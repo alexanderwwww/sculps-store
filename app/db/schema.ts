@@ -1456,3 +1456,169 @@ export const oxResults = pgTable(
   },
   (t) => [index("ox_results_schedule_at_idx").on(t.scheduleId, t.at)],
 );
+
+/* ---------------------------------------------------------------- organic */
+/*
+ * Organic — the second organic app, and nothing here is shared with OrganicX.
+ * New tables under `og_*`, filled by a different app with a different brief:
+ * a list of products and market terms rather than one product, and a market
+ * screen that reads the Ad Library and writes what it finds.
+ *
+ * The same rules hold. No credential column anywhere; `connected` means the
+ * app saw a logged-in session and read a handle, nothing more. No store id:
+ * everything about products comes from the brief.
+ */
+
+/** TikTok, Instagram, YouTube. A row exists only once a handle was read. */
+export const ogAccounts = pgTable(
+  "og_accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    platform: text("platform").notNull(),
+    handle: text("handle").notNull(),
+    /** Set once the app has seen a logged-in session. Never a credential. */
+    connected: boolean("connected").notNull().default(false),
+    connectedAt: timestamp("connected_at", { withTimezone: true }),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+    /** How old the account behaves as, not how old it is. */
+    warmedDays: integer("warmed_days").notNull().default(0),
+    /** A captcha, a verification prompt, an action block: parked for the day. */
+    friction: text("friction"),
+    frictionAt: timestamp("friction_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("og_accounts_platform_handle_idx").on(t.platform, t.handle)],
+);
+
+/** The person behind an account. Written once and then kept. */
+export const ogPersonas = pgTable("og_personas", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id")
+    .notNull()
+    .references(() => ogAccounts.id, { onDelete: "cascade" }),
+  who: text("who").notNull(),
+  metro: text("metro").notNull(),
+  hours: jsonb("hours").$type<{ start: string; end: string }[]>().notNull(),
+  interests: jsonb("interests").$type<string[]>().notNull(),
+  voice: text("voice").notNull(),
+  typing: jsonb("typing").$type<{ cpsMin: number; cpsMax: number; typoRate: number }>().notNull(),
+  temperament: jsonb("temperament")
+    .$type<{ likeRate: number; saveRate: number; commentRate: number; followRate: number }>()
+    .notNull(),
+  /** 0 = Sunday. */
+  daysOff: jsonb("days_off").$type<number[]>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Every human thing an account did, recorded rather than assumed. */
+export const ogActions = pgTable(
+  "og_actions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    accountId: uuid("account_id")
+      .notNull()
+      .references(() => ogAccounts.id, { onDelete: "cascade" }),
+    /** watch | like | save | share | comment | follow | unfollow | scroll */
+    kind: text("kind").notNull(),
+    targetUrl: text("target_url"),
+    dwellMs: integer("dwell_ms"),
+    text: text("text"),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("og_actions_account_at_idx").on(t.accountId, t.at)],
+);
+
+/**
+ * What the research turned up: an ad, a clip, a seller, a product. One row
+ * per (kind, url); seeing it again refreshes the row rather than adding one.
+ */
+export const ogFindings = pgTable(
+  "og_findings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** ad | clip | seller | product */
+    kind: text("kind").notNull(),
+    /** Which product in the brief this was found for, if any. */
+    product: text("product"),
+    /** The search term or hashtag that turned it up. */
+    query: text("query"),
+    platform: text("platform"),
+    url: text("url").notNull(),
+    /** The advertiser, creator or seller. */
+    who: text("who"),
+    title: text("title"),
+    /** Views, likes, days running — whatever was visible. Never a guess. */
+    metrics: jsonb("metrics").$type<Record<string, unknown>>(),
+    /** As the page printed it ("Started running on 12 Sep 2026"). */
+    startedAt: text("started_at"),
+    seenAt: timestamp("seen_at", { withTimezone: true }).notNull().defaultNow(),
+    note: text("note"),
+  },
+  (t) => [uniqueIndex("og_findings_kind_url_idx").on(t.kind, t.url)],
+);
+
+/** A clip found in the wild, with the numbers that were visible. */
+export const ogClips = pgTable(
+  "og_clips",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    platform: text("platform").notNull(),
+    sourceUrl: text("source_url").notNull(),
+    sourceHandle: text("source_handle"),
+    postedAt: timestamp("posted_at", { withTimezone: true }),
+    caption: text("caption"),
+    views: integer("views"),
+    likes: integer("likes"),
+    comments: integer("comments"),
+    fileKey: text("file_key"),
+    durationMs: integer("duration_ms"),
+    seen: jsonb("seen").$type<Record<string, unknown>>(),
+    validated: boolean("validated"),
+    validationNote: text("validation_note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("og_clips_source_idx").on(t.sourceUrl)],
+);
+
+/** One thing learned, with what it rests on. */
+export const ogLessons = pgTable("og_lessons", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  scope: text("scope").notNull(),
+  lesson: text("lesson").notNull(),
+  evidence: jsonb("evidence").$type<Record<string, unknown>>(),
+  confidence: real("confidence").notNull().default(0),
+  at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Nudged toward outcomes, never replaced by them. */
+export const ogWeights = pgTable(
+  "og_weights",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    scope: text("scope").notNull(),
+    dimension: text("dimension").notNull(),
+    value: text("value").notNull(),
+    weight: real("weight").notNull().default(0),
+    trials: integer("trials").notNull().default(0),
+    wins: integer("wins").notNull().default(0),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("og_weights_scope_dim_value_idx").on(t.scope, t.dimension, t.value)],
+);
+
+/** The queue the scheduler works through. */
+export const ogTasks = pgTable(
+  "og_tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    kind: text("kind").notNull(),
+    payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+    /** todo | doing | done | failed */
+    state: text("state").notNull().default("todo"),
+    attempts: integer("attempts").notNull().default(0),
+    notBefore: timestamp("not_before", { withTimezone: true }),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    doneAt: timestamp("done_at", { withTimezone: true }),
+  },
+  (t) => [index("og_tasks_state_idx").on(t.state, t.notBefore)],
+);
