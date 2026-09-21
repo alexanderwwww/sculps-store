@@ -88,19 +88,36 @@ export async function offerForOrder(db: DB, orderId: string): Promise<PostPurcha
     .where(and(eq(products.storeId, order.storeId), eq(products.status, "active")))
     .orderBy(asc(variants.priceCents));
 
-  const pick = rows.find(
-    (r) =>
-      !boughtVariants.has(r.variantId) &&
-      !boughtTitles.has(r.productTitle) &&
-      r.available > 0 &&
-      r.priceCents > 0 &&
-      // A test row is not a thing to sell somebody who has just paid.
-      !/^test\b/i.test(r.productTitle) &&
-      // Nothing cheap enough that the floor below would price it above its
-      // own shelf price. At $0.50 this offered the item for $1.00 and then
-      // printed "Save -$0.50".
-      r.priceCents > MIN_OFFER_CENTS,
-  );
+  /* Every other product gets a turn.
+     This took the first row of a price-ascending list, so the answer was the
+     cheapest thing in the shop for every customer of every order -- the same
+     Haunted Projector, forever, no matter what they had just bought.
+
+     One entry per product now, cheapest variant of each, and which one is
+     offered rotates with the order rather than being fixed. The rotation is
+     derived from the order's own id, so a refresh shows the same offer and
+     the countdown means something. */
+  const eligible: typeof rows = [];
+  const seenProducts = new Set<string>();
+  for (const r of rows) {
+    if (seenProducts.has(r.productTitle)) continue;
+    if (boughtVariants.has(r.variantId) || boughtTitles.has(r.productTitle)) continue;
+    if (r.available <= 0) continue;
+    // A test row is not a thing to sell somebody who has just paid.
+    if (/^test\b/i.test(r.productTitle)) continue;
+    // Nothing cheap enough that the floor below would price it above its own
+    // shelf price. At $0.50 this offered the item for $1.00 and then printed
+    // "Save -$0.50".
+    if (r.priceCents <= MIN_OFFER_CENTS) continue;
+    seenProducts.add(r.productTitle);
+    eligible.push(r);
+  }
+  if (!eligible.length) return null;
+
+  let spin = 0;
+  for (const ch of orderId) spin = (spin * 31 + ch.charCodeAt(0)) >>> 0;
+  const pick = eligible[spin % eligible.length]!;
+
   if (!pick) return null;
 
   const saving = discountFor(pick.priceCents);
