@@ -113,7 +113,7 @@ fi
 # $RUNTIME/BUILD, and this must not copy over it — otherwise the next restart
 # silently undoes the fix that was just shipped, which is the worst kind of
 # bug: it works, then it does not, and nothing changed.
-BUNDLE_BUILD=7
+BUNDLE_BUILD=8
 RUNTIME_BUILD=0
 if [ -f "$RUNTIME/BUILD" ]; then
   RUNTIME_BUILD=$(tr -dc '0-9' < "$RUNTIME/BUILD" 2>/dev/null)
@@ -134,6 +134,19 @@ if [ "$RUNTIME_BUILD" -lt "$BUNDLE_BUILD" ] || [ ! -f "$RUNTIME/ox.mjs" ]; then
   done
   echo "$BUNDLE_BUILD" > "$RUNTIME/BUILD"
   say "Installed build $BUNDLE_BUILD from the bundle."
+
+  # The Dock keeps drawing the icon it cached for the previous copy of this
+  # app, keyed on bundle id and version, and it does not look again on its
+  # own. Once per new bundle: re-register this bundle with Launch Services,
+  # bump the folder's mtime so Finder re-reads it, and restart the Dock so
+  # it draws the icon that is actually in Resources. Nothing else on the
+  # machine is touched, and it only runs the first time a build opens.
+  APP_ROOT="$(cd "$HERE/../.." && pwd)"
+  LSREG=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+  [ -x "$LSREG" ] && "$LSREG" -f "$APP_ROOT" >/dev/null 2>&1 || true
+  touch "$APP_ROOT" "$APP_ROOT/Contents/Info.plist" 2>/dev/null || true
+  rm -rf "$HOME/Library/Caches/com.apple.iconservices.store" 2>/dev/null || true
+  killall Dock 2>/dev/null || true
 else
   say "Running build $RUNTIME_BUILD (shipped without a download)."
 fi

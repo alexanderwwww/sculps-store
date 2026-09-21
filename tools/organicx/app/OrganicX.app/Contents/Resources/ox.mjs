@@ -30,7 +30,7 @@ import { homeUrl, refreshHome } from "./home.mjs";
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 6;
+export const BUILD = 8;
 
 /**
  * The build that is actually running.
@@ -446,7 +446,7 @@ async function main() {
 
   state = "starting";
   await report();
-  await skills.load(PATHS.runtime);
+  await skills.load(PATHS.runtime).catch(() => {});
   const taught = skills.list();
   await tick(
     "organicx",
@@ -469,7 +469,11 @@ async function main() {
     );
   }
 
+  // Said before each step, so a start that stalls says where it stalled
+  // instead of sitting on "starting" with nothing after it.
+  await tick("organicx", "opening chrome");
   const { browser } = await openChrome({ profile: PATHS.profile });
+  await tick("organicx", "chrome is open — drawing the home screen");
   await openHome(browser);
   let nextHome = 0;
 
