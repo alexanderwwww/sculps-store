@@ -2016,7 +2016,28 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
   // print a number that is simply false.
   const rated = rows.filter((r) => r.rating > 0);
   const mean = rated.length ? rated.reduce((n, r) => n + r.rating, 0) / rated.length : 0;
-  const visible = rows.slice(0, shown);
+
+  /* One review from this season, near the top.
+     The table has current rows in it and the curated order buries them, so
+     every review anybody actually read was dated last October and the shop
+     looked like it had not sold anything since. This lifts the single newest
+     row to second place and leaves the rest of the order alone -- the
+     hand-made pairings further down (a buyer, and then their mother texting
+     about the same lawn) are worth more than a full sort by date. */
+  const ordered = (() => {
+    const ms = (r: LoadedProductPage["reviews"][number]) =>
+      r.reviewedOn ? new Date(r.reviewedOn).getTime() : 0;
+    const recent = Date.now() - 120 * 86400_000;
+    if (rows.length < 4 || rows.slice(0, 4).some((r) => ms(r) > recent)) return rows;
+    let best = 0;
+    for (let i = 1; i < rows.length; i++) if (ms(rows[i]!) > ms(rows[best]!)) best = i;
+    if (best < 4 || ms(rows[best]!) <= recent) return rows;
+    const out = rows.slice();
+    out.splice(1, 0, out.splice(best, 1)[0]!);
+    return out;
+  })();
+
+  const visible = ordered.slice(0, shown);
 
   /* The places, off the reviews themselves.
      `country` holds "Toledo, OH" on 130 of these rows and until now it was
@@ -2025,7 +2046,7 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
      top where the star bar used to say "from verified buyers" -- which is
      the voice of a plugin, not of a shop. Still type. It does not scroll. */
   const towns: string[] = [];
-  for (const r of rows) {
+  for (const r of ordered) {
     const c = cityOf(r.country);
     if (c && !towns.includes(c)) towns.push(c);
     if (towns.length === 10) break;
@@ -2050,7 +2071,7 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
           {visible.map((r, i) => <RvCard key={r.id} r={r} eager={i < 2} />)}
         </div>
 
-        {shown < rows.length ? (
+        {shown < ordered.length ? (
           <button type="button" className="cb-rvg__more" onClick={() => setShown((n) => n + 6)}>
             Read more reviews
           </button>
