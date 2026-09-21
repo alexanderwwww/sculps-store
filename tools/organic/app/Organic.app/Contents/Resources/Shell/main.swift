@@ -50,7 +50,12 @@ final class Delegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKU
     web.uiDelegate = self
     web.setValue(false, forKey: "drawsBackground")
     window.contentView = web
-    web.load(URLRequest(url: pageURL))
+
+    // Something to look at from the first frame. The worker may still be
+    // installing what it needs, and a blank window — or Safari's "cannot
+    // connect" page — reads as broken when it is only slow.
+    web.loadHTMLString(Delegate.waitingHTML, baseURL: nil)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { self.web.load(URLRequest(url: pageURL)) }
 
     window.makeKeyAndOrderFront(nil)
     NSApp.activate(ignoringOtherApps: true)
@@ -64,11 +69,27 @@ final class Delegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKU
   func retry() {
     if retryArmed { return }
     retryArmed = true
+    web.loadHTMLString(Delegate.waitingHTML, baseURL: nil)
     DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
       self.retryArmed = false
       self.web.load(URLRequest(url: pageURL))
     }
   }
+
+  // Plain, white, and the same typeface the app uses.
+  static let waitingHTML = """
+  <!doctype html><meta charset="utf-8"><style>
+  html,body{margin:0;height:100%;background:#fff;color:#111;
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    display:flex;align-items:center;justify-content:center}
+  .b{text-align:center}
+  .d{width:9px;height:9px;border-radius:50%;background:#39FF7A;margin:0 auto 14px;
+    animation:p 1.4s ease-in-out infinite}
+  @keyframes p{0%,100%{opacity:.25;transform:scale(.85)}50%{opacity:1;transform:scale(1)}}
+  .s{color:#777;font-size:13px;margin-top:6px}
+  </style><div class="b"><div class="d"></div><div>Starting Organic</div>
+  <div class="s">first run takes a moment — it is fetching what it needs</div></div>
+  """
 
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }

@@ -60,13 +60,25 @@ else
   say "running build $RUNTIME_BUILD"
 fi
 
-if [ ! -f "$SUPPORT/worker/node_modules/playwright/package.json" ] || [ ! -f "$SUPPORT/worker/node_modules/ws/package.json" ]; then
-  say "installing dependencies"
-  if ! (cd "$SUPPORT/worker" && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --no-audit --no-fund >> "$LOG" 2>&1); then
-    alert "Could not install the worker's dependencies. Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')"
-    exit 1
+# The dependencies are installed by the worker's own runner, below, AFTER the
+# window is up. It used to happen here, before anything was on screen: the
+# Dock icon bounced with nothing to look at, and a slow npm made it bounce
+# for a minute. Nothing Alex waits for happens without a window saying so.
+needs_deps() {
+  [ ! -f "$SUPPORT/worker/node_modules/playwright/package.json" ] || [ ! -f "$SUPPORT/worker/node_modules/ws/package.json" ]
+}
+
+# The watchdog: if this run never reaches the window, say why, once. A silent
+# bouncing icon is the one failure that tells nobody anything.
+rm -f "$SUPPORT/.window"
+(
+  sleep 75
+  if [ ! -f "$SUPPORT/.window" ]; then
+    /usr/bin/osascript -e 'on run argv' -e 'display alert "Organic" message (item 1 of argv)' -e 'end run' \
+      "Still setting up after a minute. Last lines of the log: $(tail -4 "$LOG" | tr '\n' ' ')" >/dev/null 2>&1
   fi
-fi
+) &
+WATCHDOG=$!
 
 # --- the window, built once ------------------------------------------------
 # Keyed on the source, so a changed main.swift is rebuilt and an unchanged one
@@ -94,6 +106,25 @@ find_sdk() {
   return 1
 }
 
+# Run something with a ceiling on it. macOS has no `timeout`, and a build
+# step that hangs forever is what a bouncing Dock icon actually is.
+run_bounded() {
+  local secs="$1"; shift
+  "$@" >> "$LOG" 2>&1 &
+  local pid=$! waited=0
+  while kill -0 "$pid" 2>/dev/null; do
+    sleep 1
+    waited=$((waited + 1))
+    if [ "$waited" -ge "$secs" ]; then
+      kill "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+      say "gave up on: $1 (over ${secs}s)"
+      return 124
+    fi
+  done
+  wait "$pid"
+}
+
 build_window() {
   [ -n "$SWIFTC" ] || return 1
   local sdk arch
@@ -109,20 +140,23 @@ build_window() {
   # Most specific first, then looser. Each attempt says why it failed.
   if [ -n "$sdk" ]; then
     say "building the window (sdk $sdk, $arch)"
-    "$SWIFTC" -O -sdk "$sdk" -target "$arch-apple-macosx12.0" \
-      -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" >> "$LOG" 2>&1 && return 0
-    "$SWIFTC" -O -sdk "$sdk" \
-      -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" >> "$LOG" 2>&1 && return 0
+    run_bounded 60 "$SWIFTC" -O -sdk "$sdk" -target "$arch-apple-macosx12.0" \
+      -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
+    run_bounded 60 "$SWIFTC" -O -sdk "$sdk" \
+      -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
   else
     say "building the window (no sdk found)"
   fi
-  "$SWIFTC" -O -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" >> "$LOG" 2>&1 && return 0
+  run_bounded 60 "$SWIFTC" -O -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
   return 1
 }
 
+SHELL_STARTED="$(date +%s)"
 if [ ! -x "$SHELL_BIN" ] && ! build_window; then
   rm -f "$SHELL_BIN"
   say "the native window could not be built — using the fallback window"
+elif [ -x "$SHELL_BIN" ]; then
+  say "the window is ready ($(( $(date +%s) - SHELL_STARTED ))s)"
 fi
 
 # --- run --------------------------------------------------------------------
@@ -140,6 +174,15 @@ export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 # the worker never pulls it again, and the worker is started once more.
 (
   cd "$SUPPORT/worker" || exit 1
+  if needs_deps; then
+    say "installing dependencies"
+    if ! PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 run_bounded 420 npm install --no-audit --no-fund; then
+      /usr/bin/osascript -e 'on run argv' -e 'display alert "Organic" message (item 1 of argv)' -e 'end run' \
+        "Could not install what the worker needs. Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')" >/dev/null 2>&1
+      exit 1
+    fi
+    say "dependencies installed"
+  fi
   recovered=0
   while :; do
     started=$(date +%s)
@@ -166,6 +209,8 @@ export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ) &
 
 say "window on http://127.0.0.1:$PORT/"
+: > "$SUPPORT/.window"
+kill "$WATCHDOG" 2>/dev/null || true
 
 if [ -x "$SHELL_BIN" ]; then
   exec "$SHELL_BIN" "http://127.0.0.1:$PORT/" "$HERE/AppIcon.icns"
