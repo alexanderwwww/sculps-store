@@ -137,10 +137,38 @@ Read the one that matches the task; do not load all of them.
 | `references/product-research.md` | Burners done properly, the keyword rabbit hole, software, manual research on Temu/AliExpress |
 | `references/validation.md` | What counts as viral, competitor limits, the full validation list for both methods |
 | `references/creatives.md` | The elements of a clip, iterations vs variations, the editing workflow, AI's real role |
+| `references/agents.md` | The agency — thirteen named specialists, their biases, the four-signature gate, how work moves |
 | `references/behaviour.md` | The persona system, session rhythm, engagement ratios, commenting, following, typing — how an account behaves like a person |
 | `references/accounts.md` | Phone setup, VPN, warming, primed Instagram accounts, posting cadence, equipment |
 | `references/diagnostics.md` | Views but no clicks, clicks but no add-to-cart, add-to-cart but no sales — what each one means |
 | `references/store.md` | Why the store barely matters, what actually does, the checkout test |
+
+## How it is driven
+
+**The playbook ships inside the app, not only inside Claude.** Every reference
+in this skill is compiled into OrganicX itself, so the crew can work without
+asking permission for each decision. Claude holds the same copy, which is what
+keeps the two in step.
+
+So the command is big, not small:
+
+> *"Black Reaper, the Crawling Zombie. Run it for five days across all three
+> platforms. Warm the accounts as you go."*
+
+and then the agency gets on with it — on **Alex's machine, using his compute**.
+Reyna researches, Desmond kills most of it, Lena cuts, the gate signs or
+refuses, Sam posts, Theo reads the numbers back. Nobody stops to ask what a
+validation is, because they already know.
+
+Claude is not in the loop for every step. Claude is in the loop for:
+
+- setting the brief and the boundaries
+- anything the gate refuses that Alex should see
+- anything that needs a decision only he can make
+- fixing the app when something is wrong, and shipping that fix to it
+
+That split is the point. Round-tripping every like and every caption would be
+slower than doing it by hand, which would defeat the entire object.
 
 ## App architecture
 
