@@ -4,12 +4,13 @@
 <dict>
   <key>CFBundleName</key><string>OrganicX</string>
   <key>CFBundleDisplayName</key><string>OrganicX</string>
-  <key>CFBundleIdentifier</key><string>us.blackreaper.organicx.app</string>
-  <key>CFBundleVersion</key><string>4</string>
-  <key>CFBundleShortVersionString</key><string>1.0.4</string>
+  <key>CFBundleIdentifier</key><string>us.blackreaper.organicx.leaf</string>
+  <key>CFBundleVersion</key><string>6</string>
+  <key>CFBundleShortVersionString</key><string>1.0.6</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleExecutable</key><string>OrganicX</string>
-  <key>CFBundleIconFile</key><string>organicx</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
+  <key>CFBundleIconName</key><string>AppIcon</string>
   <key>LSMinimumSystemVersion</key><string>12.0</string>
   <key>NSHighResolutionCapable</key><true/>
 </dict>

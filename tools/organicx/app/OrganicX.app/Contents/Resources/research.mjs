@@ -21,7 +21,7 @@
  * all. Reading the same pages while signed in as one of the accounts would
  * tie that browsing to it for nothing.
  */
-import { attach, say, sleep, scroll, checkFriction } from "./browser.mjs";
+import { attach, say, sleep, scroll, checkFriction, ask } from "./browser.mjs";
 import { between, around, chance } from "./human.mjs";
 
 /**
@@ -81,7 +81,7 @@ export async function adLibrary(context, { query, country = "US", limit = 40 }) 
   const url =
     "https://www.facebook.com/ads/library/?active_status=active&ad_type=all" +
     `&country=${encodeURIComponent(country)}&q=${encodeURIComponent(query)}&search_type=keyword_unordered`;
-  await page.goto(url, { waitUntil: "domcontentloaded" }).catch(() => {});
+  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
   await sleep(between(3000, 5000));
 
   // A cookie wall or a rate limit, said plainly rather than returning an
@@ -94,8 +94,7 @@ export async function adLibrary(context, { query, country = "US", limit = 40 }) 
 
   const ads = [];
   for (let pass = 0; pass < 8 && ads.length < limit; pass++) {
-    const batch = await page
-      .evaluate(() => {
+    const batch = (await ask(page, () => {
         const out = [];
         // The library renders every ad card with its start date in plain
         // text. Reading the visible text is more durable than a class name,
@@ -110,8 +109,7 @@ export async function adLibrary(context, { query, country = "US", limit = 40 }) 
           out.push({ advertiser, started, img, video, text: text.slice(0, 400) });
         }
         return out;
-      })
-      .catch(() => []);
+      }, undefined, 8000)) ?? [];
 
     for (const ad of batch) {
       if (!ads.some((a) => a.text === ad.text)) ads.push(ad);
@@ -166,7 +164,7 @@ export async function hashtag(context, platform, tag, { passes = 6 } = {}) {
   const page = await context.newPage();
   await attach(page);
   await say(page, `${platform} — #${tag}`);
-  await page.goto(make(tag), { waitUntil: "domcontentloaded" }).catch(() => {});
+  await page.goto(make(tag), { waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
   await sleep(between(2500, 4500));
 
   const friction = await checkFriction(page);
@@ -178,13 +176,11 @@ export async function hashtag(context, platform, tag, { passes = 6 } = {}) {
 
   const links = new Set();
   for (let i = 0; i < passes; i++) {
-    const found = await page
-      .evaluate(() =>
+    const found = (await ask(page, () =>
         [...document.querySelectorAll("a[href]")]
           .map((a) => a.href)
           .filter((h) => /\/video\/|\/reel\/|\/p\/|watch\?v=|\/shorts\//.test(h)),
-      )
-      .catch(() => []);
+      undefined, 8000)) ?? [];
     found.forEach((h) => links.add(h));
     await scroll(page, { absorbed: chance(0.35) });
     await sleep(around(1600, 600, 600, 3600));

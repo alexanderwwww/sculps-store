@@ -16,7 +16,7 @@
  */
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import {
   openChrome, attach, say, signedIn, whoAmI, sleep, checkFriction,
@@ -25,11 +25,30 @@ import {
 import * as db from "./db.mjs";
 import { planDay, scatterAcrossDay, dayBudget, isAwake } from "./human.mjs";
 import * as skills from "./skills.mjs";
+import { homeUrl, refreshHome } from "./home.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-/** This build. The control plane's runtime slot is compared against it. */
-export const BUILD = 4;
+/** The build this file was written as. What is RUNNING may be newer — see running(). */
+export const BUILD = 6;
+
+/**
+ * The build that is actually running.
+ *
+ * A live push replaces some files and writes the new number to BUILD beside
+ * them; it does not necessarily replace this file. So the constant above can
+ * be behind, and comparing the Worker against it caused a restart loop: the
+ * Worker said 5, this file said 4, "different, so update", exit 75, repeat
+ * every second forever. The file on disk is the truth.
+ */
+async function running() {
+  try {
+    const n = Number((await readFile(join(PATHS.runtime, "BUILD"), "utf8")).trim());
+    return Number.isFinite(n) && n > 0 ? n : BUILD;
+  } catch {
+    return BUILD;
+  }
+}
 
 const BASE =
   process.env.OX_BASE ??
@@ -70,16 +89,25 @@ export async function tick(who, did) {
   await post("/log", { who, did }).catch(() => {});
 }
 
+/*
+ * Ten seconds, on every call to the control plane.
+ *
+ * A stalled connection with no deadline blocked tick(), report() and the
+ * order poll for undici's five-minute default, and since every loop turn
+ * awaits them, the whole app stood still. .catch() handles a rejection; a
+ * hang never rejects.
+ */
 async function post(path, body) {
   return fetch(BASE + path, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(10000),
   }).then((r) => r.json().catch(() => null));
 }
 
 async function get(path) {
-  return fetch(BASE + path).then((r) => r.json().catch(() => null));
+  return fetch(BASE + path, { signal: AbortSignal.timeout(10000) }).then((r) => r.json().catch(() => null));
 }
 
 let state = "starting";
@@ -108,7 +136,13 @@ async function report() {
  */
 async function maybeUpdate() {
   const runtime = await get("/runtime").catch(() => null);
-  if (!runtime?.build || runtime.build === BUILD) return false;
+  const current = await running();
+  /*
+   * Forward only. A Worker slot holding an OLDER build than this one is
+   * stale, not an instruction to downgrade — treating it as one is what
+   * made the app reinstall itself in a loop.
+   */
+  if (!Number.isFinite(Number(runtime?.build)) || Number(runtime.build) <= current) return false;
 
   await tick("organicx", `updating to build ${runtime.build}`);
   await mkdir(PATHS.runtime, { recursive: true });
@@ -131,6 +165,49 @@ async function maybeUpdate() {
   process.exit(75);
 }
 
+/* -------------------------------------------------------------- the tabs */
+
+/**
+ * One tab per platform, kept.
+ *
+ * It used to open a tab, look, and close it — for every check, on every
+ * sweep — so from the outside it was a browser spasming: Instagram opens,
+ * refreshes, closes; YouTube opens, closes; TikTok opens. A person keeps
+ * Instagram open in one tab and TikTok in another and moves between them,
+ * and now so does this. A tab Alex closes himself is simply reopened.
+ */
+const tabs = new Map();
+/** Per-platform connection state, as last shown. The home page redraws from this. */
+const conn = {};
+/** The home tab: every platform on one page, live. Opened first, returned to between jobs. */
+let home = null;
+
+async function openHome(browser) {
+  if (home && !home.isClosed()) return home;
+  const context = browser.contexts()[0] ?? (await browser.newContext());
+  home = await context.newPage();
+  await home.goto(homeUrl(), { waitUntil: "domcontentloaded", timeout: 10000 }).catch(() => {});
+  await attach(home);
+  return home;
+}
+
+/** Record a connection state and show it everywhere at once. */
+async function showConnection(page, platform, state, handle) {
+  conn[platform] = { state, handle: handle ?? null };
+  await connection(page, platform, state, handle);
+  if (home && !home.isClosed()) await connection(home, platform, state, handle);
+}
+
+async function tabFor(browser, platform) {
+  const existing = tabs.get(platform);
+  if (existing && !existing.isClosed()) return existing;
+  const context = browser.contexts()[0] ?? (await browser.newContext());
+  const page = await context.newPage();
+  await attach(page);
+  tabs.set(platform, page);
+  return page;
+}
+
 /* ----------------------------------------------------------- the connect */
 
 /**
@@ -149,12 +226,11 @@ export async function connect(browser, only) {
    * to the store.
    */
   const wanted = only ? [only] : ["instagram", "tiktok", "youtube"];
-  const context = browser.contexts()[0] ?? (await browser.newContext());
 
   for (const platform of wanted) {
-    const page = await context.newPage();
-    await attach(page);
-    await connection(page, platform, "checking");
+    const page = await tabFor(browser, platform);
+    await page.bringToFront().catch(() => {});
+    await showConnection(page, platform, "checking");
     await tick("sam", `opening ${platform} — sign in and I will pick it up`);
 
     /*
@@ -183,20 +259,19 @@ export async function connect(browser, only) {
       // and signing in happens in it, so checking is reading the DOM again.
       result = await signedIn(page, platform, { navigate: i === 0 });
       if (result.connected) break;
-      await connection(page, platform, "waiting");
+      await showConnection(page, platform, "waiting");
       await say(page, `sign in to ${platform} — I am watching this tab`);
       if (await stopRequested(page)) break;
       await sleep(5000);
     }
 
     if (!result.connected) {
-      await connection(page, platform, "off");
+      await showConnection(page, platform, "off");
       await tick(
         "sam",
         `${platform} is not signed in yet${result.friction ? ` (${result.friction})` : ""} — I will keep checking`,
       );
-      await page.close();
-      continue;
+      continue; // the tab stays open, so signing in later happens in it
     }
 
     /*
@@ -209,16 +284,15 @@ export async function connect(browser, only) {
      */
     const handle = await whoAmI(page, platform);
     if (!handle || handle.replace(/[@\s]/g, "") === "") {
-      await connection(page, platform, "off");
+      await showConnection(page, platform, "off");
       await tick(
         "sam",
         `${platform} looked signed in but would not tell me who — not taking that as connected`,
       );
-      await page.close();
       continue;
     }
     const row = await db.markConnected(platform, handle, PATHS.profile);
-    await connection(page, platform, "connected", handle);
+    await showConnection(page, platform, "connected", handle);
     await say(page, `${handle} connected`);
     await tick("sam", `${platform} connected as ${handle}`);
     await post("/accounts", { accounts: await db.accounts() }).catch(() => {});
@@ -229,7 +303,6 @@ export async function connect(browser, only) {
       await db.savePersona(row.id, personaSeed(handle));
     }
     await sleep(1200);
-    await page.close();
   }
 }
 
@@ -241,20 +314,20 @@ export async function connect(browser, only) {
  * platform Alex signs into later should go green on its own.
  */
 export async function verifyConnections(browser) {
-  const context = browser.contexts()[0] ?? (await browser.newContext());
   const rows = await db.accounts();
-  const page = await context.newPage();
-  await attach(page);
 
   for (const platform of ["instagram", "tiktok", "youtube"]) {
+    const page = await tabFor(browser, platform);
     const known = rows.find((r) => r.platform === platform && r.connected);
-    await connection(page, platform, "checking");
-    const result = await signedIn(page, platform);
+    await showConnection(page, platform, "checking");
+    // Already on the site: read it where it is rather than reloading it.
+    const onSite = page.url().includes(platform === "youtube" ? "youtube.com" : platform + ".com");
+    const result = await signedIn(page, platform, { navigate: !onSite });
     if (result.connected) {
       const handle = known?.handle ?? (await whoAmI(page, platform));
       if (!handle || handle.replace(/[@\s]/g, "") === "") {
         // Same rule as the connect step: no name, not connected.
-        await connection(page, platform, "off");
+        await showConnection(page, platform, "off");
         continue;
       }
       if (!known) {
@@ -263,13 +336,12 @@ export async function verifyConnections(browser) {
         await tick("sam", `${platform} came online as ${handle}`);
         if (!(await db.personaFor(row.id))) await db.savePersona(row.id, personaSeed(handle));
       }
-      await connection(page, platform, "connected", handle);
+      await showConnection(page, platform, "connected", handle);
     } else {
-      await connection(page, platform, "off");
+      await showConnection(page, platform, "off");
       if (known) await tick("sam", `${platform} is signed out now — it was ${known.handle}`);
     }
   }
-  await page.close();
 }
 
 /**
@@ -348,13 +420,19 @@ export async function farm(browser, account) {
   if (friction) {
     await db.park(account.id, friction);
     await tick("sam", `${account.handle}: ${friction}. That account is done for today.`);
-    await page.close();
+    await page.close().catch(() => {});
     return;
   }
 
-  await db.seen(account.id);
+  /*
+   * warmedToday before seen — the order is the bug fix. warmedToday counts a
+   * day only when last_seen_at is before today, and seen() sets it to now, so
+   * the other way round the count never moved and the ramp stayed at week one
+   * forever.
+   */
   await db.warmedToday(account.id);
-  await page.close();
+  await db.seen(account.id);
+  await page.close().catch(() => {});
 }
 
 /* -------------------------------------------------------------- the loop */
@@ -392,6 +470,8 @@ async function main() {
   }
 
   const { browser } = await openChrome({ profile: PATHS.profile });
+  await openHome(browser);
+  let nextHome = 0;
 
   /*
    * It opens and it goes.
@@ -407,7 +487,16 @@ async function main() {
    */
   state = "connecting";
   await report();
-  await connect(browser);
+  /*
+   * Guarded, because this is the exact moment Alex is typing a password.
+   * Unguarded, any throw here reached main().catch and exited the process —
+   * and the tab navigating on form submit is enough to make Playwright throw.
+   */
+  try {
+    await connect(browser);
+  } catch (error) {
+    await tick("sam", `connect hit a snag and is moving on: ${error?.message ?? error}`);
+  }
   state = "working";
   doing = "warming the accounts";
   await report();
@@ -467,10 +556,31 @@ async function main() {
           if (!account.connected) continue;
           await farm(browser, account);
         }
-        nextSweep = Date.now() + 4 * 60 * 1000;
+        // Two minutes, not four: this is also how long a sign-in Alex does
+        // AFTER the connect step waits to be noticed. Four was too long to
+        // stare at a green-less dot.
+        nextSweep = Date.now() + 2 * 60 * 1000;
       }
 
       await report();
+
+      /*
+       * The home screen, every eight seconds: a fresh picture of each
+       * platform tab and the last few ticker lines. Cheap, and it is what
+       * makes the browser window read as "the whole operation" rather than
+       * whichever feed it is scrolling.
+       */
+      if (Date.now() >= nextHome) {
+        await refreshHome(await openHome(browser), tabs, {
+          connections: conn,
+          ticker: recent.slice(-7).map((line) => {
+            const at = line.indexOf(" · ");
+            return at > 0 ? { who: line.slice(0, at), did: line.slice(at + 3) } : { who: "", did: line };
+          }),
+        }).catch(() => {});
+        nextHome = Date.now() + 8000;
+      }
+
       await sleep(2000);
     } catch (error) {
       // Say what failed and why. "Nothing happened" is not a status.

@@ -708,7 +708,7 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
     return json({ items: (store.items ?? []).map((item) => ({ ...item, ...verdictOf(item) })) });
   }
 
-  if (what in FILES) {
+  if (Object.hasOwn(FILES, what)) {
     const value = await read(env, what as Slot);
     /*
      * An order is read once and then cleared. Leaving it in place made the
@@ -755,7 +755,7 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   }
 
   if (what === "mcp") {
-    const body = (await request.json()) as {
+    const body = ((await request.json().catch(() => ({}))) ?? {}) as {
       method?: string;
       id?: unknown;
       params?: { name?: string; arguments?: Record<string, unknown> };
@@ -859,7 +859,14 @@ export async function action({ params, request, context }: Route.ActionArgs) {
     return json({ ok: true, id: item.id });
   }
 
-  if (what in FILES) {
+  if (Object.hasOwn(FILES, what)) {
+    /*
+     * The runtime slot is code the app will execute. It is written only by
+     * organicx_push, which validates every filename; a raw POST here would
+     * have skipped that check entirely, and a channel that writes code to
+     * somebody's Mac does not get a second, unchecked door.
+     */
+    if (what === "runtime") return json({ ok: false, error: "use organicx_push" }, 403);
     await write(env, what as Slot, body);
     return json({ ok: true });
   }

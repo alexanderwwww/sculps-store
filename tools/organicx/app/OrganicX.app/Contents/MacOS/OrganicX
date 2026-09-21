@@ -21,7 +21,10 @@ say() { printf '%s\n' "$1" | tee -a "$LOG"; }
 # is indistinguishable from a broken one.
 bail() {
   say "$1"
-  /usr/bin/osascript -e "display alert \"OrganicX\" message \"$1\"" >/dev/null 2>&1
+  # The text is handed to AppleScript as an argument, not spliced into the
+  # script: a quote inside a log line used to break the script and the alert
+  # silently never appeared — which is the one thing an alert must not do.
+  /usr/bin/osascript -e 'on run argv' -e 'display alert "OrganicX" message (item 1 of argv)' -e 'end run' "$1" >/dev/null 2>&1
   exit 1
 }
 
@@ -41,9 +44,14 @@ if command -v brew >/dev/null 2>&1; then
 fi
 # nvm, fnm, volta and asdf each keep node somewhere of their own. Sourcing the
 # login shell picks up whichever one is in use without guessing at it.
+# Probed in a subshell, never sourced into this one. An rc file that touches
+# an unset variable — $ZSH_VERSION, $PS1, most of oh-my-zsh — under this
+# script's set -u aborted the whole launcher with nothing logged and no alert.
 if ! command -v node >/dev/null 2>&1; then
   for rc in "$HOME/.zprofile" "$HOME/.zshrc" "$HOME/.bash_profile" "$HOME/.profile"; do
-    [ -f "$rc" ] && . "$rc" >/dev/null 2>&1
+    [ -f "$rc" ] || continue
+    found=$(bash -c ". \"$rc\" >/dev/null 2>&1; command -v node" 2>/dev/null || true)
+    if [ -n "$found" ]; then export PATH="$(dirname "$found"):$PATH"; break; fi
   done
 fi
 for guess in "$HOME/.volta/bin" "$HOME/.local/bin" "$HOME/n/bin"; do
@@ -105,9 +113,12 @@ fi
 # $RUNTIME/BUILD, and this must not copy over it — otherwise the next restart
 # silently undoes the fix that was just shipped, which is the worst kind of
 # bug: it works, then it does not, and nothing changed.
-BUNDLE_BUILD=4
+BUNDLE_BUILD=6
 RUNTIME_BUILD=0
-[ -f "$RUNTIME/BUILD" ] && RUNTIME_BUILD=$(cat "$RUNTIME/BUILD" 2>/dev/null || echo 0)
+if [ -f "$RUNTIME/BUILD" ]; then
+  RUNTIME_BUILD=$(tr -dc '0-9' < "$RUNTIME/BUILD" 2>/dev/null)
+  RUNTIME_BUILD=${RUNTIME_BUILD:-0}
+fi
 
 if [ "$RUNTIME_BUILD" -lt "$BUNDLE_BUILD" ] || [ ! -f "$RUNTIME/ox.mjs" ]; then
   # Everything in Resources, not a list somebody has to remember to update.
@@ -135,13 +146,17 @@ cd "$RUNTIME" || bail "Could not open $RUNTIME"
 export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1
 
-[ -d node_modules ] || {
+# Gated on the one package that matters being actually present, not on the
+# folder existing. A network drop mid-install left a half-empty node_modules
+# that passed the old check, and every launch after that died on "Cannot
+# find package 'playwright'" — silently.
+if [ ! -f node_modules/playwright/package.json ]; then
   say "First launch — fetching what it needs. A minute or so."
   if ! npm install --omit=dev --no-audit --no-fund >>"$LOG" 2>&1; then
     bail "Could not fetch what it needs. The last lines of $LOG say why: $(tail -3 "$LOG" | tr '\n' ' ')"
   fi
   say "Ready."
-}
+fi
 
 # --- run, and restart on a self-update ----------------------------------
 while true; do
@@ -151,5 +166,11 @@ while true; do
     say "New build installed. Restarting."
     continue
   fi
-  exit $code
+  # Any other exit is a crash, and a crash has to be seen. Exiting quietly
+  # here was the exact "double-clicked, nothing happened" this launcher's
+  # header says it exists to prevent.
+  if [ $code -ne 0 ]; then
+    bail "OrganicX stopped (code $code). Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')"
+  fi
+  exit 0
 done

@@ -17,12 +17,9 @@
  *   There is no retry, because retrying is how accounts are lost.
  */
 import { chromium } from "playwright";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
+import { spawn } from "node:child_process";
 import { keystrokes, frictionIn, between, around, chance } from "./human.mjs";
 import { panelSource } from "./panel.mjs";
-
-const run = promisify(execFile);
 
 /* ----------------------------------------------------------- the overlay */
 
@@ -129,6 +126,24 @@ export async function openChrome({ port = 9333, profile }) {
     "--no-default-browser-check",
     // Without this the profile opens on a restore prompt that nothing clicks.
     "--hide-crash-restore-bubble",
+    /*
+     * Quiet. A fresh profile otherwise throws every first-run page it has —
+     * "what's new", the privacy-sandbox dialog, the extensions and welcome
+     * tabs, the sign-in-to-Chrome nudge — and Alex watched a browser open
+     * four pages he never asked for before it did any work. None of that
+     * is the job. It opens on a blank page and nothing else.
+     */
+    "--disable-extensions",
+    "--disable-component-extensions-with-background-pages",
+    "--disable-default-apps",
+    "--disable-sync",
+    "--no-service-autorun",
+    "--password-store=basic",
+    "--disable-features=ChromeWhatsNewUI,PrivacySandboxSettings4,PrivacySandboxSettings3,SidePanelPinning,OptimizationGuideModelDownloading",
+    "--disable-search-engine-choice-screen",
+    "--ash-no-nudges",
+    "--no-default-browser-check",
+    "about:blank",
     // Extra flags, for running this somewhere that is not a Mac — which is
     // the only way the whole daemon gets exercised before it is sent to one.
     ...(process.env.OX_CHROME_ARGS ? process.env.OX_CHROME_ARGS.split(" ").filter(Boolean) : []),
@@ -141,11 +156,19 @@ export async function openChrome({ port = 9333, profile }) {
    * refused to start looked identical to one that was merely slow, and the
    * only symptom forty seconds later was "did not open a debugging port".
    */
+  /*
+   * spawn, not execFile. execFile buffers the child's output up to one
+   * megabyte and then terminates the child — and Chrome writes to stderr
+   * steadily, so after enough hours the browser was simply killed mid-session
+   * with no relaunch. Only the first line of stderr is kept, for the error
+   * message, and the rest is discarded as it arrives.
+   */
   let why = null;
-  const child = execFile(bin, args, (error, stdout, stderr) => {
-    if (error) why = (stderr || error.message || "").trim().split("\n")[0];
-  });
+  const child = spawn(bin, args, { stdio: ["ignore", "ignore", "pipe"], detached: false });
   child.on("error", (error) => { why = error.message; });
+  child.stderr?.once("data", (chunk) => { why = String(chunk).trim().split("\n")[0]; });
+  child.stderr?.on("data", () => {}); // drain
+  child.unref?.();
 
   // It takes a moment to listen. Racing it prints "nothing on port 9333",
   // which reads like a missing Chrome rather than an impatient caller.
@@ -391,31 +414,56 @@ export async function signedIn(page, platform, { navigate = true } = {}) {
   if (friction && friction !== "logged out") return { connected: false, friction };
 
   /*
-   * Signed-out first, and it is decisive.
+   * The login redirect, then the session cookie. Not the markup.
    *
-   * Checking "signed in" first let an ambiguous page — one carrying both a
-   * profile-ish element and a login button — come back connected. A login
-   * button on the page is the platform telling you plainly that nobody is
-   * signed in, and no other marker outweighs it.
-   */
-  for (const sel of spec.out) {
-    if (await page.$(sel)) return { connected: false, friction: null };
-  }
-  for (const sel of spec.in) {
-    if (await page.$(sel)) return { connected: true, friction: null };
-  }
-  /*
-   * Neither marker matched. Before giving up, ask the URL.
+   * The first version looked for elements — a Home icon, a profile button —
+   * and on Alex's real, signed-in Instagram it found none of them and said
+   * "could not tell". Markup is the least stable thing on these sites. The
+   * address a platform bounces you to when you are signed out, and the cookie
+   * it sets when you sign in, are the most stable.
    *
-   * Every one of these bounces a signed-out visitor to a login address, and
-   * that redirect is a far more stable signal than any selector — it does not
-   * change when somebody renames a class. Markers first because they are
-   * precise; this because it is durable.
+   *   out = on a login address. Decisive: the platform is saying plainly
+   *         that nobody is signed in, and no other signal outweighs it.
+   *   in  = the session cookie is present. Not proof on its own — a cookie
+   *         that exists is not a session that works — which is why the caller
+   *         still has to read the handle before anything counts as connected.
    */
   const here = page.url();
   if (/\/accounts\/login|\/login\b|accounts\.google\.com|ServiceLogin/i.test(here)) {
     return { connected: false, friction: null };
   }
+
+  let cookies = [];
+  try {
+    cookies = await page.context().cookies();
+  } catch {
+    return { connected: false, friction: null }; // context mid-teardown: look again next time
+  }
+  const has = (name, host) =>
+    cookies.some((c) => c.name === name && String(c.domain ?? "").includes(host) && String(c.value ?? "").length > 8);
+  const session =
+    platform === "instagram" ? has("sessionid", "instagram.com")
+    : platform === "tiktok" ? has("sessionid", "tiktok.com") || has("sid_tt", "tiktok.com")
+    : platform === "youtube" ? has("SAPISID", "google.com") || has("SAPISID", "youtube.com")
+    : false;
+  if (session) return { connected: true, friction: null };
+
+  /*
+   * No cookie, not on a login page — a landing page that has not asked yet,
+   * usually. The markers are a second opinion. Wrapped, because they throw
+   * when the tab navigates mid-call, which is exactly what submitting a login
+   * form does; a throw here used to reach the top and exit the process while
+   * Alex was typing a password.
+   */
+  let out = false, inn = false;
+  try {
+    for (const sel of spec.out) if (await page.$(sel)) { out = true; break; }
+    if (!out) for (const sel of spec.in) if (await page.$(sel)) { inn = true; break; }
+  } catch {
+    return { connected: false, friction: null };
+  }
+  if (out) return { connected: false, friction: null };
+  if (inn) return { connected: true, friction: null };
 
   // Still nothing. Guessing "connected" here is what puts the app in a
   // logged-out browser, so it says it does not know instead.
@@ -432,10 +480,16 @@ export async function whoAmI(page, platform) {
       return v ? `@${v}` : null;
     }
     if (platform === "tiktok") {
-      const href = await page
-        .getAttribute('[data-e2e="profile-icon"] a, a[href^="/@"]', "href", { timeout: 6000 })
-        .catch(() => null);
-      return href?.startsWith("/@") ? href.slice(1) : null;
+      /*
+       * Not a[href^="/@"]: that matches every creator link in the feed, and
+       * the first one found would have been recorded as our own handle.
+       * /profile redirects a signed-in account to its own /@handle, and the
+       * URL cannot be somebody else's.
+       */
+      await page.goto("https://www.tiktok.com/profile", { waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
+      await sleep(1500);
+      const m = /tiktok\.com\/(@[\w.-]+)/.exec(page.url());
+      return m ? m[1] : null;
     }
     if (platform === "youtube") {
       await page.goto("https://www.youtube.com/account", { waitUntil: "domcontentloaded", timeout: 20000 });
