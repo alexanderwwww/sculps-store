@@ -57,35 +57,35 @@ command -v node >/dev/null 2>&1 || bail "Cannot find node. It may be installed b
 # somebody can actually copy. The first cut printed "brew installffmpeg
 # yt-dlp", which is a command that fails — an instruction that does not work
 # when followed is worse than no instruction.
+#
+# ffmpeg and yt-dlp are NOT required to start.
+#
+# They are for pulling clips and cutting them, which is the third thing this
+# app does. Connecting accounts and warming them — the part that has to start
+# weeks before anything else — needs neither. Refusing to open over them meant
+# the app would not run at all for a job it was perfectly capable of doing,
+# which is the wrong trade by a mile.
+#
+# So it says what is missing, writes it down, and opens. The pieces that
+# genuinely need them check for them at the point of use.
 MISSING=""
 command -v ffmpeg >/dev/null 2>&1 || MISSING="$MISSING ffmpeg"
 command -v yt-dlp >/dev/null 2>&1 || MISSING="$MISSING yt-dlp"
 MISSING="${MISSING# }"
+export OX_MISSING_TOOLS="$MISSING"
 if [ -n "$MISSING" ]; then
-  # Say where it looked, not just what it did not find. "Missing: ffmpeg" is
-  # the same sentence whether it is not installed or merely not on this
-  # app's PATH, and those need opposite fixes.
-  BREW_DIR="(no /opt/homebrew/bin)"
-  [ -d /opt/homebrew/bin ] && BREW_DIR="/opt/homebrew/bin exists"
-  LOCAL_DIR="(no /usr/local/bin)"
-  [ -d /usr/local/bin ] && LOCAL_DIR="/usr/local/bin exists"
+  say "Not installed: $MISSING — connecting and warming work without them."
   say "PATH searched: $PATH"
-  say "brew: $(command -v brew || echo 'not found') · $BREW_DIR · $LOCAL_DIR"
-  bail "Missing: $MISSING.
-
-Open Terminal and run:
-brew install $MISSING
-
-Then open OrganicX again.
-
-If you already installed them, run this in Terminal and send me what it says:
-which ffmpeg yt-dlp"
+  say "brew: $(command -v brew || echo 'not found')"
 fi
 
 # What was actually found, so a wrong answer is debuggable rather than a
 # mystery. This goes in the log every launch.
 say "node $(node --version 2>/dev/null) at $(command -v node)"
-say "ffmpeg at $(command -v ffmpeg) · yt-dlp at $(command -v yt-dlp)"
+for tool in ffmpeg yt-dlp; do
+  where=$(command -v "$tool" 2>/dev/null)
+  [ -n "$where" ] && say "$tool at $where"
+done
 
 if [ -z "${OX_CHROME:-}" ] && [ ! -d "/Applications/Google Chrome.app" ]; then
   bail "Google Chrome is not in /Applications. Install it, or set OX_CHROME to where it is."
@@ -109,8 +109,16 @@ RUNTIME_BUILD=0
 [ -f "$RUNTIME/BUILD" ] && RUNTIME_BUILD=$(cat "$RUNTIME/BUILD" 2>/dev/null || echo 0)
 
 if [ "$RUNTIME_BUILD" -lt "$BUNDLE_BUILD" ] || [ ! -f "$RUNTIME/ox.mjs" ]; then
-  for f in human.mjs score.mjs browser.mjs db.mjs ox.mjs research.mjs package.json; do
-    [ -f "$HERE/$f" ] && cp "$HERE/$f" "$RUNTIME/$f"
+  # Everything in Resources, not a list somebody has to remember to update.
+  #
+  # The list was human.mjs score.mjs browser.mjs db.mjs ox.mjs research.mjs
+  # package.json — and it had fallen two files behind. panel.mjs and
+  # skills.mjs were never copied, so a clean install died on
+  # "Cannot find module './panel.mjs'" before it drew anything. A list of
+  # filenames maintained by hand drifts the moment a file is added, and the
+  # failure lands on whoever installs next rather than whoever forgot.
+  for f in "$HERE"/*.mjs "$HERE"/package.json; do
+    [ -f "$f" ] && cp "$f" "$RUNTIME/$(basename "$f")"
   done
   echo "$BUNDLE_BUILD" > "$RUNTIME/BUILD"
   say "Installed build $BUNDLE_BUILD from the bundle."

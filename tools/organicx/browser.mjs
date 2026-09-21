@@ -404,8 +404,21 @@ export async function signedIn(page, platform, { navigate = true } = {}) {
   for (const sel of spec.in) {
     if (await page.$(sel)) return { connected: true, friction: null };
   }
-  // Neither marker found: the page changed, and guessing "connected" here
-  // would have the app posting into a logged-out browser.
+  /*
+   * Neither marker matched. Before giving up, ask the URL.
+   *
+   * Every one of these bounces a signed-out visitor to a login address, and
+   * that redirect is a far more stable signal than any selector — it does not
+   * change when somebody renames a class. Markers first because they are
+   * precise; this because it is durable.
+   */
+  const here = page.url();
+  if (/\/accounts\/login|\/login\b|accounts\.google\.com|ServiceLogin/i.test(here)) {
+    return { connected: false, friction: null };
+  }
+
+  // Still nothing. Guessing "connected" here is what puts the app in a
+  // logged-out browser, so it says it does not know instead.
   return { connected: false, friction: "could not tell — the page did not look like either state" };
 }
 

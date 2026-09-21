@@ -299,6 +299,17 @@ function personaSeed(handle) {
   };
 }
 
+/**
+ * Whether the clip tools are here, asked where they are needed.
+ *
+ * Startup does not demand them; anything that pulls or cuts a clip does, and
+ * gets a sentence naming the fix rather than a spawn failure.
+ */
+export function clipToolsReady() {
+  const missing = (process.env.OX_MISSING_TOOLS ?? "").trim();
+  return missing ? { ok: false, missing, fix: `brew install ${missing}` } : { ok: true };
+}
+
 /* -------------------------------------------------------------- the work */
 
 /**
@@ -361,6 +372,22 @@ async function main() {
     "organicx",
     `build ${BUILD} is up` + (taught.length ? ` · ${taught.length} skill${taught.length > 1 ? "s" : ""} loaded` : ""),
   );
+
+  /*
+   * What is missing, said once, without stopping anything.
+   *
+   * The launcher no longer refuses to open over ffmpeg and yt-dlp, because
+   * connecting accounts and warming them — the part that has to start weeks
+   * before anything else — does not touch either. This is the reminder, and
+   * the work that genuinely needs them checks again at the point of use.
+   */
+  const missingTools = (process.env.OX_MISSING_TOOLS ?? "").trim();
+  if (missingTools) {
+    await tick(
+      "rosa",
+      `no ${missingTools} yet — warming does not need it, cutting clips will. brew install ${missingTools}`,
+    );
+  }
 
   const { browser } = await openChrome({ profile: PATHS.profile });
 
