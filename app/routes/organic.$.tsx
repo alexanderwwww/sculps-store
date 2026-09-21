@@ -437,7 +437,7 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
 
     case "organic_brief_set": {
       const brief = briefOf(args);
-      if (!brief.products.length) return { ok: false, error: "a brief needs at least one product" };
+      if (!brief.products.length && !brief.storeUrl) return { ok: false, error: "a brief needs a storeUrl or at least one product" };
       await write(env, "brief", brief);
       await append(env, {
         kind: "brief",
@@ -676,7 +676,7 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   /* The brief takes the same shape whichever door it comes through. */
   if (what === "brief") {
     const brief = briefOf(body);
-    if (!brief.products.length) return json({ ok: false, error: "a brief needs at least one product" }, 400);
+    if (!brief.products.length && !brief.storeUrl) return json({ ok: false, error: "a brief needs a storeUrl or at least one product" }, 400);
     await write(env, "brief", brief);
     await append(env, { kind: "brief", products: brief.products, market: brief.market });
     return json({ ok: true, brief });
