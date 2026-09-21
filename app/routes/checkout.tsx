@@ -3420,6 +3420,15 @@ function OnePage({
         amount: Math.max(50, cart.totalCents),
         currency: (cart.currency ?? "usd").toLowerCase(),
         appearance,
+        /*
+         * This has to match the intent the server creates, or Stripe refuses
+         * the confirmation outright: "the provided setup_future_usage does
+         * not match the expected setup future usage: null". The server sets
+         * off_session so the post-purchase offer can charge the saved card;
+         * Elements was never told, so every card payment failed at the last
+         * step.
+         */
+        setupFutureUsage: "off_session",
       });
       stripeRef.current = stripe;
       elementsRef.current = elements;
@@ -3448,9 +3457,32 @@ function OnePage({
        * tapped, so iOS could not offer its own "Scan Credit Card" on the
        * number field until after that tap.
        */
+      /*
+       * Tabs, not a stack of spaced accordion rows. The accordion drew a
+       * "Card" header with "optional" under it and pushed the whole form
+       * down the page for no gain; tabs is a small row of names with only
+       * the chosen one's fields underneath. Card is selected by default, so
+       * the number field still exists on load and iOS can still offer to
+       * scan a card without anyone tapping first.
+       */
       const payment = elements.create("payment", {
-        layout: { type: "accordion", defaultCollapsed: false, radios: true, spacedAccordionItems: true },
+        layout: { type: "tabs" },
         wallets: { applePay: "auto", googlePay: "never" },
+        /*
+         * Link is off here. It drew its own grey panel — an "Optional" pill,
+         * "Save my information for faster checkout", an email box and a phone
+         * box — under the card fields, which was most of the height of the
+         * payment section and asked for two things the page already has. Link
+         * still has its own button in the express row at the top, so nobody
+         * who wants it loses it.
+         */
+        paymentMethodOrder: ["card"],
+        /*
+         * Country and ZIP are not asked for twice. The delivery address is
+         * already on this page and is handed to Stripe at confirmation, so
+         * the card box is the card and nothing else.
+         */
+        fields: { billingDetails: { address: "never" } },
       });
       if (cardRef.current) payment.mount(cardRef.current);
 
@@ -3958,10 +3990,36 @@ function OnePage({
     }
 
     if (wallet) report("wallet-step", "confirming with Stripe");
+    /*
+     * The billing address the card box no longer asks for. Stripe refuses a
+     * confirmation with `billingDetails.address: "never"` unless it is given
+     * here, so it comes from the delivery form — the same address the order
+     * was just written with. The wallet path never reaches this branch with
+     * fields to fill: the sheet supplies its own.
+     */
+    const billing = wallet
+      ? undefined
+      : {
+          payment_method_data: {
+            billing_details: {
+              name: String(body.get("name") ?? "").trim() || undefined,
+              email: String(body.get("email") ?? "").trim() || undefined,
+              phone: String(body.get("phone") ?? "").trim() || undefined,
+              address: {
+                line1: String(body.get("address1") ?? "").trim() || undefined,
+                line2: String(body.get("address2") ?? "").trim() || undefined,
+                city: String(body.get("city") ?? "").trim() || undefined,
+                state: String(body.get("region") ?? "").trim() || undefined,
+                postal_code: String(body.get("postalCode") ?? "").trim() || undefined,
+                country: String(body.get("country") ?? "").trim().toUpperCase() || undefined,
+              },
+            },
+          },
+        };
     const result = await stripeRef.current.confirmPayment({
       elements: elementsRef.current,
       clientSecret: answer.clientSecret,
-      confirmParams: { return_url: answer.returnTo },
+      confirmParams: { return_url: answer.returnTo, ...(billing ?? {}) },
     });
     if (wallet && result?.error) report("wallet-step", `Stripe: ${result.error.code ?? ""} ${result.error.message ?? ""}`);
 
