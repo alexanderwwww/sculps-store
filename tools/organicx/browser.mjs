@@ -113,7 +113,15 @@ export async function openChrome({ port = 9333, profile }) {
     /* Nothing listening yet — start one. */
   }
 
-  const bin = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+  /*
+   * Where Chrome is.
+   *
+   * The default is where macOS puts it. OX_CHROME overrides it — for a Chrome
+   * installed somewhere else, for Chromium, and for running this anywhere
+   * that is not a Mac, which is the only way the whole daemon can be executed
+   * before it is sent to one.
+   */
+  const bin = process.env.OX_CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
   const args = [
     `--remote-debugging-port=${port}`,
     `--user-data-dir=${profile}`,
@@ -121,8 +129,23 @@ export async function openChrome({ port = 9333, profile }) {
     "--no-default-browser-check",
     // Without this the profile opens on a restore prompt that nothing clicks.
     "--hide-crash-restore-bubble",
+    // Extra flags, for running this somewhere that is not a Mac — which is
+    // the only way the whole daemon gets exercised before it is sent to one.
+    ...(process.env.OX_CHROME_ARGS ? process.env.OX_CHROME_ARGS.split(" ").filter(Boolean) : []),
   ];
-  execFile(bin, args, () => {});
+
+  /*
+   * Why it failed, if it does.
+   *
+   * execFile with a callback that swallows everything meant a Chrome that
+   * refused to start looked identical to one that was merely slow, and the
+   * only symptom forty seconds later was "did not open a debugging port".
+   */
+  let why = null;
+  const child = execFile(bin, args, (error, stdout, stderr) => {
+    if (error) why = (stderr || error.message || "").trim().split("\n")[0];
+  });
+  child.on("error", (error) => { why = error.message; });
 
   // It takes a moment to listen. Racing it prints "nothing on port 9333",
   // which reads like a missing Chrome rather than an impatient caller.
@@ -135,7 +158,10 @@ export async function openChrome({ port = 9333, profile }) {
       /* keep waiting */
     }
   }
-  throw new Error("Chrome did not open a debugging port. Is Google Chrome installed?");
+  throw new Error(
+    `Chrome did not open a debugging port on ${port}. Tried: ${bin}` +
+      (why ? ` — it said: ${why}` : ""),
+  );
 }
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, Math.max(0, ms)));
@@ -163,6 +189,13 @@ export async function stopRequested(page) {
 /** Who is working, and what they are doing this second. */
 export async function working(page, who, line) {
   await page.evaluate(([w, l]) => window.__oxPanel?.working(w, l), [who, line]).catch(() => {});
+}
+
+/** Show one platform's live connection state on the panel. */
+export async function connection(page, platform, state, handle) {
+  await page
+    .evaluate(([p, s, h]) => window.__oxPanel?.connection(p, s, h), [platform, state, handle ?? null])
+    .catch(() => {});
 }
 
 export async function panelState(page, state) {

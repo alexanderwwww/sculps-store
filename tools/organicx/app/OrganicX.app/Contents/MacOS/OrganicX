@@ -75,7 +75,9 @@ fi
 say "node $(node --version 2>/dev/null) at $(command -v node)"
 say "ffmpeg at $(command -v ffmpeg) · yt-dlp at $(command -v yt-dlp)"
 
-[ -d "/Applications/Google Chrome.app" ] || bail "Google Chrome is not in /Applications."
+if [ -z "${OX_CHROME:-}" ] && [ ! -d "/Applications/Google Chrome.app" ]; then
+  bail "Google Chrome is not in /Applications. Install it, or set OX_CHROME to where it is."
+fi
 
 if [ -z "${DATABASE_URL:-}" ] && [ -f "$HOME_DIR/.env" ]; then
   set -a; . "$HOME_DIR/.env"; set +a
@@ -105,9 +107,19 @@ else
 fi
 
 cd "$RUNTIME" || bail "Could not open $RUNTIME"
+# Playwright would otherwise download its own copies of Chromium, Firefox and
+# WebKit — several hundred megabytes on a first launch, all of it wasted,
+# because this drives the real Chrome over a debugging port and never starts a
+# bundled browser.
+export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1
+
 [ -d node_modules ] || {
-  say "First launch — fetching what it needs. This takes a minute."
-  npm install --omit=dev --silent >>"$LOG" 2>&1 || bail "npm install failed. See $LOG"
+  say "First launch — fetching what it needs. A minute or so."
+  if ! npm install --omit=dev --no-audit --no-fund >>"$LOG" 2>&1; then
+    bail "Could not fetch what it needs. The last lines of $LOG say why: $(tail -3 "$LOG" | tr '\n' ' ')"
+  fi
+  say "Ready."
 }
 
 # --- run, and restart on a self-update ----------------------------------
