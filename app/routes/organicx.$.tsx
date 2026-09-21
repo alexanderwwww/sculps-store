@@ -45,6 +45,7 @@
  * this Worker, not in R2, not in the repo.
  */
 import type { Route } from "./+types/organicx.$";
+import { runOp } from "~/lib/organicx-db.server";
 
 /** Rotating this invalidates every client at once, which is the point. */
 const KEY = "q9DpKpatiPsqZc_sSQr5Vo-8UI4FR3ck";
@@ -738,6 +739,19 @@ export async function action({ params, request, context }: Route.ActionArgs) {
       },
     });
     return json({ ok: true, key });
+  }
+
+  /*
+   * The app's memory, answered here so the Mac never holds the database URL.
+   * A name and its arguments in, a result out; the list of names is fixed in
+   * organicx-db.server.ts and nothing takes a query from the caller.
+   */
+  if (what === "db") {
+    const body = (await request.json().catch(() => null)) as { op?: string; args?: Record<string, unknown> } | null;
+    if (!body?.op) return json({ ok: false, error: "no op" }, 400);
+    const url = (env as unknown as { DATABASE_URL?: string }).DATABASE_URL;
+    if (!url) return json({ ok: false, error: "the Worker has no DATABASE_URL" }, 500);
+    return json(await runOp(url, body.op, body.args ?? {}));
   }
 
   if (what === "mcp") {

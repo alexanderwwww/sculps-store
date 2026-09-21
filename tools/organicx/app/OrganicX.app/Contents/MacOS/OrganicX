@@ -91,10 +91,11 @@ if [ -z "${OX_CHROME:-}" ] && [ ! -d "/Applications/Google Chrome.app" ]; then
   bail "Google Chrome is not in /Applications. Install it, or set OX_CHROME to where it is."
 fi
 
-if [ -z "${DATABASE_URL:-}" ] && [ -f "$HOME_DIR/.env" ]; then
-  set -a; . "$HOME_DIR/.env"; set +a
-fi
-[ -n "${DATABASE_URL:-}" ] || bail "No DATABASE_URL. Put it in $HOME_DIR/.env"
+# There used to be a DATABASE_URL check here, and a .env file to put it in.
+# Both are gone: the app's memory is reached through the control plane, which
+# holds the credential. A Mac app that drives a browser has no business
+# holding a database password, and "put this file here" is a step somebody
+# gets wrong — it was the last thing stopping this from opening.
 
 # --- first launch installs the runtime beside itself --------------------
 # Committing to the repo alone and calling it shipped is false: the .app runs
@@ -104,7 +105,7 @@ fi
 # $RUNTIME/BUILD, and this must not copy over it — otherwise the next restart
 # silently undoes the fix that was just shipped, which is the worst kind of
 # bug: it works, then it does not, and nothing changed.
-BUNDLE_BUILD=3
+BUNDLE_BUILD=4
 RUNTIME_BUILD=0
 [ -f "$RUNTIME/BUILD" ] && RUNTIME_BUILD=$(cat "$RUNTIME/BUILD" 2>/dev/null || echo 0)
 

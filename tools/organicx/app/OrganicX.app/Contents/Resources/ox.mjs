@@ -16,7 +16,7 @@
  */
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import {
   openChrome, attach, say, signedIn, whoAmI, sleep, checkFriction,
@@ -29,7 +29,7 @@ import * as skills from "./skills.mjs";
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** This build. The control plane's runtime slot is compared against it. */
-export const BUILD = 3;
+export const BUILD = 4;
 
 const BASE =
   process.env.OX_BASE ??
@@ -362,7 +362,9 @@ export async function farm(browser, account) {
 async function main() {
   await mkdir(PATHS.home, { recursive: true });
   await mkdir(PATHS.scratch, { recursive: true });
-  db.connect(process.env.DATABASE_URL);
+  // Its memory lives behind the control plane. Nothing on this Mac holds a
+  // database credential, and there is nothing to put in any file.
+  db.connect(BASE);
 
   state = "starting";
   await report();
