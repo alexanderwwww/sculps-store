@@ -212,13 +212,27 @@ Same shape as Magic Wand, with one addition.
 
 ## Things already settled — do not re-derive them
 
-**The dock icon is sized by looking, not by the grid.** Apple's 824-of-1024
-figure is drawn for a hard-edged rounded square. The OrganicX icon is a
-squircle whose glass edges taper, so the same bounding box carries less visual
-mass and reads visibly smaller in the dock next to Magic Wand. It sits at
-**1000 of 1024**. Measuring the alpha bbox said the two were the same size;
-the eye said otherwise, and the eye was right. When an icon looks wrong,
-render it beside the wand at 128px and look — do not measure and argue.
+**The dock icon is sized against a real dock, measured.** Not against Apple's
+grid in the abstract, and not against Magic Wand — the wand renders 114px in
+Alex's dock where every system icon renders 92-94, so matching it makes an app
+look oversized.
+
+The method, when an icon looks wrong: take a screenshot of his actual dock,
+find each icon's width by column mass, drop the candidate into the same slot
+and measure it the same way. Numbers from his screen, not opinions.
+
+The current icon — a white squircle with green leaves, hard-edged and
+full-bleed — sits at **800 of 1024** and renders 94px, the same as Music and
+Clock. Apple's 824 renders 96.
+
+The earlier glass icon needed 1000 of 1024 and still read small, because its
+edges faded into the dock grey: the same bounding box carried less visual
+mass. That is a property of that artwork, not a rule. A solid icon takes the
+standard padding; a soft-edged one needs more.
+
+**Corners must be transparent.** The generated PNG came with opaque black
+corners outside the squircle, which show as black notches in the dock. The
+mask's radius is measured off the artwork rather than chosen.
 
 **A double-clicked .app cannot see Homebrew.** It inherits launchd's PATH
 (`/usr/bin:/bin:/usr/sbin:/sbin`) and nothing more, so `node`, `ffmpeg` and
