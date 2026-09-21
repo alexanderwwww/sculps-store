@@ -351,6 +351,27 @@ const TOOLS = [
     },
   },
   {
+    name: "organicx_push",
+    description:
+      "Ship a change to the running app without Alex downloading anything. Give it the new " +
+      "build number and the files that changed — including browser.mjs, which carries the " +
+      "cursor and the on-screen panel, so the UI can be changed on the spot. The app sees " +
+      "the new build within a couple of seconds, writes the files beside itself, and " +
+      "restarts. Only the files named are replaced; everything else is left alone.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        build: { type: "number", description: "Must be higher than the build it is running." },
+        files: {
+          type: "object",
+          description: "Filename to source, e.g. { \"browser.mjs\": \"...\" }. No paths.",
+        },
+        note: { type: "string", description: "One line for the ticker: what changed." },
+      },
+      required: ["build", "files"],
+    },
+  },
+  {
     name: "organicx_ask",
     description:
       "What OrganicX has asked for that it cannot do itself — most often a picture it wants " +
@@ -457,6 +478,30 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
       const all = store.entries ?? [];
       const rows = who ? all.filter((e) => String(e.who ?? "").toLowerCase() === who) : all;
       return { entries: rows.slice(-limit) };
+    }
+
+    case "organicx_push": {
+      const build = Number(args.build);
+      if (!Number.isFinite(build) || build < 1) return { ok: false, error: "build must be a number" };
+      const given = (args.files ?? {}) as Record<string, string>;
+      /*
+       * Names only, never paths. This writes to disk on somebody's Mac, so a
+       * "../" in a filename is the one thing that must not get through.
+       */
+      const files: Record<string, string> = {};
+      for (const [name, source] of Object.entries(given)) {
+        if (!/^[\w.-]+\.(mjs|json)$/.test(name) || name.includes("..")) {
+          return { ok: false, error: `not a filename this will write: ${name}` };
+        }
+        files[name] = String(source);
+      }
+      if (!Object.keys(files).length) return { ok: false, error: "no files" };
+      await write(env, "runtime", { build, files, note: args.note ?? null, at: Date.now() });
+      await append(env, {
+        who: "claude",
+        did: `shipped build ${build}${args.note ? ` — ${args.note}` : ""}`,
+      });
+      return { ok: true, build, files: Object.keys(files) };
     }
 
     case "organicx_ask": {

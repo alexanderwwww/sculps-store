@@ -46,11 +46,23 @@ fi
 # Committing to the repo alone and calling it shipped is false: the .app runs
 # what is in Application Support, not what is in the checkout. The wand cost a
 # day to exactly that.
-for f in human.mjs score.mjs browser.mjs db.mjs ox.mjs package.json; do
-  if [ ! -f "$RUNTIME/$f" ] || [ "$HERE/$f" -nt "$RUNTIME/$f" ]; then
-    cp "$HERE/$f" "$RUNTIME/$f"
-  fi
-done
+# The bundle's own build number. A live push writes a higher one into
+# $RUNTIME/BUILD, and this must not copy over it — otherwise the next restart
+# silently undoes the fix that was just shipped, which is the worst kind of
+# bug: it works, then it does not, and nothing changed.
+BUNDLE_BUILD=1
+RUNTIME_BUILD=0
+[ -f "$RUNTIME/BUILD" ] && RUNTIME_BUILD=$(cat "$RUNTIME/BUILD" 2>/dev/null || echo 0)
+
+if [ "$RUNTIME_BUILD" -lt "$BUNDLE_BUILD" ] || [ ! -f "$RUNTIME/ox.mjs" ]; then
+  for f in human.mjs score.mjs browser.mjs db.mjs ox.mjs research.mjs package.json; do
+    [ -f "$HERE/$f" ] && cp "$HERE/$f" "$RUNTIME/$f"
+  done
+  echo "$BUNDLE_BUILD" > "$RUNTIME/BUILD"
+  say "Installed build $BUNDLE_BUILD from the bundle."
+else
+  say "Running build $RUNTIME_BUILD (shipped without a download)."
+fi
 
 cd "$RUNTIME" || bail "Could not open $RUNTIME"
 [ -d node_modules ] || {
