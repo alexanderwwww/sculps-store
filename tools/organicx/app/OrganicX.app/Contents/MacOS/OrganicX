@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# The launcher.
+#
+# Three jobs: check what is missing and say which thing rather than failing
+# halfway, install the runtime beside itself on first launch, and restart the
+# runner when it exits 75 — which is how a self-update lands without Alex
+# downloading anything.
+
+set -u
+HERE="$(cd "$(dirname "$0")/../Resources" && pwd)"
+HOME_DIR="$HOME/Library/Application Support/OrganicX"
+RUNTIME="$HOME_DIR/runtime"
+LOG="$HOME_DIR/organicx.log"
+
+mkdir -p "$RUNTIME" "$HOME_DIR/scratch"
+
+say() { printf '%s\n' "$1" | tee -a "$LOG"; }
+
+# An alert rather than a silent exit: a double-clicked app that does nothing
+# is indistinguishable from a broken one.
+bail() {
+  say "$1"
+  /usr/bin/osascript -e "display alert \"OrganicX\" message \"$1\"" >/dev/null 2>&1
+  exit 1
+}
+
+# --- what has to be here -----------------------------------------------
+command -v node >/dev/null 2>&1 || bail "Node is not installed. Run: brew install node"
+
+MISSING=""
+command -v ffmpeg >/dev/null 2>&1 || MISSING="ffmpeg"
+command -v yt-dlp >/dev/null 2>&1 || MISSING="$MISSING yt-dlp"
+if [ -n "$MISSING" ]; then
+  bail "Missing:$MISSING. Run: brew install$MISSING"
+fi
+
+[ -d "/Applications/Google Chrome.app" ] || bail "Google Chrome is not in /Applications."
+
+if [ -z "${DATABASE_URL:-}" ] && [ -f "$HOME_DIR/.env" ]; then
+  set -a; . "$HOME_DIR/.env"; set +a
+fi
+[ -n "${DATABASE_URL:-}" ] || bail "No DATABASE_URL. Put it in $HOME_DIR/.env"
+
+# --- first launch installs the runtime beside itself --------------------
+# Committing to the repo alone and calling it shipped is false: the .app runs
+# what is in Application Support, not what is in the checkout. The wand cost a
+# day to exactly that.
+for f in human.mjs score.mjs browser.mjs db.mjs ox.mjs package.json; do
+  if [ ! -f "$RUNTIME/$f" ] || [ "$HERE/$f" -nt "$RUNTIME/$f" ]; then
+    cp "$HERE/$f" "$RUNTIME/$f"
+  fi
+done
+
+cd "$RUNTIME" || bail "Could not open $RUNTIME"
+[ -d node_modules ] || {
+  say "First launch — fetching what it needs. This takes a minute."
+  npm install --omit=dev --silent >>"$LOG" 2>&1 || bail "npm install failed. See $LOG"
+}
+
+# --- run, and restart on a self-update ----------------------------------
+while true; do
+  node ox.mjs >>"$LOG" 2>&1
+  code=$?
+  if [ $code -eq 75 ]; then
+    say "New build installed. Restarting."
+    continue
+  fi
+  exit $code
+done
