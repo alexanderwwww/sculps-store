@@ -113,7 +113,15 @@ export async function openChrome({ port = 9333, profile }) {
     /* Nothing listening yet — start one. */
   }
 
-  const bin = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+  /*
+   * Where Chrome is.
+   *
+   * The default is where macOS puts it. OX_CHROME overrides it — for a Chrome
+   * installed somewhere else, for Chromium, and for running this anywhere
+   * that is not a Mac, which is the only way the whole daemon can be executed
+   * before it is sent to one.
+   */
+  const bin = process.env.OX_CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
   const args = [
     `--remote-debugging-port=${port}`,
     `--user-data-dir=${profile}`,
@@ -121,8 +129,23 @@ export async function openChrome({ port = 9333, profile }) {
     "--no-default-browser-check",
     // Without this the profile opens on a restore prompt that nothing clicks.
     "--hide-crash-restore-bubble",
+    // Extra flags, for running this somewhere that is not a Mac — which is
+    // the only way the whole daemon gets exercised before it is sent to one.
+    ...(process.env.OX_CHROME_ARGS ? process.env.OX_CHROME_ARGS.split(" ").filter(Boolean) : []),
   ];
-  execFile(bin, args, () => {});
+
+  /*
+   * Why it failed, if it does.
+   *
+   * execFile with a callback that swallows everything meant a Chrome that
+   * refused to start looked identical to one that was merely slow, and the
+   * only symptom forty seconds later was "did not open a debugging port".
+   */
+  let why = null;
+  const child = execFile(bin, args, (error, stdout, stderr) => {
+    if (error) why = (stderr || error.message || "").trim().split("\n")[0];
+  });
+  child.on("error", (error) => { why = error.message; });
 
   // It takes a moment to listen. Racing it prints "nothing on port 9333",
   // which reads like a missing Chrome rather than an impatient caller.
@@ -135,18 +158,48 @@ export async function openChrome({ port = 9333, profile }) {
       /* keep waiting */
     }
   }
-  throw new Error("Chrome did not open a debugging port. Is Google Chrome installed?");
+  throw new Error(
+    `Chrome did not open a debugging port on ${port}. Tried: ${bin}` +
+      (why ? ` — it said: ${why}` : ""),
+  );
 }
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, Math.max(0, ms)));
 
+/**
+ * Every call into the page, with a deadline.
+ *
+ * page.evaluate has no timeout of its own. A tab that is still loading, or
+ * one whose main thread is busy, makes it wait forever — and wrapping it in
+ * .catch() does not help, because it never rejects, it simply never returns.
+ *
+ * That is exactly how the connect step hung: the goto was capped, so the next
+ * suspect was the code that reads the page, and it was waiting on a tab that
+ * had not settled. Nothing here is allowed to wait longer than it says.
+ */
+export async function ask(page, fn, arg, ms = 8000) {
+  let timer;
+  try {
+    return await Promise.race([
+      page.evaluate(fn, arg),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error("the page did not answer")), ms);
+      }),
+    ]);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Put the cursor and the panel on the page, and keep them across navigations. */
 export async function attach(page) {
   const panel = panelSource();
-  await page.addInitScript(CURSOR);
-  await page.addInitScript(panel);
-  await page.evaluate(CURSOR).catch(() => {});
-  await page.evaluate(panel).catch(() => {});
+  await page.addInitScript(CURSOR).catch(() => {});
+  await page.addInitScript(panel).catch(() => {});
+  await ask(page, CURSOR);
+  await ask(page, panel);
 }
 
 /**
@@ -157,24 +210,29 @@ export async function attach(page) {
  * lands mid-scroll rather than at the end of the session.
  */
 export async function stopRequested(page) {
-  return page.evaluate(() => window.__oxPanel?.stopped === true).catch(() => false);
+  return (await ask(page, () => window.__oxPanel?.stopped === true, undefined, 3000)) === true;
 }
 
 /** Who is working, and what they are doing this second. */
 export async function working(page, who, line) {
-  await page.evaluate(([w, l]) => window.__oxPanel?.working(w, l), [who, line]).catch(() => {});
+  await ask(page, ([w, l]) => window.__oxPanel?.working(w, l), [who, line], 3000);
+}
+
+/** Show one platform's live connection state on the panel. */
+export async function connection(page, platform, state, handle) {
+  await ask(page, ([p, s, h]) => window.__oxPanel?.connection(p, s, h), [platform, state, handle ?? null], 3000);
 }
 
 export async function panelState(page, state) {
-  await page.evaluate((s) => window.__oxPanel?.state(s), state).catch(() => {});
+  await ask(page, (s) => window.__oxPanel?.state(s), state, 3000);
 }
 
 export async function progress(page, pct, label) {
-  await page.evaluate(([p, l]) => window.__oxPanel?.progress(p, l), [pct, label]).catch(() => {});
+  await ask(page, ([p, l]) => window.__oxPanel?.progress(p, l), [pct, label], 3000);
 }
 
 export async function say(page, text) {
-  await page.evaluate((t) => window.__ox?.say(t), text).catch(() => {});
+  await ask(page, (t) => window.__ox?.say(t), text, 3000);
 }
 
 /* --------------------------------------------------------------- the hands */
@@ -192,7 +250,7 @@ export async function moveTo(page, target) {
   const x = box.x + box.width * between(0.32, 0.68);
   const y = box.y + box.height * between(0.32, 0.68);
 
-  await page.evaluate(([px, py]) => window.__ox?.to(px, py), [x, y]).catch(() => {});
+  await ask(page, ([px, py]) => window.__ox?.to(px, py), [x, y], 3000);
 
   // A couple of waypoints, so the pointer arcs.
   const from = page.__oxAt ?? { x: x - between(120, 380), y: y - between(80, 260) };
@@ -215,7 +273,7 @@ export async function moveTo(page, target) {
 export async function click(page, target) {
   const at = await moveTo(page, target);
   if (!at) return false;
-  await page.evaluate(() => window.__ox?.tap()).catch(() => {});
+  await ask(page, () => window.__ox?.tap(), undefined, 3000);
   await page.mouse.click(at.x, at.y, { delay: Math.round(between(40, 130)) });
   return true;
 }
@@ -260,10 +318,8 @@ export async function scroll(page, { absorbed = false } = {}) {
  * page, and the account keeps working right up until it does not.
  */
 export async function checkFriction(page) {
-  const text = await page
-    .evaluate(() => document.body?.innerText?.slice(0, 4000) ?? "")
-    .catch(() => "");
-  return frictionIn(text);
+  const text = await ask(page, () => document.body?.innerText?.slice(0, 4000) ?? "", undefined, 6000);
+  return frictionIn(text ?? "");
 }
 
 /* ------------------------------------------------------- is anyone home */
@@ -275,9 +331,14 @@ export async function checkFriction(page) {
 const SIGNED_IN = {
   tiktok: {
     url: "https://www.tiktok.com/",
-    // The upload entry point only exists for a signed-in account.
-    in: ['a[href*="/upload"]', '[data-e2e="profile-icon"]'],
-    out: ['button:has-text("Log in")', 'a[href*="/login"]'],
+    /*
+     * Not the upload link: a signed-out TikTok shows one too and prompts for
+     * a login when it is clicked. Taking it as proof reported "connected as
+     * @" — connected, with nobody's name on it — which is precisely the
+     * failure that ends with the app posting into a logged-out browser.
+     */
+    in: ['[data-e2e="profile-icon"]', 'a[href^="/@"][data-e2e="nav-profile"]'],
+    out: ['button:has-text("Log in")', 'a[href*="/login"]', '#login-modal'],
   },
   instagram: {
     url: "https://www.instagram.com/",
@@ -297,25 +358,51 @@ const SIGNED_IN = {
  * This is the whole of the connect flow's detection. It never types anything
  * into a login form — it opens the page, waits, and looks.
  */
-export async function signedIn(page, platform) {
+export async function signedIn(page, platform, { navigate = true } = {}) {
   const spec = SIGNED_IN[platform];
   if (!spec) throw new Error(`no such platform: ${platform}`);
 
-  await page.goto(spec.url, { waitUntil: "domcontentloaded" }).catch(() => {});
-  await attach(page);
+  /*
+   * Load the page once, then look at it repeatedly.
+   *
+   * This used to navigate on every check, which is both slow and rude: eight
+   * checks meant eight full page loads of the same site in ninety seconds.
+   * Worse, page.goto with no timeout waits Playwright's default thirty
+   * seconds, so a slow or blocked load turned a ninety-second watch into five
+   * minutes of apparently doing nothing.
+   *
+   * Once the tab is on the site, signing in happens in that tab — so the
+   * check is just reading the DOM again.
+   */
+  if (navigate) {
+    await page
+      .goto(spec.url, { waitUntil: "domcontentloaded", timeout: 20000 })
+      .catch(() => {});
+    await attach(page);
+    await sleep(between(2500, 4200));
+  } else {
+    await sleep(between(600, 1200));
+  }
   await say(page, `checking whether you are signed in to ${platform}`);
-  await sleep(between(2500, 4200));
 
   const friction = await checkFriction(page);
   // "Log in to continue" on a page we expected to be signed in is not
   // friction, it is simply not connected yet.
   if (friction && friction !== "logged out") return { connected: false, friction };
 
-  for (const sel of spec.in) {
-    if (await page.$(sel)) return { connected: true, friction: null };
-  }
+  /*
+   * Signed-out first, and it is decisive.
+   *
+   * Checking "signed in" first let an ambiguous page — one carrying both a
+   * profile-ish element and a login button — come back connected. A login
+   * button on the page is the platform telling you plainly that nobody is
+   * signed in, and no other marker outweighs it.
+   */
   for (const sel of spec.out) {
     if (await page.$(sel)) return { connected: false, friction: null };
+  }
+  for (const sel of spec.in) {
+    if (await page.$(sel)) return { connected: true, friction: null };
   }
   // Neither marker found: the page changed, and guessing "connected" here
   // would have the app posting into a logged-out browser.
@@ -326,19 +413,23 @@ export async function signedIn(page, platform) {
 export async function whoAmI(page, platform) {
   try {
     if (platform === "instagram") {
-      await page.goto("https://www.instagram.com/accounts/edit/", { waitUntil: "domcontentloaded" });
+      await page.goto("https://www.instagram.com/accounts/edit/", { waitUntil: "domcontentloaded", timeout: 20000 });
       await sleep(2200);
-      const v = await page.inputValue('input[name="username"]').catch(() => null);
+      const v = await page.inputValue('input[name="username"]', { timeout: 6000 }).catch(() => null);
       return v ? `@${v}` : null;
     }
     if (platform === "tiktok") {
-      const href = await page.getAttribute('[data-e2e="profile-icon"] a, a[href^="/@"]', "href").catch(() => null);
+      const href = await page
+        .getAttribute('[data-e2e="profile-icon"] a, a[href^="/@"]', "href", { timeout: 6000 })
+        .catch(() => null);
       return href?.startsWith("/@") ? href.slice(1) : null;
     }
     if (platform === "youtube") {
-      await page.goto("https://www.youtube.com/account", { waitUntil: "domcontentloaded" });
+      await page.goto("https://www.youtube.com/account", { waitUntil: "domcontentloaded", timeout: 20000 });
       await sleep(2000);
-      const t = await page.textContent("#channel-handle, yt-formatted-string#handle").catch(() => null);
+      const t = await page
+        .textContent("#channel-handle, yt-formatted-string#handle", { timeout: 6000 })
+        .catch(() => null);
       return t?.trim() || null;
     }
   } catch {
@@ -354,7 +445,7 @@ export async function whoAmI(page, platform) {
  */
 export async function beat(page) {
   if (chance(0.07)) {
-    await page.evaluate(() => window.__ox?.rest()).catch(() => {});
+    await ask(page, () => window.__ox?.rest(), undefined, 3000);
     await sleep(around(2600, 1200, 800, 7000));
   }
   await sleep(around(700, 400, 150, 2600));

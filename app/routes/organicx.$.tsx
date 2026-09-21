@@ -587,7 +587,22 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
        */
       const files: Record<string, string> = {};
       for (const [name, source] of Object.entries(given)) {
-        if (!/^[\w.-]+\.(mjs|json)$/.test(name) || name.includes("..")) {
+        /*
+         * Code, or a skill.
+         *
+         * A skill is a markdown file under skills/ — what one of the crew
+         * knows, written the way the playbook is written. They ship down the
+         * same channel as the code because they change for the same reasons
+         * and at the same speed: Desmond's bar moves, Hana's house rules
+         * gain a line, Lena learns a treatment that works. Rebuilding a .app
+         * to teach somebody something would be absurd.
+         *
+         * skills/<name>.md and nothing deeper, so one slash is allowed and
+         * only in that position.
+         */
+        const isCode = /^[\w.-]+\.(mjs|json)$/.test(name);
+        const isSkill = /^skills\/[\w.-]+\.md$/.test(name);
+        if ((!isCode && !isSkill) || name.includes("..")) {
           return { ok: false, error: `not a filename this will write: ${name}` };
         }
         files[name] = String(source);

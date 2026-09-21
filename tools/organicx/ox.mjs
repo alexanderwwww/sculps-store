@@ -24,6 +24,7 @@ import {
 } from "./browser.mjs";
 import * as db from "./db.mjs";
 import { planDay, scatterAcrossDay, dayBudget, isAwake } from "./human.mjs";
+import * as skills from "./skills.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -89,6 +90,7 @@ async function report() {
     state,
     doing,
     build: BUILD,
+    skills: skills.list(),
     at: Date.now(),
     tail: recent.slice(-18),
   }).catch(() => {});
@@ -111,8 +113,16 @@ async function maybeUpdate() {
   await tick("organicx", `updating to build ${runtime.build}`);
   await mkdir(PATHS.runtime, { recursive: true });
   for (const [name, source] of Object.entries(runtime.files ?? {})) {
-    // Only ever writes beside itself, never anywhere else on the disk.
-    if (name.includes("/") || name.includes("..")) continue;
+    /*
+     * Only ever beside itself. A code file at the top, a skill under
+     * skills/, and nothing else — no parent hops, no deeper paths, no
+     * absolute anything. The other end of this is a network channel that
+     * writes to somebody's disk.
+     */
+    const isCode = /^[\w.-]+\.(mjs|json)$/.test(name);
+    const isSkill = /^skills\/[\w.-]+\.md$/.test(name);
+    if ((!isCode && !isSkill) || name.includes("..")) continue;
+    if (isSkill) await mkdir(join(PATHS.runtime, "skills"), { recursive: true });
     await writeFile(join(PATHS.runtime, name), source, "utf8");
   }
   await writeFile(join(PATHS.runtime, "BUILD"), String(runtime.build), "utf8");
@@ -189,7 +199,24 @@ export async function connect(browser, only) {
       continue;
     }
 
-    const handle = (await whoAmI(page, platform)) ?? `(${platform} account)`;
+    /*
+     * A connection with no name on it is not a connection.
+     *
+     * The markers can be fooled — a signed-out TikTok once came back as
+     * "connected as @" — and the handle cannot: reading it means the page
+     * gave up something only a signed-in session has. So it is the
+     * confirmation, not a decoration on one.
+     */
+    const handle = await whoAmI(page, platform);
+    if (!handle || handle.replace(/[@\s]/g, "") === "") {
+      await connection(page, platform, "off");
+      await tick(
+        "sam",
+        `${platform} looked signed in but would not tell me who — not taking that as connected`,
+      );
+      await page.close();
+      continue;
+    }
     const row = await db.markConnected(platform, handle, PATHS.profile);
     await connection(page, platform, "connected", handle);
     await say(page, `${handle} connected`);
@@ -224,7 +251,12 @@ export async function verifyConnections(browser) {
     await connection(page, platform, "checking");
     const result = await signedIn(page, platform);
     if (result.connected) {
-      const handle = known?.handle ?? (await whoAmI(page, platform)) ?? `(${platform})`;
+      const handle = known?.handle ?? (await whoAmI(page, platform));
+      if (!handle || handle.replace(/[@\s]/g, "") === "") {
+        // Same rule as the connect step: no name, not connected.
+        await connection(page, platform, "off");
+        continue;
+      }
       if (!known) {
         // Signed in since the last look. Pick it up without being asked.
         const row = await db.markConnected(platform, handle, PATHS.profile);
@@ -323,7 +355,12 @@ async function main() {
 
   state = "starting";
   await report();
-  await tick("organicx", `build ${BUILD} is up`);
+  await skills.load(PATHS.runtime);
+  const taught = skills.list();
+  await tick(
+    "organicx",
+    `build ${BUILD} is up` + (taught.length ? ` · ${taught.length} skill${taught.length > 1 ? "s" : ""} loaded` : ""),
+  );
 
   const { browser } = await openChrome({ profile: PATHS.profile });
 
@@ -392,6 +429,9 @@ async function main() {
        * had its day. Checking constantly would burn the Mac for nothing.
        */
       if (state !== "paused" && Date.now() >= nextSweep) {
+        // A skill shipped since the last sweep takes effect now, not on the
+        // next restart — the point of shipping one is that it lands.
+        await skills.load(PATHS.runtime).catch(() => {});
         // What is actually signed in, checked rather than remembered.
         await verifyConnections(browser).catch(() => {});
         for (const account of await db.accounts()) {

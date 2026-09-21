@@ -318,18 +318,30 @@ export function commentProblem(text, { ownDomains = [], competitorNames = [] } =
  * Pushing through any one of these is how accounts are lost, so the account
  * parks for the day and says why. There is no retry here on purpose.
  */
+/*
+ * Each of these has to be specific enough not to fire on ordinary page text.
+ *
+ * "try again later" on its own matched a signed-out TikTok page and reported
+ * an action block on a perfectly healthy account — which in the farming loop
+ * would have parked it for twenty hours over nothing. A false positive here
+ * is not a harmless extra caution: it silently stops an account working, and
+ * the only symptom is that nothing happens.
+ *
+ * So every pattern names the thing the platform actually says, not a fragment
+ * that could appear anywhere.
+ */
 const FRICTION = [
-  { re: /try again later/i, why: "action blocked — 'try again later'" },
   { re: /action blocked/i, why: "action blocked" },
+  { re: /(you'?re|you are) temporarily blocked/i, why: "temporarily blocked" },
+  { re: /try again later.{0,80}(blocked|limit|restrict)/is, why: "action blocked" },
+  { re: /(blocked|limit|restrict).{0,80}try again later/is, why: "action blocked" },
   { re: /we restrict certain activity/i, why: "activity restricted" },
-  { re: /confirm (your|it'?s you)/i, why: "asked to confirm it is them" },
-  { re: /verify (your|that you)/i, why: "verification prompt" },
-  { re: /unusual (activity|login)/i, why: "unusual-activity notice" },
-  { re: /suspicious (activity|login)/i, why: "suspicious-login notice" },
-  { re: /captcha|are you a robot|verify you are human/i, why: "captcha" },
+  { re: /(confirm|verify) (your identity|it'?s you|that it'?s you)/i, why: "asked to confirm it is them" },
+  { re: /we detected unusual (activity|login)/i, why: "unusual-activity notice" },
+  { re: /suspicious (login|activity) (attempt|detected)/i, why: "suspicious-login notice" },
+  { re: /are you a robot|verify you are human|complete the captcha/i, why: "captcha" },
   { re: /your account has been (suspended|disabled)/i, why: "account suspended" },
   { re: /too many (requests|attempts)/i, why: "rate limited" },
-  { re: /log ?in to continue|please log ?in/i, why: "logged out" },
 ];
 
 export function frictionIn(pageText) {

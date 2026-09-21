@@ -49,11 +49,23 @@ check("the green survived the CSP", drawn.hasGlow === true);
 // opacity sampled mid-transition is an intermediate value, which reads as a
 // failure when nothing is wrong.
 await say(page, "watching a clip");
-await sleep(400);
-const label = await page.evaluate(() => {
-  const el = document.getElementById("ox-label");
-  return el ? { text: el.textContent, opacity: getComputedStyle(el).opacity } : null;
-});
+/*
+ * Wait for the value, not for a duration.
+ *
+ * This slept 400ms for a 220ms fade and failed about one run in four,
+ * because a computed opacity sampled while the main thread is busy is still
+ * mid-transition. A test that sleeps a fixed time to wait for an animation is
+ * flaky by construction, and a flaky test is worse than no test — it teaches
+ * you to ignore a red run.
+ */
+const label = await page
+  .waitForFunction(() => {
+    const el = document.getElementById("ox-label");
+    if (!el || getComputedStyle(el).opacity !== "1") return null;
+    return { text: el.textContent, opacity: "1" };
+  }, null, { timeout: 5000 })
+  .then((h) => h.jsonValue())
+  .catch(() => null);
 check("label shows text", label?.text === "watching a clip" && label.opacity === "1", JSON.stringify(label));
 
 /*

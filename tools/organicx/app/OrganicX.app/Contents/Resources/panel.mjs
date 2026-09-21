@@ -7,10 +7,14 @@
  * five accounts for ten days, and the question it has to answer at a glance
  * is *who is working, and on what*.
  *
- * So it is a floor plan rather than a wand. The crew are on it. Whoever is
- * working is lit; the rest are dim. Under the lit name, one line of plain
- * language. When something stops you get a name and a sentence, not an error
- * code.
+ * So it is a control bar rather than a wand: a pill, centred, small. Who is
+ * working and what they are doing on one line, the three connections as three
+ * dots, and a stop. Nothing else, because nothing else needs to be on screen
+ * while it works — the full record is in the ticker, which is read elsewhere.
+ *
+ * It was a 306px panel listing all sixteen of the crew down the right-hand
+ * side. That is a dashboard, and a dashboard is for reading. This is for
+ * glancing at.
  *
  * Everything here runs inside the page, not in node, and it is written
  * without a <style> element on purpose — these sites serve a content security
@@ -55,193 +59,120 @@ export const PANEL = `(() => {
   var css = function (el, s) { for (var k in s) el.style[k] = s[k]; return el; };
   var TOP = "2147483646";
   var GREEN = "#39FF7A";
-  var DIM = "rgba(236,238,240,.34)";
+  var DIM = "rgba(236,238,240,.42)";
+  var CREW = __CREW__;
+  var byKey = {};
+  CREW.forEach(function (p) { byKey[p.key] = p; });
 
-  /* ---- the glass ----------------------------------------------------- */
-  /* No colour of its own. It takes what is behind it — a saturating,
-     brightening blur, a hard light band across the top edge, a shadow pooled
-     at the bottom, and the rim drawn from the inside on all four sides so it
-     reads as thickness rather than a border. */
-  var panel = css(document.createElement("div"), {
-    position: "fixed", zIndex: TOP, right: "18px", bottom: "18px",
-    /* border-box, so 306 means 306. Without it the padding is added on top
-       and the panel is 334 wide, which is the kind of thing nobody notices
-       until it overlaps something. */
-    boxSizing: "border-box", width: "306px", padding: "14px 14px 12px",
-    borderRadius: "18px",
-    background: "rgba(16,17,19,.72)",
-    backdropFilter: "blur(22px) saturate(1.7) brightness(1.06)",
-    WebkitBackdropFilter: "blur(22px) saturate(1.7) brightness(1.06)",
+  /* ---- the pill ------------------------------------------------------ */
+  /* Glass with no colour of its own: it takes what is behind it. A hard
+     light band across the top edge, a shadow pooled under it, and the rim
+     drawn from the inside so it reads as thickness rather than a border. */
+  var pill = css(document.createElement("div"), {
+    position: "fixed", zIndex: TOP,
+    left: "50%", bottom: "26px", transform: "translateX(-50%) translateY(16px) scale(.96)",
+    boxSizing: "border-box", maxWidth: "min(620px, 92vw)",
+    display: "flex", alignItems: "center", gap: "12px",
+    padding: "9px 10px 9px 15px",
+    borderRadius: "999px",
+    background: "rgba(16,17,19,.74)",
+    backdropFilter: "blur(24px) saturate(1.7) brightness(1.06)",
+    WebkitBackdropFilter: "blur(24px) saturate(1.7) brightness(1.06)",
     boxShadow: [
-      "0 24px 60px rgba(0,0,0,.55)",
-      "inset 0 1px 0 rgba(255,255,255,.16)",
-      "inset 0 -1px 0 rgba(0,0,0,.4)",
-      "inset 1px 0 0 rgba(255,255,255,.05)",
-      "inset -1px 0 0 rgba(255,255,255,.05)",
-      "inset 0 0 40px rgba(57,255,122,.05)"
+      "0 18px 50px rgba(0,0,0,.5)",
+      "inset 0 1px 0 rgba(255,255,255,.17)",
+      "inset 0 -1px 0 rgba(0,0,0,.42)",
+      "inset 0 0 34px rgba(57,255,122,.06)"
     ].join(","),
-    font: "13px/1.35 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    color: "rgba(236,238,240,.92)",
-    /* Opens like liquid: a bead arrives, spreads wider and flatter than it
-       will finish, then settles back as the blur clears. The clearing lags
-       the shape on purpose — matching the durations turns it into a fade. */
-    transform: "translateY(14px) scale(.94)",
+    font: "13px/1.3 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    color: "rgba(236,238,240,.94)",
     opacity: "0",
-    transition: "transform .52s cubic-bezier(.16,1.1,.3,1), opacity .34s linear",
-    userSelect: "none",
+    transition: "transform .5s cubic-bezier(.16,1.1,.3,1), opacity .3s linear",
+    userSelect: "none", overflow: "hidden",
   });
-  panel.id = "ox-panel";
+  pill.id = "ox-panel";
 
-  /* ---- the update bar ------------------------------------------------ */
-  /* Across the top, inside the glass. It moves when real work happens and it
-     finishes before it disappears — Apple's actual trick there is not the
-     bar, it is that it never sits at 99%. */
+  /* The update bar, hairline across the very top of the pill. */
   var barWrap = css(document.createElement("div"), {
-    position: "absolute", left: "14px", right: "14px", top: "7px",
-    height: "2px", borderRadius: "2px",
-    background: "rgba(255,255,255,.09)",
-    opacity: "0", transition: "opacity .25s linear",
-    overflow: "hidden",
+    position: "absolute", left: "0", right: "0", top: "0", height: "2px",
+    background: "rgba(255,255,255,.08)", opacity: "0",
+    transition: "opacity .25s linear", overflow: "hidden",
   });
   var bar = css(document.createElement("div"), {
-    width: "0%", height: "100%", borderRadius: "2px",
+    width: "0%", height: "100%",
     background: "linear-gradient(90deg, rgba(11,224,99,.5), " + GREEN + ")",
     boxShadow: "0 0 10px rgba(57,255,122,.85)",
     transition: "width .5s cubic-bezier(.3,.9,.3,1)",
   });
-  barWrap.id = "ox-bar-track";
-  bar.id = "ox-bar";
-  barWrap.appendChild(bar);
-  panel.appendChild(barWrap);
+  barWrap.id = "ox-bar-track"; bar.id = "ox-bar";
+  barWrap.appendChild(bar); pill.appendChild(barWrap);
 
-  /* ---- the header ---------------------------------------------------- */
-  var head = css(document.createElement("div"), {
-    display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px",
-  });
+  /* Breathing when resting, steady when working. */
   var pulse = css(document.createElement("div"), {
-    width: "7px", height: "7px", borderRadius: "50%",
-    background: GREEN, boxShadow: "0 0 10px " + GREEN,
+    width: "7px", height: "7px", borderRadius: "50%", flex: "0 0 7px",
+    background: GREEN, boxShadow: "0 0 9px " + GREEN,
     transition: "opacity 1.5s ease-in-out, background .3s linear, box-shadow .3s linear",
   });
-  var title = css(document.createElement("div"), {
-    fontWeight: "700", letterSpacing: ".02em", fontSize: "12.5px", flex: "1",
-  });
-  title.textContent = "OrganicX";
-  var stateLabel = css(document.createElement("div"), {
-    fontSize: "10.5px", letterSpacing: ".07em", textTransform: "uppercase",
-    color: DIM, fontWeight: "600",
-  });
-  stateLabel.textContent = "idle";
-  head.appendChild(pulse); head.appendChild(title); head.appendChild(stateLabel);
-  panel.appendChild(head);
+  pulse.id = "ox-pulse";
+  pill.appendChild(pulse);
 
-  /* ---- the connections ------------------------------------------------ */
-  /* Live, and always on screen. Whether an account is actually signed in is
-     the one thing that decides whether anything else can happen, so it is
-     not a line that scrolls past in a log — it is a row that is either green
-     or it is not, re-checked while the app runs. */
+  /* Who is working, and what they are doing — the only text that matters. */
+  var line = css(document.createElement("div"), {
+    flex: "1 1 auto", minWidth: "0",
+    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+  });
+  var whoEl = css(document.createElement("span"), { fontWeight: "700", color: GREEN });
+  var didEl = css(document.createElement("span"), { color: "rgba(236,238,240,.8)" });
+  whoEl.id = "ox-who"; didEl.id = "ox-did";
+  whoEl.textContent = "OrganicX";
+  didEl.textContent = " · starting";
+  line.appendChild(whoEl); line.appendChild(didEl);
+  pill.appendChild(line);
+
+  /* The three connections, as three dots. Hover says which is which. */
   var conns = css(document.createElement("div"), {
-    display: "grid", gap: "3px", marginBottom: "10px",
-    paddingBottom: "9px", borderBottom: "1px solid rgba(255,255,255,.08)",
+    display: "flex", alignItems: "center", gap: "5px", flex: "0 0 auto",
+    paddingLeft: "10px", marginLeft: "2px",
+    borderLeft: "1px solid rgba(255,255,255,.1)",
   });
   conns.id = "ox-connections";
-  var connRows = {};
+  var connDots = {};
   ["instagram", "tiktok", "youtube"].forEach(function (platform) {
-    var row = css(document.createElement("div"), {
-      display: "flex", alignItems: "center", gap: "7px", fontSize: "11.5px",
-    });
     var dot = css(document.createElement("span"), {
-      width: "6px", height: "6px", borderRadius: "50%", flex: "0 0 6px",
-      background: "rgba(255,255,255,.18)",
+      width: "7px", height: "7px", borderRadius: "50%",
+      background: "rgba(255,255,255,.16)",
       transition: "background .25s linear, box-shadow .25s linear",
     });
-    var name = css(document.createElement("span"), {
-      fontWeight: "600", minWidth: "62px", color: "rgba(236,238,240,.7)",
-      textTransform: "capitalize",
-    });
-    name.textContent = platform;
-    var who = css(document.createElement("span"), {
-      flex: "1", minWidth: "0", color: DIM,
-      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-    });
-    who.textContent = "not connected";
-    row.id = "ox-conn-" + platform;
+    dot.id = "ox-conn-" + platform;
     dot.className = "ox-conn-dot";
-    who.className = "ox-conn-who";
-    row.appendChild(dot); row.appendChild(name); row.appendChild(who);
-    connRows[platform] = { dot: dot, who: who };
-    conns.appendChild(row);
+    dot.title = platform + ": not connected";
+    connDots[platform] = dot;
+    conns.appendChild(dot);
   });
-  panel.appendChild(conns);
+  pill.appendChild(conns);
 
-  /* ---- the crew ------------------------------------------------------ */
-  var list = css(document.createElement("div"), { display: "grid", gap: "1px" });
-  var rows = {};
-  var CREW = __CREW__;
-  CREW.forEach(function (person) {
-    var row = css(document.createElement("div"), {
-      display: "flex", alignItems: "baseline", gap: "7px",
-      padding: "3px 7px", borderRadius: "7px",
-      transition: "background .22s linear, color .22s linear",
-      color: DIM,
-    });
-    var name = css(document.createElement("span"), {
-      fontWeight: "600", fontSize: "12px", minWidth: "54px",
-    });
-    name.textContent = person.name;
-    var said = css(document.createElement("span"), {
-      fontSize: "11.5px", flex: "1", minWidth: "0",
-      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-      opacity: ".85",
-    });
-    said.textContent = person.role;
-    row.id = "ox-crew-" + person.key;
-    name.className = "ox-crew-name";
-    said.className = "ox-crew-said";
-    row.appendChild(name); row.appendChild(said);
-    rows[person.key] = { row: row, name: name, said: said };
-    list.appendChild(row);
-  });
-  panel.appendChild(list);
-
-  /* ---- the stop ------------------------------------------------------ */
-  /* Always reachable, and it says what it does. An agent driving somebody's
-     real accounts that cannot be stopped in one move is not one anybody
-     should be asked to run. */
-  var foot = css(document.createElement("div"), {
-    display: "flex", alignItems: "center", gap: "8px",
-    marginTop: "10px", paddingTop: "9px",
-    borderTop: "1px solid rgba(255,255,255,.08)",
-  });
   var stop = css(document.createElement("button"), {
-    appearance: "none", border: "1px solid rgba(255,120,120,.34)",
-    background: "rgba(255,90,90,.12)", color: "rgba(255,190,190,.95)",
-    borderRadius: "8px", padding: "5px 12px", cursor: "pointer",
+    appearance: "none", border: "1px solid rgba(255,120,120,.3)",
+    background: "rgba(255,90,90,.12)", color: "rgba(255,195,195,.95)",
+    borderRadius: "999px", padding: "5px 13px", cursor: "pointer", flex: "0 0 auto",
     font: "600 11.5px/1 -apple-system, BlinkMacSystemFont, sans-serif",
-    letterSpacing: ".03em",
   });
   stop.id = "ox-stop";
+  stop.title = "or press Esc";
   stop.textContent = "Stop";
   stop.onclick = function () { window.__oxPanel.stopped = true; stop.textContent = "Stopping…"; };
-  var hint = css(document.createElement("div"), {
-    fontSize: "10.5px", color: DIM, flex: "1", textAlign: "right",
-  });
-  hint.textContent = "or press Esc";
-  foot.appendChild(stop); foot.appendChild(hint);
-  panel.appendChild(foot);
+  pill.appendChild(stop);
 
-  document.documentElement.appendChild(panel);
+  document.documentElement.appendChild(pill);
   requestAnimationFrame(function () {
-    panel.style.transform = "translateY(0) scale(1)";
-    panel.style.opacity = "1";
+    pill.style.transform = "translateX(-50%) translateY(0) scale(1)";
+    pill.style.opacity = "1";
   });
 
-  /* Escape stops it from anywhere, including mid-action. */
   window.addEventListener("keydown", function (e) {
     if (e.key === "Escape") { window.__oxPanel.stopped = true; stop.textContent = "Stopping…"; }
   }, true);
 
-  /* Breathing, only while resting. A pulse that never stops is a spinner. */
   var breath = null;
   function breathe(on) {
     if (breath) { clearInterval(breath); breath = null; }
@@ -252,58 +183,42 @@ export const PANEL = `(() => {
 
   window.__oxPanel = {
     stopped: false,
-    show: function () { panel.style.opacity = "1"; panel.style.transform = "translateY(0) scale(1)"; },
-    hide: function () { panel.style.opacity = "0"; panel.style.transform = "translateY(14px) scale(.94)"; },
-    /* Who is working, and what they are doing this second. */
-    working: function (key, line) {
-      Object.keys(rows).forEach(function (k) {
-        var r = rows[k];
-        var on = k === key;
-        r.row.style.background = on ? "rgba(57,255,122,.10)" : "transparent";
-        r.row.style.color = on ? "rgba(236,238,240,.96)" : DIM;
-        r.name.style.color = on ? GREEN : "inherit";
-        if (on && line) r.said.textContent = line;
-      });
+    show: function () { pill.style.opacity = "1"; pill.style.transform = "translateX(-50%) translateY(0) scale(1)"; },
+    hide: function () { pill.style.opacity = "0"; pill.style.transform = "translateX(-50%) translateY(16px) scale(.96)"; },
+    working: function (key, said) {
+      var person = byKey[key];
+      whoEl.textContent = person ? person.name : (key || "OrganicX");
+      didEl.textContent = said ? " · " + said : (person ? " · " + person.role : "");
     },
-    /*
-     * One platform's live state.
-     *
-     * The state is one of: waiting (the login page is open), checking,
-     * connected, or off. Connected is the only one that goes green, and it
-     * carries the handle it actually read off the page rather than the one
-     * anybody assumed.
-     */
     connection: function (platform, state, handle) {
-      var r = connRows[platform];
-      if (!r) return;
+      var dot = connDots[platform];
+      if (!dot) return;
       var colour = {
         connected: GREEN,
         checking: "#FFD36B",
         waiting: "#FFD36B",
-        off: "rgba(255,255,255,.18)",
-      }[state] || "rgba(255,255,255,.18)";
-      r.dot.style.background = colour;
-      r.dot.style.boxShadow = state === "connected" ? "0 0 8px " + GREEN : "none";
-      r.who.textContent =
+        off: "rgba(255,255,255,.16)",
+      }[state] || "rgba(255,255,255,.16)";
+      dot.style.background = colour;
+      dot.style.boxShadow = state === "connected" ? "0 0 8px " + GREEN : "none";
+      dot.title = platform + ": " + (
         state === "connected" ? (handle || "connected")
         : state === "waiting" ? "sign in — I am watching"
         : state === "checking" ? "checking…"
-        : "not connected";
-      r.who.style.color = state === "connected" ? "rgba(236,238,240,.9)" : DIM;
+        : "not connected"
+      );
     },
     state: function (s) {
-      stateLabel.textContent = s || "";
       var resting = s === "idle" || s === "resting";
       breathe(resting);
       pulse.style.background = s === "error" ? "#FF6B6B" : GREEN;
-      pulse.style.boxShadow = "0 0 10px " + (s === "error" ? "#FF6B6B" : GREEN);
+      pulse.style.boxShadow = "0 0 9px " + (s === "error" ? "#FF6B6B" : GREEN);
     },
-    /* The update bar. Never sits at 99: it finishes, then it goes. */
     progress: function (pct, label) {
       if (pct == null) { barWrap.style.opacity = "0"; return; }
       barWrap.style.opacity = "1";
       bar.style.width = Math.max(0, Math.min(100, pct)) + "%";
-      if (label) stateLabel.textContent = label;
+      if (label) didEl.textContent = " · " + label;
       if (pct >= 100) setTimeout(function () { barWrap.style.opacity = "0"; bar.style.width = "0%"; }, 420);
     },
   };

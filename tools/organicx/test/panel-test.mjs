@@ -45,24 +45,28 @@ const drawn = await page.evaluate(() => {
   if (!el) return null;
   const cs = getComputedStyle(el);
   const box = el.getBoundingClientRect();
-  return { opacity: cs.opacity, blur: cs.backdropFilter || cs.webkitBackdropFilter, w: Math.round(box.width), h: Math.round(box.height) };
+  return {
+    opacity: cs.opacity,
+    blur: cs.backdropFilter || cs.webkitBackdropFilter,
+    w: Math.round(box.width), h: Math.round(box.height),
+    cx: Math.round(box.left + box.width / 2),
+    radius: cs.borderRadius,
+  };
 });
-ok("panel is painted and settled at the width it asked for", drawn && drawn.opacity === "1" && drawn.w === 306, JSON.stringify(drawn));
+ok("pill is painted and settled", drawn && drawn.opacity === "1" && drawn.w > 200 && drawn.h < 60, JSON.stringify(drawn));
+ok("it is centred, not parked in a corner", Math.abs(drawn.cx - 600) < 3, String(drawn.cx));
 ok("the glass is really glass", Boolean(drawn?.blur && drawn.blur !== "none"), drawn?.blur);
-const present = await page.evaluate((keys) => keys.filter((k) => document.getElementById("ox-crew-" + k)).length, CREW.map((c) => c.key));
-ok("every crew member has a row", present === CREW.length, `${present} of ${CREW.length}`);
+ok("it is a pill, not a card", drawn.radius.startsWith("999px"), drawn.radius);
 
 // Lighting someone up changes only their row.
 await page.evaluate(() => window.__oxPanel.working("sam", "@spookyhome — watched 14, liked 2"));
 await sleep(350);
-const lit = await page.evaluate(() => {
-  const names = [...document.querySelectorAll("#ox-panel .ox-crew-name")];
-  const green = names.filter((s) => s.style.color.includes("57, 255, 122"));
-  const line = green[0]?.nextElementSibling?.textContent ?? "";
-  return { greenCount: green.length, who: green[0]?.textContent, line };
-});
-ok("exactly one is lit", lit.greenCount === 1, JSON.stringify(lit));
-ok("the lit one says what it is doing", lit.who === "Sam" && lit.line.includes("watched 14"), lit.line);
+const lit = await page.evaluate(() => ({
+  who: document.getElementById("ox-who")?.textContent,
+  did: document.getElementById("ox-did")?.textContent,
+}));
+ok("it names who is working", lit.who === "Sam", JSON.stringify(lit));
+ok("and what they are doing", (lit.did ?? "").includes("watched 14"), lit.did);
 
 // The update bar moves and then gets out of the way.
 await page.evaluate(() => window.__oxPanel.progress(40, "installing"));
@@ -100,18 +104,14 @@ await page.evaluate(() => {
 await sleep(350);
 const conns = await page.evaluate(() =>
   ["instagram", "tiktok", "youtube"].map((p) => {
-    const row = document.getElementById("ox-conn-" + p);
-    return {
-      p,
-      green: row.querySelector(".ox-conn-dot").style.background.includes("57, 255, 122"),
-      who: row.querySelector(".ox-conn-who").textContent,
-    };
+    const dot = document.getElementById("ox-conn-" + p);
+    return { p, green: dot.style.background.includes("57, 255, 122"), title: dot.title };
   }),
 );
 ok("only a connected platform goes green", conns.filter((c) => c.green).length === 1, JSON.stringify(conns));
-ok("it shows the handle it actually read", conns[0].who === "@spookyhome", conns[0].who);
-ok("one waiting says what to do", conns[1].who.includes("sign in"), conns[1].who);
-ok("one off says so", conns[2].who === "not connected", conns[2].who);
+ok("it carries the handle it actually read", conns[0].title.includes("@spookyhome"), conns[0].title);
+ok("one waiting says what to do", conns[1].title.includes("sign in"), conns[1].title);
+ok("one off says so", conns[2].title.includes("not connected"), conns[2].title);
 
 await page.screenshot({ path: "/tmp/claude-0/panel.png" });
 await browser.close();
