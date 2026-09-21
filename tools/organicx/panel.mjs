@@ -135,6 +135,45 @@ export const PANEL = `(() => {
   head.appendChild(pulse); head.appendChild(title); head.appendChild(stateLabel);
   panel.appendChild(head);
 
+  /* ---- the connections ------------------------------------------------ */
+  /* Live, and always on screen. Whether an account is actually signed in is
+     the one thing that decides whether anything else can happen, so it is
+     not a line that scrolls past in a log — it is a row that is either green
+     or it is not, re-checked while the app runs. */
+  var conns = css(document.createElement("div"), {
+    display: "grid", gap: "3px", marginBottom: "10px",
+    paddingBottom: "9px", borderBottom: "1px solid rgba(255,255,255,.08)",
+  });
+  conns.id = "ox-connections";
+  var connRows = {};
+  ["instagram", "tiktok", "youtube"].forEach(function (platform) {
+    var row = css(document.createElement("div"), {
+      display: "flex", alignItems: "center", gap: "7px", fontSize: "11.5px",
+    });
+    var dot = css(document.createElement("span"), {
+      width: "6px", height: "6px", borderRadius: "50%", flex: "0 0 6px",
+      background: "rgba(255,255,255,.18)",
+      transition: "background .25s linear, box-shadow .25s linear",
+    });
+    var name = css(document.createElement("span"), {
+      fontWeight: "600", minWidth: "62px", color: "rgba(236,238,240,.7)",
+      textTransform: "capitalize",
+    });
+    name.textContent = platform;
+    var who = css(document.createElement("span"), {
+      flex: "1", minWidth: "0", color: DIM,
+      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+    });
+    who.textContent = "not connected";
+    row.id = "ox-conn-" + platform;
+    dot.className = "ox-conn-dot";
+    who.className = "ox-conn-who";
+    row.appendChild(dot); row.appendChild(name); row.appendChild(who);
+    connRows[platform] = { dot: dot, who: who };
+    conns.appendChild(row);
+  });
+  panel.appendChild(conns);
+
   /* ---- the crew ------------------------------------------------------ */
   var list = css(document.createElement("div"), { display: "grid", gap: "1px" });
   var rows = {};
@@ -225,6 +264,32 @@ export const PANEL = `(() => {
         r.name.style.color = on ? GREEN : "inherit";
         if (on && line) r.said.textContent = line;
       });
+    },
+    /*
+     * One platform's live state.
+     *
+     * The state is one of: waiting (the login page is open), checking,
+     * connected, or off. Connected is the only one that goes green, and it
+     * carries the handle it actually read off the page rather than the one
+     * anybody assumed.
+     */
+    connection: function (platform, state, handle) {
+      var r = connRows[platform];
+      if (!r) return;
+      var colour = {
+        connected: GREEN,
+        checking: "#FFD36B",
+        waiting: "#FFD36B",
+        off: "rgba(255,255,255,.18)",
+      }[state] || "rgba(255,255,255,.18)";
+      r.dot.style.background = colour;
+      r.dot.style.boxShadow = state === "connected" ? "0 0 8px " + GREEN : "none";
+      r.who.textContent =
+        state === "connected" ? (handle || "connected")
+        : state === "waiting" ? "sign in — I am watching"
+        : state === "checking" ? "checking…"
+        : "not connected";
+      r.who.style.color = state === "connected" ? "rgba(236,238,240,.9)" : DIM;
     },
     state: function (s) {
       stateLabel.textContent = s || "";

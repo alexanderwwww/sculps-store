@@ -18,7 +18,10 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { openChrome, attach, say, signedIn, whoAmI, sleep, checkFriction } from "./browser.mjs";
+import {
+  openChrome, attach, say, signedIn, whoAmI, sleep, checkFriction,
+  connection, panelState, working, stopRequested,
+} from "./browser.mjs";
 import * as db from "./db.mjs";
 import { planDay, scatterAcrossDay, dayBudget, isAwake } from "./human.mjs";
 
@@ -128,43 +131,101 @@ async function maybeUpdate() {
  * rather than assuming "connected" and posting into a logged-out browser.
  */
 export async function connect(browser, only) {
-  const wanted = only ? [only] : ["tiktok", "instagram", "youtube"];
+  /*
+   * Instagram first, then TikTok, then YouTube.
+   *
+   * The order is Alex's: he signs in one at a time, and Instagram is the one
+   * that matters most — best conversion, product tagging in the reel, one tap
+   * to the store.
+   */
+  const wanted = only ? [only] : ["instagram", "tiktok", "youtube"];
   const context = browser.contexts()[0] ?? (await browser.newContext());
 
   for (const platform of wanted) {
     const page = await context.newPage();
     await attach(page);
+    await connection(page, platform, "checking");
     await tick("sam", `opening ${platform} — sign in and I will pick it up`);
 
-    // Up to five minutes per platform, checked every few seconds. He may be
-    // doing a 2FA code on his phone, and rushing him is how this gets a
-    // half-signed-in session recorded as connected.
+    /*
+     * It watches rather than waits.
+     *
+     * The first version gave each platform five minutes and then gave up,
+     * which is wrong twice over: he may be finding a code on his phone, and
+     * he said himself he would do one now and one later. So it checks, and
+     * if nothing is signed in it moves on and comes back — a platform that
+     * gets signed into an hour from now is picked up on the next sweep
+     * without anybody restarting anything.
+     */
     let result = { connected: false, friction: null };
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 24; i++) {
       result = await signedIn(page, platform);
       if (result.connected) break;
-      await say(page, `waiting for you to sign in to ${platform}`);
+      await connection(page, platform, "waiting");
+      await say(page, `sign in to ${platform} — I am watching this tab`);
+      if (await stopRequested(page)) break;
       await sleep(5000);
     }
 
     if (!result.connected) {
-      await tick("sam", `${platform} is still not signed in${result.friction ? ` (${result.friction})` : ""} — skipping it`);
+      await connection(page, platform, "off");
+      await tick(
+        "sam",
+        `${platform} is not signed in yet${result.friction ? ` (${result.friction})` : ""} — I will keep checking`,
+      );
       await page.close();
       continue;
     }
 
     const handle = (await whoAmI(page, platform)) ?? `(${platform} account)`;
     const row = await db.markConnected(platform, handle, PATHS.profile);
+    await connection(page, platform, "connected", handle);
     await say(page, `${handle} connected`);
     await tick("sam", `${platform} connected as ${handle}`);
     await post("/accounts", { accounts: await db.accounts() }).catch(() => {});
-    await page.close();
 
     if (!(await db.personaFor(row.id))) {
-      await tick("ines", `writing who ${handle} is — this gets written once and kept`);
+      await working(page, "ines", `writing who ${handle} is`);
+      await tick("ines", `writing who ${handle} is — written once and kept`);
       await db.savePersona(row.id, personaSeed(handle));
     }
+    await sleep(1200);
+    await page.close();
   }
+}
+
+/**
+ * Re-check what is signed in, and show it.
+ *
+ * Runs on every sweep. A session that has expired should stop being green
+ * the moment it expires, not the next time somebody restarts the app — and a
+ * platform Alex signs into later should go green on its own.
+ */
+export async function verifyConnections(browser) {
+  const context = browser.contexts()[0] ?? (await browser.newContext());
+  const rows = await db.accounts();
+  const page = await context.newPage();
+  await attach(page);
+
+  for (const platform of ["instagram", "tiktok", "youtube"]) {
+    const known = rows.find((r) => r.platform === platform && r.connected);
+    await connection(page, platform, "checking");
+    const result = await signedIn(page, platform);
+    if (result.connected) {
+      const handle = known?.handle ?? (await whoAmI(page, platform)) ?? `(${platform})`;
+      if (!known) {
+        // Signed in since the last look. Pick it up without being asked.
+        const row = await db.markConnected(platform, handle, PATHS.profile);
+        await tick("sam", `${platform} came online as ${handle}`);
+        if (!(await db.personaFor(row.id))) await db.savePersona(row.id, personaSeed(handle));
+      }
+      await connection(page, platform, "connected", handle);
+    } else {
+      await connection(page, platform, "off");
+      if (known) await tick("sam", `${platform} is signed out now — it was ${known.handle}`);
+    }
+  }
+  await page.close();
 }
 
 /**
@@ -266,12 +327,9 @@ async function main() {
    * So: anything not connected gets connected, and then it works. Orders
    * still arrive and are still obeyed — they steer it, they do not start it.
    */
-  const known = await db.accounts();
-  if (!known.some((a) => a.connected)) {
-    state = "connecting";
-    await report();
-    await connect(browser);
-  }
+  state = "connecting";
+  await report();
+  await connect(browser);
   state = "working";
   doing = "warming the accounts";
   await report();
@@ -322,6 +380,8 @@ async function main() {
        * had its day. Checking constantly would burn the Mac for nothing.
        */
       if (state !== "paused" && Date.now() >= nextSweep) {
+        // What is actually signed in, checked rather than remembered.
+        await verifyConnections(browser).catch(() => {});
         for (const account of await db.accounts()) {
           if (!account.connected) continue;
           await farm(browser, account);

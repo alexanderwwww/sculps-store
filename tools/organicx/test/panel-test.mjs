@@ -90,6 +90,29 @@ await stopBtn.click();
 await sleep(200);
 ok("the Stop button stops it", await page.evaluate(() => window.__oxPanel.stopped === true));
 
+/* The connection rows are the one thing that decides whether anything else
+   can happen, so they are checked rather than looked at. */
+await page.evaluate(() => {
+  window.__oxPanel.connection("instagram", "connected", "@spookyhome");
+  window.__oxPanel.connection("tiktok", "waiting");
+  window.__oxPanel.connection("youtube", "off");
+});
+await sleep(350);
+const conns = await page.evaluate(() =>
+  ["instagram", "tiktok", "youtube"].map((p) => {
+    const row = document.getElementById("ox-conn-" + p);
+    return {
+      p,
+      green: row.querySelector(".ox-conn-dot").style.background.includes("57, 255, 122"),
+      who: row.querySelector(".ox-conn-who").textContent,
+    };
+  }),
+);
+ok("only a connected platform goes green", conns.filter((c) => c.green).length === 1, JSON.stringify(conns));
+ok("it shows the handle it actually read", conns[0].who === "@spookyhome", conns[0].who);
+ok("one waiting says what to do", conns[1].who.includes("sign in"), conns[1].who);
+ok("one off says so", conns[2].who === "not connected", conns[2].who);
+
 await page.screenshot({ path: "/tmp/claude-0/panel.png" });
 await browser.close();
 console.log(bad ? `\n${bad} failed` : "\nall passed");
