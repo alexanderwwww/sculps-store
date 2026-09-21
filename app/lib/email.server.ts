@@ -13,7 +13,7 @@
 import type { DB } from "~/db/client";
 import { recordOrderEvent } from "./admin.server";
 import { formatMoney } from "./money";
-import { reaperProduct, type ReaperProductGuide } from "./emails/reaper-products";
+import { reaperProduct, reaperHandles, type ReaperProductGuide } from "./emails/reaper-products";
 
 export interface EmailLine {
   label: string;
@@ -185,6 +185,8 @@ export interface EmailBrand {
  * logo above it competing for the first second of attention.
  */
 function shell(brand: EmailBrand, body: string, preheader = "", hero = true): string {
+  // This shop has its own frame. Everything else keeps the shared one.
+  if (brand.domain === "blackreaper.us") return reaperShell(brand, body, preheader, hero);
   const ink = brand.brandColor || "#16223A";
   const site = brand.domain ? `https://${brand.domain}` : null;
   const heroSrc = hero ? abs(brand, brand.heroImageUrl) : null;
@@ -224,6 +226,196 @@ You are receiving this because you shopped with us.
 </td></tr>
 
 </table></td></tr></table></body></html>`;
+}
+
+/* ===================================================================== *
+ * Black Reaper's own frame.
+ *
+ * The shared shell above is Garden Buddy's: a beige page, a white rounded
+ * card, navy text and a mustard button. Every Reaper message was wearing it,
+ * and the order confirmation -- the one email every customer sees -- had
+ * hand-rolled itself out of lime green and a Garden Buddy animation. None of
+ * that is this brand.
+ *
+ * This frame is the brand and nothing else: near-black ground, bone type, one
+ * orange. It deliberately does not read `brandColor` or `accentColor`. Being
+ * a colour-swap of somebody else's template is the whole reason the old one
+ * looked generic, and a theme variable would put it straight back.
+ *
+ * Tables and inline styles throughout, because Outlook understands nothing
+ * else. Every alpha is pre-computed to a solid hex for the same reason.
+ * ===================================================================== */
+
+const RV = {
+  ground: "#0B0B0C",
+  panel: "#141416",
+  rule: "#2A2928",
+  bone: "#F7F2E7",
+  body: "#DAD6CD",
+  meta: "#817F7A",
+  orange: "#F5821F",
+  onOrange: "#0B0B0C",
+} as const;
+
+/** Archivo and Inter where they exist, something sane everywhere else. */
+const RV_DISPLAY =
+  "Archivo,'Helvetica Neue',Helvetica,Arial,'Segoe UI',Roboto,sans-serif";
+const RV_BODY =
+  "Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+
+/** The headline. One size, used once per message. */
+export function rvHead(text: string): string {
+  return `<h1 style="margin:0 0 14px;font-family:${RV_DISPLAY};font-size:30px;line-height:1.14;font-weight:800;letter-spacing:-.02em;color:${RV.bone}">${esc(text)}</h1>`;
+}
+
+/** A paragraph. Anything read as prose is this size and this colour. */
+export function rvText(text: string): string {
+  return `<p style="margin:0 0 16px;font-family:${RV_BODY};font-size:16px;line-height:1.6;color:${RV.body}">${esc(text)}</p>`;
+}
+
+/** The small caps line above a block, so a section says what it is. */
+export function rvLabel(text: string): string {
+  return `<div style="margin:0 0 10px;font-family:${RV_BODY};font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:${RV.meta}">${esc(text)}</div>`;
+}
+
+export function rvRule(): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="height:1px;line-height:1px;font-size:0;background:${RV.rule}">&nbsp;</td></tr></table>`;
+}
+
+/** The only button. Square, solid orange, dark ink. Never a pill. */
+export function rvButton(label: string, href: string): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 4px"><tr>
+<td align="center" bgcolor="${RV.orange}" style="border-radius:4px;background:${RV.orange}">
+<a href="${esc(href)}" style="display:inline-block;padding:16px 34px;font-family:${RV_DISPLAY};font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${RV.onOrange};text-decoration:none">${esc(label)}</a>
+</td></tr></table>`;
+}
+
+/**
+ * What is in the box, numbered.
+ *
+ * The owner asked for this by name and no message had it. It is deliberately
+ * a list of real contents rather than a photograph: a flat-lay we do not own
+ * would be an invented picture of a product, and the words are true today.
+ */
+export function rvBox(heading: string, items: string[]): string {
+  if (!items.length) return "";
+  const rows = items
+    .map(
+      (item, i) => `<tr>
+<td valign="top" width="34" style="padding:0 0 12px;font-family:${RV_DISPLAY};font-size:13px;font-weight:700;letter-spacing:.04em;color:${RV.orange}">${String(i + 1).padStart(2, "0")}</td>
+<td valign="top" style="padding:0 0 12px;font-family:${RV_BODY};font-size:15px;line-height:1.5;color:${RV.body}">${esc(item)}</td>
+</tr>`,
+    )
+    .join("");
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${RV.panel}" style="background:${RV.panel};border-radius:4px;margin:6px 0 20px"><tr><td style="padding:22px 22px 10px">
+${rvLabel(heading)}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
+</td></tr></table>`;
+}
+
+/** The order's lines, then the totals under a rule. */
+export function rvLines(lines: EmailLine[], currency: string): string {
+  const rows = lines
+    .map(
+      (l) => `<tr>
+<td valign="top" style="padding:0 0 14px;font-family:${RV_BODY};font-size:16px;line-height:1.4;color:${RV.bone}">${esc(l.label)}<br>
+<span style="font-size:13.5px;color:${RV.meta}">Qty ${l.quantity}</span></td>
+<td valign="top" align="right" style="padding:0 0 14px;font-family:${RV_BODY};font-size:16px;color:${RV.bone};white-space:nowrap">${formatMoney(l.lineTotalCents, currency)}</td>
+</tr>`,
+    )
+    .join("");
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>`;
+}
+
+/** One totals row. `strong` is the last one, in the accent. */
+export function rvTotal(label: string, value: string, strong = false): string {
+  const colour = strong ? RV.orange : RV.body;
+  const weight = strong ? "700" : "400";
+  const size = strong ? "18px" : "15px";
+  return `<tr>
+<td style="padding:5px 0;font-family:${RV_BODY};font-size:${size};font-weight:${weight};color:${RV.body}">${esc(label)}</td>
+<td align="right" style="padding:5px 0;font-family:${RV_BODY};font-size:${size};font-weight:${weight};color:${colour};white-space:nowrap">${esc(value)}</td>
+</tr>`;
+}
+
+/**
+ * The frame.
+ *
+ * `color-scheme: dark` rather than the shared shell's `light only`: this page
+ * is already dark, and asking a client to force it light is what makes a
+ * black email arrive as a grey one with inverted type.
+ */
+function reaperShell(brand: EmailBrand, body: string, preheader = "", hero = true): string {
+  const site = brand.domain ? `https://${brand.domain}` : null;
+  const heroSrc = hero ? abs(brand, brand.heroImageUrl) : null;
+
+  return `<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark light">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:${RV.ground};-webkit-font-smoothing:antialiased">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(preheader)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${RV.ground}" style="background:${RV.ground}">
+<tr><td align="center" style="padding:0 0 40px">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px">
+
+<tr><td align="center" style="padding:30px 32px 22px">
+${site ? `<a href="${site}" style="text-decoration:none">` : ""}
+<span style="font-family:${RV_DISPLAY};font-size:17px;font-weight:800;letter-spacing:.22em;color:${RV.bone};text-decoration:none">${esc(brand.storeName.toUpperCase())}</span>
+${site ? `</a>` : ""}
+</td></tr>
+<tr><td style="height:1px;line-height:1px;font-size:0;background:${RV.rule}">&nbsp;</td></tr>
+
+${
+  heroSrc
+    ? `<tr><td style="padding:0;font-size:0;line-height:0">
+${site ? `<a href="${site}">` : ""}<img src="${esc(heroSrc)}" width="600" alt="" style="display:block;width:100%;max-width:600px;height:auto;border:0">${site ? `</a>` : ""}
+</td></tr>`
+    : ""
+}
+
+<tr><td style="padding:34px 32px 30px">
+${body}
+</td></tr>
+
+<tr><td style="height:1px;line-height:1px;font-size:0;background:${RV.rule}">&nbsp;</td></tr>
+<tr><td align="center" style="padding:22px 32px 0">
+<div style="font-family:${RV_DISPLAY};font-size:12px;font-weight:800;letter-spacing:.20em;color:${RV.meta}">${esc(brand.storeName.toUpperCase())}</div>
+<div style="margin-top:9px;font-family:${RV_BODY};font-size:12px;line-height:1.7;color:${RV.meta}">
+Free shipping &middot; 30 days to send it back${site ? ` &middot; <a href="${site}" style="color:${RV.meta};text-decoration:underline">${esc(brand.domain ?? "")}</a>` : ""}
+</div>
+<div style="margin-top:8px;font-family:${RV_BODY};font-size:11.5px;line-height:1.7;color:${RV.meta}">
+You are getting this because you shopped with us.
+</div>
+</td></tr>
+
+</table></td></tr></table></body></html>`;
+}
+
+/**
+ * What will be in the box, for whatever was actually bought.
+ *
+ * Matched on the product's own name appearing in the line's label, because a
+ * line is a variant ("The Black Reaper — two") and the guide is keyed by
+ * product. One product per order is the normal case; when somebody buys two
+ * different things the lists are joined in the order they were bought, and
+ * when nothing matches the block is simply left out rather than guessed at.
+ */
+function boxContentsFor(lines: EmailLine[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const line of lines) {
+    const label = (line.label ?? "").toLowerCase();
+    for (const handle of reaperHandles) {
+      if (seen.has(handle)) continue;
+      const guide = reaperProduct(handle);
+      if (!guide || !label.includes(guide.name.toLowerCase())) continue;
+      seen.add(handle);
+      out.push(...guide.inBox);
+    }
+  }
+  return out;
 }
 
 /** Every send function builds its brand the same way. */
@@ -360,88 +552,59 @@ export async function sendOrderConfirmation(
   const hero = abs(brandOf(input), emailCopy(input.heroImageUrl));
   const logo = abs(brandOf(input), input.logoUrl);
 
-  const html = `<!doctype html><html><body style="margin:0;padding:0;background:${DARKEST};font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0">Order ${ref} confirmed &mdash; ${formatMoney(input.totalCents, input.currency)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${DARKEST}"><tr><td align="center">
-<table role="presentation" width="640" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%">
+  /* The message.
 
-${logo ? `<tr><td style="background:${DARKEST};padding:22px 0;text-align:center">
-<img src="${logo}" width="168" alt="${esc(input.storeName)}" style="width:168px;height:auto;display:inline-block">
-</td></tr>` : ""}
+     It used to be ninety lines of its own, built out of lime green, two
+     yellows, three browns, four invented iMessage bubbles and an animated
+     GIF whose filename begins `gb-` -- Garden Buddy's. Somebody paying three
+     hundred dollars for a sixteen-foot phantom got a lime receipt with
+     another shop's garden animation in it.
 
-<tr><td style="background:${LIME};padding:40px 34px 36px;text-align:center">
-<div style="font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:${LIMEINK};opacity:.6">Order received</div>
-<div style="margin:14px 0 8px;font-size:40px;line-height:1.05;font-weight:800;letter-spacing:-.04em;color:${LIMEINK}">We&rsquo;ve got it, ${esc(first)}.</div>
-<div style="font-size:16px;line-height:1.6;color:${LIMEINK};opacity:.72">Our team is packing your order right now.</div>
-<div style="display:inline-block;margin-top:22px;padding:13px 26px;background:${DARKEST};border-radius:999px">
-<span style="font-size:10.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:${YELLOW}">Order</span>
-<span style="font-size:19px;font-weight:800;letter-spacing:.11em;color:#F6EEE2;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">&nbsp;&nbsp;${esc(ref)}</span>
-</div>
-</td></tr>
+     It is the brand's own frame now, and the only things in it are things
+     that are true: what they bought, what it cost, where it is going, and
+     what will be in the box when it lands. */
+  const heroSrc = emailCopy(input.heroImageUrl);
+  const box = boxContentsFor(input.lines);
 
-<tr><td style="background:${PANEL};padding:0;font-size:0;line-height:0">
-<img src="${abs(brandOf(input), "/media/gb-email-line.gif") ?? ""}" width="640" alt="On its way" style="width:100%;max-width:640px;height:auto;display:block">
-</td></tr>
-${city ? `<tr><td style="background:${PANEL};padding:4px 34px 28px;text-align:center">
-<div style="font-size:10.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:${YELLOW}">On its way to</div>
-<div style="margin-top:7px;font-size:26px;font-weight:800;letter-spacing:-.03em;color:#F6EEE2">${esc(city)}</div>
-</td></tr>` : ""}
+  const body = `
+${rvLabel(`Order ${ref}`)}
+${rvHead(`We have it, ${esc(first)}.`)}
+${rvText("Payment went through and the order is being packed. The next email from us has a tracking number in it.")}
 
-${hero ? `<tr><td style="background:${SAND};padding:0;font-size:0;line-height:0">
-<img src="${hero}" width="640" alt="" style="width:100%;max-width:640px;height:auto;display:block">
-</td></tr>` : ""}
+${rvRule()}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:24px 0 6px">
+${rvLines(input.lines, input.currency)}
+</td></tr></table>
+${rvRule()}
 
-<tr><td style="background:#ffffff;padding:30px 34px 6px">
-<div style="font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#5C8C1E;margin-bottom:14px">Your order</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${input.lines.map(line).join('<tr><td colspan="2" style="height:14px"></td></tr>')}</table>
-</td></tr>
-
-<tr><td style="background:#ffffff;padding:14px 34px 32px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #E8E3D6">
-<tr><td style="padding:16px 0 3px;font-size:14.5px;color:#5D6657">Subtotal</td><td style="padding:16px 0 3px;text-align:right;font-size:14.5px;color:#1C2318">${formatMoney(input.subtotalCents, input.currency)}</td></tr>
-${input.discountCode && input.discountCents ? `<tr><td style="padding:3px 0;font-size:14.5px;font-weight:700;color:#5C8C1E">${esc(input.discountCode)}</td><td style="padding:3px 0;text-align:right;font-size:14.5px;font-weight:700;color:#5C8C1E">&minus;${formatMoney(input.discountCents, input.currency)}</td></tr>` : ""}
-<tr><td style="padding:3px 0;font-size:14.5px;color:#5D6657">Shipping</td><td style="padding:3px 0;text-align:right;font-size:14.5px;font-weight:700;color:#5C8C1E">${input.shippingCents ? formatMoney(input.shippingCents, input.currency) : "Free"}</td></tr>
-${input.taxCents ? `<tr><td style="padding:3px 0;font-size:14.5px;color:#5D6657">Tax</td><td style="padding:3px 0;text-align:right;font-size:14.5px;color:#1C2318">${formatMoney(input.taxCents, input.currency)}</td></tr>` : ""}
-<tr><td style="padding:14px 0 0;font-size:21px;font-weight:800;color:#1C2318">Total</td><td style="padding:14px 0 0;text-align:right;font-size:21px;font-weight:800;color:#1C2318">${formatMoney(input.totalCents, input.currency)}</td></tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 22px">
+${rvTotal("Subtotal", formatMoney(input.subtotalCents, input.currency))}
+${input.discountCode && input.discountCents ? rvTotal(String(input.discountCode), `−${formatMoney(input.discountCents, input.currency)}`) : ""}
+${rvTotal("Shipping", input.shippingCents ? formatMoney(input.shippingCents, input.currency) : "Free")}
+${input.taxCents ? rvTotal("Tax", formatMoney(input.taxCents, input.currency)) : ""}
+${rvTotal("Total", formatMoney(input.totalCents, input.currency), true)}
 </table>
-</td></tr>
 
-<tr><td style="background:${CHAT};padding:30px 34px 26px">
-<div style="font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:${YELLOW};text-align:center;margin-bottom:22px">Questions? Just reply</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-${bubbleUs("just ordered 🙌 how long till it gets here?")}
-${bubbleThem("1&ndash;2 days to leave us, then your tracking lands by email.")}
-${bubbleUs("perfect")}
-${bubbleThem("that&rsquo;s the idea. shout if you need anything.")}
-</table>
-</td></tr>
+${box.length ? rvBox("In the box", box) : ""}
 
-${input.giftCode ? `<tr><td style="background:#ECFCD2;padding:36px 34px;text-align:center">
-<div style="font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#5C8C1E">A thank you</div>
-<div style="margin:12px 0 6px;font-size:32px;font-weight:800;letter-spacing:-.035em;color:${LIMEINK}">${esc(input.giftLabel ?? "$10 off your next one.")}</div>
-<div style="font-size:15px;line-height:1.6;color:#4A5544">No minimum, no expiry. Use it whenever you like.</div>
-<div style="display:inline-block;margin-top:20px;padding:16px 38px;background:${YELLOW};border-radius:16px">
-<span style="font-size:25px;font-weight:800;letter-spacing:.2em;color:${YELLOWINK};font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${esc(input.giftCode)}</span>
-</div>
-</td></tr>` : ""}
+${
+  city
+    ? `${rvLabel("On its way to")}
+<div style="margin:0 0 22px;font-family:${RV_DISPLAY};font-size:22px;font-weight:800;letter-spacing:-.02em;color:${RV.bone}">${esc(city)}</div>`
+    : ""
+}
 
-<tr><td style="background:${SAND};padding:26px 20px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-<td width="33%" style="text-align:center;font-size:12.5px;line-height:1.5;color:#5D6657"><strong style="display:block;color:#1C2318;font-size:13.5px;margin-bottom:2px">Free shipping</strong>already included</td>
-<td width="33%" style="text-align:center;font-size:12.5px;line-height:1.5;color:#5D6657"><strong style="display:block;color:#1C2318;font-size:13.5px;margin-bottom:2px">30-day returns</strong>no questions</td>
-<td width="33%" style="text-align:center;font-size:12.5px;line-height:1.5;color:#5D6657"><strong style="display:block;color:#1C2318;font-size:13.5px;margin-bottom:2px">Real people</strong>reply to this email</td>
-</tr></table>
-</td></tr>
+${/* No customer-facing order page exists yet, so this sends them to the shop
+      rather than to a 404. When one is built this becomes its link. */ ""}
+${input.domain ? rvButton("Back to the shop", `https://${input.domain}`) : ""}
+${rvText("Reply to this email if anything is wrong with it. A person reads it.")}
+`;
 
-<tr><td style="background:${DARKEST};padding:34px 34px 28px;text-align:center">
-${logo ? `<img src="${logo}" width="128" alt="" style="width:128px;height:auto;display:inline-block;margin-bottom:14px">` : ""}
-<div style="font-size:13.5px;line-height:1.7;color:#F6EEE2;opacity:.7">
-Questions? Just reply &mdash; a person reads it.<br>
-<span style="color:#F6EEE2;font-weight:700;opacity:1">${esc(input.storeName)}</span>${input.domain ? ` &middot; ${esc(input.domain)}` : ""}
-</div>
-</td></tr>
-
-</table></td></tr></table></body></html>`;
+  const html = shell(
+    { ...brandOf(input), heroImageUrl: heroSrc },
+    body,
+    `Order ${ref} confirmed — ${formatMoney(input.totalCents, input.currency)}`,
+  );
 
   const result = await send(env, {
     from: `${input.storeName} <${from}>`,

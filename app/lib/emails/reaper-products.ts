@@ -30,6 +30,8 @@ export interface ReaperProductGuide {
   setupSteps: string[];
   /** The things people find out on the second night. */
   setupTips: string[];
+  /** Exactly what is in the box, as the product page lists it. */
+  inBox: string[];
   /** The questions that arrive by reply after delivery. */
   faq: { q: string; a: string }[];
   /** One sentence, asked a few days in. */
@@ -50,6 +52,13 @@ export const REAPER_PRODUCTS: Record<ReaperProductHandle, ReaperProductGuide> = 
       "On a driveway, decking or concrete, use the sandbag loops at the base instead of the stake.",
       "The fabric is weather-treated and he is built to stay out all month. Bring him in for a real storm.",
       "Face him at the path. He is taller than the front door, and the effect is him looking straight at whoever walks up.",
+    ],
+    inBox: [
+      "The Black Reaper — 8 ft 6 in, robe, hood and skull",
+      "The lantern, fitted and lit, with the ghost strand",
+      "Sectional steel ground stake",
+      "Sandbag loops, for a driveway or decking",
+      "Batteries, fitted, plus a spare set",
     ],
     faq: [
       {
@@ -81,6 +90,13 @@ export const REAPER_PRODUCTS: Record<ReaperProductHandle, ReaperProductGuide> = 
       "The fan runs the whole time he is out. That is what holds him up.",
       "In a storm, unplug him and he lays down flat on his own. Staked properly he handles an ordinary autumn night.",
       "The LEDs are inside the head and body, so the face glows after dark. That is the shot everyone films.",
+    ],
+    inBox: [
+      "The Scream — 16.4 ft, weatherproof nylon, lit from inside",
+      "Blower unit, fitted, with a sealed outdoor lead",
+      "Six steel ground stakes, 10 in",
+      "Four guy ropes with tensioners",
+      "Repair patch kit",
     ],
     faq: [
       {
@@ -114,6 +130,14 @@ export const REAPER_PRODUCTS: Record<ReaperProductHandle, ReaperProductGuide> = 
       "Keep the base out of standing water and bring it in for a real storm. It lives outside the rest of the month.",
       "Set it just off the main path so trick-or-treaters can choose whether to go near it.",
     ],
+    inBox: [
+      "The Crawling Zombie — arms, torso, head, torn clothing",
+      "The motor unit, sealed into the body",
+      "Motion sensor in the chest, with an always-on switch",
+      "Lit red eyes, on while it moves",
+      "Batteries, fitted, plus a spare set",
+      "Remote — on, off, and the motion trigger",
+    ],
     faq: [
       {
         q: "Where is the cable?",
@@ -145,6 +169,14 @@ export const REAPER_PRODUCTS: Record<ReaperProductHandle, ReaperProductGuide> = 
       "Leave the blower running the whole evening. It is what holds the screen up, and it is quieter than the film.",
       "The sound comes off your own speaker, so bring one out with the chairs.",
       "It packs down smaller than a folding chair. Everything goes back in the bag, and the bag goes in the garage.",
+    ],
+    inBox: [
+      "The screen — 12 ft wide, inflatable, stands on the grass",
+      "The projector — plays from a phone, a laptop or a stick",
+      "The blower, quiet enough to run all evening",
+      "Four ground pegs and tethers",
+      "Outdoor lead for the blower, HDMI for the projector",
+      "The bag it all goes back into",
     ],
     faq: [
       {
@@ -178,6 +210,13 @@ export const REAPER_PRODUCTS: Record<ReaperProductHandle, ReaperProductGuide> = 
       "It can also go out on the lawn: the adjustable stake mount angles it up a wall, and from about sixteen feet back the picture is thirteen feet wide.",
       "Outdoors, the housing is weather-sealed but the plug end has to stay dry. Use an outdoor socket cover.",
     ],
+    inBox: [
+      "The projector, with twelve loops built in",
+      "Ground stake mount, adjustable angle",
+      "Window film, for the indoor-glass effect",
+      "16 ft outdoor extension cord",
+      "Remote — loop and timer",
+    ],
     faq: [
       {
         q: "Does it make any noise?",
@@ -203,3 +242,12 @@ export function reaperProduct(handle: string | null | undefined): ReaperProductG
   if (!handle) return null;
   return (REAPER_PRODUCTS as Record<string, ReaperProductGuide>)[handle] ?? null;
 }
+
+/** Every product this shop has a guide for, for looking one up by name. */
+export const reaperHandles: ReaperProductHandle[] = [
+  "black-reaper",
+  "the-scream",
+  "crawling-zombie",
+  "halloween-movie-theater",
+  "haunted-projector",
+];
