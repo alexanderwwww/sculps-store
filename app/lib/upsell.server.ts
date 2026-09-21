@@ -45,10 +45,10 @@ export interface PostPurchaseOffer {
 
 /** Dollars off, never a percentage — the number has to be pictureable. */
 function discountFor(cents: number): number {
-  if (cents >= 20000) return 4000;
-  if (cents >= 10000) return 2500;
-  if (cents >= 5000) return 1500;
-  if (cents >= 2500) return 700;
+  if (cents >= 20000) return 6000;
+  if (cents >= 10000) return 3500;
+  if (cents >= 5000) return 2000;
+  if (cents >= 2500) return 1000;
   return 500;
 }
 
@@ -63,11 +63,15 @@ function discountFor(cents: number): number {
 /** The least we will charge a card for a post-purchase add. */
 const MIN_OFFER_CENTS = 100;
 
-export async function offerForOrder(db: DB, orderId: string): Promise<PostPurchaseOffer | null> {
+export async function offersForOrder(db: DB, orderId: string): Promise<PostPurchaseOffer[]> {
   const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
-  if (!order || order.paymentStatus !== "paid" || !order.paymentRef) return null;
-  // Taken or declined, this order is done being asked.
-  if (order.upsellState && order.upsellState !== "offered") return null;
+  if (!order || order.paymentStatus !== "paid" || !order.paymentRef) return [];
+  /* Only a no ends it.
+     This also stopped at "taken", so adding one thing closed the whole
+     shelf. The card is still on file after the first add and the page is
+     still open, so there is no reason the second one cannot be bought the
+     same way. Anything already on the order drops out below. */
+  if (order.upsellState === "declined") return [];
 
   const bought = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
   const boughtVariants = new Set(bought.map((l) => l.variantId).filter(Boolean) as string[]);
@@ -112,29 +116,30 @@ export async function offerForOrder(db: DB, orderId: string): Promise<PostPurcha
     seenProducts.add(r.productTitle);
     eligible.push(r);
   }
-  if (!eligible.length) return null;
 
-  let spin = 0;
-  for (const ch of orderId) spin = (spin * 31 + ch.charCodeAt(0)) >>> 0;
-  const pick = eligible[spin % eligible.length]!;
-
-  if (!pick) return null;
-
-  const saving = discountFor(pick.priceCents);
-  const offerCents = Math.max(MIN_OFFER_CENTS, pick.priceCents - saving);
-  const savingCents = pick.priceCents - offerCents;
-  // An offer that saves nothing is not an offer. Say nothing instead.
-  if (savingCents <= 0) return null;
-
-  return {
-    variantId: pick.variantId,
-    productTitle: pick.productTitle,
-    variantLabel: pick.label,
-    imageUrl: pick.variantImage ?? (pick.images ?? []).find((i) => i.url)?.url ?? null,
-    normalCents: pick.priceCents,
-    offerCents,
-    savingCents,
-  };
+  /* Everything, not one of them.
+     This used to rotate and show a single product, which meant four of the
+     five were never offered to anybody. The customer has paid and is
+     already looking at the page; the whole shelf costs nothing more to
+     show than one row of it does. */
+  const offers: PostPurchaseOffer[] = [];
+  for (const pick of eligible) {
+    const saving = discountFor(pick.priceCents);
+    const offerCents = Math.max(MIN_OFFER_CENTS, pick.priceCents - saving);
+    const savingCents = pick.priceCents - offerCents;
+    // An offer that saves nothing is not an offer. Leave it out.
+    if (savingCents <= 0) continue;
+    offers.push({
+      variantId: pick.variantId,
+      productTitle: pick.productTitle,
+      variantLabel: pick.label,
+      imageUrl: pick.variantImage ?? (pick.images ?? []).find((i) => i.url)?.url ?? null,
+      normalCents: pick.priceCents,
+      offerCents,
+      savingCents,
+    });
+  }
+  return offers;
 }
 
 export type TakeResult =
@@ -159,12 +164,11 @@ export async function takeOffer(
   if (!order || order.paymentStatus !== "paid" || !order.paymentRef) {
     return { ok: false, reason: "that order cannot take an add-on" };
   }
-  if (order.upsellState === "taken") return { ok: false, reason: "already added" };
-
   // Priced here, from the database, never from the form. A price that arrives
   // with the request is a price the customer can choose.
-  const offer = await offerForOrder(db, orderId);
-  if (!offer || offer.variantId !== variantId) {
+  const offers = await offersForOrder(db, orderId);
+  const offer = offers.find((o) => o.variantId === variantId);
+  if (!offer) {
     return { ok: false, reason: "that offer is no longer available" };
   }
 

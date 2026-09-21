@@ -19,7 +19,8 @@ import { metaConfig } from "~/db/schema";
 import { pixelScript, purchasePixelScript } from "~/lib/meta.server";
 import { readVisitorSession } from "~/lib/visitor.server";
 import { formatMoney } from "~/lib/money";
-import { offerForOrder, takeOffer, declineOffer } from "~/lib/upsell.server";
+import { offersForOrder, takeOffer, declineOffer } from "~/lib/upsell.server";
+import { orderReference } from "~/lib/email.server";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
 import mapCssHref from "maplibre-gl/dist/maplibre-gl.css?url";
 import { useEffect, useRef, useState } from "react";
@@ -152,10 +153,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
    * normal and silent — a shop with one product, or an order that already
    * holds everything cheap, simply gets no card.
    */
-  const offer =
+  const offers =
     paymentStatus === "paid"
-      ? await offerForOrder(context.db, loaded.order.id).catch(() => null)
-      : null;
+      ? await offersForOrder(context.db, loaded.order.id).catch(() => [])
+      : [];
 
   /*
    * The pin. The delivery app's receipt shows the house on a map, and that
@@ -173,28 +174,30 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     shipEstimate: store.shipEstimate ?? null,
     /** the offer is good for twenty minutes from now; the clock runs in the browser */
     offerUntil: Date.now() + 20 * 60 * 1000,
-    offer: offer
-      ? {
-          variantId: offer.variantId,
-          title: offer.productTitle,
-          label: offer.variantLabel,
-          imageUrl: offer.imageUrl,
-          normal: formatMoney(offer.normalCents, loaded.order.currency),
-          price: formatMoney(offer.offerCents, loaded.order.currency),
-          /* Whole dollars. The shop says "Save $15", never "Save $15.00" --
-             the price is exact, the saving is a headline. */
-          saving: formatMoney(
-            Math.round(offer.savingCents / 100) * 100,
-            loaded.order.currency,
-          ).replace(/([.,])00\b/, ""),
-        }
-      : null,
+    offers: offers.map((offer) => ({
+      variantId: offer.variantId,
+      title: offer.productTitle,
+      label: offer.variantLabel,
+      imageUrl: offer.imageUrl,
+      normal: formatMoney(offer.normalCents, loaded.order.currency),
+      price: formatMoney(offer.offerCents, loaded.order.currency),
+      /* Whole dollars. The shop says "Save $15", never "Save $15.00" --
+         the price is exact, the saving is a headline. */
+      saving: formatMoney(
+        Math.round(offer.savingCents / 100) * 100,
+        loaded.order.currency,
+      ).replace(/([.,])00\b/, ""),
+    })),
     orderId: loaded.order.id,
     pixel,
     store: { name: store.name, slug: store.slug, contactEmail: store.contactEmail, logoUrl: store.logoUrl },
     footerLinks: nav?.footer ?? [],
     order: {
-      number: loaded.order.number,
+      /* What the customer is shown. A sequential 1001 tells anyone who
+         looks that they are the first person ever to buy here; two letters
+         for the shop and six digits reads like a system and says nothing.
+         The sequential number stays in the admin, where it is useful. */
+      number: orderReference(store.name, loaded.order.number),
       email: loaded.order.email,
       customerName: loaded.order.customerName,
       address: [loaded.order.address1, loaded.order.address2, loaded.order.city, loaded.order.region, loaded.order.postalCode, loaded.order.country]
@@ -278,7 +281,7 @@ function ArrivalCard({
   address,
 }: {
   paid: boolean;
-  number: number;
+  number: string;
   shipEstimate: string | null;
   pin: { lat: number; lon: number; label: string } | null;
   address: string;
@@ -389,28 +392,71 @@ function Countdown({ until }: { until: number }) {
   return <span className="gb-th__clock">{m}:{String(s).padStart(2, "0")} left</span>;
 }
 
-function OfferCard({
-  offer,
+type OfferRow = Route.ComponentProps["loaderData"]["offers"][number];
+
+/** One product on the shelf: picture, name, what it costs here, one button. */
+function OfferItem({ offer, orderId }: { offer: OfferRow; orderId: string }) {
+  const fetcher = useFetcher<{ taken: boolean; error: string | null }>();
+  const busy = fetcher.state !== "idle";
+
+  if (fetcher.data?.taken) {
+    return (
+      <li className="up__item up__item--done">
+        {offer.imageUrl ? (
+          <span className="up__pic"><img src={offer.imageUrl} alt="" /></span>
+        ) : null}
+        <div className="up__body">
+          <b className="up__name">{offer.title}</b>
+          <span className="up__added">Added to your order — nothing more to pay.</span>
+        </div>
+      </li>
+    );
+  }
+
+  return (
+    <li className="up__item">
+      {offer.imageUrl ? (
+        <span className="up__pic"><img src={offer.imageUrl} alt="" /></span>
+      ) : null}
+      <div className="up__body">
+        <b className="up__name">{offer.title}</b>
+        <span className="up__label">{offer.label}</span>
+        <span className="up__price">
+          {offer.price} <s>{offer.normal}</s> <em>Save {offer.saving}</em>
+        </span>
+        {fetcher.data?.error ? <p className="up__err">{fetcher.data.error}</p> : null}
+        <fetcher.Form method="post">
+          <input type="hidden" name="orderId" value={orderId} />
+          <input type="hidden" name="variantId" value={offer.variantId} />
+          <button type="submit" className="up__yes" disabled={busy}>
+            {busy ? "Adding…" : `Add it — save ${offer.saving}`}
+          </button>
+        </fetcher.Form>
+      </div>
+    </li>
+  );
+}
+
+/**
+ * The shelf after the money has moved.
+ *
+ * Every product the order does not already hold, each at its own dollars
+ * off, each one tap on the card that is still on file. It used to be a
+ * single rotating card, which meant most of the shop was never offered to
+ * anybody at the one moment it costs nothing to offer it.
+ */
+function OfferShelf({
+  offers,
   orderId,
   until,
 }: {
-  until?: number;
-  offer: NonNullable<Route.ComponentProps["loaderData"]["offer"]>;
+  offers: OfferRow[];
   orderId: string;
+  until?: number;
 }) {
-  const fetcher = useFetcher<{ taken: boolean; error: string | null }>();
-  const busy = fetcher.state !== "idle";
-  const done = fetcher.data?.taken;
-  const gone = fetcher.data && !fetcher.data.taken && !fetcher.data.error;
-
-  if (gone) return null;
-  if (done) {
-    return (
-      <section className="up up--done">
-        <p><b>Added to your order.</b> It ships with everything else — nothing more to pay.</p>
-      </section>
-    );
-  }
+  const decliner = useFetcher<{ taken: boolean; error: string | null }>();
+  if (!offers.length) return null;
+  if (decliner.data && !decliner.data.taken && !decliner.data.error) return null;
 
   return (
     <section className="up">
@@ -418,29 +464,27 @@ function OfferCard({
         Add more for less
         {until ? <Countdown until={until} /> : null}
       </p>
-      <div className="up__row">
-        {offer.imageUrl ? (
-          <span className="up__pic"><img src={offer.imageUrl} alt="" /></span>
-        ) : null}
-        <div className="up__body">
-          <b className="up__name">{offer.title}</b>
-          <span className="up__label">{offer.label}</span>
-          <span className="up__price">
-            {offer.price} <s>{offer.normal}</s> <em>Save {offer.saving}</em>
-          </span>
-        </div>
-      </div>
-      {fetcher.data?.error ? <p className="up__err">{fetcher.data.error}</p> : null}
-      <fetcher.Form method="post" className="up__acts">
+      <p className="up__sub">
+        The card you just used is still on file. One tap adds it to this order and
+        it ships with everything else.
+      </p>
+      <ul className="up__list">
+        {offers.map((offer) => (
+          <OfferItem key={offer.variantId} offer={offer} orderId={orderId} />
+        ))}
+      </ul>
+      <decliner.Form method="post" className="up__acts">
         <input type="hidden" name="orderId" value={orderId} />
-        <input type="hidden" name="variantId" value={offer.variantId} />
-        <button type="submit" className="up__yes" disabled={busy}>
-          {busy ? "Adding…" : "Add it — one tap, card already on file"}
-        </button>
-        <button type="submit" name="intent" value="decline" className="up__no" disabled={busy}>
+        <button
+          type="submit"
+          name="intent"
+          value="decline"
+          className="up__no"
+          disabled={decliner.state !== "idle"}
+        >
           No thanks
         </button>
-      </fetcher.Form>
+      </decliner.Form>
     </section>
   );
 }
@@ -450,7 +494,7 @@ const BRANDED_THANKS = new Set(["garden-buddy", "ceiling-buddy", "reaper"]);
 const THANKS_SKIN: Record<string, string> = { reaper: "gb-co-sec--reaper" };
 
 export default function Thanks({ loaderData }: Route.ComponentProps) {
-  const { store, order, items, pixel, footerLinks, offer, orderId, pin, shipEstimate, offerUntil } = loaderData;
+  const { store, order, items, pixel, footerLinks, offers, orderId, pin, shipEstimate, offerUntil } = loaderData;
   const paid = order.paymentStatus === "paid";
 
   /* Garden Buddy: the last page a paying customer sees is the store's own,
@@ -501,7 +545,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
                   <span>Total</span>
                   <b>{order.total}</b>
                 </div>
-                {paid && offer ? <OfferCard offer={offer} orderId={orderId} until={offerUntil} /> : null}
+                {paid ? <OfferShelf offers={offers} orderId={orderId} until={offerUntil} /> : null}
                 {store.contactEmail ? (
                   <p className="gb-co__note">
                     Any questions, reply to your receipt or write to {store.contactEmail} and quote #{order.number}.
@@ -562,7 +606,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
             <strong>Total</strong>
             <strong>{order.total}</strong>
           </div>
-          {paid && offer ? <OfferCard offer={offer} orderId={orderId} /> : null}
+          {paid ? <OfferShelf offers={offers} orderId={orderId} /> : null}
 
           {store.contactEmail ? (
             <p className="gk-quiet" style={{ marginTop: 20 }}>

@@ -123,7 +123,7 @@ export async function afterPaymentConfirmed(
         // file for everyone and this is the line that makes it personal.
         shipCity: order.city,
         shipRegion: order.region,
-        reference: orderReference(store.slug, order.number),
+        reference: orderReference(store.name, order.number),
         // The standing thank-you, read out of the shop's own discounts. It
         // used to print "GET10" on every receipt — a code nothing in this
         // system has ever created, so the one person who tried to use it was

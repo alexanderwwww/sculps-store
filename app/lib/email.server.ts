@@ -81,12 +81,16 @@ export interface OrderEmailInput extends BrandFields {
  * store and six random digits reads like a real system and gives nothing
  * away. Uniqueness does not matter — the row id is the key, this is a label.
  */
-export function orderReference(storeSlug: string, orderNumber: number): string {
-  const prefix = storeSlug
-    .split("-")
+export function orderReference(storeLabel: string, orderNumber: number): string {
+  /* Initials of the words in the shop's name, so Black Reaper is BR. The
+     slug used to be split on hyphens alone, which turned a one-word slug
+     like "reaper" into R and then padded it to RX. */
+  const prefix = storeLabel
+    .split(/[\s_-]+/)
     .map((part) => part[0] ?? "")
     .join("")
     .toUpperCase()
+    .replace(/[^A-Z]/g, "")
     .slice(0, 2)
     .padEnd(2, "X");
   // Seeded off the order number so the same order always shows the same

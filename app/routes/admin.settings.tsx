@@ -696,7 +696,7 @@ export async function action({ context, request }: Route.ActionArgs) {
         lines: [{ label: top?.label ?? "Example bundle", quantity: 1, lineTotalCents: price, imageUrl: top?.image ?? null }],
         subtotalCents: price, taxCents: 0, shippingCents: 0, totalCents: price,
         shipCity: "Oviedo", shipRegion: "FL",
-        reference: orderReference(store.slug, 1001),
+        reference: orderReference(store.name, 1001),
         giftCode: "GET10", giftLabel: "$10 off your next one.",
       }).catch(() => false);
     } else if (kind === "shipping") {
