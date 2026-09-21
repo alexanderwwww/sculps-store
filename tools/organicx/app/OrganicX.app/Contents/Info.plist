@@ -5,8 +5,8 @@
   <key>CFBundleName</key><string>OrganicX</string>
   <key>CFBundleDisplayName</key><string>OrganicX</string>
   <key>CFBundleIdentifier</key><string>us.blackreaper.organicx</string>
-  <key>CFBundleVersion</key><string>1</string>
-  <key>CFBundleShortVersionString</key><string>1.0</string>
+  <key>CFBundleVersion</key><string>3</string>
+  <key>CFBundleShortVersionString</key><string>1.0.3</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleExecutable</key><string>OrganicX</string>
   <key>CFBundleIconFile</key><string>organicx</string>

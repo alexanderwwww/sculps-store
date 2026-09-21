@@ -29,7 +29,7 @@ import * as skills from "./skills.mjs";
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** This build. The control plane's runtime slot is compared against it. */
-export const BUILD = 1;
+export const BUILD = 3;
 
 const BASE =
   process.env.OX_BASE ??
