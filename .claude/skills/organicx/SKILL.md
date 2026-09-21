@@ -65,6 +65,10 @@ costing an account rather than building one.
 6. **The inspector approves or rejects** — a second agent doing Alex's job.
 7. **Post**, on a human schedule.
 
+All of that sits inside a day of ordinary behaviour — watching, liking,
+following, commenting — driven by the account's persona. Posting is one thing
+the account does, not the only thing. See `references/behaviour.md`.
+
 ### The inspector
 
 Nothing goes out without it. It checks four things:
@@ -133,6 +137,7 @@ Read the one that matches the task; do not load all of them.
 | `references/product-research.md` | Burners done properly, the keyword rabbit hole, software, manual research on Temu/AliExpress |
 | `references/validation.md` | What counts as viral, competitor limits, the full validation list for both methods |
 | `references/creatives.md` | The elements of a clip, iterations vs variations, the editing workflow, AI's real role |
+| `references/behaviour.md` | The persona system, session rhythm, engagement ratios, commenting, following, typing — how an account behaves like a person |
 | `references/accounts.md` | Phone setup, VPN, warming, primed Instagram accounts, posting cadence, equipment |
 | `references/diagnostics.md` | Views but no clicks, clicks but no add-to-cart, add-to-cart but no sales — what each one means |
 | `references/store.md` | Why the store barely matters, what actually does, the checkout test |
@@ -148,6 +153,11 @@ Same shape as Magic Wand, with one addition.
 - **Queue → inspector → approve → publish.** Alex sees everything before it goes
   out, the same way Magic Wand asks before it draws.
 - **Reports what it is doing**, in plain language, the way the wand's status does.
+- **Updates itself.** Version one ships with the update channel in it. Magic Wand
+  reached build 71 because every fix meant a rebuild and a reinstall; this one
+  takes fixes without Alex doing anything.
+- **Carries a persona per account**, written once and kept, so no two accounts
+  behave alike.
 
 ### Learned from Magic Wand — do not repeat
 
