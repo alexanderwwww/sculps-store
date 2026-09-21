@@ -212,6 +212,47 @@ Same shape as Magic Wand, with one addition.
 
 ## Things already settled — do not re-derive them
 
+**OrganicX is superseded by Organic (`tools/organic/`).** Alex asked for a whole
+new app with nothing shared: name Organic, bundle id `us.blackreaper.organic`,
+folder `~/Library/Application Support/Organic`, control plane `/organic/<key>`,
+tables `og_*`. The spec is `tools/organic/SPEC.md`; build to it. Do not revive
+OrganicX's control plane, tables or bundle.
+
+**The app is a native Swift window; Chrome is headless.** Alex never wants to
+see a Chrome window, tab, or about:blank. Every page is a "screen" streamed
+into the app's one window via CDP screencast; he signs in by clicking a screen
+(input is forwarded). One page per screen id, never a second context — the
+separate signed-out research window read to him as "three TikToks". Research
+happens in the account's own tab at human pace; the Ad Library gets its own
+`market` screen.
+
+**Chrome outlives a restart; adopt its tabs.** The self-update exits and comes
+back to the same Chrome with the same pages. Without adopting them by host it
+opened another Instagram on every build. Adopt, close duplicates.
+
+**A handle is never an email.** YouTube's account page prints the Google
+address; `@gmail.com` was recorded as a channel handle once. Nothing before the
+`@`, never a mailbox domain.
+
+**Instagram's handle comes from `/api/v1/accounts/current_user/?edit=true`**
+(fetched from instagram.com with `x-ig-app-id: 936619743392459`). The
+`/accounts/edit/` page redirects to Accounts Center now; the username input is
+gone. Proven on Alex's Mac: `@blackreaper.us`.
+
+**The Dock icon: the running app sets `NSApp.applicationIconImage` itself.**
+Bundle-id bumps, lsregister and Dock restarts were all tried on the old
+launcher and Alex still saw the old icon. Only the app drawing its own icon at
+runtime is independent of the cache.
+
+**No Mac here.** Swift cannot be compiled on this box; the launcher compiles
+`Shell/main.swift` on the Mac with the Command Line Tools on first open. Keep
+the Swift tiny and everything with logic in JavaScript, where it can be tested.
+
+**A blocking connect ceremony is wrong.** Waiting per platform for a sign-in
+blocked the loop, hid a pushed build for three minutes, and opened YouTube
+when Alex had said no YouTube. Platforms come from the brief; sign-in is
+polled, never waited on.
+
 **The dock icon is sized against a real dock, measured.** Not against Apple's
 grid in the abstract, and not against Magic Wand — the wand renders 114px in
 Alex's dock where every system icon renders 92-94, so matching it makes an app
