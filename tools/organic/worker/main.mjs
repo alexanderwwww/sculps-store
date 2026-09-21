@@ -20,6 +20,7 @@ import { openChrome, ask, sleep } from "./chrome.mjs";
 import { Screens, HOME, LOGIN } from "./screens.mjs";
 import { startServer } from "./server.mjs";
 import { connectCloud } from "./cloud.mjs";
+import { linkClaude } from "./claudelink.mjs";
 import { say, onSay, recent, nameOf } from "./crew.mjs";
 import * as accounts from "./accounts.mjs";
 import * as market from "./market.mjs";
@@ -30,7 +31,7 @@ import { isAwake, planDay, scatterAcrossDay, watchMs, react, dayBudget, scrollPa
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 2;
+export const BUILD = 3;
 
 const SUPPORT = process.env.ORGANIC_HOME || join(homedir(), "Library", "Application Support", "Organic");
 export const PATHS = {
@@ -86,6 +87,37 @@ function stateMsg() {
   };
 }
 const pushState = () => server?.broadcast(stateMsg());
+
+/**
+ * Tell Claude where to find this app, so nobody has to type a command.
+ *
+ * Alex should not have to open a terminal to use something he has already
+ * opened. This adds the app's MCP address to Claude's own config — additive,
+ * backed up, atomic — once per boot. Whatever it did, or did not do and why,
+ * is said in the ticker: it writes to a file he owns, so he should be able to
+ * read what happened to it.
+ */
+async function linkToClaude() {
+  const url = (cloud?.base ?? "") + "/mcp";
+  /*
+   * Only ever for the real control plane. A test points the app at a stub
+   * cloud, and a test must not write into whoever-is-running-it's config —
+   * it did exactly that once, on this machine, before this line existed.
+   */
+  if (process.env.ORGANIC_CLOUD || process.env.ORGANIC_NO_LINK === "1") return;
+  let results = [];
+  try {
+    results = await linkClaude(url);
+  } catch (e) {
+    say("organic", `could not reach Claude's config: ${e.message}`);
+    return;
+  }
+  const added = results.filter((r) => r.state === "added" || r.state === "updated").map((r) => r.what);
+  if (added.length) say("organic", `Claude can reach me now — added to ${added.join(" and ")}. Restart Claude to see it.`);
+  for (const p of results.filter((r) => String(r.state).startsWith("left alone"))) {
+    say("organic", `${p.what}: ${p.state}`);
+  }
+}
 
 function setScreen(id, state, handle) {
   const sc = S.screens[id];
@@ -882,6 +914,9 @@ export async function main() {
   server = await startServer({ dir: here, onMessage, state: stateMsg, recent: () => recent, hello: () => [planMsg(), ...Object.values(lastFrame)] });
   watchParent();
   say("organic", `build ${S.build} is up`);
+  // Not awaited: writing to a config file is nobody's reason to wait for a
+  // window.
+  linkToClaude().catch(() => {});
   await report();
 
   say("organic", "opening chrome");

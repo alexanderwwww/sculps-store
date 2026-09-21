@@ -3,13 +3,15 @@
  * UI opened in a second browser. Three boots on one Chrome:
  *   1. nothing signed in → setup, three cards, live frames, connect → waiting
  *   2. an "update" order → files written, BUILD advanced, exit 75
- *   3. cookies say tiktok is signed in → straight to working, build 2, grid
+ *   3. cookies say tiktok is signed in → straight to working, the new build, grid
  */
 import { spawn, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { mkdir, cp, readFile, writeFile, access } from "node:fs/promises";
 import { chromium } from "playwright";
+import { BUILD } from "../worker/main.mjs";
+const NEXT = BUILD + 1;
 import { check, failures, until, sleep } from "./lib.mjs";
 import { cloudStub } from "./_cloud-stub.mjs";
 
@@ -32,7 +34,7 @@ if (!(await exists(join(WORKER, "node_modules")))) execSync(`ln -s ${join(here, 
 let pendingOrder = null;
 const cloud = await cloudStub({
   order: () => { const o = pendingOrder; pendingOrder = null; return o; },
-  runtime: () => ({ build: 2, files: { "ui/index.html": "<!doctype html><title>Organic</title><body>updated ui", "skills/hello.md": "# hi", "../evil.mjs": "nope", "notes.txt": "nope" } }),
+  runtime: () => ({ build: NEXT, files: { "ui/index.html": "<!doctype html><title>Organic</title><body>updated ui", "skills/hello.md": "# hi", "../evil.mjs": "nope", "notes.txt": "nope" } }),
   brief: () => ({ store: "Test Store", storeUrl: "https://store.test/", products: ["Widget"], market: ["widget deal"], platforms: ["instagram", "tiktok", "youtube"], notes: "#widgets" }),
 });
 
@@ -92,13 +94,13 @@ await sleep(800);
 check("ok without a connection stays in setup", await page.evaluate(() => window.__organic.phase) === "setup");
 const dbOps = cloud.calls.map((c) => c.op);
 check("nothing was recorded as connected", !dbOps.includes("markConnected"));
-check("the cloud got status and log", cloud.statuses.length >= 1 && cloud.logs.some((l) => /build 1 is up/.test(l.what)));
+check("the cloud got status and log", cloud.statuses.length >= 1 && cloud.logs.some((l) => l.what === `build ${BUILD} is up`));
 
 /* ---------------------------------------------------------------- boot 2: update */
 pendingOrder = { cmd: "update" };
 const code = await Promise.race([w.exit(), sleep(30000).then(() => "timeout")]);
 check("an update order exits 75", code === 75, String(code));
-check("BUILD advanced on disk", (await readFile(join(WORKER, "BUILD"), "utf8")).trim() === "2");
+check("BUILD advanced on disk", (await readFile(join(WORKER, "BUILD"), "utf8")).trim() === String(NEXT));
 check("ui/index.html was replaced", (await readFile(join(WORKER, "ui", "index.html"), "utf8")).includes("updated ui"));
 check("skills/hello.md was written", await exists(join(WORKER, "skills", "hello.md")));
 check("bad names were refused", !(await exists(join(HOME, "evil.mjs"))) && !(await exists(join(WORKER, "notes.txt"))));
@@ -113,7 +115,7 @@ const port3 = await until(w.port, 20000);
 check("boot 3 binds the same ORGANIC_PORT", port3 === port, `${port3} vs ${port}`);
 await until(() => page.evaluate(() => window.__organic?.phase === "working").catch(() => false), 60000);
 check("the window reconnected on its own and is working", await page.evaluate(() => window.__organic.phase) === "working");
-check("build 2 is what runs now", await page.evaluate(() => window.__organic.build) === 2);
+check("the pushed build is what runs now", await page.evaluate(() => window.__organic.build) === NEXT);
 check("tiktok shows its handle", await page.evaluate(() => window.__organic.screens.tiktok.handle) === "@tester");
 const ops3 = cloud.calls.map((c) => c.op);
 check("markConnected was recorded", ops3.includes("markConnected"));

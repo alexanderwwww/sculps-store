@@ -568,8 +568,11 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
   const what = parts[1] ?? "";
 
   /* The app's own mark, for any client that draws one next to a tool call. */
-  if (what === "icon.png") {
-    const obj = await env.MEDIA.get("og-icon.png");
+  if (what === "icon.png" || what === "icon-256.png") {
+    /* The connector icon: the leaves with the black surround cut away, at a
+       size a list of connectors actually draws. The original stays where it
+       is — an R2 key is never written twice. */
+    const obj = await env.MEDIA.get(what === "icon-256.png" ? "og-icon-256.png" : "og-icon-512.png");
     if (!obj) return new Response("no", { status: 404 });
     return new Response(obj.body, {
       headers: {
@@ -639,6 +642,11 @@ export async function action({ params, request, context }: Route.ActionArgs) {
           icons: [
             {
               src: `https://kerberos.gardenbuddystore.workers.dev/organic/${KEY}/icon.png`,
+              mimeType: "image/png",
+              sizes: ["512x512"],
+            },
+            {
+              src: `https://kerberos.gardenbuddystore.workers.dev/organic/${KEY}/icon-256.png`,
               mimeType: "image/png",
               sizes: ["256x256"],
             },
