@@ -10,7 +10,7 @@
  * chrome and live here in code. Nothing on this page is invented — a section
  * with no content renders nothing rather than a placeholder.
  */
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { LoadedProductPage, LoadedSection } from "~/lib/store.server";
 import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
@@ -476,6 +476,30 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
     ? own.map((x, i) => ({ id: `p${i}`, values: { image: x.url, alt: x.alt } }))
     : section.blocks.filter((b) => has(b.values, "image"));
   const [shot, setShot] = useState(0);
+  /*
+   * The pictures are a swipe track, not one picture that a thumbnail swaps.
+   *
+   * Every slide is in the DOM and the browser does the scrolling, so a thumb
+   * gets real momentum and rubber-banding on iOS rather than a JS gesture
+   * handler pretending to. The thumbnails stay: they move the track, and the
+   * track moves them back.
+   */
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const goTo = useCallback((i: number) => {
+    setShot(i);
+    const track = trackRef.current;
+    if (!track) return;
+    const slide = track.children[i] as HTMLElement | undefined;
+    if (slide) track.scrollTo({ left: slide.offsetLeft, behavior: "smooth" });
+  }, []);
+  /* Which slide is in front, read from where the track actually is. */
+  const onTrackScroll = useCallback(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+    setShot((was) => (was === i ? was : Math.max(0, Math.min(shotsLength.current - 1, i))));
+  }, []);
+  const shotsLength = useRef(0);
   const variants = page.variants;
   const fallbackId = (variants.find((x) => x.isDefault) ?? variants[0])?.id ?? "";
   const { id: picked, set: setPicked } = usePicked(fallbackId);
@@ -491,22 +515,47 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
     formatMoney(Math.round(cents / 100) * 100, currency).replace(/([.,])00\b/, "");
   const currency = page.store.currency;
   const main = shots[shot];
+  shotsLength.current = shots.length;
 
   return (
     <section className="cb-buy" id="buy">
       <div className="cb-wrap cb-buy__grid">
         <div className="cb-gal">
           <div className="cb-gal__main">
-            {main ? (
-              <img
-                src={val(main.values, "image")}
-                alt={val(main.values, "alt") || page.product.title}
-                /* This one shows whichever thumbnail was last pressed, so the
-                   editor must not tie it to a field — see matchMedia. */
-                data-ed-live="1"
-              />
-            ) : null}
+            <div
+              className="cb-gal__track"
+              ref={trackRef}
+              onScroll={onTrackScroll}
+              /* A horizontal list of pictures, said so for anyone not looking. */
+              role="group"
+              aria-roledescription="carousel"
+              aria-label={`${page.product.title} — ${shots.length} photos`}
+            >
+              {shots.map((b, i) => (
+                <div className="cb-gal__slide" key={b.id} aria-hidden={i === shot ? undefined : true}>
+                  <img
+                    src={val(b.values, "image")}
+                    alt={i === shot ? val(b.values, "alt") || page.product.title : ""}
+                    /* The first one is what the page is for; the rest can wait
+                       until a thumb actually asks for them. */
+                    loading={i === 0 ? "eager" : "lazy"}
+                    decoding={i === 0 ? "sync" : "async"}
+                    /* The editor watches whichever picture is in front, so it
+                       must not be tied to a field — see matchMedia. */
+                    {...(i === shot ? { "data-ed-live": "1" } : {})}
+                    draggable={false}
+                  />
+                </div>
+              ))}
+            </div>
             <div className="cb-gal__glow" />
+            {shots.length > 1 ? (
+              <div className="cb-gal__dots" aria-hidden="true">
+                {shots.map((b, i) => (
+                  <span key={b.id} className={i === shot ? "is-on" : undefined} />
+                ))}
+              </div>
+            ) : null}
           </div>
           {shots.length > 1 ? (
             <div className="cb-gal__strip">
@@ -517,7 +566,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                   className="cb-gal__thumb"
                   aria-current={i === shot}
                   aria-label={`Photo ${i + 1}`}
-                  onClick={() => setShot(i)}
+                  onClick={() => goTo(i)}
                 >
                   <Pic src={val(b.values, "image")} size="t200" alt="" loading="lazy" />
                 </button>

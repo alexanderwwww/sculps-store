@@ -998,7 +998,50 @@
   display: grid; place-items: center;
   overflow: hidden;
 }
-.cb-gal__main img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+
+/* The pictures swipe.
+   Every slide is in the track and the browser does the scrolling, so a thumb
+   gets real momentum and rubber-banding instead of a JS gesture handler
+   imitating them. The thumbnails still work — they move the track, and the
+   track moves them back. */
+.cb-gal__main { position: relative; display: block; }
+.cb-gal__track {
+  display: flex;
+  width: 100%; height: 100%;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* The page still scrolls vertically; only the sideways drag is claimed. */
+  touch-action: pan-y pinch-zoom;
+  scroll-behavior: smooth;
+}
+.cb-gal__track::-webkit-scrollbar { display: none; }
+.cb-gal__slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  display: grid; place-items: center;
+  min-width: 0;
+}
+.cb-gal__main img {
+  width: 100%; height: 100%; object-fit: contain; padding: 10px;
+  /* A long-press should not start a drag of the picture itself. */
+  -webkit-user-drag: none; user-select: none;
+}
+/* Where you are in the strip, for a thumb that has not looked down yet. */
+.cb-gal__dots {
+  position: absolute; left: 0; right: 0; bottom: 10px;
+  display: flex; gap: 6px; justify-content: center;
+  pointer-events: none;
+}
+.cb-gal__dots span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(11, 11, 12, .22);
+  transition: background .18s ease, width .18s ease;
+}
+.cb-gal__dots span.is-on { width: 18px; border-radius: 3px; background: var(--action); }
+
 .cb-gal__strip { gap: 8px; margin-top: 10px; }
 .cb-gal__thumb {
   width: 62px; height: 62px;
