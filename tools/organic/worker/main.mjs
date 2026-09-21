@@ -129,6 +129,10 @@ async function maybeUpdate() {
   const current = await running();
   const build = Number(runtime?.build);
   if (!Number.isFinite(build) || build <= current) return false;
+  // A build that would not start: the launcher fell back to the bundle and wrote its number here. Never pull it again.
+  let bad = 0;
+  try { bad = Number((await readFile(join(PATHS.worker, "BAD"), "utf8")).trim()) || 0; } catch { /* none */ }
+  if (build <= bad) return false;
   say("organic", `updating to build ${build}`);
   await mkdir(PATHS.worker, { recursive: true });
   let wrote = 0;
@@ -157,6 +161,10 @@ async function checkOrders() {
   if (cmd === "resume" || cmd === "run") { S.paused = false; S.stopped = false; if (cmd === "run") sched.marketNext = 0; }
   if (cmd === "stop") S.stopped = true;
   if (cmd === "update") await maybeUpdate();
+  const connect = /^connect(?: (\w+))?$/.exec(cmd);
+  if (connect) {
+    for (const p of connect[1] ? [connect[1]] : PLATFORMS) if (S.screens[p]?.state !== "connected") await connectScreen(p);
+  }
   pushState();
 }
 
@@ -629,7 +637,7 @@ async function sessionTask(ctx, platform, job) {
     const r = react(persona, { interesting, budget });
     if (r.like && liked < budget.like) {
       const hit = await tryLike(ctx, platform, handle);
-      if (hit) { liked++; budget.like--; if (accountId) await cloud.db.act(accountId, "like", { target_url: page.url(), dwell_ms: dwell }).catch(() => {}); }
+      if (hit) { liked++; budget.like--; if (accountId) await cloud.db.act(accountId, "like", { targetUrl: page.url(), dwellMs: dwell }).catch(() => {}); }
     }
     if (shouldRest()) await sleep(around(2600, 1200, 800, 7000));
 
@@ -730,8 +738,9 @@ async function startWorking() {
   pushState();
   say("organic", `working — ${connectedIds().map((p) => S.screens[p].handle).join(", ")}`);
   if (S.screens.youtube.state !== "connected") {
-    // YouTube is a screen only when it is connected.
+    // YouTube is a screen only when it is connected. "Connect" in the window opens it again.
     await screens.close("youtube").catch(() => {});
+    setScreen("youtube", "none", null);
   }
   await openScreen("market").catch((e) => say("reyna", `could not open the market screen: ${e.message}`));
   setScreen("market", "connected", "Ad Library");
@@ -743,13 +752,19 @@ async function startWorking() {
   schedulerTick();
 }
 
-/** Setup: watch the waiting screens every 3 s, the others every 15 s. */
+/**
+ * Watch for sign-ins: in setup every screen that is not connected (waiting
+ * ones every 3 s, the others every 15 s); while working, only the screens
+ * Alex asked to connect and the ones that signed out — so YouTube can be
+ * connected after the fact, and a re-login is picked up without a click.
+ */
 const lastLook = {};
 async function setupPoll() {
-  if (S.phase !== "setup" || quitting) return;
+  if (quitting) return;
   for (const platform of PLATFORMS) {
     const sc = S.screens[platform];
     if (sc.state === "connected" || !screens.page(platform)) continue;
+    if (S.phase === "working" && sc.state !== "waiting" && sc.state !== "out") continue;
     const gap = sc.state === "waiting" ? 3000 : 15000;
     if (Date.now() - (lastLook[platform] ?? 0) < gap - 200) continue;
     lastLook[platform] = Date.now();
@@ -758,6 +773,22 @@ async function setupPoll() {
 }
 
 /* --------------------------------------------------------- the window */
+
+/**
+ * Put a platform's screen at its login page and watch it (setupPoll). In
+ * either phase: a platform left out at setup — YouTube, usually — is opened
+ * again here. A screen already waiting is left where Alex is on it.
+ */
+async function connectScreen(platform) {
+  const sc = S.screens[platform];
+  if (!sc || !PLATFORMS.includes(platform) || sc.state === "connected") return;
+  if (sc.state === "waiting" && screens.page(platform)) return;
+  if (!screens.page(platform)) await openScreen(platform).catch((e) => say("sam", `could not open ${platform}: ${e.message}`));
+  if (!screens.page(platform)) return;
+  setScreen(platform, "waiting", null);
+  say("sam", `opening ${platform} — sign in on the screen and I will pick it up`);
+  await screens.navigate(platform, LOGIN[platform]);
+}
 
 async function onMessage(msg) {
   switch (msg.t) {
@@ -769,15 +800,9 @@ async function onMessage(msg) {
       // The page is Alex's only while he has it focused.
       if (screens.focused === msg.id) await screens.input(msg.id, msg);
       break;
-    case "connect": {
-      const sc = S.screens[msg.platform];
-      if (!sc || sc.state === "connected") break;
-      if (!screens.page(msg.platform)) await openScreen(msg.platform).catch(() => {});
-      setScreen(msg.platform, "waiting", null);
-      say("sam", `opening ${msg.platform} — sign in on the screen and I will pick it up`);
-      await screens.navigate(msg.platform, LOGIN[msg.platform]);
+    case "connect":
+      await connectScreen(msg.platform);
       break;
-    }
     case "ok":
       if (connectedIds().length >= 1) await startWorking();
       else say("sam", "connect at least one account first");
@@ -799,9 +824,15 @@ async function onMessage(msg) {
 async function shutdown(code = 0, { keepChrome = code === 75 } = {}) {
   if (quitting) return;
   quitting = true;
+  // Whatever hangs below, the process ends: a restart on 75 must not wait on a Chrome that stopped answering.
+  setTimeout(() => process.exit(code), 8000).unref();
   try { await screens?.dispose(); } catch { /* fine */ }
   try { await report(); } catch { /* fine */ }
   try { await server?.close(); } catch { /* fine */ }
+  if (!keepChrome && browser && !chromeChild) {
+    // Attached, not started (a restart before this one): close() would only disconnect and leave a headless Chrome behind.
+    try { const s = await browser.newBrowserCDPSession(); await s.send("Browser.close"); } catch { /* already gone */ }
+  }
   try { await browser?.close(); } catch { /* disconnects only */ }
   if (!keepChrome && chromeChild && !chromeChild.killed) { try { chromeChild.kill(); } catch { /* gone */ } }
   process.exit(code);
@@ -814,10 +845,16 @@ function watchParent() {
       try { process.kill(pid, 0); } catch { say("organic", "the app closed — stopping"); shutdown(0); }
     }, 5000).unref();
   }
-  process.stdin.on("end", () => shutdown(0));
-  process.stdin.on("close", () => shutdown(0));
-  process.stdin.on("error", () => {});
-  process.stdin.resume();
+  // The launcher starts the worker as a background job, whose stdin bash
+  // points at /dev/null: it reads EOF at once. With a parent pid to watch,
+  // stdin says nothing about the window; without one (tests, a terminal)
+  // its end is the signal to go.
+  if (!(Number.isFinite(pid) && pid > 0)) {
+    process.stdin.on("end", () => shutdown(0));
+    process.stdin.on("close", () => shutdown(0));
+    process.stdin.on("error", () => {});
+    process.stdin.resume();
+  }
   process.on("SIGTERM", () => shutdown(0));
   process.on("SIGINT", () => shutdown(0));
 }
@@ -838,6 +875,9 @@ export async function main() {
   say("organic", "opening chrome");
   let started = false;
   ({ browser, child: chromeChild, started } = await openChrome({ port: CDP_PORT, profile: PATHS.chrome }));
+  // Chrome gone (crashed, killed): every page call would fail quietly and the crew would idle for ever.
+  // Restart the worker instead; it opens a fresh Chrome and the window reconnects.
+  browser.on("disconnected", () => { if (!quitting) { say("organic", "chrome went away — restarting"); shutdown(75, { keepChrome: true }); } });
   screens = new Screens(browser);
   screens.on("frame", (f) => { lastFrame[f.id] = { t: "frame", ...f }; if (server.hasClients()) server.broadcast(lastFrame[f.id]); });
   screens.on("cursor", (c) => server.broadcast(c));

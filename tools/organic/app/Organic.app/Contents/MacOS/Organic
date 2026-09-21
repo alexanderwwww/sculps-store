@@ -13,6 +13,8 @@ APP_ROOT="$(cd "$HERE/../.." && pwd)"
 SUPPORT="$HOME/Library/Application Support/Organic"
 LOG="$SUPPORT/log/organic.log"
 mkdir -p "$SUPPORT/chrome" "$SUPPORT/worker" "$SUPPORT/bin" "$SUPPORT/log"
+# Every crew line lands in the log; kept to one generation past 8 MB.
+if [ -f "$LOG" ] && [ "$(stat -f%z "$LOG" 2>/dev/null || echo 0)" -gt 8000000 ]; then mv -f "$LOG" "$LOG.1"; fi
 
 # launchd's PATH has none of Homebrew in it. Every "node is not installed"
 # alert the old app ever showed was this line missing.
@@ -89,12 +91,29 @@ export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
 # The worker, restarted on 75 (it updated itself) and left alone otherwise.
 # It watches the window's pid and exits when the window is gone.
+#
+# A pushed build that dies within its first half minute is put aside: the
+# bundle's build is copied back, the bad number is written to worker/BAD so
+# the worker never pulls it again, and the worker is started once more.
 (
   cd "$SUPPORT/worker" || exit 1
+  recovered=0
   while :; do
+    started=$(date +%s)
     node main.mjs >> "$LOG" 2>&1
     code=$?
     if [ "$code" -eq 75 ]; then say "worker restarting on a new build"; continue; fi
+    running="$(tr -dc '0-9' < "$SUPPORT/worker/BUILD" 2>/dev/null)"; running="${running:-0}"
+    if [ "$code" -ne 0 ] && [ "$recovered" -eq 0 ] && [ "$running" -gt "$BUNDLE_BUILD" ] && [ $(( $(date +%s) - started )) -lt 30 ]; then
+      recovered=1
+      say "build $running died at start (code $code) — back to the bundled build $BUNDLE_BUILD"
+      echo "$running" > "$SUPPORT/worker/BAD"
+      cp -R "$HERE/worker/." "$SUPPORT/worker/"
+      echo "$BUNDLE_BUILD" > "$SUPPORT/worker/BUILD"
+      /usr/bin/osascript -e 'on run argv' -e 'display alert "Organic" message (item 1 of argv)' -e 'end run' \
+        "Build $running would not start, so Organic is back on its bundled build. Tell Claude: the last push is bad." >/dev/null 2>&1
+      continue
+    fi
     if [ "$code" -ne 0 ] && kill -0 "$ORGANIC_PARENT_PID" 2>/dev/null; then
       /usr/bin/osascript -e 'on run argv' -e 'display alert "Organic" message (item 1 of argv)' -e 'end run' \
         "The worker stopped (code $code). Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')" >/dev/null 2>&1

@@ -69,6 +69,29 @@ const VK = {
   ";": 186, "=": 187, ",": 188, "-": 189, ".": 190, "/": 191, "`": 192, "[": 219, "\\": 220, "]": 221, "'": 222,
 };
 
+/**
+ * On a Mac, Chrome does not turn a synthetic ⌘V into a paste by itself: the
+ * editing command has to ride along with the key event (what Playwright does
+ * for its own keyboard). Without this, pasting a password into a sign-in
+ * screen types nothing.
+ */
+const MAC_COMMANDS = {
+  "Meta+KeyA": "selectAll", "Meta+KeyC": "copy", "Meta+KeyX": "cut", "Meta+KeyV": "paste",
+  "Meta+KeyZ": "undo", "Shift+Meta+KeyZ": "redo",
+  "Meta+Backspace": "deleteToBeginningOfLine", "Meta+ArrowLeft": "moveToLeftEndOfLine", "Meta+ArrowRight": "moveToRightEndOfLine",
+  "Shift+Meta+ArrowLeft": "moveToLeftEndOfLineAndModifySelection", "Shift+Meta+ArrowRight": "moveToRightEndOfLineAndModifySelection",
+};
+function macCommands(code, modifiers) {
+  if (process.platform !== "darwin" || !(modifiers & MOD.meta)) return [];
+  const parts = [];
+  if (modifiers & MOD.shift) parts.push("Shift");
+  if (modifiers & MOD.ctrl) parts.push("Control");
+  if (modifiers & MOD.alt) parts.push("Alt");
+  parts.push("Meta", code);
+  const c = MAC_COMMANDS[parts.join("+")];
+  return c ? [c] : [];
+}
+
 function virtualKey(key) {
   if (!key) return 0;
   if (VK[key] !== undefined) return VK[key];
@@ -376,6 +399,8 @@ export class Screens extends EventEmitter {
         const text = typeof msg.text === "string" && msg.text.length ? msg.text : undefined;
         const vk = virtualKey(key);
         const base = { key, code, modifiers, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk };
+        const commands = macCommands(code, modifiers);
+        if (commands.length) base.commands = commands;
         if (msg.kind === "down") {
           // With text, keyDown carries the character and Chrome inserts it.
           await session.send("Input.dispatchKeyEvent", text ? { ...base, type: "keyDown", text, unmodifiedText: text } : { ...base, type: "rawKeyDown" });

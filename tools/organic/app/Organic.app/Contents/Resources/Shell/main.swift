@@ -38,8 +38,9 @@ final class Delegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKU
     window.minSize = NSSize(width: 1000, height: 700)
     window.backgroundColor = .white
     window.isReleasedWhenClosed = false
+    // Centered on the first run; from then on the autosave name restores where Alex left it.
+    window.center()
     window.setFrameAutosaveName("OrganicMain")
-    if window.frame.width < 100 { window.center() }
 
     let config = WKWebViewConfiguration()
     config.preferences.setValue(true, forKey: "developerExtrasEnabled")

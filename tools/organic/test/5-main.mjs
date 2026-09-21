@@ -33,7 +33,7 @@ let pendingOrder = null;
 const cloud = await cloudStub({
   order: () => { const o = pendingOrder; pendingOrder = null; return o; },
   runtime: () => ({ build: 2, files: { "ui/index.html": "<!doctype html><title>Organic</title><body>updated ui", "skills/hello.md": "# hi", "../evil.mjs": "nope", "notes.txt": "nope" } }),
-  brief: () => ({ store: "Test Store", storeUrl: "https://store.test/", products: ["Widget"], market: ["widget deal"], platforms: ["instagram", "tiktok"], notes: "#widgets" }),
+  brief: () => ({ store: "Test Store", storeUrl: "https://store.test/", products: ["Widget"], market: ["widget deal"], platforms: ["instagram", "tiktok", "youtube"], notes: "#widgets" }),
 });
 
 function boot(extraEnv = {}) {
@@ -144,6 +144,25 @@ check("a tag pass discovered tags for the next sweep", Boolean(remembered) && re
 check("clips from the pass were saved", cloud.calls.some((c) => c.op === "saveClip") && cloud.calls.some((c) => c.op === "saveFinding" && c.args?.finding?.kind === "clip"));
 const moves = await page.evaluate(() => window.__organic.cursorMoves || 0);
 check("the crew cursor moved many times (real mouse glides)", moves >= 8, String(moves));
+
+// Connect a platform from the brief after setup: YouTube was closed at OK; the pill offers it, and the worker opens it again.
+check("youtube is not a tile while not connected", (await page.$$eval("#grid > .tile", (els) => els.filter((e) => e.style.display !== "none").length)) === 4);
+const ytBtn = (await page.$$("#pillDots button.can")).at(-1);
+check("the pill offers to connect the brief's missing platform", Boolean(ytBtn) && /YouTube/.test(await ytBtn.evaluate((b) => b.title)), ytBtn ? await ytBtn.evaluate((b) => b.title) : "none");
+await ytBtn.click();
+const ytWaiting = await until(() => page.evaluate(() => window.__organic.screens.youtube.state === "waiting").catch(() => false), 15000);
+check("connect while working marks youtube waiting", Boolean(ytWaiting));
+check("...and the screen is focused for the sign-in", await page.$eval("#focus", (e) => e.classList.contains("on")));
+await page.keyboard.press("Escape");
+check("Escape returns to the grid", !(await page.$eval("#focus", (e) => e.classList.contains("on"))));
+{
+  const peek = await chromium.connectOverCDP(`http://127.0.0.1:${CDP}`);
+  const live = peek.contexts()[0].pages().filter((p) => !p.isClosed());
+  check("four pages, no strays (instagram, tiktok, market, youtube)", live.length === 4, live.map((p) => p.url()).join(" "));
+  await peek.close();
+}
+await sleep(3500);
+check("a waiting screen is polled while working (still waiting, not connected)", await page.evaluate(() => window.__organic.screens.youtube.state) === "waiting");
 
 w.child.stdin.end();
 const code3 = await Promise.race([w.exit(), sleep(15000).then(() => "timeout")]);

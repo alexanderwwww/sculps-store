@@ -193,8 +193,14 @@
   #pill .text .l span { color: var(--ink-2); }
   #pill .bar { height: 3px; border-radius: 3px; background: rgba(11,13,15,.08); overflow: hidden; }
   #pill .bar i { display: block; height: 100%; width: 0; background: var(--green); box-shadow: 0 0 10px rgba(57,255,122,.8); transition: width .6s ease; }
-  #pill .dots { display: flex; gap: 7px; padding: 0 4px; }
+  #pill .dots { display: flex; gap: 4px; padding: 0 2px; }
   #pill .dots .dot { width: 8px; height: 8px; }
+  /* A platform in the brief that is not connected yet: its dot is the way to connect it. */
+  #pill .dots button { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 999px; cursor: default; }
+  #pill .dots button.can { cursor: pointer; }
+  #pill .dots button.can:hover { background: rgba(11,13,15,.06); }
+  #pill .dots button .k { display: none; font-size: 11px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+  #pill .dots button.can .k { display: inline; }
   #stopBtn { height: 32px; padding: 0 14px; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 12px; }
   #stopBtn.resume { background: var(--green); color: #05220f; }
 
@@ -310,7 +316,7 @@
     screen.append(empty, hint);
     screen.addEventListener("click", () => focus(id));
     const btn = el("button", "connect", "Connect");
-    btn.addEventListener("click", () => { send({ t: "connect", platform: id }); focus(id); });
+    btn.addEventListener("click", () => { if ((S.screens[id] || {}).state !== "waiting") send({ t: "connect", platform: id }); focus(id); });
     c.append(head, screen, btn);
     cardsEl.append(c);
     cards[id] = { root: c, dot, meta, handle, screen, btn };
@@ -432,10 +438,17 @@
     pill.classList.toggle("paused", S.paused && !S.stopped);
     pill.classList.toggle("stopped", S.stopped);
     const dots = $("#pillDots"); dots.textContent = "";
+    const wanted = S.brief && Array.isArray(S.brief.platforms) && S.brief.platforms.length ? S.brief.platforms : ORDER;
     for (const id of ORDER) {
-      const d = el("i", "dot " + ((S.screens[id] && S.screens[id].state) || "none"));
-      d.title = PLATFORM[id] + (S.screens[id] && S.screens[id].handle ? " · " + S.screens[id].handle : "");
-      dots.append(d);
+      const sc = S.screens[id] || { state: "none" };
+      const st = sc.state || "none";
+      // Not connected and in the brief → a button that opens that screen at its sign-in page.
+      const can = st !== "connected" && st !== "checking" && wanted.includes(id);
+      const b = el("button", "d" + (can ? " can" : ""));
+      b.append(el("i", "dot " + st), el("span", "k", st === "waiting" ? "sign in to " + PLATFORM[id] : "connect " + PLATFORM[id]));
+      b.title = PLATFORM[id] + (sc.handle ? " · " + sc.handle : can ? " · click to connect" : "");
+      if (can) b.addEventListener("click", () => { if (st !== "waiting") send({ t: "connect", platform: id }); focus(id); });
+      dots.append(b);
     }
     const b = $("#stopBtn");
     b.textContent = S.stopped ? "Resume" : S.paused ? "Resume" : "Stop";
@@ -586,7 +599,7 @@
         sawState = true;
         clearTimeout(disconnectTimer); toast("", false);
         const was = S.phase;
-        S.phase = m.phase; S.build = m.build; S.paused = !!m.paused; S.stopped = !!m.stopped;
+        S.phase = m.phase; S.build = m.build; S.paused = !!m.paused; S.stopped = !!m.stopped; S.brief = m.brief || null;
         S.screens = {};
         for (const sc of m.screens || []) S.screens[sc.id] = sc;
         if (was !== m.phase && S.focused) unfocus();
