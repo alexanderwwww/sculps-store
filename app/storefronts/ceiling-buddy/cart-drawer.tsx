@@ -88,6 +88,7 @@ export function CartDrawerProvider({
      component says when it is ready; until it does the slot is not in the
      row at all and PayPal has the width to itself. */
   const [walletReady, setWalletReady] = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
   const fetcher = useFetcher<CartPayload>();
   const loaded = useRef(false);
 
@@ -136,6 +137,40 @@ export function CartDrawerProvider({
     },
     [reload, storeParam],
   );
+
+  /* The discount code, in the cart.
+     The server has taken one on POST /cart since before this drawer existed
+     -- checkout has the box, the drawer never did, so anybody holding a code
+     had to carry it to the next page and hope.
+
+     Submitted through a fetcher rather than a bare fetch: a plain POST to a
+     route is a document request, so React Router answers it with HTML and
+     `response.json()` throws. The code applied and the drawer still said it
+     had failed. */
+  const codeFetcher = useFetcher<{ ok: boolean; discountError: string | null }>();
+  const codeBusy = codeFetcher.state !== "idle";
+
+  const applyCode = useCallback(
+    (code: string) => {
+      setCodeError(null);
+      codeFetcher.submit({ intent: "discount", code }, { method: "post", action: href("/cart") });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [storeParam],
+  );
+
+  const dropCode = useCallback(() => {
+    setCodeError(null);
+    codeFetcher.submit({ intent: "discount-remove" }, { method: "post", action: href("/cart") });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeParam]);
+
+  // When it answers, show what it said and re-read the priced cart.
+  useEffect(() => {
+    if (codeFetcher.state !== "idle" || !codeFetcher.data) return;
+    setCodeError(codeFetcher.data.ok ? null : codeFetcher.data.discountError ?? "That code did not work.");
+    reload();
+  }, [codeFetcher.state, codeFetcher.data, reload]);
 
   const show = useCallback(() => {
     setOpen(true);
@@ -251,6 +286,40 @@ export function CartDrawerProvider({
               gets the top of the drawer, and the ones not made yet go under
               it. It was the other way round. */}
           <div className="cb-drawer__foot">
+            {/* The code goes above the total it changes, so the number
+                underneath visibly moves when one is applied. */}
+            {lines.length ? (
+              cart?.discount ? (
+                <div className="cb-code cb-code--on">
+                  <span className="cb-code__tag">{cart.discount.code}</span>
+                  <span className="cb-code__amt">−{money(cart.discount.amountCents, currency)}</span>
+                  <button type="button" className="cb-code__x" onClick={dropCode} disabled={codeBusy}>Remove</button>
+                </div>
+              ) : (
+                <form
+                  className="cb-code"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const input = e.currentTarget.elements.namedItem("code") as HTMLInputElement | null;
+                    const value = (input?.value ?? "").trim();
+                    if (value) applyCode(value);
+                  }}
+                >
+                  <input
+                    name="code"
+                    className="cb-code__in"
+                    placeholder="Discount code"
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    spellCheck={false}
+                    aria-label="Discount code"
+                  />
+                  <button type="submit" className="cb-code__go" disabled={codeBusy}>{codeBusy ? "…" : "Apply"}</button>
+                </form>
+              )
+            ) : null}
+            {codeError ? <div className="cb-code__err">{codeError}</div> : null}
+
             <div className="cb-drawer__sum">
               <span>Subtotal</span>
               <span>{money(cart?.subtotalCents ?? 0, currency)}</span>

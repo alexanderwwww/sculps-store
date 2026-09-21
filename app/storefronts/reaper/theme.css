@@ -3732,3 +3732,42 @@ html, body { margin: 0; }
   animation: cb-off 2.4s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) { .cb-rec2__flag { animation: none; } }
+
+/* ---- the discount code, in the cart ----------------------------------- */
+
+.cb-code { display: flex; gap: 8px; align-items: center; margin: 0 0 12px; }
+.cb-code__in {
+  flex: 1 1 auto; min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(11, 11, 12, .18); border-radius: 8px;
+  background: #fff; color: #0B0B0C;
+  /* 16px so iOS does not zoom the page when it is tapped. */
+  font-size: 16px; font-family: inherit;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.cb-code__in::placeholder { text-transform: none; letter-spacing: 0; color: rgba(11, 11, 12, .42); }
+.cb-code__in:focus { outline: none; border-color: var(--action, #F5821F); }
+.cb-code__go {
+  flex: 0 0 auto; min-height: 44px; padding: 12px 18px;
+  border: 1px solid rgba(11, 11, 12, .18); border-radius: 8px;
+  background: none; cursor: pointer;
+  font-family: var(--display); font-weight: 700; font-size: 14px;
+  letter-spacing: .04em; text-transform: uppercase; color: #0B0B0C;
+}
+.cb-code__go:hover { border-color: var(--action, #F5821F); color: var(--action, #F5821F); }
+.cb-code__go:disabled { opacity: .5; cursor: default; }
+
+.cb-code--on {
+  padding: 10px 12px; border-radius: 8px;
+  background: rgba(15, 123, 61, .08);
+}
+.cb-code__tag {
+  font-family: var(--display); font-weight: 800; font-size: 13.5px;
+  letter-spacing: .06em; text-transform: uppercase; color: #0F7B3D;
+}
+.cb-code__amt { margin-left: auto; font-weight: 700; font-size: 14.5px; color: #0F7B3D; }
+.cb-code__x {
+  border: 0; background: none; cursor: pointer; padding: 6px 2px 6px 10px;
+  font-size: 13px; color: rgba(11, 11, 12, .5); text-decoration: underline;
+}
+.cb-code__err { margin: -6px 0 10px; font-size: 13.5px; color: #B3261E; }
