@@ -56,7 +56,7 @@ const KEY = "q9DpKpatiPsqZc_sSQr5Vo-8UI4FR3ck";
  * opens the login pages so Alex can sign in himself. `skip` abandons the
  * current step. `update` makes the app pull the runtime and restart.
  */
-const ORDERS = ["run", "pause", "stop", "connect", "skip", "update", "warm"] as const;
+const ORDERS = ["run", "pause", "stop", "connect", "skip", "update", "warm", "do"] as const;
 
 /** The three platforms, and nothing else is accepted anywhere in this file. */
 const PLATFORMS = ["tiktok", "instagram", "youtube"] as const;
@@ -74,6 +74,46 @@ type Platform = (typeof PLATFORMS)[number];
  */
 const SIGNATURES = ["yusuf", "carla", "eli", "hana"] as const;
 type Signature = (typeof SIGNATURES)[number];
+
+/**
+ * The free-hand vocabulary.
+ *
+ * The app is not a script with a fixed list of things it can do — it is a
+ * browser with hands, and this is how it is told to use them. Enough to drive
+ * anything: go somewhere, find something, click it, type into it, scroll,
+ * wait, say something on the panel, send back what is on screen.
+ *
+ * A vocabulary rather than `eval` on purpose. Handing the other end of a
+ * network channel the ability to run arbitrary code on somebody's Mac is a
+ * different product with a different risk, and this loses nothing: every step
+ * below is also readable in the log afterwards, which arbitrary code is not.
+ */
+const STEPS = ["goto", "find", "click", "type", "scroll", "wait", "say", "look", "back"] as const;
+
+function stepError(step: unknown): string | null {
+  if (!step || typeof step !== "object") return "each step must be an object";
+  const { do: verb, value } = step as { do?: string; value?: unknown };
+  if (!verb || !(STEPS as readonly string[]).includes(verb)) {
+    return `not a step: ${verb ?? "(none)"} — one of ${STEPS.join(", ")}`;
+  }
+  if (verb === "goto") {
+    let url: URL;
+    try {
+      url = new URL(String(value));
+    } catch {
+      return `not a URL: ${String(value)}`;
+    }
+    /*
+     * http and https only. A file:// or chrome:// sent down this channel
+     * would have the app reading the disk or its own settings, which is not
+     * what a browser with hands is for.
+     */
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return `only http and https: ${url.protocol}`;
+    }
+  }
+  return null;
+}
 
 function orderError(cmd: string): string | null {
   if ((ORDERS as readonly string[]).includes(cmd)) return null;
@@ -351,6 +391,41 @@ const TOOLS = [
     },
   },
   {
+    name: "organicx_do",
+    description:
+      "Drive the app by hand: a list of steps it carries out in its browser, at human " +
+      "speed, with the cursor visible. Steps are goto (http/https only), find (a CSS " +
+      "selector or text), click, type, scroll, wait, say (a line on the panel), look (send " +
+      "back what is on screen) and back. Use it to try something the app has no routine " +
+      "for yet, or to look at a page with it. It runs in the signed-out research browser " +
+      "unless `account` names one, so nothing touches a logged-in session by accident.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        steps: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              do: { type: "string", enum: [...STEPS] },
+              value: { type: "string" },
+              as: { type: "string", description: "Which crew name to show on the panel." },
+            },
+            required: ["do"],
+          },
+        },
+        account: {
+          type: "string",
+          description:
+            "A handle, to run this as that account instead of signed out. Only for things " +
+            "an account must do itself — research never needs it.",
+        },
+        why: { type: "string", description: "One line for the ticker." },
+      },
+      required: ["steps"],
+    },
+  },
+  {
     name: "organicx_push",
     description:
       "Ship a change to the running app without Alex downloading anything. Give it the new " +
@@ -478,6 +553,28 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
       const all = store.entries ?? [];
       const rows = who ? all.filter((e) => String(e.who ?? "").toLowerCase() === who) : all;
       return { entries: rows.slice(-limit) };
+    }
+
+    case "organicx_do": {
+      const steps = Array.isArray(args.steps) ? args.steps : [];
+      if (!steps.length) return { ok: false, error: "no steps" };
+      for (const step of steps) {
+        const bad = stepError(step);
+        if (bad) return { ok: false, error: bad };
+      }
+      const job = {
+        id: crypto.randomUUID(),
+        steps,
+        account: args.account ?? null,
+        why: args.why ?? null,
+        at: Date.now(),
+      };
+      await write(env, "order", { cmd: "do", job, at: Date.now() });
+      await append(env, {
+        who: "claude",
+        did: args.why ? String(args.why) : `${steps.length} step${steps.length > 1 ? "s" : ""} by hand`,
+      });
+      return { ok: true, id: job.id, steps: steps.length };
     }
 
     case "organicx_push": {

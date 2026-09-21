@@ -20,6 +20,7 @@ import { chromium } from "playwright";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { keystrokes, frictionIn, between, around, chance } from "./human.mjs";
+import { panelSource } from "./panel.mjs";
 
 const run = promisify(execFile);
 
@@ -139,10 +140,37 @@ export async function openChrome({ port = 9333, profile }) {
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, Math.max(0, ms)));
 
-/** Put the cursor on the page, and keep it there across navigations. */
+/** Put the cursor and the panel on the page, and keep them across navigations. */
 export async function attach(page) {
+  const panel = panelSource();
   await page.addInitScript(CURSOR);
+  await page.addInitScript(panel);
   await page.evaluate(CURSOR).catch(() => {});
+  await page.evaluate(panel).catch(() => {});
+}
+
+/**
+ * Has anyone asked it to stop?
+ *
+ * Escape or the Stop button set a flag in the page; this is how it reaches
+ * node. Checked between every action rather than only between jobs, so a stop
+ * lands mid-scroll rather than at the end of the session.
+ */
+export async function stopRequested(page) {
+  return page.evaluate(() => window.__oxPanel?.stopped === true).catch(() => false);
+}
+
+/** Who is working, and what they are doing this second. */
+export async function working(page, who, line) {
+  await page.evaluate(([w, l]) => window.__oxPanel?.working(w, l), [who, line]).catch(() => {});
+}
+
+export async function panelState(page, state) {
+  await page.evaluate((s) => window.__oxPanel?.state(s), state).catch(() => {});
+}
+
+export async function progress(page, pct, label) {
+  await page.evaluate(([p, l]) => window.__oxPanel?.progress(p, l), [pct, label]).catch(() => {});
 }
 
 export async function say(page, text) {
