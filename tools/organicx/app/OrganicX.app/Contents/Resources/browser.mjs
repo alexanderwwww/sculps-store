@@ -532,8 +532,23 @@ export async function whoAmI(page, platform) {
         const el = document.querySelector("#channel-handle, yt-formatted-string#handle");
         const t = el?.textContent?.trim();
         if (t && t.startsWith("@")) return t;
-        const m = /(@[\w.-]{3,30})\b/.exec(document.body?.innerText ?? "");
-        return m ? m[1] : null;
+        /*
+         * The account page also prints the Google address, and "alex@gmail.com"
+         * contains "@gmail.com" — which was recorded as the channel handle
+         * once. A handle stands on its own: nothing before the @, and it is
+         * never a mailbox domain. No channel yet means no handle, and that
+         * is the truth to report rather than the nearest @-shaped string.
+         */
+        const text = document.body?.innerText ?? "";
+        const re = /(?<![\w.@-])(@[\w.-]{3,30})/g;
+        let m;
+        while ((m = re.exec(text))) {
+          const h = m[1];
+          if (/^@(gmail|googlemail|icloud|me|yahoo|hotmail|outlook|live|proton|protonmail|mail)\./i.test(h)) continue;
+          if (/\.(com|net|org|edu|gov)$/i.test(h)) continue;
+          return h;
+        }
+        return null;
       }, undefined, 8000);
       return found || null;
     }

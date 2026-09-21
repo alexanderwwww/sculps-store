@@ -113,7 +113,7 @@ fi
 # $RUNTIME/BUILD, and this must not copy over it — otherwise the next restart
 # silently undoes the fix that was just shipped, which is the worst kind of
 # bug: it works, then it does not, and nothing changed.
-BUNDLE_BUILD=8
+BUNDLE_BUILD=9
 RUNTIME_BUILD=0
 if [ -f "$RUNTIME/BUILD" ]; then
   RUNTIME_BUILD=$(tr -dc '0-9' < "$RUNTIME/BUILD" 2>/dev/null)
