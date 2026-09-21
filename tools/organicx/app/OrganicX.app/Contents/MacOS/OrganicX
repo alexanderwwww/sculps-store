@@ -53,11 +53,21 @@ done
 # --- what has to be here -----------------------------------------------
 command -v node >/dev/null 2>&1 || bail "Cannot find node. It may be installed but not on this app's PATH — open Terminal, run: which node — and send me what it prints."
 
+# Built with a leading space and trimmed, so the line that comes out is one
+# somebody can actually copy. The first cut printed "brew installffmpeg
+# yt-dlp", which is a command that fails — an instruction that does not work
+# when followed is worse than no instruction.
 MISSING=""
-command -v ffmpeg >/dev/null 2>&1 || MISSING="ffmpeg"
+command -v ffmpeg >/dev/null 2>&1 || MISSING="$MISSING ffmpeg"
 command -v yt-dlp >/dev/null 2>&1 || MISSING="$MISSING yt-dlp"
+MISSING="${MISSING# }"
 if [ -n "$MISSING" ]; then
-  bail "Missing:$MISSING. In Terminal run: brew install$MISSING"
+  bail "Missing: $MISSING.
+
+Open Terminal and run:
+brew install $MISSING
+
+Then open OrganicX again."
 fi
 
 # What was actually found, so a wrong answer is debuggable rather than a
