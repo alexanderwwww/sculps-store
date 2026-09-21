@@ -1,0 +1,10 @@
+{
+  "name": "organic-worker",
+  "private": true,
+  "type": "module",
+  "description": "Organic's worker: a headless Chrome, live screens of it, and the crew that works in them.",
+  "dependencies": {
+    "playwright": "^1.49.1",
+    "ws": "^8.18.0"
+  }
+}
