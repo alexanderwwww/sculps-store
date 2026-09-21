@@ -1224,10 +1224,10 @@ function validate(values: Record<string, string>, store: LoadedStore): Errors {
   // Company is only ever asked for when this store's settings make the server
   // demand it. It is not one of the four, so it is never invented here.
   if (store.companyMode === "required" && !at("company")) errors.company = "Please add the company name.";
-  // Name, address, email, phone — the four, and nothing else. Phone is asked
-  // for wherever the field is on the page, and its label says so: no box on
-  // this page is marked optional and then refused when it is left empty.
-  if (store.phoneMode !== "hidden" && !at("phone")) errors.phone = "Please add your phone number so we can ship it.";
+  // Phone is refused only when the shop actually requires it. This read
+  // "!== hidden", which made the optional setting behave exactly like the
+  // required one and stopped a payment over a box nobody was told to fill.
+  if (store.phoneMode === "required" && !at("phone")) errors.phone = "Please add your phone number so we can ship it.";
   if (!at("address1")) errors.address1 = "Please add your street address so we can ship it.";
   if (!at("city")) errors.city = "Please add your city so we can ship it.";
   if (!at("region")) errors.region = "Please add your state so we can ship it.";
@@ -2045,7 +2045,7 @@ function DeliveryFields({
             <Cell
               {...common}
               name="phone"
-              label="Phone"
+              label={store.phoneMode === "required" ? "Phone" : "Phone (optional)"}
               type="tel"
               inputMode="tel"
               autoComplete="tel"
@@ -3546,7 +3546,10 @@ function OnePage({
                   link: "auto",
                 },
                 emailRequired: true,
-                phoneNumberRequired: store.phoneMode !== "hidden",
+                // Only when the shop requires it. Making the wallet sheet
+                // demand a phone is a way for Apple Pay to fail on a card
+                // that has none, and the shop does not need one to ship.
+                phoneNumberRequired: store.phoneMode === "required",
                 billingAddressRequired: true,
                 // The parcel goes where the buyer says, which is not always
                 // where their card is registered.
@@ -3843,7 +3846,7 @@ function OnePage({
         total: { label: store.name, amount: Math.max(50, cart.totalCents) },
         requestPayerName: true,
         requestPayerEmail: true,
-        requestPayerPhone: store.phoneMode !== "hidden",
+        requestPayerPhone: store.phoneMode === "required",
         requestShipping: true,
         shippingOptions: [
           { id: "standard", label: "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
