@@ -206,6 +206,9 @@ function briefOf(args: Record<string, unknown>) {
     : (platforms[0] ?? "instagram");
   return {
     store: args.store == null ? null : String(args.store),
+    // The storefront the crew opens first to see what is for sale. Products
+    // are read from it, not typed here; `products` below is only a seed.
+    storeUrl: /^https?:\/\//.test(String(args.storeUrl ?? "")) ? String(args.storeUrl) : null,
     products: strings(args.products),
     market: strings(args.market),
     platforms: platforms.length ? platforms : ["instagram", "tiktok"],
@@ -259,10 +262,14 @@ const TOOLS = [
       type: "object",
       properties: {
         store: { type: "string" },
+        storeUrl: {
+          type: "string",
+          description: "The storefront, e.g. https://blackreaper.us — the crew reads the products from it.",
+        },
         products: {
           type: "array",
           items: { type: "string" },
-          description: "The product names, e.g. [\"Halloween Projector\", \"Crawling Zombie\"].",
+          description: "Extra product names to hunt, on top of what the storefront shows.",
         },
         market: {
           type: "array",
