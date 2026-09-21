@@ -1,0 +1,107 @@
+#!/bin/bash
+# Organic — the launcher.
+#
+# Three jobs: make sure the Mac has what it needs (node, Chrome, the Command
+# Line Tools), build the window once, then start the worker and hand the
+# process over to the window. `exec` at the end is deliberate: the window
+# keeps this process id, which is the one Launch Services started from the
+# bundle, so the Dock shows the bundle's icon and Cmd-Q quits the right thing.
+set -u
+
+HERE="$(cd "$(dirname "$0")/../Resources" && pwd)"
+APP_ROOT="$(cd "$HERE/../.." && pwd)"
+SUPPORT="$HOME/Library/Application Support/Organic"
+LOG="$SUPPORT/log/organic.log"
+mkdir -p "$SUPPORT/chrome" "$SUPPORT/worker" "$SUPPORT/bin" "$SUPPORT/log"
+
+# launchd's PATH has none of Homebrew in it. Every "node is not installed"
+# alert the old app ever showed was this line missing.
+export PATH="/opt/homebrew/bin:/usr/local/bin:/opt/homebrew/sbin:$PATH"
+
+say() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG"; }
+alert() {
+  say "ALERT: $1"
+  /usr/bin/osascript -e 'on run argv' -e 'display alert "Organic" message (item 1 of argv)' -e 'end run' "$1" >/dev/null 2>&1
+}
+
+say "open — bundle at $APP_ROOT"
+
+# --- what the Mac needs --------------------------------------------------
+if ! command -v node >/dev/null 2>&1; then
+  alert "Node is not installed. In Terminal: brew install node — then open Organic again."
+  exit 1
+fi
+CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+if [ ! -x "$CHROME" ] && [ -z "${ORGANIC_CHROME:-}" ]; then
+  alert "Google Chrome is not installed. Install it from google.com/chrome — then open Organic again."
+  exit 1
+fi
+SWIFTC="$(xcrun -f swiftc 2>/dev/null || true)"
+if [ -z "$SWIFTC" ] || [ ! -x "$SWIFTC" ]; then
+  alert "Apple's Command Line Tools are needed once, to build the window. In Terminal: xcode-select --install — then open Organic again."
+  exit 1
+fi
+
+# --- the worker, installed beside itself ----------------------------------
+# The bundle's build; a live push writes a higher one into worker/BUILD and
+# this must never copy over it.
+BUNDLE_BUILD=1
+RUNTIME_BUILD=0
+if [ -f "$SUPPORT/worker/BUILD" ]; then
+  RUNTIME_BUILD="$(tr -dc '0-9' < "$SUPPORT/worker/BUILD")"
+  RUNTIME_BUILD="${RUNTIME_BUILD:-0}"
+fi
+if [ "$RUNTIME_BUILD" -lt "$BUNDLE_BUILD" ] || [ ! -f "$SUPPORT/worker/main.mjs" ]; then
+  cp -R "$HERE/worker/." "$SUPPORT/worker/"
+  echo "$BUNDLE_BUILD" > "$SUPPORT/worker/BUILD"
+  say "installed build $BUNDLE_BUILD from the bundle"
+else
+  say "running build $RUNTIME_BUILD"
+fi
+
+if [ ! -f "$SUPPORT/worker/node_modules/playwright/package.json" ] || [ ! -f "$SUPPORT/worker/node_modules/ws/package.json" ]; then
+  say "installing dependencies"
+  if ! (cd "$SUPPORT/worker" && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --no-audit --no-fund >> "$LOG" 2>&1); then
+    alert "Could not install the worker's dependencies. Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')"
+    exit 1
+  fi
+fi
+
+# --- the window, built once ------------------------------------------------
+# Keyed on the source, so a changed main.swift is rebuilt and an unchanged one
+# never is.
+SHELL_KEY="$(md5 -q "$HERE/Shell/main.swift" 2>/dev/null || md5sum "$HERE/Shell/main.swift" | cut -c1-32)"
+SHELL_BIN="$SUPPORT/bin/OrganicShell-$SHELL_KEY"
+if [ ! -x "$SHELL_BIN" ]; then
+  say "building the window"
+  if ! "$SWIFTC" -O -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" >> "$LOG" 2>&1; then
+    alert "Could not build the window. Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')"
+    exit 1
+  fi
+fi
+
+# --- run --------------------------------------------------------------------
+PORT="$(node -e 'const s=require("net").createServer();s.listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})')"
+export ORGANIC_PORT="$PORT"
+export ORGANIC_PARENT_PID="$$"
+export ORGANIC_HOME="$SUPPORT"
+export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
+# The worker, restarted on 75 (it updated itself) and left alone otherwise.
+# It watches the window's pid and exits when the window is gone.
+(
+  cd "$SUPPORT/worker" || exit 1
+  while :; do
+    node main.mjs >> "$LOG" 2>&1
+    code=$?
+    if [ "$code" -eq 75 ]; then say "worker restarting on a new build"; continue; fi
+    if [ "$code" -ne 0 ] && kill -0 "$ORGANIC_PARENT_PID" 2>/dev/null; then
+      /usr/bin/osascript -e 'on run argv' -e 'display alert "Organic" message (item 1 of argv)' -e 'end run' \
+        "The worker stopped (code $code). Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')" >/dev/null 2>&1
+    fi
+    break
+  done
+) &
+
+say "window on http://127.0.0.1:$PORT/"
+exec "$SHELL_BIN" "http://127.0.0.1:$PORT/" "$HERE/AppIcon.icns"
