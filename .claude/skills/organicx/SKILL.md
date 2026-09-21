@@ -209,3 +209,35 @@ Same shape as Magic Wand, with one addition.
 - Never dummy or sample data.
 - Never post the same asset twice to the same account.
 - Never claim a result that has not been measured.
+
+## Things already settled — do not re-derive them
+
+**The dock icon is sized by looking, not by the grid.** Apple's 824-of-1024
+figure is drawn for a hard-edged rounded square. The OrganicX icon is a
+squircle whose glass edges taper, so the same bounding box carries less visual
+mass and reads visibly smaller in the dock next to Magic Wand. It sits at
+**1000 of 1024**. Measuring the alpha bbox said the two were the same size;
+the eye said otherwise, and the eye was right. When an icon looks wrong,
+render it beside the wand at 128px and look — do not measure and argue.
+
+**A double-clicked .app cannot see Homebrew.** It inherits launchd's PATH
+(`/usr/bin:/bin:/usr/sbin:/sbin`) and nothing more, so `node`, `ffmpeg` and
+`yt-dlp` are invisible even though they work in Terminal. The launcher puts
+`/opt/homebrew/bin` and `/usr/local/bin` on PATH, asks `brew --prefix`, and
+sources the login shell for version managers. Getting this wrong produces a
+confident, wrong alert — "Node is not installed" on a Mac where it is.
+
+**The panel and cursor are template literals.** A backtick or a `${` inside
+them, *including inside a comment*, breaks them at a line nowhere near the
+cause. `node --check` after every edit, and the test suites compile the
+overlay separately for exactly this reason.
+
+**Find elements by id, never by sniffing inline styles.** Style-sniffing has
+produced a confident wrong answer twice: once finding the test page's own
+button and declaring the stop broken, once reading a computed opacity
+mid-transition and declaring the label broken. Every overlay element carries
+an id.
+
+**Research never runs in a logged-in context.** It is a structural guard with
+a test, not a convention. The failure it prevents is silent — research from an
+account's browser works perfectly and costs that account three weeks later.

@@ -25,15 +25,45 @@ bail() {
   exit 1
 }
 
+# --- where the tools actually are ---------------------------------------
+#
+# A double-clicked .app inherits launchd's PATH, which is
+# /usr/bin:/bin:/usr/sbin:/sbin and nothing else. Homebrew is not on it. So
+# node, ffmpeg and yt-dlp are all invisible to this script even though they
+# are sitting right there and work fine in Terminal — and the honest-looking
+# alert this used to print ("Node is not installed") was simply wrong.
+#
+# Apple Silicon puts Homebrew in /opt/homebrew, Intel in /usr/local, and a
+# version manager puts node somewhere else again. Look in all of them.
+export PATH="/opt/homebrew/bin:/usr/local/bin:/opt/homebrew/sbin:$PATH"
+if command -v brew >/dev/null 2>&1; then
+  export PATH="$(brew --prefix)/bin:$PATH"
+fi
+# nvm, fnm, volta and asdf each keep node somewhere of their own. Sourcing the
+# login shell picks up whichever one is in use without guessing at it.
+if ! command -v node >/dev/null 2>&1; then
+  for rc in "$HOME/.zprofile" "$HOME/.zshrc" "$HOME/.bash_profile" "$HOME/.profile"; do
+    [ -f "$rc" ] && . "$rc" >/dev/null 2>&1
+  done
+fi
+for guess in "$HOME/.volta/bin" "$HOME/.local/bin" "$HOME/n/bin"; do
+  [ -d "$guess" ] && export PATH="$guess:$PATH"
+done
+
 # --- what has to be here -----------------------------------------------
-command -v node >/dev/null 2>&1 || bail "Node is not installed. Run: brew install node"
+command -v node >/dev/null 2>&1 || bail "Cannot find node. It may be installed but not on this app's PATH — open Terminal, run: which node — and send me what it prints."
 
 MISSING=""
 command -v ffmpeg >/dev/null 2>&1 || MISSING="ffmpeg"
 command -v yt-dlp >/dev/null 2>&1 || MISSING="$MISSING yt-dlp"
 if [ -n "$MISSING" ]; then
-  bail "Missing:$MISSING. Run: brew install$MISSING"
+  bail "Missing:$MISSING. In Terminal run: brew install$MISSING"
 fi
+
+# What was actually found, so a wrong answer is debuggable rather than a
+# mystery. This goes in the log every launch.
+say "node $(node --version 2>/dev/null) at $(command -v node)"
+say "ffmpeg at $(command -v ffmpeg) · yt-dlp at $(command -v yt-dlp)"
 
 [ -d "/Applications/Google Chrome.app" ] || bail "Google Chrome is not in /Applications."
 
