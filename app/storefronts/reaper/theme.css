@@ -3700,3 +3700,35 @@ html, body { margin: 0; }
 }
 .cb-shelf__p { font-family: var(--display); font-weight: 800; font-size: 13px; }
 .cb-shelf__p s { margin-right: 5px; font-weight: 500; font-size: 11.5px; color: rgba(11, 11, 12, .42); }
+
+/* ---- recommendations: smaller, with what each one really saves --------- */
+
+/* Three across on a phone instead of two, and the card loses the padding
+   and the radius that made each one a panel. A cross-sell should read as a
+   shelf, not as six more product pages. */
+@media (max-width: 720px) {
+  .cb-recs__grid2 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+  .cb-rec2 { padding: 0 0 8px; border: 0; border-radius: 0; background: none; gap: 6px; }
+  .cb-rec2:hover { transform: none; box-shadow: none; }
+  .cb-rec2__hit { font-size: 12.5px; line-height: 1.25; }
+  .cb-rec2__price { font-size: 12.5px; }
+  .cb-rec2__add { padding: 8px 10px; font-size: 12.5px; }
+}
+@media (min-width: 721px) {
+  .cb-rec2 { padding: 8px 8px 10px; border-radius: 12px; }
+}
+
+.cb-rec2__pic { position: relative; }
+/* The saving, as a bubble on the corner of the picture. Same object as the
+   drawer's, same rule: only drawn where a variant really is priced under
+   its own compare-at. */
+.cb-rec2__flag {
+  position: absolute; top: 6px; left: 6px;
+  padding: 5px 9px; border-radius: 999px;
+  background: var(--action, #F5821F); color: #0B0B0C;
+  font-family: var(--display);
+  font-size: 11px; font-weight: 800; line-height: 1; white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(11, 11, 12, .35);
+  animation: cb-off 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) { .cb-rec2__flag { animation: none; } }

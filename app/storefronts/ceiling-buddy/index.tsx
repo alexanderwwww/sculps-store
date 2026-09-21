@@ -2294,6 +2294,27 @@ function Recommends({
   const v = section.values;
   const cta = has(v, "ctaLabel") ? val(v, "ctaLabel") : "Add";
 
+  /* The best real saving each product offers, and on how many.
+     The entry price has no compare-at on any of these -- one reaper is just
+     $129 -- so a badge worked out from that price would have nothing to say.
+     The saving lives on the bundles, and this finds the largest genuine one
+     per product from the variants themselves. Nothing is invented: a tile
+     with no variant priced under its own compare-at gets no badge. */
+  const bestSaving = new Map<string, { off: number; qty: number }>();
+  for (const variant of page.addOns) {
+    const compare = variant.compareAtCents ?? 0;
+    if (compare <= variant.priceCents) continue;
+    const off = compare - variant.priceCents;
+    const current = bestSaving.get(variant.productId);
+    if (current && current.off >= off) continue;
+    const qty =
+      Number((variant.label.match(/^(\d+)/) ?? [])[1] ?? 0) ||
+      (/^two\b/i.test(variant.label) ? 2 : /^three\b/i.test(variant.label) ? 3 : 0);
+    bestSaving.set(variant.productId, { off, qty });
+  }
+  const dollars = (cents: number) =>
+    formatMoney(Math.round(cents / 100) * 100, page.store.currency).replace(/([.,])00\b/, "");
+
   return (
     <section className="cb-section cb-recs" id="more">
       <div className="cb-wrap">
@@ -2318,6 +2339,15 @@ function Recommends({
             <li className="cb-rec2" key={p.id}>
               <span className="cb-rec2__pic">
                 {p.imageUrl ? <img src={p.imageUrl} alt={p.title} loading="lazy" /> : <span />}
+                {/* What this product genuinely saves at its best bundle, said
+                    in dollars and with the quantity that earns it, so the
+                    number is checkable rather than a sticker. */}
+                {bestSaving.get(p.id) ? (
+                  <span className="cb-rec2__flag">
+                    {dollars(bestSaving.get(p.id)!.off)} off
+                    {bestSaving.get(p.id)!.qty > 1 ? ` on ${bestSaving.get(p.id)!.qty}` : ""}
+                  </span>
+                ) : null}
               </span>
               <a className="cb-rec2__hit" href={`/products/${p.handle}${storeParam}`}>
                 {p.title}

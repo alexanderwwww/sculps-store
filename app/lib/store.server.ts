@@ -256,7 +256,14 @@ export async function loadProductPage(
       fromMany: (mine?.length ?? 0) > 1,
       variantId: pick?.id ?? "",
     };
-  }).filter((p) => p.variantId);
+  })
+    .filter((p) => p.variantId)
+    /* A test product is never cross-sold.
+       The fifty-cent row that exists to prove the checkout takes money was
+       being offered to customers as an add-on in the cart drawer and again
+       in the recommendations under the product. It stays buyable by its own
+       link; it just stops being suggested. */
+    .filter((p) => !/^test\b/i.test(p.title));
 
   return { store, nav, product, variants: variantRows, addOns, addOnProducts, sections: loaded, reviews: pageReviews };
 }

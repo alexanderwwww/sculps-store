@@ -2273,20 +2273,26 @@ function Upsell({
         {items.map((item) => {
           // Only a real compare-at earns a badge, and the number is worked out
           // from the two prices rather than written anywhere.
-          const off =
+          /* What it saves, in dollars.
+             This was a percentage -- "−25%" on the badge -- and this shop
+             writes money off in dollars, never in percent. It is also the
+             bigger-sounding number on anything over forty dollars, which is
+             most of what is here. Whole dollars: nobody says "$48.01 off". */
+          const offCents =
             item.compareAtCents && item.compareAtCents > item.priceCents
-              ? Math.round(((item.compareAtCents - item.priceCents) / item.compareAtCents) * 100)
+              ? item.compareAtCents - item.priceCents
               : 0;
+          const off = offCents;
           const shot = item.imageUrl ?? photo?.src ?? null;
           return (
-            <li className={`gb-co__up-item${off >= 40 ? " gb-co__up-item--deal" : ""}`} key={item.id}>
+            <li className={`gb-co__up-item${off > 0 ? " gb-co__up-item--deal" : ""}`} key={item.id}>
               <span className="gb-co__up-shot">
                 {shot ? (
                   <img src={shot} alt={item.imageUrl ? item.label : photo?.alt || item.productTitle} loading="lazy" />
                 ) : (
                   <span className="gb-ph">No photo</span>
                 )}
-                {off > 0 ? <span className="gb-co__up-flag">−{off}%</span> : null}
+                {off > 0 ? <span className="gb-co__up-flag">{money(Math.round(off / 100) * 100)} off</span> : null}
               </span>
               <span className="gb-co__up-body">
                 <span className="gb-co__up-name">{item.label}</span>
@@ -2296,7 +2302,7 @@ function Upsell({
                 </span>
                 {/* Half price or better is the whole reason to look twice, so
                     it is said in words as well as in the badge. */}
-                {off >= 40 ? (
+                {off > 0 ? (
                   <span className="gb-co__up-deal">
                     Save {money(item.compareAtCents! - item.priceCents)} — only with this order
                   </span>
