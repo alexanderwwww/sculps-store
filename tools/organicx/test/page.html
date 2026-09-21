@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8">
+<!-- A nonce'd style policy, exactly like the sites this drives. An injected
+     <style> element is dropped here, so an overlay that relies on one mounts,
+     reports success, and draws nothing. -->
+<meta http-equiv="Content-Security-Policy" content="style-src 'self' 'nonce-abc123'">
+<body style="margin:0;height:2400px;background:#111">
+  <button id="like" style="position:absolute;left:220px;top:420px;padding:14px 22px">Like</button>
+  <textarea id="box" style="position:absolute;left:220px;top:520px;width:320px;height:80px"></textarea>
+</body>
