@@ -1,0 +1,10 @@
+{
+  "name": "organicx",
+  "private": true,
+  "type": "module",
+  "description": "An organic dropshipper with hands: finds the clips, cuts them, and runs the accounts like a person.",
+  "dependencies": {
+    "playwright": "^1.47.0",
+    "@neondatabase/serverless": "^0.10.0"
+  }
+}
