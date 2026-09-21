@@ -248,6 +248,35 @@ export function CartDrawerProvider({
             )}
           </div>
 
+          {/* Everything else the shop sells, sideways, with what each one
+              actually saves against its own full price. No invented numbers:
+              a tile only carries a banner when that variant has a compare-at
+              price above what it costs. */}
+          {shelf.length ? (
+            <div className="cb-shelf">
+              <div className="cb-shelf__h">Goes with this</div>
+              <div className="cb-shelf__row">
+                {shelf.map((x) => (
+                  <button type="button" className="cb-shelf__item" key={x.id} onClick={() => add(x.variantId)} disabled={busy}>
+                    <span className="cb-shelf__pic">
+                      {x.imageUrl ? <img src={x.imageUrl} alt="" loading="lazy" /> : null}
+                      {/* Across the top of the photograph, so the saving is
+                          read first and the row costs no extra height. */}
+                      {x.saveCents > 0 ? (
+                        <span className="cb-shelf__flag">{off(x.saveCents, currency)} off</span>
+                      ) : null}
+                    </span>
+                    <span className="cb-shelf__t">{x.title}</span>
+                    <span className="cb-shelf__p">
+                      {x.compareCents > x.addCents ? <s>{money(x.compareCents, currency)}</s> : null}
+                      {money(x.addCents, currency)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           {/* What they are about to pay, then the three ways to pay it.
               This sits above everything on offer: the decision already made
               gets the top of the drawer, and the ones not made yet go under
@@ -295,32 +324,6 @@ export function CartDrawerProvider({
             <div className="cb-reassure">Free shipping · 30-day returns</div>
           </div>
 
-          {/* Everything else the shop sells, sideways, with what each one
-              actually saves against its own full price. No invented numbers:
-              a tile only carries a banner when that variant has a compare-at
-              price above what it costs. */}
-          {shelf.length ? (
-            <div className="cb-shelf">
-              <div className="cb-shelf__h">Goes with this</div>
-              <div className="cb-shelf__row">
-                {shelf.map((x) => (
-                  <button type="button" className="cb-shelf__item" key={x.id} onClick={() => add(x.variantId)} disabled={busy}>
-                    <span className="cb-shelf__pic">
-                      {x.imageUrl ? <img src={x.imageUrl} alt="" loading="lazy" /> : null}
-                    </span>
-                    {x.saveCents > 0 ? (
-                      <span className="cb-shelf__flag">Get it now for {off(x.saveCents, currency)} off</span>
-                    ) : null}
-                    <span className="cb-shelf__t">{x.title}</span>
-                    <span className="cb-shelf__p">
-                      {x.compareCents > x.addCents ? <s>{money(x.compareCents, currency)}</s> : null}
-                      {money(x.addCents, currency)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
         </div>
       </div>
     </Ctx.Provider>
