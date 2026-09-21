@@ -3780,7 +3780,10 @@ html, body { margin: 0; }
 .cb-code__in:focus { outline: none; border-color: var(--action, #F5821F); }
 /* Solid ink, not an outline — a white button beside a white field read as
    disabled. Ink rather than orange so it never competes with Checkout. */
-.cb-code__go {
+/* Scoped with .cb-drawer on purpose. `.cb button { color: inherit }` lives in
+   ceiling-buddy/theme.css, which loads after this file and outranks a bare
+   class — which is how a white-on-black button came out black on black. */
+.cb-drawer .cb-code__go {
   flex: 0 0 auto; min-height: 46px; padding: 12px 22px;
   border: 0; border-radius: 8px;
   background: #0B0B0C; color: #fff; cursor: pointer;
@@ -3788,9 +3791,9 @@ html, body { margin: 0; }
   letter-spacing: .06em; text-transform: uppercase;
   touch-action: manipulation; transition: background .14s ease, transform .1s ease;
 }
-.cb-code__go:hover { background: #1c1c1f; }
-.cb-code__go:active { transform: translateY(1px); }
-.cb-code__go:disabled { background: rgba(11, 11, 12, .32); cursor: default; }
+.cb-drawer .cb-code__go:hover { background: #1c1c1f; }
+.cb-drawer .cb-code__go:active { transform: translateY(1px); }
+.cb-drawer .cb-code__go:disabled { background: rgba(11, 11, 12, .32); cursor: default; }
 
 .cb-code--on {
   padding: 10px 12px; border-radius: 8px;
