@@ -96,6 +96,18 @@ const FILES = {
   gate: "ox-gate.json",
   log: "ox-log.json",
   /*
+   * What the app has asked for and cannot do itself.
+   *
+   * The first of these is a picture: OrganicX wants a story card or a
+   * thumbnail, Magic Wand is the thing on this Mac that draws, and both
+   * already sit on the same Worker and the same bucket. So the app raises a
+   * request and carries on working; Claude writes the wand's prompt — because
+   * a prompt written without checking the product's real facts is exactly how
+   * a black projector ended up in a white projector's listing — and hands the
+   * finished key back here.
+   */
+  asks: "ox-asks.json",
+  /*
    * The app's own code, and the build number it belongs to.
    *
    * This is the whole of "version one updates itself". The runner reads this
@@ -330,11 +342,38 @@ const TOOLS = [
   {
     name: "organicx_log",
     description:
-      "What actually happened, newest last. Views are views — nothing in here is a claim " +
-      "that was not measured.",
+      "The crew ticker: who did what, newest last, in plain language — 'Reyna: 34 accounts " +
+      "in on #halloweendecor', 'Sam: @spookyhome, watched 14, liked 2, resting'. Not code. " +
+      "Views are views — nothing in here is a claim that was not measured.",
     inputSchema: {
       type: "object",
-      properties: { limit: { type: "number" } },
+      properties: { limit: { type: "number" }, who: { type: "string" } },
+    },
+  },
+  {
+    name: "organicx_ask",
+    description:
+      "What OrganicX has asked for that it cannot do itself — most often a picture it wants " +
+      "Magic Wand to draw for a story or a post. It raises the request on its own and carries " +
+      "on working; Claude fulfils it when he is next here, writes the wand's prompt properly, " +
+      "and hands the finished file back. The app never writes its own image prompt, because a " +
+      "prompt written without checking the product's real facts is how a black projector ends " +
+      "up in a white projector's listing.",
+    inputSchema: {
+      type: "object",
+      properties: { state: { type: "string", enum: ["open", "done", "failed", "all"] } },
+    },
+  },
+  {
+    name: "organicx_answer",
+    description:
+      "Close one of OrganicX's requests by handing it what it asked for — usually the R2 key " +
+      "of a picture Magic Wand has now drawn. The app picks it up on its next pass without " +
+      "being restarted.",
+    inputSchema: {
+      type: "object",
+      properties: { id: { type: "string" }, result: { type: "object" }, error: { type: "string" } },
+      required: ["id"],
     },
   },
 ] as const;
@@ -412,9 +451,33 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
     }
 
     case "organicx_log": {
-      const store = ((await read(env, "log")) as { entries?: unknown[] } | null) ?? { entries: [] };
+      const store = ((await read(env, "log")) as { entries?: Record<string, unknown>[] } | null) ?? { entries: [] };
       const limit = Math.max(1, Math.min(LOG_KEEP, Number(args.limit ?? 60)));
-      return { entries: (store.entries ?? []).slice(-limit) };
+      const who = String(args.who ?? "").toLowerCase();
+      const all = store.entries ?? [];
+      const rows = who ? all.filter((e) => String(e.who ?? "").toLowerCase() === who) : all;
+      return { entries: rows.slice(-limit) };
+    }
+
+    case "organicx_ask": {
+      const store = ((await read(env, "asks")) as { asks?: Record<string, unknown>[] } | null) ?? { asks: [] };
+      const want = String(args.state ?? "open");
+      const asks = store.asks ?? [];
+      return { asks: want === "all" ? asks : asks.filter((a) => (a.state ?? "open") === want) };
+    }
+
+    case "organicx_answer": {
+      const store = ((await read(env, "asks")) as { asks?: Record<string, unknown>[] } | null) ?? { asks: [] };
+      const asks = store.asks ?? [];
+      const ask = asks.find((a) => a.id === String(args.id));
+      if (!ask) return { ok: false, error: "no request with that id" };
+      ask.state = args.error ? "failed" : "done";
+      ask.result = args.result ?? null;
+      ask.error = args.error ?? null;
+      ask.answeredAt = new Date().toISOString();
+      await write(env, "asks", { asks });
+      await append(env, { who: "claude", did: args.error ? `could not do it: ${args.error}` : "handed back what was asked for" });
+      return { ok: true, ask };
     }
 
     default:
@@ -545,6 +608,30 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   if (what === "log") {
     await append(env, body);
     return json({ ok: true });
+  }
+
+  if (what === "asks") {
+    const store = ((await read(env, "asks")) as { asks?: Record<string, unknown>[] } | null) ?? { asks: [] };
+    const asks = store.asks ?? [];
+    const ask = {
+      id: String(body.id ?? crypto.randomUUID()),
+      /* "picture" is the only kind so far. Others take the same shape. */
+      kind: String(body.kind ?? "picture"),
+      /* Plain language, because a person reads this before Claude acts on it. */
+      wants: String(body.wants ?? ""),
+      context: (body.context as Record<string, unknown>) ?? {},
+      state: "open",
+      result: null as unknown,
+      error: null as string | null,
+      raisedAt: new Date().toISOString(),
+      answeredAt: null as string | null,
+    };
+    const at = asks.findIndex((a) => a.id === ask.id);
+    if (at >= 0) asks[at] = ask;
+    else asks.push(ask);
+    await write(env, "asks", { asks: asks.slice(-100) });
+    await append(env, { who: "organicx", did: `asked for a picture: ${ask.wants}` });
+    return json({ ok: true, id: ask.id });
   }
 
   if (what === "gate") {
