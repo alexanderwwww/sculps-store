@@ -100,6 +100,8 @@
   /* ------------------------------------------------------------ focus */
   #focus { position: fixed; inset: 0; z-index: 20; background: rgba(255,255,255,.96); opacity: 0; pointer-events: none; transition: opacity .28s ease; display: flex; align-items: center; justify-content: center; }
   #focus.on { opacity: 1; pointer-events: auto; }
+  /* Nothing shows through the focused screen: the header and OK fade out with it. */
+  body:has(#focus.on) #top, body:has(#focus.on) #okwrap { opacity: 0; transition: opacity .2s ease; pointer-events: none; }
   #focus .stage {
     position: relative; border-radius: 16px; overflow: hidden; background: #fff; border: 1px solid var(--line);
     box-shadow: 0 40px 100px -30px rgba(0,0,0,.35), 0 0 0 1px rgba(57,255,122,.25), 0 0 60px -20px rgba(57,255,122,.6);
