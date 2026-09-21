@@ -1228,3 +1228,231 @@ export const visits = pgTable(
   },
   (t) => [primaryKey({ columns: [t.storeId, t.sessionId] }), index("visits_store_first_idx").on(t.storeId, t.firstAt)],
 );
+
+/* ---------------------------------------------------------------- OrganicX */
+
+/**
+ * The organic operator's tables.
+ *
+ * They live in this database rather than in a file on the Mac for one
+ * reason: when the app stops at three in the morning, the answer has to be
+ * readable from somewhere other than the machine it stopped on. A local
+ * SQLite file is invisible from here and dies with a reinstall.
+ *
+ * Nothing in here is a credential. There is no password column, no session
+ * cookie, no token. The app drives a Chrome that Alex logged into himself,
+ * and "connected" means it saw a logged-in session, not that it holds one.
+ *
+ * It is also not tied to a store. OrganicX is pointed at a product — from
+ * this platform or from a link to somebody else's shop — so `storeId` is
+ * nullable on purpose. Magic Wand's first version baked one shop in, and
+ * every fix afterwards was undoing that.
+ */
+
+/** TikTok, Instagram, YouTube. The same recipe on all three, because reels. */
+export const oxAccounts = pgTable(
+  "ox_accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    platform: text("platform").notNull(),
+    handle: text("handle").notNull(),
+    /** Which Chrome profile on the Mac carries this login. */
+    profile: text("profile"),
+    /** Set once the app has seen a logged-in session. Never a credential. */
+    connected: boolean("connected").notNull().default(false),
+    connectedAt: timestamp("connected_at", { withTimezone: true }),
+    /**
+     * How old the account behaves as, not how old it is. A brand-new account
+     * does far less in week one than in week four, and this is what the
+     * ramp reads.
+     */
+    warmedDays: integer("warmed_days").notNull().default(0),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+    /**
+     * A captcha, a verification prompt, an action block, an unusual-login
+     * notice. The account stops for the day rather than pushing through,
+     * because pushing through is how accounts are lost.
+     */
+    friction: text("friction"),
+    frictionAt: timestamp("friction_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("ox_accounts_platform_handle_idx").on(t.platform, t.handle)],
+);
+
+/**
+ * The person behind an account. Written once and then kept — a person does
+ * not change who they are between Tuesday and Wednesday.
+ */
+export const oxPersonas = pgTable("ox_personas", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id")
+    .notNull()
+    .references(() => oxAccounts.id, { onDelete: "cascade" }),
+  /** 34, suburban, two kids, decorates hard for Halloween. */
+  who: text("who").notNull(),
+  /** A real US metro, consistent with wherever the browser looks like it is. */
+  metro: text("metro").notNull(),
+  /** Up at 6:40, phone at 7:05, again at lunch, properly in the evening. */
+  hours: jsonb("hours").$type<{ start: string; end: string }[]>().notNull(),
+  /** Home improvement, dogs, high-school football, deals. Not only the niche. */
+  interests: jsonb("interests").$type<string[]>().notNull(),
+  /** Short. Lowercase. Says "omg". Never a semicolon. */
+  voice: text("voice").notNull(),
+  /** Typing speed, and the rate at which they typo and do not fix it. */
+  typing: jsonb("typing").$type<{ cpsMin: number; cpsMax: number; typoRate: number }>().notNull(),
+  /** Liker, or serial commenter who rarely follows. Ratios live here. */
+  temperament: jsonb("temperament")
+    .$type<{ likeRate: number; saveRate: number; commentRate: number; followRate: number }>()
+    .notNull(),
+  /** Everyone has days off. Some weeks are quiet. 0 = Sunday. */
+  daysOff: jsonb("days_off").$type<number[]>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * A clip found in the wild, with the numbers that made it worth pulling and
+ * the note of exactly where it came from. Kofi is never the reason something
+ * gets held, and Eli is going to ask.
+ */
+export const oxClips = pgTable(
+  "ox_clips",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** Which run found it. */
+    briefId: uuid("brief_id"),
+    platform: text("platform").notNull(),
+    sourceUrl: text("source_url").notNull(),
+    sourceHandle: text("source_handle"),
+    postedAt: timestamp("posted_at", { withTimezone: true }),
+    caption: text("caption"),
+    views: integer("views"),
+    likes: integer("likes"),
+    comments: integer("comments"),
+    /** R2 key of the file as pulled, watermark-free. */
+    fileKey: text("file_key"),
+    durationMs: integer("duration_ms"),
+    /**
+     * What the app saw when it looked at the frames, rather than at the
+     * metadata: is our product on screen, is there a hook in the first
+     * second, is there a watermark that would have to be cropped.
+     */
+    seen: jsonb("seen").$type<Record<string, unknown>>(),
+    /** Desmond's answer, and his one line. Most of these are "no". */
+    validated: boolean("validated"),
+    validationNote: text("validation_note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("ox_clips_source_idx").on(t.sourceUrl)],
+);
+
+/**
+ * A cut made from a clip: one change at a time, or you learn nothing.
+ */
+export const oxCuts = pgTable("ox_cuts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  clipId: uuid("clip_id")
+    .notNull()
+    .references(() => oxClips.id, { onDelete: "cascade" }),
+  /** hook-swap, subtitle-restamp, reorder, music, stamped-text, stitch. */
+  treatment: text("treatment").notNull(),
+  /** The one thing that changed against the parent, in a sentence. */
+  changed: text("changed").notNull(),
+  hook: text("hook"),
+  caption: text("caption"),
+  fileKey: text("file_key"),
+  thumbKey: text("thumb_key"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * The four signatures, and what each of them said.
+ *
+ * Stored as rows rather than as a count because the point of the gate is
+ * that Alex reads WHO refused and why — a product problem, a creative
+ * problem, a safety problem or a brand problem. "Rejected 3-1" tells him
+ * nothing.
+ */
+export const oxGate = pgTable(
+  "ox_gate",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    cutId: uuid("cut_id").references(() => oxCuts.id, { onDelete: "cascade" }),
+    /** yusuf | carla | eli | hana */
+    who: text("who").notNull(),
+    ok: boolean("ok").notNull(),
+    /** One line Alex can read. */
+    why: text("why").notNull(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("ox_gate_cut_who_idx").on(t.cutId, t.who)],
+);
+
+/**
+ * The schedule, prepared as far ahead as the run wants — fifteen days is
+ * normal. The app wakes, finds what is due, and does it.
+ */
+export const oxSchedule = pgTable(
+  "ox_schedule",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    accountId: uuid("account_id")
+      .notNull()
+      .references(() => oxAccounts.id, { onDelete: "cascade" }),
+    cutId: uuid("cut_id").references(() => oxCuts.id, { onDelete: "set null" }),
+    dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+    /** planned | posted | skipped | failed */
+    state: text("state").notNull().default("planned"),
+    postedUrl: text("posted_url"),
+    note: text("note"),
+    postedAt: timestamp("posted_at", { withTimezone: true }),
+  },
+  (t) => [index("ox_schedule_due_idx").on(t.state, t.dueAt)],
+);
+
+/**
+ * Every human thing an account did: a watch, a like, a save, a follow, a
+ * comment, a scroll that went nowhere. This is what makes the account read
+ * as a person rather than a billboard, so it is recorded rather than
+ * assumed.
+ */
+export const oxActions = pgTable(
+  "ox_actions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    accountId: uuid("account_id")
+      .notNull()
+      .references(() => oxAccounts.id, { onDelete: "cascade" }),
+    /** watch | like | save | share | comment | follow | unfollow | scroll | post */
+    kind: text("kind").notNull(),
+    targetUrl: text("target_url"),
+    /** How long the clip was actually watched. Interest, not a script. */
+    dwellMs: integer("dwell_ms"),
+    text: text("text"),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("ox_actions_account_at_idx").on(t.accountId, t.at)],
+);
+
+/**
+ * What a post actually did, read back at intervals. Views are views —
+ * nothing in here is a claim that was not measured.
+ */
+export const oxResults = pgTable(
+  "ox_results",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    scheduleId: uuid("schedule_id")
+      .notNull()
+      .references(() => oxSchedule.id, { onDelete: "cascade" }),
+    views: integer("views"),
+    likes: integer("likes"),
+    comments: integer("comments"),
+    shares: integer("shares"),
+    saves: integer("saves"),
+    profileVisits: integer("profile_visits"),
+    linkClicks: integer("link_clicks"),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("ox_results_schedule_at_idx").on(t.scheduleId, t.at)],
+);
