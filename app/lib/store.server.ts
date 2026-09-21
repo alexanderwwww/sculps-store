@@ -75,6 +75,11 @@ export interface LoadedProductPage {
     handle: string;
     imageUrl: string | null;
     fromCents: number;
+    /** What the cheapest variant is worth at full price, when it is on offer. */
+    compareAtCents: number | null;
+    /** What the Add button actually charges, and its full price. */
+    addCents: number;
+    addCompareAtCents: number | null;
     /** True when that price is a floor — the product sells in more than one size. */
     fromMany: boolean;
     /** the variant an Add button adds — the default, or the cheapest */
@@ -228,6 +233,17 @@ export async function loadProductPage(
        * rest, which is both cheaper-sounding and true.
        */
       fromCents: (cheapest ?? pick)?.priceCents ?? 0,
+      /* What that same variant is worth at full price, so a tile can say
+         what it saves. It comes off the variant being quoted rather than any
+         other one, which is the only way the two numbers belong together. */
+      compareAtCents: (cheapest ?? pick)?.compareAtCents ?? null,
+      /* What pressing Add costs.
+         `fromCents` is the cheapest variant, which is the right number on a
+         product card next to the word "From". In a cart the same tile has a
+         button that adds the default variant, so quoting the floor there
+         charged somebody $129.99 after showing them $79.99. */
+      addCents: pick?.priceCents ?? 0,
+      addCompareAtCents: pick?.compareAtCents ?? null,
       /** Whether that price is a floor rather than the only price. */
       fromMany: (mine?.length ?? 0) > 1,
       variantId: pick?.id ?? "",

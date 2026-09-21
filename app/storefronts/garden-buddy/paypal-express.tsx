@@ -45,11 +45,14 @@ export function PayPalExpress({
   clientId,
   currency,
   storeParam = "",
+  only,
   beforeCreate,
 }: {
   clientId: string;
   currency: string;
   storeParam?: string;
+  /** "paypal" draws the PayPal button alone, without Venmo or Pay Later. */
+  only?: "paypal";
   /**
    * Run before the PayPal order is created. The drawer needs nothing here —
    * what it shows is already the cart. A product page does: the thing being
@@ -79,6 +82,10 @@ export function PayPalExpress({
         sdk
           .Buttons({
             style: { layout: "vertical", shape: "pill", height: 46, label: "paypal", tagline: false },
+            /* In the drawer there is room for one wallet beside Apple Pay,
+               not three stacked. The SDK still loads Venmo and Pay Later for
+               the product page; this only picks which button is drawn. */
+            ...(only ? { fundingSource: (window as any).paypal?.FUNDING?.PAYPAL } : {}),
             createOrder: async () => {
               if (latest.current) await latest.current();
               const response = await fetch(`/checkout/paypal${storeParam}`, {

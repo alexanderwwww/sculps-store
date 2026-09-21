@@ -3584,3 +3584,91 @@ html, body { margin: 0; }
 }
 @media (min-width: 720px) { .cb-rvg__more { width: auto; } }
 .cb-rvg__more:hover { border-color: var(--rv-accent); color: var(--rv-accent); background: none; }
+
+/* ==== the cart drawer, rebuilt ==========================================
+   The order was upside down. What somebody had already chosen sat in a
+   74px thumbnail; three things they had not chosen sat under it in 200px
+   cards, and the upsell block was taller than the cart. The decision
+   already made now gets the top of the drawer and the biggest picture,
+   what it costs comes straight after it, and everything still on offer
+   goes underneath, sideways. ======================================== */
+
+.cb-drawer__panel { display: flex; flex-direction: column; }
+.cb-drawer__body { flex: 0 1 auto; overflow-y: auto; }
+
+/* The thing they are buying, at a size that says so. */
+/* Scoped to the drawer so it outranks the base theme's 74px square, which
+   loads after this file. */
+.cb-drawer .cb-line { display: grid; grid-template-columns: 124px 1fr; gap: 14px; align-items: start; padding: 16px 18px; }
+.cb-drawer .cb-line__pic {
+  width: 124px; height: 124px;
+  border-radius: 10px; overflow: hidden;
+  background: rgba(11, 11, 12, .05); border: 0;
+  flex: 0 0 auto;
+}
+.cb-drawer .cb-line__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cb-line__meta { display: grid; gap: 4px; min-width: 0; }
+.cb-line__t { font-family: var(--display); font-weight: 700; font-size: 17px; line-height: 1.25; }
+.cb-line__row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 4px; }
+.cb-line__p { font-family: var(--display); font-weight: 800; font-size: 17px; white-space: nowrap; }
+.cb-line__p s { margin-right: 7px; font-weight: 500; font-size: 14px; color: rgba(11, 11, 12, .42); }
+
+.cb-drawer__saved {
+  margin: -4px 0 10px;
+  font-size: 13.5px; font-weight: 600; color: #0F7B3D;
+}
+
+/* Two wallets, half each. Three ways to pay is a choice; the six stacked
+   full-width buttons that were here were a menu. */
+/* Two wallets side by side, each taking half. When Apple Pay does not draw
+   -- a browser without a wallet, or a card-less phone -- its slot collapses
+   to nothing and PayPal takes the row, instead of sitting stranded in the
+   right half beside an empty space. */
+.cb-drawer__wallets {
+  display: flex; gap: 10px; align-items: flex-start; margin-top: 10px;
+}
+.cb-drawer__wallet { flex: 1 1 0; min-width: 0; }
+.cb-drawer__wallet.is-idle { display: none; }
+.cb-drawer__or { display: none; }
+
+/* The shelf. Everything else the shop sells, in one sideways row. */
+.cb-shelf { border-top: 1px solid rgba(11, 11, 12, .1); padding: 16px 0 18px; }
+.cb-shelf__h {
+  padding: 0 18px 12px;
+  font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(11, 11, 12, .5);
+}
+.cb-shelf__row {
+  display: flex; gap: 10px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  padding: 0 18px 4px;
+  scrollbar-width: none;
+}
+.cb-shelf__row::-webkit-scrollbar { display: none; }
+.cb-shelf__item {
+  flex: 0 0 148px; scroll-snap-align: start;
+  display: grid; gap: 6px; justify-items: start;
+  padding: 0; border: 0; background: none; text-align: left; cursor: pointer;
+}
+.cb-shelf__pic {
+  width: 148px; aspect-ratio: 1 / 1;
+  border-radius: 10px; overflow: hidden; background: rgba(11, 11, 12, .05);
+}
+.cb-shelf__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Only drawn when that variant really is below its own full price. */
+.cb-shelf__flag {
+  display: inline-block; margin-top: 2px;
+  padding: 4px 8px; border-radius: 4px;
+  background: var(--action, #F5821F); color: #0B0B0C;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .01em;
+}
+.cb-shelf__t {
+  font-family: var(--display); font-weight: 700; font-size: 14px; line-height: 1.25;
+  /* Two lines, so a long name does not push its own price out of line with
+     the tile beside it. */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  min-height: 35px;
+}
+.cb-shelf__p { font-family: var(--display); font-weight: 800; font-size: 14.5px; }
+.cb-shelf__p s { margin-right: 6px; font-weight: 500; font-size: 12.5px; color: rgba(11, 11, 12, .42); }

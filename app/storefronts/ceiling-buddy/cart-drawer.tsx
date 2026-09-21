@@ -11,6 +11,7 @@ import { useFetcher } from "react-router";
 import type { LoadedProductPage, VariantRow } from "~/lib/store.server";
 import { formatMoney, savedAmount } from "~/lib/money";
 import { PayPalExpress } from "../garden-buddy/paypal-express";
+import { ProductExpress } from "../garden-buddy/product-express";
 
 interface DrawerLine {
   variantId: string;
@@ -67,6 +68,7 @@ export function CartDrawerProvider({
   storeParam = "",
   photo,
   paypalClientId = null,
+  publishableKey = null,
   children,
 }: {
   page: LoadedProductPage;
@@ -74,11 +76,18 @@ export function CartDrawerProvider({
   photo?: { src: string; alt: string } | null;
   /** PayPal's public client id, when the store has PayPal connected. */
   paypalClientId?: string | null;
+  /** Stripe's publishable key, for the Apple Pay button. */
+  publishableKey?: string | null;
   children: React.ReactNode;
 }) {
   const href = (path: string) => `${path}${storeParam}`;
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  /* Stripe draws nothing when the browser has no wallet, but the element it
+     mounts into is not empty, so a CSS :empty test cannot see that. The
+     component says when it is ready; until it does the slot is not in the
+     row at all and PayPal has the width to itself. */
+  const [walletReady, setWalletReady] = useState(false);
   const fetcher = useFetcher<CartPayload>();
   const loaded = useRef(false);
 
@@ -145,46 +154,34 @@ export function CartDrawerProvider({
   const lines = cart?.lines ?? [];
   const currency = cart?.currency ?? page.store.currency;
 
-  // The upgrade: the dearer bundle, when the cart is not already on it.
-  //
-  // "Not in the cart" is not enough on its own. Once someone has taken the
-  // bundle, the only variant left is the cheaper base one — and offering that
-  // is asking them to spend less, under a heading that says "Add". So the
-  // upsell has to cost more than what they are already holding, or there is
-  // no upsell to make.
-  const inCart = new Set(lines.map((l) => l.variantId));
-  const paying = lines.reduce((top, l) => Math.max(top, l.unitPriceCents), 0);
-  const upsell: VariantRow | null =
-    lines.length && page.variants.length > 1
-      ? page.variants
-          .filter((v) => !inCart.has(v.id) && v.priceCents > paying)
-          .reduce<VariantRow | null>((best, v) => (!best || v.priceCents > best.priceCents ? v : best), null)
-      : null;
+  /* Prices, without the cents when there are none.
+     "$199.00" and "+$70.00" are receipt formatting. The shop writes money
+     the way a person says it. */
+  const money = (cents: number, ccy: string) =>
+    formatMoney(cents, ccy).replace(/([.,])00\b/, "");
+  /* Money off is always whole dollars. "$48.01 off" is a number a computer
+     wrote; nobody says it out loud and nobody believes it. */
+  const off = (cents: number, ccy: string) => money(Math.round(cents / 100) * 100, ccy);
 
-  /*
-   * The add-ons, under the upgrade.
-   *
-   * Anything the shop sells that is not already in the cart, cheapest first,
-   * capped at two. Cheapest first is deliberate: the add-on that gets taken is
-   * the one that feels like nothing next to what has already been spent, and
-   * a list of five turns a decision into a shop.
-   */
-  const haveProducts = new Set(lines.map((l) => l.productTitle));
-  const extras = (page.addOnProducts ?? [])
-    .filter((x) => x.variantId && !haveProducts.has(x.title))
-    .slice()
-    .sort((a, b) => a.fromCents - b.fromCents)
-    .slice(0, 2);
-
-  // What the bigger bundle saves against buying the same number singly, so
-  // the upgrade can say why it is worth taking rather than only what it costs.
-  const single = page.variants.reduce<VariantRow | null>(
-    (low, v) => (!low || v.priceCents < low.priceCents ? v : low),
-    null,
+  // What the cart already saves against the same things at full price.
+  const saved = lines.reduce(
+    (n, l) => n + (l.compareAtCents && l.compareAtCents > l.unitPriceCents ? (l.compareAtCents - l.unitPriceCents) * l.quantity : 0),
+    0,
   );
-  const upsellQty = upsell ? Number((upsell.label.match(/^(\d+)/) ?? [])[1] ?? (/^two/i.test(upsell.label) ? 2 : /^three/i.test(upsell.label) ? 3 : 1)) : 1;
-  const upsellSaving =
-    upsell && single && upsellQty > 1 ? Math.max(0, single.priceCents * upsellQty - upsell.priceCents) : 0;
+
+  /* The shelf: everything else the shop sells.
+     Not "one upgrade and two add-ons" any more -- the whole range, sideways,
+     because a cart is the one place somebody is already buying. The test
+     product is excluded by hand: it exists to prove the checkout works and
+     it was being offered to customers as an add-on at fifty cents. */
+  const haveProducts = new Set(lines.map((l) => l.productTitle));
+  const shelf = (page.addOnProducts ?? [])
+    .filter((x) => x.variantId && !haveProducts.has(x.title) && !/^test\b/i.test(x.title))
+    .map((x) => {
+      const compare = x.addCompareAtCents ?? 0;
+      return { ...x, compareCents: compare, saveCents: compare > x.addCents ? compare - x.addCents : 0 };
+    })
+    .sort((a, b) => b.saveCents - a.saveCents || a.addCents - b.addCents);
 
   // Swapping a bundle replaces the cart rather than adding a second one —
   // nobody wants the tray twice.
@@ -224,101 +221,106 @@ export function CartDrawerProvider({
             ) : (
               lines.map((l) => (
                 <div className="cb-line" key={l.variantId}>
+                  {/* The picture of the thing they are actually buying.
+                      It used to be a 74px thumbnail while the upsells beside
+                      it were 200px, so the cart gave more room to what had
+                      not been chosen than to what had. */}
                   <div className="cb-line__pic">
                     {l.imageUrl || photo ? (
-                      <img src={l.imageUrl || photo!.src} alt={l.productTitle} loading="lazy" />
+                      <img src={l.imageUrl || photo!.src} alt={l.productTitle} />
                     ) : null}
                   </div>
-                  <div>
+                  <div className="cb-line__meta">
                     <div className="cb-line__t">{l.label}</div>
                     {l.sublabel ? <div className="cb-line__s">{l.sublabel}</div> : null}
-                    <div className="cb-line__s">Qty {l.quantity}</div>
+                    <div className="cb-line__row">
+                      <span className="cb-line__s">Qty {l.quantity}</span>
+                      <span className="cb-line__p">
+                        {l.compareAtCents && l.compareAtCents > l.unitPriceCents ? (
+                          <s>{money(l.compareAtCents * l.quantity, currency)}</s>
+                        ) : null}
+                        {money(l.lineTotalCents, currency)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="cb-line__p">{formatMoney(l.lineTotalCents, currency)}</div>
                 </div>
               ))
             )}
           </div>
 
-          {/*
-            What else, offered where the decision is still open.
-
-            Two different offers, in the order they are worth making. First the
-            bigger bundle of the thing they are already buying, because that is
-            one tap and the cheapest yes there is. Then the other products,
-            smallest first — somebody who has just spent two hundred dollars
-            will add a twenty dollar thing without thinking about it, and will
-            not consider a second two hundred dollar thing at all.
-
-            The heading used to name Ceiling Buddy's screen in hardcoded text,
-            on every store that borrowed this drawer. It names the actual
-            bundle now.
-          */}
-          {lines.length && (upsell || extras.length) ? (
-            <div className="cb-ups">
-              <div className="cb-ups__h">Add to your order</div>
-              {/* Sideways. Stacked, three of these stood between the cart line
-                  and the Checkout button and pushed it off a phone screen. */}
-              <div className="cb-ups__row">
-
-              {upsell ? (
-                <button type="button" className="cb-up" onClick={() => swap(upsell.id)} disabled={busy}>
-                  <span className="cb-up__pic">
-                    {upsell.imageUrl || photo ? <img src={upsell.imageUrl || photo!.src} alt="" /> : null}
-                  </span>
-                  <span className="cb-up__txt">
-                    <b>{upsell.label}</b>
-                    <i>
-                      {upsellSaving
-                        ? `Save ${formatMoney(upsellSaving, currency)} against buying them apart`
-                        : "Upgrade the bundle"}
-                    </i>
-                  </span>
-                  <span className="cb-up__add">
-                    {/* What the swap actually costs on top of what is in the
-                        cart. The upsell is only ever dearer than that, so this
-                        reads as a plus and never as a minus with a plus in
-                        front of it. */}
-                    +{formatMoney(Math.max(0, upsell.priceCents - paying), currency)}
-                  </span>
-                </button>
-              ) : null}
-
-              {extras.map((x) => (
-                <button type="button" className="cb-up" key={x.id} onClick={() => add(x.variantId)} disabled={busy}>
-                  <span className="cb-up__pic">
-                    {x.imageUrl ? <img src={x.imageUrl} alt="" loading="lazy" /> : null}
-                  </span>
-                  <span className="cb-up__txt">
-                    <b>{x.title}</b>
-                    <i>Goes with this</i>
-                  </span>
-                  <span className="cb-up__add">+{formatMoney(x.fromCents, currency)}</span>
-                </button>
-              ))}
-              </div>
-            </div>
-          ) : null}
-
+          {/* What they are about to pay, then the three ways to pay it.
+              This sits above everything on offer: the decision already made
+              gets the top of the drawer, and the ones not made yet go under
+              it. It was the other way round. */}
           <div className="cb-drawer__foot">
             <div className="cb-drawer__sum">
               <span>Subtotal</span>
-              <span>{formatMoney(cart?.subtotalCents ?? 0, currency)}</span>
+              <span>{money(cart?.subtotalCents ?? 0, currency)}</span>
             </div>
+            {saved > 0 ? (
+              <div className="cb-drawer__saved">You save {money(saved, currency)}</div>
+            ) : null}
             <a className="cb-btn" href={href("/checkout")} aria-disabled={lines.length === 0}>
               Checkout
             </a>
-            {/* Their own buttons, so the wallet someone already trusts is one
-                tap away instead of a form. Nothing is priced here — the server
-                prices the cart for both the create and the capture. */}
-            {paypalClientId && lines.length ? (
+            {/* Apple Pay and PayPal, side by side and half-width each, so the
+                two of them together take the room one used to. Venmo and Pay
+                Later are gone from here -- three ways to pay is a choice, six
+                is a menu. */}
+            {lines.length && (publishableKey || paypalClientId) ? (
               <div className="cb-drawer__wallets">
-                <span className="cb-drawer__or">or pay with</span>
-                <PayPalExpress clientId={paypalClientId} currency={currency} storeParam={storeParam} />
+                {publishableKey ? (
+                  <div className={walletReady ? "cb-drawer__wallet" : "cb-drawer__wallet is-idle"}>
+                    <ProductExpress
+                      mode="cart"
+                      publishableKey={publishableKey}
+                      currency={currency}
+                      variantId={lines[0]!.variantId}
+                      amountCents={cart?.totalCents ?? 0}
+                      label={page.store.name}
+                      storeName={page.store.name}
+                      shippingCents={0}
+                      storeParam={storeParam}
+                      onReady={(hasWallet) => setWalletReady(hasWallet)}
+                    />
+                  </div>
+                ) : null}
+                {paypalClientId ? (
+                  <div className="cb-drawer__wallet">
+                    <PayPalExpress clientId={paypalClientId} currency={currency} storeParam={storeParam} only="paypal" />
+                  </div>
+                ) : null}
               </div>
             ) : null}
             <div className="cb-reassure">Free shipping · 30-day returns</div>
           </div>
+
+          {/* Everything else the shop sells, sideways, with what each one
+              actually saves against its own full price. No invented numbers:
+              a tile only carries a banner when that variant has a compare-at
+              price above what it costs. */}
+          {shelf.length ? (
+            <div className="cb-shelf">
+              <div className="cb-shelf__h">Goes with this</div>
+              <div className="cb-shelf__row">
+                {shelf.map((x) => (
+                  <button type="button" className="cb-shelf__item" key={x.id} onClick={() => add(x.variantId)} disabled={busy}>
+                    <span className="cb-shelf__pic">
+                      {x.imageUrl ? <img src={x.imageUrl} alt="" loading="lazy" /> : null}
+                    </span>
+                    {x.saveCents > 0 ? (
+                      <span className="cb-shelf__flag">Get it now for {off(x.saveCents, currency)} off</span>
+                    ) : null}
+                    <span className="cb-shelf__t">{x.title}</span>
+                    <span className="cb-shelf__p">
+                      {x.compareCents > x.addCents ? <s>{money(x.compareCents, currency)}</s> : null}
+                      {money(x.addCents, currency)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </Ctx.Provider>
