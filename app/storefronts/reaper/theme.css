@@ -3477,10 +3477,25 @@ html, body { margin: 0; }
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
-  column-gap: 56px;
   align-items: start;
 }
-@media (min-width: 900px) { .cb-rvg { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* Two columns, flowed rather than gridded.
+   A grid gives every row the height of its tallest card, so one long review
+   with a photograph next to a two-line one with none left a hole the height
+   of the photograph. Multi-column lets each entry take only the room it
+   needs and the next one start straight underneath it. */
+@media (min-width: 900px) {
+  .cb-rvg {
+    display: block;
+    columns: 2;
+    column-gap: 56px;
+  }
+  /* An entry is never split across the fold of two columns. */
+  .cb-rv { break-inside: avoid; page-break-inside: avoid; }
+  /* Both columns begin with a rule, so neither looks like it starts
+     mid-sentence and the two heads line up. */
+  .cb-rv, .cb-rv + .cb-rv { border-top: 1px solid var(--rv-rule); }
+}
 
 .cb-rv {
   background: none;

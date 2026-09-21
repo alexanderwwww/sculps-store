@@ -133,6 +133,13 @@ export async function loadProductPage(
 
   const [product] = await db.select().from(products).where(eq(products.id, page.productId)).limit(1);
   if (!product) return null;
+  /* A draft is not published.
+     Nothing checked the status, so a product taken out of the menu was still
+     served in full to anybody with the address -- and to anybody a search
+     engine had shown it to. The shop decides when something is for sale; the
+     only way to see a draft is the admin's own preview, which is what
+     includeHidden means and which requires a signed-in user. */
+  if (product.status !== "active" && !options.includeHidden) return null;
 
   const [variantRows, sectionRows, publishedReviews] = await Promise.all([
     db.select().from(variants).where(eq(variants.productId, product.id)).orderBy(asc(variants.position)),
