@@ -42,6 +42,7 @@ import {
   unbindHostname,
   hostnameSsl,
   rootDomain,
+  putDnsRecord,
 } from "~/lib/cloudflare.server";
 import { createSenderDomain, readSenderDomain, verifySenderDomain } from "~/lib/resend-domains.server";
 import { emailReady, orderReference, sendOrderConfirmation, sendShippingNotice, sendRefundNotice } from "~/lib/email.server";
@@ -595,6 +596,51 @@ export async function action({ context, request }: Route.ActionArgs) {
       return { ok: `Saved. Add the DNS records below at your DNS provider, then press Verify.` };
     }
     return { ok: from ? "Saved. Email is not configured on the Worker yet, so the domain cannot be verified." : "Saved." };
+  }
+  /*
+   * Write Resend's records into Cloudflare, instead of printing them for
+   * somebody to retype.
+   *
+   * The table under this button has always been correct and always been a
+   * chore: two records, one of them a long DKIM key, copied by hand into
+   * another dashboard, where one wrapped character means the mail quietly
+   * goes to spam for a week. When the domain's nameservers are Cloudflare's
+   * the shop already holds a token that can write them.
+   */
+  if (intent === "sender-dns") {
+    if (!store.resendDomainId) return { error: "Save a from address first." };
+    const config = cloudflareConfig(env);
+    if (!config) return { error: "Cloudflare is not configured on the Worker." };
+    const sender = await readSenderDomain(env, store.resendDomainId);
+    if (!sender.ok) return { error: sender.reason };
+    if (!sender.value.records.length) return { error: "Resend has not returned any records for this domain yet." };
+
+    const zone = await findZone(config, rootDomain(sender.value.name));
+    if (!zone.ok) return { error: zone.reason };
+    if (!zone.value) {
+      return { error: `${sender.value.name} is not on this Cloudflare account, so the records have to be added wherever its DNS is hosted.` };
+    }
+
+    const failed: string[] = [];
+    for (const record of sender.value.records) {
+      const written = await putDnsRecord(config, zone.value.id, {
+        type: record.type,
+        name: record.name,
+        value: record.value,
+      });
+      if (!written.ok) failed.push(`${record.record}: ${written.reason}`);
+    }
+    if (failed.length) return { error: `Some records were not written. ${failed.join(" ")}` };
+
+    // Written is not verified -- ask Resend to look, and report what it saw.
+    const checked = await verifySenderDomain(env, store.resendDomainId);
+    if (!checked.ok) return { ok: `${sender.value.records.length} records written to Cloudflare. Press Verify in a minute.` };
+    return {
+      ok:
+        checked.value.status === "verified"
+          ? "Records written to Cloudflare and verified. Receipts now go out from your own domain."
+          : `${sender.value.records.length} records written to Cloudflare. Resend says "${checked.value.status}" — DNS takes a few minutes, press Verify again shortly.`,
+    };
   }
   if (intent === "verify-sender") {
     if (!store.resendDomainId) return { error: "Save a from address first." };
@@ -2120,6 +2166,13 @@ function NotificationsPane({
           badges={[{ label: dkim?.status === "verified" ? "Verified" : "Not verified", kind: dkim?.status === "verified" ? "success" : "neutral" }]}
           actions={[{ label: "Verify", intent: "verify-sender", disabled: !store.resendDomainId || busy }]}
         />
+        {onCloudflare ? (
+          <ListRow
+            name="Add them for me"
+            note="Writes both records straight into this domain's Cloudflare DNS, then asks Resend to check"
+            actions={[{ label: "Add to Cloudflare", intent: "sender-dns", disabled: !store.resendDomainId || busy }]}
+          />
+        ) : null}
         {sender ? <DnsTable rows={sender.records.map((r) => ({ type: r.type, name: r.name, value: r.value }))} /> : null}
         {!verified && store.emailFrom ? (
           <div style={{ padding: "10px 16px", fontSize: 12, color: "var(--ink-3)" }}>

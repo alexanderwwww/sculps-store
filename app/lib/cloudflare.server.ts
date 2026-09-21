@@ -176,3 +176,49 @@ export async function hostnameSsl(
   if (covering.some((pack) => pack.status === "active")) return { ok: true, value: "active" };
   return { ok: true, value: "provisioning" };
 }
+
+export interface DnsWrite {
+  type: string;
+  name: string;
+  value: string;
+  priority?: number;
+}
+
+/**
+ * Write a DNS record, replacing one that is already there.
+ *
+ * Resend hands back the SPF and DKIM records a sender domain needs and the
+ * settings screen used to print them in a table for somebody to retype at
+ * their registrar. When the domain's nameservers are Cloudflare's -- which
+ * they are for every shop this platform hosts -- there is no reason for a
+ * person to be in the middle of that.
+ *
+ * Matching is on name and type, so pressing the button twice replaces the
+ * record rather than stacking a second copy of it. TXT values are quoted by
+ * Cloudflare itself; sending them pre-quoted double-quotes them and DKIM
+ * silently fails, so the value goes up exactly as Resend gave it.
+ */
+export async function putDnsRecord(
+  config: CloudflareConfig,
+  zoneId: string,
+  record: DnsWrite,
+): Promise<Result<null>> {
+  const name = record.name.replace(/\.$/, "");
+  const existing = await call<{ id: string; name: string; type: string }[]>(
+    config,
+    "GET",
+    `/zones/${zoneId}/dns_records?type=${encodeURIComponent(record.type)}&name=${encodeURIComponent(name)}`,
+  );
+  const body = {
+    type: record.type,
+    name,
+    content: record.value,
+    ttl: 1, // automatic
+    ...(record.priority === undefined ? {} : { priority: record.priority }),
+  };
+  const found = existing.ok ? existing.value[0] : null;
+  const written = found
+    ? await call<unknown>(config, "PUT", `/zones/${zoneId}/dns_records/${found.id}`, body)
+    : await call<unknown>(config, "POST", `/zones/${zoneId}/dns_records`, body);
+  return written.ok ? { ok: true, value: null } : written;
+}
