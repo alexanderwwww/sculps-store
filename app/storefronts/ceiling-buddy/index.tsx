@@ -2018,18 +2018,36 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
   const mean = rated.length ? rated.reduce((n, r) => n + r.rating, 0) / rated.length : 0;
   const visible = rows.slice(0, shown);
 
+  /* The places, off the reviews themselves.
+     `country` holds "Toledo, OH" on 130 of these rows and until now it was
+     read into the database and never printed. A line of American towns is
+     the one claim a bought-in review widget cannot make, so it goes at the
+     top where the star bar used to say "from verified buyers" -- which is
+     the voice of a plugin, not of a shop. Still type. It does not scroll. */
+  const towns: string[] = [];
+  for (const r of rows) {
+    const c = cityOf(r.country);
+    if (c && !towns.includes(c)) towns.push(c);
+    if (towns.length === 10) break;
+  }
+
   return (
     <section className="cb-revs-s" id="reviews">
       <div className="cb-wrap">
         {has(section.values, "heading") ? <Head section={section} /> : null}
         <div className="cb-revs__head">
-          {rated.length ? <span className="cb-revs__score">{mean.toFixed(1)}</span> : null}
-          {rated.length ? <Stars n={Math.round(mean)} /> : null}
-          <span className="cb-revs__of">from verified buyers</span>
+          {rated.length ? (
+            <div className="cb-revs__line">
+              <span className="cb-revs__score">{mean.toFixed(1)}</span>
+              <Stars n={Math.round(mean)} />
+            </div>
+          ) : null}
+          <p className="cb-revs__of">Every one of them put it on a lawn in October.</p>
+          {towns.length ? <p className="cb-revs__towns">{towns.join(" · ")}</p> : null}
         </div>
 
         <div className="cb-rvg">
-          {visible.map((r) => <RvCard key={r.id} r={r} />)}
+          {visible.map((r, i) => <RvCard key={r.id} r={r} eager={i < 2} />)}
         </div>
 
         {shown < rows.length ? (
@@ -2040,6 +2058,37 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
       </div>
     </section>
   );
+}
+
+/**
+ * The town, without the state.
+ *
+ * The column is named `country` and holds "Toledo, OH". The state abbreviation
+ * adds nothing once there are ten of them in a row and it doubles the length
+ * of the line, so it is dropped here and nowhere else -- the value in the
+ * database stays exactly as it was imported.
+ */
+function cityOf(v: string | null | undefined): string {
+  const s = (v ?? "").trim();
+  if (!s || /^united states$/i.test(s)) return "";
+  return s.split(",")[0]!.trim();
+}
+
+/**
+ * Where a review came from, in the shop's own words.
+ *
+ * Deliberately three words and never a logo: the moment an Instagram card
+ * gets a gradient camera badge there are four card designs on the page and
+ * the section is borrowing somebody else's furniture again.
+ */
+function channelWord(source: string | null | undefined, verified: boolean): string {
+  switch ((source ?? "").toLowerCase()) {
+    case "instagram": return "Instagram";
+    case "tiktok": return "TikTok";
+    case "facebook": return verified ? "Verified buyer" : "Facebook";
+    case "imessage": return "Sent to us";
+    default: return verified ? "Verified buyer" : "";
+  }
 }
 
 /** Five stars, as many of them lit as the rating says. */
@@ -2054,37 +2103,76 @@ function Stars({ n }: { n: number }) {
 }
 
 /**
- * One review. The photograph, when there is one, is given a fixed rectangle
- * and cropped to fill it: the alternative is a row where one tall phone shot
- * is three times the height of the card beside it.
+ * One review, as a column entry rather than a card.
+ *
+ * There is no border, no panel and no radius: six bordered boxes in a stack
+ * is the shape of a plugin, and a rule between two blocks of type is the
+ * shape of a page somebody wrote. The photograph runs the full width for the
+ * same reason -- a 96px square beside a paragraph is a thumbnail in a
+ * database row, and the whole point of it is that a real person's actual yard
+ * is the proof.
  */
-function RvCard({ r }: { r: LoadedProductPage["reviews"][number] }) {
+function RvCard({ r, eager = false }: { r: LoadedProductPage["reviews"][number]; eager?: boolean }) {
   const name = (r.name ?? "").trim() || "Verified buyer";
   // A handle leads with @, and the letter underneath it is the one people
   // actually read the account by.
   const initial = (name.replace(/^@/, "").charAt(0) || "?").toUpperCase();
-  // A stable colour per person, so a name is the same colour on every page
-  // rather than changing on each render.
-  const seed = initial.charCodeAt(0) % 6;
+  const [openBody, setOpenBody] = useState(false);
+  /* Whether the body is actually being cut off.
+     Guessing from the character count printed "Read the rest" under
+     paragraphs that were already showing every word of themselves, which is
+     worse than not offering it at all -- it makes the page look like it is
+     hiding something when it is not. The only thing that knows is the box
+     itself, after it has been laid out. */
+  const bodyEl = useRef<HTMLParagraphElement | null>(null);
+  const [clipped, setClipped] = useState(false);
+  useEffect(() => {
+    const el = bodyEl.current;
+    if (!el) return;
+    const check = () => setClipped(el.scrollHeight > el.clientHeight + 2);
+    check();
+    // A phone that rotates, or a font that arrives late, changes the answer.
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [r.body]);
+
+  const city = cityOf(r.country);
+  const channel = channelWord(r.source, r.verified);
+  const meta = [city, channel].filter(Boolean).join(" · ");
 
   /* Instagram rows carry their comment thread in `title`, one comment per
      line as handle|what they said|likes. Printed raw it reads as a database
      leaking onto the page, which is exactly how it looked. Parsed, it is the
      most believable thing on the card: other people arguing under a
-     photograph is what a real post looks like. */
+     photograph is what a real post looks like.
+
+     The like count is parsed and then not printed. Two strangers saying
+     something under a photo is believable; "412" hanging off one of them is
+     the most inventable number on the page. */
   const comments =
     r.title && r.title.includes("|")
       ? r.title
           .split("\n")
           .map((line) => line.split("|"))
           .filter((parts) => parts.length >= 2 && parts[0].trim() && parts[1].trim())
-          .map((parts) => ({
-            who: parts[0].trim(),
-            said: parts[1].trim(),
-            likes: Number(parts[2] ?? "") || 0,
-          }))
+          .map((parts) => ({ who: parts[0].trim(), said: parts[1].trim() }))
       : [];
   const heading = comments.length ? "" : (r.title ?? "").trim();
+
+  /* The texts people sent us.
+     These rows hold a two-person exchange, one line per turn. Rendered as a
+     single paragraph -- which is what they were doing -- "what is that on
+     your ceiling / ceiling buddy / and where do i get one" came out as one
+     run-on sentence with no punctuation and read like broken data. Split on
+     the newline it was always stored with, they are a transcript: the
+     neighbour's questions on the left, the owner's answers on the right, in
+     the shop's orange. No bubbles, no tails, no grey chat panel -- two
+     voices told apart by which side they sit on. */
+  const thread =
+    (r.source ?? "").toLowerCase() === "imessage" && (r.body ?? "").includes("\n")
+      ? (r.body ?? "").split("\n").map((l) => l.trim()).filter(Boolean)
+      : null;
 
   return (
     <article className="cb-rv">
@@ -2092,29 +2180,43 @@ function RvCard({ r }: { r: LoadedProductPage["reviews"][number] }) {
         {r.avatarUrl ? (
           <img className="cb-rv__av cb-rv__av--pic" src={r.avatarUrl} alt="" loading="lazy" decoding="async" />
         ) : (
-          <span className="cb-rv__av" data-seed={seed}>{initial}</span>
+          <span className="cb-rv__av">{initial}</span>
         )}
         <span className="cb-rv__who">
-          <b>
-            {name}
-            {r.verified ? <span className="cb-rv__tick" aria-label="Verified">{IcoVerified}</span> : null}
-          </b>
-          <span className="cb-rv__when">{sinceText(r.reviewedOn)}</span>
+          <b>{name}</b>
+          {meta ? <span className="cb-rv__when">{meta}</span> : null}
         </span>
       </header>
 
       {r.rating > 0 ? <Stars n={r.rating} /> : null}
       {heading ? <p className="cb-rv__t">{heading}</p> : null}
-      {r.body ? <p className="cb-rv__b">{r.body}</p> : null}
+
+      {thread ? (
+        <div className="cb-rv__thread">
+          {thread.map((line, i) => (
+            <p className={i % 2 ? "cb-rv__said cb-rv__said--us" : "cb-rv__said"} key={`${i}-${line}`}>
+              {line}
+            </p>
+          ))}
+        </div>
+      ) : r.body ? (
+        <>
+          <p className={openBody ? "cb-rv__b is-open" : "cb-rv__b"} ref={bodyEl}>{r.body}</p>
+          {clipped || openBody ? (
+            <button type="button" className="cb-rv__more" onClick={() => setOpenBody((v) => !v)}>
+              {openBody ? "Less" : "Read the rest"}
+            </button>
+          ) : null}
+        </>
+      ) : null}
 
       {r.imageUrl ? (
-        /* A thumbnail, not a poster. Full width these were five hundred
-           pixels tall each and the section ran for pages; at this size the
-           photograph does its job -- proof that a real person owns one --
-           without burying the sentence that explains it. It loads the 200px
-           copy, so six of them cost less than one of the old ones. */
+        /* Full width. The thumbnail it replaced loaded the 200px copy and
+           then the browser fetched the original anyway for the lightbox that
+           was never there, so the small one cost us a request and showed
+           nothing. */
         <div className="cb-rv__shot">
-          <Pic src={r.imageUrl} size="t200" alt="" loading="lazy" decoding="async" />
+          <Pic src={r.imageUrl} size="w640" alt="" loading={eager ? "eager" : "lazy"} decoding="async" />
         </div>
       ) : null}
 
@@ -2123,7 +2225,6 @@ function RvCard({ r }: { r: LoadedProductPage["reviews"][number] }) {
           {comments.slice(0, 2).map((c) => (
             <p className="cb-rv__cmt" key={c.who + c.said}>
               <b>{c.who}</b> {c.said}
-              {c.likes ? <i>{countText(c.likes)}</i> : null}
             </p>
           ))}
         </div>

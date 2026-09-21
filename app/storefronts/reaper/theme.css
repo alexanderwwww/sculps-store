@@ -3412,3 +3412,160 @@ html, body { margin: 0; }
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+
+/* ==== the reviews, rebuilt ==============================================
+   An editorial column, not a widget. No card, no border, no radius, no
+   panel: six bordered boxes stacked is the shape of a plugin, a rule
+   between two blocks of type is the shape of a page somebody wrote.
+
+   Every rule here is paint-only. No blur, no backdrop-filter, no mask, no
+   will-change, no animation -- that combination at DPR 3 is what put fifty
+   compositing layers on the phone and killed the tab.
+
+   The ground is a token so the section can be turned over to black in one
+   line without touching anything else. ===================================== */
+
+.cb-revs-s {
+  --rv-ground: #fff;
+  --rv-ink: #0B0B0C;
+  --rv-body: rgba(11, 11, 12, .82);
+  --rv-meta: rgba(11, 11, 12, .48);
+  --rv-rule: rgba(11, 11, 12, .13);
+  --rv-off: rgba(11, 11, 12, .18);
+  --rv-accent: #F5821F;
+  background: var(--rv-ground);
+  color: var(--rv-ink);
+}
+
+/* ---- the summary ---- */
+
+.cb-revs__head {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin: 0 0 clamp(26px, 4vw, 40px);
+  text-align: center;
+}
+.cb-revs__line { display: flex; align-items: center; gap: 12px; }
+/* A headline number, not a badge. */
+.cb-revs__score {
+  font-family: var(--display); font-weight: 800;
+  font-size: clamp(44px, 7vw, 68px); line-height: .9; letter-spacing: -.02em;
+  color: var(--rv-ink);
+}
+.cb-revs__head .cb-rvstars svg { width: 18px; height: 18px; }
+.cb-revs__of {
+  margin: 0; font-size: 15px; line-height: 1.45; color: var(--rv-meta);
+}
+/* The towns. Still type -- it does not scroll and it never will. */
+.cb-revs__towns {
+  margin: 6px 0 0;
+  max-width: 100%;
+  font-size: 12.5px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: .10em;
+  color: var(--rv-meta);
+  overflow: hidden; white-space: nowrap; text-overflow: clip;
+}
+
+.cb-rvstars > span { color: var(--rv-off); }
+.cb-rvstars > span.is-on { color: var(--rv-accent); }
+.cb-rvstars svg { width: 15px; height: 15px; }
+
+/* ---- the column ---- */
+
+.cb-rvg {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  column-gap: 56px;
+  align-items: start;
+}
+@media (min-width: 900px) { .cb-rvg { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.cb-rv {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 28px 0;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.cb-rv + .cb-rv { border-top: 1px solid var(--rv-rule); }
+/* Two columns means the second column's first entry starts a column of its
+   own and must not carry a rule above it either. */
+@media (min-width: 900px) { .cb-rvg > .cb-rv:nth-child(2) { border-top: 0; } }
+
+.cb-rv__top { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; }
+/* Square, hard-cornered, one treatment. Six circles in a column read as a
+   contact list; the colour ramp underneath them made it a chat app. */
+.cb-rv__av {
+  width: 34px; height: 34px; border-radius: 4px;
+  display: grid; place-items: center;
+  font-family: var(--display); font-weight: 800; font-size: 14px;
+  color: var(--rv-ink);
+  background: var(--rv-rule);
+}
+.cb-rv__av--pic { object-fit: cover; }
+.cb-rv__who b {
+  font-family: var(--display); font-weight: 700; font-size: 15px;
+  letter-spacing: .01em; color: var(--rv-ink);
+}
+.cb-rv__when { font-size: 12.5px; color: var(--rv-meta); }
+
+.cb-rv__t { margin: 0; font-size: 15px; font-weight: 700; color: var(--rv-ink); }
+.cb-rv__b {
+  margin: 0; font-size: 16px; line-height: 1.55; color: var(--rv-body);
+  display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden;
+}
+.cb-rv__b.is-open { display: block; overflow: visible; }
+.cb-rv__more {
+  justify-self: start;
+  margin: -2px 0 0; padding: 10px 0;
+  min-height: 44px;
+  border: 0; background: none;
+  font-size: 14px; font-weight: 600; color: var(--rv-accent);
+  cursor: pointer;
+}
+
+/* The texts. A transcript, told apart by side and colour -- not a screenshot
+   of somebody else's chat app. */
+.cb-rv__thread { display: grid; gap: 6px; }
+.cb-rv__said {
+  margin: 0; max-width: 78%;
+  font-size: 16px; line-height: 1.5; color: var(--rv-body);
+}
+.cb-rv__said--us { justify-self: end; text-align: right; color: var(--rv-accent); }
+
+/* The photograph does the arguing. Full width, and sharp enough at the
+   corners to read as a photograph rather than as a piece of UI. */
+.cb-rv__shot {
+  margin-top: 4px;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(11, 11, 12, .06);
+}
+@media (min-width: 900px) { .cb-rv__shot { aspect-ratio: 3 / 2; } }
+.cb-rv__shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.cb-rv__cmt { font-size: 13.5px; color: var(--rv-meta); }
+.cb-rv__cmt b { color: var(--rv-ink); }
+.cb-rv__cmt i { display: none; }
+
+.cb-rvg__more {
+  display: block;
+  width: 100%;
+  margin: 34px auto 0;
+  padding: 15px 34px;
+  border: 1px solid var(--rv-off);
+  border-radius: 4px;
+  background: none;
+  font-family: var(--display); font-weight: 700; font-size: 15px;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--rv-ink);
+  cursor: pointer;
+}
+@media (min-width: 720px) { .cb-rvg__more { width: auto; } }
+.cb-rvg__more:hover { border-color: var(--rv-accent); color: var(--rv-accent); background: none; }
