@@ -3379,3 +3379,36 @@ html, body { margin: 0; }
   .cb-yard__grid { grid-template-columns: minmax(0, 1fr); }
   .cb-yard__map { position: static; }
 }
+
+/* ---- the cart drawer: Checkout must be reachable -----------------------
+ *
+ * PayPal's SDK renders its buttons into absolutely positioned iframes. The
+ * block they mount into had no position of its own, so the nearest positioned
+ * ancestor was the drawer panel -- and the iframes anchored to that, landing
+ * on top of the Checkout button. Hit-testing the centre of Checkout on a
+ * phone returned the iframe, not the link. Every add to cart on a phone was
+ * a dead end, silently, with the button plainly visible underneath.
+ *
+ * Two independent guards, because this one is too expensive to get wrong
+ * twice: the wallet block becomes the containing block its iframes should
+ * have had, and Checkout is lifted above them regardless.
+ */
+.cb-drawer__wallets {
+  position: relative;
+  isolation: isolate;
+  z-index: 1;
+}
+.cb-drawer__foot .cb-btn {
+  position: relative;
+  z-index: 3;
+  display: block;
+}
+/* And when the wallets make the foot taller than the screen, the foot
+   scrolls rather than swallowing the button. */
+.cb-drawer__foot {
+  position: relative;
+  z-index: 2;
+  max-height: 68vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

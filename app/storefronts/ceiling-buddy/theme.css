@@ -591,7 +591,7 @@
 
 /* ----------------------------------------------------------------- drawer */
 
-.cb-drawer { position: fixed; inset: 0; z-index: 60; display: none; }
+.cb-drawer { position: fixed; inset: 0; z-index: 2000; display: none; }
 .cb-drawer.is-open { display: block; }
 .cb-drawer__veil { position: absolute; inset: 0; background: rgba(14,17,22,.45); }
 .cb-drawer__panel {
@@ -1565,3 +1565,9 @@
   .cb-rec2__hit { font-size: 14.5px; }
   .cb-rec2__price { font-size: 13.5px; }
 }
+
+/* The drawer is a modal. PayPal's own iframes on the page behind it carry
+   z-index 100 of their own, and one of them sat over the Checkout link and
+   swallowed the tap. The drawer now outranks them, and the product page's
+   wallet row is taken out of the way while the drawer is open. */
+body:has(.cb-drawer.is-open) .cb-buy__side .cb-wallet { visibility: hidden; }
