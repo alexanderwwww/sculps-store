@@ -1,16 +1,18 @@
 /**
  * OrganicX — the thing that runs.
  *
- * Double-clicked, it opens its own Chrome, says what it is doing, waits for
- * orders, and gets on with the work. Everything it does is reported to the
- * control plane after it does it, because the Mac cannot be reached from
- * where Claude is and "it stopped" is not a diagnosis.
+ * Double-clicked, it opens its own Chrome and gets on with it. It does not
+ * wait to be told to start — anything not connected gets connected, and then
+ * it works. Orders steer it; they do not start it.
+ *
+ * Everything it does is reported after it does it, because the Mac cannot be
+ * reached from where Claude is and "it stopped" is not a diagnosis.
  *
  * Three jobs, in order of how often they run:
  *
+ *   work      connect, then farm, on the accounts' own rhythms
  *   obey      an order arrives within a couple of seconds, wherever it is
  *   update    a new build installs itself and the app restarts
- *   work      connect, then farm, then the rest of the loop
  */
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -251,9 +253,30 @@ async function main() {
   await tick("organicx", `build ${BUILD} is up`);
 
   const { browser } = await openChrome({ profile: PATHS.profile });
-  state = "idle";
-  doing = "waiting for something to do";
+
+  /*
+   * It opens and it goes.
+   *
+   * This used to boot to idle and sit there until an order arrived, which
+   * meant opening the app did nothing and the first thing Alex had to do was
+   * tell it to start. That is backwards: he opens it because he wants it
+   * working, and a tool that needs to be told to begin is one more thing to
+   * remember.
+   *
+   * So: anything not connected gets connected, and then it works. Orders
+   * still arrive and are still obeyed — they steer it, they do not start it.
+   */
+  const known = await db.accounts();
+  if (!known.some((a) => a.connected)) {
+    state = "connecting";
+    await report();
+    await connect(browser);
+  }
+  state = "working";
+  doing = "warming the accounts";
   await report();
+  await tick("bea", "starting the day");
+  let nextSweep = 0;
 
   for (;;) {
     try {
@@ -264,6 +287,14 @@ async function main() {
         const cmd = String(order.cmd);
         await tick("organicx", `heard: ${cmd}`);
 
+        if (cmd === "pause") {
+          state = "paused";
+          doing = "paused";
+          await report();
+        }
+        if (cmd === "run" || cmd === "warm") {
+          state = "working";
+        }
         if (cmd === "stop") {
           state = "stopped";
           await report();
@@ -278,14 +309,24 @@ async function main() {
           state = "idle";
         }
         if (cmd === "warm" || cmd === "run") {
-          state = "working";
-          await report();
-          for (const account of await db.accounts()) {
-            if (!account.connected) continue;
-            await farm(browser, account);
-          }
-          state = "idle";
+          nextSweep = 0; // go now rather than at the next sweep
         }
+      }
+
+      /*
+       * The work, on its own.
+       *
+       * A sweep every few minutes rather than a tight loop: the accounts'
+       * own rhythms decide whether anything actually happens, and farm()
+       * returns immediately for one that is asleep, parked, or has already
+       * had its day. Checking constantly would burn the Mac for nothing.
+       */
+      if (state !== "paused" && Date.now() >= nextSweep) {
+        for (const account of await db.accounts()) {
+          if (!account.connected) continue;
+          await farm(browser, account);
+        }
+        nextSweep = Date.now() + 4 * 60 * 1000;
       }
 
       await report();
