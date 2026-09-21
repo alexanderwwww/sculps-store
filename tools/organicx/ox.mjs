@@ -30,7 +30,7 @@ import { homeUrl, refreshHome } from "./home.mjs";
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 6;
+export const BUILD = 7;
 
 /**
  * The build that is actually running.

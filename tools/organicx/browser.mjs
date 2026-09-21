@@ -474,10 +474,39 @@ export async function signedIn(page, platform, { navigate = true } = {}) {
 export async function whoAmI(page, platform) {
   try {
     if (platform === "instagram") {
-      await page.goto("https://www.instagram.com/accounts/edit/", { waitUntil: "domcontentloaded", timeout: 20000 });
-      await sleep(2200);
-      const v = await page.inputValue('input[name="username"]', { timeout: 6000 }).catch(() => null);
-      return v ? `@${v}` : null;
+      /*
+       * Not /accounts/edit/ any more: that page now bounces to Meta's Accounts
+       * Center on a different origin, and the username field never appears.
+       * Ask what the web app itself asks — the current-user endpoint, from
+       * instagram.com, with the session cookies the tab already holds. If
+       * that is refused, the home page embeds the viewer in its JSON and the
+       * profile link in the left rail points at the account's own page.
+       */
+      if (!/instagram\.com/.test(page.url())) {
+        await page.goto("https://www.instagram.com/", { waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
+      }
+      await sleep(1500);
+      const found = await ask(page, async () => {
+        try {
+          const r = await fetch("/api/v1/accounts/current_user/?edit=true", {
+            credentials: "include",
+            headers: { "x-ig-app-id": "936619743392459", "x-requested-with": "XMLHttpRequest" },
+          });
+          if (r.ok) {
+            const j = await r.json();
+            const u = j?.user?.username;
+            if (u) return { via: "api", handle: u };
+          }
+        } catch {}
+        const html = document.documentElement.innerHTML;
+        const m = /"viewer"\s*:\s*\{[^{}]*?"username"\s*:\s*"([\w.]+)"/.exec(html);
+        if (m) return { via: "viewer", handle: m[1] };
+        const link = document.querySelector('a[href^="/"] img[alt$="profile picture" i]')?.closest("a");
+        const h = link?.getAttribute("href")?.replace(/^\/|\/$/g, "");
+        if (h && !h.includes("/")) return { via: "rail", handle: h };
+        return null;
+      }, undefined, 12000);
+      return found?.handle ? `@${found.handle}` : null;
     }
     if (platform === "tiktok") {
       /*
@@ -492,12 +521,21 @@ export async function whoAmI(page, platform) {
       return m ? m[1] : null;
     }
     if (platform === "youtube") {
-      await page.goto("https://www.youtube.com/account", { waitUntil: "domcontentloaded", timeout: 20000 });
-      await sleep(2000);
-      const t = await page
-        .textContent("#channel-handle, yt-formatted-string#handle", { timeout: 6000 })
-        .catch(() => null);
-      return t?.trim() || null;
+      /*
+       * The account page shows exactly one channel — the signed-in one — so
+       * a handle found anywhere in its text is ours. The element ids come
+       * and go; the text does not.
+       */
+      await page.goto("https://www.youtube.com/account", { waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
+      await sleep(2500);
+      const found = await ask(page, () => {
+        const el = document.querySelector("#channel-handle, yt-formatted-string#handle");
+        const t = el?.textContent?.trim();
+        if (t && t.startsWith("@")) return t;
+        const m = /(@[\w.-]{3,30})\b/.exec(document.body?.innerText ?? "");
+        return m ? m[1] : null;
+      }, undefined, 8000);
+      return found || null;
     }
   } catch {
     /* A handle we could not read is not a reason to stop. */
