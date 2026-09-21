@@ -483,6 +483,12 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
   // Always the dollars, never the percentage: "Save $59" is a number somebody
   // can picture, and "Save 23%" is arithmetic homework.
   const off = chosen ? savedAmount(chosen.priceCents, chosen.compareAtCents) : null;
+  /* Money off, in whole dollars.
+     "Save $29.99" is a number a computer wrote. The shop says "Save $30",
+     the way a person reads it out. The price itself keeps its cents --
+     what something costs is exact, what it saves is the headline. */
+  const dollarsOff = (cents: number) =>
+    formatMoney(Math.round(cents / 100) * 100, currency).replace(/([.,])00\b/, "");
   const currency = page.store.currency;
   const main = shots[shot];
 
@@ -552,7 +558,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                 <s className="cb-price__was">{formatMoney(chosen.compareAtCents, currency)}</s>
               ) : null}
               {off ? (
-                <span className="cb-price__off">{IcoTag} Save {formatMoney(off, currency)}</span>
+                <span className="cb-price__off">{IcoTag} Save {dollarsOff(off)}</span>
               ) : null}
             </div>
           ) : null}
@@ -659,7 +665,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                       <span className="cb-tier__name">{x.label}</span>
                       <span className="cb-tier__under">
                         {x.compareAtCents ? <s>{formatMoney(x.compareAtCents, currency)}</s> : null}
-                        {save ? <b>Save {formatMoney(save, currency)}</b> : null}
+                        {save ? <b>Save {dollarsOff(save)}</b> : null}
                         {!save && x.sublabel ? <span>{x.sublabel}</span> : null}
                       </span>
                     </span>
