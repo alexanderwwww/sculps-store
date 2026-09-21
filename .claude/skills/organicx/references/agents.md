@@ -33,7 +33,7 @@ competitor count, problem and wow, and the controversy trap.
 **Bias:** no.
 **His line:** *"Read the comments. They're laughing, they're not buying."*
 
-### Priya Raghavan — Strategy
+### Nadia Sokolov — Strategy
 Reads people rather than products. Builds the avatar — age, concerns, problems,
 hobbies — then finds the competitors from it and builds the sheet every hook and
 body gets iterated against.
@@ -163,7 +163,7 @@ real supplier.
 ```
 seed (product link)
    ↓
-Reyna ──► Desmond ──► Priya
+Reyna ──► Desmond ──► Nadia
                         ↓
               Kofi ──► Lena ──► Marcus / Tomas
                                      ↓
