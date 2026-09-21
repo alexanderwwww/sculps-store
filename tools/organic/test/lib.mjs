@@ -6,6 +6,8 @@ import { openChrome } from "../worker/chrome.mjs";
 
 process.env.OX_CHROME ??= "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 process.env.ORGANIC_CHROME_ARGS ??= "--no-sandbox --disable-gpu --no-proxy-server";
+// There is no display here, so the tests run the headless path on purpose.
+process.env.ORGANIC_HEADLESS ??= "1";
 
 let failed = 0;
 export const check = (name, ok, extra = "") => {

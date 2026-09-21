@@ -133,8 +133,11 @@ export class Screens extends EventEmitter {
     this.pages = new Map();     // id → Page
     this.streams = new Map();   // id → { session, opts, lastAt, stopping }
     this.focused = null;
-    this.grid = { width: 640, quality: 40, fps: 8 };
+    // Four tiles at once: enough to see movement, not enough to cost the Mac
+    // anything. The focused screen is where the frames are spent.
+    this.grid = { width: 600, quality: 40, fps: 5 };
     this.full = { width: 1280, quality: 60, fps: 12 };
+    this._pausedByFocus = new Set();
     this.spare = [];            // blank pages worth reusing (the first tab Chrome opens)
     this._ctx = null;
   }
@@ -350,16 +353,123 @@ export class Screens extends EventEmitter {
    * Which screen is big. The focused screen streams at full size, the rest
    * at grid size; null returns everything to the grid.
    */
-  async focus(id) {
+  /**
+   * Make one screen the whole window — and make it feel like the page.
+   *
+   * Three things happen, and all three are about the click landing where it
+   * was aimed and arriving while the hand is still there:
+   *
+   *   the page is resized to the window's own size, at the window's own pixel
+   *   density, so the picture is sharp on a Retina screen and every coordinate
+   *   maps one to one with no letterbox to guess around;
+   *
+   *   it is streamed at that density, so text is readable rather than a
+   *   blurred-up 1280-wide photograph of it;
+   *
+   *   every other screen stops streaming. Nobody is looking at them, and the
+   *   frames they were encoding are exactly the ones the focused screen needs.
+   *
+   * `view` is what the window measured: CSS pixels and devicePixelRatio.
+   */
+  async focus(id, view = null) {
     const next = id && IDS.includes(id) ? id : null;
     const prev = this.focused;
     this.focused = next;
     if (prev !== next) this.emit("focus", { id: next, was: prev });
+
+    if (prev && prev !== next) await this._sizePage(prev, null);
+    if (next) await this._sizePage(next, view);
+
     for (const [sid, st] of this.streams) {
-      if (!st.on) continue;
-      await this.startStream(sid, sid === next ? this.full : this.grid);
+      if (next && sid !== next) {
+        // Nobody is looking: stop paying for it, and remember that it was
+        // running so it comes back when the window returns to the grid.
+        if (st.on) { this._pausedByFocus.add(sid); await this.stopStream(sid); }
+        continue;
+      }
+      if (!st.on && !this._pausedByFocus.has(sid)) continue;
+      this._pausedByFocus.delete(sid);
+      await this.startStream(sid, sid === next ? this._fullFor(view) : this.grid);
+    }
+    if (!next) {
+      for (const sid of [...this._pausedByFocus]) {
+        this._pausedByFocus.delete(sid);
+        await this.startStream(sid, this.grid);
+      }
     }
     return next;
+  }
+
+  /**
+   * Put Chrome's own window in front of Alex, or park it off screen again.
+   *
+   * For one moment — typing a password — a video of a browser is the wrong
+   * thing. It is slower than the browser, it cannot show a "Continue with
+   * Google" popup, and a click that arrives a second late feels broken. So
+   * the sign-in happens in the real window, at the machine's own speed, and
+   * the moment it is done the window goes back to -4000 where Alex never
+   * sees it and the app's window is the only one again.
+   */
+  async showWindow(id, on) {
+    const session = await this._session(id);
+    if (!session) return false;
+    try {
+      const { windowId } = await session.send("Browser.getWindowForTarget");
+      if (on) {
+        await session.send("Browser.setWindowBounds", {
+          windowId,
+          bounds: { left: 80, top: 80, width: 1180, height: 860, windowState: "normal" },
+        });
+        // Raising the tab brings the window forward with it.
+        await this.page(id)?.bringToFront().catch(() => {});
+      } else {
+        await session.send("Browser.setWindowBounds", {
+          windowId,
+          bounds: { left: -4000, top: -4000, width: 1280, height: 900, windowState: "normal" },
+        });
+      }
+      return true;
+    } catch {
+      // Headless has no window to move. Nothing breaks; the streamed screen
+      // is still there to sign in through.
+      return false;
+    }
+  }
+
+  /** What to stream a focused screen at, from what the window measured. */
+  _fullFor(view) {
+    const dpr = Math.min(2, Math.max(1, Number(view?.dpr) || 1));
+    const css = Math.max(600, Math.min(1800, Math.round(Number(view?.w) || this.full.width)));
+    return { width: Math.min(2400, Math.round(css * dpr)), quality: 52, fps: 15 };
+  }
+
+  /**
+   * Resize the page itself. `view` null puts it back to the size the crew
+   * works at, so a session after a sign-in is not laid out for whatever shape
+   * the window happened to be.
+   */
+  async _sizePage(id, view) {
+    const session = await this._session(id);
+    if (!session) return;
+    const st = this.streams.get(id);
+    if (st) { st.vp = null; st.vpAt = 0; }
+    try {
+      if (!view) {
+        await session.send("Emulation.setDeviceMetricsOverride", {
+          width: 1280, height: 900, deviceScaleFactor: 1, mobile: false,
+        });
+        return;
+      }
+      const width = Math.max(600, Math.min(1800, Math.round(Number(view.w) || 1280)));
+      const height = Math.max(400, Math.min(1400, Math.round(Number(view.h) || 900)));
+      await session.send("Emulation.setDeviceMetricsOverride", {
+        width, height,
+        deviceScaleFactor: Math.min(2, Math.max(1, Number(view.dpr) || 1)),
+        mobile: false,
+      });
+    } catch {
+      /* A page that will not be resized is still usable. */
+    }
   }
 
   /* ------------------------------------------------------------ the way in */

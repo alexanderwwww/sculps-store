@@ -24,8 +24,10 @@ check("startStream (second screen)", await screens.startStream("tiktok"));
 await until(() => frames.instagram.length >= 3 && frames.tiktok.length >= 3, 15000);
 check("frames arrive for both screens", frames.instagram.length >= 3 && frames.tiktok.length >= 3, `${frames.instagram.length}/${frames.tiktok.length}`);
 const f = frames.instagram.at(-1);
+const g = frames.tiktok.at(-1);
+check("a screen started with no options uses the grid size", g.w === 600, String(g.w));
 check("a frame is base64 jpeg with a size", typeof f.jpeg === "string" && f.jpeg.startsWith("/9j/") && f.w > 0 && f.h > 0, `${f.w}x${f.h}`);
-check("grid frames are 640 wide", f.w === 640, String(f.w));
+check("the width asked for is the width that arrives", f.w === 640, String(f.w));
 
 const t0 = Date.now();
 const n0 = frames.instagram.length;
@@ -36,13 +38,18 @@ check("throttled to about 8 fps", fps <= 9.5, fps.toFixed(1));
 await screens.focus("instagram");
 const big = await until(() => frames.instagram.findLast((x) => x.w > 640), 10000);
 check("focus makes the frames full width", big && big.w >= 1000, big ? `${big.w}x${big.h}` : "none");
-const small = frames.tiktok.at(-1);
-check("the other screen stays small", small.w === 640, String(small.w));
+// Nobody is looking at the others while one fills the window, so they stop
+// streaming entirely — those frames are what the focused one needs.
+const tiktokBefore = frames.tiktok.length;
+await sleep(1200);
+check("the other screens stop streaming while one is focused", frames.tiktok.length === tiktokBefore, `${frames.tiktok.length - tiktokBefore} extra`);
 
 await screens.focus(null);
 const backCount = frames.instagram.length;
-const back = await until(() => frames.instagram.length > backCount && frames.instagram.at(-1).w === 640, 10000);
-check("unfocus returns to 640", Boolean(back));
+const back = await until(() => frames.instagram.length > backCount && frames.instagram.at(-1).w === 600, 10000);
+check("unfocus returns to the grid size", Boolean(back));
+const resumed = await until(() => frames.tiktok.length > tiktokBefore, 10000);
+check("and the other screens start again", Boolean(resumed));
 
 const cursors = [];
 screens.on("cursor", (c) => cursors.push(c));
@@ -54,7 +61,7 @@ await screens.open("youtube", "http://yt.test/");
 await sleep(1500);
 check("startStream on a static page", await screens.startStream("youtube"));
 const still = await until(() => frames.youtube.length >= 1, 5000);
-check("a static page still gets a first frame", Boolean(still) && frames.youtube[0].w === 640, frames.youtube[0] ? `${frames.youtube[0].w}x${frames.youtube[0].h}` : "none");
+check("a static page still gets a first frame", Boolean(still) && frames.youtube[0].w === 600, frames.youtube[0] ? `${frames.youtube[0].w}x${frames.youtube[0].h}` : "none");
 
 await screens.stopStream("instagram");
 const stoppedAt = frames.instagram.length;

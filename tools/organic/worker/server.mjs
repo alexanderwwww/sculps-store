@@ -34,7 +34,16 @@ export function validate(raw) {
   switch (m.t) {
     case "focus":
       if (m.id != null && !IDS.includes(m.id)) return null;
-      return { t: "focus", id: m.id == null ? null : m.id };
+      return {
+        t: "focus",
+        id: m.id == null ? null : m.id,
+        // What the window measured for itself: CSS pixels and pixel density.
+        view: m.id == null ? null : {
+          w: Math.max(200, Math.min(4000, Number(m.w) || 1280)),
+          h: Math.max(200, Math.min(3000, Number(m.h) || 900)),
+          dpr: Math.max(1, Math.min(3, Number(m.dpr) || 1)),
+        },
+      };
     case "mouse": {
       if (!IDS.includes(m.id) || !MOUSE.has(m.kind)) return null;
       const x = num(m.x, 0, 1), y = num(m.y, 0, 1);

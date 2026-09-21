@@ -30,7 +30,7 @@ import { isAwake, planDay, scatterAcrossDay, watchMs, react, dayBudget, scrollPa
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 1;
+export const BUILD = 2;
 
 const SUPPORT = process.env.ORGANIC_HOME || join(homedir(), "Library", "Application Support", "Organic");
 export const PATHS = {
@@ -81,6 +81,8 @@ function stateMsg() {
     stopped: S.stopped,
     screens: Object.values(S.screens).map(({ id, platform, state, handle }) => ({ id, platform, state, handle })),
     brief: S.brief,
+    // Where Claude plugs in. Shown in the window so it is never hunted for.
+    mcp: (cloud?.base ?? "") + "/mcp",
   };
 }
 const pushState = () => server?.broadcast(stateMsg());
@@ -208,6 +210,9 @@ async function checkSignedIn(platform, { quiet = false } = {}) {
   try { row = await cloud.db.markConnected(platform, handle); } catch (e) { say("organic", `could not record ${handle}: ${e.message}`); }
   sc.accountId = row?.id ?? sc.accountId ?? null;
   setScreen(platform, "connected", handle);
+  // Signed in: Chrome goes back out of sight, and the app is the only window
+  // again. Alex never has to close it himself.
+  await screens.showWindow(platform, false).catch(() => {});
   say("sam", `${platform} connected as ${handle}`);
   sched.firstLook.add(platform);
   if (S.phase === "working") await prepareAccount(platform).catch(() => {});
@@ -786,14 +791,21 @@ async function connectScreen(platform) {
   if (!screens.page(platform)) await openScreen(platform).catch((e) => say("sam", `could not open ${platform}: ${e.message}`));
   if (!screens.page(platform)) return;
   setScreen(platform, "waiting", null);
-  say("sam", `opening ${platform} — sign in on the screen and I will pick it up`);
   await screens.navigate(platform, LOGIN[platform]);
+  // The real window, for the one moment that has to be fast.
+  const infront = await screens.showWindow(platform, true);
+  say(
+    "sam",
+    infront
+      ? `${platform} is open in front of you — sign in there and I will pick it up`
+      : `opening ${platform} — sign in on the screen and I will pick it up`,
+  );
 }
 
 async function onMessage(msg) {
   switch (msg.t) {
     case "focus":
-      await screens.focus(msg.id);
+      await screens.focus(msg.id, msg.view);
       break;
     case "mouse":
     case "key":

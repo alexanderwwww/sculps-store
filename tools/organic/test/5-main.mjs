@@ -39,7 +39,7 @@ const cloud = await cloudStub({
 function boot(extraEnv = {}) {
   const child = spawn(process.execPath, ["main.mjs"], {
     cwd: WORKER, stdio: ["pipe", "pipe", "pipe"],
-    env: { ...process.env, ORGANIC_HOME: HOME, ORGANIC_CLOUD: cloud.base, ORGANIC_CDP_PORT: String(CDP), ORGANIC_PORT: "", ORGANIC_STUB_SIGNEDIN: "", ...extraEnv },
+    env: { ...process.env, ORGANIC_HEADLESS: "1", ORGANIC_HOME: HOME, ORGANIC_CLOUD: cloud.base, ORGANIC_CDP_PORT: String(CDP), ORGANIC_PORT: "", ORGANIC_STUB_SIGNEDIN: "", ...extraEnv },
   });
   let out = "", err = "";
   child.stdout.on("data", (d) => { out += d; });

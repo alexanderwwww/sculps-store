@@ -19,9 +19,24 @@ export function chromePath() {
   return process.env.ORGANIC_CHROME || process.env.OX_CHROME || MAC_CHROME;
 }
 
-export function chromeArgs({ port, profile, headed = process.env.ORGANIC_HEADED === "1" }) {
+/*
+ * Headed, off-screen, by default.
+ *
+ * Headless Chrome on macOS paints in software: no GPU, every frame composited
+ * on the CPU. On a site as heavy as Instagram that is the difference between
+ * a live picture and a slideshow — and a slideshow makes clicking feel broken,
+ * because the click lands and the proof of it arrives a second later.
+ *
+ * A headed Chrome gets the GPU. Parked at -4000,-4000 it is never on a screen
+ * Alex looks at, and the app's own window is still the only thing he sees.
+ * ORGANIC_HEADLESS=1 forces the old behaviour; the Linux tests set it.
+ */
+export function chromeArgs({ port, profile, headed = process.env.ORGANIC_HEADLESS !== "1" }) {
   return [
-    ...(headed ? ["--window-position=-4000,-4000"] : ["--headless=new"]),
+    ...(headed
+      ? ["--window-position=-4000,-4000", "--window-size=1280,900", "--disable-backgrounding-occluded-windows",
+         "--disable-renderer-backgrounding", "--disable-features=CalculateNativeWinOcclusion"]
+      : ["--headless=new"]),
     `--remote-debugging-port=${port}`,
     `--user-data-dir=${profile}`,
     "--no-first-run",
