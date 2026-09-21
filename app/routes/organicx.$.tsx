@@ -493,6 +493,19 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
   const env = context.cloudflare.env;
   const what = parts[1] ?? "";
 
+  /* The app's own mark, for any client that draws one next to a tool call. */
+  if (what === "icon.png") {
+    const obj = await env.MEDIA.get("ox-icon.png");
+    if (!obj) return new Response("no", { status: 404 });
+    return new Response(obj.body, {
+      headers: {
+        "content-type": "image/png",
+        "cache-control": "public, max-age=86400",
+        "access-control-allow-origin": "*",
+      },
+    });
+  }
+
   if (what === "clips") {
     const prefix = parts[2] ? `${CLIPS}${parts[2]}/` : CLIPS;
     const out: { key: string; name: string; size: number; uploaded: string }[] = [];
@@ -582,7 +595,22 @@ export async function action({ params, request, context }: Route.ActionArgs) {
       return reply({
         protocolVersion: "2024-11-05",
         capabilities: { tools: {} },
-        serverInfo: { name: "organicx", version: "1" },
+        serverInfo: {
+          name: "organicx",
+          title: "OrganicX",
+          version: "1.0.0",
+          websiteUrl: "https://kerberos.gardenbuddystore.workers.dev",
+          // Offered the way the spec allows, the same as the wand's. Whether a
+          // given client draws it is the client's business, and nothing here
+          // depends on it.
+          icons: [
+            {
+              src: `https://kerberos.gardenbuddystore.workers.dev/organicx/${KEY}/icon.png`,
+              mimeType: "image/png",
+              sizes: ["256x256"],
+            },
+          ],
+        },
       });
     }
     if (body.method === "tools/list") return reply({ tools: TOOLS });
