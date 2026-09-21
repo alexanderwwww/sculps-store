@@ -31,7 +31,7 @@ import * as research from "./research.mjs";
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 10;
+export const BUILD = 11;
 
 /**
  * The build that is actually running.
@@ -314,6 +314,9 @@ export async function connect(browser, only) {
      */
     let result = { connected: false, friction: null };
     for (let i = 0; i < 8; i++) {
+      // A build pushed while it waits here lands now, not after the wait:
+      // build 10 sat unseen behind build 9's YouTube wait for three minutes.
+      if (await maybeUpdate()) return;
       // Navigate on the first look only; after that the tab is already there
       // and signing in happens in it, so checking is reading the DOM again.
       result = await signedIn(page, platform, { navigate: i === 0 });

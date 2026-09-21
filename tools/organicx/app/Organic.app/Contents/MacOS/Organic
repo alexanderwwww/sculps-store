@@ -9,6 +9,10 @@
 
 set -u
 HERE="$(cd "$(dirname "$0")/../Resources" && pwd)"
+# The app is called Organic now — a fresh name, bundle id and path, because the
+# Dock kept drawing the icon it had cached for the old one. The folder keeps
+# the old name on purpose: the Chrome profile in it holds the Instagram
+# session Alex already signed in, and a rename must not cost him that.
 HOME_DIR="$HOME/Library/Application Support/OrganicX"
 RUNTIME="$HOME_DIR/runtime"
 LOG="$HOME_DIR/organicx.log"
@@ -24,7 +28,7 @@ bail() {
   # The text is handed to AppleScript as an argument, not spliced into the
   # script: a quote inside a log line used to break the script and the alert
   # silently never appeared — which is the one thing an alert must not do.
-  /usr/bin/osascript -e 'on run argv' -e 'display alert "OrganicX" message (item 1 of argv)' -e 'end run' "$1" >/dev/null 2>&1
+  /usr/bin/osascript -e 'on run argv' -e 'display alert "Organic" message (item 1 of argv)' -e 'end run' "$1" >/dev/null 2>&1
   exit 1
 }
 
@@ -113,7 +117,7 @@ fi
 # $RUNTIME/BUILD, and this must not copy over it — otherwise the next restart
 # silently undoes the fix that was just shipped, which is the worst kind of
 # bug: it works, then it does not, and nothing changed.
-BUNDLE_BUILD=10
+BUNDLE_BUILD=11
 RUNTIME_BUILD=0
 if [ -f "$RUNTIME/BUILD" ]; then
   RUNTIME_BUILD=$(tr -dc '0-9' < "$RUNTIME/BUILD" 2>/dev/null)
@@ -183,7 +187,7 @@ while true; do
   # here was the exact "double-clicked, nothing happened" this launcher's
   # header says it exists to prevent.
   if [ $code -ne 0 ]; then
-    bail "OrganicX stopped (code $code). Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')"
+    bail "Organic stopped (code $code). Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')"
   fi
   exit 0
 done
