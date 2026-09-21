@@ -17,17 +17,19 @@
 const GREEN = "#39FF7A";
 
 const PLATFORMS = ["instagram", "tiktok", "youtube"];
+/* The fourth screen: whatever research is happening right now, signed out. */
+const TILES = [...PLATFORMS, "research"];
 
 /** The page itself. Static; everything live is pushed into it afterwards. */
 export function homeHtml() {
-  const tiles = PLATFORMS.map(
+  const tiles = TILES.map(
     (p) => `
       <div class="tile" id="tile-${p}">
         <div class="shot"><img id="shot-${p}" alt=""></div>
         <div class="foot">
           <span class="dot" id="dot-${p}"></span>
           <span class="name">${p}</span>
-          <span class="who" id="who-${p}">not connected</span>
+          <span class="who" id="who-${p}">${p === "research" ? "signed out, always" : "not connected"}</span>
         </div>
       </div>`,
   ).join("");
@@ -39,7 +41,7 @@ export function homeHtml() {
   html, body { margin: 0; height: 100%; background: #0b0b0d; color: rgba(236,238,240,.92);
     font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overflow: hidden; }
   .wrap { display: grid; grid-template-rows: 1fr auto; height: 100%; padding: 18px 18px 84px; box-sizing: border-box; gap: 14px; }
-  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; min-height: 0; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 14px; min-height: 0; }
   .tile { display: grid; grid-template-rows: 1fr auto; min-height: 0; border-radius: 14px; overflow: hidden;
     background: linear-gradient(160deg, #173420, #0d1a12 55%, #0b0b0d);
     box-shadow: inset 0 0 0 1px rgba(57,255,122,.08), inset 0 0 60px rgba(57,255,122,.04); }
@@ -75,6 +77,13 @@ export function homeHtml() {
       w.textContent = state === "connected" ? (handle || "connected")
         : state === "waiting" ? "sign in in its tab" : state === "checking" ? "checking…" : "not connected";
     },
+    research(p, on) {
+      var d = document.getElementById("dot-" + p), w = document.getElementById("who-" + p), img = document.getElementById("shot-" + p);
+      if (!d || !w) return;
+      d.className = "dot " + (on ? "on" : "");
+      w.textContent = on ? "Reyna is looking" : "signed out, always";
+      if (!on && img) img.removeAttribute("src");
+    },
     ticker(lines) {
       var t = document.getElementById("ticker"); if (!t) return;
       t.innerHTML = "";
@@ -103,7 +112,7 @@ export function homeUrl() {
  */
 export async function refreshHome(home, tabs, { connections = {}, ticker = [] } = {}) {
   if (!home || home.isClosed()) return;
-  for (const platform of PLATFORMS) {
+  for (const platform of TILES) {
     const page = tabs.get(platform);
     if (page && !page.isClosed()) {
       const shot = await page
@@ -111,6 +120,11 @@ export async function refreshHome(home, tabs, { connections = {}, ticker = [] } 
         .then((b) => "data:image/jpeg;base64," + b.toString("base64"))
         .catch(() => null);
       if (shot) await home.evaluate(([p, d]) => window.__oxHome?.shot(p, d), [platform, shot]).catch(() => {});
+    }
+    if (platform === "research") {
+      // Idle between runs is a state worth showing, not a stale picture.
+      await home.evaluate(([p, on]) => window.__oxHome?.research(p, on), [platform, Boolean(page && !page.isClosed())]).catch(() => {});
+      continue;
     }
     const c = connections[platform];
     if (c) await home.evaluate(([p, st, h]) => window.__oxHome?.connection(p, st, h), [platform, c.state, c.handle ?? null]).catch(() => {});

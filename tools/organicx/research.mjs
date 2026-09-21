@@ -25,6 +25,16 @@ import { attach, say, sleep, scroll, checkFriction, ask } from "./browser.mjs";
 import { between, around, chance } from "./human.mjs";
 
 /**
+ * The research page that is open right now, if any — so the home screen
+ * can show Reyna working. Research pages come and go; this is the one that
+ * exists at this moment, or null.
+ */
+let current = null;
+export function currentPage() {
+  return current && !current.isClosed() ? current : null;
+}
+
+/**
  * A context with nothing in it.
  *
  * Made fresh and thrown away, so nothing accumulates that could link one
@@ -75,6 +85,8 @@ function mustBeAnonymous(context) {
 export async function adLibrary(context, { query, country = "US", limit = 40 }) {
   mustBeAnonymous(context);
   const page = await context.newPage();
+  current = page;
+  await page.bringToFront().catch(() => {});
   await attach(page);
   await say(page, `ad library — ${query}`);
 
@@ -88,6 +100,7 @@ export async function adLibrary(context, { query, country = "US", limit = 40 }) 
   // empty list that reads as "nobody is advertising this".
   const friction = await checkFriction(page);
   if (friction) {
+    current = null;
     await page.close();
     return { ads: [], stopped: friction };
   }
@@ -119,6 +132,7 @@ export async function adLibrary(context, { query, country = "US", limit = 40 }) 
     await sleep(around(1800, 700, 700, 4000));
   }
 
+  current = null;
   await page.close();
   return { ads: ads.slice(0, limit), stopped: null };
 }
@@ -162,6 +176,8 @@ export async function hashtag(context, platform, tag, { passes = 6 } = {}) {
   if (!make) throw new Error(`no such platform: ${platform}`);
 
   const page = await context.newPage();
+  current = page;
+  await page.bringToFront().catch(() => {});
   await attach(page);
   await say(page, `${platform} — #${tag}`);
   await page.goto(make(tag), { waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
@@ -170,6 +186,7 @@ export async function hashtag(context, platform, tag, { passes = 6 } = {}) {
   const friction = await checkFriction(page);
   // "Logged out" is the expected state here, not a problem.
   if (friction && friction !== "logged out") {
+    current = null;
     await page.close();
     return { links: [], stopped: friction };
   }
@@ -186,6 +203,7 @@ export async function hashtag(context, platform, tag, { passes = 6 } = {}) {
     await sleep(around(1600, 600, 600, 3600));
   }
 
+  current = null;
   await page.close();
   return { links: [...links], stopped: null };
 }

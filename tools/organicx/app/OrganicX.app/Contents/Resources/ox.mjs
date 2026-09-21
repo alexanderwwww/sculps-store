@@ -26,11 +26,12 @@ import * as db from "./db.mjs";
 import { planDay, scatterAcrossDay, dayBudget, isAwake } from "./human.mjs";
 import * as skills from "./skills.mjs";
 import { homeUrl, refreshHome } from "./home.mjs";
+import * as research from "./research.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 9;
+export const BUILD = 10;
 
 /**
  * The build that is actually running.
@@ -182,6 +183,40 @@ const conn = {};
 /** The home tab: every platform on one page, live. Opened first, returned to between jobs. */
 let home = null;
 
+const HOST = { instagram: "instagram.com", tiktok: "tiktok.com", youtube: "youtube.com" };
+
+/**
+ * Take over the tabs that are already open.
+ *
+ * Chrome outlives a restart: the app updates itself, exits, and comes back to
+ * the same browser with the same tabs — but with an empty tab map, so it
+ * opened a second Instagram, then a third. One tab per platform, and one
+ * home. Anything already there is adopted; a duplicate is closed; a blank
+ * first-run tab is closed too.
+ */
+async function adoptTabs(browser) {
+  const context = browser.contexts()[0] ?? (await browser.newContext());
+  for (const page of context.pages()) {
+    if (page.isClosed()) continue;
+    const url = page.url();
+    if (url.startsWith("data:text/html")) {
+      if (home && !home.isClosed()) await page.close().catch(() => {});
+      else { home = page; await attach(page); }
+      continue;
+    }
+    const platform = Object.keys(HOST).find((p) => url.includes(HOST[p]));
+    if (platform) {
+      const kept = tabs.get(platform);
+      if (kept && !kept.isClosed() && kept !== page) await page.close().catch(() => {});
+      else { tabs.set(platform, page); await attach(page); }
+      continue;
+    }
+    if (url === "about:blank" || url === "chrome://newtab/") {
+      if (context.pages().length > 1) await page.close().catch(() => {});
+    }
+  }
+}
+
 async function openHome(browser) {
   if (home && !home.isClosed()) return home;
   const context = browser.contexts()[0] ?? (await browser.newContext());
@@ -202,6 +237,13 @@ async function tabFor(browser, platform) {
   const existing = tabs.get(platform);
   if (existing && !existing.isClosed()) return existing;
   const context = browser.contexts()[0] ?? (await browser.newContext());
+  // A tab already on the site — from before a restart — is this tab.
+  const there = context.pages().find((p) => !p.isClosed() && p.url().includes(HOST[platform]));
+  if (there) {
+    tabs.set(platform, there);
+    await attach(there);
+    return there;
+  }
   const page = await context.newPage();
   await attach(page);
   tabs.set(platform, page);
@@ -217,6 +259,23 @@ async function tabFor(browser, platform) {
  * there — and when it cannot tell which state the page is in, it says so
  * rather than assuming "connected" and posting into a logged-out browser.
  */
+/**
+ * The standing instruction, read live. Null until Claude sets one.
+ *
+ * Which platforms it names is what gets connected, checked and researched.
+ * "No YouTube for now" is a brief without youtube in it, not a special case.
+ */
+let brief = null;
+async function readBrief() {
+  const b = await get("/brief").catch(() => null);
+  brief = b && b.product ? b : null;
+  return brief;
+}
+function platformsWanted() {
+  const list = Array.isArray(brief?.platforms) && brief.platforms.length ? brief.platforms : ["instagram", "tiktok", "youtube"];
+  return ["instagram", "tiktok", "youtube"].filter((p) => list.includes(p));
+}
+
 export async function connect(browser, only) {
   /*
    * Instagram first, then TikTok, then YouTube.
@@ -225,7 +284,7 @@ export async function connect(browser, only) {
    * that matters most — best conversion, product tagging in the reel, one tap
    * to the store.
    */
-  const wanted = only ? [only] : ["instagram", "tiktok", "youtube"];
+  const wanted = only ? [only] : platformsWanted();
 
   for (const platform of wanted) {
     const page = await tabFor(browser, platform);
@@ -306,6 +365,99 @@ export async function connect(browser, only) {
   }
 }
 
+/* ------------------------------------------------------------- research */
+
+/**
+ * What to look for, from the brief.
+ *
+ * The product name is the ad-library query. Hashtags are the product's
+ * words run together plus any #tags written in the notes — nothing here
+ * knows what the product is, it reads what it was told.
+ */
+function termsFromBrief(b) {
+  const product = String(b?.product ?? "").trim();
+  const notes = String(b?.notes ?? "");
+  const tags = new Set();
+  const compact = product.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  if (compact.length >= 4) tags.add(compact);
+  for (const m of notes.matchAll(/#([a-z0-9_]{3,40})/gi)) tags.add(m[1].toLowerCase());
+  return { query: product, tags: [...tags].slice(0, 6) };
+}
+
+let researchedAt = 0;
+
+/**
+ * The research floor's hour.
+ *
+ * Reyna reads the Ad Library and the open hashtag feeds, signed out, and
+ * Kofi logs every clip she finds that memory has not seen. Nothing is
+ * downloaded and nothing is judged here — this is the pile Desmond will
+ * kill nine tenths of. Once an hour, and on "run".
+ */
+export async function researchSweep(browser) {
+  const b = brief ?? (await readBrief());
+  if (!b) {
+    if (!researchedAt) await tick("reyna", "nothing to look for yet — no brief");
+    researchedAt = Date.now();
+    return;
+  }
+  const { query, tags } = termsFromBrief(b);
+  const platforms = platformsWanted();
+  doing = "researching";
+  await report();
+
+  const context = await research.anonymous(browser);
+  try {
+    if (query) {
+      await tick("reyna", `ad library — what is paying to show "${query}" right now`);
+      const { ads, stopped } = await research.adLibrary(context, { query, limit: 40 });
+      if (stopped) {
+        await tick("reyna", `ad library stopped me: ${stopped}`);
+      } else {
+        const provenAds = ads.filter((a) => research.proven(a));
+        const names = [...new Set(provenAds.map((a) => a.advertiser).filter(Boolean))].slice(0, 4);
+        await tick(
+          "reyna",
+          `ad library: ${ads.length} ads for "${query}", ${provenAds.length} running 28+ days` +
+            (names.length ? ` — ${names.join(", ")}` : ""),
+        );
+        if (provenAds.length) {
+          await db.remember(
+            "research",
+            `${provenAds.length} of ${ads.length} "${query}" ads have run 28+ days — somebody is making money on this`,
+            { query, proven: provenAds.slice(0, 10).map((a) => ({ advertiser: a.advertiser, started: a.started })) },
+            0.6,
+          ).catch(() => {});
+        }
+      }
+    }
+
+    for (const platform of platforms) {
+      if (platform === "youtube") continue; // shorts research is a different feed; not in this pass
+      for (const tag of tags) {
+        if (stopRequested()) return;
+        await tick("reyna", `${platform} #${tag} — reading the feed`);
+        const { links, stopped } = await research.hashtag(context, platform, tag, { passes: 5 });
+        if (stopped) {
+          await tick("reyna", `${platform} #${tag}: ${stopped}`);
+          continue;
+        }
+        let fresh = 0;
+        for (const url of links) {
+          if (await db.knownClip(url).catch(() => true)) continue;
+          await db.saveClip({ platform, sourceUrl: url, seen: { tag, foundAt: new Date().toISOString() } }).catch(() => {});
+          fresh++;
+        }
+        await tick("kofi", `${platform} #${tag}: ${links.length} clips, ${fresh} new — logged`);
+      }
+    }
+  } finally {
+    await context.close().catch(() => {});
+    researchedAt = Date.now();
+    doing = "warming the accounts";
+  }
+}
+
 /**
  * Re-check what is signed in, and show it.
  *
@@ -316,7 +468,7 @@ export async function connect(browser, only) {
 export async function verifyConnections(browser) {
   const rows = await db.accounts();
 
-  for (const platform of ["instagram", "tiktok", "youtube"]) {
+  for (const platform of platformsWanted()) {
     const page = await tabFor(browser, platform);
     const known = rows.find((r) => r.platform === platform && r.connected);
     await showConnection(page, platform, "checking");
@@ -474,6 +626,7 @@ async function main() {
   await tick("organicx", "opening chrome");
   const { browser } = await openChrome({ profile: PATHS.profile });
   await tick("organicx", "chrome is open — drawing the home screen");
+  await adoptTabs(browser);
   await openHome(browser);
   let nextHome = 0;
 
@@ -491,6 +644,8 @@ async function main() {
    */
   state = "connecting";
   await report();
+  await readBrief();
+  if (brief) await tick("nadia", `the brief: ${brief.product}${brief.store ? ` for ${brief.store}` : ""} — ${platformsWanted().join(", ")}`);
   /*
    * Guarded, because this is the exact moment Alex is typing a password.
    * Unguarded, any throw here reached main().catch and exited the process —
@@ -539,6 +694,7 @@ async function main() {
         }
         if (cmd === "warm" || cmd === "run") {
           nextSweep = 0; // go now rather than at the next sweep
+          researchedAt = 0;
         }
       }
 
@@ -554,11 +710,21 @@ async function main() {
         // A skill shipped since the last sweep takes effect now, not on the
         // next restart — the point of shipping one is that it lands.
         await skills.load(PATHS.runtime).catch(() => {});
+        await readBrief();
         // What is actually signed in, checked rather than remembered.
         await verifyConnections(browser).catch(() => {});
         for (const account of await db.accounts()) {
           if (!account.connected) continue;
           await farm(browser, account);
+        }
+        // The research floor, once an hour, never from an account.
+        if (Date.now() - researchedAt > 60 * 60 * 1000) {
+          try {
+            await researchSweep(browser);
+          } catch (error) {
+            await tick("reyna", `research stopped on: ${error?.message ?? error}`);
+            researchedAt = Date.now();
+          }
         }
         // Two minutes, not four: this is also how long a sign-in Alex does
         // AFTER the connect step waits to be noticed. Four was too long to
@@ -575,6 +741,8 @@ async function main() {
        * whichever feed it is scrolling.
        */
       if (Date.now() >= nextHome) {
+        const rp = research.currentPage();
+        if (rp) tabs.set("research", rp); else tabs.delete("research");
         await refreshHome(await openHome(browser), tabs, {
           connections: conn,
           ticker: recent.slice(-7).map((line) => {
@@ -605,4 +773,4 @@ if (process.argv[1] && process.argv[1].endsWith("ox.mjs")) {
   });
 }
 
-export { PATHS, main };
+export { PATHS, main, adoptTabs, tabFor, tabs };
