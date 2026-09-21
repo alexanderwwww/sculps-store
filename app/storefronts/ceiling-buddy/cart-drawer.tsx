@@ -176,7 +176,7 @@ export function CartDrawerProvider({
      it was being offered to customers as an add-on at fifty cents. */
   const haveProducts = new Set(lines.map((l) => l.productTitle));
   const shelf = (page.addOnProducts ?? [])
-    .filter((x) => x.variantId && !haveProducts.has(x.title) && !/^test\b/i.test(x.title))
+    .filter((x) => (x.entryVariantId || x.variantId) && !haveProducts.has(x.title) && !/^test\b/i.test(x.title))
     .map((x) => {
       const compare = x.addCompareAtCents ?? 0;
       return { ...x, compareCents: compare, saveCents: compare > x.addCents ? compare - x.addCents : 0 };
@@ -257,7 +257,7 @@ export function CartDrawerProvider({
               <div className="cb-shelf__h">Goes with this</div>
               <div className="cb-shelf__row">
                 {shelf.map((x) => (
-                  <button type="button" className="cb-shelf__item" key={x.id} onClick={() => add(x.variantId)} disabled={busy}>
+                  <button type="button" className="cb-shelf__item" key={x.id} onClick={() => add(x.entryVariantId || x.variantId)} disabled={busy}>
                     <span className="cb-shelf__pic">
                       {x.imageUrl ? <img src={x.imageUrl} alt="" loading="lazy" /> : null}
                       {/* Across the top of the photograph, so the saving is

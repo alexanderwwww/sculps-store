@@ -80,6 +80,8 @@ export interface LoadedProductPage {
     /** What the Add button actually charges, and its full price. */
     addCents: number;
     addCompareAtCents: number | null;
+    /** the single, for a cart tile — as opposed to the page's default bundle */
+    entryVariantId: string;
     /** True when that price is a floor — the product sells in more than one size. */
     fromMany: boolean;
     /** the variant an Add button adds — the default, or the cheapest */
@@ -242,8 +244,14 @@ export async function loadProductPage(
          product card next to the word "From". In a cart the same tile has a
          button that adds the default variant, so quoting the floor there
          charged somebody $129.99 after showing them $79.99. */
-      addCents: pick?.priceCents ?? 0,
-      addCompareAtCents: pick?.compareAtCents ?? null,
+      addCents: (cheapest ?? pick)?.priceCents ?? 0,
+      addCompareAtCents: (cheapest ?? pick)?.compareAtCents ?? null,
+      /* Which variant a cart tile adds: the single, not the bundle.
+         The default variant is the two-pack on most of these products, so a
+         tile offering "The Crawling Zombie" was adding $219.99 of zombie to
+         somebody who had not asked for two. The entry price is the one that
+         gets said yes to. */
+      entryVariantId: (cheapest ?? pick)?.id ?? "",
       /** Whether that price is a floor rather than the only price. */
       fromMany: (mine?.length ?? 0) > 1,
       variantId: pick?.id ?? "",
