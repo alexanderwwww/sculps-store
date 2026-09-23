@@ -1,10 +1,10 @@
-/** Run the numbered tests one after another; Chrome ports must not overlap. */
+/** Run the numbered tests one after another. */
 import { spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 const here = dirname(fileURLToPath(import.meta.url));
-const tests = readdirSync(here).filter((f) => /^\d+-.*\.mjs$/.test(f)).sort();
+const tests = readdirSync(here).filter((f) => /^(\d+-.*|agent-test)\.mjs$/.test(f)).sort();
 let bad = 0;
 for (const t of tests) {
   console.log(`\n== ${t}`);
