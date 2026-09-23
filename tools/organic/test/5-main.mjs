@@ -119,7 +119,10 @@ check("the pushed build is what runs now", await page.evaluate(() => window.__or
 check("tiktok shows its handle", await page.evaluate(() => window.__organic.screens.tiktok.handle) === "@tester");
 const ops3 = cloud.calls.map((c) => c.op);
 check("markConnected was recorded", ops3.includes("markConnected"));
-check("chrome was attached to, not reopened", /chrome was already open/.test(w.err()));
+// The browser is the app's own now: there is nothing to attach to, and a
+// restart starts a fresh one on the same profile. What must hold is that the
+// sign-in survived it — the cookies are on disk, not in the old process.
+check("the sign-in survived the restart", await page.evaluate(() => window.__organic.screens.tiktok.state) === "connected");
 const tilesShown = await page.$$eval("#grid > .tile", (els) => els.filter((e) => e.style.display !== "none").map((e) => e.id || e.querySelector(".name")?.textContent));
 check("the grid has instagram, tiktok, market and the ticker", tilesShown.join(",") === "Instagram,TikTok,Market,tickerTile", tilesShown.join(","));
 check("the pill is up", await page.$eval("#pill", (e) => e.classList.contains("on")));

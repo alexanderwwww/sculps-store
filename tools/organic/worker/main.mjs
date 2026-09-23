@@ -952,7 +952,11 @@ export async function main() {
   every(5 * 60 * 1000, readBrief);
 }
 
-if (process.argv[1] && /main\.mjs$/.test(process.argv[1])) {
+// Run only when this file IS the program. The old test matched any path
+// ENDING in main.mjs — and `test/5-main.mjs` ends in main.mjs, so importing
+// one constant from here booted a second worker inside the test process and
+// killed it a few lines later. The separator is the whole fix.
+if (process.argv[1] && /(^|\/)main\.mjs$/.test(process.argv[1])) {
   main().catch((error) => {
     say("organic", `could not start: ${error?.message ?? error}`);
     process.stderr.write(String(error?.stack ?? error) + "\n");
