@@ -31,7 +31,7 @@ import {
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 15;
+export const BUILD = 16;
 
 const SUPPORT = process.env.ORGANIC_HOME || join(homedir(), "Library", "Application Support", "Organic");
 export const PATHS = { home: SUPPORT, worker: join(SUPPORT, "worker"), log: join(SUPPORT, "log") };
@@ -755,6 +755,18 @@ export async function main() {
   // Wait for the phone to arrive, then put something on the glass.
   for (let i = 0; i < 60 && !bridge.connected(); i++) await sleep(500);
   if (!bridge.connected()) say("organic", "the window has not connected yet — waiting");
+
+  // What it remembered. The sign-ins live in the app's own store and survive a
+  // quit, an update and a reinstall — so this should be the normal case, and
+  // it is worth saying out loud rather than leaving him to guess.
+  const remembered = [];
+  for (const p of PLATFORMS) {
+    S.showing = p;
+    await phone.goto(HOME[p]).catch(() => {});
+    await sleep(1500);
+    if (await phone.read("signedIn", { platform: p })) remembered.push(p);
+  }
+  if (remembered.length) say("sam", `still signed in from last time: ${remembered.join(", ")} — nothing to redo`);
 
   const known = await cloud.db.accounts().catch(() => []);
   for (const row of known) {

@@ -28,7 +28,10 @@ for f in "$C"/Resources/worker/*.mjs; do node --check "$f"; done
 node --check "$C/Resources/worker/agent.built.js"
 [ -f "$C/Resources/AppIcon.icns" ] || { echo "icon missing"; exit 1; }
 [ "$(ls "$C"/Resources/*.icns | wc -l)" -eq 1 ] || { echo "more than one icon file"; exit 1; }
-grep -q "us.blackreaper.organic<" "$C/Info.plist"
+# The sign-ins are keyed to this identity: change it and Alex logs in again.
+# It has cost him that twice. Nothing ships unless it is exactly this.
+grep -q "<string>us.blackreaper.organic</string>" "$C/Info.plist" || {
+  echo "the bundle id changed — that would wipe every saved login"; exit 1; }
 [ -f "$C/Resources/Shell/main.swift" ] || { echo "swift shell missing"; exit 1; }
 rm -rf "$T"
 echo "ok: $OUT ($(du -h "$OUT" | cut -f1)) — $(unzip -l "$OUT" | tail -1)"
