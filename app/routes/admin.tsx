@@ -24,7 +24,7 @@ export function links() {
     // makes this look like a page rather than a place.
     { rel: "icon", href: "/favicon.ico", sizes: "any" },
     { rel: "icon", href: "/icon-512.png", type: "image/png" },
-    { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+    { rel: "apple-touch-icon", href: "/apple-touch-icon-v2.png" },
     // Lets the admin be added to an iPhone home screen, which is the only way
     // Apple allows a web page to receive push notifications.
     { rel: "manifest", href: "/manifest.webmanifest" },

@@ -36,7 +36,7 @@ self.addEventListener("push", (event) => {
       .then(function () {
         return self.registration.showNotification(title, {
           body: data.body || "",
-          icon: "/icon-512.png",
+          icon: "/icon-512-v2.png",
           badge: "/logo-mark.png",
           // Same tag means a re-delivery replaces the banner instead of
           // stacking; requireInteraction keeps it on screen until it is dealt

@@ -19,8 +19,8 @@ export function loader(_: Route.LoaderArgs) {
       background_color: "#0b0b0d",
       theme_color: "#0b0b0d",
       icons: [
-        { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-        { src: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+        { src: "/icon-512-v2.png", sizes: "512x512", type: "image/png", purpose: "any" },
+        { src: "/apple-touch-icon-v2.png", sizes: "180x180", type: "image/png" },
       ],
     }),
     { headers: { "content-type": "application/manifest+json", "cache-control": "public, max-age=3600" } },

@@ -40,7 +40,7 @@ export function meta() {
 /* The admin's own manifest and its own icon. There is one Shop Admin. */
 export const links: Route.LinksFunction = () => [
   { rel: "manifest", href: "/m/manifest.webmanifest" },
-  { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+  { rel: "apple-touch-icon", href: "/apple-touch-icon-v2.png" },
 ];
 
 export async function loader({ context, request }: Route.LoaderArgs) {

@@ -389,8 +389,29 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
   ];
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "row", background: "var(--bg)", overflow: "hidden", position: "relative" }}>
-      <div style={{ flex: "none", width: "clamp(360px, 30%, 580px)", minWidth: 0, overflow: "auto", padding: "20px 20px 32px", display: "flex", flexDirection: "column", gap: 16 }}>
+    <>
+    {/*
+      Phones only. Live View was built side by side: a panel of a fixed width
+      and the globe filling what is left. On a 390pt screen the panel takes it
+      all and the globe is a sliver off the edge — which is exactly what Alex
+      saw. Below 820px the two stack instead, the globe gets a height of its
+      own, and nothing here touches the desktop layout: every rule is inside
+      the query, and the styles it overrides are the inline ones, so it says
+      so out loud.
+    */}
+    <style>{`
+      @media (max-width: 820px) {
+        .live-shell { flex-direction: column !important; height: auto !important; overflow: visible !important; }
+        .live-side { width: 100% !important; flex: none !important; overflow: visible !important;
+                     padding: 14px 14px 20px !important; }
+        .live-globe-pane { flex: none !important; width: 100% !important;
+                           height: 58vh !important; min-height: 320px !important; }
+        /* The cards floating over the globe are placed for a wide pane. */
+        .live-globe-pane > div[style*="position: absolute"][style*="left: 20px"] { width: auto !important; right: 12px; }
+      }
+    `}</style>
+    <div className="live-shell" style={{ height: "100%", display: "flex", flexDirection: "row", background: "var(--bg)", overflow: "hidden", position: "relative" }}>
+      <div className="live-side" style={{ flex: "none", width: "clamp(360px, 30%, 580px)", minWidth: 0, overflow: "auto", padding: "20px 20px 32px", display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <h1 style={{ margin: 0, fontSize: 20, lineHeight: "28px", fontWeight: 650, display: "inline-flex", alignItems: "center", gap: 8 }}>
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="var(--ink)" strokeWidth="1.5">
@@ -567,7 +588,7 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
 
-      <div style={{ position: "relative", flex: "1 1 auto", minWidth: 0, height: "auto", minHeight: 0, overflow: "hidden", background: "var(--bg)" }}>
+      <div className="live-globe-pane" style={{ position: "relative", flex: "1 1 auto", minWidth: 0, height: "auto", minHeight: 0, overflow: "hidden", background: "var(--bg)" }}>
         <div style={{ position: "absolute", left: 20, top: 20, zIndex: 8, display: "flex", flexDirection: "column", gap: 8, pointerEvents: "none", width: 226 }}>
           {glassCards.map((card) => (
             <div
@@ -728,6 +749,7 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
