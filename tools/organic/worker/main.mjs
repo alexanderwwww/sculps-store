@@ -31,7 +31,7 @@ import { isAwake, planDay, scatterAcrossDay, watchMs, react, dayBudget, scrollPa
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 3;
+export const BUILD = 4;
 
 const SUPPORT = process.env.ORGANIC_HOME || join(homedir(), "Library", "Application Support", "Organic");
 export const PATHS = {
