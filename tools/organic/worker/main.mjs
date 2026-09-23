@@ -31,7 +31,7 @@ import {
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 13;
+export const BUILD = 14;
 
 const SUPPORT = process.env.ORGANIC_HOME || join(homedir(), "Library", "Application Support", "Organic");
 export const PATHS = { home: SUPPORT, worker: join(SUPPORT, "worker"), log: join(SUPPORT, "log") };
@@ -255,6 +255,25 @@ async function checkSignedIn(platform, { quiet = false } = {}) {
   sched.firstLook.add(platform);
   await prepareAccount(platform).catch(() => {});
   if (S.phase === "setup") await startWorking();
+  /*
+   * Move now, not at seven tonight.
+   *
+   * The day's plan puts a session inside the persona's own hours, which is
+   * right for an account and wrong for the moment somebody just connected
+   * one and is watching the phone. So the first look happens immediately,
+   * once, and the persona's hours own everything after it.
+   */
+  if (!sched.jobs.some((j) => j.platform === platform && j.now && j.state !== "done")) {
+    addJob({
+      kind: "session",
+      platform,
+      now: true,
+      who: "bea",
+      what: `${at} · a first look around`,
+      at: Date.now(),
+      seconds: Math.round(between(300, 600)),
+    });
+  }
   return true;
 }
 
@@ -602,7 +621,9 @@ async function tick() {
   if (sched.running || S.paused || S.stopped || S.phase !== "working") return;
   planTheDay();
   const now = Date.now();
-  const due = sched.jobs.find((j) => j.state === "next" && (j.at ?? 0) <= now);
+  const due =
+    sched.jobs.find((j) => j.state === "next" && j.now) ??
+    sched.jobs.find((j) => j.state === "next" && (j.at ?? 0) <= now);
   if (!due) {
     // Nothing now: say when, once, rather than going quiet.
     const next = sched.jobs.find((j) => j.state === "next");
@@ -612,7 +633,7 @@ async function tick() {
     return;
   }
   // An account whose person is asleep waits for their own hours.
-  if (due.kind === "session") {
+  if (due.kind === "session" && !due.now) {
     const persona = sched.personas[due.platform];
     if (persona && !isAwake(persona)) { due.at = now + 20 * 60 * 1000; pushPanel(); return; }
   }
