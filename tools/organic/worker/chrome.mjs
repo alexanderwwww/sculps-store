@@ -10,6 +10,28 @@
  */
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
+import { rm } from "node:fs/promises";
+import { join } from "node:path";
+
+/**
+ * Remove the singleton files a dead Chrome left in a profile.
+ *
+ * Only ever called when nothing answers on the debugging port, which means
+ * no running Chrome owns this profile. On macOS these are symlinks, so
+ * `rm` with force is the whole job; a missing one is not an error.
+ */
+export async function clearStaleLocks(profile) {
+  const cleared = [];
+  for (const name of ["SingletonLock", "SingletonSocket", "SingletonCookie"]) {
+    try {
+      await rm(join(profile, name), { force: true, recursive: true });
+      cleared.push(name);
+    } catch {
+      /* not there, or not ours to remove: starting will say so itself */
+    }
+  }
+  return cleared;
+}
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, Math.max(0, ms)));
 
@@ -75,6 +97,21 @@ export async function openChrome({ port = 9444, profile } = {}) {
 
   const bin = chromePath();
   const args = chromeArgs({ port, profile });
+
+  /*
+   * A lock left behind by a Chrome that is no longer running.
+   *
+   * Chrome writes SingletonLock into the profile so two copies cannot share
+   * it. Quit it properly and the lock goes; kill it, lose power, or let the
+   * app restart while it is still shutting down, and the lock stays — and the
+   * next start dies with "Failed to create .../SingletonLock: File exists",
+   * forever, until somebody deletes a file they have never heard of.
+   *
+   * Nothing is listening on the debugging port at this point (the attach
+   * above failed), so no live Chrome owns this profile. The lock is stale and
+   * it is ours to clear.
+   */
+  await clearStaleLocks(profile);
 
   /*
    * spawn, not execFile: execFile buffers stderr up to a megabyte and then

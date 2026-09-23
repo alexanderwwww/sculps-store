@@ -139,11 +139,26 @@
   .tile .foot .doing { margin-left: auto; color: var(--ink-3); font-size: 12px; max-width: 55%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cur { position: absolute; left: 0; top: 0; pointer-events: none; opacity: 0; transition: transform .38s cubic-bezier(.22,.8,.28,1), opacity .25s; z-index: 3; }
   .cur.on { opacity: 1; }
+  /* The cursor is the thing Alex watches to know it is alive, so it glows
+     and it pulses: a lit core, a halo, and a ring that breathes out of it. */
   .cur i {
-    display: block; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #fff 0, var(--green) 45%, rgba(11,224,99,.25) 70%, transparent 72%);
-    box-shadow: 0 0 14px rgba(57,255,122,.8), 0 2px 8px rgba(0,0,0,.3);
+    display: block; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%;
+    background: radial-gradient(circle at 34% 34%, #fff 0, #8CFFB4 28%, var(--green) 52%, rgba(11,224,99,.35) 72%, transparent 76%);
+    box-shadow: 0 0 10px rgba(57,255,122,1), 0 0 26px rgba(57,255,122,.85), 0 0 48px rgba(57,255,122,.45), 0 2px 8px rgba(0,0,0,.35);
+    animation: curpulse 1.6s ease-in-out infinite;
   }
+  .cur i::after {
+    content: ""; position: absolute; left: -9px; top: -9px; width: 18px; height: 18px;
+    border-radius: 50%; border: 2px solid rgba(57,255,122,.85); animation: curring 1.8s ease-out infinite;
+  }
+  @keyframes curpulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.14); } }
+  @keyframes curring {
+    0% { transform: scale(.7); opacity: .9; }
+    70% { transform: scale(2.6); opacity: 0; }
+    100% { transform: scale(2.6); opacity: 0; }
+  }
+  /* A short trail, so a move reads as a movement and not a teleport. */
+  .cur.moving i { box-shadow: 0 0 12px rgba(57,255,122,1), 0 0 34px rgba(57,255,122,.9), 0 0 64px rgba(57,255,122,.5); }
   .cur b {
     position: absolute; left: 12px; top: 8px; white-space: nowrap; padding: 4px 9px; border-radius: 8px; font-size: 11px; font-weight: 600;
     background: rgba(11,13,15,.82); color: #fff; border: 1px solid rgba(57,255,122,.4); max-width: 220px; overflow: hidden; text-overflow: ellipsis;
@@ -617,6 +632,9 @@
     }
     t.cur.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px)";
     t.cur.classList.add("on");
+    t.cur.classList.add("moving");
+    clearTimeout(t.cur.__still);
+    t.cur.__still = setTimeout(() => t.cur.classList.remove("moving"), 420);
     $("b", t.cur).textContent = m.label || "";
     t.root.classList.add("busy");
     t.doing.textContent = m.label || "";
