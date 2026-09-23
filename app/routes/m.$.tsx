@@ -13,8 +13,8 @@
  *
  *   GET /m                        the page
  *   GET /m/data                   the numbers, for the page's own refresh
- *   GET /m/manifest.webmanifest   what makes it installable
- *   GET /m/icon-180.png|512.png   the home-screen icon
+ *   GET /m/manifest.webmanifest   what makes it installable — the admin's own
+ *                                 name and icon, opening on /m
  *
  * Sign-in is the admin's own: no session, no page. The installed app keeps its
  * own cookie, so he signs in once inside it.
@@ -28,18 +28,19 @@ import { phoneNumbers } from "~/lib/phone-board.server";
 
 export function meta() {
   return [
-    { title: "Shop" },
+    { title: "Shop Admin" },
     { name: "viewport", content: "width=device-width,initial-scale=1,viewport-fit=cover" },
     { name: "apple-mobile-web-app-capable", content: "yes" },
     { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-    { name: "apple-mobile-web-app-title", content: "Shop" },
+    { name: "apple-mobile-web-app-title", content: "Shop Admin" },
     { name: "theme-color", content: "#0b0b0f" },
   ];
 }
 
+/* The admin's own manifest and its own icon. There is one Shop Admin. */
 export const links: Route.LinksFunction = () => [
   { rel: "manifest", href: "/m/manifest.webmanifest" },
-  { rel: "apple-touch-icon", href: "/m/icon-180.png" },
+  { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
 ];
 
 export async function loader({ context, request }: Route.LoaderArgs) {
@@ -48,10 +49,13 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 
   const url = new URL(request.url);
   const { store, all } = await resolveAdminStore(context.db, url);
-  if (!store) return { store: null, stores: [], numbers: null, at: Date.now() };
+  if (!store) return { publicKey: "", store: null, stores: [], numbers: null, at: Date.now() };
 
   const board = await liveBoard(context.db, store.id, store.timezone);
   return {
+    // Public by design: it is the key the browser needs to subscribe, and
+    // nothing can be pushed with it.
+    publicKey: context.cloudflare.env.VAPID_PUBLIC_KEY ?? "",
     store: { slug: store.slug, name: store.name, currency: store.currency },
     stores: all.map((s) => ({ slug: s.slug, name: s.name })),
     numbers: phoneNumbers(board, store.currency),
@@ -76,6 +80,7 @@ const LABEL: Record<string, string> = {
 
 export default function Phone({ loaderData }: Route.ComponentProps) {
   const first = loaderData as {
+    publicKey: string;
     store: { slug: string; name: string; currency: string } | null;
     stores: { slug: string; name: string }[];
     numbers: ReturnType<typeof phoneNumbers> | null;
@@ -83,6 +88,63 @@ export default function Phone({ loaderData }: Route.ComponentProps) {
   };
   const [data, setData] = useState(first);
   const [live, setLive] = useState(true);
+  const [alerts, setAlerts] = useState<"unknown" | "on" | "off" | "asking" | "blocked" | "unsupported">("unknown");
+
+  /*
+   * Sale alerts, through the admin's own service worker and the same push the
+   * desktop admin uses: one Shop Admin, one enrolment list, one cha-ching.
+   * On iOS this only works from the installed app, which is exactly where he
+   * will be standing when he taps it.
+   */
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) { setAlerts("unsupported"); return; }
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    navigator.serviceWorker.ready
+      .then((reg) => reg.pushManager.getSubscription())
+      .then((sub) => setAlerts(sub ? "on" : Notification.permission === "denied" ? "blocked" : "off"))
+      .catch(() => setAlerts("off"));
+  }, []);
+
+  const turnOnAlerts = async () => {
+    setAlerts("asking");
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") { setAlerts("blocked"); return; }
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        const raw = atob(data.publicKey.replace(/-/g, "+").replace(/_/g, "/"));
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: Uint8Array.from(raw, (ch) => ch.charCodeAt(0)),
+        });
+      }
+      const json = sub.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
+      const res = await fetch("/admin/push", {
+        method: "POST",
+        body: new URLSearchParams({
+          intent: "subscribe",
+          endpoint: json.endpoint ?? "",
+          p256dh: json.keys?.p256dh ?? "",
+          auth: json.keys?.auth ?? "",
+          label: /iPhone|iPad/.test(navigator.userAgent) ? "iPhone" : "Phone",
+        }),
+      });
+      setAlerts(res.ok ? "on" : "off");
+    } catch {
+      setAlerts("off");
+    }
+  };
+
+  /* The worker cannot make a sound; a page in front of him can. */
+  useEffect(() => {
+    const heard = (event: MessageEvent) => {
+      if ((event.data as { type?: string })?.type !== "shop-admin:push") return;
+      new Audio("/sale.mp3").play().catch(() => {});
+    };
+    navigator.serviceWorker?.addEventListener("message", heard);
+    return () => navigator.serviceWorker?.removeEventListener("message", heard);
+  }, []);
 
   /* Ten seconds while it is on screen, nothing at all when it is not: a page
      that keeps polling in a pocket is a page that eats a battery. */
@@ -142,6 +204,19 @@ export default function Phone({ loaderData }: Route.ComponentProps) {
             <Tile label="Checking out" value={String(n.checkingOut)} />
             <Tile label="Bought" value={String(n.purchased)} />
           </div>
+
+          {alerts !== "on" && alerts !== "unsupported" ? (
+            <button
+              type="button"
+              onClick={turnOnAlerts}
+              disabled={alerts === "asking" || alerts === "blocked"}
+              style={S.alerts}
+            >
+              {alerts === "asking" ? "Asking…"
+                : alerts === "blocked" ? "Notifications are off in iPhone Settings"
+                : "Tell me when something sells"}
+            </button>
+          ) : null}
 
           {n.where.length ? (
             <section>
@@ -223,4 +298,9 @@ const S: Record<string, React.CSSProperties> = {
   quiet: { color: "rgba(235,235,245,.5)", fontSize: 15 },
   foot: { marginTop: "2rem", paddingTop: "1rem", borderTop: "1px solid rgba(255,255,255,.07)" },
   link: { color: "#39FF7A", textDecoration: "none", fontSize: 15 },
+  alerts: {
+    width: "100%", padding: ".85rem 1rem", marginBottom: "1.2rem",
+    background: "rgba(57,255,122,.14)", color: "#39FF7A", border: "none",
+    borderRadius: 14, fontSize: 15, fontWeight: 600, fontFamily: "inherit",
+  },
 };

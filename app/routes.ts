@@ -48,14 +48,11 @@ export default [
   route("organicx/*", "routes/organicx.$.tsx"),
   route("organic/*", "routes/organic.$.tsx"),
   route("research/*", "routes/research.$.tsx"),
-  // Shop Admin on the phone. The page is a page; the manifest, the icons and
-  // the refresh are their own routes, because a route that renders a document
-  // cannot hand back a manifest.
+  // Shop Admin on the phone. It uses the admin's own manifest, icons and
+  // service worker — there is one Shop Admin, and it has one face.
   route("m", "routes/m.$.tsx"),
   route("m/data", "routes/m.data.tsx"),
   route("m/manifest.webmanifest", "routes/m.manifest.tsx"),
-  route("m/icon-180.png", "routes/m.icon.$.tsx", { id: "phone-icon-180" }),
-  route("m/icon-512.png", "routes/m.icon.$.tsx", { id: "phone-icon-512" }),
   route("webhooks/stripe", "routes/webhooks.stripe.tsx"),
 
   // Admin. Sign-in lives outside the layout so it is reachable when signed out.
