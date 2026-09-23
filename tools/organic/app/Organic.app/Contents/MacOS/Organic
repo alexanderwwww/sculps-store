@@ -1,18 +1,22 @@
 #!/bin/bash
 # Organic — the launcher.
 #
-# Three jobs: make sure the Mac has what it needs (node, Chrome, the Command
-# Line Tools), build the window once, then start the worker and hand the
-# process over to the window. `exec` at the end is deliberate: the window
-# keeps this process id, which is the one Launch Services started from the
-# bundle, so the Dock shows the bundle's icon and Cmd-Q quits the right thing.
+# Four jobs, in this order: install the worker beside itself, start the worker,
+# build the window once, then hand this process over to the window. `exec` at
+# the end is deliberate: the window keeps this process id, which is the one
+# Launch Services started from the bundle, so the Dock shows the bundle's icon
+# and Cmd-Q quits the right thing.
+#
+# There is no Chromium any more and no fallback window: the window is always
+# the Swift one. If Swift cannot build, that is a thing to fix, not to paper
+# over — the alert says exactly what to type.
 set -u
 
 HERE="$(cd "$(dirname "$0")/../Resources" && pwd)"
 APP_ROOT="$(cd "$HERE/../.." && pwd)"
 SUPPORT="$HOME/Library/Application Support/Organic"
 LOG="$SUPPORT/log/organic.log"
-mkdir -p "$SUPPORT/chrome" "$SUPPORT/worker" "$SUPPORT/bin" "$SUPPORT/log"
+mkdir -p "$SUPPORT/worker" "$SUPPORT/bin" "$SUPPORT/log"
 # Every crew line lands in the log; kept to one generation past 8 MB.
 if [ -f "$LOG" ] && [ "$(stat -f%z "$LOG" 2>/dev/null || echo 0)" -gt 8000000 ]; then mv -f "$LOG" "$LOG.1"; fi
 
@@ -33,19 +37,14 @@ if ! command -v node >/dev/null 2>&1; then
   alert "Node is not installed. In Terminal: brew install node — then open Organic again."
   exit 1
 fi
-# Google Chrome is no longer needed for the work — the app has its own browser
-# — but the fallback window (when Swift cannot build) is still a Chrome window,
-# so this is where it is found rather than something to refuse to start over.
-CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-# Swift is how the native window gets built, once. It is not required to
-# run: if it is missing or broken, the app still opens (see below).
+# Swift builds the window. It is the only window there is.
 SWIFTC="$(xcrun -f swiftc 2>/dev/null || true)"
 [ -x "$SWIFTC" ] || SWIFTC=""
 
 # --- the worker, installed beside itself ----------------------------------
 # The bundle's build; a live push writes a higher one into worker/BUILD and
 # this must never copy over it.
-BUNDLE_BUILD=10
+BUNDLE_BUILD=11
 RUNTIME_BUILD=0
 if [ -f "$SUPPORT/worker/BUILD" ]; then
   RUNTIME_BUILD="$(tr -dc '0-9' < "$SUPPORT/worker/BUILD")"
@@ -59,12 +58,10 @@ else
   say "running build $RUNTIME_BUILD"
 fi
 
-# The dependencies are installed by the worker's own runner, below, AFTER the
-# window is up. It used to happen here, before anything was on screen: the
-# Dock icon bounced with nothing to look at, and a slow npm made it bounce
-# for a minute. Nothing Alex waits for happens without a window saying so.
+# The worker's only dependency is `ws`. It is installed by the worker's own
+# runner, below — never on this path, where nothing is on screen yet.
 needs_deps() {
-  [ ! -f "$SUPPORT/worker/node_modules/playwright/package.json" ] || [ ! -f "$SUPPORT/worker/node_modules/ws/package.json" ]
+  [ ! -f "$SUPPORT/worker/node_modules/ws/package.json" ]
 }
 
 # The watchdog: if this run never reaches the window, say why, once. A silent
@@ -79,37 +76,12 @@ rm -f "$SUPPORT/.window"
 ) &
 WATCHDOG=$!
 
-# --- the window, built once ------------------------------------------------
-# Keyed on the source, so a changed main.swift is rebuilt and an unchanged one
-# never is.
-SHELL_KEY="$(md5 -q "$HERE/Shell/main.swift" 2>/dev/null || md5sum "$HERE/Shell/main.swift" | cut -c1-32)"
-SHELL_BIN="$SUPPORT/bin/OrganicShell-$SHELL_KEY"
-
-# Where the macOS SDK is.
-#
-# `swiftc` on its own found no SDK on Alex's Mac and died with "unable to
-# load standard library for target x86_64-apple-macosx15.0". With only the
-# Command Line Tools installed — no Xcode — swiftc has to be TOLD which SDK
-# to build against; and when xcode-select points at an Xcode that is not
-# there, xcrun answers nothing at all. So: ask xcrun, then look where the
-# Command Line Tools and Xcode each keep it.
-find_sdk() {
-  local sdk
-  sdk="$(xcrun --sdk macosx --show-sdk-path 2>/dev/null || true)"
-  [ -n "$sdk" ] && [ -d "$sdk" ] && { printf '%s' "$sdk"; return 0; }
-  for candidate in \
-    /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
-    /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk; do
-    [ -d "$candidate" ] && { printf '%s' "$candidate"; return 0; }
-  done
-  return 1
-}
-
-# Run something with a ceiling on it. macOS has no `timeout`, and a build
-# step that hangs forever is what a bouncing Dock icon actually is.
+# Run something with a ceiling on it. macOS has no `timeout`, and a build step
+# that hangs forever is what a bouncing Dock icon actually is. Output goes to
+# the log unless RUN_BOUNDED_OUT names a file.
 run_bounded() {
   local secs="$1"; shift
-  "$@" >> "$LOG" 2>&1 &
+  "$@" >> "${RUN_BOUNDED_OUT:-$LOG}" 2>&1 &
   local pid=$! waited=0
   while kill -0 "$pid" 2>/dev/null; do
     sleep 1
@@ -124,49 +96,11 @@ run_bounded() {
   wait "$pid"
 }
 
-build_window() {
-  [ -n "$SWIFTC" ] || return 1
-  local sdk arch
-  sdk="$(find_sdk || true)"
-  arch="$(uname -m)"
-  # If xcode-select is pointing somewhere broken, the Command Line Tools are
-  # still a complete developer dir on their own.
-  if [ -z "$sdk" ] && [ -d /Library/Developer/CommandLineTools ]; then
-    export DEVELOPER_DIR=/Library/Developer/CommandLineTools
-    sdk="$(find_sdk || true)"
-    SWIFTC="$(xcrun -f swiftc 2>/dev/null || printf '%s' "$SWIFTC")"
-  fi
-  # Most specific first, then looser. Each attempt says why it failed.
-  if [ -n "$sdk" ]; then
-    say "building the window (sdk $sdk, $arch)"
-    run_bounded 60 "$SWIFTC" -O -sdk "$sdk" -target "$arch-apple-macosx12.0" \
-      -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
-    run_bounded 60 "$SWIFTC" -O -sdk "$sdk" \
-      -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
-  else
-    say "building the window (no sdk found)"
-  fi
-  run_bounded 60 "$SWIFTC" -O -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
-  return 1
-}
-
-SHELL_STARTED="$(date +%s)"
-if [ ! -x "$SHELL_BIN" ] && ! build_window; then
-  rm -f "$SHELL_BIN"
-  say "the native window could not be built — using the fallback window"
-elif [ -x "$SHELL_BIN" ]; then
-  say "the window is ready ($(( $(date +%s) - SHELL_STARTED ))s)"
-fi
-
-# --- run --------------------------------------------------------------------
+# --- the port and the worker ------------------------------------------------
 PORT="$(node -e 'const s=require("net").createServer();s.listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})')"
 export ORGANIC_PORT="$PORT"
 export ORGANIC_PARENT_PID="$$"
 export ORGANIC_HOME="$SUPPORT"
-# The app brings its own browser now, so the download is the point rather
-# than something to skip: Alex's own Chrome cannot be borrowed without macOS
-# handing the launch to the copy he already has open.
-export PLAYWRIGHT_BROWSERS_PATH="$SUPPORT/browser"
 
 # The worker, restarted on 75 (it updated itself) and left alone otherwise.
 # It watches the window's pid and exits when the window is gone.
@@ -178,8 +112,7 @@ export PLAYWRIGHT_BROWSERS_PATH="$SUPPORT/browser"
   cd "$SUPPORT/worker" || exit 1
   if needs_deps; then
     say "installing dependencies"
-    say "this takes a minute the first time — it is fetching its own browser"
-    if ! run_bounded 900 npm install --no-audit --no-fund; then
+    if ! run_bounded 300 npm install --no-audit --no-fund; then
       /usr/bin/osascript -e 'on run argv' -e 'display alert "Organic" message (item 1 of argv)' -e 'end run' \
         "Could not install what the worker needs. Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')" >/dev/null 2>&1
       exit 1
@@ -210,35 +143,85 @@ export PLAYWRIGHT_BROWSERS_PATH="$SUPPORT/browser"
     break
   done
 ) &
+say "worker starting on port $PORT"
 
-say "window on http://127.0.0.1:$PORT/"
+# --- the window, built once ------------------------------------------------
+# Keyed on the source, so a changed main.swift is rebuilt and an unchanged one
+# never is.
+SHELL_KEY="$(md5 -q "$HERE/Shell/main.swift" 2>/dev/null || md5sum "$HERE/Shell/main.swift" | cut -c1-32)"
+SHELL_BIN="$SUPPORT/bin/OrganicShell-$SHELL_KEY"
+
+# Where the macOS SDK is.
+#
+# `swiftc` on its own found no SDK on Alex's Mac and died with "unable to
+# load standard library for target x86_64-apple-macosx15.0". With only the
+# Command Line Tools installed — no Xcode — swiftc has to be TOLD which SDK
+# to build against; and when xcode-select points at an Xcode that is not
+# there, xcrun answers nothing at all. So: ask xcrun, then look where the
+# Command Line Tools and Xcode each keep it.
+find_sdk() {
+  local sdk
+  sdk="$(xcrun --sdk macosx --show-sdk-path 2>/dev/null || true)"
+  [ -n "$sdk" ] && [ -d "$sdk" ] && { printf '%s' "$sdk"; return 0; }
+  for candidate in \
+    /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+    /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk; do
+    [ -d "$candidate" ] && { printf '%s' "$candidate"; return 0; }
+  done
+  return 1
+}
+
+build_window() {
+  [ -n "$SWIFTC" ] || return 1
+  local sdk arch
+  sdk="$(find_sdk || true)"
+  arch="$(uname -m)"
+  # If xcode-select is pointing somewhere broken, the Command Line Tools are
+  # still a complete developer dir on their own.
+  if [ -z "$sdk" ] && [ -d /Library/Developer/CommandLineTools ]; then
+    export DEVELOPER_DIR=/Library/Developer/CommandLineTools
+    sdk="$(find_sdk || true)"
+    SWIFTC="$(xcrun -f swiftc 2>/dev/null || printf '%s' "$SWIFTC")"
+  fi
+  # Most specific first, then looser. Each attempt says why it failed.
+  if [ -n "$sdk" ]; then
+    say "building the window (sdk $sdk, $arch)"
+    run_bounded 60 "$SWIFTC" -O -sdk "$sdk" -target "$arch-apple-macosx12.0" \
+      -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
+    run_bounded 60 "$SWIFTC" -O -sdk "$sdk" \
+      -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
+  else
+    say "building the window (no sdk found)"
+  fi
+  run_bounded 60 "$SWIFTC" -O -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
+  return 1
+}
+
+if [ ! -x "$SHELL_BIN" ]; then
+  SHELL_STARTED="$(date +%s)"
+  if build_window; then
+    say "the window is ready ($(( $(date +%s) - SHELL_STARTED ))s)"
+    # Built fresh: prove it opens a window and that the bridge carries a
+    # message, once, into the log. A broken shell should be a line here
+    # rather than a blank rectangle nobody can explain.
+    RUN_BOUNDED_OUT="$SUPPORT/log/selftest.txt"
+    : > "$RUN_BOUNDED_OUT"
+    run_bounded 20 "$SHELL_BIN" --selftest "$PORT" || true
+    say "selftest: $(tail -1 "$RUN_BOUNDED_OUT" 2>/dev/null || true)"
+    unset RUN_BOUNDED_OUT
+  else
+    rm -f "$SHELL_BIN"
+    kill "$WATCHDOG" 2>/dev/null || true
+    alert "Organic's window could not be built. Apple's build tools are missing or broken. In Terminal, run this once:   xcode-select --install   — then open Organic again."
+    exit 1
+  fi
+else
+  say "the window is already built"
+fi
+
+# --- run --------------------------------------------------------------------
+say "window on 127.0.0.1:$PORT"
 : > "$SUPPORT/.window"
 kill "$WATCHDOG" 2>/dev/null || true
 
-if [ -x "$SHELL_BIN" ]; then
-  exec "$SHELL_BIN" "http://127.0.0.1:$PORT/" "$HERE/AppIcon.icns"
-fi
-
-# The fallback window.
-#
-# Swift could not build, and an app that will not open is worth nothing. So
-# the window is a Chrome window in app mode instead: its own profile, no
-# tabs, no address bar, nothing but our page. It is the same app behind it —
-# the worker, the screens, the crew — drawn in a window that does not look
-# like a browser. Said once, so Alex knows which window he is looking at and
-# how to get the native one.
-say "opening the fallback window"
-/usr/bin/osascript -e 'on run argv' -e 'display alert "Organic" message (item 1 of argv)' -e 'end run' \
-  "Opening in the fallback window: Apple's build tools could not build the native one. The app works the same. To get the native window, run this once in Terminal and open Organic again:   xcode-select --install" >/dev/null 2>&1 &
-if [ ! -x "${ORGANIC_CHROME:-$CHROME}" ]; then
-  alert "The window could not be built and Google Chrome is not installed to fall back to. In Terminal: xcode-select --install — then open Organic again."
-  exit 1
-fi
-exec "${ORGANIC_CHROME:-$CHROME}" \
-  --app="http://127.0.0.1:$PORT/" \
-  --user-data-dir="$SUPPORT/window" \
-  --window-size=1280,820 \
-  --no-first-run --no-default-browser-check --disable-extensions \
-  --disable-component-extensions-with-background-pages --disable-default-apps \
-  --disable-sync --no-service-autorun --password-store=basic \
-  --disable-search-engine-choice-screen
+exec "$SHELL_BIN" "$PORT" "$HERE/AppIcon.icns"
