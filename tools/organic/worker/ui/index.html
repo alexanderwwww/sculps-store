@@ -18,6 +18,8 @@
     --grey: #c9ced3;
     --red: #ff5a5a;
     --radius: 18px;
+    /* the height of a phone body; everything in a row is measured off it */
+    --ph: min(50vh, 420px);
     --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
   * { box-sizing: border-box; }
@@ -49,48 +51,96 @@
   .dot.out { background: var(--red); }
   @keyframes breathe { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
 
-  /* ------------------------------------------------------------- setup */
-  #setup { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px 40px 96px; gap: 34px; }
-  #setup h1 { margin: 0; font-size: clamp(26px, 3.2vw, 38px); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
-  #setup .sub { margin: 10px 0 0; color: var(--ink-2); font-size: 15px; text-align: center; }
-  #cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; width: min(100%, 1120px); }
-  .card {
-    background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
-    box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 40px -20px rgba(0,0,0,.18);
-    padding: 16px; display: flex; flex-direction: column; gap: 14px; transition: box-shadow .3s, transform .3s, border-color .3s;
+  /* ------------------------------------------------- the iPhone frame */
+  /* Drawn, not drawn on: a body, a thin bezel, the island, the home bar.
+     Percentages are of the body, so one frame works at every size. */
+  .phone {
+    position: relative; flex: 0 0 auto;
+    height: var(--ph); aspect-ratio: 390 / 844; padding: 1.7%;
+    border-radius: 13.3% / 6.15%;
+    background: linear-gradient(158deg, #40454c 0%, #16191d 16%, #0a0c0e 52%, #0f1215 78%, #34393f 100%);
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.20),
+      0 28px 64px -28px rgba(0,0,0,.55),
+      inset 0 0 0 1px rgba(255,255,255,.10);
+    transition: box-shadow .3s, transform .3s;
   }
-  .card:hover { box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 24px 60px -24px rgba(0,0,0,.28); transform: translateY(-2px); }
-  .card.connected { border-color: rgba(57,255,122,.6); }
-  .card .head { display: flex; align-items: center; gap: 10px; }
-  .card .head .name { font-weight: 600; font-size: 15px; }
-  .card .head .meta { color: var(--ink-3); font-size: 12px; margin-left: auto; }
-  .card .head .handle { color: var(--green-ink); font-weight: 600; font-size: 13px; margin-left: auto; }
-  .screen {
-    position: relative; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden;
-    background: #f5f6f7; border: 1px solid var(--line); cursor: pointer;
+  .phone::after { /* the polished rim just inside the body */
+    content: ""; position: absolute; inset: 1.5px; border-radius: inherit; z-index: 5;
+    border: 1px solid rgba(255,255,255,.055); pointer-events: none;
+  }
+  .phone .glass {
+    position: relative; width: 100%; height: 100%; overflow: hidden;
+    border-radius: 11.4% / 5.25%; background: #f2f3f5; cursor: pointer;
+  }
+  .phone .glass img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; background: #fff; }
+  .island {
+    position: absolute; left: 50%; top: 2.05%; transform: translateX(-50%);
+    width: 30%; aspect-ratio: 125 / 37; border-radius: 999px; background: #000;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); z-index: 4; pointer-events: none;
+  }
+  .homebar {
+    position: absolute; left: 50%; bottom: 1.35%; transform: translateX(-50%);
+    width: 35%; height: 4px; border-radius: 999px;
+    /* dark core, light halo — it stays readable over a white feed and a dark one */
+    background: rgba(18,20,23,.45); box-shadow: 0 0 0 1px rgba(255,255,255,.45);
+    z-index: 4; pointer-events: none;
+  }
+  .btns i {
+    position: absolute; width: 2px; border-radius: 2px; z-index: 0;
+    background: linear-gradient(90deg, #333840, #0c0e11);
+  }
+  .btns i:nth-child(1) { left: -1.5px; top: 17.5%; height: 3.6%; }
+  .btns i:nth-child(2) { left: -1.5px; top: 24%; height: 6.6%; }
+  .btns i:nth-child(3) { left: -1.5px; top: 32.5%; height: 6.6%; }
+  .btns i:nth-child(4) { right: -1.5px; top: 27%; height: 10%; background: linear-gradient(270deg, #333840, #0c0e11); }
+
+  .glass .empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-3); font-size: 12px; text-align: center; padding: 0 14px; }
+  .glass img[src] + .empty { display: none; }
+  .glass .hint {
+    position: absolute; left: 50%; bottom: 5%; transform: translateX(-50%) translateY(6px); opacity: 0;
+    padding: 5px 10px; border-radius: 999px; background: rgba(11,13,15,.78); color: #fff; font-size: 11px; font-weight: 600;
+    transition: opacity .2s, transform .2s; white-space: nowrap; pointer-events: none; z-index: 3;
+  }
+  .glass:hover .hint { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* the market screen is a desktop page, so it keeps a desktop-shaped card */
+  .deskcard {
+    position: relative; flex: none; width: 100%; aspect-ratio: 16 / 10; padding: 7px; border-radius: 16px;
+    background: linear-gradient(158deg, #3a4047 0%, #14181c 20%, #0b0d0f 60%, #2b3037 100%);
+    box-shadow: 0 1px 2px rgba(0,0,0,.20), 0 28px 64px -28px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.10);
     transition: box-shadow .3s;
   }
-  .screen:hover { box-shadow: 0 0 0 3px rgba(57,255,122,.35); }
-  .screen img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
-  .screen .empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-3); font-size: 13px; }
-  .screen img[src] + .empty { display: none; }
-  .screen .hint {
-    position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%) translateY(6px); opacity: 0;
-    padding: 5px 10px; border-radius: 999px; background: rgba(11,13,15,.78); color: #fff; font-size: 11px; font-weight: 600;
-    transition: opacity .2s, transform .2s; white-space: nowrap; pointer-events: none;
+  .deskcard .glass {
+    position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 9px;
+    background: #f2f3f5; cursor: pointer;
   }
-  .screen:hover .hint { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .deskcard .glass img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+
+  /* ------------------------------------------------------------- setup */
+  #setup { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 40px 96px; gap: 26px; }
+  #setup h1 { margin: 0; font-size: clamp(24px, 3vw, 34px); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; text-align: center; }
+  #setup .sub { margin: 8px 0 0; color: var(--ink-2); font-size: 14px; text-align: center; }
+  #cards { display: flex; align-items: flex-start; justify-content: center; gap: clamp(20px, 4vw, 54px); width: 100%; }
+  .card { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; }
+  .card:hover .phone { transform: translateY(-3px); box-shadow: 0 1px 2px rgba(0,0,0,.20), 0 34px 70px -26px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.12), 0 0 0 2px rgba(57,255,122,.45); }
+  .card.connected .phone { box-shadow: 0 1px 2px rgba(0,0,0,.20), 0 28px 64px -28px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.10), 0 0 0 2px rgba(57,255,122,.5); }
+  .card .head { display: flex; align-items: center; gap: 8px; max-width: 100%; }
+  .card .head .name { font-weight: 600; font-size: 14px; }
+  .card .head .meta { color: var(--ink-3); font-size: 12px; }
+  .card .head .handle { color: var(--green-ink); font-weight: 600; font-size: 12.5px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .connect {
-    height: 38px; border-radius: 11px; border: 1px solid var(--line-2); font-weight: 600; font-size: 13px;
+    height: 34px; padding: 0 16px; max-width: 100%; border-radius: 999px; border: 1px solid var(--line-2);
+    font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     transition: background .2s, color .2s, border-color .2s;
   }
   .connect:hover { background: #f5f6f7; }
   .connect.waiting { color: #a05b00; border-color: rgba(255,179,71,.6); background: rgba(255,179,71,.08); }
   .connect.connected { color: var(--green-ink); border-color: rgba(57,255,122,.7); background: rgba(57,255,122,.10); }
 
-  #okwrap { position: absolute; left: 0; right: 0; bottom: 30px; display: flex; justify-content: center; pointer-events: none; }
+  #okwrap { position: absolute; left: 0; right: 0; bottom: 26px; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
   #ok {
-    pointer-events: auto; height: 50px; padding: 0 40px; border-radius: 999px; background: var(--green); color: #05220f;
+    pointer-events: auto; height: 48px; padding: 0 38px; border-radius: 999px; background: var(--green); color: #05220f;
     font-weight: 700; font-size: 15px; letter-spacing: .01em; box-shadow: 0 10px 30px -10px rgba(57,255,122,.9), 0 1px 0 rgba(0,0,0,.05);
     transition: transform .15s, opacity .3s, box-shadow .3s;
   }
@@ -107,12 +157,21 @@
   /* Nothing shows through the focused screen: the header and OK fade out with it. */
   body:has(#focus.on) #top, body:has(#focus.on) #okwrap { opacity: 0; transition: opacity .2s ease; pointer-events: none; }
   #focus .stage {
-    position: relative; border-radius: 16px; overflow: hidden; background: #fff; border: 1px solid var(--line);
-    box-shadow: 0 40px 100px -30px rgba(0,0,0,.35), 0 0 0 1px rgba(57,255,122,.25), 0 0 60px -20px rgba(57,255,122,.6);
-    transform: scale(.94); transition: transform .32s cubic-bezier(.22,.8,.28,1); cursor: default; outline: none;
+    position: relative; display: flex; align-items: center; justify-content: center; outline: none;
+    transform: scale(.94); transition: transform .32s cubic-bezier(.22,.8,.28,1); cursor: default;
   }
   #focus.on .stage { transform: scale(1); }
-  #focus .stage img { width: 100%; height: 100%; object-fit: contain; }
+  /* The focused screen is the same frame, grown: an enlarged iPhone. */
+  #fbody { position: relative; }
+  #fbody .phone {
+    height: auto; aspect-ratio: auto; cursor: default;
+    box-shadow: 0 1px 2px rgba(0,0,0,.2), 0 60px 120px -40px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.12), 0 0 0 2px rgba(57,255,122,.22);
+  }
+  #fbody .glass { cursor: default; }
+  #fbody.desk .phone { border-radius: 16px; padding: 7px; background: linear-gradient(158deg,#3a4047 0%,#14181c 20%,#0b0d0f 60%,#2b3037 100%); }
+  #fbody.desk .glass { border-radius: 9px; }
+  #fbody.desk .glass img { object-fit: contain; }
+  #fbody.desk .island, #fbody.desk .homebar, #fbody.desk .btns { display: none; }
   #focus .bar { position: fixed; top: 14px; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 12px; pointer-events: none; }
   #focus .bar > * { pointer-events: auto; }
   #focus .who { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(11,13,15,.06); font-weight: 600; font-size: 13px; }
@@ -122,21 +181,18 @@
 
   /* ---------------------------------------------------------- working */
   #work { padding: 56px 24px 92px; }
-  #grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 18px; height: 100%; }
-  .tile {
-    position: relative; display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--line); border-radius: var(--radius);
-    background: #fff; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 16px 50px -30px rgba(0,0,0,.25);
-    transition: box-shadow .3s, border-color .3s;
-  }
-  .tile.busy { border-color: rgba(57,255,122,.55); }
-  .tile .shot { position: relative; flex: 1; min-height: 0; background: #f5f6f7; cursor: pointer; }
-  .tile .shot img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
-  .tile .shot .empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-3); font-size: 13px; }
-  .tile .shot img[src] + .empty { display: none; }
-  .tile .foot { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 13px; }
+  #grid { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; align-content: center; gap: 18px; height: 100%; overflow: hidden; }
+  .tile { position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .tile.ph { flex: 0 0 auto; }
+  .tile.desk { flex: 1 1 260px; min-width: 240px; max-width: 520px; align-self: center; }
+  .tile.ph.busy .phone { box-shadow: 0 1px 2px rgba(0,0,0,.2), 0 28px 64px -28px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.1), 0 0 0 2px rgba(57,255,122,.55); }
+  .tile.desk.busy .deskcard { box-shadow: 0 1px 2px rgba(0,0,0,.2), 0 28px 64px -28px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.1), 0 0 0 2px rgba(57,255,122,.55); }
+  .tile .foot { display: flex; align-items: center; gap: 8px; padding: 9px 4px 0; font-size: 12.5px; min-width: 0; }
+  .tile.ph .foot { justify-content: center; }
   .tile .foot .name { font-weight: 600; }
-  .tile .foot .handle { color: var(--ink-2); }
-  .tile .foot .doing { margin-left: auto; color: var(--ink-3); font-size: 12px; max-width: 55%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .foot .handle { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tile .foot .doing { margin-left: auto; color: var(--ink-3); font-size: 11.5px; max-width: 55%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile.ph .foot .doing { display: none; }
   .cur { position: absolute; left: 0; top: 0; pointer-events: none; opacity: 0; transition: transform .38s cubic-bezier(.22,.8,.28,1), opacity .25s; z-index: 3; }
   .cur.on { opacity: 1; }
   /* The cursor is the thing Alex watches to know it is alive, so it glows
@@ -166,7 +222,12 @@
   .cur b:empty { display: none; }
 
   /* ticker tile / strip */
-  #tickerTile { display: grid; grid-template-columns: 1.15fr 1fr; gap: 0 22px; padding: 18px 20px 14px; overflow: hidden; }
+  #tickerTile {
+    flex: 1 1 240px; min-width: 220px; max-width: 440px; height: calc(var(--ph) + 34px);
+    background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 16px 50px -30px rgba(0,0,0,.25);
+  }
+  #tickerTile { display: grid; grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 16px 0; padding: 18px 20px 14px; overflow: hidden; }
   #tickerTile > div { min-width: 0; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
   #tickerTile h3 { margin: 0 0 4px; font-size: 12px; font-weight: 600; color: var(--ink-3); letter-spacing: .08em; text-transform: uppercase; }
   .jobs { display: flex; flex-direction: column; gap: 5px; overflow: hidden; }
@@ -234,15 +295,14 @@
   #toast i { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: breathe 1s infinite; }
 
   @media (max-width: 1080px) {
-    #setup { padding: 60px 24px 92px; gap: 26px; }
-    #cards { gap: 14px; }
-    .card { padding: 12px; gap: 10px; }
+    #setup { padding: 56px 18px 88px; gap: 20px; }
     #work { padding: 52px 16px 84px; }
     #grid { gap: 12px; }
     .line .who { flex-basis: 64px; }
   }
-  @media (max-height: 720px) {
-    #setup { gap: 20px; padding-top: 54px; }
+  @media (max-height: 760px) {
+    :root { --ph: min(45vh, 330px); }
+    #setup { gap: 18px; padding-top: 52px; }
     #setup .sub { margin-top: 6px; }
   }
 </style>
@@ -279,7 +339,15 @@
 
   <div id="focus">
     <div class="bar"><div class="who" id="focusWho"></div><button id="done">Done<kbd>esc</kbd></button></div>
-    <div class="stage" id="stage" tabindex="0"></div>
+    <div class="stage" id="stage" tabindex="0">
+      <div id="fbody">
+        <div class="phone">
+          <div class="glass" id="fglass"></div>
+          <div class="island"></div><div class="homebar"></div>
+          <div class="btns"><i></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="toast"><i></i><span id="toastText">updating…</span></div>
@@ -321,6 +389,41 @@
     if (img.parentElement !== home) home.insertBefore(img, home.firstChild);
   }
 
+  /* ------------------------------------------------- the iPhone frame */
+  // body > glass + island + home bar + side buttons. The glass is where the
+  // live frame goes; it is the rect every coordinate is normalised against.
+  function phoneFrame(glassCls) {
+    const body = el("div", "phone");
+    const glass = el("div", "glass " + glassCls);
+    const island = el("div", "island");
+    const home = el("div", "homebar");
+    const btns = el("div", "btns"); for (let i = 0; i < 4; i++) btns.append(el("i"));
+    body.append(glass, island, home, btns);
+    return { body, glass };
+  }
+  // The market page is a desktop page, so it keeps a desktop-shaped card.
+  function deskFrame(glassCls) {
+    const body = el("div", "deskcard");
+    const glass = el("div", "glass " + glassCls);
+    body.append(glass);
+    return { body, glass };
+  }
+  const isPhone = (id) => id !== "market";
+  // How the <img> is fitted inside its glass — phones fill it, the desk letterboxes.
+  const fitOf = (id) => (isPhone(id) ? "cover" : "contain");
+  // The rect the live page actually occupies inside a glass box.
+  function drawn(rect, id) {
+    const f = S.frames[id];
+    if (!f || !f.w || !f.h) return { x: 0, y: 0, w: rect.width, h: rect.height };
+    const sc = fitOf(id) === "cover"
+      ? Math.max(rect.width / f.w, rect.height / f.h)
+      : Math.min(rect.width / f.w, rect.height / f.h);
+    const w = f.w * sc, h = f.h * sc;
+    // object-position is 50% 0 for cover (top-aligned), centred otherwise.
+    const y = fitOf(id) === "cover" ? 0 : (rect.height - h) / 2;
+    return { x: (rect.width - w) / 2, y, w, h };
+  }
+
   /* ------------------------------------------------------------ setup */
   const cardsEl = $("#cards");
   const cards = {};
@@ -333,14 +436,14 @@
     const meta = el("span", "meta", id === "youtube" ? "optional" : "");
     const handle = el("span", "handle");
     head.append(dot, name, meta, handle);
-    const screen = el("div", "screen");
+    const { body, glass: screen } = phoneFrame("screen");
     const empty = el("div", "empty", "waiting for the page…");
     const hint = el("div", "hint", "Click to sign in");
     screen.append(empty, hint);
     screen.addEventListener("click", () => focus(id));
     const btn = el("button", "connect", "Connect");
     btn.addEventListener("click", () => { if ((S.screens[id] || {}).state !== "waiting") send({ t: "connect", platform: id }); focus(id); });
-    c.append(head, screen, btn);
+    c.append(body, head, btn);
     cardsEl.append(c);
     cards[id] = { root: c, dot, meta, handle, screen, btn };
     place(id, screen);
@@ -367,8 +470,8 @@
   const tiles = {};
   function tile(id) {
     if (tiles[id]) return tiles[id];
-    const t = el("div", "tile");
-    const shot = el("div", "shot");
+    const t = el("div", "tile " + (isPhone(id) ? "ph" : "desk"));
+    const { body, glass: shot } = (isPhone(id) ? phoneFrame : deskFrame)("shot");
     const empty = el("div", "empty", "waiting for the page…");
     const cur = el("div", "cur"); cur.append(el("i"), el("b"));
     shot.append(empty, cur);
@@ -379,7 +482,7 @@
     const handle = el("span", "handle");
     const doing = el("span", "doing");
     foot.append(dot, name, handle, doing);
-    t.append(shot, foot);
+    t.append(body, foot);
     tiles[id] = { root: t, shot, cur, dot, handle, doing };
     return tiles[id];
   }
@@ -445,7 +548,8 @@
     // Doing first, then what is next in time order, then what is done; skipped last.
     const rank = { doing: 0, next: 1, done: 2, skipped: 3 };
     const jobs = S.plan.slice().sort((a, b) => (rank[a.state] ?? 1) - (rank[b.state] ?? 1) || new Date(a.at) - new Date(b.at));
-    const room = Math.max(4, Math.floor((tickerTile.clientHeight - 60) / 23));
+    // The crew lines sit above the plan in one column; leave them their room.
+    const room = Math.max(3, Math.floor((tickerTile.clientHeight - 220) / 23));
     renderJobs(planList, jobs, room);
     renderJobs($("#stripJobs"), jobs.filter((j) => j.state === "doing" || j.state === "next"), 3);
   }
@@ -508,20 +612,34 @@
     w.append(el("i", "dot " + (sc.state || "none")), el("span", null, PLATFORM[S.focused] || S.focused));
     w.append(el("span", "k", sc.handle ? sc.handle : S.phase === "setup" ? "signing in happens in the browser window in front — this is the live view" : "your hands are on the page"));
   }
+  const fbody = $("#fbody"), fglass = $("#fglass");
   function sizeStage() {
     if (!S.focused) return;
-    const f = S.frames[S.focused] || { w: 1280, h: 720 };
-    const ratio = f.w && f.h ? f.w / f.h : 16 / 9;
+    const id = S.focused;
+    const phone = isPhone(id);
+    const f = S.frames[id] || (phone ? { w: 390, h: 844 } : { w: 1280, h: 800 });
+    const ratio = f.w && f.h ? f.w / f.h : (phone ? 390 / 844 : 16 / 10);
     const maxW = window.innerWidth - 56, maxH = window.innerHeight - 96;
-    let w = maxW, h = w / ratio;
-    if (h > maxH) { h = maxH; w = h * ratio; }
-    stage.style.width = Math.round(w) + "px";
-    stage.style.height = Math.round(h) + "px";
+    stage.style.width = Math.round(maxW) + "px";
+    stage.style.height = Math.round(maxH) + "px";
+    const boxW = phone ? maxW : maxW - 16, boxH = phone ? maxH : maxH - 16;
+    // The bezel is a fraction of the body's width, so solve for the body size
+    // that leaves a glass of exactly the frame's aspect ratio.
+    const pad = phone ? 0.017 : 0;
+    const k = 1 - 2 * pad + 2 * pad * ratio;   // bodyW = ratio * bodyH / k
+    let H = boxH, W = (ratio * H) / k;
+    if (W > boxW) { W = boxW; H = (W * k) / ratio; }
+    const el2 = fbody.firstElementChild;
+    el2.style.width = Math.round(W) + "px";
+    el2.style.height = Math.round(H) + "px";
+    if (!phone) { el2.style.width = ""; el2.style.height = ""; fglass.style.width = Math.round(W) + "px"; fglass.style.height = Math.round(H) + "px"; }
+    else { fglass.style.width = ""; fglass.style.height = ""; }
   }
   function focus(id) {
     if (S.focused === id) return;
     S.focused = id;
-    place(id, stage);
+    fbody.classList.toggle("desk", !isPhone(id));
+    place(id, fglass);
     sizeStage();
     paintFocusWho();
     focusEl.classList.add("on");
@@ -566,11 +684,12 @@
   }
 
   function sendFocus(id) {
-    const r = stage.getBoundingClientRect();
+    // offsetWidth, not the client rect: the stage animates in with a scale()
+    // and the page must be laid out at the glass's real size.
     send({
       t: "focus", id,
-      w: Math.round(r.width || window.innerWidth - 56),
-      h: Math.round(r.height || window.innerHeight - 96),
+      w: Math.round(fglass.offsetWidth || window.innerWidth - 56),
+      h: Math.round(fglass.offsetHeight || window.innerHeight - 96),
       dpr: window.devicePixelRatio || 1,
     });
   }
@@ -582,9 +701,14 @@
     resizeTimer = setTimeout(() => { if (S.focused) sendFocus(S.focused); }, 250);
   });
 
+  // Normalised against the drawn page — the glass, and inside it the rect the
+  // frame really covers — so a click lands where Alex sees it.
   function norm(e) {
-    const r = stage.getBoundingClientRect();
-    return { x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) };
+    const r = fglass.getBoundingClientRect();
+    const d = drawn(r, S.focused);
+    const x = d.w ? (e.clientX - r.left - d.x) / d.w : 0;
+    const y = d.h ? (e.clientY - r.top - d.y) / d.h : 0;
+    return { x: Math.min(1, Math.max(0, x)), y: Math.min(1, Math.max(0, y)) };
   }
   let moveQueued = null;
   stage.addEventListener("mousemove", (e) => {
@@ -620,16 +744,9 @@
     S.cursorMoves = (S.cursorMoves || 0) + 1;
     const t = tiles[m.id]; if (!t) return;
     const r = t.shot.getBoundingClientRect();
-    const img = S.imgs[m.id];
-    // The image is object-fit: contain inside the shot; map onto the drawn area.
-    let x = m.x * r.width, y = m.y * r.height;
-    const f = S.frames[m.id];
-    if (img && f && f.w && f.h) {
-      const ratio = f.w / f.h, box = r.width / r.height;
-      let dw = r.width, dh = r.height;
-      if (ratio > box) dh = r.width / ratio; else dw = r.height * ratio;
-      x = (r.width - dw) / 2 + m.x * dw; y = (r.height - dh) / 2 + m.y * dh;
-    }
+    // Map onto the rect the frame really covers inside the glass.
+    const d = drawn(r, m.id);
+    const x = d.x + m.x * d.w, y = d.y + m.y * d.h;
     t.cur.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px)";
     t.cur.classList.add("on");
     t.cur.classList.add("moving");
@@ -667,6 +784,7 @@
         const was = S.phase;
         S.phase = m.phase; S.build = m.build; S.paused = !!m.paused; S.stopped = !!m.stopped; S.brief = m.brief || null;
         S.mcp = m.mcp || S.mcp || "";
+        S.pages = m.pages ?? S.pages ?? 0;
         paintMcp();
         S.screens = {};
         for (const sc of m.screens || []) S.screens[sc.id] = sc;
