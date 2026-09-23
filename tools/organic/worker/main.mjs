@@ -31,7 +31,7 @@ import {
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 11;
+export const BUILD = 12;
 
 const SUPPORT = process.env.ORGANIC_HOME || join(homedir(), "Library", "Application Support", "Organic");
 export const PATHS = { home: SUPPORT, worker: join(SUPPORT, "worker"), log: join(SUPPORT, "log") };
@@ -216,9 +216,22 @@ async function beginConnect(platform) {
 }
 
 /** Look at the page and decide whether we are signed in, and as whom. */
+let lastSeen = "";
+function sawOnce(line) {
+  if (line === lastSeen) return;
+  lastSeen = line;
+  say("sam", line);
+}
+
 async function checkSignedIn(platform, { quiet = false } = {}) {
   const inn = await phone.read("signedIn", { platform });
+  if (inn === null || inn === undefined) {
+    // The page did not answer at all — usually it is still loading.
+    sawOnce(`${platform}: the page has not answered yet`);
+    return false;
+  }
   if (!inn) {
+    sawOnce(`${platform}: not signed in yet — sign in on the phone`);
     if (S.accounts[platform].state === "connected") {
       setAccount(platform, "out", null);
       say("sam", `${platform} is signed out now`);
@@ -228,10 +241,11 @@ async function checkSignedIn(platform, { quiet = false } = {}) {
   const handle = await phone.read("handle", { platform });
   const clean = handle ? String(handle).trim() : "";
   if (!clean || clean === "@") {
-    if (!quiet) say("sam", `${platform} looks signed in but will not tell me who — not taking that as connected yet`);
+    sawOnce(`${platform} is signed in but will not say who yet — looking again in a moment`);
     setAccount(platform, "waiting", null);
     return false;
   }
+  lastSeen = "";
   const at = clean.startsWith("@") ? clean : `@${clean}`;
   let row = null;
   try { row = await cloud.db.markConnected(platform, at); } catch (e) { say("organic", `could not record ${at}: ${e.message}`); }
@@ -705,7 +719,7 @@ export async function main() {
   const nowIn = await checkSignedIn(first, { quiet: true }).catch(() => false);
   if (!nowIn && S.accounts[first].state !== "connected") {
     setAccount(first, "none", null);
-    say("sam", "connect an account on the phone — tap the platform you want");
+    sawOnce("connect an account on the phone — tap the platform you want");
     await phone.panel(true, panelState()).catch(() => {});
   }
 
@@ -718,9 +732,11 @@ export async function main() {
         lastSweep = now;
         if (await maybeUpdate()) return;
         await readBrief();
-        // A platform we are waiting on: look again, quietly.
-        for (const p of PLATFORMS) {
-          if (S.accounts[p].state === "waiting" && S.showing === p) await checkSignedIn(p, { quiet: true }).catch(() => {});
+        // Look at whatever is on the glass. Alex may have signed in without
+        // pressing anything — he did exactly that, and nothing was watching.
+        const on = S.showing;
+        if (PLATFORMS.includes(on) && S.accounts[on].state !== "connected") {
+          await checkSignedIn(on, { quiet: true }).catch(() => {});
         }
       }
       if (now - lastReport > 10000) { lastReport = now; await report(); }

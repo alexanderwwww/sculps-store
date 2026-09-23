@@ -53,13 +53,25 @@ func fail(_ reason: String) {
 // isMovableByWindowBackground plus performDrag move the phone around.
 
 final class PhoneView: NSView {
+  /// The outermost ring: AppKit resizes the window there.
   let edge: CGFloat = 8
+  /// The phone's body. The page stops here, so this is where a drag lands.
+  static let bezel: CGFloat = 16
 
   override func hitTest(_ point: NSPoint) -> NSView? {
     let p = convert(point, from: superview)
     if p.x < edge || p.y < edge || p.x > bounds.width - edge || p.y > bounds.height - edge {
       return nil
     }
+    /*
+     * Hold command and the whole phone is a handle.
+     *
+     * The web view covers everything inside the body, and a web view keeps
+     * the mouse to itself — which is why the phone could not be moved at all.
+     * The body is a real grip now, and command-drag is the one that works
+     * wherever the hand happens to be.
+     */
+    if NSEvent.modifierFlags.contains(.command) { return self }
     return super.hitTest(point)
   }
 
@@ -166,7 +178,9 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     container.wantsLayer = true
     container.autoresizingMask = [.width, .height]
     if let layer = container.layer {
-      layer.backgroundColor = NSColor.clear.cgColor
+      // The phone's body: dark, so the bezel reads as a phone and the ring
+      // around the page is something to take hold of.
+      layer.backgroundColor = NSColor(calibratedWhite: 0.055, alpha: 1).cgColor
       layer.masksToBounds = true
       layer.cornerRadius = Shell.radius(for: initial.width)
     }
@@ -183,7 +197,8 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     config.userContentController.add(self, name: "organic")
     config.preferences.setValue(true, forKey: "developerExtrasEnabled")
 
-    let view = WKWebView(frame: container.bounds, configuration: config)
+    let inset = PhoneView.bezel
+    let view = WKWebView(frame: container.bounds.insetBy(dx: inset, dy: inset), configuration: config)
     view.autoresizingMask = [.width, .height]
     view.navigationDelegate = self
     view.uiDelegate = self
@@ -240,8 +255,12 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     guard let container = body else { return }
     let r = Shell.radius(for: container.bounds.width)
     container.layer?.cornerRadius = r
-    web?.frame = container.bounds
-    web?.layer?.cornerRadius = r
+    // The glass sits inside the body, with its own slightly tighter corner —
+    // which is the detail that makes a drawn phone look like a phone.
+    let inset = PhoneView.bezel
+    web?.frame = container.bounds.insetBy(dx: inset, dy: inset)
+    web?.layer?.masksToBounds = true
+    web?.layer?.cornerRadius = max(10, r - inset * 0.6)
   }
 
   // MARK: the agent

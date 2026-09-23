@@ -494,9 +494,21 @@
 
     signedIn: function () {
       if (this.isLoginPage()) return false;
+      /*
+       * Instagram's own answer first.
+       *
+       * ds_user_id is the id of the signed-in account and it is readable from
+       * the page (sessionid is not). The markup test below is a good second —
+       * but it is markup, and the first build read a real signed-in phone as
+       * signed out because the mobile site does not label its tab bar the way
+       * the desktop one does. A cookie the site sets about itself does not
+       * change with the layout.
+       */
+      if (/(^|;\s*)ds_user_id=\d+/.test(document.cookie || "")) return true;
       return !!(
-        F.oneByLabel(/^(home|profile|new post|search)$/i) ||
-        document.querySelector('a[href="/direct/inbox/"]')
+        F.oneByLabel(/^(home|profile|new post|search|reels|messages)$/i) ||
+        document.querySelector('a[href="/direct/inbox/"]') ||
+        document.querySelector('a[href^="/explore/"]')
       );
     },
 
