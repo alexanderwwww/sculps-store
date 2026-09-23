@@ -9,6 +9,10 @@ RES="$HERE/app/Organic.app/Contents/Resources/worker"
 rm -rf "$RES"; mkdir -p "$RES"
 # The crew's code is rebuilt from its parts, so the bundle can never carry a
 # stale one: agent.built.js is generated, not edited.
+# Nothing ships without this: the Swift cannot be compiled here, so every name
+# in it is checked instead. A wrong one reaches Alex as "Apple's build tools
+# are broken", which is a lie the launcher cannot help telling.
+node "$HERE/check-swift.mjs" "$HERE/app/Organic.app/Contents/Resources/Shell/main.swift"
 node "$HERE/worker/agent/build.mjs"
 cp "$HERE"/worker/*.mjs "$HERE"/worker/package.json "$HERE"/worker/agent.built.js "$RES/"
 [ -d "$HERE/worker/skills" ] && cp -R "$HERE/worker/skills" "$RES/skills" || true

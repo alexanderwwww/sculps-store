@@ -220,7 +220,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
      * bounced, and Alex saw nothing at all. A phone that is starting has to
      * LOOK like a phone that is starting.
      */
-    view.loadHTMLString(Delegate.startingHTML, baseURL: nil)
+    view.loadHTMLString(Shell.startingHTML, baseURL: nil)
 
     // First run: centred. After that the autosave name puts it back where
     // Alex left it (setFrameAutosaveName restores if a saved frame exists).
