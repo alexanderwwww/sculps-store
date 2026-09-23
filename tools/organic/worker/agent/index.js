@@ -123,6 +123,7 @@
       if (what === "store") return O.read.store(a.url, a);
       if (what === "handle") return O.read.handle(a.platform);
       if (what === "signedIn") return O.read.signedIn(a.platform);
+      if (what === "userId") return O.read.userId();
       return O.read.handle(a.platform).then(function (h) {
         return {
           url: location.href,

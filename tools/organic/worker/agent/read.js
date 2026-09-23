@@ -35,6 +35,18 @@
   }
 
   /** Signed in when the platform recipe says so; unknown platform => false. */
+  /**
+   * The account's own id, from the cookie the site sets about itself.
+   *
+   * Proof that somebody is signed in, and a name to work under while the
+   * real handle is still being asked for. A platform refusing to say WHO is
+   * not a reason to stand still — it is a reason to keep asking.
+   */
+  function userId() {
+    var m = /(^|;\s*)ds_user_id=(\d+)/.exec(document.cookie || "");
+    return m ? m[2] : null;
+  }
+
   function signedIn(which) {
     var s = site(which);
     if (!s) return false;
@@ -434,6 +446,7 @@
   O.read = {
     platform: platform,
     signedIn: signedIn,
+    userId: userId,
     handle: handle,
     bodyText: bodyText,
     posts: posts,

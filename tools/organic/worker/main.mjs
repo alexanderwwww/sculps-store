@@ -31,7 +31,7 @@ import {
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 14;
+export const BUILD = 15;
 
 const SUPPORT = process.env.ORGANIC_HOME || join(homedir(), "Library", "Application Support", "Organic");
 export const PATHS = { home: SUPPORT, worker: join(SUPPORT, "worker"), log: join(SUPPORT, "log") };
@@ -241,12 +241,42 @@ async function checkSignedIn(platform, { quiet = false } = {}) {
   const handle = await phone.read("handle", { platform });
   const clean = handle ? String(handle).trim() : "";
   if (!clean || clean === "@") {
-    sawOnce(`${platform} is signed in but will not say who yet — looking again in a moment`);
-    setAccount(platform, "waiting", null);
-    return false;
+    /*
+     * Signed in, but the platform will not say who.
+     *
+     * The old rule stopped here — no handle, no connection — and that is how
+     * a genuinely signed-in Instagram sat doing nothing while its API
+     * answered "useragent mismatch". The proof of a session is the session,
+     * not the name on it. So the crew starts, under the account's own id,
+     * and the name is asked for again on every sweep until it answers.
+     */
+    const id = await phone.read("userId", { platform });
+    if (!id) {
+      sawOnce(`${platform} is signed in but will not say who yet — looking again in a moment`);
+      setAccount(platform, "waiting", null);
+      return false;
+    }
+    const provisional = `@${String(id).slice(0, 12)}`;
+    sawOnce(`${platform} is signed in — working as ${provisional} until it tells me the name`);
+    let row0 = null;
+    try { row0 = await cloud.db.markConnected(platform, provisional); } catch { /* recorded next time */ }
+    S.accounts[platform].accountId = row0?.id ?? S.accounts[platform].accountId ?? null;
+    S.accounts[platform].provisional = true;
+    setAccount(platform, "connected", provisional);
+    sched.firstLook.add(platform);
+    await prepareAccount(platform).catch(() => {});
+    if (S.phase === "setup") await startWorking();
+    if (!sched.jobs.some((j) => j.platform === platform && j.now && j.state !== "done")) {
+      addJob({ kind: "session", platform, now: true, who: "bea", what: `${provisional} · a first look around`, at: Date.now(), seconds: Math.round(between(300, 600)) });
+    }
+    return true;
   }
   lastSeen = "";
   const at = clean.startsWith("@") ? clean : `@${clean}`;
+  if (S.accounts[platform].provisional) {
+    S.accounts[platform].provisional = false;
+    say("sam", `${platform} says its name now: ${at}`);
+  }
   let row = null;
   try { row = await cloud.db.markConnected(platform, at); } catch (e) { say("organic", `could not record ${at}: ${e.message}`); }
   S.accounts[platform].accountId = row?.id ?? S.accounts[platform].accountId ?? null;
@@ -756,7 +786,7 @@ export async function main() {
         // Look at whatever is on the glass. Alex may have signed in without
         // pressing anything — he did exactly that, and nothing was watching.
         const on = S.showing;
-        if (PLATFORMS.includes(on) && S.accounts[on].state !== "connected") {
+        if (PLATFORMS.includes(on) && (S.accounts[on].state !== "connected" || S.accounts[on].provisional)) {
           await checkSignedIn(on, { quiet: true }).catch(() => {});
         }
       }
