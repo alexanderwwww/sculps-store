@@ -74,6 +74,9 @@
       "white-space:nowrap;}" +
       "#" + ID + " .dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.22);}" +
       "#" + ID + " .dot.on{background:#39FF7A;box-shadow:0 0 8px rgba(57,255,122,.8);}" +
+      "#" + ID + " .row.here .grow{color:#39FF7A;}" +
+      "#" + ID + " .what{display:block;font-size:12px;color:rgba(235,235,245,.55);" +
+      "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}" +
       "#" + ID + " .sub{font-size:13px;color:rgba(235,235,245,.6);}" +
       "#" + ID + " .hd{font-size:12px;letter-spacing:.06em;text-transform:uppercase;" +
       "color:rgba(235,235,245,.5);padding:12px 16px 4px;}" +
@@ -109,13 +112,21 @@
     (state.accounts || []).forEach(function (a) {
       var on = a.state === "on" || a.state === "connected" || a.state === true;
       var act = on ? "switch" : "connect";
-      var sub = a.handle ? (a.handle.charAt(0) === "@" ? a.handle : "@" + a.handle) : on ? String(a.state) : "connect";
+      // The name line is the handle; underneath it, what that one is doing —
+      // tap the row and the glass goes to it.
+      var name = a.handle
+        ? (a.handle.charAt(0) === "@" ? a.handle : "@" + a.handle)
+        : a.label || LABEL[a.platform] || a.platform;
+      var sub = on ? (a.doing || "") : "connect";
+      if (a.mission === "recover") sub = "recovery · " + sub;
       h.push(
-        '<div class="row" data-organic-do="' + act +
+        '<div class="row' + (a.on ? " here" : "") + '" data-organic-do="' + act +
+          '" data-organic-account="' + esc(a.id || "") +
           '" data-organic-platform="' + esc(a.platform) +
           '"><span class="dot' + (on ? " on" : "") + '"></span>' +
-          '<span class="grow">' + esc(a.label || LABEL[a.platform] || a.platform) + "</span>" +
-          '<span class="sub">' + esc(sub) + "</span></div>",
+          '<span class="grow">' + esc(name) +
+          '<span class="what">' + esc(sub) + "</span></span>" +
+          '<span class="sub">' + esc(a.on ? "on screen" : on ? "watch" : "") + "</span></div>",
       );
     });
 
@@ -194,9 +205,10 @@
       if (!hit) return;
       var act = hit.getAttribute("data-organic-do");
       var platform = hit.getAttribute("data-organic-platform") || null;
+      var account = hit.getAttribute("data-organic-account") || null;
       if (act) {
         // The panel only ever asks. The brain decides and pushes state back.
-        send({ t: "asked", do: act, platform: platform });
+        send({ t: "asked", do: act, platform: platform, account: account });
         if (act === "quit") send({ t: "window", do: "quit" });
         if (act === "stop" || act === "resume") setOpen(false);
         return;

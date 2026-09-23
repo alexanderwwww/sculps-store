@@ -23,7 +23,8 @@ await cp(join(here, "..", "worker"), WORKER, { recursive: true });
 await symlink(join(here, "..", "..", "..", "node_modules"), join(WORKER, "node_modules")).catch(() => {});
 const guard = setTimeout(() => { console.log("HARD STOP"); process.exit(9); }, 260000);
 
-const cloud = await cloudStub({ brief: () => ({ store: "Test Store", storeUrl: "https://store.test/", products: ["Widget"], market: [], platforms: ["instagram"] }) });
+let nextOrder = null;
+const cloud = await cloudStub({ order: () => { const o = nextOrder; nextOrder = null; return o ? { cmd: o } : null; }, brief: () => ({ store: "Test Store", storeUrl: "https://store.test/", products: ["Widget"], market: [], platforms: ["instagram"] }) });
 
 const child = spawn(process.execPath, ["main.mjs"], {
   cwd: WORKER, stdio: ["pipe", "pipe", "pipe"],
@@ -56,6 +57,8 @@ ws.on("message", (raw) => {
     if (m.what === "tags") return reply(true, ["halloweendecor"]);
     if (m.what === "store") return reply(true, { products: [{ url: "https://store.test/products/w", title: "Widget", price: "$9" }], stopped: null });
     if (m.what === "ads") return reply(true, []);
+    if (m.what === "accountStatusUrl") return reply(true, "https://www.instagram.com/accounts/account_status/");
+    if (m.what === "accountStatus") return reply(true, { restricted: true, said: "Your account is not eligible to be recommended" });
     return reply(true, null);
   }
   if (m.act === "tap") return reply(true, { found: true, changed: true });
@@ -85,6 +88,30 @@ check("the crew actually scrolls and watches", Boolean(moved), asks.filter((a) =
 handle = "@blackreaper.us";
 const named = await until(() => /says its name now: @blackreaper\.us/.test(err), 90000);
 check("the real name replaces the id when it arrives", Boolean(named));
+
+// The panel is how he picks a worker to watch: one row per account, each
+// saying what it is doing, plus the research screen.
+const panels = asks.filter((a) => a.act === "panel").filter(Boolean);
+const last = panels[panels.length - 1] ?? {};
+check("the panel lists accounts by id", Array.isArray(last.accounts) && last.accounts.some((a) => a.id === "instagram-1"), JSON.stringify(last.accounts ?? []).slice(0, 160));
+check("each row says what that one is doing", last.accounts.some((a) => a.id === "instagram-1" && typeof a.doing === "string" && a.doing.length));
+check("the research screen is one of the rows", last.accounts.some((a) => a.id === "market"));
+check("one row is marked as the one on screen", last.accounts.some((a) => a.on === true));
+
+// Tapping a row switches the glass — by account id, not by platform.
+const before = profiles.length;
+ws.send(JSON.stringify({ t: "asked", do: "switch", account: "market" }));
+const switched = await until(() => profiles.length > before, 15000);
+check("tapping a row puts that one on the glass", Boolean(switched), `${before} -> ${profiles.length}`);
+
+// The recovery: ordered from the cloud, and it says so in its own words.
+nextOrder = "recover instagram-1";
+const onRecovery = await until(() => /is on the recovery/.test(err), 60000);
+check("an account can be put on the recovery", Boolean(onRecovery), err.split("\n").filter(Boolean).slice(-1)[0]);
+const statusRead = await until(() => asks.some((a) => a.act === "read" && a.what === "accountStatus"), 90000);
+check("it reads Instagram's own Account Status", Boolean(statusRead));
+const savedNow = JSON.parse(await readFile(join(WORKER, "accounts.json"), "utf8"));
+check("the recovery survives a restart", savedNow.accounts[0].mission === "recover" && typeof savedNow.accounts[0].missionSince === "string");
 
 const saved = JSON.parse(await readFile(join(WORKER, "accounts.json"), "utf8"));
 check("the account and its jar are on disk", saved.accounts.length >= 1 && /^[0-9a-f-]{36}$/.test(saved.accounts[0].profileId));

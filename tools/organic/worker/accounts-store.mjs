@@ -68,6 +68,10 @@ export class Accounts {
       state: "none",
       accountId: null,
       provisional: false,
+      // What this account is for. "grow" is the ordinary day; "recover" is an
+      // account that is not being recommended and is being walked back.
+      mission: "grow",
+      missionSince: null,
       addedAt: new Date().toISOString(),
     };
     this.list.push(account);
@@ -81,6 +85,28 @@ export class Accounts {
     Object.assign(a, patch);
     await this.save();
     return a;
+  }
+
+  /**
+   * Put an account on a mission. "recover" also stamps the day it started,
+   * because the recovery opens up on the days since, not on a guess.
+   */
+  async mission(id, mission) {
+    const a = this.find(id);
+    if (!a) return null;
+    if (a.mission === mission) return a;
+    return this.update(id, {
+      mission,
+      missionSince: mission === "grow" ? null : new Date().toISOString(),
+    });
+  }
+
+  /** Whole days since this account went on its current mission. */
+  daysOnMission(id) {
+    const a = this.find(id);
+    if (!a?.missionSince) return 0;
+    const ms = Date.now() - Date.parse(a.missionSince);
+    return Number.isFinite(ms) && ms > 0 ? Math.floor(ms / 86400000) : 0;
   }
 
   /** Forget an account: the app stops using that store. Nothing is deleted from the platform. */

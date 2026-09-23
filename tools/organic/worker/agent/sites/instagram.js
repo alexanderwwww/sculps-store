@@ -65,6 +65,28 @@
       return !!F.byText("button", /^log in$/i);
     },
 
+    /**
+     * Instagram's own answer about the account.
+     *
+     * "Shadowban" is not a thing Instagram has a word for, but Account Status
+     * is: it says plainly whether the account's content can be recommended to
+     * people who do not follow it, and lists anything it has taken down. So
+     * the app reads that page and reports what Instagram says rather than
+     * guessing from view counts.
+     */
+    statusUrl: "https://www.instagram.com/accounts/account_status/",
+
+    readStatus: function () {
+      var text = (document.body && document.body.innerText) || "";
+      if (!/account status/i.test(text) && !/recommend/i.test(text)) return null;
+      var restricted = null;
+      if (/not eligible to be recommended|isn't eligible to be recommended|cannot be recommended/i.test(text)) restricted = true;
+      else if (/eligible to be recommended|your account can be recommended|no issues/i.test(text)) restricted = false;
+      // Instagram's own words, trimmed to something a person reads.
+      var said = text.replace(/\s+/g, " ").slice(0, 400);
+      return { restricted: restricted, said: said };
+    },
+
     signedIn: function () {
       if (this.isLoginPage()) return false;
       /*

@@ -27,12 +27,13 @@ import * as discover from "./discover.mjs";
 import {
   isAwake, planDay, scatterAcrossDay, watchMs, react, dayBudget,
   shouldRest, between, around, chance, pick, frictionIn,
+  recoveryBudget, recoveryDwellMs,
 } from "./human.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 17;
+export const BUILD = 18;
 
 const SUPPORT = process.env.ORGANIC_HOME || join(homedir(), "Library", "Application Support", "Organic");
 export const PATHS = { home: SUPPORT, worker: join(SUPPORT, "worker"), log: join(SUPPORT, "log") };
@@ -81,7 +82,7 @@ const showingAccount = () => acct(S.showing);
 const hunt = { products: [], queries: [], tags: [], next: [], known: new Set(), sweep: 0, readStoreAt: 0 };
 
 /** The day's plan, and what is running right now. */
-const sched = { jobs: [], running: null, personas: {}, warmed: {}, plannedFor: null, firstLook: new Set(), marketAt: 0 };
+const sched = { jobs: [], running: null, personas: {}, warmed: {}, plannedFor: null, firstLook: new Set(), marketAt: 0, cutShort: null };
 
 let cloud, bridge, phone, quitting = false;
 
@@ -99,12 +100,46 @@ function panelState() {
     doing: S.doing,
     showing: S.showing,
     mcp: (cloud?.base ?? "") + "/mcp",
-    accounts: (accts?.all() ?? []).map((a) => ({ id: a.id, platform: a.platform, state: a.state, handle: a.handle })),
+    accounts: (accts?.all() ?? []).map((a) => ({
+      id: a.id,
+      platform: a.platform,
+      state: a.state,
+      handle: a.handle,
+      mission: a.mission ?? "grow",
+      on: S.showing === a.id,
+      // What this one is doing right now, so he can pick a worker and watch.
+      doing: accountDoing(a.id),
+    })).concat([{
+      id: "market",
+      platform: "market",
+      label: "Research",
+      state: connected().length ? "on" : "off",
+      handle: null,
+      mission: "grow",
+      on: S.showing === "market",
+      doing: sched.running?.kind === "market" ? sched.running.what : "reyna, between sweeps",
+    }]),
     canAdd: PLATFORMS.map((p) => ({ platform: p, room: (accts?.forPlatform(p).length ?? 0) < 5 })),
     jobs: sched.jobs.slice(0, 8).map(({ id, who, what, at, state }) => ({ id, who, what, at, state })),
     lines: recent.slice(-6).map((l) => ({ who: l.who, what: l.what })),
   };
 }
+/**
+ * One line for what an account is doing — the running job if it is this
+ * account's turn, otherwise when its turn comes. Nothing invented: if there
+ * is no job for it, it says so.
+ */
+function accountDoing(id) {
+  const a = acct(id);
+  if (!a) return null;
+  if (a.state !== "connected") return a.state === "waiting" ? "waiting for sign-in" : "not connected";
+  if (sched.running?.account === id) return sched.running.what;
+  const next = sched.jobs.find((j) => j.account === id && j.state === "next");
+  if (!next) return "nothing planned yet";
+  const when = new Date(next.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return `next at ${when}`;
+}
+
 const pushPanel = () => phone?.panel(undefined, panelState()).catch(() => {});
 
 function setAccount(id, state, handle) {
@@ -195,6 +230,10 @@ async function checkOrders() {
   if (cmd === "run" || cmd === "resume") { S.paused = false; S.stopped = false; phone.resume(); pushPanel(); }
   if (cmd === "stop") { S.stopped = true; await phone.stop().catch(() => {}); pushPanel(); }
   if (cmd === "update") await maybeUpdate();
+  if (cmd.startsWith("recover") || cmd.startsWith("grow ")) {
+    const [verb, id] = cmd.split(/\s+/);
+    await setMission(id, verb === "recover" ? "recover" : "grow");
+  }
   if (cmd.startsWith("connect")) {
     const only = cmd.split(" ")[1];
     await beginConnect(PLATFORMS.includes(only) ? only : connected().length ? null : "instagram");
@@ -378,17 +417,85 @@ function planAccount(id, persona, warmedDays) {
   }
 }
 
+/**
+ * Put an account on the recovery.
+ *
+ * There is no button at Instagram that undoes this and nobody outside
+ * Instagram has one. What this does is change how the account behaves: it
+ * watches far more than it acts, it comments not at all for a week and a
+ * half, it keeps to its own hours, and once a day it opens Instagram's own
+ * Account Status page and reports, in Instagram's words, whether the account
+ * is eligible to be recommended again.
+ */
+async function setMission(id, mission) {
+  const a = acct(id) ?? accts?.connected()[0] ?? null;
+  if (!a) { say("sam", `no account called ${id}`); return; }
+  await accts.mission(a.id, mission);
+  sched.jobs = sched.jobs.filter((j) => j.account !== a.id || j.state === "doing");
+  sched.plannedFor = null;
+  // Whatever it was doing, it was doing it under the old rules. Wind it up.
+  if (sched.running?.account === a.id) sched.cutShort = a.id;
+  if (mission === "recover") {
+    say("sam", `${a.handle ?? a.id} is on the recovery: watching far more than acting, no comments, its own hours only. I will read Instagram's Account Status every day and tell you what it says.`);
+    planStatus(a.id, Date.now() + 30 * 1000);
+  } else {
+    say("sam", `${a.handle ?? a.id} is back to an ordinary day`);
+  }
+  pushPanel();
+}
+
+function planStatus(id, at = Date.now()) {
+  const a = acct(id);
+  if (!a) return;
+  if (sched.jobs.some((j) => j.kind === "status" && j.account === id && j.state === "next")) return;
+  addJob({ kind: "status", account: id, platform: a.platform, who: "sam", what: `${a.handle ?? id} · read Account Status`, at });
+}
+
+/**
+ * Ask Instagram what it thinks of the account, and repeat it verbatim.
+ *
+ * Account Status is Instagram's own verdict on whether an account can be
+ * recommended. It is the nearest thing to an answer that exists, and it is
+ * the only one worth quoting — so nothing here guesses, and when the page
+ * will not say, it says that instead.
+ */
+async function statusTask(job) {
+  const a = acct(job.account);
+  if (!a || a.state !== "connected" || a.platform !== "instagram") return;
+  await show(a.id);
+  const url = await phone.read("accountStatusUrl", { platform: a.platform });
+  if (url) { await phone.goto(String(url)); await phone.beat(2200, 4200); }
+  const status = await phone.read("accountStatus", { platform: a.platform });
+  if (!status || status.restricted === null || status.restricted === undefined) {
+    say("sam", `${a.handle}: Account Status did not say anything readable this time`);
+  } else if (status.restricted) {
+    say("sam", `${a.handle}: Instagram says — "${String(status.said ?? "").slice(0, 200)}". Still not recommendable. Staying on the recovery.`);
+  } else {
+    say("sam", `${a.handle}: Instagram says the account IS eligible to be recommended — "${String(status.said ?? "").slice(0, 200)}"`);
+  }
+  if (a.accountId) {
+    await cloud.db.remember("account", `account status for ${a.handle}`, {
+      restricted: status?.restricted ?? null, said: status?.said ?? null, at: new Date().toISOString(),
+    }, 0.9).catch(() => {});
+  }
+  planStatus(a.id, Date.now() + 22 * 60 * 60 * 1000);
+}
+
 /** Plan the day once, and again when the day turns over. */
 function planTheDay() {
   const today = new Date().toDateString();
   if (sched.plannedFor === today) return;
   sched.plannedFor = today;
-  sched.jobs = sched.jobs.filter((j) => j.state === "doing");
+  // A pending Account Status read belongs to the account, not to the day.
+  sched.jobs = sched.jobs.filter((j) => j.state === "doing" || (j.kind === "status" && j.state === "next"));
   planMarket(Date.now());
   // Every connected account gets its own day: its own hours, its own budget.
   for (const a of connected()) {
     const persona = sched.personas[a.id] ?? personaSeed(a.handle);
     planAccount(a.id, persona, sched.warmed[a.id] ?? 0);
+    if (a.mission === "recover" && a.platform === "instagram") {
+      planStatus(a.id, Date.now() + Math.round(between(5, 25)) * 60 * 1000);
+    }
   }
   pushPanel();
 }
@@ -515,9 +622,26 @@ async function sessionTask(job) {
   const look = sched.firstLook.has(a.id);
   sched.firstLook.delete(a.id);
   const seconds = Math.max(60, Number(job.seconds) || 180);
-  const budget = dayBudget(persona, warmedDays);
+  let budget = dayBudget(persona, warmedDays);
   if (look) budget.like = Math.min(budget.like, 2);
-  say("bea", `${a.handle} — ${look ? "a first look around" : "having a scroll"}, about ${Math.round(seconds / 60)} min, up to ${budget.like} like${budget.like === 1 ? "" : "s"}`);
+
+  // An account that is not being recommended gets a quieter day: it watches,
+  // it barely acts, and it never runs at an hour its person would be asleep.
+  const recovering = a.mission === "recover";
+  const daysIn = recovering ? accts.daysOnMission(a.id) : 0;
+  if (recovering) {
+    if (!isAwake(persona)) {
+      // Its person is asleep. The session does not happen now; it happens later.
+      say("sam", `${a.handle} is on the recovery — not touching it outside its own hours`);
+      addJob({ kind: "session", account: a.id, platform, who: "bea", what: job.what, at: Date.now() + 25 * 60 * 1000, seconds });
+      return;
+    }
+    budget = recoveryBudget(budget, daysIn);
+  }
+
+  say("bea", recovering
+    ? `${a.handle} — recovery day ${daysIn + 1}: watching, about ${Math.round(seconds / 60)} min, at most ${budget.like} like${budget.like === 1 ? "" : "s"} and no comments`
+    : `${a.handle} — ${look ? "a first look around" : "having a scroll"}, about ${Math.round(seconds / 60)} min, up to ${budget.like} like${budget.like === 1 ? "" : "s"}`);
   if (a.accountId) {
     await cloud.db.warmedToday(a.accountId).catch(() => {});
     await cloud.db.seen(a.accountId).catch(() => {});
@@ -530,6 +654,8 @@ async function sessionTask(job) {
   let tagAt = Date.now() + (look ? 60 : Math.round(between(2, 5)) * 60) * 1000;
 
   while (Date.now() < end && !shouldStop()) {
+    // The mission changed under it: stop here rather than finish the old day.
+    if (sched.cutShort === a.id) { sched.cutShort = null; say("bea", `${a.handle} — winding this one up`); return; }
     // The brakes: a captcha, a block, a "verify" — the account is done today.
     const text = (await phone.read("text")) ?? "";
     const friction = frictionIn(String(text));
@@ -542,7 +668,11 @@ async function sessionTask(job) {
     }
 
     const interesting = chance(0.4);
-    const dwell = Math.min(watchMs(15000, interesting), 25000);
+    // Watch time is the one signal that only helps. Recovering means sitting
+    // with a clip the way someone actually watching it would.
+    const dwell = recovering
+      ? recoveryDwellMs(watchMs(15000, interesting))
+      : Math.min(watchMs(15000, interesting), 25000);
     await phone.say("bea", `${a.handle} · watching`);
     await phone.dwell(dwell);
     watched++;
@@ -563,7 +693,7 @@ async function sessionTask(job) {
     if (shouldRest()) await phone.pause(2600, 7000);
 
     // A look at one hashtag, from the account, at browsing pace.
-    if (tags.length && Date.now() >= tagAt && Date.now() + 90 * 1000 < end) {
+    if (!recovering && tags.length && Date.now() >= tagAt && Date.now() + 90 * 1000 < end) {
       const tag = tags.shift();
       tagAt = Date.now() + Math.round(between(2, 5)) * 60 * 1000;
       say("reyna", `${a.handle} — #${tag} on ${platform}, a look at the feed`);
@@ -690,6 +820,7 @@ async function tick() {
   try {
     if (due.kind === "market") await marketTask(due);
     else if (due.kind === "session") await sessionTask(due);
+    else if (due.kind === "status") await statusTask(due);
     due.state = "done";
   } catch (error) {
     due.state = "skipped";
@@ -721,7 +852,7 @@ async function fromPage(msg) {
   if (msg.t === "asked") {
     const what = String(msg.do ?? "");
     if (what === "connect") await beginConnect(String(msg.platform ?? ""));
-    else if (what === "switch") await show(String(msg.platform ?? ""));
+    else if (what === "switch") await show(String(msg.account ?? msg.platform ?? ""));
     else if (what === "stop") { S.stopped = true; await phone.stop().catch(() => {}); pushPanel(); }
     else if (what === "resume") { S.stopped = false; S.paused = false; phone.resume(); pushPanel(); }
     else if (what === "quit") await shutdown(0);

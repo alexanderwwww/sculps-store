@@ -349,3 +349,36 @@ export function frictionIn(pageText) {
   for (const { re, why } of FRICTION) if (re.test(text)) return why;
   return null;
 }
+
+/* ---------------------------------------------------------- the recovery */
+
+/**
+ * The day for an account Instagram has stopped recommending.
+ *
+ * There is no switch for this and nobody outside Instagram can flip one. What
+ * Instagram does say, in Account Status, is whether an account is eligible to
+ * be recommended — and what moves that is time plus an account that reads as
+ * a person rather than a tool: far more watching than acting, no bursts, no
+ * comments for a while, and nothing at all outside the persona's own hours.
+ *
+ * So a recovery day is a normal day with the acting cut down hard and the
+ * watching left alone. It opens up slowly — a quarter of the usual ceiling on
+ * day one, back to normal after about ten clean days.
+ */
+export function recoveryBudget(budget, daysIn = 0) {
+  const open = Math.min(1, 0.22 + Math.max(0, daysIn) * 0.08);
+  return {
+    // A handful of likes, never a run of them.
+    like: Math.max(1, Math.min(Math.round(26 * open), Math.round(budget.like * open))),
+    save: budget.save > 0 && daysIn >= 3 ? 1 : 0,
+    share: 0,
+    // Comments are the loudest thing a watched account can do. Not yet.
+    comment: daysIn >= 10 ? Math.min(1, budget.comment) : 0,
+    follow: daysIn >= 7 ? Math.min(2, budget.follow) : 0,
+  };
+}
+
+/** How long to sit with one clip while recovering: watched, not skimmed. */
+export function recoveryDwellMs(base) {
+  return Math.round(Math.min(45000, base * between(1.6, 2.4)));
+}

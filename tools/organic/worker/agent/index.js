@@ -124,6 +124,8 @@
       if (what === "handle") return O.read.handle(a.platform);
       if (what === "signedIn") return O.read.signedIn(a.platform);
       if (what === "userId") return O.read.userId();
+      if (what === "accountStatus") return O.read.accountStatus();
+      if (what === "accountStatusUrl") return O.read.accountStatusUrl();
       return O.read.handle(a.platform).then(function (h) {
         return {
           url: location.href,

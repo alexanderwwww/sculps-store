@@ -447,6 +447,14 @@
     platform: platform,
     signedIn: signedIn,
     userId: userId,
+    accountStatus: function () {
+      var site = O.sites && O.sites.instagram;
+      return site && site.readStatus ? site.readStatus() : null;
+    },
+    accountStatusUrl: function () {
+      var site = O.sites && O.sites.instagram;
+      return site ? site.statusUrl : null;
+    },
     handle: handle,
     bodyText: bodyText,
     posts: posts,
