@@ -220,6 +220,50 @@
       });
   }
 
+  /**
+   * What the site answers when something fails.
+   *
+   * Alex saw Instagram's own "an unexpected error occurred" and asked whether
+   * the log showed the response. It did not: the log carried what the crew
+   * said and nothing the site said back. So the page watches its own network
+   * now — only failures, only the status and the first words of the body,
+   * never a form field and never anything he typed. A refused login is a
+   * fact worth having; it is also usually not an account problem at all.
+   */
+  function watchNetwork() {
+    if (root.__organicNetWatched) return;
+    root.__organicNetWatched = true;
+    var realFetch = root.fetch;
+    if (typeof realFetch !== "function") return;
+    root.fetch = function (input, init) {
+      var url = "";
+      try { url = typeof input === "string" ? input : (input && input.url) || ""; } catch (e) { url = ""; }
+      return realFetch.apply(this, arguments).then(function (res) {
+        try {
+          var interesting = res && (res.status >= 400 || /login|challenge|checkpoint|accounts\/login/i.test(url));
+          if (interesting && res.status >= 400) {
+            var copy = res.clone();
+            copy.text().then(function (body) {
+              send({
+                t: "trouble",
+                what: "the site refused " + short(url) + " with " + res.status + (body ? ": " + String(body).slice(0, 180) : ""),
+              });
+            }).catch(function () {
+              send({ t: "trouble", what: "the site refused " + short(url) + " with " + res.status });
+            });
+          }
+        } catch (e) { /* watching must never break the page */ }
+        return res;
+      });
+    };
+  }
+
+  function short(url) {
+    try { var u = new URL(url, location.href); return u.hostname + u.pathname.slice(0, 60); } catch (e) { return String(url).slice(0, 60); }
+  }
+
+  watchNetwork();
+
   root.__organic = {
     __booted: true,
     version: 1,

@@ -203,7 +203,22 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     view.navigationDelegate = self
     view.uiDelegate = self
     view.allowsBackForwardNavigationGestures = true
-    view.customUserAgent = iphoneUA
+    /*
+     * It stops claiming to be an iPhone when it signs in.
+     *
+     * A Mac's WebKit wearing an iPhone user agent is a mismatch Instagram can
+     * see — the engine is Safari on macOS and the name says iOS — and its
+     * login came back "an unexpected error occurred". A login refused for
+     * looking odd is not a shadow ban and not an account problem: it is this
+     * app lying about what it is.
+     *
+     * So it tells the truth and gets the mobile layout the honest way: the
+     * window is 390 points wide, and Instagram is responsive. Set
+     * ORGANIC_UA=phone to put the old claim back if a site ever needs it.
+     */
+    if ProcessInfo.processInfo.environment["ORGANIC_UA"] == "phone" {
+      view.customUserAgent = iphoneUA
+    }
     view.setValue(false, forKey: "drawsBackground")
     view.wantsLayer = true
     if let layer = view.layer {
