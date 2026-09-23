@@ -1,45 +1,53 @@
 /**
- * Organic — the worker.
+ * Organic — the brain.
  *
- * Started by the launcher, it opens its own headless Chrome, shows the
- * window live pictures of the pages in it, lets Alex sign in through those
- * pictures, and then runs the crew: market research on the market screen,
- * human-paced sessions on each connected account, everything logged to the
- * control plane. It updates itself from the runtime slot and exits 75 so the
- * launcher restarts it; Chrome and the window both survive that.
+ * The app is one window that is an iPhone, and inside it one real page. The
+ * Swift shell is a wire; the crew's hands live in the page; everything that
+ * decides anything lives here.
+ *
+ * It does one thing at a time, because there is one phone. That is not a
+ * limitation to work around — it is the point. Alex watches the cursor move,
+ * so whatever is happening has to be the thing on screen.
  *
  * stdout carries exactly one line ("PORT n"). Everything said goes through
- * say() → ticker, cloud log, stderr.
+ * say() → the ticker, the control plane, stderr.
  */
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { createHash } from "node:crypto";
-import { openChrome, ask, sleep } from "./chrome.mjs";
-import { Screens, HOME, LOGIN } from "./screens.mjs";
-import { startServer } from "./server.mjs";
+import { startBridge } from "./bridge.mjs";
+import { Phone } from "./phone.mjs";
 import { connectCloud } from "./cloud.mjs";
 import { linkClaude } from "./claudelink.mjs";
-import { say, onSay, recent, nameOf } from "./crew.mjs";
-import * as accounts from "./accounts.mjs";
-import * as market from "./market.mjs";
-import * as store from "./store.mjs";
+import { say, onSay, recent } from "./crew.mjs";
 import * as discover from "./discover.mjs";
-import { isAwake, planDay, scatterAcrossDay, watchMs, react, dayBudget, scrollPauseMs, shouldRest, between, around, chance, pick, frictionIn } from "./human.mjs";
+import {
+  isAwake, planDay, scatterAcrossDay, watchMs, react, dayBudget,
+  shouldRest, between, around, chance, pick, frictionIn,
+} from "./human.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 10;
+export const BUILD = 11;
 
 const SUPPORT = process.env.ORGANIC_HOME || join(homedir(), "Library", "Application Support", "Organic");
-export const PATHS = {
-  home: SUPPORT,
-  chrome: join(SUPPORT, "chrome"),
-  worker: join(SUPPORT, "worker"),
-  log: join(SUPPORT, "log"),
+export const PATHS = { home: SUPPORT, worker: join(SUPPORT, "worker"), log: join(SUPPORT, "log") };
+
+const PLATFORMS = ["instagram", "tiktok", "youtube"];
+const HOME = {
+  instagram: "https://www.instagram.com/",
+  tiktok: "https://www.tiktok.com/foryou",
+  youtube: "https://m.youtube.com/",
 };
+const LOGIN = {
+  instagram: "https://www.instagram.com/accounts/login/",
+  tiktok: "https://www.tiktok.com/login",
+  youtube: "https://accounts.google.com/ServiceLogin?service=youtube&continue=https://m.youtube.com/",
+};
+const sleep = (ms) => new Promise((r) => setTimeout(r, Math.max(0, ms)));
 
 /** The build on disk is the truth: a push writes BUILD beside the files it replaces. */
 async function running() {
@@ -51,87 +59,57 @@ async function running() {
   }
 }
 
-const PLATFORMS = ["instagram", "tiktok", "youtube"];
-const CDP_PORT = Number(process.env.ORGANIC_CDP_PORT) || 9444;
-
 /* ---------------------------------------------------------------- state */
 
 const S = {
-  phase: "setup",
+  phase: "setup",          // setup until one account is connected, then working
   paused: false,
   stopped: false,
   build: BUILD,
   brief: null,
-  screens: Object.fromEntries(
-    [...PLATFORMS, "market"].map((id) => [id, { id, platform: id, state: "none", handle: null, accountId: null, since: 0 }]),
-  ),
   doing: "starting",
+  showing: null,           // which platform the glass is on
+  accounts: Object.fromEntries(PLATFORMS.map((p) => [p, { platform: p, state: "none", handle: null, accountId: null }])),
 };
 
-let cloud, server, browser, chromeChild, screens;
-/** The last picture of each screen, so a window that opens late is not blank until something repaints. */
-const lastFrame = {};
-let quitting = false;
+/** What the crew has learned to look for. */
+const hunt = { products: [], queries: [], tags: [], next: [], known: new Set(), sweep: 0, readStoreAt: 0 };
 
-function stateMsg() {
+/** The day's plan, and what is running right now. */
+const sched = { jobs: [], running: null, personas: {}, warmed: {}, plannedFor: null, firstLook: new Set(), marketAt: 0 };
+
+let cloud, bridge, phone, quitting = false;
+
+const connected = () => PLATFORMS.filter((p) => S.accounts[p].state === "connected");
+
+/* ----------------------------------------------------------- the panel */
+
+/** Everything the phone's own sheet shows. Sent whenever it changes. */
+function panelState() {
   return {
-    t: "state",
     phase: S.phase,
     build: S.build,
     paused: S.paused,
     stopped: S.stopped,
-    screens: Object.values(S.screens).map(({ id, platform, state, handle }) => ({ id, platform, state, handle })),
-    brief: S.brief,
-    // Where Claude plugs in. Shown in the window so it is never hunted for.
+    doing: S.doing,
+    showing: S.showing,
     mcp: (cloud?.base ?? "") + "/mcp",
-    // One page per screen and no strays: said out loud rather than trusted.
-    pages: screens?.livePages?.() ?? 0,
+    accounts: PLATFORMS.map((p) => ({ ...S.accounts[p] })),
+    jobs: sched.jobs.slice(0, 8).map(({ id, who, what, at, state }) => ({ id, who, what, at, state })),
+    lines: recent.slice(-6).map((l) => ({ who: l.who, what: l.what })),
   };
 }
-const pushState = () => server?.broadcast(stateMsg());
+const pushPanel = () => phone?.panel(undefined, panelState()).catch(() => {});
 
-/**
- * Tell Claude where to find this app, so nobody has to type a command.
- *
- * Alex should not have to open a terminal to use something he has already
- * opened. This adds the app's MCP address to Claude's own config — additive,
- * backed up, atomic — once per boot. Whatever it did, or did not do and why,
- * is said in the ticker: it writes to a file he owns, so he should be able to
- * read what happened to it.
- */
-async function linkToClaude() {
-  const url = (cloud?.base ?? "") + "/mcp";
-  /*
-   * Only ever for the real control plane. A test points the app at a stub
-   * cloud, and a test must not write into whoever-is-running-it's config —
-   * it did exactly that once, on this machine, before this line existed.
-   */
-  if (process.env.ORGANIC_CLOUD || process.env.ORGANIC_NO_LINK === "1") return;
-  let results = [];
-  try {
-    results = await linkClaude(url);
-  } catch (e) {
-    say("organic", `could not reach Claude's config: ${e.message}`);
-    return;
-  }
-  const added = results.filter((r) => r.state === "added" || r.state === "updated").map((r) => r.what);
-  if (added.length) say("organic", `Claude can reach me now — added to ${added.join(" and ")}. Restart Claude to see it.`);
-  for (const p of results.filter((r) => String(r.state).startsWith("left alone"))) {
-    say("organic", `${p.what}: ${p.state}`);
+function setAccount(platform, state, handle) {
+  const a = S.accounts[platform];
+  if (!a) return;
+  if (a.state !== state || (handle !== undefined && a.handle !== handle)) {
+    a.state = state;
+    if (handle !== undefined) a.handle = handle;
+    pushPanel();
   }
 }
-
-function setScreen(id, state, handle) {
-  const sc = S.screens[id];
-  if (!sc) return;
-  if (sc.state !== state || (handle !== undefined && sc.handle !== handle)) {
-    sc.state = state;
-    if (handle !== undefined) sc.handle = handle;
-    sc.since = Date.now();
-    pushState();
-  }
-}
-const connectedIds = () => PLATFORMS.filter((p) => S.screens[p].state === "connected");
 
 /* ----------------------------------------------------------- the cloud */
 
@@ -141,7 +119,8 @@ async function report() {
     doing: S.doing,
     build: S.build,
     at: Date.now(),
-    screens: stateMsg().screens,
+    showing: S.showing,
+    accounts: PLATFORMS.map((p) => ({ platform: p, state: S.accounts[p].state, handle: S.accounts[p].handle })),
     tail: recent.slice(-18).map((l) => `${l.who} · ${l.what}`),
   }).catch(() => {});
 }
@@ -151,21 +130,36 @@ async function readBrief() {
   const next = b && (Array.isArray(b.products) || b.store) ? b : null;
   const changed = JSON.stringify(next) !== JSON.stringify(S.brief);
   S.brief = next;
-  if (changed) pushState();
+  if (changed) pushPanel();
   return S.brief;
 }
 
 /**
- * Pull a new build and restart. Forward only: a slot holding an older build
- * is stale, not an instruction to downgrade. Files land beside this one and
- * nowhere else — no parent hops, no absolute paths.
+ * Tell Claude where to find this app, so nobody has to type a command.
+ * Additive, backed up, and never when pointed at a stub cloud.
+ */
+async function linkToClaude() {
+  if (process.env.ORGANIC_CLOUD || process.env.ORGANIC_NO_LINK === "1") return;
+  try {
+    const results = await linkClaude((cloud?.base ?? "") + "/mcp");
+    const added = results.filter((r) => r.state === "added" || r.state === "updated").map((r) => r.what);
+    if (added.length) say("organic", `Claude can reach me now — added to ${added.join(" and ")}. Restart Claude to see it.`);
+    for (const p of results.filter((r) => String(r.state).startsWith("left alone"))) say("organic", `${p.what}: ${p.state}`);
+  } catch (e) {
+    say("organic", `could not reach Claude's config: ${e.message}`);
+  }
+}
+
+/**
+ * Pull a new build and restart. Forward only: a slot holding an older build is
+ * stale, not an instruction to downgrade. The crew's own code (agent.built.js)
+ * ships the same way, so the hands can change without a download.
  */
 async function maybeUpdate() {
   const runtime = await cloud.runtime().catch(() => null);
   const current = await running();
   const build = Number(runtime?.build);
   if (!Number.isFinite(build) || build <= current) return false;
-  // A build that would not start: the launcher fell back to the bundle and wrote its number here. Never pull it again.
   let bad = 0;
   try { bad = Number((await readFile(join(PATHS.worker, "BAD"), "utf8")).trim()) || 0; } catch { /* none */ }
   if (build <= bad) return false;
@@ -173,9 +167,8 @@ async function maybeUpdate() {
   await mkdir(PATHS.worker, { recursive: true });
   let wrote = 0;
   for (const [name, source] of Object.entries(runtime.files ?? {})) {
-    const isCode = /^(ui\/)?[\w.-]+\.(mjs|json|html)$/.test(name);
-    const isSkill = /^skills\/[\w.-]+\.md$/.test(name);
-    if ((!isCode && !isSkill) || name.includes("..") || typeof source !== "string") continue;
+    const ok = /^[\w.-]+\.(mjs|js|json|html)$/.test(name) || /^(agent|ui)\/[\w.-]+\.(js|html)$/.test(name) || /^skills\/[\w.-]+\.md$/.test(name);
+    if (!ok || name.includes("..") || typeof source !== "string") continue;
     if (name.includes("/")) await mkdir(join(PATHS.worker, dirname(name)), { recursive: true });
     await writeFile(join(PATHS.worker, name), source, "utf8");
     wrote++;
@@ -184,7 +177,7 @@ async function maybeUpdate() {
   say("organic", `build ${build}: ${wrote} file${wrote === 1 ? "" : "s"} written — restarting`);
   S.doing = "updating";
   await report();
-  await shutdown(75, { keepChrome: true });
+  await shutdown(75);
   return true;
 }
 
@@ -193,410 +186,73 @@ async function checkOrders() {
   const cmd = order?.cmd ? String(order.cmd) : null;
   if (!cmd) return;
   say("organic", `heard: ${cmd}`);
-  if (cmd === "pause") S.paused = true;
-  if (cmd === "resume" || cmd === "run") { S.paused = false; S.stopped = false; if (cmd === "run") sched.marketNext = 0; }
-  if (cmd === "stop") S.stopped = true;
+  if (cmd === "pause") { S.paused = true; pushPanel(); }
+  if (cmd === "run" || cmd === "resume") { S.paused = false; S.stopped = false; phone.resume(); pushPanel(); }
+  if (cmd === "stop") { S.stopped = true; await phone.stop().catch(() => {}); pushPanel(); }
   if (cmd === "update") await maybeUpdate();
-  const connect = /^connect(?: (\w+))?$/.exec(cmd);
-  if (connect) {
-    for (const p of connect[1] ? [connect[1]] : PLATFORMS) if (S.screens[p]?.state !== "connected") await connectScreen(p);
+  if (cmd.startsWith("connect")) {
+    const only = cmd.split(" ")[1];
+    await beginConnect(PLATFORMS.includes(only) ? only : connected().length ? null : "instagram");
   }
-  pushState();
 }
 
-/* ----------------------------------------------------------- the pages */
-
-async function openScreen(id) {
-  const page = await screens.open(id, HOME[id]);
-  await screens.startStream(id);
-  return page;
-}
+/* --------------------------------------------------------- the connect */
 
 /**
- * Is this platform signed in, and as whom? Reads the cookie/URL via
- * accounts.signedIn, then the handle — a connection with no readable
- * handle is not a connection.
+ * Sign-in is Alex's, always.
+ *
+ * The phone goes to the login page and the crew stands back: nothing is typed
+ * for him and nothing he types is read. What the app looks for afterwards is
+ * a handle — an account we cannot name is not an account we will act as.
  */
+async function beginConnect(platform) {
+  if (!platform || !PLATFORMS.includes(platform)) return;
+  if (S.accounts[platform].state === "connected") return show(platform);
+  setAccount(platform, "waiting", null);
+  S.showing = platform;
+  await phone.goto(LOGIN[platform]);
+  say("sam", `${platform} is open — sign in on the phone and I will pick it up`);
+  pushPanel();
+}
+
+/** Look at the page and decide whether we are signed in, and as whom. */
 async function checkSignedIn(platform, { quiet = false } = {}) {
-  const page = screens.page(platform);
-  if (!page) return false;
-  const sc = S.screens[platform];
-  let result = { connected: false, friction: null };
-  try { result = (await accounts.signedIn(page, platform)) ?? result; } catch { /* not connected then */ }
-  if (!result.connected) {
-    if (sc.state === "connected") {
-      say("sam", `${platform} is signed out now — it was ${sc.handle}`);
-      setScreen(platform, "out", null);
+  const inn = await phone.read("signedIn", { platform });
+  if (!inn) {
+    if (S.accounts[platform].state === "connected") {
+      setAccount(platform, "out", null);
+      say("sam", `${platform} is signed out now`);
     }
-    if (result.friction && !quiet) say("sam", `${platform}: ${result.friction}`);
     return false;
   }
-  if (sc.state === "connected" && sc.handle) return true;
-  let handle = null;
-  try { handle = await accounts.whoAmI(page, platform); } catch { /* no name */ }
-  if (!handle || String(handle).replace(/[@\s]/g, "") === "") {
-    if (!quiet || sc.state !== "waiting") say("sam", `${platform} looks signed in but will not tell me who — not taking that as connected yet`);
-    setScreen(platform, "waiting", null);
+  const handle = await phone.read("handle", { platform });
+  const clean = handle ? String(handle).trim() : "";
+  if (!clean || clean === "@") {
+    if (!quiet) say("sam", `${platform} looks signed in but will not tell me who — not taking that as connected yet`);
+    setAccount(platform, "waiting", null);
     return false;
   }
-  handle = String(handle).startsWith("@") ? String(handle) : `@${handle}`;
+  const at = clean.startsWith("@") ? clean : `@${clean}`;
   let row = null;
-  try { row = await cloud.db.markConnected(platform, handle); } catch (e) { say("organic", `could not record ${handle}: ${e.message}`); }
-  sc.accountId = row?.id ?? sc.accountId ?? null;
-  setScreen(platform, "connected", handle);
-  // Signed in: Chrome goes back out of sight, and the app is the only window
-  // again. Alex never has to close it himself.
-  await screens.showWindow(platform, false).catch(() => {});
-  say("sam", `${platform} connected as ${handle}`);
+  try { row = await cloud.db.markConnected(platform, at); } catch (e) { say("organic", `could not record ${at}: ${e.message}`); }
+  S.accounts[platform].accountId = row?.id ?? S.accounts[platform].accountId ?? null;
+  setAccount(platform, "connected", at);
+  say("sam", `${platform} connected as ${at}`);
   sched.firstLook.add(platform);
-  if (S.phase === "working") await prepareAccount(platform).catch(() => {});
+  await prepareAccount(platform).catch(() => {});
+  if (S.phase === "setup") await startWorking();
   return true;
 }
 
-/* -------------------------------------------------------- the scheduler */
-
-/**
- * One task per screen at a time, suspended while Alex has that screen.
- * Jobs come from the plan: the accounts' sessions from human.mjs, spread
- * across their persona's day, and the market sweeps once an hour. The plan
- * is sent to the window and updated as jobs run.
- */
-const sched = {
-  tasks: new Map(),      // screen id → { who, label, promise }
-  jobs: [],              // the plan: { id, who, what, at, state, platform, seconds, kind }
-  marketNext: 0,
-  planned: {},           // platform → day string the plan was made for
-  firstLook: new Set(),  // platforms that connected today and have not had their look-around
-  lookedOn: {},          // platform → day string of the last look-around
-  verifyNext: {},        // platform → when to re-check the sign-in
-  personas: {},          // platform → persona
-  accountIds: {},        // platform → account id
-  warmed: {},            // platform → warmed_days
-  idleSaidFor: null,
-};
-
-/** What the crew hunts: products read from the store, the terms they expand to, and what the feeds taught us. */
-const hunt = {
-  products: [],
-  queries: [],
-  tags: [],
-  known: new Set(),      // every tag ever used or discovered
-  next: [],              // discovered this sweep, for the next one: { tag, from, views }
-  sweep: 0,
-};
-
-class Stopped extends Error {}
-
-const day = () => new Date().toISOString().slice(0, 10);
-const hhmm = (d) => { const x = new Date(d); return `${String(x.getHours()).padStart(2, "0")}:${String(x.getMinutes()).padStart(2, "0")}`; };
-
-function planMsg() {
-  return { t: "plan", jobs: sched.jobs.map(({ id, who, what, at, state }) => ({ id, who, what, at: new Date(at).toISOString(), state })) };
-}
-const pushPlan = () => server?.broadcast(planMsg());
-
-function setJob(id, state) {
-  const j = sched.jobs.find((x) => x.id === id);
-  if (j && j.state !== state) { j.state = state; pushPlan(); }
-}
-
-function addJob(job) {
-  sched.jobs.push({ state: "next", ...job });
-  sched.jobs.sort((x, y) => x.at - y.at);
-  // Yesterday's are not today's plan.
-  const cutoff = Date.now() - 20 * 60 * 60 * 1000;
-  sched.jobs = sched.jobs.filter((j) => j.at > cutoff || j.state === "next" || j.state === "doing");
-  pushPlan();
-  return job;
-}
-
-/** The market sweep's place in the plan: one "next" job at marketNext. */
-function planMarket() {
-  const have = sched.jobs.find((j) => j.kind === "market" && (j.state === "next" || j.state === "doing"));
-  if (have) { if (have.state === "next" && have.at !== sched.marketNext) { have.at = sched.marketNext; sched.jobs.sort((x, y) => x.at - y.at); pushPlan(); } return have; }
-  const first = !sched.jobs.some((j) => j.kind === "market");
-  return addJob({ id: `market-${Date.now()}`, kind: "market", who: "Reyna", what: first && storeUrl() ? "read the store, then the ad library" : "ad library sweep", at: sched.marketNext });
-}
-
-/**
- * The day's sessions for an account, from its persona. Times in the past
- * are moved into what is left of today's waking hours, or skipped — a
- * person who missed the morning does not do it at midnight.
- */
-function planAccount(platform, persona, warmedDays) {
-  const today = day();
-  if (sched.planned[platform] === today) return;
-  sched.planned[platform] = today;
-  const handle = S.screens[platform].handle;
-  const now = new Date();
-  const sessions = planDay(persona, warmedDays);
-  if (!sessions.length) { say("bea", `${handle} does not open the app today — that happens`); pushPlan(); return; }
-  const timed = scatterAcrossDay(persona, sessions, now);
-  const spare = 4 * 60 * 60 * 1000; // move a missed one into the next four hours if the persona is up
-  let i = 0;
-  for (const s of timed) {
-    let at = s.at.getTime();
-    let state = "next";
-    if (at < Date.now()) {
-      const later = new Date(Date.now() + between(5 * 60 * 1000, spare));
-      if (isAwake(persona, later)) at = later.getTime(); else state = "skipped";
-    }
-    const mins = Math.max(1, Math.round(s.seconds / 60));
-    addJob({ id: `${platform}-${today}-${i++}`, kind: "session", platform, seconds: s.seconds, who: "Bea", what: `${handle} · ${s.long ? "the sofa session" : "a scroll"}, ${mins} min`, at, state });
-  }
-}
-
-/** The context a task works in: its page, and the brakes. */
-function taskContext(id, who) {
-  return {
-    id,
-    who,
-    page: screens.page(id),
-    /** Wait while Alex has the screen or the app is paused; throw when stopped. */
-    async hold() {
-      for (;;) {
-        if (S.stopped || quitting || S.phase !== "working") throw new Stopped();
-        if (!screens.busy(id) && !S.paused) return;
-        await sleep(500);
-      }
-    },
-    async cursor(x, y, label) { await screens.cursor(id, x, y, label ?? `${nameOf(who)} · working`); },
-    progress(pct, doing) { server.broadcast({ t: "progress", who: nameOf(who), doing, pct }); S.doing = doing; },
-  };
-}
-
-/**
- * Move the real mouse there the way a hand does — an arc, a wobble, a
- * settle — and show every step in the window. The cursor Alex sees is the
- * mouse Chrome sees; nothing is drawn in the page.
- */
-async function glide(ctx, x, y, label) {
-  const page = ctx.page;
-  const from = page.__at ?? { x: x - between(120, 380), y: y - between(80, 260) };
-  const steps = Math.round(between(8, 16));
-  for (let i = 1; i <= steps; i++) {
-    const t = i / steps, ease = t * t * (3 - 2 * t), wobble = Math.sin(t * Math.PI) * between(-12, 12);
-    const px = from.x + (x - from.x) * ease + wobble, py = from.y + (y - from.y) * ease + wobble * 0.6;
-    await page.mouse.move(px, py).catch(() => {});
-    await ctx.cursor(px, py, label);
-    await sleep(between(8, 24));
-  }
-  page.__at = { x, y };
-  await sleep(around(180, 90, 60, 500));
-}
-
-function runTask(id, who, label, fn) {
-  const ctx = taskContext(id, who);
-  const promise = fn(ctx)
-    .catch((e) => { if (!(e instanceof Stopped)) say(who, `${label} stopped on: ${e?.message ?? e}`); })
-    .finally(() => { sched.tasks.delete(id); server.broadcast({ t: "progress", who: nameOf(who), doing: "", pct: 0 }); });
-  sched.tasks.set(id, { who, label, promise });
-}
-
-function schedulerTick() {
-  if (S.phase !== "working" || S.paused || S.stopped || quitting) return;
-  const now = Date.now();
-  // Market: once an hour.
-  if (screens.page("market")) {
-    const job = planMarket();
-    if (!sched.tasks.has("market") && !screens.busy("market") && now >= sched.marketNext) {
-      sched.marketNext = now + 60 * 60 * 1000;
-      setJob(job.id, "doing");
-      runTask("market", "reyna", "market research", async (ctx) => {
-        try { await marketTask(ctx); setJob(job.id, "done"); } catch (e) { setJob(job.id, e instanceof Stopped ? "skipped" : "done"); throw e; }
-      });
-    }
-  }
-  for (const platform of connectedIds()) {
-    if (sched.tasks.has(platform) || screens.busy(platform) || !screens.page(platform)) continue;
-    if (now >= (sched.verifyNext[platform] ?? 0)) {
-      sched.verifyNext[platform] = now + 5 * 60 * 1000;
-      runTask(platform, "sam", "checking the sign-in", async () => { await checkSignedIn(platform, { quiet: true }); await prepareAccount(platform); });
-      continue;
-    }
-    if (!sched.personas[platform]) continue; // prepareAccount has not run yet
-    // The first connect of the day: a look around now, whatever the hour.
-    let job = null;
-    if (sched.firstLook.has(platform) && sched.lookedOn[platform] !== day()) {
-      sched.firstLook.delete(platform);
-      sched.lookedOn[platform] = day();
-      const seconds = Math.round(between(5 * 60, 10 * 60));
-      job = addJob({ id: `${platform}-${day()}-look`, kind: "session", platform, seconds, look: true, who: "Bea", what: `${S.screens[platform].handle} · a first look around, ${Math.round(seconds / 60)} min`, at: now });
-    } else {
-      job = sched.jobs.find((j) => j.kind === "session" && j.platform === platform && j.state === "next" && j.at <= now) ?? null;
-    }
-    if (!job) continue;
-    setJob(job.id, "doing");
-    runTask(platform, "bea", `a session on ${platform}`, async (ctx) => {
-      try { await sessionTask(ctx, platform, job); setJob(job.id, "done"); } catch (e) { setJob(job.id, e instanceof Stopped ? "skipped" : "done"); throw e; }
-    });
-  }
-  idleNotice(now);
-}
-
-/** Never idle silently: if nothing runs and nothing is due for ten minutes, say when the next thing is. Once. */
-function idleNotice(now) {
-  if (sched.tasks.size) { sched.idleSaidFor = null; return; }
-  const next = sched.jobs.filter((j) => j.state === "next" && (j.kind !== "session" || connectedIds().includes(j.platform))).sort((x, y) => x.at - y.at)[0] ?? null;
-  const key = next ? `${next.id}` : "none";
-  if (next && next.at - now < 10 * 60 * 1000) { sched.idleSaidFor = null; return; }
-  if (sched.idleSaidFor === key) return;
-  sched.idleSaidFor = key;
-  if (next) say("bea", `nothing until ${hhmm(next.at)} — next: ${next.who} · ${next.what}`);
-  else say("bea", "nothing more scheduled today — the personas are done for the day");
-}
-
-/** Persona, account id and today's plan for a connected account. */
-async function prepareAccount(platform) {
-  const sc = S.screens[platform];
-  if (sc.state !== "connected" || !sc.handle) return;
-  let account = null;
-  try { account = (await cloud.db.accountFor(platform, sc.handle)) ?? null; } catch { /* the plane is away */ }
-  const accountId = account?.id ?? sc.accountId ?? null;
-  sched.accountIds[platform] = accountId;
-  sched.warmed[platform] = Number(account?.warmed_days ?? 0);
-  let persona = sched.personas[platform] ?? null;
-  if (!persona && accountId) {
-    try { persona = await cloud.db.personaFor(accountId); } catch { /* none yet */ }
-    if (!persona) {
-      persona = personaSeed(sc.handle);
-      say("ines", `writing who ${sc.handle} is — written once and kept`);
-      await cloud.db.savePersona(accountId, persona).catch(() => {});
-    }
-  }
-  persona ??= personaSeed(sc.handle);
-  sched.personas[platform] = persona;
-  planAccount(platform, persona, sched.warmed[platform]);
-}
-
-/* -------------------------------------------------------------- market */
-
-function storeUrl() {
-  const b = S.brief ?? {};
-  if (b.storeUrl && /^https?:\/\//i.test(String(b.storeUrl))) return String(b.storeUrl);
-  const name = String(b.store ?? "").trim();
-  if (/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(name)) return `https://${name}`;
-  return null;
-}
-
-/** What to look for, from the store's products, the brief, and what the feeds taught us. */
-function refreshTerms() {
-  const b = S.brief ?? {};
-  const queries = [], tags = [];
-  const addQ = (q) => { const t = String(q ?? "").trim(); if (t && !queries.some((x) => x.toLowerCase() === t.toLowerCase())) queries.push(t); };
-  const addT = (t) => { const c = String(t ?? "").toLowerCase().replace(/[^a-z0-9]+/g, ""); if (c.length >= 4 && !tags.includes(c)) tags.push(c); };
-  try {
-    const e = discover.expandTerms(hunt.products, b) ?? {};
-    for (const q of e.queries ?? []) addQ(q);
-    for (const t of e.tags ?? []) addT(t);
-  } catch { /* fall through to the brief */ }
-  try {
-    const m = typeof market.termsFromBrief === "function" ? market.termsFromBrief(b) ?? {} : {};
-    for (const q of m.queries ?? []) addQ(q);
-    if (m.query) addQ(m.query);
-    for (const t of m.tags ?? []) addT(t);
-  } catch { /* fine */ }
-  for (const q of [...(Array.isArray(b.products) ? b.products : []), ...(Array.isArray(b.market) ? b.market : [])]) { addQ(q); addT(q); }
-  for (const m of String(b.notes ?? "").matchAll(/#([a-z0-9_]{3,40})/gi)) addT(m[1]);
-  // What the last sweep discovered, best first.
-  let ranked = [];
-  try { ranked = discover.rankTags(hunt.next) ?? []; } catch { ranked = hunt.next; }
-  for (const r of ranked.slice(0, 12)) addT(r.tag);
-  hunt.next = [];
-  hunt.queries = queries.slice(0, 12);
-  hunt.tags = tags.slice(0, 20);
-  for (const t of hunt.tags) hunt.known.add(t);
-  hunt.sweep++;
-  return { queries: hunt.queries, tags: hunt.tags };
-}
-
-const hash = (s) => createHash("sha1").update(s).digest("hex").slice(0, 16);
-
-async function marketTask(ctx) {
-  // Our store first: nobody tells the crew the products.
-  const url = storeUrl();
-  if (url) {
-    await ctx.hold();
-    say("reyna", "looking at what we sell");
-    ctx.progress(0, `reading ${new URL(url).hostname}`);
-    await ctx.cursor(640, 300, "Reyna · our store");
-    let read = { products: [], stopped: null };
-    try { read = (await store.readStore(ctx.page, url)) ?? read; } catch (e) { read = { products: [], stopped: e?.message ?? String(e) }; }
-    if (read.stopped) say("reyna", `the store: ${read.stopped}`);
-    const products = (read.products ?? []).filter((p) => p?.title).slice(0, 30);
-    if (products.length) {
-      hunt.products = products;
-      for (const p of products) {
-        await cloud.db.saveFinding({
-          kind: "product", product: p.title, query: null, platform: "store", url: p.url || url, who: null,
-          title: p.title, metrics: { price: p.price ?? null, image: p.image ?? null }, startedAt: null, note: null,
-        }).catch(() => {});
-      }
-      say("reyna", `${products.length} product${products.length === 1 ? "" : "s"} on the store: ${products.slice(0, 4).map((p) => p.title).join(", ")}${products.length > 4 ? "…" : ""}`);
-    }
-  }
-  const { queries, tags } = refreshTerms();
-  if (!queries.length) {
-    say("reyna", "nothing to look for yet — no store products and no products in the brief");
-    return;
-  }
-  say("nadia", `hunting ${queries.length} term${queries.length === 1 ? "" : "s"} and ${tags.length} tag${tags.length === 1 ? "" : "s"}: ${tags.slice(0, 5).map((t) => "#" + t).join(" ")}${tags.length > 5 ? "…" : ""}`);
-  const productFor = (q) => hunt.products.find((p) => String(p.title).toLowerCase() === q.toLowerCase())?.title ?? ((S.brief?.products ?? []).find((p) => String(p).toLowerCase() === q.toLowerCase()) ?? null);
-  say("reyna", `ad library — ${queries.length} search${queries.length === 1 ? "" : "es"}`);
-  let ads = 0, sellers = 0, i = 0;
-  const seenSellers = new Set();
-  for (const q of queries) {
-    await ctx.hold();
-    ctx.progress(Math.round((i++ / queries.length) * 100), `ad library · ${q}`);
-    await glide(ctx, 640 + between(-200, 200), 200 + between(-60, 60), `Reyna · ad library: ${q}`);
-    let found = { ads: [], stopped: null };
-    try { found = (await market.adLibrary(ctx.page, { query: q })) ?? found; } catch (e) { found = { ads: [], stopped: e?.message ?? String(e) }; }
-    if (found.stopped) { say("reyna", `ad library "${q}": ${found.stopped}`); continue; }
-    const list = (found.ads ?? []).slice(0, 40);
-    const product = productFor(q);
-    let proven = 0;
-    for (const ad of list) {
-      const advertiser = String(ad.advertiser ?? "").trim();
-      const adUrl = ad.video || ad.img || `https://www.facebook.com/ads/library/?q=${encodeURIComponent(q)}&ad=${hash(advertiser + "|" + (ad.text ?? "") + "|" + (ad.started ?? ""))}`;
-      const days = runningDays(ad.started);
-      if (days >= 28) proven++;
-      await cloud.db.saveFinding({
-        kind: "ad", product, query: q, platform: "meta", url: adUrl, who: advertiser || null,
-        title: String(ad.text ?? "").slice(0, 160) || null, metrics: { days, video: Boolean(ad.video) },
-        startedAt: ad.started ?? null, note: null,
-      }).catch(() => {});
-      ads++;
-      if (advertiser && !seenSellers.has(advertiser.toLowerCase())) {
-        seenSellers.add(advertiser.toLowerCase());
-        await cloud.db.saveFinding({
-          kind: "seller", product, query: q, platform: "meta",
-          url: `https://www.facebook.com/ads/library/?search_type=page&q=${encodeURIComponent(advertiser)}`,
-          who: advertiser, title: null, metrics: { firstSeenFor: q }, startedAt: ad.started ?? null, note: null,
-        }).catch(() => {});
-        sellers++;
-      }
-    }
-    say("reyna", `"${q}": ${list.length} ads, ${proven} running 28+ days`);
-    await sleep(around(4000, 1500, 1500, 9000));
-  }
-  ctx.progress(100, "ad library · done");
-  say("kofi", `logged ${ads} ads and ${sellers} sellers`);
-}
-
-function runningDays(started) {
-  if (!started) return 0;
-  const t = Date.parse(String(started));
-  if (!Number.isFinite(t)) return 0;
-  return Math.max(0, Math.round((Date.now() - t) / 86400000));
-}
-
-/* ------------------------------------------------------------ sessions */
-
-/** A starting persona, written once and kept. Interests come from the brief and the store, not from anywhere in here. */
+/** The person behind an account: written once, then kept. */
 function personaSeed(handle) {
   const b = S.brief ?? {};
   const metros = ["Columbus, OH", "Boise, ID", "Mobile, AL", "Provo, UT", "Raleigh, NC", "Tucson, AZ"];
-  const interests = [...(Array.isArray(b.market) ? b.market : []), ...hunt.products.map((p) => p.title), ...(Array.isArray(b.products) ? b.products : [])].map(String).slice(0, 6);
+  const interests = [
+    ...(Array.isArray(b.market) ? b.market : []),
+    ...hunt.products.map((p) => p.title),
+    ...(Array.isArray(b.products) ? b.products : []),
+  ].map(String).slice(0, 6);
   return {
     who: `early thirties, scrolls at the kettle and on the sofa (${handle})`,
     metro: pick(metros),
@@ -613,353 +269,475 @@ function personaSeed(handle) {
   };
 }
 
-const LIKE = {
-  instagram: ['article svg[aria-label="Like"]', 'svg[aria-label="Like"]'],
-  tiktok: ['[data-e2e="like-icon"]', '[data-e2e="browse-like-icon"]'],
-  youtube: ['#like-button button', 'like-button-view-model button', 'button[aria-label^="like" i]'],
-};
-
-async function sessionTask(ctx, platform, job) {
-  const sc = S.screens[platform];
-  const handle = sc.handle;
-  const accountId = sched.accountIds[platform] ?? null;
-  const warmedDays = sched.warmed[platform] ?? 0;
-  const persona = sched.personas[platform] ?? personaSeed(handle);
-  if (accountId) {
-    let parked = false;
-    try { parked = Boolean(await cloud.db.isParked(accountId)); } catch { /* assume not */ }
-    if (parked) { say("sam", `${handle} is parked for today — leaving it alone`); throw new Stopped(); }
+async function prepareAccount(platform) {
+  const a = S.accounts[platform];
+  if (!a.accountId) return;
+  let persona = null;
+  try { persona = await cloud.db.personaFor(a.accountId); } catch { /* none yet */ }
+  if (!persona) {
+    say("ines", `writing who ${a.handle} is — written once and kept`);
+    try { persona = await cloud.db.savePersona(a.accountId, personaSeed(a.handle)); } catch { persona = personaSeed(a.handle); }
   }
-  const lookAround = Boolean(job.look);
+  sched.personas[platform] = persona?.hours ? persona : personaSeed(a.handle);
+  try {
+    const row = await cloud.db.accountFor(platform, a.handle);
+    sched.warmed[platform] = Number(row?.warmed_days ?? 0) || 0;
+  } catch { sched.warmed[platform] = 0; }
+}
+
+/* ------------------------------------------------------------ the plan */
+
+let jobSeq = 1;
+function addJob(job) {
+  const j = { id: `j${jobSeq++}`, state: "next", ...job };
+  sched.jobs.push(j);
+  sched.jobs.sort((x, y) => (x.at ?? 0) - (y.at ?? 0));
+  pushPanel();
+  return j;
+}
+
+function planMarket(at = Date.now()) {
+  addJob({ kind: "market", who: "reyna", what: "read the store, then the ad library", at });
+}
+
+function planAccount(platform, persona, warmedDays) {
+  const sessions = planDay(persona, warmedDays);
+  const times = scatterAcrossDay(persona, sessions);
+  for (const t of times) {
+    addJob({
+      kind: "session",
+      platform,
+      who: "bea",
+      what: `${S.accounts[platform].handle} · a scroll, ${Math.round((t.seconds ?? 180) / 60)} min`,
+      at: t.at ?? Date.now(),
+      seconds: t.seconds ?? 180,
+    });
+  }
+}
+
+/** Plan the day once, and again when the day turns over. */
+function planTheDay() {
+  const today = new Date().toDateString();
+  if (sched.plannedFor === today) return;
+  sched.plannedFor = today;
+  sched.jobs = sched.jobs.filter((j) => j.state === "doing");
+  planMarket(Date.now());
+  for (const p of connected()) {
+    const persona = sched.personas[p] ?? personaSeed(S.accounts[p].handle);
+    planAccount(p, persona, sched.warmed[p] ?? 0);
+  }
+  pushPanel();
+}
+
+/* --------------------------------------------------------- the working */
+
+/** Put a platform on the glass, and say so. */
+async function show(platform) {
+  if (S.showing === platform) return;
+  S.showing = platform;
+  pushPanel();
+  const url = platform === "market" ? "https://www.facebook.com/ads/library/" : HOME[platform];
+  if (url) await phone.goto(url);
+}
+
+/** A job may be interrupted between steps; this is where it gives way. */
+function shouldStop() {
+  return S.stopped || S.paused || quitting;
+}
+
+/**
+ * The store first, then the market.
+ *
+ * Nobody tells the crew what we sell: they open the storefront in the brief
+ * and read it like a visitor, and what they find is what they hunt.
+ */
+async function marketTask(job) {
+  const url = storeUrl();
+  await show("market");
+  if (url && Date.now() - hunt.readStoreAt > 6 * 60 * 60 * 1000) {
+    say("reyna", "looking at what we sell");
+    await phone.goto(url);
+    await phone.beat(1200, 2600);
+    const found = await phone.read("store", { url });
+    const products = Array.isArray(found?.products) ? found.products : [];
+    if (products.length) {
+      hunt.products = products;
+      hunt.readStoreAt = Date.now();
+      say("reyna", `our store: ${products.length} product${products.length === 1 ? "" : "s"} — ${products.slice(0, 3).map((p) => p.title).join(", ")}`);
+      for (const p of products) {
+        await cloud.db.saveFinding({
+          kind: "product", product: p.title, url: p.url, who: S.brief?.store ?? null,
+          title: p.title, metrics: { price: p.price ?? null, image: p.image ?? null },
+        }).catch(() => {});
+      }
+    } else if (found?.stopped) {
+      say("reyna", `the store did not read: ${found.stopped}`);
+    }
+  }
+
+  const { queries } = refreshTerms();
+  for (const q of queries.slice(0, 3)) {
+    if (shouldStop()) return;
+    say("reyna", `ad library — who is paying to show "${q}"`);
+    const url2 = "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=US&q=" +
+      encodeURIComponent(q) + "&search_type=keyword_unordered";
+    await phone.goto(url2);
+    await phone.beat(2000, 3500);
+    for (let pass = 0; pass < 4 && !shouldStop(); pass++) {
+      await phone.scroll(between(500, 900), { pace: "skim" });
+      await phone.pause(1200, 2600);
+    }
+    const ads = (await phone.read("ads")) ?? [];
+    if (!ads.length) { say("reyna", `nothing readable for "${q}" this time`); continue; }
+    const sellers = new Map();
+    for (const ad of ads) {
+      const days = runningDays(ad.started);
+      const key = hash(`${ad.advertiser ?? ""}|${ad.text ?? ""}|${ad.started ?? ""}`);
+      await cloud.db.saveFinding({
+        kind: "ad", product: q, query: q, platform: "meta",
+        url: ad.url || `https://www.facebook.com/ads/library/?q=${encodeURIComponent(q)}&ad=${key}`,
+        who: ad.advertiser ?? null, title: (ad.text ?? "").slice(0, 200),
+        metrics: { days, started: ad.started ?? null }, startedAt: ad.started ?? null,
+      }).catch(() => {});
+      if (ad.advertiser) sellers.set(ad.advertiser, Math.max(sellers.get(ad.advertiser) ?? 0, days ?? 0));
+    }
+    for (const [advertiser, longest] of sellers) {
+      await cloud.db.saveFinding({
+        kind: "seller", product: q, query: q, platform: "meta",
+        url: `https://www.facebook.com/ads/library/?search_type=page&q=${encodeURIComponent(advertiser)}`,
+        who: advertiser, title: advertiser, metrics: { longestDays: longest },
+      }).catch(() => {});
+    }
+    const proven = [...sellers.entries()].filter(([, d]) => d >= 28);
+    say("desmond", proven.length
+      ? `"${q}": ${proven.length} of ${sellers.size} advertisers have run 28+ days — ${proven.slice(0, 3).map(([n]) => n).join(", ")}`
+      : `"${q}": ${ads.length} ads, nobody running long yet`);
+    await phone.pause(3000, 7000);
+  }
+  sched.marketAt = Date.now();
+}
+
+/**
+ * One account, one session: scroll the way a person scrolls, watch what is
+ * worth watching, like sparingly, and take a look at one hashtag while you
+ * are in there. The cursor does all of it where Alex can see it.
+ */
+async function sessionTask(job) {
+  const platform = job.platform;
+  const a = S.accounts[platform];
+  if (a.state !== "connected") return;
+  const persona = sched.personas[platform] ?? personaSeed(a.handle);
+  const warmedDays = sched.warmed[platform] ?? 0;
+  if (a.accountId) {
+    let parked = false;
+    try { parked = Boolean(await cloud.db.isParked(a.accountId)); } catch { /* assume not */ }
+    if (parked) { say("sam", `${a.handle} is parked for today — leaving it alone`); return; }
+  }
+  const look = sched.firstLook.has(platform);
+  sched.firstLook.delete(platform);
   const seconds = Math.max(60, Number(job.seconds) || 180);
   const budget = dayBudget(persona, warmedDays);
-  if (lookAround) budget.like = Math.min(budget.like, 2);
-  const mins = Math.max(1, Math.round(seconds / 60));
-  say("bea", `${handle} — ${lookAround ? "a first look around" : "having a scroll"}, about ${mins} min, up to ${budget.like} like${budget.like === 1 ? "" : "s"}`);
-  if (accountId) { await cloud.db.warmedToday(accountId).catch(() => {}); await cloud.db.seen(accountId).catch(() => {}); }
+  if (look) budget.like = Math.min(budget.like, 2);
+  say("bea", `${a.handle} — ${look ? "a first look around" : "having a scroll"}, about ${Math.round(seconds / 60)} min, up to ${budget.like} like${budget.like === 1 ? "" : "s"}`);
+  if (a.accountId) {
+    await cloud.db.warmedToday(a.accountId).catch(() => {});
+    await cloud.db.seen(a.accountId).catch(() => {});
+  }
 
-  const page = ctx.page;
-  await ctx.hold();
-  if (!page.url().includes(new URL(HOME[platform]).hostname)) await screens.navigate(platform, HOME[platform]);
-
+  await show(platform);
   const end = Date.now() + seconds * 1000;
-  let watched = 0, liked = 0, passes = 0;
-  const tagQueue = hunt.tags.length ? [...hunt.tags] : refreshTerms().tags;
-  const tagFn = platform === "instagram" ? market.instagramTag : platform === "tiktok" ? market.tiktokTag : null;
-  const nextPassAt = () => Date.now() + Math.round(between(2, 5)) * 60 * 1000;
-  let passAt = lookAround ? Date.now() + 60 * 1000 : nextPassAt();
+  let liked = 0, watched = 0;
+  const tags = hunt.tags.length ? [...hunt.tags] : refreshTerms().tags;
+  let tagAt = Date.now() + (look ? 60 : Math.round(between(2, 5)) * 60) * 1000;
 
-  while (Date.now() < end) {
-    await ctx.hold();
-    ctx.progress(Math.round(100 - ((end - Date.now()) / (seconds * 1000)) * 100), `${handle} · ${lookAround ? "looking around" : "scrolling"}`);
-
-    // The brakes: a captcha, a block, a "verify" — the account is parked for the day.
-    const text = await ask(page, () => document.body?.innerText?.slice(0, 4000) ?? "", undefined, 6000);
-    const friction = frictionIn(text ?? "");
+  while (Date.now() < end && !shouldStop()) {
+    // The brakes: a captcha, a block, a "verify" — the account is done today.
+    const text = (await phone.read("text")) ?? "";
+    const friction = frictionIn(String(text));
     if (friction && friction !== "logged out") {
-      say("sam", `${handle}: ${friction}. That account is done for today.`);
-      if (accountId) await cloud.db.park(accountId, friction).catch(() => {});
+      say("sam", `${a.handle}: ${friction}. That account is done for today.`);
+      if (a.accountId) await cloud.db.park(a.accountId, friction).catch(() => {});
       for (const j of sched.jobs) if (j.platform === platform && j.state === "next") j.state = "skipped";
-      pushPlan();
+      pushPanel();
       return;
     }
 
-    // Watch whatever is in view; the hand drifts a little while watching.
     const interesting = chance(0.4);
     const dwell = Math.min(watchMs(15000, interesting), 25000);
-    const vp = await screens.viewport(platform);
-    await glide(ctx, vp.w * between(0.4, 0.6), vp.h * between(0.35, 0.65), `${handle} · watching`);
-    await sleep(dwell);
+    await phone.say("bea", `${a.handle} · watching`);
+    await phone.dwell(dwell);
     watched++;
 
-    // Like, sparingly, from the persona's own ratios.
     const r = react(persona, { interesting, budget });
     if (r.like && liked < budget.like) {
-      const hit = await tryLike(ctx, platform, handle);
-      if (hit) { liked++; budget.like--; if (accountId) await cloud.db.act(accountId, "like", { targetUrl: page.url(), dwellMs: dwell }).catch(() => {}); }
-    }
-    if (shouldRest()) await sleep(around(2600, 1200, 800, 7000));
-
-    // A research pass, from the account, at browsing pace: one tag, a few screens, minutes between.
-    if (tagFn && tagQueue.length && Date.now() >= passAt && Date.now() + 90 * 1000 < end) {
-      const tag = tagQueue.shift();
-      passAt = nextPassAt();
-      passes++;
-      say("reyna", `${handle} — #${tag} on ${platform}, a look at the feed`);
-      await glide(ctx, vp.w * 0.5, vp.h * 0.2, `Reyna · #${tag}`);
-      let got = { items: [], stopped: null };
-      try { got = (await tagFn(page, tag, { passes: 2, limit: 40 })) ?? got; } catch (e) { got = { items: [], stopped: e?.message ?? String(e) }; }
-      if (got.stopped) say("reyna", `#${tag}: ${got.stopped}`);
-      const items = (got.items ?? got.links ?? []).slice(0, 40);
-      let fresh = 0, topViews = 0;
-      for (const link of items) {
-        const url = typeof link === "string" ? link : link?.url;
-        if (!url) continue;
-        const views = typeof link === "object" && link.views != null ? Number(link.views) || 0 : 0;
-        topViews = Math.max(topViews, views);
-        let known = false;
-        try { known = Boolean(await cloud.db.knownClip(url)); } catch { known = true; }
-        if (known) continue;
-        await cloud.db.saveClip({ platform, sourceUrl: url, sourceHandle: typeof link === "object" ? link.handle ?? null : null, views: views || null, seen: { tag, foundAt: new Date().toISOString(), by: handle } }).catch(() => {});
-        await cloud.db.saveFinding({
-          kind: "clip", product: hunt.products.find((p) => String(p.title).toLowerCase().replace(/[^a-z0-9]+/g, "") === tag)?.title ?? null, query: `#${tag}`, platform, url,
-          who: typeof link === "object" ? link.handle ?? null : null, title: null,
-          metrics: views ? { views } : {}, startedAt: null, note: null,
-        }).catch(() => {});
-        fresh++;
+      const hit = await phone.tap("like", { who: "Bea" });
+      if (hit?.ok && hit.result?.changed) {
+        liked++;
+        budget.like--;
+        say("bea", `${a.handle} liked one`);
+        if (a.accountId) await cloud.db.act(a.accountId, "like", { targetUrl: phone.where, dwellMs: dwell }).catch(() => {});
+      } else if (hit?.ok && hit.result && hit.result.changed === false) {
+        // The press landed on nothing that moved. Said once, not every time.
+        if (!sessionTask.warned) { sessionTask.warned = true; say("sam", `${platform} did not take a tap from the app — I will keep watching and not pretend otherwise`); }
       }
-      say("kofi", `#${tag}: ${items.length} clips, ${fresh} new — logged`);
-      // What the people posting this actually tag it: into the next sweep.
-      await discoverFrom(page, tag, topViews);
-      await ctx.hold();
-      await screens.navigate(platform, HOME[platform]);
-      await sleep(around(2500, 800, 1200, 5000));
-      continue;
+    }
+    if (shouldRest()) await phone.pause(2600, 7000);
+
+    // A look at one hashtag, from the account, at browsing pace.
+    if (tags.length && Date.now() >= tagAt && Date.now() + 90 * 1000 < end) {
+      const tag = tags.shift();
+      tagAt = Date.now() + Math.round(between(2, 5)) * 60 * 1000;
+      say("reyna", `${a.handle} — #${tag} on ${platform}, a look at the feed`);
+      const tagUrl = platform === "instagram"
+        ? `https://www.instagram.com/explore/tags/${encodeURIComponent(tag)}/`
+        : `https://www.tiktok.com/tag/${encodeURIComponent(tag)}`;
+      await phone.goto(tagUrl);
+      for (let pass = 0; pass < 3 && !shouldStop(); pass++) {
+        await phone.scroll(between(600, 1100), { pace: "skim" });
+        await phone.pause(1400, 3200);
+      }
+      const posts = (await phone.read("posts")) ?? [];
+      let fresh = 0, top = 0;
+      for (const p of posts.slice(0, 40)) {
+        if (!p?.url) continue;
+        top = Math.max(top, Number(p.views) || 0);
+        let known = true;
+        try { known = Boolean(await cloud.db.knownClip(p.url)); } catch { known = true; }
+        if (known) continue;
+        fresh++;
+        await cloud.db.saveClip({
+          platform, sourceUrl: p.url, sourceHandle: p.handle ?? null,
+          views: Number(p.views) || null, seen: { tag, at: new Date().toISOString() },
+        }).catch(() => {});
+      }
+      say("kofi", `#${tag}: ${posts.length} clips, ${fresh} new — logged`);
+      // What sits next to this tag is where the next sweep goes.
+      const near = (await phone.read("tags")) ?? [];
+      for (const t of near.slice(0, 12)) {
+        const c = String(t).toLowerCase().replace(/[^a-z0-9]+/g, "");
+        if (c.length >= 4 && !hunt.known.has(c)) {
+          hunt.next.push({ tag: c, from: tag, views: top });
+          await cloud.db.remember("discovery", `#${c} sits beside #${tag} clips`, { tag: c, from: tag, views: top }, 0.4).catch(() => {});
+        }
+      }
+      await show(platform);
     }
 
-    // Scroll on, the way a thumb does.
-    const distance = Math.round(around(interesting ? 520 : 900, 260, 180, 1600));
-    const steps = Math.round(between(3, 8));
-    for (let i = 0; i < steps; i++) {
-      await page.mouse.wheel(0, distance / steps).catch(() => {});
-      await sleep(between(18, 70));
-    }
-    await sleep(scrollPauseMs(interesting));
+    await phone.scroll(between(400, 900), { pace: "read" });
+    await phone.pause(900, 2600);
   }
-  say("bea", `${handle}: watched ${watched}, liked ${liked}${passes ? `, ${passes} research pass${passes === 1 ? "" : "es"}` : ""}`);
+  say("bea", `${a.handle} — done for now: watched ${watched}, liked ${liked}`);
 }
 
-/** The hashtags beside this tag's clips — at most twelve new ones a sweep, remembered with where they came from. */
-async function discoverFrom(page, from, views) {
-  let found = [];
-  try { found = (await discover.relatedTags(page, { except: [...hunt.known, from], limit: 20, ask })) ?? []; } catch { found = []; }
-  const fresh = [];
-  for (const t of found) {
-    const tag = String(t).toLowerCase().replace(/[^a-z0-9_]+/g, "");
-    if (tag.length < 4 || hunt.known.has(tag)) continue;
-    if (hunt.next.length >= 12) break;
-    hunt.known.add(tag);
-    hunt.next.push({ tag, from, views });
-    fresh.push(tag);
-    await cloud.db.remember("discovery", `#${tag} sits beside #${from} clips`, { tag, from, views }, 0.4).catch(() => {});
-  }
-  if (fresh.length) say("reyna", `#${from} led to ${fresh.slice(0, 5).map((t) => "#" + t).join(" ")}${fresh.length > 5 ? ` +${fresh.length - 5}` : ""} — for the next sweep`);
+const hash = (s) => createHash("sha1").update(s).digest("hex").slice(0, 16);
+
+function runningDays(started, now = new Date()) {
+  if (!started) return null;
+  const when = new Date(started);
+  if (Number.isNaN(when.getTime())) return null;
+  const a = Date.UTC(when.getFullYear(), when.getMonth(), when.getDate());
+  const b = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.max(0, Math.round((b - a) / 86_400_000));
 }
 
-/** Find a like button in view and press it like a hand would. */
-async function tryLike(ctx, platform, handle) {
-  const page = ctx.page;
-  for (const sel of LIKE[platform] ?? []) {
-    let box = null;
-    try {
-      const target = page.locator(sel).first();
-      if (!(await target.count())) continue;
-      box = await target.boundingBox({ timeout: 1500 });
-    } catch { continue; }
-    if (!box) continue;
-    const vp = await screens.viewport(platform);
-    if (box.y < 0 || box.y > vp.h) continue;
-    const x = box.x + box.width * between(0.32, 0.68);
-    const y = box.y + box.height * between(0.32, 0.68);
-    await glide(ctx, x, y, `${handle} · like`);
-    await page.mouse.click(x, y, { delay: Math.round(between(40, 130)) }).catch(() => {});
-    return true;
-  }
-  return false;
+function storeUrl() {
+  const b = S.brief ?? {};
+  if (b.storeUrl && /^https?:\/\//i.test(String(b.storeUrl))) return String(b.storeUrl);
+  const name = String(b.store ?? "").trim();
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(name)) return `https://${name}`;
+  return null;
 }
 
-/* ------------------------------------------------------------- phases */
+/** What to look for: the store's products, the brief, and what the feeds taught us. */
+function refreshTerms() {
+  const b = S.brief ?? {};
+  const queries = [], tags = [];
+  const addQ = (q) => { const t = String(q ?? "").trim(); if (t && !queries.some((x) => x.toLowerCase() === t.toLowerCase())) queries.push(t); };
+  const addT = (t) => { const c = String(t ?? "").toLowerCase().replace(/[^a-z0-9]+/g, ""); if (c.length >= 4 && !tags.includes(c)) tags.push(c); };
+  try {
+    const e = discover.expandTerms(hunt.products, b) ?? {};
+    for (const q of e.queries ?? []) addQ(q);
+    for (const t of e.tags ?? []) addT(t);
+  } catch { /* fall through to the brief */ }
+  for (const q of [...(Array.isArray(b.products) ? b.products : []), ...(Array.isArray(b.market) ? b.market : [])]) { addQ(q); addT(q); }
+  for (const m of String(b.notes ?? "").matchAll(/#([a-z0-9_]{3,40})/gi)) addT(m[1]);
+  let ranked = [];
+  try { ranked = discover.rankTags(hunt.next) ?? []; } catch { ranked = hunt.next; }
+  for (const r of ranked.slice(0, 12)) addT(r.tag);
+  hunt.next = [];
+  hunt.queries = queries.slice(0, 12);
+  hunt.tags = tags.slice(0, 20);
+  for (const t of hunt.tags) hunt.known.add(t);
+  hunt.sweep++;
+  return { queries: hunt.queries, tags: hunt.tags };
+}
+
+/* -------------------------------------------------------- the schedule */
 
 async function startWorking() {
   if (S.phase === "working") return;
   S.phase = "working";
-  S.doing = "working";
-  pushState();
-  say("organic", `working — ${connectedIds().map((p) => S.screens[p].handle).join(", ")}`);
-  if (S.screens.youtube.state !== "connected") {
-    // YouTube is a screen only when it is connected. "Connect" in the window opens it again.
-    await screens.close("youtube").catch(() => {});
-    setScreen("youtube", "none", null);
+  S.doing = "getting started";
+  pushPanel();
+  await report();
+  planTheDay();
+}
+
+/** One job at a time, because there is one phone. */
+async function tick() {
+  if (sched.running || S.paused || S.stopped || S.phase !== "working") return;
+  planTheDay();
+  const now = Date.now();
+  const due = sched.jobs.find((j) => j.state === "next" && (j.at ?? 0) <= now);
+  if (!due) {
+    // Nothing now: say when, once, rather than going quiet.
+    const next = sched.jobs.find((j) => j.state === "next");
+    const when = next ? new Date(next.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
+    const line = when ? `nothing until ${when} — next: ${next.what}` : "nothing scheduled";
+    if (S.doing !== line) { S.doing = line; pushPanel(); }
+    return;
   }
-  await openScreen("market").catch((e) => say("reyna", `could not open the market screen: ${e.message}`));
-  setScreen("market", "connected", "Ad Library");
-  await readBrief();
-  if (S.brief) say("nadia", `the brief: ${S.brief.store ?? "our store"}${storeUrl() ? ` at ${new URL(storeUrl()).hostname}` : ""}${(S.brief.products ?? []).length ? ` · ${S.brief.products.join(", ")}` : ""}`);
-  else say("nadia", "no brief yet — the crew will warm the accounts and wait for one");
-  for (const p of connectedIds()) await prepareAccount(p).catch(() => {});
-  planMarket();
-  schedulerTick();
-}
-
-/**
- * Watch for sign-ins: in setup every screen that is not connected (waiting
- * ones every 3 s, the others every 15 s); while working, only the screens
- * Alex asked to connect and the ones that signed out — so YouTube can be
- * connected after the fact, and a re-login is picked up without a click.
- */
-const lastLook = {};
-async function setupPoll() {
-  if (quitting) return;
-  for (const platform of PLATFORMS) {
-    const sc = S.screens[platform];
-    if (sc.state === "connected" || !screens.page(platform)) continue;
-    if (S.phase === "working" && sc.state !== "waiting" && sc.state !== "out") continue;
-    const gap = sc.state === "waiting" ? 3000 : 15000;
-    if (Date.now() - (lastLook[platform] ?? 0) < gap - 200) continue;
-    lastLook[platform] = Date.now();
-    await checkSignedIn(platform, { quiet: true });
+  // An account whose person is asleep waits for their own hours.
+  if (due.kind === "session") {
+    const persona = sched.personas[due.platform];
+    if (persona && !isAwake(persona)) { due.at = now + 20 * 60 * 1000; pushPanel(); return; }
   }
+  due.state = "doing";
+  sched.running = due;
+  S.doing = due.what;
+  pushPanel();
+  try {
+    if (due.kind === "market") await marketTask(due);
+    else if (due.kind === "session") await sessionTask(due);
+    due.state = "done";
+  } catch (error) {
+    due.state = "skipped";
+    say("organic", `${due.what}: ${error?.message ?? error}`);
+  } finally {
+    sched.running = null;
+    S.doing = "between jobs";
+    pushPanel();
+  }
+  if (due.kind === "market") planMarket(Date.now() + 60 * 60 * 1000);
 }
 
-/* --------------------------------------------------------- the window */
+/* ------------------------------------------------- what the page says */
 
-/**
- * Put a platform's screen at its login page and watch it (setupPoll). In
- * either phase: a platform left out at setup — YouTube, usually — is opened
- * again here. A screen already waiting is left where Alex is on it.
- */
-async function connectScreen(platform) {
-  const sc = S.screens[platform];
-  if (!sc || !PLATFORMS.includes(platform) || sc.state === "connected") return;
-  if (sc.state === "waiting" && screens.page(platform)) return;
-  if (!screens.page(platform)) await openScreen(platform).catch((e) => say("sam", `could not open ${platform}: ${e.message}`));
-  if (!screens.page(platform)) return;
-  setScreen(platform, "waiting", null);
-  await screens.navigate(platform, LOGIN[platform]);
-  // The real window, for the one moment that has to be fast.
-  const infront = await screens.showWindow(platform, true);
-  say(
-    "sam",
-    infront
-      ? `${platform} is open in front of you — sign in there and I will pick it up`
-      : `opening ${platform} — sign in on the screen and I will pick it up`,
-  );
-}
-
-async function onMessage(msg) {
-  switch (msg.t) {
-    case "focus":
-      await screens.focus(msg.id, msg.view);
-      break;
-    case "mouse":
-    case "key":
-      // The page is Alex's only while he has it focused.
-      if (screens.focused === msg.id) await screens.input(msg.id, msg);
-      break;
-    case "connect":
-      await connectScreen(msg.platform);
-      break;
-    case "ok":
-      if (connectedIds().length >= 1) await startWorking();
-      else say("sam", "connect at least one account first");
-      break;
-    case "stop":
-      S.stopped = true; pushState(); say("organic", "stopped — the crew is off the screens");
-      break;
-    case "pause":
-      S.paused = true; pushState(); say("organic", "paused");
-      break;
-    case "resume":
-      S.paused = false; S.stopped = false; pushState(); say("organic", "back to work");
-      break;
+async function fromPage(msg) {
+  if (msg.t === "hello") {
+    phone.sawPage(msg);
+    pushPanel();
+    // A sign-in that happened while we were looking elsewhere still counts.
+    const platform = msg.platform;
+    if (PLATFORMS.includes(platform) && S.accounts[platform].state !== "connected") {
+      await checkSignedIn(platform, { quiet: true }).catch(() => {});
+    }
+    return;
+  }
+  if (msg.t === "tick") { say(msg.who || "organic", String(msg.what ?? "")); return; }
+  if (msg.t === "trouble") { say("sam", String(msg.what ?? "something on the page")); return; }
+  if (msg.t === "asked") {
+    const what = String(msg.do ?? "");
+    if (what === "connect") await beginConnect(String(msg.platform ?? ""));
+    else if (what === "switch") await show(String(msg.platform ?? ""));
+    else if (what === "stop") { S.stopped = true; await phone.stop().catch(() => {}); pushPanel(); }
+    else if (what === "resume") { S.stopped = false; S.paused = false; phone.resume(); pushPanel(); }
+    else if (what === "quit") await shutdown(0);
   }
 }
 
-/* -------------------------------------------------------------- lifecycle */
+/* ------------------------------------------------------------ the life */
 
-async function shutdown(code = 0, { keepChrome = code === 75 } = {}) {
+async function shutdown(code = 0) {
   if (quitting) return;
   quitting = true;
-  // Whatever hangs below, the process ends: a restart on 75 must not wait on a Chrome that stopped answering.
   setTimeout(() => process.exit(code), 8000).unref();
-  try { await screens?.dispose(); } catch { /* fine */ }
   try { await report(); } catch { /* fine */ }
-  try { await server?.close(); } catch { /* fine */ }
-  // The browser is ours and nobody else's, so closing it closes it — there is
-  // no attached-versus-started case left to get wrong.
-  if (!keepChrome) { try { await browser?.close(); } catch { /* already gone */ } }
+  try { await bridge?.close(); } catch { /* fine */ }
   process.exit(code);
 }
 
+/** The window is the app: when it goes, so do we. */
 function watchParent() {
-  const pid = Number(process.env.ORGANIC_PARENT_PID);
-  if (Number.isFinite(pid) && pid > 0) {
-    setInterval(() => {
-      try { process.kill(pid, 0); } catch { say("organic", "the app closed — stopping"); shutdown(0); }
-    }, 5000).unref();
-  }
-  // The launcher starts the worker as a background job, whose stdin bash
-  // points at /dev/null: it reads EOF at once. With a parent pid to watch,
-  // stdin says nothing about the window; without one (tests, a terminal)
-  // its end is the signal to go.
-  if (!(Number.isFinite(pid) && pid > 0)) {
-    process.stdin.on("end", () => shutdown(0));
-    process.stdin.on("close", () => shutdown(0));
-    process.stdin.on("error", () => {});
+  const pid = Number(process.env.ORGANIC_PARENT_PID) || 0;
+  if (!pid) {
+    process.stdin.on("end", () => { say("organic", "the app closed — stopping"); shutdown(0); });
     process.stdin.resume();
+    return;
   }
-  process.on("SIGTERM", () => shutdown(0));
-  process.on("SIGINT", () => shutdown(0));
+  setInterval(() => {
+    try { process.kill(pid, 0); } catch { say("organic", "the app closed — stopping"); shutdown(0); }
+  }, 5000).unref();
 }
-
-const every = (ms, fn) => setInterval(() => { fn().catch?.(() => {}); }, ms).unref();
 
 export async function main() {
   for (const d of Object.values(PATHS)) await mkdir(d, { recursive: true });
   S.build = await running();
   cloud = connectCloud();
-  onSay((line) => { server?.broadcast(line); return cloud.log(line.who, line.what); });
+  onSay((line) => { phone?.say(line.who, line.what).catch(() => {}); return cloud.log(line.who, line.what); });
 
-  server = await startServer({ dir: here, onMessage, state: stateMsg, recent: () => recent, hello: () => [planMsg(), ...Object.values(lastFrame)] });
+  bridge = await startBridge({ dir: here, onMessage: (m) => { fromPage(m).catch(() => {}); } });
+  phone = new Phone(bridge);
+  // The one line stdout ever carries: the launcher reads it to find the window.
+  process.stdout.write(`PORT ${bridge.port}\n`);
   watchParent();
-  say("organic", `build ${S.build} is up`);
-  // Not awaited: writing to a config file is nobody's reason to wait for a
-  // window.
-  linkToClaude().catch(() => {});
-  await report();
 
-  say("organic", "opening the browser");
-  let started = false;
-  ({ browser, child: chromeChild, started } = await openChrome({ profile: PATHS.chrome }));
-  // Chrome gone (crashed, killed): every page call would fail quietly and the crew would idle for ever.
-  // Restart the worker instead; it opens a fresh Chrome and the window reconnects.
-  browser.on("disconnected", () => { if (!quitting) { say("organic", "the browser went away — restarting"); shutdown(75, { keepChrome: false }); } });
-  screens = new Screens(browser);
-  screens.on("frame", (f) => { lastFrame[f.id] = { t: "frame", ...f }; if (server.hasClients()) server.broadcast(lastFrame[f.id]); });
-  screens.on("cursor", (c) => server.broadcast(c));
-  const adopted = await screens.adopt();
-  if (!started) say("organic", `chrome was already open${adopted.length ? ` — kept ${adopted.join(", ")}` : ""}`);
-  await Promise.all(PLATFORMS.map((p) => openScreen(p).catch((e) => say("organic", `${p}: ${e.message}`))));
+  say("organic", `build ${S.build} is up`);
+  await report();
+  linkToClaude().catch(() => {});
   await readBrief();
 
-  // Who is already signed in? Cookies outlive a restart, and so should the connection.
-  for (const p of PLATFORMS) setScreen(p, "checking");
-  await Promise.all(PLATFORMS.map(async (p) => { const ok = await checkSignedIn(p, { quiet: true }); if (!ok && S.screens[p].state === "checking") setScreen(p, "none"); }));
-  if (connectedIds().length >= 1) {
-    await startWorking();
-  } else {
-    S.phase = "setup";
-    S.doing = "waiting for a sign-in";
-    pushState();
-    say("sam", "connect your accounts — click a screen to sign in on it");
+  // Wait for the phone to arrive, then put something on the glass.
+  for (let i = 0; i < 60 && !bridge.connected(); i++) await sleep(500);
+  if (!bridge.connected()) say("organic", "the window has not connected yet — waiting");
+
+  const known = await cloud.db.accounts().catch(() => []);
+  for (const row of known) {
+    if (!PLATFORMS.includes(row.platform) || !row.connected) continue;
+    S.accounts[row.platform].handle = row.handle;
+    S.accounts[row.platform].accountId = row.id;
+    setAccount(row.platform, "checking", row.handle);
   }
 
-  every(3000, setupPoll);
-  every(3000, async () => schedulerTick());
-  every(5000, checkOrders);
-  every(10000, report);
-  every(60000, maybeUpdate);
-  every(5 * 60 * 1000, readBrief);
+  const first = known.find((r) => r.connected && PLATFORMS.includes(r.platform))?.platform ?? "instagram";
+  await show(first);
+  await sleep(2500);
+  const nowIn = await checkSignedIn(first, { quiet: true }).catch(() => false);
+  if (!nowIn && S.accounts[first].state !== "connected") {
+    setAccount(first, "none", null);
+    say("sam", "connect an account on the phone — tap the platform you want");
+    await phone.panel(true, panelState()).catch(() => {});
+  }
+
+  let lastSweep = 0, lastOrders = 0, lastReport = 0;
+  for (;;) {
+    const now = Date.now();
+    try {
+      if (now - lastOrders > 5000) { lastOrders = now; await checkOrders(); if (quitting) return; }
+      if (now - lastSweep > 60000) {
+        lastSweep = now;
+        if (await maybeUpdate()) return;
+        await readBrief();
+        // A platform we are waiting on: look again, quietly.
+        for (const p of PLATFORMS) {
+          if (S.accounts[p].state === "waiting" && S.showing === p) await checkSignedIn(p, { quiet: true }).catch(() => {});
+        }
+      }
+      if (now - lastReport > 10000) { lastReport = now; await report(); }
+      await tick();
+    } catch (error) {
+      say("organic", `stopped on: ${error?.message ?? error}`);
+      await sleep(5000);
+    }
+    await sleep(1000);
+  }
 }
 
-// Run only when this file IS the program. The old test matched any path
-// ENDING in main.mjs — and `test/5-main.mjs` ends in main.mjs, so importing
-// one constant from here booted a second worker inside the test process and
-// killed it a few lines later. The separator is the whole fix.
 if (process.argv[1] && /(^|\/)main\.mjs$/.test(process.argv[1])) {
-  main().catch((error) => {
-    say("organic", `could not start: ${error?.message ?? error}`);
-    process.stderr.write(String(error?.stack ?? error) + "\n");
-    shutdown(1);
+  main().catch(async (error) => {
+    console.error(error);
+    try { say("organic", `could not start: ${error?.message ?? error}`); } catch { /* nothing */ }
+    await sleep(300);
+    process.exit(1);
   });
 }
