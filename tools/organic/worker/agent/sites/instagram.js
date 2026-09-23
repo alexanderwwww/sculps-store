@@ -52,6 +52,12 @@
       return h ? "https://www.instagram.com/" + h + "/" : null;
     },
 
+    /** The thing to press to get to our own profile. null when not on screen. */
+    profileLink: function () {
+      var el = O.find.oneByLabel(/^profile$/i);
+      return el ? O.find.clickable(el) : null;
+    },
+
     isLoginPage: function () {
       if (/\/accounts\/(login|emailsignup)/.test(location.pathname)) return true;
       var pw = document.querySelector('input[type="password"]');
@@ -67,7 +73,43 @@
       );
     },
 
-    /** The signed-in handle, read from the profile link in the tab bar. null if not there. */
+    /**
+     * The signed-in handle, asked of Instagram itself: the current-user
+     * endpoint first, then the viewer JSON the page embeds, then the profile
+     * link in the tab bar. Every step returns null rather than a guess, and
+     * the whole chain resolves null off instagram.com (the fetch is
+     * same-origin only).
+     */
+    handleAsync: function () {
+      var self = this;
+      var viaDom = function () {
+        return self.handle();
+      };
+      if (!/instagram\./.test(location.hostname) || typeof fetch !== "function")
+        return Promise.resolve(viaDom());
+      return fetch("/api/v1/accounts/current_user/?edit=true", {
+        credentials: "include",
+        headers: { "x-ig-app-id": "936619743392459" },
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error("http " + r.status);
+          return r.json();
+        })
+        .then(function (j) {
+          var u = j && j.user && j.user.username;
+          if (u) return u;
+          throw new Error("no username");
+        })
+        .catch(function () {
+          // the viewer blob the page ships with, when the endpoint says no
+          var m = /"viewer":\{[^}]*?"username":"([A-Za-z0-9._]{2,30})"/.exec(
+            document.documentElement.innerHTML,
+          );
+          return m ? m[1] : viaDom();
+        });
+    },
+
+    /** The handle as the DOM shows it: the profile link in the tab bar. */
     handle: function () {
       var prof = F.oneByLabel(/^profile$/i);
       var a = prof && (prof.tagName === "A" ? prof : prof.closest && prof.closest("a[href]"));
@@ -86,8 +128,13 @@
     },
 
     captionOf: function (el) {
-      var spans = F.all("h1, h2, span", el).filter(function (n) {
-        return !n.children.length;
+      // a caption is a leaf, or a paragraph whose only children are its own
+      // hashtag links — anything deeper is layout, not words
+      var spans = F.all("h1, h2, span, p", el).filter(function (n) {
+        if (!n.children.length) return true;
+        for (var i = 0; i < n.children.length; i++)
+          if (n.children[i].tagName !== "A") return false;
+        return true;
       });
       var best = null;
       for (var i = 0; i < spans.length; i++) {

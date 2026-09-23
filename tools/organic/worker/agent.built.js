@@ -479,6 +479,12 @@
       return h ? "https://www.instagram.com/" + h + "/" : null;
     },
 
+    /** The thing to press to get to our own profile. null when not on screen. */
+    profileLink: function () {
+      var el = O.find.oneByLabel(/^profile$/i);
+      return el ? O.find.clickable(el) : null;
+    },
+
     isLoginPage: function () {
       if (/\/accounts\/(login|emailsignup)/.test(location.pathname)) return true;
       var pw = document.querySelector('input[type="password"]');
@@ -494,7 +500,43 @@
       );
     },
 
-    /** The signed-in handle, read from the profile link in the tab bar. null if not there. */
+    /**
+     * The signed-in handle, asked of Instagram itself: the current-user
+     * endpoint first, then the viewer JSON the page embeds, then the profile
+     * link in the tab bar. Every step returns null rather than a guess, and
+     * the whole chain resolves null off instagram.com (the fetch is
+     * same-origin only).
+     */
+    handleAsync: function () {
+      var self = this;
+      var viaDom = function () {
+        return self.handle();
+      };
+      if (!/instagram\./.test(location.hostname) || typeof fetch !== "function")
+        return Promise.resolve(viaDom());
+      return fetch("/api/v1/accounts/current_user/?edit=true", {
+        credentials: "include",
+        headers: { "x-ig-app-id": "936619743392459" },
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error("http " + r.status);
+          return r.json();
+        })
+        .then(function (j) {
+          var u = j && j.user && j.user.username;
+          if (u) return u;
+          throw new Error("no username");
+        })
+        .catch(function () {
+          // the viewer blob the page ships with, when the endpoint says no
+          var m = /"viewer":\{[^}]*?"username":"([A-Za-z0-9._]{2,30})"/.exec(
+            document.documentElement.innerHTML,
+          );
+          return m ? m[1] : viaDom();
+        });
+    },
+
+    /** The handle as the DOM shows it: the profile link in the tab bar. */
     handle: function () {
       var prof = F.oneByLabel(/^profile$/i);
       var a = prof && (prof.tagName === "A" ? prof : prof.closest && prof.closest("a[href]"));
@@ -513,8 +555,13 @@
     },
 
     captionOf: function (el) {
-      var spans = F.all("h1, h2, span", el).filter(function (n) {
-        return !n.children.length;
+      // a caption is a leaf, or a paragraph whose only children are its own
+      // hashtag links — anything deeper is layout, not words
+      var spans = F.all("h1, h2, span, p", el).filter(function (n) {
+        if (!n.children.length) return true;
+        for (var i = 0; i < n.children.length; i++)
+          if (n.children[i].tagName !== "A") return false;
+        return true;
       });
       var best = null;
       for (var i = 0; i < spans.length; i++) {
@@ -583,6 +630,12 @@
       return h ? "https://www.tiktok.com/@" + h : null;
     },
 
+    profileLink: function () {
+      var el =
+        document.querySelector('[data-e2e="profile-icon"]') || O.find.oneByLabel(/^profile$/i);
+      return el && O.find.visible(el) ? O.find.clickable(el) : null;
+    },
+
     isLoginPage: function () {
       if (/\/login/.test(location.pathname)) return true;
       var pw = document.querySelector('input[type="password"]');
@@ -623,6 +676,104 @@
   };
 })(window);
 
+/* ---- agent/sites/youtube.js ---- */
+/**
+ * sites/youtube.js — only as much as the brain asks for: is this account
+ * signed in, and what is its handle.
+ *
+ * The handle is a channel handle and NEVER an email address. That bug shipped
+ * once: the account page prints "Signed in as alex@gmail.com" right next to
+ * the channel name, and the reader took the mailbox. Anything with an "@"
+ * inside it, or a mail-shaped ending, is refused here and again in read.js.
+ *
+ * WHEN A SELECTOR IS NOT FOUND: null. No fallback guess.
+ */
+(function (root) {
+  "use strict";
+  var O = root.__organicNS || (root.__organicNS = {});
+  O.sites = O.sites || {};
+  if (O.sites.youtube) return;
+  var F = O.find;
+
+  var MAILISH = /@|\.(com|net|org|co)$/i;
+
+  O.sites.youtube = {
+    name: "youtube",
+
+    likeButton: function (scope) {
+      var el = F.oneByLabel(/^(like this video|like|unlike)/i, scope);
+      return el ? F.clickable(el) : null;
+    },
+
+    liked: function (scope) {
+      var el = F.oneByLabel(/^(unlike|like this video)/i, scope);
+      return !!(el && el.getAttribute("aria-pressed") === "true");
+    },
+
+    commentBox: function (scope) {
+      return F.field(/comment/i, scope);
+    },
+
+    openReel: function () {
+      var a = F.all('a[href*="/shorts/"]').filter(F.visible)[0];
+      return a || null;
+    },
+
+    nextReel: function () {
+      return { kind: "scroll", px: root.innerHeight || 844 };
+    },
+
+    profileUrl: function () {
+      var h = this.handle();
+      return h ? "https://www.youtube.com/@" + h : null;
+    },
+
+    profileLink: function () {
+      var el = F.oneByLabel(/^(your channel|account menu|avatar)/i);
+      return el ? F.clickable(el) : null;
+    },
+
+    isLoginPage: function () {
+      if (/accounts\.google\./.test(location.hostname)) return true;
+      var pw = document.querySelector('input[type="password"]');
+      if (pw && F.visible(pw)) return true;
+      return !!F.byText("link", /^sign in$/i);
+    },
+
+    signedIn: function () {
+      if (this.isLoginPage()) return false;
+      return !!(
+        F.oneByLabel(/^(account menu|your channel|create)/i) ||
+        document.querySelector("#avatar-btn")
+      );
+    },
+
+    handle: function () {
+      var a = F.all('a[href^="/@"], a[href*="youtube.com/@"]').filter(function (n) {
+        return /\/@[A-Za-z0-9._-]{2,30}\/?$/.test(n.getAttribute("href") || "");
+      })[0];
+      if (a) {
+        var m = /\/@([A-Za-z0-9._-]{2,30})/.exec(a.getAttribute("href"));
+        if (m && !MAILISH.test(m[1])) return m[1];
+      }
+      var t = (document.body && (document.body.innerText || "")) || "";
+      var h = /(^|\s)@([A-Za-z0-9._-]{3,30})(\s|$)/.exec(t);
+      if (h && !MAILISH.test(h[2])) return h[2];
+      return null; // a mailbox is not a handle
+    },
+
+    postNodes: function () {
+      return F.all('ytd-rich-item-renderer, [role="article"], article').filter(F.visible);
+    },
+
+    captionOf: function (el) {
+      var n = el.querySelector("#video-title, h3, a[title]");
+      if (!n) return null;
+      return (n.getAttribute("title") || n.innerText || n.textContent || "").replace(/\s+/g, " ").trim();
+    },
+  };
+})(window);
+
 /* ---- agent/read.js ---- */
 /**
  * read.js — reading the page for the crew.
@@ -632,7 +783,10 @@
  * found this returns null or an empty list — it never guesses.
  *
  * It reads no input values at all. The one field the agent ever reads back is
- * the comment box it just typed into, and that read lives in hands.type().
+ * the comment box hands.type() just wrote to, and that read lives there.
+ *
+ * The brain asks for exactly these: signedIn, handle, text, posts, tags, ads,
+ * store.
  */
 (function (root) {
   "use strict";
@@ -646,58 +800,73 @@
 
   function platform() {
     var h = location.hostname || "";
-    if (/instagram\.com$/.test(h) || /(^|\.)instagram\./.test(h)) return "instagram";
-    if (/tiktok\.com$/.test(h) || /(^|\.)tiktok\./.test(h)) return "tiktok";
-    if (/youtube\.com$/.test(h) || /(^|\.)youtube\./.test(h)) return "youtube";
+    if (/instagram\./.test(h)) return "instagram";
+    if (/tiktok\./.test(h)) return "tiktok";
+    if (/youtube\./.test(h)) return "youtube";
     return "unknown";
   }
 
-  function site() {
-    var p = platform();
+  function site(which) {
+    var p = which || platform();
     return (O.sites && O.sites[p]) || null;
   }
 
   /** Signed in when the platform recipe says so; unknown platform => false. */
-  function signedIn() {
-    var s = site();
+  function signedIn(which) {
+    var s = site(which);
     if (!s) return false;
     if (s.isLoginPage()) return false;
     return !!s.signedIn();
   }
 
-  /** Our own handle, or null. A connection with no readable handle is none. */
-  function handle() {
-    var s = site();
-    if (!s) return null;
-    var h = s.handle();
-    return h ? String(h).replace(/^@+/, "") : null;
+  /**
+   * Our own handle as "@name", or null. A connection with no readable handle
+   * is not a connection. Async, because Instagram's best answer is a fetch.
+   */
+  function handle(which) {
+    var s = site(which);
+    if (!s) return Promise.resolve(null);
+    var got = s.handleAsync ? s.handleAsync() : Promise.resolve(s.handle());
+    return Promise.resolve(got)
+      .then(function (h) {
+        if (!h) return null;
+        h = String(h).trim().replace(/^@+/, "");
+        // never an email address — that bug shipped once on YouTube
+        if (!h || h.indexOf("@") >= 0 || /\.(com|net|org|co)$/i.test(h)) return null;
+        if (!/^[A-Za-z0-9._-]{2,40}$/.test(h)) return null;
+        return "@" + h;
+      })
+      .catch(function () {
+        return null;
+      });
+  }
+
+  /** The first ~4000 characters the page shows. The brain looks for friction. */
+  function bodyText(max) {
+    var b = document.body;
+    if (!b) return "";
+    var t = b.innerText || b.textContent || "";
+    return t.slice(0, max || 4000);
   }
 
   var NUM = /([\d][\d.,]*)\s*([KMB])?\s*(likes?|views?|plays?|comments?)/i;
 
   function countsIn(el) {
     var out = {};
-    var t = text(el);
-    var re = new RegExp(NUM.source, "gi");
-    var m;
-    while ((m = re.exec(t))) {
+    var take = function (m) {
+      if (!m) return;
       var n = parseFloat(m[1].replace(/,/g, ""));
       var mult = { K: 1e3, M: 1e6, B: 1e9 }[(m[2] || "").toUpperCase()] || 1;
       var kind = m[3].toLowerCase().replace(/s$/, "");
       if (kind === "play") kind = "view";
-      out[kind] = Math.round(n * mult);
-    }
-    // aria-labels carry the same numbers on both sites
+      if (out[kind] == null) out[kind] = Math.round(n * mult);
+    };
+    var re = new RegExp(NUM.source, "gi");
+    var t = text(el);
+    var m;
+    while ((m = re.exec(t))) take(m);
     var labelled = el.querySelectorAll("[aria-label]");
-    for (var i = 0; i < labelled.length; i++) {
-      var lm = NUM.exec(labelled[i].getAttribute("aria-label") || "");
-      if (!lm) continue;
-      var ln = parseFloat(lm[1].replace(/,/g, ""));
-      var lmult = { K: 1e3, M: 1e6, B: 1e9 }[(lm[2] || "").toUpperCase()] || 1;
-      var lk = lm[3].toLowerCase().replace(/s$/, "");
-      if (lk === "play") lk = "view";
-      if (out[lk] == null) out[lk] = Math.round(ln * lmult);
-    }
+    for (var i = 0; i < labelled.length; i++) take(NUM.exec(labelled[i].getAttribute("aria-label") || ""));
     return out;
   }
 
@@ -705,72 +874,99 @@
     var links = el.querySelectorAll('a[href^="/@"], a[href*="/@"]');
     for (var i = 0; i < links.length; i++) {
       var m = /\/@([A-Za-z0-9._]+)/.exec(links[i].getAttribute("href") || "");
-      if (m) return m[1];
+      if (m) return "@" + m[1];
     }
     var m2 = /@([A-Za-z0-9._]{2,30})/.exec(text(el));
-    if (m2) return m2[1];
-    var byRole = el.querySelector('[role="link"][href]');
+    if (m2) return "@" + m2[1];
+    var byRole = el.querySelector("a[href]");
     if (byRole) {
       var m3 = /^\/([A-Za-z0-9._]{2,30})\/?$/.exec(byRole.getAttribute("href") || "");
-      if (m3) return m3[1];
+      if (m3) return "@" + m3[1];
     }
     return null;
   }
 
-  function urlIn(el) {
-    var a =
-      el.querySelector('a[href*="/reel/"], a[href*="/p/"], a[href*="/video/"]') ||
-      el.querySelector("a[href]");
-    if (!a) return null;
+  function abs(href) {
     try {
-      return new URL(a.getAttribute("href"), location.href).href;
+      return new URL(href, location.href).href;
     } catch (e) {
-      return a.getAttribute("href");
+      return href || null;
     }
   }
 
-  /** Posts on screen: articles, or whatever the recipe says stands for one. */
+  function urlIn(el) {
+    var a =
+      el.querySelector('a[href*="/reel/"], a[href*="/p/"], a[href*="/video/"], a[href*="/shorts/"]') ||
+      el.querySelector("a[href]");
+    return a ? abs(a.getAttribute("href")) : null;
+  }
+
+  /** Posts on screen: {url, handle, views, ...}. Deduped by url, at most 40. */
   function posts() {
     var s = site();
     var nodes = (s && s.postNodes && s.postNodes()) || [];
     if (!nodes.length) nodes = Array.prototype.slice.call(document.querySelectorAll("article"));
     if (!nodes.length)
       nodes = Array.prototype.slice.call(document.querySelectorAll('[role="article"]'));
-    return nodes.map(function (el) {
+    var seen = Object.create(null);
+    var out = [];
+    for (var i = 0; i < nodes.length && out.length < 40; i++) {
+      var el = nodes[i];
       var c = countsIn(el);
-      return {
-        url: urlIn(el),
-        handle: handleIn(el),
+      var url = urlIn(el);
+      var h = handleIn(el);
+      var key = url || (h || "") + "#" + i;
+      if (seen[key]) continue;
+      seen[key] = 1;
+      out.push({
+        url: url,
+        handle: h,
         views: c.view == null ? null : c.view,
         likes: c.like == null ? null : c.like,
         comments: c.comment == null ? null : c.comment,
         caption: captionOf(el),
-      };
-    });
+      });
+    }
+    return out;
   }
 
-  /** Every hashtag visible on the page, deduped, in document order. */
+  /**
+   * The hashtags this page carries: the ones the platform itself links
+   * (/explore/tags/x/, /tag/x) plus #word in the captions. Most-seen first,
+   * at most 20.
+   */
   function tags(scope) {
     var root_ = scope || document.body || document.documentElement;
     if (!root_) return [];
-    var seen = Object.create(null);
-    var out = [];
+    var count = Object.create(null);
+    var order = [];
     var push = function (t) {
-      var v = t.toLowerCase();
-      if (seen[v]) return;
-      seen[v] = 1;
-      out.push(t);
+      var v = "#" + String(t).replace(/^#/, "").toLowerCase();
+      if (!/^#[a-z0-9_]{2,60}$/.test(v)) return;
+      if (count[v] == null) {
+        count[v] = 0;
+        order.push(v);
+      }
+      count[v]++;
     };
-    var links = root_.querySelectorAll('a[href*="/tag/"], a[href*="/explore/tags/"]');
+    var links = root_.querySelectorAll('a[href*="/explore/tags/"], a[href*="/tag/"]');
     for (var i = 0; i < links.length; i++) {
-      var t = text(links[i]);
-      if (/^#/.test(t)) push(t);
+      var href = links[i].getAttribute("href") || "";
+      var m = /\/(?:explore\/tags|tag)\/([^/?#]+)/.exec(href);
+      if (m) push(decodeURIComponent(m[1]));
+      else {
+        var t = text(links[i]);
+        if (/^#/.test(t)) push(t);
+      }
     }
     var re = /#[A-Za-z0-9_]{2,60}/g;
-    var m;
     var body = text(root_);
-    while ((m = re.exec(body))) push(m[0]);
-    return out;
+    var mm;
+    while ((mm = re.exec(body))) push(mm[0]);
+    order.sort(function (a, b) {
+      return count[b] - count[a];
+    });
+    return order.slice(0, 20);
   }
 
   /** The caption of a post element: the recipe knows, otherwise longest text. */
@@ -793,12 +989,234 @@
     return best;
   }
 
+  /**
+   * The Meta Ad Library, read off the visible cards.
+   * `started` is the date exactly as printed ("Started running on Aug 2, 2026"
+   * gives "Aug 2, 2026"). A card with no advertiser is skipped rather than
+   * guessed at.
+   */
+  function ads() {
+    var cards = Array.prototype.slice.call(
+      document.querySelectorAll('[role="article"], article, [data-testid*="ad" i]'),
+    );
+    if (!cards.length) {
+      // the library also renders each result as a plain block with the
+      // "Library ID" line in it; take those blocks' nearest sized ancestor
+      var ids = Array.prototype.slice.call(document.querySelectorAll("div,section")).filter(function (n) {
+        return !n.querySelector("div,section") && /Library ID/i.test(text(n));
+      });
+      cards = ids
+        .map(function (n) {
+          var p = n;
+          for (var i = 0; i < 4 && p.parentElement; i++) p = p.parentElement;
+          return p;
+        })
+        .filter(Boolean);
+    }
+    var seen = Object.create(null);
+    var out = [];
+    for (var i = 0; i < cards.length && out.length < 40; i++) {
+      var el = cards[i];
+      var t = text(el);
+      if (!/Library ID|Started running|Sponsored/i.test(t)) continue;
+      var startedM = /Started running on\s+([A-Za-z]{3,9}\s+\d{1,2},\s+\d{4})/.exec(t);
+      var link = el.querySelector('a[href*="http"], a[href^="/"]');
+      var name = null;
+      var nameEl = el.querySelector("a[href] span, a[href] strong, a[href]");
+      if (nameEl) name = text(nameEl);
+      if (!name) {
+        var m = /Sponsored\s*·?\s*([^\n·]{2,60})/.exec(t);
+        if (m) name = m[1].trim();
+      }
+      if (!name) continue; // no advertiser: skip, do not guess
+      var body = t
+        .replace(/Started running on\s+[A-Za-z]{3,9}\s+\d{1,2},\s+\d{4}/i, " ")
+        .replace(/Library ID:?\s*\d+/i, " ")
+        .replace(/Sponsored/i, " ")
+        .replace(name, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      var url = link ? abs(link.getAttribute("href")) : null;
+      var key = name + "|" + (startedM ? startedM[1] : "") + "|" + body.slice(0, 60);
+      if (seen[key]) continue;
+      seen[key] = 1;
+      out.push({
+        advertiser: name,
+        started: startedM ? startedM[1] : null,
+        text: body.slice(0, 600),
+        url: url,
+      });
+    }
+    return out;
+  }
+
+  /**
+   * Our own storefront, walked the way a visitor walks it — the logic that
+   * used to live in worker/store.mjs, moved in here because the page is the
+   * only thing with a browser now.
+   *
+   * Same origin only: the agent can fetch the store's own pages when the web
+   * view is already on the store (the brain sends `goto` first). From another
+   * origin the browser would refuse the fetch, so this says so plainly rather
+   * than returning an empty shop.
+   *
+   * The dedupe trap from store.mjs is kept: ?variant=… is the same product in
+   * another colour, so links are keyed by pathname with search and hash gone.
+   */
+  var PRODUCT_PATH = /\/(products?|product|item|items|p|shop)\/[^/?#]+/i;
+  var LISTING_PATH = /\/(collections?|categories?|category|shop|products|all)(\/[^/?#]+)?\/?$/i;
+
+  function linksIn(doc, base) {
+    var here = new URL(base).host;
+    var seen = Object.create(null);
+    var products = [];
+    var listings = [];
+    var as = doc.querySelectorAll("a[href]");
+    for (var i = 0; i < as.length; i++) {
+      var u;
+      try {
+        u = new URL(as[i].getAttribute("href"), base);
+      } catch (e) {
+        continue;
+      }
+      if (u.host !== here) continue;
+      u.hash = "";
+      u.search = "";
+      if (seen[u.href]) continue;
+      seen[u.href] = 1;
+      if (PRODUCT_PATH.test(u.pathname)) products.push(u.href);
+      else if (LISTING_PATH.test(u.pathname)) listings.push(u.href);
+    }
+    return { products: products, listings: listings };
+  }
+
+  function productFrom(doc, url) {
+    var meta = function (sel) {
+      var n = doc.querySelector(sel);
+      var v = n && n.getAttribute("content");
+      return v ? v.trim() : null;
+    };
+    var title = meta('meta[property="og:title"]');
+    if (!title) {
+      var h1 = doc.querySelector("h1");
+      title = h1 ? text(h1) : null;
+    }
+    if (!title) title = doc.title || null;
+    var image = meta('meta[property="og:image"]');
+    if (!image) {
+      var img = doc.querySelector("main img, img");
+      image = img ? abs(img.getAttribute("src")) : null;
+    }
+    var price =
+      meta('meta[property="product:price:amount"]') || meta('meta[property="og:price:amount"]');
+    if (!price) {
+      var ip = doc.querySelector('[itemprop="price"]');
+      price = (ip && (ip.getAttribute("content") || text(ip))) || null;
+    }
+    if (!price) {
+      var scope = doc.body || doc.documentElement;
+      var pm = /(?:[$€£]\s?\d[\d,]*(?:\.\d{2})?|\d[\d,]*(?:\.\d{2})?\s?(?:USD|EUR|GBP))/.exec(
+        text(scope),
+      );
+      price = pm ? pm[0] : null;
+    }
+    return {
+      url: url,
+      title: title ? String(title).trim() : null,
+      price: price ? String(price).trim() : null,
+      image: image,
+    };
+  }
+
+  function fetchDoc(url) {
+    return root
+      .fetch(url, { credentials: "same-origin" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("http " + r.status);
+        return r.text();
+      })
+      .then(function (html) {
+        return new root.DOMParser().parseFromString(html, "text/html");
+      });
+  }
+
+  function store(url, opts) {
+    opts = opts || {};
+    var limit = opts.limit || 30;
+    if (!url) return Promise.resolve({ products: [], stopped: "no store url" });
+    var base;
+    try {
+      base = new URL(url, location.href);
+    } catch (e) {
+      return Promise.resolve({ products: [], stopped: "the store url is not a url" });
+    }
+    if (base.origin !== location.origin)
+      return Promise.resolve({
+        products: [],
+        stopped: "not on the store — open " + base.origin + " first",
+      });
+
+    return fetchDoc(base.href)
+      .then(function (doc) {
+        var found = linksIn(doc, base.href);
+        var chain = Promise.resolve(found.products.slice());
+        found.listings.slice(0, 3).forEach(function (listing) {
+          chain = chain.then(function (acc) {
+            if (acc.length >= limit) return acc;
+            return fetchDoc(listing)
+              .then(function (d2) {
+                var more = linksIn(d2, listing).products;
+                more.forEach(function (p) {
+                  if (acc.indexOf(p) < 0) acc.push(p);
+                });
+                return acc;
+              })
+              .catch(function () {
+                return acc;
+              });
+          });
+        });
+        return chain;
+      })
+      .then(function (links) {
+        links = links.slice(0, limit);
+        var products = [];
+        var chain = Promise.resolve();
+        links.forEach(function (link) {
+          chain = chain.then(function () {
+            return fetchDoc(link)
+              .then(function (d) {
+                var p = productFrom(d, link);
+                if (p.title) products.push(p);
+              })
+              .catch(function () {});
+          });
+        });
+        return chain.then(function () {
+          if (!products.length)
+            return {
+              products: products,
+              stopped: links.length
+                ? "the product pages did not read"
+                : "no products found on the store",
+            };
+          return { products: products, stopped: null };
+        });
+      })
+      .catch(function (e) {
+        return { products: [], stopped: "the store did not open: " + ((e && e.message) || e) };
+      });
+  }
+
   O.read = {
     platform: platform,
     signedIn: signedIn,
     handle: handle,
+    bodyText: bodyText,
     posts: posts,
     tags: tags,
+    ads: ads,
+    store: store,
     captionOf: captionOf,
     text: text,
   };
@@ -849,9 +1267,10 @@
    */
   function scroll(px, opts) {
     opts = opts || {};
+    // the brain's paces: "read" is a slow browse, "skim" is a fast flick
     var pace = opts.pace || "easy";
-    var perStep = pace === "fast" ? 34 : pace === "slow" ? 12 : 22;
-    var burst = pace === "fast" ? 9 : pace === "slow" ? 4 : 6;
+    var perStep = pace === "skim" || pace === "fast" ? 34 : pace === "read" || pace === "slow" ? 12 : 22;
+    var burst = pace === "skim" || pace === "fast" ? 9 : pace === "read" || pace === "slow" ? 4 : 6;
     var dir = px < 0 ? -1 : 1;
     var left = Math.abs(px);
     var steps = 0;
@@ -1026,11 +1445,14 @@
   }
 
   /**
-   * type(text, {into, delays, typos})
-   * The brain sends the per-character delays and any typo it wants — this
-   * invents no rhythm of its own. `delays` is an array of ms, one per
-   * character (short arrays repeat their last value). `typos` is a list of
-   * {at, ch}: a wrong character typed at that index, then backspaced.
+   * type(text, {into, strokes, delays, typos})
+   *
+   * `strokes` is what the brain actually sends: [{key, delayMs}], where a key
+   * of "\b" is a backspace. The strokes ARE the rhythm — they are played back
+   * exactly, and nothing here invents timing of its own.
+   * `delays` + `typos` are the older, simpler form and are turned into the
+   * same strokes: one ms per character (a short array repeats its last value),
+   * and {at, ch} for a wrong character typed at that index then backspaced.
    * The only field this ever reads back is the one it typed into.
    */
   function type(text, opts) {
@@ -1049,12 +1471,23 @@
     };
     var editable = el.isContentEditable && !("value" in el);
 
-    var write = function (v) {
-      if (editable) {
-        el.textContent = v;
-      } else {
-        setValue(el, v);
+    // strokes win when they are there; otherwise the text + delays form
+    var strokes = Array.isArray(opts.strokes) ? opts.strokes.slice() : null;
+    if (!strokes) {
+      strokes = [];
+      for (var si = 0; si < text.length; si++) {
+        for (var ti = 0; ti < typos.length; ti++)
+          if (typos[ti].at === si) {
+            strokes.push({ key: typos[ti].ch, delayMs: at(si) });
+            strokes.push({ key: "\b", delayMs: typos[ti].pause || at(si) * 3 });
+          }
+        strokes.push({ key: text.charAt(si), delayMs: at(si) });
       }
+    }
+
+    var write = function (v) {
+      if (editable) el.textContent = v;
+      else setValue(el, v); // the native setter, so React notices
       el.dispatchEvent(new root.Event("input", { bubbles: true, composed: true }));
     };
 
@@ -1074,31 +1507,19 @@
         var i = 0;
         return new Promise(function (done) {
           (function next() {
-            if (stopped || i >= text.length) {
+            if (stopped || i >= strokes.length) {
               el.dispatchEvent(new root.Event("change", { bubbles: true }));
-              return done({
-                ok: true,
-                typed: editable ? el.textContent : el.value,
-              });
+              // the one field the agent ever reads: the box it just typed into
+              return done({ ok: true, typed: editable ? el.textContent : el.value });
             }
-            var typo = null;
-            for (var t = 0; t < typos.length; t++) if (typos[t].at === i) typo = typos[t];
-            var d = at(i);
+            var st = strokes[i++] || {};
+            var wait = st.delayMs == null ? 55 : st.delayMs;
             root.setTimeout(function () {
-              if (typo) {
-                cur += typo.ch;
-                write(cur);
-                return root.setTimeout(function () {
-                  cur = cur.slice(0, -1);
-                  write(cur);
-                  root.setTimeout(next, d);
-                }, typo.pause || d * 3);
-              }
-              cur += text.charAt(i);
+              if (st.key === "\b" || st.key === "Backspace") cur = cur.slice(0, -1);
+              else cur += st.key == null ? "" : String(st.key);
               write(cur);
-              i++;
               next();
-            }, d);
+            }, wait);
           })();
         });
       });
@@ -1154,16 +1575,28 @@
   var lastAttach = 0;
   var observer = null;
 
+  /**
+   * Exactly the state the brain pushes. Nothing here is computed locally and
+   * nothing is stored — a reload starts from this shape again.
+   */
   var state = {
+    phase: null,
+    build: null,
+    paused: false,
+    stopped: false,
+    doing: null,
+    showing: null,
+    mcp: null,
     accounts: [
-      { platform: "instagram", label: "Instagram", handle: null, on: false },
-      { platform: "tiktok", label: "TikTok", handle: null, on: false },
-      { platform: "youtube", label: "YouTube", handle: null, on: false },
+      { platform: "instagram", state: "off", handle: null },
+      { platform: "tiktok", state: "off", handle: null },
+      { platform: "youtube", state: "off", handle: null },
     ],
-    now: "idle",
-    ticks: [],
-    running: true,
+    jobs: [],
+    lines: [],
   };
+
+  var LABEL = { instagram: "Instagram", tiktok: "TikTok", youtube: "YouTube" };
 
   var FONT =
     "-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,sans-serif";
@@ -1224,37 +1657,56 @@
   function render() {
     if (!sheet) return;
     var h = ['<div class="bar"></div>'];
+
     h.push('<div class="hd">Accounts</div>');
-    state.accounts.forEach(function (a) {
+    (state.accounts || []).forEach(function (a) {
+      var on = a.state === "on" || a.state === "connected" || a.state === true;
+      var act = on ? "switch" : "connect";
+      var sub = a.handle ? (a.handle.charAt(0) === "@" ? a.handle : "@" + a.handle) : on ? String(a.state) : "connect";
       h.push(
-        '<div class="row" data-organic-act="' +
-          (a.on ? "switch" : "connect") +
-          '" data-organic-platform="' +
-          esc(a.platform) +
-          '"><span class="dot' +
-          (a.on ? " on" : "") +
-          '"></span><span class="grow">' +
-          esc(a.label) +
-          '</span><span class="sub">' +
-          esc(a.handle ? "@" + a.handle : a.on ? "connected" : "connect") +
-          "</span></div>",
+        '<div class="row" data-organic-do="' + act +
+          '" data-organic-platform="' + esc(a.platform) +
+          '"><span class="dot' + (on ? " on" : "") + '"></span>' +
+          '<span class="grow">' + esc(a.label || LABEL[a.platform] || a.platform) + "</span>" +
+          '<span class="sub">' + esc(sub) + "</span></div>",
       );
     });
+
     h.push('<div class="hd">Now</div>');
-    h.push('<div class="row"><span class="grow">' + esc(state.now) + "</span></div>");
-    if (state.ticks.length) {
+    var now = state.stopped
+      ? "stopped"
+      : state.paused
+        ? "paused"
+        : state.doing || state.showing || state.phase || "idle";
+    h.push('<div class="row"><span class="grow">' + esc(now) + "</span>" +
+      (state.build ? '<span class="sub">' + esc(state.build) + "</span>" : "") + "</div>");
+    if (state.mcp) h.push('<div class="tick">mcp: ' + esc(state.mcp) + "</div>");
+
+    var jobs = (state.jobs || []).slice(-3);
+    if (jobs.length) {
+      h.push('<div class="hd">Jobs</div>');
+      jobs.forEach(function (j) {
+        h.push('<div class="tick">' + esc((j.who ? j.who + " — " : "") + (j.what || "")) +
+          (j.state ? " (" + esc(j.state) + ")" : "") + "</div>");
+      });
+    }
+
+    var lines = (state.lines || []).slice(-5);
+    if (lines.length) {
       h.push('<div class="hd">Lately</div>');
-      state.ticks.slice(-5).forEach(function (t) {
+      lines.forEach(function (l) {
+        var t = typeof l === "string" ? l : (l.who ? l.who + ": " : "") + (l.what || "");
         h.push('<div class="tick">' + esc(t) + "</div>");
       });
     }
+
     h.push(
-      '<div class="btns"><div class="btn stop" data-organic-act="stop">Stop</div>' +
-        '<div class="btn go" data-organic-act="resume">Resume</div></div>',
+      '<div class="btns"><div class="btn stop" data-organic-do="stop">Stop</div>' +
+        '<div class="btn go" data-organic-do="resume">Resume</div></div>',
     );
     h.push(
       '<div class="drag"><span class="move" data-organic-window="move">drag to move</span>' +
-        '<span class="quit" data-organic-window="quit">Quit</span></div>',
+        '<span class="quit" data-organic-do="quit" data-organic-window="quit">Quit</span></div>',
     );
     sheet.innerHTML = h.join("");
   }
@@ -1283,27 +1735,27 @@
     });
 
     sheet.addEventListener("click", function (ev) {
-      var t = ev.target;
-      while (t && t !== sheet && !t.getAttribute) t = t.parentNode;
       var hit = null;
       var n = ev.target;
       while (n && n !== sheet) {
-        if (n.getAttribute && (n.getAttribute("data-organic-act") || n.getAttribute("data-organic-window"))) {
+        if (n.getAttribute && (n.getAttribute("data-organic-do") || n.getAttribute("data-organic-window"))) {
           hit = n;
           break;
         }
         n = n.parentNode;
       }
       if (!hit) return;
-      var win = hit.getAttribute("data-organic-window");
-      if (win) {
-        send({ t: "window", do: win });
+      var act = hit.getAttribute("data-organic-do");
+      var platform = hit.getAttribute("data-organic-platform") || null;
+      if (act) {
+        // The panel only ever asks. The brain decides and pushes state back.
+        send({ t: "asked", do: act, platform: platform });
+        if (act === "quit") send({ t: "window", do: "quit" });
+        if (act === "stop" || act === "resume") setOpen(false);
         return;
       }
-      var act = hit.getAttribute("data-organic-act");
-      var platform = hit.getAttribute("data-organic-platform") || null;
-      send({ t: "asked", what: act, platform: platform });
-      if (act === "stop" || act === "resume") setOpen(false);
+      var win = hit.getAttribute("data-organic-window");
+      if (win) send({ t: "window", do: win });
     });
 
     // dragging the move strip asks Swift to move the window
@@ -1385,16 +1837,18 @@
     /** The brain owns the contents. This only draws what it is given. */
     set: function (patch) {
       if (!patch) return state;
-      if (patch.accounts) state.accounts = patch.accounts;
-      if (patch.now != null) state.now = patch.now;
-      if (patch.running != null) state.running = !!patch.running;
-      if (patch.ticks) state.ticks = patch.ticks.slice(-20);
+      [
+        "phase", "build", "paused", "stopped", "doing", "showing", "mcp",
+        "accounts", "jobs", "lines",
+      ].forEach(function (k) {
+        if (patch[k] !== undefined) state[k] = patch[k];
+      });
+      if (state.lines && state.lines.length > 20) state.lines = state.lines.slice(-20);
       render();
       return state;
     },
     tick: function (who, what) {
-      state.ticks.push((who ? who + ": " : "") + what);
-      if (state.ticks.length > 20) state.ticks = state.ticks.slice(-20);
+      state.lines = (state.lines || []).concat([{ who: who, what: what }]).slice(-20);
       render();
     },
     state: function () {
@@ -1462,15 +1916,15 @@
     send({ t: "tick", who: who, what: what });
   }
 
-  function elFor(a) {
-    if (a.selector) return document.querySelector(a.selector);
-    if (a.what) {
-      var s = O.sites[O.read.platform()];
-      if (!s) return null;
-      if (a.what === "like") return s.likeButton();
-      if (a.what === "comment") return s.commentBox();
-      if (a.what === "reel") return s.openReel();
-    }
+  /** The named things the brain taps: like, comment, next, profile. */
+  function targetEl(name, a) {
+    if (a && a.selector) return document.querySelector(a.selector);
+    var s = O.sites[O.read.platform()];
+    if (!s) return null;
+    if (name === "like") return s.likeButton();
+    if (name === "comment") return s.commentBox();
+    if (name === "profile") return s.profileLink ? s.profileLink() : null;
+    if (name === "reel") return s.openReel();
     return null;
   }
 
@@ -1484,58 +1938,93 @@
       return O.hands.scroll(a.px == null ? root.innerHeight : a.px, { pace: a.pace });
     },
     tap: function (a) {
-      if (a.x != null && a.y != null) return O.hands.tapAt(a.x, a.y, a);
-      var el = elFor(a);
-      if (!el) throw new Error("nothing to tap: " + (a.selector || a.what || "?"));
-      return O.hands.tapEl(el, a);
+      if (a.x != null && a.y != null)
+        return O.hands.tapAt(a.x, a.y, a).then(function (r) {
+          return { found: !!r.hit, changed: !!r.changed };
+        });
+      var name = a.target || a.what || null;
+      var site = O.sites[O.read.platform()];
+      // "next" is not a button on mobile: a reel advances by one viewport.
+      if (name === "next") {
+        var how = site && site.nextReel ? site.nextReel() : null;
+        if (!how) return { found: false, changed: false };
+        var y0 = root.scrollY;
+        return O.hands.scroll(how.px, { pace: "skim" }).then(function () {
+          return { found: true, changed: root.scrollY !== y0 };
+        });
+      }
+      var el = targetEl(name, a);
+      if (!el) return { found: false, changed: false }; // never a guess
+      return O.hands.tapEl(el, a).then(function (r) {
+        return { found: true, changed: !!r.changed, stillThere: !!r.stillThere };
+      });
     },
+
     type: function (a) {
-      var into = a.selector || a.into || null;
-      if (!into && a.what) into = elFor({ what: a.what });
-      return O.hands.type(a.text, { into: into, delays: a.delays, typos: a.typos });
+      var into = a.selector || null;
+      var name = a.into || a.what || "comment";
+      if (!into) into = targetEl(name === "comment" ? "comment" : name, {});
+      if (!into) return { ok: false, error: "no field: " + name };
+      // The brain sends the rhythm as strokes; the hands only play it.
+      return O.hands.type(a.text, {
+        into: into,
+        strokes: a.strokes,
+        delays: a.delays,
+        typos: a.typos,
+      });
     },
+
     dwell: function (a) {
       return O.hands.dwell(a.ms == null ? 800 : a.ms);
     },
     read: function (a) {
       var what = a.what || "page";
-      if (what === "posts") return { posts: O.read.posts() };
-      if (what === "tags") return { tags: O.read.tags() };
-      if (what === "handle") return { handle: O.read.handle() };
-      if (what === "signedIn") return { signedIn: O.read.signedIn() };
-      return {
-        url: location.href,
-        platform: O.read.platform(),
-        signedIn: O.read.signedIn(),
-        handle: O.read.handle(),
-        posts: O.read.posts(),
-        tags: O.read.tags(),
-      };
+      if (what === "posts") return O.read.posts();
+      if (what === "tags") return O.read.tags();
+      if (what === "text") return O.read.bodyText(4000);
+      if (what === "ads") return O.read.ads();
+      if (what === "store") return O.read.store(a.url, a);
+      if (what === "handle") return O.read.handle(a.platform);
+      if (what === "signedIn") return O.read.signedIn(a.platform);
+      return O.read.handle(a.platform).then(function (h) {
+        return {
+          url: location.href,
+          platform: O.read.platform(),
+          signedIn: O.read.signedIn(),
+          handle: h,
+          posts: O.read.posts(),
+          tags: O.read.tags(),
+        };
+      });
     },
+
     say: function (a) {
       tick(a.who || "crew", a.what || "");
       return { said: true };
     },
     cursor: function (a) {
-      if (a.name) O.cursor.setName(a.name);
+      if (a.label || a.name) O.cursor.setName(a.label || a.name);
       if (a.press) return O.cursor.press();
       if (a.x != null && a.y != null) return O.cursor.moveTo(a.x, a.y, { ms: a.ms });
       return O.cursor.at();
     },
     panel: function (a) {
-      if (a.open != null) a.open ? O.panel.open() : O.panel.close();
-      if (a.accounts || a.now != null || a.ticks || a.running != null) O.panel.set(a);
-      return { open: O.panel.isOpen(), state: O.panel.state() };
+      // `show` is tri-state: true opens, false closes, undefined just redraws.
+      O.panel.set(a);
+      if (a.show === true) O.panel.open();
+      else if (a.show === false) O.panel.close();
+      return { open: O.panel.isOpen() };
     },
+
     stop: function (a) {
       if (a.resume) {
         O.hands.resume();
-        O.panel.set({ running: true });
-        return { running: true };
+        O.panel.set({ stopped: false, paused: false });
+        return { stopped: false };
       }
       O.hands.stop();
-      O.panel.set({ running: false, now: "stopped" });
-      return { running: false };
+      O.panel.set({ stopped: true });
+      return { stopped: true };
     },
   };
 
@@ -1574,13 +2063,24 @@
   }
 
   function hello() {
-    send({
+    var base = {
       t: "hello",
       url: location.href,
       platform: O.read.platform(),
       signedIn: O.read.signedIn(),
-      handle: O.read.handle(),
-    });
+    };
+    return O.read
+      .handle()
+      .then(function (h) {
+        base.handle = h;
+        send(base);
+        return base;
+      })
+      .catch(function () {
+        base.handle = null;
+        send(base);
+        return base;
+      });
   }
 
   root.__organic = {

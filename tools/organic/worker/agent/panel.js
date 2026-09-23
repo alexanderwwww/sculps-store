@@ -22,16 +22,28 @@
   var lastAttach = 0;
   var observer = null;
 
+  /**
+   * Exactly the state the brain pushes. Nothing here is computed locally and
+   * nothing is stored — a reload starts from this shape again.
+   */
   var state = {
+    phase: null,
+    build: null,
+    paused: false,
+    stopped: false,
+    doing: null,
+    showing: null,
+    mcp: null,
     accounts: [
-      { platform: "instagram", label: "Instagram", handle: null, on: false },
-      { platform: "tiktok", label: "TikTok", handle: null, on: false },
-      { platform: "youtube", label: "YouTube", handle: null, on: false },
+      { platform: "instagram", state: "off", handle: null },
+      { platform: "tiktok", state: "off", handle: null },
+      { platform: "youtube", state: "off", handle: null },
     ],
-    now: "idle",
-    ticks: [],
-    running: true,
+    jobs: [],
+    lines: [],
   };
+
+  var LABEL = { instagram: "Instagram", tiktok: "TikTok", youtube: "YouTube" };
 
   var FONT =
     "-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,sans-serif";
@@ -92,37 +104,56 @@
   function render() {
     if (!sheet) return;
     var h = ['<div class="bar"></div>'];
+
     h.push('<div class="hd">Accounts</div>');
-    state.accounts.forEach(function (a) {
+    (state.accounts || []).forEach(function (a) {
+      var on = a.state === "on" || a.state === "connected" || a.state === true;
+      var act = on ? "switch" : "connect";
+      var sub = a.handle ? (a.handle.charAt(0) === "@" ? a.handle : "@" + a.handle) : on ? String(a.state) : "connect";
       h.push(
-        '<div class="row" data-organic-act="' +
-          (a.on ? "switch" : "connect") +
-          '" data-organic-platform="' +
-          esc(a.platform) +
-          '"><span class="dot' +
-          (a.on ? " on" : "") +
-          '"></span><span class="grow">' +
-          esc(a.label) +
-          '</span><span class="sub">' +
-          esc(a.handle ? "@" + a.handle : a.on ? "connected" : "connect") +
-          "</span></div>",
+        '<div class="row" data-organic-do="' + act +
+          '" data-organic-platform="' + esc(a.platform) +
+          '"><span class="dot' + (on ? " on" : "") + '"></span>' +
+          '<span class="grow">' + esc(a.label || LABEL[a.platform] || a.platform) + "</span>" +
+          '<span class="sub">' + esc(sub) + "</span></div>",
       );
     });
+
     h.push('<div class="hd">Now</div>');
-    h.push('<div class="row"><span class="grow">' + esc(state.now) + "</span></div>");
-    if (state.ticks.length) {
+    var now = state.stopped
+      ? "stopped"
+      : state.paused
+        ? "paused"
+        : state.doing || state.showing || state.phase || "idle";
+    h.push('<div class="row"><span class="grow">' + esc(now) + "</span>" +
+      (state.build ? '<span class="sub">' + esc(state.build) + "</span>" : "") + "</div>");
+    if (state.mcp) h.push('<div class="tick">mcp: ' + esc(state.mcp) + "</div>");
+
+    var jobs = (state.jobs || []).slice(-3);
+    if (jobs.length) {
+      h.push('<div class="hd">Jobs</div>');
+      jobs.forEach(function (j) {
+        h.push('<div class="tick">' + esc((j.who ? j.who + " — " : "") + (j.what || "")) +
+          (j.state ? " (" + esc(j.state) + ")" : "") + "</div>");
+      });
+    }
+
+    var lines = (state.lines || []).slice(-5);
+    if (lines.length) {
       h.push('<div class="hd">Lately</div>');
-      state.ticks.slice(-5).forEach(function (t) {
+      lines.forEach(function (l) {
+        var t = typeof l === "string" ? l : (l.who ? l.who + ": " : "") + (l.what || "");
         h.push('<div class="tick">' + esc(t) + "</div>");
       });
     }
+
     h.push(
-      '<div class="btns"><div class="btn stop" data-organic-act="stop">Stop</div>' +
-        '<div class="btn go" data-organic-act="resume">Resume</div></div>',
+      '<div class="btns"><div class="btn stop" data-organic-do="stop">Stop</div>' +
+        '<div class="btn go" data-organic-do="resume">Resume</div></div>',
     );
     h.push(
       '<div class="drag"><span class="move" data-organic-window="move">drag to move</span>' +
-        '<span class="quit" data-organic-window="quit">Quit</span></div>',
+        '<span class="quit" data-organic-do="quit" data-organic-window="quit">Quit</span></div>',
     );
     sheet.innerHTML = h.join("");
   }
@@ -151,27 +182,27 @@
     });
 
     sheet.addEventListener("click", function (ev) {
-      var t = ev.target;
-      while (t && t !== sheet && !t.getAttribute) t = t.parentNode;
       var hit = null;
       var n = ev.target;
       while (n && n !== sheet) {
-        if (n.getAttribute && (n.getAttribute("data-organic-act") || n.getAttribute("data-organic-window"))) {
+        if (n.getAttribute && (n.getAttribute("data-organic-do") || n.getAttribute("data-organic-window"))) {
           hit = n;
           break;
         }
         n = n.parentNode;
       }
       if (!hit) return;
-      var win = hit.getAttribute("data-organic-window");
-      if (win) {
-        send({ t: "window", do: win });
+      var act = hit.getAttribute("data-organic-do");
+      var platform = hit.getAttribute("data-organic-platform") || null;
+      if (act) {
+        // The panel only ever asks. The brain decides and pushes state back.
+        send({ t: "asked", do: act, platform: platform });
+        if (act === "quit") send({ t: "window", do: "quit" });
+        if (act === "stop" || act === "resume") setOpen(false);
         return;
       }
-      var act = hit.getAttribute("data-organic-act");
-      var platform = hit.getAttribute("data-organic-platform") || null;
-      send({ t: "asked", what: act, platform: platform });
-      if (act === "stop" || act === "resume") setOpen(false);
+      var win = hit.getAttribute("data-organic-window");
+      if (win) send({ t: "window", do: win });
     });
 
     // dragging the move strip asks Swift to move the window
@@ -253,16 +284,18 @@
     /** The brain owns the contents. This only draws what it is given. */
     set: function (patch) {
       if (!patch) return state;
-      if (patch.accounts) state.accounts = patch.accounts;
-      if (patch.now != null) state.now = patch.now;
-      if (patch.running != null) state.running = !!patch.running;
-      if (patch.ticks) state.ticks = patch.ticks.slice(-20);
+      [
+        "phase", "build", "paused", "stopped", "doing", "showing", "mcp",
+        "accounts", "jobs", "lines",
+      ].forEach(function (k) {
+        if (patch[k] !== undefined) state[k] = patch[k];
+      });
+      if (state.lines && state.lines.length > 20) state.lines = state.lines.slice(-20);
       render();
       return state;
     },
     tick: function (who, what) {
-      state.ticks.push((who ? who + ": " : "") + what);
-      if (state.ticks.length > 20) state.ticks = state.ticks.slice(-20);
+      state.lines = (state.lines || []).concat([{ who: who, what: what }]).slice(-20);
       render();
     },
     state: function () {

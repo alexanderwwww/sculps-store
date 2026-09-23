@@ -53,15 +53,15 @@
     send({ t: "tick", who: who, what: what });
   }
 
-  function elFor(a) {
-    if (a.selector) return document.querySelector(a.selector);
-    if (a.what) {
-      var s = O.sites[O.read.platform()];
-      if (!s) return null;
-      if (a.what === "like") return s.likeButton();
-      if (a.what === "comment") return s.commentBox();
-      if (a.what === "reel") return s.openReel();
-    }
+  /** The named things the brain taps: like, comment, next, profile. */
+  function targetEl(name, a) {
+    if (a && a.selector) return document.querySelector(a.selector);
+    var s = O.sites[O.read.platform()];
+    if (!s) return null;
+    if (name === "like") return s.likeButton();
+    if (name === "comment") return s.commentBox();
+    if (name === "profile") return s.profileLink ? s.profileLink() : null;
+    if (name === "reel") return s.openReel();
     return null;
   }
 
@@ -75,58 +75,93 @@
       return O.hands.scroll(a.px == null ? root.innerHeight : a.px, { pace: a.pace });
     },
     tap: function (a) {
-      if (a.x != null && a.y != null) return O.hands.tapAt(a.x, a.y, a);
-      var el = elFor(a);
-      if (!el) throw new Error("nothing to tap: " + (a.selector || a.what || "?"));
-      return O.hands.tapEl(el, a);
+      if (a.x != null && a.y != null)
+        return O.hands.tapAt(a.x, a.y, a).then(function (r) {
+          return { found: !!r.hit, changed: !!r.changed };
+        });
+      var name = a.target || a.what || null;
+      var site = O.sites[O.read.platform()];
+      // "next" is not a button on mobile: a reel advances by one viewport.
+      if (name === "next") {
+        var how = site && site.nextReel ? site.nextReel() : null;
+        if (!how) return { found: false, changed: false };
+        var y0 = root.scrollY;
+        return O.hands.scroll(how.px, { pace: "skim" }).then(function () {
+          return { found: true, changed: root.scrollY !== y0 };
+        });
+      }
+      var el = targetEl(name, a);
+      if (!el) return { found: false, changed: false }; // never a guess
+      return O.hands.tapEl(el, a).then(function (r) {
+        return { found: true, changed: !!r.changed, stillThere: !!r.stillThere };
+      });
     },
+
     type: function (a) {
-      var into = a.selector || a.into || null;
-      if (!into && a.what) into = elFor({ what: a.what });
-      return O.hands.type(a.text, { into: into, delays: a.delays, typos: a.typos });
+      var into = a.selector || null;
+      var name = a.into || a.what || "comment";
+      if (!into) into = targetEl(name === "comment" ? "comment" : name, {});
+      if (!into) return { ok: false, error: "no field: " + name };
+      // The brain sends the rhythm as strokes; the hands only play it.
+      return O.hands.type(a.text, {
+        into: into,
+        strokes: a.strokes,
+        delays: a.delays,
+        typos: a.typos,
+      });
     },
+
     dwell: function (a) {
       return O.hands.dwell(a.ms == null ? 800 : a.ms);
     },
     read: function (a) {
       var what = a.what || "page";
-      if (what === "posts") return { posts: O.read.posts() };
-      if (what === "tags") return { tags: O.read.tags() };
-      if (what === "handle") return { handle: O.read.handle() };
-      if (what === "signedIn") return { signedIn: O.read.signedIn() };
-      return {
-        url: location.href,
-        platform: O.read.platform(),
-        signedIn: O.read.signedIn(),
-        handle: O.read.handle(),
-        posts: O.read.posts(),
-        tags: O.read.tags(),
-      };
+      if (what === "posts") return O.read.posts();
+      if (what === "tags") return O.read.tags();
+      if (what === "text") return O.read.bodyText(4000);
+      if (what === "ads") return O.read.ads();
+      if (what === "store") return O.read.store(a.url, a);
+      if (what === "handle") return O.read.handle(a.platform);
+      if (what === "signedIn") return O.read.signedIn(a.platform);
+      return O.read.handle(a.platform).then(function (h) {
+        return {
+          url: location.href,
+          platform: O.read.platform(),
+          signedIn: O.read.signedIn(),
+          handle: h,
+          posts: O.read.posts(),
+          tags: O.read.tags(),
+        };
+      });
     },
+
     say: function (a) {
       tick(a.who || "crew", a.what || "");
       return { said: true };
     },
     cursor: function (a) {
-      if (a.name) O.cursor.setName(a.name);
+      if (a.label || a.name) O.cursor.setName(a.label || a.name);
       if (a.press) return O.cursor.press();
       if (a.x != null && a.y != null) return O.cursor.moveTo(a.x, a.y, { ms: a.ms });
       return O.cursor.at();
     },
     panel: function (a) {
-      if (a.open != null) a.open ? O.panel.open() : O.panel.close();
-      if (a.accounts || a.now != null || a.ticks || a.running != null) O.panel.set(a);
-      return { open: O.panel.isOpen(), state: O.panel.state() };
+      // `show` is tri-state: true opens, false closes, undefined just redraws.
+      O.panel.set(a);
+      if (a.show === true) O.panel.open();
+      else if (a.show === false) O.panel.close();
+      return { open: O.panel.isOpen() };
     },
+
     stop: function (a) {
       if (a.resume) {
         O.hands.resume();
-        O.panel.set({ running: true });
-        return { running: true };
+        O.panel.set({ stopped: false, paused: false });
+        return { stopped: false };
       }
       O.hands.stop();
-      O.panel.set({ running: false, now: "stopped" });
-      return { running: false };
+      O.panel.set({ stopped: true });
+      return { stopped: true };
     },
   };
 
@@ -165,13 +200,24 @@
   }
 
   function hello() {
-    send({
+    var base = {
       t: "hello",
       url: location.href,
       platform: O.read.platform(),
       signedIn: O.read.signedIn(),
-      handle: O.read.handle(),
-    });
+    };
+    return O.read
+      .handle()
+      .then(function (h) {
+        base.handle = h;
+        send(base);
+        return base;
+      })
+      .catch(function () {
+        base.handle = null;
+        send(base);
+        return base;
+      });
   }
 
   root.__organic = {

@@ -52,6 +52,12 @@
       return h ? "https://www.tiktok.com/@" + h : null;
     },
 
+    profileLink: function () {
+      var el =
+        document.querySelector('[data-e2e="profile-icon"]') || O.find.oneByLabel(/^profile$/i);
+      return el && O.find.visible(el) ? O.find.clickable(el) : null;
+    },
+
     isLoginPage: function () {
       if (/\/login/.test(location.pathname)) return true;
       var pw = document.querySelector('input[type="password"]');

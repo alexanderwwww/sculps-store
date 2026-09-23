@@ -20,6 +20,7 @@ export const ORDER = [
   "sites/common.js",
   "sites/instagram.js",
   "sites/tiktok.js",
+  "sites/youtube.js",
   "read.js",
   "hands.js",
   "panel.js",

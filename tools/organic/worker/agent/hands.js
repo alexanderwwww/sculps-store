@@ -42,9 +42,10 @@
    */
   function scroll(px, opts) {
     opts = opts || {};
+    // the brain's paces: "read" is a slow browse, "skim" is a fast flick
     var pace = opts.pace || "easy";
-    var perStep = pace === "fast" ? 34 : pace === "slow" ? 12 : 22;
-    var burst = pace === "fast" ? 9 : pace === "slow" ? 4 : 6;
+    var perStep = pace === "skim" || pace === "fast" ? 34 : pace === "read" || pace === "slow" ? 12 : 22;
+    var burst = pace === "skim" || pace === "fast" ? 9 : pace === "read" || pace === "slow" ? 4 : 6;
     var dir = px < 0 ? -1 : 1;
     var left = Math.abs(px);
     var steps = 0;
@@ -219,11 +220,14 @@
   }
 
   /**
-   * type(text, {into, delays, typos})
-   * The brain sends the per-character delays and any typo it wants — this
-   * invents no rhythm of its own. `delays` is an array of ms, one per
-   * character (short arrays repeat their last value). `typos` is a list of
-   * {at, ch}: a wrong character typed at that index, then backspaced.
+   * type(text, {into, strokes, delays, typos})
+   *
+   * `strokes` is what the brain actually sends: [{key, delayMs}], where a key
+   * of "\b" is a backspace. The strokes ARE the rhythm — they are played back
+   * exactly, and nothing here invents timing of its own.
+   * `delays` + `typos` are the older, simpler form and are turned into the
+   * same strokes: one ms per character (a short array repeats its last value),
+   * and {at, ch} for a wrong character typed at that index then backspaced.
    * The only field this ever reads back is the one it typed into.
    */
   function type(text, opts) {
@@ -242,12 +246,23 @@
     };
     var editable = el.isContentEditable && !("value" in el);
 
-    var write = function (v) {
-      if (editable) {
-        el.textContent = v;
-      } else {
-        setValue(el, v);
+    // strokes win when they are there; otherwise the text + delays form
+    var strokes = Array.isArray(opts.strokes) ? opts.strokes.slice() : null;
+    if (!strokes) {
+      strokes = [];
+      for (var si = 0; si < text.length; si++) {
+        for (var ti = 0; ti < typos.length; ti++)
+          if (typos[ti].at === si) {
+            strokes.push({ key: typos[ti].ch, delayMs: at(si) });
+            strokes.push({ key: "\b", delayMs: typos[ti].pause || at(si) * 3 });
+          }
+        strokes.push({ key: text.charAt(si), delayMs: at(si) });
       }
+    }
+
+    var write = function (v) {
+      if (editable) el.textContent = v;
+      else setValue(el, v); // the native setter, so React notices
       el.dispatchEvent(new root.Event("input", { bubbles: true, composed: true }));
     };
 
@@ -267,31 +282,19 @@
         var i = 0;
         return new Promise(function (done) {
           (function next() {
-            if (stopped || i >= text.length) {
+            if (stopped || i >= strokes.length) {
               el.dispatchEvent(new root.Event("change", { bubbles: true }));
-              return done({
-                ok: true,
-                typed: editable ? el.textContent : el.value,
-              });
+              // the one field the agent ever reads: the box it just typed into
+              return done({ ok: true, typed: editable ? el.textContent : el.value });
             }
-            var typo = null;
-            for (var t = 0; t < typos.length; t++) if (typos[t].at === i) typo = typos[t];
-            var d = at(i);
+            var st = strokes[i++] || {};
+            var wait = st.delayMs == null ? 55 : st.delayMs;
             root.setTimeout(function () {
-              if (typo) {
-                cur += typo.ch;
-                write(cur);
-                return root.setTimeout(function () {
-                  cur = cur.slice(0, -1);
-                  write(cur);
-                  root.setTimeout(next, d);
-                }, typo.pause || d * 3);
-              }
-              cur += text.charAt(i);
+              if (st.key === "\b" || st.key === "Backspace") cur = cur.slice(0, -1);
+              else cur += st.key == null ? "" : String(st.key);
               write(cur);
-              i++;
               next();
-            }, d);
+            }, wait);
           })();
         });
       });
