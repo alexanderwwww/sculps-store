@@ -109,7 +109,9 @@ function orderError(cmd: string): string | null {
  * in those positions, and never a "..": this writes to disk on somebody's
  * Mac, and a path in a filename is the one thing that must not get through.
  */
-const RUNTIME_FILE = /^(ui\/)?[\w.-]+\.(mjs|json|html)$/;
+/* The worker's own files, the crew's code that runs inside the phone, and a
+   skill. A .js is allowed now because the page's agent is plain script. */
+const RUNTIME_FILE = /^(?:[\w.-]+\.(?:mjs|js|json|html)|(?:agent|ui)\/[\w.-]+\.(?:js|html))$/;
 const SKILL_FILE = /^skills\/[\w.-]+\.md$/;
 
 function runtimeFileOk(name: string): boolean {
