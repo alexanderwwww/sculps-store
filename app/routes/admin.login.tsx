@@ -60,7 +60,9 @@ export async function action({ context, request }: Route.ActionArgs) {
   const form = await request.formData();
   const intent = String(form.get("intent") || "");
   const next = String(form.get("next") || "/admin");
-  const safeNext = next.startsWith("/admin") ? next : "/admin";
+  /* Where sign-in may send him: the admin, or the phone page he came from.
+     Anywhere else is somebody else's idea and goes to the admin instead. */
+  const safeNext = next.startsWith("/admin") || next === "/m" || next.startsWith("/m?") ? next : "/admin";
 
   if (intent === "google") {
     const config = googleConfig(context.cloudflare.env);

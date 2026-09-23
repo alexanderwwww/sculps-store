@@ -206,7 +206,8 @@ export function checkState(request: Request, returned: string | null): string | 
   const stored = readCookie(request, OAUTH_STATE_COOKIE);
   if (!stored || !returned || stored !== returned) return null;
   const next = decodeURIComponent(stored.split(":").slice(1).join(":") || "");
-  return next.startsWith("/admin") ? next : "/admin";
+  /* The admin, or the phone page he signed in from. Nothing else. */
+  return next.startsWith("/admin") || next === "/m" || next.startsWith("/m?") ? next : "/admin";
 }
 
 export function clearedStateCookie(url: URL): string {
