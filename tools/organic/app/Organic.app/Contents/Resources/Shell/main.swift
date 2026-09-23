@@ -196,6 +196,16 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     config.mediaTypesRequiringUserActionForPlayback = []
     config.userContentController.add(self, name: "organic")
     config.preferences.setValue(true, forKey: "developerExtrasEnabled")
+    /*
+     * Finish the user agent.
+     *
+     * A WKWebView's default agent stops at "AppleWebKit/605.1.15 (KHTML, like
+     * Gecko)" — no Version, no Safari. Instagram's own API answered that with
+     * "useragent mismatch" and refused to say who was signed in. This is the
+     * supported way to complete it: the engine is Safari's, and now the name
+     * says so too.
+     */
+    config.applicationNameForUserAgent = "Version/17.4 Safari/605.1.15"
 
     let inset = PhoneView.bezel
     let view = WKWebView(frame: container.bounds.insetBy(dx: inset, dy: inset), configuration: config)
