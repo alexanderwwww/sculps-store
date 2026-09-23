@@ -1,24 +1,44 @@
 /**
- * Its own Chrome, headless, with its own profile.
+ * Its own browser, its own folder, no ports.
  *
- * Real Google Chrome rather than Playwright's Chromium, because the accounts
- * are real and the sites look at the browser. Headless, because the window is
- * the Swift shell's — the pages are shown as live screens of themselves and
- * Chrome never gets a window of its own. If a platform refuses headless,
- * ORGANIC_HEADED=1 runs it headed with its window parked off-screen: still
- * one visible window.
+ * This used to launch the Google Chrome on the Mac with a debugging port and
+ * attach to it. On Alex's machine that failed every single time with "Chrome
+ * did not open a debugging port on 9444" — because his own Chrome was already
+ * open, and macOS hands a second launch of the same app to the copy that is
+ * already running, which throws our flags away. Nothing in this file could
+ * fix that: it was a fight with the browser he uses all day.
+ *
+ * So the app brings its own. Playwright's Chromium, started directly into a
+ * persistent profile of its own — no debugging port to be taken, no singleton
+ * lock to collide with, and his Chrome is never touched. It costs a download
+ * the first time the app opens.
+ *
+ * Every page in it is an iPhone: 390x844 at three times the pixels, touch,
+ * iPhone user agent. Instagram and TikTok then serve their mobile site, which
+ * is lighter to paint, quicker to stream, and the shape Alex asked to look at.
+ * The market screen is put back to a desktop in Screens, because the Ad
+ * Library is a desktop page.
  */
 import { chromium } from "playwright";
-import { spawn } from "node:child_process";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 
+/** What a current iPhone says it is. */
+export const IPHONE = {
+  userAgent:
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 " +
+    "(KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+  viewport: { width: 390, height: 844 },
+  deviceScaleFactor: 3,
+  isMobile: true,
+  hasTouch: true,
+};
+
 /**
- * Remove the singleton files a dead Chrome left in a profile.
+ * Remove the singleton files a dead browser left in a profile.
  *
- * Only ever called when nothing answers on the debugging port, which means
- * no running Chrome owns this profile. On macOS these are symlinks, so
- * `rm` with force is the whole job; a missing one is not an error.
+ * Kept because the profile is still a Chromium profile: killed mid-run it
+ * leaves the same lock, and the next start would die on it.
  */
 export async function clearStaleLocks(profile) {
   const cleared = [];
@@ -27,7 +47,7 @@ export async function clearStaleLocks(profile) {
       await rm(join(profile, name), { force: true, recursive: true });
       cleared.push(name);
     } catch {
-      /* not there, or not ours to remove: starting will say so itself */
+      /* not there, or not ours to remove */
     }
   }
   return cleared;
@@ -53,14 +73,20 @@ export function chromePath() {
  * Alex looks at, and the app's own window is still the only thing he sees.
  * ORGANIC_HEADLESS=1 forces the old behaviour; the Linux tests set it.
  */
-export function chromeArgs({ port, profile, headed = process.env.ORGANIC_HEADLESS !== "1" }) {
+export function chromeArgs({ headed = process.env.ORGANIC_HEADLESS !== "1" } = {}) {
   return [
+    /*
+     * Headed, but parked where no screen is.
+     *
+     * Headless paints in software on macOS: no GPU, every frame composited on
+     * the CPU, and a heavy feed turns into a slideshow. Headed at -4000,-4000
+     * gets the GPU and is still never on a display Alex looks at — the app's
+     * own window stays the only thing he sees.
+     */
     ...(headed
-      ? ["--window-position=-4000,-4000", "--window-size=1280,900", "--disable-backgrounding-occluded-windows",
+      ? ["--window-position=-4000,-4000", "--disable-backgrounding-occluded-windows",
          "--disable-renderer-backgrounding", "--disable-features=CalculateNativeWinOcclusion"]
-      : ["--headless=new"]),
-    `--remote-debugging-port=${port}`,
-    `--user-data-dir=${profile}`,
+      : []),
     "--no-first-run",
     "--no-default-browser-check",
     "--hide-crash-restore-bubble",
@@ -72,74 +98,62 @@ export function chromeArgs({ port, profile, headed = process.env.ORGANIC_HEADLES
     "--password-store=basic",
     "--disable-search-engine-choice-screen",
     "--disable-features=ChromeWhatsNewUI,PrivacySandboxSettings4,PrivacySandboxSettings3,SidePanelPinning,OptimizationGuideModelDownloading",
-    "--window-size=1280,900",
     ...(process.env.ORGANIC_CHROME_ARGS ? process.env.ORGANIC_CHROME_ARGS.split(" ").filter(Boolean) : []),
-    "about:blank",
   ];
 }
 
 /**
- * Connect to the Chrome on `port`, starting one if nothing answers.
- *
- * A Chrome that is already there — from before a self-update restart — is
- * attached to, tabs and sessions intact. Exactly one context is ever used;
- * pages are created only by Screens.
+ * A persistent context is not a Browser, and the rest of the app holds a
+ * Browser. This is the two lines of difference, in one place: the context is
+ * the only context, closing the app closes it, and "disconnected" is the
+ * context closing.
  */
-export async function openChrome({ port = 9444, profile } = {}) {
+function asBrowser(context) {
+  return {
+    contexts: () => [context],
+    newContext: async () => context,
+    on: (event, handler) => context.on(event === "disconnected" ? "close" : event, handler),
+    close: () => context.close(),
+    isConnected: () => true,
+    __context: context,
+  };
+}
+
+/**
+ * Start the app's own browser on its own profile.
+ *
+ * No port and no attach step: nothing else can be holding this profile, so
+ * there is nothing to connect to. A lock from a browser that was killed is
+ * cleared first — the only thing that survives from the old way.
+ */
+export async function openChrome({ profile, phone = true } = {}) {
   if (!profile) throw new Error("openChrome needs a profile directory");
-  const endpoint = `http://127.0.0.1:${port}`;
-  try {
-    const browser = await chromium.connectOverCDP(endpoint, { timeout: 4000 });
-    return { browser, started: false, child: null };
-  } catch {
-    /* nothing listening yet — start one */
-  }
-
-  const bin = chromePath();
-  const args = chromeArgs({ port, profile });
-
-  /*
-   * A lock left behind by a Chrome that is no longer running.
-   *
-   * Chrome writes SingletonLock into the profile so two copies cannot share
-   * it. Quit it properly and the lock goes; kill it, lose power, or let the
-   * app restart while it is still shutting down, and the lock stays — and the
-   * next start dies with "Failed to create .../SingletonLock: File exists",
-   * forever, until somebody deletes a file they have never heard of.
-   *
-   * Nothing is listening on the debugging port at this point (the attach
-   * above failed), so no live Chrome owns this profile. The lock is stale and
-   * it is ours to clear.
-   */
   await clearStaleLocks(profile);
 
-  /*
-   * spawn, not execFile: execFile buffers stderr up to a megabyte and then
-   * kills the child, and Chrome writes to stderr steadily. Only the first
-   * line is kept, for the error message; the rest is drained.
-   */
-  let why = null;
-  let exited = false;
-  const child = spawn(bin, args, { stdio: ["ignore", "ignore", "pipe"], detached: false });
-  child.on("error", (error) => { why = error.message; exited = true; });
-  child.on("exit", (code) => { exited = true; if (!why) why = `exited with ${code}`; });
-  child.stderr?.once("data", (chunk) => { why = String(chunk).trim().split("\n")[0]; });
-  child.stderr?.on("data", () => {});
-  child.unref?.();
+  const options = {
+    headless: process.env.ORGANIC_HEADLESS === "1",
+    args: chromeArgs(),
+    ignoreDefaultArgs: ["--enable-automation"],
+    ...(phone ? IPHONE : { viewport: { width: 1280, height: 900 } }),
+    locale: "en-US",
+    ...(process.env.ORGANIC_CHROME || process.env.OX_CHROME
+      ? { executablePath: process.env.ORGANIC_CHROME || process.env.OX_CHROME }
+      : {}),
+  };
 
-  for (let i = 0; i < 60; i++) {
-    await sleep(250);
-    if (exited && child.exitCode !== null) break;
-    try {
-      const browser = await chromium.connectOverCDP(endpoint, { timeout: 3000 });
-      return { browser, started: true, child };
-    } catch {
-      /* keep waiting */
-    }
+  let context;
+  try {
+    context = await chromium.launchPersistentContext(profile, options);
+  } catch (error) {
+    /*
+     * Said in the words of what to do about it. The usual cause on a first
+     * run is the browser not being downloaded yet, which the launcher does —
+     * so this is what a half-finished install looks like.
+     */
+    const why = String(error?.message ?? error).split("\n")[0];
+    throw new Error(`the browser would not start: ${why}`);
   }
-  throw new Error(
-    `Chrome did not open a debugging port on ${port}. Tried: ${bin}` + (why ? ` — it said: ${why}` : ""),
-  );
+  return { browser: asBrowser(context), context, started: true, child: null };
 }
 
 /**

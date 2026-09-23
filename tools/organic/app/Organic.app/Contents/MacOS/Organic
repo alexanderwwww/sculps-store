@@ -33,11 +33,10 @@ if ! command -v node >/dev/null 2>&1; then
   alert "Node is not installed. In Terminal: brew install node — then open Organic again."
   exit 1
 fi
+# Google Chrome is no longer needed for the work — the app has its own browser
+# — but the fallback window (when Swift cannot build) is still a Chrome window,
+# so this is where it is found rather than something to refuse to start over.
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-if [ ! -x "$CHROME" ] && [ -z "${ORGANIC_CHROME:-}" ]; then
-  alert "Google Chrome is not installed. Install it from google.com/chrome — then open Organic again."
-  exit 1
-fi
 # Swift is how the native window gets built, once. It is not required to
 # run: if it is missing or broken, the app still opens (see below).
 SWIFTC="$(xcrun -f swiftc 2>/dev/null || true)"
@@ -46,7 +45,7 @@ SWIFTC="$(xcrun -f swiftc 2>/dev/null || true)"
 # --- the worker, installed beside itself ----------------------------------
 # The bundle's build; a live push writes a higher one into worker/BUILD and
 # this must never copy over it.
-BUNDLE_BUILD=1
+BUNDLE_BUILD=10
 RUNTIME_BUILD=0
 if [ -f "$SUPPORT/worker/BUILD" ]; then
   RUNTIME_BUILD="$(tr -dc '0-9' < "$SUPPORT/worker/BUILD")"
@@ -164,7 +163,10 @@ PORT="$(node -e 'const s=require("net").createServer();s.listen(0,"127.0.0.1",()
 export ORGANIC_PORT="$PORT"
 export ORGANIC_PARENT_PID="$$"
 export ORGANIC_HOME="$SUPPORT"
-export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+# The app brings its own browser now, so the download is the point rather
+# than something to skip: Alex's own Chrome cannot be borrowed without macOS
+# handing the launch to the copy he already has open.
+export PLAYWRIGHT_BROWSERS_PATH="$SUPPORT/browser"
 
 # The worker, restarted on 75 (it updated itself) and left alone otherwise.
 # It watches the window's pid and exits when the window is gone.
@@ -176,7 +178,8 @@ export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
   cd "$SUPPORT/worker" || exit 1
   if needs_deps; then
     say "installing dependencies"
-    if ! PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 run_bounded 420 npm install --no-audit --no-fund; then
+    say "this takes a minute the first time — it is fetching its own browser"
+    if ! run_bounded 900 npm install --no-audit --no-fund; then
       /usr/bin/osascript -e 'on run argv' -e 'display alert "Organic" message (item 1 of argv)' -e 'end run' \
         "Could not install what the worker needs. Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')" >/dev/null 2>&1
       exit 1
@@ -227,6 +230,10 @@ fi
 say "opening the fallback window"
 /usr/bin/osascript -e 'on run argv' -e 'display alert "Organic" message (item 1 of argv)' -e 'end run' \
   "Opening in the fallback window: Apple's build tools could not build the native one. The app works the same. To get the native window, run this once in Terminal and open Organic again:   xcode-select --install" >/dev/null 2>&1 &
+if [ ! -x "${ORGANIC_CHROME:-$CHROME}" ]; then
+  alert "The window could not be built and Google Chrome is not installed to fall back to. In Terminal: xcode-select --install — then open Organic again."
+  exit 1
+fi
 exec "${ORGANIC_CHROME:-$CHROME}" \
   --app="http://127.0.0.1:$PORT/" \
   --user-data-dir="$SUPPORT/window" \

@@ -33,11 +33,11 @@ await screens.focus(null);
 const stray = await ctx.newPage();
 await stray.goto("http://ig.test/stray").catch(() => {});
 
-// Restart: drop the connection, reattach to the same Chrome, adopt.
+// Restart: the worker comes back with an empty tab map over a browser that
+// still has the pages. (The browser is this process's now — closing it would
+// close it, so the restart is the worker forgetting, not the browser dying.)
 await screens.dispose();
-await browser.close(); // disconnects; Chrome keeps running
 await sleep(300);
-({ browser } = await openChrome({ port: PORT, profile: PROFILE })); // attaches: something answers on the port
 screens = new Screens(browser, { hosts: HOSTS });
 const adopted = await screens.adopt();
 check("adopt after restart finds both by host", adopted.includes("instagram") && adopted.includes("tiktok"), adopted.join(","));

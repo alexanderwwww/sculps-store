@@ -22,7 +22,7 @@ const CDP = 9465;
 const EXE = process.env.OX_CHROME;
 const guard = setTimeout(() => { console.log("HARD STOP"); process.exit(9); }, 240000);
 
-execSync(`rm -rf ${HOME}; fuser -k ${CDP}/tcp 2>/dev/null || true`);
+execSync(`rm -rf ${HOME}`);
 await mkdir(WORKER, { recursive: true });
 await cp(join(here, "..", "worker"), WORKER, { recursive: true });
 // The other agents' modules are stubbed here: this test is main's wiring, not their page reading.
@@ -157,11 +157,11 @@ check("connect while working marks youtube waiting", Boolean(ytWaiting));
 check("...and the screen is focused for the sign-in", await page.$eval("#focus", (e) => e.classList.contains("on")));
 await page.keyboard.press("Escape");
 check("Escape returns to the grid", !(await page.$eval("#focus", (e) => e.classList.contains("on"))));
+// The browser is the worker's own now — there is no debugging port to look
+// through — so the worker reports the count and the window carries it.
 {
-  const peek = await chromium.connectOverCDP(`http://127.0.0.1:${CDP}`);
-  const live = peek.contexts()[0].pages().filter((p) => !p.isClosed());
-  check("four pages, no strays (instagram, tiktok, market, youtube)", live.length === 4, live.map((p) => p.url()).join(" "));
-  await peek.close();
+  const open = await page.evaluate(() => window.__organic.pages);
+  check("four pages, no strays (instagram, tiktok, market, youtube)", open === 4, String(open));
 }
 await sleep(3500);
 check("a waiting screen is polled while working (still waiting, not connected)", await page.evaluate(() => window.__organic.screens.youtube.state) === "waiting");
@@ -173,6 +173,6 @@ check("stdin closing ends boot 3 cleanly", code3 === 0, String(code3));
 clearTimeout(guard);
 await ui.close();
 await cloud.close();
-execSync(`fuser -k ${CDP}/tcp 2>/dev/null || true`);
+
 console.log(failures() ? `\n${failures()} FAILED` : "\nall passed");
 process.exit(failures() ? 1 : 0);

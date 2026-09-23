@@ -31,7 +31,7 @@ import { isAwake, planDay, scatterAcrossDay, watchMs, react, dayBudget, scrollPa
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 4;
+export const BUILD = 10;
 
 const SUPPORT = process.env.ORGANIC_HOME || join(homedir(), "Library", "Application Support", "Organic");
 export const PATHS = {
@@ -84,6 +84,8 @@ function stateMsg() {
     brief: S.brief,
     // Where Claude plugs in. Shown in the window so it is never hunted for.
     mcp: (cloud?.base ?? "") + "/mcp",
+    // One page per screen and no strays: said out loud rather than trusted.
+    pages: screens?.livePages?.() ?? 0,
   };
 }
 const pushState = () => server?.broadcast(stateMsg());
@@ -873,12 +875,9 @@ async function shutdown(code = 0, { keepChrome = code === 75 } = {}) {
   try { await screens?.dispose(); } catch { /* fine */ }
   try { await report(); } catch { /* fine */ }
   try { await server?.close(); } catch { /* fine */ }
-  if (!keepChrome && browser && !chromeChild) {
-    // Attached, not started (a restart before this one): close() would only disconnect and leave a headless Chrome behind.
-    try { const s = await browser.newBrowserCDPSession(); await s.send("Browser.close"); } catch { /* already gone */ }
-  }
-  try { await browser?.close(); } catch { /* disconnects only */ }
-  if (!keepChrome && chromeChild && !chromeChild.killed) { try { chromeChild.kill(); } catch { /* gone */ } }
+  // The browser is ours and nobody else's, so closing it closes it — there is
+  // no attached-versus-started case left to get wrong.
+  if (!keepChrome) { try { await browser?.close(); } catch { /* already gone */ } }
   process.exit(code);
 }
 
@@ -919,12 +918,12 @@ export async function main() {
   linkToClaude().catch(() => {});
   await report();
 
-  say("organic", "opening chrome");
+  say("organic", "opening the browser");
   let started = false;
-  ({ browser, child: chromeChild, started } = await openChrome({ port: CDP_PORT, profile: PATHS.chrome }));
+  ({ browser, child: chromeChild, started } = await openChrome({ profile: PATHS.chrome }));
   // Chrome gone (crashed, killed): every page call would fail quietly and the crew would idle for ever.
   // Restart the worker instead; it opens a fresh Chrome and the window reconnects.
-  browser.on("disconnected", () => { if (!quitting) { say("organic", "chrome went away — restarting"); shutdown(75, { keepChrome: true }); } });
+  browser.on("disconnected", () => { if (!quitting) { say("organic", "the browser went away — restarting"); shutdown(75, { keepChrome: false }); } });
   screens = new Screens(browser);
   screens.on("frame", (f) => { lastFrame[f.id] = { t: "frame", ...f }; if (server.hasClients()) server.broadcast(lastFrame[f.id]); });
   screens.on("cursor", (c) => server.broadcast(c));

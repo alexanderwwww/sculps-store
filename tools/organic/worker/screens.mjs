@@ -121,6 +121,11 @@ export function jpegSize(buf) {
   return { w: 0, h: 0 };
 }
 
+/** What the market screen says it is: a Mac, not a phone. */
+const DESKTOP_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) " +
+  "Chrome/140.0.0.0 Safari/537.36";
+
 export class Screens extends EventEmitter {
   /**
    * @param browser a Playwright browser from openChrome
@@ -148,6 +153,17 @@ export class Screens extends EventEmitter {
     const existing = this.browser.contexts();
     this._ctx = existing[0] ?? (await this.browser.newContext());
     return this._ctx;
+  }
+
+  /**
+   * How many pages are actually open, right now.
+   *
+   * The invariant Alex can see from across the room — one per screen and no
+   * strays — so it is reported rather than assumed. Synchronous on purpose:
+   * the status message is built without awaiting anything.
+   */
+  livePages() {
+    return this._ctx ? this._ctx.pages().filter((p) => !p.isClosed()).length : 0;
   }
 
   _idFor(url) {
@@ -201,6 +217,9 @@ export class Screens extends EventEmitter {
       }
       this.pages.set(id, page);
       page.once("close", () => { if (this.pages.get(id) === page) this.pages.delete(id); this.stopStream(id).catch(() => {}); });
+      // The browser hands out iPhones; the market screen is put back to a
+      // desktop the moment it exists, before anything is loaded into it.
+      if (id === "market") await this._sizePage(id, null).catch(() => {});
     }
     if (url && isBlank(page.url())) await this.navigate(id, url);
     return page;
@@ -448,6 +467,20 @@ export class Screens extends EventEmitter {
    * works at, so a session after a sign-in is not laid out for whatever shape
    * the window happened to be.
    */
+  /**
+   * What a screen goes back to when nobody is holding it.
+   *
+   * Every page in this browser is an iPhone — that is how the accounts are
+   * meant to look, and the mobile site is lighter to paint. The market screen
+   * is the exception: the Ad Library is a desktop page and reading it through
+   * a phone is reading it through a straw.
+   */
+  _restingView(id) {
+    return id === "market"
+      ? { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false }
+      : { width: 390, height: 844, deviceScaleFactor: 3, mobile: true };
+  }
+
   async _sizePage(id, view) {
     const session = await this._session(id);
     if (!session) return;
@@ -455,9 +488,12 @@ export class Screens extends EventEmitter {
     if (st) { st.vp = null; st.vpAt = 0; }
     try {
       if (!view) {
-        await session.send("Emulation.setDeviceMetricsOverride", {
-          width: 1280, height: 900, deviceScaleFactor: 1, mobile: false,
-        });
+        await session.send("Emulation.setDeviceMetricsOverride", this._restingView(id));
+        if (id === "market") {
+          /* A desktop page read on a desktop: the shape AND the name. Facebook
+             serves a different Ad Library to a phone, and it is the poorer one. */
+          await session.send("Emulation.setUserAgentOverride", { userAgent: DESKTOP_UA, platform: "MacIntel" }).catch(() => {});
+        }
         return;
       }
       const width = Math.max(600, Math.min(1800, Math.round(Number(view.w) || 1280)));

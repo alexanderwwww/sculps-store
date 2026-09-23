@@ -28,12 +28,9 @@ export async function until(fn, ms = 10000, step = 100) {
   }
 }
 
-/** A Chrome on its own port and profile; kill it with fuser afterwards. */
-export async function testChrome(port, profile) {
-  const { execSync } = await import("node:child_process");
-  try { execSync(`fuser -k ${port}/tcp 2>/dev/null`); } catch { /* nothing there */ }
-  await sleep(300);
-  return openChrome({ port, profile });
+/** The app's own browser on a throwaway profile. No port: it does not use one. */
+export async function testChrome(_port, profile) {
+  return openChrome({ profile });
 }
 
 /** Route every request on the context to a small fake site keyed by hostname. */
