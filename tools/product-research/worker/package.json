@@ -1,0 +1,9 @@
+{
+  "name": "research-worker",
+  "private": true,
+  "type": "module",
+  "description": "The research app's brain: it drives the one page in the phone and keeps what it finds.",
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

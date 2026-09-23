@@ -47,6 +47,7 @@ export default [
   route("wand/*", "routes/wand.$.tsx"),
   route("organicx/*", "routes/organicx.$.tsx"),
   route("organic/*", "routes/organic.$.tsx"),
+  route("research/*", "routes/research.$.tsx"),
   route("webhooks/stripe", "routes/webhooks.stripe.tsx"),
 
   // Admin. Sign-in lives outside the layout so it is reachable when signed out.
