@@ -96,6 +96,10 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   var window: NSWindow?
   var web: WKWebView?
   var body: PhoneView?
+  /** The crew's code, kept so a rebuilt view gets it too. */
+  var agentSource: String?
+  /** Which account's store the view is on. */
+  var currentProfile: String = "default"
 
   // the wire
   var session: URLSession?
@@ -186,26 +190,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     }
     win.contentView = container
 
-    let config = WKWebViewConfiguration()
-    config.websiteDataStore = WKWebsiteDataStore.default()
-    config.suppressesIncrementalRendering = false
-    config.preferences.javaScriptCanOpenWindowsAutomatically = true
-    // Reels autoplay: no user gesture needed. (allowsInlineMediaPlayback is an
-    // iOS-only property — on macOS every video is inline already, so there is
-    // nothing to set and naming it here would not compile.)
-    config.mediaTypesRequiringUserActionForPlayback = []
-    config.userContentController.add(self, name: "organic")
-    config.preferences.setValue(true, forKey: "developerExtrasEnabled")
-    /*
-     * Finish the user agent.
-     *
-     * A WKWebView's default agent stops at "AppleWebKit/605.1.15 (KHTML, like
-     * Gecko)" — no Version, no Safari. Instagram's own API answered that with
-     * "useragent mismatch" and refused to say who was signed in. This is the
-     * supported way to complete it: the engine is Safari's, and now the name
-     * says so too.
-     */
-    config.applicationNameForUserAgent = "Version/17.4 Safari/605.1.15"
+    let config = makeConfiguration(WKWebsiteDataStore.default())
 
     let inset = PhoneView.bezel
     let view = WKWebView(frame: container.bounds.insetBy(dx: inset, dy: inset), configuration: config)
@@ -323,7 +308,77 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     task.resume()
   }
 
+  /**
+   * Every web view this app makes, made the same way.
+   *
+   * It used to be written once, inline — and then a second view had to be
+   * built for the second account, which is how two views end up subtly
+   * different. The store is the only thing that changes between them.
+   */
+  func makeConfiguration(_ store: WKWebsiteDataStore) -> WKWebViewConfiguration {
+    let config = WKWebViewConfiguration()
+    config.websiteDataStore = store
+    config.suppressesIncrementalRendering = false
+    config.preferences.javaScriptCanOpenWindowsAutomatically = true
+    // Reels autoplay: no user gesture needed. (allowsInlineMediaPlayback is an
+    // iOS-only property — on macOS every video is inline already, so there is
+    // nothing to set and naming it here would not compile.)
+    config.mediaTypesRequiringUserActionForPlayback = []
+    config.userContentController.add(self, name: "organic")
+    config.preferences.setValue(true, forKey: "developerExtrasEnabled")
+    /*
+     * Finish the user agent.
+     *
+     * A WKWebView's default agent stops at "AppleWebKit/605.1.15 (KHTML, like
+     * Gecko)" — no Version, no Safari. Instagram's own API answered that with
+     * "useragent mismatch" and refused to say who was signed in. This is the
+     * supported way to complete it: the engine is Safari's, and now the name
+     * says so too.
+     */
+    config.applicationNameForUserAgent = "Version/17.4 Safari/605.1.15"
+    return config
+  }
+
+  /** Swap the web view onto another account's store, keeping everything else. */
+  func switchProfile(_ idText: String, then url: String?) {
+    guard let container = body, let old = web else { return }
+    if idText == currentProfile { if let u = url, let target = URL(string: u) { old.load(URLRequest(url: target)) }; return }
+
+    var store = WKWebsiteDataStore.default()
+    if #available(macOS 14.0, *) {
+      if let uuid = UUID(uuidString: idText) {
+        store = WKWebsiteDataStore(forIdentifier: uuid)
+      }
+    } else {
+      note("this Mac keeps one set of sign-ins (macOS 14 or newer keeps one per account)")
+    }
+
+    let config = makeConfiguration(store)
+    let view = WKWebView(frame: old.frame, configuration: config)
+    view.autoresizingMask = old.autoresizingMask
+    view.navigationDelegate = self
+    view.uiDelegate = self
+    view.setValue(false, forKey: "drawsBackground")
+    view.allowsBackForwardNavigationGestures = true
+    view.wantsLayer = true
+
+    old.removeFromSuperview()
+    container.addSubview(view)
+    web = view
+    currentProfile = idText
+    applyRadius()
+    if let source = agentSource { injectAgent(source) }
+    if let u = url, let target = URL(string: u) { view.load(URLRequest(url: target)) }
+    else { view.loadHTMLString(Shell.startingHTML, baseURL: nil) }
+  }
+
+  /** A line for the log, through the page's own ticker. */
+  func note(_ what: String) {
+    toPage("{\"t\":\"tick\",\"who\":\"organic\",\"what\":\"" + what.replacingOccurrences(of: "\"", with: "'") + "\"}")
+  }
+
   func injectAgent(_ source: String) {
+    agentSource = source
     guard let view = web else { return }
     let controller = view.configuration.userContentController
     controller.removeAllUserScripts()
@@ -399,6 +454,22 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       if let s = obj["url"] as? String, let url = URL(string: s) {
         web?.load(URLRequest(url: url))
       }
+    /*
+     * One phone, several accounts.
+     *
+     * Alex runs three Halloween pages for the same store, and two accounts
+     * sharing one cookie jar are one account. macOS keeps a separate,
+     * PERSISTENT website store per identifier, so each account gets its own —
+     * its own cookies, its own logged-in state, all of it surviving a quit.
+     * The web view is rebuilt on the new store, the crew is injected again,
+     * and the page it was told to open loads into it.
+     *
+     * Before macOS 14 there is only one store. The app says so and keeps
+     * using it rather than pretending the accounts are separate.
+     */
+    case "profile":
+      guard let idText = obj["id"] as? String else { break }
+      switchProfile(idText, then: obj["url"] as? String)
     default:
       break
     }

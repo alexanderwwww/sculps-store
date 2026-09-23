@@ -19,7 +19,7 @@ WKScriptMessageHandler WKNavigation WKNavigationDelegate WKUIDelegate WKPreferen
 URL URLRequest URLSession URLSessionConfiguration URLSessionWebSocketTask URLSessionWebSocketDelegate URLResponse
 HTTPURLResponse JSONSerialization Data Date DateFormatter TimeInterval DispatchQueue DispatchTime DispatchWorkItem
 OperationQueue Timer Bundle FileManager ProcessInfo CommandLine CharacterSet String Int Double Bool CGFloat CGRect
-CGSize CGPoint CGColor CALayer Array Dictionary Set Optional Result Error Any AnyObject Never Task MainActor Selector
+CGSize CGPoint CGColor CALayer Array Dictionary Set Optional Result Error Any AnyObject Never Task MainActor Selector UUID
 `.trim().split(/\s+/));
 
 const file = process.argv[2];

@@ -250,7 +250,15 @@ async function checkSignedIn(platform, { quiet = false } = {}) {
      * not the name on it. So the crew starts, under the account's own id,
      * and the name is asked for again on every sweep until it answers.
      */
-    const id = await phone.read("userId", { platform });
+    /*
+     * Digits or nothing.
+     *
+     * This took whatever the page answered and put it in a name: an older
+     * agent replied with an object and the account was recorded as
+     * "@[object Obje". A value that is not the id is not an id.
+     */
+    const raw = await phone.read("userId", { platform });
+    const id = typeof raw === "string" && /^\d{3,20}$/.test(raw) ? raw : null;
     if (!id) {
       sawOnce(`${platform} is signed in but will not say who yet — looking again in a moment`);
       setAccount(platform, "waiting", null);
