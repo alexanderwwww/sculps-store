@@ -126,6 +126,21 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     }
   }
 
+  /** White glass, the green dot, and what it is waiting for. */
+  static let startingHTML = """
+  <!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+  html,body{margin:0;height:100%;background:#fff;color:#111;
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+    display:flex;align-items:center;justify-content:center;-webkit-user-select:none}
+  .b{text-align:center;padding:0 28px}
+  .d{width:10px;height:10px;border-radius:50%;background:#39FF7A;margin:0 auto 16px;
+    box-shadow:0 0 12px rgba(57,255,122,.9);animation:p 1.4s ease-in-out infinite}
+  @keyframes p{0%,100%{opacity:.3;transform:scale(.85)}50%{opacity:1;transform:scale(1)}}
+  .s{color:#8a9097;font-size:12.5px;margin-top:8px}
+  </style><div class="b"><div class="d"></div><div>Organic</div>
+  <div class="s">waking the crew…</div></div>
+  """
+
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { return true }
 
   // MARK: the window
@@ -182,9 +197,15 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     }
     container.addSubview(view)
 
-    if let blank = URL(string: "about:blank") {
-      view.load(URLRequest(url: blank))
-    }
+    /*
+     * Something visible from the first frame.
+     *
+     * The window is transparent and the web view draws no background, so
+     * about:blank in it is an invisible window: the app opened, the Dock
+     * bounced, and Alex saw nothing at all. A phone that is starting has to
+     * LOOK like a phone that is starting.
+     */
+    view.loadHTMLString(Delegate.startingHTML, baseURL: nil)
 
     // First run: centred. After that the autosave name puts it back where
     // Alex left it (setFrameAutosaveName restores if a saved frame exists).
