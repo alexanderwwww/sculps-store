@@ -22,6 +22,7 @@ import { Phone } from "./phone.mjs";
 import { connectCloud } from "./cloud.mjs";
 import { linkClaude } from "./claudelink.mjs";
 import { say, onSay, recent } from "./crew.mjs";
+import { accountsIn } from "./accounts-store.mjs";
 import * as discover from "./discover.mjs";
 import {
   isAwake, planDay, scatterAcrossDay, watchMs, react, dayBudget,
@@ -31,7 +32,7 @@ import {
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is RUNNING may be newer — see running(). */
-export const BUILD = 16;
+export const BUILD = 17;
 
 const SUPPORT = process.env.ORGANIC_HOME || join(homedir(), "Library", "Application Support", "Organic");
 export const PATHS = { home: SUPPORT, worker: join(SUPPORT, "worker"), log: join(SUPPORT, "log") };
@@ -68,9 +69,13 @@ const S = {
   build: BUILD,
   brief: null,
   doing: "starting",
-  showing: null,           // which platform the glass is on
-  accounts: Object.fromEntries(PLATFORMS.map((p) => [p, { platform: p, state: "none", handle: null, accountId: null }])),
+  showing: null,           // which account the glass is on, by id
 };
+
+/** Every account the app has, each with its own cookie jar. */
+let accts;
+const acct = (id) => accts?.find(id) ?? null;
+const showingAccount = () => acct(S.showing);
 
 /** What the crew has learned to look for. */
 const hunt = { products: [], queries: [], tags: [], next: [], known: new Set(), sweep: 0, readStoreAt: 0 };
@@ -80,7 +85,7 @@ const sched = { jobs: [], running: null, personas: {}, warmed: {}, plannedFor: n
 
 let cloud, bridge, phone, quitting = false;
 
-const connected = () => PLATFORMS.filter((p) => S.accounts[p].state === "connected");
+const connected = () => accts?.connected() ?? [];
 
 /* ----------------------------------------------------------- the panel */
 
@@ -94,19 +99,19 @@ function panelState() {
     doing: S.doing,
     showing: S.showing,
     mcp: (cloud?.base ?? "") + "/mcp",
-    accounts: PLATFORMS.map((p) => ({ ...S.accounts[p] })),
+    accounts: (accts?.all() ?? []).map((a) => ({ id: a.id, platform: a.platform, state: a.state, handle: a.handle })),
+    canAdd: PLATFORMS.map((p) => ({ platform: p, room: (accts?.forPlatform(p).length ?? 0) < 5 })),
     jobs: sched.jobs.slice(0, 8).map(({ id, who, what, at, state }) => ({ id, who, what, at, state })),
     lines: recent.slice(-6).map((l) => ({ who: l.who, what: l.what })),
   };
 }
 const pushPanel = () => phone?.panel(undefined, panelState()).catch(() => {});
 
-function setAccount(platform, state, handle) {
-  const a = S.accounts[platform];
+function setAccount(id, state, handle) {
+  const a = acct(id);
   if (!a) return;
   if (a.state !== state || (handle !== undefined && a.handle !== handle)) {
-    a.state = state;
-    if (handle !== undefined) a.handle = handle;
+    accts.update(id, handle === undefined ? { state } : { state, handle }).catch(() => {});
     pushPanel();
   }
 }
@@ -120,7 +125,7 @@ async function report() {
     build: S.build,
     at: Date.now(),
     showing: S.showing,
-    accounts: PLATFORMS.map((p) => ({ platform: p, state: S.accounts[p].state, handle: S.accounts[p].handle })),
+    accounts: (accts?.all() ?? []).map((a) => ({ id: a.id, platform: a.platform, state: a.state, handle: a.handle })),
     tail: recent.slice(-18).map((l) => `${l.who} · ${l.what}`),
   }).catch(() => {});
 }
@@ -202,20 +207,26 @@ async function checkOrders() {
  * Sign-in is Alex's, always.
  *
  * The phone goes to the login page and the crew stands back: nothing is typed
- * for him and nothing he types is read. What the app looks for afterwards is
- * a handle — an account we cannot name is not an account we will act as.
+ * for him and nothing he types is read. Each account has its own cookie jar,
+ * so adding a second Instagram is adding a second jar and signing into it —
+ * the first one is untouched and stays signed in.
  */
-async function beginConnect(platform) {
-  if (!platform || !PLATFORMS.includes(platform)) return;
-  if (S.accounts[platform].state === "connected") return show(platform);
-  setAccount(platform, "waiting", null);
-  S.showing = platform;
-  await phone.goto(LOGIN[platform]);
-  say("sam", `${platform} is open — sign in on the phone and I will pick it up`);
+async function beginConnect(what) {
+  // Either an account we already know, or "another instagram, please".
+  let account = acct(what);
+  if (!account && PLATFORMS.includes(what)) {
+    account = accts.forPlatform(what).find((a) => a.state !== "connected") ?? (await accts.add(what));
+    if (!account) { say("sam", `that is as many ${what} accounts as this holds`); return; }
+  }
+  if (!account) return;
+  if (account.state === "connected") return show(account.id);
+  await accts.update(account.id, { state: "waiting" });
+  S.showing = account.id;
+  await phone.profile(account.profileId, LOGIN[account.platform]);
+  say("sam", `${account.platform} is open — sign in on the phone and I will pick it up`);
   pushPanel();
 }
 
-/** Look at the page and decide whether we are signed in, and as whom. */
 let lastSeen = "";
 function sawOnce(line) {
   if (line === lastSeen) return;
@@ -223,93 +234,71 @@ function sawOnce(line) {
   say("sam", line);
 }
 
-async function checkSignedIn(platform, { quiet = false } = {}) {
+/**
+ * Look at the page and decide whether this account is signed in, and as whom.
+ *
+ * The proof of a session is the session, not the name on it: an account that
+ * is plainly logged in but will not say who works under its own id, and the
+ * name is asked for again on every sweep until it answers.
+ */
+async function checkSignedIn(id, { quiet = false } = {}) {
+  const a = acct(id);
+  if (!a) return false;
+  const platform = a.platform;
   const inn = await phone.read("signedIn", { platform });
   if (inn === null || inn === undefined) {
-    // The page did not answer at all — usually it is still loading.
     sawOnce(`${platform}: the page has not answered yet`);
     return false;
   }
   if (!inn) {
     sawOnce(`${platform}: not signed in yet — sign in on the phone`);
-    if (S.accounts[platform].state === "connected") {
-      setAccount(platform, "out", null);
-      say("sam", `${platform} is signed out now`);
+    if (a.state === "connected") {
+      setAccount(id, "out", null);
+      say("sam", `${a.handle ?? platform} is signed out now`);
     }
     return false;
   }
+
   const handle = await phone.read("handle", { platform });
   const clean = handle ? String(handle).trim() : "";
-  if (!clean || clean === "@") {
-    /*
-     * Signed in, but the platform will not say who.
-     *
-     * The old rule stopped here — no handle, no connection — and that is how
-     * a genuinely signed-in Instagram sat doing nothing while its API
-     * answered "useragent mismatch". The proof of a session is the session,
-     * not the name on it. So the crew starts, under the account's own id,
-     * and the name is asked for again on every sweep until it answers.
-     */
-    /*
-     * Digits or nothing.
-     *
-     * This took whatever the page answered and put it in a name: an older
-     * agent replied with an object and the account was recorded as
-     * "@[object Obje". A value that is not the id is not an id.
-     */
+  let name = clean && clean !== "@" ? (clean.startsWith("@") ? clean : `@${clean}`) : null;
+  let provisional = false;
+
+  if (!name) {
+    // Digits or nothing: an older agent answered an object once and the
+    // account was recorded under an object's name.
     const raw = await phone.read("userId", { platform });
-    const id = typeof raw === "string" && /^\d{3,20}$/.test(raw) ? raw : null;
-    if (!id) {
+    const uid = typeof raw === "string" && /^\d{3,20}$/.test(raw) ? raw : null;
+    if (!uid) {
       sawOnce(`${platform} is signed in but will not say who yet — looking again in a moment`);
-      setAccount(platform, "waiting", null);
+      setAccount(id, "waiting", null);
       return false;
     }
-    const provisional = `@${String(id).slice(0, 12)}`;
-    sawOnce(`${platform} is signed in — working as ${provisional} until it tells me the name`);
-    let row0 = null;
-    try { row0 = await cloud.db.markConnected(platform, provisional); } catch { /* recorded next time */ }
-    S.accounts[platform].accountId = row0?.id ?? S.accounts[platform].accountId ?? null;
-    S.accounts[platform].provisional = true;
-    setAccount(platform, "connected", provisional);
-    sched.firstLook.add(platform);
-    await prepareAccount(platform).catch(() => {});
-    if (S.phase === "setup") await startWorking();
-    if (!sched.jobs.some((j) => j.platform === platform && j.now && j.state !== "done")) {
-      addJob({ kind: "session", platform, now: true, who: "bea", what: `${provisional} · a first look around`, at: Date.now(), seconds: Math.round(between(300, 600)) });
-    }
-    return true;
+    name = `@${uid.slice(0, 12)}`;
+    provisional = true;
+    sawOnce(`${platform} is signed in — working as ${name} until it tells me the name`);
+  } else {
+    lastSeen = "";
+    if (a.provisional) say("sam", `${platform} says its name now: ${name}`);
   }
-  lastSeen = "";
-  const at = clean.startsWith("@") ? clean : `@${clean}`;
-  if (S.accounts[platform].provisional) {
-    S.accounts[platform].provisional = false;
-    say("sam", `${platform} says its name now: ${at}`);
-  }
+
+  const already = a.state === "connected" && a.handle === name;
   let row = null;
-  try { row = await cloud.db.markConnected(platform, at); } catch (e) { say("organic", `could not record ${at}: ${e.message}`); }
-  S.accounts[platform].accountId = row?.id ?? S.accounts[platform].accountId ?? null;
-  setAccount(platform, "connected", at);
-  say("sam", `${platform} connected as ${at}`);
-  sched.firstLook.add(platform);
-  await prepareAccount(platform).catch(() => {});
+  try { row = await cloud.db.markConnected(platform, name); } catch (e) { if (!quiet) say("organic", `could not record ${name}: ${e.message}`); }
+  await accts.update(id, { accountId: row?.id ?? a.accountId ?? null, provisional });
+  setAccount(id, "connected", name);
+  if (already) return true;
+
+  if (!provisional) say("sam", `${platform} connected as ${name}`);
+  sched.firstLook.add(id);
+  await prepareAccount(id).catch(() => {});
   if (S.phase === "setup") await startWorking();
-  /*
-   * Move now, not at seven tonight.
-   *
-   * The day's plan puts a session inside the persona's own hours, which is
-   * right for an account and wrong for the moment somebody just connected
-   * one and is watching the phone. So the first look happens immediately,
-   * once, and the persona's hours own everything after it.
-   */
-  if (!sched.jobs.some((j) => j.platform === platform && j.now && j.state !== "done")) {
+  // Move now, not at seven tonight: somebody just connected this and is
+  // watching the phone. The persona's hours own everything after it.
+  if (!sched.jobs.some((j) => j.account === id && j.now && j.state !== "done")) {
     addJob({
-      kind: "session",
-      platform,
-      now: true,
-      who: "bea",
-      what: `${at} · a first look around`,
-      at: Date.now(),
-      seconds: Math.round(between(300, 600)),
+      kind: "session", account: id, platform, now: true, who: "bea",
+      what: `${name} · a first look around`, at: Date.now(), seconds: Math.round(between(300, 600)),
     });
   }
   return true;
@@ -340,20 +329,20 @@ function personaSeed(handle) {
   };
 }
 
-async function prepareAccount(platform) {
-  const a = S.accounts[platform];
-  if (!a.accountId) return;
+async function prepareAccount(id) {
+  const a = acct(id);
+  if (!a?.accountId) return;
   let persona = null;
   try { persona = await cloud.db.personaFor(a.accountId); } catch { /* none yet */ }
   if (!persona) {
     say("ines", `writing who ${a.handle} is — written once and kept`);
     try { persona = await cloud.db.savePersona(a.accountId, personaSeed(a.handle)); } catch { persona = personaSeed(a.handle); }
   }
-  sched.personas[platform] = persona?.hours ? persona : personaSeed(a.handle);
+  sched.personas[id] = persona?.hours ? persona : personaSeed(a.handle);
   try {
-    const row = await cloud.db.accountFor(platform, a.handle);
-    sched.warmed[platform] = Number(row?.warmed_days ?? 0) || 0;
-  } catch { sched.warmed[platform] = 0; }
+    const row = await cloud.db.accountFor(a.platform, a.handle);
+    sched.warmed[id] = Number(row?.warmed_days ?? 0) || 0;
+  } catch { sched.warmed[id] = 0; }
 }
 
 /* ------------------------------------------------------------ the plan */
@@ -371,15 +360,18 @@ function planMarket(at = Date.now()) {
   addJob({ kind: "market", who: "reyna", what: "read the store, then the ad library", at });
 }
 
-function planAccount(platform, persona, warmedDays) {
+function planAccount(id, persona, warmedDays) {
+  const a = acct(id);
+  if (!a) return;
   const sessions = planDay(persona, warmedDays);
   const times = scatterAcrossDay(persona, sessions);
   for (const t of times) {
     addJob({
       kind: "session",
-      platform,
+      account: id,
+      platform: a.platform,
       who: "bea",
-      what: `${S.accounts[platform].handle} · a scroll, ${Math.round((t.seconds ?? 180) / 60)} min`,
+      what: `${a.handle} · a scroll, ${Math.round((t.seconds ?? 180) / 60)} min`,
       at: t.at ?? Date.now(),
       seconds: t.seconds ?? 180,
     });
@@ -393,9 +385,10 @@ function planTheDay() {
   sched.plannedFor = today;
   sched.jobs = sched.jobs.filter((j) => j.state === "doing");
   planMarket(Date.now());
-  for (const p of connected()) {
-    const persona = sched.personas[p] ?? personaSeed(S.accounts[p].handle);
-    planAccount(p, persona, sched.warmed[p] ?? 0);
+  // Every connected account gets its own day: its own hours, its own budget.
+  for (const a of connected()) {
+    const persona = sched.personas[a.id] ?? personaSeed(a.handle);
+    planAccount(a.id, persona, sched.warmed[a.id] ?? 0);
   }
   pushPanel();
 }
@@ -403,13 +396,28 @@ function planTheDay() {
 /* --------------------------------------------------------- the working */
 
 /** Put a platform on the glass, and say so. */
-async function show(platform) {
-  if (S.showing === platform) return;
-  S.showing = platform;
+/**
+ * Put something on the glass.
+ *
+ * `what` is an account id, or "market". Each account has its own cookie jar,
+ * so this is also the moment the window is swapped onto that jar — switching
+ * account and switching what is on screen are the same act.
+ */
+async function show(what) {
+  if (S.showing === what) return;
+  S.showing = what;
   pushPanel();
-  const url = platform === "market" ? "https://www.facebook.com/ads/library/" : HOME[platform];
-  if (url) await phone.goto(url);
+  if (what === "market") {
+    await phone.profile(MARKET_PROFILE, "https://www.facebook.com/ads/library/");
+    return;
+  }
+  const a = acct(what);
+  if (!a) return;
+  await phone.profile(a.profileId, HOME[a.platform]);
 }
+
+/** The research screen has a jar of its own: it is nobody's account. */
+const MARKET_PROFILE = "00000000-0000-4000-8000-000000000001";
 
 /** A job may be interrupted between steps; this is where it gives way. */
 function shouldStop() {
@@ -494,18 +502,18 @@ async function marketTask(job) {
  * are in there. The cursor does all of it where Alex can see it.
  */
 async function sessionTask(job) {
-  const platform = job.platform;
-  const a = S.accounts[platform];
-  if (a.state !== "connected") return;
-  const persona = sched.personas[platform] ?? personaSeed(a.handle);
-  const warmedDays = sched.warmed[platform] ?? 0;
+  const a = acct(job.account);
+  if (!a || a.state !== "connected") return;
+  const platform = a.platform;
+  const persona = sched.personas[a.id] ?? personaSeed(a.handle);
+  const warmedDays = sched.warmed[a.id] ?? 0;
   if (a.accountId) {
     let parked = false;
     try { parked = Boolean(await cloud.db.isParked(a.accountId)); } catch { /* assume not */ }
     if (parked) { say("sam", `${a.handle} is parked for today — leaving it alone`); return; }
   }
-  const look = sched.firstLook.has(platform);
-  sched.firstLook.delete(platform);
+  const look = sched.firstLook.has(a.id);
+  sched.firstLook.delete(a.id);
   const seconds = Math.max(60, Number(job.seconds) || 180);
   const budget = dayBudget(persona, warmedDays);
   if (look) budget.like = Math.min(budget.like, 2);
@@ -515,7 +523,7 @@ async function sessionTask(job) {
     await cloud.db.seen(a.accountId).catch(() => {});
   }
 
-  await show(platform);
+  await show(a.id);
   const end = Date.now() + seconds * 1000;
   let liked = 0, watched = 0;
   const tags = hunt.tags.length ? [...hunt.tags] : refreshTerms().tags;
@@ -528,7 +536,7 @@ async function sessionTask(job) {
     if (friction && friction !== "logged out") {
       say("sam", `${a.handle}: ${friction}. That account is done for today.`);
       if (a.accountId) await cloud.db.park(a.accountId, friction).catch(() => {});
-      for (const j of sched.jobs) if (j.platform === platform && j.state === "next") j.state = "skipped";
+      for (const j of sched.jobs) if (j.account === a.id && j.state === "next") j.state = "skipped";
       pushPanel();
       return;
     }
@@ -591,7 +599,7 @@ async function sessionTask(job) {
           await cloud.db.remember("discovery", `#${c} sits beside #${tag} clips`, { tag: c, from: tag, views: top }, 0.4).catch(() => {});
         }
       }
-      await show(platform);
+      await show(a.id);
     }
 
     await phone.scroll(between(400, 900), { pace: "read" });
@@ -700,10 +708,11 @@ async function fromPage(msg) {
   if (msg.t === "hello") {
     phone.sawPage(msg);
     pushPanel();
-    // A sign-in that happened while we were looking elsewhere still counts.
-    const platform = msg.platform;
-    if (PLATFORMS.includes(platform) && S.accounts[platform].state !== "connected") {
-      await checkSignedIn(platform, { quiet: true }).catch(() => {});
+    // A sign-in that happened while nobody pressed anything still counts —
+    // and it belongs to whichever account's jar is on the glass.
+    const a = showingAccount();
+    if (a && a.platform === msg.platform && (a.state !== "connected" || a.provisional)) {
+      await checkSignedIn(a.id, { quiet: true }).catch(() => {});
     }
     return;
   }
@@ -747,6 +756,8 @@ export async function main() {
   for (const d of Object.values(PATHS)) await mkdir(d, { recursive: true });
   S.build = await running();
   cloud = connectCloud();
+  accts = accountsIn(PATHS.worker);
+  await accts.load();
   onSay((line) => { phone?.say(line.who, line.what).catch(() => {}); return cloud.log(line.who, line.what); });
 
   bridge = await startBridge({ dir: here, onMessage: (m) => { fromPage(m).catch(() => {}); } });
@@ -764,34 +775,31 @@ export async function main() {
   for (let i = 0; i < 60 && !bridge.connected(); i++) await sleep(500);
   if (!bridge.connected()) say("organic", "the window has not connected yet — waiting");
 
-  // What it remembered. The sign-ins live in the app's own store and survive a
-  // quit, an update and a reinstall — so this should be the normal case, and
-  // it is worth saying out loud rather than leaving him to guess.
-  const remembered = [];
-  for (const p of PLATFORMS) {
-    S.showing = p;
-    await phone.goto(HOME[p]).catch(() => {});
-    await sleep(1500);
-    if (await phone.read("signedIn", { platform: p })) remembered.push(p);
-  }
-  if (remembered.length) say("sam", `still signed in from last time: ${remembered.join(", ")} — nothing to redo`);
+  /*
+   * What it remembered.
+   *
+   * Every account has its own jar and every jar keeps its sign-in through a
+   * quit, an update and a reinstall. So this walks them, says which ones came
+   * back, and only asks Alex for the ones that did not.
+   */
+  await accts.load();
+  if (!accts.all().length) await accts.add("instagram");
 
-  const known = await cloud.db.accounts().catch(() => []);
-  for (const row of known) {
-    if (!PLATFORMS.includes(row.platform) || !row.connected) continue;
-    S.accounts[row.platform].handle = row.handle;
-    S.accounts[row.platform].accountId = row.id;
-    setAccount(row.platform, "checking", row.handle);
+  const back = [];
+  for (const a of accts.all()) {
+    S.showing = a.id;
+    await phone.profile(a.profileId, HOME[a.platform]).catch(() => {});
+    await sleep(2000);
+    const inn = await checkSignedIn(a.id, { quiet: true }).catch(() => false);
+    if (inn) back.push(acct(a.id)?.handle ?? a.platform);
   }
+  if (back.length) say("sam", `still signed in from last time: ${back.join(", ")} — nothing to redo`);
 
-  const first = known.find((r) => r.connected && PLATFORMS.includes(r.platform))?.platform ?? "instagram";
-  await show(first);
-  await sleep(2500);
-  const nowIn = await checkSignedIn(first, { quiet: true }).catch(() => false);
-  if (!nowIn && S.accounts[first].state !== "connected") {
-    setAccount(first, "none", null);
+  if (!connected().length) {
     sawOnce("connect an account on the phone — tap the platform you want");
     await phone.panel(true, panelState()).catch(() => {});
+  } else {
+    await show(connected()[0].id);
   }
 
   let lastSweep = 0, lastOrders = 0, lastReport = 0;
@@ -805,13 +813,22 @@ export async function main() {
         await readBrief();
         // Look at whatever is on the glass. Alex may have signed in without
         // pressing anything — he did exactly that, and nothing was watching.
-        const on = S.showing;
-        if (PLATFORMS.includes(on) && (S.accounts[on].state !== "connected" || S.accounts[on].provisional)) {
-          await checkSignedIn(on, { quiet: true }).catch(() => {});
+        const on = showingAccount();
+        if (on && (on.state !== "connected" || on.provisional)) {
+          await checkSignedIn(on.id, { quiet: true }).catch(() => {});
         }
       }
       if (now - lastReport > 10000) { lastReport = now; await report(); }
-      await tick();
+      /*
+       * Not awaited.
+       *
+       * A session is seven minutes of scrolling, and awaiting it here froze
+       * everything else for seven minutes: no orders, no update, no second
+       * look at a sign-in. tick() already refuses to start a second job, so
+       * letting it run beside the loop is both correct and the only way the
+       * app stays answerable while the crew works.
+       */
+      tick().catch((error) => say("organic", `the job stopped: ${error?.message ?? error}`));
     } catch (error) {
       say("organic", `stopped on: ${error?.message ?? error}`);
       await sleep(5000);

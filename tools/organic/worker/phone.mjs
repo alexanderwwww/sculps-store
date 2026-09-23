@@ -29,6 +29,21 @@ export class Phone {
     this.handle = handle ?? null;
   }
 
+  /**
+   * Put the window on an account's own cookie jar, and open a page in it.
+   *
+   * Two accounts sharing one jar are one account, so this is what makes a
+   * second Instagram a second Instagram. The window rebuilds its view on that
+   * jar, the crew is injected again, and the page loads into it.
+   */
+  async profile(profileId, url) {
+    if (!profileId) return this.goto(url);
+    this.bridge.window("profile", { id: profileId, url });
+    // The view is rebuilt, so the page says hello again when it is ready.
+    await new Promise((r) => setTimeout(r, 1200));
+    return { ok: true };
+  }
+
   async goto(url, { ms = 30000 } = {}) {
     // The window owns navigation: Swift calls load() so a page that refuses
     // to be scripted is still reachable.

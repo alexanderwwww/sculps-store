@@ -5,8 +5,8 @@
   <key>CFBundleName</key><string>Organic</string>
   <key>CFBundleDisplayName</key><string>Organic</string>
   <key>CFBundleIdentifier</key><string>us.blackreaper.organic</string>
-  <key>CFBundleVersion</key><string>16</string>
-  <key>CFBundleShortVersionString</key><string>3.1.1</string>
+  <key>CFBundleVersion</key><string>17</string>
+  <key>CFBundleShortVersionString</key><string>3.2.0</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleExecutable</key><string>Organic</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
