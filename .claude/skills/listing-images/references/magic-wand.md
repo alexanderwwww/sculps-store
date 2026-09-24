@@ -147,3 +147,29 @@ It opens like liquid: a bead arrives, spreads wider and flatter than it will fin
 settles back as the blur clears — the clearing lagging the shape, because matching the
 durations turns it into a fade. Transform, filter and opacity only, so the page underneath
 is never slowed by the thing watching it.
+
+## `continue` resumes, it does not start
+
+Queueing a job does not make the app take it. `continue` means *carry on with
+what you were already doing*, so sending it to an app that is mid-way through
+an older job restarts that older job — the new queue is untouched and the
+credits go on pictures nobody asked for. This happened on 24 Sep 2026: a
+projector job was resumed twice while a cryo job sat queued, and Alex paid for
+both runs.
+
+Before sending the wand any command:
+
+1. **Read `wand_status` and look at `job`, not just `state`.** A queued job is
+   not a running job, and the app will happily resume something else.
+2. **`stop` leaves the old job resumable.** The app itself says "stopped at 1
+   of 5 — send it again and it carries on". Stop does not clear.
+3. **A frozen `at` timestamp with a closed-browser error means the app is dead,
+   not busy.** Orders sent to it go nowhere. Say so instead of reporting the
+   stale screen as the truth.
+4. **`newChat: true` on the queue is what unpins it** from whatever chat the
+   last job lived in.
+
+The general form, and it is the standing rule of this project: before sending
+any command to a running app, know what state it is in and what that command
+does *in that state*. Verify, then send. Guessing at a verb's meaning is the
+same failure as guessing at a fact.
