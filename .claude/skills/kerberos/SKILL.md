@@ -80,6 +80,13 @@ checkout, pixels, and domains cold. He has never built software.
   what he asked. He has already reversed his own brief once (see "Design rules" below);
   when his latest instruction contradicts an earlier one, follow the latest and say so in
   one line rather than arguing from the old document.
+- **Spend tokens like they are the budget, because they are.** He is on Pro, not
+  Max, and waiting on a limit stops the business. Batch shell calls instead of
+  running five; never re-read a file already in context; never re-verify what a
+  test already proved; skip the status essay and say the one line that matters.
+  Subagents are the expensive move — roughly a hundred thousand tokens each —
+  so they are for a genuine multi-engineer build and nothing smaller. Stated
+  24 Sep 2026.
 - **Budget is Claude usage, not dollars.** He hits session limits. Do not spend a session
   rebuilding something he already approved, and do not build the same screen twice.
 
