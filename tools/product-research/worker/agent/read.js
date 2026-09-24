@@ -29,6 +29,20 @@
     return "unknown";
   }
 
+  /**
+   * The desk's recipes say which host they are for, rather than being looked
+   * up by a platform name — WhatsApp and Alibaba are not "platforms" in the
+   * sense the rest of this file means.
+   */
+  function deskSite() {
+    var host = location.hostname;
+    var all = O.sites || {};
+    for (var key in all) {
+      if (all[key] && typeof all[key].match === "function" && all[key].match(host)) return all[key];
+    }
+    return null;
+  }
+
   function site(which) {
     var p = which || platform();
     return (O.sites && O.sites[p]) || null;
@@ -455,6 +469,26 @@
       var site = O.sites && O.sites.instagram;
       return site ? site.statusUrl : null;
     },
+    /* ------------------------------------------------- the supplier desk */
+
+    /** Whoever the site on screen says its conversations are with. */
+    threads: function () {
+      var site = deskSite();
+      return site && site.threads ? site.threads() : [];
+    },
+
+    /** The open conversation, oldest last. */
+    messages: function () {
+      var site = deskSite();
+      return site && site.messages ? site.messages() : [];
+    },
+
+    /** What a search page on Alibaba or 1688 is showing. */
+    results: function () {
+      var site = O.sites && O.sites.alibaba;
+      return site && site.results ? site.results() : [];
+    },
+
     handle: handle,
     bodyText: bodyText,
     posts: posts,

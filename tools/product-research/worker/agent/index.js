@@ -111,6 +111,54 @@
       });
     },
 
+    /**
+     * Send a message in whatever conversation is open.
+     *
+     * Deliberately dumb about WHO: opening the right thread is a separate,
+     * visible step, so a message can never land in the wrong conversation
+     * because a name matched loosely. If no composer is on screen it says so
+     * and sends nothing.
+     *
+     * The text is typed keystroke by keystroke at the brain's pace — never
+     * pasted. A composer filled instantly is the loudest automation signal
+     * there is, and this is his own account.
+     */
+    send: function (a) {
+      var desk = null;
+      var all = O.sites || {};
+      for (var key in all) {
+        if (all[key] && typeof all[key].match === "function" && all[key].match(location.hostname)) desk = all[key];
+      }
+      var box = desk && desk.composer ? desk.composer() : null;
+      if (!box) return Promise.resolve({ ok: false, error: "no message box on this page" });
+      var body = String(a.text == null ? "" : a.text);
+      if (!body.trim()) return Promise.resolve({ ok: false, error: "nothing to say" });
+
+      return O.hands.type(body, { into: box, strokes: a.strokes, delays: a.delays, typos: a.typos }).then(function (r) {
+        if (!r || !r.ok) return { ok: false, error: (r && r.error) || "could not type" };
+        if (a.hold) return { ok: true, typed: r.typed, sent: false };
+        // Enter sends on both WhatsApp Web and the Alibaba message centre.
+        ["keydown", "keypress", "keyup"].forEach(function (type) {
+          box.dispatchEvent(
+            new root.KeyboardEvent(type, { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }),
+          );
+        });
+        return { ok: true, typed: r.typed, sent: true };
+      });
+    },
+
+    /** Open a conversation by the exact name the list shows. */
+    openThread: function (a) {
+      var all = O.sites || {};
+      for (var key in all) {
+        var site = all[key];
+        if (site && typeof site.match === "function" && site.match(location.hostname) && site.openThread) {
+          return { ok: Boolean(site.openThread(String(a.who || ""))) };
+        }
+      }
+      return { ok: false, error: "this page has no conversation list" };
+    },
+
     dwell: function (a) {
       return O.hands.dwell(a.ms == null ? 800 : a.ms);
     },
@@ -126,6 +174,9 @@
       if (what === "userId") return O.read.userId();
       if (what === "accountStatus") return O.read.accountStatus();
       if (what === "accountStatusUrl") return O.read.accountStatusUrl();
+      if (what === "threads") return O.read.threads();
+      if (what === "messages") return O.read.messages();
+      if (what === "results") return O.read.results();
       return O.read.handle(a.platform).then(function (h) {
         return {
           url: location.href,

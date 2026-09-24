@@ -17,7 +17,11 @@ import { join } from "node:path";
 import { WebSocketServer } from "ws";
 
 /** Everything the brain may ask the page to do. Anything else is refused. */
-export const ACTS = new Set(["goto", "scroll", "tap", "type", "dwell", "read", "say", "cursor", "panel", "stop"]);
+export const ACTS = new Set([
+  "goto", "scroll", "tap", "type", "dwell", "read", "say", "cursor", "panel", "stop",
+  // the supplier desk
+  "send", "openThread",
+]);
 
 /** Everything the page may say back. */
 const FROM_PAGE = new Set(["hello", "done", "tick", "asked", "trouble"]);
