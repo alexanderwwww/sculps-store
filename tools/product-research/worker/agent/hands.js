@@ -300,6 +300,109 @@
       });
   }
 
+  /**
+   * A data URL or a blob, turned into the bytes a file input wants.
+   * Anything that is not one of those is refused rather than guessed at.
+   */
+  function toBlob(src) {
+    if (!src) return Promise.resolve(null);
+    if (root.Blob && src instanceof root.Blob) return Promise.resolve(src);
+    var s = String(src);
+    if (/^data:/.test(s)) {
+      var m = /^data:([^;,]*)(;base64)?,([\s\S]*)$/.exec(s);
+      if (!m) return Promise.resolve(null);
+      var type = m[1] || "application/octet-stream";
+      var body = m[3];
+      try {
+        if (m[2]) {
+          var bin = root.atob(body);
+          var bytes = new Uint8Array(bin.length);
+          for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          return Promise.resolve(new root.Blob([bytes], { type: type }));
+        }
+        return Promise.resolve(new root.Blob([decodeURIComponent(body)], { type: type }));
+      } catch (e) {
+        return Promise.resolve(null);
+      }
+    }
+    if (/^blob:/.test(s)) {
+      // a blob: URL only resolves through a fetch, and only same-origin
+      return root
+        .fetch(s)
+        .then(function (r) { return r.blob(); })
+        .catch(function () { return null; });
+    }
+    return Promise.resolve(null);
+  }
+
+  function extFor(type) {
+    return { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif", "application/pdf": "pdf" }[type] || "bin";
+  }
+
+  /**
+   * sendFile({file, name, selector}) — hand the page a picture.
+   *
+   * Suppliers ask for the render and for his WeChat QR, and both message
+   * centres take them through a plain <input type="file"> behind the paperclip.
+   * There is no way to fake a real file chooser from page JS, so this does the
+   * one thing that works: builds a DataTransfer, puts the File in it, assigns
+   * it to input.files and fires input+change so the site's own uploader picks
+   * it up. That is the same object the browser would have handed it.
+   *
+   * It never picks a file off the disk and never invents one: `file` is a data
+   * URL or a Blob the app already fetched into the page. When there is no file
+   * input on screen, or the browser will not let files be assigned, it says so
+   * — { ok: false, error } — rather than reporting a send that never happened.
+   */
+  function sendFile(opts) {
+    opts = opts || {};
+    var input = null;
+    if (opts.selector) input = document.querySelector(opts.selector);
+    if (!input) {
+      var desk = null;
+      var all = O.sites || {};
+      for (var key in all) {
+        if (all[key] && typeof all[key].match === "function" && all[key].match(location.hostname)) desk = all[key];
+      }
+      if (desk && desk.fileInput) input = desk.fileInput();
+    }
+    if (!input) {
+      var any = document.querySelectorAll('input[type="file"]');
+      for (var i = 0; i < any.length && !input; i++) if (!any[i].disabled) input = any[i];
+    }
+    if (!input) return Promise.resolve({ ok: false, error: "no file input on this page" });
+    if (!root.DataTransfer || !root.File)
+      return Promise.resolve({ ok: false, error: "this browser will not let a file be attached" });
+
+    return toBlob(opts.file || opts.dataUrl || opts.blob).then(function (blob) {
+      if (!blob) return { ok: false, error: "no file: expected a data: url or a blob" };
+      var name = String(opts.name || "image." + extFor(blob.type));
+      var file;
+      try {
+        file = new root.File([blob], name, { type: blob.type || "application/octet-stream" });
+      } catch (e) {
+        return { ok: false, error: "could not build the file: " + ((e && e.message) || e) };
+      }
+      var dt;
+      try {
+        dt = new root.DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+      } catch (e2) {
+        return { ok: false, error: "the page would not take the file: " + ((e2 && e2.message) || e2) };
+      }
+      if (!input.files || input.files.length !== 1)
+        return { ok: false, error: "the file did not stick to the input" };
+      try {
+        input.dispatchEvent(new root.Event("input", { bubbles: true, composed: true }));
+        input.dispatchEvent(new root.Event("change", { bubbles: true, composed: true }));
+      } catch (e3) {
+        return { ok: false, error: "could not tell the page about the file" };
+      }
+      return { ok: true, name: name, type: blob.type || null, bytes: blob.size == null ? null : blob.size };
+    });
+  }
+
   function dwell(ms) {
     return O.cursor.breathe(Math.max(0, ms | 0)).then(function () {
       return { waited: ms | 0 };
@@ -311,6 +414,7 @@
     tapAt: tapAt,
     tapEl: tapEl,
     type: type,
+    sendFile: sendFile,
     dwell: dwell,
     centerOf: centerOf,
     stop: function () {

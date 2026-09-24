@@ -489,6 +489,19 @@
       return site && site.results ? site.results() : [];
     },
 
+    /**
+     * The company or product page on screen, as printed: who they are, how
+     * long they say they have traded, how fast they answer, what they have
+     * sold, what certificates they list, whether they say OEM/ODM, and the
+     * quantity -> price ladder when the page shows one. null when the page on
+     * screen is not one of those.
+     */
+    supplier: function () {
+      var site = O.sites && O.sites.alibaba;
+      if (!site || !site.supplier || !site.match(location.hostname)) return null;
+      return site.supplier();
+    },
+
     handle: handle,
     bodyText: bodyText,
     posts: posts,

@@ -147,6 +147,22 @@
       });
     },
 
+    /**
+     * Hand the page a picture — the product render, his WeChat QR.
+     *
+     * The file arrives from the app as a data URL already in the page; this
+     * only attaches it to the site's own file input. If the message centre is
+     * not open, or the paperclip has not been pressed and no input exists, it
+     * says so and sends nothing.
+     */
+    sendFile: function (a) {
+      return O.hands.sendFile({
+        file: a.file || a.dataUrl || a.blob,
+        name: a.name,
+        selector: a.selector,
+      });
+    },
+
     /** Open a conversation by the exact name the list shows. */
     openThread: function (a) {
       var all = O.sites || {};
@@ -177,6 +193,7 @@
       if (what === "threads") return O.read.threads();
       if (what === "messages") return O.read.messages();
       if (what === "results") return O.read.results();
+      if (what === "supplier") return O.read.supplier();
       return O.read.handle(a.platform).then(function (h) {
         return {
           url: location.href,
