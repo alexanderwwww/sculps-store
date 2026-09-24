@@ -104,7 +104,8 @@ const VARIANTS = [
     isDefault: true,
   },
   {
-    label: "the everyday — most popular",
+    // The badge on the page says "Most popular"; the label does not repeat it.
+    label: "the everyday",
     sublabel: "cryo machine, 3 frozen cartridges, USB-C cable, quick-start card",
     priceCents: 10900,
     compareAtCents: null,
@@ -251,11 +252,20 @@ const SECTIONS = [
         "more cold.",
       image: "",
     },
+    /*
+     * This theme reads a block's `note` as two things joined by a space — the
+     * first word is a marker it uses for placement and it is NOT shown. So the
+     * whole line goes in `title`, and `note` stays empty; otherwise the first
+     * word of every caption is silently eaten off the live page.
+     *
+     * When the real panel lands, set this section's `image` instead: artwork
+     * on the section replaces the built layout entirely.
+     */
     blocks: [
-      { title: "cryo machine", note: "brushed aluminium, clear dome lid", image: RENDER },
-      { title: "Frozen cartridge", note: "the cold. Freeze, drop in, go", image: "" },
-      { title: "USB-C cable", note: "charges from anything", image: "" },
-      { title: "Quick-start card", note: "three steps, one side of card", image: "" },
+      { title: "cryo machine — brushed aluminium, clear dome lid", note: "", image: "" },
+      { title: "Frozen cartridge — the cold. Freeze, drop in, go", note: "", image: "" },
+      { title: "USB-C cable — charges from anything", note: "", image: "" },
+      { title: "Quick-start card — three steps, one side", note: "", image: "" },
     ],
   },
 

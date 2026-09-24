@@ -17,40 +17,51 @@
  * Only the paint and the prefix changed.
  */
 .cy {
+  /* --------------------------------------------------------------- palette
+     Alex's four words: silver, icy baby pastel blue, black, white.
+     White is the ground. Silver is every surface that sits back from it.
+     Icy blue is the one accent, and it is the colour the machine itself
+     glows — so every blue pixel on the page is either the product or a
+     thing you can press. Black is the ink. Nothing warm, ever. */
   --paper: #FFFFFF;
-  --paper-2: #F4F4F6;      /* the quietest possible band */
-  --silver: #EDF1F4;        /* brushed silver, on surfaces only */
+  --paper-2: #F2F7FB;       /* the faintest icy band, for alternating sections */
+  --silver: #E8EDF2;        /* brushed silver, on surfaces only */
+  --silver-2: #D7DFE7;      /* the edge of a brushed surface */
+  --tint: #F2F7FB;
+  --cream: #FFFFFF;         /* the template's warm surface, killed: never beige */
 
-  --sky: #6EC8F0;          /* the LED ring's ice blue */
-  --action: #23272C;       /* the ink. A black button asks no questions. */
-  --action-soft: #F2F3F5;
-  --ink: #23272C;
+  --ice: #CFE8F7;           /* icy baby pastel blue — chips, washes, badges */
+  --ice-2: #EAF5FC;         /* the same blue, breathed on */
+  --ice-deep: #4FA3D4;      /* the LED ring, at full strength */
+  --ice-ink: #0B3A57;       /* type that has to sit on icy blue */
+  --sky: #BFE4F7;
+  --amber: var(--ice);      /* the template's warm token, repointed at the ice */
 
-  --dim: rgba(35, 39, 44, 0.58);
-  --dimmer: rgba(35, 39, 44, 0.36);
+  /* The button colour. Deep glacier, not black-black: it still asks no
+     questions, and it belongs to the same family as the machine's light. */
+  --action: #10283A;
+  --action-soft: #EAF5FC;
+  --ink: #0F1A22;
 
-  /* One border weight and two shadows for the whole page. Restraint is the
-     design; a second treatment is a decision the reader has to process. */
+  --dim: rgba(15, 26, 34, 0.58);
+  --dimmer: rgba(15, 26, 34, 0.34);
+  --go: #0F9D58;
+  --go-soft: #E8F6EE;
+
+  /* One border weight and two shadows for the whole page. */
   --key: 1px;
-  --hair: rgba(35, 39, 44, 0.11);
-  --lift: 0 1px 2px rgba(35,39,44,.04), 0 10px 26px -16px rgba(35,39,44,.18);
-  --lift-lg: 0 1px 3px rgba(35,39,44,.04), 0 28px 60px -30px rgba(35,39,44,.22);
+  --hair: rgba(15, 26, 34, 0.12);
+  --lift: 0 1px 2px rgba(15,26,34,.04), 0 10px 26px -16px rgba(16,40,58,.20);
+  --lift-lg: 0 1px 3px rgba(15,26,34,.04), 0 28px 60px -30px rgba(16,40,58,.26);
   --pop: var(--lift);
   --pop-sm: var(--lift);
   --r: 18px;
   --frame-w: min(340px, 82vw);
   --frame-h: calc(min(340px, 82vw) * 16 / 9);
 
-  /* A heavy grotesk, set tight. The logo is the only rounded thing on the
-     page — a bubble face used everywhere reads as a children's brand and
-     undercuts a $79 product. Display carries headlines and numbers; the body
-     face carries everything someone actually has to read. */
   --display: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --body: "Inter", system-ui, -apple-system, sans-serif;
   --wrap: 1200px;
-  /* The one dark colour the whole night chapter is built on. Three photos
-     butted edge to edge in three different colours read as three unrelated
-     posters; sharing one ground makes them one place. */
   --night: #06142A;
   --night-r: clamp(16px, 2.2vw, 26px);
 
@@ -185,7 +196,9 @@
 .cy-gal__main img { width: 100%; height: 100%; object-fit: contain; }
 .cy-gal__glow {
   position: absolute; inset: auto 0 -30% 0; height: 62%;
-  background: radial-gradient(58% 100% at 50% 100%, rgba(255,193,105,.55), transparent 72%);
+  /* Ice blue, not Ceiling Buddy's warm LED: the glow under the machine is
+     the mist it makes, and a warm glow on a cold product fights the product. */
+  background: radial-gradient(58% 100% at 50% 100%, rgba(110,200,240,.55), transparent 72%);
   pointer-events: none;
 }
 .cy-gal__strip { display: flex; gap: 10px; margin-top: 18px; overflow-x: auto; padding: 4px; max-width: 100%; scrollbar-width: none; }
@@ -1586,3 +1599,1069 @@ body:has(.cy-drawer.is-open) .cy-buy__side .cy-wallet { visibility: hidden; }
   white-space: nowrap;
 }
 .cy .cy-mark--lg { font-size: 2.4em; }
+
+/* ===================================================================
+   Components the markup uses that this stylesheet never carried.
+   Ported from the reaper sheet (same component file), repainted
+   below in the cryo override block. Without these the bundle rows,
+   the gallery track, the score and the sticky bar render unstyled —
+   which is why a full-size photograph was appearing inside an
+   option row.
+   =================================================================== */
+
+.cy-pay4--under {
+  margin-top: 14px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.cy-pay4--under .cy-pay4__in {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: none;
+  padding: 14px 16px;
+  border: 1.5px solid #B9D3EE;
+  border-radius: 16px;
+  /* PayPal's own blue, at the lightest weight that still reads as theirs.
+     A beige box beside a blue logo looks like the logo was dropped on it. */
+  background: linear-gradient(180deg, #F2F8FF 0%, #E9F2FD 100%);
+}
+
+.cy-pay4--under .cy-pp--word { height: 22px; width: auto; flex: 0 0 auto; }
+
+.cy-pay4--under p { margin: 0; font-size: 15px; flex: 1 1 200px; }
+
+.cy-pay4--under p b { font-weight: 800; }
+
+.cy-pay4--under .cy-pay4__small { flex: 1 0 100%; font-size: 12px; color: var(--dim); }
+
+.cy-bundle {
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  margin: 22px 0 18px;
+  background: transparent;
+}
+
+.cy-tiers { display: grid; gap: 11px; padding: 0; }
+
+.cy-tier {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px auto 1fr auto;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 16px 18px;
+  border: 1.5px solid var(--hair);
+  border-radius: 16px;
+  background: var(--paper);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .15s ease, background .15s ease;
+}
+
+.cy-tier:hover { border-color: rgba(20, 22, 26, .26); }
+
+.cy-tier[aria-checked="true"] {
+  border-color: var(--action);
+  border-width: 2px;
+  padding: 15.5px 17.5px;
+  background: rgba(245, 130, 31, .06);
+}
+
+.cy-tier[aria-checked="true"] .cy-tier__dot { border-color: var(--action); }
+
+.cy-tier[aria-checked="true"] .cy-tier__dot::after {
+  content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--action);
+}
+
+.cy-tier[aria-checked="true"] .cy-tier__pic { border-color: rgba(245, 130, 31, .55); }
+
+.cy-tier[aria-checked="true"] .cy-tier__flag { background: var(--action); color: #140A02; }
+
+@media (max-width: 430px) {
+  .cy-tier { grid-template-columns: 20px auto 1fr auto; gap: 10px; padding: 14px 13px; }
+  .cy-tier[aria-checked="true"] { padding: 13.5px 12.5px; }
+  .cy-tier__pic { width: 40px; height: 40px; }
+  .cy-tier__name { font-size: 15.5px; }
+  .cy-tier__price { font-size: 19px; }
+  .cy-tier__under s { font-size: 12.5px; }
+}
+
+.cy-btn__p {
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1.5px solid rgba(20, 10, 2, .28);
+  font-weight: 800;
+}
+
+.cy-ticks {
+  list-style: none; margin: 14px 0 0; padding: 0;
+  display: grid; gap: 7px;
+}
+
+.cy-ticks li {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 14px; color: var(--dim);
+}
+
+.cy-ticks svg { width: 17px; height: 17px; flex: 0 0 auto; color: #1FA34A; }
+
+.cy-score {
+  display: inline-flex; align-items: center; gap: 9px;
+  margin: 0 0 4px; text-decoration: none; color: var(--ink);
+}
+
+.cy-score b { font-family: var(--display); font-weight: 800; font-size: 15px; }
+
+.cy-score span { font-size: 14px; color: var(--dim); text-decoration: underline; text-underline-offset: 3px; }
+
+.cy-score:hover span { color: var(--ink); }
+
+.cy-score { margin-bottom: 8px; }
+
+.cy-bundle { margin: 14px 0 14px; }
+
+.cy-tiers { gap: 9px; }
+
+.cy-tier { padding: 13px 16px; }
+
+.cy-tier[aria-checked="true"] { padding: 12.5px 15.5px; }
+
+.cy-ticks { margin-top: 12px; gap: 6px; }
+
+.cy-ticks li { font-size: 14px; color: var(--ink); }
+
+.cy-ticks li svg { color: var(--go); }
+
+.cy-stock {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin: 2px 0 0;
+  font-size: 13.5px; font-weight: 600; color: #0B6E3F;
+  background: var(--go-soft); border: 1px solid #BFE6CF;
+  border-radius: 999px; padding: 6px 13px;
+}
+
+.cy-stock i {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--go);
+  box-shadow: 0 0 0 3px rgba(15, 157, 88, .22);
+}
+
+.cy-revs__stars svg, .cy-card__stars svg { width: 16px; height: 16px; }
+
+.cy-revs__stars, .cy-card__stars { color: #F5A623; display: inline-flex; gap: 2px; }
+
+.cy-card__stars { margin: 0 0 8px; }
+
+.cy-tiers { gap: 10px; }
+
+.cy-tier {
+  border-radius: 18px;
+  padding: 14px 16px;
+  transition: border-color .15s ease, background .15s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.cy-tier:hover { transform: translateY(-1px); }
+
+.cy-tier[aria-checked="true"] {
+  padding: 13.5px 15.5px;
+  background: linear-gradient(180deg, rgba(245,130,31,.10) 0%, rgba(245,130,31,.045) 100%);
+  box-shadow: 0 8px 22px -14px rgba(233, 118, 26, .9);
+}
+
+.cy-tier[aria-checked="true"] .cy-tier__each { background: #fff; color: var(--ink); }
+
+.cy-gal__track {
+  display: flex;
+  width: 100%; height: 100%;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* The page still scrolls vertically; only the sideways drag is claimed. */
+  touch-action: pan-y pinch-zoom;
+  scroll-behavior: smooth;
+}
+
+.cy-gal__track::-webkit-scrollbar { display: none; }
+
+.cy-gal__slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  display: grid; place-items: center;
+  min-width: 0;
+}
+
+.cy-gal__dots {
+  position: absolute; left: 0; right: 0; bottom: 10px;
+  display: flex; gap: 6px; justify-content: center;
+  pointer-events: none;
+}
+
+.cy-gal__dots span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(11, 11, 12, .22);
+  transition: background .18s ease, width .18s ease;
+}
+
+.cy-gal__dots span.is-on { width: 18px; border-radius: 3px; background: var(--action); }
+
+.cy-tier[aria-checked="true"] .cy-tier__each { background: none; color: var(--dim); }
+
+.cy-bundle {
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--paper);
+  margin: 16px 0 14px;
+}
+
+.cy-tiers { padding: 12px; gap: 10px; }
+
+.cy-tier {
+  border: 1.5px solid var(--hair);
+  border-radius: 12px;
+  background: var(--paper);
+  padding: 13px 14px;
+  box-shadow: none;
+  grid-template-columns: 22px auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.cy-tier:hover { transform: none; border-color: rgba(20, 22, 26, .3); }
+
+.cy-tier[aria-checked="true"] {
+  border: 2px solid var(--ink);
+  padding: 12.5px 13.5px;
+  background: var(--paper);
+  box-shadow: none;
+}
+
+.cy-tier[aria-checked="true"] .cy-tier__dot { border-color: var(--ink); }
+
+.cy-tier[aria-checked="true"] .cy-tier__dot::after { background: var(--ink); }
+
+.cy-tier[aria-checked="true"] .cy-tier__pic { border-color: var(--hair); }
+
+.cy-tier[aria-checked="true"] .cy-tier__each { background: none; color: var(--dim); }
+
+@media (max-width: 430px) {
+  .cy-tier { grid-template-columns: 20px auto 1fr auto; gap: 9px; padding: 12px 11px; }
+  .cy-tier__name { font-size: 15.5px; }
+  .cy-tier__price { font-size: 19px; }
+  .cy-tier__each { font-size: 12px; }
+}
+
+.cy-ugcw {
+  background:
+    radial-gradient(90% 120% at 50% 0%, #14203A 0%, #0A0C12 62%),
+    #0A0C12;
+  color: #fff;
+  padding: clamp(52px, 6vw, 84px) 0 clamp(56px, 6vw, 88px);
+  overflow: hidden;
+}
+
+.cy-ugcw .cy-head h2, .cy-ugcw .cy-h2 { color: #fff; }
+
+.cy-ugcw .cy-head p { color: rgba(255,255,255,.55); }
+
+.cy-clip {
+  position: relative;
+  flex: 0 0 auto;
+  width: clamp(200px, 20vw, 268px);
+  aspect-ratio: 9 / 16;
+  margin: 0;
+  border-radius: 26px;
+  overflow: hidden;
+  background: #0E1118;
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow:
+    0 34px 70px -34px rgba(0,0,0,.95),
+    inset 0 1px 0 rgba(255,255,255,.22);
+  animation: cy-clipbob 9s ease-in-out infinite;
+}
+
+.cy-ugcw__pass .cy-clip:nth-child(6n + 1) { animation-delay: -0.6s; }
+
+.cy-ugcw__pass .cy-clip:nth-child(6n + 2) { animation-delay: -3.2s; }
+
+.cy-ugcw__pass .cy-clip:nth-child(6n + 3) { animation-delay: -6.1s; }
+
+.cy-ugcw__pass .cy-clip:nth-child(6n + 4) { animation-delay: -1.9s; }
+
+.cy-ugcw__pass .cy-clip:nth-child(6n + 5) { animation-delay: -7.4s; }
+
+.cy-ugcw__pass .cy-clip:nth-child(6n)     { animation-delay: -4.5s; }
+
+@media (prefers-reduced-motion: reduce) { .cy-clip { animation: none; } }
+
+.cy-clip img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.cy-clip figcaption {
+  position: absolute; left: 12px; right: 12px; bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 12.5px; font-weight: 600; color: #fff;
+  background: rgba(14, 17, 24, .58);
+  border: 1px solid rgba(255,255,255,.16);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+}
+
+@media (max-width: 520px) {
+  .cy-ugcw__pass { gap: 13px; padding-right: 13px; }
+  .cy-clip { width: 180px; border-radius: 22px; }
+}
+
+.cy-night__head {
+  text-align: center;
+  margin: 0 auto clamp(20px, 3vw, 32px);
+  line-height: 1.2;
+}
+
+.cy-night__head h2 { color: #fff; margin: 0; }
+
+.cy-night__head p {
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, .62);
+  font-size: 16px;
+}
+
+.cy-night__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 0 clamp(10px, 1.6vw, 20px);
+}
+
+@media (max-width: 899px) {
+  .cy-night__row,
+  .cy-night__row--1,
+  .cy-night__row--2 {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 100vw;
+    grid-template-columns: none;
+    gap: 0;
+    padding: 0;
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .cy-night__row::-webkit-scrollbar { display: none; }
+  .cy-night img {
+    scroll-snap-align: center;
+    border-radius: 0;
+  }
+}
+
+.cy-tier {
+  padding: 9px 12px;
+  gap: 10px;
+  border-radius: 13px;
+}
+
+.cy-tiers { gap: 8px; }
+
+.cy-pay4--under { display: none; }
+
+@media (min-width: 900px) {
+  .cy-pay4--under { display: block; }
+}
+
+@media (max-width: 720px) {
+  .cy-buy__side { display: flex; flex-direction: column; }
+  .cy-buy__side > .cy-badge { order: 1; }
+  .cy-buy__side > .cy-h1 { order: 2; }
+  .cy-buy__side > .cy-score { order: 3; }
+  .cy-buy__side > .cy-price { order: 4; }
+  .cy-buy__side > .cy-acts { order: 5; }
+  .cy-buy__side > .cy-lede { order: 6; }
+  /* Everything not named keeps its place, after the block above. */
+  .cy-buy__side > * { order: 7; }
+  .cy-buy__side > .cy-price { margin-top: 10px; }
+  .cy-buy__side > .cy-acts { margin-bottom: 18px; }
+}
+
+.cy-thrilled {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 8px 12px 8px 8px;
+  border: 1px solid var(--border, rgba(20,22,26,.12));
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  line-height: 1.3;
+  color: rgba(20, 22, 26, .68);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.cy-thrilled b { color: var(--ink); font-weight: 700; }
+
+@media (max-width: 599px) {
+  .cy-thrilled { font-size: 12.5px; padding: 7px 11px 7px 7px; gap: 8px; }
+  .cy-thrilled__face { width: 23px; height: 23px; font-size: 11px; }
+}
+
+.cy-coupon {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 13px;
+  background: #F4F4F6;
+  border: 1px solid rgba(20, 22, 26, .08);
+  border-radius: 0;
+}
+
+.cy-thrilled {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 14px;
+  padding: 8px 13px;
+  /* The same grey as the strip above it. Two tones stacked read as two
+     separate widgets; one tone reads as one block with a line through it. */
+  background: #F4F4F6;
+  border: 1px solid rgba(20, 22, 26, .08);
+  border-top: 0;
+  border-radius: 0;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: rgba(20, 22, 26, .6);
+}
+
+@media (max-width: 599px) {
+  .cy-coupon { padding: 9px 11px; gap: 9px; }
+  .cy-thrilled { padding: 8px 11px; font-size: 12px; }
+  .cy-thrilled__face { width: 24px; height: 24px; }
+}
+
+.cy-carton {
+  background: #0B0B0C;
+  color: #FFFFFF;
+  padding: 64px 0 56px;
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .cy-carton { padding: 44px 0 40px; }
+  .cy-carton__stage { margin-top: 24px; padding: 0; }
+  .cy-carton__list {
+    grid-template-columns: 1fr 1fr;
+    margin-top: 28px;
+  }
+  .cy-carton__list li {
+    padding: 18px 16px 20px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .12);
+  }
+  .cy-carton__list li:nth-child(even) { border-right: 0; }
+  .cy-carton__list b { font-size: 16.5px; }
+  .cy-carton__list span { font-size: 13.5px; }
+}
+
+.cy-rvstars { display: inline-flex; gap: 2px; }
+
+.cy-rvstars svg { width: 16px; height: 16px; display: block; }
+
+.cy-rvstars > span { color: rgba(11, 11, 12, .18); line-height: 0; }
+
+.cy-rvstars > span.is-on { color: #F5A623; }
+
+.cy-rvg {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 640px) { .cy-rvg { grid-template-columns: minmax(0, 1fr); gap: 12px; } }
+
+.cy-rv {
+  background: #fff;
+  border: 1px solid rgba(11, 11, 12, .11);
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.cy-clip { animation: none; will-change: auto; }
+
+.cy-clip figcaption,
+.cy-tile figcaption {
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: #fff;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .85), 0 1px 3px rgba(0, 0, 0, .7);
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .cy-buy__side > * { order: 20; }
+  .cy-buy__side > .cy-coupon   { order: 1; }
+  .cy-buy__side > .cy-thrilled { order: 2; }
+  .cy-buy__side > .cy-h1       { order: 3; }
+  .cy-buy__side > .cy-score    { order: 4; }
+  .cy-buy__side > .cy-lede     { order: 5; }
+  .cy-buy__side > .cy-price    { order: 6; margin-top: 10px; }
+  .cy-buy__side > .cy-bundle   { order: 7; }
+  .cy-buy__side > .cy-stock    { order: 8; }
+  .cy-buy__side > .cy-acts     { order: 9; margin-bottom: 10px; }
+  .cy-buy__side > .cy-wallet   { order: 10; margin-bottom: 18px; }
+}
+
+.cy-p4t {
+  position: fixed;
+  left: 14px;
+  bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+  z-index: 59;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .98);
+  border: 1px solid rgba(11, 11, 12, .10);
+  box-shadow: 0 8px 24px -10px rgba(11, 11, 12, .32);
+  animation: cy-p4t-in .3s cubic-bezier(.2, .8, .3, 1) both;
+}
+
+.cy-p4t.is-out { animation: cy-p4t-out .3s ease-in both; }
+
+@media (prefers-reduced-motion: reduce) { .cy-p4t, .cy-p4t.is-out { animation: none; } }
+
+.cy-sticky__pic {
+  flex: 0 0 auto; width: 44px; height: 44px;
+  border-radius: 10px; overflow: hidden; background: #0B0B0C;
+}
+
+.cy-sticky__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.cy-sticky__txt { min-width: 0; display: grid; gap: 1px; }
+
+.cy-sticky__v {
+  color: rgba(11, 11, 12, .50);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.cy-sticky__form { margin-left: auto; flex: 0 0 auto; }
+
+@media (max-width: 540px) {
+  /* The name stays. It is the only thing on the bar that says what the
+     button is about to buy. */
+  .cy-sticky__t { display: block; font-size: 13.5px; }
+  .cy-sticky__v { display: none; }
+  .cy-sticky .cy-btn { flex: 0 0 auto; padding: 12px 18px; font-size: 14.5px; }
+}
+
+@media (max-width: 720px) {
+  .cy-rvg {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    padding: 2px 20px 6px;
+    margin: 0 -20px;
+  }
+  .cy-rvg::-webkit-scrollbar { display: none; }
+  .cy-rv {
+    flex: 0 0 82%;
+    scroll-snap-align: center;
+  }
+  /* Every card the same height, so the row has one edge instead of a ragged
+     one, and a short review does not leave a hole beside a long one. */
+  .cy-rv { min-height: 260px; }
+}
+
+.cy-ladder { background: #0B0B0C; color: #F7F2E7; padding: clamp(48px, 6vw, 84px) 0; }
+
+.cy-ladder .cy-head h2, .cy-ladder .cy-h2 { color: #fff; }
+
+.cy-ladder .cy-head p, .cy-ladder .cy-lede { color: rgba(247, 242, 231, .58); }
+
+.cy-week { background: #fff; color: #0B0B0C; padding: clamp(44px, 5.5vw, 76px) 0; }
+
+.cy-weather { background: #F4F4F6; color: #0B0B0C; padding: clamp(44px, 5.5vw, 76px) 0; }
+
+.cy-two { background: #fff; color: #0B0B0C; padding: clamp(44px, 5.5vw, 76px) 0; }
+
+.cy-revs__line { display: flex; align-items: center; gap: 12px; }
+
+.cy-revs__head .cy-rvstars svg { width: 18px; height: 18px; }
+
+.cy-revs__towns {
+  margin: 6px 0 0;
+  max-width: 100%;
+  font-size: 12.5px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: .10em;
+  color: var(--rv-meta);
+  overflow: hidden; white-space: nowrap; text-overflow: clip;
+}
+
+.cy-rvstars > span { color: var(--rv-off); }
+
+.cy-rvstars > span.is-on { color: var(--rv-accent); }
+
+.cy-rvstars svg { width: 15px; height: 15px; }
+
+.cy-rvg {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .cy-rvg {
+    display: block;
+    columns: 2;
+    column-gap: 56px;
+  }
+  /* An entry is never split across the fold of two columns. */
+  .cy-rv { break-inside: avoid; page-break-inside: avoid; }
+  /* Both columns begin with a rule, so neither looks like it starts
+     mid-sentence and the two heads line up. */
+  .cy-rv, .cy-rv + .cy-rv { border-top: 1px solid var(--rv-rule); }
+}
+
+.cy-rv {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 28px 0;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.cy-rv + .cy-rv { border-top: 1px solid var(--rv-rule); }
+
+@media (min-width: 900px) { .cy-rvg > .cy-rv:nth-child(2) { border-top: 0; } }
+
+.cy-rec2__flag {
+  position: absolute; top: 6px; left: 6px;
+  padding: 5px 9px; border-radius: 999px;
+  background: var(--action, #F5821F); color: #0B0B0C;
+  font-family: var(--display);
+  font-size: 11px; font-weight: 800; line-height: 1; white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(11, 11, 12, .35);
+  animation: cy-off 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) { .cy-rec2__flag { animation: none; } }
+/* ===================================================================
+   cryo — the repaint.
+
+   Everything above is structure inherited from the template. Everything
+   below is this brand: silver surfaces, one icy pastel blue, black type,
+   white ground. It is last in the file on purpose, so it wins on source
+   order over any template colour it is replacing.
+   =================================================================== */
+
+/* ------------------------------------------------------- announcement bar */
+/*
+ * It was a scrolling black rail. Two things were wrong with that: black is
+ * not in this brand, and a marquee is always caught mid-word by whoever
+ * arrives while it is halfway through a loop — which is exactly how the
+ * live page read, "shipping" with no start to it.
+ *
+ * So it does not move. One centred line on brushed ice, with the promises
+ * separated by a hairline dot. Nothing can be clipped by something that
+ * never travels.
+ */
+.cy .cy-ann {
+  background: linear-gradient(180deg, var(--ice-2) 0%, var(--ice) 100%);
+  color: var(--ice-ink);
+  border-bottom: 1px solid rgba(11, 58, 87, .14);
+  overflow: hidden;
+}
+.cy .cy-ann__t {
+  animation: none;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+/* The track prints its list twice so a marquee can loop seamlessly. Standing
+   still, the second copy is just a repeat — so it goes. */
+.cy .cy-ann__t > span:nth-child(2) { display: none; }
+.cy .cy-ann__t > span {
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: nowrap; min-width: 0;
+}
+.cy .cy-ann__t i {
+  color: var(--ice-ink);
+  font-size: 12.5px; font-weight: 700; letter-spacing: .01em;
+  padding: 10px 0; gap: 7px;
+  white-space: nowrap; min-width: 0;
+}
+.cy .cy-ann__t i::after {
+  background: rgba(11, 58, 87, .34);
+  width: 3px; height: 3px;
+  margin-left: 18px; margin-right: 18px;
+}
+/* The last visible item has nothing after it to be separated from. */
+.cy .cy-ann__t > span > i:last-child::after { content: none; }
+.cy .cy-ann__t i svg { opacity: .85; color: var(--ice-ink); }
+.cy .cy-ann__t i[data-pill] {
+  background: var(--action); color: #fff;
+  margin: 5px 0 5px 18px; padding: 5px 14px; font-size: 11.5px;
+}
+.cy .cy-ann__t i[data-pill] code { color: #fff; }
+/* The wordmark does not ride a bar that is standing still — it already sits
+   in the header two centimetres below. */
+.cy .cy-ann__t i[data-logo] { display: none; }
+
+/* A phone fits two promises and no more. Rather than let a third one run off
+   the edge — which is the bug being fixed — the extras are simply not shown. */
+@media (max-width: 720px) {
+  /* Two promises fit. The third child is the second visible one, because the
+     wordmark sits between them and is hidden on every width. */
+  .cy .cy-ann__t i:nth-child(n+4) { display: none; }
+  .cy .cy-ann__t i:nth-child(3)::after { content: none; }
+  .cy .cy-ann__t i { font-size: 11.5px; }
+  .cy .cy-ann__t i::after { margin-left: 13px; margin-right: 13px; }
+}
+
+/* ------------------------------------------------------------------ header */
+/* Brushed silver under white: a hairline of the brand's own metal so the bar
+   reads as a made thing rather than a browser default. */
+.cy .cy-header {
+  background: rgba(255, 255, 255, .86);
+  border-bottom: 1px solid var(--silver-2);
+  box-shadow: 0 1px 0 rgba(255,255,255,.7) inset;
+}
+.cy .cy-logo img { height: 34px; }
+.cy .cy-nav a {
+  font-weight: 600; font-size: 14.5px; letter-spacing: -0.01em;
+  padding: 7px 2px; border-bottom: 2px solid transparent;
+}
+.cy .cy-nav a:hover { color: var(--ice-deep); border-bottom-color: var(--ice-deep); }
+.cy .cy-cart, .cy .cy-burger {
+  background: linear-gradient(180deg, #fff, var(--silver));
+  border: 1px solid var(--silver-2);
+  box-shadow: 0 1px 2px rgba(16,40,58,.08);
+  width: 42px; height: 42px;
+}
+.cy .cy-cart__n { background: var(--action); color: #fff; }
+
+/* ----------------------------------------------------------- section rhythm */
+/* White, ice, white, ice. Structure the eye can feel without reading. */
+.cy .cy-section--sky,
+.cy .cy-section--silver { background: var(--paper-2); }
+.cy .cy-head h2 {
+  background: linear-gradient(to top, var(--ice) 0 26%, transparent 26%);
+}
+
+/* ---------------------------------------------------------------- buttons */
+.cy .cy-btn {
+  background: var(--action); border-color: var(--action); color: #fff;
+  box-shadow: 0 10px 22px -14px rgba(16,40,58,.75);
+}
+.cy .cy-btn:hover { background: #0A1D2B; border-color: #0A1D2B; }
+.cy .cy-btn--ghost {
+  background: #fff; color: var(--action); border-color: var(--silver-2);
+}
+.cy .cy-btn--ghost:hover { background: var(--ice-2); border-color: var(--ice-deep); }
+
+/* ------------------------------------------------------------------ chips */
+/* The chips are the loudest brand moment on the page, so they carry the ice
+   rather than an outline in ink. */
+.cy .cy-chip {
+  background: linear-gradient(180deg, #fff, var(--ice-2));
+  border: 1px solid var(--ice);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(16,40,58,.06);
+}
+.cy .cy-chip svg { color: var(--ice-deep); }
+
+/* ---------------------------------------------------------------- gallery */
+/*
+ * The frame is 1:1 and the picture is `contain`, which is the platform rule
+ * and stays. What was wrong was the frame: a pale card with the photograph
+ * sitting small in the middle of it. The track and the slide now claim the
+ * whole square, so the image area IS the frame.
+ */
+.cy .cy-gal__main {
+  background: #fff;
+  border: 1px solid var(--silver-2);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(16,40,58,.05), 0 30px 60px -38px rgba(16,40,58,.35);
+  padding: 0;
+}
+.cy .cy-gal__track { width: 100%; height: 100%; }
+.cy .cy-gal__slide { width: 100%; height: 100%; padding: 0; }
+.cy .cy-gal__slide img,
+.cy .cy-gal__main img {
+  width: 100%; height: 100%;
+  object-fit: contain; object-position: center;
+  /* The renders carry their own white border. A hair of scale eats it so the
+     machine reaches the edges of its square instead of floating in a box. */
+  transform: scale(1.04);
+}
+.cy .cy-gal__glow {
+  background: radial-gradient(58% 100% at 50% 100%, rgba(79,163,212,.34), transparent 72%);
+}
+.cy .cy-gal__dots span { background: rgba(15,26,34,.20); }
+.cy .cy-gal__dots span.is-on { background: var(--ice-deep); }
+.cy .cy-gal__thumb {
+  width: 76px; height: 76px; border-radius: 14px;
+  background: #fff; border: 1px solid var(--silver-2);
+}
+.cy .cy-gal__thumb img { object-fit: contain; }
+.cy .cy-gal__thumb[aria-current="true"] {
+  border-color: var(--ice-deep); box-shadow: 0 0 0 2px var(--ice-deep);
+}
+
+/* ------------------------------------------------------------ bundle tiers */
+/*
+ * Two tiers, and they have to look chosen rather than listed. The template
+ * puts a product photograph in each row; at this size it is a grey smudge and
+ * it is what made the selector look like a mistake. It is gone from the
+ * markup, so each row is a name, a line of reason, and a price.
+ */
+.cy .cy-bundle {
+  border: 1px solid var(--silver-2);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #fff, var(--paper-2));
+  overflow: hidden;
+  margin: 18px 0 16px;
+}
+.cy .cy-bundle__lid {
+  font-family: var(--display); font-weight: 700; font-size: 13px;
+  letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ice-ink);
+  background: var(--ice-2);
+  border-bottom: 1px solid var(--ice);
+  padding: 12px 16px;
+}
+.cy .cy-tiers { display: grid; gap: 10px; padding: 14px; }
+.cy .cy-tier {
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  gap: 13px;
+  background: #fff;
+  border: 1.5px solid var(--silver-2);
+  border-radius: 16px;
+  padding: 15px 16px;
+  box-shadow: none;
+}
+.cy .cy-tier:hover { border-color: var(--ice-deep); transform: none; }
+.cy .cy-tier[aria-checked="true"] {
+  border-color: var(--action); border-width: 1.5px; padding: 15px 16px;
+  background: linear-gradient(180deg, #fff, var(--ice-2));
+  box-shadow: 0 0 0 1.5px var(--action), 0 10px 24px -18px rgba(16,40,58,.6);
+}
+.cy .cy-tier__dot { border-color: var(--silver-2); background: #fff; }
+.cy .cy-tier[aria-checked="true"] .cy-tier__dot { border-color: var(--action); }
+.cy .cy-tier[aria-checked="true"] .cy-tier__dot::after { background: var(--action); }
+.cy .cy-tier__main { min-width: 0; }
+.cy .cy-tier__name {
+  font-family: var(--display); font-weight: 700; font-size: 17px;
+  letter-spacing: -0.02em; color: var(--ink); display: block;
+}
+.cy .cy-tier__under {
+  display: block; margin-top: 3px;
+  font-size: 13px; line-height: 1.35; color: var(--dim);
+}
+.cy .cy-tier__right { text-align: right; }
+.cy .cy-tier__price {
+  display: block;
+  font-family: var(--display); font-weight: 700; font-size: 21px;
+  letter-spacing: -0.03em; color: var(--ink);
+}
+.cy .cy-tier__each { display: block; font-size: 12.5px; color: var(--dim); background: none; }
+.cy .cy-tier__flag {
+  position: absolute; top: -10px; right: 14px; left: auto;
+  font-family: var(--display); font-weight: 700; font-size: 10.5px;
+  letter-spacing: .09em; text-transform: uppercase;
+  background: var(--action); color: #fff;
+  border-radius: 999px; padding: 4px 11px;
+}
+.cy .cy-tier[aria-checked="true"] .cy-tier__flag { background: var(--action); color: #fff; }
+.cy .cy-tier--flagged { margin-top: 10px; }
+.cy .cy-bundle__foot {
+  font-size: 12.5px; color: var(--dim);
+  padding: 0 16px 14px; margin: 0;
+}
+
+/* ------------------------------------------------------------- price + bits */
+.cy .cy-price__off,
+.cy .cy-opt__save { background: var(--ice); color: var(--ice-ink); }
+.cy .cy-badge { background: var(--action); color: #fff; }
+.cy .cy-opt[aria-checked="true"] {
+  border-color: var(--action);
+  box-shadow: 0 0 0 1.5px var(--action), var(--lift);
+  background: var(--ice-2);
+}
+.cy .cy-steps-s { background: var(--action); }
+.cy .cy-steps-s .cy-head h2 {
+  background: linear-gradient(to top, var(--ice-deep) 0 26%, transparent 26%);
+}
+
+/* ------------------------------------------------------- second pass, seen */
+/*
+ * Everything below was found by looking at the deployed page rather than at
+ * the file. Each one is a thing a buyer would have seen.
+ */
+
+/* The strip under the buy box had the same fault as the announcement bar —
+   it scrolled, so it was always caught mid-word. It stands still now, on the
+   brand's own ice, and centres itself. */
+.cy .cy-marq {
+  background: linear-gradient(180deg, var(--ice-2), var(--ice));
+  border-block: 1px solid rgba(11,58,87,.12);
+  color: var(--ice-ink);
+  padding: 13px 0;
+}
+.cy .cy-marq__t {
+  animation: none; width: 100%; justify-content: center; flex-wrap: nowrap;
+}
+.cy .cy-marq__t > span:nth-child(2) { display: none; }
+.cy .cy-marq__t > span { min-width: 0; }
+.cy .cy-marq__t i {
+  font-size: 13px; letter-spacing: .06em; padding: 0 0; gap: 0;
+  color: var(--ice-ink); white-space: nowrap;
+}
+.cy .cy-marq__t i::after {
+  background: rgba(11,58,87,.35); margin: 0 18px;
+}
+.cy .cy-marq__t > span > i:last-child::after { content: none; }
+@media (max-width: 720px) {
+  .cy .cy-marq__t i:nth-child(n+3) { display: none; }
+  .cy .cy-marq__t i:nth-child(2)::after { content: none; }
+  .cy .cy-marq__t i { font-size: 11.5px; }
+  .cy .cy-marq__t i::after { margin: 0 12px; }
+}
+
+/* The gallery: the picture sat small inside a white card, which is what read
+   as "floating in a margin". The square is now a brushed-silver mat, so the
+   bands beside a wide photograph look like a frame instead of a mistake. */
+.cy .cy-gal__main {
+  background: linear-gradient(160deg, #FBFCFD 0%, var(--silver) 100%);
+  padding: 0;
+}
+.cy .cy-gal__slide img,
+.cy .cy-gal__main img { transform: none; }
+/* The gallery column stretches, so `position: sticky` on it has somewhere to
+   travel. Without this the picture scrolled away and left half a screen of
+   empty white beside the buy box. */
+.cy .cy-buy__grid { align-items: start; }
+@media (min-width: 941px) {
+  .cy .cy-gal { align-self: start; position: sticky; top: 96px; }
+}
+/* Below 941px the columns stack, and a sticky gallery would ride down over
+   the bundle rows. It must stay static there. */
+@media (max-width: 940px) { .cy .cy-gal { position: static; } }
+
+/* Free shipping / 24 hours / 30-day returns was printed three times in the
+   same column. The green ticks say it once; the other two go. */
+.cy .cy-reassure, .cy .cy-buy__side .cy-ship { display: none; }
+
+/* The lock-screen mock was a royal blue no part of this brand uses. Glacier
+   instead — the same family as the machine's own light. */
+.cy .cy-lock__in {
+  background:
+    radial-gradient(70% 55% at 50% 42%, #2A7EA8 0%, #14506F 42%, #0A2B3F 76%, #06182A 100%);
+}
+.cy .cy-lock__msg[data-side="us"] p { background: var(--ice-deep); }
+
+/* The one electric-cyan card in "who buys one" and the electric line through
+   the steps. Pastel ice, black type — the brand, not a highlighter. */
+.cy .cy-for__it[data-i="3"] {
+  background: var(--ice); border-color: var(--ice); color: var(--ink);
+}
+.cy .cy-for__it[data-i="3"] p { color: rgba(15,26,34,.66); }
+.cy .cy-steps::before {
+  background: linear-gradient(90deg, rgba(191,228,247,.2), var(--ice) 50%, rgba(191,228,247,.2));
+}
+@media (max-width: 780px) {
+  .cy .cy-steps::before {
+    background: linear-gradient(180deg, rgba(191,228,247,.2), var(--ice) 50%, rgba(191,228,247,.2));
+  }
+}
+.cy .cy-steps-s .cy-head h2 {
+  background: linear-gradient(to top, var(--ice-deep) 0 26%, transparent 26%);
+}
+
+/* The features grid left a dead grey cell where the row ran out of items. */
+/* Eight features in a three-wide grid leaves a ninth cell showing the grid's
+   own grey. The last one takes the empty seat instead. */
+@media (min-width: 861px) {
+  .cy .cy-specgrid__it:last-child { grid-column: span 2; }
+}
+
+/* The sticky bar: the thumbnail was a broken image, and the price ran into
+   the variant name with no space between them. */
+.cy .cy-sticky__pic { display: none; }
+.cy .cy-sticky__v { margin-left: 7px; color: var(--dim); }
+.cy .cy-sticky__txt b { font-family: var(--display); }
+
+/* A heading that runs to two lines put one wide slab of blue across the
+   bottom of the whole block, over the descenders. Per line instead. */
+.cy .cy-head h2 {
+  display: inline;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding: 0 8px 1px;
+}
+
+/* `overflow-x: hidden` on the theme root silently disables `position: sticky`
+   on every descendant, which is why the gallery scrolled away and left half a
+   screen of white beside the buy box. `clip` stops the sideways scroll the
+   same way and leaves sticky alone. */
+.cy { overflow-x: clip; }
+
+/* The heading swipe, on a two-line heading, was running through the letters.
+   Thinner, and sat lower, so it reads as an underline. */
+.cy .cy-head h2 {
+  background: linear-gradient(to top, var(--ice) 0 15%, transparent 15%);
+  line-height: 1.12;
+}
+.cy .cy-steps-s .cy-head h2 {
+  background: linear-gradient(to top, var(--ice-deep) 0 15%, transparent 15%);
+}
+
+/* The step numbers were an electric cyan. Pastel ice with dark type: the
+   brand's blue, and far more legible at this size. */
+.cy .cy-step__n {
+  background: var(--ice); color: var(--action);
+  box-shadow: 0 0 0 8px var(--action), 0 0 28px -6px rgba(191,228,247,.55);
+}
+
+/* The trust band wrapped into three ragged centred rows on a phone. Two even
+   columns instead, so it reads as a list rather than as leftovers. */
+@media (max-width: 720px) {
+  .cy .cy-band__in {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 12px; justify-items: start;
+  }
+  .cy .cy-band__it { min-width: 0; }
+  .cy .cy-band__t { font-size: 13px; }
+}
+
+/* The footer carried its own closing banner on top of the closing_cta
+   section, so the same headline and button printed twice in a row — and its
+   fallback headline belonged to another store. The section is the one the
+   admin edits, so the footer's copy of it goes. */
+.cy .cy-last { display: none; }

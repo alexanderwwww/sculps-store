@@ -310,7 +310,7 @@ const BRAND: CyBrand = {
   logo: LOGO,
   nav: NAV,
   rail: ["Free US shipping", "Ships within 24 hours", "30-day returns", "1-year warranty"],
-  marquee: ["No fridge", "No ice", "Chills the bottle you already own", "Charges over USB-C"],
+  marquee: ["No fridge", "No ice", "Nothing to refill", "Chills the bottle you already own"],
 };
 
 function Header({
@@ -656,7 +656,11 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                 const flag =
                   x.id === deepest.id && !x.isDefault && (savedPercent(x.priceCents, x.compareAtCents) ?? 0) > 0
                     ? ["best", "Best value"] as const
-                    : x.isDefault && variants.length > 1
+                    // The badge rides the UPSELL, never the default. The
+                    // default here is the $89 entry — the number every ad
+                    // quotes — and badging it would spend the badge on the
+                    // row the visitor was going to pick anyway.
+                    : !x.isDefault && variants.length > 1
                       ? ["pop", "Most popular"] as const
                       : null;
                 const off = savedPercent(x.priceCents, x.compareAtCents);
@@ -673,6 +677,9 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                   // "Both — one at each end" is two of them. Without this the
                   // row divided $469 by one and claimed $469.00 each.
                   : /^both\b/i.test(x.label) ? 2
+                  // "the pair" is two of them; without this the row divided
+                  // $159 by one and the per-unit line never appeared.
+                  : /^(the\s+)?pair\b/i.test(x.label) ? 2
                   : 1;
                 return (
                   <button
@@ -687,36 +694,11 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
 
                     <span className="cy-tier__dot" aria-hidden="true" />
 
-                    {/* One picture per row, and a small one.
-                        It used to print a thumbnail per unit, fanned out like
-                        cards in a hand, on the theory that two pictures say
-                        "two of them" faster than the words do. They do not —
-                        the words already say it, and the fan made every row
-                        tall enough to wrap its own name over three lines. A
-                        bundle box that runs half the page reads as clutter,
-                        not as choice. The quantity is in the title. */}
-                    {(() => {
-                      // A listing graphic is the right lead photograph and the
-                      // wrong thumbnail: at forty-eight pixels its banner type
-                      // and callouts are grey mush, and three rows of mush is
-                      // what makes a bundle look cheap. Those images carry
-                      // `kind: "graphic"`, so the tile can take the first plain
-                      // photograph of the product and fall back to anything at
-                      // all rather than render an empty row.
-                      const imgs = page.product.images ?? [];
-                      const pic =
-                        x.imageUrl ||
-                        imgs.find((i) => i.url && i.kind !== "graphic")?.url ||
-                        imgs.find((i) => i.url)?.url;
-                      if (!pic) return null;
-                      return (
-                        <span className="cy-tier__pics cy-tier__pics--1">
-                          <span className="cy-tier__pic">
-                            <Pic src={pic} size="t200" alt="" loading="lazy" />
-                          </span>
-                        </span>
-                      );
-                    })()}
+                    {/* No picture in the row.
+                        A thumbnail of the machine inside a tier reads as a
+                        photograph someone forgot to size, and at this scale it
+                        says nothing the two words beside it do not. The rows
+                        are a name, a reason and a price. */}
 
                     <span className="cy-tier__main">
                       <span className="cy-tier__name">{x.label}</span>
