@@ -20,6 +20,7 @@ URL URLRequest URLSession URLSessionConfiguration URLSessionWebSocketTask URLSes
 HTTPURLResponse JSONSerialization Data Date DateFormatter TimeInterval DispatchQueue DispatchTime DispatchWorkItem
 OperationQueue Timer Bundle FileManager ProcessInfo CommandLine CharacterSet String Int Double Bool CGFloat CGRect
 CGSize CGPoint CGColor CALayer Array Dictionary Set Optional Result Error Any AnyObject Never Task MainActor Selector UUID
+NSVisualEffectView NSAnimationContext NSFont NSBitmapImageRep NSGraphicsContext NSTrackingArea NSCursor NSAttributedString
 `.trim().split(/\s+/));
 
 const file = process.argv[2];

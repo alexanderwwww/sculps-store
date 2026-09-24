@@ -1,4 +1,4 @@
-// Research's window. One window, one web view, one wire.
+// Research's window. One window, three shapes, one wire.
 //
 // The rule for this file: it is a wire, not a brain. Everything that thinks
 // lives in the worker (Node) or in the agent bundle the worker serves and we
@@ -8,10 +8,23 @@
 // Compiled once on the Mac by the launcher (swiftc from the Command Line
 // Tools). Targets macOS 12.
 //
+// This is a desk, not a phone. The window is one of three shapes and it
+// animates between them:
+//
+//   pill     320x64   a floating capsule: a dot and one line of text. What
+//                     sits over the desktop while Alex works.
+//   working  900x700  one site pane, the web view filling it.
+//   desk    1400x820  three panes side by side, each on its own cookie jar,
+//                     one of them active.
+//
 // argv[1] = worker port. argv[2] = path to AppIcon.icns (optional).
 // --selftest anywhere in argv = run the diagnostic and exit.
 import Cocoa
 import WebKit
+
+
+
+
 
 // --- arguments ---------------------------------------------------------------
 
@@ -26,11 +39,49 @@ let workerPort: Int = {
 }()
 let iconPath: String? = positional.count > 1 ? positional[1] : nil
 
-let phoneAspect = NSSize(width: 390, height: 844)
 let iphoneUA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
+
+/*
+ * The three shapes, and the sizes Alex asked for.
+ */
+enum Shape {
+  case pill
+  case working
+  case desk
+}
+
+let pillSize = NSSize(width: 320, height: 64)
+let workingSize = NSSize(width: 900, height: 700)
+let deskSize = NSSize(width: 1400, height: 820)
+
+/// The gutter around and between panes, and the height of the chrome strip
+/// along the top that is always a handle.
+let gutter: CGFloat = 10
+let headerHeight: CGFloat = 36
+
+/*
+ * The three slots, in the order they sit on the desk.
+ *
+ * The identifier is what macOS keys the cookie jar to, so it is written down
+ * once and never generated: change one of these and that slot is signed out.
+ */
+let paneSlots: [(String, String)] = [
+  ("alibaba", "7A1B0C2D-0001-4E00-9E00-000000000001"),
+  ("1688",    "7A1B0C2D-0002-4E00-9E00-000000000002"),
+  ("spare",   "7A1B0C2D-0003-4E00-9E00-000000000003")
+]
 
 func agentURL(_ port: Int) -> URL? { return URL(string: "http://127.0.0.1:\(port)/agent.js") }
 func socketURL(_ port: Int) -> URL? { return URL(string: "ws://127.0.0.1:\(port)/ws") }
+
+/// Where the app keeps its things. The launcher hands this over; the fallback
+/// is the same path the launcher would have computed.
+func supportDir() -> String {
+  let env = ProcessInfo.processInfo.environment
+  if let home = env["RESEARCH_HOME"], home.count > 0 { return home }
+  let user = env["HOME"] ?? "/tmp"
+  return user + "/Library/Application Support/ProductResearch"
+}
 
 func fail(_ reason: String) {
   if selfTest {
@@ -45,18 +96,20 @@ func fail(_ reason: String) {
   exit(1)
 }
 
-// --- the phone's body --------------------------------------------------------
+// --- the chrome --------------------------------------------------------------
 //
 // The outer 8 points on every edge belong to the window, not the page: hitTest
 // returns nil there, so AppKit's own resize machinery (the window is
-// .resizable) gets the drag. Everywhere else the web view gets the event, and
-// isMovableByWindowBackground plus performDrag move the phone around.
+// .resizable) gets the drag. Inside that, anything that is not a pane — the
+// top strip, the gutters, the whole pill — is a handle. Only the panes
+// themselves see the mouse.
 
-final class PhoneView: NSView {
+final class ChromeView: NSView {
   /// The outermost ring: AppKit resizes the window there.
   let edge: CGFloat = 8
-  /// The phone's body. The page stops here, so this is where a drag lands.
-  static let bezel: CGFloat = 16
+  /// Where the panes are right now, in this view's coordinates. Everything
+  /// outside them is something to take hold of.
+  var paneFrames: [NSRect] = []
 
   override func hitTest(_ point: NSPoint) -> NSView? {
     let p = convert(point, from: superview)
@@ -64,29 +117,43 @@ final class PhoneView: NSView {
       return nil
     }
     /*
-     * Hold command and the whole phone is a handle.
+     * Hold command and the whole window is a handle.
      *
-     * The web view covers everything inside the body, and a web view keeps
-     * the mouse to itself — which is why the phone could not be moved at all.
-     * The body is a real grip now, and command-drag is the one that works
-     * wherever the hand happens to be.
+     * A web view keeps the mouse to itself, so without this there is no way to
+     * move the window while a page covers it. Command-drag is the one that
+     * works wherever the hand happens to be.
      */
     if NSEvent.modifierFlags.contains(.command) { return self }
-    return super.hitTest(point)
+    for frame in paneFrames {
+      if frame.contains(p) { return super.hitTest(point) }
+    }
+    return self
   }
 
   override func mouseDown(with event: NSEvent) {
     window?.performDrag(with: event)
   }
-
 }
 
-// A borderless window is not key-capable unless it says it is, and a phone
+// A borderless window is not key-capable unless it says it is, and a pane
 // nobody can type into cannot be signed into.
 
-final class PhoneWindow: NSWindow {
+final class ShellWindow: NSWindow {
   override var canBecomeKey: Bool { return true }
   override var canBecomeMain: Bool { return true }
+}
+
+/// One slot on the desk: a name, the cookie jar it is keyed to, and the view.
+final class Pane {
+  let id: String
+  let storeID: String
+  var view: WKWebView
+
+  init(id: String, storeID: String, view: WKWebView) {
+    self.id = id
+    self.storeID = storeID
+    self.view = view
+  }
 }
 
 // --- the app -----------------------------------------------------------------
@@ -94,11 +161,21 @@ final class PhoneWindow: NSWindow {
 final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate, URLSessionWebSocketDelegate {
 
   var window: NSWindow?
+  /// The active pane's view. Everything that used to be "the web view" still
+  /// means this, so every verb that was here before behaves as it did.
   var web: WKWebView?
-  var body: PhoneView?
+  var body: ChromeView?
+  var effect: NSVisualEffectView?
+  var statusDot: NSView?
+  var statusLabel: NSTextField?
+
+  var panes: [Pane] = []
+  var activePane: Int = 0
+  var shape: Shape = .working
+
   /** The crew's code, kept so a rebuilt view gets it too. */
   var agentSource: String?
-  /** Which account's store the view is on. */
+  /** Which account's store the active pane is on. */
   var currentProfile: String = "default"
 
   // the wire
@@ -162,54 +239,124 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   // MARK: the window
 
   func buildWindow() {
-    let initial = NSRect(x: 0, y: 0, width: phoneAspect.width, height: phoneAspect.height)
-    let win = PhoneWindow(
+    let initial = NSRect(x: 0, y: 0, width: workingSize.width, height: workingSize.height)
+    let win = ShellWindow(
       contentRect: initial,
       styleMask: [.borderless, .resizable],
       backing: .buffered, defer: false)
     win.isOpaque = false
     win.backgroundColor = .clear
     win.hasShadow = true
-    win.level = .normal
+    /*
+     * Always on top, and never in the way.
+     *
+     * .floating keeps it over the desktop while Alex works in something else.
+     * It is never activated on its own — no makeKeyAndOrderFront and no
+     * NSApp.activate outside the "front" verb — so it cannot take the mouse or
+     * the keyboard from whatever he is typing into. orderFrontRegardless shows
+     * it without making this app the front one.
+     */
+    win.level = .floating
+    win.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
     win.isMovableByWindowBackground = true
     win.isReleasedWhenClosed = false
     win.titleVisibility = .hidden
-    win.minSize = NSSize(width: 300, height: 650)
-    win.maxSize = NSSize(width: 520, height: 520 / phoneAspect.width * phoneAspect.height)
-    win.contentAspectRatio = phoneAspect
+    win.minSize = NSSize(width: 280, height: 56)
+    win.maxSize = NSSize(width: 4000, height: 3000)
 
-    let container = PhoneView(frame: initial)
+    let container = ChromeView(frame: initial)
     container.wantsLayer = true
     container.autoresizingMask = [.width, .height]
     if let layer = container.layer {
-      // The phone's body: dark, so the bezel reads as a phone and the ring
-      // around the page is something to take hold of.
-      layer.backgroundColor = NSColor(calibratedWhite: 0.055, alpha: 1).cgColor
       layer.masksToBounds = true
-      layer.cornerRadius = Shell.radius(for: initial.width)
+      layer.cornerRadius = 16
     }
     win.contentView = container
 
-    let config = makeConfiguration(WKWebsiteDataStore.default())
+    /*
+     * A real material, not a painted rectangle.
+     *
+     * NSVisualEffectView behind everything is what makes the pill read as a
+     * piece of macOS: it picks up whatever is under the window and blurs it,
+     * and it follows light and dark on its own.
+     */
+    let fx = NSVisualEffectView(frame: container.bounds)
+    fx.autoresizingMask = [.width, .height]
+    fx.material = .hudWindow
+    fx.blendingMode = .behindWindow
+    fx.state = .active
+    fx.wantsLayer = true
+    if let layer = fx.layer {
+      layer.masksToBounds = true
+      layer.cornerRadius = 16
+    }
+    container.addSubview(fx)
 
-    let inset = PhoneView.bezel
-    let view = WKWebView(frame: container.bounds.insetBy(dx: inset, dy: inset), configuration: config)
-    view.autoresizingMask = [.width, .height]
+    let dot = NSView(frame: NSRect(x: 0, y: 0, width: 9, height: 9))
+    dot.wantsLayer = true
+    if let layer = dot.layer {
+      layer.cornerRadius = 4.5
+      layer.backgroundColor = NSColor.systemGreen.cgColor
+    }
+    container.addSubview(dot)
+
+    let label = NSTextField(labelWithString: "Research")
+    label.font = NSFont.systemFont(ofSize: 13, weight: .medium)
+    label.textColor = NSColor.labelColor
+    label.lineBreakMode = .byTruncatingTail
+    label.isSelectable = false
+    container.addSubview(label)
+
+    window = win
+    body = container
+    effect = fx
+    statusDot = dot
+    statusLabel = label
+
+    // The panes. The first one is active and is what `web` means.
+    for slot in paneSlots {
+      let view = makeWebView(makeConfiguration(storeFor(slot.1)))
+      container.addSubview(view)
+      panes.append(Pane(id: slot.0, storeID: slot.1, view: view))
+    }
+    activePane = 0
+    web = panes.count > 0 ? panes[0].view : nil
+
+    /*
+     * Something visible from the first frame.
+     *
+     * The window is transparent and the web views draw no background, so
+     * about:blank in them is an invisible window: the app opened, the Dock
+     * bounced, and Alex saw nothing at all.
+     */
+    for pane in panes {
+      pane.view.loadHTMLString(Shell.startingHTML, baseURL: nil)
+    }
+
+    // First run: centred. After that the autosave name puts it back where
+    // Alex left it; the shape then decides the size.
+    win.center()
+    win.setFrameAutosaveName("ResearchDesk")
+    applyShape(.working, animated: false)
+
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(windowResized(_:)),
+      name: NSWindow.didResizeNotification, object: win)
+
+    win.orderFrontRegardless()
+  }
+
+  /** Every web view this app makes, made the same way. */
+  func makeWebView(_ config: WKWebViewConfiguration) -> WKWebView {
+    let view = WKWebView(frame: NSRect(x: 0, y: 0, width: 400, height: 400), configuration: config)
     view.navigationDelegate = self
     view.uiDelegate = self
     view.allowsBackForwardNavigationGestures = true
     /*
      * It stops claiming to be an iPhone when it signs in.
      *
-     * A Mac's WebKit wearing an iPhone user agent is a mismatch Instagram can
-     * see — the engine is Safari on macOS and the name says iOS — and its
-     * login came back "an unexpected error occurred". A login refused for
-     * looking odd is not a shadow ban and not an account problem: it is this
-     * app lying about what it is.
-     *
-     * So it tells the truth and gets the mobile layout the honest way: the
-     * window is 390 points wide, and Instagram is responsive. Set
-     * RESEARCH_UA=phone to put the old claim back if a site ever needs it.
+     * A Mac's WebKit wearing an iPhone user agent is a mismatch a site can
+     * see. Set RESEARCH_UA=phone to put the old claim back if one ever needs it.
      */
     if ProcessInfo.processInfo.environment["RESEARCH_UA"] == "phone" {
       view.customUserAgent = iphoneUA
@@ -218,59 +365,189 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     view.wantsLayer = true
     if let layer = view.layer {
       layer.masksToBounds = true
-      layer.cornerRadius = Shell.radius(for: initial.width)
+      layer.cornerRadius = 10
     }
-    container.addSubview(view)
-
-    /*
-     * Something visible from the first frame.
-     *
-     * The window is transparent and the web view draws no background, so
-     * about:blank in it is an invisible window: the app opened, the Dock
-     * bounced, and Alex saw nothing at all. A phone that is starting has to
-     * LOOK like a phone that is starting.
-     */
-    view.loadHTMLString(Shell.startingHTML, baseURL: nil)
-
-    // First run: centred. After that the autosave name puts it back where
-    // Alex left it (setFrameAutosaveName restores if a saved frame exists).
-    win.center()
-    win.setFrameAutosaveName("ResearchPhone")
-
-    window = win
-    web = view
-    body = container
-    applyRadius()
-
-    NotificationCenter.default.addObserver(
-      self, selector: #selector(windowResized(_:)),
-      name: NSWindow.didResizeNotification, object: win)
-
-    win.makeKeyAndOrderFront(nil)
-    NSApp.activate(ignoringOtherApps: true)
+    return view
   }
 
-  static func radius(for width: CGFloat) -> CGFloat {
-    let r = width * 0.114
-    if r < 28 { return 28 }
-    if r > 64 { return 64 }
-    return r
+  /*
+   * One desk, three cookie jars.
+   *
+   * Two accounts sharing one cookie jar are one account. macOS keeps a
+   * separate, PERSISTENT website store per identifier, so each pane gets its
+   * own — its own cookies, its own logged-in state, all of it surviving a
+   * quit. Before macOS 14 there is only one store; the app says so once rather
+   * than pretending the panes are separate.
+   */
+  var saidOneStore = false
+
+  func storeFor(_ idText: String) -> WKWebsiteDataStore {
+    if #available(macOS 14.0, *) {
+      if let uuid = UUID(uuidString: idText) {
+        return WKWebsiteDataStore(forIdentifier: uuid)
+      }
+    } else if !saidOneStore {
+      saidOneStore = true
+      note("this Mac keeps one set of sign-ins (macOS 14 or newer keeps one per pane)")
+    }
+    return WKWebsiteDataStore.default()
+  }
+
+  // MARK: shapes
+
+  func sizeFor(_ s: Shape) -> NSSize {
+    switch s {
+    case .pill: return pillSize
+    case .working: return workingSize
+    case .desk: return deskSize
+    }
+  }
+
+  func radiusFor(_ s: Shape) -> CGFloat {
+    switch s {
+    case .pill: return pillSize.height / 2
+    case .working: return 16
+    case .desk: return 16
+    }
+  }
+
+  /**
+   * Change shape.
+   *
+   * The window grows and shrinks from its top-left corner, so the thing Alex
+   * is looking at does not jump across the screen, and it is clamped back onto
+   * whichever screen it is on. The resize itself is an animator resize —
+   * AppKit's own ease-in-ease-out over 0.35s — and the corner radius is
+   * carried with it so the pill rounds off as it closes.
+   */
+  func applyShape(_ s: Shape, animated: Bool) {
+    guard let win = window else { return }
+    shape = s
+    let size = sizeFor(s)
+    var frame = win.frame
+    let top = frame.origin.y + frame.size.height
+    frame.origin.y = top - size.height
+    frame.size = size
+
+    if let screen = win.screen ?? NSScreen.main {
+      let visible = screen.visibleFrame
+      if frame.origin.x + frame.size.width > visible.origin.x + visible.size.width {
+        frame.origin.x = visible.origin.x + visible.size.width - frame.size.width
+      }
+      if frame.origin.x < visible.origin.x { frame.origin.x = visible.origin.x }
+      if frame.origin.y < visible.origin.y { frame.origin.y = visible.origin.y }
+      let ceiling = visible.origin.y + visible.size.height
+      if frame.origin.y + frame.size.height > ceiling {
+        frame.origin.y = ceiling - frame.size.height
+      }
+    }
+
+    let radius = radiusFor(s)
+    body?.layer?.cornerRadius = radius
+    effect?.layer?.cornerRadius = radius
+
+    if animated {
+      NSAnimationContext.runAnimationGroup({ context in
+        context.duration = 0.35
+        context.allowsImplicitAnimation = true
+        win.animator().setFrame(frame, display: true)
+      }, completionHandler: {
+        self.layoutChrome()
+      })
+    } else {
+      win.setFrame(frame, display: true)
+    }
+    layoutChrome()
   }
 
   @objc func windowResized(_ note: Notification) {
-    applyRadius()
+    layoutChrome()
   }
 
-  func applyRadius() {
+  /** Put the panes and the status line where this shape wants them. */
+  func layoutChrome() {
     guard let container = body else { return }
-    let r = Shell.radius(for: container.bounds.width)
-    container.layer?.cornerRadius = r
-    // The glass sits inside the body, with its own slightly tighter corner —
-    // which is the detail that makes a drawn phone look like a phone.
-    let inset = PhoneView.bezel
-    web?.frame = container.bounds.insetBy(dx: inset, dy: inset)
-    web?.layer?.masksToBounds = true
-    web?.layer?.cornerRadius = max(10, r - inset * 0.6)
+    let bounds = container.bounds
+    var frames: [NSRect] = []
+
+    if shape == .pill {
+      for pane in panes { pane.view.isHidden = true }
+      let dotSize: CGFloat = 9
+      let left: CGFloat = 22
+      statusDot?.frame = NSRect(
+        x: left, y: (bounds.height - dotSize) / 2,
+        width: dotSize, height: dotSize)
+      statusLabel?.frame = NSRect(
+        x: left + dotSize + 10, y: (bounds.height - 18) / 2,
+        width: max(40, bounds.width - (left + dotSize + 10) - 20), height: 18)
+    } else {
+      let dotSize: CGFloat = 8
+      let left: CGFloat = 16
+      let midY = bounds.height - headerHeight / 2
+      statusDot?.frame = NSRect(
+        x: left, y: midY - dotSize / 2,
+        width: dotSize, height: dotSize)
+      statusLabel?.frame = NSRect(
+        x: left + dotSize + 9, y: midY - 9,
+        width: max(40, bounds.width - (left + dotSize + 9) - 16), height: 18)
+
+      let paneY = gutter
+      let paneH = max(40, bounds.height - headerHeight - gutter)
+      if shape == .working {
+        for (index, pane) in panes.enumerated() {
+          if index == activePane {
+            pane.view.isHidden = false
+            let frame = NSRect(
+              x: gutter, y: paneY,
+              width: max(40, bounds.width - gutter * 2), height: paneH)
+            pane.view.frame = frame
+            frames.append(frame)
+          } else {
+            pane.view.isHidden = true
+          }
+        }
+      } else {
+        let count = CGFloat(max(1, panes.count))
+        let paneW = max(40, (bounds.width - gutter * (count + 1)) / count)
+        for (index, pane) in panes.enumerated() {
+          pane.view.isHidden = false
+          let frame = NSRect(
+            x: gutter + CGFloat(index) * (paneW + gutter), y: paneY,
+            width: paneW, height: paneH)
+          pane.view.frame = frame
+          frames.append(frame)
+        }
+      }
+    }
+
+    // The active pane is the bright one, and it is the one with the ring.
+    for (index, pane) in panes.enumerated() {
+      let isActive = index == activePane
+      pane.view.alphaValue = (shape == .desk && !isActive) ? 0.72 : 1.0
+      if let layer = pane.view.layer {
+        layer.cornerRadius = 10
+        layer.borderWidth = (shape == .desk && isActive) ? 1.5 : 0
+        layer.borderColor = NSColor.controlAccentColor.cgColor
+      }
+    }
+
+    container.paneFrames = frames
+  }
+
+  /** Make one slot the active pane. */
+  func activatePane(_ id: String, then url: String?) {
+    var found = -1
+    for (index, pane) in panes.enumerated() {
+      if pane.id == id { found = index }
+    }
+    if found < 0 { return }
+    activePane = found
+    web = panes[found].view
+    currentProfile = panes[found].storeID
+    layoutChrome()
+    if let text = url, let target = URL(string: text) {
+      panes[found].view.load(URLRequest(url: target))
+    }
   }
 
   // MARK: the agent
@@ -309,18 +586,16 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   }
 
   /**
-   * Every web view this app makes, made the same way.
+   * Every web view this app makes, configured the same way.
    *
-   * It used to be written once, inline — and then a second view had to be
-   * built for the second account, which is how two views end up subtly
-   * different. The store is the only thing that changes between them.
+   * The store is the only thing that changes between them.
    */
   func makeConfiguration(_ store: WKWebsiteDataStore) -> WKWebViewConfiguration {
     let config = WKWebViewConfiguration()
     config.websiteDataStore = store
     config.suppressesIncrementalRendering = false
     config.preferences.javaScriptCanOpenWindowsAutomatically = true
-    // Reels autoplay: no user gesture needed. (allowsInlineMediaPlayback is an
+    // No user gesture needed for playback. (allowsInlineMediaPlayback is an
     // iOS-only property — on macOS every video is inline already, so there is
     // nothing to set and naming it here would not compile.)
     config.mediaTypesRequiringUserActionForPlayback = []
@@ -330,45 +605,36 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
      * Finish the user agent.
      *
      * A WKWebView's default agent stops at "AppleWebKit/605.1.15 (KHTML, like
-     * Gecko)" — no Version, no Safari. Instagram's own API answered that with
-     * "useragent mismatch" and refused to say who was signed in. This is the
-     * supported way to complete it: the engine is Safari's, and now the name
-     * says so too.
+     * Gecko)" — no Version, no Safari. This is the supported way to complete
+     * it: the engine is Safari's, and now the name says so too.
      */
     config.applicationNameForUserAgent = "Version/17.4 Safari/605.1.15"
     return config
   }
 
-  /** Swap the web view onto another account's store, keeping everything else. */
+  /** Swap the active pane onto another account's store, keeping everything else. */
   func switchProfile(_ idText: String, then url: String?) {
-    guard let container = body, let old = web else { return }
-    if idText == currentProfile { if let u = url, let target = URL(string: u) { old.load(URLRequest(url: target)) }; return }
-
-    var store = WKWebsiteDataStore.default()
-    if #available(macOS 14.0, *) {
-      if let uuid = UUID(uuidString: idText) {
-        store = WKWebsiteDataStore(forIdentifier: uuid)
-      }
-    } else {
-      note("this Mac keeps one set of sign-ins (macOS 14 or newer keeps one per account)")
+    guard let container = body else { return }
+    if activePane < 0 || activePane >= panes.count { return }
+    let pane = panes[activePane]
+    let old = pane.view
+    if idText == currentProfile {
+      if let text = url, let target = URL(string: text) { old.load(URLRequest(url: target)) }
+      return
     }
 
-    let config = makeConfiguration(store)
-    let view = WKWebView(frame: old.frame, configuration: config)
-    view.autoresizingMask = old.autoresizingMask
-    view.navigationDelegate = self
-    view.uiDelegate = self
-    view.setValue(false, forKey: "drawsBackground")
-    view.allowsBackForwardNavigationGestures = true
-    view.wantsLayer = true
+    let view = makeWebView(makeConfiguration(storeFor(idText)))
+    view.frame = old.frame
+    view.isHidden = old.isHidden
 
     old.removeFromSuperview()
     container.addSubview(view)
+    pane.view = view
     web = view
     currentProfile = idText
-    applyRadius()
+    layoutChrome()
     if let source = agentSource { injectAgent(source) }
-    if let u = url, let target = URL(string: u) { view.load(URLRequest(url: target)) }
+    if let text = url, let target = URL(string: text) { view.load(URLRequest(url: target)) }
     else { view.loadHTMLString(Shell.startingHTML, baseURL: nil) }
   }
 
@@ -379,11 +645,12 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
   func injectAgent(_ source: String) {
     agentSource = source
-    guard let view = web else { return }
-    let controller = view.configuration.userContentController
-    controller.removeAllUserScripts()
-    let script = WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: false)
-    controller.addUserScript(script)
+    for pane in panes {
+      let controller = pane.view.configuration.userContentController
+      controller.removeAllUserScripts()
+      let script = WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: false)
+      controller.addUserScript(script)
+    }
   }
 
   // MARK: page -> Swift
@@ -400,7 +667,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       return
     }
     sawBridgeMessage = true
-    if handledAsWindow(text) { return }
+    if handledAsWindow(text, fromPage: true) { return }
     send(text)
   }
 
@@ -416,9 +683,23 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     view.evaluateJavaScript("window.__organic&&window.__organic.fromApp(\(literal))", completionHandler: nil)
   }
 
+  func jsonText(_ object: [String: Any]) -> String {
+    if let data = try? JSONSerialization.data(withJSONObject: object, options: []),
+       let text = String(data: data, encoding: .utf8) {
+      return text
+    }
+    return "{}"
+  }
+
+  /// An answer goes back the way the question came.
+  func reply(_ object: [String: Any], fromPage: Bool) {
+    let text = jsonText(object)
+    if fromPage { toPage(text) } else { send(text) }
+  }
+
   // MARK: the one thing Swift does read
 
-  func handledAsWindow(_ text: String) -> Bool {
+  func handledAsWindow(_ text: String, fromPage: Bool) -> Bool {
     guard let data = text.data(using: .utf8) else { return false }
     guard let any = try? JSONSerialization.jsonObject(with: data, options: []) else { return false }
     guard let obj = any as? [String: Any] else { return false }
@@ -443,7 +724,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         var frame = win.frame
         frame.size = NSSize(width: w, height: h)
         win.setFrame(frame, display: true)
-        applyRadius()
+        layoutChrome()
       }
     case "front":
       win.makeKeyAndOrderFront(nil)
@@ -455,25 +736,105 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         web?.load(URLRequest(url: url))
       }
     /*
-     * One phone, several accounts.
+     * One pane, several accounts.
      *
-     * Alex runs three Halloween pages for the same store, and two accounts
-     * sharing one cookie jar are one account. macOS keeps a separate,
-     * PERSISTENT website store per identifier, so each account gets its own —
-     * its own cookies, its own logged-in state, all of it surviving a quit.
-     * The web view is rebuilt on the new store, the crew is injected again,
-     * and the page it was told to open loads into it.
-     *
-     * Before macOS 14 there is only one store. The app says so and keeps
-     * using it rather than pretending the accounts are separate.
+     * The pane is rebuilt on the new store, the crew is injected again, and
+     * the page it was told to open loads into it.
      */
     case "profile":
       guard let idText = obj["id"] as? String else { break }
       switchProfile(idText, then: obj["url"] as? String)
+    /*
+     * The three shapes. {t:"window", do:"shape", to:"pill"|"working"|"desk"}.
+     * "text" and "dot" are optional and set the pill's line in the same move,
+     * so the worker does not have to send two messages to fold the window away
+     * with something to say on it.
+     */
+    case "shape":
+      let to = (obj["to"] as? String) ?? ""
+      setStatus(obj["text"] as? String, dot: obj["dot"] as? String)
+      switch to {
+      case "pill": applyShape(.pill, animated: true)
+      case "desk": applyShape(.desk, animated: true)
+      case "working": applyShape(.working, animated: true)
+      default: break
+      }
+    /* The pill's line on its own. */
+    case "status":
+      setStatus(obj["text"] as? String, dot: obj["dot"] as? String)
+    /* {t:"window", do:"pane", id:"alibaba"} — which slot is active. */
+    case "pane":
+      guard let idText = obj["id"] as? String else { break }
+      activatePane(idText, then: obj["url"] as? String)
+    /* {t:"window", do:"snapshot"} — a PNG of the active pane. */
+    case "snapshot":
+      takeShot(obj["id"] as? String, fromPage: fromPage)
     default:
       break
     }
     return true
+  }
+
+  /** The pill's dot and its one line. */
+  func setStatus(_ text: String?, dot: String?) {
+    if let text = text {
+      statusLabel?.stringValue = text
+    }
+    if let name = dot {
+      var color = NSColor.systemGreen
+      if name == "amber" || name == "orange" { color = NSColor.systemOrange }
+      if name == "red" { color = NSColor.systemRed }
+      if name == "grey" || name == "gray" { color = NSColor.systemGray }
+      if name == "blue" { color = NSColor.systemBlue }
+      statusDot?.layer?.backgroundColor = color.cgColor
+    }
+  }
+
+  /**
+   * A picture of the active pane.
+   *
+   * This is how a QR code and a supplier's page get out of the window and into
+   * something the worker can read. WebKit draws the snapshot itself, so what
+   * lands on disk is the page as rendered, not the screen.
+   */
+  func takeShot(_ echo: String?, fromPage: Bool) {
+    guard let view = web else {
+      reply(["t": "shot", "ok": false, "why": "no pane"], fromPage: fromPage)
+      return
+    }
+    let dir = supportDir() + "/data/shots"
+    do {
+      try FileManager.default.createDirectory(
+        atPath: dir, withIntermediateDirectories: true, attributes: nil)
+    } catch {
+      reply(["t": "shot", "ok": false, "why": "could not make \(dir)"], fromPage: fromPage)
+      return
+    }
+    let stamp = DateFormatter()
+    stamp.dateFormat = "yyyyMMdd-HHmmss-SSS"
+    let path = dir + "/shot-" + stamp.string(from: Date()) + ".png"
+
+    view.takeSnapshot(with: nil) { image, _ in
+      guard let image = image,
+            let tiff = image.tiffRepresentation,
+            let rep = NSBitmapImageRep(data: tiff),
+            let png = rep.representation(using: .png, properties: [:]) else {
+        self.reply(["t": "shot", "ok": false, "why": "WebKit drew nothing"], fromPage: fromPage)
+        return
+      }
+      do {
+        try png.write(to: URL(fileURLWithPath: path), options: .atomic)
+      } catch {
+        self.reply(["t": "shot", "ok": false, "why": "could not write \(path)"], fromPage: fromPage)
+        return
+      }
+      var answer: [String: Any] = ["t": "shot", "ok": true, "path": path]
+      if self.activePane >= 0 && self.activePane < self.panes.count {
+        answer["pane"] = self.panes[self.activePane].id
+      }
+      if let echo = echo { answer["id"] = echo }
+      self.reply(answer, fromPage: fromPage)
+    }
   }
 
   func numberOf(_ value: Any?) -> CGFloat {
@@ -531,7 +892,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         }
         DispatchQueue.main.async {
           if let text = text {
-            if !self.handledAsAgent(text) && !self.handledAsWindow(text) {
+            if !self.handledAsAgent(text) && !self.handledAsWindow(text, fromPage: false) {
               self.toPage(text)
             }
           }
