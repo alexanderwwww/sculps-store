@@ -186,3 +186,57 @@ export function buildReport({
     candidates: withMath.map((c) => ({ ...c, verdict: verdict(c) })),
   };
 }
+
+/* ===================================================================== */
+/*  The sourcing shortlist.                                              */
+/* ===================================================================== */
+
+import { QUESTIONS, QUESTION_IDS } from "./desk.mjs";
+
+const cell = (f) => (f && typeof f === "object" && "value" in f
+  ? { value: f.value, from: f.source?.kind ?? null, ref: f.source?.ref ?? null, quote: f.source?.quote ?? null }
+  : { value: null, unknown: true });
+
+/**
+ * One row per factory, and a blank wherever nobody answered.
+ *
+ * The chill time is reported three ways on purpose — measured, claimed but
+ * never measured, or not answered — because "yes, 30 seconds" and a lab
+ * number are not the same fact and a table that prints them the same way is
+ * how a five-figure order goes to the wrong factory.
+ */
+export function sourcingTable(suppliers = []) {
+  const rows = suppliers.map((s) => {
+    const slot = s.answers?.chillTime ?? {};
+    const chill = s.chillTime
+      ? { state: "measured", value: s.chillTime.value, ref: s.chillTime.source?.ref ?? null, quote: s.chillTime.source?.quote ?? null }
+      : slot.asked && slot.note?.claimed
+        ? { state: "claimed, not measured", value: slot.note.claimed, ref: slot.note.ref, quote: slot.note.quote, why: slot.note.why }
+        : slot.asked
+          ? { state: "asked, unanswered", why: slot.why ?? "no answer yet" }
+          : { state: "not asked" };
+    return {
+      id: s.id, name: s.name, site: s.site, url: s.url ?? null,
+      chillTime: chill,
+      makes: cell(s.makes), oem: cell(s.oem), priceTiers: cell(s.priceTiers), moq: cell(s.moq),
+      sampleCost: cell(s.sampleCost), sampleLeadDays: cell(s.sampleLeadDays),
+      tooling: cell(s.tooling), certs: cell(s.certs),
+      unanswered: QUESTION_IDS.filter((id) => s.answers?.[id]?.asked && !s.answers?.[id]?.answered),
+      neverAsked: QUESTION_IDS.filter((id) => !s.answers?.[id]?.asked),
+      messages: (s.messages ?? []).length,
+      lastHeard: [...(s.messages ?? [])].reverse().find((m) => m.dir === "in")?.at ?? null,
+    };
+  });
+  const measured = rows.filter((r) => r.chillTime.state === "measured");
+  return {
+    kind: "sourcing",
+    at: new Date().toISOString(),
+    questions: QUESTIONS.map((q) => ({ id: q.id, ask: q.ask })),
+    rows: rows.sort((a, b) =>
+      (b.chillTime.state === "measured") - (a.chillTime.state === "measured")
+      || a.unanswered.length - b.unanswered.length),
+    headline: measured.length
+      ? `${measured.length} of ${rows.length} factories have given a MEASURED chill time.`
+      : `No factory has given a measured chill time yet. ${rows.filter((r) => r.chillTime.state === "claimed, not measured").length} claimed a number without one.`,
+  };
+}

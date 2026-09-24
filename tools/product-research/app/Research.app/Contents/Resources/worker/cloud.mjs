@@ -40,6 +40,16 @@ export function connectCloud(base = process.env.RESEARCH_CLOUD || DEFAULT_BASE, 
     publish: (report) => post("/report", report),
     /** A line for the record. */
     log: (lines) => post("/log", { lines }),
+    /** The sourcing job Alex wants run — the product, in his words. */
+    sourcing: () => get("/sourcing"),
+    /** The shortlist as it stands: one row per factory, blanks where blank. */
+    shortlist: (table) => post("/shortlist", table),
+    /** The message queue, drafts and their statuses, for him to look at. */
+    queue: (items) => post("/queue", { items }),
+    /** What he decided on the drafts: [{ id, decision: "approve"|"reject", why }]. */
+    decisions: () => get("/decisions"),
+    /** The answers table: what each factory has and has not answered. */
+    answers: (rows) => post("/answers", { rows }),
     /** New code for this app, pushed without him downloading anything. */
     runtime: () => get("/runtime"),
   };

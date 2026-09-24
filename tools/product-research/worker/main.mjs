@@ -25,13 +25,21 @@ import {
   queriesFrom, adLibraryUrl, tiktokSearchUrl, instagramTagUrl, tagFor, runningDays, priceIn,
 } from "./hunt.mjs";
 import { between, chance, frictionIn, shouldRest } from "./human.mjs";
+import {
+  DESKS, isDesk, searchUrl, QUESTIONS, QUESTION_IDS, FIRST_QUESTION, sourcingQueries,
+  newSupplier, record, fact, logMessage, readReply, unanswered, shortlistCase,
+  Outbox, sendApproved, openingDraft, followUpDraft,
+} from "./desk.mjs";
+import { sourcingTable } from "./report.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The build this file was written as. What is running may be newer. */
 export const BUILD = 1;
 
-const SUPPORT = join(homedir(), "Library", "Application Support", "ProductResearch");
+const SUPPORT = process.env.RESEARCH_HOME
+  ? join(process.env.RESEARCH_HOME, "ProductResearch")
+  : join(homedir(), "Library", "Application Support", "ProductResearch");
 const PATHS = { worker: join(SUPPORT, "worker"), data: join(SUPPORT, "data") };
 
 const S = {
@@ -93,6 +101,307 @@ function remember(finding) {
   return true;
 }
 
+
+/* ------------------------------------------------------- the sourcing job */
+
+/**
+ * The second kind of job this brain runs.
+ *
+ * The hunt looks for a product. This one goes and gets it made: it searches
+ * Alibaba and 1688 in his signed-in window, reads what the listings actually
+ * say, shortlists on that, opens a conversation, asks the eight questions,
+ * waits, reads the replies, files what was answered and — this is the part
+ * that matters — leaves everything that was not answered visibly blank.
+ *
+ * Every stage writes itself to disk before it moves on, so closing the app in
+ * the middle of a search loses a page, not a week of conversations.
+ */
+const STAGES = ["search", "read", "shortlist", "open", "ask", "wait", "reply", "record", "followup"];
+
+const SRC = {
+  job: null,           // { id, product, at }
+  stage: "idle",
+  queries: [],         // [{ site, q }]
+  doneQueries: [],     // the ones already swept, by "site|q"
+  listings: [],        // what the search pages showed
+  suppliers: [],       // the records
+  outbox: new Outbox(),
+  waitingSince: null,
+  at: null,
+};
+
+const SRC_FILE = () => join(PATHS.data, "sourcing.json");
+
+async function loadSourcing() {
+  try {
+    const raw = JSON.parse(await readFile(SRC_FILE(), "utf8"));
+    SRC.job = raw.job ?? null;
+    SRC.stage = raw.stage ?? "idle";
+    SRC.queries = Array.isArray(raw.queries) ? raw.queries : [];
+    SRC.doneQueries = Array.isArray(raw.doneQueries) ? raw.doneQueries : [];
+    SRC.listings = Array.isArray(raw.listings) ? raw.listings : [];
+    SRC.suppliers = Array.isArray(raw.suppliers) ? raw.suppliers : [];
+    SRC.outbox = new Outbox(raw.outbox ?? null);
+    SRC.waitingSince = raw.waitingSince ?? null;
+  } catch { /* a first run */ }
+}
+
+async function saveSourcing() {
+  await mkdir(PATHS.data, { recursive: true });
+  await writeFile(SRC_FILE(), JSON.stringify({
+    job: SRC.job, stage: SRC.stage, queries: SRC.queries, doneQueries: SRC.doneQueries,
+    listings: SRC.listings.slice(-600), suppliers: SRC.suppliers,
+    outbox: SRC.outbox.toJSON(), waitingSince: SRC.waitingSince, at: Date.now(),
+  }, null, 0), "utf8");
+}
+
+const supplierById = (id) => SRC.suppliers.find((s) => s.id === id) ?? null;
+
+async function startSourcing(job) {
+  SRC.job = { id: job.id ?? String(Date.now()), product: job.product ?? job.looking ?? "portable countertop bottle chiller", at: Date.now() };
+  SRC.stage = "search";
+  SRC.queries = sourcingQueries(SRC.job.product);
+  SRC.doneQueries = [];
+  say("desk", `sourcing "${SRC.job.product}" — ${SRC.queries.length} searches across Alibaba and 1688`);
+  await saveSourcing();
+}
+
+/** search + read: one query shape at a time, and the page decides what is true. */
+async function stageSearch() {
+  while (!stopNow() && await oneSearch()) { /* the whole sweep, one query at a time */ }
+}
+
+/** One query shape. Returns false when the sweep is done. */
+async function oneSearch() {
+  const next = SRC.queries.find((x) => !SRC.doneQueries.includes(`${x.site}|${x.q}`));
+  if (!next) { SRC.stage = "shortlist"; await saveSourcing(); return false; }
+  await at("desk", `${DESKS[next.site].label} — "${next.q}"`, searchUrl(next.site, next.q));
+  await phone.beat(1800, 3200);
+  for (let pass = 0; pass < 2 && !stopNow(); pass++) {
+    await phone.scroll(between(500, 900), { pace: "skim" });
+    await phone.pause(1200, 2400);
+  }
+  const rows = (await phone.read("listings")) ?? [];
+  for (const r of rows) {
+    if (!r?.name) continue;
+    const seenAlready = SRC.listings.some((l) => l.site === next.site && l.name === r.name);
+    if (seenAlready) continue;
+    SRC.listings.push({
+      site: next.site, query: next.q, name: String(r.name), url: r.url ?? null,
+      title: r.title ?? null, blurb: r.blurb ?? null, tags: r.tags ?? null, years: r.years ?? null,
+      at: new Date().toISOString(),
+    });
+  }
+  SRC.doneQueries.push(`${next.site}|${next.q}`);
+  say("desk", `"${next.q}" on ${DESKS[next.site].label}: ${rows.length} listings read, ${SRC.listings.length} on file`);
+  await saveSourcing();
+  return true;
+}
+
+/** shortlist: on what the pages said, with the reasons kept. */
+async function stageShortlist() {
+  let added = 0;
+  for (const l of SRC.listings) {
+    const seat = shortlistCase(l);
+    if (!seat.keep) continue;
+    if (supplierById(`${l.site}:${l.name}`)) continue;
+    const s = newSupplier({ name: l.name, site: l.site, url: l.url });
+    s.shortlisted = true;
+    s.shortlistBecause = seat.because;
+    if (l.title || l.blurb) {
+      try {
+        record(s, "makes", String(l.title ?? l.blurb).slice(0, 200),
+          { kind: "page", ref: l.url ?? `${l.site}:${l.query}`, quote: String(l.title ?? l.blurb).slice(0, 300) });
+      } catch { /* nothing readable is not a fact */ }
+    }
+    if (/\b(oem|odm|定制|开模|代工)\b/i.test(`${l.title ?? ""} ${l.blurb ?? ""} ${l.tags ?? ""}`)) {
+      try {
+        record(s, "oem", true, { kind: "page", ref: l.url ?? `${l.site}:${l.query}`, quote: String(l.title ?? l.blurb ?? l.tags).slice(0, 300) });
+      } catch { /* no quote, no fact */ }
+    }
+    SRC.suppliers.push(s);
+    added++;
+  }
+  say("desk", `shortlist: ${added} new, ${SRC.suppliers.length} factories in total`);
+  SRC.stage = SRC.suppliers.length ? "open" : "search";
+  await saveSourcing();
+  await publishSourcing();
+}
+
+/** open + ask: a thread, then a draft. Nothing is typed at this stage. */
+async function stageOpen() {
+  const s = SRC.suppliers.find((x) => x.shortlisted && !x.threadOpen);
+  if (!s) { SRC.stage = "ask"; await saveSourcing(); return; }
+  await at("desk", `${DESKS[s.site].label} — opening a conversation with ${s.name}`, s.url ?? DESKS[s.site].messages);
+  await phone.beat(1500, 3000);
+  const opened = await phone.openThread(s.name, { site: s.site });
+  s.threadOpen = Boolean(opened?.ok ?? opened);
+  say("desk", s.threadOpen ? `thread open with ${s.name}` : `could not open a thread with ${s.name} yet`);
+  await saveSourcing();
+}
+
+async function stageAsk() {
+  const s = SRC.suppliers.find((x) => x.threadOpen && !SRC.outbox.forSupplier(x.id).length);
+  if (!s) { SRC.stage = "wait"; SRC.waitingSince = SRC.waitingSince ?? Date.now(); await saveSourcing(); return; }
+  const d = openingDraft(s, { product: SRC.job?.product });
+  const draft = SRC.outbox.draft({ supplierId: s.id, site: s.site, name: s.name, text: d.text, asks: d.asks, kind: "opening" });
+  say("desk", `drafted the opening to ${s.name} — waiting on Alex to approve it (${draft.id})`);
+  await saveSourcing();
+  await publishSourcing();
+}
+
+/**
+ * Send whatever he has approved, and nothing else.
+ *
+ * The text comes out of the outbox through `release`, which is the only way
+ * to get it, and which refuses anything that is not approved.
+ */
+async function sendApprovedDrafts() {
+  for (const it of SRC.outbox.approved()) {
+    if (stopNow()) return;
+    const s = supplierById(it.supplierId);
+    if (!s) continue;
+    const out = await sendApproved(SRC.outbox, it.id, async (payload) => {
+      await at("desk", `${DESKS[payload.site].label} — writing to ${payload.name}`, undefined);
+      const opened = s.threadOpen ? { ok: true } : await phone.openThread(payload.name, { site: payload.site });
+      if (!(opened?.ok ?? opened)) return { ok: false, error: "no thread" };
+      // A person's pace, but no typos: this is the exact text he approved, and
+      // a slip of the finger in a quotation request is not "human", it is wrong.
+      const typed = await phone.type(payload.text, {
+        into: "message", who: "desk",
+        persona: { typing: { cpsMin: 4, cpsMax: 8, typoRate: 0 } },
+      });
+      if (typed?.ok === false) return typed;
+      return phone.send({ site: payload.site, to: payload.name });
+    });
+    if (out.ok) {
+      const at_ = new Date().toISOString();
+      logMessage(s, { dir: "out", text: it.text, at: at_, ref: it.id, asks: it.asks });
+      for (const id of it.asks) {
+        const slot = s.answers[id];
+        if (slot && !slot.asked) { slot.asked = at_; slot.why = "asked, no answer yet"; }
+      }
+      say("desk", `sent to ${s.name}: ${it.asks.length} questions, starting with the measured chill time`);
+      SRC.waitingSince = Date.now();
+    } else {
+      say("desk", `could not send to ${s.name}: ${out.error}`);
+    }
+    await saveSourcing();
+  }
+}
+
+/** wait + reply + record: read the threads, file only what was answered. */
+async function stageRead() {
+  for (const s of SRC.suppliers) {
+    if (stopNow()) return;
+    if (!s.messages.some((m) => m.dir === "out")) continue;
+    await at("desk", `${DESKS[s.site].label} — reading ${s.name}'s replies`, DESKS[s.site].messages);
+    await phone.beat(1200, 2400);
+    const replies = (await phone.read("thread", { who: s.name, site: s.site })) ?? [];
+    let fresh = 0;
+    for (const r of replies) {
+      // Only what the page said came FROM the supplier. A message whose side
+      // the page did not state is not filed as their answer.
+      if (!r || r.dir !== "in") continue;
+      const ref = r.id ?? `${s.id}@${r.at ?? ""}`;
+      if (s.messages.some((m) => m.id === ref)) continue;
+      const filed = readReply(s, { text: r.text ?? "", at: r.at ?? new Date().toISOString(), ref });
+      fresh++;
+      const still = filed.unanswered;
+      say("desk", filed.moved.length
+        ? `${s.name} answered: ${filed.moved.join(", ")}${still.length ? ` · still open: ${still.join(", ")}` : ""}`
+        : `${s.name} replied and answered nothing: ${s.answers.chillTime?.note?.why ?? "nothing usable"}`);
+    }
+    if (fresh) await saveSourcing();
+  }
+  SRC.stage = "followup";
+  await saveSourcing();
+  await publishSourcing();
+}
+
+/** followup: only the questions still open, drafted, never sent on its own. */
+async function stageFollowUp() {
+  for (const s of SRC.suppliers) {
+    const open = unanswered(s);
+    if (!open.length) continue;
+    const already = SRC.outbox.forSupplier(s.id).filter((d) => d.kind === "followup" && d.status !== "rejected");
+    const last = s.messages.filter((m) => m.dir === "out").slice(-1)[0];
+    const quiet = !last || Date.now() - Date.parse(last.at) > 2 * 86400000;
+    if (already.length >= 3 || !quiet) continue;
+    const d = followUpDraft(s);
+    if (!d) continue;
+    const draft = SRC.outbox.draft({ supplierId: s.id, site: s.site, name: s.name, text: d.text, asks: d.asks, kind: "followup" });
+    say("desk", `drafted a follow-up to ${s.name} on ${open.length} open questions (${draft.id})`);
+  }
+  SRC.stage = "wait";
+  await saveSourcing();
+  await publishSourcing();
+}
+
+/** Everything the panel and the MCP need to see, pushed out. */
+async function publishSourcing() {
+  const table = sourcingTable(SRC.suppliers);
+  await cloud.shortlist?.({ job: SRC.job, stage: SRC.stage, ...table }).catch(() => {});
+  await cloud.queue?.(SRC.outbox.all()).catch(() => {});
+  await cloud.answers?.(table.rows.map((r) => ({
+    id: r.id, name: r.name, site: r.site, chillTime: r.chillTime,
+    unanswered: r.unanswered, neverAsked: r.neverAsked,
+  }))).catch(() => {});
+}
+
+/** What he decided about the drafts, from the cloud, applied here. */
+async function hearDecisions() {
+  const said = await cloud.decisions?.().catch(() => null);
+  const list = Array.isArray(said) ? said : Array.isArray(said?.decisions) ? said.decisions : [];
+  let moved = 0;
+  for (const d of list) {
+    try {
+      if (d?.decision === "approve") { SRC.outbox.approve(String(d.id), d.by ?? "alex"); moved++; say("desk", `Alex approved ${d.id}`); }
+      else if (d?.decision === "reject") { SRC.outbox.reject(String(d.id), d.why ?? "", d.by ?? "alex"); moved++; say("desk", `Alex rejected ${d.id}${d.why ? `: ${d.why}` : ""}`); }
+    } catch (e) { say("desk", `${d?.id}: ${e.message}`); }
+  }
+  if (moved) { await saveSourcing(); await publishSourcing(); }
+}
+
+/** One turn of the pipeline. Called on a timer; each stage is resumable. */
+export async function stepSourcing() {
+  if (!SRC.job || S.paused || S.stopped || quitting) return;
+  await hearDecisions();
+  await sendApprovedDrafts();
+  if (stopNow()) return;
+  const stage = SRC.stage;
+  S.doing = `sourcing · ${stage}`;
+  pushPanel();
+  if (stage === "search" || stage === "read") await stageSearch();
+  else if (stage === "shortlist") await stageShortlist();
+  else if (stage === "open") await stageOpen();
+  else if (stage === "ask") await stageAsk();
+  else if (stage === "wait") {
+    const pending = SRC.outbox.pending().length;
+    if (SRC.suppliers.some((x) => x.shortlisted && !x.threadOpen)) { SRC.stage = "open"; }
+    else if (SRC.suppliers.some((x) => x.threadOpen && !SRC.outbox.forSupplier(x.id).length)) { SRC.stage = "ask"; }
+    else if (SRC.suppliers.some((x) => x.messages.some((m) => m.dir === "out"))) { SRC.stage = "reply"; }
+    else if (!pending) { SRC.stage = "search"; }
+    await saveSourcing();
+  }
+  else if (stage === "reply" || stage === "record") await stageRead();
+  else if (stage === "followup") await stageFollowUp();
+  await report();
+}
+
+let sourcing = false;
+async function maybeSource() {
+  if (S.paused || S.stopped || sourcing) return;
+  sourcing = true;
+  try { await sourceTurn(); } finally { sourcing = false; }
+}
+
+async function sourceTurn() {
+  const job = await cloud.sourcing?.().catch(() => null);
+  if (job?.product && job.id !== SRC.job?.id) await startSourcing(job);
+  await stepSourcing();
+}
+
 /* ------------------------------------------------------------- the panel */
 
 function panelState() {
@@ -109,7 +418,10 @@ function panelState() {
       { id: "tiktok", platform: "tiktok", label: "TikTok", state: "on", doing: S.at?.tiktok ?? "waiting", on: S.source === "tiktok" },
       { id: "instagram", platform: "instagram", label: "Instagram", state: "on", doing: S.at?.instagram ?? "waiting", on: S.source === "instagram" },
     ],
-    jobs: h ? [{ who: NAME.toLowerCase(), what: h.looking, state: S.phase }] : [],
+    jobs: [
+      ...(h ? [{ who: NAME.toLowerCase(), what: h.looking, state: S.phase }] : []),
+      ...(SRC.job ? [{ who: "desk", what: `sourcing ${SRC.job.product}`, state: SRC.stage, pending: SRC.outbox.pending().length }] : []),
+    ],
     lines: recent.slice(-6).map((l) => ({ who: l.who, what: l.what })),
   };
 }
@@ -271,6 +583,14 @@ async function heard() {
   if (cmd === "pause") { S.paused = true; pushPanel(); }
   if (cmd === "run" || cmd === "resume") { S.paused = false; S.stopped = false; phone.resume(); pushPanel(); }
   if (cmd === "stop") { S.stopped = true; await phone.stop().catch(() => {}); pushPanel(); }
+  const approve = /^approve\s+(\S+)/.exec(cmd);
+  const reject = /^reject\s+(\S+)\s*(.*)$/.exec(cmd);
+  const source = /^source\s+(.+)$/.exec(cmd);
+  try {
+    if (approve) { SRC.outbox.approve(approve[1]); say("desk", `Alex approved ${approve[1]}`); await saveSourcing(); await publishSourcing(); }
+    if (reject) { SRC.outbox.reject(reject[1], reject[2] ?? ""); say("desk", `Alex rejected ${reject[1]}`); await saveSourcing(); await publishSourcing(); }
+  } catch (e) { say("desk", e.message); }
+  if (source) await startSourcing({ id: `order-${Date.now()}`, product: source[1].trim() });
 }
 
 async function maybeHunt() {
@@ -285,6 +605,7 @@ export async function main() {
   for (const d of Object.values(PATHS)) await mkdir(d, { recursive: true });
   cloud = connectCloud();
   await loadSeen();
+  await loadSourcing();
 
   bridge = await startBridge({ dir: here, onMessage: fromPage });
   process.stdout.write(`PORT ${bridge.port}\n`);
@@ -297,6 +618,7 @@ export async function main() {
 
   setInterval(() => { heard().catch(() => {}); }, 6000).unref();
   setInterval(() => { maybeHunt().catch((e) => say("research", `the hunt stopped: ${e?.message ?? e}`)); }, 8000).unref();
+  setInterval(() => { maybeSource().catch((e) => say("desk", `the desk stopped: ${e?.message ?? e}`)); }, Number(process.env.RESEARCH_TICK) || 7000).unref();
   setInterval(() => { report().catch(() => {}); }, 20000).unref();
   watchParent();
 }
@@ -318,6 +640,7 @@ async function shutdown(code = 0) {
   quitting = true;
   setTimeout(() => process.exit(code), 8000).unref();
   try { await saveSeen(); } catch { /* fine */ }
+  try { await saveSourcing(); } catch { /* fine */ }
   try { await report(); } catch { /* fine */ }
   try { await bridge?.close(); } catch { /* fine */ }
   process.exit(code);

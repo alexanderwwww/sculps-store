@@ -193,6 +193,54 @@
       if (what === "threads") return O.read.threads();
       if (what === "messages") return O.read.messages();
       if (what === "results") return O.read.results();
+
+      /*
+       * The desk's own vocabulary.
+       *
+       * The brain asks for "listings" and "thread"; the readers above produce
+       * "results" and "messages" in the shapes the pages actually give. These
+       * two lines are the seam between them, and they are a seam rather than
+       * a rename because the shapes differ too: a listing needs a name to be
+       * worth keeping, and a message needs a direction before anything it
+       * says can be filed as a supplier's answer.
+       */
+      if (what === "listings") {
+        return O.read.results().map(function (r) {
+          return {
+            // The supplier is the name; the product title is not a company.
+            name: r.supplier || null,
+            url: r.url,
+            title: r.title,
+            blurb: r.title,
+            tags: null,
+            years: r.years,
+            price: r.price,
+            moq: r.moq,
+            transactions: r.transactions,
+            site: r.site,
+          };
+        });
+      }
+      if (what === "thread") {
+        // Opening by the exact printed name first: reading the wrong
+        // conversation is how a supplier's words get filed under another's.
+        var site = null;
+        var all = O.sites || {};
+        for (var key in all) {
+          if (all[key] && typeof all[key].match === "function" && all[key].match(location.hostname)) site = all[key];
+        }
+        if (a.who && site && site.openThread) site.openThread(String(a.who));
+        return O.read.messages().map(function (m, i) {
+          return {
+            id: String(m.at || "") + "#" + i + "#" + String(m.text || "").slice(0, 24),
+            // Unknown stays unknown: a message whose side the page did not
+            // state is never filed as a supplier's reply.
+            dir: m.mine === true ? "out" : m.mine === false ? "in" : "unknown",
+            text: m.text,
+            at: m.at,
+          };
+        });
+      }
       if (what === "supplier") return O.read.supplier();
       return O.read.handle(a.platform).then(function (h) {
         return {

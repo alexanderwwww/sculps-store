@@ -81,6 +81,29 @@ export class Phone {
     return this.bridge.ask("type", { into, strokes, who }, { ms: 60000 });
   }
 
+  /**
+   * Open a supplier conversation by the exact name the list printed.
+   *
+   * No fuzzy matching: a thread is about to receive a real message under his
+   * name, so if the page cannot find that exact supplier it says so.
+   */
+  async openThread(name, { site = null, ms = 30000 } = {}) {
+    if (this.stopped) return { ok: false, error: "stopped" };
+    return this.bridge.ask("openThread", { name: String(name), site }, { ms });
+  }
+
+  /**
+   * Press send on a message that is already typed.
+   *
+   * Deliberately separate from `type`: the brain only reaches this after the
+   * outbox has released an approved draft, and nothing here can compose text
+   * of its own.
+   */
+  async send({ site = null, to = null, ms = 30000 } = {}) {
+    if (this.stopped) return { ok: false, error: "stopped" };
+    return this.bridge.ask("send", { site, to }, { ms });
+  }
+
   /** Read something out of the page. `what` is a reader the crew's code has. */
   async read(what, args = {}) {
     const answer = await this.bridge.ask("read", { what, ...args }, { ms: 15000 });
