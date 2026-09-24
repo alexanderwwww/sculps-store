@@ -80,7 +80,7 @@ const GARDEN_BUDDY = "garden-buddy";
  * leaving a store out of here is how a customer ends up paying on a page that
  * looks like a different shop.
  */
-const BRANDED_CHECKOUT = new Set(["garden-buddy", "ceiling-buddy", "reaper"]);
+const BRANDED_CHECKOUT = new Set(["garden-buddy", "ceiling-buddy", "reaper", "cryo"]);
 
 /**
  * A store that wants the split checkout in its own colours rather than the

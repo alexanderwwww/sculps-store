@@ -140,7 +140,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       ? { "Set-Cookie": `kerberos_cart=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${url.protocol === "https:" ? "; Secure" : ""}` }
       : undefined;
 
-  const nav = ["garden-buddy", "ceiling-buddy", "reaper"].includes(store.slug)
+  const nav = ["garden-buddy", "ceiling-buddy", "reaper", "cryo"].includes(store.slug)
     ? await storeNav(context.db, store.id)
     : null;
 
@@ -490,7 +490,7 @@ function OfferShelf({
 }
 
 /** Stores whose receipt wears their own checkout skin rather than the default. */
-const BRANDED_THANKS = new Set(["garden-buddy", "ceiling-buddy", "reaper"]);
+const BRANDED_THANKS = new Set(["garden-buddy", "ceiling-buddy", "reaper", "cryo"]);
 const THANKS_SKIN: Record<string, string> = { reaper: "gb-co-sec--reaper" };
 
 export default function Thanks({ loaderData }: Route.ComponentProps) {

@@ -27,6 +27,8 @@ import { GardenBuddyStorefront } from "~/storefronts/garden-buddy";
 import gardenBuddyThemeHref from "~/storefronts/garden-buddy/theme.css?url";
 import { BodiesHome } from "~/storefronts/bodies";
 import bodiesThemeHref from "~/storefronts/bodies/theme.css?url";
+import { CryoStorefront } from "~/storefronts/cryo";
+import cryoThemeHref from "~/storefronts/cryo/theme.css?url";
 import { CeilingBuddyStorefront } from "~/storefronts/ceiling-buddy";
 import ceilingBuddyThemeHref from "~/storefronts/ceiling-buddy/theme.css?url";
 import { XeroStorefront } from "~/storefronts/xero";
@@ -41,6 +43,7 @@ import xeroThemeHref from "~/storefronts/xero/theme.css?url";
  */
 const GARDEN_BUDDY = "garden-buddy";
 const BODIES = "bodies";
+const CRYO = "cryo";
 const CEILING_BUDDY = "ceiling-buddy";
 const XERO = "xero";
 /**
@@ -316,6 +319,22 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
         <link rel="stylesheet" href={xeroThemeHref} precedence="high" />
         {head}
         <XeroStorefront page={page} storeParam={storeParam} />
+      </>
+    );
+  }
+
+  if (store.slug === CRYO) {
+    return (
+      <>
+        <link rel="stylesheet" href={cryoThemeHref} precedence="high" />
+        {head}
+        <CryoStorefront
+          page={page}
+          storeParam={storeParam}
+          publishableKey={publishableKey}
+          paypalClientId={paypalClientId}
+          offer={offer}
+        />
       </>
     );
   }

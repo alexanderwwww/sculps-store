@@ -47,12 +47,23 @@ A bottle goes in, the lid closes, it comes out ice-cold. No fridge, no ice.
 - Black lowercase **cryo** wordmark, front left
 - Apple-level minimal
 
-**How it works:** a frozen cold cartridge (salt brine / phase-change gel) sits inside,
-frozen in any freezer or on the dock. The rollers spin the bottle while a pump sprays
-sub-zero liquid over it — spinning is what stops the water freezing and chills it
-evenly. An IR sensor ends the cycle at target (default 4°C, adjustable 2–8°C). A
-battery runs the motor and pump and charges over USB-C, so it works in the US and
-Europe. Roughly 3–4 bottles per cartridge; spares sold separately (~$25).
+**How it works — changed 24 Sep 2026, and this supersedes the cartridge.** The machine
+holds its own water reservoir and freezes it itself with a thermoelectric plate, slowly,
+while it sits plugged in. That ice is the cold bank. A bottle goes on the rollers, the
+lid closes, the pump sprays the ice-water over it while it spins — spinning is what
+stops the water freezing and chills it evenly — and an IR sensor ends the cycle at
+target (default 4°C, adjustable 2–8°C). The plate then rebuilds the bank in the
+background. Slow charge, fast discharge, the same way a battery works.
+
+**There is no cartridge and there is no freezer trip.** Alex's call, and it is the right
+one: the swap-a-frozen-block step was the friction that kills a kitchen gadget. Nothing
+on the store, in an ad, or in a render may show a cartridge, a cold pack, or a freezer.
+
+**What it costs, and none of it gets hidden.** A thermoelectric plate pulls 50–60 W
+continuously and takes hours to freeze a reservoir, so the machine lives plugged in —
+"charges anywhere" is dead as a claim. A battery can run the motor and the pump for a
+cycle; it cannot make ice. And back-to-back bottles will outrun the bank: the honest
+line is "so many in a row, then it catches up", and only a sample says how many.
 
 ## What is true, and what is not
 
