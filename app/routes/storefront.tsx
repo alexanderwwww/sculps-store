@@ -29,7 +29,9 @@ import gardenBuddyThemeHref from "~/storefronts/garden-buddy/theme.css?url";
 import { BodiesHome } from "~/storefronts/bodies";
 import bodiesThemeHref from "~/storefronts/bodies/theme.css?url";
 import { Storefront as SharedStorefront } from "~/storefronts/template";
-import { cryoBrand, ceilingBuddyBrand, reaperBrand } from "~/storefronts/template/brands";
+import { cryoBrand } from "~/storefronts/template/brands";
+import { CeilingBuddyStorefront } from "~/storefronts/ceiling-buddy";
+import { reaperBrand } from "~/storefronts/reaper/brand";
 import cryoThemeHref from "~/storefronts/cryo/theme.css?url";
 import ceilingBuddyThemeHref from "~/storefronts/ceiling-buddy/theme.css?url";
 import { XeroStorefront } from "~/storefronts/xero";
@@ -376,14 +378,13 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
         <link rel="stylesheet" href={ceilingBuddyThemeHref} precedence="high" />
         {store.slug === REAPER ? <link rel="stylesheet" href={reaperThemeHref} precedence="high" /> : null}
         {head}
-        <SharedStorefront
+        <CeilingBuddyStorefront
           page={page}
           storeParam={storeParam}
           publishableKey={publishableKey}
           paypalClientId={paypalClientId}
           offer={offer}
-          crowd={crowd}
-          brand={store.slug === REAPER ? reaperBrand(page) : ceilingBuddyBrand(page)}
+          brand={store.slug === REAPER ? reaperBrand(page) : undefined}
         />
       </>
     );

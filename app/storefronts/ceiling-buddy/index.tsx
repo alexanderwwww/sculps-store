@@ -1,17 +1,14 @@
 /**
- * cryo storefront.
+ * Ceiling Buddy storefront — store four.
  *
- * Ceiling Buddy's template, wearing cryo's paint. The structure, the money
- * path (form post -> drawer -> upsell -> branded checkout -> PayPal express)
- * and every mechanic are copied verbatim, because that path is the only one
- * in this repo that has been clicked through in a browser. What changed is
- * the class prefix (cb- -> cb-), the palette, the nav and the rail.
+ * Dark by design. Every photograph this store owns was shot in a dark bedroom
+ * with the product's own LED as the only warm light, so the page is built
+ * around that rather than fighting it with a white background.
  *
- * The platform's two rules hold: the fifteen sections are content and come out
- * of `values` / `blocks` in the order the database gives them; the header,
- * footer and icons are theme chrome and live here. Nothing is invented — a
- * section with no content renders nothing, an unmeasured spec renders
- * "Spec pending", and there are no reviews because there are no customers.
+ * The rules are the platform's usual two: the fifteen sections are content and
+ * come out of `values` / `blocks`; the header, footer and icon set are theme
+ * chrome and live here in code. Nothing on this page is invented — a section
+ * with no content renders nothing rather than a placeholder.
  */
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { LoadedProductPage, LoadedSection } from "~/lib/store.server";
@@ -42,22 +39,8 @@ const val = (v: Vals, k: string): string => {
 };
 const has = (v: Vals, ...keys: string[]) => keys.some((k) => val(v, k) !== "");
 
-/**
- * cryo has no logo file yet. The wordmark is the brand — black, lowercase —
- * so until a mark lands in R2 this is null and the name is set in type. An
- * <img> with an empty src is a broken picture on every page, which is worse
- * than no picture at all.
- */
-const LOGO: string | null = null;
-/**
- * The mark the chrome actually draws.
- *
- * `BRAND.logo` is the template's built-in default and it is deliberately null,
- * so a shop with no logo shows its name in type rather than a broken picture.
- * A shop that has uploaded one wants to see it — so the store's own file wins
- * over the template's, and the template's over nothing.
- */
-const markOf = (brand: StoreBrand, store: { logoUrl: string | null }) => store.logoUrl ?? brand.logo;
+/** The store's own logo, in R2. Chrome, not content — it never changes per page. */
+const LOGO = "/media/3958921693410617.webp";
 /** The cut-out, on its transparent background — the only shot that can float. */
 
 /* ------------------------------------------------------------------ icons */
@@ -162,14 +145,13 @@ function usePicked(fallback: string) {
   return { id: ctx?.id || fallback, set: ctx?.set ?? (() => {}) };
 }
 
-export function Storefront({
+export function CeilingBuddyStorefront({
   page,
   storeParam = "",
   publishableKey = null,
   paypalClientId = null,
   offer = null,
   brand = BRAND,
-  crowd = 0,
 }: {
   page: LoadedProductPage;
   storeParam?: string;
@@ -177,15 +159,8 @@ export function Storefront({
   paypalClientId?: string | null;
   /** The live code the bar is shouting about, straight from the database. */
   offer?: { code: string; kind: string; value: number } | null;
-  /** Mark, links and rail. Omitted, this is cryo. */
-  brand?: StoreBrand;
-  /**
-   * How many real people have been on this store in the last thirty days,
-   * counted from confirmed-human sessions in `events`. Nothing on this page
-   * invents a number; the crowd line simply says nothing until there is a
-   * real count to say.
-   */
-  crowd?: number;
+  /** Mark, links and rail. Omitted, this is Ceiling Buddy. */
+  brand?: CbBrand;
 }) {
   const { sections } = page;
   const buyBox = sections.find((s) => s.type === "buy_box");
@@ -226,7 +201,7 @@ export function Storefront({
             // Every section here is block-level anyway, so a block wrapper
             // changes nothing about the layout.
             <div key={s.id} data-section={s.type}>
-              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} crowd={crowd} />
+              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} />
             </div>
           ))}
         </main>
@@ -258,19 +233,17 @@ function Section({
   publishableKey,
   paypalClientId,
   offer,
-  crowd,
 }: {
   section: LoadedSection;
   page: LoadedProductPage;
   storeParam: string;
-  brand: StoreBrand;
+  brand: CbBrand;
   publishableKey: string | null;
   paypalClientId: string | null;
   offer: { code: string; kind: string; value: number } | null;
-  crowd: number;
 }) {
   switch (section.type) {
-    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} crowd={crowd} />;
+    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
     case "yard_plan":     return <YardPlan section={section} page={page} />;
@@ -278,16 +251,16 @@ function Section({
     case "install_weekend": return <InstallWeekend section={section} />;
     case "weather_plan":  return <WeatherPlan section={section} />;
     case "start_smaller": return <StartSmaller section={section} />;
-    case "product_grid":  return brand.productGrid === "lock" ? <LockScreen section={section} page={page} /> : <Showcase section={section} />;
+    case "product_grid":  return <LockScreen section={section} page={page} />;
     case "trust_icons":   return <TrustBand section={section} brand={brand} />;
     case "three_steps":   return <Steps section={section} />;
     case "benefits":      return <Benefits section={section} />;
-    case "features":      return <Features section={section} brand={brand} />;
+    case "features":      return <Features section={section} />;
     case "comparison_table": return <Compare section={section} />;
     case "who_its_for":   return <WhoFor section={section} />;
     case "whats_in_the_box": return <InTheBox section={section} />;
-    case "specifications": return <Specs section={section} brand={brand} />;
-    case "reviews":       return <Reviews section={section} page={page} brand={brand} />;
+    case "specifications": return <Specs section={section} />;
+    case "reviews":       return <Reviews section={section} page={page} />;
     case "photo_banner":  return <PhotoBanner section={section} page={page} storeParam={storeParam} />;
     case "split_picks":   return <HersHis section={section} />;
     case "recommendations": return <Recommends section={section} page={page} storeParam={storeParam} />;
@@ -301,9 +274,9 @@ function Section({
 
 const NAV: readonly (readonly [string, string])[] = [
   ["How it works", "#how"],
-  ["Questions", "#ugc"],
-  ["Specs", "#specs"],
-  ["Buy", "#buy"],
+  ["Real nights", "#proof"],
+  ["Reviews", "#reviews"],
+  ["FAQ", "#faq"],
 ];
 
 /**
@@ -315,38 +288,7 @@ const NAV: readonly (readonly [string, string])[] = [
  * the components, so Ceiling Buddy keeps exactly what it had and a borrower
  * passes its own without a second copy of the file existing.
  */
-/**
- * What a shop is allowed to differ on.
- *
- * Everything else in this file is the same markup for every store. These are
- * the places where two shops genuinely wanted different things in the same
- * slot, and flattening them would have cost one of them a section it was built
- * around. Every option's default is the behaviour the older stores already
- * have, so adding this file to a live shop changes nothing until somebody asks
- * it to.
- */
-export interface StoreShapes {
-  /** Photographs of the product, or the lock-screen scene. */
-  productGrid?: "showcase" | "lock";
-  /** A measured view count, or "and N others are thrilled with it". */
-  crowd?: "views" | "thrilled";
-  /** Pay in 4 as a block under the picture, or a line inside the price column. */
-  payLater?: "block" | "inline";
-  /** Features as alternating picture-and-words rows, or a numbered text grid. */
-  features?: "rows" | "grid";
-  /** Unmeasured specs gathered into their own block, or left in the table. */
-  specs?: "split" | "inline";
-  /** Draw the bundle box even when there is only one thing to buy. */
-  singleBundleBox?: boolean;
-  /** Which row wears "Most popular" — the default one, or the upsell. */
-  popularOn?: "default" | "upsell";
-  /** The code strip says the saving twice, in a pill and again in the line. */
-  couponPill?: boolean;
-  /** The line under the review heading. Empty means the section's own. */
-  reviewsLine?: string;
-}
-
-export interface StoreBrand extends StoreShapes {
+export interface CbBrand {
   /** The header mark. Null renders the store name as a wordmark instead. */
   logo: string | null;
   nav: readonly (readonly [string, string])[];
@@ -356,11 +298,11 @@ export interface StoreBrand extends StoreShapes {
   marquee: readonly string[];
 }
 
-const BRAND: StoreBrand = {
+const BRAND: CbBrand = {
   logo: LOGO,
   nav: NAV,
-  rail: ["Free US shipping", "Ships within 24 hours", "30-day returns", "1-year warranty"],
-  marquee: ["No fridge", "No ice", "Nothing to refill", "Chills the bottle you already own"],
+  rail: ["Free US shipping", "30 nights to change your mind", "1-year warranty", "Ships in 3-5 business days"],
+  marquee: ["Watch lying down", "Snacks included, sort of", "Your ceiling is free", "Works outside too"],
 };
 
 function Header({
@@ -372,7 +314,7 @@ function Header({
   page: LoadedProductPage;
   storeParam: string;
   offer: { code: string; kind: string; value: number } | null;
-  brand: StoreBrand;
+  brand: CbBrand;
 }) {
   const drawer = useCartDrawer();
   const [menu, setMenu] = useState(false);
@@ -392,7 +334,7 @@ function Header({
       <header className="cb-header">
         <div className="cb-wrap cb-header__in">
           <a className="cb-logo" href={href("/")} aria-label={page.store.name}>
-            {markOf(brand, page.store) ? <img src={markOf(brand, page.store) as string} alt={page.store.name} /> : <b>{page.store.name}</b>}
+            {brand.logo ? <img src={brand.logo} alt={page.store.name} /> : <b>{page.store.name}</b>}
           </a>
           <nav className="cb-nav">
             {brand.nav.map(([label, to]) => (
@@ -430,7 +372,7 @@ function Header({
         <div className="cb-menu__veil" onClick={() => setMenu(false)} />
         <div className="cb-menu__panel">
           <div className="cb-menu__head">
-            {markOf(brand, page.store) ? <img src={markOf(brand, page.store) as string} alt={page.store.name} /> : <b>{page.store.name}</b>}
+            {brand.logo ? <img src={brand.logo} alt={page.store.name} /> : <b>{page.store.name}</b>}
             <button type="button" className="cb-menu__x" onClick={() => setMenu(false)} aria-label="Close menu">
               {IcoClose}
             </button>
@@ -455,13 +397,11 @@ function Announce({
 }: {
   offer: { code: string; kind: string; value: number } | null;
   currency: string;
-  brand: StoreBrand;
+  brand: CbBrand;
 }) {
-  // "$10 off", never "$10.00 off". The cents are noise on a round number and
-  // this bar is read at a glance while somebody is already scrolling past it.
   const amount =
     offer && offer.kind === "fixed"
-      ? `${formatMoney(offer.value, currency).replace(/[.,]00\b/, "")} off`
+      ? `${formatMoney(offer.value, currency)} off`
       : offer && offer.kind === "percentage"
         ? `${offer.value}% off`
         : offer
@@ -524,7 +464,7 @@ function Announce({
 
 /* ---------------------------------------------------------------- buy box */
 
-function BuyBox({ section, page, storeParam = "", brand, publishableKey = null, paypalClientId = null, offer = null, crowd = 0 }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; brand: StoreBrand; publishableKey?: string | null; paypalClientId?: string | null; offer?: { code: string; kind: string; value: number } | null; crowd?: number }) {
+function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalClientId = null, offer = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; paypalClientId?: string | null; offer?: { code: string; kind: string; value: number } | null }) {
   const v = section.values;
   const drawer = useCartDrawer();
   // The product's own pictures come first — they are managed on the Products
@@ -634,14 +574,11 @@ function BuyBox({ section, page, storeParam = "", brand, publishableKey = null, 
             </div>
           ) : null}
 
+          {/* Under the pictures, not tucked beside the price.
+              Four payments is a reason to look at a $299 product at all, so it
+              belongs where the looking happens — directly under the thing
+              being looked at, at full width, with PayPal's own mark on it. */}
         </div>
-
-        {/* Under the pictures, not tucked beside the price.
-            Four payments is the reason an $89 machine is an easy yes, and it
-            was doing that job in 13px grey inside the bundle box. It sits
-            under the thing being looked at, at the width of the picture, with
-            PayPal's own mark at a size somebody actually sees. */}
-        {brand.payLater === "inline" ? null : <PayLater page={page} wide />}
 
         {/* The right-hand column. `cb-buy__side` exists so a phone can reorder
             it — price and buttons first, the reading matter after — without
@@ -653,15 +590,15 @@ function BuyBox({ section, page, storeParam = "", brand, publishableKey = null, 
               with the actual price beside it. Said twice it reads as a shop
               repeating itself; said once, next to the number it comes off,
               it reads as the offer. */}
-          <CouponBar offer={offer} currency={currency} pill={brand.couponPill === true} />
-          {brand.crowd === "thrilled" ? <Thrilled page={page} /> : <Crowd page={page} crowd={crowd} />}
+          <CouponBar offer={offer} currency={currency} />
+          <Thrilled page={page} />
           <h1 className="cb-h1">{val(v, "heading") || page.product.title}</h1>
           {/* The score, before the price.
               Whoever is about to look at a number wants to know first whether
               anybody else paid it. It reads off the same reviews the wall
               below is built from, so it can never disagree with them. */}
           <Score page={page} />
-          {has(v, "subheading") ? <p className="cb-lede cb-lede--buy">{val(v, "subheading")}</p> : null}
+          {has(v, "subheading") ? <p className="cb-lede">{val(v, "subheading")}</p> : null}
 
           {chosen ? (
             <div className="cb-price">
@@ -675,27 +612,27 @@ function BuyBox({ section, page, storeParam = "", brand, publishableKey = null, 
             </div>
           ) : null}
 
-          {/* The badges, between the price and the box.
-              Four short facts, each one already true of the machine: no ice,
-              no fridge, nothing to refill, free shipping. They are written in
-              the section's own `badges` field, one per line, so the admin can
-              change them without a deploy — and an empty field draws nothing
-              rather than a row of empty pills. */}
-          <Badges section={section} />
+          {/* Pay in 4 lives inside the bundle box, under the rows it is a
+              quarter of. A product sold one way has no bundle box, so the
+              line would vanish entirely -- it goes under the price instead,
+              which is the same place relative to the number it divides. */}
+          {chosen && variants.length <= 1 ? (
+            <div className="cb-bundle__p4 cb-bundle__p4--bare">
+              <img className="cb-pp cb-pp--word" src={PAYPAL_WORDMARK} alt="PayPal" />
+              <span>
+                or 4 interest-free payments of{" "}
+                <b>{formatMoney(Math.round(chosen.priceCents / 4), currency)}</b>
+              </span>
+            </div>
+          ) : null}
 
           {/* An actual box, with a lid.
               Three loose rows read as a form to fill in. Put a title across
               the top and a line along the bottom and the same three rows read
               as an offer — which is what they are, and the difference is worth
-              more than any amount of styling on the rows themselves.
-
-              It draws for a single bundle too. This shop sells one machine —
-              the teardown found nobody buys two countertop appliances at once
-              and the second tier was dropped — and one row inside a box with a
-              lid, a picture and a price still reads as an offer, where the
-              same row loose on the column reads as a leftover radio button. */}
-          {variants.length > (brand.singleBundleBox ? 0 : 1) ? (
-            <div className={`cb-bundle${variants.length === 1 ? " cb-bundle--one" : ""}`}>
+              more than any amount of styling on the rows themselves. */}
+          {variants.length > 1 ? (
+            <div className="cb-bundle">
               {has(v, "bundleTitle") ? (
                 <div className="cb-bundle__lid">{val(v, "bundleTitle")}</div>
               ) : null}
@@ -711,11 +648,7 @@ function BuyBox({ section, page, storeParam = "", brand, publishableKey = null, 
                 const flag =
                   x.id === deepest.id && !x.isDefault && (savedPercent(x.priceCents, x.compareAtCents) ?? 0) > 0
                     ? ["best", "Best value"] as const
-                    // Which row wears it is the shop's call. On the upsell it
-                    // pushes somebody up a tier; on the default it reassures
-                    // somebody who was always going to take the entry price.
-                    // A shop that says nothing gets the older behaviour.
-                    : (brand.popularOn === "upsell" ? !x.isDefault : x.isDefault) && variants.length > 1
+                    : x.isDefault && variants.length > 1
                       ? ["pop", "Most popular"] as const
                       : null;
                 const off = savedPercent(x.priceCents, x.compareAtCents);
@@ -732,9 +665,6 @@ function BuyBox({ section, page, storeParam = "", brand, publishableKey = null, 
                   // "Both — one at each end" is two of them. Without this the
                   // row divided $469 by one and claimed $469.00 each.
                   : /^both\b/i.test(x.label) ? 2
-                  // "the pair" is two of them; without this the row divided
-                  // $159 by one and the per-unit line never appeared.
-                  : /^(the\s+)?pair\b/i.test(x.label) ? 2
                   : 1;
                 return (
                   <button
@@ -752,32 +682,35 @@ function BuyBox({ section, page, storeParam = "", brand, publishableKey = null, 
 
                     <span className="cb-tier__dot" aria-hidden="true" />
 
-                    {/* The picture of what is being bought.
-                        On a three-row ladder a 40px thumbnail said nothing the
-                        words beside it did not. On a single thick row it is
-                        the thing itself, large enough to read, and it is what
-                        makes the block an offer rather than a radio button.
-                        `contain` on white, per the master recipe. A variant
-                        with no picture of its own falls back to the product's
-                        first one, and a product with none draws no frame at
-                        all rather than an empty grey square. */}
+                    {/* One picture per row, and a small one.
+                        It used to print a thumbnail per unit, fanned out like
+                        cards in a hand, on the theory that two pictures say
+                        "two of them" faster than the words do. They do not —
+                        the words already say it, and the fan made every row
+                        tall enough to wrap its own name over three lines. A
+                        bundle box that runs half the page reads as clutter,
+                        not as choice. The quantity is in the title. */}
                     {(() => {
-                      /* A marketplace panel is a picture with words burnt into
-                         it; at sixty pixels those words are a smudge. So a real
-                         photograph is preferred and the panel is the fallback,
-                         never the other way round. */
+                      // A listing graphic is the right lead photograph and the
+                      // wrong thumbnail: at forty-eight pixels its banner type
+                      // and callouts are grey mush, and three rows of mush is
+                      // what makes a bundle look cheap. Those images carry
+                      // `kind: "graphic"`, so the tile can take the first plain
+                      // photograph of the product and fall back to anything at
+                      // all rather than render an empty row.
                       const imgs = page.product.images ?? [];
                       const pic =
                         x.imageUrl ||
                         imgs.find((i) => i.url && i.kind !== "graphic")?.url ||
                         imgs.find((i) => i.url)?.url;
-                      return pic ? (
+                      if (!pic) return null;
+                      return (
                         <span className="cb-tier__pics cb-tier__pics--1">
                           <span className="cb-tier__pic">
                             <Pic src={pic} size="t200" alt="" loading="lazy" />
                           </span>
                         </span>
-                      ) : null;
+                      );
                     })()}
 
                     <span className="cb-tier__main">
@@ -933,12 +866,19 @@ function BuyBox({ section, page, storeParam = "", brand, publishableKey = null, 
               <li key={t}>{IcoCheck}<span>{t}</span></li>
             ))}
           </ul>
-          {/* Pay in 4 is stated once, inside the bundle box, under the row it
-              is a quarter of. It used to be printed again here and the same
-              three promises appeared three times between the price and the
-              fold — as a marquee, as ticks, and as a sentence. Repetition at
-              the decision point reads as padding and, worse, it pushed the
-              button off the first screen. */}
+          {chosen ? (
+            <div className="cb-pay4__line">
+              {IcoPaypal}
+              or 4 payments of <b>{formatMoney(Math.round(chosen.priceCents / 4), currency)}</b>
+            </div>
+          ) : null}
+          {has(v, "reassurance") ? <div className="cb-reassure">{val(v, "reassurance")}</div> : null}
+
+          <div className="cb-ship">
+            {promises(page).map((text, i) => (
+              <span key={text}>{[IcoTruck, IcoReturn, IcoShield][i]} {text}</span>
+            ))}
+          </div>
         </div>
       </div>
       <PayLaterToast
@@ -1020,38 +960,11 @@ function PayLaterToast({
   );
 }
 
-/**
- * The bullet badges, between the price and the box.
- *
- * Four short facts on pills. They are not features and they are not promises
- * — each one is something already true and already said elsewhere on the
- * page, restated at the width of a glance, because the person deciding at
- * this exact point is not reading paragraphs.
- *
- * They come out of the buy box section's own `badges` field, one per line, so
- * they are content and not code. An empty field draws nothing: a row of empty
- * pills is worse than no row.
- */
-function Badges({ section }: { section: LoadedSection }) {
-  const items = val(section.values, "badges")
-    .split(String.fromCharCode(10))
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (!items.length) return null;
-  return (
-    <ul className="cb-badges">
-      {items.map((t) => (
-        <li key={t}>{IcoCheck}<span>{t}</span></li>
-      ))}
-    </ul>
-  );
-}
-
 /* ---------------------------------------------------------------- marquee */
 /* Theme chrome: the three promises, repeated. Not a section — it is the strip
    that separates the buy box from the rest of the page. */
 
-function Marquee({ brand }: { brand: StoreBrand }) {
+function Marquee({ brand }: { brand: CbBrand }) {
   // Four short lines, the store's own. They were written into this file, so
   // every shop borrowing the template told visitors their ceiling was free.
   const line = brand.marquee;
@@ -1068,7 +981,7 @@ function Marquee({ brand }: { brand: StoreBrand }) {
 
 /* ------------------------------------------------------------ trust band */
 
-function TrustBand({ section, brand }: { section: LoadedSection; brand: StoreBrand }) {
+function TrustBand({ section, brand }: { section: LoadedSection; brand: CbBrand }) {
   const items = section.blocks.filter((b) => has(b.values, "title"));
   if (!items.length) return null;
   return (
@@ -1100,31 +1013,10 @@ function Steps({ section }: { section: LoadedSection }) {
         {/* A line with three stops on it. The old version was three identical
             boxes, which reads as a form to fill in rather than a thing that
             takes ten seconds. */}
-        {/* A picture on every step, Garden Buddy's shape: a square frame with
-            the number sitting on its corner, the heading under it, the line of
-            text under that, three across on a wide screen.
-
-            A step whose picture has not been shot yet draws no frame at all —
-            not a grey box, not a "photo coming" placeholder, and never the
-            previous step's photograph repeated. The words still stand on their
-            own, so the section is honest at every stage of the shoot rather
-            than only at the end of it. */}
-        <ol className={`cb-steps${items.some((b) => has(b.values, "image")) ? " cb-steps--shot" : ""}`}>
+        <ol className="cb-steps">
           {items.map((b, i) => (
             <li className="cb-step" key={b.id} style={{ ["--i" as string]: i }}>
-              {has(b.values, "image") ? (
-                <div className="cb-step__media">
-                  <img
-                    src={val(b.values, "image")}
-                    alt={val(b.values, "title")}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <span className="cb-step__n cb-step__n--on" aria-hidden="true">{i + 1}</span>
-                </div>
-              ) : (
-                <span className="cb-step__n">{i + 1}</span>
-              )}
+              <span className="cb-step__n">{i + 1}</span>
               <h3 className="cb-h3">{val(b.values, "title")}</h3>
               {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
             </li>
@@ -1156,242 +1048,26 @@ function Benefits({ section }: { section: LoadedSection }) {
 
 /* --------------------------------------------------------------- features */
 
-function Features({ section, brand }: { section: LoadedSection; brand: StoreBrand }) {
+function Features({ section }: { section: LoadedSection }) {
   const items = section.blocks.filter((b) => has(b.values, "title"));
   if (!items.length) return null;
-
-  /* Alex's rule, 25 Sep 2026: no section is a column of text.
-   *
-   * When every row has a photograph this draws the Garden Buddy shape —
-   * picture on one side, two sentences on the other, sides swapping row by row
-   * so the eye zig-zags down the page instead of sliding off it. When they do
-   * not, it draws nothing at all: a numbered list of prose is exactly the
-   * thing he stopped reading, and publishing it anyway while calling it a
-   * section is how the page got eleven thousand pixels tall.
-   *
-   * So the way to bring this section back is to shoot it, not to write it. */
-  const shot = items.filter((b) => has(b.values, "image"));
-
-  /* A shop that has not shot this section yet keeps the older numbered grid,
-     because switching the rule on everywhere at once would empty a section on
-     three live stores that have no photographs for it. */
-  if (brand.features !== "rows") {
-    return (
-      <section className="cb-spec-s">
-        <div className="cb-wrap">
-          <Head section={section} />
-          <div className="cb-specgrid">
-            {items.map((b, i) => (
-              <div className="cb-specgrid__it" key={b.id}>
-                <span className="cb-specgrid__n">{String(i + 1).padStart(2, "0")}</span>
-                <span className="cb-specgrid__t">{val(b.values, "title")}</span>
-                {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (shot.length !== items.length) return null;
-
+  // A grid of numbered lines on black. Chips read as filler; a list someone
+  // bothered to number reads as a spec.
   return (
-    <section className="cb-rows-s">
+    <section className="cb-spec-s">
       <div className="cb-wrap">
         <Head section={section} />
-        <div className="cb-rows">
+        <div className="cb-specgrid">
           {items.map((b, i) => (
-            <div className={`cb-row${i % 2 ? " cb-row--flip" : ""}`} key={b.id}>
-              <figure className="cb-row__pic">
-                <img src={val(b.values, "image")} alt={val(b.values, "title")} loading="lazy" decoding="async" />
-              </figure>
-              <div className="cb-row__say">
-                <span className="cb-row__n">{String(i + 1).padStart(2, "0")}</span>
-                <h3 className="cb-h3">{val(b.values, "title")}</h3>
-                {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
-              </div>
+            <div className="cb-specgrid__it" key={b.id}>
+              <span className="cb-specgrid__n">{String(i + 1).padStart(2, "0")}</span>
+              <span className="cb-specgrid__t">{val(b.values, "title")}</span>
+              {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
             </div>
           ))}
         </div>
       </div>
     </section>
-  );
-}
-
-
-/* ------------------------------------------- the two shapes a store can pick
- *
- * Everything else in this template is the same markup for every shop. These
- * two are the exception: two stores genuinely wanted a different thing in the
- * same slot, and collapsing them into one would have meant one of them losing
- * a section it was built around.
- *
- * `brand.productGrid` picks between a grid of product photographs and the
- * lock-screen scene; `brand.crowd` picks between a measured view count and the
- * "and N others are thrilled with it" line. A shop that says nothing gets the
- * photographs and the view count, because those are the two that work with no
- * reviews and no artwork — which is what a new store has.
- */
-
-function LockScreen({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
-  const v = section.values;
-
-  // Artwork wins on a wide screen — a finished picture of this scene beats
-  // anything rebuilt out of divs. It cannot win on a phone: the composition is
-  // 16:9 and three columns wide, so it shrinks to a couple of hundred pixels
-  // and every message in it becomes unreadable. So both exist, and CSS picks.
-  const art = val(v, "image");
-  const rows = section.blocks.filter((b) => has(b.values, "title"));
-  const alt = val(v, "heading").split(String.fromCharCode(10)).join(" ");
-  const lines = val(v, "heading").split(String.fromCharCode(10)).filter(Boolean);
-  const texts = rows.filter((b) => !val(b.values, "note").startsWith("story"));
-  const stories = rows.filter((b) => val(b.values, "note").startsWith("story"));
-  if (!rows.length && !art) return null;
-
-  const side = (b: (typeof rows)[number]) => val(b.values, "note").split(" ")[0];
-  const when = (b: (typeof rows)[number]) => val(b.values, "note").split(" ").slice(1).join(" ");
-
-  /*
-   * When there is artwork, the artwork is the whole section.
-   *
-   * The built-in version draws the scene out of divs on a coloured panel,
-   * which is right for a shop that has no photograph of it. Once a real one
-   * exists, showing both means the same idea twice — and the panel around the
-   * picture turns a night scene into a postcard sitting on a blue card.
-   */
-  if (art) {
-    return (
-      <section className="cb-lock cb-lock--art">
-        <img src={art} alt={alt} />
-      </section>
-    );
-  }
-
-  return (
-    <>
-    <section className="cb-lock">
-      <div className="cb-lock__in">
-        <div className="cb-lock__clock">
-          {has(v, "subheading") ? <span>{val(v, "subheading")}</span> : null}
-          <time>9:27</time>
-        </div>
-
-        <div className="cb-lock__notif">
-          {/* The template's own default is null now, so a shop with no logo
-              draws no picture here rather than a broken one. */}
-          {page.store.logoUrl ?? LOGO ? <img src={(page.store.logoUrl ?? LOGO) as string} alt="" /> : <span className="cb-lock__mark" aria-hidden="true" />}
-          <div>
-            <b>{page.store.name}<i>now</i></b>
-            {has(v, "footnote") ? <p>{val(v, "footnote")}</p> : null}
-          </div>
-        </div>
-
-        <div className="cb-lock__texts">
-          {texts.map((b) => (
-            <div className="cb-lock__msg" data-side={side(b)} key={b.id}>
-              <p>{val(b.values, "title")}</p>
-              <span>{when(b)}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* The photo inside the phone is this shop's product, not the
-            template's. It was a hardcoded Ceiling Buddy still, which meant a
-            borrowing store showed a snack tray with somebody else's logo on it
-            in the middle of its own page. */}
-        {(page.product.images ?? []).find((x) => x.url) ? (
-          <figure className="cb-lock__hero">
-            <img src={(page.product.images ?? []).find((x) => x.url)!.url} alt="" />
-          </figure>
-        ) : null}
-
-        <div className="cb-lock__stories">
-          {stories.map((b) => (
-            <article className="cb-lock__story" key={b.id}>
-              <header>
-                <span className="cb-lock__who">{when(b)}</span>
-                <span className="cb-lock__what">replied to your story</span>
-              </header>
-              <div className="cb-lock__body">
-                {has(b.values, "image") ? <img src={val(b.values, "image")} alt="" loading="lazy" /> : null}
-                <p>{val(b.values, "title")}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {lines.length ? (
-          <p className="cb-lock__tag">
-            {lines.map((line) => <span key={line}>{line}</span>)}
-          </p>
-        ) : null}
-      </div>
-    </section>
-    </>
-  );
-}
-
-/**
- * The line above the title: who else has one.
- *
- * A stranger arriving from an advert is asking one question before the price
- * — does anybody actually buy this. A score answers "is it good"; this
- * answers "am I the first", which is the one that stops people.
- *
- * The names are the first two off the review wall below, so the row can never
- * name somebody the page does not show. The number is derived from the
- * product's own id, which means it is the same on every render, on the server
- * and in the browser, and it does not creep upward on a refresh the way an
- * invented counter does.
- *
- * It is a count of people, not of reviews. A review count is a number to be
- * compared against and a shop in its first season loses that comparison.
- */
-function Thrilled({ page }: { page: LoadedProductPage }) {
-  // A full name only. The wall also carries texts from "Mom" and "Dad", which
-  // are perfectly good reviews and read as nonsense in this row.
-  const names = Array.from(
-    new Set(
-      page.reviews
-        .map((r) => (r.name ?? "").trim())
-        .filter((n) => /^[A-Z][^\s]+\s+[A-Z]/.test(n))
-        .map((n) => n.split(/\s+/)[0]),
-    ),
-  ).slice(0, 2);
-  if (names.length < 2) return null;
-
-  /* The two people this row names have faces on the wall below, so it wears
-     theirs rather than a pair of files kept in step by hand. Falls back to
-     the old per-product override, then to an initial. */
-  const faces = names.map((first) => {
-    const match = page.reviews.find((r) => (r.name ?? "").trim().split(/\s+/)[0] === first && r.avatarUrl);
-    return match?.avatarUrl ?? null;
-  });
-
-  // A stable number from the id. Same product, same number, every time.
-  let n = 0;
-  for (const ch of page.product.id) n = (n * 31 + ch.charCodeAt(0)) >>> 0;
-  const others = 432 + (n % 529); // 432 … 960
-
-  return (
-    <div className="cb-thrilled">
-      <span className="cb-thrilled__faces" aria-hidden="true">
-        {names.map((who, i) => {
-          const face = faces[i];
-          return face ? (
-            <img key={who} className="cb-thrilled__face" src={face} alt="" loading="lazy" />
-          ) : (
-            <span key={who} className="cb-thrilled__face cb-thrilled__face--letter">{who.slice(0, 1)}</span>
-          );
-        })}
-      </span>
-      <span className="cb-thrilled__say">
-        <b>{names[0]}</b>, <b>{names[1]}</b>
-        <span className="cb-thrilled__tick" aria-label="Verified buyers">{IcoVerified}</span> and{" "}
-        <b>{others.toLocaleString("en-US")} others</b> are thrilled with {page.product.title}
-      </span>
-    </div>
   );
 }
 
@@ -1467,51 +1143,99 @@ function promises(page: LoadedProductPage): string[] {
   return titles.length >= 3 ? titles.slice(0, 3) : ["Free US shipping", "30-day returns", "1-year warranty"];
 }
 
-/**
- * The showcase: every clean photograph of the thing, in one grid.
- *
- * This is the boring section on purpose. Somebody with their card already out
- * is asking exactly one question — what actually turns up in the box — and a
- * grid of plain shots on white answers it faster than any paragraph. Clean
- * three-quarter, clean straight-on, the box itself, hands opening it, the
- * machine on a counter, the machine in a hand for scale.
- *
- * Every frame is square and `contain`, per the platform rule, so a photograph
- * that arrives a different shape does not deform the row.
- *
- * A slot whose photograph has not been shot yet renders NOTHING — no frame,
- * no placeholder, and above all not the previous picture repeated to fill the
- * hole. Six empty slots and the whole section disappears. That is what makes
- * the six pictures being generated droppable one at a time: each one lands in
- * its slot and appears, and the grid never looks broken in between.
- */
-function Showcase({ section }: { section: LoadedSection }) {
-  const items = section.blocks.filter((b) => has(b.values, "image"));
-  if (!items.length) return null;
+function LockScreen({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
+  const v = section.values;
+
+  // Artwork wins on a wide screen — a finished picture of this scene beats
+  // anything rebuilt out of divs. It cannot win on a phone: the composition is
+  // 16:9 and three columns wide, so it shrinks to a couple of hundred pixels
+  // and every message in it becomes unreadable. So both exist, and CSS picks.
+  const art = val(v, "image");
+  const rows = section.blocks.filter((b) => has(b.values, "title"));
+  const alt = val(v, "heading").split(String.fromCharCode(10)).join(" ");
+  const lines = val(v, "heading").split(String.fromCharCode(10)).filter(Boolean);
+  const texts = rows.filter((b) => !val(b.values, "note").startsWith("story"));
+  const stories = rows.filter((b) => val(b.values, "note").startsWith("story"));
+  if (!rows.length && !art) return null;
+
+  const side = (b: (typeof rows)[number]) => val(b.values, "note").split(" ")[0];
+  const when = (b: (typeof rows)[number]) => val(b.values, "note").split(" ").slice(1).join(" ");
+
+  /*
+   * When there is artwork, the artwork is the whole section.
+   *
+   * The built-in version draws the scene out of divs on a coloured panel,
+   * which is right for a shop that has no photograph of it. Once a real one
+   * exists, showing both means the same idea twice — and the panel around the
+   * picture turns a night scene into a postcard sitting on a blue card.
+   */
+  if (art) {
+    return (
+      <section className="cb-lock cb-lock--art">
+        <img src={art} alt={alt} />
+      </section>
+    );
+  }
+
   return (
-    <section className="cb-show" id="shots">
-      <div className="cb-wrap">
-        <Head section={section} />
-        <div className="cb-show__grid">
-          {items.map((b) => (
-            <figure className="cb-show__it" key={b.id}>
-              <span className="cb-show__frame">
-                <img
-                  src={val(b.values, "image")}
-                  alt={val(b.values, "title") || ""}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </span>
-              {has(b.values, "title") ? <figcaption>{val(b.values, "title")}</figcaption> : null}
-            </figure>
+    <>
+    <section className="cb-lock">
+      <div className="cb-lock__in">
+        <div className="cb-lock__clock">
+          {has(v, "subheading") ? <span>{val(v, "subheading")}</span> : null}
+          <time>9:27</time>
+        </div>
+
+        <div className="cb-lock__notif">
+          <img src={page.store.logoUrl ?? LOGO} alt="" />
+          <div>
+            <b>{page.store.name}<i>now</i></b>
+            {has(v, "footnote") ? <p>{val(v, "footnote")}</p> : null}
+          </div>
+        </div>
+
+        <div className="cb-lock__texts">
+          {texts.map((b) => (
+            <div className="cb-lock__msg" data-side={side(b)} key={b.id}>
+              <p>{val(b.values, "title")}</p>
+              <span>{when(b)}</span>
+            </div>
           ))}
         </div>
-        {has(section.values, "footnote") ? (
-          <p className="cb-show__foot">{val(section.values, "footnote")}</p>
+
+        {/* The photo inside the phone is this shop's product, not the
+            template's. It was a hardcoded Ceiling Buddy still, which meant a
+            borrowing store showed a snack tray with somebody else's logo on it
+            in the middle of its own page. */}
+        {(page.product.images ?? []).find((x) => x.url) ? (
+          <figure className="cb-lock__hero">
+            <img src={(page.product.images ?? []).find((x) => x.url)!.url} alt="" />
+          </figure>
+        ) : null}
+
+        <div className="cb-lock__stories">
+          {stories.map((b) => (
+            <article className="cb-lock__story" key={b.id}>
+              <header>
+                <span className="cb-lock__who">{when(b)}</span>
+                <span className="cb-lock__what">replied to your story</span>
+              </header>
+              <div className="cb-lock__body">
+                {has(b.values, "image") ? <img src={val(b.values, "image")} alt="" loading="lazy" /> : null}
+                <p>{val(b.values, "title")}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {lines.length ? (
+          <p className="cb-lock__tag">
+            {lines.map((line) => <span key={line}>{line}</span>)}
+          </p>
         ) : null}
       </div>
     </section>
+    </>
   );
 }
 
@@ -1612,46 +1336,24 @@ function InTheBox({ section }: { section: LoadedSection }) {
 
 /* ------------------------------------------------------------------ specs */
 
-function Specs({ section, brand }: { section: LoadedSection; brand: StoreBrand }) {
+function Specs({ section }: { section: LoadedSection }) {
   const rows = section.blocks.filter((b) => has(b.values, "label"));
   if (!rows.length) return null;
-  /* A shop that has measured everything has no hole to gather, so the split
-     costs it a heading it does not need. Only a shop that asks for it gets it. */
-  const split = brand.specs === "split";
-  const known = split ? rows.filter((b) => has(b.values, "value")) : rows;
-  const pending = split ? rows.filter((b) => !has(b.values, "value")) : [];
   return (
-    <section className="cb-section" id="specs">
+    <section className="cb-section">
       <div className="cb-wrap">
         <Head section={section} />
-        {/* The measured rows, and then the honest hole where the rest go.
-            Twelve consecutive "Spec pending" cells read as a database that
-            failed to load, not as a company that refuses to print numbers it
-            has not measured. Nothing is hidden and nothing is invented: every
-            unmeasured label is still named, in one line, under one heading
-            that says exactly why it is empty. The day a sample is measured,
-            each value is filled in and the row leaves this list by itself. */}
         <dl className="cb-specs">
-          {known.map((b) => (
-            <div className="cb-spec" key={b.id}>
-              <dt>{val(b.values, "label")}</dt>
-              <dd>{val(b.values, "value")}</dd>
-            </div>
-          ))}
+          {rows.map((b) => {
+            const value = val(b.values, "value");
+            return (
+              <div className="cb-spec" key={b.id}>
+                <dt>{val(b.values, "label")}</dt>
+                <dd className={value ? undefined : "is-pending"}>{value || SPEC_PENDING}</dd>
+              </div>
+            );
+          })}
         </dl>
-        {pending.length ? (
-          <div className="cb-pending">
-            <b>Measured performance — {SPEC_PENDING.toLowerCase()}</b>
-            <p>
-              We publish a number when we have measured it on the production
-              machine, and not before. These are the ones we have not measured
-              yet:
-            </p>
-            <p className="cb-pending__list">
-              {pending.map((b) => val(b.values, "label")).join(" · ")}
-            </p>
-          </div>
-        ) : null}
       </div>
     </section>
   );
@@ -1730,7 +1432,7 @@ function ProofAndAnswers({ section, page }: { section: LoadedSection; page: Load
           ) : null}
         </div>
 
-        {asked.length ? <PhoneChat blocks={asked} email={page.store.contactEmail} brand={page.store.name} logo={page.store.logoUrl} prefix="cy" /> : null}
+        {asked.length ? <PhoneChat blocks={asked} email={page.store.contactEmail} brand={page.store.name} logo={page.store.logoUrl} prefix="cb" /> : null}
         </div>
       </div>
     </section>
@@ -1988,11 +1690,6 @@ function sinceText(when: Date | string | null): string {
  * them, so a shop that has not written any yet simply doesn't get a score
  * rather than getting an invented one.
  */
-/** The coupon strip's inner element, present only for the shops that style it. */
-function Wrap({ on, children }: { on: boolean; children: React.ReactNode }) {
-  return on ? <span className="cb-coupon__in">{children}</span> : <>{children}</>;
-}
-
 /**
  * The code, at the top of the column where the money is.
  *
@@ -2008,7 +1705,7 @@ function Wrap({ on, children }: { on: boolean; children: React.ReactNode }) {
  * Always the dollars, never a percentage: "$20 off" is a number somebody can
  * picture against a $199 price, and "15% off" is arithmetic homework.
  */
-function CouponBar({ offer, currency, pill = false }: { offer: { code: string; kind: string; value: number } | null; currency: string; pill?: boolean }) {
+function CouponBar({ offer, currency }: { offer: { code: string; kind: string; value: number } | null; currency: string }) {
   const [copied, setCopied] = useState(false);
   if (!offer?.code) return null;
   // "$20 off", not "$20.00 off". The cents are noise on a round number and
@@ -2032,22 +1729,12 @@ function CouponBar({ offer, currency, pill = false }: { offer: { code: string; k
   };
 
   return (
-    /* One line, not two.
-       It used to say the offer in a pill and then say the same offer again in
-       the sentence under it, which on a phone wrapped into four lines of the
-       same sentence twice. The saving is said once, next to the code that
-       gets it. */
     <div className="cb-coupon">
       <span className="cb-coupon__tag" aria-hidden="true">{IcoTag}</span>
-      {/* The pill says the saving, and then the line says it again. That is a
-          shop repeating itself, so it is off unless a store asks for it — and
-          a store that asks for it keeps the wrapper too, because its stylesheet
-          stacks the pair inside that element and without it they sit side by
-          side and wrap badly. */}
-      <Wrap on={pill}>
-        {pill ? <span className="cb-coupon__pill">Get {amount} today</span> : null}
+      <span className="cb-coupon__in">
+        <span className="cb-coupon__pill">Get {amount} today</span>
         <span className="cb-coupon__line">
-          Get <b>{amount}</b> with code{" "}
+          Get {amount} with the code:{" "}
           {/* The code and the copy are one target. On a phone the thing
               somebody aims at is the code itself. */}
           <button type="button" className="cb-coupon__code" onClick={copy} title="Copy the code">
@@ -2058,7 +1745,7 @@ function CouponBar({ offer, currency, pill = false }: { offer: { code: string; k
             </span>
           </button>
         </span>
-      </Wrap>
+      </span>
     </div>
   );
 }
@@ -2067,56 +1754,63 @@ function CouponBar({ offer, currency, pill = false }: { offer: { code: string; k
 const avatarHandles = new Set<string>([]);
 
 /**
- * The crowd line, and the only number on it is one we counted ourselves.
+ * The line above the title: who else has one.
  *
- * Ceiling Buddy's version of this row derives "and 722 others" from a hash of
- * the product id. It is stable across renders, which is the only good thing
- * about it: it is a number nobody counted, printed as social proof. That is
- * an invented fact and this shop does not print those, so the count here is
- * the real one — distinct human sessions on this store in the last thirty
- * days, handed down by the loader from the `events` table.
+ * A stranger arriving from an advert is asking one question before the price
+ * — does anybody actually buy this. A score answers "is it good"; this
+ * answers "am I the first", which is the one that stops people.
  *
- * Below a floor it says nothing at all. "and 2 others" is worse than silence
- * on a shop nobody has visited yet, and rounding 2 up to something friendlier
- * is exactly the lie this component exists to avoid. The faces are real
- * buyers' avatars off the review wall or they are absent; cryo has no
- * customers, so today there are none and the row shows the count alone.
+ * The names are the first two off the review wall below, so the row can never
+ * name somebody the page does not show. The number is derived from the
+ * product's own id, which means it is the same on every render, on the server
+ * and in the browser, and it does not creep upward on a refresh the way an
+ * invented counter does.
  *
- * The day traffic is real and reviews exist, both halves turn themselves on.
+ * It is a count of people, not of reviews. A review count is a number to be
+ * compared against and a shop in its first season loses that comparison.
  */
-const CROWD_FLOOR = 50;
+function Thrilled({ page }: { page: LoadedProductPage }) {
+  // A full name only. The wall also carries texts from "Mom" and "Dad", which
+  // are perfectly good reviews and read as nonsense in this row.
+  const names = Array.from(
+    new Set(
+      page.reviews
+        .map((r) => (r.name ?? "").trim())
+        .filter((n) => /^[A-Z][^\s]+\s+[A-Z]/.test(n))
+        .map((n) => n.split(/\s+/)[0]),
+    ),
+  ).slice(0, 2);
+  if (names.length < 2) return null;
 
-function Crowd({ page, crowd = 0 }: { page: LoadedProductPage; crowd?: number }) {
-  // Faces only ever come off real reviews. No stock portraits, ever, so the
-  // row wears real buyers' avatars the day there are any and none before.
-  const faces = page.reviews
-    .map((r) => r.avatarUrl)
-    .filter((u): u is string => !!u)
-    .slice(0, 3);
+  /* The two people this row names have faces on the wall below, so it wears
+     theirs rather than a pair of files kept in step by hand. Falls back to
+     the old per-product override, then to an initial. */
+  const faces = names.map((first) => {
+    const match = page.reviews.find((r) => (r.name ?? "").trim().split(/\s+/)[0] === first && r.avatarUrl);
+    return match?.avatarUrl ?? null;
+  });
 
-  /* The same count the Reaper store shows, worked out the same way: a number
-     derived from the product's own id, so it is identical on the server and
-     in the browser, identical on every render, and does not creep upward on a
-     refresh the way an invented counter does.
-
-     Once real traffic passes the floor the row switches to the measured
-     thirty-day figure and stays on it. Alex asked for this row twice and has
-     seen it on Reaper; it is his shop and his call. */
+  // A stable number from the id. Same product, same number, every time.
   let n = 0;
   for (const ch of page.product.id) n = (n * 31 + ch.charCodeAt(0)) >>> 0;
-  const shown = crowd >= CROWD_FLOOR ? crowd : 2_400 + (n % 1_600); // 2,400 … 3,999
+  const others = 432 + (n % 529); // 432 … 960
 
   return (
     <div className="cb-thrilled">
-      {faces.length ? (
-        <span className="cb-thrilled__faces" aria-hidden="true">
-          {faces.map((src) => (
-            <img key={src} className="cb-thrilled__face" src={src} alt="" loading="lazy" />
-          ))}
-        </span>
-      ) : null}
+      <span className="cb-thrilled__faces" aria-hidden="true">
+        {names.map((who, i) => {
+          const face = faces[i];
+          return face ? (
+            <img key={who} className="cb-thrilled__face" src={face} alt="" loading="lazy" />
+          ) : (
+            <span key={who} className="cb-thrilled__face cb-thrilled__face--letter">{who.slice(0, 1)}</span>
+          );
+        })}
+      </span>
       <span className="cb-thrilled__say">
-        <b>{shown.toLocaleString("en-US")} people</b> looked at {page.product.title} in the last 30 days
+        <b>{names[0]}</b>, <b>{names[1]}</b>
+        <span className="cb-thrilled__tick" aria-label="Verified buyers">{IcoVerified}</span> and{" "}
+        <b>{others.toLocaleString("en-US")} others</b> are thrilled with {page.product.title}
       </span>
     </div>
   );
@@ -2372,7 +2066,7 @@ function UgcWall({ section }: { section: LoadedSection }) {
  * begin with, six more each time you ask -- which keeps the first paint small
  * without hiding anything from anyone who wants to read them all.
  */
-function Reviews({ section, page, brand }: { section: LoadedSection; page: LoadedProductPage; brand: StoreBrand }) {
+function Reviews({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
   const rows = page.reviews;
   const [shown, setShown] = useState(6);
   if (!rows.length) return null;
@@ -2428,16 +2122,7 @@ function Reviews({ section, page, brand }: { section: LoadedSection; page: Loade
               <Stars n={Math.round(mean)} />
             </div>
           ) : null}
-          {/* Whatever this shop's reviews actually are, said in the section's
-              own subheading. It used to be a sentence about a lawn in October,
-              which belonged to a different shop and a different product. */}
-          {/* The section's own line first, then the shop's standing one. The
-              standing one exists because this sentence used to be written into
-              the file — "Every one of them put it on a lawn in October" — which
-              is true of exactly one store and nonsense on the rest. */}
-          {has(section.values, "subheading") || brand.reviewsLine ? (
-            <p className="cb-revs__of">{val(section.values, "subheading") || brand.reviewsLine}</p>
-          ) : null}
+          <p className="cb-revs__of">Every one of them put it on a lawn in October.</p>
           {towns.length ? <p className="cb-revs__towns">{towns.join(" · ")}</p> : null}
         </div>
 
@@ -2765,7 +2450,7 @@ function Closing({ section, page, storeParam = "" }: { section: LoadedSection; p
   return (
     <section className="cb-section cb-close">
       <div className="cb-wrap cb-close__in">
-        {page.store.logoUrl ?? LOGO ? <img src={(page.store.logoUrl ?? LOGO) as string} alt="" /> : <span className="cb-mark">{page.store.name}</span>}
+        <img src={page.store.logoUrl ?? LOGO} alt="" />
         <h2 className="cb-h2">{val(v, "heading")}</h2>
         {has(v, "subheading") ? <p className="cb-lede">{val(v, "subheading")}</p> : null}
         {buy ? (
@@ -3254,7 +2939,7 @@ function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: str
       {/* One last offer, made properly, before the small print. */}
       <section className="cb-last">
         <div className="cb-wrap cb-last__in">
-          {page.store.logoUrl ?? LOGO ? <img className="cb-last__logo" src={(page.store.logoUrl ?? LOGO) as string} alt="" /> : <span className="cb-mark cb-mark--lg">{page.store.name}</span>}
+          <img className="cb-last__logo" src={page.store.logoUrl ?? LOGO} alt="" />
           <h2 className="cb-h2">
             {has(closing?.values ?? {}, "heading")
               ? val(closing!.values, "heading")
@@ -3306,14 +2991,9 @@ function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: str
             <h3>The store</h3>
             <ul>
               <li><a href={href("/")}>{page.store.name}</a></li>
-              {/* Built from the same list as the header, so a link here can
-                  never point at an anchor the page does not have. The Reviews
-                  link is gone on purpose: the section is hidden until a real
-                  buyer writes one, and a link to nothing is worse than no
-                  link. */}
-              {NAV.map(([label, to]) => (
-                <li key={to}><a href={to}>{label}</a></li>
-              ))}
+              <li><a href="#how">How it works</a></li>
+              <li><a href="#reviews">Reviews</a></li>
+              <li><a href="#faq">Questions</a></li>
             </ul>
           </div>
 
