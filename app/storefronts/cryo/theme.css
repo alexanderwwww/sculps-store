@@ -2461,7 +2461,13 @@ body:has(.cy-drawer.is-open) .cy-buy__side .cy-wallet { visibility: hidden; }
   border-bottom: 1px solid var(--silver-2);
   box-shadow: 0 1px 0 rgba(255,255,255,.7) inset;
 }
-.cy .cy-logo img { height: 34px; }
+/* Smaller. A wordmark is a signature, not a headline — at 34px it was
+   competing with the nav beside it instead of sitting behind it. */
+.cy .cy-logo img { height: 24px; }
+.cy .cy-close img { height: 38px; margin-bottom: 18px; }
+.cy .cy-last__logo { height: 36px; margin-bottom: 18px; }
+.cy .cy-footer__brand img { height: 26px; width: auto; }
+@media (max-width: 880px) { .cy .cy-logo img { height: 21px; } }
 .cy .cy-nav a {
   font-weight: 600; font-size: 14.5px; letter-spacing: -0.01em;
   padding: 7px 2px; border-bottom: 2px solid transparent;
