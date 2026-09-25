@@ -30,10 +30,10 @@ import {
 import { data as withHeaders } from "react-router";
 import { BodiesProduct, slug } from "~/storefronts/bodies";
 import bodiesThemeHref from "~/storefronts/bodies/theme.css?url";
-import { CeilingBuddyStorefront } from "~/storefronts/ceiling-buddy";
+import { Storefront as SharedStorefront } from "~/storefronts/template";
 import ceilingBuddyThemeHref from "~/storefronts/ceiling-buddy/theme.css?url";
 import reaperThemeHref from "~/storefronts/reaper/theme.css?url";
-import { reaperBrand } from "~/storefronts/reaper/brand";
+import { reaperBrand } from "~/storefronts/template/brands";
 
 export function meta({ data: loaded }: Route.MetaArgs) {
   if (!loaded?.variant) return [{ title: "Not found" }];
@@ -220,7 +220,7 @@ export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
         {favicon ? <link rel="icon" href={favicon} /> : null}
         {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
         {vitals ? <script dangerouslySetInnerHTML={{ __html: vitals }} /> : null}
-                <CeilingBuddyStorefront
+                <SharedStorefront
           page={page}
           storeParam={storeParam}
           publishableKey={publishableKey}

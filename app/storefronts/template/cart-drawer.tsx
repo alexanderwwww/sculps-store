@@ -256,39 +256,39 @@ export function CartDrawerProvider({
     <Ctx.Provider value={{ add, open: show, itemCount: cart?.itemCount ?? 0 }}>
       {children}
 
-      <div className={`cy cy-drawer${open ? " is-open" : ""}`} role="dialog" aria-modal="true" aria-label="Cart">
-        <div className="cy-drawer__veil" onClick={() => setOpen(false)} />
-        <div className="cy-drawer__panel">
-          <div className="cy-drawer__head">
-            {page.store.logoUrl ?? LOGO ? <img className="cy-drawer__logo" src={(page.store.logoUrl ?? LOGO) as string} alt={page.store.name} /> : <span className="cy-mark">{page.store.name}</span>}
+      <div className={`cy cb-drawer${open ? " is-open" : ""}`} role="dialog" aria-modal="true" aria-label="Cart">
+        <div className="cb-drawer__veil" onClick={() => setOpen(false)} />
+        <div className="cb-drawer__panel">
+          <div className="cb-drawer__head">
+            {page.store.logoUrl ?? LOGO ? <img className="cb-drawer__logo" src={(page.store.logoUrl ?? LOGO) as string} alt={page.store.name} /> : <span className="cb-mark">{page.store.name}</span>}
             <h3>Your cart</h3>
-            <button type="button" className="cy-drawer__x" onClick={() => setOpen(false)} aria-label="Close">
+            <button type="button" className="cb-drawer__x" onClick={() => setOpen(false)} aria-label="Close">
               {IcoClose}
             </button>
           </div>
 
-          <div className="cy-drawer__body">
+          <div className="cb-drawer__body">
             {busy && !lines.length ? (
-              <div className="cy-drawer__empty">Adding…</div>
+              <div className="cb-drawer__empty">Adding…</div>
             ) : lines.length === 0 ? (
-              <div className="cy-drawer__empty">Nothing in here yet.</div>
+              <div className="cb-drawer__empty">Nothing in here yet.</div>
             ) : (
               lines.map((l) => (
-                <div className="cy-line" key={l.variantId}>
+                <div className="cb-line" key={l.variantId}>
                   {/* The picture of the thing they are actually buying.
                       It used to be a 74px thumbnail while the upsells beside
                       it were 200px, so the cart gave more room to what had
                       not been chosen than to what had. */}
-                  <div className="cy-line__pic">
+                  <div className="cb-line__pic">
                     {l.imageUrl || photo ? (
                       <img src={l.imageUrl || photo!.src} alt={l.productTitle} />
                     ) : null}
                   </div>
-                  <div className="cy-line__meta">
-                    <div className="cy-line__t">{l.label}</div>
-                    {l.sublabel ? <div className="cy-line__s">{l.sublabel}</div> : null}
-                    <div className="cy-line__row">
-                      <span className="cy-qty">
+                  <div className="cb-line__meta">
+                    <div className="cb-line__t">{l.label}</div>
+                    {l.sublabel ? <div className="cb-line__s">{l.sublabel}</div> : null}
+                    <div className="cb-line__row">
+                      <span className="cb-qty">
                         <button
                           type="button"
                           onClick={() => setQty(l.variantId, l.quantity - 1)}
@@ -303,7 +303,7 @@ export function CartDrawerProvider({
                           aria-label={`One more ${l.label}`}
                         >+</button>
                       </span>
-                      <span className="cy-line__p">
+                      <span className="cb-line__p">
                         {l.compareAtCents && l.compareAtCents > l.unitPriceCents ? (
                           <s>{money(l.compareAtCents * l.quantity, currency)}</s>
                         ) : null}
@@ -312,7 +312,7 @@ export function CartDrawerProvider({
                     </div>
                     <button
                       type="button"
-                      className="cy-line__x"
+                      className="cb-line__x"
                       onClick={() => setQty(l.variantId, 0)}
                       disabled={lineBusy}
                     >Remove</button>
@@ -327,19 +327,19 @@ export function CartDrawerProvider({
               This sits above everything on offer: the decision already made
               gets the top of the drawer, and the ones not made yet go under
               it. It was the other way round. */}
-          <div className="cy-drawer__foot">
+          <div className="cb-drawer__foot">
             {/* The code goes above the total it changes, so the number
                 underneath visibly moves when one is applied. */}
             {lines.length ? (
               cart?.discount ? (
-                <div className="cy-code cy-code--on">
-                  <span className="cy-code__tag">{cart.discount.code}</span>
-                  <span className="cy-code__amt">−{money(cart.discount.amountCents, currency)}</span>
-                  <button type="button" className="cy-code__x" onClick={dropCode} disabled={codeBusy}>Remove</button>
+                <div className="cb-code cb-code--on">
+                  <span className="cb-code__tag">{cart.discount.code}</span>
+                  <span className="cb-code__amt">−{money(cart.discount.amountCents, currency)}</span>
+                  <button type="button" className="cb-code__x" onClick={dropCode} disabled={codeBusy}>Remove</button>
                 </div>
               ) : (
                 <form
-                  className="cy-code"
+                  className="cb-code"
                   onSubmit={(e) => {
                     e.preventDefault();
                     const input = e.currentTarget.elements.namedItem("code") as HTMLInputElement | null;
@@ -349,27 +349,27 @@ export function CartDrawerProvider({
                 >
                   <input
                     name="code"
-                    className="cy-code__in"
+                    className="cb-code__in"
                     placeholder="Discount code"
                     autoComplete="off"
                     autoCapitalize="characters"
                     spellCheck={false}
                     aria-label="Discount code"
                   />
-                  <button type="submit" className="cy-code__go" disabled={codeBusy}>{codeBusy ? "…" : "Apply"}</button>
+                  <button type="submit" className="cb-code__go" disabled={codeBusy}>{codeBusy ? "…" : "Apply"}</button>
                 </form>
               )
             ) : null}
-            {codeError ? <div className="cy-code__err">{codeError}</div> : null}
+            {codeError ? <div className="cb-code__err">{codeError}</div> : null}
 
-            <div className="cy-drawer__sum">
+            <div className="cb-drawer__sum">
               <span>Subtotal</span>
               <span>{money(cart?.subtotalCents ?? 0, currency)}</span>
             </div>
             {saved > 0 ? (
-              <div className="cy-drawer__saved">You save {money(saved, currency)}</div>
+              <div className="cb-drawer__saved">You save {money(saved, currency)}</div>
             ) : null}
-            <a className="cy-btn" href={href("/checkout")} aria-disabled={lines.length === 0}>
+            <a className="cb-btn" href={href("/checkout")} aria-disabled={lines.length === 0}>
               Checkout
             </a>
             {/* Apple Pay and PayPal, side by side and half-width each, so the
@@ -377,9 +377,9 @@ export function CartDrawerProvider({
                 Later are gone from here -- three ways to pay is a choice, six
                 is a menu. */}
             {lines.length && (publishableKey || paypalClientId) ? (
-              <div className="cy-drawer__wallets">
+              <div className="cb-drawer__wallets">
                 {publishableKey ? (
-                  <div className={walletReady ? "cy-drawer__wallet" : "cy-drawer__wallet is-idle"}>
+                  <div className={walletReady ? "cb-drawer__wallet" : "cb-drawer__wallet is-idle"}>
                     <ProductExpress
                       mode="cart"
                       publishableKey={publishableKey}
@@ -395,13 +395,13 @@ export function CartDrawerProvider({
                   </div>
                 ) : null}
                 {paypalClientId ? (
-                  <div className="cy-drawer__wallet">
+                  <div className="cb-drawer__wallet">
                     <PayPalExpress clientId={paypalClientId} currency={currency} storeParam={storeParam} only="paypal" />
                   </div>
                 ) : null}
               </div>
             ) : null}
-            <div className="cy-reassure">Free shipping · 30-day returns</div>
+            <div className="cb-reassure">Free shipping · 30-day returns</div>
           </div>
 
         </div>
