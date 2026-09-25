@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 212 104" width="212" height="104" role="img" aria-label="cryo">
+  <title>cryo</title>
+  <!--
+    Monoline geometric lowercase, one stroke weight throughout, round caps.
+    The final o is not a letter borrowed from a typeface: it is the machine's
+    own dial — the aluminium ring with the ice-blue light around it — drawn at
+    letter size. That is the whole idea of the mark. The product is in the word.
+  -->
+  <g fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <!-- c -->
+    <path d="M40 36.5 A20 20 0 1 0 40 63.5" />
+    <!-- r -->
+    <path d="M64 70 V33" />
+    <path d="M64 45 A13 13 0 0 1 85 35" />
+    <!-- y -->
+    <path d="M100 33 L112 61" />
+    <path d="M129 33 L108 86" />
+  </g>
+  <!-- o — the dial. Aluminium ring, ice-blue light. -->
+  <circle cx="172" cy="50" r="20" fill="none" stroke="currentColor" stroke-width="9" />
+  <circle cx="172" cy="50" r="27.5" fill="none" stroke="#4FA3D4" stroke-width="3.5" opacity=".92" />
+</svg>

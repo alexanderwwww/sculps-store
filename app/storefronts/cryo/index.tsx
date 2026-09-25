@@ -49,6 +49,15 @@ const has = (v: Vals, ...keys: string[]) => keys.some((k) => val(v, k) !== "");
  * than no picture at all.
  */
 const LOGO: string | null = null;
+/**
+ * The mark the chrome actually draws.
+ *
+ * `BRAND.logo` is the template's built-in default and it is deliberately null,
+ * so a shop with no logo shows its name in type rather than a broken picture.
+ * A shop that has uploaded one wants to see it — so the store's own file wins
+ * over the template's, and the template's over nothing.
+ */
+const markOf = (brand: CyBrand, store: { logoUrl: string | null }) => store.logoUrl ?? brand.logo;
 /** The cut-out, on its transparent background — the only shot that can float. */
 
 /* ------------------------------------------------------------------ icons */
@@ -352,7 +361,7 @@ function Header({
       <header className="cy-header">
         <div className="cy-wrap cy-header__in">
           <a className="cy-logo" href={href("/")} aria-label={page.store.name}>
-            {brand.logo ? <img src={brand.logo} alt={page.store.name} /> : <b>{page.store.name}</b>}
+            {markOf(brand, page.store) ? <img src={markOf(brand, page.store) as string} alt={page.store.name} /> : <b>{page.store.name}</b>}
           </a>
           <nav className="cy-nav">
             {brand.nav.map(([label, to]) => (
@@ -390,7 +399,7 @@ function Header({
         <div className="cy-menu__veil" onClick={() => setMenu(false)} />
         <div className="cy-menu__panel">
           <div className="cy-menu__head">
-            {brand.logo ? <img src={brand.logo} alt={page.store.name} /> : <b>{page.store.name}</b>}
+            {markOf(brand, page.store) ? <img src={markOf(brand, page.store) as string} alt={page.store.name} /> : <b>{page.store.name}</b>}
             <button type="button" className="cy-menu__x" onClick={() => setMenu(false)} aria-label="Close menu">
               {IcoClose}
             </button>
