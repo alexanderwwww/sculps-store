@@ -226,12 +226,46 @@ export function pixelScript(
   const view = options.pageViewEventId
     ? `fbq('track','PageView',{},{eventID:${JSON.stringify(options.pageViewEventId)}});`
     : `fbq('track','PageView');`;
+
+  /*
+   * The PageView waits for a person.
+   *
+   * A pixel that fires on load fires for everything that runs JavaScript —
+   * scrapers, preview crawlers, headless browsers — and Meta learns from that
+   * pool: it goes looking for more of whoever it saw. Alex's call, 25 Sep
+   * 2026, and he is right about the trade: a visitor who never scrolls, never
+   * moves, never touches the screen was never going to buy, so teaching Meta
+   * to find more of them is worse than not counting them at all.
+   *
+   * What counts as a person: a scroll, a pointer that moves, a touch, a key,
+   * or a click. Touch is in there because most of this traffic is a phone,
+   * where nothing moves a mouse and a scroll is the first thing that happens.
+   *
+   * `autoConfig` off first, or Meta's own automatic events fire before this
+   * gate and defeat the whole thing.
+   *
+   * Two deliberate exceptions. A confirmation page fires at once — somebody
+   * who has just paid is not in question, and waiting for them to wiggle the
+   * mouse would lose the most valuable view on the site. And every other
+   * event — AddToCart, InitiateCheckout, Purchase — is ungated everywhere,
+   * because each one already required a human act to happen at all.
+   */
+  const gate = `(function(){var done=false,off=[];
+function fire(){if(done)return;done=true;for(var i=0;i<off.length;i++){try{off[i]()}catch(e){}}${view}}
+var paid=/thank|order-confirm|confirmation|success/i.test(location.pathname);
+if(paid){fire();return}
+var evs=['scroll','pointermove','pointerdown','touchstart','keydown','click','wheel'];
+for(var i=0;i<evs.length;i++){(function(n){var h=function(){fire()};
+window.addEventListener(n,h,{passive:true,once:true});
+off.push(function(){window.removeEventListener(n,h,{passive:true})})})(evs[i])}})();`;
+
   return `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
 document,'script','https://connect.facebook.net/en_US/fbevents.js');
-${init}${view}`;
+fbq('set','autoConfig',false,'${pixelId}');
+${init}${gate}`;
 }
 
 /**
