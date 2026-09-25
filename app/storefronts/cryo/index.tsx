@@ -417,9 +417,11 @@ function Announce({
   currency: string;
   brand: CyBrand;
 }) {
+  // "$10 off", never "$10.00 off". The cents are noise on a round number and
+  // this bar is read at a glance while somebody is already scrolling past it.
   const amount =
     offer && offer.kind === "fixed"
-      ? `${formatMoney(offer.value, currency)} off`
+      ? `${formatMoney(offer.value, currency).replace(/[.,]00\b/, "")} off`
       : offer && offer.kind === "percentage"
         ? `${offer.value}% off`
         : offer
@@ -1750,22 +1752,24 @@ function CouponBar({ offer, currency }: { offer: { code: string; kind: string; v
   };
 
   return (
+    /* One line, not two.
+       It used to say the offer in a pill and then say the same offer again in
+       the sentence under it, which on a phone wrapped into four lines of the
+       same sentence twice. The saving is said once, next to the code that
+       gets it. */
     <div className="cy-coupon">
       <span className="cy-coupon__tag" aria-hidden="true">{IcoTag}</span>
-      <span className="cy-coupon__in">
-        <span className="cy-coupon__pill">Get {amount} today</span>
-        <span className="cy-coupon__line">
-          Get {amount} with the code:{" "}
-          {/* The code and the copy are one target. On a phone the thing
-              somebody aims at is the code itself. */}
-          <button type="button" className="cy-coupon__code" onClick={copy} title="Copy the code">
-            <code>{offer.code}</code>
-            <span className="cy-coupon__do" aria-live="polite">
-              {copied ? IcoCheck : IcoCopy}
-              <span className="cy-coupon__did">{copied ? "Copied" : ""}</span>
-            </span>
-          </button>
-        </span>
+      <span className="cy-coupon__line">
+        Get <b>{amount}</b> with code{" "}
+        {/* The code and the copy are one target. On a phone the thing
+            somebody aims at is the code itself. */}
+        <button type="button" className="cy-coupon__code" onClick={copy} title="Copy the code">
+          <code>{offer.code}</code>
+          <span className="cy-coupon__do" aria-live="polite">
+            {copied ? IcoCheck : IcoCopy}
+            <span className="cy-coupon__did">{copied ? "Copied" : ""}</span>
+          </span>
+        </button>
       </span>
     </div>
   );
