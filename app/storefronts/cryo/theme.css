@@ -2665,3 +2665,334 @@ body:has(.cy-drawer.is-open) .cy-buy__side .cy-wallet { visibility: hidden; }
    fallback headline belonged to another store. The section is the one the
    admin edits, so the footer's copy of it goes. */
 .cy .cy-last { display: none; }
+
+/* ===================================================================
+ * The rebuild, in the owner's order.
+ *
+ * Announcement · carousel (full bleed) · trust strip + code · title ·
+ * price · badges · bundle · UGC and the FAQ · the showcase · reviews ·
+ * then the sections the strategy chose · footer.
+ *
+ * Everything below either moves something into that order or fixes one of
+ * the things the conversion review measured. Nothing here invents a colour:
+ * the tokens at the top of this file are the palette, and grey #F4F4F6 is
+ * the one neutral surface — never beige, on any store.
+ * =================================================================== */
+
+/* ---- 1. the announcement bar, big ------------------------------------ */
+.cy .cy-ann { font-size: 14px; letter-spacing: .01em; }
+.cy .cy-ann__t i { padding: 0 22px; min-height: 46px; }
+@media (max-width: 720px) {
+  .cy .cy-ann { font-size: 13px; }
+  .cy .cy-ann__t i { padding: 0 15px; min-height: 40px; }
+}
+
+/* ---- 2. the carousel, full bleed ------------------------------------- */
+/* The picture is the pitch on a product nobody has seen, so it runs to the
+   edge of the glass rather than sitting inside the page's gutter. Its height
+   is capped, not its width: an uncapped square at this width is a screen and
+   a half of photograph and it buries the price. */
+.cy .cy-buy { padding-top: 0; }
+.cy .cy-buy__grid { align-items: start; }
+.cy .cy-gal { margin-inline: -20px; }
+.cy .cy-gal__main {
+  border-radius: 0;
+  border: 0;
+  padding: 0;
+  background: #fff;
+  aspect-ratio: 1 / 1;
+  max-height: min(62vh, 560px);
+  margin-inline: auto;
+  width: 100%;
+}
+.cy .cy-gal__main img { object-fit: contain; }
+.cy .cy-gal__strip { margin-top: 12px; padding-inline: 20px; }
+
+@media (min-width: 941px) {
+  /* On a wide screen the bleed is to the left edge only — the buying column
+     keeps the page's right-hand gutter, because a price hard against the
+     glass reads as a broken layout rather than a bold one. */
+  .cy .cy-buy__grid { max-width: none; padding-left: 0; gap: clamp(24px, 3vw, 44px); }
+  .cy .cy-gal { margin-inline: 0; position: sticky; top: 92px; }
+  .cy .cy-buy__side { max-width: 520px; padding-right: 8px; }
+}
+
+@media (max-width: 940px) {
+  /* The first screen has to carry a price and a button. The gallery gets a
+     third of it and no more. */
+  .cy .cy-gal__main { aspect-ratio: auto; height: clamp(230px, 36vh, 330px); }
+  .cy .cy-gal__strip { gap: 8px; margin-top: 10px; }
+  .cy .cy-gal__thumb { width: 44px; height: 44px; }
+}
+
+/* ---- 3-7. the buying column, in the order he wrote ------------------- */
+.cy .cy-buy__side { display: flex; flex-direction: column; }
+.cy .cy-buy__side > *            { order: 20; }
+.cy .cy-buy__side > .cy-coupon   { order: 1; }
+.cy .cy-buy__side > .cy-thrilled { order: 2; }
+.cy .cy-buy__side > .cy-h1       { order: 3; margin-top: 12px; }
+.cy .cy-buy__side > .cy-score    { order: 4; }
+.cy .cy-buy__side > .cy-price    { order: 5; }
+.cy .cy-buy__side > .cy-badges   { order: 6; }
+.cy .cy-buy__side > .cy-bundle   { order: 7; }
+.cy .cy-buy__side > .cy-acts     { order: 8; }
+.cy .cy-buy__side > .cy-stock    { order: 9; }
+.cy .cy-buy__side > .cy-ticks    { order: 10; }
+.cy .cy-buy__side > .cy-wallet   { order: 11; }
+/* The long "what it is" paragraph is reading matter, not deciding matter. It
+   goes under the button, where the person who wants it will find it, instead
+   of pushing the button off the screen. */
+.cy .cy-buy__side > .cy-lede--buy { order: 12; margin-top: 18px; }
+
+/* The headline was 64px and three lines deep on a desktop and 40px on a
+   phone, which is ~390px of column before a price appeared. */
+.cy .cy-buy__side > .cy-h1 { font-size: clamp(26px, 3.1vw, 42px); line-height: 1.04; }
+.cy .cy-lede--buy { font-size: 15.5px; line-height: 1.55; }
+.cy .cy-price { margin: 12px 0 0; }
+.cy .cy-price__now { font-size: clamp(30px, 3.2vw, 36px); }
+
+/* ---- 6. the bullet badges ------------------------------------------- */
+.cy .cy-badges {
+  list-style: none; margin: 12px 0 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 7px;
+}
+.cy .cy-badges li {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 11px 6px 9px;
+  border-radius: 999px;
+  background: var(--ice-2);
+  border: 1px solid rgba(79, 163, 212, .28);
+  font-size: 13px; font-weight: 600; color: var(--ice-ink);
+  line-height: 1.2;
+}
+.cy .cy-badges svg { width: 14px; height: 14px; flex: 0 0 auto; color: var(--ice-deep); }
+
+/* ---- 7. the bundle, thick ------------------------------------------- */
+/* One bundle, because there is one machine. A single row loose on the column
+   reads as a radio button somebody forgot to delete; the same row inside a
+   box with a lid, a picture and a price reads as the offer it is. */
+.cy .cy-bundle {
+  margin: 16px 0 0;
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: var(--lift);
+}
+.cy .cy-bundle__lid {
+  background: var(--ink); color: #fff;
+  font-family: var(--display); font-weight: 800;
+  font-size: 13.5px; letter-spacing: .04em; text-transform: uppercase;
+  padding: 11px 16px;
+}
+.cy .cy-bundle .cy-tiers { padding: 12px; gap: 10px; }
+.cy .cy-bundle__p4, .cy .cy-bundle__foot {
+  padding: 11px 16px; border-top: 1px solid var(--hair);
+  font-size: 13px; color: var(--dim);
+}
+.cy .cy-bundle__p4 { display: flex; align-items: center; gap: 8px; }
+.cy .cy-bundle__p4 .cy-pp--word { height: 15px; width: auto; }
+
+.cy .cy-tier {
+  display: grid;
+  grid-template-columns: 20px 62px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+}
+.cy .cy-tier__pic {
+  width: 62px; height: 62px; border-radius: 10px; overflow: hidden;
+  background: #fff; border: 1px solid var(--hair); display: block;
+}
+.cy .cy-tier__pic img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.cy .cy-tier__name { font-family: var(--display); font-weight: 800; font-size: 17px; }
+.cy .cy-tier__under { font-size: 12.5px; color: var(--dim); display: block; }
+.cy .cy-tier__price { font-family: var(--display); font-weight: 800; font-size: 21px; }
+
+/* A single bundle has nothing to choose between, so the radio dot goes. */
+.cy .cy-bundle--one .cy-tier { grid-template-columns: 62px minmax(0, 1fr) auto; cursor: default; }
+.cy .cy-bundle--one .cy-tier__dot { display: none; }
+.cy .cy-bundle--one .cy-tier[aria-checked="true"] { padding: 12px; }
+
+@media (max-width: 720px) {
+  .cy .cy-bundle { margin-top: 12px; }
+  .cy .cy-bundle__lid { padding: 9px 13px; font-size: 12.5px; }
+  .cy .cy-bundle .cy-tiers { padding: 10px; }
+  .cy .cy-tier { padding: 10px; gap: 10px; }
+  .cy .cy-bundle--one .cy-tier { grid-template-columns: 54px minmax(0, 1fr) auto; }
+  .cy .cy-tier__pic { width: 54px; height: 54px; }
+  .cy .cy-tier__name { font-size: 15.5px; }
+  .cy .cy-tier__price { font-size: 19px; }
+  .cy .cy-bundle__p4, .cy .cy-bundle__foot { padding: 9px 13px; font-size: 12px; }
+  .cy .cy-acts { margin-top: 12px; }
+  .cy .cy-btn { padding: 15px 20px; }
+}
+
+/* ---- 9. the showcase ------------------------------------------------- */
+.cy .cy-show { padding: clamp(48px, 6vw, 88px) 0; background: var(--paper-2); }
+.cy .cy-show__grid {
+  display: grid; gap: clamp(14px, 2vw, 22px);
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+@media (max-width: 560px) { .cy .cy-show__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
+.cy .cy-show__it { margin: 0; display: grid; gap: 9px; align-content: start; }
+.cy .cy-show__frame {
+  display: block; width: 100%; aspect-ratio: 1 / 1;
+  border-radius: 14px; overflow: hidden;
+  background: #fff; border: 1px solid var(--hair);
+}
+.cy .cy-show__frame img { width: 100%; height: 100%; object-fit: contain; }
+.cy .cy-show__it figcaption { font-size: 13.5px; color: var(--dim); line-height: 1.4; }
+.cy .cy-show__foot { margin: clamp(20px, 3vw, 30px) 0 0; color: var(--dim); font-size: 15px; max-width: 62ch; }
+
+/* ---- 11. three steps, with a picture on each ------------------------- */
+/* Garden Buddy's shape: a square frame with the number on its corner, the
+   heading under it, the line under that. A step with no photograph yet keeps
+   the plain number and draws no frame — never a grey box, never the picture
+   from the step above. */
+.cy .cy-steps--shot { gap: clamp(20px, 3vw, 32px); }
+.cy .cy-steps--shot::before { display: none; }
+.cy .cy-steps--shot .cy-step { padding: 0; text-align: center; display: grid; gap: 12px; justify-items: center; }
+.cy .cy-step__media {
+  position: relative; width: 100%; max-width: 280px;
+  aspect-ratio: 1 / 1; border-radius: 16px; overflow: hidden;
+  background: #fff;
+}
+.cy .cy-step__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cy .cy-step__n--on {
+  position: absolute; top: 10px; left: 10px;
+  width: 38px; height: 38px; border-radius: 999px;
+  display: grid; place-items: center;
+  font-family: var(--display); font-weight: 800; font-size: 18px;
+  background: var(--ice); color: var(--action); box-shadow: none;
+}
+.cy .cy-steps--shot .cy-h3 { font-size: clamp(19px, 2vw, 23px); }
+.cy .cy-steps--shot .cy-step p { max-width: 34ch; margin-inline: auto; }
+@media (max-width: 780px) {
+  .cy .cy-steps--shot { grid-template-columns: minmax(0, 1fr); gap: 30px; }
+  .cy .cy-steps--shot .cy-step { padding: 0; text-align: center; }
+}
+
+/* ---- the spec sheet, with one honest hole instead of twelve --------- */
+.cy .cy-pending {
+  margin: clamp(18px, 2.4vw, 26px) 0 0;
+  padding: clamp(16px, 2vw, 22px);
+  border: 1px solid var(--hair);
+  border-left: 3px solid var(--ice-deep);
+  border-radius: 12px;
+  background: #F4F4F6;
+}
+.cy .cy-pending b {
+  display: block; font-family: var(--display); font-weight: 800;
+  font-size: 15.5px; color: var(--ink); margin-bottom: 6px;
+}
+.cy .cy-pending p { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--dim); }
+.cy .cy-pending__list { margin-top: 8px !important; color: var(--ink) !important; font-weight: 600; }
+
+/* ---- 10. the review wall, in Black Reaper's shape -------------------- */
+/* Ported from app/storefronts/reaper/theme.css, values unchanged except the
+   ink, which is this store's. It renders nothing at all until a real customer
+   has written something: cryo has zero customers, so today the section is
+   built, styled, and empty. No seeded rows, ever. */
+.cy .cy-revs__head {
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 10px;
+  margin: 0 0 clamp(20px, 3vw, 30px);
+}
+.cy .cy-revs__score { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 4vw, 40px); line-height: 1; }
+.cy .cy-revs__of { font-size: 14px; color: var(--dim); }
+.cy .cy-rvstars { display: inline-flex; gap: 2px; }
+.cy .cy-rvstars svg { width: 16px; height: 16px; display: block; }
+.cy .cy-rvstars > span { color: rgba(15, 26, 34, .18); line-height: 0; }
+.cy .cy-rvstars > span.is-on { color: #F5A623; }
+
+.cy .cy-rvg {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.cy .cy-rv {
+  background: #fff;
+  border: 1px solid rgba(15, 26, 34, .11);
+  border-radius: 14px;
+  padding: 14px;
+  display: grid; gap: 8px; align-content: start;
+}
+.cy .cy-rv__top { display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: center; }
+.cy .cy-rv__av {
+  width: 36px; height: 36px; border-radius: 999px;
+  display: grid; place-items: center;
+  font-family: var(--display); font-weight: 800; font-size: 15px; color: #fff;
+  background: linear-gradient(140deg, #4F8BFF, #2E63D6);
+}
+.cy .cy-rv__av[data-seed="1"] { background: linear-gradient(140deg, #8FD3F4, #4FA3D4); }
+.cy .cy-rv__av[data-seed="2"] { background: linear-gradient(140deg, #C4B5FD, #7C4DE8); }
+.cy .cy-rv__av[data-seed="3"] { background: linear-gradient(140deg, #6EE7B7, #0FA36B); }
+.cy .cy-rv__av[data-seed="4"] { background: linear-gradient(140deg, #FDA4AF, #E1364F); }
+.cy .cy-rv__av[data-seed="5"] { background: linear-gradient(140deg, #FCD34D, #E08A00); }
+.cy .cy-rv__av--pic { object-fit: cover; background: #EDEDF0; }
+.cy .cy-rv__who { display: grid; gap: 1px; min-width: 0; }
+.cy .cy-rv__who b {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 14.5px; font-weight: 700; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cy .cy-rv__tick { display: inline-flex; line-height: 0; color: #2E7CF6; }
+.cy .cy-rv__tick svg { width: 14px; height: 14px; }
+.cy .cy-rv__when { font-size: 12.5px; color: rgba(15, 26, 34, .45); }
+.cy .cy-rv__t { margin: 0; font-size: 14.5px; font-weight: 700; color: var(--ink); }
+.cy .cy-rv__b {
+  margin: 0; font-size: 14px; line-height: 1.5; color: rgba(15, 26, 34, .82);
+  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
+}
+.cy .cy-rv__shot {
+  margin-top: 3px; width: 96px; aspect-ratio: 1 / 1;
+  border-radius: 9px; overflow: hidden; background: #F1F1F3;
+}
+.cy .cy-rv__shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cy .cy-rvg__more {
+  display: block; margin: clamp(18px, 3vw, 26px) auto 0;
+  padding: 12px 26px;
+  border: 1px solid rgba(15, 26, 34, .18);
+  border-radius: 999px; background: #fff;
+  font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--ink);
+  cursor: pointer;
+}
+.cy .cy-rvg__more:hover { background: rgba(15, 26, 34, .04); }
+@media (max-width: 720px) {
+  .cy .cy-rvg {
+    display: flex; gap: 12px; overflow-x: auto;
+    overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; scroll-snap-type: x mandatory;
+    padding: 2px 20px 6px; margin: 0 -20px;
+  }
+  .cy .cy-rvg::-webkit-scrollbar { display: none; }
+  .cy .cy-rv { flex: 0 0 82%; scroll-snap-align: center; min-height: 260px; }
+}
+
+/* ---- the trust strip and the code, one block ------------------------- */
+.cy .cy-coupon { border-radius: 10px 10px 0 0; }
+.cy .cy-coupon:last-child { border-radius: 10px; }
+.cy .cy-thrilled {
+  border-radius: 0 0 10px 10px;
+  background: #F4F4F6;
+  border: 1px solid rgba(15, 26, 34, .08);
+  border-top: 0;
+  width: auto;
+  padding: 9px 13px;
+}
+.cy .cy-thrilled__faces { display: inline-flex; flex: none; }
+.cy .cy-thrilled__face {
+  width: 26px; height: 26px; border-radius: 999px; object-fit: cover;
+  display: block; border: 2px solid #F4F4F6; background: #E6E6EA;
+}
+.cy .cy-thrilled__face + .cy-thrilled__face { margin-left: -10px; }
+/* A code with no crowd under it is a single block and keeps all four
+   corners; a crowd with no code above it is likewise whole. */
+.cy .cy-coupon + .cy-thrilled { border-radius: 0 0 10px 10px; }
+.cy .cy-buy__side > .cy-thrilled:first-child { border-radius: 10px; border-top: 1px solid rgba(15, 26, 34, .08); }

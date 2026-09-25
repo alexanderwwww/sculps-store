@@ -160,6 +160,7 @@ export function CryoStorefront({
   paypalClientId = null,
   offer = null,
   brand = BRAND,
+  crowd = 0,
 }: {
   page: LoadedProductPage;
   storeParam?: string;
@@ -169,6 +170,13 @@ export function CryoStorefront({
   offer?: { code: string; kind: string; value: number } | null;
   /** Mark, links and rail. Omitted, this is cryo. */
   brand?: CyBrand;
+  /**
+   * How many real people have been on this store in the last thirty days,
+   * counted from confirmed-human sessions in `events`. Nothing on this page
+   * invents a number; the crowd line simply says nothing until there is a
+   * real count to say.
+   */
+  crowd?: number;
 }) {
   const { sections } = page;
   const buyBox = sections.find((s) => s.type === "buy_box");
@@ -209,7 +217,7 @@ export function CryoStorefront({
             // Every section here is block-level anyway, so a block wrapper
             // changes nothing about the layout.
             <div key={s.id} data-section={s.type}>
-              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} />
+              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} crowd={crowd} />
             </div>
           ))}
         </main>
@@ -241,6 +249,7 @@ function Section({
   publishableKey,
   paypalClientId,
   offer,
+  crowd,
 }: {
   section: LoadedSection;
   page: LoadedProductPage;
@@ -249,9 +258,10 @@ function Section({
   publishableKey: string | null;
   paypalClientId: string | null;
   offer: { code: string; kind: string; value: number } | null;
+  crowd: number;
 }) {
   switch (section.type) {
-    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} />;
+    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} crowd={crowd} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
     case "yard_plan":     return <YardPlan section={section} page={page} />;
@@ -259,7 +269,7 @@ function Section({
     case "install_weekend": return <InstallWeekend section={section} />;
     case "weather_plan":  return <WeatherPlan section={section} />;
     case "start_smaller": return <StartSmaller section={section} />;
-    case "product_grid":  return <LockScreen section={section} page={page} />;
+    case "product_grid":  return <Showcase section={section} />;
     case "trust_icons":   return <TrustBand section={section} brand={brand} />;
     case "three_steps":   return <Steps section={section} />;
     case "benefits":      return <Benefits section={section} />;
@@ -472,7 +482,7 @@ function Announce({
 
 /* ---------------------------------------------------------------- buy box */
 
-function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalClientId = null, offer = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; paypalClientId?: string | null; offer?: { code: string; kind: string; value: number } | null }) {
+function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalClientId = null, offer = null, crowd = 0 }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; paypalClientId?: string | null; offer?: { code: string; kind: string; value: number } | null; crowd?: number }) {
   const v = section.values;
   const drawer = useCartDrawer();
   // The product's own pictures come first — they are managed on the Products
@@ -599,14 +609,14 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               repeating itself; said once, next to the number it comes off,
               it reads as the offer. */}
           <CouponBar offer={offer} currency={currency} />
-          <Thrilled page={page} />
+          <Crowd page={page} crowd={crowd} />
           <h1 className="cy-h1">{val(v, "heading") || page.product.title}</h1>
           {/* The score, before the price.
               Whoever is about to look at a number wants to know first whether
               anybody else paid it. It reads off the same reviews the wall
               below is built from, so it can never disagree with them. */}
           <Score page={page} />
-          {has(v, "subheading") ? <p className="cy-lede">{val(v, "subheading")}</p> : null}
+          {has(v, "subheading") ? <p className="cy-lede cy-lede--buy">{val(v, "subheading")}</p> : null}
 
           {chosen ? (
             <div className="cy-price">
@@ -620,27 +630,27 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
             </div>
           ) : null}
 
-          {/* Pay in 4 lives inside the bundle box, under the rows it is a
-              quarter of. A product sold one way has no bundle box, so the
-              line would vanish entirely -- it goes under the price instead,
-              which is the same place relative to the number it divides. */}
-          {chosen && variants.length <= 1 ? (
-            <div className="cy-bundle__p4 cy-bundle__p4--bare">
-              <img className="cy-pp cy-pp--word" src={PAYPAL_WORDMARK} alt="PayPal" />
-              <span>
-                or 4 interest-free payments of{" "}
-                <b>{formatMoney(Math.round(chosen.priceCents / 4), currency)}</b>
-              </span>
-            </div>
-          ) : null}
+          {/* The badges, between the price and the box.
+              Four short facts, each one already true of the machine: no ice,
+              no fridge, nothing to refill, free shipping. They are written in
+              the section's own `badges` field, one per line, so the admin can
+              change them without a deploy — and an empty field draws nothing
+              rather than a row of empty pills. */}
+          <Badges section={section} />
 
           {/* An actual box, with a lid.
               Three loose rows read as a form to fill in. Put a title across
               the top and a line along the bottom and the same three rows read
               as an offer — which is what they are, and the difference is worth
-              more than any amount of styling on the rows themselves. */}
-          {variants.length > 1 ? (
-            <div className="cy-bundle">
+              more than any amount of styling on the rows themselves.
+
+              It draws for a single bundle too. This shop sells one machine —
+              the teardown found nobody buys two countertop appliances at once
+              and the second tier was dropped — and one row inside a box with a
+              lid, a picture and a price still reads as an offer, where the
+              same row loose on the column reads as a leftover radio button. */}
+          {variants.length >= 1 ? (
+            <div className={`cy-bundle${variants.length === 1 ? " cy-bundle--one" : ""}`}>
               {has(v, "bundleTitle") ? (
                 <div className="cy-bundle__lid">{val(v, "bundleTitle")}</div>
               ) : null}
@@ -694,11 +704,23 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
 
                     <span className="cy-tier__dot" aria-hidden="true" />
 
-                    {/* No picture in the row.
-                        A thumbnail of the machine inside a tier reads as a
-                        photograph someone forgot to size, and at this scale it
-                        says nothing the two words beside it do not. The rows
-                        are a name, a reason and a price. */}
+                    {/* The picture of what is being bought.
+                        On a three-row ladder a 40px thumbnail said nothing the
+                        words beside it did not. On a single thick row it is
+                        the thing itself, large enough to read, and it is what
+                        makes the block an offer rather than a radio button.
+                        `contain` on white, per the master recipe. A variant
+                        with no picture of its own falls back to the product's
+                        first one, and a product with none draws no frame at
+                        all rather than an empty grey square. */}
+                    {(() => {
+                      const pic = x.imageUrl || (page.product.images ?? []).find((im) => im.url)?.url || "";
+                      return pic ? (
+                        <span className="cy-tier__pic">
+                          <Pic src={pic} size="t200" alt="" loading="lazy" />
+                        </span>
+                      ) : null;
+                    })()}
 
                     <span className="cy-tier__main">
                       <span className="cy-tier__name">{x.label}</span>
@@ -853,19 +875,12 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               <li key={t}>{IcoCheck}<span>{t}</span></li>
             ))}
           </ul>
-          {chosen ? (
-            <div className="cy-pay4__line">
-              {IcoPaypal}
-              or 4 payments of <b>{formatMoney(Math.round(chosen.priceCents / 4), currency)}</b>
-            </div>
-          ) : null}
-          {has(v, "reassurance") ? <div className="cy-reassure">{val(v, "reassurance")}</div> : null}
-
-          <div className="cy-ship">
-            {promises(page).map((text, i) => (
-              <span key={text}>{[IcoTruck, IcoReturn, IcoShield][i]} {text}</span>
-            ))}
-          </div>
+          {/* Pay in 4 is stated once, inside the bundle box, under the row it
+              is a quarter of. It used to be printed again here and the same
+              three promises appeared three times between the price and the
+              fold — as a marquee, as ticks, and as a sentence. Repetition at
+              the decision point reads as padding and, worse, it pushed the
+              button off the first screen. */}
         </div>
       </div>
       <PayLaterToast
@@ -947,6 +962,33 @@ function PayLaterToast({
   );
 }
 
+/**
+ * The bullet badges, between the price and the box.
+ *
+ * Four short facts on pills. They are not features and they are not promises
+ * — each one is something already true and already said elsewhere on the
+ * page, restated at the width of a glance, because the person deciding at
+ * this exact point is not reading paragraphs.
+ *
+ * They come out of the buy box section's own `badges` field, one per line, so
+ * they are content and not code. An empty field draws nothing: a row of empty
+ * pills is worse than no row.
+ */
+function Badges({ section }: { section: LoadedSection }) {
+  const items = val(section.values, "badges")
+    .split(String.fromCharCode(10))
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!items.length) return null;
+  return (
+    <ul className="cy-badges">
+      {items.map((t) => (
+        <li key={t}>{IcoCheck}<span>{t}</span></li>
+      ))}
+    </ul>
+  );
+}
+
 /* ---------------------------------------------------------------- marquee */
 /* Theme chrome: the three promises, repeated. Not a section — it is the strip
    that separates the buy box from the rest of the page. */
@@ -1000,10 +1042,31 @@ function Steps({ section }: { section: LoadedSection }) {
         {/* A line with three stops on it. The old version was three identical
             boxes, which reads as a form to fill in rather than a thing that
             takes ten seconds. */}
-        <ol className="cy-steps">
+        {/* A picture on every step, Garden Buddy's shape: a square frame with
+            the number sitting on its corner, the heading under it, the line of
+            text under that, three across on a wide screen.
+
+            A step whose picture has not been shot yet draws no frame at all —
+            not a grey box, not a "photo coming" placeholder, and never the
+            previous step's photograph repeated. The words still stand on their
+            own, so the section is honest at every stage of the shoot rather
+            than only at the end of it. */}
+        <ol className={`cy-steps${items.some((b) => has(b.values, "image")) ? " cy-steps--shot" : ""}`}>
           {items.map((b, i) => (
             <li className="cy-step" key={b.id} style={{ ["--i" as string]: i }}>
-              <span className="cy-step__n">{i + 1}</span>
+              {has(b.values, "image") ? (
+                <div className="cy-step__media">
+                  <img
+                    src={val(b.values, "image")}
+                    alt={val(b.values, "title")}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span className="cy-step__n cy-step__n--on" aria-hidden="true">{i + 1}</span>
+                </div>
+              ) : (
+                <span className="cy-step__n">{i + 1}</span>
+              )}
               <h3 className="cy-h3">{val(b.values, "title")}</h3>
               {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
             </li>
@@ -1130,99 +1193,51 @@ function promises(page: LoadedProductPage): string[] {
   return titles.length >= 3 ? titles.slice(0, 3) : ["Free US shipping", "30-day returns", "1-year warranty"];
 }
 
-function LockScreen({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
-  const v = section.values;
-
-  // Artwork wins on a wide screen — a finished picture of this scene beats
-  // anything rebuilt out of divs. It cannot win on a phone: the composition is
-  // 16:9 and three columns wide, so it shrinks to a couple of hundred pixels
-  // and every message in it becomes unreadable. So both exist, and CSS picks.
-  const art = val(v, "image");
-  const rows = section.blocks.filter((b) => has(b.values, "title"));
-  const alt = val(v, "heading").split(String.fromCharCode(10)).join(" ");
-  const lines = val(v, "heading").split(String.fromCharCode(10)).filter(Boolean);
-  const texts = rows.filter((b) => !val(b.values, "note").startsWith("story"));
-  const stories = rows.filter((b) => val(b.values, "note").startsWith("story"));
-  if (!rows.length && !art) return null;
-
-  const side = (b: (typeof rows)[number]) => val(b.values, "note").split(" ")[0];
-  const when = (b: (typeof rows)[number]) => val(b.values, "note").split(" ").slice(1).join(" ");
-
-  /*
-   * When there is artwork, the artwork is the whole section.
-   *
-   * The built-in version draws the scene out of divs on a coloured panel,
-   * which is right for a shop that has no photograph of it. Once a real one
-   * exists, showing both means the same idea twice — and the panel around the
-   * picture turns a night scene into a postcard sitting on a blue card.
-   */
-  if (art) {
-    return (
-      <section className="cy-lock cy-lock--art">
-        <img src={art} alt={alt} />
-      </section>
-    );
-  }
-
+/**
+ * The showcase: every clean photograph of the thing, in one grid.
+ *
+ * This is the boring section on purpose. Somebody with their card already out
+ * is asking exactly one question — what actually turns up in the box — and a
+ * grid of plain shots on white answers it faster than any paragraph. Clean
+ * three-quarter, clean straight-on, the box itself, hands opening it, the
+ * machine on a counter, the machine in a hand for scale.
+ *
+ * Every frame is square and `contain`, per the platform rule, so a photograph
+ * that arrives a different shape does not deform the row.
+ *
+ * A slot whose photograph has not been shot yet renders NOTHING — no frame,
+ * no placeholder, and above all not the previous picture repeated to fill the
+ * hole. Six empty slots and the whole section disappears. That is what makes
+ * the six pictures being generated droppable one at a time: each one lands in
+ * its slot and appears, and the grid never looks broken in between.
+ */
+function Showcase({ section }: { section: LoadedSection }) {
+  const items = section.blocks.filter((b) => has(b.values, "image"));
+  if (!items.length) return null;
   return (
-    <>
-    <section className="cy-lock">
-      <div className="cy-lock__in">
-        <div className="cy-lock__clock">
-          {has(v, "subheading") ? <span>{val(v, "subheading")}</span> : null}
-          <time>9:27</time>
-        </div>
-
-        <div className="cy-lock__notif">
-          {page.store.logoUrl ?? LOGO ? <img src={(page.store.logoUrl ?? LOGO) as string} alt="" /> : <span className="cy-mark">{page.store.name}</span>}
-          <div>
-            <b>{page.store.name}<i>now</i></b>
-            {has(v, "footnote") ? <p>{val(v, "footnote")}</p> : null}
-          </div>
-        </div>
-
-        <div className="cy-lock__texts">
-          {texts.map((b) => (
-            <div className="cy-lock__msg" data-side={side(b)} key={b.id}>
-              <p>{val(b.values, "title")}</p>
-              <span>{when(b)}</span>
-            </div>
+    <section className="cy-show" id="shots">
+      <div className="cy-wrap">
+        <Head section={section} />
+        <div className="cy-show__grid">
+          {items.map((b) => (
+            <figure className="cy-show__it" key={b.id}>
+              <span className="cy-show__frame">
+                <img
+                  src={val(b.values, "image")}
+                  alt={val(b.values, "title") || ""}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </span>
+              {has(b.values, "title") ? <figcaption>{val(b.values, "title")}</figcaption> : null}
+            </figure>
           ))}
         </div>
-
-        {/* The photo inside the phone is this shop's product, not the
-            template's. It was a hardcoded Ceiling Buddy still, which meant a
-            borrowing store showed a snack tray with somebody else's logo on it
-            in the middle of its own page. */}
-        {(page.product.images ?? []).find((x) => x.url) ? (
-          <figure className="cy-lock__hero">
-            <img src={(page.product.images ?? []).find((x) => x.url)!.url} alt="" />
-          </figure>
-        ) : null}
-
-        <div className="cy-lock__stories">
-          {stories.map((b) => (
-            <article className="cy-lock__story" key={b.id}>
-              <header>
-                <span className="cy-lock__who">{when(b)}</span>
-                <span className="cy-lock__what">replied to your story</span>
-              </header>
-              <div className="cy-lock__body">
-                {has(b.values, "image") ? <img src={val(b.values, "image")} alt="" loading="lazy" /> : null}
-                <p>{val(b.values, "title")}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {lines.length ? (
-          <p className="cy-lock__tag">
-            {lines.map((line) => <span key={line}>{line}</span>)}
-          </p>
+        {has(section.values, "footnote") ? (
+          <p className="cy-show__foot">{val(section.values, "footnote")}</p>
         ) : null}
       </div>
     </section>
-    </>
   );
 }
 
@@ -1326,21 +1341,40 @@ function InTheBox({ section }: { section: LoadedSection }) {
 function Specs({ section }: { section: LoadedSection }) {
   const rows = section.blocks.filter((b) => has(b.values, "label"));
   if (!rows.length) return null;
+  const known = rows.filter((b) => has(b.values, "value"));
+  const pending = rows.filter((b) => !has(b.values, "value"));
   return (
     <section className="cy-section" id="specs">
       <div className="cy-wrap">
         <Head section={section} />
+        {/* The measured rows, and then the honest hole where the rest go.
+            Twelve consecutive "Spec pending" cells read as a database that
+            failed to load, not as a company that refuses to print numbers it
+            has not measured. Nothing is hidden and nothing is invented: every
+            unmeasured label is still named, in one line, under one heading
+            that says exactly why it is empty. The day a sample is measured,
+            each value is filled in and the row leaves this list by itself. */}
         <dl className="cy-specs">
-          {rows.map((b) => {
-            const value = val(b.values, "value");
-            return (
-              <div className="cy-spec" key={b.id}>
-                <dt>{val(b.values, "label")}</dt>
-                <dd className={value ? undefined : "is-pending"}>{value || SPEC_PENDING}</dd>
-              </div>
-            );
-          })}
+          {known.map((b) => (
+            <div className="cy-spec" key={b.id}>
+              <dt>{val(b.values, "label")}</dt>
+              <dd>{val(b.values, "value")}</dd>
+            </div>
+          ))}
         </dl>
+        {pending.length ? (
+          <div className="cy-pending">
+            <b>Measured performance — {SPEC_PENDING.toLowerCase()}</b>
+            <p>
+              We publish a number when we have measured it on the production
+              machine, and not before. These are the ones we have not measured
+              yet:
+            </p>
+            <p className="cy-pending__list">
+              {pending.map((b) => val(b.values, "label")).join(" · ")}
+            </p>
+          </div>
+        ) : null}
       </div>
     </section>
   );
@@ -1741,63 +1775,43 @@ function CouponBar({ offer, currency }: { offer: { code: string; kind: string; v
 const avatarHandles = new Set<string>([]);
 
 /**
- * The line above the title: who else has one.
+ * The crowd line, and the only number on it is one we counted ourselves.
  *
- * A stranger arriving from an advert is asking one question before the price
- * — does anybody actually buy this. A score answers "is it good"; this
- * answers "am I the first", which is the one that stops people.
+ * Ceiling Buddy's version of this row derives "and 722 others" from a hash of
+ * the product id. It is stable across renders, which is the only good thing
+ * about it: it is a number nobody counted, printed as social proof. That is
+ * an invented fact and this shop does not print those, so the count here is
+ * the real one — distinct human sessions on this store in the last thirty
+ * days, handed down by the loader from the `events` table.
  *
- * The names are the first two off the review wall below, so the row can never
- * name somebody the page does not show. The number is derived from the
- * product's own id, which means it is the same on every render, on the server
- * and in the browser, and it does not creep upward on a refresh the way an
- * invented counter does.
+ * Below a floor it says nothing at all. "and 2 others" is worse than silence
+ * on a shop nobody has visited yet, and rounding 2 up to something friendlier
+ * is exactly the lie this component exists to avoid. The faces are real
+ * buyers' avatars off the review wall or they are absent; cryo has no
+ * customers, so today there are none and the row shows the count alone.
  *
- * It is a count of people, not of reviews. A review count is a number to be
- * compared against and a shop in its first season loses that comparison.
+ * The day traffic is real and reviews exist, both halves turn themselves on.
  */
-function Thrilled({ page }: { page: LoadedProductPage }) {
-  // A full name only. The wall also carries texts from "Mom" and "Dad", which
-  // are perfectly good reviews and read as nonsense in this row.
-  const names = Array.from(
-    new Set(
-      page.reviews
-        .map((r) => (r.name ?? "").trim())
-        .filter((n) => /^[A-Z][^\s]+\s+[A-Z]/.test(n))
-        .map((n) => n.split(/\s+/)[0]),
-    ),
-  ).slice(0, 2);
-  if (names.length < 2) return null;
+const CROWD_FLOOR = 50;
 
-  /* The two people this row names have faces on the wall below, so it wears
-     theirs rather than a pair of files kept in step by hand. Falls back to
-     the old per-product override, then to an initial. */
-  const faces = names.map((first) => {
-    const match = page.reviews.find((r) => (r.name ?? "").trim().split(/\s+/)[0] === first && r.avatarUrl);
-    return match?.avatarUrl ?? null;
-  });
-
-  // A stable number from the id. Same product, same number, every time.
-  let n = 0;
-  for (const ch of page.product.id) n = (n * 31 + ch.charCodeAt(0)) >>> 0;
-  const others = 432 + (n % 529); // 432 … 960
-
+function Crowd({ page, crowd = 0 }: { page: LoadedProductPage; crowd?: number }) {
+  // Faces only ever come off real reviews. No stock portraits, ever.
+  const faces = page.reviews
+    .map((r) => r.avatarUrl)
+    .filter((u): u is string => !!u)
+    .slice(0, 3);
+  if (crowd < CROWD_FLOOR) return null;
   return (
     <div className="cy-thrilled">
-      <span className="cy-thrilled__faces" aria-hidden="true">
-        {names.map((who, i) => {
-          const face = faces[i];
-          return face ? (
-            <img key={who} className="cy-thrilled__face" src={face} alt="" loading="lazy" />
-          ) : (
-            <span key={who} className="cy-thrilled__face cy-thrilled__face--letter">{who.slice(0, 1)}</span>
-          );
-        })}
-      </span>
+      {faces.length ? (
+        <span className="cy-thrilled__faces" aria-hidden="true">
+          {faces.map((src) => (
+            <img key={src} className="cy-thrilled__face" src={src} alt="" loading="lazy" />
+          ))}
+        </span>
+      ) : null}
       <span className="cy-thrilled__say">
-        <b>{names[0]}</b>, <b>{names[1]}</b>
-        <span className="cy-thrilled__tick" aria-label="Verified buyers">{IcoVerified}</span> and{" "}
-        <b>{others.toLocaleString("en-US")} others</b> are thrilled with {page.product.title}
+        <b>{crowd.toLocaleString("en-US")} people</b> looked at {page.product.title} in the last 30 days
       </span>
     </div>
   );
@@ -2109,7 +2123,12 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
               <Stars n={Math.round(mean)} />
             </div>
           ) : null}
-          <p className="cy-revs__of">Every one of them put it on a lawn in October.</p>
+          {/* Whatever this shop's reviews actually are, said in the section's
+              own subheading. It used to be a sentence about a lawn in October,
+              which belonged to a different shop and a different product. */}
+          {has(section.values, "subheading") ? (
+            <p className="cy-revs__of">{val(section.values, "subheading")}</p>
+          ) : null}
           {towns.length ? <p className="cy-revs__towns">{towns.join(" · ")}</p> : null}
         </div>
 

@@ -4,9 +4,9 @@ import { resolveStore, loadProductPage } from "~/lib/store.server";
 import { providerForStore } from "~/lib/payments.server";
 import { paypalFor } from "~/lib/paypal.server";
 import { currentUser } from "~/lib/auth.server";
-import { pages, metaConfig, themes, discounts } from "~/db/schema";
+import { pages, metaConfig, themes, discounts, events } from "~/db/schema";
 import { passwordCookieValid } from "~/lib/password.server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { metaCookieHeaders, newMetaEventId, pixelScript, trackFunnelEvent } from "~/lib/meta.server";
 import { presenceScript, vitalsScript } from "~/lib/vitals";
 import { ladderScript } from "~/lib/meta.signals";
@@ -250,6 +250,30 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true)))
     .limit(1);
 
+  /**
+   * How many real people have been on this store in the last thirty days.
+   *
+   * A shop that wants to say "722 people looked at this" has to have counted
+   * 722 people. This counts them: distinct sessions in `events` that a browser
+   * confirmed was a human by running script, which is the same gate Live View
+   * and the traffic numbers use, so the figure on the storefront and the
+   * figure in the admin can never disagree.
+   *
+   * It is not a review count and it is not an order count, and the storefront
+   * refuses to print it at all until it is large enough to mean something.
+   */
+  const [crowdRow] = await context.db
+    .select({ n: sql<number>`count(distinct ${events.sessionId})::int` })
+    .from(events)
+    .where(
+      and(
+        eq(events.storeId, store.id),
+        eq(events.human, true),
+        gte(events.at, new Date(Date.now() - 30 * 86400_000)),
+      ),
+    );
+  const crowd = crowdRow?.n ?? 0;
+
   // The publishable key only — it is public by design — so the product page
   // can draw a wallet button. No key, no button; nothing is drawn that
   // cannot take money.
@@ -265,11 +289,11 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const paypalClientId = await paypalFor(context.db, context.cloudflare.env, store.id)
     .then((client) => client?.clientId ?? null)
     .catch(() => null);
-  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, offer: offer ?? null }, { headers });
+  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, offer: offer ?? null, crowd }, { headers });
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {
-  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, offer } = loaderData;
+  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, offer, crowd } = loaderData;
 
   if (!page) {
     return (
@@ -340,6 +364,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
           publishableKey={publishableKey}
           paypalClientId={paypalClientId}
           offer={offer}
+          crowd={crowd}
         />
       </>
     );
