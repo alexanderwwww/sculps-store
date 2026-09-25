@@ -84,7 +84,7 @@
 .cy button { font: inherit; color: inherit; }
 /* Anything with its own colour has to outrank the reset above. */
 .cy .cy-btn { color: #fff; }
-.cy .cy-btn--ghost { color: var(--ink); }
+.cy .cy-btn--ghost { color: #fff; }
 
 .cy-wrap { width: 100%; max-width: var(--wrap); margin: 0 auto; padding: 0 20px; }
 
@@ -182,7 +182,10 @@
 /* -------------------------------------------------------------- buy box */
 
 .cy-buy { padding: clamp(26px, 4vw, 52px) 0 clamp(44px, 6vw, 72px); }
-.cy-buy__grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, .8fr); gap: clamp(26px, 4vw, 48px); align-items: start; }
+/* 1.618 : 1. The pictures take the long side of the golden section and the
+   column that sells takes the short one — which is also very close to the
+   1.35 : 0.8 it was eyeballed at, said properly. */
+.cy-buy__grid { display: grid; grid-template-columns: minmax(0, 1.618fr) minmax(0, 1fr); gap: clamp(26px, 4vw, 48px); align-items: start; }
 .cy-buy__grid > * { min-width: 0; }
 @media (max-width: 940px) { .cy-buy__grid { grid-template-columns: minmax(0, 1fr); } }
 
@@ -2377,17 +2380,18 @@ body:has(.cy-drawer.is-open) .cy-buy__side .cy-wallet { visibility: hidden; }
   border-bottom: 0;
   overflow: hidden;
 }
+/* It moves. A bar that stands still is a strip of furniture; a bar that travels
+   is the only thing on the page telling you the offer is live. The track prints
+   its list twice and slides one full copy, so the loop has no seam. */
 .cy .cy-ann__t {
-  animation: none;
-  width: 100%;
-  justify-content: center;
+  animation: cy-slide 30s linear infinite;
+  width: max-content;
+  justify-content: flex-start;
   flex-wrap: nowrap;
 }
-/* The track prints its list twice so a marquee can loop seamlessly. Standing
-   still, the second copy is just a repeat — so it goes. */
-.cy .cy-ann__t > span:nth-child(2) { display: none; }
+.cy .cy-ann__t > span:nth-child(2) { display: inline-flex; }
 .cy .cy-ann__t > span {
-  display: flex; align-items: center; justify-content: center;
+  display: inline-flex; align-items: center;
   flex-wrap: nowrap; min-width: 0;
 }
 .cy .cy-ann__t i {
@@ -2440,22 +2444,13 @@ body:has(.cy-drawer.is-open) .cy-buy__side .cy-wallet { visibility: hidden; }
  * edge with the code half-cut, which is worse than no bar at all. So on a
  * narrow screen the promises go — they are repeated three more times further
  * down the page — and the offer gets the whole strip to itself, centred. */
+/* Nothing is hidden on a phone any more. It travels, so a line too long for
+   390px simply arrives a second later instead of being deleted. */
 @media (max-width: 720px) {
-  .cy .cy-ann__t i:not([data-pill]) { display: none; }
-  .cy .cy-ann__t i[data-pill] {
-    margin: 0;
-    padding: 11px 14px;
-    border-radius: 0;
-    background: transparent;
-    color: #fff;
-    font-size: 12px;
-    letter-spacing: .05em;
-  }
-  .cy .cy-ann__t i[data-pill] ~ i[data-pill] { display: none; }
-  .cy .cy-ann__t i[data-pill] code {
-    background: var(--ice, #CFE9F7);
-    color: #0B1220;
-  }
+  .cy .cy-ann__t { animation-duration: 24s; }
+  .cy .cy-ann__t i { font-size: 11.5px; padding: 11px 0; letter-spacing: .05em; }
+  .cy .cy-ann__t i::after { margin-left: 14px; margin-right: 14px; }
+  .cy .cy-ann__t i[data-pill] { margin-left: 14px; padding: 5px 12px; font-size: 11px; }
 }
 
 /* ------------------------------------------------------------------ header */
@@ -2488,16 +2483,103 @@ body:has(.cy-drawer.is-open) .cy-buy__side .cy-wallet { visibility: hidden; }
   background: linear-gradient(to top, var(--ice) 0 26%, transparent 26%);
 }
 
+/* ---------------------------------------------------- the gallery, relaid
+ *
+ * The filmstrip runs down the LEFT of the big picture instead of under it.
+ * Under it, the strip pushed the price a thumbnail's height down the page and
+ * read as a row of unrelated tiles; beside it, it reads as a contact sheet and
+ * the buy column starts higher.
+ *
+ * On a phone it goes back under the picture and scrolls sideways, because a
+ * vertical strip on a 390px screen would eat a third of the width.
+ */
+.cy .cy-gal {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.cy .cy-gal__main { grid-column: 2; grid-row: 1; }
+.cy .cy-gal__strip {
+  grid-column: 1; grid-row: 1;
+  display: flex; flex-direction: column;
+  gap: 10px; margin-top: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 2px;
+}
+.cy .cy-gal__thumb { width: 72px; height: 72px; flex: 0 0 auto; border-radius: 10px; overflow: hidden; }
+.cy .cy-gal__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+@media (max-width: 940px) {
+  .cy .cy-gal { grid-template-columns: minmax(0, 1fr); }
+  .cy .cy-gal__main { grid-column: 1; }
+  .cy .cy-gal__strip {
+    grid-column: 1; grid-row: 2;
+    flex-direction: row;
+    overflow-x: auto; overflow-y: visible;
+    margin-top: 14px;
+  }
+}
+
+/* ------------------------------------------ the instalment block, big
+ *
+ * Directly under the picture, at the width of the picture, because "or four
+ * payments of $22.25" is the number that makes an $89 machine an easy yes and
+ * it was doing that job in 13px grey inside the bundle box.
+ */
+/* Three children, two columns, and the instalment block belongs under the
+ * pictures — so the rows are named rather than left to auto-placement, which
+ * pushed the price column down past the whole gallery. */
+.cy .cy-buy__grid > .cy-gal { grid-column: 1; grid-row: 1; }
+.cy .cy-buy__grid > .cy-pay4--under { grid-column: 1; grid-row: 2; }
+.cy .cy-buy__grid > .cy-buy__side { grid-column: 2; grid-row: 1 / span 2; }
+@media (max-width: 940px) {
+  .cy .cy-buy__grid > .cy-gal,
+  .cy .cy-buy__grid > .cy-pay4--under,
+  .cy .cy-buy__grid > .cy-buy__side { grid-column: 1; grid-row: auto; }
+}
+.cy .cy-pay4--under {
+  margin-top: 18px;
+  padding: 18px 22px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fff, var(--ice-2));
+  border: 1px solid var(--ice);
+  box-shadow: 0 1px 2px rgba(16, 40, 58, .06);
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.cy .cy-pay4--under .cy-pp--word { height: 26px; width: auto; flex: none; }
+.cy .cy-pay4--under b { font-family: var(--display); font-weight: 800; font-size: 22px; color: var(--ink); }
+.cy .cy-pay4--under p { margin: 0; font-size: 15px; line-height: 1.4; color: var(--ice-ink); }
+.cy .cy-pay4--under small { display: block; margin-top: 3px; font-size: 12.5px; color: var(--dim); }
+@media (max-width: 720px) {
+  .cy .cy-pay4--under { padding: 14px 16px; gap: 12px; }
+  .cy .cy-pay4--under .cy-pp--word { height: 21px; }
+  .cy .cy-pay4--under b { font-size: 19px; }
+  .cy .cy-pay4--under p { font-size: 14px; }
+}
+
 /* ---------------------------------------------------------------- buttons */
+/* No white button on this page.
+ *
+ * "Buy now" was a white pill under a navy one, which on a white column reads
+ * as a disabled control — the second door looked shut. Both doors are solid
+ * now: ink for add to cart, the brand's ice-deep for buy now, so the pair
+ * reads as two live choices. */
+.cy .cy-btn--ghost {
+  background: var(--ice-deep);
+  color: #fff;
+  border-color: var(--ice-deep);
+  box-shadow: 0 10px 22px -14px rgba(16, 40, 58, .55);
+}
+.cy .cy-btn--ghost:hover { background: var(--action); border-color: var(--action); color: #fff; }
+
 .cy .cy-btn {
   background: var(--action); border-color: var(--action); color: #fff;
   box-shadow: 0 10px 22px -14px rgba(16,40,58,.75);
 }
 .cy .cy-btn:hover { background: #0A1D2B; border-color: #0A1D2B; }
-.cy .cy-btn--ghost {
-  background: #fff; color: var(--action); border-color: var(--silver-2);
-}
-.cy .cy-btn--ghost:hover { background: var(--ice-2); border-color: var(--ice-deep); }
+
 
 /* ------------------------------------------------------------------ chips */
 /* The chips are the loudest brand moment on the page, so they carry the ice
@@ -2820,13 +2902,15 @@ body:has(.cy-drawer.is-open) .cy-buy__side .cy-wallet { visibility: hidden; }
   width: 100%;
 }
 .cy .cy-gal__main img { object-fit: contain; }
-.cy .cy-gal__strip { margin-top: 12px; padding-inline: 20px; }
+@media (max-width: 940px) { .cy .cy-gal__strip { margin-top: 12px; padding-inline: 20px; } }
 
 @media (min-width: 941px) {
-  /* On a wide screen the bleed is to the left edge only — the buying column
-     keeps the page's right-hand gutter, because a price hard against the
-     glass reads as a broken layout rather than a bold one. */
-  .cy .cy-buy__grid { max-width: none; padding-left: 0; gap: clamp(24px, 3vw, 44px); }
+  /* The full-bleed to the left glass is off.
+     It was right when the filmstrip sat under the picture and the picture
+     could run to the edge. With the strip down the left-hand side, bleeding
+     puts the thumbnails half off the screen — so the page's own gutter comes
+     back and the gallery starts where the header does. */
+  .cy .cy-buy__grid { max-width: var(--wrap); padding-left: 20px; gap: clamp(24px, 3vw, 44px); }
   .cy .cy-gal { margin-inline: 0; position: sticky; top: 92px; }
   .cy .cy-buy__side { max-width: 520px; padding-right: 8px; }
 }

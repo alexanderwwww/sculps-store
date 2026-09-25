@@ -594,11 +594,14 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
             </div>
           ) : null}
 
-          {/* Under the pictures, not tucked beside the price.
-              Four payments is a reason to look at a $299 product at all, so it
-              belongs where the looking happens — directly under the thing
-              being looked at, at full width, with PayPal's own mark on it. */}
         </div>
+
+        {/* Under the pictures, not tucked beside the price.
+            Four payments is the reason an $89 machine is an easy yes, and it
+            was doing that job in 13px grey inside the bundle box. It sits
+            under the thing being looked at, at the width of the picture, with
+            PayPal's own mark at a size somebody actually sees. */}
+        <PayLater page={page} wide />
 
         {/* The right-hand column. `cy-buy__side` exists so a phone can reorder
             it — price and buttons first, the reading matter after — without
@@ -1103,18 +1106,35 @@ function Benefits({ section }: { section: LoadedSection }) {
 function Features({ section }: { section: LoadedSection }) {
   const items = section.blocks.filter((b) => has(b.values, "title"));
   if (!items.length) return null;
-  // A grid of numbered lines on black. Chips read as filler; a list someone
-  // bothered to number reads as a spec.
+
+  /* Alex's rule, 25 Sep 2026: no section is a column of text.
+   *
+   * When every row has a photograph this draws the Garden Buddy shape —
+   * picture on one side, two sentences on the other, sides swapping row by row
+   * so the eye zig-zags down the page instead of sliding off it. When they do
+   * not, it draws nothing at all: a numbered list of prose is exactly the
+   * thing he stopped reading, and publishing it anyway while calling it a
+   * section is how the page got eleven thousand pixels tall.
+   *
+   * So the way to bring this section back is to shoot it, not to write it. */
+  const shot = items.filter((b) => has(b.values, "image"));
+  if (shot.length !== items.length) return null;
+
   return (
-    <section className="cy-spec-s">
+    <section className="cy-rows-s">
       <div className="cy-wrap">
         <Head section={section} />
-        <div className="cy-specgrid">
+        <div className="cy-rows">
           {items.map((b, i) => (
-            <div className="cy-specgrid__it" key={b.id}>
-              <span className="cy-specgrid__n">{String(i + 1).padStart(2, "0")}</span>
-              <span className="cy-specgrid__t">{val(b.values, "title")}</span>
-              {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
+            <div className={`cy-row${i % 2 ? " cy-row--flip" : ""}`} key={b.id}>
+              <figure className="cy-row__pic">
+                <img src={val(b.values, "image")} alt={val(b.values, "title")} loading="lazy" decoding="async" />
+              </figure>
+              <div className="cy-row__say">
+                <span className="cy-row__n">{String(i + 1).padStart(2, "0")}</span>
+                <h3 className="cy-h3">{val(b.values, "title")}</h3>
+                {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
+              </div>
             </div>
           ))}
         </div>
