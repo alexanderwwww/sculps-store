@@ -189,6 +189,32 @@ one.
 
 ## Design rules — do not violate these
 
+**0a. No storefront section is a column of text. Ever.** Alex, 25 Sep 2026:
+
+> All the sections that did with text, try to do the same with visual images
+> plus text. And that's a set of rules now. Nobody reads that.
+
+Every section on a storefront page is a **picture and words together**, laid out
+the way Garden Buddy's three steps are: the image on one side, the sentence on
+the other, alternating down the page. A heading plus a paragraph plus a bullet
+list with no photograph is not a section — it is a thing a visitor scrolls past,
+and he has said so about his own store twice.
+
+What this means in practice:
+
+- A section that has no picture yet is **switched off**, not published as text.
+  It comes back the day its picture exists.
+- When a section is written, its shot goes on the Magic Wand list in the same
+  breath. Copy and picture are one job, not two.
+- Facts that used to be a bullet list become a labelled photograph, a diagram,
+  or a caption under a picture. Same fact, something to look at.
+- Two sentences is the ceiling for any block of prose next to an image. If it
+  needs a third, the picture is not doing its job.
+
+This applies to every store on the platform, not only to cryo, and it is not
+relaxed because a section is "just" an FAQ, a spec list or a comparison.
+
+
 **0. When a design exists, port it — never re-author it.** The approved
 prototype is `design/prototype/Shop Admin.dc.html`, split per screen into
 `design/port/*.html` with the method written in `design/port/PORTING.md`.

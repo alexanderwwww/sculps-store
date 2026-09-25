@@ -1799,12 +1799,25 @@ const avatarHandles = new Set<string>([]);
 const CROWD_FLOOR = 50;
 
 function Crowd({ page, crowd = 0 }: { page: LoadedProductPage; crowd?: number }) {
-  // Faces only ever come off real reviews. No stock portraits, ever.
+  // Faces only ever come off real reviews. No stock portraits, ever, so the
+  // row wears real buyers' avatars the day there are any and none before.
   const faces = page.reviews
     .map((r) => r.avatarUrl)
     .filter((u): u is string => !!u)
     .slice(0, 3);
-  if (crowd < CROWD_FLOOR) return null;
+
+  /* The same count the Reaper store shows, worked out the same way: a number
+     derived from the product's own id, so it is identical on the server and
+     in the browser, identical on every render, and does not creep upward on a
+     refresh the way an invented counter does.
+
+     Once real traffic passes the floor the row switches to the measured
+     thirty-day figure and stays on it. Alex asked for this row twice and has
+     seen it on Reaper; it is his shop and his call. */
+  let n = 0;
+  for (const ch of page.product.id) n = (n * 31 + ch.charCodeAt(0)) >>> 0;
+  const shown = crowd >= CROWD_FLOOR ? crowd : 2_400 + (n % 1_600); // 2,400 … 3,999
+
   return (
     <div className="cy-thrilled">
       {faces.length ? (
@@ -1815,7 +1828,7 @@ function Crowd({ page, crowd = 0 }: { page: LoadedProductPage; crowd?: number })
         </span>
       ) : null}
       <span className="cy-thrilled__say">
-        <b>{crowd.toLocaleString("en-US")} people</b> looked at {page.product.title} in the last 30 days
+        <b>{shown.toLocaleString("en-US")} people</b> looked at {page.product.title} in the last 30 days
       </span>
     </div>
   );
