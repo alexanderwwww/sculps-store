@@ -41,6 +41,12 @@ export default [
   // The storefront heartbeat: who is on the site right now, and proof that a
   // browser — not a scanner — is the one asking.
   route("seen", "routes/seen.tsx"),
+  // The event ladder. The storefront reports what the visitor did; this
+  // decides whether Meta hears about it.
+  route("rung", "routes/rung.tsx"),
+  // The pixel, served from our own domain so an ad blocker cannot take a
+  // fifth of the events with it.
+  route("px/*", "routes/px.$.tsx"),
   route("media/:key", "routes/media.$key.tsx"),
   // The Magic Wand's status board, order desk and MCP server. Everything
   // behind it is guarded by the key in the path.

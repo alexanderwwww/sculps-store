@@ -65,6 +65,7 @@ import {
 } from "~/db/schema";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { newMetaEventId, pixelScript, readMetaCookies, sendServerEvent, trackFunnelEvent } from "~/lib/meta.server";
+import { ladderScript } from "~/lib/meta.signals";
 import { formatMoney } from "~/lib/money";
 import { CheckoutHeader, CheckoutFooter, TrustRow } from "~/storefronts/garden-buddy/checkout-chrome";
 import kneelerHref from "~/storefronts/garden-kneeler/theme.css?url";
@@ -550,6 +551,19 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     });
     if (initiate) pixel = `${pixel}\n${initiate}`;
   }
+  /*
+   * The ladder's reporter, and the two rungs that only exist here.
+   *
+   * HotLead is "reached checkout" — asked for the moment the page runs, and
+   * again when an email is typed, because the second call is a no-op once the
+   * session's ledger cookie says it already went. CardStarted is fired by the
+   * payment element the first time somebody actually types into the card box.
+   *
+   * Both go through /rung like every other rung, so "once per session", the
+   * value and the deduplication id are all decided in one place. None of this
+   * touches the payment path: it is a fetch that nothing waits on.
+   */
+  if (pixel) pixel = `${pixel}\n${ladderScript()}\nsetTimeout(function(){if(window.__kbRung)window.__kbRung('HotLead')},0);`;
 
   /**
    * "Just one more thing": the store's other bundles, from the variants table.
@@ -3299,6 +3313,13 @@ function OnePage({
         if (values.phone) body.set("phone", values.phone);
         if (store.consent) body.set("consent", values.marketing === "on" ? "on" : "false");
         fetch("/checkout/identify", { method: "POST", body }).catch(() => undefined);
+        // An email in the checkout form is the other half of HotLead. The
+        // ladder ignores it if the rung already went on page load.
+        try {
+          (window as unknown as { __kbRung?: (name: string) => void }).__kbRung?.("HotLead");
+        } catch {
+          /* never let an ad signal touch checkout */
+        }
       }
     }
 
@@ -3485,6 +3506,29 @@ function OnePage({
         fields: { billingDetails: { address: "never" } },
       });
       if (cardRef.current) payment.mount(cardRef.current);
+
+      /*
+       * CardStarted: they began entering payment details. The strongest
+       * signal a non-buyer can give, and the one Meta has no way to see.
+       *
+       * Stripe's own change event, fired the first time a character lands in
+       * the card box. Wrapped because a Stripe.js that does not know this
+       * event must not be able to stop the form mounting.
+       */
+      try {
+        let toldCard = false;
+        payment.on("change", () => {
+          if (toldCard) return;
+          toldCard = true;
+          try {
+            (window as unknown as { __kbRung?: (name: string) => void }).__kbRung?.("CardStarted");
+          } catch {
+            /* an ad signal is never worth a payment */
+          }
+        });
+      } catch {
+        /* older Stripe.js: no signal, same checkout */
+      }
 
       // Wallets: a person who has one is done in two taps. The wallet is asked
       // for the address too, because it is the only address that flow ever has

@@ -12,6 +12,16 @@ import { eq } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { metaConfig, clientEvents } from "~/db/schema";
 import { decryptSecret } from "./crypto.server";
+import {
+  LADDER_RUNGS,
+  type LadderRung,
+  cleanFbclid,
+  isValidFbc,
+  isValidFbp,
+  newFbc,
+  newFbp,
+  shouldSendToCapi,
+} from "./meta.signals";
 
 async function hash(value: string | null | undefined): Promise<string | null> {
   if (!value) return null;
@@ -34,6 +44,14 @@ export type MetaEventName =
   | "AddPaymentInfo"
   | "Lead"
   | "Purchase";
+
+/**
+ * The custom rungs. Meta calls these "custom events": same API, same
+ * deduplication, `trackCustom` instead of `track` in the browser. They are
+ * what teaches the algorithm the difference between somebody who loaded the
+ * page and somebody who was nearly out their card.
+ */
+export type MetaTrackName = MetaEventName | LadderRung;
 
 /** What is known about the person, sent hashed on every event that has it. */
 export interface MetaIdentity {
@@ -106,9 +124,19 @@ export async function metaSettings(
  */
 export async function sendEvent(
   settings: MetaSettings,
-  name: MetaEventName,
+  name: MetaTrackName,
   event: MetaEvent,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
+  /*
+   * The bot filter. A crawler that renders JavaScript still tells us what it
+   * is in its user agent, and an event with no user agent at all came from no
+   * browser. Both are dropped before they can teach Meta to go and find more
+   * of them. Purchase is never dropped — a card was charged, so a person was
+   * there, whatever the header said.
+   */
+  if (!shouldSendToCapi(name, event.userAgent)) {
+    return { ok: false, reason: "not a person: bot or missing user agent" };
+  }
   const [em, ph, fn, ln, ct, st, zp, country, externalId] = await Promise.all([
     hash(event.email),
     hash(event.phone?.replace(/[^0-9]/g, "")),
@@ -259,11 +287,29 @@ for(var i=0;i<evs.length;i++){(function(n){var h=function(){fire()};
 window.addEventListener(n,h,{passive:true,once:true});
 off.push(function(){window.removeEventListener(n,h,{passive:true})})})(evs[i])}})();`;
 
+  /*
+   * The loader, pointed at our own domain first.
+   *
+   * `/px/fbevents.js` is this Worker proxying Meta's script and rewriting the
+   * endpoints inside it, so to the browser the whole pixel is first-party: no
+   * third-party request to block, no seven-day cap on what it stores. Roughly
+   * a fifth to a third of events were being lost to blockers before this.
+   *
+   * It has to be impossible for that proxy to cost a sale, so the tag carries
+   * its own fallback: if our copy 404s, errors or is blocked, `onerror` loads
+   * Meta's original from connect.facebook.net and the pixel behaves exactly as
+   * it did before. The proxy route itself redirects to Meta on an upstream
+   * failure, so there are two ways back to the old behaviour and none to a
+   * broken page.
+   */
   return `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-document,'script','https://connect.facebook.net/en_US/fbevents.js');
+t.src=v;t.onerror=function(){var r=b.createElement(e);r.async=!0;
+r.src='https://connect.facebook.net/en_US/fbevents.js';
+s.parentNode.insertBefore(r,s)};s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window,
+document,'script','/px/fbevents.js');
 fbq('set','autoConfig',false,'${pixelId}');
 ${init}${gate}`;
 }
@@ -276,17 +322,13 @@ ${init}${gate}`;
  * one of them and the match quality of the event drops; sending the same thing
  * twice is the whole point.
  */
-export function eventPixelScript(input: {
-  name: MetaEventName;
-  eventId: string;
+export function metaCustomData(input: {
   valueCents: number;
   currency: string;
   contents: { id: string; quantity: number; itemPrice: number }[];
-}): string {
-  if (!input.contents.length) {
-    return `if(window.fbq){fbq('track',${JSON.stringify(input.name)},{},{eventID:${JSON.stringify(input.eventId)}});}`;
-  }
-  const customData = {
+}): Record<string, unknown> {
+  if (!input.contents.length) return {};
+  return {
     value: Number((input.valueCents / 100).toFixed(2)),
     currency: input.currency.toUpperCase(),
     content_type: "product",
@@ -298,7 +340,26 @@ export function eventPixelScript(input: {
     })),
     num_items: input.contents.reduce((sum, item) => sum + item.quantity, 0),
   };
-  return `if(window.fbq){fbq('track',${JSON.stringify(input.name)},${JSON.stringify(customData)},{eventID:${JSON.stringify(input.eventId)}});}`;
+}
+
+/**
+ * Standard events go through `track`; the four custom rungs go through
+ * `trackCustom`, which is the only difference Meta's pixel makes between them.
+ * Sending a custom name through `track` gets it silently ignored.
+ */
+export function pixelVerb(name: MetaTrackName): "track" | "trackCustom" {
+  return (LADDER_RUNGS as readonly string[]).includes(name) ? "trackCustom" : "track";
+}
+
+export function eventPixelScript(input: {
+  name: MetaTrackName;
+  eventId: string;
+  valueCents: number;
+  currency: string;
+  contents: { id: string; quantity: number; itemPrice: number }[];
+}): string {
+  const customData = metaCustomData(input);
+  return `if(window.fbq){fbq(${JSON.stringify(pixelVerb(input.name))},${JSON.stringify(input.name)},${JSON.stringify(customData)},{eventID:${JSON.stringify(input.eventId)}});}`;
 }
 
 export function purchasePixelScript(input: {
@@ -330,39 +391,48 @@ export function metaCookieHeaders(request: Request, url: URL): string[] {
   const have = readMetaCookies(request);
   const secure = url.protocol === "https:" ? "; Secure" : "";
   const ninetyDays = 90 * 86400;
+  const now = Date.now();
   const out: string[] = [];
-  const fbclid = url.searchParams.get("fbclid");
-  if (fbclid && !have.fbc) {
-    out.push(`_fbc=fb.1.${Date.now()}.${encodeURIComponent(fbclid)}; Path=/; SameSite=Lax; Max-Age=${ninetyDays}${secure}`);
-  } else if (have.fbc) {
-    out.push(`_fbc=${have.fbc}; Path=/; SameSite=Lax; Max-Age=${ninetyDays}${secure}`);
-  }
-  if (have.fbp) {
-    out.push(`_fbp=${have.fbp}; Path=/; SameSite=Lax; Max-Age=${ninetyDays}${secure}`);
-  } else {
-    const random = Math.floor(Math.random() * 1e10);
-    out.push(`_fbp=fb.1.${Date.now()}.${random}; Path=/; SameSite=Lax; Max-Age=${ninetyDays}${secure}`);
-  }
+
+  // _fbc first: a click id in the URL always wins, because it is the freshest
+  // proof of which ad this visit came from. Otherwise a valid existing cookie
+  // is refreshed so its ninety days start again from today; an existing value
+  // that is not in Meta's format is dropped rather than re-sent.
+  const fbclid = cleanFbclid(url.searchParams.get("fbclid"));
+  const fbc = fbclid ? newFbc(fbclid, now) : isValidFbc(have.fbc) ? have.fbc : null;
+  if (fbc) out.push(`_fbc=${fbc}; Path=/; SameSite=Lax; Max-Age=${ninetyDays}${secure}`);
+
+  // _fbp: ours if it is well formed, a new one if it is missing or mangled.
+  const fbp = isValidFbp(have.fbp) ? have.fbp! : newFbp(now);
+  out.push(`_fbp=${fbp}; Path=/; SameSite=Lax; Max-Age=${ninetyDays}${secure}`);
+
   return out;
 }
 
+/**
+ * What the request carries. Anything that is not in Meta's format is treated
+ * as absent — the Conversions API would rather have nothing than a value it
+ * cannot parse, and a bad one drags the whole user_data block down with it.
+ */
 export function readMetaCookies(request: Request, url?: URL): { fbp: string | null; fbc: string | null } {
   const header = request.headers.get("Cookie");
-  const fbclid = url?.searchParams.get("fbclid") ?? null;
-  const fromClick = fbclid ? `fb.1.${Date.now()}.${fbclid}` : null;
-  if (!header) return { fbp: null, fbc: fromClick };
+  const fbclid = cleanFbclid(url?.searchParams.get("fbclid"));
+  const fromClick = fbclid ? newFbc(fbclid) : null;
 
   let fbp: string | null = null;
   let fbc: string | null = null;
-  for (const part of header.split(";")) {
-    const [key, ...rest] = part.trim().split("=");
-    const value = rest.join("=");
-    if (key === "_fbp") fbp = value;
-    if (key === "_fbc") fbc = value;
+  if (header) {
+    for (const part of header.split(";")) {
+      const [key, ...rest] = part.trim().split("=");
+      const value = rest.join("=");
+      if (key === "_fbp") fbp = value;
+      if (key === "_fbc") fbc = value;
+    }
   }
-  return { fbp, fbc: fbc ?? fromClick };
+  // A click id on this very request is newer than a cookie from a past one.
+  const resolvedFbc = fromClick ?? (isValidFbc(fbc) ? fbc : null);
+  return { fbp: isValidFbp(fbp) ? fbp : null, fbc: resolvedFbc };
 }
-
 /**
  * One funnel event, both halves.
  *
@@ -381,7 +451,7 @@ export function readMetaCookies(request: Request, url?: URL): { fbp: string | nu
  * A refused server event is written down, so the Meta page can say so
  * instead of the failure vanishing into a background task.
  */
-async function noteFailure(db: DB, storeId: string, name: MetaEventName, reason: string): Promise<void> {
+async function noteFailure(db: DB, storeId: string, name: MetaTrackName, reason: string): Promise<void> {
   try {
     await db.insert(clientEvents).values({ storeId, kind: "meta-capi-failed", detail: `${name}: ${reason}`.slice(0, 500) });
   } catch {
@@ -398,7 +468,7 @@ export async function trackFunnelEvent(
     pixelId: string | null;
     request: Request;
     url: URL;
-    name: MetaEventName;
+    name: MetaTrackName;
     valueCents: number;
     currency: string;
     contents: { id: string; quantity: number; itemPrice: number }[];
@@ -409,7 +479,12 @@ export async function trackFunnelEvent(
   },
 ): Promise<string | null> {
   if (!input.pixelId) return null;
-  if (!input.contents.length && input.name !== "PageView") return null;
+  // PageView has no contents by nature, and a ladder rung can legitimately
+  // have none either (an Engaged signal away from the bundle box). Everything
+  // else without contents would be a valueless event, which Meta cannot
+  // optimise on.
+  const contentless = input.name === "PageView" || (LADDER_RUNGS as readonly string[]).includes(input.name);
+  if (!input.contents.length && !contentless) return null;
 
   const eventId = input.eventId ?? newMetaEventId();
   const script = eventPixelScript({
@@ -457,7 +532,7 @@ export function sendServerEvent(
     storeId: string;
     request: Request;
     url: URL;
-    name: MetaEventName;
+    name: MetaTrackName;
     identity: MetaIdentity;
     valueCents?: number;
     currency?: string;

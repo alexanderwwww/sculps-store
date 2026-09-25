@@ -373,12 +373,22 @@ function SetupStep({
   );
 }
 
-/** The four events this store really sends, and which halves send them. */
+/**
+ * What this store really sends, and which halves send it.
+ *
+ * The four standard events, then the ladder: custom events that grade a
+ * visitor by how interested they were, so Meta's optimisation has something
+ * between "loaded the page" and "paid".
+ */
 const SENT_EVENTS: { name: string; when: string; browser: boolean; server: boolean }[] = [
   { name: "ViewContent", when: "Someone opens a product", browser: true, server: true },
   { name: "AddToCart", when: "Something goes in the cart", browser: true, server: true },
   { name: "InitiateCheckout", when: "The checkout page loads", browser: true, server: true },
   { name: "Purchase", when: "An order is paid for", browser: true, server: true },
+  { name: "Engaged", when: "Touched a bundle, a photo, an answer or a video", browser: true, server: true },
+  { name: "Considered", when: "60% scrolled, 30s active, and engaged", browser: true, server: true },
+  { name: "HotLead", when: "Reached checkout or typed an email", browser: true, server: true },
+  { name: "CardStarted", when: "Started entering card details", browser: true, server: true },
 ];
 
 export default function Meta({ loaderData }: Route.ComponentProps) {

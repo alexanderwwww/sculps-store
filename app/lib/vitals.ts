@@ -64,6 +64,12 @@ export function p75(values: number[]): number | null {
 export function presenceScript(): string {
   return `(function(){
 var EVERY=20000,last=0,timer=0,scrollMax=0,visibleSince=Date.now(),active=0;
+/* On the built-in workers.dev address the store is chosen by ?store=, so the
+   beat has to say which shop it is beating for. Without it the visit is
+   recorded against whichever store answers a bare request, which is also the
+   row the Meta ladder reads its seconds and scroll depth from. A real domain
+   has no such parameter and nothing changes there. */
+var sp=location.search.match(/[?&]store=([^&]*)/),SEEN='/seen'+(sp?'?store='+sp[1]:'');
 function depth(){var h=document.documentElement,s=h.scrollHeight-innerHeight;if(s<=0)return 100;return Math.min(100,Math.round((scrollY+innerHeight)/h.scrollHeight*100))}
 addEventListener('scroll',function(){var d=depth();if(d>scrollMax)scrollMax=d},{passive:true});
 function beat(final){
@@ -73,8 +79,8 @@ function beat(final){
   if(document.visibilityState==='visible'){active+=Math.min(EVERY,now-visibleSince);visibleSince=now}
   var d=depth();if(d>scrollMax)scrollMax=d;
   var body=JSON.stringify({path:location.pathname,scroll:scrollMax,active:Math.round(active/1000)});active=0;
-  if(final&&navigator.sendBeacon){navigator.sendBeacon('/seen',new Blob([body],{type:'application/json'}));return}
-  fetch('/seen',{method:'POST',body:body,keepalive:!!final,headers:{'Content-Type':'application/json'}}).catch(function(){});
+  if(final&&navigator.sendBeacon){navigator.sendBeacon(SEEN,new Blob([body],{type:'application/json'}));return}
+  fetch(SEEN,{method:'POST',body:body,keepalive:!!final,headers:{'Content-Type':'application/json'}}).catch(function(){});
 }
 function start(){if(timer)return;beat();timer=setInterval(function(){if(document.visibilityState==='visible')beat()},EVERY)}
 function stop(){if(timer){clearInterval(timer);timer=0}}
