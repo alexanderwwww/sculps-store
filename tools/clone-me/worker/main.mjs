@@ -4,10 +4,12 @@
  * Read the board, think, write, show. Round and round, at a person's pace,
  * inside the seller's own hours, in the seller's own signed-in window.
  *
- * "Think" is a live call to Claude on every job. Nothing here is a template
- * and nothing is cached: the deliverable and the reply are written fresh
- * against that buyer's actual words. That is the whole reason this is worth
- * running rather than a macro.
+ * The thinking is not done here. This posts what it sees to the back end;
+ * Claude reads that board from the other side, writes the deliverable and the
+ * reply against that buyer's actual words, and posts them back; this shows
+ * them. Nothing is templated and nothing is cached, and the laptop holds no
+ * credential of any kind — the app talks to a Claude session Alex already
+ * pays for rather than to an API key he would have to buy.
  *
  * The panel is pushed after every step rather than at the end of a pass, so
  * the screen is never a progress bar — it is what is happening, now.
@@ -20,10 +22,13 @@
  */
 import { startBridge } from "./bridge.mjs";
 import { shortlist } from "./work.mjs";
-import { doJob } from "./brain.mjs";
+import { connectCloud } from "./cloud.mjs";
 import { SELLER, working, replyAfterMs, takeBudget, betweenActionsMs, typeReply } from "./pace.mjs";
 
 const BOARD = "https://www.fiverr.com/seller_dashboard";
+const cloud = connectCloud();
+/** How often to look for work Claude has written. */
+const DRAIN_MS = 6000;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const state = {
@@ -43,10 +48,47 @@ const tapped = new Map();
 function show(patch) {
   Object.assign(state, patch);
   page?.do("panel", { set: state }).catch(() => {});
+  // Said outward too, so "is Clone Me working?" has an answer from anywhere.
+  cloud.status({
+    working: state.working,
+    doing: state.doing,
+    resting: state.resting,
+    takenToday: state.takenToday,
+    takeBudget: state.takeBudget,
+    jobs: state.board.length,
+  }).catch(() => {});
 }
 
 function patch(id, fields) {
   show({ board: state.board.map((j) => (j.id === id ? { ...j, ...fields } : j)) });
+}
+
+/**
+ * The tray Claude writes into.
+ *
+ * Drained rather than polled per job, because one read hands over everything
+ * written since the last one and the back end clears it on read — so the same
+ * reply can never be typed twice, which matters more than latency.
+ */
+const written = new Map();
+
+async function drain() {
+  const got = await cloud.work().catch(() => null);
+  const items = got?.items ?? {};
+  for (const [id, work] of Object.entries(items)) written.set(id, work);
+  return Object.keys(items).length;
+}
+
+/** Wait until Claude has written this one. Gives up after twenty minutes. */
+async function waitForWork(id, waitMs = 20 * 60_000) {
+  const until = Date.now() + waitMs;
+  while (Date.now() < until) {
+    if (written.has(id)) return written.get(id);
+    await drain();
+    if (written.has(id)) return written.get(id);
+    await sleep(DRAIN_MS);
+  }
+  return null;
 }
 
 /** Wait for a tap. No timeout — an unanswered job simply stays on the board. */
@@ -83,20 +125,23 @@ async function pass() {
 
   // The board is shown before a single deliverable is written, so the screen
   // fills at once rather than after several minutes of thinking.
-  show({
-    doing: `${take.length} worth looking at`,
-    board: take.map(({ job, verdict }, i) => ({
-      id: job.url || `row-${i}`,
-      title: job.title,
-      buyer: job.buyer,
-      pays: job.priceCents,
-      why: verdict.why,
-      label: verdict.label,
-      wand: verdict.wand === true,
-      reply: null,
-      ready: null,
-    })),
-  });
+  const board = take.map(({ job, verdict }, i) => ({
+    id: job.url || `row-${i}`,
+    title: job.title,
+    buyer: job.buyer,
+    pays: job.priceCents,
+    why: verdict.why,
+    label: verdict.label,
+    wand: verdict.wand === true,
+    reply: null,
+    ready: null,
+    // The brief goes out so Claude can write against the buyer's own words
+    // rather than against a title.
+    brief: job.brief ?? job.line ?? null,
+    dueInMinutes: job.dueInMinutes ?? null,
+  }));
+  show({ doing: `${take.length} worth looking at`, board });
+  await cloud.board(board).catch(() => {});
 
   for (let i = 0; i < take.length; i++) {
     const { job, verdict } = take[i];
@@ -114,20 +159,12 @@ async function pass() {
       continue;
     }
 
-    show({ doing: `writing: ${job.title ?? "a job"}` });
-    let work;
-    try {
-      work = await doJob({ job, verdict });
-    } catch (error) {
-      patch(id, { reply: `Could not write this one: ${error.message}`, ready: false });
+    show({ doing: `waiting on Claude: ${job.title ?? "a job"}` });
+    const work = await waitForWork(id);
+    if (!work) {
+      patch(id, { reply: "Claude has not written this one yet.", ready: false });
       continue;
     }
-
-    if (work.refused) {
-      patch(id, { reply: `Declined — ${work.refused}. It should not have been shortlisted.`, ready: false });
-      continue;
-    }
-
     patch(id, { reply: work.reply, ready: work.ready, questions: work.questions });
 
     const go = await waitForTap(id);
