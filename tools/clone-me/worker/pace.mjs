@@ -64,14 +64,23 @@ export function typeReply(text, persona = SELLER) {
 /**
  * How many jobs to take today.
  *
- * A new seller who accepts nine jobs on day one and delivers six late has
- * ended the account more surely than one who took none. It ramps.
+ * Twenty is the floor, his number. The earlier version ramped from one, on the
+ * reasoning that a new seller who accepts nine jobs on day one and delivers six
+ * late has ended the account faster than one who took none. He overruled it and
+ * it is his account.
+ *
+ * Worth knowing what this number actually does, though: it is a ceiling, not a
+ * target. It cannot conjure orders. A new account with no reviews is not shown
+ * twenty briefs a day — the limiter on day one is how much work exists on the
+ * board, and this only stops the app being the thing in the way. It starts
+ * mattering the week the orders outnumber it.
  */
+export const FLOOR_PER_DAY = 20;
+
 export function takeBudget(daysSelling = 0) {
-  if (daysSelling < 2) return 1;
-  if (daysSelling < 7) return intBetween(1, 2);
-  if (daysSelling < 21) return intBetween(2, 4);
-  return intBetween(3, 6);
+  if (daysSelling < 7) return FLOOR_PER_DAY;
+  if (daysSelling < 21) return FLOOR_PER_DAY + intBetween(0, 10);
+  return FLOOR_PER_DAY + intBetween(5, 25);
 }
 
 /** Between two actions on the site — never the same gap twice. */
