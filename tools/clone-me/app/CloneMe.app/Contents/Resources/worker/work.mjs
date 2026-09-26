@@ -105,8 +105,19 @@ export const ROUTE_TO_WAND = [
   },
 ];
 
-/** A job is worth the hour it takes, or it is not worth taking. */
-const FLOOR_PER_HOUR_CENTS = 1500;
+/**
+ * The old price floor, kept at zero.
+ *
+ * It used to refuse anything under fifteen dollars an hour, which was right
+ * for a shop with a queue and wrong for one with no reviews — and it directly
+ * contradicted his instruction to always offer the lowest. A job cannot be
+ * both too cheap to take and something we deliberately bid the floor on.
+ *
+ * Left as a named number rather than deleted, because the day the reviews
+ * exist this is the one line that turns the shop from buying reviews to
+ * selling work.
+ */
+const FLOOR_PER_HOUR_CENTS = 0;
 
 /**
  * Score one job. Returns what it is, what it pays per hour, and — when we are
@@ -202,4 +213,55 @@ export function shortlist(jobs) {
   const take = scored.filter((s) => s.verdict.take);
   take.sort((a, b) => (b.verdict.perHourCents ?? -1) - (a.verdict.perHourCents ?? -1));
   return { take, skip: scored.filter((s) => !s.verdict.take) };
+}
+
+/* ------------------------------------------------------------- the offer */
+
+/**
+ * What to offer on a brief: the lowest it can be.
+ *
+ * His instruction, and it is the right one for where this account is. A seller
+ * with no reviews has exactly one lever and it is price — nobody picks the
+ * unrated stranger at the same money as a five-hundred-review seller. So the
+ * offer is the platform floor, the work is done properly anyway, and what is
+ * actually being bought is the first reviews.
+ *
+ * A first version of this had a ramp and a stated-budget rule. It was wrong in
+ * two ways at once: it produced an eleven-dollar offer against a forty-dollar
+ * budget — neither lowest nor near the budget — and it was answering a question
+ * he had not asked. Deleted rather than patched.
+ *
+ * The one thing that is not negotiable: Fiverr's minimum is $5 and Fiverr takes
+ * 20%, so a $5 offer nets $4. Below that is not a low price, it is an error,
+ * and the platform refuses it anyway.
+ */
+export const FIVERR_MIN_CENTS = 500;
+export const FIVERR_CUT = 0.2;
+
+/** What actually arrives, after Fiverr's cut. */
+export const netOf = (cents) => Math.round(cents * (1 - FIVERR_CUT));
+
+/**
+ * The offer, in cents.
+ *
+ * The floor for anything up to an hour, and one floor per hour after that —
+ * because a five-dollar offer on a four-hour job is not a low price, it is a
+ * promise that will be delivered late or badly, and a one-star review costs
+ * more than the four dollars it earned.
+ */
+export function offerFor({ verdict, reviews = 0 } = {}) {
+  const minutes = verdict?.minutes ?? 60;
+  const hours = Math.max(1, Math.ceil(minutes / 60));
+  const cents = FIVERR_MIN_CENTS * hours;
+  const net = netOf(cents);
+  return {
+    cents,
+    net,
+    hours,
+    perHourNetCents: Math.round((net / minutes) * 60),
+    why: hours === 1 ? "the lowest Fiverr allows" : `the lowest Fiverr allows, times ${hours} hours`,
+    // Said out loud, because it is the number that decides whether this was
+    // worth doing and it is never the number on the offer.
+    keeps: `$${(net / 100).toFixed(2)} after Fiverr's 20%`,
+  };
 }
