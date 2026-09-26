@@ -85,6 +85,26 @@ export const REFUSE = [
   { re: /\bnda\b.*\bsign\b|\bconfidential\b.*\bcontract\b/i, why: "needs a signature, not a tap" },
 ];
 
+/**
+ * Work we can take, but not finish alone.
+ *
+ * Anything whose deliverable is a picture goes through the Magic Wand, and the
+ * prompt for it is written by Claude rather than improvised by the worker —
+ * Alex's rule, and the right one: a prompt is where an image job is won or
+ * lost, and the worker has no way to look at what came back and judge it.
+ *
+ * These are still shortlisted. They just come with a hand-off rather than a
+ * deliverable, so nothing quietly promises a picture nobody drew.
+ */
+export const ROUTE_TO_WAND = [
+  {
+    id: "listing-images",
+    label: "Listing images and product panels",
+    wants: ["product image", "listing image", "infographic", "amazon image", "product photo", "mockup", "thumbnail", "banner", "ad creative", "poster"],
+    minutes: 60,
+  },
+];
+
 /** A job is worth the hour it takes, or it is not worth taking. */
 const FLOOR_PER_HOUR_CENTS = 1500;
 
@@ -106,6 +126,22 @@ export function scoreJob(job) {
   for (const rule of REFUSE) {
     if (rule.re.test(text)) {
       return { take: false, why: rule.why, skill: null, perHourCents: null };
+    }
+  }
+
+  // The picture jobs are checked first: several of them also mention copy, and
+  // a job whose deliverable is an image must never be scored as a writing job.
+  for (const route of ROUTE_TO_WAND) {
+    if (route.wants.some((w) => text.includes(w))) {
+      return {
+        take: true,
+        wand: true,
+        why: "pictures — the prompt is Claude's, the wand draws it",
+        skill: route.id,
+        label: route.label,
+        minutes: route.minutes,
+        perHourCents: cents == null ? null : Math.round((cents / route.minutes) * 60),
+      };
     }
   }
 
