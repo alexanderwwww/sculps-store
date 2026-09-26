@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Card</title>
+<title>Phoenix</title>
 <style>
 :root{
   --ink:#0A0B0D; --ink-2:rgba(10,11,13,.56); --ink-3:rgba(10,11,13,.34);
@@ -9,7 +9,11 @@
   --sheen:rgba(255,255,255,.85); --hair:rgba(10,11,13,.08);
   --liq1:rgba(120,150,190,.34); --liq2:rgba(20,26,36,.30); --liq3:rgba(90,120,160,.22);
   --ok:#0F9D58;
-  --sil:#E9EBEF; --sil-2:#D8DCE3;
+  --sil:#F1EDE3; --sil-2:#E2DACA;
+  /* Gold as a material, not a colour: a light edge, a mid body and a dark
+     rim, so anything wearing it turns in the light instead of sitting flat. */
+  --au-1:#FFEFBE; --au-2:#E7C476; --au-3:#C28E31; --au-4:#8A621B;
+  --au-ink:#2A1E06;
   --pad:22px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -36,32 +40,41 @@ body{
 /* ---- glass chrome ---------------------------------------------------- */
 .bar{display:flex;align-items:center;justify-content:space-between;padding:56px 0 18px}
 .bar b{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.brand{display:flex;align-items:center;gap:10px}
+/* The mark goes here the moment his file arrives — swap the letter for an
+   <img> and nothing else moves. */
+.ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  background:linear-gradient(150deg,var(--au-1),var(--au-2) 46%,var(--au-3));
+  color:var(--au-ink);font:800 15px/1 inherit;
+  box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 4px 10px -6px rgba(120,86,20,.7)}
+.ico img{width:100%;height:100%;object-fit:contain;display:block}
 .dot{width:36px;height:36px;border-radius:50%;background:var(--glass);backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);border:1px solid var(--glass-b);box-shadow:0 1px 2px rgba(10,11,13,.06),inset 0 1px 0 var(--sheen)}
 
 /* ---- the balance ----------------------------------------------------- */
 .bal{padding:10px 0 26px}
 .bal small{display:block;font-size:13px;font-weight:600;color:var(--ink-3);letter-spacing:.02em}
 .bal b{display:block;font-size:52px;font-weight:700;letter-spacing:-.035em;line-height:1.05;margin-top:6px}
+.bal b em{font-style:normal;background:linear-gradient(140deg,var(--au-3),var(--au-2) 42%,var(--au-1) 62%,var(--au-3));-webkit-background-clip:text;background-clip:text;color:transparent}
 .bal b i{font-style:normal;color:var(--ink-3)}
 
 /* ---- the card: silicone, not glass ----------------------------------- */
 .card{
   position:relative;aspect-ratio:1.586;border-radius:22px;overflow:hidden;
-  background:linear-gradient(152deg,#12151B 0%,#1B2028 42%,#0B0E13 100%);
-  box-shadow:0 26px 44px -22px rgba(10,11,13,.55), 0 2px 0 rgba(255,255,255,.12) inset;
-  color:#F2F5F8;padding:20px;display:flex;flex-direction:column;justify-content:space-between;
+  background:linear-gradient(152deg,var(--au-4) 0%,var(--au-3) 24%,var(--au-2) 50%,var(--au-1) 62%,var(--au-3) 82%,var(--au-4) 100%);
+  box-shadow:0 26px 44px -22px rgba(74,52,10,.55), 0 1px 0 rgba(255,255,255,.55) inset;
+  color:var(--au-ink);padding:20px;display:flex;flex-direction:column;justify-content:space-between;
 }
 /* the soft rubber highlight that makes it read as silicone rather than plastic */
 .card::before{content:"";position:absolute;inset:0;background:
-  radial-gradient(120% 80% at 18% 8%,rgba(255,255,255,.16),transparent 58%),
-  radial-gradient(90% 70% at 92% 96%,rgba(120,160,210,.20),transparent 60%);pointer-events:none}
+  radial-gradient(120% 80% at 18% 8%,rgba(255,255,255,.42),transparent 58%),
+  radial-gradient(90% 70% at 92% 96%,rgba(120,80,10,.22),transparent 60%);pointer-events:none}
 .card::after{content:"";position:absolute;left:-40%;top:-60%;width:80%;height:220%;transform:rotate(18deg);
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.10),transparent);animation:sheen 7s ease-in-out infinite}
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:sheen 7s ease-in-out infinite}
 @keyframes sheen{0%,62%{transform:translateX(-30%) rotate(18deg)}100%{transform:translateX(320%) rotate(18deg)}}
 .card .mk{font-size:15px;font-weight:700;letter-spacing:-.01em;opacity:.95}
 .card .no{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:15px;letter-spacing:.14em;opacity:.9}
 .card .ft{display:flex;align-items:flex-end;justify-content:space-between}
-.card .ft span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.55}
+.card .ft span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.62}
 
 /* ---- silicone buttons ------------------------------------------------ */
 .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0 20px}
@@ -72,7 +85,11 @@ body{
   transition:transform .12s ease,box-shadow .12s ease;
 }
 .btn:active{transform:translateY(1px) scale(.995);box-shadow:0 1px 3px rgba(10,11,13,.18) inset}
-.btn--go{background:linear-gradient(180deg,#1C222B,#0B0E13);color:#fff;box-shadow:0 1px 0 rgba(255,255,255,.14) inset,0 10px 20px -10px rgba(10,11,13,.7)}
+.btn--go{
+  background:linear-gradient(180deg,var(--au-1),var(--au-2) 38%,var(--au-3));
+  color:var(--au-ink);
+  box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 -1px 0 rgba(138,98,27,.5) inset,0 10px 20px -10px rgba(120,86,20,.65);
+}
 
 /* ---- the list, on glass ---------------------------------------------- */
 .sheet{
@@ -94,11 +111,14 @@ body{
 </style></head><body>
 <div class="water"><i class="w1"></i><i class="w2"></i><i class="w3"></i></div>
 <div class="app">
-  <div class="bar"><b>Card</b><span class="dot"></span></div>
-  <div class="bal"><small>Available</small><b>$4,182<i>.60</i></b></div>
+  <div class="bar">
+    <span class="brand"><span class="ico">P</span><b>Phoenix</b></span>
+    <span class="dot"></span>
+  </div>
+  <div class="bal"><small>Available</small><b>$4,182<em>.60</em></b></div>
 
   <div class="card">
-    <div class="mk">kerberos</div>
+    <div class="mk">phoenix</div>
     <div class="no">4242&nbsp;&nbsp;4242&nbsp;&nbsp;4242&nbsp;&nbsp;4242</div>
     <div class="ft"><span>Virtual · Visa</span><span>09/29</span></div>
   </div>
