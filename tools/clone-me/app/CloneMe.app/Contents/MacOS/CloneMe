@@ -98,17 +98,29 @@ run_bounded() {
 
 # --- the port and the worker ------------------------------------------------
 PORT="$(node -e 'const s=require("net").createServer();s.listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})')"
-# The brain is a real call to Claude, so it needs a key. It lives in a file
-# beside the app's own data rather than in the bundle, because the bundle gets
-# replaced on every update and a key inside it would be lost each time.
+# The brain is a real call to Claude, so it needs credentials — but not
+# necessarily an API key. The SDK resolves them in order: ANTHROPIC_API_KEY,
+# then ANTHROPIC_AUTH_TOKEN, then whichever profile `ant auth login` left in
+# ~/.config/anthropic. That last one is the path for somebody who has a Claude
+# subscription and no API key at all, which is the normal case.
 #
-# ~/Library/Application Support/CloneMe/key — one line, nothing else.
-if [ -z "${ANTHROPIC_API_KEY:-}" ] && [ -f "$SUPPORT/key" ]; then
+# So this checks that SOMETHING is there and otherwise says which of the two
+# doors to use. It never reads the credential itself.
+HAS_CREDENTIAL=""
+[ -n "${ANTHROPIC_API_KEY:-}" ] && HAS_CREDENTIAL="env"
+[ -n "${ANTHROPIC_AUTH_TOKEN:-}" ] && HAS_CREDENTIAL="env"
+if [ -z "$HAS_CREDENTIAL" ] && [ -f "$SUPPORT/key" ]; then
   ANTHROPIC_API_KEY="$(head -n 1 "$SUPPORT/key" | tr -d '\r\n ')"
-  export ANTHROPIC_API_KEY
+  [ -n "$ANTHROPIC_API_KEY" ] && { export ANTHROPIC_API_KEY; HAS_CREDENTIAL="file"; }
 fi
-if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
-  alert "Clone Me has no Claude key, so it cannot think. Put the key on one line in:   ~/Library/Application Support/CloneMe/key   — then open Clone Me again."
+# An `ant auth login` profile. The SDK finds it on its own — this only checks
+# that it exists, so the alert below can tell the truth.
+if [ -z "$HAS_CREDENTIAL" ] && [ -d "$HOME/.config/anthropic" ] \
+   && [ -n "$(ls -A "$HOME/.config/anthropic" 2>/dev/null)" ]; then
+  HAS_CREDENTIAL="profile"
+fi
+if [ -z "$HAS_CREDENTIAL" ]; then
+  alert "Clone Me needs to reach Claude and cannot yet. The easy way, if you have a Claude subscription: open Terminal and run   ant auth login   — then open Clone Me again. It signs in through the browser and no key is ever typed. If you would rather use an API key, put it on one line in ~/Library/Application Support/CloneMe/key instead."
   exit 1
 fi
 
