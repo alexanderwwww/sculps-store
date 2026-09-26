@@ -243,6 +243,7 @@ export function Storefront({
           photo={(page.product.images ?? []).find((i) => i.url && i.kind !== "graphic")?.url ?? null}
           logo={page.store.logoUrl ?? null}
           productName={page.product.title}
+          frosted={brand.frostedOffer === true}
         />
       </div>
     </CartDrawerProvider>
@@ -344,6 +345,8 @@ export interface StoreShapes {
   couponPill?: boolean;
   /** The line under the review heading. Empty means the section's own. */
   reviewsLine?: string;
+  /** Hide the offer behind a pane of frost the visitor wipes clear. */
+  frostedOffer?: boolean;
 }
 
 export interface StoreBrand extends StoreShapes {

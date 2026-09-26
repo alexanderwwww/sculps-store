@@ -45,7 +45,13 @@ const NEWER: StoreShapes = {
   specs: "split",
   singleBundleBox: true,
   popularOn: "upsell",
-  couponPill: false,
+  // Reaper's code strip, exactly: the saving in a pill, then the line with the
+  // code you tap to copy. He picked that one by name.
+  couponPill: true,
+  // The machine makes its own ice, so the offer arrives behind a frozen pane
+  // you wipe with a finger. It is the one shop on this platform where a
+  // scratch card is not a gimmick bolted on — it is what the product does.
+  frostedOffer: true,
 };
 
 export const cryoBrand = (page: LoadedProductPage): StoreBrand => ({

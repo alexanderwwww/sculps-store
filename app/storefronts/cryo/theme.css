@@ -3243,3 +3243,203 @@ body:has(.cb-drawer.is-open) .cb-buy__side .cb-wallet { visibility: hidden; }
    corners; a crowd with no code above it is likewise whole. */
 .cb .cb-coupon + .cb-thrilled { border-radius: 0 0 10px 10px; }
 .cb .cb-buy__side > .cb-thrilled:first-child { border-radius: 10px; border-top: 1px solid rgba(15, 26, 34, .08); }
+
+/* ==================================================================
+   The pop-up. The shape is the one Black Reaper uses — he picked it by
+   name — recoloured to this shop's own ice, plus the frozen pane.
+   ================================================================== */
+
+@keyframes pp-veil { from { opacity: 0; } }
+@keyframes pp-in { from { opacity: 0; transform: translate(-50%, -46%) scale(.97); } }
+
+.pp__veil {
+  position: fixed; inset: 0; z-index: 90;
+  background: rgba(6, 6, 8, .62);
+  backdrop-filter: blur(3px);
+  animation: pp-veil .2s ease-out;
+}
+.pp {
+  position: fixed;
+  z-index: 91;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(760px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  overflow: auto;
+  border-radius: 22px;
+  background: #0B1220;
+  color: #F4FAFE;
+  border: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 50px 110px -30px rgba(0,0,0,.9);
+  animation: pp-in .24s cubic-bezier(.2,.8,.3,1);
+  display: grid;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 720px) { .pp { grid-template-columns: 300px 1fr; } }
+.pp__shot {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: var(--silver, #E9EEF2);
+  height: 150px;
+}
+.pp__shot img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+  display: block;
+}
+.pp__shot::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 45%, rgba(11,11,12,.85) 100%);
+}
+  .pp__shot { height: auto; }
+  .pp__shot::after { background: linear-gradient(to right, transparent 55%, rgba(11,11,12,.75) 100%); }
+.pp__in { padding: clamp(20px, 3vw, 32px); display: grid; align-content: center; gap: 0; }
+.pp__logo {
+  height: 30px; width: auto;
+  display: block; margin: 0 0 16px;
+  object-fit: contain; object-position: left center;
+}
+.pp__x {
+  position: absolute; top: 12px; right: 14px; z-index: 3;
+  appearance: none; border: 0; cursor: pointer;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(0,0,0,.5);
+  color: rgba(247,242,231,.85);
+  font-size: 20px; line-height: 1; padding: 0;
+  backdrop-filter: blur(6px);
+}
+.pp__x:hover { background: rgba(0,0,0,.75); }
+.pp__amount {
+  display: block;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(54px, 7vw, 76px);
+  line-height: .9;
+  letter-spacing: -.035em;
+  color: var(--neon);
+}
+.pp__amount em {
+  font-style: normal;
+  font-size: clamp(22px, 2.4vw, 30px);
+  letter-spacing: -.01em;
+  color: #F4FAFE;
+  margin-left: 6px;
+}
+.pp__h { display: block; font-family: var(--display); font-size: 28px; letter-spacing: -.02em; }
+.pp__b {
+  margin: 12px 0 20px;
+  font-size: 14.5px; line-height: 1.5;
+  color: rgba(247,242,231,.62);
+  max-width: 38ch;
+}
+.pp__form { display: grid; gap: 10px; }
+.pp__field {
+  appearance: none; width: 100%;
+  padding: 15px 16px; border-radius: 13px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.05);
+  color: #F4FAFE; font: inherit; font-size: 16px;
+}
+.pp__field::placeholder { color: rgba(247,242,231,.32); }
+.pp__field:focus-visible { outline: 2px solid var(--neon); outline-offset: 1px; border-color: transparent; }
+.pp__go {
+  appearance: none; border: 0; cursor: pointer; width: 100%;
+  padding: 15px 18px; border-radius: 999px;
+  background: var(--neon);
+  color: #17400A;
+  font: inherit; font-weight: 800; font-size: 16px;
+  letter-spacing: -.01em;
+}
+.pp__go:hover { filter: brightness(1.06); }
+.pp__go[disabled] { opacity: .6; cursor: default; }
+.pp__no {
+  appearance: none; border: 0; background: none; cursor: pointer;
+  display: block; margin: 14px 0 0; padding: 2px;
+  font: inherit; font-size: 12.5px;
+  color: rgba(247,242,231,.4); text-decoration: underline;
+}
+.pp__err { margin: 12px 0 0; font-size: 13.5px; color: #FF8A7A; }
+.pp__done { display: grid; gap: 12px; justify-items: start; }
+.pp__done .pp__b { margin: 0; }
+.pp__done .pp__go { margin-top: 6px; }
+.pp__code {
+  display: inline-block;
+  padding: 11px 18px; border-radius: 11px;
+  background: var(--neon); color: #17400A;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700; font-size: 20px; letter-spacing: .1em;
+}
+.pp .pp__go[disabled] { color: #17400A; }
+.pp .pp__code { color: #17400A; }
+
+/* ------------------------------------------------ the frozen pane
+ *
+ * The offer arrives behind frost and you wipe it clear with a finger. It is a
+ * scratch card, except the thing being scratched is a frozen window — the one
+ * metaphor this shop has actually earned, because the machine under it makes
+ * its own ice.
+ *
+ * The canvas is drawn in the component, not downloaded: sharp at any size,
+ * weighs nothing, and a different pane every time.
+ */
+.pp__amount--iced { position: relative; isolation: isolate; }
+.pp__frost {
+  position: absolute;
+  inset: -12px -16px;
+  min-height: 92px;
+  z-index: 2;
+  border-radius: 14px;
+  overflow: hidden;
+  /* The pane has an edge, the way a cold window does against its frame. */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .5), inset 0 0 26px rgba(207, 233, 247, .55);
+}
+.pp__ice {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* A finger, not an I-beam. */
+  cursor: grab;
+  touch-action: none;
+  transition: opacity .4s ease;
+}
+.pp__ice.is-gone { opacity: 0; pointer-events: none; }
+
+/* The instruction, and the way in for anybody who cannot drag: keyboard,
+   screen reader, reduced motion. It is a real button, not a label. */
+/* `button.pp__rub`, not `.pp__rub`: the theme's own reset says
+   `.cb button { font-size: inherit }`, which outranks a single class and was
+   handing this label the amount's seventy-six pixel display face. */
+button.pp__rub {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  /* Written out rather than shorthand: the `font:` shorthand takes the whole
+     declaration down with it if the family var resolves to anything it does
+     not like, and what it took down here was the size — leaving the label
+     inheriting the amount's display face at sixty pixels. */
+  font-family: var(--body, system-ui);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0 14px;
+  color: rgba(11, 58, 87, .66);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .75);
+  pointer-events: none;
+}
+/* It only takes clicks once the pane is gone for people who never dragged —
+   while there is frost, the canvas under it wants the pointer. */
+.pp__ice.is-gone ~ button.pp__rub { pointer-events: auto; opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .pp__ice { display: none; }
+  button.pp__rub { pointer-events: auto; position: static; inset: auto; }
+}
