@@ -9,7 +9,7 @@
   --sheen:rgba(255,255,255,.85); --hair:rgba(10,11,13,.08);
   --liq1:rgba(120,150,190,.34); --liq2:rgba(20,26,36,.30); --liq3:rgba(90,120,160,.22);
   --ok:#0F9D58;
-  --sil:#F1EDE3; --sil-2:#E2DACA;
+  --sil:#E9EBEF; --sil-2:#D8DCE3;
   /* Gold as a material, not a colour: a light edge, a mid body and a dark
      rim, so anything wearing it turns in the light instead of sitting flat. */
   --au-1:#FFEFBE; --au-2:#E7C476; --au-3:#C28E31; --au-4:#8A621B;
@@ -38,7 +38,7 @@ body{
 .app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:0 var(--pad) 0}
 
 /* ---- glass chrome ---------------------------------------------------- */
-.bar{display:flex;align-items:center;justify-content:space-between;padding:56px 0 18px}
+.bar{display:flex;align-items:center;justify-content:space-between;padding:52px 0 14px}
 .bar b{font-size:19px;font-weight:700;letter-spacing:-.02em}
 .brand{display:flex;align-items:center;gap:10px}
 /* The mark goes here the moment his file arrives — swap the letter for an
@@ -51,10 +51,10 @@ body{
 .dot{width:36px;height:36px;border-radius:50%;background:var(--glass);backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);border:1px solid var(--glass-b);box-shadow:0 1px 2px rgba(10,11,13,.06),inset 0 1px 0 var(--sheen)}
 
 /* ---- the balance ----------------------------------------------------- */
-.bal{padding:10px 0 26px}
+.bal{padding:6px 0 20px}
 .bal small{display:block;font-size:13px;font-weight:600;color:var(--ink-3);letter-spacing:.02em}
-.bal b{display:block;font-size:52px;font-weight:700;letter-spacing:-.035em;line-height:1.05;margin-top:6px}
-.bal b em{font-style:normal;background:linear-gradient(140deg,var(--au-3),var(--au-2) 42%,var(--au-1) 62%,var(--au-3));-webkit-background-clip:text;background-clip:text;color:transparent}
+.bal b{display:block;font-size:44px;font-weight:700;letter-spacing:-.035em;line-height:1.05;margin-top:6px}
+.bal b em{font-style:normal;color:var(--ink-3)}
 .bal b i{font-style:normal;color:var(--ink-3)}
 
 /* ---- the card: silicone, not glass ----------------------------------- */
@@ -86,9 +86,8 @@ body{
 }
 .btn:active{transform:translateY(1px) scale(.995);box-shadow:0 1px 3px rgba(10,11,13,.18) inset}
 .btn--go{
-  background:linear-gradient(180deg,var(--au-1),var(--au-2) 38%,var(--au-3));
-  color:var(--au-ink);
-  box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 -1px 0 rgba(138,98,27,.5) inset,0 10px 20px -10px rgba(120,86,20,.65);
+  background:linear-gradient(180deg,#1C222B,#0B0E13);color:#fff;
+  box-shadow:0 1px 0 rgba(255,255,255,.14) inset,0 10px 20px -10px rgba(10,11,13,.7);
 }
 
 /* ---- the list, on glass ---------------------------------------------- */
@@ -108,6 +107,57 @@ body{
 .row small{display:block;font-size:12.5px;color:var(--ink-3);margin-top:1px}
 .amt{font-size:15px;font-weight:700;letter-spacing:-.02em}
 .amt.in{color:var(--ok)}
+
+/* ---- round actions ---------------------------------------------------- */
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:2px 0 18px}
+.quick button{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  border:0;background:none;padding:0;cursor:pointer;
+  font:600 12.5px/1 inherit;color:var(--ink-2);letter-spacing:-.01em;
+}
+.quick .q{
+  width:54px;height:54px;border-radius:50%;display:grid;place-items:center;
+  font-size:19px;color:var(--ink);
+  background:linear-gradient(180deg,#fff,var(--sil));
+  box-shadow:0 1px 0 rgba(255,255,255,.95) inset,0 -1px 0 rgba(10,11,13,.05) inset,0 8px 16px -10px rgba(10,11,13,.35);
+  transition:transform .12s ease;
+}
+.quick button:active .q{transform:translateY(1px) scale(.97)}
+
+/* ---- the card, as a chip --------------------------------------------- */
+.chip{
+  display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;width:100%;
+  border:0;text-align:left;cursor:pointer;
+  padding:12px;border-radius:16px;margin:0 0 16px;
+  background:var(--glass);backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);
+  border:1px solid var(--glass-b);
+  box-shadow:0 1px 0 var(--sheen) inset,0 6px 16px -12px rgba(10,11,13,.3);
+}
+.chip__card{
+  width:44px;height:29px;border-radius:6px;display:block;
+  background:linear-gradient(140deg,var(--au-4),var(--au-3) 26%,var(--au-2) 52%,var(--au-1) 64%,var(--au-3) 88%);
+  box-shadow:0 1px 0 rgba(255,255,255,.55) inset,0 3px 8px -5px rgba(120,86,20,.8);
+}
+.chip__t b{display:block;font-size:14.5px;font-weight:650}
+.chip__t small{display:block;font-size:12.5px;color:var(--ink-3);margin-top:1px}
+.chip__x{font-size:20px;color:var(--ink-3);line-height:1}
+
+/* ---- tab bar ---------------------------------------------------------- */
+.tabs{
+  position:sticky;bottom:0;margin:0 calc(var(--pad) * -1);
+  display:grid;grid-template-columns:repeat(4,1fr);
+  padding:10px 8px calc(10px + env(safe-area-inset-bottom,18px));
+  background:var(--glass);backdrop-filter:blur(30px) saturate(1.7);-webkit-backdrop-filter:blur(30px) saturate(1.7);
+  border-top:1px solid var(--glass-b);
+}
+.tabs button{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  border:0;background:none;cursor:pointer;
+  font:600 11px/1 inherit;color:var(--ink-3);letter-spacing:.01em;
+}
+.tabs button span{font-size:17px;line-height:1}
+.tabs button.on{color:var(--ink)}
+.sheet h3+h3,.row+h3{margin-top:18px}
 </style></head><body>
 <div class="water"><i class="w1"></i><i class="w2"></i><i class="w3"></i></div>
 <div class="app">
@@ -115,26 +165,45 @@ body{
     <span class="brand"><span class="ico">P</span><b>Phoenix</b></span>
     <span class="dot"></span>
   </div>
-  <div class="bal"><small>Available</small><b>$4,182<em>.60</em></b></div>
 
-  <div class="card">
-    <div class="mk">phoenix</div>
-    <div class="no">4242&nbsp;&nbsp;4242&nbsp;&nbsp;4242&nbsp;&nbsp;4242</div>
-    <div class="ft"><span>Virtual · Visa</span><span>09/29</span></div>
+  <div class="bal">
+    <small>US Dollar · Available</small>
+    <b>$4,182<em>.60</em></b>
   </div>
 
-  <div class="acts">
-    <button class="btn btn--go">Add money</button>
-    <button class="btn">Freeze</button>
-  </div>
+  <!-- Round actions, the way Revolut and Wise open: the four things you came
+       to do, said in one word each, before anything else on the screen. -->
+  <nav class="quick">
+    <button><span class="q">&#8595;</span>Add</button>
+    <button><span class="q">&#8593;</span>Send</button>
+    <button><span class="q">&#8644;</span>Convert</button>
+    <button><span class="q">&#183;&#183;&#183;</span>More</button>
+  </nav>
+
+  <!-- The card is a chip you tap, not the hero. A picture of a card takes half
+       a phone and tells you nothing you did not already know. -->
+  <button class="chip">
+    <span class="chip__card"></span>
+    <span class="chip__t"><b>Virtual · Visa</b><small>&#8226;&#8226;&#8226;&#8226; 4242 &#183; Apple Pay</small></span>
+    <span class="chip__x">&#8250;</span>
+  </button>
 
   <div class="sheet">
     <h3>Today</h3>
-    <div class="row"><span class="av">◐</span><span><b>Meta Ads</b><small>11:04 · Advertising</small></span><span class="amt">−$240.00</span></div>
-    <div class="row"><span class="av">↑</span><span><b>Top up · Apple Pay</b><small>10:52 · Instant</small></span><span class="amt in">+$1,000.00</span></div>
-    <div class="row"><span class="av">◈</span><span><b>Cloudflare</b><small>09:18 · Software</small></span><span class="amt">−$5.00</span></div>
-    <div class="row"><span class="av">▣</span><span><b>Stripe payout</b><small>08:00 · From blackreaper.us</small></span><span class="amt in">+$612.40</span></div>
-    <div class="row"><span class="av">✳</span><span><b>OpenAI</b><small>07:41 · Software</small></span><span class="amt">−$20.00</span></div>
+    <div class="row"><span class="av">&#9680;</span><span><b>Meta Ads</b><small>11:04 &#183; Advertising</small></span><span class="amt">&#8722;$240.00</span></div>
+    <div class="row"><span class="av">&#8593;</span><span><b>Top up &#183; Apple Pay</b><small>10:52 &#183; Instant</small></span><span class="amt in">+$1,000.00</span></div>
+    <div class="row"><span class="av">&#9672;</span><span><b>Cloudflare</b><small>09:18 &#183; Software</small></span><span class="amt">&#8722;$5.00</span></div>
+    <h3>Yesterday</h3>
+    <div class="row"><span class="av">&#9635;</span><span><b>Stripe payout</b><small>08:00 &#183; blackreaper.us</small></span><span class="amt in">+$612.40</span></div>
+    <div class="row"><span class="av">&#10035;</span><span><b>OpenAI</b><small>07:41 &#183; Software</small></span><span class="amt">&#8722;$20.00</span></div>
+    <div class="row"><span class="av">&#9681;</span><span><b>Meta Ads</b><small>06:30 &#183; Advertising</small></span><span class="amt">&#8722;$180.00</span></div>
   </div>
+
+  <nav class="tabs">
+    <button class="on"><span>&#9632;</span>Home</button>
+    <button><span>&#9636;</span>Cards</button>
+    <button><span>&#8644;</span>Payments</button>
+    <button><span>&#9679;</span>You</button>
+  </nav>
 </div>
 </body></html>
