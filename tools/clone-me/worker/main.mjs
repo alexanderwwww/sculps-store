@@ -47,7 +47,7 @@ const tapped = new Map();
 
 function show(patch) {
   Object.assign(state, patch);
-  page?.do("panel", { set: state }).catch(() => {});
+  page?.ask("panel", { set: state }).catch(() => {});
   // Said outward too, so "is Clone Me working?" has an answer from anywhere.
   cloud.status({
     working: state.working,
@@ -111,11 +111,11 @@ async function pass() {
   }
   show({ working: true, resting: null, doing: "opening the board" });
 
-  await page.do("goto", { url: BOARD });
+  await page.ask("goto", { url: BOARD });
   await sleep(betweenActionsMs());
 
   show({ doing: "reading what is waiting" });
-  const rows = await page.do("read", { what: "listings" });
+  const rows = await page.ask("read", { what: "listings" });
   const { take } = shortlist(rows ?? []);
 
   if (!take.length) {
@@ -181,7 +181,7 @@ async function pass() {
     await sleep(Math.min(wait, 90_000));
 
     show({ doing: `typing to ${job.buyer ?? "the buyer"}` });
-    await page.do("type", { keys: typeReply(work.reply) });
+    await page.ask("type", { keys: typeReply(work.reply) });
 
     state.takenToday += 1;
     patch(id, { reply: work.reply + "\n\n— typed, ready for you to send" });
@@ -192,13 +192,19 @@ async function pass() {
   show({ doing: null });
 }
 
-const bridge = await startBridge({
+let bridge;
+bridge = await startBridge({
   dir: new URL(".", import.meta.url).pathname,
-  onMessage(message, api) {
+  // One argument. The bridge hands over the message and nothing else — the
+  // way to reach the page is the object startBridge returned, which is why
+  // `page` is assigned below rather than in here.
+  onMessage(message) {
     if (message.t === "hello") {
-      page = api;
+      page = bridge;
       show({});
-      pass().catch(() => {});
+      pass().catch((error) => {
+        cloud.log([{ line: `pass failed: ${error.message}` }]).catch(() => {});
+      });
     }
     if (message.t === "take") tapped.set(message.id, "take");
     if (message.t === "skip") tapped.set(message.id, "skip");
