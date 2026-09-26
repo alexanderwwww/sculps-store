@@ -22,6 +22,7 @@
  *   GET  /clone/<key>/log      what happened
  *   POST /clone/<key>/log      a line for the record
  *   POST /clone/<key>/mcp      the same things as MCP tools
+ *   GET  /clone/<key>/icon.png the app's mark, so the connector wears it
  *
  * The key in the path is the whole of the authentication. Alex signs into
  * Fiverr himself, in the window; nothing to sign in with is ever stored here.
@@ -186,6 +187,21 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   if (path[0] !== KEY) return json({ ok: false, error: "no" }, 404);
   const what = path[1] ?? "";
 
+  /* The mark, so the connector shows his icon rather than a default glyph.
+     Served from the bucket rather than the bundle: the app is replaced on
+     every update and the picture should not have to be. */
+  if (what === "icon.png" || what === "icon-256.png") {
+    const object = await env.MEDIA.get(what === "icon-256.png" ? "cm-icon-256.png" : "cm-icon-512.png");
+    if (!object) return new Response("no", { status: 404 });
+    return new Response(object.body, {
+      headers: {
+        "content-type": "image/png",
+        "cache-control": "public, max-age=86400",
+        "access-control-allow-origin": "*",
+      },
+    });
+  }
+
   if (what === "board") return json((await read(env, "board")) ?? { jobs: [], at: null });
   if (what === "status") return json((await read(env, "status")) ?? {});
   if (what === "log") return json((await read(env, "log")) ?? { lines: [] });
@@ -221,7 +237,16 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       return reply({
         protocolVersion: "2024-11-05",
         capabilities: { tools: {} },
-        serverInfo: { name: "clone-me", version: "1.0.0" },
+        serverInfo: {
+          name: "clone-me",
+          title: "Clone Me",
+          version: "1.0.0",
+          websiteUrl: ORIGIN,
+          icons: [
+            { src: `${BASE}/icon.png`, mimeType: "image/png", sizes: ["512x512"] },
+            { src: `${BASE}/icon-256.png`, mimeType: "image/png", sizes: ["256x256"] },
+          ],
+        },
       });
     }
     if (body.method === "tools/list") return reply({ tools: TOOLS });
