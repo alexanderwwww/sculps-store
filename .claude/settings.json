@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build)",
+      "Bash(npm run typecheck)",
+      "mcp__magic_wand__wand_status",
+      "mcp__magic_wand__wand_shots",
+      "mcp__magic_wand__wand_queue_get",
+      "mcp__higgs__balance",
+      "mcp__higgs__jobs_wait",
+      "mcp__higgs__models_explore",
+      "mcp__higgs__show_medias",
+      "mcp__higgs__transactions",
+      "mcp__openart__openart_account_get",
+      "mcp__openart__openart_creation_get",
+      "mcp__openart__openart_model_cost",
+      "mcp__openart__openart_model_list",
+      "mcp__openart__openart_model_form_get",
+      "mcp__organic__organic_status",
+      "mcp__organic__organic_accounts",
+      "mcp__organic__organic_findings",
+      "mcp__organic__organic_log"
+    ]
+  }
+}
