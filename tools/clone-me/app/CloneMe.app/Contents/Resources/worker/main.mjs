@@ -213,6 +213,28 @@ bridge = await startBridge({
 
 console.log(`PORT ${bridge.port}`);
 
+/**
+ * Say "I am up" before the page has said anything.
+ *
+ * Without this the back end cannot tell a dead worker from a live one whose
+ * window never connected — both look like silence, and silence sent me looking
+ * in the wrong place twice. The heartbeat keeps saying it, so a page that
+ * connects late, or drops, is visible from outside rather than guessed at.
+ */
+cloud.log([{ line: `worker up on port ${bridge.port}` }]).catch(() => {});
+
+setInterval(() => {
+  cloud.status({
+    ...state,
+    board: undefined,
+    jobs: state.board.length,
+    // The one fact that separates the two silences.
+    pageConnected: bridge.connected(),
+    at: Date.now(),
+  }).catch(() => {});
+}, 20_000);
+
+
 // Round again on a scattered timer. A pass that starts at exactly :00 every
 // hour is its own signature, whoever is pressing the buttons.
 setInterval(

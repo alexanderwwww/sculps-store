@@ -14,6 +14,18 @@ node "$HERE/check-swift.mjs" "$HERE/app/CloneMe.app/Contents/Resources/Shell/mai
 # The page's code is rebuilt from its parts, so the bundle can never carry a
 # stale one: agent.built.js is generated, never edited.
 node "$HERE/worker/agent/build.mjs"
+# Every build gets a number, and the number always goes up.
+#
+# This is not bookkeeping — it is the difference between shipping and not. The
+# launcher copies the bundle's worker over the installed one only when the
+# bundle's build is HIGHER. Both were hardcoded to 1, so the very first install
+# pinned the machine to the first worker and every rebuild after it was
+# silently ignored. A whole afternoon of "it still does not work" was one
+# stale file that no amount of re-downloading could dislodge.
+BUILD="$(date +%s)"
+/usr/bin/sed -i.bak "s/^BUNDLE_BUILD=.*/BUNDLE_BUILD=$BUILD/" "$HERE/app/CloneMe.app/Contents/MacOS/CloneMe"
+rm -f "$HERE/app/CloneMe.app/Contents/MacOS/CloneMe.bak"
+echo "build $BUILD"
 cp "$HERE"/worker/*.mjs "$HERE"/worker/package.json "$HERE"/worker/agent.built.js "$RES/"
 rm -f "$OUT"; mkdir -p "$(dirname "$OUT")"
 ( cd "$HERE/app" && zip -qr "$OUT" CloneMe.app -x '*.DS_Store' -x '*/node_modules/*' )

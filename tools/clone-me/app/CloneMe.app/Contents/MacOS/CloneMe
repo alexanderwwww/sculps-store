@@ -44,7 +44,7 @@ SWIFTC="$(xcrun -f swiftc 2>/dev/null || true)"
 # --- the worker, installed beside itself ----------------------------------
 # The bundle's build; a live push writes a higher one into worker/BUILD and
 # this must never copy over it.
-BUNDLE_BUILD=1
+BUNDLE_BUILD=1790423337
 RUNTIME_BUILD=0
 if [ -f "$SUPPORT/worker/BUILD" ]; then
   RUNTIME_BUILD="$(tr -dc '0-9' < "$SUPPORT/worker/BUILD")"
