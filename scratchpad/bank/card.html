@@ -1,0 +1,120 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Card</title>
+<style>
+:root{
+  --ink:#0A0B0D; --ink-2:rgba(10,11,13,.56); --ink-3:rgba(10,11,13,.34);
+  --pg:#F4F5F7; --white:#fff;
+  --glass:rgba(255,255,255,.62); --glass-b:rgba(255,255,255,.75);
+  --sheen:rgba(255,255,255,.85); --hair:rgba(10,11,13,.08);
+  --liq1:rgba(120,150,190,.34); --liq2:rgba(20,26,36,.30); --liq3:rgba(90,120,160,.22);
+  --ok:#0F9D58;
+  --sil:#E9EBEF; --sil-2:#D8DCE3;
+  --pad:22px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  background:var(--pg);
+  font-family:-apple-system,"SF Pro Display","SF Pro Text",system-ui,sans-serif;
+  letter-spacing:-.014em; color:var(--ink);
+  overflow:hidden;
+}
+
+/* ---- dark water, moving under everything ---------------------------- */
+.water{position:fixed;inset:0;overflow:hidden;z-index:0;filter:blur(46px) saturate(1.15)}
+.water i{position:absolute;display:block;border-radius:50%;mix-blend-mode:multiply}
+.w1{width:78vw;height:78vw;left:-18vw;top:-14vh;background:radial-gradient(circle at 34% 36%,var(--liq2),transparent 68%);animation:liqA 19s ease-in-out infinite}
+.w2{width:70vw;height:70vw;right:-22vw;top:22vh;background:radial-gradient(circle at 60% 40%,var(--liq1),transparent 66%);animation:liqB 24s ease-in-out infinite}
+.w3{width:64vw;height:64vw;left:8vw;bottom:-22vh;background:radial-gradient(circle at 44% 56%,var(--liq3),transparent 64%);animation:liqA 31s ease-in-out infinite reverse}
+@keyframes liqA{0%{transform:translate3d(-8%,-4%,0) scale(1)}50%{transform:translate3d(12%,6%,0) scale(1.16)}100%{transform:translate3d(-8%,-4%,0) scale(1)}}
+@keyframes liqB{0%{transform:translate3d(10%,4%,0) scale(1.08)}50%{transform:translate3d(-8%,-6%,0) scale(.94)}100%{transform:translate3d(10%,4%,0) scale(1.08)}}
+@media (prefers-reduced-motion:reduce){.water i{animation:none}}
+
+.app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:0 var(--pad) 0}
+
+/* ---- glass chrome ---------------------------------------------------- */
+.bar{display:flex;align-items:center;justify-content:space-between;padding:56px 0 18px}
+.bar b{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.dot{width:36px;height:36px;border-radius:50%;background:var(--glass);backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);border:1px solid var(--glass-b);box-shadow:0 1px 2px rgba(10,11,13,.06),inset 0 1px 0 var(--sheen)}
+
+/* ---- the balance ----------------------------------------------------- */
+.bal{padding:10px 0 26px}
+.bal small{display:block;font-size:13px;font-weight:600;color:var(--ink-3);letter-spacing:.02em}
+.bal b{display:block;font-size:52px;font-weight:700;letter-spacing:-.035em;line-height:1.05;margin-top:6px}
+.bal b i{font-style:normal;color:var(--ink-3)}
+
+/* ---- the card: silicone, not glass ----------------------------------- */
+.card{
+  position:relative;aspect-ratio:1.586;border-radius:22px;overflow:hidden;
+  background:linear-gradient(152deg,#12151B 0%,#1B2028 42%,#0B0E13 100%);
+  box-shadow:0 26px 44px -22px rgba(10,11,13,.55), 0 2px 0 rgba(255,255,255,.12) inset;
+  color:#F2F5F8;padding:20px;display:flex;flex-direction:column;justify-content:space-between;
+}
+/* the soft rubber highlight that makes it read as silicone rather than plastic */
+.card::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(120% 80% at 18% 8%,rgba(255,255,255,.16),transparent 58%),
+  radial-gradient(90% 70% at 92% 96%,rgba(120,160,210,.20),transparent 60%);pointer-events:none}
+.card::after{content:"";position:absolute;left:-40%;top:-60%;width:80%;height:220%;transform:rotate(18deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.10),transparent);animation:sheen 7s ease-in-out infinite}
+@keyframes sheen{0%,62%{transform:translateX(-30%) rotate(18deg)}100%{transform:translateX(320%) rotate(18deg)}}
+.card .mk{font-size:15px;font-weight:700;letter-spacing:-.01em;opacity:.95}
+.card .no{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:15px;letter-spacing:.14em;opacity:.9}
+.card .ft{display:flex;align-items:flex-end;justify-content:space-between}
+.card .ft span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.55}
+
+/* ---- silicone buttons ------------------------------------------------ */
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0 20px}
+.btn{
+  border:0;border-radius:16px;padding:15px 16px;font:600 15px/1 inherit;color:var(--ink);
+  background:linear-gradient(180deg,#fff,var(--sil));
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 -1px 0 rgba(10,11,13,.06) inset,0 6px 14px -8px rgba(10,11,13,.3);
+  transition:transform .12s ease,box-shadow .12s ease;
+}
+.btn:active{transform:translateY(1px) scale(.995);box-shadow:0 1px 3px rgba(10,11,13,.18) inset}
+.btn--go{background:linear-gradient(180deg,#1C222B,#0B0E13);color:#fff;box-shadow:0 1px 0 rgba(255,255,255,.14) inset,0 10px 20px -10px rgba(10,11,13,.7)}
+
+/* ---- the list, on glass ---------------------------------------------- */
+.sheet{
+  flex:1;min-height:0;margin:0 calc(var(--pad) * -1);padding:16px var(--pad) 28px;
+  border-radius:26px 26px 0 0;
+  background:var(--glass);backdrop-filter:blur(30px) saturate(1.7);-webkit-backdrop-filter:blur(30px) saturate(1.7);
+  border-top:1px solid var(--glass-b);
+  box-shadow:0 -1px 0 var(--sheen) inset, 0 -18px 40px -24px rgba(10,11,13,.35);
+  overflow:auto;
+}
+.sheet h3{margin:0 0 12px;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
+.row{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--hair)}
+.row:last-child{border-bottom:0}
+.av{width:38px;height:38px;border-radius:12px;background:linear-gradient(180deg,#fff,var(--sil-2));display:grid;place-items:center;font-size:15px;box-shadow:0 1px 0 rgba(255,255,255,.9) inset}
+.row b{display:block;font-size:15px;font-weight:600}
+.row small{display:block;font-size:12.5px;color:var(--ink-3);margin-top:1px}
+.amt{font-size:15px;font-weight:700;letter-spacing:-.02em}
+.amt.in{color:var(--ok)}
+</style></head><body>
+<div class="water"><i class="w1"></i><i class="w2"></i><i class="w3"></i></div>
+<div class="app">
+  <div class="bar"><b>Card</b><span class="dot"></span></div>
+  <div class="bal"><small>Available</small><b>$4,182<i>.60</i></b></div>
+
+  <div class="card">
+    <div class="mk">kerberos</div>
+    <div class="no">4242&nbsp;&nbsp;4242&nbsp;&nbsp;4242&nbsp;&nbsp;4242</div>
+    <div class="ft"><span>Virtual · Visa</span><span>09/29</span></div>
+  </div>
+
+  <div class="acts">
+    <button class="btn btn--go">Add money</button>
+    <button class="btn">Freeze</button>
+  </div>
+
+  <div class="sheet">
+    <h3>Today</h3>
+    <div class="row"><span class="av">◐</span><span><b>Meta Ads</b><small>11:04 · Advertising</small></span><span class="amt">−$240.00</span></div>
+    <div class="row"><span class="av">↑</span><span><b>Top up · Apple Pay</b><small>10:52 · Instant</small></span><span class="amt in">+$1,000.00</span></div>
+    <div class="row"><span class="av">◈</span><span><b>Cloudflare</b><small>09:18 · Software</small></span><span class="amt">−$5.00</span></div>
+    <div class="row"><span class="av">▣</span><span><b>Stripe payout</b><small>08:00 · From blackreaper.us</small></span><span class="amt in">+$612.40</span></div>
+    <div class="row"><span class="av">✳</span><span><b>OpenAI</b><small>07:41 · Software</small></span><span class="amt">−$20.00</span></div>
+  </div>
+</div>
+</body></html>
