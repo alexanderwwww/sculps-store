@@ -1,0 +1,10 @@
+{
+  "name": "clone-me-worker",
+  "private": true,
+  "type": "module",
+  "description": "Clone Me's brain: it reads the board, thinks with Claude, writes the work, and shows it. It never presses send.",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.125.0",
+    "ws": "^8.18.0"
+  }
+}

@@ -1,0 +1,241 @@
+#!/bin/bash
+# Clone Me — the launcher.
+#
+# Four jobs, in this order: install the worker beside itself, start the worker,
+# build the window once, then hand this process over to the window. `exec` at
+# the end is deliberate: the window keeps this process id, which is the one
+# Launch Services started from the bundle, so the Dock shows the bundle's icon
+# and Cmd-Q quits the right thing.
+#
+# There is no Chromium any more and no fallback window: the window is always
+# the Swift one. If Swift cannot build, that is a thing to fix, not to paper
+# over — the alert says exactly what to type.
+set -u
+
+HERE="$(cd "$(dirname "$0")/../Resources" && pwd)"
+APP_ROOT="$(cd "$HERE/../.." && pwd)"
+SUPPORT="$HOME/Library/Application Support/CloneMe"
+LOG="$SUPPORT/log/research.log"
+mkdir -p "$SUPPORT/worker" "$SUPPORT/bin" "$SUPPORT/log"
+# Every crew line lands in the log; kept to one generation past 8 MB.
+if [ -f "$LOG" ] && [ "$(stat -f%z "$LOG" 2>/dev/null || echo 0)" -gt 8000000 ]; then mv -f "$LOG" "$LOG.1"; fi
+
+# launchd's PATH has none of Homebrew in it. Every "node is not installed"
+# alert the old app ever showed was this line missing.
+export PATH="/opt/homebrew/bin:/usr/local/bin:/opt/homebrew/sbin:$PATH"
+
+say() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG"; }
+alert() {
+  say "ALERT: $1"
+  /usr/bin/osascript -e 'on run argv' -e 'display alert "Clone Me" message (item 1 of argv)' -e 'end run' "$1" >/dev/null 2>&1
+}
+
+say "open — bundle at $APP_ROOT"
+
+# --- what the Mac needs --------------------------------------------------
+if ! command -v node >/dev/null 2>&1; then
+  alert "Node is not installed. In Terminal: brew install node — then open Clone Me again."
+  exit 1
+fi
+# Swift builds the window. It is the only window there is.
+SWIFTC="$(xcrun -f swiftc 2>/dev/null || true)"
+[ -x "$SWIFTC" ] || SWIFTC=""
+
+# --- the worker, installed beside itself ----------------------------------
+# The bundle's build; a live push writes a higher one into worker/BUILD and
+# this must never copy over it.
+BUNDLE_BUILD=1
+RUNTIME_BUILD=0
+if [ -f "$SUPPORT/worker/BUILD" ]; then
+  RUNTIME_BUILD="$(tr -dc '0-9' < "$SUPPORT/worker/BUILD")"
+  RUNTIME_BUILD="${RUNTIME_BUILD:-0}"
+fi
+if [ "$RUNTIME_BUILD" -lt "$BUNDLE_BUILD" ] || [ ! -f "$SUPPORT/worker/main.mjs" ]; then
+  cp -R "$HERE/worker/." "$SUPPORT/worker/"
+  echo "$BUNDLE_BUILD" > "$SUPPORT/worker/BUILD"
+  say "installed build $BUNDLE_BUILD from the bundle"
+else
+  say "running build $RUNTIME_BUILD"
+fi
+
+# The worker's only dependency is `ws`. It is installed by the worker's own
+# runner, below — never on this path, where nothing is on screen yet.
+needs_deps() {
+  [ ! -f "$SUPPORT/worker/node_modules/ws/package.json" ]
+}
+
+# The watchdog: if this run never reaches the window, say why, once. A silent
+# bouncing icon is the one failure that tells nobody anything.
+rm -f "$SUPPORT/.window"
+(
+  sleep 75
+  if [ ! -f "$SUPPORT/.window" ]; then
+    /usr/bin/osascript -e 'on run argv' -e 'display alert "Clone Me" message (item 1 of argv)' -e 'end run' \
+      "Still setting up after a minute. Last lines of the log: $(tail -4 "$LOG" | tr '\n' ' ')" >/dev/null 2>&1
+  fi
+) &
+WATCHDOG=$!
+
+# Run something with a ceiling on it. macOS has no `timeout`, and a build step
+# that hangs forever is what a bouncing Dock icon actually is. Output goes to
+# the log unless RUN_BOUNDED_OUT names a file.
+run_bounded() {
+  local secs="$1"; shift
+  "$@" >> "${RUN_BOUNDED_OUT:-$LOG}" 2>&1 &
+  local pid=$! waited=0
+  while kill -0 "$pid" 2>/dev/null; do
+    sleep 1
+    waited=$((waited + 1))
+    if [ "$waited" -ge "$secs" ]; then
+      kill "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+      say "gave up on: $1 (over ${secs}s)"
+      return 124
+    fi
+  done
+  wait "$pid"
+}
+
+# --- the port and the worker ------------------------------------------------
+PORT="$(node -e 'const s=require("net").createServer();s.listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})')"
+# The brain is a real call to Claude, so it needs a key. It lives in a file
+# beside the app's own data rather than in the bundle, because the bundle gets
+# replaced on every update and a key inside it would be lost each time.
+#
+# ~/Library/Application Support/CloneMe/key — one line, nothing else.
+if [ -z "${ANTHROPIC_API_KEY:-}" ] && [ -f "$SUPPORT/key" ]; then
+  ANTHROPIC_API_KEY="$(head -n 1 "$SUPPORT/key" | tr -d '\r\n ')"
+  export ANTHROPIC_API_KEY
+fi
+if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+  alert "Clone Me has no Claude key, so it cannot think. Put the key on one line in:   ~/Library/Application Support/CloneMe/key   — then open Clone Me again."
+  exit 1
+fi
+
+export CLONE_PORT="$PORT"
+export CLONE_PARENT_PID="$$"
+export CLONE_HOME="$SUPPORT"
+
+# The worker, restarted on 75 (it updated itself) and left alone otherwise.
+# It watches the window's pid and exits when the window is gone.
+#
+# A pushed build that dies within its first half minute is put aside: the
+# bundle's build is copied back, the bad number is written to worker/BAD so
+# the worker never pulls it again, and the worker is started once more.
+(
+  cd "$SUPPORT/worker" || exit 1
+  if needs_deps; then
+    say "installing dependencies"
+    if ! run_bounded 300 npm install --no-audit --no-fund; then
+      /usr/bin/osascript -e 'on run argv' -e 'display alert "Clone Me" message (item 1 of argv)' -e 'end run' \
+        "Could not install what the worker needs. Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')" >/dev/null 2>&1
+      exit 1
+    fi
+    say "dependencies installed"
+  fi
+  recovered=0
+  while :; do
+    started=$(date +%s)
+    node main.mjs >> "$LOG" 2>&1
+    code=$?
+    if [ "$code" -eq 75 ]; then say "worker restarting on a new build"; continue; fi
+    running="$(tr -dc '0-9' < "$SUPPORT/worker/BUILD" 2>/dev/null)"; running="${running:-0}"
+    if [ "$code" -ne 0 ] && [ "$recovered" -eq 0 ] && [ "$running" -gt "$BUNDLE_BUILD" ] && [ $(( $(date +%s) - started )) -lt 30 ]; then
+      recovered=1
+      say "build $running died at start (code $code) — back to the bundled build $BUNDLE_BUILD"
+      echo "$running" > "$SUPPORT/worker/BAD"
+      cp -R "$HERE/worker/." "$SUPPORT/worker/"
+      echo "$BUNDLE_BUILD" > "$SUPPORT/worker/BUILD"
+      /usr/bin/osascript -e 'on run argv' -e 'display alert "Clone Me" message (item 1 of argv)' -e 'end run' \
+        "Build $running would not start, so Clone Me is back on its bundled build. Tell Claude: the last push is bad." >/dev/null 2>&1
+      continue
+    fi
+    if [ "$code" -ne 0 ] && kill -0 "$CLONE_PARENT_PID" 2>/dev/null; then
+      /usr/bin/osascript -e 'on run argv' -e 'display alert "Clone Me" message (item 1 of argv)' -e 'end run' \
+        "The worker stopped (code $code). Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')" >/dev/null 2>&1
+    fi
+    break
+  done
+) &
+say "worker starting on port $PORT"
+
+# --- the window, built once ------------------------------------------------
+# Keyed on the source, so a changed main.swift is rebuilt and an unchanged one
+# never is.
+SHELL_KEY="$(md5 -q "$HERE/Shell/main.swift" 2>/dev/null || md5sum "$HERE/Shell/main.swift" | cut -c1-32)"
+SHELL_BIN="$SUPPORT/bin/CloneMeShell-$SHELL_KEY"
+
+# Where the macOS SDK is.
+#
+# `swiftc` on its own found no SDK on Alex's Mac and died with "unable to
+# load standard library for target x86_64-apple-macosx15.0". With only the
+# Command Line Tools installed — no Xcode — swiftc has to be TOLD which SDK
+# to build against; and when xcode-select points at an Xcode that is not
+# there, xcrun answers nothing at all. So: ask xcrun, then look where the
+# Command Line Tools and Xcode each keep it.
+find_sdk() {
+  local sdk
+  sdk="$(xcrun --sdk macosx --show-sdk-path 2>/dev/null || true)"
+  [ -n "$sdk" ] && [ -d "$sdk" ] && { printf '%s' "$sdk"; return 0; }
+  for candidate in \
+    /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+    /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk; do
+    [ -d "$candidate" ] && { printf '%s' "$candidate"; return 0; }
+  done
+  return 1
+}
+
+build_window() {
+  [ -n "$SWIFTC" ] || return 1
+  local sdk arch
+  sdk="$(find_sdk || true)"
+  arch="$(uname -m)"
+  # If xcode-select is pointing somewhere broken, the Command Line Tools are
+  # still a complete developer dir on their own.
+  if [ -z "$sdk" ] && [ -d /Library/Developer/CommandLineTools ]; then
+    export DEVELOPER_DIR=/Library/Developer/CommandLineTools
+    sdk="$(find_sdk || true)"
+    SWIFTC="$(xcrun -f swiftc 2>/dev/null || printf '%s' "$SWIFTC")"
+  fi
+  # Most specific first, then looser. Each attempt says why it failed.
+  if [ -n "$sdk" ]; then
+    say "building the window (sdk $sdk, $arch)"
+    run_bounded 60 "$SWIFTC" -O -sdk "$sdk" -target "$arch-apple-macosx12.0" \
+      -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
+    run_bounded 60 "$SWIFTC" -O -sdk "$sdk" \
+      -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
+  else
+    say "building the window (no sdk found)"
+  fi
+  run_bounded 60 "$SWIFTC" -O -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
+  return 1
+}
+
+if [ ! -x "$SHELL_BIN" ]; then
+  SHELL_STARTED="$(date +%s)"
+  if build_window; then
+    say "the window is ready ($(( $(date +%s) - SHELL_STARTED ))s)"
+    # Built fresh: prove it opens a window and that the bridge carries a
+    # message, once, into the log. A broken shell should be a line here
+    # rather than a blank rectangle nobody can explain.
+    RUN_BOUNDED_OUT="$SUPPORT/log/selftest.txt"
+    : > "$RUN_BOUNDED_OUT"
+    run_bounded 20 "$SHELL_BIN" --selftest "$PORT" || true
+    say "selftest: $(tail -1 "$RUN_BOUNDED_OUT" 2>/dev/null || true)"
+    unset RUN_BOUNDED_OUT
+  else
+    rm -f "$SHELL_BIN"
+    kill "$WATCHDOG" 2>/dev/null || true
+    alert "Clone Me's window could not be built. Apple's build tools are missing or broken. In Terminal, run this once:   xcode-select --install   — then open Clone Me again."
+    exit 1
+  fi
+else
+  say "the window is already built"
+fi
+
+# --- run --------------------------------------------------------------------
+say "window on 127.0.0.1:$PORT"
+: > "$SUPPORT/.window"
+kill "$WATCHDOG" 2>/dev/null || true
+
+exec "$SHELL_BIN" "$PORT" "$HERE/AppIcon.icns"

@@ -14,7 +14,7 @@
  */
 (function (root) {
   "use strict";
-  var O = root.__cloneNS || (root.__cloneNS = {});
+  var O = root.__organicNS || (root.__organicNS = {});
   if (O.panel) return;
 
   var ID = "__clone_panel";
@@ -34,7 +34,7 @@
   };
 
   function send(message) {
-    try { root.webkit.messageHandlers.clone.postMessage(message); } catch (e) {}
+    try { root.webkit.messageHandlers.organic.postMessage(message); } catch (e) {}
   }
 
   function el(tag, cls, text) {
