@@ -57,8 +57,6 @@ const history = Object.create(null);
 let page = null;
 /** Set by the panel's "Work anyway", cleared by the pass it buys. */
 let override = false;
-/** What he tapped, per job. Nothing moves without an entry in here. */
-const tapped = new Map();
 
 function show(patch) {
   Object.assign(state, patch);
@@ -106,17 +104,55 @@ async function waitForWork(id, waitMs = 20 * 60_000) {
   return null;
 }
 
-/** Wait for a tap. No timeout — an unanswered job simply stays on the board. */
-function waitForTap(id) {
-  return new Promise((resolve) => {
-    const check = setInterval(() => {
-      const answer = tapped.get(id);
-      if (!answer) return;
-      clearInterval(check);
-      tapped.delete(id);
-      resolve(answer);
-    }, 400);
+/*
+ * Nothing waits for him. Ever.
+ *
+ * This used to be a promise with no timeout, awaited inside the pass, inside
+ * the lock — so one reply he did not tap at 09:35 stopped every refresh, every
+ * offer and every other reply for the rest of the day, while the app sat there
+ * looking alive. It is the worst bug this thing has had.
+ *
+ * A pass writes the work onto the board and moves on. His tap arrives whenever
+ * it arrives and is handled on its own, below.
+ */
+
+/** Written, shown, and waiting on him — by id. */
+const onTheBoard = new Map();
+
+/** Type one thing he has just taken. Runs outside the pass, on its own. */
+async function takeIt(id) {
+  const held = onTheBoard.get(id);
+  if (!held || !page) return;
+  const { row, work, words, verdict } = held;
+  onTheBoard.delete(id);
+
+  // Reading time first: a reply that lands eleven seconds after a long message
+  // is the tell, and this whole app is built on not being one.
+  const wait = replyAfterMs({
+    words: String(row.line ?? "").split(/\s+/).length,
+    firstContact: !row.buyer,
+    urgent: verdict.urgent === true,
   });
+  show({ doing: `holding ${Math.round(wait / 1000)}s, then typing` });
+  await sleep(Math.min(wait, 90_000));
+
+  show({ doing: `typing ${work.kind === "listing" ? "the listing" : "to " + (row.buyer ?? "the buyer")}` });
+  const typed = await page.ask("type", { into: "composer", strokes: typeReply(words) }).catch(() => null);
+
+  /* The count and the message both depend on what the page actually says.
+     Claiming work that does not exist is the worst thing this app could do. */
+  if (!typed || typed.ok === false || typed.found === false) {
+    patch(id, { reply: words, why: "could not find the box — open it on screen and press Take again" });
+    onTheBoard.set(id, held);
+    show({ doing: null });
+    return;
+  }
+
+  state.takenToday += 1;
+  if (verdict.act === "offer") history[id] = { ...(history[id] || {}), offeredAt: Date.now() };
+  if (verdict.act === "reply") history[id] = { ...(history[id] || {}), repliedAt: Date.now() };
+  patch(id, { reply: words + "\n\n— typed, ready for you to send" });
+  show({ takenToday: state.takenToday, doing: null });
 }
 
 /** A pass can block for twenty minutes waiting on Claude while the timer
@@ -136,33 +172,49 @@ async function pass() {
 }
 
 async function onePass() {
-  /* The board is opened before the clock is consulted.
-     Two reasons, both learned the hard way. He cannot sign in to Depop if
-     the window never leaves the starting screen — and a window that sits on
-     "waking the crew…" all evening looks broken when it is only resting. */
-  show({ doing: "opening the board" });
+  /* The shop opens before the clock is consulted: he cannot sign in if the
+     window never leaves the starting screen, and a window that sits on
+     "waking" all evening looks broken when it is only resting. */
+  show({ doing: "opening the shop" });
   await page.ask("goto", { url: BOARD });
   await sleep(betweenActionsMs());
+
+  /*
+   * Signed in, or nothing else here means anything.
+   *
+   * Without this the app read a logged-out page and told him "nothing on the
+   * shop floor yet" — which is the worst lie it could tell, because a shut
+   * door looks exactly like a quiet day.
+   */
+  const who = await page.ask("read", { what: "status" }).catch(() => null);
+  if (!who || who.signedIn !== true) {
+    show({
+      working: false,
+      doing: null,
+      resting: "not signed in — open me, then Paste login or make a password",
+      board: [],
+    });
+    return;
+  }
+  show({ who: who.who ?? null });
 
   if (!working(new Date(), SELLER) && !override) {
     show({
       working: false,
       doing: null,
-      resting: "Off the clock — back inside seller hours. Work anyway if you want it running now.",
+      resting: "resting — open me and press Work anyway to go now",
       board: [],
     });
     return;
   }
-  /* An override is for the pass he asked for, not for every pass after it. */
   override = false;
   show({ working: true, resting: null });
 
   show({ doing: "reading the inbox" });
   const inbox = (await page.ask("read", { what: "listings" })) ?? [];
 
-  /* Then the shop floor. Two reads rather than one because they live on two
-     screens, and a pass that only ever sees the inbox would never refresh or
-     offer anything. */
+  /* Then the shop floor. Two reads, because they are two screens, and a pass
+     that only ever saw the inbox would never refresh or offer anything. */
   await sleep(betweenActionsMs());
   show({ doing: "looking at the shop" });
   await page.ask("goto", { url: SHOP });
@@ -175,15 +227,13 @@ async function onePass() {
     show({
       doing: null,
       resting: considered
-        ? "Nothing due — everything answered, refreshed or too soon to touch."
-        : "Nothing on the shop floor yet.",
+        ? "all caught up — answered, refreshed, or too soon to touch"
+        : "nothing on the shop floor yet",
       board: [],
     });
     return;
   }
 
-  /* The board fills before a single word is written, so the glass shows the
-     shop at once rather than after several minutes of thinking. */
   const board = take.map(({ row, verdict }) => ({
     id: row.id,
     kind: row.kind,
@@ -195,8 +245,6 @@ async function onePass() {
     likes: row.likes ?? null,
     why: verdict.why,
     urgent: verdict.urgent === true,
-    // The buyer's own words go out, so Claude writes against what was said
-    // rather than against a title.
     line: row.line ?? null,
     waitingMinutes: row.waitingMinutes ?? null,
     satMinutes: row.listedMinutesAgo ?? null,
@@ -206,80 +254,45 @@ async function onePass() {
   show({ doing: `${take.length} to do`, board });
   await cloud.board(board).catch(() => {});
 
+  /* Refreshes first, because they need nobody: one tap on a listing he already
+     wrote, inside the window, on something people liked. */
   for (const { row, verdict } of take) {
-    const id = row.id;
-
-    if (state.takenToday >= state.takeBudget) {
-      show({ doing: null, resting: `Enough for today — ${state.takenToday} done.` });
-      return;
+    if (verdict.act !== "refresh") continue;
+    if (state.takenToday >= state.takeBudget) break;
+    show({ doing: `refreshing ${row.title ?? "a listing"}` });
+    const done = await page.ask("tap", { url: row.url, what: "refresh" }).catch(() => null);
+    if (done && done.ok !== false && done.found !== false) {
+      history[row.id] = { ...(history[row.id] || {}), refreshedAt: Date.now() };
+      patch(row.id, { why: verdict.why + " — refreshed" });
+    } else {
+      patch(row.id, { why: "could not find the refresh control" });
     }
-
-    /* A refresh needs nobody's words. It is one tap on a listing he already
-       wrote, inside the window, on something people liked — so it does not
-       wait on Claude and it does not wait on him. */
-    if (verdict.act === "refresh") {
-      show({ doing: `refreshing ${row.title ?? "a listing"}` });
-      const done = await page.ask("tap", { url: row.url, what: "refresh" });
-      if (done && done.ok !== false && done.found !== false) {
-        history[id] = { ...(history[id] || {}), refreshedAt: Date.now() };
-        patch(id, { why: verdict.why + " — refreshed" });
-      } else {
-        patch(id, { why: "could not find the refresh control" });
-      }
-      await sleep(betweenActionsMs());
-      continue;
-    }
-
-    show({ doing: `waiting on Claude: ${row.title ?? row.buyer ?? "a row"}` });
-    const work = await waitForWork(id);
-    if (!work) {
-      patch(id, { reply: "Claude has not written this one yet.", ready: false });
-      continue;
-    }
-    /* What is shown is what will be typed, whichever kind it is. */
-    const words = work.kind === "listing"
-      ? [work.title, work.description, (work.hashtags || []).join(" ")].filter(Boolean).join("\n\n")
-      : work.reply;
-    patch(id, { reply: words, ready: work.ready, questions: work.questions, why: work.why || verdict.why });
-
-    const go = await waitForTap(id);
-    if (go !== "take") {
-      patch(id, { reply: null, why: "skipped" });
-      continue;
-    }
-
-    // Reading time is charged before anything is typed, because a reply that
-    // lands eleven seconds after a long message is the tell.
-    const wait = replyAfterMs({
-      words: String(row.line ?? "").split(/\s+/).length,
-      firstContact: !row.buyer,
-      urgent: verdict.urgent === true,
-    });
-    show({ doing: `holding ${Math.round(wait / 1000)}s, then typing` });
-    await sleep(Math.min(wait, 90_000));
-
-    show({ doing: `typing ${work.kind === "listing" ? "the listing" : "to " + (row.buyer ?? "the buyer")}` });
-    const typed = await page.ask("type", { into: "composer", strokes: typeReply(words) });
-
-    /* The count and the message both depend on what the page actually says.
-       Claiming work that does not exist is the worst failure this app has. */
-    if (!typed || typed.ok === false || typed.found === false) {
-      patch(id, {
-        reply: words,
-        why: "could not find the box — open it on screen and it will try again",
-      });
-      continue;
-    }
-
-    state.takenToday += 1;
-    if (verdict.act === "offer") history[id] = { ...(history[id] || {}), offeredAt: Date.now() };
-    if (verdict.act === "reply") history[id] = { ...(history[id] || {}), repliedAt: Date.now() };
-    patch(id, { reply: words + "\n\n— typed, ready for you to send" });
-    show({ takenToday: state.takenToday });
     await sleep(betweenActionsMs());
   }
 
-  show({ doing: null });
+  /* Then whatever Claude has already written, put in front of him. One drain,
+     no waiting — what is not written yet will be there on the next pass. */
+  await drain();
+  let waitingOnHim = 0;
+  for (const { row, verdict } of take) {
+    if (verdict.act === "refresh") continue;
+    const work = written.get(row.id);
+    if (!work) continue;
+    written.delete(row.id);
+    const words = work.kind === "listing"
+      ? [work.title, work.description, (work.hashtags || []).join(" ")].filter(Boolean).join("\n\n")
+      : work.reply;
+    onTheBoard.set(row.id, { row, work, words, verdict });
+    patch(row.id, { reply: words, ready: work.ready, questions: work.questions, why: work.why || verdict.why });
+    waitingOnHim += 1;
+  }
+
+  show({
+    doing: null,
+    resting: waitingOnHim
+      ? `${waitingOnHim} written — open me and press Take`
+      : "on the board, waiting on Claude to write them",
+  });
 }
 
 /** Midnight resets the count. Without this "Done for today" was forever. */
@@ -315,8 +328,17 @@ bridge = await startBridge({
       override = true;
       pass().catch(() => {});
     }
-    if (message.t === "take") tapped.set(message.id, "take");
-    if (message.t === "skip") tapped.set(message.id, "skip");
+    /* Out of band, both. A tap never waits for a pass, a pass never waits
+       for a tap. */
+    if (message.t === "take") {
+      takeIt(String(message.id)).catch((error) => {
+        cloud.log([{ line: `take failed: ${error.message}` }]).catch(() => {});
+      });
+    }
+    if (message.t === "skip") {
+      onTheBoard.delete(String(message.id));
+      patch(String(message.id), { reply: null, why: "skipped" });
+    }
   },
 });
 

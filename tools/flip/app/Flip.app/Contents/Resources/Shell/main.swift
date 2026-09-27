@@ -646,7 +646,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     bring.wantsLayer = true
     bring.font = NSFont.systemFont(ofSize: 11.5, weight: .semibold)
     bring.contentTintColor = NSColor.labelColor
-    bring.toolTip = "Copy your Depop cookies in Chrome, then press this"
+    bring.toolTip = "In Chrome on depop.com: ⌥⌘I → Application → Cookies → select the rows → copy. Then press this."
     bring.layer?.cornerRadius = 11
     bring.layer?.cornerCurve = .continuous
     bring.layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(0.09).cgColor
@@ -748,7 +748,11 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   var saidOneStore = false
 
   func storeFor(_ idText: String) -> WKWebsiteDataStore {
-    if #available(macOS 14.0, *) {
+    /* The running binary lives outside the bundle — the launcher execs it from
+       Application Support — so Bundle.main has no identifier, and a data store
+       keyed to one is a gamble taken during launch where a raise is a dead
+       Dock icon. Only asked for when there is an identity to key it to. */
+    if #available(macOS 14.0, *), Bundle.main.bundleIdentifier != nil {
       if let uuid = UUID(uuidString: idText) {
         return WKWebsiteDataStore(forIdentifier: uuid)
       }
@@ -905,8 +909,14 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       signInButton?.frame = NSRect(x: 12, y: chipY, width: 100, height: 26)
       passwordButton?.frame = NSRect(x: 116, y: chipY, width: 104, height: 26)
       pasteButton?.frame = NSRect(x: 12, y: chipY + 32, width: 92, height: 26)
+      /* The radius follows the height. Set once at 11 it left flat sides on a
+         26pt chip, which is a pill that is not a pill. */
+      for chip in [collapse, signInButton, passwordButton, pasteButton] {
+        chip?.layer?.cornerRadius = (chip?.frame.height ?? 22) / 2
+      }
     } else {
       let chipY = bounds.height - headerHeight + 5
+      for chip in [collapse, signInButton, passwordButton] { chip?.layer?.cornerRadius = 11 }
       collapse?.frame = NSRect(x: bounds.width - 96, y: chipY, width: 82, height: 22)
       signInButton?.frame = NSRect(x: bounds.width - 96 - 126, y: chipY, width: 118, height: 22)
       passwordButton?.frame = NSRect(x: bounds.width - 96 - 126 - 118, y: chipY, width: 110, height: 22)
@@ -914,11 +924,11 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     passwordButton?.isHidden = shape == .orb || shape == .pill
     signInButton?.isHidden = shape == .orb || shape == .pill
     pasteButton?.isHidden = shape != .working
+    /* Hidden on the phone as well as the orb — left visible, the green dot and
+       the word "flip" paint over the top of the 393-wide phone, exactly where
+       the agent draws the island. */
     statusDot?.isHidden = shape == .orb || shape == .working
     statusLabel?.isHidden = shape == .orb || shape == .working
-
-    statusDot?.isHidden = shape == .orb
-    statusLabel?.isHidden = shape == .orb
     if shape == .orb {
       /*
        * The work, behind the water.
@@ -1086,7 +1096,12 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     // nothing to set and naming it here would not compile.)
     config.mediaTypesRequiringUserActionForPlayback = []
     config.userContentController.add(self, name: "organic")
-    config.preferences.setValue(true, forKey: "developerExtrasEnabled")
+    /* Guarded like the other two. This runs during launch, four times, and an
+       NSUnknownKeyException out of AppKit cannot be caught in Swift — so the
+       day this key goes it is a dead Dock icon with no alert. */
+    if config.preferences.responds(to: NSSelectorFromString("setDeveloperExtrasEnabled:")) {
+      config.preferences.setValue(true, forKey: "developerExtrasEnabled")
+    }
     /*
      * Finish the user agent.
      *
@@ -1334,25 +1349,54 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       return
     }
 
-    /* Two shapes are accepted, because the two ways a person gets this differ:
-       a document.cookie string ("a=1; b=2") and a pasted cookie table where
-       the pairs are separated by newlines or tabs. */
+    /*
+     * Two shapes, because the two ways a person gets this look nothing alike.
+     *
+     * The one that matters is the DevTools cookie table: name, value, domain,
+     * … separated by TABS, with no "=" in the row at all. Splitting that on
+     * the first "=" dropped every clean row and, worse, mangled the ones whose
+     * value is a JWT — the "=" landed inside the value, so the name came out
+     * as "sessionId<tab>eyJhbGci…" and a junk cookie was written and counted.
+     * He would have read "brought 6 cookies over" and still been signed out.
+     *
+     * The other shape, a document.cookie string, is accepted but cannot carry
+     * a session on its own: Chrome never exposes HttpOnly cookies to it, and
+     * Depop's session is HttpOnly. The table is the route.
+     */
     var pairs: [(String, String)] = []
-    for chunk in text.components(separatedBy: CharacterSet(charactersIn: ";\n\r")) {
-      let trimmed = chunk.trimmingCharacters(in: .whitespaces)
-      guard let split = trimmed.firstIndex(of: "=") else { continue }
-      let name = String(trimmed[trimmed.startIndex..<split]).trimmingCharacters(in: .whitespaces)
-      let value = String(trimmed[trimmed.index(after: split)...]).trimmingCharacters(in: .whitespaces)
-      if name.isEmpty || value.isEmpty { continue }
+    for line in text.components(separatedBy: CharacterSet(charactersIn: ";\n\r")) {
+      let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+      if trimmed.isEmpty { continue }
+      var name = ""
+      var value = ""
+      if trimmed.contains("\t") {
+        let columns = trimmed.components(separatedBy: "\t")
+        if columns.count < 2 { continue }
+        name = columns[0].trimmingCharacters(in: .whitespaces)
+        value = columns[1].trimmingCharacters(in: .whitespaces)
+      } else {
+        guard let split = trimmed.firstIndex(of: "=") else { continue }
+        name = String(trimmed[trimmed.startIndex..<split]).trimmingCharacters(in: .whitespaces)
+        value = String(trimmed[trimmed.index(after: split)...]).trimmingCharacters(in: .whitespaces)
+      }
+      // The table's own header row comes along with a select-all.
+      if name.isEmpty || value.isEmpty || name.lowercased() == "name" { continue }
       pairs.append((name, value))
     }
 
     guard !pairs.isEmpty else {
-      note("that did not look like cookies — copy the whole line from Chrome")
+      note("that did not look like cookies — select the rows in DevTools and copy")
       return
     }
 
-    let store = web?.configuration.websiteDataStore.httpCookieStore
+    /* Hoisted: enter() was unconditional and leave() only ran when the store
+       existed, so a nil pane left the group unbalanced and notify never fired
+       — the reload silently never happened and every press leaked another. */
+    guard let store = web?.configuration.websiteDataStore.httpCookieStore else {
+      note("open the window first, then paste")
+      return
+    }
+
     var written = 0
     let group = DispatchGroup()
     for (name, value) in pairs {
@@ -1366,7 +1410,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       ]) else { continue }
       written += 1
       group.enter()
-      store?.setCookie(cookie) { group.leave() }
+      store.setCookie(cookie) { group.leave() }
     }
 
     note("brought \(written) cookies over — reloading")
