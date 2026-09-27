@@ -26,12 +26,16 @@ import { startBridge } from "./bridge.mjs";
 import { shortlist } from "./work.mjs";
 import { connectCloud } from "./cloud.mjs";
 import { readKnowledge } from "./knowledge.mjs";
-import { SELLER, working, replyAfterMs, takeBudget, betweenActionsMs, typeReply } from "./pace.mjs";
+import { SELLER, working, takeBudget, betweenActionsMs, typeReply } from "./pace.mjs";
 
 /* The inbox, because an unanswered buyer is the only row that costs ranking
    by the hour. The shop floor is read from there in the same pass. */
 const BOARD = "https://www.depop.com/messages/";
-const SHOP = "https://www.depop.com/";
+/* Filled in from the page once it says who he is. The homepage was being read
+   as "the shop floor", which is other people's listings in the recommendation
+   feed — so the app would have shortlisted strangers' items and tried to
+   refresh them. */
+let SHOP = null;
 const cloud = connectCloud();
 /** How often to look for work Claude has written. */
 const DRAIN_MS = 6000;
@@ -85,23 +89,30 @@ function patch(id, fields) {
  */
 const written = new Map();
 
+/*
+ * Take the work, then say so.
+ *
+ * Reading used to clear the tray on the far side, so a slow response or a
+ * dropped link — and this gives up after ten seconds — lost everything Claude
+ * had written in that window, permanently and silently. Now the tray is only
+ * emptied of the ids that actually arrived here.
+ */
 async function drain() {
-  const got = await cloud.work().catch(() => null);
+  const got = await cloud.work().catch((error) => {
+    cloud.log([{ line: `could not read the tray: ${error.message}` }]).catch(() => {});
+    return null;
+  });
   const items = got?.items ?? {};
+  const ids = Object.keys(items);
+  if (!ids.length) return 0;
   for (const [id, work] of Object.entries(items)) written.set(id, work);
-  return Object.keys(items).length;
-}
-
-/** Wait until Claude has written this one. Gives up after twenty minutes. */
-async function waitForWork(id, waitMs = 20 * 60_000) {
-  const until = Date.now() + waitMs;
-  while (Date.now() < until) {
-    if (written.has(id)) return written.get(id);
-    await drain();
-    if (written.has(id)) return written.get(id);
-    await sleep(DRAIN_MS);
-  }
-  return null;
+  await cloud.ack(ids).catch(() => {
+    /* Not acknowledged: the tray keeps them and the next drain hands them
+       over again. `written` is keyed by id, so a second copy overwrites
+       rather than duplicating — a job can be handed over twice, never typed
+       twice, because typing waits for his tap. */
+  });
+  return ids.length;
 }
 
 /*
@@ -119,6 +130,36 @@ async function waitForWork(id, waitMs = 20 * 60_000) {
 /** Written, shown, and waiting on him — by id. */
 const onTheBoard = new Map();
 
+/** Every row the last pass shortlisted, by id, with what it decided. Kept so
+ *  that work Claude writes a minute later can still find its row. */
+const known = new Map();
+
+/**
+ * Put one piece of written work in front of him.
+ *
+ * Shared by the pass and by the drain loop, because work almost never arrives
+ * while a pass is running — Claude writes in its own time, and a row that had
+ * to wait for the next pass to appear meant his Take did nothing for fifteen
+ * minutes and nothing said why.
+ */
+function present(id, work) {
+  const seat = known.get(id);
+  if (!seat) return false;
+  const words = work.kind === "listing"
+    ? [work.title, work.description, (work.hashtags || []).join(" ")].filter(Boolean).join("\n\n")
+    : work.kind === "offer"
+      ? String(work.priceCents != null ? work.priceCents / 100 : "")
+      : work.reply;
+  onTheBoard.set(id, { row: seat.row, work, words, verdict: seat.verdict });
+  patch(id, {
+    reply: words,
+    ready: work.ready,
+    questions: work.questions,
+    why: work.why || seat.verdict.why,
+  });
+  return true;
+}
+
 /** Type one thing he has just taken. Runs outside the pass, on its own. */
 async function takeIt(id) {
   const held = onTheBoard.get(id);
@@ -126,18 +167,37 @@ async function takeIt(id) {
   const { row, work, words, verdict } = held;
   onTheBoard.delete(id);
 
-  // Reading time first: a reply that lands eleven seconds after a long message
-  // is the tell, and this whole app is built on not being one.
-  const wait = replyAfterMs({
-    words: String(row.line ?? "").split(/\s+/).length,
-    firstContact: !row.buyer,
-    urgent: verdict.urgent === true,
-  });
-  show({ doing: `holding ${Math.round(wait / 1000)}s, then typing` });
-  await sleep(Math.min(wait, 90_000));
+  /*
+   * No hold here.
+   *
+   * The reading-time delay belongs before the work is put in front of him, not
+   * after he has asked for it — once he presses Take he is waiting on the app,
+   * and up to ninety seconds of nothing is how it earned "it does nothing".
+   * The human rhythm comes from the pass cadence and from the fact that he
+   * presses send himself, which is a real person at a real keyboard.
+   */
+  /* An offer is a price, not a sentence, and an empty one must never be
+     reported as typed. */
+  if (!String(words || "").trim()) {
+    patch(id, { why: "nothing written to type — Claude sent an empty one" });
+    show({ doing: null });
+    return;
+  }
 
   show({ doing: `typing ${work.kind === "listing" ? "the listing" : "to " + (row.buyer ?? "the buyer")}` });
-  const typed = await page.ask("type", { into: "composer", strokes: typeReply(words) }).catch(() => null);
+  const strokes = typeReply(words);
+  /*
+   * The deadline follows the typing, not the clock.
+   *
+   * The bridge gives an act 20 seconds. At a human's pace that is about 130
+   * characters — so a normal reply timed out mid-sentence and a listing, at
+   * five hundred to fifteen hundred characters, never stood a chance. The
+   * hands kept typing correctly in the page while the brain gave up on them.
+   */
+  const howLong = strokes.reduce((sum, stroke) => sum + (stroke?.delayMs ?? 0), 0);
+  const typed = await page
+    .ask("type", { into: "composer", strokes }, { ms: 30_000 + howLong })
+    .catch(() => null);
 
   /* The count and the message both depend on what the page actually says.
      Claiming work that does not exist is the worst thing this app could do. */
@@ -186,7 +246,9 @@ async function onePass() {
    * shop floor yet" — which is the worst lie it could tell, because a shut
    * door looks exactly like a quiet day.
    */
-  const who = await page.ask("read", { what: "status" }).catch(() => null);
+  /* `accountStatus`, because that is the act the reader implements — "status"
+     fell through to a default branch that answered false on every page. */
+  const who = await page.ask("read", { what: "accountStatus" }).catch(() => null);
   if (!who || who.signedIn !== true) {
     show({
       working: false,
@@ -197,6 +259,10 @@ async function onePass() {
     return;
   }
   show({ who: who.who ?? null });
+  /* His handle, as the page states it. Without one there is no shop floor to
+     read, so the pass does the inbox and stops rather than reading Depop's
+     front page and calling it his. */
+  if (who.who) SHOP = `https://www.depop.com/${String(who.who).replace(/^@/, "")}/`;
 
   if (!working(new Date(), SELLER) && !override) {
     show({
@@ -211,17 +277,25 @@ async function onePass() {
   show({ working: true, resting: null });
 
   show({ doing: "reading the inbox" });
-  const inbox = (await page.ask("read", { what: "listings" })) ?? [];
+  const inbox = await page.ask("read", { what: "listings" });
 
   /* Then the shop floor. Two reads, because they are two screens, and a pass
      that only ever saw the inbox would never refresh or offer anything. */
-  await sleep(betweenActionsMs());
-  show({ doing: "looking at the shop" });
-  await page.ask("goto", { url: SHOP });
-  await sleep(betweenActionsMs());
-  const floor = (await page.ask("read", { what: "listings" })) ?? [];
+  let floor = [];
+  if (SHOP) {
+    await sleep(betweenActionsMs());
+    show({ doing: "looking at the shop" });
+    await page.ask("goto", { url: SHOP });
+    await sleep(betweenActionsMs());
+    floor = await page.ask("read", { what: "listings" });
+  }
 
-  const { take, considered } = shortlist([...inbox, ...floor], { history });
+  /* Anything but an array is a timeout or a refusal — never spread it. */
+  const rows = [
+    ...(Array.isArray(inbox) ? inbox : []),
+    ...(Array.isArray(floor) ? floor : []),
+  ];
+  const { take, considered } = shortlist(rows, { history });
 
   if (!take.length) {
     show({
@@ -272,19 +346,20 @@ async function onePass() {
 
   /* Then whatever Claude has already written, put in front of him. One drain,
      no waiting — what is not written yet will be there on the next pass. */
+  /* Remember the seats before draining, so anything already written finds its
+     row — and so anything written later still can. */
+  known.clear();
+  for (const { row, verdict } of take) {
+    if (verdict.act !== "refresh") known.set(row.id, { row, verdict });
+  }
+
   await drain();
   let waitingOnHim = 0;
-  for (const { row, verdict } of take) {
-    if (verdict.act === "refresh") continue;
-    const work = written.get(row.id);
+  for (const id of known.keys()) {
+    const work = written.get(id);
     if (!work) continue;
-    written.delete(row.id);
-    const words = work.kind === "listing"
-      ? [work.title, work.description, (work.hashtags || []).join(" ")].filter(Boolean).join("\n\n")
-      : work.reply;
-    onTheBoard.set(row.id, { row, work, words, verdict });
-    patch(row.id, { reply: words, ready: work.ready, questions: work.questions, why: work.why || verdict.why });
-    waitingOnHim += 1;
+    written.delete(id);
+    if (present(id, work)) waitingOnHim += 1;
   }
 
   show({
@@ -330,6 +405,13 @@ bridge = await startBridge({
     }
     /* Out of band, both. A tap never waits for a pass, a pass never waits
        for a tap. */
+    /* Depop pushing back is the most important thing the page can say, and it
+       was being thrown away. It goes on the record and onto the glass. */
+    if (message.t === "trouble") {
+      const line = String(message.what ?? message.line ?? "trouble on the page");
+      cloud.log([{ line }]).catch(() => {});
+      show({ resting: line });
+    }
     if (message.t === "take") {
       takeIt(String(message.id)).catch((error) => {
         cloud.log([{ line: `take failed: ${error.message}` }]).catch(() => {});
@@ -372,6 +454,32 @@ console.log(`PORT ${bridge.port}`);
  * connects late, or drops, is visible from outside rather than guessed at.
  */
 cloud.log([{ line: `worker up on port ${bridge.port}` }]).catch(() => {});
+
+/*
+ * Look for written work every few seconds while there is a row expecting some.
+ *
+ * Without this the board only ever picked work up during a pass, which is once
+ * every nine to fifteen minutes — so his Take on a reply Claude had already
+ * written did nothing at all, silently, until the next one came round.
+ */
+setInterval(() => {
+  if (!page || !known.size) return;
+  const waiting = [...known.keys()].some((id) => !onTheBoard.has(id));
+  if (!waiting) return;
+  drain()
+    .then(() => {
+      let fresh = 0;
+      for (const id of known.keys()) {
+        if (onTheBoard.has(id)) continue;
+        const work = written.get(id);
+        if (!work) continue;
+        written.delete(id);
+        if (present(id, work)) fresh += 1;
+      }
+      if (fresh) show({ resting: `${fresh} written — open me and press Take` });
+    })
+    .catch(() => {});
+}, DRAIN_MS);
 
 setInterval(() => {
   cloud.status({

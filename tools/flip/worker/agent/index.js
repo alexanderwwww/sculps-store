@@ -63,6 +63,12 @@
     var s = (O.read.deskSite && O.read.deskSite()) || O.sites[O.read.platform()];
     if (!s) return null;
     /* The one field this app types into. */
+    /* Anything the desk names for itself, first — "refresh" lives on the
+       Depop recipe and nowhere in this list, so it resolved to null and every
+       refresh answered "not found" while being recorded as done. */
+    if (name && typeof s[name] === "function") {
+      try { return s[name](); } catch (e) { return null; }
+    }
     if (name === "composer" || name === "reply") return s.composer ? s.composer() : null;
     if (name === "like") return s.likeButton();
     if (name === "comment") return s.commentBox();
@@ -86,6 +92,14 @@
           return { found: !!r.hit, changed: !!r.changed };
         });
       var name = a.target || a.what || null;
+      /* Somewhere to be first. The brain asks to refresh a listing by url and
+         this ignored the url entirely, so the tap was attempted on whatever
+         page happened to be open. Answering "elsewhere" lets the brain come
+         back once the page has settled rather than pretending it worked. */
+      if (a.url && String(a.url) !== location.href) {
+        location.href = String(a.url);
+        return { found: false, navigated: true, to: String(a.url) };
+      }
       var site = O.sites[O.read.platform()];
       // "next" is not a button on mobile: a reel advances by one viewport.
       if (name === "next") {
@@ -233,7 +247,7 @@
             // Unknown stays unknown: a message whose side the page did not
             // state is never filed as a supplier's reply.
             dir: m.mine === true ? "out" : m.mine === false ? "in" : "unknown",
-            text: m.text,
+            text: m.text != null ? m.text : m.line,
             at: m.at,
           };
         });

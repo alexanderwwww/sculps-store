@@ -85,7 +85,21 @@ export async function startBridge({ dir, port = Number(process.env.FLIP_PORT) ||
       if (!m || typeof m !== "object" || !FROM_PAGE.has(m.t)) return;
       if (m.t === "done") {
         const held = waiting.get(m.id);
-        if (held) { waiting.delete(m.id); clearTimeout(held.timer); held.resolve(m); }
+        if (held) {
+          waiting.delete(m.id);
+          clearTimeout(held.timer);
+          /*
+           * The result, not the envelope.
+           *
+           * This resolved the whole {t,id,ok,result,error} frame, so every
+           * caller in the worker was reading the wrong object: a read came
+           * back as a frame and could not be spread, `found` was always
+           * undefined so a type that failed inside the page counted as typed,
+           * and `ok` was the transport's ok rather than the act's. It is the
+           * single line under almost everything that did not work.
+           */
+          held.resolve(m.ok === false ? { ok: false, error: m.error } : (m.result ?? { ok: true }));
+        }
         return;
       }
       onMessage?.(m);

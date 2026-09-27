@@ -196,7 +196,10 @@
             waitingMinutes: agoMinutes(when),
             // Depop marks unread differently across builds; when nothing says
             // so the answer is null rather than a cheerful false.
-            unread: /unread/i.test(el.className || "") ? true : null,
+            // getAttribute, not .className: on an SVG that property is an
+          // object and stringifies to "[object SVGAnimatedString]", so the
+          // test is quietly always false.
+          unread: /unread/i.test(el.getAttribute("class") || "") ? true : null,
           });
         }
         return rows;
@@ -208,19 +211,31 @@
         'li[class*="styles__ProductCard" i]',
         'a[href*="/products/"]',
       ]);
+      /* By url, not by element. The three selectors above match different
+         parts of the SAME card — the wrapper and the anchor inside it — so
+         every listing came back twice: the board doubled, the six-action cap
+         became three items, and the same listing was refreshed twice in one
+         pass, which is the exact rhythm this file exists to avoid. */
+      var seenUrls = {};
       for (var j = 0; j < cards.length; j++) {
         var card = cards[j];
         var link = card.matches && card.matches('a[href*="/products/"]')
           ? card
           : one(['a[href*="/products/"]'], card);
         var url = abs(link && link.getAttribute("href"));
-        if (!url) continue;
+        if (!url || seenUrls[url]) continue;
+        seenUrls[url] = true;
         var priceText = flat(one([
           '[data-testid*="price" i]', '[class*="price" i]', 'p[aria-label*="price" i]',
         ], card));
         var likesText = flat(one(['[data-testid*="like" i]', '[class*="like" i]'], card));
         var likes = /(\d+)/.exec(likesText);
-        var sold = /sold/i.test(flat(card));
+        /* A badge, never the word. "Similar sold recently" in a card's body
+           marked a live listing as sold, and work.mjs drops those — so it
+           vanished off the board with nothing saying why. */
+        var sold = !!one([
+          '[data-testid*="sold" i]', '[class*="Sold" i]', '[aria-label*="sold" i]',
+        ], card);
         rows.push({
           kind: "listing",
           id: url,
@@ -251,21 +266,63 @@
         var line = flat(items[i]);
         if (!line) continue;
         out.push({
+          // `text` and `at` are what index.js reads. It used to send `line`
+          // only, so every message came through as undefined.
+          text: line,
+          at: null,
           line: line,
           // Whose it is, when the markup says so. Guessing this puts words in
           // the buyer's mouth, so it stays null when unknown.
-          mine: /own|outgoing|sent/i.test(items[i].className || "") ? true : null,
+          mine: /own|outgoing|sent/i.test(items[i].getAttribute("class") || "") ? true : null,
         });
       }
       return out;
     },
 
+    /**
+     * Refresh one listing.
+     *
+     * Depop keeps it behind the listing's own overflow menu, so this is only
+     * ever called once the page IS that listing — the caller navigates first.
+     * Several spellings are tried and the answer is honest when none is found,
+     * because a refresh that silently did nothing used to be recorded as done
+     * and then suppressed for 24 hours by the rules.
+     */
+    refresh: function () {
+      var more = one([
+        '[data-testid*="more" i]', 'button[aria-label*="more" i]',
+        'button[aria-label*="options" i]', '[data-testid*="overflow" i]',
+      ]);
+      if (more) { try { more.click(); } catch (e) {} }
+      var items = all(['[role="menuitem"]', 'button', 'a', 'li']);
+      for (var i = 0; i < items.length; i++) {
+        if (/^(refresh|bump|boost listing|refresh listing)$/i.test(flat(items[i]))) {
+          return items[i];
+        }
+      }
+      return null;
+    },
+
     /** Open a conversation by its url, without leaving the app. */
-    openThread: function (url) {
-      var target = abs(url);
-      if (!target) return { ok: false, error: "no url" };
-      location.href = target;
-      return { ok: true, url: target };
+    openThread: function (which) {
+      var text = String(which || "").trim();
+      if (!text) return { ok: false, error: "nobody named" };
+      /* A url or a name. The caller passes a display name, and treating that
+         as a url sent the window to depop.com/<name> and off the inbox
+         entirely — so a name is looked up in the thread list first and
+         refused when it is not there, rather than navigating blind. */
+      if (/^https?:\/\//i.test(text)) {
+        location.href = text;
+        return { ok: true, url: text };
+      }
+      var rows = all(['a[href*="/messages/"]', '[data-testid*="conversation" i] a']);
+      for (var i = 0; i < rows.length; i++) {
+        if (flat(rows[i]).toLowerCase().indexOf(text.toLowerCase()) >= 0) {
+          var href = abs(rows[i].getAttribute("href"));
+          if (href) { location.href = href; return { ok: true, url: href }; }
+        }
+      }
+      return { ok: false, error: "no thread for " + text };
     },
 
     /** Enough to say on the glass what the shop is doing. */

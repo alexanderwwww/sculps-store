@@ -47,6 +47,8 @@ export function connectCloud(base = process.env.FLIP_CLOUD || DEFAULT_BASE, { ti
      * a duplicate message to a buyer is worse than a late one.
      */
     work: () => get("/work"),
+    /** Say what actually arrived. Only these leave the tray. */
+    ack: (ids) => post("/ack", { ids }),
     /** The playbook, as markdown, so Claude reads it before writing anything. */
     knowledge: (files) => post("/knowledge", { files }),
     /** A line for the record. */

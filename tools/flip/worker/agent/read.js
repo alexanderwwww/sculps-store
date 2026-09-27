@@ -62,9 +62,13 @@
   }
 
   function signedIn(which) {
-    var s = site(which);
+    /* The desk's own reader when nothing was named. platform() does not know
+       depop.com, so site(undefined) was null and this returned false on a
+       signed-in shop — which made the app announce "not signed in" forever
+       while he was looking at his own inbox. */
+    var s = site(which) || deskSite();
     if (!s) return false;
-    if (s.isLoginPage()) return false;
+    if (s.isLoginPage && s.isLoginPage()) return false;
     return !!s.signedIn();
   }
 

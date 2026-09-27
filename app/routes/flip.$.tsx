@@ -144,8 +144,14 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
 
   if (name === "flip_board") {
     const board = (await read(env, "board")) ?? { items: [], at: null };
-    const work = ((await read(env, "work")) ?? {}) as { items?: Record<string, unknown> };
-    const written = new Set(Object.keys(work.items ?? {}));
+    const work = ((await read(env, "work")) ?? {}) as {
+      items?: Record<string, unknown>;
+      handed?: string[];
+    };
+    /* What is still in the tray AND what the app has already taken. Counting
+       only the tray meant that the moment the app drained it, every row read
+       as waiting again and Claude rewrote replies it had already written. */
+    const written = new Set([...Object.keys(work.items ?? {}), ...(work.handed ?? [])]);
     const items = Array.isArray(board.items) ? (board.items as Record<string, unknown>[]) : [];
     return {
       at: board.at ?? null,
@@ -228,14 +234,25 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   if (what === "log") return json((await read(env, "log")) ?? { lines: [] });
   if (what === "knowledge") return json((await read(env, "knowledge")) ?? { files: [] });
 
-  /* The tray the app drains. Reading it hands the work over and clears it, so
-     the same reply can never be typed twice — a duplicate message to a buyer
-     is worse than a missing one. */
+  /*
+   * The tray, handed over but not yet thrown away.
+   *
+   * It used to clear on read. If the response was slow or the Mac's link
+   * dropped — and the app gives up after ten seconds — the tray was already
+   * empty and everything Claude had written in that window was gone for good,
+   * with nothing anywhere saying so. The app acknowledges what it actually
+   * received, and only then is it cleared.
+   *
+   * Handed-over ids are remembered, so `flip_board` does not offer the same
+   * row back to Claude to be written a second time.
+   */
   if (what === "work") {
-    const now = ((await read(env, "work")) ?? {}) as { items?: Record<string, unknown> };
+    const now = ((await read(env, "work")) ?? {}) as {
+      items?: Record<string, unknown>;
+      handed?: string[];
+    };
     const items = now.items ?? {};
-    if (Object.keys(items).length) await write(env, "work", { items: {} });
-    return json({ items });
+    return json({ items, ids: Object.keys(items), handed: now.handed ?? [] });
   }
 
   if (!what) return json({ ok: true, app: "flip", base: BASE, endpoints: Object.keys(FILES) });
@@ -261,6 +278,11 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         capabilities: { tools: {} },
         serverInfo: { name: "flip", title: "flip", version: "1.0.0", websiteUrl: ORIGIN },
       });
+    }
+    /* A notification takes no response. Answering one with a result is a
+       protocol error and strict clients reject the whole connection. */
+    if (String(body.method ?? "").startsWith("notifications/")) {
+      return new Response(null, { status: 202, headers: { "access-control-allow-origin": "*" } });
     }
     if (body.method === "tools/list") return reply({ tools: TOOLS });
     if (body.method === "tools/call") {
@@ -293,6 +315,20 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     await write(env, "knowledge", { files, at: Date.now() });
     await append(env, { line: `playbook published: ${files.length} file(s)` });
     return json({ ok: true, files: files.length });
+  }
+
+  /* The app saying what it actually has. Only these ids leave the tray. */
+  if (what === "ack") {
+    const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
+    const now = ((await read(env, "work")) ?? {}) as {
+      items?: Record<string, unknown>;
+      handed?: string[];
+    };
+    const items = { ...(now.items ?? {}) };
+    for (const id of ids) delete items[id];
+    const handed = [...new Set([...(now.handed ?? []), ...ids])].slice(-500);
+    await write(env, "work", { items, handed });
+    return json({ ok: true, cleared: ids.length, left: Object.keys(items).length });
   }
 
   if (what === "log") {

@@ -176,6 +176,17 @@
   }
 
   O.cursor = {
+    /** The little name tag beside the dot. Called by the dispatcher; without
+     *  it every cursor act with a label threw and came back as an error. */
+    setName: function (name) {
+      /* `label` is the element, not the text — assigning a string to it would
+         have thrown the name tag away. The name lives on O.cursorName, which
+         is what mount() already reads. */
+      O.cursorName = String(name == null ? "" : name) || "Bea";
+      if (label && label.textContent != null) label.textContent = O.cursorName;
+      return { ok: true, name: O.cursorName };
+    },
+
     mount: function () {
       if (document.body) {
         attach();

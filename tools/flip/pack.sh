@@ -70,6 +70,10 @@ echo "  ok  the bridge serves from a path with a space"
 # a syntax check and syntax was never the problem. Nothing ships unless the
 # packed worker actually runs.
 node "$HERE/test/smoke.test.mjs" "$C/Resources/worker" || { echo "the packed worker does not run"; exit 1; }
+# The loop, against a page that answers. The smoke test only proves the worker
+# starts — which is why five builds shipped with onePass never once executed by
+# anything before his Mac.
+node "$HERE/test/loop.test.mjs" || { echo "the loop does not work"; exit 1; }
 node "$HERE/test/depop-parse.test.mjs"
 node "$HERE/test/work.test.mjs"
 rm -rf "$T"

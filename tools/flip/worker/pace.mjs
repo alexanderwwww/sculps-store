@@ -94,5 +94,10 @@ export function takeBudget(daysSelling = 0) {
 
 /** Between two actions on the site — never the same gap twice. */
 export function betweenActionsMs() {
+  /* A test drives the whole loop end to end and cannot spend four minutes
+     waiting for a human rhythm it is not measuring. Only ever set by the
+     tests; unset everywhere else, which is the pace that keeps the shop
+     alive. */
+  if (process.env.FLIP_FAST) return Math.round(between(20, 90));
   return Math.round(chance(0.15) ? between(20_000, 120_000) : between(2_500, 14_000));
 }
