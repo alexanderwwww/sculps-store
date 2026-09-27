@@ -210,6 +210,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   var collapse: NSButton?
   var passwordButton: NSButton?
   var signInButton: NSButton?
+  var pasteButton: NSButton?
   var shape: Shape = .orb
 
   /** The crew's code, kept so a rebuilt view gets it too. */
@@ -618,14 +619,16 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
      * against a Keychain key only Chrome can use, and Depop binds a session
      * to the browser that made it anyway.
      *
-     * So: one button opens Depop's password page in his own browser, where he
-     * sets one once, and the other opens Depop's sign-in form in here, where
-     * that password signs him in for good.
+     * He signed up with Google, so there is no password to fall back on — and
+     * a reset works anyway, even on an account that never had one. So: one
+     * button opens Depop's login in his OWN browser, where "Forgot password"
+     * is on screen and the reset mail can be opened; the other opens the
+     * email-and-password form in here, where the session is kept.
      */
-    let setPass = NSButton(title: "Set a password", target: self, action: #selector(openSecurityInBrowser))
+    let setPass = NSButton(title: "Reset password", target: self, action: #selector(openSecurityInBrowser))
     let signIn = NSButton(title: "Sign in to Depop", target: self, action: #selector(openDepopLogin))
     for (button, tip) in [
-      (setPass, "Opens Depop's password settings in your own browser"),
+      (setPass, "Opens Depop in your own browser — use Forgot password there"),
       (signIn, "Opens Depop's email and password form in here"),
     ] {
       button.isBordered = false
@@ -638,8 +641,20 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       button.layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(0.09).cgColor
       container.addSubview(button)
     }
+    let bring = NSButton(title: "Paste login", target: self, action: #selector(importCookiesFromClipboard))
+    bring.isBordered = false
+    bring.wantsLayer = true
+    bring.font = NSFont.systemFont(ofSize: 11.5, weight: .semibold)
+    bring.contentTintColor = NSColor.labelColor
+    bring.toolTip = "Copy your Depop cookies in Chrome, then press this"
+    bring.layer?.cornerRadius = 11
+    bring.layer?.cornerCurve = .continuous
+    bring.layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(0.09).cgColor
+    container.addSubview(bring)
+
     passwordButton = setPass
     signInButton = signIn
+    pasteButton = bring
 
     /*
      * Something visible from the first frame.
@@ -887,8 +902,9 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
          the bottom where a thumb is — never in a strip above it. */
       let chipY: CGFloat = 26
       collapse?.frame = NSRect(x: bounds.width - 96, y: chipY, width: 82, height: 26)
-      signInButton?.frame = NSRect(x: 14, y: chipY, width: 104, height: 26)
-      passwordButton?.frame = NSRect(x: 124, y: chipY, width: 104, height: 26)
+      signInButton?.frame = NSRect(x: 12, y: chipY, width: 100, height: 26)
+      passwordButton?.frame = NSRect(x: 116, y: chipY, width: 104, height: 26)
+      pasteButton?.frame = NSRect(x: 12, y: chipY + 32, width: 92, height: 26)
     } else {
       let chipY = bounds.height - headerHeight + 5
       collapse?.frame = NSRect(x: bounds.width - 96, y: chipY, width: 82, height: 22)
@@ -897,6 +913,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     }
     passwordButton?.isHidden = shape == .orb || shape == .pill
     signInButton?.isHidden = shape == .orb || shape == .pill
+    pasteButton?.isHidden = shape != .working
     statusDot?.isHidden = shape == .orb || shape == .working
     statusLabel?.isHidden = shape == .orb || shape == .working
 
@@ -1286,11 +1303,78 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     done()
   }
 
-  /** His own browser, at the page where a password is set. */
+  /** His own browser, at Depop's login, where Forgot password lives.
+   *
+   *  Not a deep link to a reset page: Depop refuses requests from here so that
+   *  path could not be verified, and a button that lands on a 404 is worse
+   *  than one that lands a click away. */
   @objc func openSecurityInBrowser() {
-    guard let url = URL(string: "https://www.depop.com/settings/password/") else { return }
+    guard let url = URL(string: "https://www.depop.com/login/") else { return }
     NSWorkspace.shared.open(url)
-    note("set a password there, then Sign in to Depop here")
+    note("there: Forgot password → check your mail → set one. Then Sign in to Depop here.")
+  }
+
+  /*
+   * Bring the session over from Chrome, by hand, once.
+   *
+   * He has asked for this repeatedly and he is right that it is the shortest
+   * path — Google will not do OAuth inside an embedded browser, ever, so the
+   * session has to be made somewhere Google trusts and carried here.
+   *
+   * What cannot be done is reaching INTO Chrome: its cookies are sealed with a
+   * Keychain key only Chrome can use. What can be done is this — he copies
+   * them out himself and presses one button. The cookies are parsed, written
+   * into the app's own persistent store for .depop.com, and the page reloads
+   * signed in. Once, and it stays.
+   */
+  @objc func importCookiesFromClipboard() {
+    let text = NSPasteboard.general.string(forType: .string) ?? ""
+    guard !text.isEmpty else {
+      note("copy your Depop cookies in Chrome first — then press this")
+      return
+    }
+
+    /* Two shapes are accepted, because the two ways a person gets this differ:
+       a document.cookie string ("a=1; b=2") and a pasted cookie table where
+       the pairs are separated by newlines or tabs. */
+    var pairs: [(String, String)] = []
+    for chunk in text.components(separatedBy: CharacterSet(charactersIn: ";\n\r")) {
+      let trimmed = chunk.trimmingCharacters(in: .whitespaces)
+      guard let split = trimmed.firstIndex(of: "=") else { continue }
+      let name = String(trimmed[trimmed.startIndex..<split]).trimmingCharacters(in: .whitespaces)
+      let value = String(trimmed[trimmed.index(after: split)...]).trimmingCharacters(in: .whitespaces)
+      if name.isEmpty || value.isEmpty { continue }
+      pairs.append((name, value))
+    }
+
+    guard !pairs.isEmpty else {
+      note("that did not look like cookies — copy the whole line from Chrome")
+      return
+    }
+
+    let store = web?.configuration.websiteDataStore.httpCookieStore
+    var written = 0
+    let group = DispatchGroup()
+    for (name, value) in pairs {
+      guard let cookie = HTTPCookie(properties: [
+        .domain: ".depop.com",
+        .path: "/",
+        .name: name,
+        .value: value,
+        .secure: "TRUE",
+        .expires: Date(timeIntervalSinceNow: 60 * 60 * 24 * 365),
+      ]) else { continue }
+      written += 1
+      group.enter()
+      store?.setCookie(cookie) { group.leave() }
+    }
+
+    note("brought \(written) cookies over — reloading")
+    group.notify(queue: .main) {
+      if let url = URL(string: "https://www.depop.com/") {
+        self.web?.load(URLRequest(url: url))
+      }
+    }
   }
 
   /** Depop's email-and-password form, in here, where the session is kept. */
