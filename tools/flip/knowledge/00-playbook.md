@@ -40,7 +40,7 @@ automation, and enforcement is by *behaviour*, not by tooling. Accounts die from
 volume and rhythm — bot-speed following, refreshing hundreds of times an hour, blast
 messaging. Reported case: ~40 follow actions a minute, rate-limit ban in six hours.
 So the app moves at a person's pace, with the same human-timing model Clone Me uses,
-and the last button is his. Same posture as Fiverr: the machine does the work, the
+and the last button is his: the machine does the work, the
 human presses the button.
 
 ## The mechanics — what actually moves listings
