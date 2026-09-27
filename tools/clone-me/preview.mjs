@@ -38,10 +38,22 @@ const browser = await chromium.launch({ args: ["--no-sandbox"], executablePath: 
 /* Two grounds, because the whole point of glass is what is behind it: a
    photograph-ish desktop and a bright one. A tint that reads on black and
    vanishes on white is not a material. */
+/* Busy grounds, not flat ones. A flat gradient behind glass proves nothing —
+   transparency is only visible when there is something with edges behind it to
+   see. These stand in for a desktop with windows and a photograph on it. */
 const GROUNDS = {
-  dark: "linear-gradient(135deg,#1b2430 0%,#2d1f3d 55%,#0f1a24 100%)",
-  light: "linear-gradient(135deg,#dfe7f2 0%,#f6efe6 55%,#cfd9e8 100%)",
+  dark: `linear-gradient(135deg,#1b2430 0%,#2d1f3d 55%,#0f1a24 100%)`,
+  light: `linear-gradient(135deg,#dfe7f2 0%,#f6efe6 55%,#cfd9e8 100%)`,
 };
+const CLUTTER = `
+  <div style="position:absolute;left:40px;top:60px;width:300px;height:190px;border-radius:14px;
+    background:linear-gradient(160deg,#ff5f6d,#ffc371);opacity:.9"></div>
+  <div style="position:absolute;right:30px;top:120px;width:220px;height:260px;border-radius:14px;
+    background:linear-gradient(200deg,#2193b0,#6dd5ed);opacity:.92"></div>
+  <div style="position:absolute;left:90px;bottom:40px;width:260px;height:150px;border-radius:14px;
+    background:repeating-linear-gradient(45deg,#111 0 12px,#eee 12px 24px);opacity:.75"></div>
+  <div style="position:absolute;left:150px;top:180px;font:700 64px/1 -apple-system,sans-serif;
+    color:rgba(255,255,255,.5)">AIGIS</div>`;
 
 for (const [name, ground] of Object.entries(GROUNDS)) {
   for (const working of [false, true]) {
@@ -52,10 +64,10 @@ for (const [name, ground] of Object.entries(GROUNDS)) {
       /* The window's own material, which the canvas only tints. */
       .orb{width:216px;height:216px;border-radius:56px;overflow:hidden;position:relative;
         backdrop-filter:blur(30px) saturate(1.7);-webkit-backdrop-filter:blur(30px) saturate(1.7);
-        background:rgba(255,255,255,.10);box-shadow:0 30px 60px -20px rgba(0,0,0,.55),
+        background:rgba(255,255,255,.06);box-shadow:0 30px 60px -20px rgba(0,0,0,.55),
         inset 0 1px 0 rgba(255,255,255,.35)}
       iframe{border:0;width:100%;height:100%;background:transparent}
-    </style><div class="stage"><div class="orb"><iframe id="f"></iframe></div></div>`);
+    </style>${CLUTTER}<div class="stage"><div class="orb"><iframe id="f"></iframe></div></div>`);
     const frame = page.frameLocator("#f");
     await page.evaluate((source) => {
       const f = document.getElementById("f");

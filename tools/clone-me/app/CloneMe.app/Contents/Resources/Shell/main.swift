@@ -312,10 +312,20 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
       /* A tint, not a paint: the material is the window's blur behind this. */
       var g=x.createLinearGradient(0,0,w*0.4,h);
-      /* Dense enough to carry its own contrast. Thinner than this and the
-         type disappeared the moment the desktop behind it was pale. */
-      g.addColorStop(0,tint(0.52));g.addColorStop(1,tint(0.78));
+      /* Barely a tint. He wants to see through it, so the glass is glass and
+         the legibility problem is solved where it actually is — behind the
+         words — rather than by making the whole pane opaque. */
+      g.addColorStop(0,tint(0.05));g.addColorStop(1,tint(0.16));
       x.fillStyle=g;x.fillRect(0,0,w,h);
+
+      /* A scrim under the type only: a soft elliptical shadow, feathered to
+         nothing well before the edges, so the words hold on any desktop while
+         the rest of the pane stays see-through. */
+      var sc=x.createRadialGradient(w/2,h*0.33,4,w/2,h*0.33,w*0.62);
+      sc.addColorStop(0,"rgba(6,10,18,.46)");
+      sc.addColorStop(0.55,"rgba(6,10,18,.18)");
+      sc.addColorStop(1,"rgba(6,10,18,0)");
+      x.fillStyle=sc;x.fillRect(0,0,w,h);
 
       /* The water. Three waves at different speeds; where they cross they
          brighten, and that interference is what reads as liquid. */
@@ -363,7 +373,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       r.addColorStop(0,"rgba(255,255,255,.30)");
       r.addColorStop(0.12,"rgba(255,255,255,0)");
       r.addColorStop(0.9,"rgba(255,255,255,0)");
-      r.addColorStop(1,tint(0.35));
+      r.addColorStop(1,tint(0.22));
       x.fillStyle=r;x.fillRect(0,0,w,h);
 
       /* A specular sweep, drifting. */
