@@ -1,0 +1,9 @@
+{
+  "name": "flip-worker",
+  "private": true,
+  "type": "module",
+  "description": "flip's brain: it reads the board, thinks with Claude, writes the work, and shows it. It never presses send.",
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
