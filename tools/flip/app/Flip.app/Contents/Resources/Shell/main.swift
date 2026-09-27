@@ -425,7 +425,13 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         x.fillStyle=bg;x.fillRect(0,0,w,h);
       }
 
-      requestAnimationFrame(draw);
+      /* Full rate while it is working, half while it rests, nothing at all
+         when the page is hidden. This runs for as long as the app is folded
+         away, which is most of the day, and it is a decoration. */
+      if (document.hidden) { setTimeout(function(){requestAnimationFrame(draw);}, 400); }
+      else if (mix < 0.02 && Math.abs(vx) + Math.abs(vy) < 0.5) {
+        setTimeout(function(){requestAnimationFrame(draw);}, 24);
+      } else requestAnimationFrame(draw);
     }
     draw();
 
@@ -470,7 +476,10 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     win.isMovableByWindowBackground = true
     win.isReleasedWhenClosed = false
     win.titleVisibility = .hidden
-    win.minSize = NSSize(width: 280, height: 56)
+    /* Below the orb's own 216, or minSize silently widens it and the squircle
+       comes out a fat pill — setFrame is constrained by this, not just the
+       user's drag. Every other shape is far above it. */
+    win.minSize = NSSize(width: 200, height: 56)
     win.maxSize = NSSize(width: 4000, height: 3000)
 
     let container = ChromeView(frame: initial)
@@ -518,7 +527,13 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
     container.onTap = { [weak self] in
       guard let self = self else { return }
-      if self.shape == .orb { self.applyShape(.working, animated: true) }
+      guard self.shape == .orb else { return }
+      /* The orb page never receives the mouse — ChromeView takes it so the
+         thing can be dragged — so the press is played from here instead. */
+      self.orb?.evaluateJavaScript(
+        "document.body.classList.add('press');setTimeout(function(){document.body.classList.remove('press')},150)",
+        completionHandler: nil)
+      self.applyShape(.working, animated: true)
     }
 
     window = win
@@ -558,7 +573,10 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     frosted.state = .active
     frosted.wantsLayer = true
     frosted.layer?.masksToBounds = true
-    frosted.alphaValue = 0.82
+    /* No alphaValue. Anything under 1 composites the effect view into its own
+       transparency layer and the backdrop sampling degrades — which is how a
+       blur turns into a flat grey sheet. Soften with the material, never with
+       opacity. */
     container.addSubview(frosted)
     frost = frosted
 
@@ -566,7 +584,9 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     orbConfig.websiteDataStore = WKWebsiteDataStore.nonPersistent()
     orbConfig.userContentController.add(self, name: "organic")
     let orbView = WKWebView(frame: container.bounds, configuration: orbConfig)
-    orbView.setValue(false, forKey: "drawsBackground")
+    if orbView.responds(to: NSSelectorFromString("setDrawsBackground:")) {
+      orbView.setValue(false, forKey: "drawsBackground")
+    }
     orbView.wantsLayer = true
     orbView.layer?.masksToBounds = true
     orbView.loadHTMLString(Shell.orbHTML, baseURL: nil)
@@ -634,8 +654,11 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
     // First run: centred. After that the autosave name puts it back where
     // Alex left it; the shape then decides the size.
-    win.center()
+    /* setFrameAutosaveName only registers the name for SAVING. Restoring a
+       window built in code needs setFrameUsingName, so without this it was
+       centred on every launch and the saved frame was written and ignored. */
     win.setFrameAutosaveName("FlipBoard")
+    if !win.setFrameUsingName("FlipBoard") { win.center() }
     applyShape(.orb, animated: false)
 
     /* Escape folds it away from wherever the hand is — including from inside
@@ -683,7 +706,13 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     if ProcessInfo.processInfo.environment["FLIP_UA"] != "mac" {
       view.customUserAgent = iphoneUA
     }
-    view.setValue(false, forKey: "drawsBackground")
+    /* Private, and the only way to a transparent web view. Guarded because an
+       NSUnknownKeyException from AppKit cannot be caught in Swift: the day the
+       key goes, this is a launch crash with no alert, which from the outside
+       looks exactly like "the window never opened". */
+    if view.responds(to: NSSelectorFromString("setDrawsBackground:")) {
+      view.setValue(false, forKey: "drawsBackground")
+    }
     view.wantsLayer = true
     if let layer = view.layer {
       layer.masksToBounds = true
@@ -750,6 +779,11 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   func applyShape(_ s: Shape, animated: Bool) {
     guard let win = window else { return }
     shape = s
+    /* A shape change moves the window by hundreds of points with the top edge
+       pinned, and windowMoved would hand every step of that to the glass as a
+       drag — so folding away threw the light across the surface and slammed
+       the specular to its clamp for a second, every single time. */
+    changingShape = true
     let size = sizeFor(s)
     var frame = win.frame
     let top = frame.origin.y + frame.size.height
@@ -779,6 +813,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     orb?.layer?.cornerRadius = radius
     orb?.layer?.cornerCurve = .continuous
 
+    lastOrigin = frame.origin
     if animated {
       /*
        * Surface tension, not a dialog box.
@@ -804,10 +839,13 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         context.allowsImplicitAnimation = true
         win.animator().setFrame(frame, display: true)
       }, completionHandler: {
+        self.lastOrigin = win.frame.origin
+        self.changingShape = false
         self.layoutChrome()
       })
     } else {
       win.setFrame(frame, display: true)
+      changingShape = false
     }
     layoutChrome()
   }
@@ -818,12 +856,14 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
   /// Where it was last time it reported in, so a move is a direction.
   var lastOrigin: NSPoint?
+  /// True while the window is moving because the shape changed, not the hand.
+  var changingShape = false
 
   @objc func windowMoved(_ note: Notification) {
     guard let win = window else { return }
     let origin = win.frame.origin
     defer { lastOrigin = origin }
-    guard shape == .orb, let previous = lastOrigin else { return }
+    guard shape == .orb, !changingShape, let previous = lastOrigin else { return }
     let dx = Double(origin.x - previous.x)
     let dy = Double(origin.y - previous.y)
     if abs(dx) < 0.5 && abs(dy) < 0.5 { return }
@@ -859,6 +899,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     signInButton?.isHidden = shape == .orb || shape == .pill
     statusDot?.isHidden = shape == .orb || shape == .working
     statusLabel?.isHidden = shape == .orb || shape == .working
+
     statusDot?.isHidden = shape == .orb
     statusLabel?.isHidden = shape == .orb
     if shape == .orb {
@@ -881,6 +922,9 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         pane.view.frame = bounds.insetBy(dx: 8, dy: 8)
         pane.view.layer?.cornerRadius = radiusFor(.orb) - 6
         pane.view.layer?.cornerCurve = .continuous
+        // The desk's accent ring is not restyled on this path, so it has to be
+        // cleared here or a blue rectangle outlines the page inside the glass.
+        pane.view.layer?.borderWidth = 0
       }
       frost?.frame = bounds
       frost?.isHidden = false
@@ -924,7 +968,6 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
           if index == activePane {
             pane.view.isHidden = false
             pane.view.frame = bounds
-            pane.view.layer?.cornerRadius = radiusFor(.working)
             frames.append(bounds)
           } else {
             pane.view.isHidden = true
@@ -950,7 +993,8 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       pane.view.alphaValue = (shape == .desk && !isActive) ? 0.72 : 1.0
       pane.view.layer?.cornerCurve = .continuous
       if let layer = pane.view.layer {
-        layer.cornerRadius = 10
+        // The phone keeps the window's own corner; the desk's panes are cards.
+        layer.cornerRadius = shape == .working ? radiusFor(.working) : 10
         layer.borderWidth = (shape == .desk && isActive) ? 1.5 : 0
         layer.borderColor = NSColor.controlAccentColor.cgColor
       }
@@ -1053,7 +1097,15 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     view.isHidden = old.isHidden
 
     old.removeFromSuperview()
-    container.addSubview(view)
+    /* Below the frost, always. addSubview appends to the FRONT, so a rebuilt
+       pane landed on top of the frost, the glass and all three chips — the orb
+       showed the raw page through nothing, and every button stopped responding
+       because the web view was now the frontmost thing under the mouse. */
+    if let frosted = frost {
+      container.addSubview(view, positioned: .below, relativeTo: frosted)
+    } else {
+      container.addSubview(view)
+    }
     pane.view = view
     web = view
     currentProfile = idText
@@ -1483,7 +1535,9 @@ let menubar = NSMenu()
 let appItem = NSMenuItem()
 menubar.addItem(appItem)
 let appMenu = NSMenu()
-appMenu.addItem(withTitle: "Hide flip", action: #selector(NSApplication.hide(_:)), keyEquivalent: "w")
+/* Cmd-W folds it away. It was bound to hide, which is a duplicate of Cmd-H
+   and not what Cmd-W does in any other app on the machine. */
+appMenu.addItem(withTitle: "Fold away", action: #selector(Shell.foldAway), keyEquivalent: "w")
 appMenu.addItem(withTitle: "Hide", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
 appMenu.addItem(NSMenuItem.separator())
 appMenu.addItem(withTitle: "Quit flip", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
