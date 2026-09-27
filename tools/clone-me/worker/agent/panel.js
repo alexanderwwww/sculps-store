@@ -118,6 +118,17 @@
       body.appendChild(el("div", "cl-empty", state.working ? "Nothing on the board it can do." : "Not working right now."));
     }
 
+    /* Off the clock is a decision, not a wall. Sunday evening is exactly when
+       he wants to watch it run, and an app that answers "come back Monday"
+       to the person who built it is a broken app. */
+    if (!state.working) {
+      var now = el("div", "cl-acts");
+      var go = el("button", "cl-b cl-take", "Work anyway");
+      go.onclick = function () { send({ t: "now" }); };
+      now.appendChild(go);
+      body.appendChild(now);
+    }
+
     state.board.forEach(function (job) {
       var row = el("div", "cl-job");
 

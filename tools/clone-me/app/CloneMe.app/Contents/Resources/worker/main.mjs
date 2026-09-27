@@ -43,6 +43,8 @@ const state = {
 };
 
 let page = null;
+/** Set by the panel's "Work anyway", cleared by the pass it buys. */
+let override = false;
 /** What he tapped, per job. Nothing moves without an entry in here. */
 const tapped = new Map();
 
@@ -122,14 +124,26 @@ async function pass() {
 }
 
 async function onePass() {
-  if (!working(new Date(), SELLER)) {
-    show({ working: false, doing: null, resting: "Off the clock — back inside seller hours.", board: [] });
-    return;
-  }
-  show({ working: true, resting: null, doing: "opening the board" });
-
+  /* The board is opened before the clock is consulted.
+     Two reasons, both learned the hard way. He cannot sign in to Fiverr if
+     the window never leaves the starting screen — and a window that sits on
+     "waking the crew…" all evening looks broken when it is only resting. */
+  show({ doing: "opening the board" });
   await page.ask("goto", { url: BOARD });
   await sleep(betweenActionsMs());
+
+  if (!working(new Date(), SELLER) && !override) {
+    show({
+      working: false,
+      doing: null,
+      resting: "Off the clock — back inside seller hours. Work anyway if you want it running now.",
+      board: [],
+    });
+    return;
+  }
+  /* An override is for the pass he asked for, not for every pass after it. */
+  override = false;
+  show({ working: true, resting: null });
 
   show({ doing: "reading what is waiting" });
   const rows = await page.ask("read", { what: "listings" });
@@ -253,6 +267,10 @@ bridge = await startBridge({
       pass().catch((error) => {
         cloud.log([{ line: `pass failed: ${error.message}` }]).catch(() => {});
       });
+    }
+    if (message.t === "now") {
+      override = true;
+      pass().catch(() => {});
     }
     if (message.t === "take") tapped.set(message.id, "take");
     if (message.t === "skip") tapped.set(message.id, "skip");

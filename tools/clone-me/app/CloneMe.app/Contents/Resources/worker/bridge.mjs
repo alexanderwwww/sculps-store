@@ -28,7 +28,7 @@ const FROM_PAGE = new Set([
   "hello", "done", "tick", "asked", "trouble",
   // Clone Me's own: the two buttons on the board. Without these the taps were
   // rejected here, before onMessage, and the loop waited for them forever.
-  "take", "skip",
+  "take", "skip", "now",
 ]);
 
 let nextId = 1;
