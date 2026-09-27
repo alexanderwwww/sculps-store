@@ -129,6 +129,15 @@ final class ChromeView: NSView {
      * works wherever the hand happens to be.
      */
     if NSEvent.modifierFlags.contains(.command) { return self }
+    /*
+     * Controls come before the handle.
+     *
+     * Everything that is not a pane used to be a drag handle, buttons
+     * included — so the chips in the header took the mouse down as the
+     * beginning of a window drag and never fired. Three buttons that did
+     * nothing at all, for one missing check.
+     */
+    if let hit = super.hitTest(point), hit is NSButton { return hit }
     for frame in paneFrames {
       if frame.contains(p) { return super.hitTest(point) }
     }
