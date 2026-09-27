@@ -178,8 +178,10 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   var activePane: Int = 0
   /// The glass face. Always built, only visible when the window is an orb.
   var orb: WKWebView?
-  /// The one control the open window has: a soft dot that folds it back.
+  /// The one control the open window has: a chip that folds it back.
   var collapse: NSButton?
+  var passwordButton: NSButton?
+  var signInButton: NSButton?
   var shape: Shape = .orb
 
   /** The crew's code, kept so a rebuilt view gets it too. */
@@ -485,6 +487,38 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     collapse = back
 
     /*
+     * Signing in, made into two buttons instead of an explanation.
+     *
+     * Google, Apple and Facebook all refuse OAuth inside an embedded browser
+     * — their anti-phishing rule, and nothing this app does can change it. And
+     * a login cannot be carried over from Chrome: its cookies are encrypted
+     * against a Keychain key only Chrome can use, and Fiverr binds a session
+     * to the browser that made it anyway.
+     *
+     * So: one button opens Fiverr's security page in his own browser, where
+     * he sets a password once, and the other opens Fiverr's password form in
+     * here, where that password signs him in for good.
+     */
+    let setPass = NSButton(title: "Set a password", target: self, action: #selector(openSecurityInBrowser))
+    let signIn = NSButton(title: "Sign in to Fiverr", target: self, action: #selector(openFiverrLogin))
+    for (button, tip) in [
+      (setPass, "Opens Fiverr's security settings in your own browser"),
+      (signIn, "Opens Fiverr's email and password form in here"),
+    ] {
+      button.isBordered = false
+      button.wantsLayer = true
+      button.font = NSFont.systemFont(ofSize: 11.5, weight: .semibold)
+      button.contentTintColor = NSColor.labelColor
+      button.toolTip = tip
+      button.layer?.cornerRadius = 11
+      button.layer?.cornerCurve = .continuous
+      button.layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(0.09).cgColor
+      container.addSubview(button)
+    }
+    passwordButton = setPass
+    signInButton = signIn
+
+    /*
      * Something visible from the first frame.
      *
      * The window is transparent and the web views draw no background, so
@@ -679,7 +713,12 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     orb?.frame = bounds
     orb?.isHidden = shape != .orb
     collapse?.isHidden = shape == .orb || shape == .pill
-    collapse?.frame = NSRect(x: bounds.width - 96, y: bounds.height - headerHeight + 5, width: 82, height: 22)
+    let chipY = bounds.height - headerHeight + 5
+    collapse?.frame = NSRect(x: bounds.width - 96, y: chipY, width: 82, height: 22)
+    signInButton?.frame = NSRect(x: bounds.width - 96 - 126, y: chipY, width: 118, height: 22)
+    passwordButton?.frame = NSRect(x: bounds.width - 96 - 126 - 118, y: chipY, width: 110, height: 22)
+    passwordButton?.isHidden = shape == .orb || shape == .pill
+    signInButton?.isHidden = shape == .orb || shape == .pill
     statusDot?.isHidden = shape == .orb
     statusLabel?.isHidden = shape == .orb
     if shape == .orb {
@@ -1045,6 +1084,20 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     alert.informativeText = message
     alert.runModal()
     done()
+  }
+
+  /** His own browser, at the page where a password is set. */
+  @objc func openSecurityInBrowser() {
+    guard let url = URL(string: "https://www.fiverr.com/settings/security") else { return }
+    NSWorkspace.shared.open(url)
+    note("set a password there, then Sign in to Fiverr here")
+  }
+
+  /** Fiverr's email-and-password form, in here, where the session is kept. */
+  @objc func openFiverrLogin() {
+    guard let url = URL(string: "https://www.fiverr.com/login") else { return }
+    applyShape(.working, animated: true)
+    web?.load(URLRequest(url: url))
   }
 
   /** Fold the window back into the orb. The button and the esc key both land here. */

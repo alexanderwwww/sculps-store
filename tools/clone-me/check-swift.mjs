@@ -18,7 +18,7 @@ WKWebView WKWebViewConfiguration WKWebsiteDataStore WKUserContentController WKUs
 WKScriptMessageHandler WKNavigation WKNavigationDelegate WKUIDelegate WKNavigationAction WKWindowFeatures WKFrameInfo WKPreferences WKUserScriptInjectionTime
 URL URLRequest URLSession URLSessionConfiguration URLSessionWebSocketTask URLSessionWebSocketDelegate URLResponse
 HTTPURLResponse JSONSerialization Data Date DateFormatter TimeInterval DispatchQueue DispatchTime DispatchWorkItem
-OperationQueue Timer Bundle FileManager ProcessInfo CommandLine CharacterSet String Int Double Bool CGFloat CGRect
+OperationQueue Timer Bundle FileManager NSWorkspace ProcessInfo CommandLine CharacterSet String Int Double Bool CGFloat CGRect
 CGSize CGPoint CGColor CALayer CABasicAnimation CAMediaTimingFunction CATransaction Array Dictionary Set Optional Result Error Any AnyObject Never Task MainActor Selector UUID
 NSVisualEffectView NSAnimationContext NSFont NSBitmapImageRep NSGraphicsContext NSTrackingArea NSCursor NSAttributedString
 `.trim().split(/\s+/));
