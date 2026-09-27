@@ -13,13 +13,13 @@ import { readFile } from "node:fs/promises";
 
 const APPLE = new Set(`
 NSObject NSApp NSApplication NSWindow NSView NSEvent NSMenu NSMenuItem NSAlert NSImage NSColor NSRect NSSize NSPoint
-NSText NSTextField NSScreen NSNotification NotificationCenter NSValue NSNumber NSString NSData NSError NSBezierPath
+NSText NSTextField NSButton NSScreen NSNotification NotificationCenter NSValue NSNumber NSString NSData NSError NSBezierPath
 WKWebView WKWebViewConfiguration WKWebsiteDataStore WKUserContentController WKUserScript WKScriptMessage
-WKScriptMessageHandler WKNavigation WKNavigationDelegate WKUIDelegate WKPreferences WKUserScriptInjectionTime
+WKScriptMessageHandler WKNavigation WKNavigationDelegate WKUIDelegate WKNavigationAction WKWindowFeatures WKFrameInfo WKPreferences WKUserScriptInjectionTime
 URL URLRequest URLSession URLSessionConfiguration URLSessionWebSocketTask URLSessionWebSocketDelegate URLResponse
 HTTPURLResponse JSONSerialization Data Date DateFormatter TimeInterval DispatchQueue DispatchTime DispatchWorkItem
 OperationQueue Timer Bundle FileManager ProcessInfo CommandLine CharacterSet String Int Double Bool CGFloat CGRect
-CGSize CGPoint CGColor CALayer Array Dictionary Set Optional Result Error Any AnyObject Never Task MainActor Selector UUID
+CGSize CGPoint CGColor CALayer CABasicAnimation CAMediaTimingFunction CATransaction Array Dictionary Set Optional Result Error Any AnyObject Never Task MainActor Selector UUID
 NSVisualEffectView NSAnimationContext NSFont NSBitmapImageRep NSGraphicsContext NSTrackingArea NSCursor NSAttributedString
 `.trim().split(/\s+/));
 

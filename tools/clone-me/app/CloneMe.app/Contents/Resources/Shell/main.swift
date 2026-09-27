@@ -21,6 +21,7 @@
 // --selftest anywhere in argv = run the diagnostic and exit.
 import Cocoa
 import WebKit
+import QuartzCore
 
 
 
@@ -45,11 +46,15 @@ let iphoneUA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebK
  * The three shapes, and the sizes Alex asked for.
  */
 enum Shape {
+  /// What it is when nobody needs anything: a small living piece of glass.
+  case orb
   case pill
   case working
   case desk
 }
 
+/// The orb is square on purpose — a squircle, not a circle and not a window.
+let orbSize = NSSize(width: 216, height: 216)
 let pillSize = NSSize(width: 320, height: 64)
 let workingSize = NSSize(width: 900, height: 700)
 let deskSize = NSSize(width: 1400, height: 820)
@@ -171,7 +176,11 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
   var panes: [Pane] = []
   var activePane: Int = 0
-  var shape: Shape = .working
+  /// The glass face. Always built, only visible when the window is an orb.
+  var orb: WKWebView?
+  /// The one control the open window has: a soft dot that folds it back.
+  var collapse: NSButton?
+  var shape: Shape = .orb
 
   /** The crew's code, kept so a rebuilt view gets it too. */
   var agentSource: String?
@@ -232,6 +241,98 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   .s{color:#8a9097;font-size:12.5px;margin-top:8px}
   </style><div class="b"><div class="d"></div><div>Clone Me</div>
   <div class="s">waking the crew…</div></div>
+  """
+
+
+  /**
+   * The face of the thing.
+   *
+   * Not a window with a page in it — a piece of glass with water under it. The
+   * canvas draws slow interfering waves, tinted by whatever the status is, and
+   * a ring of crew dots that only move while they are working. Everything is
+   * generated, so it weighs nothing and never loads.
+   *
+   * Clicking it swells the window open. That is the only control it has.
+   */
+  static let orbHTML = """
+  <!doctype html><meta charset="utf-8"><style>
+  html,body{margin:0;height:100%;overflow:hidden;background:transparent;
+    font:13px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+    -webkit-user-select:none;cursor:pointer}
+  canvas{position:absolute;inset:0;width:100%;height:100%}
+  .f{position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:5px;text-align:center;padding:0 22px}
+  .n{font-size:14.5px;font-weight:640;letter-spacing:-.01em;color:rgba(255,255,255,.96);
+    text-shadow:0 1px 10px rgba(0,0,0,.45)}
+  .s{font-size:11.5px;color:rgba(255,255,255,.72);text-shadow:0 1px 8px rgba(0,0,0,.4);
+    max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .c{font-size:10.5px;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.5);
+    letter-spacing:.06em;margin-top:2px}
+  body.press .f{transform:scale(.96)}
+  .f{transition:transform .22s cubic-bezier(.2,.9,.3,1.3)}
+  </style>
+  <canvas id="c"></canvas>
+  <div class="f"><div class="n">Clone Me</div><div class="s" id="s">waking…</div>
+  <div class="c" id="k"></div></div>
+  <script>
+  (function(){
+    var c=document.getElementById("c"),x=c.getContext("2d"),t=0;
+    var state={working:false,doing:"waking…",taken:0,budget:20};
+    function size(){var r=window.devicePixelRatio||2;c.width=innerWidth*r;c.height=innerHeight*r;x.setTransform(r,0,0,r,0,0);}
+    size();addEventListener("resize",size);
+    /* Two tints: resting is deep slate-blue, working is the green it has
+       always used. The move between them is slow, so waking up reads as a
+       tide coming in rather than a light switch. */
+    var rest=[38,52,74], work=[16,120,92], mix=0;
+    function draw(){
+      t+=0.006;
+      mix += ((state.working?1:0)-mix)*0.02;
+      var w=innerWidth,h=innerHeight;
+      x.clearRect(0,0,w,h);
+      var base=[0,1,2].map(function(i){return Math.round(rest[i]+(work[i]-rest[i])*mix)});
+      var g=x.createLinearGradient(0,0,w,h);
+      g.addColorStop(0,"rgba("+base[0]+","+base[1]+","+base[2]+",.92)");
+      g.addColorStop(1,"rgba("+Math.round(base[0]*.4)+","+Math.round(base[1]*.45)+","+Math.round(base[2]*.6)+",.96)");
+      x.fillStyle=g;x.fillRect(0,0,w,h);
+      /* Three waves at different speeds. Where they cross they brighten —
+         that interference is what makes it look like liquid and not a loop. */
+      for(var i=0;i<3;i++){
+        var sp=0.5+i*0.42, amp=h*(0.045+i*0.016), y0=h*(0.56+i*0.085);
+        x.beginPath();x.moveTo(0,h);
+        for(var px=0;px<=w;px+=4){
+          var y=y0+Math.sin(px/(52-i*9)+t*sp*3.1)*amp+Math.sin(px/(121+i*24)-t*sp*1.7)*amp*0.7;
+          x.lineTo(px,y);
+        }
+        x.lineTo(w,h);x.closePath();
+        x.fillStyle="rgba(255,255,255,"+(0.05+i*0.035+mix*0.03)+")";x.fill();
+      }
+      /* The crew. They drift while resting and orbit while working. */
+      var cx=w/2, cy=h*0.5, n=5;
+      for(var d=0;d<n;d++){
+        var a=t*(0.5+mix*1.6)+d*(Math.PI*2/n);
+        var rad=h*(0.30+Math.sin(t*1.3+d)*0.02);
+        var px2=cx+Math.cos(a)*rad, py=cy+Math.sin(a)*rad*0.92;
+        x.beginPath();x.arc(px2,py,2.1+mix*0.7,0,Math.PI*2);
+        x.fillStyle="rgba(255,255,255,"+(0.30+mix*0.45)+")";x.fill();
+      }
+      /* The light on the glass: a soft highlight top-left, always. */
+      var s2=x.createRadialGradient(w*0.3,h*0.18,2,w*0.3,h*0.18,h*0.8);
+      s2.addColorStop(0,"rgba(255,255,255,.22)");s2.addColorStop(1,"rgba(255,255,255,0)");
+      x.fillStyle=s2;x.fillRect(0,0,w,h);
+      requestAnimationFrame(draw);
+    }
+    draw();
+    function send(m){try{window.webkit.messageHandlers.organic.postMessage(m);}catch(e){}}
+    document.body.onmousedown=function(){document.body.classList.add("press");};
+    document.body.onmouseup=function(){document.body.classList.remove("press");};
+    document.body.onclick=function(){send({t:"window",do:"shape",to:"working"});};
+    window.__orb={set:function(next){
+      for(var k in next) state[k]=next[k];
+      document.getElementById("s").textContent = state.doing || (state.working?"on the board":"resting");
+      document.getElementById("k").textContent = state.taken + " / " + state.budget + " TODAY";
+    }};
+  })();
+  </script>
   """
 
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { return true }
@@ -323,6 +424,34 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     web = panes.count > 0 ? panes[0].view : nil
 
     /*
+     * The orb sits above everything and takes the whole window when it is the
+     * shape. It shares the message handler, so a click in there is the same
+     * kind of message the agent sends — there is only one way into Swift.
+     */
+    let orbConfig = WKWebViewConfiguration()
+    orbConfig.websiteDataStore = WKWebsiteDataStore.nonPersistent()
+    orbConfig.userContentController.add(self, name: "organic")
+    let orbView = WKWebView(frame: container.bounds, configuration: orbConfig)
+    orbView.setValue(false, forKey: "drawsBackground")
+    orbView.wantsLayer = true
+    orbView.layer?.masksToBounds = true
+    orbView.loadHTMLString(Shell.orbHTML, baseURL: nil)
+    container.addSubview(orbView)
+    orb = orbView
+
+    /* Folding it back away. Deliberately small and quiet: the window is for
+       the page, not for its own controls. */
+    let back = NSButton(title: "", target: self, action: #selector(foldAway))
+    back.isBordered = false
+    back.wantsLayer = true
+    back.title = "\u{2022}"
+    back.font = NSFont.systemFont(ofSize: 18, weight: .bold)
+    back.contentTintColor = NSColor.secondaryLabelColor
+    back.toolTip = "Fold away (esc)"
+    container.addSubview(back)
+    collapse = back
+
+    /*
      * Something visible from the first frame.
      *
      * The window is transparent and the web views draw no background, so
@@ -337,7 +466,19 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     // Alex left it; the shape then decides the size.
     win.center()
     win.setFrameAutosaveName("CloneMeBoard")
-    applyShape(.working, animated: false)
+    applyShape(.orb, animated: false)
+
+    /* Escape folds it away from wherever the hand is — including from inside
+       a page, which is where it always is. A local monitor sees the key before
+       the web view swallows it. */
+    NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+      guard let self = self else { return event }
+      if event.keyCode == 53 && self.shape != .orb {
+        self.foldAway()
+        return nil
+      }
+      return event
+    }
 
     NotificationCenter.default.addObserver(
       self, selector: #selector(windowResized(_:)),
@@ -397,6 +538,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
   func sizeFor(_ s: Shape) -> NSSize {
     switch s {
+    case .orb: return orbSize
     case .pill: return pillSize
     case .working: return workingSize
     case .desk: return deskSize
@@ -405,9 +547,13 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
   func radiusFor(_ s: Shape) -> CGFloat {
     switch s {
+    /* 26% of the side is Apple's own squircle proportion — the icon grid, the
+       Watch, a Sonoma window. Rounder than that reads as a bubble toy; squarer
+       reads as a dialog box. */
+    case .orb: return orbSize.width * 0.26
     case .pill: return pillSize.height / 2
-    case .working: return 16
-    case .desk: return 16
+    case .working: return 28
+    case .desk: return 28
     }
   }
 
@@ -445,10 +591,35 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     let radius = radiusFor(s)
     body?.layer?.cornerRadius = radius
     effect?.layer?.cornerRadius = radius
+    /* .continuous is the squircle. Without it these are circular corners and
+       the whole thing reads as a bubble toy rather than a piece of Apple. */
+    body?.layer?.cornerCurve = .continuous
+    effect?.layer?.cornerCurve = .continuous
+    orb?.layer?.cornerRadius = radius
+    orb?.layer?.cornerCurve = .continuous
 
     if animated {
+      /*
+       * Surface tension, not a dialog box.
+       *
+       * The curve overshoots slightly on the way out and settles back, the way
+       * a drop of water does when it lands. The corner radius rides the same
+       * timing on the layers, so the shape rounds off as it closes instead of
+       * snapping square the moment the frame arrives.
+       */
+      let curve = CAMediaTimingFunction(controlPoints: 0.22, 1.2, 0.28, 1)
+      for layer in [body?.layer, effect?.layer] {
+        guard let layer = layer else { continue }
+        let anim = CABasicAnimation(keyPath: "cornerRadius")
+        anim.fromValue = layer.cornerRadius
+        anim.toValue = radius
+        anim.duration = 0.44
+        anim.timingFunction = curve
+        layer.add(anim, forKey: "cornerRadius")
+      }
       NSAnimationContext.runAnimationGroup({ context in
-        context.duration = 0.35
+        context.duration = 0.44
+        context.timingFunction = curve
         context.allowsImplicitAnimation = true
         win.animator().setFrame(frame, display: true)
       }, completionHandler: {
@@ -469,6 +640,23 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     guard let container = body else { return }
     let bounds = container.bounds
     var frames: [NSRect] = []
+
+    /* The orb owns the whole window and nothing else is on screen — no panes,
+       no status line, no button. A piece of glass with one thing in it. */
+    orb?.frame = bounds
+    orb?.isHidden = shape != .orb
+    collapse?.isHidden = shape == .orb || shape == .pill
+    collapse?.frame = NSRect(x: bounds.width - 34, y: bounds.height - headerHeight + 6, width: 24, height: 24)
+    statusDot?.isHidden = shape == .orb
+    statusLabel?.isHidden = shape == .orb
+    if shape == .orb {
+      for pane in panes { pane.view.isHidden = true }
+      /* The orb has to see the mouse or the click that opens it is swallowed
+         by the drag handle. So it is listed like a pane — and moving the orb
+         is command-drag, the same as moving the window over any other page. */
+      container.paneFrames = [bounds.insetBy(dx: container.edge, dy: container.edge)]
+      return
+    }
 
     if shape == .pill {
       for pane in panes { pane.view.isHidden = true }
@@ -754,14 +942,22 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       let to = (obj["to"] as? String) ?? ""
       setStatus(obj["text"] as? String, dot: obj["dot"] as? String)
       switch to {
+      case "orb": applyShape(.orb, animated: true)
       case "pill": applyShape(.pill, animated: true)
       case "desk": applyShape(.desk, animated: true)
       case "working": applyShape(.working, animated: true)
       default: break
       }
-    /* The pill's line on its own. */
+    /* The line, the dot, and the day's count — for the pill and for the glass. */
     case "status":
       setStatus(obj["text"] as? String, dot: obj["dot"] as? String)
+      let taken = (obj["taken"] as? Int) ?? -1
+      let budget = (obj["budget"] as? Int) ?? -1
+      if taken >= 0 && budget > 0 {
+        orb?.evaluateJavaScript(
+          "window.__orb&&window.__orb.set({taken:\(taken),budget:\(budget)})",
+          completionHandler: nil)
+      }
     /* {t:"window", do:"pane", id:"alibaba"} — which slot is active. */
     case "pane":
       guard let idText = obj["id"] as? String else { break }
@@ -775,10 +971,52 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     return true
   }
 
+  /*
+   * A pop-up is not a dead end.
+   *
+   * Sign-in flows open a second window and WebKit answers nil unless the app
+   * says otherwise — so the click did nothing at all, silently, which is
+   * exactly what he saw. Loading it in the same view keeps the flow alive and
+   * keeps it inside the one cookie jar that is signed in.
+   */
+  func webView(_ view: WKWebView, createWebViewWith config: WKWebViewConfiguration,
+               for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+    if action.targetFrame == nil, let url = action.request.url {
+      view.load(URLRequest(url: url))
+    }
+    return nil
+  }
+
+  /** A site's own alert, shown as the app's. Unanswered dialogs hang a page. */
+  func webView(_ view: WKWebView, runJavaScriptAlertPanelWithMessage message: String,
+               initiatedByFrame frame: WKFrameInfo, completionHandler done: @escaping () -> Void) {
+    let alert = NSAlert()
+    alert.messageText = "Clone Me"
+    alert.informativeText = message
+    alert.runModal()
+    done()
+  }
+
+  /** Fold the window back into the orb. The button and the esc key both land here. */
+  @objc func foldAway() {
+    applyShape(.orb, animated: true)
+  }
+
   /** The pill's dot and its one line. */
   func setStatus(_ text: String?, dot: String?) {
     if let text = text {
       statusLabel?.stringValue = text
+      /* The same words on the glass. The orb is not a second screen to keep
+         in sync by hand — it is told whatever the status line is told. */
+      if let data = try? JSONSerialization.data(withJSONObject: [text], options: []),
+         let wrapped = String(data: data, encoding: .utf8) {
+        let literal = String(wrapped.dropFirst().dropLast())
+        orb?.evaluateJavaScript("window.__orb&&window.__orb.set({doing:\(literal)})", completionHandler: nil)
+      }
+    }
+    if let working = dot {
+      let awake = working != "grey" && working != "gray"
+      orb?.evaluateJavaScript("window.__orb&&window.__orb.set({working:\(awake)})", completionHandler: nil)
     }
     if let name = dot {
       var color = NSColor.systemGreen

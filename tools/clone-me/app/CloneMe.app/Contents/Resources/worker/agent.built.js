@@ -2120,6 +2120,19 @@
          `set` is still honoured so an older worker keeps working. */
       var next = a && a.set && typeof a.set === "object" ? a.set : a;
       O.panel.set(next);
+      /* And the glass. The orb is the whole app when the window is folded
+         away, so the state has to reach it too — same words, same counts,
+         sent through the one door into Swift. */
+      try {
+        window.webkit.messageHandlers.organic.postMessage({
+          t: "window",
+          do: "status",
+          text: next.doing || next.resting || (next.working ? "on the board" : "resting"),
+          dot: next.working ? "green" : "grey",
+          taken: next.takenToday,
+          budget: next.takeBudget,
+        });
+      } catch (e) {}
       if (a.show === true) O.panel.open();
       else if (a.show === false) O.panel.close();
       /* Guarded rather than assumed: this panel is not the research app's and
