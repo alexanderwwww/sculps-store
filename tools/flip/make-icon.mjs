@@ -42,22 +42,48 @@ const made = new Map();
 for (const px of wanted) {
   const file = `/tmp/flip-icon-${px}.png`;
   execFileSync("python3", ["-c", `
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter
+px = ${px}
 src = Image.open(${JSON.stringify(source)}).convert("RGBA")
-# Square it on its own bounding box, so the art is centred on what is actually
-# drawn rather than on whatever transparent space the export left around it.
+
+# Square on the bounding box, so the tag is centred on what is actually drawn
+# rather than on whatever transparent space the export left around it.
 box = src.getbbox() or (0, 0, src.width, src.height)
 art = src.crop(box)
 side = max(art.size)
 square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
 square.paste(art, ((side - art.width) // 2, (side - art.height) // 2))
-# Apple's 10% margin.
-px = ${px}
-inner = round(px * 0.80)
-square = square.resize((inner, inner), Image.LANCZOS)
+
+# A white squircle, at Apple's own proportion: the rounded body fills about
+# 82% of the canvas and the rest is the margin the icon grid expects. Drawn at
+# 4x and scaled down, because a rounded corner drawn straight at 16px is a
+# staircase.
+S = 4
+body = round(px * 0.82) * S
+radius = round(body * 0.225)   # macOS corner, not iOS's rounder one
+plate = Image.new("RGBA", (body, body), (0, 0, 0, 0))
+ImageDraw.Draw(plate).rounded_rectangle([0, 0, body - 1, body - 1], radius=radius, fill=(255, 255, 255, 255))
+
+# The tag sits inside the white, not on top of the whole canvas.
+inner = round(body * 0.74)
+glass = square.resize((inner, inner), Image.LANCZOS)
+plate.alpha_composite(glass, ((body - inner) // 2, (body - inner) // 2))
+plate = plate.resize((round(px * 0.82), round(px * 0.82)), Image.LANCZOS)
+
 canvas = Image.new("RGBA", (px, px), (0, 0, 0, 0))
-canvas.paste(square, ((px - inner) // 2, (px - inner) // 2))
-canvas.save(${JSON.stringify("/tmp/flip-icon-")} + str(px) + ".png")
+# A soft drop shadow, so a white plate does not disappear into a light Dock.
+if px >= 64:
+    shade = Image.new("RGBA", (px, px), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(shade)
+    off = max(1, round(px * 0.018))
+    pad = (px - plate.width) // 2
+    sd.rounded_rectangle(
+        [pad, pad + off, pad + plate.width - 1, pad + off + plate.height - 1],
+        radius=round(plate.width * 0.225), fill=(0, 0, 0, 64))
+    canvas.alpha_composite(shade.filter(ImageFilter.GaussianBlur(max(1, px * 0.012))))
+
+canvas.alpha_composite(plate, ((px - plate.width) // 2, (px - plate.height) // 2))
+canvas.save("/tmp/flip-icon-" + str(px) + ".png")
 `]);
   made.set(px, readFileSync(file));
 }
