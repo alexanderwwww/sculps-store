@@ -144,8 +144,23 @@ final class ChromeView: NSView {
     return self
   }
 
+  /// What to do when the mouse went down and up without going anywhere.
+  var onTap: (() -> Void)?
+
+  /*
+   * A drag and a tap are the same gesture until it ends.
+   *
+   * performDrag blocks until the mouse comes up, so the distance travelled is
+   * known by the time it returns: moved, and it was a drag; did not, and it
+   * was a click. Without this the orb had to choose — take the mouse and be
+   * unmovable, or hand it to the drag machinery and be unclickable. It was
+   * unmovable, which is what he hit.
+   */
   override func mouseDown(with event: NSEvent) {
+    let start = NSEvent.mouseLocation
     window?.performDrag(with: event)
+    let end = NSEvent.mouseLocation
+    if abs(end.x - start.x) < 4 && abs(end.y - start.y) < 4 { onTap?() }
   }
 }
 
@@ -474,6 +489,11 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     label.isSelectable = false
     container.addSubview(label)
 
+    container.onTap = { [weak self] in
+      guard let self = self else { return }
+      if self.shape == .orb { self.applyShape(.working, animated: true) }
+    }
+
     window = win
     body = container
     effect = fx
@@ -617,12 +637,15 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     view.uiDelegate = self
     view.allowsBackForwardNavigationGestures = true
     /*
-     * It stops claiming to be an iPhone when it signs in.
+     * It is a phone, because that is the thing that actually signs in.
      *
-     * A Mac's WebKit wearing an iPhone user agent is a mismatch a site can
-     * see. Set CLONE_UA=phone to put the old claim back if one ever needs it.
+     * Google refuses OAuth to an embedded browser it can identify, and a Mac
+     * WebKit is one it identifies instantly — which is every dead "Continue
+     * with Google" click so far. On an iPhone user agent it is served the
+     * mobile flow instead, which is the same reason the organic app signs in
+     * without a fight. Set CLONE_UA=mac to go back to the desktop claim.
      */
-    if ProcessInfo.processInfo.environment["CLONE_UA"] == "phone" {
+    if ProcessInfo.processInfo.environment["CLONE_UA"] != "mac" {
       view.customUserAgent = iphoneUA
     }
     view.setValue(false, forKey: "drawsBackground")
@@ -803,10 +826,10 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       frost?.isHidden = false
       frost?.layer?.cornerRadius = radiusFor(.orb)
       frost?.layer?.cornerCurve = .continuous
-      /* The orb has to see the mouse or the click that opens it is swallowed
-         by the drag handle. So it is listed like a pane — and moving the orb
-         is command-drag, the same as moving the window over any other page. */
-      container.paneFrames = [bounds.insetBy(dx: container.edge, dy: container.edge)]
+      /* Nothing here is a pane. The whole orb is a handle, so it drags — and
+         ChromeView calls back on a mouse-up that never moved, which is the
+         click that opens it. */
+      container.paneFrames = []
       return
     }
 
