@@ -261,12 +261,14 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     -webkit-user-select:none;cursor:pointer}
   canvas{position:absolute;inset:0;width:100%;height:100%}
   .f{position:absolute;inset:0;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:5px;text-align:center;padding:0 22px}
-  .n{font-size:14.5px;font-weight:640;letter-spacing:-.01em;color:rgba(255,255,255,.96);
-    text-shadow:0 1px 10px rgba(0,0,0,.45)}
-  .s{font-size:11.5px;color:rgba(255,255,255,.72);text-shadow:0 1px 8px rgba(0,0,0,.4);
+    align-items:center;justify-content:center;gap:5px;text-align:center;
+    padding:0 22px 42px}
+  .n{font-size:14.5px;font-weight:640;letter-spacing:-.01em;color:rgba(255,255,255,.97);
+    text-shadow:0 1px 3px rgba(0,0,0,.55),0 2px 18px rgba(0,0,0,.6)}
+  .s{font-size:11.5px;color:rgba(255,255,255,.82);text-shadow:0 1px 3px rgba(0,0,0,.6),0 2px 14px rgba(0,0,0,.5);
     max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .c{font-size:10.5px;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.5);
+  .c{font-size:10.5px;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.62);
+    text-shadow:0 1px 3px rgba(0,0,0,.55);
     letter-spacing:.06em;margin-top:2px}
   body.press .f{transform:scale(.96)}
   .f{transition:transform .22s cubic-bezier(.2,.9,.3,1.3)}
@@ -290,9 +292,12 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       var w=innerWidth,h=innerHeight;
       x.clearRect(0,0,w,h);
       var base=[0,1,2].map(function(i){return Math.round(rest[i]+(work[i]-rest[i])*mix)});
+      /* Barely there. The real material is the window's own blur of whatever
+         is behind it — this only tints it. Painted opaque, as it was, the
+         glass stopped being glass and became a coloured tile. */
       var g=x.createLinearGradient(0,0,w,h);
-      g.addColorStop(0,"rgba("+base[0]+","+base[1]+","+base[2]+",.92)");
-      g.addColorStop(1,"rgba("+Math.round(base[0]*.4)+","+Math.round(base[1]*.45)+","+Math.round(base[2]*.6)+",.96)");
+      g.addColorStop(0,"rgba("+base[0]+","+base[1]+","+base[2]+",.20)");
+      g.addColorStop(1,"rgba("+Math.round(base[0]*.5)+","+Math.round(base[1]*.55)+","+Math.round(base[2]*.7)+",.34)");
       x.fillStyle=g;x.fillRect(0,0,w,h);
       /* Three waves at different speeds. Where they cross they brighten —
          that interference is what makes it look like liquid and not a loop. */
@@ -304,8 +309,32 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
           x.lineTo(px,y);
         }
         x.lineTo(w,h);x.closePath();
-        x.fillStyle="rgba(255,255,255,"+(0.05+i*0.035+mix*0.03)+")";x.fill();
+        x.fillStyle="rgba(255,255,255,"+(0.035+i*0.028+mix*0.025)+")";x.fill();
       }
+      /*
+       * The columns.
+       *
+       * Sixteen of them across the floor of the glass, each on its own slow
+       * wave so the row breathes instead of marching. They sit low and calm
+       * while it rests and rise while it works, and every one of them glows
+       * into the water above it — the bloom is what makes it read as light
+       * under liquid rather than a bar chart drawn on a screen.
+       */
+      var n2=16, pad=w*0.10, span=(w-pad*2), bw=span/n2*0.46;
+      for(var b=0;b<n2;b++){
+        var ph=t*2.1+b*0.55;
+        var lvl=(Math.sin(ph)*0.5+0.5)*(Math.sin(ph*0.37+1.3)*0.35+0.65);
+        var hgt=h*(0.05+lvl*(0.07+mix*0.20));
+        var bx=pad+span*(b+0.5)/n2-bw/2, by=h*0.80-hgt;
+        x.save();
+        x.shadowBlur=10+mix*16;
+        x.shadowColor="rgba("+(120+mix*80)+",255,"+(210+mix*20)+","+(0.35+mix*0.4)+")";
+        x.fillStyle="rgba(255,255,255,"+(0.30+lvl*0.28+mix*0.22)+")";
+        if (x.roundRect) { x.beginPath(); x.roundRect(bx,by,bw,hgt,bw/2); x.fill(); }
+        else { x.fillRect(bx,by,bw,hgt); }
+        x.restore();
+      }
+
       /* The crew. They drift while resting and orbit while working. */
       var cx=w/2, cy=h*0.5, n=5;
       for(var d=0;d<n;d++){
@@ -317,7 +346,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       }
       /* The light on the glass: a soft highlight top-left, always. */
       var s2=x.createRadialGradient(w*0.3,h*0.18,2,w*0.3,h*0.18,h*0.8);
-      s2.addColorStop(0,"rgba(255,255,255,.22)");s2.addColorStop(1,"rgba(255,255,255,0)");
+      s2.addColorStop(0,"rgba(255,255,255,.16)");s2.addColorStop(1,"rgba(255,255,255,0)");
       x.fillStyle=s2;x.fillRect(0,0,w,h);
       requestAnimationFrame(draw);
     }
@@ -441,13 +470,17 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
     /* Folding it back away. Deliberately small and quiet: the window is for
        the page, not for its own controls. */
-    let back = NSButton(title: "", target: self, action: #selector(foldAway))
+    let back = NSButton(title: "Fold away", target: self, action: #selector(foldAway))
     back.isBordered = false
     back.wantsLayer = true
-    back.title = "\u{2022}"
-    back.font = NSFont.systemFont(ofSize: 18, weight: .bold)
-    back.contentTintColor = NSColor.secondaryLabelColor
-    back.toolTip = "Fold away (esc)"
+    back.font = NSFont.systemFont(ofSize: 11.5, weight: .semibold)
+    back.contentTintColor = NSColor.labelColor
+    back.toolTip = "Fold back into the orb (esc)"
+    if let layer = back.layer {
+      layer.cornerRadius = 11
+      layer.cornerCurve = .continuous
+      layer.backgroundColor = NSColor.labelColor.withAlphaComponent(0.09).cgColor
+    }
     container.addSubview(back)
     collapse = back
 
@@ -646,11 +679,27 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     orb?.frame = bounds
     orb?.isHidden = shape != .orb
     collapse?.isHidden = shape == .orb || shape == .pill
-    collapse?.frame = NSRect(x: bounds.width - 34, y: bounds.height - headerHeight + 6, width: 24, height: 24)
+    collapse?.frame = NSRect(x: bounds.width - 96, y: bounds.height - headerHeight + 5, width: 82, height: 22)
     statusDot?.isHidden = shape == .orb
     statusLabel?.isHidden = shape == .orb
     if shape == .orb {
-      for pane in panes { pane.view.isHidden = true }
+      /*
+       * The work, behind the water.
+       *
+       * The live page is not hidden when the app folds away — it is dimmed
+       * right down and left running underneath the glass, so the orb shows
+       * what is actually happening rather than an animation standing in for
+       * it. The orb is above it in the view order, so the click still opens
+       * the window instead of landing on the page.
+       */
+      for (index, pane) in panes.enumerated() {
+        let isActive = index == activePane
+        pane.view.isHidden = !isActive
+        pane.view.alphaValue = 0.22
+        pane.view.frame = bounds.insetBy(dx: 10, dy: 10)
+        pane.view.layer?.cornerRadius = radiusFor(.orb) - 8
+        pane.view.layer?.cornerCurve = .continuous
+      }
       /* The orb has to see the mouse or the click that opens it is swallowed
          by the drag handle. So it is listed like a pane — and moving the orb
          is command-drag, the same as moving the window over any other page. */
@@ -712,6 +761,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     for (index, pane) in panes.enumerated() {
       let isActive = index == activePane
       pane.view.alphaValue = (shape == .desk && !isActive) ? 0.72 : 1.0
+      pane.view.layer?.cornerCurve = .continuous
       if let layer = pane.view.layer {
         layer.cornerRadius = 10
         layer.borderWidth = (shape == .desk && isActive) ? 1.5 : 0
