@@ -66,6 +66,15 @@ means in practice:
   it, and send him the file.
 - **Do the work, do not describe it.** He is paying for a finished store, not a plan.
 
+## Naming — his rule, said plainly
+
+> Stop giving ancient Greek names to apps that are Gen Z. If I want a Greek name, I
+> will say it with my mouth to you.
+
+Kerberos is his, and it stays. Everything after it is named in the language of the
+people who will use it: short, current, spoken. A god's name is only on the table when
+he asks for one out loud.
+
 ## Who you're working with — read this first
 
 Alex is not a developer. He has run many Shopify stores, so he knows products, orders,
