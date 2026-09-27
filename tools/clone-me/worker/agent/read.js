@@ -459,14 +459,17 @@
 
   O.read = {
     platform: platform,
+    /** The site for whatever host is on screen, by hostname rather than by
+        the three-social-platform guess. */
+    deskSite: deskSite,
     signedIn: signedIn,
     userId: userId,
     accountStatus: function () {
-      var site = O.sites && O.sites.instagram;
+      var site = deskSite();
       return site && site.readStatus ? site.readStatus() : null;
     },
     accountStatusUrl: function () {
-      var site = O.sites && O.sites.instagram;
+      var site = deskSite();
       return site ? site.statusUrl : null;
     },
     /* ------------------------------------------------- the supplier desk */
@@ -485,7 +488,7 @@
 
     /** What a search page on Alibaba or 1688 is showing. */
     results: function () {
-      var site = O.sites && O.sites.alibaba;
+      var site = deskSite();
       return site && site.results ? site.results() : [];
     },
 
@@ -497,7 +500,8 @@
      * screen is not one of those.
      */
     supplier: function () {
-      var site = O.sites && O.sites.alibaba;
+      var site = deskSite();
+      var site = deskSite();
       if (!site || !site.supplier || !site.match(location.hostname)) return null;
       return site.supplier();
     },

@@ -652,6 +652,28 @@
       return out;
     },
 
+    /**
+     * The box a reply is typed into, when one is on screen.
+     *
+     * A reader that could not find this was the cause of the worst bug in this
+     * app: the loop typed into nothing, then told him the reply was "typed,
+     * ready to send". Claiming work that does not exist is worse than failing,
+     * so this returns null rather than a guess, and the loop believes it.
+     *
+     * Still not a hand: it finds the box. Putting words in it and pressing
+     * send remain two separate, deliberate acts.
+     */
+    composer: function () {
+      return one([
+        '[contenteditable="true"]',
+        'textarea[placeholder*="message" i]',
+        'textarea[name*="message" i]',
+        'textarea[aria-label*="message" i]',
+        '[data-testid*="composer" i] textarea',
+        "form textarea",
+      ]);
+    },
+
     /** Open a named conversation. Reading only — it never types or sends. */
     openThread: function (who) {
       var want = String(who || "").replace(/^@/, "").toLowerCase();
@@ -1155,14 +1177,17 @@
 
   O.read = {
     platform: platform,
+    /** The site for whatever host is on screen, by hostname rather than by
+        the three-social-platform guess. */
+    deskSite: deskSite,
     signedIn: signedIn,
     userId: userId,
     accountStatus: function () {
-      var site = O.sites && O.sites.instagram;
+      var site = deskSite();
       return site && site.readStatus ? site.readStatus() : null;
     },
     accountStatusUrl: function () {
-      var site = O.sites && O.sites.instagram;
+      var site = deskSite();
       return site ? site.statusUrl : null;
     },
     /* ------------------------------------------------- the supplier desk */
@@ -1181,7 +1206,7 @@
 
     /** What a search page on Alibaba or 1688 is showing. */
     results: function () {
-      var site = O.sites && O.sites.alibaba;
+      var site = deskSite();
       return site && site.results ? site.results() : [];
     },
 
@@ -1193,7 +1218,8 @@
      * screen is not one of those.
      */
     supplier: function () {
-      var site = O.sites && O.sites.alibaba;
+      var site = deskSite();
+      var site = deskSite();
       if (!site || !site.supplier || !site.match(location.hostname)) return null;
       return site.supplier();
     },
@@ -1864,15 +1890,21 @@
   O.send = send;
 
   function tick(who, what) {
-    O.panel.tick(who, what);
+    if (O.panel && O.panel.tick) O.panel.tick(who, what);
     send({ t: "tick", who: who, what: what });
   }
 
   /** The named things the brain taps: like, comment, next, profile. */
   function targetEl(name, a) {
     if (a && a.selector) return document.querySelector(a.selector);
-    var s = O.sites[O.read.platform()];
+    /* The site by hostname, not by `platform()` — that function knows only the
+       three social sites and answers "unknown" everywhere else, which on this
+       app meant every lookup returned null and every type went nowhere while
+       still reporting success. */
+    var s = (O.read.deskSite && O.read.deskSite()) || O.sites[O.read.platform()];
     if (!s) return null;
+    /* The one field this app types into. */
+    if (name === "composer" || name === "reply") return s.composer ? s.composer() : null;
     if (name === "like") return s.likeButton();
     if (name === "comment") return s.commentBox();
     if (name === "profile") return s.profileLink ? s.profileLink() : null;
@@ -2020,21 +2052,12 @@
        * says can be filed as a supplier's answer.
        */
       if (what === "listings") {
-        return O.read.results().map(function (r) {
-          return {
-            // The supplier is the name; the product title is not a company.
-            name: r.supplier || null,
-            url: r.url,
-            title: r.title,
-            blurb: r.title,
-            tags: null,
-            years: r.years,
-            price: r.price,
-            moq: r.moq,
-            transactions: r.transactions,
-            site: r.site,
-          };
-        });
+        /* No reshaping. The original needed a seam here because the page's
+           supplier vocabulary and the brain's differed; this app's reader and
+           this app's brain already agree on one shape, and translating between
+           two identical shapes is exactly how buyer, price, due time and the
+           brief all arrived as undefined. The row goes through as read. */
+        return O.read.results();
       }
       if (what === "thread") {
         // Opening by the exact printed name first: reading the wrong
@@ -2080,11 +2103,19 @@
       return O.cursor.at();
     },
     panel: function (a) {
-      // `show` is tri-state: true opens, false closes, undefined just redraws.
-      O.panel.set(a);
+      /* The fields arrive flat. They used to be read off `a.set`, which meant
+         the panel merged {t,id,act,set} into its own state and never saw
+         board, doing or working at all — a screen that could not change.
+         `set` is still honoured so an older worker keeps working. */
+      var next = a && a.set && typeof a.set === "object" ? a.set : a;
+      O.panel.set(next);
       if (a.show === true) O.panel.open();
       else if (a.show === false) O.panel.close();
-      return { open: O.panel.isOpen() };
+      /* Guarded rather than assumed: this panel is not the research app's and
+         does not carry every method that one does. Unguarded, this threw after
+         set() had already run — so the one signal that would have exposed the
+         bug above came back as a TypeError instead. */
+      return { ok: true, open: O.panel.isOpen ? O.panel.isOpen() : null };
     },
 
     stop: function (a) {

@@ -15,7 +15,7 @@ set -u
 HERE="$(cd "$(dirname "$0")/../Resources" && pwd)"
 APP_ROOT="$(cd "$HERE/../.." && pwd)"
 SUPPORT="$HOME/Library/Application Support/CloneMe"
-LOG="$SUPPORT/log/research.log"
+LOG="$SUPPORT/log/cloneme.log"
 mkdir -p "$SUPPORT/worker" "$SUPPORT/bin" "$SUPPORT/log"
 # Every crew line lands in the log; kept to one generation past 8 MB.
 if [ -f "$LOG" ] && [ "$(stat -f%z "$LOG" 2>/dev/null || echo 0)" -gt 8000000 ]; then mv -f "$LOG" "$LOG.1"; fi
@@ -44,13 +44,18 @@ SWIFTC="$(xcrun -f swiftc 2>/dev/null || true)"
 # --- the worker, installed beside itself ----------------------------------
 # The bundle's build; a live push writes a higher one into worker/BUILD and
 # this must never copy over it.
-BUNDLE_BUILD=1790423337
+BUNDLE_BUILD=1790520739
 RUNTIME_BUILD=0
 if [ -f "$SUPPORT/worker/BUILD" ]; then
   RUNTIME_BUILD="$(tr -dc '0-9' < "$SUPPORT/worker/BUILD")"
   RUNTIME_BUILD="${RUNTIME_BUILD:-0}"
 fi
 if [ "$RUNTIME_BUILD" -lt "$BUNDLE_BUILD" ] || [ ! -f "$SUPPORT/worker/main.mjs" ]; then
+  # Replace, never merge. `cp -R src/. dst/` leaves behind every file a later
+  # build dropped — brain.mjs outlived two rewrites that way — and a stale
+  # module nobody can dislodge is the bug that already cost an afternoon.
+  # node_modules is kept: it is installed here, not shipped.
+  find "$SUPPORT/worker" -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} + 2>/dev/null
   cp -R "$HERE/worker/." "$SUPPORT/worker/"
   echo "$BUNDLE_BUILD" > "$SUPPORT/worker/BUILD"
   say "installed build $BUNDLE_BUILD from the bundle"
@@ -130,6 +135,7 @@ export CLONE_HOME="$SUPPORT"
       recovered=1
       say "build $running died at start (code $code) — back to the bundled build $BUNDLE_BUILD"
       echo "$running" > "$SUPPORT/worker/BAD"
+      find "$SUPPORT/worker" -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} + 2>/dev/null
       cp -R "$HERE/worker/." "$SUPPORT/worker/"
       echo "$BUNDLE_BUILD" > "$SUPPORT/worker/BUILD"
       /usr/bin/osascript -e 'on run argv' -e 'display alert "Clone Me" message (item 1 of argv)' -e 'end run' \

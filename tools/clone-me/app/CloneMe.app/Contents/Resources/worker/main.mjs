@@ -20,6 +20,7 @@
  * work still gets done by the machine; only the pressing is human, and the
  * pressing is the cheap part.
  */
+import { fileURLToPath } from "node:url";
 import { startBridge } from "./bridge.mjs";
 import { shortlist } from "./work.mjs";
 import { connectCloud } from "./cloud.mjs";
@@ -47,7 +48,7 @@ const tapped = new Map();
 
 function show(patch) {
   Object.assign(state, patch);
-  page?.ask("panel", { set: state }).catch(() => {});
+  page?.ask("panel", { ...state }).catch(() => {});
   // Said outward too, so "is Clone Me working?" has an answer from anywhere.
   cloud.status({
     working: state.working,
@@ -104,7 +105,23 @@ function waitForTap(id) {
   });
 }
 
+/** A pass can block for twenty minutes waiting on Claude while the timer
+ *  fires again underneath it. Two passes interleaving `goto`, the board and
+ *  the day's count is not a race worth having. */
+let passing = false;
+
 async function pass() {
+  if (passing) return;
+  passing = true;
+  try {
+    rollDay();
+    await onePass();
+  } finally {
+    passing = false;
+  }
+}
+
+async function onePass() {
   if (!working(new Date(), SELLER)) {
     show({ working: false, doing: null, resting: "Off the clock — back inside seller hours.", board: [] });
     return;
@@ -181,7 +198,23 @@ async function pass() {
     await sleep(Math.min(wait, 90_000));
 
     show({ doing: `typing to ${job.buyer ?? "the buyer"}` });
-    await page.ask("type", { keys: typeReply(work.reply) });
+    /* `strokes` and a named field, because that is what the page reads. It
+       used to send `keys` with no target: nothing read either, so nothing was
+       typed — and the next three lines then told him it had been. Claiming
+       work that does not exist is the worst failure this app can have, so the
+       count and the message now both depend on what the page actually says. */
+    const typed = await page.ask("type", {
+      into: "composer",
+      strokes: typeReply(work.reply),
+    });
+
+    if (!typed || typed.ok === false || typed.found === false) {
+      patch(id, {
+        reply: work.reply,
+        why: "could not find the message box — open the conversation and it will try again",
+      });
+      continue;
+    }
 
     state.takenToday += 1;
     patch(id, { reply: work.reply + "\n\n— typed, ready for you to send" });
@@ -192,9 +225,24 @@ async function pass() {
   show({ doing: null });
 }
 
+/** Midnight resets the count. Without this "Done for today" was forever. */
+let day = new Date().toDateString();
+function rollDay() {
+  const today = new Date().toDateString();
+  if (today === day) return;
+  day = today;
+  state.takenToday = 0;
+  state.takeBudget = takeBudget(Number(process.env.CLONE_DAYS_SELLING) || 0);
+}
+
 let bridge;
 bridge = await startBridge({
-  dir: new URL(".", import.meta.url).pathname,
+  /* fileURLToPath, never `.pathname`: the worker lives in "Application
+     Support", and a URL pathname percent-encodes that space. The bridge then
+     looked for agent.built.js under "Application%20Support", never found it,
+     and answered 500 — so the window gave up on a worker that was listening
+     the whole time. */
+  dir: fileURLToPath(new URL(".", import.meta.url)),
   // One argument. The bridge hands over the message and nothing else — the
   // way to reach the page is the object startBridge returned, which is why
   // `page` is assigned below rather than in here.

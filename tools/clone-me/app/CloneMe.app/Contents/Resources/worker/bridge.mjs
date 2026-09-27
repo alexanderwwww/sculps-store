@@ -8,7 +8,7 @@
  * over, and a small promise-shaped API for the brain: `do(act, args)` goes
  * out, `{t:"done", id}` comes back, and nothing waits forever.
  *
- * Bound to 127.0.0.1. The launcher passes the port in ORGANIC_PORT and reads
+ * Bound to 127.0.0.1. The launcher passes the port in CLONE_PORT and reads
  * "PORT n" from stdout — the first and only line stdout ever carries.
  */
 import http from "node:http";
@@ -20,11 +20,16 @@ import { WebSocketServer } from "ws";
 export const ACTS = new Set([
   "goto", "scroll", "tap", "type", "dwell", "read", "say", "cursor", "panel", "stop",
   // the supplier desk
-  "send", "openThread",
+  "send", "openThread", "sendFile",
 ]);
 
 /** Everything the page may say back. */
-const FROM_PAGE = new Set(["hello", "done", "tick", "asked", "trouble"]);
+const FROM_PAGE = new Set([
+  "hello", "done", "tick", "asked", "trouble",
+  // Clone Me's own: the two buttons on the board. Without these the taps were
+  // rejected here, before onMessage, and the loop waited for them forever.
+  "take", "skip",
+]);
 
 let nextId = 1;
 

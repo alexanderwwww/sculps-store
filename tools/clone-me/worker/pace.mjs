@@ -32,9 +32,18 @@ export const SELLER = {
 };
 
 /** Awake now? The late window is only used some nights. */
+let lateNight = { key: "", up: false };
 export function working(now = new Date(), persona = SELLER) {
   const hour = now.getHours();
-  if ((hour >= 22 || hour < 1) && !chance(0.35)) return false;
+  if (hour >= 22 || hour < 1) {
+    /* Decided once per night and remembered. Re-rolling on every call made
+       the late window flicker on and off between passes, which is the one
+       thing a real person's evening never does. The key is the night, not
+       the day, so 23:00 and 00:30 are the same sitting. */
+    const night = new Date(now.getTime() - (hour < 1 ? 86_400_000 : 0)).toDateString();
+    if (lateNight.key !== night) lateNight = { key: night, up: chance(0.35) };
+    if (!lateNight.up) return false;
+  }
   return isAwake(persona, now);
 }
 

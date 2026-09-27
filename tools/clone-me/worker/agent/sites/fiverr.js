@@ -225,6 +225,28 @@
       return out;
     },
 
+    /**
+     * The box a reply is typed into, when one is on screen.
+     *
+     * A reader that could not find this was the cause of the worst bug in this
+     * app: the loop typed into nothing, then told him the reply was "typed,
+     * ready to send". Claiming work that does not exist is worse than failing,
+     * so this returns null rather than a guess, and the loop believes it.
+     *
+     * Still not a hand: it finds the box. Putting words in it and pressing
+     * send remain two separate, deliberate acts.
+     */
+    composer: function () {
+      return one([
+        '[contenteditable="true"]',
+        'textarea[placeholder*="message" i]',
+        'textarea[name*="message" i]',
+        'textarea[aria-label*="message" i]',
+        '[data-testid*="composer" i] textarea',
+        "form textarea",
+      ]);
+    },
+
     /** Open a named conversation. Reading only — it never types or sends. */
     openThread: function (who) {
       var want = String(who || "").replace(/^@/, "").toLowerCase();
