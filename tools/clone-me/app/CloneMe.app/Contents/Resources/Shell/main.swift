@@ -187,6 +187,8 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   var activePane: Int = 0
   /// The glass face. Always built, only visible when the window is an orb.
   var orb: WKWebView?
+  /// The frost between the live page and the glass. Only there when folded.
+  var frost: NSVisualEffectView?
   /// The one control the open window has: a chip that folds it back.
   var collapse: NSButton?
   var passwordButton: NSButton?
@@ -492,6 +494,27 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
      * shape. It shares the message handler, so a click in there is the same
      * kind of message the agent sends — there is only one way into Swift.
      */
+    /*
+     * The frost.
+     *
+     * .withinWindow blurs what is BEHIND it inside this same window — which is
+     * the live page. So folded away, the board is not a dim rectangle under
+     * the glass, it is genuinely frosted: the cursor moving, a thread opening,
+     * a reply going in, all of it soft and unreadable and obviously alive.
+     *
+     * It is added before the orb, so the order from back to front is
+     * page → frost → glass.
+     */
+    let frosted = NSVisualEffectView(frame: container.bounds)
+    frosted.material = .underPageBackground
+    frosted.blendingMode = .withinWindow
+    frosted.state = .active
+    frosted.wantsLayer = true
+    frosted.layer?.masksToBounds = true
+    frosted.alphaValue = 0.82
+    container.addSubview(frosted)
+    frost = frosted
+
     let orbConfig = WKWebViewConfiguration()
     orbConfig.websiteDataStore = WKWebsiteDataStore.nonPersistent()
     orbConfig.userContentController.add(self, name: "organic")
@@ -745,6 +768,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
        no status line, no button. A piece of glass with one thing in it. */
     orb?.frame = bounds
     orb?.isHidden = shape != .orb
+    frost?.isHidden = shape != .orb
     collapse?.isHidden = shape == .orb || shape == .pill
     let chipY = bounds.height - headerHeight + 5
     collapse?.frame = NSRect(x: bounds.width - 96, y: chipY, width: 82, height: 22)
@@ -767,11 +791,18 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       for (index, pane) in panes.enumerated() {
         let isActive = index == activePane
         pane.view.isHidden = !isActive
-        pane.view.alphaValue = 0.22
-        pane.view.frame = bounds.insetBy(dx: 10, dy: 10)
-        pane.view.layer?.cornerRadius = radiusFor(.orb) - 8
+        /* Brighter than it was: the frost above it is what softens it now, so
+           the page can be nearly full strength and still read as weather
+           rather than as a document. */
+        pane.view.alphaValue = 0.55
+        pane.view.frame = bounds.insetBy(dx: 8, dy: 8)
+        pane.view.layer?.cornerRadius = radiusFor(.orb) - 6
         pane.view.layer?.cornerCurve = .continuous
       }
+      frost?.frame = bounds
+      frost?.isHidden = false
+      frost?.layer?.cornerRadius = radiusFor(.orb)
+      frost?.layer?.cornerCurve = .continuous
       /* The orb has to see the mouse or the click that opens it is swallowed
          by the drag handle. So it is listed like a pane — and moving the orb
          is command-drag, the same as moving the window over any other page. */
