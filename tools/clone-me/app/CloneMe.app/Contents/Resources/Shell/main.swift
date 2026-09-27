@@ -271,97 +271,111 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     font:13px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
     -webkit-user-select:none;cursor:pointer}
   canvas{position:absolute;inset:0;width:100%;height:100%}
-  .f{position:absolute;inset:0;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:5px;text-align:center;
-    padding:0 22px 42px}
-  .n{font-size:14.5px;font-weight:640;letter-spacing:-.01em;color:rgba(255,255,255,.97);
-    text-shadow:0 1px 3px rgba(0,0,0,.55),0 2px 18px rgba(0,0,0,.6)}
-  .s{font-size:11.5px;color:rgba(255,255,255,.82);text-shadow:0 1px 3px rgba(0,0,0,.6),0 2px 14px rgba(0,0,0,.5);
-    max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .c{font-size:10.5px;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.62);
-    text-shadow:0 1px 3px rgba(0,0,0,.55);
-    letter-spacing:.06em;margin-top:2px}
-  body.press .f{transform:scale(.96)}
-  .f{transition:transform .22s cubic-bezier(.2,.9,.3,1.3)}
+  .f{position:absolute;left:0;right:0;top:20%;display:flex;flex-direction:column;
+    align-items:center;gap:3px;text-align:center;padding:0 20px;
+    transition:transform .22s cubic-bezier(.2,.9,.3,1.3)}
+  .n{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+    color:rgba(255,255,255,.55)}
+  .s{font-size:14px;font-weight:600;letter-spacing:-.01em;color:rgba(255,255,255,.98);
+    text-shadow:0 1px 14px rgba(0,0,0,.5);max-width:100%;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .c{font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.14em;
+    color:rgba(255,255,255,.45);margin-top:1px}
+  body.press .f{transform:scale(.97)}
   </style>
   <canvas id="c"></canvas>
-  <div class="f"><div class="n">Clone Me</div><div class="s" id="s">waking…</div>
+  <div class="f"><div class="n">Clone Me</div><div class="s" id="s">waking</div>
   <div class="c" id="k"></div></div>
   <script>
   (function(){
     var c=document.getElementById("c"),x=c.getContext("2d"),t=0;
-    var state={working:false,doing:"waking…",taken:0,budget:20};
+    var state={working:false,doing:"waking",taken:0,budget:20};
     function size(){var r=window.devicePixelRatio||2;c.width=innerWidth*r;c.height=innerHeight*r;x.setTransform(r,0,0,r,0,0);}
     size();addEventListener("resize",size);
-    /* Two tints: resting is deep slate-blue, working is the green it has
-       always used. The move between them is slow, so waking up reads as a
-       tide coming in rather than a light switch. */
-    var rest=[38,52,74], work=[16,120,92], mix=0;
+
+    /* Resting is a cold blue-violet, working is a vivid mint. The move between
+       them is slow on purpose: waking up should read as a tide, not a switch. */
+    var rest=[34,46,78], work=[0,150,118], mix=0;
+    function tint(a,f){
+      var b=[0,1,2].map(function(i){return Math.round(rest[i]+(work[i]-rest[i])*mix)});
+      return "rgba("+b[0]+","+b[1]+","+b[2]+","+a+")";
+    }
+    /* Sixteen columns, each holding its own level so they fall slower than
+       they rise — the asymmetry is what makes a meter look alive. */
+    var N=16, lv=[]; for(var i=0;i<N;i++) lv.push(0.12);
+
     function draw(){
-      t+=0.006;
-      mix += ((state.working?1:0)-mix)*0.02;
+      t+=0.0075;
+      mix += ((state.working?1:0)-mix)*0.025;
       var w=innerWidth,h=innerHeight;
       x.clearRect(0,0,w,h);
-      var base=[0,1,2].map(function(i){return Math.round(rest[i]+(work[i]-rest[i])*mix)});
-      /* Barely there. The real material is the window's own blur of whatever
-         is behind it — this only tints it. Painted opaque, as it was, the
-         glass stopped being glass and became a coloured tile. */
-      var g=x.createLinearGradient(0,0,w,h);
-      g.addColorStop(0,"rgba("+base[0]+","+base[1]+","+base[2]+",.20)");
-      g.addColorStop(1,"rgba("+Math.round(base[0]*.5)+","+Math.round(base[1]*.55)+","+Math.round(base[2]*.7)+",.34)");
+
+      /* A tint, not a paint: the material is the window's blur behind this. */
+      var g=x.createLinearGradient(0,0,w*0.4,h);
+      /* Dense enough to carry its own contrast. Thinner than this and the
+         type disappeared the moment the desktop behind it was pale. */
+      g.addColorStop(0,tint(0.52));g.addColorStop(1,tint(0.78));
       x.fillStyle=g;x.fillRect(0,0,w,h);
-      /* Three waves at different speeds. Where they cross they brighten —
-         that interference is what makes it look like liquid and not a loop. */
+
+      /* The water. Three waves at different speeds; where they cross they
+         brighten, and that interference is what reads as liquid. */
       for(var i=0;i<3;i++){
-        var sp=0.5+i*0.42, amp=h*(0.045+i*0.016), y0=h*(0.56+i*0.085);
+        var sp=0.5+i*0.42, amp=h*(0.030+i*0.012), y0=h*(0.60+i*0.075);
         x.beginPath();x.moveTo(0,h);
-        for(var px=0;px<=w;px+=4){
-          var y=y0+Math.sin(px/(52-i*9)+t*sp*3.1)*amp+Math.sin(px/(121+i*24)-t*sp*1.7)*amp*0.7;
+        for(var px=0;px<=w;px+=3){
+          var y=y0+Math.sin(px/(54-i*9)+t*sp*3.1)*amp+Math.sin(px/(128+i*24)-t*sp*1.7)*amp*0.7;
           x.lineTo(px,y);
         }
         x.lineTo(w,h);x.closePath();
-        x.fillStyle="rgba(255,255,255,"+(0.035+i*0.028+mix*0.025)+")";x.fill();
+        x.fillStyle="rgba(255,255,255,"+(0.045+i*0.03)+")";x.fill();
       }
-      /*
-       * The columns.
-       *
-       * Sixteen of them across the floor of the glass, each on its own slow
-       * wave so the row breathes instead of marching. They sit low and calm
-       * while it rests and rise while it works, and every one of them glows
-       * into the water above it — the bloom is what makes it read as light
-       * under liquid rather than a bar chart drawn on a screen.
-       */
-      var n2=16, pad=w*0.10, span=(w-pad*2), bw=span/n2*0.46;
-      for(var b=0;b<n2;b++){
-        var ph=t*2.1+b*0.55;
-        var lvl=(Math.sin(ph)*0.5+0.5)*(Math.sin(ph*0.37+1.3)*0.35+0.65);
-        var hgt=h*(0.05+lvl*(0.07+mix*0.20));
-        var bx=pad+span*(b+0.5)/n2-bw/2, by=h*0.80-hgt;
-        x.save();
-        x.shadowBlur=10+mix*16;
-        x.shadowColor="rgba("+(120+mix*80)+",255,"+(210+mix*20)+","+(0.35+mix*0.4)+")";
-        x.fillStyle="rgba(255,255,255,"+(0.30+lvl*0.28+mix*0.22)+")";
-        if (x.roundRect) { x.beginPath(); x.roundRect(bx,by,bw,hgt,bw/2); x.fill(); }
-        else { x.fillRect(bx,by,bw,hgt); }
+
+      /* The columns. Drawn twice — a wide soft pass for the bloom and a tight
+         bright pass on top — because one pass with a shadow is a smudge and
+         this has to read as light coming up through the liquid. */
+      var pad=w*0.155, span=w-pad*2, bw=span/N*0.42, floor=h*0.795;
+      for(var b=0;b<N;b++){
+        var ph=t*2.3+b*0.62;
+        var target=(Math.sin(ph)*0.5+0.5)*(Math.sin(ph*0.37+1.3)*0.3+0.7);
+        target=0.10+target*(0.16+mix*0.74);
+        lv[b] += (target-lv[b]) * (target>lv[b] ? 0.30 : 0.07);
+        var hgt=h*0.34*lv[b], bx=pad+span*(b+0.5)/N-bw/2, by=floor-hgt;
+        for(var pass=0;pass<2;pass++){
+          var wide=pass===0;
+          x.save();
+          x.globalCompositeOperation="lighter";
+          x.fillStyle = wide ? "rgba("+Math.round(40+mix*40)+",255,"+Math.round(190+mix*30)+","+(0.10+mix*0.20)+")" : "rgba(255,255,255,"+(0.46+lv[b]*0.42)+")";
+          var ww=wide?bw*2.6:bw, xx=bx-(ww-bw)/2;
+          if (x.roundRect){x.beginPath();x.roundRect(xx,by-(wide?5:0),ww,hgt+(wide?7:0),ww/2);x.fill();}
+          else x.fillRect(xx,by,ww,hgt);
+          x.restore();
+        }
+        /* Its own reflection, under the floor, fading out. */
+        x.save();x.globalAlpha=0.16;
+        x.fillStyle="rgba(255,255,255,.7)";
+        if(x.roundRect){x.beginPath();x.roundRect(bx,floor+2,bw,hgt*0.38,bw/2);x.fill();}
         x.restore();
       }
 
-      /* The crew. They drift while resting and orbit while working. */
-      var cx=w/2, cy=h*0.5, n=5;
-      for(var d=0;d<n;d++){
-        var a=t*(0.5+mix*1.6)+d*(Math.PI*2/n);
-        var rad=h*(0.30+Math.sin(t*1.3+d)*0.02);
-        var px2=cx+Math.cos(a)*rad, py=cy+Math.sin(a)*rad*0.92;
-        x.beginPath();x.arc(px2,py,2.1+mix*0.7,0,Math.PI*2);
-        x.fillStyle="rgba(255,255,255,"+(0.30+mix*0.45)+")";x.fill();
-      }
-      /* The light on the glass: a soft highlight top-left, always. */
-      var s2=x.createRadialGradient(w*0.3,h*0.18,2,w*0.3,h*0.18,h*0.8);
-      s2.addColorStop(0,"rgba(255,255,255,.16)");s2.addColorStop(1,"rgba(255,255,255,0)");
+      /* The rim: a bright top edge and a cool bottom one, so the glass has a
+         thickness instead of being a hole cut in the desktop. */
+      var r=x.createLinearGradient(0,0,0,h);
+      r.addColorStop(0,"rgba(255,255,255,.30)");
+      r.addColorStop(0.12,"rgba(255,255,255,0)");
+      r.addColorStop(0.9,"rgba(255,255,255,0)");
+      r.addColorStop(1,tint(0.35));
+      x.fillStyle=r;x.fillRect(0,0,w,h);
+
+      /* A specular sweep, drifting. */
+      var sx=w*(0.22+Math.sin(t*0.6)*0.10);
+      var s2=x.createRadialGradient(sx,h*0.16,2,sx,h*0.16,h*0.78);
+      s2.addColorStop(0,"rgba(255,255,255,.20)");s2.addColorStop(1,"rgba(255,255,255,0)");
       x.fillStyle=s2;x.fillRect(0,0,w,h);
+
       requestAnimationFrame(draw);
     }
     draw();
+
     function send(m){try{window.webkit.messageHandlers.organic.postMessage(m);}catch(e){}}
     document.body.onmousedown=function(){document.body.classList.add("press");};
     document.body.onmouseup=function(){document.body.classList.remove("press");};
