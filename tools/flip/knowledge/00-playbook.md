@@ -116,11 +116,29 @@ one-of-one and reworked pieces.
 
 Does not: H&M, Forever 21, Shein, anything basic, anything that photographs flat.
 
-### Fees
+### Fees — and the thing that changes every calculation
 
-Sources disagree — one says 0% selling commission for US/UK listings created after
-July 2024 with only payment processing (3.3% + $0.45 US), another still quotes 10%.
-**Check the live fee in his own account before pricing anything against it.**
+He is in **Greece**, and almost all English-language Depop advice is written for a
+US or UK seller and is quietly wrong for him.
+
+- Depop's 2024 fee removal **does not apply to him**. He pays **10% selling fee**
+  plus payment processing — work on **~13% all-in** until a real payout says
+  otherwise.
+- He is paid through **PayPal**, not Depop Payments.
+- He gets **no Depop shipping labels**. He arranges his own courier and carries the
+  customs and IOSS burden himself.
+
+The one that matters most: because Depop Protection is built around Depop Payments,
+a material part of his dispute exposure probably runs through **PayPal — whose
+Seller Protection does not cover "not as described" at all**. So on those orders the
+listing itself is the entire defence. That is why every flaw gets named, located and
+photographed, without exception. A hidden flaw is not a cosmetic choice, it is an
+uninsured loss.
+
+Two legal facts, for him rather than for the app: **DAC7** reports him to AADE once
+he passes 30 sales or €2,000 in a calendar year, and profit from trading secondhand
+goods is taxable in Greece. That is an accountant's job, not the app's. And
+under-declaring customs value is fraud — the app refuses it even when a buyer asks.
 
 ## Authenticity — the one that ends the business
 
@@ -142,6 +160,22 @@ lookup, a refresh scheduler that respects the rules above, and an offer engine.
 
 Build it after Clone Me has typed its first job. Two half-finished apps are worth
 nothing.
+
+## The knowledge files
+
+`tools/flip/knowledge/` — shipped inside the app and published to the connector at
+start, so Claude reads them before writing anything:
+
+- `01-sourcing-and-margin.md` — the buy rule, ROI tiers, days-to-sell by category,
+  the dead-money ladder, sold comps, the seasonal calendar
+- `02-listing-craft.md` — titles, three description templates, the exact measurement
+  set per garment type, the condition ladder, the QA check
+- `03-messages-and-negotiation.md` — tone, the counter-offer ladder by band, bundles,
+  what never to say
+- `04-authenticity-and-risk.md` — brand-by-brand tells, the evidence pack, how a claim
+  actually runs, shipping for a seller with no labels
+- `05-growth.md` — levers by effect per hour, cross-listing, drops, and the
+  cargo-cult list
 
 ## Sources
 
