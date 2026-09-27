@@ -17,8 +17,8 @@ import { between, chance, intBetween, isAwake, keystrokes } from "./human.mjs";
  * The seller's hours.
  *
  * Greek time, because that is where he is and pretending otherwise is the
- * thing that does not survive one buyer asking what timezone he is in. Fiverr
- * shows a seller's local time to buyers anyway.
+ * thing that does not survive one buyer asking where he ships from. A shop
+ * that answers at 4am Athens time every night is a shop nobody is running.
  */
 export const SELLER = {
   hours: [

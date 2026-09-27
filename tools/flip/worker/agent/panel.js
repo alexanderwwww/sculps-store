@@ -4,7 +4,7 @@
  * One row per job on the shortlist: what it is, what it pays an hour, and the
  * reply Claude drafted for it. Take is a button, and it is the only way work
  * is ever accepted — nothing on this screen fires on its own. That is not a UI
- * preference, it is the line the whole app is built on: Fiverr bans automated
+ * preference, it is the line the whole app is built on: Depop does not permit automated
  * order fulfilment, so the accepting is a person tapping a thing.
  *
  * It computes nothing. Every value here is pushed by the brain, and a reload

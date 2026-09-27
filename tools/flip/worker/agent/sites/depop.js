@@ -1,7 +1,7 @@
 /**
  * Depop, as the shop sees it.
  *
- * This is the one that earns, so the rule from the Fiverr desk carries over
+ * This is the one that earns, and the rule it carries is older than this file
  * unchanged and for a stronger reason: Depop does not permit third-party
  * automation and enforces it on BEHAVIOUR rather than tooling. Shops die from
  * rhythm — bot-speed following, refreshing hundreds of times an hour, blast

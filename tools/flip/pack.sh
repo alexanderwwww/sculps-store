@@ -65,5 +65,12 @@ rm -rf "$S"; mkdir -p "$S"; cp -R "$C"/Resources/worker/. "$S/"
 node "$HERE/check-space-path.mjs" "$S" || { rm -rf "$S"; echo "the bridge cannot serve from a path with a space"; exit 1; }
 rm -rf "$S"
 echo "  ok  the bridge serves from a path with a space"
+# Boot it. The whole reason this line exists: a build went out that died on
+# launch with "cloud.knowledge is not a function", because every check here was
+# a syntax check and syntax was never the problem. Nothing ships unless the
+# packed worker actually runs.
+node "$HERE/test/smoke.test.mjs" "$C/Resources/worker" || { echo "the packed worker does not run"; exit 1; }
+node "$HERE/test/depop-parse.test.mjs"
+node "$HERE/test/work.test.mjs"
 rm -rf "$T"
 echo "built $OUT  ($(du -h "$OUT" | cut -f1))"

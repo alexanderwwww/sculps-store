@@ -615,18 +615,18 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
      * Google, Apple and Facebook all refuse OAuth inside an embedded browser
      * — their anti-phishing rule, and nothing this app does can change it. And
      * a login cannot be carried over from Chrome: its cookies are encrypted
-     * against a Keychain key only Chrome can use, and Fiverr binds a session
+     * against a Keychain key only Chrome can use, and Depop binds a session
      * to the browser that made it anyway.
      *
-     * So: one button opens Fiverr's security page in his own browser, where
-     * he sets a password once, and the other opens Fiverr's password form in
-     * here, where that password signs him in for good.
+     * So: one button opens Depop's password page in his own browser, where he
+     * sets one once, and the other opens Depop's sign-in form in here, where
+     * that password signs him in for good.
      */
     let setPass = NSButton(title: "Set a password", target: self, action: #selector(openSecurityInBrowser))
-    let signIn = NSButton(title: "Sign in to Fiverr", target: self, action: #selector(openFiverrLogin))
+    let signIn = NSButton(title: "Sign in to Depop", target: self, action: #selector(openDepopLogin))
     for (button, tip) in [
-      (setPass, "Opens Fiverr's security settings in your own browser"),
-      (signIn, "Opens Fiverr's email and password form in here"),
+      (setPass, "Opens Depop's password settings in your own browser"),
+      (signIn, "Opens Depop's email and password form in here"),
     ] {
       button.isBordered = false
       button.wantsLayer = true
@@ -1288,14 +1288,14 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
   /** His own browser, at the page where a password is set. */
   @objc func openSecurityInBrowser() {
-    guard let url = URL(string: "https://www.fiverr.com/settings/security") else { return }
+    guard let url = URL(string: "https://www.depop.com/settings/password/") else { return }
     NSWorkspace.shared.open(url)
-    note("set a password there, then Sign in to Fiverr here")
+    note("set a password there, then Sign in to Depop here")
   }
 
-  /** Fiverr's email-and-password form, in here, where the session is kept. */
-  @objc func openFiverrLogin() {
-    guard let url = URL(string: "https://www.fiverr.com/login") else { return }
+  /** Depop's email-and-password form, in here, where the session is kept. */
+  @objc func openDepopLogin() {
+    guard let url = URL(string: "https://www.depop.com/login/") else { return }
     applyShape(.working, animated: true)
     web?.load(URLRequest(url: url))
   }

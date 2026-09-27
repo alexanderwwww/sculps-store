@@ -14,7 +14,7 @@
  * The panel is pushed after every step rather than at the end of a pass, so
  * the screen is never a progress bar — it is what is happening, now.
  *
- * Sending is a tap. Every reply, every delivery. Fiverr bans automated order
+ * Sending is a tap. Every reply, every delivery. Depop does not permit automated
  * fulfilment and enforces it with a permanent ban that cannot be appealed, and
  * this account is the one paying for the ads, so the last button is his. The
  * work still gets done by the machine; only the pressing is human, and the
@@ -137,7 +137,7 @@ async function pass() {
 
 async function onePass() {
   /* The board is opened before the clock is consulted.
-     Two reasons, both learned the hard way. He cannot sign in to Fiverr if
+     Two reasons, both learned the hard way. He cannot sign in to Depop if
      the window never leaves the starting screen — and a window that sits on
      "waking the crew…" all evening looks broken when it is only resting. */
   show({ doing: "opening the board" });

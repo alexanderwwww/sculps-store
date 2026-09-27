@@ -18,7 +18,7 @@ export const ORDER = [
   "bezel.js",
   "cursor.js",
   "sites/common.js",
-  // the one site this app works on: his own Fiverr, signed in by him
+  // the one site this app works on: his own Depop shop, signed in by him
   "sites/depop.js",
   "read.js",
   "hands.js",

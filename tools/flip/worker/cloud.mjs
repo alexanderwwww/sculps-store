@@ -2,7 +2,7 @@
  * The wire to Claude, reached over HTTP and nothing else.
  *
  * This is why the app needs no key. The thinking is not done here: the app
- * posts what it sees on Fiverr, Claude reads that from the other side and
+ * posts what it sees on Depop, Claude reads that from the other side and
  * posts the written work back, and the app shows it. The laptop never holds a
  * credential of any kind — the key in the URL is the whole of the auth, and it
  * reaches nothing but this app's own four slots.
@@ -33,8 +33,11 @@ export function connectCloud(base = process.env.FLIP_CLOUD || DEFAULT_BASE, { ti
 
   return {
     base: root,
-    /** What is waiting on Fiverr, as the app just read it. */
-    board: (jobs) => post("/board", { jobs }),
+    /** What is on the shop floor, as the app just read it.
+     *  `items`, because that is the word the back end reads. It used to send
+     *  `jobs`, which the route ignored — so the board arrived empty every
+     *  time and nothing said so. */
+    board: (items) => post("/board", { items }),
     /** What it is doing, for anyone who asks from outside. */
     status: (state) => post("/status", state),
     /**
@@ -44,6 +47,8 @@ export function connectCloud(base = process.env.FLIP_CLOUD || DEFAULT_BASE, { ti
      * a duplicate message to a buyer is worse than a late one.
      */
     work: () => get("/work"),
+    /** The playbook, as markdown, so Claude reads it before writing anything. */
+    knowledge: (files) => post("/knowledge", { files }),
     /** A line for the record. */
     log: (lines) => post("/log", { lines }),
   };
