@@ -339,6 +339,7 @@
         window.webkit.messageHandlers.organic.postMessage({
           t: "window",
           do: "status",
+          note: a.note || null,
           text: next.doing || next.resting || (next.working ? "on the board" : "resting"),
           dot: next.working ? "green" : "grey",
           taken: next.takenToday,

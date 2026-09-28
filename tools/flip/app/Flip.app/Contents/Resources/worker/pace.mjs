@@ -95,9 +95,17 @@ export function takeBudget(daysSelling = 0) {
 /** Between two actions on the site — never the same gap twice. */
 export function betweenActionsMs() {
   /* A test drives the whole loop end to end and cannot spend four minutes
-     waiting for a human rhythm it is not measuring. Only ever set by the
-     tests; unset everywhere else, which is the pace that keeps the shop
-     alive. */
+     waiting for a rhythm it is not measuring. */
   if (process.env.FLIP_FAST) return Math.round(between(20, 90));
-  return Math.round(chance(0.15) ? between(20_000, 120_000) : between(2_500, 14_000));
+  /*
+   * Fast enough to look alive.
+   *
+   * This used to wait up to two minutes between actions, carried over from an
+   * app whose whole job was to look like a person scrolling. On Depop the risk
+   * is volume and rhythm, not speed — and the caps in work.mjs are what hold
+   * those. Waiting two minutes between reading the inbox and opening the shop
+   * bought nothing and cost the only thing that matters on his screen: being
+   * able to tell working from broken.
+   */
+  return Math.round(chance(0.12) ? between(6_000, 18_000) : between(1_200, 4_500));
 }

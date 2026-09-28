@@ -66,6 +66,12 @@ let override = false;
 
 function show(patch) {
   Object.assign(state, patch);
+  /* One line onto the glass whenever there is something new to say — the
+     machine thinking out loud, which is how he can tell it apart from frozen
+     without opening anything. */
+  if (patch.doing || patch.resting) {
+    page?.ask("panel", { note: patch.doing || patch.resting }).catch(() => {});
+  }
   page?.ask("panel", { ...state }).catch(() => {});
   // Said outward too, so "is flip working?" has an answer from anywhere.
   cloud.status({
@@ -512,5 +518,8 @@ setInterval(() => {
 // hour is its own signature, whoever is pressing the buttons.
 setInterval(
   () => { if (page) pass().catch(() => {}); },
-  9 * 60_000 + Math.round(Math.random() * 6 * 60_000),
+  /* Every three to six minutes. It was nine to fifteen, which on his screen is
+     indistinguishable from dead — and the thing that actually protects the
+     account is the per-pass cap in work.mjs, not the gap between passes. */
+  3 * 60_000 + Math.round(Math.random() * 3 * 60_000),
 );

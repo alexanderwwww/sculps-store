@@ -291,22 +291,27 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     font:13px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
     -webkit-user-select:none;cursor:pointer}
   canvas{position:absolute;inset:0;width:100%;height:100%}
-  .f{position:absolute;left:0;right:0;top:20%;display:flex;flex-direction:column;
-    align-items:center;gap:3px;text-align:center;padding:0 20px;
+  .f{position:absolute;left:0;right:0;top:19%;display:flex;flex-direction:column;
+    align-items:center;gap:4px;text-align:center;padding:0 18px;
     transition:transform .22s cubic-bezier(.2,.9,.3,1.3)}
-    /* No text-transform. The shop is called flip, lowercase, always — uppercase
-     reads sneaker-bot and loses half the customers. */
   .n{font-size:11px;font-weight:700;letter-spacing:.34em;color:rgba(255,255,255,.58)}
   .s{font-size:14px;font-weight:600;letter-spacing:-.01em;color:rgba(255,255,255,.98);
     text-shadow:0 1px 14px rgba(0,0,0,.5);max-width:100%;overflow:hidden;
     text-overflow:ellipsis;white-space:nowrap}
   .c{font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.14em;
     color:rgba(255,255,255,.45);margin-top:1px}
+  /* The machine thinking out loud. Never more than four, oldest fading. */
+  .t{position:absolute;left:0;right:0;bottom:16px;padding:0 20px;
+    display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
+  .t div{font:9.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.06em;
+    color:rgba(255,255,255,.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    max-width:100%;transition:opacity .5s}
   body.press .f{transform:scale(.97)}
   </style>
   <canvas id="c"></canvas>
   <div class="f"><div class="n">flip</div><div class="s" id="s">waking</div>
   <div class="c" id="k"></div></div>
+  <div class="t" id="t"></div>
   <script>
   (function(){
     var c=document.getElementById("c"),x=c.getContext("2d"),t=0;
@@ -314,21 +319,17 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     function size(){var r=window.devicePixelRatio||2;c.width=innerWidth*r;c.height=innerHeight*r;x.setTransform(r,0,0,r,0,0);}
     size();addEventListener("resize",size);
 
-    /* Resting is a cold blue-violet, working is a vivid mint. The move between
-       them is slow on purpose: waking up should read as a tide, not a switch. */
-    var rest=[46,38,44], work=[214,96,64], mix=0;
-    function tint(a,f){
+    /* Resting is a cold blue-violet, working a vivid mint. Slow between them,
+       so waking up reads as a tide and not a light switch. */
+    var rest=[70,96,150], work=[0,214,150], mix=0;
+    function tint(a){
       var b=[0,1,2].map(function(i){return Math.round(rest[i]+(work[i]-rest[i])*mix)});
       return "rgba("+b[0]+","+b[1]+","+b[2]+","+a+")";
     }
-    /* Sixteen columns, each holding its own level so they fall slower than
-       they rise — the asymmetry is what makes a meter look alive. */
-    var N=16, lv=[]; for(var i=0;i<N;i++) lv.push(0.12);
 
-    /* How hard it is being thrown around, and which way. Swift hands over the
-       delta of every step of a drag; this keeps a velocity that decays, so the
-       light keeps sliding for a moment after the hand stops — which is the
-       whole difference between glass and a picture of glass. */
+    /* How hard it is being thrown around. Swift hands over every step of a
+       drag; the velocity decays, so light keeps sliding after the hand stops —
+       which is the whole difference between glass and a picture of glass. */
     var vx=0, vy=0, lean=0;
 
     function draw(){
@@ -339,63 +340,54 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       var w=innerWidth,h=innerHeight;
       x.clearRect(0,0,w,h);
 
-      /* A tint, not a paint: the material is the window's blur behind this. */
+      /* A tint, never a paint. The material is the window's own blur of what
+         is behind it; anything opaque here turns the glass into a tile. */
       var g=x.createLinearGradient(0,0,w*0.4,h);
-      /* Barely a tint. He wants to see through it, so the glass is glass and
-         the legibility problem is solved where it actually is — behind the
-         words — rather than by making the whole pane opaque. */
       g.addColorStop(0,tint(0.05));g.addColorStop(1,tint(0.16));
       x.fillStyle=g;x.fillRect(0,0,w,h);
 
-      /* A scrim under the type only: a soft elliptical shadow, feathered to
-         nothing well before the edges, so the words hold on any desktop while
-         the rest of the pane stays see-through. */
-      var sc=x.createRadialGradient(w/2,h*0.33,4,w/2,h*0.33,w*0.62);
+      /* A soft scrim under the type only, feathered out well before the edges,
+         so the words hold on any desktop while the pane stays see-through. */
+      var sc=x.createRadialGradient(w/2,h*0.30,4,w/2,h*0.30,w*0.62);
       sc.addColorStop(0,"rgba(6,10,18,.46)");
       sc.addColorStop(0.55,"rgba(6,10,18,.18)");
       sc.addColorStop(1,"rgba(6,10,18,0)");
       x.fillStyle=sc;x.fillRect(0,0,w,h);
 
-      /* The water. Three waves at different speeds; where they cross they
-         brighten, and that interference is what reads as liquid. */
+      /*
+       * The ribbons.
+       *
+       * Three sheets of light folding through the glass, additively blended, at
+       * different speeds — drifting when it rests, folding fast when it works.
+       * Where they cross they brighten, and that interference is what reads as
+       * liquid. This replaced sixteen columns, which were an equaliser from
+       * 2010: Apple does not build readouts, it builds substance.
+       */
+      x.save(); x.globalCompositeOperation="lighter";
       for(var i=0;i<3;i++){
-        var sp=0.5+i*0.42, amp=h*(0.030+i*0.012), y0=h*(0.60+i*0.075);
-        x.beginPath();x.moveTo(0,h);
+        var sp=(0.26+mix*0.8)*(0.6+i*0.3);
+        var amp=h*(0.10+i*0.03)*(0.7+mix*0.8);
+        var mid=h*(0.46+i*0.10);
+        var gr=x.createLinearGradient(0,mid-amp,0,mid+amp);
+        gr.addColorStop(0,"rgba(255,255,255,0)");
+        gr.addColorStop(0.5, i===1 ? tint(0.40) : tint(0.26));
+        gr.addColorStop(1,"rgba(255,255,255,0)");
+        x.beginPath();
         for(var px=0;px<=w;px+=3){
-          var y=y0+Math.sin(px/(54-i*9)+t*sp*3.1)*amp+Math.sin(px/(128+i*24)-t*sp*1.7)*amp*0.7
-                +lean*amp*2.4*(px/w-0.5)*-2;
-          x.lineTo(px,y);
+          var y=mid+Math.sin(px/(70-i*14)+t*sp*2.4)*amp
+                   +Math.sin(px/(150+i*30)-t*sp*1.3)*amp*0.6
+                   +lean*amp*1.8*(px/w-0.5)*-2;
+          if(px===0) x.moveTo(px,y); else x.lineTo(px,y);
         }
-        x.lineTo(w,h);x.closePath();
-        x.fillStyle="rgba(255,255,255,"+(0.045+i*0.03)+")";x.fill();
-      }
-
-      /* The columns. Drawn twice — a wide soft pass for the bloom and a tight
-         bright pass on top — because one pass with a shadow is a smudge and
-         this has to read as light coming up through the liquid. */
-      var pad=w*0.155, span=w-pad*2, bw=span/N*0.42, floor=h*0.795;
-      for(var b=0;b<N;b++){
-        var ph=t*2.3+b*0.62;
-        var target=(Math.sin(ph)*0.5+0.5)*(Math.sin(ph*0.37+1.3)*0.3+0.7);
-        target=0.10+target*(0.16+mix*0.74);
-        lv[b] += (target-lv[b]) * (target>lv[b] ? 0.30 : 0.07);
-        var hgt=h*0.34*lv[b], bx=pad+span*(b+0.5)/N-bw/2, by=floor-hgt;
-        for(var pass=0;pass<2;pass++){
-          var wide=pass===0;
-          x.save();
-          x.globalCompositeOperation="lighter";
-          x.fillStyle = wide ? "rgba(255,"+Math.round(150+mix*40)+","+Math.round(96+mix*30)+","+(0.10+mix*0.22)+")" : "rgba(255,255,255,"+(0.46+lv[b]*0.42)+")";
-          var ww=wide?bw*2.6:bw, xx=bx-(ww-bw)/2;
-          if (x.roundRect){x.beginPath();x.roundRect(xx,by-(wide?5:0),ww,hgt+(wide?7:0),ww/2);x.fill();}
-          else x.fillRect(xx,by,ww,hgt);
-          x.restore();
+        for(var px2=w;px2>=0;px2-=3){
+          var y2=mid+Math.sin(px2/(70-i*14)+t*sp*2.4)*amp
+                    +Math.sin(px2/(150+i*30)-t*sp*1.3)*amp*0.6
+                    +lean*amp*1.8*(px2/w-0.5)*-2;
+          x.lineTo(px2,y2+h*(0.06+mix*0.05));
         }
-        /* Its own reflection, under the floor, fading out. */
-        x.save();x.globalAlpha=0.16;
-        x.fillStyle="rgba(255,255,255,.7)";
-        if(x.roundRect){x.beginPath();x.roundRect(bx,floor+2,bw,hgt*0.38,bw/2);x.fill();}
-        x.restore();
+        x.closePath(); x.fillStyle=gr; x.fill();
       }
+      x.restore();
 
       /* The rim: a bright top edge and a cool bottom one, so the glass has a
          thickness instead of being a hole cut in the desktop. */
@@ -406,9 +398,8 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       r.addColorStop(1,tint(0.22));
       x.fillStyle=r;x.fillRect(0,0,w,h);
 
-      /* A specular sweep, drifting. */
-      /* The highlight slides the opposite way to the hand, the way a reflection
-         does on a thing you are carrying, and it brightens while it moves. */
+      /* The highlight slides the opposite way to the hand and brightens while
+         it moves, the way a reflection does on a thing being carried. */
       var sx=w*(0.22+Math.sin(t*0.6)*0.10)-lean*w*0.30;
       var sy=h*0.16+Math.max(-1,Math.min(1,vy/26))*h*0.16;
       var glare=0.20+Math.min(0.26,(Math.abs(vx)+Math.abs(vy))/90);
@@ -416,8 +407,8 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       s2.addColorStop(0,"rgba(255,255,255,"+glare+")");s2.addColorStop(1,"rgba(255,255,255,0)");
       x.fillStyle=s2;x.fillRect(0,0,w,h);
 
-      /* And a caustic: a thin bright band raked across the surface by the
-         movement, which is the bit that reads as thickness. */
+      /* And a caustic raked across the surface by the movement — the bit that
+         reads as thickness. */
       if (Math.abs(lean)>0.02){
         var bx=w*(0.5-lean*0.85), bg=x.createLinearGradient(bx-w*0.34,0,bx+w*0.34,h);
         bg.addColorStop(0,"rgba(255,255,255,0)");
@@ -426,9 +417,6 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         x.fillStyle=bg;x.fillRect(0,0,w,h);
       }
 
-      /* Full rate while it is working, half while it rests, nothing at all
-         when the page is hidden. This runs for as long as the app is folded
-         away, which is most of the day, and it is a decoration. */
       if (document.hidden) { setTimeout(function(){requestAnimationFrame(draw);}, 400); }
       else if (mix < 0.02 && Math.abs(vx) + Math.abs(vy) < 0.5) {
         setTimeout(function(){requestAnimationFrame(draw);}, 24);
@@ -436,16 +424,29 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     }
     draw();
 
-    function send(m){try{window.webkit.messageHandlers.organic.postMessage(m);}catch(e){}}
-    document.body.onmousedown=function(){document.body.classList.add("press");};
-    document.body.onmouseup=function(){document.body.classList.remove("press");};
-    document.body.onclick=function(){send({t:"window",do:"shape",to:"working"});};
-    window.__orb={move:function(dx,dy){ vx+=dx; vy+=dy; },
-    set:function(next){
-      for(var k in next) state[k]=next[k];
-      document.getElementById("s").textContent = state.doing || (state.working?"minding the shop":"shop is quiet");
-      document.getElementById("k").textContent = state.taken + " LISTED · " + state.budget + " LIVE";
-    }};
+    /* The telemetry. Lines arrive, push the rest up, and fade. */
+    var lines=[];
+    function note(line){
+      if(!line) return;
+      if(lines.length && lines[lines.length-1]===line) return;
+      lines.push(line); if(lines.length>4) lines.shift();
+      var box=document.getElementById("t"); box.textContent="";
+      lines.forEach(function(l,i){
+        var d=document.createElement("div");
+        d.textContent=l;
+        d.style.opacity=String(0.22+0.22*i);
+        box.appendChild(d);
+      });
+    }
+
+    window.__orb={
+      move:function(dx,dy){ vx+=dx; vy+=dy; },
+      note:note,
+      set:function(next){
+        for(var k in next) state[k]=next[k];
+        document.getElementById("s").textContent = state.doing || (state.working?"minding the shop":"shop is quiet");
+        document.getElementById("k").textContent = state.taken + " LISTED · " + state.budget + " LIVE";
+      }};
   })();
   </script>
   """
@@ -899,7 +900,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
        no status line, no button. A piece of glass with one thing in it. */
     orb?.frame = bounds
     orb?.isHidden = shape != .orb
-    frost?.isHidden = shape != .orb
+    frost?.isHidden = true
     collapse?.isHidden = shape == .orb || shape == .pill
     if shape == .working {
       /* On the phone the controls live on the phone, floating over the page at
@@ -931,32 +932,21 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     statusLabel?.isHidden = shape == .orb || shape == .working
     if shape == .orb {
       /*
-       * The work, behind the water.
+       * Nothing behind the glass but the desktop.
        *
-       * The live page is not hidden when the app folds away — it is dimmed
-       * right down and left running underneath the glass, so the orb shows
-       * what is actually happening rather than an animation standing in for
-       * it. The orb is above it in the view order, so the click still opens
-       * the window instead of landing on the page.
+       * The page used to run underneath at 55%, so the blur was blurring
+       * Depop — which is white — and the whole thing came out as milk. Glass
+       * shows what is BEHIND THE WINDOW; anything inside it is a wall. The
+       * work goes on the board and in the telemetry, where it can be read,
+       * rather than smeared under a tint where it cannot.
        */
-      for (index, pane) in panes.enumerated() {
-        let isActive = index == activePane
-        pane.view.isHidden = !isActive
-        /* Brighter than it was: the frost above it is what softens it now, so
-           the page can be nearly full strength and still read as weather
-           rather than as a document. */
-        pane.view.alphaValue = 0.55
-        pane.view.frame = bounds.insetBy(dx: 8, dy: 8)
-        pane.view.layer?.cornerRadius = radiusFor(.orb) - 6
-        pane.view.layer?.cornerCurve = .continuous
-        // The desk's accent ring is not restyled on this path, so it has to be
-        // cleared here or a blue rectangle outlines the page inside the glass.
+      for pane in panes {
+        pane.view.isHidden = true
         pane.view.layer?.borderWidth = 0
       }
-      frost?.frame = bounds
-      frost?.isHidden = false
-      frost?.layer?.cornerRadius = radiusFor(.orb)
-      frost?.layer?.cornerCurve = .continuous
+      /* And no second effect view either: .withinWindow blurs the window's own
+         contents, which is now nothing, and it was the other half of the milk. */
+      frost?.isHidden = true
       /* Nothing here is a pane. The whole orb is a handle, so it drags — and
          ChromeView calls back on a mouse-up that never moved, which is the
          click that opens it. */
@@ -1272,6 +1262,13 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     /* The line, the dot, and the day's count — for the pill and for the glass. */
     case "status":
       setStatus(obj["text"] as? String, dot: obj["dot"] as? String)
+      /* A telemetry line, if this status carried one. */
+      if let note = obj["note"] as? String, !note.isEmpty,
+         let data = try? JSONSerialization.data(withJSONObject: [note], options: []),
+         let wrapped = String(data: data, encoding: .utf8) {
+        let literal = String(wrapped.dropFirst().dropLast())
+        orb?.evaluateJavaScript("window.__orb&&window.__orb.note(\(literal))", completionHandler: nil)
+      }
       let taken = (obj["taken"] as? Int) ?? -1
       let budget = (obj["budget"] as? Int) ?? -1
       if taken >= 0 && budget > 0 {
