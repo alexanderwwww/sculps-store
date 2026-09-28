@@ -79,44 +79,65 @@ what it refuses), `.claude/skills/flip-negotiator` (offer ladder and authority),
   stopped being true.
 - The **build number is visible in the app**, so which version is running is never a
   question.
-- The look is changeable live from chat — he says "more refraction" and the running app
-  changes, with nothing to download and no approval step.
+- Everything about it is changeable live from chat. See **Live** below — it is the
+  point of the app, not a convenience.
 
 The glass is settled in `.claude/skills/flip-ui/SKILL.md`. Five rejected builds are
 encoded there. **Read it before changing a pixel.**
 
-## The sign-in — decided, and built first
+## Live — the whole point of the app
 
-**He signs in inside the phone window. There is no Chrome, and no other browser.** His
+**Everything about plug can be changed while it is running.** Not the look: everything.
+This is not a convenience, it is the feature. He is connected to an agent in chat and
+the app on his desk answers, immediately.
+
+> "live updates. Everything can be done live. That's the point of the app. Absolute
+> connection with you."
+
+What that means, concretely:
+
+- **The look changes live.** He says "more refraction", "warmer rim", "smaller" — the
+  running app changes within seconds. No download, no restart, and **no approval step**:
+  *"without with without I have to approve. It must be auto-approved."*
+- **The behaviour changes live.** Prices, thresholds, the negotiator's limits, how often
+  it refreshes, what it hunts next — pushed and in effect on the next pass.
+- **The code changes live.** A new worker is pushed, it restarts itself and carries on.
+  He is not asked to install anything.
+- **It reports back live.** He asks the agent what it is doing and gets the truth from
+  the running app, not a guess.
+- **A bad push is undone the same way it arrived** — by pushing again. Every change
+  carries a number that only goes up, so a stale read can never quietly undo a good
+  change, and a rollback is an ordinary push rather than a special case.
+- Every push is logged with a one-line reason, so a change he does not like can be
+  found and reversed without asking him what happened.
+
+The only thing he should ever have to download is the app itself, once.
+
+## The sign-in — in the phone window, and built first
+
+**He signs in inside the phone window. There is no Chrome and no other browser.** His
 words: *"on this app never give me again the Chrome just make it connect on the phone
-okay"*. That is settled; do not propose a browser again in any form.
+okay."* Settled — do not propose a browser again in any form.
 
-This is the hardest part of the app, not the easiest, and it is what broke every single
-time on the app plug replaces. Build and prove it **before anything else exists**.
-
-Three things follow from it, and all three are load-bearing:
+This is the hardest part of the app and it is built and proved before anything else
+exists. Three requirements, all load-bearing:
 
 1. **Email sign-in only.** Continue with Google and Continue with Apple cannot complete
-   inside any embedded web view — Google refuses the flow outright and Apple hands the
-   browser to iCloud, which hands it back to the login screen, forever. Those two
-   buttons must be removed from Depop's sign-in sheet by an injected script with a
-   MutationObserver behind it, so they cannot reappear when the page re-renders. Match
-   them by the words Google and Apple, not by the verb: his account is served Greek,
-   where the label is "Συνέχεια με την Google" — accented, which broke the first
-   attempt.
-2. **The session must outlive every rebuild.** A WKWebView's cookie jar is derived from
-   the process, so anything that changes the executable's name, its path, or the app's
-   identity moves the jar with it and signs him out. The compiled binary keeps **one
-   name forever**, with any rebuild key in a file beside it that no browser reads.
-   Whatever returns the data store location must never change again, for any reason,
-   including a good one — a "safety" guard on it once turned a signed-in app into a
-   signed-out one.
-3. **The worker must be replaced whenever it differs from the bundle, in either
-   direction.** A launcher that only installs a *newer* worker pins his Mac to the
-   first version that ever landed, and every fix after it looks like it was never made.
+   inside an embedded web view — Google refuses the flow and Apple hands the browser to
+   iCloud, which returns it to the login screen. Both buttons are removed from Depop's
+   sheet by an injected script with a MutationObserver behind it, so they cannot return
+   when the page re-renders. Match them on the words *Google* and *Apple*, never on the
+   verb: his account is served Greek, where the label is "Συνέχεια με την Google" —
+   accented.
+2. **The session outlives every rebuild.** A WKWebView's cookie jar follows the process,
+   so the compiled binary keeps **one name forever**, with any rebuild key in a file
+   beside it that no browser reads. Whatever returns the data store location never
+   changes again, for any reason.
+3. **The worker is replaced whenever it differs from the bundle, in either direction** —
+   never only when it is newer.
 
-**Done for this step is: he signs in once, then three consecutive rebuilds are
-installed, and he is still signed in.** Nothing else gets written until that is true.
+**Done for this step: he signs in once, three rebuilds are installed, and he is still
+signed in.** Nothing else is written until that is true.
 
 ## How it is built
 
@@ -139,7 +160,9 @@ Not "it builds". Done is:
 4. It answers one real buyer in a voice he is happy to have representing him.
 5. It runs for **four hours unattended** without stopping, without a duplicate reply,
    and without needing to be reopened.
-6. He never opened a Terminal.
+6. He asks for a change in chat — the look, a price, how it negotiates — and sees it
+   take effect on the running app without downloading anything.
+7. He never opened a Terminal.
 
 ## Before anything ships to him
 
@@ -149,7 +172,7 @@ Not "it builds". Done is:
 - The build number stated in the message and visible in the app.
 - Any assumption that could not be proved from the container, **said out loud to him**.
 
-**The pattern behind almost every failure on the last app was an assumption about the
-environment — macOS, WebKit, Chrome, the installer — never checked, shipped as if it
-had been.** Name the assumption in one sentence, then prove it or flag it. And when a
-fix fails twice at the same layer, the layer is wrong: stop tuning it.
+**Most things that break are not logic bugs — they are an assumption about the
+environment: macOS, WebKit, Node, the installer.** So name the assumption in one
+sentence, then prove it or flag it as unproven. And when a fix fails twice at the same
+layer, the layer is wrong: stop tuning it and look somewhere else.
