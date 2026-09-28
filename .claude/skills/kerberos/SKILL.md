@@ -66,6 +66,21 @@ means in practice:
   it, and send him the file.
 - **Do the work, do not describe it.** He is paying for a finished store, not a plan.
 
+## Everything we decide becomes a skill
+
+> updagteyour memory to abworb knowledge and make it as a skill
+> everythign we say you make it a skill or microskill
+
+His instruction, and it is the difference between paying for a decision once
+and paying for it every session. When something is settled — a name, a look, a
+number, a rule, a way he wants to be spoken to — it goes into a skill file
+before the conversation moves on. Small and specific is better than one large
+one: `flip`, `flip-ui`, `cryo`, `bodies`, `listing-images` each carry their own
+decisions.
+
+A decision that lives only in a transcript is a decision we will argue about
+again.
+
 ## The fatal mistakes — mine, written down so they stop happening
 
 Every one of these cost him a build he had to open, find broken, and hand back.
