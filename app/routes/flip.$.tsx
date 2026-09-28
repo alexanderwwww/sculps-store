@@ -44,6 +44,7 @@ const FILES = {
   status: "flip-status.json",
   log: "flip-log.json",
   knowledge: "flip-knowledge.json",
+  ui: "flip-ui.json",
 } as const;
 type Slot = keyof typeof FILES;
 
@@ -127,6 +128,20 @@ const TOOLS = [
         questions: { type: "array", items: { type: "string" }, description: "What must be answered. Only when ready is false." },
       },
       required: ["id", "kind"],
+    },
+  },
+  {
+    name: "flip_ui",
+    description:
+      "Change how the glass looks, live. `html` is the whole page the orb renders — the liquid, the ribbons, the type, the telemetry, the states. The running app picks it up within seconds and swaps it in place: no restart, no download, nothing lost. Raise `build` above the current one. Whole page only, there is no patching. This is the face of the app and nothing else — it cannot reach the shop, the worker or the Mac.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        build: { type: "integer", description: "Higher than the running build, or it is ignored." },
+        html: { type: "string", description: "The complete orb page, doctype to closing script." },
+        why: { type: "string", description: "One line for the log, so a bad look can be found and undone." },
+      },
+      required: ["build", "html"],
     },
   },
   {
@@ -238,6 +253,21 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
     return { ok: true, id, ready, waitingOnHim: true };
   }
 
+  if (name === "flip_ui") {
+    const build = Number(args.build);
+    if (!Number.isFinite(build) || build <= 0) return { ok: false, error: "build must be a number" };
+    const html = String(args.html ?? "");
+    if (html.length < 40) return { ok: false, error: "that is not a page" };
+    if (html.length > 400_000) return { ok: false, error: "too big for a face" };
+    const now = ((await read(env, "ui")) ?? {}) as { build?: number };
+    if (Number(now.build ?? 0) >= build) {
+      return { ok: false, error: `build ${build} is not above the running ${now.build ?? 0}` };
+    }
+    await write(env, "ui", { build, html, why: String(args.why ?? ""), at: Date.now() });
+    await append(env, { line: `new face, build ${build}`, why: args.why });
+    return { ok: true, build, bytes: html.length };
+  }
+
   if (name === "flip_log") {
     const line = String(args.line ?? "").trim();
     if (!line) return { ok: false, error: "nothing to write" };
@@ -258,6 +288,8 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   if (what === "status") return json((await read(env, "status")) ?? {});
   if (what === "log") return json((await read(env, "log")) ?? { lines: [] });
   if (what === "knowledge") return json((await read(env, "knowledge")) ?? { files: [] });
+  /* The face. The app asks every few seconds and takes anything newer. */
+  if (what === "ui") return json((await read(env, "ui")) ?? { build: 0, html: null });
 
   /*
    * The tray, handed over but not yet thrown away.
