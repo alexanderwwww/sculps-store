@@ -237,3 +237,31 @@ button, then ask whether the marketplace is now on screen.
 `test/signin.test.mjs` runs the real main.js, presses Sign in with email, and
 asserts a Depop page is loaded, visible, inside the glass, with the dead
 buttons already stripped. That is the test that found this.
+
+## A control that is drawn but wired to nothing is the whole complaint
+
+He said it as "it's like UI and also not what I asked". Four separate things in
+plug were drawn as controls and connected to nothing:
+
+- Tabs that set a variable no other code read.
+- A "signed in" state rendered as a badge, so the one thing he most wanted to
+  press had no button in it at all.
+- Cards hidden the moment they succeeded, leaving no way back into either shop.
+- A popup opened with `window.open` from inside an embedded view — it lands in a
+  child window behind the app: he presses, something happens somewhere, and on
+  screen nothing moves. Refuse popups, load the URL in the same view.
+
+**Before shipping a screen, press every visible control and assert what the main
+process was asked to do.** Not that it rendered — what it *called*. `click.test.mjs`
+does exactly this and it is the cheapest test in the app.
+
+Two more, from the same round:
+
+- **A script injected on `dom-ready` only reaches the main document.** Both Depop
+  and Vestiaire put parts of the sign-in sheet in iframes, which is why a
+  "Continue with Google" he could see was one the app had never touched. Inject
+  into every frame in the subtree, and on `did-frame-finish-load` too.
+- **Adaptive ink must measure the rectangle UNDER THE WINDOW**, not the whole
+  screen. A pale wallpaper with a dark patch beneath the glass averages "light"
+  and picks dark type exactly where it cannot be read. And carry a halo of the
+  opposite tone regardless — over clear glass the background is a photograph.
