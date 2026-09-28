@@ -44,7 +44,7 @@ SWIFTC="$(xcrun -f swiftc 2>/dev/null || true)"
 # --- the worker, installed beside itself ----------------------------------
 # The bundle's build; a live push writes a higher one into worker/BUILD and
 # this must never copy over it.
-BUNDLE_BUILD=1790595784
+BUNDLE_BUILD=1790596922
 RUNTIME_BUILD=0
 if [ -f "$SUPPORT/worker/BUILD" ]; then
   RUNTIME_BUILD="$(tr -dc '0-9' < "$SUPPORT/worker/BUILD")"
@@ -62,6 +62,14 @@ fi
 #
 # The bundle in front of us is the truth. If what is installed is not exactly
 # it, install it — newer, older, or sideways.
+# A runtime NEWER than this bundle means there is a newer Flip.app on this Mac
+# and this is not it. Nothing here ever writes a higher number, so the only way
+# to get one is to have opened a later download and then gone back to an older
+# copy — which from the outside looks exactly like "you shipped me the same
+# bugs again". Say so by name before doing anything else.
+if [ "$RUNTIME_BUILD" -gt "$BUNDLE_BUILD" ]; then
+  alert "This is an OLD flip (build $BUNDLE_BUILD). A newer one, build $RUNTIME_BUILD, has already run on this Mac — look in your Downloads for the most recent Flip and drag this one to the Trash."
+fi
 if [ "$RUNTIME_BUILD" -ne "$BUNDLE_BUILD" ] || [ ! -f "$SUPPORT/worker/main.mjs" ]; then
   # Replace, never merge. `cp -R src/. dst/` leaves behind every file a later
   # build dropped — brain.mjs outlived two rewrites that way — and a stale

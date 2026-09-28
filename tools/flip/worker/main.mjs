@@ -510,18 +510,36 @@ bridge = await startBridge({
 console.log(`PORT ${bridge.port}`);
 
 /*
- * Chrome comes up with the worker, not on a greeting.
+ * Chrome comes up alongside the worker — NEVER awaited here.
  *
- * A greeting is a page load, and a pass begins with a navigation — starting
- * work on a greeting is how the window ended up reloading once a second. This
- * runs once, here, and the timer below does the rest.
+ * This used to be `if (await useChrome())`, and that one word took the app
+ * down: everything below this line — the status heartbeat, the pass timer, the
+ * drain, Xcoder — only registers once the await finishes. Chrome opened, the
+ * attach hung, and the rest of the worker never came into existence. From the
+ * outside: Chrome on screen, the window connected the whole time, and nothing
+ * ever sent, which is exactly "the worker is not answering".
+ *
+ * A top-level await is a promise the whole module is betting on. Nothing that
+ * talks to another process belongs in one.
+ *
+ * So it is started and left to settle. The pass timer below finds `page` when
+ * it is ready and gets on with it; until then the window is told what is
+ * happening rather than left on a boot screen.
  */
-if (await useChrome()) {
-  greeted = true;
-  pass().catch((error) => {
-    cloud.log([{ line: `first pass failed: ${error.message}` }]).catch(() => {});
+show({ doing: "starting your Chrome" });
+useChrome()
+  .then((ok) => {
+    if (!ok) {
+      show({ doing: null, resting: "using the window — Chrome did not start" });
+      return;
+    }
+    greeted = true;
+    return pass();
+  })
+  .catch((error) => {
+    show({ doing: null, resting: `chrome: ${error.message}` });
+    cloud.log([{ line: `chrome start failed: ${error.message}` }]).catch(() => {});
   });
-}
 
 /*
  * What it knows, published once at start.
