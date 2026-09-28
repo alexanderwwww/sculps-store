@@ -245,3 +245,24 @@ in, inside the same `NSAnimationContext` as the frame and on the same curve. Wit
 it they cut the instant the shape changes and the morph reads as two windows rather
 than one thing becoming another. An un-animated shape change sets the alpha directly,
 so it can never be left faded out from the last transition.
+
+## The light, once the glass is genuinely clear
+
+Clear on its own reads as a hole cut in the desktop, not an object. He asked for the
+light and the transformations back — *"needa transformations and lightr"* — the first
+time he saw it actually clear. Both are native now; there is no canvas left.
+
+**The specular.** One `CAGradientLayer` on the container: clear → **white 13%** →
+clear, diagonal (`0,1` → `1,0`), `locations` animated `[-0.4,-0.22,-0.04]` →
+`[1.04,1.22,1.4]` over **7.5s**, repeating, on `CAMediaTimingFunction(0.45,0,0.55,1)`.
+It carries the orb's corner radius and `.continuous`, so the light stops at the
+squircle rather than a rectangle.
+
+- **Slow on purpose.** A fast highlight reads as a loading bar.
+- **Orb and pill only** — hidden with its animation removed the moment the window is
+  a page.
+- **13% is the ceiling.** If it ever looks milky again, turn this down first.
+
+**The fold.** The three labels dissolve to 0 on the way out and back to 1 on the way
+in, inside the same `NSAnimationContext` as the frame and on the same curve. An
+un-animated shape change sets the alpha directly so it can never be stranded faded.

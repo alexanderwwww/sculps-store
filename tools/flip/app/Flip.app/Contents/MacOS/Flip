@@ -44,7 +44,7 @@ SWIFTC="$(xcrun -f swiftc 2>/dev/null || true)"
 # --- the worker, installed beside itself ----------------------------------
 # The bundle's build; a live push writes a higher one into worker/BUILD and
 # this must never copy over it.
-BUNDLE_BUILD=1790593643
+BUNDLE_BUILD=1790593984
 RUNTIME_BUILD=0
 if [ -f "$SUPPORT/worker/BUILD" ]; then
   RUNTIME_BUILD="$(tr -dc '0-9' < "$SUPPORT/worker/BUILD")"
@@ -169,7 +169,25 @@ say "worker starting on port $PORT"
 # Keyed on the source, so a changed main.swift is rebuilt and an unchanged one
 # never is.
 SHELL_KEY="$(md5 -q "$HERE/Shell/main.swift" 2>/dev/null || md5sum "$HERE/Shell/main.swift" | cut -c1-32)"
-SHELL_BIN="$SUPPORT/bin/FlipShell-$SHELL_KEY"
+# ONE NAME, FOREVER. The key lives beside it, not in it.
+#
+# This used to be FlipShell-$SHELL_KEY, so every build with a changed main.swift
+# ran an executable with a NEW NAME. The app has no bundle identity, so WebKit
+# derives its cookie jar from the process name — which means every build he was
+# sent was a brand new browser that had never heard of him, and his Depop
+# session stayed behind in the jar belonging to the previous name.
+#
+# That is why signing in worked whenever the builds stopped and broke again the
+# moment they resumed. It is the "never change where a session is stored" rule,
+# broken by the build system rather than by an edit.
+#
+# So the binary is always FlipShell. Whether it needs rebuilding is decided by
+# the key in a file next to it, which no browser ever looks at.
+SHELL_BIN="$SUPPORT/bin/FlipShell"
+SHELL_KEY_FILE="$SUPPORT/bin/FlipShell.key"
+# The old per-hash binaries are dead weight and each one owns a stranded cookie
+# jar; clear them out so this cannot be confusing later.
+rm -f "$SUPPORT/bin/FlipShell-"* 2>/dev/null
 
 # Where the macOS SDK is.
 #
@@ -217,9 +235,12 @@ build_window() {
   return 1
 }
 
-if [ ! -x "$SHELL_BIN" ]; then
+BUILT_KEY=""
+[ -f "$SHELL_KEY_FILE" ] && BUILT_KEY="$(cat "$SHELL_KEY_FILE")"
+if [ ! -x "$SHELL_BIN" ] || [ "$BUILT_KEY" != "$SHELL_KEY" ]; then
   SHELL_STARTED="$(date +%s)"
   if build_window; then
+    printf '%s' "$SHELL_KEY" > "$SHELL_KEY_FILE"
     say "the window is ready ($(( $(date +%s) - SHELL_STARTED ))s)"
     # Built fresh: prove it opens a window and that the bridge carries a
     # message, once, into the log. A broken shell should be a line here
@@ -230,7 +251,7 @@ if [ ! -x "$SHELL_BIN" ]; then
     say "selftest: $(tail -1 "$RUN_BOUNDED_OUT" 2>/dev/null || true)"
     unset RUN_BOUNDED_OUT
   else
-    rm -f "$SHELL_BIN"
+    rm -f "$SHELL_BIN" "$SHELL_KEY_FILE"
     kill "$WATCHDOG" 2>/dev/null || true
     alert "flip's window could not be built. Apple's build tools are missing or broken. In Terminal, run this once:   xcode-select --install   — then open flip again."
     exit 1

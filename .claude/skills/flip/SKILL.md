@@ -330,3 +330,25 @@ start, so Claude reads them before writing anything:
 
 Channels he rates, to be transcribed and folded in: **Jay's Pittsburgh**. Send more
 links and they get distilled into this file.
+
+## Why signing in kept breaking while builds were being shipped
+
+He noticed it before I did: *"only when your credits finished, only then the app let
+me connect."* That is real, and the mechanism is the build system.
+
+The launcher compiled the window to `Application Support/Flip/bin/FlipShell-<md5 of
+main.swift>`. Change a line of Swift → new hash → **new executable name**. The shell
+has no bundle identity, so WebKit derives its website data store from the process
+name. A new name is a new cookie jar, so **every build he was sent was a browser that
+had never heard of him**, and his Depop session stayed behind under the old name.
+
+Stop shipping builds and the hash stops moving, the jar persists, and he stays signed
+in. Exactly what he saw.
+
+The binary is now **always `FlipShell`**, with the key in `bin/FlipShell.key` beside
+it deciding whether to rebuild — a file no browser ever looks at. The stranded
+per-hash binaries are deleted on launch.
+
+**This is the "never change where a session is stored" rule, and it can be broken by
+the build system rather than by an edit.** Anything that changes the executable's
+name, its path, or the app's identity moves the cookie jar with it.
