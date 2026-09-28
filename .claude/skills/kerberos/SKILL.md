@@ -145,6 +145,43 @@ They are not style notes. Re-read them before shipping anything.
 12. **When he says it is broken, he is right.** Every single time. The argument
    about whether it is broken is time not spent finding out why.
 
+## The pattern behind every one of those mistakes
+
+Read the fatal mistakes list as a whole and they are not twelve different failures.
+Almost all of them are **one** failure: an assumption about the environment his app
+runs in, never checked, shipped as if it were checked.
+
+- The glass was not the material. `WKWebView` composites an opaque white base.
+- The fixes never arrived. The installer only copied a worker when its number was
+  higher, so the first one that ever landed was the one he ran forever.
+- The sign-in kept breaking. The shell binary was named after a hash of its source,
+  so every build was a new process name, and WebKit gives a new process name a new
+  cookie jar.
+- The login never completed. Google and Apple cannot finish an OAuth handshake inside
+  any embedded web view.
+
+None of those were logic bugs. The code did exactly what it said. **What was wrong
+was what I believed about macOS, WebKit and the installer** — and each one survived
+several rounds because the next fix was another guess at the same layer.
+
+So, before anything ships:
+
+1. **Name the assumption out loud.** "This is clear because the material is thin."
+   "This arrives because the launcher copies it." If it cannot be said in a sentence,
+   it has not been thought about.
+2. **Prove it or mark it unproven.** Render it, run it, read the framework's actual
+   behaviour. `preview.mjs` models the real material tints for exactly this reason —
+   it used to model a flattering one, and a preview that agrees with you is worse than
+   none.
+3. **When a fix fails twice at the same layer, the layer is wrong.** Stop tuning it.
+   The third round of thinning a material was the tell, and I did four.
+4. **Put the version on the screen.** Two rounds were spent arguing about a build that
+   was not the build. The orb wears its number now.
+
+"I found the real bug" is not a finding. A mechanism that explains every observation —
+including the ones that looked like magic, such as signing in working only when the
+builds stopped — is a finding.
+
 ## Naming — his rule, said plainly
 
 > Stop giving ancient Greek names to apps that are Gen Z. If I want a Greek name, I
