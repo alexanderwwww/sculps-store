@@ -108,3 +108,17 @@ Scales = refraction × (1 + dispersion), refraction, refraction × (1 − disper
 `backdrop-filter:url()` is Chromium-only. For a real Mac app:
 - **Electron** → paste this code as-is (Chromium renders it identically); make the window `transparent: true, frame: false, vibrancy: none`. Caveat: backdrop only sees content *inside* the window, so for true desktop refraction use a native build.
 - **SwiftUI (macOS 26+)** → use Apple's `.glassEffect()` on a `RoundedRectangle(cornerRadius: 46)`; match rim/highlight with the values above.
+
+---
+
+## Packaging for his Mac, from Linux
+
+`electron-builder --mac --dir --arm64` produces the bundle, and then skips
+signing with "supported only on macOS". **On Apple Silicon that is fatal, not
+cosmetic**: arm64 binaries without a signature are killed by the kernel, and
+what he sees is "plug is damaged and can't be opened" — which reads as a
+corrupt download rather than as a missing signature.
+
+`rcodesign sign plug.app` (apple-codesign, runs on Linux) applies an ad-hoc
+signature and the app launches. It is not notarised, so the first open is
+right-click → Open, once.
