@@ -85,18 +85,38 @@ what it refuses), `.claude/skills/flip-negotiator` (offer ladder and authority),
 The glass is settled in `.claude/skills/flip-ui/SKILL.md`. Five rejected builds are
 encoded there. **Read it before changing a pixel.**
 
-## The one thing that must be decided first
+## The sign-in — decided, and built first
 
-**The Depop sign-in has to survive.** It is what broke every single time on the app
-this replaces, for four different reasons: an embedded browser cannot complete Continue
-with Google or Continue with Apple; a WKWebView's cookie jar is derived from the
-process name, so every new build was a browser that had never heard of him; a guard on
-the data store silently changed which jar was used; and a launcher that only installed
-a newer worker pinned his Mac to the first version forever.
+**He signs in inside the phone window. There is no Chrome, and no other browser.** His
+words: *"on this app never give me again the Chrome just make it connect on the phone
+okay"*. That is settled; do not propose a browser again in any form.
 
-Settle this before anything else is built, prove it survives three consecutive
-rebuilds, and only then write the rest. **Ask him which he wants** — the app holding
-its own session, or a browser he signs into once himself — and build only that one.
+This is the hardest part of the app, not the easiest, and it is what broke every single
+time on the app plug replaces. Build and prove it **before anything else exists**.
+
+Three things follow from it, and all three are load-bearing:
+
+1. **Email sign-in only.** Continue with Google and Continue with Apple cannot complete
+   inside any embedded web view — Google refuses the flow outright and Apple hands the
+   browser to iCloud, which hands it back to the login screen, forever. Those two
+   buttons must be removed from Depop's sign-in sheet by an injected script with a
+   MutationObserver behind it, so they cannot reappear when the page re-renders. Match
+   them by the words Google and Apple, not by the verb: his account is served Greek,
+   where the label is "Συνέχεια με την Google" — accented, which broke the first
+   attempt.
+2. **The session must outlive every rebuild.** A WKWebView's cookie jar is derived from
+   the process, so anything that changes the executable's name, its path, or the app's
+   identity moves the jar with it and signs him out. The compiled binary keeps **one
+   name forever**, with any rebuild key in a file beside it that no browser reads.
+   Whatever returns the data store location must never change again, for any reason,
+   including a good one — a "safety" guard on it once turned a signed-in app into a
+   signed-out one.
+3. **The worker must be replaced whenever it differs from the bundle, in either
+   direction.** A launcher that only installs a *newer* worker pins his Mac to the
+   first version that ever landed, and every fix after it looks like it was never made.
+
+**Done for this step is: he signs in once, then three consecutive rebuilds are
+installed, and he is still signed in.** Nothing else gets written until that is true.
 
 ## How it is built
 
