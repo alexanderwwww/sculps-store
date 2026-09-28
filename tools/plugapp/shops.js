@@ -95,8 +95,32 @@ class Shop {
     win.contentView.addChildView(this.view);
 
     const wc = this.view.webContents;
-    wc.on("dom-ready", () => {
+    /* Every frame, not just the top one: both sites put parts of the sign-in
+       sheet in iframes, and a script run only on the main document never
+       reaches them — which is how a Continue with Google he could see was one
+       the app had never touched. */
+    const strip = () => {
       wc.executeJavaScript(ONLY_EMAIL).catch(() => {});
+      for (const frame of wc.mainFrame?.framesInSubtree ?? []) {
+        if (frame !== wc.mainFrame) frame.executeJavaScript(ONLY_EMAIL, true).catch(() => {});
+      }
+    };
+    wc.on("dom-ready", strip);
+    wc.on("did-frame-finish-load", strip);
+
+    /*
+     * Nothing opens a window he cannot see.
+     *
+     * A sign-in button that calls window.open in here produces a child window
+     * with no chrome, off behind the phone — which is exactly what he
+     * described: he pressed a button, something happened somewhere, and on
+     * screen nothing moved and nothing was clickable. Popups are refused and
+     * the URL is loaded in the same view instead, so every step of a sign-in
+     * stays inside the glass.
+     */
+    wc.setWindowOpenHandler(({ url }) => {
+      if (/^https?:/.test(url)) this.go(url).catch(() => {});
+      return { action: "deny" };
     });
   }
 

@@ -207,11 +207,34 @@ ipcMain.handle("shape", async (_event, next) => {
 ipcMain.handle("signin", async (_event, id) => {
   const shop = shopFor(id);
   if (!shop || !win) return { ok: false, why: "no such shop" };
+  for (const [other, view] of shops) if (other !== id) view.hide();
   const b = win.getBounds();
   /* Inset, so the rim and the ✕ stay visible around it — the page is inside
      plug rather than the other way round. */
   shop.show({ x: 10, y: 74, width: b.width - 20, height: b.height - 96 });
   await shop.go(shop.spec.signin);
+  return { ok: true };
+});
+
+/**
+ * Open a marketplace's own page inside the phone.
+ *
+ * Signed in is not the end of it — he still wants to SEE the shop: his
+ * messages, his offers, his payouts. Before this, a shop that answered "signed
+ * in" became a green dot and nothing else, and pressing it did nothing at all,
+ * which is exactly what he reported about Vestiaire. Same view, same session,
+ * same partition as the sign-in; only the starting page differs.
+ */
+ipcMain.handle("open-shop", async (_event, id, where) => {
+  const shop = shopFor(id);
+  if (!shop || !win) return { ok: false, why: "no such shop" };
+  /* One shop on screen at a time, or the second draws over the first and the
+     one underneath keeps taking the clicks. */
+  for (const [other, view] of shops) if (other !== id) view.hide();
+  const b = win.getBounds();
+  shop.show({ x: 10, y: 74, width: b.width - 20, height: b.height - 96 });
+  const url = where === "signin" ? shop.spec.signin : shop.spec.home;
+  await shop.go(url);
   return { ok: true };
 });
 
@@ -251,6 +274,11 @@ ipcMain.handle("pass", async () => {
   }
   return out;
 });
+
+/* Which build he is actually running — never a guess. A Mac app that installs
+   a worker beside itself can run a version from weeks ago while every fix
+   looks like it was never made, so the number is on screen. */
+ipcMain.handle("build", () => app.getVersion());
 
 ipcMain.handle("open-external", (_event, url) => {
   if (typeof url === "string" && /^https:\/\//.test(url)) shell.openExternal(url);

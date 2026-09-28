@@ -40,13 +40,28 @@ let state = { build: "", shops: {}, doing: "starting…", site: "depop" };
  * capture — and it is the only way type on genuinely clear glass can work.
  */
 let inkIsLight = null;
-function inkFor(dataUrl) {
+/*
+ * Measured UNDER THE WINDOW, not across the whole screen.
+ *
+ * Averaging the entire desktop is how the type ended up black on a dark patch:
+ * a pale wallpaper with the window sitting over a dark terminal reads "light
+ * background" and picks dark ink, which is invisible exactly where the ink is.
+ * Only the rectangle the glass covers decides.
+ */
+function inkFor(dataUrl, where, display) {
   const img = new Image();
   img.onload = () => {
     const c = document.createElement("canvas");
     c.width = 24; c.height = 24;
     const x = c.getContext("2d", { willReadFrequently: true });
-    x.drawImage(img, 0, 0, 24, 24);
+    const sx = img.width / display.width;
+    const sy = img.height / display.height;
+    x.drawImage(
+      img,
+      Math.max(0, (where.x - display.x) * sx), Math.max(0, (where.y - display.y) * sy),
+      Math.max(1, where.width * sx), Math.max(1, where.height * sy),
+      0, 0, 24, 24
+    );
     const { data } = x.getImageData(0, 0, 24, 24);
     let sum = 0;
     for (let i = 0; i < data.length; i += 4) {
@@ -78,7 +93,7 @@ async function grab() {
   const img = $("desk");
   const { display } = grab;
   img.src = grab.image;
-  inkFor(grab.image);
+  inkFor(grab.image, where, display);
   /* The capture is at the display's backing scale; the page is in points. */
   const k = 1 / (display.scale || 1);
   img.style.width = `${display.width}px`;
@@ -155,20 +170,45 @@ function slot(site) {
   const shop = state.shops[site] || {};
   const box = $(`slot-${site}`);
   if (!box) return;
+  const name = site === "vestiaire" ? "Vestiaire" : "Depop";
+
+  /*
+   * Signed in is a DOOR, not a badge.
+   *
+   * This used to print a green dot and stop there — so a shop that was
+   * connected was the one thing on the screen he could not press. He said it
+   * plainly about Vestiaire: signed in, clicked it, nothing happened. Right
+   * every time. Now it opens the shop's own page inside the phone, in the same
+   * session, so he can read his messages and his payouts without leaving.
+   */
+  const open = document.createElement("button");
+  open.className = "tap";
   if (shop.signedIn === true) {
-    box.innerHTML = `<span class="live"><span class="dot"></span>${
-      String(shop.who ?? "signed in").replace(/[<&]/g, "")}</span>`;
-    return;
+    open.innerHTML = `<span class="dot"></span>Open ${name}`;
+    open.onclick = () => openSite(site);
+  } else if (shop.signedIn === false) {
+    open.textContent = "Sign in with email";
+    open.onclick = () => openSite(site, "signin");
+  } else {
+    /* Unknown is never drawn as signed out — it offers the way in without
+       claiming his shop is empty. */
+    open.textContent = `Open ${name}`;
+    open.onclick = () => openSite(site);
   }
-  box.innerHTML = `<button class="tap">Sign in with email</button>`;
-  box.firstChild.onclick = () => {
-    state.doing = `opening ${site}…`;
+  box.innerHTML = "";
+  box.appendChild(open);
+}
+
+/** Put a marketplace on screen, and remember which one is up. */
+function openSite(site, where) {
+  if (!window.plug) return;
+  state.site = site;
+  state.doing = `opening ${site}…`;
+  paint();
+  window.plug.openShop(site, where).then(() => {
+    signingIn = site;
     paint();
-    /* The main process puts that marketplace's own page inside the phone. The
-       screen never navigates anything itself — one way in, and it is the
-       bridge. */
-    if (window.plug) window.plug.signin(site).then(() => { signingIn = site; paint(); });
-  };
+  });
 }
 
 /*
@@ -233,9 +273,10 @@ function paint() {
   $("lede").textContent = both
     ? "plug is hunting, listing and answering on both. Fold it away — it keeps working."
     : "Sign in once. plug lists, answers, negotiates and sells on its own from then on.";
-  /* Once both shops are in, the cards have done their job and the day takes
-     the screen. Leaving them up would be asking for something already given. */
-  document.querySelector(".shops").hidden = both;
+  /* The cards stay. Once both shops are in they stop being sign-ins and
+     become the way into each shop — hiding them left him connected to two
+     marketplaces with no way to reach either. */
+  document.querySelector(".shops").hidden = false;
   paintDay();
 }
 
@@ -278,8 +319,16 @@ $("plus").onclick = (e) => {
   e.stopPropagation();
   window.dispatchEvent(new CustomEvent("plug:list-item"));
 };
+/*
+ * The two tabs SWITCH THE SHOP, they do not just highlight themselves.
+ *
+ * Before this they set a variable nothing else read: he pressed Depop, he
+ * pressed Vestiaire, the underline moved and not one other thing on the Mac
+ * changed. That is the definition of the complaint he made — a pretty window
+ * instead of a working one. Pressing a tab now brings that marketplace up.
+ */
 for (const tab of document.querySelectorAll(".seg > div")) {
-  tab.onclick = () => { state.site = tab.dataset.site; paint(); };
+  tab.onclick = () => openSite(tab.dataset.site);
 }
 
 window.__plug = {
@@ -292,6 +341,7 @@ window.__plug = {
 installFilters(document);
 paint();
 if (window.plug) {
+  window.plug.build().then((v) => { state.build = v; paint(); }).catch(() => {});
   window.plug.onMoved(refreshSoon);
   paintDesktop();
   /*

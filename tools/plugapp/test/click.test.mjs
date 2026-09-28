@@ -24,7 +24,9 @@ const say = (ok, what, extra) => out.push({ ok, what, extra: extra ?? null });
 
 let signinAsked = null;
 let shapeAsked = null;
+let opened = [];
 ipcMain.handle("signin", (_e, site) => { signinAsked = site; return { ok: true }; });
+ipcMain.handle("open-shop", (_e, site, where) => { opened.push(site + ":" + (where || "home")); return { ok: true }; });
 ipcMain.handle("shape", (_e, next) => { shapeAsked = next; return next; });
 ipcMain.handle("desktop", () => null);
 ipcMain.handle("where", () => ({ x: 0, y: 0, width: 393, height: 852 }));
@@ -50,7 +52,7 @@ app.whenReady().then(async () => {
       document.body.className = "shape-phone";
       document.getElementById("pill").hidden = true;
       document.getElementById("phone").hidden = false;
-      window.__plug.set({ build: "t", shops: {}, doing: "" });
+      window.__plug.set({ build: "t", shops: { depop: { signedIn: false }, vestiaire: { signedIn: true } }, doing: "" });
       true;
     \`, true);
 
@@ -80,8 +82,41 @@ app.whenReady().then(async () => {
       document.querySelector("#slot-depop button").click(); true;
     \`, true);
     await new Promise((r) => setTimeout(r, 300));
-    say(signinAsked === "depop", "clicking it asks the app to open Depop's sign-in",
-      "asked: " + signinAsked);
+    say(opened.includes("depop:signin"), "clicking it asks the app to open Depop's sign-in",
+      "opened: " + opened.join(", "));
+
+    /*
+     * A SIGNED-IN shop is pressable too.
+     *
+     * This is the exact thing he reported: Vestiaire says signed in, he
+     * presses it, nothing happens — because the card printed a green dot and
+     * no button at all. It must open the shop.
+     */
+    const live = await wc.executeJavaScript(\`
+      (function () {
+        const b = document.querySelector("#slot-vestiaire button");
+        if (!b) return { there: false };
+        b.click();
+        return { there: true, label: b.textContent.trim() };
+      })()
+    \`, true);
+    await new Promise((r) => setTimeout(r, 300));
+    say(live.there, "a signed-in shop still has something to press", live.label || "");
+    say(opened.includes("vestiaire:home"), "and pressing it opens Vestiaire",
+      "opened: " + opened.join(", "));
+
+    /*
+     * The two tabs switch the shop rather than only highlighting themselves —
+     * "if you switch it up, nothing's happening" was true, and it is the
+     * clearest case of UI standing in for the app.
+     */
+    opened = [];
+    await wc.executeJavaScript(\`
+      document.querySelector('.seg > div[data-site="vestiaire"]').click(); true;
+    \`, true);
+    await new Promise((r) => setTimeout(r, 300));
+    say(opened.includes("vestiaire:home"), "the Vestiaire tab actually opens Vestiaire",
+      "opened: " + opened.join(", "));
 
     /* And the pill opening into the phone. */
     await wc.executeJavaScript(\`
