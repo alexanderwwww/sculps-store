@@ -44,13 +44,25 @@ SWIFTC="$(xcrun -f swiftc 2>/dev/null || true)"
 # --- the worker, installed beside itself ----------------------------------
 # The bundle's build; a live push writes a higher one into worker/BUILD and
 # this must never copy over it.
-BUNDLE_BUILD=1790578700
+BUNDLE_BUILD=1790579215
 RUNTIME_BUILD=0
 if [ -f "$SUPPORT/worker/BUILD" ]; then
   RUNTIME_BUILD="$(tr -dc '0-9' < "$SUPPORT/worker/BUILD")"
   RUNTIME_BUILD="${RUNTIME_BUILD:-0}"
 fi
-if [ "$RUNTIME_BUILD" -lt "$BUNDLE_BUILD" ] || [ ! -f "$SUPPORT/worker/main.mjs" ]; then
+# NOT "-lt". "different" is the rule.
+#
+# The old rule only installed when the bundle was NEWER than what was already
+# on the Mac, on the theory that a live push writes a higher number that must
+# not be clobbered. Nothing has ever written one. What it actually did was
+# freeze the Mac on whatever worker landed there first: delete the app,
+# download a new one, open it — Application Support still holds the old worker
+# with a number that is not lower, so the new app runs the old code and every
+# fix looks like it was never made. That is the whole "same mistake" loop.
+#
+# The bundle in front of us is the truth. If what is installed is not exactly
+# it, install it — newer, older, or sideways.
+if [ "$RUNTIME_BUILD" -ne "$BUNDLE_BUILD" ] || [ ! -f "$SUPPORT/worker/main.mjs" ]; then
   # Replace, never merge. `cp -R src/. dst/` leaves behind every file a later
   # build dropped — brain.mjs outlived two rewrites that way — and a stale
   # module nobody can dislodge is the bug that already cost an afternoon.
@@ -62,6 +74,8 @@ if [ "$RUNTIME_BUILD" -lt "$BUNDLE_BUILD" ] || [ ! -f "$SUPPORT/worker/main.mjs"
 else
   say "running build $RUNTIME_BUILD"
 fi
+# The window shows what it is, so which build is running is never a guess again.
+export FLIP_BUILD="$BUNDLE_BUILD"
 
 # The worker's only dependency is `ws`. It is installed by the worker's own
 # runner, below — never on this path, where nothing is on screen yet.

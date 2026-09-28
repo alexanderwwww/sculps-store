@@ -65,6 +65,9 @@ let deskSize = NSSize(width: 1400, height: 820)
 /// along the top that is always a handle.
 let gutter: CGFloat = 10
 let headerHeight: CGFloat = 36
+/* The strip along the top of the phone that belongs to the window rather than
+   the page: what you grab to move it, and what the close chip sits in. */
+let handleStrip: CGFloat = 52
 
 /*
  * The three slots, in the order they sit on the desk.
@@ -197,6 +200,8 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   var web: WKWebView?
   var body: ChromeView?
   var effect: NSVisualEffectView?
+  /// The last five digits of the build, painted on the orb and the pill.
+  var orbBuild: String = ""
   var statusDot: NSView?
   var statusLabel: NSTextField?
 
@@ -311,7 +316,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   body.press .f{transform:scale(.97)}
   </style>
   <canvas id="c"></canvas>
-  <div class="f"><div class="n">flip</div><div class="s" id="s">waking</div>
+  <div class="f"><div class="n" id="n">flip{{BUILD}}</div><div class="s" id="s">waking</div>
   <div class="c" id="k"></div></div>
   <div class="t" id="t"></div>
   <script>
@@ -601,7 +606,25 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     }
     orbView.wantsLayer = true
     orbView.layer?.masksToBounds = true
-    orbView.loadHTMLString(Shell.orbHTML, baseURL: nil)
+    /*
+     * Which build this is, on the glass.
+     *
+     * Three rounds went into arguing about fixes that were already made,
+     * because the app on his desk and the app in the checkout were different
+     * builds and neither of us could tell by looking. The launcher exports
+     * FLIP_BUILD; the orb wears the last five digits of it beside its name.
+     * Baked into the HTML rather than evaluated afterwards, because there is
+     * no didFinish here and a script that races the load paints nothing.
+     *
+     * If the number on the glass is not the number I packed, the problem is
+     * the install, not the code.
+     */
+    let stamp = ProcessInfo.processInfo.environment["FLIP_BUILD"] ?? ""
+    orbBuild = stamp.isEmpty ? "" : String(stamp.suffix(5))
+    orbView.loadHTMLString(
+      Shell.orbHTML.replacingOccurrences(
+        of: "{{BUILD}}", with: orbBuild.isEmpty ? "" : " \u{00B7} " + orbBuild),
+      baseURL: nil)
     container.addSubview(orbView)
     orb = orbView
 
@@ -1039,7 +1062,20 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
           if index == activePane {
             pane.view.isHidden = false
             pane.view.frame = bounds
-            frames.append(bounds)
+            /*
+             * The page is edge to edge, but it does not get the whole surface
+             * to touch.
+             *
+             * paneFrames is hit-testing only, never layout, so the top strip
+             * can belong to the window while the page still draws under it.
+             * Without this the phone had nothing left to take hold of — the
+             * pane covered every pixel, so every drag went into Depop and the
+             * window could not be moved at all. The strip is the width of the
+             * close chip's row, which is where a hand reaches anyway.
+             */
+            var hit = bounds
+            hit.size.height -= handleStrip
+            frames.append(hit)
           } else {
             pane.view.isHidden = true
           }
@@ -1481,6 +1517,48 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     guard let url = URL(string: "https://www.depop.com/login/") else { return }
     applyShape(.working, animated: true)
     web?.load(URLRequest(url: url))
+    reachEmailForm()
+  }
+
+  /**
+   * Straight to the email form, past the two buttons that cannot work.
+   *
+   * Depop's sign-in sheet leads with "Continue with Google" and "Continue with
+   * Apple". Neither of those can complete inside ANY embedded web view — Google
+   * refuses the flow outright and Apple's needs a real browser session — so the
+   * first two things on screen are dead ends, and pressing them and getting
+   * nothing is exactly the "we cannot connect" he keeps hitting. The third one,
+   * "Continue with email", is a plain form and works.
+   *
+   * So it is pressed for him. The page is a React app that mounts whenever it
+   * mounts, so this looks for the control rather than waiting a fixed time, and
+   * gives up after eight seconds rather than clicking something else later.
+   */
+  func reachEmailForm() {
+    let find = """
+    (function(){
+      var want = /continue with email|log in with email|sign in with email/i;
+      var nodes = document.querySelectorAll('button,a,[role=button]');
+      for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i];
+        if (!want.test((n.textContent || '').trim())) continue;
+        if (!n.offsetParent && n.offsetHeight === 0) continue;
+        n.click();
+        return true;
+      }
+      return document.querySelector('input[type=password]') != null;
+    })()
+    """
+    var tries = 0
+    let timer = Timer.scheduledTimer(withTimeInterval: 0.4, repeats: true) { [weak self] t in
+      tries += 1
+      guard let self = self, let view = self.web, tries <= 20 else { t.invalidate(); return }
+      view.evaluateJavaScript(find) { result, _ in
+        if (result as? Bool) == true { t.invalidate() }
+      }
+    }
+    /* Loose: it is looking for a button, not keeping time. */
+    timer.tolerance = 0.1
   }
 
   /** Fold the window back into the orb. The button and the esc key both land here. */
