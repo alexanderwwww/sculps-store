@@ -278,7 +278,7 @@ async function onePass() {
     show({
       working: false,
       doing: null,
-      resting: "resting — open me and press Work anyway to go now",
+      resting: "paused",
       board: [],
     });
     return;
@@ -518,8 +518,8 @@ setInterval(() => {
 // hour is its own signature, whoever is pressing the buttons.
 setInterval(
   () => { if (page) pass().catch(() => {}); },
-  /* Every three to six minutes. It was nine to fifteen, which on his screen is
-     indistinguishable from dead — and the thing that actually protects the
-     account is the per-pass cap in work.mjs, not the gap between passes. */
-  3 * 60_000 + Math.round(Math.random() * 3 * 60_000),
+  /* Twenty seconds. There is no slow gap between passes any more: what holds
+     the account is the per-pass cap and the refresh rules, which are Depop's
+     arithmetic — not a performance of somebody having a think. */
+  20_000,
 );

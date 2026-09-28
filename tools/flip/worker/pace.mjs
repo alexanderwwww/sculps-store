@@ -32,20 +32,19 @@ export const SELLER = {
 };
 
 /** Awake now? The late window is only used some nights. */
-let lateNight = { key: "", up: false };
-export function working(now = new Date(), persona = SELLER) {
-  const hour = now.getHours();
-  if (hour >= 22 || hour < 1) {
-    /* Decided once per night and remembered. Re-rolling on every call made
-       the late window flicker on and off between passes, which is the one
-       thing a real person's evening never does. The key is the night, not
-       the day, so 23:00 and 00:30 are the same sitting. */
-    const night = new Date(now.getTime() - (hour < 1 ? 86_400_000 : 0)).toDateString();
-    if (lateNight.key !== night) lateNight = { key: night, up: chance(0.35) };
-    if (!lateNight.up) return false;
-  }
-  return isAwake(persona, now);
+/**
+ * Always. There are no hours.
+ *
+ * It kept a persona's waking hours and a day off, carried over from an app
+ * whose job was to look like a person posting. A shop does not sleep, and the
+ * buyer asking at 3am is the one nobody else answers. Kept as a function so
+ * nothing downstream has to change, and so a real reason to stop — a cap, a
+ * rate limit, being signed out — lives where it belongs, in the rules.
+ */
+export function working() {
+  return true;
 }
+
 
 /**
  * How long before a reply goes out.
@@ -54,20 +53,29 @@ export function working(now = new Date(), persona = SELLER) {
  * signature. A first message from a new buyer gets more time than the fourth
  * message in a thread that is already moving.
  */
-export function replyAfterMs({ words = 40, firstContact = false, urgent = false } = {}) {
-  // Reading is real time: a person does not answer a 600-word brief in nine
-  // seconds, and answering it that fast is worse than answering it slowly.
-  const reading = (words / 3.2) * 1000;
-  const thinking = firstContact ? between(90_000, 20 * 60_000) : between(25_000, 9 * 60_000);
-  const distracted = chance(0.18) ? between(12 * 60_000, 50 * 60_000) : 0;
-  const total = reading + thinking + distracted;
-  // A late order is the one thing that justifies answering quickly.
-  return Math.round(urgent ? Math.min(total, 4 * 60_000) : total);
+/**
+ * Kept, and near zero.
+ *
+ * It used to hold a reply for up to fifty minutes so it would read as a person
+ * getting round to it. Depop ranks on reply time and the buyer asking at 3am is
+ * the one nobody else answers — the human part is the words, not the waiting.
+ * A beat for the page to be ready, and that is all.
+ */
+export function replyAfterMs() {
+  return 400;
 }
 
-/** The keystrokes for a reply, so it is typed rather than pasted. */
+
+/**
+ * The keystrokes for a reply, so it is typed into the box rather than pasted —
+ * some fields only register real key events. The CADENCE is a machine's: Depop
+ * receives a message, not a performance of somebody typing it, and the old
+ * four-to-nine-characters-a-second put a normal reply past the bridge's own
+ * deadline mid-sentence.
+ */
 export function typeReply(text, persona = SELLER) {
-  return keystrokes(String(text ?? ""), persona);
+  const strokes = keystrokes(String(text ?? ""), persona);
+  return strokes.map((stroke) => ({ ...stroke, delayMs: 8 }));
 }
 
 /**
@@ -94,18 +102,16 @@ export function takeBudget(daysSelling = 0) {
 
 /** Between two actions on the site — never the same gap twice. */
 export function betweenActionsMs() {
-  /* A test drives the whole loop end to end and cannot spend four minutes
-     waiting for a rhythm it is not measuring. */
-  if (process.env.FLIP_FAST) return Math.round(between(20, 90));
   /*
-   * Fast enough to look alive.
+   * A machine's pace, not a person's.
    *
-   * This used to wait up to two minutes between actions, carried over from an
-   * app whose whole job was to look like a person scrolling. On Depop the risk
-   * is volume and rhythm, not speed — and the caps in work.mjs are what hold
-   * those. Waiting two minutes between reading the inbox and opening the shop
-   * bought nothing and cost the only thing that matters on his screen: being
-   * able to tell working from broken.
+   * "When I say like human, I mean talk like human to customers. Other than
+   * that, it's a fucking robot." So this is only the small gap a page needs to
+   * settle after a navigation or a click — not a performance of being someone
+   * scrolling. What protects the account is the caps in work.mjs and the
+   * refresh rules, which are Depop's arithmetic rather than mime.
    */
-  return Math.round(chance(0.12) ? between(6_000, 18_000) : between(1_200, 4_500));
+  if (process.env.FLIP_FAST) return 20;
+  return Math.round(between(150, 600));
 }
+
