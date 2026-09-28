@@ -35,7 +35,7 @@ const BOARD = "https://www.depop.com/messages/";
    as "the shop floor", which is other people's listings in the recommendation
    feed — so the app would have shortlisted strangers' items and tried to
    refresh them. */
-let SHOP = null;
+let SHOP = "https://www.depop.com/alleqsh/";
 const cloud = connectCloud();
 /** How often to look for work Claude has written. */
 const DRAIN_MS = 6000;
@@ -262,6 +262,8 @@ async function onePass() {
   /* His handle, as the page states it. Without one there is no shop floor to
      read, so the pass does the inbox and stops rather than reading Depop's
      front page and calling it his. */
+  /* His handle if the page states it, and alleqsh as the default — so a pass
+     can still read the shop floor on a screen that does not print it. */
   if (who.who) SHOP = `https://www.depop.com/${String(who.who).replace(/^@/, "")}/`;
 
   if (!working(new Date(), SELLER) && !override) {

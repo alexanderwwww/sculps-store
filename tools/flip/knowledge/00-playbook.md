@@ -11,6 +11,22 @@ Named by his girlfriend. **Lowercase, always** — `flip`, never FLIP. Lowercase
 secondhand, soft, girl-run, a rail in a bedroom with good light. Uppercase reads
 sneaker-bot and pushes away half the customers.
 
+## The shop
+
+- **Handle:** `alleqsh` — depop.com/alleqsh. This is what the app reads as the
+  shop floor; never Depop's front page, which is other people's listings.
+- **Email on the account:** alleqsh@icloud.com
+- **Country:** United States. See the fee section.
+- **Bio:** *Premium luxury plug.*
+
+That bio is the positioning and it settles the tier: **luxury and designer
+first**, not volume thrifting. Which is the right call — every seller in the
+guides is marking a $17 bag up to $50 out of the same catalogue as each other.
+He can get the real thing at any level, so the shop competes where they cannot
+follow.
+
+Volume Y2K can come later as a second shop. One shop points at one person.
+
 ## The business
 
 He is a plug in real life. He can get anything from Nike to a Birkin. That is the
