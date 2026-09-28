@@ -190,6 +190,53 @@
     font-size: 15px; color: var(--ink);
     display: flex; align-items: center; justify-content: center;
   }
+  /*
+   * The cycle, drawn as growth rather than as a progress bar.
+   *
+   * One ring: the arc is how far through today's target he is, and the seven
+   * dots under it are the week — 1, 2, 3, 4, 7, 11, 18 — with today filled.
+   * A bar would say "loading". This says "growing", which is what it is.
+   */
+  .dial { position: relative; display: flex; justify-content: center; margin-top: 18px; }
+  .dial svg { overflow: visible; }
+  .dial circle { fill: none; stroke-width: 7; stroke-linecap: round; }
+  .dial .track { stroke: rgba(255,255,255,.45); }
+  .dial .arc { stroke: var(--accent); transition: stroke-dashoffset .6s cubic-bezier(.22,1,.36,1); }
+  .dial-mid {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; pointer-events: none;
+  }
+  .dial-mid .big { font-size: 42px; font-weight: 700; letter-spacing: -.04em; line-height: 1; }
+  .dial-mid .of { font-size: 12px; color: rgba(13,20,51,.66); margin-top: 2px; }
+
+  .cyc { display: flex; justify-content: center; gap: 7px; margin-top: 14px; }
+  .cyc span {
+    font-size: 11px; font-weight: 600; width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(13,20,51,.5);
+    border: 1px solid rgba(255,255,255,.55);
+  }
+  .cyc span[data-today="true"] {
+    background: rgba(255,255,255,.55); color: var(--ink);
+    box-shadow: inset 0 1px 0 #fff;
+  }
+
+  .held {
+    margin-top: 12px; font-size: 12.5px; text-align: center;
+    color: rgba(13,20,51,.66);
+  }
+  .feed { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .feed .row {
+    display: flex; align-items: center; gap: 9px; font-size: 13px;
+    color: rgba(13,20,51,.8);
+  }
+  .feed .tag {
+    font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: 3px 7px; border-radius: 7px; color: #fff; flex: none;
+  }
+  .feed .tag.depop { background: #ff2300; }
+  .feed .tag.vestiaire { background: #f3e9d8; color: #111; }
+
   [hidden] { display: none !important; }
 </style>
 
@@ -238,6 +285,31 @@
             <div id="slot-vestiaire"></div>
           </div>
         </div>
+        <!--
+          Working: what it is doing with the day.
+
+          The number is the point. He should be able to read, in one glance,
+          how many items go up today, how many are up, and what is in the way
+          if anything is. The ring is the seven-day golden-ratio cycle — where
+          today sits in it, and how far through today he is.
+        -->
+        <div id="working" hidden style="width:100%">
+          <div class="dial">
+            <svg viewBox="0 0 120 120" width="150" height="150" aria-hidden="true">
+              <circle class="track" cx="60" cy="60" r="52"></circle>
+              <circle class="arc" id="arc" cx="60" cy="60" r="52"
+                      transform="rotate(-90 60 60)"></circle>
+            </svg>
+            <div class="dial-mid">
+              <div class="big" id="done">0</div>
+              <div class="of">of <span id="target">1</span> today</div>
+            </div>
+          </div>
+          <div class="cyc" id="cyc"></div>
+          <div class="held" id="held" hidden></div>
+          <div class="feed" id="feed"></div>
+        </div>
+
         <div class="grow"></div>
         <div class="hair"></div>
         <div class="foot">

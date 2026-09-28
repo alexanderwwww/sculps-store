@@ -41,7 +41,7 @@ const STUFF = `
   <div style="position:absolute;left:40px;bottom:40px;width:420px;height:150px;
     background:repeating-linear-gradient(90deg,#101820 0 10px,#f2f4f8 10px 20px);border-radius:10px"></div>`;
 
-async function shot(name, shapeClass, size) {
+async function shot(name, shapeClass, size, state) {
   const page = await browser.newPage({
     viewport: { width: 1100, height: 1000 },
     deviceScaleFactor: 2,
@@ -70,6 +70,10 @@ async function shot(name, shapeClass, size) {
     document.getElementById("pill").hidden = shapeClass !== "shape-pill";
     document.getElementById("phone").hidden = shapeClass !== "shape-phone";
   }, { shapeClass, size, DESK, STUFF });
+  if (state) {
+    await page.waitForTimeout(200);
+    await page.evaluate((s) => window.__plug.set(s), state);
+  }
   await page.waitForTimeout(900);
   await page.screenshot({ path: `${OUT}/${name}.png` });
   console.log("wrote", `${OUT}/${name}.png`);
@@ -78,4 +82,24 @@ async function shot(name, shapeClass, size) {
 
 await shot("pill", "shape-pill", { w: 320, h: 64 });
 await shot("phone", "shape-phone", { w: 393, h: 852 });
+
+/* The screen he actually lives with: both shops in, a day under way. */
+await shot("working", "shape-phone", { w: 393, h: 852 }, {
+  build: "001",
+  shops: {
+    depop: { signedIn: true, who: "@alleqsh" },
+    vestiaire: { signedIn: true, who: "alleqsh" },
+  },
+  day: 5,
+  target: 7,
+  doneToday: 4,
+  held: null,
+  doing: "listing the Chrome Hearts cross ring",
+  feed: [
+    { site: "depop", line: "listed — CH cross ring · €380" },
+    { site: "vestiaire", line: "offer accepted — Birkin 30 · €12,900" },
+    { site: "depop", line: "answered — “is this still available?”" },
+    { site: "vestiaire", line: "refreshed — Datejust 36" },
+  ],
+});
 await browser.close();

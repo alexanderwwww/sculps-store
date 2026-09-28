@@ -7,6 +7,7 @@
  * never disagree about who is signed in.
  */
 import { installFilters, SHAPES } from "./glass.js";
+import { cycle, targetForDay } from "../worker/schedule.mjs";
 
 const $ = (id) => document.getElementById(id);
 
@@ -82,6 +83,50 @@ function slot(site) {
   };
 }
 
+/*
+ * The day, drawn as a ring.
+ *
+ * The arc is how far through today's target he is; the seven dots are the
+ * golden-ratio week with today filled. Deliberately not a progress bar — a bar
+ * says "loading" and this is meant to say "growing", which is the thing he
+ * actually asked for.
+ */
+function paintDay() {
+  const box = $("working");
+  const both = (state.shops.depop || {}).signedIn === true
+    && (state.shops.vestiaire || {}).signedIn === true;
+  box.hidden = !both;
+  if (!both) return;
+
+  const day = Number(state.day || 1);
+  const target = Number(state.target ?? targetForDay(day));
+  const done = Number(state.doneToday || 0);
+  $("done").textContent = String(done);
+  $("target").textContent = String(target);
+
+  const arc = $("arc");
+  const circumference = 2 * Math.PI * 52;
+  const share = target > 0 ? Math.min(1, done / target) : 0;
+  arc.style.strokeDasharray = String(circumference);
+  arc.style.strokeDashoffset = String(circumference * (1 - share));
+
+  $("cyc").innerHTML = cycle()
+    .map((n, i) => `<span data-today="${i + 1 === day}">${n}</span>`)
+    .join("");
+
+  const held = $("held");
+  held.hidden = !state.held;
+  held.textContent = state.held ? `held: ${state.held}` : "";
+
+  /* The last few things it did, each saying which shop it happened on. */
+  $("feed").innerHTML = (state.feed || []).slice(0, 4).map((row) => {
+    const site = row.site === "vestiaire" ? "vestiaire" : "depop";
+    const label = site === "vestiaire" ? "V" : "d";
+    return `<div class="row"><span class="tag ${site}">${label}</span>`
+      + `<span>${String(row.line ?? "").replace(/[<&]/g, "")}</span></div>`;
+  }).join("");
+}
+
 function paint() {
   $("pill-doing").textContent = state.doing || "minding the shops";
   $("build").textContent = state.build ? `build ${state.build}` : "build —";
@@ -96,6 +141,10 @@ function paint() {
   $("lede").textContent = both
     ? "plug is hunting, listing and answering on both. Fold it away — it keeps working."
     : "Sign in once. plug lists, answers, negotiates and sells on its own from then on.";
+  /* Once both shops are in, the cards have done their job and the day takes
+     the screen. Leaving them up would be asking for something already given. */
+  document.querySelector(".shops").hidden = both;
+  paintDay();
 }
 
 /* The pill opens; the ✕ folds it back. Nothing else on the glass is a button,
