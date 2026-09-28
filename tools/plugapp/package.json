@@ -27,7 +27,12 @@
       "category": "public.app-category.business",
       "icon": "assets/AppIcon.icns",
       "target": [
-        "dir"
+        {
+          "target": "dir",
+          "arch": [
+            "universal"
+          ]
+        }
       ],
       "extendInfo": {
         "LSUIElement": false,

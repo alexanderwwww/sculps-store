@@ -122,3 +122,9 @@ corrupt download rather than as a missing signature.
 `rcodesign sign plug.app` (apple-codesign, runs on Linux) applies an ad-hoc
 signature and the app launches. It is not notarised, so the first open is
 right-click → Open, once.
+
+**Build universal, never one architecture.** His Mac is Intel. A build made for
+Apple Silicon refuses to open on it with "not supported by this Mac", which
+costs him a download and a round trip — and the assumption behind it was never
+checked, only guessed. `target: [{ target: "dir", arch: ["universal"] }]`
+produces one bundle that runs on both, and the question never comes up again.

@@ -130,3 +130,17 @@ observation — including the ones that looked like magic — is a finding.
 2. Anything he will look at, rendered and **opened**.
 3. The build number visible in the app and stated in the message.
 4. The one assumption that could not be proved, said out loud to him.
+
+## His Mac is Intel
+
+Not Apple Silicon. A build packaged `--arm64` refuses to open on it — *"not
+supported by this Mac"* — and he has already lost a download to that guess.
+
+Package **universal** (`arch: ["universal"]`), which runs on both and makes the
+question disappear. And on Apple Silicon an unsigned arm64 binary is killed by
+the kernel and reads as *"damaged and can't be opened"*, so `rcodesign sign`
+the bundle either way: electron-builder skips signing on Linux and says so in a
+line that is easy to read past.
+
+It is the same failure as all the others — an assumption about the environment,
+never checked, shipped as if it had been. **Ask, or build for both.**
