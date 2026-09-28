@@ -298,7 +298,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     transition:transform .22s cubic-bezier(.2,.9,.3,1.3)}
   .n{font-size:11px;font-weight:700;letter-spacing:.34em;color:rgba(255,255,255,.58)}
   .s{font-size:14px;font-weight:600;letter-spacing:-.01em;color:rgba(255,255,255,.98);
-    text-shadow:0 1px 14px rgba(0,0,0,.5);max-width:100%;overflow:hidden;
+    text-shadow:0 1px 3px rgba(0,0,0,.85),0 1px 14px rgba(0,0,0,.55);max-width:100%;overflow:hidden;
     text-overflow:ellipsis;white-space:nowrap}
   .c{font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.14em;
     color:rgba(255,255,255,.45);margin-top:1px}
@@ -351,8 +351,8 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       /* A soft scrim under the type only, feathered out well before the edges,
          so the words hold on any desktop while the pane stays see-through. */
       var sc=x.createRadialGradient(w/2,h*0.30,4,w/2,h*0.30,w*0.62);
-      sc.addColorStop(0,"rgba(6,10,18,.46)");
-      sc.addColorStop(0.55,"rgba(6,10,18,.18)");
+      sc.addColorStop(0,"rgba(6,10,18,.26)");
+      sc.addColorStop(0.55,"rgba(6,10,18,.10)");
       sc.addColorStop(1,"rgba(6,10,18,0)");
       x.fillStyle=sc;x.fillRect(0,0,w,h);
 
@@ -504,7 +504,15 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
      */
     let fx = NSVisualEffectView(frame: container.bounds)
     fx.autoresizingMask = [.width, .height]
-    fx.material = .hudWindow
+    /*
+     * The material is per-shape, not fixed. `.hudWindow` is a heavy, nearly
+     * opaque slab — fine behind a page, but as the orb it turned the glass
+     * into a grey stone: you could not see what was behind the window, only
+     * that something was. Clear glass is the thinnest stock material there
+     * is, and the blur it still does is the glass part. See `materialFor`.
+     */
+    fx.material = Shell.materialFor(.orb)
+    fx.isEmphasized = false
     fx.blendingMode = .behindWindow
     fx.state = .active
     fx.wantsLayer = true
@@ -777,6 +785,32 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     }
   }
 
+
+  /**
+   * Which material each shape is made of.
+   *
+   * He asked for both traits at once: "I want to be able to also see your chat
+   * through the back ... clear transparent but also glass like transformation."
+   * Those are not in tension — a blur IS still a blur when the tint over it is
+   * thin. What killed it was `.hudWindow`, whose tint is nearly opaque, so the
+   * blur had nothing left to show. `.underWindowBackground` is the thinnest
+   * stock material macOS has: it samples and blurs the desktop the same way
+   * and puts almost no colour over the top, so what is behind the window reads
+   * through it, softened rather than hidden. That is liquid glass.
+   *
+   * Never reach for alphaValue to get here. Anything under 1 composites the
+   * effect view into its own transparency layer and the backdrop sampling
+   * degrades to a flat wash — clear in the wrong way, and no longer glass.
+   *
+   * The page shapes keep the solid material: a web view is drawn on top of it
+   * anyway, and a thin material under a scrolling page is just noise.
+   */
+  static func materialFor(_ s: Shape) -> NSVisualEffectView.Material {
+    switch s {
+    case .orb, .pill: return .underWindowBackground
+    default: return .hudWindow
+    }
+  }
   func radiusFor(_ s: Shape) -> CGFloat {
     switch s {
     /* 26% of the side is Apple's own squircle proportion — the icon grid, the
@@ -824,6 +858,14 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         frame.origin.y = ceiling - frame.size.height
       }
     }
+
+    /*
+     * Clear when it is a piece of glass, solid when it is a window onto a
+     * page. Set before the frame animates so the material crosses over with
+     * the shape rather than a beat after it.
+     */
+    effect?.material = Shell.materialFor(s)
+    effect?.isEmphasized = false
 
     let radius = radiusFor(s)
     body?.layer?.cornerRadius = radius

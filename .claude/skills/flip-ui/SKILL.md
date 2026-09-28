@@ -110,3 +110,33 @@ WebKit cannot sample what is behind the window. Any spec that says otherwise —
 including the one ChatGPT produced — is wrong about the layer stack. The
 desktop blur is native and the canvas sits on top of it. Keep the two jobs
 separate.
+
+## Clear glass, not a grey stone
+
+His words: *"when I open the glass I want to be able to also see your chat through
+the back ... it might be faded or something but it's a liquid glass I want it clear
+transparent also so it will have both traits — clear transparent but also glass like
+transformation."*
+
+Clear and glassy are not in tension. A blur is still a blur when the **tint** over it
+is thin. What kills it is the material, not the blur:
+
+| Material | Reads as |
+|---|---|
+| `.hudWindow` | nearly opaque slab — the blur has nothing left to show. **Never the orb.** |
+| `.underWindowBackground` | the thinnest stock material: samples and blurs the desktop, puts almost no colour over it. **This is liquid glass.** |
+
+So the material is **per-shape**, chosen in `Shell.materialFor(_:)` and re-applied at
+the top of `applyShape` so it crosses over with the frame rather than a beat after:
+
+- `.orb`, `.pill` → `.underWindowBackground`, `isEmphasized = false`
+- page shapes → `.hudWindow` (a web view is drawn over it anyway)
+
+And still: **never `alphaValue`** to get there. Anything under 1 composites the effect
+view into its own transparency layer, backdrop sampling degrades to a flat wash, and
+it is clear in the wrong way — no longer glass.
+
+Once the tint thins out, legibility has to come from the type rather than the panel:
+the canvas scrim under the text drops to `.26 → .10 → 0` and the status line carries a
+tight `0 1px 3px rgba(0,0,0,.85)` shadow under its soft one. Light on the type, not a
+wall behind it.

@@ -19,7 +19,12 @@
       "mcp__organic__organic_status",
       "mcp__organic__organic_accounts",
       "mcp__organic__organic_findings",
-      "mcp__organic__organic_log"
+      "mcp__organic__organic_log",
+      "Bash(node tools/flip/check-swift.mjs:*)",
+      "Bash(node --test tools/flip/test/:*)",
+      "Bash(cd tools/flip && npm test)",
+      "Edit(tools/flip/**)",
+      "Read(tools/flip/**)"
     ]
   }
 }
