@@ -21,6 +21,10 @@ const TYPES: Record<string, string> = {
   mp4: "video/mp4",
   webm: "video/webm",
   mov: "video/quicktime",
+  /* Builds of his Mac apps, so a 130MB download is a link he clicks rather
+     than something he has to be walked through. */
+  zip: "application/zip",
+  dmg: "application/x-apple-diskimage",
 };
 
 export async function loader({ params, context, request }: Route.LoaderArgs) {
