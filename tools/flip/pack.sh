@@ -21,6 +21,8 @@ node "$HERE/worker/agent/build.mjs"
 # agent, run an act, survive a navigation. --no-sandbox is for THIS container
 # only; his Mac never gets it.
 ( cd "$HERE/worker" && FLIP_CHROME_ARGS="--no-sandbox --headless=new" node ../test/chrome.test.mjs )
+# And that a pushed look lands while a stale one cannot.
+( cd "$HERE/worker" && node ../test/xcoder.test.mjs )
 # Only now is the old bundle worker thrown away. Emptying it first meant any
 # failure in the two steps above left Resources/worker empty under `set -eu`,
 # and an empty worker reaches Alex as the same alert we are here to fix.

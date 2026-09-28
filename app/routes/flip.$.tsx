@@ -133,15 +133,30 @@ const TOOLS = [
   {
     name: "flip_ui",
     description:
-      "Change how the glass looks, live. `html` is the whole page the orb renders — the liquid, the ribbons, the type, the telemetry, the states. The running app picks it up within seconds and swaps it in place: no restart, no download, nothing lost. Raise `build` above the current one. Whole page only, there is no patching. This is the face of the app and nothing else — it cannot reach the shop, the worker or the Mac.",
+      "Change how the glass looks, live. The orb is drawn by AppKit, so what travels is the numbers it is made of — the running app applies them within seconds, with no restart and nothing to download. Raise `build` above the current one; a push that is not higher is ignored, and a rollback is a higher build carrying the old numbers. Every value is optional and anything left out is untouched. This is the look and nothing else — it cannot reach the shop, the worker or the Mac.",
     inputSchema: {
       type: "object",
       properties: {
         build: { type: "integer", description: "Higher than the running build, or it is ignored." },
-        html: { type: "string", description: "The complete orb page, doctype to closing script." },
+        lens: {
+          type: "number",
+          description:
+            "How hard the glass bends what is behind it, 0 to 1. 0.42 is the shipped value; 0.7 is a fisheye and 0.1 is nearly flat.",
+        },
+        rim: {
+          type: "number",
+          description: "How lit the edge is, 0 to 1. 0.72 ships. This is the thickness of the glass.",
+        },
+        sheen: {
+          type: "number",
+          description:
+            "The travelling highlight, 0 to 1. 0.13 ships, and it is the ceiling — above that the orb reads milky, which he has rejected four times.",
+        },
+        drift: { type: "number", description: "Seconds for the drop to cross. 11 ships. Below 4 it reads as a loading bar." },
+        radius: { type: "number", description: "The squircle's corner, in points. 56 ships." },
         why: { type: "string", description: "One line for the log, so a bad look can be found and undone." },
       },
-      required: ["build", "html"],
+      required: ["build"],
     },
   },
   {
@@ -256,16 +271,39 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
   if (name === "flip_ui") {
     const build = Number(args.build);
     if (!Number.isFinite(build) || build <= 0) return { ok: false, error: "build must be a number" };
-    const html = String(args.html ?? "");
-    if (html.length < 40) return { ok: false, error: "that is not a page" };
-    if (html.length > 400_000) return { ok: false, error: "too big for a face" };
-    const now = ((await read(env, "ui")) ?? {}) as { build?: number };
+    const now = ((await read(env, "ui")) ?? {}) as { build?: number; style?: Record<string, number> };
     if (Number(now.build ?? 0) >= build) {
       return { ok: false, error: `build ${build} is not above the running ${now.build ?? 0}` };
     }
-    await write(env, "ui", { build, html, why: String(args.why ?? ""), at: Date.now() });
-    await append(env, { line: `new face, build ${build}`, why: args.why });
-    return { ok: true, build, bytes: html.length };
+    /*
+     * Only the keys the window knows, only numbers, and only inside the range
+     * each one is sane in. A pushed look cannot take the app down, and it
+     * cannot quietly put the orb back to the milky slab he rejected: `sheen`
+     * is capped at the value that has already been argued over four times.
+     */
+    const LIMITS: Record<string, [number, number]> = {
+      lens: [0, 1],
+      rim: [0, 1],
+      sheen: [0, 0.13],
+      drift: [4, 60],
+      radius: [0, 120],
+    };
+    const style: Record<string, number> = {};
+    for (const [key, [low, high]] of Object.entries(LIMITS)) {
+      if (args[key] === undefined) continue;
+      const value = Number(args[key]);
+      if (!Number.isFinite(value)) return { ok: false, error: `${key} is not a number` };
+      if (value < low || value > high) {
+        return { ok: false, error: `${key} must be between ${low} and ${high}` };
+      }
+      style[key] = value;
+    }
+    if (!Object.keys(style).length) return { ok: false, error: "nothing to change" };
+    /* Merged, so a push that carries one value does not blank the rest. */
+    const merged = { ...(now.style ?? {}), ...style };
+    await write(env, "ui", { build, style: merged, why: String(args.why ?? ""), at: Date.now() });
+    await append(env, { line: `new look, build ${build}: ${Object.keys(style).join(", ")}`, why: args.why });
+    return { ok: true, build, style: merged };
   }
 
   if (name === "flip_log") {

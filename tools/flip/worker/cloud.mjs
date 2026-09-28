@@ -41,6 +41,16 @@ export function connectCloud(base = process.env.FLIP_CLOUD || DEFAULT_BASE, { ti
     /** What it is doing, for anyone who asks from outside. */
     status: (state) => post("/status", state),
     /**
+     * Xcoder: the look, as numbers, pushed from the chat.
+     *
+     * The orb is drawn by AppKit, so there is no page to push HTML into — what
+     * travels is the values the glass is made of. `build` only ever goes up,
+     * and the worker ignores anything that is not higher than what it already
+     * applied, so a stale read can never undo a change and a push can be
+     * rolled back by sending a higher build carrying the old numbers.
+     */
+    ui: () => get("/ui"),
+    /**
      * The written work, if Claude has posted any.
      *
      * Reading drains the tray, so the same reply can never be typed twice —

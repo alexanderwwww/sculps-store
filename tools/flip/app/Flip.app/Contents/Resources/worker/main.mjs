@@ -21,10 +21,12 @@
  * pressing is the cheap part.
  */
 import { fileURLToPath } from "node:url";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { startBridge } from "./bridge.mjs";
 import { shortlist } from "./work.mjs";
 import { connectCloud } from "./cloud.mjs";
+import { openChrome, pageOverChrome, findChrome } from "./chrome.mjs";
 import { readKnowledge } from "./knowledge.mjs";
 import { SELLER, working, takeBudget, betweenActionsMs, typeReply } from "./pace.mjs";
 
@@ -404,6 +406,48 @@ function rollDay() {
   state.takeBudget = takeBudget(Number(process.env.FLIP_DAYS_SELLING) || 0);
 }
 
+/*
+ * His own Chrome, and it is the driver — not the window's web view.
+ *
+ * The web view could never hold a Depop session across builds (its cookie jar
+ * comes from the process, and the process changes) and could never complete
+ * Continue with Google or Continue with Apple, because both refuse an embedded
+ * browser on purpose. So the pass runs in his Chrome: a profile of its own
+ * under the support directory that no rebuild touches, signed into once and
+ * kept.
+ *
+ * The loop does not know the difference. It says page.ask(act, args) and
+ * pageOverChrome answers in the same shape the bridge does.
+ *
+ * If Chrome is not installed, the window's web view is still there and the
+ * bridge still assigns `page` on hello — so the app degrades to what it was
+ * rather than refusing to start.
+ */
+let chrome = null;
+
+async function useChrome() {
+  if (!findChrome()) {
+    cloud.log([{ line: "Chrome is not installed — falling back to the window" }]).catch(() => {});
+    return false;
+  }
+  try {
+    chrome = await openChrome({
+      home: process.env.FLIP_HOME || ".",
+      agent: await readFile(new URL("./agent.built.js", import.meta.url), "utf8"),
+      log: (line) => cloud.log([{ line }]).catch(() => {}),
+    });
+    /* Whatever is already open, or the shop. Reusing the tab matters: opening
+       a new one on every start would leave him with forty tabs by lunchtime. */
+    const target = (await chrome.firstPage()) ?? (await chrome.open(SHOP));
+    page = pageOverChrome(target);
+    show({ doing: "using your Chrome" });
+    return true;
+  } catch (error) {
+    cloud.log([{ line: `chrome would not start: ${error.message}` }]).catch(() => {});
+    return false;
+  }
+}
+
 let bridge;
 bridge = await startBridge({
   /* fileURLToPath, never `.pathname`: the worker lives in "Application
@@ -417,7 +461,10 @@ bridge = await startBridge({
   // `page` is assigned below rather than in here.
   onMessage(message) {
     if (message.t === "hello") {
-      page = bridge;
+      /* Only if Chrome is not driving. Otherwise a reload of the window's web
+         view would quietly take the pass back off his signed-in browser and
+         put it on one that has never seen Depop. */
+      if (!chrome) page = bridge;
       show({});
       /*
        * Only the first hello starts a pass.
@@ -461,6 +508,20 @@ bridge = await startBridge({
 });
 
 console.log(`PORT ${bridge.port}`);
+
+/*
+ * Chrome comes up with the worker, not on a greeting.
+ *
+ * A greeting is a page load, and a pass begins with a navigation — starting
+ * work on a greeting is how the window ended up reloading once a second. This
+ * runs once, here, and the timer below does the rest.
+ */
+if (await useChrome()) {
+  greeted = true;
+  pass().catch((error) => {
+    cloud.log([{ line: `first pass failed: ${error.message}` }]).catch(() => {});
+  });
+}
 
 /*
  * What it knows, published once at start.
@@ -516,6 +577,36 @@ setInterval(() => {
     })
     .catch(() => {});
 }, DRAIN_MS);
+
+/*
+ * Xcoder — the look changing while he watches, with nothing to download.
+ *
+ * He asked for this twice and was explicit that it must not need his approval
+ * each time: "without with without I have to approve. It must be auto-approved."
+ * So the worker asks the cloud what the look should be and forwards it to the
+ * window. The window applies it on the next frame.
+ *
+ * Only a HIGHER build is applied. A push that is not newer than what is
+ * already on is ignored, which means a slow or repeated read can never undo a
+ * change, and a rollback is a higher build carrying the old numbers rather
+ * than a special case.
+ */
+let uiBuild = 0;
+setInterval(() => {
+  if (!bridge) return;
+  cloud.ui()
+    .then((face) => {
+      if (!face || typeof face !== "object") return;
+      const build = Number(face.build ?? 0);
+      if (!(build > uiBuild)) return;
+      uiBuild = build;
+      const style = face.style && typeof face.style === "object" ? face.style : null;
+      if (!style) return;
+      bridge.window("style", style);
+      cloud.log([{ line: `look ${build}: ${face.why ?? "no reason given"}` }]).catch(() => {});
+    })
+    .catch(() => {});
+}, 4000);
 
 setInterval(() => {
   cloud.status({

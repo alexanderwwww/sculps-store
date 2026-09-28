@@ -234,6 +234,23 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
    * lesson of the last four builds. If it ever looks milky, this is the first
    * thing to turn down.
    */
+  /*
+   * The look, as numbers, in one place.
+   *
+   * Every value the glass is made of lives here rather than as a literal
+   * buried in layoutChrome, because Xcoder pushes these live — see the "style"
+   * verb. A number that is only written inline can be changed for a session
+   * and then quietly revert on the next cold start; a number that is read from
+   * here behaves the same either way.
+   */
+  struct Style {
+    var lens: CGFloat = 0.42
+    var rim: CGFloat = 0.72
+    var sheen: CGFloat = 0.13
+    var drift: Double = 11
+    var radius: CGFloat = -1   // -1 means "whatever radiusFor says"
+  }
+  var style = Style()
   var sheen: CAGradientLayer?
   /*
    * The bevel: the inside edge of the glass, where its thickness lives.
@@ -537,7 +554,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     }
     /* The outer rim is the lit edge of the glass; the inner one sits a couple
        of points in and reads as its far wall, seen through the body. */
-    bevel = ring(0.72, 0.30)
+    bevel = ring(0.72, 0.30)   // re-coloured from `style` in layoutChrome
     bevelInner = ring(0.24, 0.10)
     container.autoresizingMask = [.width, .height]
     if let layer = container.layer {
@@ -955,6 +972,8 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     }
   }
   func radiusFor(_ s: Shape) -> CGFloat {
+    /* A pushed radius wins, so the squircle can be dialled live. */
+    if style.radius >= 0, s == .orb { return style.radius }
     switch s {
     /* 26% of the side is Apple's own squircle proportion — the icon grid, the
        Watch, a Sonoma window. Rounder than that reads as a bubble toy; squarer
@@ -1230,7 +1249,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
        * his screen, untouched.
        */
       container.layer?.borderWidth = 1
-      container.layer?.borderColor = NSColor.white.withAlphaComponent(0.34).cgColor
+      container.layer?.borderColor = NSColor.white.withAlphaComponent(style.rim * 0.47).cgColor
 
       /*
        * The lens: what makes it liquid glass rather than a tinted hole.
@@ -1257,7 +1276,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         lens?.setValue(bounds.width * 0.78, forKey: "inputRadius")
         /* Small. A strong bump is a fisheye toy; this is a pane of glass with
            a thickness, and the give-away is only at the edge. */
-        lens?.setValue(0.42, forKey: "inputScale")
+        lens?.setValue(style.lens, forKey: "inputScale")
         /* Named, because a filter can only be animated through a key path and
            the key path goes through its name. */
         lens?.name = "lens"
@@ -1281,7 +1300,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
           let drift = CABasicAnimation(keyPath: "backgroundFilters.lens.inputCenter")
           drift.fromValue = CIVector(x: bounds.width * 0.36, y: bounds.height * 0.58)
           drift.toValue = CIVector(x: bounds.width * 0.64, y: bounds.height * 0.44)
-          drift.duration = 11
+          drift.duration = style.drift
           drift.autoreverses = true
           drift.repeatCount = .infinity
           drift.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0, 0.2, 1)
@@ -1290,9 +1309,9 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
           /* The thickness breathes with it, so the edge swells and settles the
              way the surface of a drop does. */
           let swell = CABasicAnimation(keyPath: "backgroundFilters.lens.inputScale")
-          swell.fromValue = 0.34
-          swell.toValue = 0.52
-          swell.duration = 14
+          swell.fromValue = style.lens * 0.81
+          swell.toValue = style.lens * 1.24
+          swell.duration = style.drift * 1.27
           swell.autoreverses = true
           swell.repeatCount = .infinity
           swell.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -1307,6 +1326,15 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         guard let ring = ring, let shape = ring.mask as? CAShapeLayer else { continue }
         ring.isHidden = false
         ring.frame = bounds
+        /* Re-coloured every layout, so a pushed `rim` lands without a restart.
+           The inner ring is a third of the outer one — it is the far wall seen
+           through the body, not a second edge. */
+        let lit = index == 0 ? style.rim : style.rim * 0.33
+        ring.colors = [
+          NSColor.white.withAlphaComponent(lit).cgColor,
+          NSColor.white.withAlphaComponent(lit * 0.16).cgColor,
+          NSColor.white.withAlphaComponent(lit * 0.42).cgColor,
+        ]
         let inset = CGFloat(index) * 3.5 + 0.75
         let width: CGFloat = index == 0 ? 1.5 : 1
         shape.frame = ring.bounds
@@ -1325,6 +1353,11 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       if let gloss = sheen {
         gloss.isHidden = false
         gloss.frame = bounds
+        gloss.colors = [
+          NSColor.white.withAlphaComponent(0).cgColor,
+          NSColor.white.withAlphaComponent(style.sheen).cgColor,
+          NSColor.white.withAlphaComponent(0).cgColor,
+        ]
         gloss.cornerRadius = radiusFor(.orb)
         gloss.cornerCurve = .continuous
         gloss.masksToBounds = true
@@ -1753,6 +1786,43 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     case "pane":
       guard let idText = obj["id"] as? String else { break }
       activatePane(idText, then: obj["url"] as? String)
+    /*
+     * {t:"window", do:"style", lens:0.42, rim:0.72, drift:11, radius:56, …}
+     *
+     * Xcoder: the look, changed while it is running.
+     *
+     * The orb is drawn by AppKit now, so there is no page to push HTML into —
+     * what has to travel live is the NUMBERS. He says "more refraction" or
+     * "warmer rim" and the value arrives here and is applied to the layer on
+     * the next frame. No download, no restart, no zip.
+     *
+     * Every key is optional, so a push can carry one value. Anything absent is
+     * left exactly as it was; anything unknown is ignored rather than throwing,
+     * because a bad push must never be able to take the window down.
+     */
+    case "style":
+      if let lens = obj["lens"] as? Double {
+        style.lens = CGFloat(lens)
+      }
+      if let rim = obj["rim"] as? Double {
+        style.rim = CGFloat(rim)
+      }
+      if let drift = obj["drift"] as? Double, drift > 0 {
+        style.drift = drift
+      }
+      if let sheenTo = obj["sheen"] as? Double {
+        style.sheen = CGFloat(sheenTo)
+      }
+      if let radius = obj["radius"] as? Double, radius >= 0 {
+        style.radius = CGFloat(radius)
+      }
+      /* Re-laying out is what applies it: every one of these numbers is read
+         in layoutChrome, so there is one place where the look is decided and
+         a live change cannot drift away from a cold start. */
+      body?.layer?.removeAnimation(forKey: "drift")
+      body?.layer?.removeAnimation(forKey: "swell")
+      sheen?.removeAnimation(forKey: "sweep")
+      layoutChrome()
     /* {t:"window", do:"snapshot"} — a PNG of the active pane. */
     case "snapshot":
       takeShot(obj["id"] as? String, fromPage: fromPage)
