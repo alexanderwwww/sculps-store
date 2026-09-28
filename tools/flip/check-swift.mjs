@@ -20,7 +20,7 @@ URL URLRequest URLSession URLSessionConfiguration URLSessionWebSocketTask URLSes
 HTTPURLResponse HTTPCookie NSPasteboard DispatchGroup JSONSerialization Data Date DateFormatter TimeInterval DispatchQueue DispatchTime DispatchWorkItem
 OperationQueue Timer Bundle FileManager NSWorkspace NSSelectorFromString ProcessInfo CommandLine CharacterSet String Int Double Bool CGFloat CGRect
 CGSize CGPoint CGColor CALayer CABasicAnimation CAMediaTimingFunction CATransaction Array Dictionary Set Optional Result Error Any AnyObject Never Task MainActor Selector UUID
-NSVisualEffectView NSAnimationContext NSFont NSBitmapImageRep NSGraphicsContext NSTrackingArea NSCursor NSAttributedString
+NSVisualEffectView NSAppearance NSAnimationContext NSFont NSBitmapImageRep NSGraphicsContext NSTrackingArea NSCursor NSAttributedString
 `.trim().split(/\s+/));
 
 const file = process.argv[2];

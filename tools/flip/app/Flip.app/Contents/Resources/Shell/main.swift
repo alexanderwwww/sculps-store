@@ -356,8 +356,8 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       /* A soft scrim under the type only, feathered out well before the edges,
          so the words hold on any desktop while the pane stays see-through. */
       var sc=x.createRadialGradient(w/2,h*0.30,4,w/2,h*0.30,w*0.62);
-      sc.addColorStop(0,"rgba(6,10,18,.26)");
-      sc.addColorStop(0.55,"rgba(6,10,18,.10)");
+      sc.addColorStop(0,"rgba(6,10,18,.16)");
+      sc.addColorStop(0.55,"rgba(6,10,18,.05)");
       sc.addColorStop(1,"rgba(6,10,18,0)");
       x.fillStyle=sc;x.fillRect(0,0,w,h);
 
@@ -377,7 +377,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         var mid=h*(0.46+i*0.10);
         var gr=x.createLinearGradient(0,mid-amp,0,mid+amp);
         gr.addColorStop(0,"rgba(255,255,255,0)");
-        gr.addColorStop(0.5, i===1 ? tint(0.40) : tint(0.26));
+        gr.addColorStop(0.5, i===1 ? tint(0.16) : tint(0.10));
         gr.addColorStop(1,"rgba(255,255,255,0)");
         x.beginPath();
         for(var px=0;px<=w;px+=3){
@@ -399,17 +399,17 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       /* The rim: a bright top edge and a cool bottom one, so the glass has a
          thickness instead of being a hole cut in the desktop. */
       var r=x.createLinearGradient(0,0,0,h);
-      r.addColorStop(0,"rgba(255,255,255,.30)");
+      r.addColorStop(0,"rgba(255,255,255,.16)");
       r.addColorStop(0.12,"rgba(255,255,255,0)");
       r.addColorStop(0.9,"rgba(255,255,255,0)");
-      r.addColorStop(1,tint(0.22));
+      r.addColorStop(1,tint(0.10));
       x.fillStyle=r;x.fillRect(0,0,w,h);
 
       /* The highlight slides the opposite way to the hand and brightens while
          it moves, the way a reflection does on a thing being carried. */
       var sx=w*(0.22+Math.sin(t*0.6)*0.10)-lean*w*0.30;
       var sy=h*0.16+Math.max(-1,Math.min(1,vy/26))*h*0.16;
-      var glare=0.20+Math.min(0.26,(Math.abs(vx)+Math.abs(vy))/90);
+      var glare=0.07+Math.min(0.12,(Math.abs(vx)+Math.abs(vy))/160);
       var s2=x.createRadialGradient(sx,sy,2,sx,sy,h*0.78);
       s2.addColorStop(0,"rgba(255,255,255,"+glare+")");s2.addColorStop(1,"rgba(255,255,255,0)");
       x.fillStyle=s2;x.fillRect(0,0,w,h);
@@ -419,7 +419,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       if (Math.abs(lean)>0.02){
         var bx=w*(0.5-lean*0.85), bg=x.createLinearGradient(bx-w*0.34,0,bx+w*0.34,h);
         bg.addColorStop(0,"rgba(255,255,255,0)");
-        bg.addColorStop(0.5,"rgba(255,255,255,"+(Math.abs(lean)*0.20)+")");
+        bg.addColorStop(0.5,"rgba(255,255,255,"+(Math.abs(lean)*0.09)+")");
         bg.addColorStop(1,"rgba(255,255,255,0)");
         x.fillStyle=bg;x.fillRect(0,0,w,h);
       }
@@ -518,6 +518,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
      */
     fx.material = Shell.materialFor(.orb)
     fx.isEmphasized = false
+    fx.appearance = Shell.appearanceFor(.orb)
     fx.blendingMode = .behindWindow
     fx.state = .active
     fx.wantsLayer = true
@@ -830,8 +831,32 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
    */
   static func materialFor(_ s: Shape) -> NSVisualEffectView.Material {
     switch s {
-    case .orb, .pill: return .underWindowBackground
+    case .orb, .pill: return .fullScreenUI
     default: return .hudWindow
+    }
+  }
+
+  /**
+   * Smoked, not milky — and the reason the last one came out white.
+   *
+   * A thin material takes its tint from the system appearance. His desktop is
+   * light, so light mode gave the glass a WHITE tint, laid it over a white
+   * page, and the blur had nothing to show through it. Clear in the wrong
+   * direction: the tint went pale instead of going away.
+   *
+   * Pinning the effect view to dark appearance fixes it without touching the
+   * blur. The tint becomes a dark smoke, everything behind the window reads
+   * through it the way it does through sunglasses, and the white type on the
+   * glass keeps its contrast for free. That is both traits at once — clear
+   * enough to see his chat, still genuinely refracting.
+   *
+   * Only the glass is pinned, never the window: the page shapes have to follow
+   * light and dark like anything else on the Mac.
+   */
+  static func appearanceFor(_ s: Shape) -> NSAppearance? {
+    switch s {
+    case .orb, .pill: return NSAppearance(named: .darkAqua)
+    default: return nil
     }
   }
   func radiusFor(_ s: Shape) -> CGFloat {
@@ -889,6 +914,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
      */
     effect?.material = Shell.materialFor(s)
     effect?.isEmphasized = false
+    effect?.appearance = Shell.appearanceFor(s)
 
     let radius = radiusFor(s)
     body?.layer?.cornerRadius = radius
