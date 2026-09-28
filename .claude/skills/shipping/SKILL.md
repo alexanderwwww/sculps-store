@@ -144,3 +144,19 @@ line that is easy to read past.
 
 It is the same failure as all the others — an assumption about the environment,
 never checked, shipped as if it had been. **Ask, or build for both.**
+
+## The packed app is a different program from the source tree
+
+plug shipped and died on launch: *"Cannot find module './shops.js'"*.
+electron-builder ships only what its `build.files` list names, and that file
+was not on it. **Every test passed**, because every test ran from the source
+tree, where the file is obviously present.
+
+A test that runs from source cannot tell you what is in the bundle. So there is
+now one that reads every local import in the source and asks whether the packed
+app would contain it — no packing needed, a second to run, and it catches the
+whole class.
+
+The same trap covers anything loaded by path rather than by import: icons,
+HTML, the worker. If the app reads it at runtime, name it in `files` and assert
+it.

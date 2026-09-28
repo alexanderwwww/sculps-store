@@ -7,7 +7,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node test/glass.test.mjs && node test/logic.test.mjs && node test/app.test.mjs",
+    "test": "node test/packaged.test.mjs && node test/glass.test.mjs && node test/logic.test.mjs && node test/app.test.mjs",
     "dist": "electron-builder --mac --dir"
   },
   "devDependencies": {
@@ -20,7 +20,9 @@
     "files": [
       "main.js",
       "preload.js",
+      "shops.js",
       "renderer/**",
+      "worker/**",
       "assets/**"
     ],
     "mac": {
