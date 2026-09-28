@@ -13,6 +13,10 @@ contextBridge.exposeInMainWorld("plug", {
   where: () => ipcRenderer.invoke("where"),
   shape: (next) => ipcRenderer.invoke("shape", next),
   openExternal: (url) => ipcRenderer.invoke("open-external", url),
+  /* The shops: open a sign-in, close it again, and ask how they stand. */
+  signin: (site) => ipcRenderer.invoke("signin", site),
+  closeShop: (site) => ipcRenderer.invoke("close-shop", site),
+  pass: () => ipcRenderer.invoke("pass"),
   onMoved: (fn) => ipcRenderer.on("moved", () => fn()),
   onShape: (fn) => ipcRenderer.on("shape", (_e, s) => fn(s)),
 });

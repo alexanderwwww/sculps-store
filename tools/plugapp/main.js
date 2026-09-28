@@ -23,6 +23,15 @@
  */
 const { app, BrowserWindow, ipcMain, screen, desktopCapturer, shell } = require("electron");
 const path = require("node:path");
+const { SITES, Shop } = require("./shops.js");
+
+/** One per marketplace, built the first time it is needed. */
+const shops = new Map();
+function shopFor(id) {
+  if (!SITES[id]) return null;
+  if (!shops.has(id)) shops.set(id, new Shop(id, win));
+  return shops.get(id);
+}
 
 const SHAPES = {
   pill: { width: 320, height: 64 },
@@ -141,6 +150,61 @@ ipcMain.handle("shape", async (_event, next) => {
   shape = next;
   send("shape", shape);
   return shape;
+});
+
+/*
+ * Sign in — the one flow that has to work before anything else exists.
+ *
+ * The marketplace's own page is put inside the phone, below the glass chrome,
+ * and he types into it. It is his session, in a named partition that no
+ * rebuild touches, and the two dead buttons are gone from the sheet before he
+ * ever sees it.
+ */
+ipcMain.handle("signin", async (_event, id) => {
+  const shop = shopFor(id);
+  if (!shop || !win) return { ok: false, why: "no such shop" };
+  const b = win.getBounds();
+  /* Inset so the glass rim and the ✕ stay visible around it — the page is
+     inside plug, not the other way round. */
+  shop.show({ x: 10, y: 74, width: b.width - 20, height: b.height - 96 });
+  await shop.go(shop.spec.signin);
+  return { ok: true };
+});
+
+/** Back to plug's own screen; the page stays signed in behind it. */
+ipcMain.handle("close-shop", (_event, id) => {
+  const shop = shops.get(id);
+  if (shop) shop.hide();
+  return { ok: true };
+});
+
+/**
+ * One pass: is he in, and what is on the shelf.
+ *
+ * Every failure comes back as a sentence rather than as silence, and a shop
+ * that cannot be read never reports an empty shelf — unknown stays unknown.
+ */
+ipcMain.handle("pass", async () => {
+  const out = [];
+  for (const id of Object.keys(SITES)) {
+    const shop = shopFor(id);
+    const row = { id, name: SITES[id].name, signedIn: null, trouble: null };
+    try {
+      const url = shop.view.webContents.getURL();
+      if (!url || url === "about:blank") await shop.go(SITES[id].home);
+      const status = await shop.accountStatus();
+      if (typeof status.signedIn !== "boolean") {
+        row.trouble = `${SITES[id].name} did not answer`;
+      } else {
+        row.signedIn = status.signedIn;
+        if (!status.signedIn) row.trouble = `not signed into ${SITES[id].name}`;
+      }
+    } catch (error) {
+      row.trouble = `${SITES[id].name}: ${error?.message ?? "something went wrong"}`;
+    }
+    out.push(row);
+  }
+  return out;
 });
 
 ipcMain.handle("open-external", (_event, url) => {

@@ -12,6 +12,9 @@ import { cycle, targetForDay } from "../worker/schedule.mjs";
 const $ = (id) => document.getElementById(id);
 
 let shape = "pill";
+/* Which shop's own page is on screen, if any. While one is, plug's chrome
+   stays but its content is behind it — he is signing in, not browsing. */
+let signingIn = null;
 let state = { build: "", shops: {}, doing: "starting…", site: "depop" };
 
 /*
@@ -77,9 +80,10 @@ function slot(site) {
   box.firstChild.onclick = () => {
     state.doing = `opening ${site}…`;
     paint();
-    /* The worker opens that shop's own sign-in. The window never navigates
-       anything itself — one way in, and it is the bridge. */
-    window.dispatchEvent(new CustomEvent("plug:signin", { detail: { site } }));
+    /* The main process puts that marketplace's own page inside the phone. The
+       screen never navigates anything itself — one way in, and it is the
+       bridge. */
+    if (window.plug) window.plug.signin(site).then(() => { signingIn = site; paint(); });
   };
 }
 
@@ -150,7 +154,38 @@ function paint() {
 /* The pill opens; the ✕ folds it back. Nothing else on the glass is a button,
    which is how it stays an object rather than a control panel. */
 $("pill").onclick = () => morph("phone");
-$("fold").onclick = (e) => { e.stopPropagation(); morph("pill"); };
+$("fold").onclick = (e) => {
+  e.stopPropagation();
+  /* While a marketplace page is up, the ✕ closes THAT rather than folding the
+     whole app away — otherwise the only way out of a sign-in is to quit. */
+  if (signingIn && window.plug) {
+    window.plug.closeShop(signingIn).then(() => { signingIn = null; runPass(); });
+    return;
+  }
+  morph("pill");
+};
+
+/*
+ * Ask both shops how they stand.
+ *
+ * Nothing here decides anything: the answer is whatever the pages actually
+ * say, and a shop that cannot be read stays unknown rather than being called
+ * signed out. A shut door and a quiet day look identical, and calling one the
+ * other is the worst lie this app can tell him.
+ */
+async function runPass() {
+  if (!window.plug) return;
+  const rows = await window.plug.pass().catch(() => []);
+  const shops = {};
+  let trouble = null;
+  for (const row of rows) {
+    shops[row.id] = { signedIn: row.signedIn, who: null };
+    if (row.trouble && !trouble) trouble = row.trouble;
+  }
+  state.shops = shops;
+  state.doing = trouble || state.doing;
+  paint();
+}
 $("plus").onclick = (e) => {
   e.stopPropagation();
   window.dispatchEvent(new CustomEvent("plug:list-item"));
@@ -172,4 +207,8 @@ if (window.plug) {
   window.plug.onMoved(refreshSoon);
   paintDesktop();
   setInterval(paintDesktop, 1200);
+  /* Not on a greeting: a greeting is a page load and a pass begins with a
+     navigation, so starting work on one is a loop that reloads forever. */
+  runPass();
+  setInterval(runPass, 30_000);
 }
