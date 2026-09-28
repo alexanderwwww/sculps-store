@@ -34,7 +34,19 @@
   }
   button, a, input, .tap { -webkit-app-region: no-drag; cursor: pointer; }
 
-  .glass { position: absolute; inset: 0; }
+  .glass {
+    position: absolute; inset: 0;
+    /*
+     * The fold, on the compositor.
+     *
+     * The window's size changes in one move and this carries the shape into
+     * place — the corner rounding off as it goes, with a slight overshoot and
+     * settle, which is what makes it read as a drop of water changing shape
+     * rather than as a box being resized. Free, because it never touches the
+     * main process.
+     */
+    transition: border-radius .42s cubic-bezier(.22, 1.2, .28, 1);
+  }
 
   /*
    * The desktop, inside the window.
@@ -105,12 +117,27 @@
     font-size: 12px; color: rgba(13,20,51,.7);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  /*
+   * The ring does NOT spin, and that is a performance decision rather than a
+   * style one.
+   *
+   * Anything animating above a backdrop-filter makes Chromium re-evaluate the
+   * filter every frame. A one-second infinite spin over the pill meant three
+   * displacement maps recomputed sixty times a second, forever, whether plug
+   * was doing anything or not — on a 2020 Air's integrated graphics that is
+   * most of a core, for a decoration.
+   *
+   * So it steps instead: the arc advances when something actually happens, and
+   * sits still the rest of the time. Costs nothing, and says more — a ring
+   * that moves when work happens is information, a ring that spins always is
+   * wallpaper.
+   */
   .ring {
     width: 22px; height: 22px; flex: none; border-radius: 50%;
-    border: 2px solid rgba(13,20,51,.18); border-top-color: rgba(13,20,51,.55);
-    animation: spin 1s linear infinite;
+    border: 2px solid rgba(13,20,51,.18);
+    border-top-color: rgba(13,20,51,.55);
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .ring[data-working="false"] { border-top-color: rgba(13,20,51,.18); }
 
   /* ---- the phone ---- */
   .phone { padding: 40px 22px 22px; display: flex; flex-direction: column; align-items: center; }

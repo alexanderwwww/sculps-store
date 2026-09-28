@@ -162,3 +162,31 @@ whole class.
 The same trap covers anything loaded by path rather than by import: icons,
 HTML, the worker. If the app reads it at runtime, name it in `files` and assert
 it.
+
+## His Mac, and what it can afford
+
+**MacBook Air 13-inch, 2020 — 1.1 GHz dual-core Core i3, Intel Iris Plus,
+8 GB, Retina, macOS Sequoia.** The slowest Mac Apple shipped that year, on
+integrated graphics, driving a 2560×1600 screen.
+
+Build for that, not for a machine that absorbs sloppiness. Two things made plug
+crawl and both were free to avoid:
+
+1. **Never animate anything over a `backdrop-filter`, ever, endlessly.**
+   Chromium re-evaluates the filter whenever anything above it changes, so a
+   one-second infinite spinner meant three displacement maps recomputed sixty
+   times a second — forever, whether the app was working or not. A transition
+   that *ends* is fine. `infinite` is a burned core for a decoration.
+2. **Never capture the screen whole, at Retina scale, as PNG, on a short
+   timer.** It was every 1.2s at full backing resolution, base64'd over IPC. It
+   is now 900px wide, JPEG at 58, at most every 8 seconds, skipped entirely
+   when the window is not visible, and never two at once — the picture lives
+   behind refracting glass where it is bent past recognition, so resolution is
+   the cheapest thing in the app to give away.
+
+Also: **do not resize a transparent window in steps to animate it.** Set the
+size once and let CSS carry the shape. Stepping the bounds is expensive, and
+every step re-triggered a capture.
+
+`test/idle.test.mjs` fails the build on an endless animation or a capture that
+has crept back up.

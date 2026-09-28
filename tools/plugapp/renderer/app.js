@@ -26,8 +26,16 @@ let state = { build: "", shops: {}, doing: "starting…", site: "depop" };
  * painted — the glass would show the desktop from a moment ago, offset by
  * however far the window had moved.
  */
+let grabbing = false;
 async function paintDesktop() {
-  if (!window.plug) return;
+  if (!window.plug || grabbing) return;
+  /* One at a time. Two captures in flight means two full-screen encodes racing
+     each other, and the second one is always the one that is thrown away. */
+  grabbing = true;
+  try { await grab(); } finally { grabbing = false; }
+}
+
+async function grab() {
   const [grab, where] = await Promise.all([window.plug.desktop(), window.plug.where()]);
   if (!grab || !where) return;
   const img = $("desk");
@@ -56,15 +64,24 @@ async function morph(next) {
   if (next === shape || !window.plug) return;
   const was = shape;
   shape = next;
+
+  /*
+   * The window is resized once; the SHAPE flows into place in CSS.
+   *
+   * Stepping the window's bounds eighteen times was expensive, retriggered a
+   * screen capture on every step, and is why the fold read as a jump. The
+   * transition on .glass does the fold now — it runs on the compositor and
+   * costs nothing.
+   */
+  await window.plug.shape(next);
   document.body.classList.remove(`shape-${was}`);
   document.body.classList.add(`shape-${next}`);
   $("pill").hidden = next !== "pill";
   $("phone").hidden = next !== "phone";
-  await window.plug.shape(next);
   /* A map drawn for one size bends the wrong pixels at another, so it is
      rebuilt whenever the window's size changes. */
   installFilters(document);
-  await paintDesktop();
+  paintDesktop();
 }
 
 function slot(site) {
@@ -133,6 +150,10 @@ function paintDay() {
 
 function paint() {
   $("pill-doing").textContent = state.doing || "minding the shops";
+  /* The ring is lit while there is something to do and dim otherwise. It does
+     not spin: see the note in index.html — a continuous animation over the
+     glass costs a core on his Mac. */
+  $("pill-ring").dataset.working = String(Boolean(state.doing));
   $("build").textContent = state.build ? `build ${state.build}` : "build —";
   for (const tab of document.querySelectorAll(".seg > div")) {
     tab.setAttribute("aria-selected", tab.dataset.site === state.site ? "true" : "false");
@@ -206,7 +227,20 @@ paint();
 if (window.plug) {
   window.plug.onMoved(refreshSoon);
   paintDesktop();
-  setInterval(paintDesktop, 1200);
+  /*
+   * Every few seconds, not every 1.2.
+   *
+   * The desktop behind it does change on its own, so it cannot be captured
+   * once and forgotten — but a capture is the single most expensive thing this
+   * app does and at 1.2 seconds it was most of what his Mac was doing. Moving
+   * the window still refreshes immediately, which is when a stale picture is
+   * actually visible.
+   */
+  /* Eight seconds. The desktop does change on its own, but on this machine a
+     capture is the most expensive thing the app does and the glass is showing
+     a blurred, bent version of it — a few seconds stale is invisible. Moving
+     the window still refreshes at once, which is when staleness would show. */
+  setInterval(paintDesktop, 8000);
   /* Not on a greeting: a greeting is a page load and a pass begins with a
      navigation, so starting work on one is a loop that reloads forever. */
   runPass();

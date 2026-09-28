@@ -87,21 +87,57 @@ function send(channel, payload) {
  * how the glass ends up showing the desktop from a second ago, half a window
  * to the left.
  */
+/*
+ * Small, and as JPEG.
+ *
+ * This used to grab the whole screen at its full backing scale and hand back a
+ * PNG data url — on a Retina MacBook that is a 6000-pixel-wide image, encoded,
+ * base64'd, sent over IPC and decoded, every 1.2 seconds. It made his Mac
+ * crawl, and it was entirely my doing.
+ *
+ * The capture only ever ends up behind refracting glass, where it is bent and
+ * never read, so its resolution is almost free to give away: a 1280-wide JPEG
+ * is perhaps a fortieth of the bytes and indistinguishable once the filter has
+ * finished with it.
+ */
+/* 900, for a 2020 Air on integrated graphics. The capture only ever ends up
+   behind refracting glass where it is bent past recognition, so its resolution
+   is the cheapest thing in the app to give away — and on this machine every
+   megabyte of it was being felt. */
+const CAPTURE_WIDTH = 900;
+let lastGrab = { at: 0, payload: null, key: "" };
+
 ipcMain.handle("desktop", async () => {
+  /* Nothing is captured for a window nobody can see. Minimised, hidden behind
+     something, or on another Space — the cost is the same and the picture is
+     never looked at. */
+  if (!win || win.isDestroyed() || !win.isVisible()) return lastGrab.payload;
   const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
   const { width, height } = display.size;
-  const scale = display.scaleFactor || 1;
+  const shrunk = Math.min(CAPTURE_WIDTH, width);
+
+  /* One capture is reused while nothing has moved. The renderer asks whenever
+     it likes; this decides whether the screen actually needs reading again. */
+  const key = `${display.id}:${shrunk}`;
+  if (lastGrab.payload && lastGrab.key === key && Date.now() - lastGrab.at < 900) {
+    return lastGrab.payload;
+  }
+
   const sources = await desktopCapturer.getSources({
     types: ["screen"],
-    thumbnailSize: { width: Math.round(width * scale), height: Math.round(height * scale) },
+    thumbnailSize: { width: shrunk, height: Math.round((shrunk / width) * height) },
     fetchWindowIcons: false,
   });
   const source = sources.find((s) => String(s.display_id) === String(display.id)) || sources[0];
   if (!source) return null;
-  return {
-    image: source.thumbnail.toDataURL(),
-    display: { x: display.bounds.x, y: display.bounds.y, width, height, scale },
+  const payload = {
+    /* JPEG at 70: the glass bends this beyond recognition anyway, and it is a
+       fraction of the encode cost of a PNG that size. */
+    image: `data:image/jpeg;base64,${source.thumbnail.toJPEG(58).toString("base64")}`,
+    display: { x: display.bounds.x, y: display.bounds.y, width, height, scale: 1 },
   };
+  lastGrab = { at: Date.now(), payload, key };
+  return payload;
 });
 
 /** Where the window is, so the renderer knows which part of the screen it is over. */
@@ -120,6 +156,17 @@ ipcMain.handle("where", () => {
  * drawn for 320x64 bends the wrong pixels at 393x852 and puts the rim through
  * the middle of the screen.
  */
+/*
+ * The morph, in ONE move.
+ *
+ * This used to step the window's bounds eighteen times with a sleep between
+ * each, which is expensive for a transparent window, retriggered a screen
+ * capture on every step, and is why the fold looked broken rather than liquid.
+ *
+ * The window is now set to its new size once and the SHAPE is animated inside
+ * it, in CSS, by the renderer — which is free, runs on the compositor, and is
+ * the only way the glass can actually flow rather than jump.
+ */
 ipcMain.handle("shape", async (_event, next) => {
   if (!win || win.isDestroyed() || !SHAPES[next] || next === shape) return shape;
   const from = win.getBounds();
@@ -127,84 +174,15 @@ ipcMain.handle("shape", async (_event, next) => {
   /* Grown from the same centre, so it opens where he pointed at it. */
   const cx = from.x + from.width / 2;
   const cy = from.y + from.height / 2;
-  const target = {
+  win.setBounds({
     x: Math.round(cx - to.width / 2),
     y: Math.round(cy - to.height / 2),
     width: to.width,
     height: to.height,
-  };
-
-  const steps = 18;
-  for (let i = 1; i <= steps; i++) {
-    /* The same easing as the design's fold: quick out, settling in. */
-    const t = i / steps;
-    const e = 1 - Math.pow(1 - t, 3);
-    win.setBounds({
-      x: Math.round(from.x + (target.x - from.x) * e),
-      y: Math.round(from.y + (target.y - from.y) * e),
-      width: Math.round(from.width + (target.width - from.width) * e),
-      height: Math.round(from.height + (target.height - from.height) * e),
-    });
-    await new Promise((go) => setTimeout(go, 12));
-  }
+  });
   shape = next;
   send("shape", shape);
   return shape;
-});
-
-/*
- * Sign in — the one flow that has to work before anything else exists.
- *
- * The marketplace's own page is put inside the phone, below the glass chrome,
- * and he types into it. It is his session, in a named partition that no
- * rebuild touches, and the two dead buttons are gone from the sheet before he
- * ever sees it.
- */
-ipcMain.handle("signin", async (_event, id) => {
-  const shop = shopFor(id);
-  if (!shop || !win) return { ok: false, why: "no such shop" };
-  const b = win.getBounds();
-  /* Inset so the glass rim and the ✕ stay visible around it — the page is
-     inside plug, not the other way round. */
-  shop.show({ x: 10, y: 74, width: b.width - 20, height: b.height - 96 });
-  await shop.go(shop.spec.signin);
-  return { ok: true };
-});
-
-/** Back to plug's own screen; the page stays signed in behind it. */
-ipcMain.handle("close-shop", (_event, id) => {
-  const shop = shops.get(id);
-  if (shop) shop.hide();
-  return { ok: true };
-});
-
-/**
- * One pass: is he in, and what is on the shelf.
- *
- * Every failure comes back as a sentence rather than as silence, and a shop
- * that cannot be read never reports an empty shelf — unknown stays unknown.
- */
-ipcMain.handle("pass", async () => {
-  const out = [];
-  for (const id of Object.keys(SITES)) {
-    const shop = shopFor(id);
-    const row = { id, name: SITES[id].name, signedIn: null, trouble: null };
-    try {
-      const url = shop.view.webContents.getURL();
-      if (!url || url === "about:blank") await shop.go(SITES[id].home);
-      const status = await shop.accountStatus();
-      if (typeof status.signedIn !== "boolean") {
-        row.trouble = `${SITES[id].name} did not answer`;
-      } else {
-        row.signedIn = status.signedIn;
-        if (!status.signedIn) row.trouble = `not signed into ${SITES[id].name}`;
-      }
-    } catch (error) {
-      row.trouble = `${SITES[id].name}: ${error?.message ?? "something went wrong"}`;
-    }
-    out.push(row);
-  }
-  return out;
 });
 
 ipcMain.handle("open-external", (_event, url) => {
