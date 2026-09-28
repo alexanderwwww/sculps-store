@@ -56,6 +56,53 @@ Named by his girlfriend. **Lowercase, always** — `flip`, never FLIP. Lowercase
 secondhand, soft, girl-run, a rail in a bedroom with good light. Uppercase reads
 sneaker-bot and pushes away half the customers.
 
+## What flip IS — read this before proposing anything
+
+> It's an automated futuristic depop seller. He's just not a human.
+> Everything together. There is no phase four and phase three.
+
+Said after I proposed a phased build with him pressing List. I was wrong and he
+had already explained it. It does not get re-litigated.
+
+**flip runs the shop by itself.** One loop, everything at once:
+
+1. **Reads hundreds of listings and accounts** across Depop and works out what
+   is actually selling — bags and offers over time, not likes, not a hunch.
+2. **Takes the winning item** and lists it on his shop. It does not ask which
+   item, it does not wait for stock to be handed to it, and **it does not ask
+   him to press List.**
+3. **He supplies whatever it lists.** He is the plug. Any item it finds on
+   Depop, he can get, genuine. That is the premise and it is not in question —
+   sourcing is never a reason to hold a listing back.
+4. **Answers, negotiates and closes** on its own, inside the thresholds in
+   `flip-negotiator`.
+5. **Refreshes, offers, prices, and learns** from what sold. Same loop.
+
+**He does not work the shop.** He runs other businesses and other stores. The
+whole reason this app exists is that his time cannot go into Depop. An app that
+queues decisions for him has failed at the only thing it was built for.
+
+### What that changes about how I talk about it
+
+- Never "you press List" or "you press send". It presses.
+- Never a phased roadmap where the intelligence arrives last. The reading IS
+  the product; a lister without the Scout is a worse version of him.
+- Never ask which item to list. Reading the market is the app's job.
+- Never ask whether he has something. He has it.
+
+### The two things that are still real constraints
+
+Not preferences, and not me being cautious — they are how the account survives:
+
+- **Cadence.** Depop bans on rhythm. The cap is a number in settings, defaulted
+  from the playbook and raised by him whenever he wants, enforced by the app so
+  a good week does not end the shop. It is a dial he owns, never a refusal.
+- **Images.** Reposting a competitor's photograph trips duplicate detection,
+  which is the documented ban trigger. So their photo goes in as reference and
+  the app generates its own — **automatically, in the same pass, no slower.**
+  He never touches it and nothing waits on him. This is a technique, not a
+  permission question.
+
 ## The shop
 
 - **Handle:** `alleqsh` — depop.com/alleqsh. This is what the app reads as the

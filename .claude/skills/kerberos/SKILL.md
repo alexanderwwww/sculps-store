@@ -125,7 +125,13 @@ They are not style notes. Re-read them before shipping anything.
    build because the window handed every click to the drag machinery. Drawn,
    positioned, and *reachable by the mouse* are three separate things.
 
-9. **When he says it is broken, he is right.** Every single time. The argument
+9. **Do not hand work back to him.** He is building these apps precisely
+   because his time cannot go into the task. A "you press the button" step, a
+   phased plan where the intelligence lands last, or a question about something
+   he has already told me, is the app failing at its only job. Autonomy inside
+   rules he sets — not a queue of decisions for him.
+
+10. **When he says it is broken, he is right.** Every single time. The argument
    about whether it is broken is time not spent finding out why.
 
 ## Naming — his rule, said plainly
