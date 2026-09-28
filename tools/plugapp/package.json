@@ -7,7 +7,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node test/glass.test.mjs",
+    "test": "node test/glass.test.mjs && node test/logic.test.mjs",
     "dist": "electron-builder --mac --dir"
   },
   "devDependencies": {
@@ -17,11 +17,18 @@
   "build": {
     "appId": "us.blackreaper.plug",
     "productName": "plug",
-    "files": ["main.js", "preload.js", "renderer/**", "assets/**"],
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**",
+      "assets/**"
+    ],
     "mac": {
       "category": "public.app-category.business",
       "icon": "assets/AppIcon.icns",
-      "target": ["dir"],
+      "target": [
+        "dir"
+      ],
       "extendInfo": {
         "LSUIElement": false,
         "NSScreenCaptureUsageDescription": "plug draws the desktop behind its glass so the glass can refract it. Nothing is recorded or sent anywhere."
