@@ -65,9 +65,16 @@ side = max(w, h)
 square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
 square.paste(im, ((side - w) // 2, (side - h) // 2))
 
-# Apple's margin: the art fills 80% of the tile, centred.
+# The art fills the tile.
+#
+# It used to be inset to 80% for Apple's icon grid, which is right for a raw
+# glyph and wrong here: his artwork already carries its own margin and its own
+# glow, so the inset applied it twice and the icon sat visibly smaller than
+# everything beside it in the Dock. Rendered at 80, 92 and 100 and looked at
+# next to real Dock sizes — 100 is the one that matches.
+inset = float(__import__("os").environ.get("PLUG_ICON_INSET", "1.0"))
 for n in sorted(set(sizes), reverse=True):
-    art = round(n * 0.8)
+    art = round(n * inset)
     tile = Image.new("RGBA", (n, n), (0, 0, 0, 0))
     tile.paste(square.resize((art, art), Image.LANCZOS), ((n - art) // 2, (n - art) // 2))
     tile.save(f"{work}/{n}.png")

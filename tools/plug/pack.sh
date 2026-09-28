@@ -16,6 +16,9 @@ node "$HERE/check-swift.mjs" "$SWIFT"
 # ever quietly leave another app's icon in this bundle again.
 [ -f "$HERE/design/icon-source.png" ] && node "$HERE/make-icon.mjs" \
   "$HERE/design/icon-source.png" "$HERE/app/Plug.app/Contents/Resources/AppIcon.icns"
+# The same artwork as a PNG, because the welcome screen carries it as a data
+# url and a loadHTMLString page has no base url to reach a file beside it.
+cp "$HERE/design/icon-source.png" "$HERE/app/Plug.app/Contents/Resources/AppIcon.png"
 # The page's code is rebuilt from its parts, so the bundle can never carry a
 # stale one: agent.built.js is generated, never edited.
 node "$HERE/worker/agent/build.mjs"

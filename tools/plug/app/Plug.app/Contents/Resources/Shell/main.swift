@@ -828,8 +828,23 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
      * about:blank in them is an invisible window: the app opened, the Dock
      * bounced, and Alex saw nothing at all.
      */
-    for pane in panes {
-      pane.view.loadHTMLString(Shell.startingHTML, baseURL: nil)
+    /*
+     * The first pane opens on the welcome screen — connect your shops.
+     *
+     * Not on Depop. Until he has signed in there is nothing on a marketplace
+     * worth showing him, and dropping him straight onto somebody else's login
+     * page is how the whole thing read as a browser with an app around it
+     * rather than as his own.
+     *
+     * The screen lives in welcome.html beside this file, so it can be rendered
+     * and looked at outside a Mac. That is the only reason it is HTML.
+     */
+    for (index, pane) in panes.enumerated() {
+      if index == 0, let page = welcomeHTML() {
+        pane.view.loadHTMLString(page, baseURL: nil)
+      } else {
+        pane.view.loadHTMLString(Shell.startingHTML, baseURL: nil)
+      }
     }
 
     // First run: centred. After that the autosave name puts it back where
@@ -869,6 +884,29 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   }
 
   /** Every web view this app makes, made the same way. */
+  /**
+   * The welcome screen, read from beside the binary.
+   *
+   * Loaded from disk rather than baked into this file so it can be opened in a
+   * browser and looked at before he ever sees it — the window itself cannot be
+   * rendered off a Mac, and a screen nobody has laid eyes on is how eleven
+   * builds became his job instead of mine.
+   *
+   * The mark goes in as a data url because a loadHTMLString page with no base
+   * url cannot reach a file next to it.
+   */
+  func welcomeHTML() -> String? {
+    let here = (Bundle.main.resourcePath ?? ".") + "/Shell/welcome.html"
+    guard var page = try? String(contentsOfFile: here, encoding: .utf8) else { return nil }
+    let iconFile = (Bundle.main.resourcePath ?? ".") + "/AppIcon.png"
+    if let data = FileManager.default.contents(atPath: iconFile) {
+      let url = "data:image/png;base64," + data.base64EncodedString()
+      page = page.replacingOccurrences(of: "{{MARK}}", with: url)
+    }
+    let build = ProcessInfo.processInfo.environment["PLUG_BUILD"] ?? ""
+    return page.replacingOccurrences(of: "{{BUILD}}", with: build)
+  }
+
   func makeWebView(_ config: WKWebViewConfiguration) -> WKWebView {
     let view = WKWebView(frame: NSRect(x: 0, y: 0, width: 400, height: 400), configuration: config)
     view.navigationDelegate = self

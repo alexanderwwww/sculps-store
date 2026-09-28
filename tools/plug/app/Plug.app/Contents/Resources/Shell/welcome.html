@@ -1,0 +1,245 @@
+<!doctype html>
+<meta charset="utf-8">
+<!--
+  The first screen: connect the shops.
+
+  This is the one thing that has to happen before plug is anything at all, so
+  it is the whole screen rather than a strip at the bottom of somebody else's
+  page. Two cards, one per marketplace, each with the ONE route that works.
+
+  Sign in with email, and only that. Continue with Google cannot complete
+  inside an embedded web view and Continue with Apple hands the browser to
+  iCloud, which returns it to the login screen forever. Offering them here
+  would be offering him two doors that are painted on.
+
+  It is drawn in HTML on purpose: the window itself cannot be rendered outside
+  a Mac, but this can be opened and looked at before he ever sees it, which is
+  the only way to stop shipping a screen nobody has laid eyes on.
+
+  Everything it knows arrives through window.__plug.set({...}) — it holds no
+  state of its own, so the worker and this page can never disagree about who is
+  signed in.
+-->
+<style>
+  :root {
+    --ink: rgba(255,255,255,.98);
+    --soft: rgba(255,255,255,.62);
+    --faint: rgba(255,255,255,.40);
+    --line: rgba(255,255,255,.16);
+    --card: rgba(255,255,255,.07);
+    --good: #39FF7A;
+  }
+  html, body {
+    margin: 0; height: 100%;
+    /* Transparent, always: what is behind this is the window's own glass, and
+       any colour here is a wall in front of it. */
+    background: transparent;
+    color: var(--ink);
+    font: 15px/1.45 -apple-system, "SF Pro Text", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  .sheet {
+    position: relative;
+    height: 100%;
+    display: flex; flex-direction: column; align-items: center;
+    /* Centred, not top-aligned. Stacked from the top it left a dead third at
+       the bottom of a 852-point window and read as a page that had not
+       finished loading. */
+    justify-content: center;
+    padding: 34px 26px 64px;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  .mark { width: 96px; height: 96px; margin-bottom: 6px; }
+  .mark img { width: 100%; height: 100%; display: block; }
+  h1 {
+    margin: 0; font-size: 44px; font-weight: 700; letter-spacing: -.035em;
+  }
+  .build {
+    margin: 2px 0 22px; font-size: 11px; font-weight: 600;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--faint);
+  }
+
+  /* Which shop is in front. Both run at once; this only says which one the
+     screen below is about. */
+  .tabs {
+    display: flex; gap: 4px; padding: 4px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid var(--line);
+    border-radius: 999px; margin-bottom: 26px;
+  }
+  .tabs button {
+    appearance: none; border: 0; cursor: pointer;
+    padding: 9px 26px; border-radius: 999px;
+    font: 600 14px/1 inherit; color: var(--soft);
+    background: transparent; transition: background .18s, color .18s;
+  }
+  .tabs button[aria-selected="true"] {
+    background: rgba(255,255,255,.92); color: #0b1320;
+  }
+
+  h2 { margin: 0 0 8px; font-size: 25px; font-weight: 700; letter-spacing: -.02em; }
+  .lede {
+    margin: 0 0 24px; max-width: 30ch; color: var(--soft); font-size: 14px;
+  }
+
+  .shops { display: flex; gap: 14px; width: 100%; }
+  .shop {
+    flex: 1; padding: 20px 14px 16px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .badge {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: grid; place-items: center;
+    font: 800 24px/1 -apple-system, sans-serif;
+  }
+  .badge.depop { background: #FF2300; color: #fff; }
+  .badge.vestiaire { background: #F2EDE4; color: #111; font-family: Georgia, serif; }
+  .shop .name { font-weight: 650; font-size: 15px; }
+  .shop button {
+    appearance: none; cursor: pointer; width: 100%;
+    padding: 10px 8px; border-radius: 12px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.10);
+    color: var(--ink); font: 600 13px/1 inherit;
+    transition: background .18s;
+  }
+  .shop button:hover { background: rgba(255,255,255,.18); }
+  .shop button:disabled { opacity: .45; cursor: default; }
+
+  /* Signed in: the button is replaced by the fact, never sat next to it. */
+  .in { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--soft); }
+  .in .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--good); box-shadow: 0 0 10px rgba(57,255,122,.85);
+  }
+
+  .foot {
+    /* Pinned, so the block above it stays centred rather than being pushed. */
+    position: absolute; left: 0; right: 0; bottom: 24px;
+    justify-content: center;
+    font-size: 12px; color: var(--faint);
+    display: flex; align-items: center; gap: 7px;
+  }
+  /* What it is doing right now, when it is doing something. */
+  .doing { margin-top: 16px; font-size: 13px; color: var(--soft); min-height: 18px; }
+</style>
+
+<div class="sheet">
+  <div class="mark"><img id="mark" src="{{MARK}}" alt=""></div>
+  <h1>plug</h1>
+  <div class="build" id="build">build {{BUILD}}</div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" data-site="depop" aria-selected="true">Depop</button>
+    <button role="tab" data-site="vestiaire" aria-selected="false">Vestiaire</button>
+  </div>
+
+  <h2 id="head">Connect your shops</h2>
+  <p class="lede" id="lede">
+    Sign in once and plug takes it from there — hunting, listing, answering
+    and closing, on its own.
+  </p>
+
+  <div class="shops">
+    <div class="shop">
+      <div class="badge depop">d</div>
+      <div class="name">Depop</div>
+      <div id="depop-slot"></div>
+    </div>
+    <div class="shop">
+      <div class="badge vestiaire">V</div>
+      <div class="name">Vestiaire</div>
+      <div id="vestiaire-slot"></div>
+    </div>
+  </div>
+
+  <div class="doing" id="doing"></div>
+
+  <div class="foot">
+    <svg width="11" height="13" viewBox="0 0 11 13" fill="none" aria-hidden="true">
+      <path d="M2 5V3.5a3.5 3.5 0 1 1 7 0V5" stroke="currentColor" stroke-width="1.4"/>
+      <rect x="1" y="5" width="9" height="7" rx="2" fill="currentColor" opacity=".55"/>
+    </svg>
+    Your sign-ins stay on this Mac
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* Everything the screen shows lives here and arrives from the worker. The
+     page decides nothing, so it can never disagree with what is actually true
+     about the shops. */
+  var state = { build: "{{BUILD}}", shops: {}, doing: "", site: "depop" };
+
+  function send(message) {
+    try {
+      window.webkit.messageHandlers.organic.postMessage(message);
+    } catch (e) { /* not in the app: the page still renders, it just cannot act */ }
+  }
+
+  function slot(site) {
+    var shop = state.shops[site] || {};
+    var box = document.getElementById(site + "-slot");
+    if (!box) return;
+    if (shop.signedIn === true) {
+      box.innerHTML = '<span class="in"><span class="dot"></span>'
+        + (shop.who ? String(shop.who).replace(/[<&]/g, "") : "signed in") + "</span>";
+      return;
+    }
+    box.innerHTML = "<button>Sign in with email</button>";
+    box.firstChild.onclick = function () {
+      /* The worker opens the login in that shop's own pane. The page never
+         navigates anything itself — one way in, and it is the bridge. */
+      send({ t: "signin", site: site });
+      document.getElementById("doing").textContent = "opening " + site + "…";
+    };
+  }
+
+  function paint() {
+    document.getElementById("build").textContent = state.build ? "build " + state.build : "build —";
+    document.getElementById("doing").textContent = state.doing || "";
+    var tabs = document.querySelectorAll(".tabs button");
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].setAttribute("aria-selected", tabs[i].dataset.site === state.site ? "true" : "false");
+    }
+    slot("depop");
+    slot("vestiaire");
+
+    /* When both are in, this screen has done its job and says so rather than
+       still asking for something it already has. */
+    var both = (state.shops.depop || {}).signedIn === true
+      && (state.shops.vestiaire || {}).signedIn === true;
+    document.getElementById("head").textContent = both ? "Both shops are connected" : "Connect your shops";
+    document.getElementById("lede").textContent = both
+      ? "plug is hunting, listing and answering on both. Fold it away — it keeps working."
+      : "Sign in once and plug takes it from there — hunting, listing, answering and closing, on its own.";
+  }
+
+  var tabs = document.querySelectorAll(".tabs button");
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].onclick = function () {
+      state.site = this.dataset.site;
+      send({ t: "pane", id: state.site });
+      paint();
+    };
+  }
+
+  window.__plug = {
+    set: function (next) {
+      for (var k in next) if (Object.prototype.hasOwnProperty.call(next, k)) state[k] = next[k];
+      paint();
+    },
+    mark: function (dataUrl) { document.getElementById("mark").src = dataUrl; },
+  };
+
+  paint();
+  send({ t: "hello", from: "welcome" });
+})();
+</script>
