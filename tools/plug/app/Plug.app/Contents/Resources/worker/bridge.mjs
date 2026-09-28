@@ -8,7 +8,7 @@
  * over, and a small promise-shaped API for the brain: `do(act, args)` goes
  * out, `{t:"done", id}` comes back, and nothing waits forever.
  *
- * Bound to 127.0.0.1. The launcher passes the port in FLIP_PORT and reads
+ * Bound to 127.0.0.1. The launcher passes the port in PLUG_PORT and reads
  * "PORT n" from stdout — the first and only line stdout ever carries.
  */
 import http from "node:http";
@@ -28,14 +28,14 @@ export const ACTS = new Set([
 /** Everything the page may say back. */
 const FROM_PAGE = new Set([
   "hello", "done", "tick", "asked", "trouble",
-  // flip's own: the two buttons on the board. Without these the taps were
+  // plug's own: the two buttons on the board. Without these the taps were
   // rejected here, before onMessage, and the loop waited for them forever.
   "take", "skip", "now",
 ]);
 
 let nextId = 1;
 
-export async function startBridge({ dir, port = Number(process.env.FLIP_PORT) || 0, onMessage }) {
+export async function startBridge({ dir, port = Number(process.env.PLUG_PORT) || 0, onMessage }) {
   const agentPath = join(dir, "agent.built.js");
 
   const server = http.createServer(async (req, res) => {

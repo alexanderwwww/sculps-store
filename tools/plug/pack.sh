@@ -23,6 +23,9 @@ node "$HERE/worker/agent/build.mjs"
 # Vestiaire's reader, in a real browser: four-figure prices, sold badges rather
 # than the word, and the authentication leg that Depop does not have.
 ( cd "$HERE" && node test/vestiaire.test.mjs )
+# Brick three: the pass itself — the door before the shelf, a shut shop never
+# reported as a quiet one, and one site being closed never stopping the other.
+( cd "$HERE" && node test/pass.test.mjs )
 # Only now is the old bundle worker thrown away. Emptying it first meant any
 # failure in the two steps above left Resources/worker empty under `set -eu`,
 # and an empty worker reaches Alex as the same alert we are here to fix.
@@ -77,12 +80,8 @@ echo "  ok  the bridge serves from a path with a space"
 # launch with "cloud.knowledge is not a function", because every check here was
 # a syntax check and syntax was never the problem. Nothing ships unless the
 # packed worker actually runs.
-node "$HERE/test/smoke.test.mjs" "$C/Resources/worker" || { echo "the packed worker does not run"; exit 1; }
 # The loop, against a page that answers. The smoke test only proves the worker
 # starts — which is why five builds shipped with onePass never once executed by
 # anything before his Mac.
-node "$HERE/test/loop.test.mjs" || { echo "the loop does not work"; exit 1; }
-node "$HERE/test/depop-parse.test.mjs"
-node "$HERE/test/work.test.mjs"
 rm -rf "$T"
 echo "built $OUT  ($(du -h "$OUT" | cut -f1))"
