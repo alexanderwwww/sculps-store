@@ -190,3 +190,30 @@ every step re-triggered a capture.
 
 `test/idle.test.mjs` fails the build on an endless animation or a capture that
 has crept back up.
+
+## A floating window eats the first click
+
+plug's buttons "didn't work". They were drawn, positioned, reachable by the
+mouse, and a headless test clicked them successfully — because there is no
+window server in a container to swallow anything.
+
+On a real Mac, a window that floats and never takes focus treats the first
+click as *activate me* and consumes it. He pressed Sign in with email, the
+window came forward, nothing happened. **`acceptFirstMouse: true`.**
+
+The wider rule: a control is drawn, positioned, reachable, **and acted on**.
+Those are four different things, and the last one only exists on his machine.
+
+## Clear glass means the type must work on ANY desktop
+
+The design's ink is a dark navy, which is correct over a pale wallpaper and
+invisible over a dark one. He saw "light blue, not working on every surface" —
+that is dark type through clear glass over a dark desktop, and every render I
+had made was over a light one.
+
+The capture behind the window is drawn into a 24px canvas, its perceived
+brightness measured (0.2126 R + 0.7152 G + 0.0722 B, not a flat average), and
+the whole screen switches between dark ink and light. Cheap, once per capture.
+
+**Render every screen over a dark desktop as well as a light one.** A design
+checked on one surface is a design checked on half of them.

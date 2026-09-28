@@ -17,7 +17,31 @@
   Nothing here may be replaced with blur, frost or a white panel.
 -->
 <style>
-  :root { --accent: #2fe58f; --ink: #0d1433; }
+  :root {
+    --accent: #2fe58f;
+    /* The design's ink, for a pale desktop. */
+    --ink: #0d1433;
+    --ink-soft: rgba(13, 20, 51, .7);
+    --ink-faint: rgba(13, 20, 51, .5);
+    --edge: rgba(255, 255, 255, .6);
+    --fill: rgba(255, 255, 255, .2);
+    --shade: none;
+  }
+  /*
+   * And for a dark one. Set from the capture behind the window — see inkFor in
+   * app.js. Clear glass shows whatever is behind it, so type that assumes a
+   * light wallpaper is type that disappears on half of them.
+   */
+  body.on-dark {
+    --ink: #f4f7ff;
+    --ink-soft: rgba(244, 247, 255, .78);
+    --ink-faint: rgba(244, 247, 255, .55);
+    --edge: rgba(255, 255, 255, .34);
+    --fill: rgba(255, 255, 255, .10);
+    /* A whisper of shadow, so the light type holds over a busy photograph the
+       way it holds over a flat colour. */
+    --shade: 0 1px 3px rgba(0, 0, 0, .55);
+  }
 
   html, body {
     margin: 0; height: 100%;
@@ -102,7 +126,23 @@
   }
   .shape-pill .rim { padding: 1.2px; }
 
-  .content { position: relative; height: 100%; box-sizing: border-box; }
+  .content {
+    position: relative; height: 100%; box-sizing: border-box;
+    color: var(--ink);
+    text-shadow: var(--shade);
+    /*
+     * The fold.
+     *
+     * The window changes size in one move; this carries what is inside it,
+     * rising and settling with a slight overshoot — surface tension, the way a
+     * drop of water changes shape rather than a box being resized. It runs on
+     * the compositor and ENDS, which is the difference between this and the
+     * infinite spinner that cost him a core.
+     */
+    transform-origin: 50% 42%;
+    transition: transform .42s cubic-bezier(.22, 1.2, .28, 1), opacity .24s ease;
+  }
+  body.folding .content { transform: scale(.94); opacity: 0; }
 
   /* The window itself carries the radius, so the glass and its rim agree. */
   body.shape-phone .glass, body.shape-phone .behind { border-radius: 46px; }
@@ -114,7 +154,7 @@
   .pill .lines { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
   .pill .name { font-size: 21px; font-weight: 700; letter-spacing: -.04em; line-height: 1; }
   .pill .doing {
-    font-size: 12px; color: rgba(13,20,51,.7);
+    font-size: 12px; color: var(--ink-soft);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   /*
@@ -134,10 +174,10 @@
    */
   .ring {
     width: 22px; height: 22px; flex: none; border-radius: 50%;
-    border: 2px solid rgba(13,20,51,.18);
-    border-top-color: rgba(13,20,51,.55);
+    border: 2px solid var(--ink-faint);
+    border-top-color: var(--ink);
   }
-  .ring[data-working="false"] { border-top-color: rgba(13,20,51,.18); }
+  .ring[data-working="false"] { border-top-color: var(--ink-faint); }
 
   /* ---- the phone ---- */
   .phone { padding: 40px 22px 22px; display: flex; flex-direction: column; align-items: center; }
@@ -145,19 +185,19 @@
   .phone .name { font-size: 60px; font-weight: 700; letter-spacing: -.055em; line-height: .9; margin-top: -6px; }
   .phone .build {
     font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase;
-    color: rgba(13,20,51,.62); margin-top: 10px;
+    color: var(--ink-faint); margin-top: 10px;
   }
   .seg {
     margin-top: 24px; width: 100%; height: 40px; border-radius: 20px;
     box-sizing: border-box; padding: 3px;
-    border: 1px solid rgba(255,255,255,.6);
+    border: 1px solid var(--edge);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
     display: grid; grid-template-columns: 1fr 1fr;
     font-size: 14px; font-weight: 500;
   }
   .seg > div {
     display: flex; align-items: center; justify-content: center;
-    border-radius: 17px; color: rgba(13,20,51,.72);
+    border-radius: 17px; color: var(--ink-soft);
   }
   .seg > div[aria-selected="true"] {
     background: rgba(255,255,255,.5); color: var(--ink);
@@ -166,12 +206,12 @@
   .phone h2 { margin: 26px 0 0; font-size: 25px; font-weight: 650; letter-spacing: -.03em; }
   .phone .lede {
     margin-top: 8px; font-size: 14px; line-height: 1.45;
-    color: rgba(13,20,51,.7); text-align: center; max-width: 310px;
+    color: var(--ink-soft); text-align: center; max-width: 310px;
   }
   .shops { margin-top: 22px; width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .shop {
     border-radius: 26px;
-    border: 1px solid rgba(255,255,255,.6);
+    border: 1px solid var(--edge);
     background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.03));
     box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
     padding: 20px 12px 14px;
@@ -187,23 +227,23 @@
   .shop .who { font-size: 17px; font-weight: 600; }
   .shop button {
     width: 100%; height: 38px; border-radius: 19px;
-    border: 1px solid rgba(255,255,255,.7);
-    background: rgba(255,255,255,.2);
+    border: 1px solid var(--edge);
+    background: var(--fill);
     box-shadow: inset 0 1px 0 #fff;
     font: 500 13px/1 inherit; color: var(--ink);
   }
-  .shop .live { display: flex; align-items: center; gap: 7px; font-size: 13px; color: rgba(13,20,51,.7); }
+  .shop .live { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-soft); }
   .shop .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 9px rgba(47,229,143,.9); }
   .grow { flex: 1; }
   .hair { width: 100%; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.7), rgba(255,255,255,0)); }
-  .foot { margin-top: 12px; font-size: 12px; color: rgba(13,20,51,.6); display: flex; align-items: center; gap: 7px; }
+  .foot { margin-top: 12px; font-size: 12px; color: var(--ink-faint); display: flex; align-items: center; gap: 7px; }
 
   /* The ＋, always reachable: his own stock, listed by dropping photos in. */
   .plus {
     position: absolute; right: 18px; top: 18px;
     width: 34px; height: 34px; border-radius: 50%;
-    border: 1px solid rgba(255,255,255,.7);
-    background: rgba(255,255,255,.22);
+    border: 1px solid var(--edge);
+    background: var(--fill);
     box-shadow: inset 0 1px 0 #fff;
     font-size: 20px; line-height: 1; color: var(--ink);
     display: flex; align-items: center; justify-content: center;
@@ -211,8 +251,8 @@
   .close {
     position: absolute; left: 18px; top: 18px;
     width: 34px; height: 34px; border-radius: 50%;
-    border: 1px solid rgba(255,255,255,.7);
-    background: rgba(255,255,255,.22);
+    border: 1px solid var(--edge);
+    background: var(--fill);
     box-shadow: inset 0 1px 0 #fff;
     font-size: 15px; color: var(--ink);
     display: flex; align-items: center; justify-content: center;
@@ -234,14 +274,14 @@
     align-items: center; justify-content: center; pointer-events: none;
   }
   .dial-mid .big { font-size: 42px; font-weight: 700; letter-spacing: -.04em; line-height: 1; }
-  .dial-mid .of { font-size: 12px; color: rgba(13,20,51,.66); margin-top: 2px; }
+  .dial-mid .of { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
 
   .cyc { display: flex; justify-content: center; gap: 7px; margin-top: 14px; }
   .cyc span {
     font-size: 11px; font-weight: 600; width: 26px; height: 26px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    color: rgba(13,20,51,.5);
-    border: 1px solid rgba(255,255,255,.55);
+    color: var(--ink-faint);
+    border: 1px solid var(--edge);
   }
   .cyc span[data-today="true"] {
     background: rgba(255,255,255,.55); color: var(--ink);
@@ -250,12 +290,12 @@
 
   .held {
     margin-top: 12px; font-size: 12.5px; text-align: center;
-    color: rgba(13,20,51,.66);
+    color: var(--ink-soft);
   }
   .feed { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
   .feed .row {
     display: flex; align-items: center; gap: 9px; font-size: 13px;
-    color: rgba(13,20,51,.8);
+    color: var(--ink-soft);
   }
   .feed .tag {
     font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;

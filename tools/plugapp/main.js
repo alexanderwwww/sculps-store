@@ -55,6 +55,17 @@ function create() {
        into. A shop that runs all day cannot be a window he has to manage. */
     alwaysOnTop: true,
     skipTaskbar: true,
+    /*
+     * The first click ACTS, rather than only focusing the window.
+     *
+     * This floats over everything and never takes focus on its own, so macOS
+     * treats the first click on it as "activate me" and swallows it. He
+     * pressed Sign in with email, the window came forward, and nothing
+     * happened — which reads exactly like a dead button. The headless test
+     * could never catch it, because there is no window server there to eat
+     * the click.
+     */
+    acceptFirstMouse: true,
     /* No vibrancy: that is macOS's own frosted material and it would sit
        behind our glass as a grey wash — the exact look this design exists to
        replace. */

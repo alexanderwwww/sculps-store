@@ -18,6 +18,20 @@ const browser = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
 });
 
+/*
+ * A DARK desktop as well as a light one.
+ *
+ * Everything so far was rendered over a pale wallpaper, which is the one
+ * surface the design's dark ink works on. He runs a dark desktop and saw the
+ * type as "light blue, and not working on every surface" — which is what dark
+ * type looks like through clear glass over something dark, and I had never
+ * once looked at it.
+ */
+const DARK = `
+  background:
+    radial-gradient(800px 600px at 20% 15%, #1b2a4a 0, rgba(27,42,74,0) 60%),
+    radial-gradient(900px 700px at 85% 80%, #2a1b3d 0, rgba(42,27,61,0) 60%),
+    linear-gradient(160deg,#080a12,#141a2b 55%,#0a0f1c);`;
 const DESK = `
   background:
     radial-gradient(900px 600px at 12% 18%, #ffd2ec 0, rgba(255,210,236,0) 62%),
@@ -41,7 +55,7 @@ const STUFF = `
   <div style="position:absolute;left:40px;bottom:40px;width:420px;height:150px;
     background:repeating-linear-gradient(90deg,#101820 0 10px,#f2f4f8 10px 20px);border-radius:10px"></div>`;
 
-async function shot(name, shapeClass, size, state) {
+async function shot(name, shapeClass, size, state, ground = DESK) {
   const page = await browser.newPage({
     viewport: { width: 1100, height: 1000 },
     deviceScaleFactor: 2,
@@ -69,9 +83,10 @@ async function shot(name, shapeClass, size, state) {
     behind.appendChild(copy);
     document.getElementById("pill").hidden = shapeClass !== "shape-pill";
     document.getElementById("phone").hidden = shapeClass !== "shape-phone";
-  }, { shapeClass, size, DESK, STUFF });
+  }, { shapeClass, size, DESK: ground, STUFF });
   if (state) {
     await page.waitForTimeout(200);
+    if (state.onDark) await page.evaluate(() => document.body.classList.add("on-dark"));
     await page.evaluate((s) => window.__plug.set(s), state);
   }
   await page.waitForTimeout(900);
@@ -102,4 +117,14 @@ await shot("working", "shape-phone", { w: 393, h: 852 }, {
     { site: "vestiaire", line: "refreshed — Datejust 36" },
   ],
 });
+/* The same screens over a dark desktop, with the ink switched. */
+for (const [name, shapeClass, size] of [
+  ["dark-pill", "shape-pill", { w: 320, h: 64 }],
+  ["dark-phone", "shape-phone", { w: 393, h: 852 }],
+]) {
+  await shot(name, shapeClass, size, {
+    build: "003", shops: {}, doing: "Depop \u00b7 checking your shop", onDark: true,
+  }, DARK);
+}
+
 await browser.close();

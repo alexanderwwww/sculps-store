@@ -26,6 +26,42 @@ let state = { build: "", shops: {}, doing: "starting…", site: "depop" };
  * painted — the glass would show the desktop from a moment ago, offset by
  * however far the window had moved.
  */
+/*
+ * The type reads on ANY desktop.
+ *
+ * The design's ink is a dark navy, which is right over a pale wallpaper and
+ * invisible over a dark one — he saw it as "light blue, and not working on
+ * every surface", which is exactly what dark type on a dark desktop looks like
+ * through clear glass.
+ *
+ * So the ink follows what is actually behind the window: the capture is drawn
+ * into a tiny canvas, its average brightness measured, and the whole screen
+ * switches between dark ink and light. Cheap — a 24-pixel-wide draw, once per
+ * capture — and it is the only way type on genuinely clear glass can work.
+ */
+let inkIsLight = null;
+function inkFor(dataUrl) {
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement("canvas");
+    c.width = 24; c.height = 24;
+    const x = c.getContext("2d", { willReadFrequently: true });
+    x.drawImage(img, 0, 0, 24, 24);
+    const { data } = x.getImageData(0, 0, 24, 24);
+    let sum = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      /* Perceived brightness, not the average of the channels: green carries
+         most of what the eye reads as light. */
+      sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+    }
+    const light = sum / (data.length / 4) < 128;
+    if (light === inkIsLight) return;
+    inkIsLight = light;
+    document.body.classList.toggle("on-dark", light);
+  };
+  img.src = dataUrl;
+}
+
 let grabbing = false;
 async function paintDesktop() {
   if (!window.plug || grabbing) return;
@@ -38,9 +74,11 @@ async function paintDesktop() {
 async function grab() {
   const [grab, where] = await Promise.all([window.plug.desktop(), window.plug.where()]);
   if (!grab || !where) return;
+  known = grab;
   const img = $("desk");
   const { display } = grab;
   img.src = grab.image;
+  inkFor(grab.image);
   /* The capture is at the display's backing scale; the page is in points. */
   const k = 1 / (display.scale || 1);
   img.style.width = `${display.width}px`;
@@ -54,10 +92,33 @@ async function grab() {
 /* Re-grab while it moves, and slowly while it sits — the desktop behind it
    changes on its own, and a frozen picture reads as a photograph rather than
    as glass. */
+/*
+ * Moving the window transforms the glass immediately.
+ *
+ * The screen behind it has not changed while he drags — only where the glass
+ * is over it. So the picture already in hand is simply re-offset, which is a
+ * style write and costs nothing, and the refraction flows under the glass as
+ * he carries it. That IS the transformation he was looking for, and waiting
+ * 60ms for a fresh capture is what made it feel dead.
+ *
+ * A real capture follows, lazily, for whatever actually changed on screen.
+ */
+let known = null;
 let pending = null;
 function refreshSoon() {
+  place();
   clearTimeout(pending);
-  pending = setTimeout(paintDesktop, 60);
+  pending = setTimeout(paintDesktop, 400);
+}
+
+/** Put the picture where the window is now, using what we already have. */
+async function place() {
+  if (!known || !window.plug) return;
+  const where = await window.plug.where();
+  if (!where) return;
+  const img = $("desk");
+  img.style.left = `${-(where.x - known.display.x)}px`;
+  img.style.top = `${-(where.y - known.display.y)}px`;
 }
 
 async function morph(next) {
@@ -73,11 +134,17 @@ async function morph(next) {
    * transition on .glass does the fold now — it runs on the compositor and
    * costs nothing.
    */
+  /* Collapse what is on screen, change the shape underneath it, then let it
+     rise into the new one. Two short beats rather than one jump — that is the
+     whole transformation, and it costs nothing because it ends. */
+  document.body.classList.add("folding");
+  await new Promise((go) => setTimeout(go, 150));
   await window.plug.shape(next);
   document.body.classList.remove(`shape-${was}`);
   document.body.classList.add(`shape-${next}`);
   $("pill").hidden = next !== "pill";
   $("phone").hidden = next !== "phone";
+  requestAnimationFrame(() => document.body.classList.remove("folding"));
   /* A map drawn for one size bends the wrong pixels at another, so it is
      rebuilt whenever the window's size changes. */
   installFilters(document);
