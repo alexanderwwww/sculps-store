@@ -163,10 +163,16 @@ export async function openChrome({ home, port = 0, agent = "", log = () => {} } 
     "--no-default-browser-check",
     // Without this the port only listens for the first window.
     "--remote-allow-origins=*",
-    /* His Mac needs nothing else. FLIP_CHROME_ARGS exists so the test in this
+    /* His Mac needs nothing else. FLIP_CHROME_ARGS exists so the tests in this
        container can pass --no-sandbox, which a real Chrome on macOS must never
-       be given. */
-    ...(process.env.FLIP_CHROME_ARGS ? process.env.FLIP_CHROME_ARGS.split(" ").filter(Boolean) : []),
+       be given.
+       Split on NEWLINES, one flag per line. Splitting on spaces broke the
+       moment a flag had a space in its value — --host-resolver-rules="MAP host
+       127.0.0.1:1234" arrived as three separate argv entries, which Chrome read
+       as three URLs to open and refused with "multiple targets". */
+    ...(process.env.FLIP_CHROME_ARGS
+      ? process.env.FLIP_CHROME_ARGS.split("\n").map((f) => f.trim()).filter(Boolean)
+      : []),
   ], { stdio: process.env.FLIP_CHROME_LOUD ? "inherit" : "ignore", detached: false });
 
   child.on("error", (error) => log(`chrome would not start: ${error.message}`));
@@ -178,10 +184,22 @@ export async function openChrome({ home, port = 0, agent = "", log = () => {} } 
     port: chosen,
     profile,
     binary,
-    /** Bring up a page on a url and give back something to talk to it with. */
+    /**
+     * Bring up a page on a url and give back something to talk to it with.
+     *
+     * The tab is created blank and then NAVIGATED over the protocol, rather
+     * than asking /json/new to do both. That endpoint took the url encoded and
+     * refused it, took it raw and still opened blank, and said nothing either
+     * way — so Chrome appeared on his screen with an empty tab and the whole
+     * app looked dead. Page.navigate is the same call the loop already uses
+     * for every other move and it reports when the load actually finished.
+     */
     async open(url) {
-      const made = await ask(chosen, `/json/new?${encodeURIComponent(url)}`, "PUT");
-      return this.attach(made);
+      const made = await ask(chosen, "/json/new", "PUT");
+      const target = await this.attach(made);
+      await target.send("Page.navigate", { url: String(url) });
+      await settle(target);
+      return target;
     },
     /** The first ordinary page already open, if there is one. */
     async firstPage() {
@@ -202,6 +220,12 @@ export async function openChrome({ home, port = 0, agent = "", log = () => {} } 
       const target = new Target(socket);
       await target.send("Page.enable");
       await target.send("Runtime.enable");
+      /* Where it really ended up. A tab that did not navigate is the bug
+         above, and it must never be silent again. */
+      const landed = await target.eval("location.href").catch(() => null);
+      if (!landed || landed === "about:blank") {
+        log(`chrome opened a blank tab instead of ${info.url ?? "the page"}`);
+      }
       if (agent) {
         /* On every navigation, not just this one — the agent has to survive
            Depop moving between pages or the first click loses it. */
