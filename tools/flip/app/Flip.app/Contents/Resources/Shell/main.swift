@@ -222,6 +222,18 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
    * for the edge, and three labels. Nothing can paint it white because nothing
    * paints it at all — what shows through is his screen.
    */
+  /*
+   * The light in the glass, drawn by Core Animation.
+   *
+   * With the web view gone the orb is genuinely clear, and clear alone reads
+   * as a cut-out rather than an object. What gives glass its substance is a
+   * specular — a band of light travelling across the surface — so that is what
+   * this is: one thin diagonal sweep at very low alpha, sliding on a long
+   * loop. Low enough that his screen still reads through it; that is the whole
+   * lesson of the last four builds. If it ever looks milky, this is the first
+   * thing to turn down.
+   */
+  var sheen: CAGradientLayer?
   var orbName: NSTextField?
   var orbDoing: NSTextField?
   var orbCount: NSTextField?
@@ -471,6 +483,19 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
     let container = ChromeView(frame: initial)
     container.wantsLayer = true
+    let gloss = CAGradientLayer()
+    gloss.colors = [
+      NSColor.white.withAlphaComponent(0.0).cgColor,
+      NSColor.white.withAlphaComponent(0.13).cgColor,
+      NSColor.white.withAlphaComponent(0.0).cgColor,
+    ]
+    /* Diagonal, so it reads as a surface catching a light rather than a bar. */
+    gloss.startPoint = CGPoint(x: 0, y: 1)
+    gloss.endPoint = CGPoint(x: 1, y: 0)
+    gloss.locations = [0.0, 0.18, 0.36]
+    gloss.isHidden = true
+    container.layer?.addSublayer(gloss)
+    sheen = gloss
     container.autoresizingMask = [.width, .height]
     if let layer = container.layer {
       layer.masksToBounds = true
@@ -978,6 +1003,14 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         context.timingFunction = curve
         context.allowsImplicitAnimation = true
         win.animator().setFrame(frame, display: true)
+        /* The orb's three lines dissolve on the way out and come back on the
+           way in, riding the same curve as the frame. Without this they cut
+           the instant the shape changes, and the fold reads as two separate
+           windows rather than one thing turning into another. */
+        let showing: CGFloat = s == .orb ? 1 : 0
+        for field in [self.orbName, self.orbDoing, self.orbCount] {
+          field?.animator().alphaValue = showing
+        }
       }, completionHandler: {
         self.lastOrigin = win.frame.origin
         self.changingShape = false
@@ -1027,8 +1060,19 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     /* Back for every shape but the orb, which hides it again below. */
     effect?.isHidden = false
     let isOrb = shape == .orb
-    for field in [orbName, orbDoing, orbCount] { field?.isHidden = !isOrb }
-    if !isOrb { container.layer?.borderWidth = 0 }
+    for field in [orbName, orbDoing, orbCount] {
+      field?.isHidden = !isOrb
+      /* An un-animated shape change must not leave them faded out from the
+         last one. The animation above sets the same value on its own curve. */
+      if !changingShape { field?.alphaValue = isOrb ? 1 : 0 }
+    }
+    if !isOrb {
+      container.layer?.borderWidth = 0
+      /* Off the moment it is a window onto a page — a highlight sliding over
+         Depop would be somebody else's app with a effect stuck on it. */
+      sheen?.isHidden = true
+      sheen?.removeAnimation(forKey: "sweep")
+    }
     collapse?.isHidden = shape == .orb || shape == .pill
     if shape == .working {
       /*
@@ -1114,6 +1158,27 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
        */
       container.layer?.borderWidth = 1
       container.layer?.borderColor = NSColor.white.withAlphaComponent(0.34).cgColor
+
+      /* The sweep, running only while the orb is the shape. Its own corner
+         radius, so the light stops at the squircle instead of at a rectangle. */
+      if let gloss = sheen {
+        gloss.isHidden = false
+        gloss.frame = bounds
+        gloss.cornerRadius = radiusFor(.orb)
+        gloss.cornerCurve = .continuous
+        gloss.masksToBounds = true
+        if gloss.animation(forKey: "sweep") == nil {
+          let travel = CABasicAnimation(keyPath: "locations")
+          travel.fromValue = [-0.4, -0.22, -0.04]
+          travel.toValue = [1.04, 1.22, 1.4]
+          /* Slow. A fast highlight reads as a loading bar, which is the one
+             thing this must never look like. */
+          travel.duration = 7.5
+          travel.repeatCount = .infinity
+          travel.timingFunction = CAMediaTimingFunction(controlPoints: 0.45, 0, 0.55, 1)
+          gloss.add(travel, forKey: "sweep")
+        }
+      }
       let mid = bounds.height / 2
       orbName?.frame = NSRect(x: 12, y: mid + 26, width: bounds.width - 24, height: 16)
       orbDoing?.frame = NSRect(x: 12, y: mid - 2, width: bounds.width - 24, height: 22)

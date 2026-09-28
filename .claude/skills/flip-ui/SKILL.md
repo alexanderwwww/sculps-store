@@ -218,3 +218,30 @@ Four rounds were lost going in the wrong order. Check these from the top:
 4. **Only then the tint numbers.**
 
 And before any of it: check the build number on the orb matches what was packed.
+
+## The light, once the glass is genuinely clear
+
+Clear on its own reads as a hole cut in the desktop, not an object. He asked for the
+transformations and the light back — *"needa transformations and lightr"* — after
+seeing it clear for the first time. Both are native now; there is no canvas to paint
+them.
+
+**The specular.** One `CAGradientLayer` on the container, clear → **white 13%** →
+clear, diagonal (`startPoint 0,1` → `endPoint 1,0`), `locations` animated from
+`[-0.4, -0.22, -0.04]` to `[1.04, 1.22, 1.4]` over **7.5s**, repeating, on
+`CAMediaTimingFunction(0.45, 0, 0.55, 1)`. It carries the orb's own corner radius and
+`.continuous` curve, so the light stops at the squircle rather than at a rectangle.
+
+- **Slow on purpose.** A fast highlight reads as a loading bar, which is the one thing
+  the orb must never look like.
+- **Orb and pill only.** It is hidden and its animation removed the moment the window
+  is a page — a highlight sliding over Depop is somebody else's app with an effect
+  stuck on it.
+- **13% is the ceiling.** If the orb ever looks milky again, this is the first thing
+  to turn down, before anything else is touched.
+
+**The fold.** The three labels dissolve to 0 on the way out and back to 1 on the way
+in, inside the same `NSAnimationContext` as the frame and on the same curve. Without
+it they cut the instant the shape changes and the morph reads as two windows rather
+than one thing becoming another. An un-animated shape change sets the alpha directly,
+so it can never be left faded out from the last transition.
