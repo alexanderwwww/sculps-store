@@ -251,6 +251,9 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     var radius: CGFloat = -1   // -1 means "whatever radiusFor says"
   }
   var style = Style()
+  /* Has the worker ever spoken? "waking the crew" is a lie the moment it is
+     not true any more, and a window that sits on it says nothing about why. */
+  var heardFromWorker = false
   var sheen: CAGradientLayer?
   /*
    * The bevel: the inside edge of the glass, where its thickness lives.
@@ -639,6 +642,21 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         "document.body.classList.add('press');setTimeout(function(){document.body.classList.remove('press')},150)",
         completionHandler: nil)
       self.applyShape(.working, animated: true)
+    }
+
+    /*
+     * If the worker never speaks, say so.
+     *
+     * The window's own web view is what carries the connection, and hiding it
+     * once cost an evening: the worker ran perfectly, nothing reached the
+     * window, and the orb sat on "waking the crew" with no way to tell that
+     * apart from a quiet shop. Twenty seconds is long enough for a cold start
+     * and short enough that he is not staring at a lie.
+     */
+    Timer.scheduledTimer(withTimeInterval: 20, repeats: false) { [weak self] _ in
+      guard let self = self, !self.heardFromWorker else { return }
+      self.orbDoing?.stringValue = "the worker is not answering"
+      self.setStatus("the worker is not answering", dot: "red")
     }
 
     window = win
@@ -1138,11 +1156,20 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
     /* The orb owns the whole window and nothing else is on screen — no panes,
        no status line, no button. A piece of glass with one thing in it. */
-    /* The orb's web view is never shown. It is kept only because the message
-       handler and the telemetry plumbing hang off it; the shape he looks at is
-       drawn by AppKit. See the note on orbName. */
-    orb?.frame = bounds
-    orb?.isHidden = true
+    /*
+     * The orb's web view is never SEEN, and must never be hidden.
+     *
+     * It is what connects the window to the worker: its page opens the socket
+     * and says hello, and every status line comes back through it. Setting
+     * isHidden on it stopped it loading, so the worker ran perfectly and the
+     * window sat on "waking the crew" forever with nothing to say why.
+     *
+     * So it stays live at one point square, tucked outside the container's
+     * bounds, which are clipped. Alive, connected, and unable to paint
+     * anything — the orb he looks at is drawn by AppKit. See orbName.
+     */
+    orb?.isHidden = false
+    orb?.frame = NSRect(x: -20, y: -20, width: 1, height: 1)
     frost?.isHidden = true
     /* Back for every shape but the orb, which hides it again below. */
     effect?.isHidden = false
@@ -1704,6 +1731,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     guard let any = try? JSONSerialization.jsonObject(with: data, options: []) else { return false }
     guard let obj = any as? [String: Any] else { return false }
     guard let t = obj["t"] as? String, t == "window" else { return false }
+    heardFromWorker = true
 
     // {t:"agent", source:"…"} is handled on the inbound path; this is windows only.
     let verb = (obj["do"] as? String) ?? ""

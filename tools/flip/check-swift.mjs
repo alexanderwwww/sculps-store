@@ -28,6 +28,21 @@ const src = await readFile(file, "utf8");
 
 const problems = [];
 
+/*
+ * The orb's web view carries the connection to the worker.
+ *
+ * Hiding it cost an evening: the worker ran perfectly, nothing ever reached
+ * the window, and the orb sat on "waking the crew" with no way to tell that
+ * apart from a quiet shop. It is invisible by being one point square outside
+ * the clipped bounds, never by isHidden — a hidden WKWebView does not load,
+ * and a web view that does not load never says hello.
+ */
+if (/\borb\?\.isHidden\s*=\s*true/.test(src)) {
+  problems.push(
+    "orb?.isHidden = true — that web view is the worker's only way into the window. " +
+    "Park it offscreen at 1x1 instead.");
+}
+
 /* Types this file declares. */
 const declared = new Set();
 for (const m of src.matchAll(/^\s*(?:public |private |internal |final )*(?:class|struct|enum|protocol|extension|actor)\s+([A-Za-z_][\w]*)/gm)) {
