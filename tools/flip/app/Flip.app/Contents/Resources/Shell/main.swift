@@ -605,6 +605,17 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     if orbView.responds(to: NSSelectorFromString("setDrawsBackground:")) {
       orbView.setValue(false, forKey: "drawsBackground")
     }
+    /*
+     * The other way a web view paints white, and the supported one.
+     *
+     * drawsBackground is private and guarded, so on any macOS where that key
+     * has moved the orb's page was painting an opaque white sheet directly on
+     * top of the glass — and no material underneath it could ever show. This
+     * is the public equivalent and it is not going anywhere. Both, because
+     * either one alone has now failed once.
+     */
+    orbView.underPageBackgroundColor = .clear
+    orbView.layer?.backgroundColor = NSColor.clear.cgColor
     orbView.wantsLayer = true
     orbView.layer?.masksToBounds = true
     /*
@@ -831,7 +842,20 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
    */
   static func materialFor(_ s: Shape) -> NSVisualEffectView.Material {
     switch s {
-    case .orb, .pill: return .fullScreenUI
+    /*
+     * .hudWindow UNDER DARK APPEARANCE, which is not the same thing as
+     * .hudWindow was before.
+     *
+     * The light materials were the wrong road. .underWindowBackground and
+     * .fullScreenUI are both PALE: pinning them dark changes their tint a
+     * little and leaves them opaque, which is how a white slab survived two
+     * rounds of "make it clear". .hudWindow is the one material macOS ships
+     * that is genuinely translucent — in dark appearance it is smoke, and the
+     * desktop reads straight through it. The page shapes take the same
+     * material at the system's own appearance, where it is the solid panel it
+     * has always been behind a web view.
+     */
+    case .orb, .pill: return .hudWindow
     default: return .hudWindow
     }
   }
