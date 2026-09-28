@@ -96,6 +96,31 @@ app.whenReady().then(async () => {
     say(!/Google/.test(page), "and Google has already been stripped from it");
     say(!/Continue with Apple/.test(page), "and Apple too");
   }
+
+  /* Two shops cannot be on screen at once: the second draws over the first and
+     the one underneath keeps taking the clicks. */
+  await wc.executeJavaScript('window.plug.openShop("vestiaire")', true).catch(() => {});
+  await new Promise((r) => setTimeout(r, 2500));
+  const live = win.contentView.children.filter((v) => v.webContents && v.getVisible());
+  say(live.length === 1, "only one marketplace is ever on screen", "visible: " + live.length);
+  say(live[0] ? /vestiairecollective/.test(live[0].webContents.getURL()) : false,
+    "and it is the one he just asked for", live[0] ? live[0].webContents.getURL() : "none");
+
+  /*
+   * Folding away takes the page with it.
+   *
+   * Otherwise a phone-sized web page stays pinned over a 320x64 pill, covering
+   * it and every button on it, and nothing he presses reaches plug again.
+   */
+  await wc.executeJavaScript('window.plug.shape("pill")', true).catch(() => {});
+  await new Promise((r) => setTimeout(r, 400));
+  const after = win.contentView.children.filter((v) => v.webContents && v.getVisible());
+  say(after.length === 0, "folding to the pill takes the marketplace down with it",
+    "still visible: " + after.length);
+  const b2 = win.getBounds();
+  say(b2.width === 320 && b2.height === 64, "and the window really is the pill again",
+    JSON.stringify(b2));
+
   done();
 });
 

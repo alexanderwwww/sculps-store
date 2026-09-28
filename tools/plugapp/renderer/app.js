@@ -204,9 +204,22 @@ function openSite(site, where) {
   if (!window.plug) return;
   state.site = site;
   state.doing = `opening ${site}…`;
+  /*
+   * Marked as open BEFORE the page loads, not after.
+   *
+   * Loading Depop takes seconds on his Mac, and until this was set the ✕ still
+   * meant "fold the whole app away" — so pressing it during the wait shrank the
+   * window to the pill with a phone-sized page pinned over it, covering
+   * everything. The shop is open the moment it is asked for.
+   */
+  signingIn = site;
   paint();
   window.plug.openShop(site, where).then(() => {
-    signingIn = site;
+    state.doing = `${site} is open`;
+    paint();
+  }).catch(() => {
+    signingIn = null;
+    state.doing = `could not open ${site}`;
     paint();
   });
 }

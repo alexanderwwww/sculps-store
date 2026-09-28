@@ -191,6 +191,15 @@ ipcMain.handle("shape", async (_event, next) => {
     width: to.width,
     height: to.height,
   });
+  /*
+   * Folding away takes the marketplace with it.
+   *
+   * A shop's page is a native view sized for the phone. Shrink the window to
+   * the pill underneath it and a 373x756 web page is left pinned over a 320x64
+   * window — it covers the pill, it covers the buttons, and nothing he presses
+   * reaches plug again. Every shop goes down with the fold.
+   */
+  if (next === "pill") for (const [, view] of shops) view.hide();
   shape = next;
   send("shape", shape);
   return shape;
