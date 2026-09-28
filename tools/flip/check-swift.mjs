@@ -19,7 +19,7 @@ WKScriptMessageHandler WKNavigation WKNavigationDelegate WKUIDelegate WKNavigati
 URL URLRequest URLSession URLSessionConfiguration URLSessionWebSocketTask URLSessionWebSocketDelegate URLResponse
 HTTPURLResponse HTTPCookie NSPasteboard DispatchGroup JSONSerialization Data Date DateFormatter TimeInterval DispatchQueue DispatchTime DispatchWorkItem
 OperationQueue Timer Bundle FileManager NSWorkspace NSSelectorFromString ProcessInfo CommandLine CharacterSet String Int Double Bool CGFloat CGRect
-CGSize CGPoint CGColor CALayer CAGradientLayer CABasicAnimation CAMediaTimingFunction CATransaction Array Dictionary Set Optional Result Error Any AnyObject Never Task MainActor Selector UUID
+CGSize CGPoint CGColor CGPath CGMutablePath CALayer CAShapeLayer CAGradientLayer CIFilter CIVector CIColor CABasicAnimation CAMediaTimingFunction CATransaction Array Dictionary Set Optional Result Error Any AnyObject Never Task MainActor Selector UUID
 NSVisualEffectView NSAppearance NSAnimationContext NSFont NSBitmapImageRep NSGraphicsContext NSTrackingArea NSCursor NSAttributedString
 `.trim().split(/\s+/));
 

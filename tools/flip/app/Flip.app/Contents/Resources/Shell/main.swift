@@ -22,6 +22,7 @@
 import Cocoa
 import WebKit
 import QuartzCore
+import CoreImage
 
 
 
@@ -234,6 +235,18 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
    * thing to turn down.
    */
   var sheen: CAGradientLayer?
+  /*
+   * The bevel: the inside edge of the glass, where its thickness lives.
+   *
+   * A sheen sliding across a flat pane is a glow, and he said so. What makes
+   * Apple's glass read as an OBJECT is that it has depth — the surface curves
+   * away at the rim, so light gathers along one edge and the far edge goes
+   * dark. Two inset rings do that: a bright one raked from the top-left and a
+   * cool one from the bottom-right, both only a few points wide, so the middle
+   * stays completely clear and only the edge says "this is thick".
+   */
+  var bevel: CAGradientLayer?
+  var bevelInner: CAGradientLayer?
   var orbName: NSTextField?
   var orbDoing: NSTextField?
   var orbCount: NSTextField?
@@ -496,6 +509,36 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     gloss.isHidden = true
     container.layer?.addSublayer(gloss)
     sheen = gloss
+
+    /*
+     * The two rings.
+     *
+     * A gradient does not show through a layer's border — borderColor is one
+     * flat colour — so each ring is a full gradient layer wearing a mask that
+     * is nothing but a stroked rounded rectangle. What survives the mask is a
+     * band of gradient the width of that stroke: bright where the light comes
+     * from, cool at the far side. That is an edge with a direction, which is
+     * what makes it read as thickness rather than an outline.
+     */
+    func ring(_ top: CGFloat, _ bottom: CGFloat) -> CAGradientLayer {
+      let layer = CAGradientLayer()
+      layer.colors = [
+        NSColor.white.withAlphaComponent(top).cgColor,
+        NSColor.white.withAlphaComponent(top * 0.16).cgColor,
+        NSColor.white.withAlphaComponent(bottom).cgColor,
+      ]
+      layer.startPoint = CGPoint(x: 0.12, y: 1)
+      layer.endPoint = CGPoint(x: 0.88, y: 0)
+      layer.locations = [0.0, 0.5, 1.0]
+      layer.mask = CAShapeLayer()
+      layer.isHidden = true
+      container.layer?.addSublayer(layer)
+      return layer
+    }
+    /* The outer rim is the lit edge of the glass; the inner one sits a couple
+       of points in and reads as its far wall, seen through the body. */
+    bevel = ring(0.72, 0.30)
+    bevelInner = ring(0.24, 0.10)
     container.autoresizingMask = [.width, .height]
     if let layer = container.layer {
       layer.masksToBounds = true
