@@ -136,8 +136,10 @@ observation — including the ones that looked like magic — is a finding.
 Not Apple Silicon. A build packaged `--arm64` refuses to open on it — *"not
 supported by this Mac"* — and he has already lost a download to that guess.
 
-Package **universal** (`arch: ["universal"]`), which runs on both and makes the
-question disappear. And on Apple Silicon an unsigned arm64 binary is killed by
+Universal would solve it, but **it cannot be built from Linux** — Apple's
+`lipo` is required and @electron/universal refuses. So build **x64**: native on
+his Intel Mac and fine under Rosetta on Apple Silicon, which is one download
+that works on any Mac. And on Apple Silicon an unsigned arm64 binary is killed by
 the kernel and reads as *"damaged and can't be opened"*, so `rcodesign sign`
 the bundle either way: electron-builder skips signing on Linux and says so in a
 line that is easy to read past.

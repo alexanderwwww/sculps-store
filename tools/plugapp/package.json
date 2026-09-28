@@ -32,7 +32,7 @@
         {
           "target": "dir",
           "arch": [
-            "universal"
+            "x64"
           ]
         }
       ],

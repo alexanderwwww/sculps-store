@@ -123,7 +123,12 @@ corrupt download rather than as a missing signature.
 signature and the app launches. It is not notarised, so the first open is
 right-click → Open, once.
 
-**Build universal, never one architecture.** His Mac is Intel. A build made for
+**Universal cannot be built from Linux** — @electron/universal needs Apple's
+own `lipo` and refuses outright. So the build is **x64**: native on his Intel
+Mac, and it runs under Rosetta on Apple Silicon. One download that works
+everywhere, which is the point.
+
+**Never assume the architecture.** His Mac is Intel. A build made for
 Apple Silicon refuses to open on it with "not supported by this Mac", which
 costs him a download and a round trip — and the assumption behind it was never
 checked, only guessed. `target: [{ target: "dir", arch: ["universal"] }]`
