@@ -1,0 +1,31 @@
+{
+  "name": "plug",
+  "productName": "plug",
+  "version": "1.0.0",
+  "private": true,
+  "description": "An autonomous resale operator for Depop and Vestiaire Collective.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node test/glass.test.mjs",
+    "dist": "electron-builder --mac --dir"
+  },
+  "devDependencies": {
+    "electron": "^44.4.5",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "us.blackreaper.plug",
+    "productName": "plug",
+    "files": ["main.js", "preload.js", "renderer/**", "assets/**"],
+    "mac": {
+      "category": "public.app-category.business",
+      "icon": "assets/AppIcon.icns",
+      "target": ["dir"],
+      "extendInfo": {
+        "LSUIElement": false,
+        "NSScreenCaptureUsageDescription": "plug draws the desktop behind its glass so the glass can refract it. Nothing is recorded or sent anywhere."
+      }
+    }
+  }
+}

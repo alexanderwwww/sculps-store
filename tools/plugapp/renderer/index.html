@@ -1,0 +1,254 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>plug</title>
+<!--
+  The window's whole contents.
+
+  Two shapes live here — the pill and the phone — and the app swaps between
+  them. The glass is the approved recipe, copied exactly from GLASS.md and
+  reference.dc.html: four stacked layers, in this order.
+
+    1. the desktop, brought inside so there is something real to bend
+    2. the refraction layer, which is the SVG filter and nothing else
+    3. the light: specular and rim, drawn with shadows and no fill
+    4. the chromatic rim, a conic gradient a pixel and a half wide
+    5. the content, always on top and never inside the refraction
+
+  Nothing here may be replaced with blur, frost or a white panel.
+-->
+<style>
+  :root { --accent: #2fe58f; --ink: #0d1433; }
+
+  html, body {
+    margin: 0; height: 100%;
+    background: transparent;
+    overflow: hidden;
+    color: var(--ink);
+    font-family: -apple-system, "SF Pro Display", "SF Pro Text", Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    /* The whole window is a handle: it has no title bar to grab. Anything
+       clickable takes itself back out of the drag region below. */
+    -webkit-app-region: drag;
+    user-select: none;
+    cursor: default;
+  }
+  button, a, input, .tap { -webkit-app-region: no-drag; cursor: pointer; }
+
+  .glass { position: absolute; inset: 0; }
+
+  /*
+   * The desktop, inside the window.
+   *
+   * Electron's backdrop-filter cannot see past the window's own edge, so a
+   * transparent window has nothing behind the glass and the filter bends empty
+   * air. This is a live picture of the screen underneath, positioned so the
+   * pixel under the window is the pixel drawn here — which makes the
+   * refraction show the real desktop, correctly aligned.
+   */
+  .behind {
+    position: absolute; inset: 0; border-radius: inherit; overflow: hidden;
+    pointer-events: none;
+  }
+  .behind img { position: absolute; transform-origin: 0 0; image-rendering: auto; }
+
+  .refract {
+    position: absolute; inset: 0; border-radius: inherit;
+    backdrop-filter: url(#lg-phone) saturate(1.35) brightness(1.06);
+    -webkit-backdrop-filter: blur(2px) saturate(1.5);
+  }
+  .shape-pill .refract { backdrop-filter: url(#lg-pill) saturate(1.35) brightness(1.06); }
+
+  .light {
+    position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: radial-gradient(90% 40% at 22% 0%, rgba(255,255,255,.22), rgba(255,255,255,0) 55%);
+    box-shadow:
+      inset 2px 3px 0 -1px rgba(255,255,255,.95),
+      inset -2px -3px 0 -1px rgba(170,215,255,.8),
+      inset 0 0 26px rgba(255,255,255,.28),
+      inset 14px 18px 30px -24px rgba(255,255,255,.9),
+      inset -16px -14px 32px -24px rgba(120,190,255,.8),
+      0 30px 60px -30px rgba(8,20,70,.4);
+  }
+  .shape-pill .light {
+    background: radial-gradient(120% 90% at 18% 0%, rgba(255,255,255,.28), rgba(255,255,255,0) 50%);
+    box-shadow:
+      inset 1.5px 2px 0 -.5px rgba(255,255,255,.95),
+      inset -1px -2px 0 -.5px rgba(170,215,255,.8),
+      inset 0 0 14px rgba(255,255,255,.3),
+      0 18px 40px -22px rgba(8,20,70,.4);
+  }
+
+  .rim {
+    position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    padding: 1.5px;
+    background: conic-gradient(from 210deg,
+      rgba(255,255,255,.95), rgba(255,150,220,.75), rgba(140,200,255,.6),
+      rgba(120,255,225,.7), rgba(255,255,255,.95), rgba(255,215,140,.7),
+      rgba(175,145,255,.7), rgba(255,255,255,.95));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  .shape-pill .rim { padding: 1.2px; }
+
+  .content { position: relative; height: 100%; box-sizing: border-box; }
+
+  /* The window itself carries the radius, so the glass and its rim agree. */
+  body.shape-phone .glass, body.shape-phone .behind { border-radius: 46px; }
+  body.shape-pill .glass, body.shape-pill .behind { border-radius: 32px; }
+
+  /* ---- the pill ---- */
+  .pill { display: flex; align-items: center; gap: 10px; padding: 0 18px 0 10px; height: 100%; }
+  .pill img { width: 54px; flex: none; margin-top: -4px; }
+  .pill .lines { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .pill .name { font-size: 21px; font-weight: 700; letter-spacing: -.04em; line-height: 1; }
+  .pill .doing {
+    font-size: 12px; color: rgba(13,20,51,.7);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ring {
+    width: 22px; height: 22px; flex: none; border-radius: 50%;
+    border: 2px solid rgba(13,20,51,.18); border-top-color: rgba(13,20,51,.55);
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- the phone ---- */
+  .phone { padding: 40px 22px 22px; display: flex; flex-direction: column; align-items: center; }
+  .phone > img { width: 176px; }
+  .phone .name { font-size: 60px; font-weight: 700; letter-spacing: -.055em; line-height: .9; margin-top: -6px; }
+  .phone .build {
+    font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase;
+    color: rgba(13,20,51,.62); margin-top: 10px;
+  }
+  .seg {
+    margin-top: 24px; width: 100%; height: 40px; border-radius: 20px;
+    box-sizing: border-box; padding: 3px;
+    border: 1px solid rgba(255,255,255,.6);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+    display: grid; grid-template-columns: 1fr 1fr;
+    font-size: 14px; font-weight: 500;
+  }
+  .seg > div {
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 17px; color: rgba(13,20,51,.72);
+  }
+  .seg > div[aria-selected="true"] {
+    background: rgba(255,255,255,.5); color: var(--ink);
+    box-shadow: inset 0 1px 0 #fff, 0 1px 6px rgba(20,40,120,.12);
+  }
+  .phone h2 { margin: 26px 0 0; font-size: 25px; font-weight: 650; letter-spacing: -.03em; }
+  .phone .lede {
+    margin-top: 8px; font-size: 14px; line-height: 1.45;
+    color: rgba(13,20,51,.7); text-align: center; max-width: 310px;
+  }
+  .shops { margin-top: 22px; width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .shop {
+    border-radius: 26px;
+    border: 1px solid rgba(255,255,255,.6);
+    background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.03));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+    padding: 20px 12px 14px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .mark {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 30px; line-height: 1;
+  }
+  .mark.depop { background: #ff2300; color: #fff; }
+  .mark.vestiaire { background: #f3e9d8; color: #111; font-family: Didot, "Bodoni 72", Georgia, serif; font-weight: 700; }
+  .shop .who { font-size: 17px; font-weight: 600; }
+  .shop button {
+    width: 100%; height: 38px; border-radius: 19px;
+    border: 1px solid rgba(255,255,255,.7);
+    background: rgba(255,255,255,.2);
+    box-shadow: inset 0 1px 0 #fff;
+    font: 500 13px/1 inherit; color: var(--ink);
+  }
+  .shop .live { display: flex; align-items: center; gap: 7px; font-size: 13px; color: rgba(13,20,51,.7); }
+  .shop .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 9px rgba(47,229,143,.9); }
+  .grow { flex: 1; }
+  .hair { width: 100%; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.7), rgba(255,255,255,0)); }
+  .foot { margin-top: 12px; font-size: 12px; color: rgba(13,20,51,.6); display: flex; align-items: center; gap: 7px; }
+
+  /* The ＋, always reachable: his own stock, listed by dropping photos in. */
+  .plus {
+    position: absolute; right: 18px; top: 18px;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.7);
+    background: rgba(255,255,255,.22);
+    box-shadow: inset 0 1px 0 #fff;
+    font-size: 20px; line-height: 1; color: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .close {
+    position: absolute; left: 18px; top: 18px;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.7);
+    background: rgba(255,255,255,.22);
+    box-shadow: inset 0 1px 0 #fff;
+    font-size: 15px; color: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+  }
+  [hidden] { display: none !important; }
+</style>
+
+<body class="shape-pill">
+  <div class="glass">
+    <div class="behind"><img id="desk" alt=""></div>
+    <div class="refract"></div>
+    <div class="light"></div>
+    <div class="rim"></div>
+
+    <div class="content">
+      <!-- compact -->
+      <div class="pill tap" id="pill">
+        <img src="../assets/plug-icon.png" alt="" draggable="false">
+        <div class="lines">
+          <div class="name">plug</div>
+          <div class="doing" id="pill-doing">starting…</div>
+        </div>
+        <div class="ring" id="pill-ring"></div>
+      </div>
+
+      <!-- expanded -->
+      <div class="phone" id="phone" hidden>
+        <button class="close" id="fold" title="Fold away">✕</button>
+        <button class="plus" id="plus" title="List an item">＋</button>
+        <img src="../assets/plug-icon.png" alt="" draggable="false">
+        <div class="name">plug</div>
+        <div class="build" id="build">build —</div>
+        <div class="seg">
+          <div data-site="depop" aria-selected="true" class="tap">Depop</div>
+          <div data-site="vestiaire" aria-selected="false" class="tap">Vestiaire</div>
+        </div>
+        <h2 id="head">connect your shops</h2>
+        <div class="lede" id="lede">
+          Sign in once. plug lists, answers, negotiates and sells on its own from then on.
+        </div>
+        <div class="shops">
+          <div class="shop">
+            <div class="mark depop">d</div>
+            <div class="who">Depop</div>
+            <div id="slot-depop"></div>
+          </div>
+          <div class="shop">
+            <div class="mark vestiaire">V</div>
+            <div class="who">Vestiaire</div>
+            <div id="slot-vestiaire"></div>
+          </div>
+        </div>
+        <div class="grow"></div>
+        <div class="hair"></div>
+        <div class="foot">
+          <svg width="11" height="13" viewBox="0 0 11 13" fill="none" aria-hidden="true">
+            <path d="M2 5V3.5a3.5 3.5 0 1 1 7 0V5" stroke="currentColor" stroke-width="1.4"/>
+            <rect x="1" y="5" width="9" height="7" rx="2" fill="currentColor" opacity=".5"/>
+          </svg>
+          Your sign-ins stay on this Mac
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="./app.js"></script>
+</body>

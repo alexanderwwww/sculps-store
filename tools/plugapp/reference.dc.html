@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0c0d11;-webkit-font-smoothing:antialiased}
+a{color:#0d1433;text-decoration:none}a:hover{color:#1a8f5a}
+@keyframes plugspin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="lg-phone" x="0" y="0" width="393" height="852" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+    <feImage href="{{ mapPhone }}" x="0" y="0" width="393" height="852" preserveAspectRatio="none" result="map"></feImage>
+    <feDisplacementMap in="SourceGraphic" in2="map" scale="{{ sR }}" xChannelSelector="R" yChannelSelector="G" result="dR"></feDisplacementMap>
+    <feColorMatrix in="dR" type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="r"></feColorMatrix>
+    <feDisplacementMap in="SourceGraphic" in2="map" scale="{{ sG }}" xChannelSelector="R" yChannelSelector="G" result="dG"></feDisplacementMap>
+    <feColorMatrix in="dG" type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0" result="g"></feColorMatrix>
+    <feDisplacementMap in="SourceGraphic" in2="map" scale="{{ sB }}" xChannelSelector="R" yChannelSelector="G" result="dB"></feDisplacementMap>
+    <feColorMatrix in="dB" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0" result="b"></feColorMatrix>
+    <feBlend in="r" in2="g" mode="screen" result="rg"></feBlend>
+    <feBlend in="rg" in2="b" mode="screen"></feBlend>
+  </filter>
+  <filter id="lg-pill" x="0" y="0" width="320" height="64" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+    <feImage href="{{ mapPill }}" x="0" y="0" width="320" height="64" preserveAspectRatio="none" result="map"></feImage>
+    <feDisplacementMap in="SourceGraphic" in2="map" scale="{{ pR }}" xChannelSelector="R" yChannelSelector="G" result="dR"></feDisplacementMap>
+    <feColorMatrix in="dR" type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="r"></feColorMatrix>
+    <feDisplacementMap in="SourceGraphic" in2="map" scale="{{ pG }}" xChannelSelector="R" yChannelSelector="G" result="dG"></feDisplacementMap>
+    <feColorMatrix in="dG" type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0" result="g"></feColorMatrix>
+    <feDisplacementMap in="SourceGraphic" in2="map" scale="{{ pB }}" xChannelSelector="R" yChannelSelector="G" result="dB"></feDisplacementMap>
+    <feColorMatrix in="dB" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0" result="b"></feColorMatrix>
+    <feBlend in="r" in2="g" mode="screen" result="rg"></feBlend>
+    <feBlend in="rg" in2="b" mode="screen"></feBlend>
+  </filter>
+</svg>
+<div data-screen-label="Desktop" style="font-family:-apple-system,'SF Pro Display','SF Pro Text',Inter,system-ui,sans-serif;position:relative;min-width:1300px;height:100vh;min-height:1000px;overflow:hidden;color:#0d1433;background:radial-gradient(900px 600px at 12% 18%,#ffd2ec 0,rgba(255,210,236,0) 62%),radial-gradient(1000px 800px at 88% 25%,#9fd0ff 0,rgba(159,208,255,0) 60%),radial-gradient(900px 700px at 55% 105%,#ffc084 0,rgba(255,192,132,0) 60%),linear-gradient(155deg,#79a9ff,#c7a6ff 50%,#ffb3c6)">
+  <div style="position:absolute;left:-200px;top:55%;width:2400px;height:900px;border-radius:50%;background:linear-gradient(100deg,rgba(255,255,255,.35),rgba(120,160,255,.25));transform:rotate(-12deg)"></div>
+  <div style="position:absolute;left:0;right:0;top:0;height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:rgba(255,255,255,.3);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);font-size:13px;color:#10152b"><div style="display:flex;gap:20px"><b>Finder</b><span>File</span><span>Edit</span><span>View</span><span>Go</span><span>Window</span></div><div style="display:flex;gap:16px"><span>Mon 28 Sep</span><span>17:56</span></div></div>
+  <div style="position:absolute;left:4%;top:70px;width:760px;height:540px;border-radius:12px;background:#fff;box-shadow:0 30px 70px rgba(20,30,80,.28);overflow:hidden">
+    <div style="height:40px;display:flex;align-items:center;gap:8px;padding:0 14px;background:#f3f3f5;border-bottom:1px solid #e3e3e8"><div style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></div><div style="width:12px;height:12px;border-radius:50%;background:#febc2e"></div><div style="width:12px;height:12px;border-radius:50%;background:#28c840"></div><div style="margin-left:120px;flex:1;max-width:360px;height:26px;border-radius:8px;background:#e6e6ea;font-size:12px;color:#555;display:flex;align-items:center;justify-content:center">depop.com/plug.archive</div></div>
+    <div style="padding:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+      <div style="display:flex;flex-direction:column;gap:6px"><div style="height:165px;border-radius:6px;background:linear-gradient(135deg,#1c1c1c,#6b6b6b)"></div><div style="font-size:13px;font-weight:600;color:#111">Chrome Hearts Cross Ring</div><div style="font-size:12px;color:#666">£1,450</div></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><div style="height:165px;border-radius:6px;background:linear-gradient(135deg,#0f5c46,#c9b27a)"></div><div style="font-size:13px;font-weight:600;color:#111">Rolex Datejust 36</div><div style="font-size:12px;color:#666">£7,900</div></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><div style="height:165px;border-radius:6px;background:linear-gradient(135deg,#e08a2e,#f7d3a3)"></div><div style="font-size:13px;font-weight:600;color:#111">Hermès Birkin 30 Gold</div><div style="font-size:12px;color:#666">£14,200</div></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><div style="height:165px;border-radius:6px;background:linear-gradient(135deg,#6fbf3a,#dff2a8)"></div><div style="font-size:13px;font-weight:600;color:#111">Bottega Jodie</div><div style="font-size:12px;color:#666">£1,120</div></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><div style="height:165px;border-radius:6px;background:linear-gradient(135deg,#b8322f,#f4c0b0)"></div><div style="font-size:13px;font-weight:600;color:#111">Cartier Love Bracelet</div><div style="font-size:12px;color:#666">£5,300</div></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><div style="height:165px;border-radius:6px;background:linear-gradient(135deg,#2b3a8f,#8fa2ff)"></div><div style="font-size:13px;font-weight:600;color:#111">Goyard Saint Louis</div><div style="font-size:12px;color:#666">£1,690</div></div>
+    </div>
+  </div>
+  <div style="position:absolute;left:38%;top:600px;width:660px;height:380px;border-radius:12px;background:#1e1f25;box-shadow:0 30px 70px rgba(20,30,80,.35);overflow:hidden">
+    <div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 14px;color:#aaa;font-size:12px"><div style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></div><div style="width:12px;height:12px;border-radius:50%;background:#febc2e"></div><div style="width:12px;height:12px;border-radius:50%;background:#28c840"></div><span style="margin-left:14px">Photos — stock · september</span></div>
+    <div style="padding:6px 10px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px"><div style="height:108px;background:#ff7a3d"></div><div style="height:108px;background:#ffd23d"></div><div style="height:108px;background:#18b7a0"></div><div style="height:108px;background:#e2358f"></div><div style="height:108px;background:#4c6bff"></div><div style="height:108px;background:#111"></div><div style="height:108px;background:#b2e04a"></div><div style="height:108px;background:#ff4d4d"></div><div style="height:108px;background:#f0e0c0"></div><div style="height:108px;background:#7b3dff"></div></div>
+  </div>
+  <div style="position:absolute;right:3%;top:70px;width:300px;height:620px;border-radius:12px;background:#fffbe8;box-shadow:0 30px 70px rgba(20,30,80,.25);padding:46px 22px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;font-size:14px;color:#3b3320">
+    <div style="font-size:22px;font-weight:700">restock</div><div>— CH cross ring, size 8</div><div>— datejust 36 jubilee</div><div>— birkin 30 gold GHW</div><div>— jodie teen, fondant</div><div>— love bracelet 17</div><div style="color:#9c8f63">call leo re: kelly 25</div><div style="color:#9c8f63">tokyo drop fri</div>
+  </div>
+
+  <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:12%">
+    <div onPointerDown="{{ dragPill }}" style="position:relative;width:320px;height:64px;border-radius:32px;flex:none;cursor:grab;touch-action:none;user-select:none;transform:{{ tPill }}">
+      <div style="position:absolute;inset:0;border-radius:inherit;backdrop-filter:url(#lg-pill) saturate(1.35) brightness(1.06);-webkit-backdrop-filter:blur(2px) saturate(1.5)"></div>
+      <div style="position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(120% 90% at 18% 0%,rgba(255,255,255,.28),rgba(255,255,255,0) 50%);box-shadow:inset 1.5px 2px 0 -.5px rgba(255,255,255,.95),inset -1px -2px 0 -.5px rgba(170,215,255,.8),inset 0 0 14px rgba(255,255,255,.3),0 18px 40px -22px rgba(8,20,70,.4)"></div>
+      <div style="position:absolute;inset:0;border-radius:inherit;pointer-events:none;padding:1.2px;background:conic-gradient(from 210deg,rgba(255,255,255,.95),rgba(255,150,220,.75),rgba(140,200,255,.6),rgba(120,255,225,.7),rgba(255,255,255,.95),rgba(255,215,140,.7),rgba(175,145,255,.7),rgba(255,255,255,.95));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude"></div>
+      <div style="position:relative;height:100%;display:flex;align-items:center;gap:10px;padding:0 18px 0 10px"><img src="assets/plug-icon.png" alt="" draggable="false" style="width:54px;flex:none;margin-top:-4px"><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px"><div style="font-size:21px;font-weight:700;letter-spacing:-.04em;line-height:1">plug</div><div style="font-size:12px;color:rgba(13,20,51,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Depop · Checking your shop</div></div>{{ spin }}</div>
+    </div>
+
+    <div onPointerDown="{{ dragPhone }}" style="position:relative;width:393px;height:852px;border-radius:46px;flex:none;cursor:grab;touch-action:none;user-select:none;transform:{{ tPhone }}">
+      <div style="position:absolute;inset:0;border-radius:inherit;backdrop-filter:url(#lg-phone) saturate(1.35) brightness(1.06);-webkit-backdrop-filter:blur(2px) saturate(1.5)"></div>
+      <div style="position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(90% 40% at 22% 0%,rgba(255,255,255,.22),rgba(255,255,255,0) 55%);box-shadow:inset 2px 3px 0 -1px rgba(255,255,255,.95),inset -2px -3px 0 -1px rgba(170,215,255,.8),inset 0 0 26px rgba(255,255,255,.28),inset 14px 18px 30px -24px rgba(255,255,255,.9),inset -16px -14px 32px -24px rgba(120,190,255,.8),0 30px 60px -30px rgba(8,20,70,.4)"></div>
+      <div style="position:absolute;inset:0;border-radius:inherit;pointer-events:none;padding:1.5px;background:conic-gradient(from 210deg,rgba(255,255,255,.95),rgba(255,150,220,.75),rgba(140,200,255,.6),rgba(120,255,225,.7),rgba(255,255,255,.95),rgba(255,215,140,.7),rgba(175,145,255,.7),rgba(255,255,255,.95));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude"></div>
+      <div style="position:relative;height:100%;box-sizing:border-box;padding:40px 22px 22px;display:flex;flex-direction:column;align-items:center">
+        <img src="assets/plug-icon.png" alt="" draggable="false" style="width:176px">
+        <div style="font-size:60px;font-weight:700;letter-spacing:-.055em;line-height:.9;margin-top:-6px">plug</div>
+        <div style="font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(13,20,51,.62);margin-top:10px">build 001 · concept</div>
+        <div style="margin-top:24px;width:100%;height:40px;border-radius:20px;box-sizing:border-box;padding:3px;border:1px solid rgba(255,255,255,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.7);display:grid;grid-template-columns:1fr 1fr;font-size:14px;font-weight:500">
+          <div style="border-radius:17px;background:rgba(255,255,255,.5);box-shadow:inset 0 1px 0 #fff,0 1px 6px rgba(20,40,120,.12);display:flex;align-items:center;justify-content:center">Depop</div>
+          <div style="display:flex;align-items:center;justify-content:center;color:rgba(13,20,51,.72)">Vestiaire</div>
+        </div>
+        <div style="margin-top:26px;font-size:25px;font-weight:650;letter-spacing:-.03em">connect your shops</div>
+        <div style="margin-top:8px;font-size:14px;line-height:1.45;color:rgba(13,20,51,.7);text-align:center;text-wrap:pretty;max-width:310px">Sign in once. plug lists, answers, negotiates and sells on its own from then on.</div>
+        <div style="margin-top:22px;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="border-radius:26px;border:1px solid rgba(255,255,255,.6);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.03));box-shadow:inset 0 1px 0 rgba(255,255,255,.8);padding:20px 12px 14px;display:flex;flex-direction:column;align-items:center;gap:10px">
+            <div style="width:52px;height:52px;border-radius:50%;background:#ff2300;color:#fff;font-weight:800;font-size:30px;display:flex;align-items:center;justify-content:center;line-height:1">d</div>
+            <div style="font-size:17px;font-weight:600">Depop</div>
+            <div style="width:100%;height:38px;border-radius:19px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.2);box-shadow:inset 0 1px 0 #fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500">Sign in with email</div>
+          </div>
+          <div style="border-radius:26px;border:1px solid rgba(255,255,255,.6);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.03));box-shadow:inset 0 1px 0 rgba(255,255,255,.8);padding:20px 12px 14px;display:flex;flex-direction:column;align-items:center;gap:10px">
+            <div style="width:52px;height:52px;border-radius:50%;background:#f3e9d8;color:#111;font-family:Didot,'Bodoni 72',Georgia,serif;font-weight:700;font-size:30px;display:flex;align-items:center;justify-content:center;line-height:1">V</div>
+            <div style="font-size:17px;font-weight:600">Vestiaire</div>
+            <div style="width:100%;height:38px;border-radius:19px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.2);box-shadow:inset 0 1px 0 #fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500">Sign in with email</div>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="width:100%;height:1px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.7),rgba(255,255,255,0))"></div>
+        <div style="margin-top:14px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(13,20,51,.68)"><svg width="12" height="14" viewBox="0 0 12 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="6" width="10" height="7" rx="2"></rect><path d="M3.5 6V4a2.5 2.5 0 015 0v2"></path></svg>Your sign-ins stay on this Mac.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;refraction&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:90,&quot;min&quot;:0,&quot;max&quot;:200,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Glass&quot;},&quot;bezel&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:28,&quot;min&quot;:6,&quot;max&quot;:80,&quot;step&quot;:1,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Glass&quot;},&quot;dispersion&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:8,&quot;min&quot;:0,&quot;max&quot;:30,&quot;step&quot;:1,&quot;unit&quot;:&quot;%&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Glass&quot;}}">
+class Component extends DCLogic {
+  state = { pill: { x: 0, y: 0 }, phone: { x: 0, y: 0 } };
+  maps = {};
+  // Displacement map: flat (128,128) in the centre, surface normal encoded in R/G across the bezel band.
+  map(W, H, R, B) {
+    const key = [W, H, R, B].join('|');
+    if (this.maps[key]) return this.maps[key];
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const ctx = c.getContext('2d'), img = ctx.createImageData(W, H), d = img.data;
+    const hw = W / 2, hh = H / 2;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const px = x + .5 - hw, py = y + .5 - hh, sx = Math.sign(px) || 1, sy = Math.sign(py) || 1;
+      const qx = Math.abs(px) - (hw - R), qy = Math.abs(py) - (hh - R);
+      let dist, nx, ny;
+      if (qx > 0 && qy > 0) { const l = Math.hypot(qx, qy); dist = R - l; nx = sx * qx / l; ny = sy * qy / l; }
+      else if (qx > qy) { dist = R - qx; nx = sx; ny = 0; }
+      else { dist = R - qy; nx = 0; ny = sy; }
+      const t = Math.min(1, Math.max(0, dist / B));
+      // convex lens profile: slope of a squircle-ish surface, steep at the rim, flat inside
+      const m = Math.pow(1 - t, 2.4) * (t > 0 ? 1 : 0);
+      const i = (y * W + x) * 4;
+      d[i] = 128 - nx * m * 127; d[i + 1] = 128 - ny * m * 127; d[i + 2] = 128; d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    return (this.maps[key] = c.toDataURL());
+  }
+  drag(which) {
+    return (e) => {
+      if (e.button !== 0) return;
+      const start = { x: e.clientX, y: e.clientY }, o = this.state[which];
+      const move = (ev) => this.setState({ [which]: { x: o.x + ev.clientX - start.x, y: o.y + ev.clientY - start.y } });
+      const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+      window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+    };
+  }
+  renderVals() {
+    const k = this.props.refraction ?? 90, disp = (this.props.dispersion ?? 8) / 100, bez = this.props.bezel ?? 28;
+    const pk = k * 0.55;
+    return {
+      mapPhone: this.map(393, 852, 46, bez),
+      mapPill: this.map(320, 64, 32, Math.min(bez * 0.75, 24)),
+      sR: k * (1 + disp), sG: k, sB: k * (1 - disp),
+      pR: pk * (1 + disp), pG: pk, pB: pk * (1 - disp),
+      tPill: `translate(${this.state.pill.x}px, ${this.state.pill.y}px)`,
+      tPhone: `translate(${this.state.phone.x}px, ${this.state.phone.y}px)`,
+      dragPill: this.drag('pill'), dragPhone: this.drag('phone'),
+      spin: React.createElement('div', { style: { width: 22, height: 22, flex: 'none', borderRadius: '50%', border: '2.5px solid rgba(255,255,255,.55)', borderTopColor: '#2fe58f', borderRightColor: 'rgba(160,140,255,.8)', animation: 'plugspin 1.8s linear infinite' } })
+    };
+  }
+}
+</script>
+</body>
+</html>
