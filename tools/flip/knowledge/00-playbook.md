@@ -116,29 +116,23 @@ one-of-one and reworked pieces.
 
 Does not: H&M, Forever 21, Shein, anything basic, anything that photographs flat.
 
-### Fees — and the thing that changes every calculation
+### Fees — the account is United States
 
-He is in **Greece**, and almost all English-language Depop advice is written for a
-US or UK seller and is quietly wrong for him.
+He set the account to the US, and it is true: ITIN, US banks, real presence.
 
-- Depop's 2024 fee removal **does not apply to him**. He pays **10% selling fee**
-  plus payment processing — work on **~13% all-in** until a real payout says
-  otherwise.
-- He is paid through **PayPal**, not Depop Payments.
-- He gets **no Depop shipping labels**. He arranges his own courier and carries the
-  customs and IOSS burden himself.
+- **0% selling fee** on listings created after July 2024 — only processing,
+  ~3.3% + $0.45.
+- **Depop Payments**, so **Depop Protection** governs disputes.
+- **Depop's shipping label is mandatory**, and payout follows the delivery scan.
 
-The one that matters most: because Depop Protection is built around Depop Payments,
-a material part of his dispute exposure probably runs through **PayPal — whose
-Seller Protection does not cover "not as described" at all**. So on those orders the
-listing itself is the entire defence. That is why every flaw gets named, located and
-photographed, without exception. A hidden flaw is not a cosmetic choice, it is an
-uninsured loss.
+Which means **he is not dropshipping**: the parcel carries Depop's label, so it
+passes through his hands. He holds genuine stock and ships it himself. That is
+a shop, not a middleman, and it is the whole difference between him and every
+seller in the guides.
 
-Two legal facts, for him rather than for the app: **DAC7** reports him to AADE once
-he passes 30 sales or €2,000 in a calendar year, and profit from trading secondhand
-goods is taxable in Greece. That is an accountant's job, not the app's. And
-under-declaring customs value is fraud — the app refuses it even when a buyer asks.
+The older research files were written for a Greek seller — 10%, PayPal, no
+labels, IOSS, DAC7. **None of that applies here.** Read them for the craft, not
+for the numbers.
 
 ## Authenticity — the one that ends the business
 

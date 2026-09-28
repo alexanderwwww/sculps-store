@@ -203,29 +203,44 @@ there is no disagreement to manage.
 because it faked being secondhand — the truth here is both accurate and
 stronger.
 
-## The country is a real choice, not a fake one
+## The account is **United States**. Settled.
 
-He has an **ITIN, US bank accounts, and genuine US presence**, and he is a Greek
-citizen living partly in Greece. Both accounts are honestly available to him.
+He set it, and it is true — ITIN, US bank accounts, real US presence. Which
+means this, and it overrides every Greece-based assumption in the older
+research files:
 
-And the discovery that matters: **the UK trick in those videos exists to obtain
-something his Greek account already has legitimately.** Greece gets no Depop
-shipping labels — he arranges his own courier — which is exactly the freedom
-the faker is lying to get. He never needs to misstate anything.
+- **0% selling fee** on listings created after July 2024. Only payment
+  processing, ~3.3% + $0.45.
+- **Depop Payments**, not PayPal. So **Depop Protection** governs disputes, not
+  PayPal's seller protection — which is a straightforwardly better position than
+  the Greek one.
+- **Depop's shipping label is mandatory**, and he is not paid until it scans as
+  delivered.
 
-So the fork is operational:
+### The consequence, and it is the important one
 
-| | **Greece** | **USA** |
-|---|---|---|
-| Selling fee | 10% + processing (~13% all in) | 0% on post-July-2024 listings |
-| Paid through | PayPal | Depop Payments |
-| Shipping label | **his own courier** | **must be Depop's** |
-| Supplier-direct | works | does not — the parcel has to pass through him |
-| Customs / IOSS | his | n/a |
+**He is not dropshipping.** He cannot ship supplier-direct, because the parcel
+has to carry Depop's label, which means it passes through his hands.
 
-**Cheaper but he must touch the goods, versus dearer but ships direct.** For
-genuine designer that he holds anyway, the US side may well win. Decide per
-shop, never by copying a video.
+That is not a limitation, it is the shape of his actual business: he holds
+genuine stock and posts it himself. Every seller in those videos is a middleman
+between AliExpress and a stranger. He is a shop.
+
+What it changes for the app:
+
+- No customs or IOSS handling. Domestic US shipping, Depop's label.
+- Fulfilment is **print the label, pack it, drop it off** — not "paste the
+  buyer's address into AliExpress."
+- Margin is cleaner: source cost → ask price, with only processing in between
+  rather than 13% all in.
+- The dispute exposure the older files were so insistent about is smaller,
+  because Depop Protection covers what PayPal's does not. The photograph-every-
+  flaw discipline stays anyway; it is just insurance now rather than the only
+  defence.
+
+Anything in `01-sourcing-and-margin.md` or `04-authenticity-and-risk.md` that
+assumes 10%, PayPal, no labels, DAC7 or IOSS is **written for the Greek case and
+does not apply to this shop.**
 
 ## Competitor photographs — reference, not repost
 
