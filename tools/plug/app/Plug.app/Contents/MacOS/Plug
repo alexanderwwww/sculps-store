@@ -1,0 +1,233 @@
+#!/bin/bash
+# plug — the launcher.
+#
+# Four jobs, in this order: install the worker beside itself, start the worker,
+# build the window once, then hand this process over to the window. `exec` at
+# the end is deliberate — the window keeps this process id, which is the one
+# Launch Services started from the bundle, so the Dock shows the right icon and
+# Cmd-Q quits the right thing.
+#
+# Two rules in here are load-bearing for the SIGN-IN, which is the thing this
+# app lives or dies on. Both are marked where they appear. Read them before
+# changing anything in this file.
+set -u
+
+HERE="$(cd "$(dirname "$0")/../Resources" && pwd)"
+APP_ROOT="$(cd "$HERE/../.." && pwd)"
+SUPPORT="$HOME/Library/Application Support/Plug"
+LOG="$SUPPORT/log/plug.log"
+mkdir -p "$SUPPORT/worker" "$SUPPORT/bin" "$SUPPORT/log"
+# Every line lands in the log; kept to one generation past 8 MB.
+if [ -f "$LOG" ] && [ "$(stat -f%z "$LOG" 2>/dev/null || echo 0)" -gt 8000000 ]; then
+  mv -f "$LOG" "$LOG.1"
+fi
+
+# launchd's PATH has none of Homebrew in it, and every "node is not installed"
+# alert a Mac app like this ever shows is this line missing.
+export PATH="/opt/homebrew/bin:/usr/local/bin:/opt/homebrew/sbin:$PATH"
+
+say() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG"; }
+alert() {
+  say "ALERT: $1"
+  /usr/bin/osascript -e 'on run argv' -e 'display alert "plug" message (item 1 of argv)' -e 'end run' "$1" >/dev/null 2>&1
+}
+
+say "open — bundle at $APP_ROOT"
+
+# --- what the Mac needs ------------------------------------------------------
+if ! command -v node >/dev/null 2>&1; then
+  alert "Node is not installed. Open Terminal once and run: brew install node — then open plug again."
+  exit 1
+fi
+SWIFTC="$(xcrun -f swiftc 2>/dev/null || true)"
+[ -x "$SWIFTC" ] || SWIFTC=""
+
+# --- the worker, installed beside itself -------------------------------------
+# RULE ONE: replace whenever it DIFFERS, never only when it is newer.
+#
+# An installer that only copies a newer build pins the Mac to the first worker
+# that ever landed there: delete the app, download a new one, open it, and the
+# old code runs again. Every fix after that looks like it was never made. The
+# bundle in front of us is the truth, in either direction.
+BUNDLE_BUILD=1
+RUNTIME_BUILD=0
+if [ -f "$SUPPORT/worker/BUILD" ]; then
+  RUNTIME_BUILD="$(tr -dc '0-9' < "$SUPPORT/worker/BUILD")"
+  RUNTIME_BUILD="${RUNTIME_BUILD:-0}"
+fi
+if [ "$RUNTIME_BUILD" -gt "$BUNDLE_BUILD" ]; then
+  alert "This is an OLD plug (build $BUNDLE_BUILD). A newer one, build $RUNTIME_BUILD, has already run on this Mac — open the most recent Plug from your Downloads and drag this one to the Trash."
+fi
+if [ "$RUNTIME_BUILD" -ne "$BUNDLE_BUILD" ] || [ ! -f "$SUPPORT/worker/main.mjs" ]; then
+  # Replace, never merge. `cp -R src/. dst/` leaves behind every file a later
+  # build dropped, and a stale module nobody can dislodge is its own bug.
+  # node_modules is kept: it is installed here, not shipped.
+  find "$SUPPORT/worker" -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} + 2>/dev/null
+  cp -R "$HERE/worker/." "$SUPPORT/worker/"
+  echo "$BUNDLE_BUILD" > "$SUPPORT/worker/BUILD"
+  say "installed build $BUNDLE_BUILD from the bundle"
+else
+  say "running build $RUNTIME_BUILD"
+fi
+
+# The window shows its own build, so which one is running is never a guess.
+export PLUG_BUILD="$BUNDLE_BUILD"
+
+needs_deps() { [ ! -f "$SUPPORT/worker/node_modules/ws/package.json" ]; }
+
+# The watchdog: if this run never reaches the window, say why, once. A silent
+# bouncing icon is the one failure that tells nobody anything.
+rm -f "$SUPPORT/.window"
+(
+  sleep 75
+  if [ ! -f "$SUPPORT/.window" ]; then
+    /usr/bin/osascript -e 'on run argv' -e 'display alert "plug" message (item 1 of argv)' -e 'end run' \
+      "Still setting up after a minute. Last lines of the log: $(tail -4 "$LOG" | tr '\n' ' ')" >/dev/null 2>&1
+  fi
+) &
+WATCHDOG=$!
+
+# Run something with a ceiling on it. macOS has no `timeout`, and a build step
+# that hangs forever is what a bouncing Dock icon actually is.
+run_bounded() {
+  local secs="$1"; shift
+  "$@" >> "${RUN_BOUNDED_OUT:-$LOG}" 2>&1 &
+  local pid=$! waited=0
+  while kill -0 "$pid" 2>/dev/null; do
+    sleep 1
+    waited=$((waited + 1))
+    if [ "$waited" -ge "$secs" ]; then
+      kill "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+      say "gave up on: $1 (over ${secs}s)"
+      return 124
+    fi
+  done
+  wait "$pid"
+}
+
+# --- the port and the worker --------------------------------------------------
+PORT="$(node -e 'const s=require("net").createServer();s.listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})')"
+export PLUG_PORT="$PORT"
+export PLUG_PARENT_PID="$$"
+export PLUG_HOME="$SUPPORT"
+
+# The worker. Exit 75 means it replaced itself and wants to come back — that is
+# how a live code push lands without him installing anything.
+(
+  cd "$SUPPORT/worker" || exit 1
+  if needs_deps; then
+    say "installing dependencies"
+    if ! run_bounded 300 npm install --no-audit --no-fund; then
+      /usr/bin/osascript -e 'on run argv' -e 'display alert "plug" message (item 1 of argv)' -e 'end run' \
+        "Could not install what the worker needs. Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')" >/dev/null 2>&1
+      exit 1
+    fi
+    say "dependencies installed"
+  fi
+  recovered=0
+  while :; do
+    started=$(date +%s)
+    node main.mjs >> "$LOG" 2>&1
+    code=$?
+    if [ "$code" -eq 75 ]; then say "worker restarting on a new build"; continue; fi
+    running="$(tr -dc '0-9' < "$SUPPORT/worker/BUILD" 2>/dev/null)"; running="${running:-0}"
+    # A pushed build that dies in its first half minute is put aside: the
+    # bundled one is restored and the bad number recorded so it is never pulled
+    # again. A live update must never be able to brick the app.
+    if [ "$code" -ne 0 ] && [ "$recovered" -eq 0 ] && [ "$running" -gt "$BUNDLE_BUILD" ] && [ $(( $(date +%s) - started )) -lt 30 ]; then
+      recovered=1
+      say "build $running died at start (code $code) — back to the bundled build $BUNDLE_BUILD"
+      echo "$running" > "$SUPPORT/worker/BAD"
+      find "$SUPPORT/worker" -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} + 2>/dev/null
+      cp -R "$HERE/worker/." "$SUPPORT/worker/"
+      echo "$BUNDLE_BUILD" > "$SUPPORT/worker/BUILD"
+      /usr/bin/osascript -e 'on run argv' -e 'display alert "plug" message (item 1 of argv)' -e 'end run' \
+        "Build $running would not start, so plug is back on its bundled build. Tell Claude: the last push is bad." >/dev/null 2>&1
+      continue
+    fi
+    if [ "$code" -ne 0 ] && kill -0 "$PLUG_PARENT_PID" 2>/dev/null; then
+      /usr/bin/osascript -e 'on run argv' -e 'display alert "plug" message (item 1 of argv)' -e 'end run' \
+        "The worker stopped (code $code). Last lines of the log: $(tail -3 "$LOG" | tr '\n' ' ')" >/dev/null 2>&1
+    fi
+    break
+  done
+) &
+say "worker starting on port $PORT"
+
+# --- the window, built once ---------------------------------------------------
+# RULE TWO: the compiled binary has ONE NAME, FOREVER.
+#
+# The window has no bundle identity of its own, so WebKit derives its cookie jar
+# from the process name. Name the binary after a hash of its source and every
+# build is a different process name — which is a browser that has never heard of
+# him, and a Depop session left behind under the previous name. He signs in, we
+# ship a fix, he is signed out, and nothing explains why.
+#
+# So: always PlugShell. Whether it needs rebuilding is decided by the key in a
+# file next to it, which no browser ever looks at.
+SHELL_KEY="$(md5 -q "$HERE/Shell/main.swift" 2>/dev/null || md5sum "$HERE/Shell/main.swift" | cut -c1-32)"
+SHELL_BIN="$SUPPORT/bin/PlugShell"
+SHELL_KEY_FILE="$SUPPORT/bin/PlugShell.key"
+
+# Where the macOS SDK is. With only the Command Line Tools installed, swiftc has
+# to be TOLD which SDK to build against, and when xcode-select points at an Xcode
+# that is not there, xcrun answers nothing at all.
+find_sdk() {
+  local sdk
+  sdk="$(xcrun --sdk macosx --show-sdk-path 2>/dev/null || true)"
+  [ -n "$sdk" ] && [ -d "$sdk" ] && { printf '%s' "$sdk"; return 0; }
+  for candidate in \
+    /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+    /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk; do
+    [ -d "$candidate" ] && { printf '%s' "$candidate"; return 0; }
+  done
+  return 1
+}
+
+build_window() {
+  [ -n "$SWIFTC" ] || return 1
+  local sdk arch
+  sdk="$(find_sdk || true)"
+  arch="$(uname -m)"
+  if [ -z "$sdk" ] && [ -d /Library/Developer/CommandLineTools ]; then
+    export DEVELOPER_DIR=/Library/Developer/CommandLineTools
+    sdk="$(find_sdk || true)"
+    SWIFTC="$(xcrun -f swiftc 2>/dev/null || printf '%s' "$SWIFTC")"
+  fi
+  if [ -n "$sdk" ]; then
+    say "building the window (sdk $sdk, $arch)"
+    run_bounded 60 "$SWIFTC" -O -sdk "$sdk" -target "$arch-apple-macosx12.0" \
+      -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
+    run_bounded 60 "$SWIFTC" -O -sdk "$sdk" \
+      -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
+  else
+    say "building the window (no sdk found)"
+  fi
+  run_bounded 60 "$SWIFTC" -O -framework Cocoa -framework WebKit -o "$SHELL_BIN" "$HERE/Shell/main.swift" && return 0
+  return 1
+}
+
+BUILT_KEY=""
+[ -f "$SHELL_KEY_FILE" ] && BUILT_KEY="$(cat "$SHELL_KEY_FILE")"
+if [ ! -x "$SHELL_BIN" ] || [ "$BUILT_KEY" != "$SHELL_KEY" ]; then
+  SHELL_STARTED="$(date +%s)"
+  if build_window; then
+    printf '%s' "$SHELL_KEY" > "$SHELL_KEY_FILE"
+    say "the window is ready ($(( $(date +%s) - SHELL_STARTED ))s)"
+  else
+    rm -f "$SHELL_BIN" "$SHELL_KEY_FILE"
+    kill "$WATCHDOG" 2>/dev/null || true
+    alert "plug's window could not be built. Apple's build tools are missing or broken. Open Terminal once and run:   xcode-select --install   — then open plug again."
+    exit 1
+  fi
+else
+  say "the window is already built"
+fi
+
+# --- run ----------------------------------------------------------------------
+say "window on 127.0.0.1:$PORT"
+: > "$SUPPORT/.window"
+kill "$WATCHDOG" 2>/dev/null || true
+
+exec "$SHELL_BIN" "$PORT" "$HERE/AppIcon.icns"
