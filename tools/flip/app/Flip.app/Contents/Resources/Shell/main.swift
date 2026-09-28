@@ -209,6 +209,22 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   var activePane: Int = 0
   /// The glass face. Always built, only visible when the window is an orb.
   var orb: WKWebView?
+  /*
+   * The orb, drawn by AppKit rather than by a web view.
+   *
+   * A WKWebView composites an OPAQUE WHITE BASE under its page. `drawsBackground`
+   * is a private key and it is not taking on his macOS, so no matter what the
+   * material was, what the canvas painted, or how transparent the HTML claimed
+   * to be, the orb arrived as a white tile. Three builds were spent thinning a
+   * material that was never the thing in the way.
+   *
+   * So the orb has no web view in it. A transparent window, a hairline border
+   * for the edge, and three labels. Nothing can paint it white because nothing
+   * paints it at all — what shows through is his screen.
+   */
+  var orbName: NSTextField?
+  var orbDoing: NSTextField?
+  var orbCount: NSTextField?
   /// The frost between the live page and the glass. Only there when folded.
   var frost: NSVisualEffectView?
   /// The one control the open window has: a chip that folds it back.
@@ -505,6 +521,30 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     label.isSelectable = false
     container.addSubview(label)
 
+    /* The orb's own type. Centred, white, each with its own shadow so it holds
+       over anything on his screen — there is no panel behind it now. */
+    func orbLabel(_ text: String, size: CGFloat, weight: NSFont.Weight,
+                  alpha: CGFloat, tracking: CGFloat) -> NSTextField {
+      let field = NSTextField(labelWithString: text)
+      field.font = NSFont.systemFont(ofSize: size, weight: weight)
+      field.textColor = NSColor.white.withAlphaComponent(alpha)
+      field.alignment = .center
+      field.isSelectable = false
+      field.lineBreakMode = .byTruncatingTail
+      field.shadow = {
+        let drop = NSShadow()
+        drop.shadowColor = NSColor.black.withAlphaComponent(0.85)
+        drop.shadowBlurRadius = 4
+        drop.shadowOffset = NSSize(width: 0, height: -1)
+        return drop
+      }()
+      container.addSubview(field)
+      return field
+    }
+    orbName = orbLabel("flip", size: 11, weight: .bold, alpha: 0.62, tracking: 4)
+    orbDoing = orbLabel("waking", size: 14, weight: .semibold, alpha: 0.98, tracking: 0)
+    orbCount = orbLabel("", size: 10, weight: .bold, alpha: 0.5, tracking: 2)
+
     container.onTap = { [weak self] in
       guard let self = self else { return }
       guard self.shape == .orb else { return }
@@ -595,6 +635,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
      */
     let stamp = ProcessInfo.processInfo.environment["FLIP_BUILD"] ?? ""
     orbBuild = stamp.isEmpty ? "" : String(stamp.suffix(5))
+    orbName?.stringValue = orbBuild.isEmpty ? "flip" : "flip \u{00B7} " + orbBuild
     orbView.loadHTMLString(
       Shell.orbHTML.replacingOccurrences(
         of: "{{BUILD}}", with: orbBuild.isEmpty ? "" : " \u{00B7} " + orbBuild),
@@ -977,11 +1018,17 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
     /* The orb owns the whole window and nothing else is on screen — no panes,
        no status line, no button. A piece of glass with one thing in it. */
+    /* The orb's web view is never shown. It is kept only because the message
+       handler and the telemetry plumbing hang off it; the shape he looks at is
+       drawn by AppKit. See the note on orbName. */
     orb?.frame = bounds
-    orb?.isHidden = shape != .orb
+    orb?.isHidden = true
     frost?.isHidden = true
     /* Back for every shape but the orb, which hides it again below. */
     effect?.isHidden = false
+    let isOrb = shape == .orb
+    for field in [orbName, orbDoing, orbCount] { field?.isHidden = !isOrb }
+    if !isOrb { container.layer?.borderWidth = 0 }
     collapse?.isHidden = shape == .orb || shape == .pill
     if shape == .working {
       /*
@@ -1057,6 +1104,20 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
        * back for every other shape, where a page is drawn over it anyway.
        */
       effect?.isHidden = true
+
+      /*
+       * The edge, and the three lines. That is the whole orb.
+       *
+       * A hairline of white on the window's own layer gives the shape a rim —
+       * what a piece of clear glass actually has — and everything inside it is
+       * his screen, untouched.
+       */
+      container.layer?.borderWidth = 1
+      container.layer?.borderColor = NSColor.white.withAlphaComponent(0.34).cgColor
+      let mid = bounds.height / 2
+      orbName?.frame = NSRect(x: 12, y: mid + 26, width: bounds.width - 24, height: 16)
+      orbDoing?.frame = NSRect(x: 12, y: mid - 2, width: bounds.width - 24, height: 22)
+      orbCount?.frame = NSRect(x: 12, y: mid - 26, width: bounds.width - 24, height: 14)
       /* Nothing here is a pane. The whole orb is a handle, so it drags — and
          ChromeView calls back on a mouse-up that never moved, which is the
          click that opens it. */
@@ -1209,6 +1270,64 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     // nothing to set and naming it here would not compile.)
     config.mediaTypesRequiringUserActionForPlayback = []
     config.userContentController.add(self, name: "organic")
+    /*
+     * Take the two dead buttons off Depop's sign-in sheet, permanently.
+     *
+     * "every time I try to connect, it connects to my iCloud and then it brings
+     * me back to the login screen." That is Continue with Apple: it hands the
+     * browser to iCloud, iCloud hands it back, and an embedded web view cannot
+     * finish the handshake — so the login page reappears, every time, forever.
+     * Continue with Google is the same story for a different reason. Nothing
+     * about this app is being detected; those two flows simply cannot complete
+     * anywhere except a real browser.
+     *
+     * The previous attempt clicked "Continue with email" once, on a timer,
+     * after he pressed a chip. It missed whenever he opened the sheet himself
+     * or React re-rendered the modal. So this is a user script instead: it runs
+     * on every page and every frame at document end, and a MutationObserver
+     * keeps running it as the app re-renders. The two buttons are removed from
+     * the DOM outright, so the only route left is the one that works.
+     *
+     * It touches nothing but those two controls, and only on depop.com.
+     */
+    let onlyEmail = """
+    (function(){
+      var host = location.hostname || "";
+      if (host !== "depop.com" && host.indexOf(".depop.com") < 0) return;
+      function dead(text){
+        var t = (text || "").toLowerCase();
+        if (t.indexOf("google") >= 0) return true;
+        if (t.indexOf("apple") >= 0) return true;
+        return false;
+      }
+      /* Not by matching the verb. His account is served Greek, where the label
+         is "Συνέχεια με την Google" — accented, and an accent is why the first
+         version of this left the Google button standing. A short control whose
+         label names Google or Apple on a Depop page is the auth button in any
+         language; the only near-miss worth excluding by hand is Apple Pay. */
+      function payment(text){
+        return (text || "").toLowerCase().indexOf("pay") >= 0;
+      }
+      function strip(){
+        var nodes = document.querySelectorAll("button, a, [role=button]");
+        for (var i = 0; i < nodes.length; i++) {
+          var n = nodes[i];
+          var t = (n.textContent || "").trim();
+          if (t.length > 40) continue;
+          if (!dead(t) || payment(t)) continue;
+          var box = n.closest("li") || n;
+          if (box && box.parentNode) box.parentNode.removeChild(box);
+        }
+      }
+      strip();
+      var mo = new MutationObserver(strip);
+      mo.observe(document.documentElement, { childList: true, subtree: true });
+    })();
+    """
+    config.userContentController.addUserScript(
+      WKUserScript(source: onlyEmail,
+                   injectionTime: .atDocumentEnd,
+                   forMainFrameOnly: false))
     /* Guarded like the other two. This runs during launch, four times, and an
        NSUnknownKeyException out of AppKit cannot be caught in Swift — so the
        day this key goes it is a dead Dock icon with no alert. */
@@ -1402,6 +1521,7 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         orb?.evaluateJavaScript(
           "window.__orb&&window.__orb.set({taken:\(taken),budget:\(budget)})",
           completionHandler: nil)
+        orbCount?.stringValue = "\(taken) LISTED \u{00B7} \(budget) LIVE"
       }
     /* {t:"window", do:"pane", id:"alibaba"} — which slot is active. */
     case "pane":
@@ -1603,6 +1723,8 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   func setStatus(_ text: String?, dot: String?) {
     if let text = text {
       statusLabel?.stringValue = text
+      /* The orb wears the same line, natively — it has no page to tell. */
+      orbDoing?.stringValue = text
       /* The same words on the glass. The orb is not a second screen to keep
          in sync by hand — it is told whatever the status line is told. */
       if let data = try? JSONSerialization.data(withJSONObject: [text], options: []),

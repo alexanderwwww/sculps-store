@@ -185,3 +185,36 @@ for comparison — that comparison is what finally proved where the milk came fr
 
 **Every design round is rendered and looked at here before it is packed.** Not
 described, not reasoned about — opened.
+
+## The orb has no web view in it — that was the milk
+
+Four builds were spent thinning a material. The material was never in the way.
+
+**`WKWebView` composites an opaque white base under its page.** `drawsBackground` is
+a private key and it does not take on his macOS, and `underPageBackgroundColor` only
+covers the overscroll area. So no matter what the material was, what the canvas
+painted, or how transparent the HTML claimed to be, a white rectangle sat on top of
+all of it.
+
+So the orb is drawn by AppKit: a transparent window, a **1pt white hairline at 34%**
+on the container's own layer for the edge, and three `NSTextField`s — name (11pt bold,
+62% white), the status line (14pt semibold, 98%), and the count (10pt bold, 50%). Each
+carries its own `NSShadow` (black 85%, blur 4, offset 0,-1) because there is no panel
+behind them any more. `setStatus` writes to `orbDoing` as well as the pill's label.
+
+The web view stays in the tree — the message handler and telemetry hang off it — but
+it is `isHidden = true` in every shape. **Nothing paints the orb, so nothing can make
+it white.**
+
+## Debugging a "the glass is not clear" report, in order
+
+Four rounds were lost going in the wrong order. Check these from the top:
+
+1. **Is a web view over it?** WKWebView's white base beats everything below it.
+2. **Is a material behind it?** Every AppKit material is a tinted panel; there is no
+   thin one. The orb uses none.
+3. **Is our own canvas painting it?** Scrims, ribbons, glare, caustics — invisible
+   under a heavy material and the only thing left once it is gone.
+4. **Only then the tint numbers.**
+
+And before any of it: check the build number on the orb matches what was packed.

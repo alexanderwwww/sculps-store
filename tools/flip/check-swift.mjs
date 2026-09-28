@@ -13,7 +13,7 @@ import { readFile } from "node:fs/promises";
 
 const APPLE = new Set(`
 NSObject NSApp NSApplication NSWindow NSView NSEvent NSMenu NSMenuItem NSAlert NSImage NSColor NSRect NSSize NSPoint
-NSText NSTextField NSButton NSScreen NSNotification NotificationCenter NSValue NSNumber NSString NSData NSError NSBezierPath
+NSShadow NSText NSTextField NSButton NSScreen NSNotification NotificationCenter NSValue NSNumber NSString NSData NSError NSBezierPath
 WKWebView WKWebViewConfiguration WKWebsiteDataStore WKUserContentController WKUserScript WKScriptMessage
 WKScriptMessageHandler WKNavigation WKNavigationDelegate WKUIDelegate WKNavigationAction WKWindowFeatures WKFrameInfo WKPreferences WKUserScriptInjectionTime
 URL URLRequest URLSession URLSessionConfiguration URLSessionWebSocketTask URLSessionWebSocketDelegate URLResponse

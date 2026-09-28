@@ -15,6 +15,8 @@ node "$HERE/check-swift.mjs" "$SWIFT"
 # The page's code is rebuilt from its parts, so the bundle can never carry a
 # stale one: agent.built.js is generated, never edited.
 node "$HERE/worker/agent/build.mjs"
+# The sign-in sheet: the two buttons that can never work must be off it.
+( cd "$HERE" && node test/onlyemail.test.mjs )
 # Only now is the old bundle worker thrown away. Emptying it first meant any
 # failure in the two steps above left Resources/worker empty under `set -eu`,
 # and an empty worker reaches Alex as the same alert we are here to fix.
