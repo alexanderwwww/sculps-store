@@ -196,6 +196,62 @@ ipcMain.handle("shape", async (_event, next) => {
   return shape;
 });
 
+/*
+ * Sign in — the one flow everything else waits on.
+ *
+ * The marketplace's own page goes inside the phone, below the glass chrome,
+ * and he types into it. It is his session, in a named partition no rebuild
+ * touches, and the two buttons that cannot work are gone from the sheet
+ * before he ever sees it.
+ */
+ipcMain.handle("signin", async (_event, id) => {
+  const shop = shopFor(id);
+  if (!shop || !win) return { ok: false, why: "no such shop" };
+  const b = win.getBounds();
+  /* Inset, so the rim and the ✕ stay visible around it — the page is inside
+     plug rather than the other way round. */
+  shop.show({ x: 10, y: 74, width: b.width - 20, height: b.height - 96 });
+  await shop.go(shop.spec.signin);
+  return { ok: true };
+});
+
+/** Back to plug's own screen; the page stays signed in behind it. */
+ipcMain.handle("close-shop", (_event, id) => {
+  const shop = shops.get(id);
+  if (shop) shop.hide();
+  return { ok: true };
+});
+
+/**
+ * One pass: is he in, and what does each shop say.
+ *
+ * Every failure comes back as a sentence rather than as silence, and a shop
+ * that cannot be read is never reported as empty — unknown stays unknown,
+ * because a shut door and a quiet day look identical from here.
+ */
+ipcMain.handle("pass", async () => {
+  const out = [];
+  for (const id of Object.keys(SITES)) {
+    const shop = shopFor(id);
+    const row = { id, name: SITES[id].name, signedIn: null, trouble: null };
+    try {
+      const url = shop.view.webContents.getURL();
+      if (!url || url === "about:blank") await shop.go(SITES[id].home);
+      const status = await shop.accountStatus();
+      if (typeof status.signedIn !== "boolean") {
+        row.trouble = `${SITES[id].name} did not answer`;
+      } else {
+        row.signedIn = status.signedIn;
+        if (!status.signedIn) row.trouble = `not signed into ${SITES[id].name}`;
+      }
+    } catch (error) {
+      row.trouble = `${SITES[id].name}: ${error?.message ?? "something went wrong"}`;
+    }
+    out.push(row);
+  }
+  return out;
+});
+
 ipcMain.handle("open-external", (_event, url) => {
   if (typeof url === "string" && /^https:\/\//.test(url)) shell.openExternal(url);
 });

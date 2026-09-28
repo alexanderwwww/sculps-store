@@ -217,3 +217,23 @@ the whole screen switches between dark ink and light. Cheap, once per capture.
 
 **Render every screen over a dark desktop as well as a light one.** A design
 checked on one surface is a design checked on half of them.
+
+## An edit that replaces a RANGE deletes what was inside it
+
+plug's buttons did nothing, and the cause was mine from two builds earlier:
+rewriting the morph handler by replacing everything between
+`ipcMain.handle("shape"` and `ipcMain.handle("open-external"` — and the
+`signin`, `close-shop` and `pass` handlers were sitting in that range. They
+were deleted, silently, and nothing said so.
+
+Every test still passed. They tested that the button *fires*, which it did;
+the app simply had no handler to answer it. **"The click fires" is not "it
+works".**
+
+So: after any edit that replaces a range rather than an anchor, **count what
+should still be there**. And test the thing he actually does — press the
+button, then ask whether the marketplace is now on screen.
+
+`test/signin.test.mjs` runs the real main.js, presses Sign in with email, and
+asserts a Depop page is loaded, visible, inside the glass, with the dead
+buttons already stripped. That is the test that found this.
