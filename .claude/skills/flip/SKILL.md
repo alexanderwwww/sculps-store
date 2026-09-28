@@ -27,6 +27,32 @@ follow.
 
 Volume Y2K can come later as a second shop. One shop points at one person.
 
+## Where the account actually stands — September 2026
+
+**Cold. No sales, no reviews, no payment set up.** This is the state the app
+must assume until he says otherwise, and it governs what it is allowed to do.
+
+Three consequences, in order:
+
+1. **He cannot be paid yet.** Depop Payments is not set up — no US bank, no tax
+   details. A sale tomorrow has nowhere to land. Settings → Payments, his US
+   bank, his ITIN, his US address. This is the first thing, and it is his.
+2. **The account has zero trust.** Every seller in the guides says the same
+   thing: a new account that starts posting gets banned, and Depop IP-bans, so
+   the next one dies with it. About a week of behaving like a person —
+   browsing, liking, following — **done by him, not by the app**, because an
+   app doing it is precisely the rhythm that gets flagged.
+3. **Then 3–4 real things he owns**, listed cheap and sold, for the first
+   reviews. That is the trust everything after depends on.
+
+**So the cap is five listings a week** until the account has age and history,
+and the app enforces it rather than letting him walk into a ban in week two.
+The luxury pieces start after the first reviews, not before — a €900 listing on
+a shop with no sales and no picture does not sell anyway.
+
+The app's job in the first fortnight is small and exact: write those first few
+listings properly, answer instantly, and hold the line on the cap.
+
 ## The business
 
 He is a plug in real life. He can get anything from Nike to a Birkin. That is the
