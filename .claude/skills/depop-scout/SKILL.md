@@ -143,7 +143,12 @@ lose this.
 
 ## What the Scout is not allowed to do
 
-- Recommend sourcing a **replica**, ever, whatever the margin looks like.
-- Copy a competitor's **photographs or description**.
+- Recommend sourcing a **replica**, ever, whatever the margin looks like. He
+  sources genuine at every level, which is the shop's entire advantage over
+  every seller it is reading.
+- Repost a competitor's **photograph or description**. Their image is
+  reference input for generating his own — which is automatic and no slower —
+  never the file that gets uploaded. Depop's duplicate detection is the flag
+  that bans accounts.
 - Present a number it did not read. If it could not get the listing age, it says
   "age unknown" — it does not invent a velocity.

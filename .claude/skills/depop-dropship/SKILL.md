@@ -182,36 +182,94 @@ reselling.
 
 ---
 
+# His situation, and what it settles
+
+Written down because three of the four objections below stopped being
+objections the moment he said what his actual position is.
+
+## He sources genuine, at any level
+
+He is a real plug. Rolex, Birkin, Chrome Hearts, and the whole range beneath
+them — genuine, in hand or reachable. That is not a claim the app has to
+verify; it is the premise it is built on, and it is the thing none of the
+sellers in those videos have.
+
+So the shop is a **genuine goods** shop, and the replica question is closed by
+him rather than by me. The rule stays in the code because a rule that only
+lives in a conversation is a rule that gets forgotten on a busy Tuesday, but
+there is no disagreement to manage.
+
+**His stock is new.** So listings say new. "Worn once" was only ever wrong
+because it faked being secondhand — the truth here is both accurate and
+stronger.
+
+## The country is a real choice, not a fake one
+
+He has an **ITIN, US bank accounts, and genuine US presence**, and he is a Greek
+citizen living partly in Greece. Both accounts are honestly available to him.
+
+And the discovery that matters: **the UK trick in those videos exists to obtain
+something his Greek account already has legitimately.** Greece gets no Depop
+shipping labels — he arranges his own courier — which is exactly the freedom
+the faker is lying to get. He never needs to misstate anything.
+
+So the fork is operational:
+
+| | **Greece** | **USA** |
+|---|---|---|
+| Selling fee | 10% + processing (~13% all in) | 0% on post-July-2024 listings |
+| Paid through | PayPal | Depop Payments |
+| Shipping label | **his own courier** | **must be Depop's** |
+| Supplier-direct | works | does not — the parcel has to pass through him |
+| Customs / IOSS | his | n/a |
+
+**Cheaper but he must touch the goods, versus dearer but ships direct.** For
+genuine designer that he holds anyway, the US side may well win. Decide per
+shop, never by copying a video.
+
+## Competitor photographs — reference, not repost
+
+His argument: he is selling the genuine article, and the competitor already
+took a good photograph, so reposting it saves work that cannot be automated.
+
+The resolution that keeps the speed and drops the risk: **their image goes in
+as reference, the app generates its own.** That is automatic — no search, no
+shoot, no slower than copying — and it avoids the two things that actually cost
+money: Depop's duplicate-image detection, which is the flag that bans accounts
+and which the method's own mockup section is emphatic about, and a buyer whose
+parcel does not match the picture.
+
+And when the piece is in his hands, his own photographs beat every dropshipper
+on the platform. On a €900 item that is the moat, not a chore.
+
+---
+
 # What flip will not do
 
 Four things appear in these videos that are not aggressive tactics, they are the
 end of the business. flip refuses them, and the refusal is in the code, not just
 in this file.
 
-### Faking the account's country
+### Misstating where the account is
 
-One seller sets his country of origin to the **United Kingdom** while living in
-the US, specifically so Depop lets him use his own shipping label instead of
-theirs, and so he gets paid without Depop's delivery confirmation.
+One seller sets his country to the **United Kingdom** from the US, purely to
+escape Depop's label-and-delivery payment protection.
 
-That is deliberately defeating the platform's payment protection by lying about
-where he is. It is fraud on Depop and on every buyer. When it is caught the
-account goes and the balance goes with it, and the balance is the point.
-**flip will not set or suggest a false country.**
+Alex does not need this and must never do it: he has genuine US and Greek
+positions, and the Greek one already carries the freedom being faked. Lying
+about location defeats the platform's payment protection, and when it is caught
+the balance goes with the account. **flip states a true country, and picks
+between his two on the operational trade-off above.**
 
 ### Replicas
 
-"Balenciaga hoodie, $30 from the supplier, list at £500." That is a counterfeit,
-sold as genuine. A third seller says quietly that reps "make a bunch of money
-but you will get banned — delete them before you scale," which tells you they
-know.
+Closed by him: everything he sells is genuine. The rule stays in the code
+anyway, because it is the one mistake that cannot be undone — counterfeit
+trafficking is a crime rather than a policy breach, and it ends in seized funds
+and chargebacks.
 
-Counterfeit trafficking is a crime, not a policy violation. It ends in seized
-funds, chargebacks, and for a real business a legal problem. **flip will not
-list a replica, and when sourcing is ambiguous it asks rather than assumes.**
-
-This matters most precisely because Alex *can* get the real thing. His whole
-advantage disappears the moment the shop carries one fake.
+**flip does not list an item it cannot treat as genuine, and asks when sourcing
+is ambiguous rather than assuming.**
 
 ### Copying a competitor's photos and description
 
@@ -221,14 +279,13 @@ It is someone else's copyright, Depop detects duplicates, and it puts the shop
 in the same image catalogue everyone else is in. The mockup section of this same
 method says exactly why that is fatal. **flip writes its own, always.**
 
-### Lying about the item's history
+### Inventing a history the item does not have
 
-"Worn once." "Never worn." Written on an item that has never been in his hands,
-to imply it is his own secondhand piece.
+"Worn once" on something that was never in his hands, to imply a secondhand
+piece. His stock is new, so the honest word is **new** — which is also the
+stronger word, and the one that does not get quoted back in a claim.
 
-It is small, and it is the exact sentence a buyer quotes in a not-as-described
-claim. **flip describes the item truthfully.** New from supplier is new from
-supplier, and it says so.
+**flip describes the item truthfully.**
 
 ---
 
