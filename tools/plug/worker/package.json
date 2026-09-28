@@ -1,0 +1,9 @@
+{
+  "name": "plug-worker",
+  "private": true,
+  "type": "module",
+  "description": "plug's brain: it reads the board, thinks with Claude, writes the work, and shows it. It never presses send.",
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
