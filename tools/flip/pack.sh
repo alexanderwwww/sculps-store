@@ -17,6 +17,10 @@ node "$HERE/check-swift.mjs" "$SWIFT"
 node "$HERE/worker/agent/build.mjs"
 # The sign-in sheet: the two buttons that can never work must be off it.
 ( cd "$HERE" && node test/onlyemail.test.mjs )
+# And that flip can really drive a browser: launch it, open a page, inject the
+# agent, run an act, survive a navigation. --no-sandbox is for THIS container
+# only; his Mac never gets it.
+( cd "$HERE/worker" && FLIP_CHROME_ARGS="--no-sandbox --headless=new" node ../test/chrome.test.mjs )
 # Only now is the old bundle worker thrown away. Emptying it first meant any
 # failure in the two steps above left Resources/worker empty under `set -eu`,
 # and an empty worker reaches Alex as the same alert we are here to fix.

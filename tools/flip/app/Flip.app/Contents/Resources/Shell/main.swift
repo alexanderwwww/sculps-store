@@ -1084,6 +1084,31 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     let dy = Double(origin.y - previous.y)
     if abs(dx) < 0.5 && abs(dy) < 0.5 { return }
     orb?.evaluateJavaScript("window.__orb&&window.__orb.move(\(dx),\(dy))", completionHandler: nil)
+    /*
+     * The water answers the hand.
+     *
+     * "sees the backround and transfomrs as it moves." The lens already bends
+     * whatever is behind the window, so carrying the orb across the screen
+     * changes what it is bending on its own. This is the other half: the drop
+     * lags behind the movement. Its centre is pushed the opposite way to the
+     * drag and its thickness swells with the speed, then both settle back —
+     * which is what a body of liquid does when the glass holding it moves.
+     *
+     * Written straight onto the presentation layer inside a CATransaction with
+     * a short ease, so it is a slosh rather than a jump, and so it does not
+     * fight the long drift animation underneath it.
+     */
+    guard let layer = body?.layer else { return }
+    let speed = min(1.0, (abs(dx) + abs(dy)) / 26)
+    let size = layer.bounds
+    CATransaction.begin()
+    CATransaction.setAnimationDuration(0.34)
+    CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(controlPoints: 0.2, 1, 0.3, 1))
+    layer.setValue(
+      CIVector(x: size.width / 2 - CGFloat(dx) * 0.9, y: size.height / 2 - CGFloat(dy) * 0.9),
+      forKeyPath: "backgroundFilters.lens.inputCenter")
+    layer.setValue(0.42 + speed * 0.34, forKeyPath: "backgroundFilters.lens.inputScale")
+    CATransaction.commit()
   }
 
   /** Put the panes and the status line where this shape wants them. */
@@ -1111,6 +1136,11 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     }
     if !isOrb {
       container.layer?.borderWidth = 0
+      container.layer?.backgroundFilters = []
+      container.layer?.removeAnimation(forKey: "drift")
+      container.layer?.removeAnimation(forKey: "swell")
+      bevel?.isHidden = true
+      bevelInner?.isHidden = true
       /* Off the moment it is a window onto a page — a highlight sliding over
          Depop would be somebody else's app with a effect stuck on it. */
       sheen?.isHidden = true
@@ -1201,6 +1231,94 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
        */
       container.layer?.borderWidth = 1
       container.layer?.borderColor = NSColor.white.withAlphaComponent(0.34).cgColor
+
+      /*
+       * The lens: what makes it liquid glass rather than a tinted hole.
+       *
+       * In Apple's own material the centre is clear and the EDGE BENDS what is
+       * behind it — text passing under the rim stretches and displaces, the way
+       * it does under a real drop of water. That is refraction, and no amount
+       * of light painted on top produces it.
+       *
+       * `backgroundFilters` is the public way to put a Core Image filter
+       * between the window and whatever is behind it. A bump with a radius a
+       * little larger than the orb and a gentle scale leaves the middle alone
+       * and does its work at the rim, which is exactly the shape of a lens.
+       *
+       * ASSUMPTION, and it is the one thing here that cannot be proved from a
+       * container: that macOS still composites backgroundFilters against the
+       * desktop for a non-opaque window. If it is ignored, nothing breaks —
+       * the orb stays clear and keeps its bevel, and the refraction is simply
+       * absent. That is why this is additive rather than load-bearing.
+       */
+      if let layer = container.layer {
+        let lens = CIFilter(name: "CIBumpDistortion")
+        lens?.setValue(CIVector(x: bounds.width / 2, y: bounds.height / 2), forKey: "inputCenter")
+        lens?.setValue(bounds.width * 0.78, forKey: "inputRadius")
+        /* Small. A strong bump is a fisheye toy; this is a pane of glass with
+           a thickness, and the give-away is only at the edge. */
+        lens?.setValue(0.42, forKey: "inputScale")
+        /* Named, because a filter can only be animated through a key path and
+           the key path goes through its name. */
+        lens?.name = "lens"
+        layer.backgroundFilters = [lens].compactMap { $0 }
+        layer.masksToBounds = true
+
+        /*
+         * And the drop moves.
+         *
+         * "literally like a drop of water transforming the background." A lens
+         * that sits still is a fixed distortion and the eye stops seeing it
+         * within a second. Drifting the bump's centre on a long, uneven path
+         * makes the background bend and release as it passes — the background
+         * is what moves, not a graphic on top of it, which is the whole
+         * difference between this and the glow he rejected.
+         *
+         * Slow: 11 seconds one way, 14 back, so the two never line up and it
+         * never reads as a loop.
+         */
+        if layer.animation(forKey: "drift") == nil {
+          let drift = CABasicAnimation(keyPath: "backgroundFilters.lens.inputCenter")
+          drift.fromValue = CIVector(x: bounds.width * 0.36, y: bounds.height * 0.58)
+          drift.toValue = CIVector(x: bounds.width * 0.64, y: bounds.height * 0.44)
+          drift.duration = 11
+          drift.autoreverses = true
+          drift.repeatCount = .infinity
+          drift.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0, 0.2, 1)
+          layer.add(drift, forKey: "drift")
+
+          /* The thickness breathes with it, so the edge swells and settles the
+             way the surface of a drop does. */
+          let swell = CABasicAnimation(keyPath: "backgroundFilters.lens.inputScale")
+          swell.fromValue = 0.34
+          swell.toValue = 0.52
+          swell.duration = 14
+          swell.autoreverses = true
+          swell.repeatCount = .infinity
+          swell.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+          layer.add(swell, forKey: "swell")
+        }
+      }
+
+      /* The two rings, redrawn for this size. The mask is a stroked rounded
+         rectangle, so what survives is a band of gradient the width of the
+         stroke — bright where the light comes from, cool at the far side. */
+      for (index, ring) in [bevel, bevelInner].enumerated() {
+        guard let ring = ring, let shape = ring.mask as? CAShapeLayer else { continue }
+        ring.isHidden = false
+        ring.frame = bounds
+        let inset = CGFloat(index) * 3.5 + 0.75
+        let width: CGFloat = index == 0 ? 1.5 : 1
+        shape.frame = ring.bounds
+        shape.fillColor = NSColor.clear.cgColor
+        shape.strokeColor = NSColor.black.cgColor
+        shape.lineWidth = width
+        shape.path = CGPath(
+          roundedRect: bounds.insetBy(dx: inset, dy: inset),
+          cornerWidth: radiusFor(.orb) - inset,
+          cornerHeight: radiusFor(.orb) - inset,
+          transform: nil)
+      }
 
       /* The sweep, running only while the orb is the shape. Its own corner
          radius, so the light stops at the squircle instead of at a rectangle. */

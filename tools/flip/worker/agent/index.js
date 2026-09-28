@@ -369,6 +369,23 @@
     },
   };
 
+  /*
+   * The same acts, reachable without the app's message handler.
+   *
+   * When flip drives his own Chrome there is no `webkit.messageHandlers` to
+   * post to — the worker speaks the DevTools protocol and evaluates an
+   * expression in the page. So the dispatch table gets a front door. Every
+   * recipe, every reader, every hand is identical whichever browser it is;
+   * only the way the instruction arrives differs.
+   */
+  O.act = function (name, args) {
+    var fn = ACTS[name];
+    if (!fn) return Promise.reject(new Error("unknown act: " + name));
+    return Promise.resolve().then(function () {
+      return fn(args || {});
+    });
+  };
+
   function fromApp(jsonText) {
     var msg;
     try {
