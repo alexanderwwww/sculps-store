@@ -86,6 +86,52 @@
     scroll: function (a) {
       return O.hands.scroll(a.px == null ? root.innerHeight : a.px, { pace: a.pace });
     },
+    /**
+     * Put a value in one named field of the sell form.
+     *
+     * Named rather than by selector, because the brain should say "price" and
+     * not carry Depop's markup around. Everything it cannot find comes back
+     * `found:false` — never a quiet success, which is the failure that told him
+     * work was done that never happened.
+     */
+    fill: function (a) {
+      var desk = O.read.deskSite && O.read.deskSite();
+      if (!desk || !desk.sell) return { ok: false, found: false, error: "no sell form here" };
+      var field = String(a.field || "");
+      var value = a.value == null ? "" : String(a.value);
+
+      if (field === "description" || field === "price") {
+        var el = desk.sell[field]();
+        if (!el) return { ok: false, found: false, field: field };
+        return O.hands.type(value, { into: el, strokes: a.strokes }).then(function (r) {
+          return { ok: true, found: true, field: field, typed: r && r.typed };
+        });
+      }
+
+      /* A picker: open it, then choose the option by its own words. */
+      var opener = desk.sell.picker(field);
+      if (!opener) return { ok: false, found: false, field: field };
+      return O.hands.tapEl(opener, {}).then(function () {
+        return O.hands.dwell(420);
+      }).then(function () {
+        var option = desk.sell.option(value);
+        if (!option) return { ok: false, found: false, field: field, opened: true, value: value };
+        return O.hands.tapEl(option, {}).then(function () {
+          return { ok: true, found: true, field: field, value: value };
+        });
+      });
+    },
+
+    /** Post the listing. The last button, and it is the app's now. */
+    list: function () {
+      var desk = O.read.deskSite && O.read.deskSite();
+      var button = desk && desk.sell ? desk.sell.listButton() : null;
+      if (!button) return { ok: false, found: false, error: "no list button" };
+      return O.hands.tapEl(button, {}).then(function (r) {
+        return { ok: true, found: true, changed: !!r.changed };
+      });
+    },
+
     tap: function (a) {
       if (a.x != null && a.y != null)
         return O.hands.tapAt(a.x, a.y, a).then(function (r) {
@@ -208,6 +254,10 @@
       if (what === "handle") return O.read.handle(a.platform);
       if (what === "signedIn") return O.read.signedIn(a.platform);
       if (what === "userId") return O.read.userId();
+      if (what === "sellForm") {
+        var desk = O.read.deskSite && O.read.deskSite();
+        return desk && desk.sellForm ? desk.sellForm() : { ok: false, error: "no sell form here" };
+      }
       if (what === "accountStatus") return O.read.accountStatus();
       if (what === "accountStatusUrl") return O.read.accountStatusUrl();
       if (what === "threads") return O.read.threads();

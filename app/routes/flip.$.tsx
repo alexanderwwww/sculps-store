@@ -108,6 +108,18 @@ const TOOLS = [
         title: { type: "string", description: "Listing only. [Brand] [Style] [Era] [Colour] [Feature]." },
         description: { type: "string", description: "Listing only. Casual, with measurements in inches and every flaw named." },
         hashtags: { type: "array", items: { type: "string" }, description: "Listing only. Five, specific, no generic tags." },
+        images: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Listing only. Up to 8 image URLs, in order — the first is the cover and it is most of the decision. The app downloads and attaches them itself. Generate them; never hand over a competitor's file, which trips Depop's duplicate detection.",
+        },
+        category: { type: "string", description: "Listing only. Depop's category, e.g. Tops." },
+        subcategory: { type: "string", description: "Listing only, when it has one." },
+        brand: { type: "string", description: "Listing only." },
+        condition: { type: "string", description: "Listing only. Depop's own words: Brand new, Like new, Used - excellent, Used - good, Used - fair." },
+        size: { type: "string", description: "Listing only." },
+        colour: { type: "string", description: "Listing only." },
         priceCents: { type: "integer", description: "Listing or offer. In cents." },
         reply: { type: "string", description: "Reply only. In his voice, short, no corporate tone." },
         why: { type: "string", description: "One line on the reasoning — the comp, the rule, the read." },
@@ -187,6 +199,12 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
     if (ready && kind === "listing" && !String(args.title ?? "").trim()) {
       return { ok: false, error: "a listing needs a title — [Brand] [Style] [Era] [Colour] [Feature]" };
     }
+    if (ready && kind === "listing" && !(Array.isArray(args.images) && args.images.length)) {
+      return {
+        ok: false,
+        error: "a listing needs images — without good ones it will not sell, and the app cannot invent them",
+      };
+    }
     if (ready && kind === "reply" && !String(args.reply ?? "").trim()) {
       return { ok: false, error: "a reply needs words" };
     }
@@ -201,6 +219,13 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
       title: String(args.title ?? ""),
       description: String(args.description ?? ""),
       hashtags: Array.isArray(args.hashtags) ? args.hashtags.map(String).slice(0, 5) : [],
+      images: Array.isArray(args.images) ? args.images.map(String).slice(0, 8) : [],
+      category: String(args.category ?? ""),
+      subcategory: String(args.subcategory ?? ""),
+      brand: String(args.brand ?? ""),
+      condition: String(args.condition ?? ""),
+      size: String(args.size ?? ""),
+      colour: String(args.colour ?? ""),
       priceCents: Number.isFinite(Number(args.priceCents)) ? Number(args.priceCents) : null,
       reply: String(args.reply ?? ""),
       why: String(args.why ?? ""),

@@ -303,6 +303,106 @@
       return null;
     },
 
+    /**
+     * The sell form, field by field.
+     *
+     * Every selector here is a guess at Depop's markup and will be wrong
+     * somewhere. So this is written to REPORT rather than to assume: `sellForm`
+     * returns what it found and what it did not, and the first run against his
+     * real page tells us the truth instead of a build that silently fills three
+     * fields out of nine and posts it.
+     */
+    sell: {
+      photos: function () {
+        return one(['input[type="file"][accept*="image" i]', 'input[type="file"]']);
+      },
+      description: function () {
+        return one([
+          'textarea[name="description"]',
+          'textarea[placeholder*="describe" i]',
+          'textarea[id*="description" i]',
+          'textarea',
+        ]);
+      },
+      price: function () {
+        return one([
+          'input[name="price"]', 'input[id*="price" i]',
+          'input[placeholder*="price" i]', 'input[inputmode="decimal"]',
+        ]);
+      },
+      /* The pickers are comboboxes rather than <select> on the current build,
+         so the opener is returned and the option is chosen by its text. */
+      picker: function (which) {
+        var by = {
+          category: ['[data-testid*="category" i]', 'button[aria-label*="category" i]'],
+          subcategory: ['[data-testid*="subcategory" i]'],
+          brand: ['[data-testid*="brand" i]', 'input[placeholder*="brand" i]'],
+          condition: ['[data-testid*="condition" i]', 'button[aria-label*="condition" i]'],
+          size: ['[data-testid*="size" i]', 'button[aria-label*="size" i]'],
+          colour: ['[data-testid*="colour" i]', '[data-testid*="color" i]'],
+          source: ['[data-testid*="source" i]'],
+          age: ['[data-testid*="age" i]'],
+          style: ['[data-testid*="style" i]'],
+        };
+        return one(by[which] || []);
+      },
+      /** An option inside an open picker, matched on its own words. */
+      option: function (text) {
+        var want = String(text || "").trim().toLowerCase();
+        if (!want) return null;
+        var rows = all(['[role="option"]', '[role="menuitem"]', 'li', 'label', 'button']);
+        for (var i = 0; i < rows.length; i++) {
+          if (flat(rows[i]).trim().toLowerCase() === want) return rows[i];
+        }
+        for (var j = 0; j < rows.length; j++) {
+          if (flat(rows[j]).toLowerCase().indexOf(want) >= 0) return rows[j];
+        }
+        return null;
+      },
+      listButton: function () {
+        var buttons = all(['button', '[role="button"]', 'input[type="submit"]']);
+        for (var i = 0; i < buttons.length; i++) {
+          if (/^(list it|list|post|publish|upload)$/i.test(flat(buttons[i]))) return buttons[i];
+        }
+        return null;
+      },
+    },
+
+    /** Where the photos go, for the hands' file attacher. */
+    fileInput: function () { return S.depop.sell.photos(); },
+
+    /**
+     * What the sell form looks like right now — a map of found and missing.
+     *
+     * This is the diagnostic that stops a listing being half-filled and posted
+     * anyway. Nothing lists until this says the fields that matter are there.
+     */
+    sellForm: function () {
+      var f = S.depop.sell;
+      var found = {
+        url: location.href,
+        onSellPage: /\/(sell|products\/create|listing)/i.test(location.pathname),
+        photos: !!f.photos(),
+        description: !!f.description(),
+        price: !!f.price(),
+        listButton: !!f.listButton(),
+      };
+      ["category", "subcategory", "brand", "condition", "size", "colour", "source", "age", "style"]
+        .forEach(function (name) { found[name] = !!f.picker(name); });
+      found.ready = found.photos && found.description && found.price && found.listButton;
+      /* The names of everything on screen, so a wrong guess can be corrected
+         from one run instead of five. */
+      found.sawInputs = all(['input', 'textarea', 'select']).slice(0, 40).map(function (el) {
+        return [el.tagName.toLowerCase(),
+                el.getAttribute("name") || el.getAttribute("id") || "",
+                el.getAttribute("placeholder") || el.getAttribute("aria-label") || ""]
+          .filter(Boolean).join(" · ");
+      });
+      found.sawButtons = all(['button', '[role="button"]']).slice(0, 40)
+        .map(function (el) { return flat(el).slice(0, 40); }).filter(Boolean);
+      return found;
+    },
+
     /** Open a conversation by its url, without leaving the app. */
     openThread: function (which) {
       var text = String(which || "").trim();

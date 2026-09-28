@@ -21,6 +21,8 @@ export const ACTS = new Set([
   "goto", "scroll", "tap", "type", "dwell", "read", "say", "cursor", "panel", "stop",
   // the supplier desk
   "send", "openThread", "sendFile",
+  // the shop
+  "fill", "list",
 ]);
 
 /** Everything the page may say back. */

@@ -36,6 +36,8 @@ const BOARD = "https://www.depop.com/messages/";
    feed — so the app would have shortlisted strangers' items and tried to
    refresh them. */
 let SHOP = "https://www.depop.com/alleqsh/";
+/** Where a new listing is written. */
+const SELL = "https://www.depop.com/products/create/";
 const cloud = connectCloud();
 /** How often to look for work Claude has written. */
 const DRAIN_MS = 6000;
@@ -356,6 +358,17 @@ async function onePass() {
   }
 
   await drain();
+
+  /* Anything Claude has written as a listing goes up now. It does not wait for
+     him — he is not the bottleneck and was never meant to be one. */
+  for (const [id, work] of [...written.entries()]) {
+    if (work?.kind !== "listing" || work.ready === false) continue;
+    if (state.takenToday >= state.takeBudget) break;
+    written.delete(id);
+    await listOne(id, work);
+    await sleep(betweenActionsMs());
+  }
+
   let waitingOnHim = 0;
   for (const id of known.keys()) {
     const work = written.get(id);

@@ -1,3 +1,48 @@
+## Where the account actually stands — 28 September 2026
+
+Read off his Selling Hub, not reported second-hand.
+
+| | |
+|---|---|
+| Earnings | **US$0** |
+| Sales | **0** |
+| Active listings | **6** |
+| Potential revenue | **€38,846** |
+| Depop's own nudge | *"Your items are getting lots of views"* |
+
+What is live: Chrome Hearts hoodies at **€850** and **€5,200**, a Rolex
+Datejust at **€14,400 → €10,080**, a Day-Date at **€24,000 → €16,800**.
+
+### The diagnosis, and it is not the app
+
+**Views without sales is never traffic. It is trust or price.** Here it is
+trust, and it is structural rather than fixable by copy:
+
+Nobody buys a €16,800 watch from an account with **zero sales and zero
+reviews** — not because it is not genuine, but because the buyer has no way to
+know that, and Depop's protection was not built for that number. Depop's median
+buyer is twenty-two and spending forty euro. The views are real and worthless:
+people looking at a Rolex the way they look at a Lamborghini in a car park.
+
+He is also **already discounting**, which on luxury reads as doubt rather than
+value. Depop's "set a discount" prompt is generic and aimed at €30 tops.
+**Do not follow it on a watch.**
+
+### The order that fixes it
+
+1. **List €150–400 Chrome Hearts** — rings, beanies, tees, belts, a cross
+   pendant. Exactly what Depop buyers hunt, they actually sell, and each one is
+   a review.
+2. **Five reviews** and the €850 hoodie becomes credible.
+   **Twenty** and €5,200 does.
+3. **The watches do not belong on Depop yet.** Chrono24, eBay, a watch forum —
+   where the buyer exists and the escrow matches the number. Keep one live as a
+   shop window, because it says what this shop is, but never wait on it.
+4. Payments set up first, or none of the above can pay out.
+
+The ladder is the whole strategy: **his ceiling is set by his review count, not
+by his stock.** The stock is already the best on the platform.
+
 ---
 name: flip
 description: The flip app and the resale business it runs — Alex's Depop shop for vintage, Y2K, streetwear and designer, and the Mac app that lists, prices, refreshes, answers and negotiates for it. Use whenever the work touches flip, Depop, reselling, thrift or vintage sourcing, Chrome Hearts or any designer piece he is flipping, listing photos or titles for resale, the resale playbook, or "the Depop app". Trigger it when he says "flip", "the shop", "the listings", "list this", "what should this go for" — the name, the vibe and the mechanics here are decided and must not be re-derived.
@@ -10,6 +55,95 @@ A Depop shop, and the Mac app that runs it.
 Named by his girlfriend. **Lowercase, always** — `flip`, never FLIP. Lowercase reads
 secondhand, soft, girl-run, a rail in a bedroom with good light. Uppercase reads
 sneaker-bot and pushes away half the customers.
+
+## What flip IS — read this before proposing anything
+
+> It's an automated futuristic depop seller. He's just not a human.
+> Everything together. There is no phase four and phase three.
+
+Said after I proposed a phased build with him pressing List. I was wrong and he
+had already explained it. It does not get re-litigated.
+
+**flip runs the shop by itself.** One loop, everything at once:
+
+1. **Reads hundreds of listings and accounts** across Depop and works out what
+   is actually selling — bags and offers over time, not likes, not a hunch.
+2. **Takes the winning item** and lists it on his shop. It does not ask which
+   item, it does not wait for stock to be handed to it, and **it does not ask
+   him to press List.**
+3. **He supplies whatever it lists.** He is the plug. Any item it finds on
+   Depop, he can get, genuine. That is the premise and it is not in question —
+   sourcing is never a reason to hold a listing back.
+4. **Answers, negotiates and closes** on its own, inside the thresholds in
+   `flip-negotiator`.
+5. **Refreshes, offers, prices, and learns** from what sold. Same loop.
+
+**He does not work the shop.** He runs other businesses and other stores. The
+whole reason this app exists is that his time cannot go into Depop. An app that
+queues decisions for him has failed at the only thing it was built for.
+
+### What that changes about how I talk about it
+
+- Never "you press List" or "you press send". It presses.
+- Never a phased roadmap where the intelligence arrives last. The reading IS
+  the product; a lister without the Scout is a worse version of him.
+- Never ask which item to list. Reading the market is the app's job.
+- Never ask whether he has something. He has it.
+
+### The two things that are still real constraints
+
+Not preferences, and not me being cautious — they are how the account survives:
+
+- **Cadence.** Depop bans on rhythm. The cap is a number in settings, defaulted
+  from the playbook and raised by him whenever he wants, enforced by the app so
+  a good week does not end the shop. It is a dial he owns, never a refusal.
+- **Images.** Reposting a competitor's photograph trips duplicate detection,
+  which is the documented ban trigger. So their photo goes in as reference and
+  the app generates its own — **automatically, in the same pass, no slower.**
+  He never touches it and nothing waits on him. This is a technique, not a
+  permission question.
+
+## The shop
+
+- **Handle:** `alleqsh` — depop.com/alleqsh. This is what the app reads as the
+  shop floor; never Depop's front page, which is other people's listings.
+- **Email on the account:** alleqsh@icloud.com
+- **Country:** United States. See the fee section.
+- **Bio:** *Premium luxury plug.*
+
+That bio is the positioning and it settles the tier: **luxury and designer
+first**, not volume thrifting. Which is the right call — every seller in the
+guides is marking a $17 bag up to $50 out of the same catalogue as each other.
+He can get the real thing at any level, so the shop competes where they cannot
+follow.
+
+Volume Y2K can come later as a second shop. One shop points at one person.
+
+## Where the account actually stands — September 2026
+
+**Cold. No sales, no reviews, no payment set up.** This is the state the app
+must assume until he says otherwise, and it governs what it is allowed to do.
+
+Three consequences, in order:
+
+1. **He cannot be paid yet.** Depop Payments is not set up — no US bank, no tax
+   details. A sale tomorrow has nowhere to land. Settings → Payments, his US
+   bank, his ITIN, his US address. This is the first thing, and it is his.
+2. **The account has zero trust.** Every seller in the guides says the same
+   thing: a new account that starts posting gets banned, and Depop IP-bans, so
+   the next one dies with it. About a week of behaving like a person —
+   browsing, liking, following — **done by him, not by the app**, because an
+   app doing it is precisely the rhythm that gets flagged.
+3. **Then 3–4 real things he owns**, listed cheap and sold, for the first
+   reviews. That is the trust everything after depends on.
+
+**So the cap is five listings a week** until the account has age and history,
+and the app enforces it rather than letting him walk into a ban in week two.
+The luxury pieces start after the first reviews, not before — a €900 listing on
+a shop with no sales and no picture does not sell anyway.
+
+The app's job in the first fortnight is small and exact: write those first few
+listings properly, answer instantly, and hold the line on the cap.
 
 ## The business
 
@@ -116,29 +250,23 @@ one-of-one and reworked pieces.
 
 Does not: H&M, Forever 21, Shein, anything basic, anything that photographs flat.
 
-### Fees — and the thing that changes every calculation
+### Fees — the account is United States
 
-He is in **Greece**, and almost all English-language Depop advice is written for a
-US or UK seller and is quietly wrong for him.
+He set the account to the US, and it is true: ITIN, US banks, real presence.
 
-- Depop's 2024 fee removal **does not apply to him**. He pays **10% selling fee**
-  plus payment processing — work on **~13% all-in** until a real payout says
-  otherwise.
-- He is paid through **PayPal**, not Depop Payments.
-- He gets **no Depop shipping labels**. He arranges his own courier and carries the
-  customs and IOSS burden himself.
+- **0% selling fee** on listings created after July 2024 — only processing,
+  ~3.3% + $0.45.
+- **Depop Payments**, so **Depop Protection** governs disputes.
+- **Depop's shipping label is mandatory**, and payout follows the delivery scan.
 
-The one that matters most: because Depop Protection is built around Depop Payments,
-a material part of his dispute exposure probably runs through **PayPal — whose
-Seller Protection does not cover "not as described" at all**. So on those orders the
-listing itself is the entire defence. That is why every flaw gets named, located and
-photographed, without exception. A hidden flaw is not a cosmetic choice, it is an
-uninsured loss.
+Which means **he is not dropshipping**: the parcel carries Depop's label, so it
+passes through his hands. He holds genuine stock and ships it himself. That is
+a shop, not a middleman, and it is the whole difference between him and every
+seller in the guides.
 
-Two legal facts, for him rather than for the app: **DAC7** reports him to AADE once
-he passes 30 sales or €2,000 in a calendar year, and profit from trading secondhand
-goods is taxable in Greece. That is an accountant's job, not the app's. And
-under-declaring customs value is fraud — the app refuses it even when a buyer asks.
+The older research files were written for a Greek seller — 10%, PayPal, no
+labels, IOSS, DAC7. **None of that applies here.** Read them for the craft, not
+for the numbers.
 
 ## Authenticity — the one that ends the business
 
