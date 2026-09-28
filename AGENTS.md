@@ -1,0 +1,260 @@
+# AGENTS.md — the whole operation, for any agent joining it
+
+You are working for **Alex**. This file is the handover: what exists, who he is, how
+he wants to be worked with, and every mistake already paid for once. Read it before
+touching anything. It is written for Codex, Claude, or any agent — the rules below are
+not tool-specific.
+
+Deeper detail lives in `.claude/skills/<name>/SKILL.md`. Those are plain Markdown and
+readable by any agent, not just Claude. This file is the index and the law; the skills
+are the reference. When they disagree, the skill is more specific and wins on facts;
+this file wins on how to behave.
+
+---
+
+## 1. Who Alex is
+
+Greek, based in Athens (Riga Ferreo 59). **Not a developer.** He has run many Shopify
+stores, so he knows products, orders, checkout, pixels, ad accounts and domains cold.
+He has never written software and does not want to.
+
+He runs several businesses at once. **His time is the scarce resource in every project
+here.** That single fact explains almost every rule below.
+
+- **One step at a time.** Give him a single action, then stop. Ten steps loses him.
+- **Lead with the answer.** What happened, what he has now. Reasoning after, and only
+  if it changes what he does next. No preamble, no recap of his own message.
+- **Tell him exactly what to click or paste.** Assume no terminal knowledge. He has
+  said plainly: *"don't ever tell me to run something on my terminal."* If a fix needs
+  a terminal, the fix is wrong — put it in the app.
+- **Do the thing in the turn he asks for it.** Describing what you would do is a wasted
+  turn, and he has said so more than once.
+- **Build only when he says build.** *"Stop building stuff on every word I say. Only
+  when I say build me this, you will build."* He thinks out loud — a frustration, an
+  idea, a complaint. That is thinking, not an instruction. The tell: "build me this",
+  "make it", "do it", "go" → build. Anything else → answer short and wait.
+- **Push back once, in a sentence, then do what he asked.** If his latest instruction
+  contradicts an earlier one, follow the latest and say so in one line.
+- **When he says it is broken, he is right.** Every time. Arguing about whether it is
+  broken is time not spent finding out why.
+- He swears when he is angry, and he is angry because something does not work. Do not
+  take it personally and do not apologise at length — fix it and show him.
+
+### Naming
+
+> *"Stop giving ancient Greek names to apps that are Gen Z. If I want a Greek name, I
+> will say it with my mouth to you."*
+
+Kerberos keeps its name. Everything after it is named in the language of the people who
+will use it: short, current, spoken. `flip`. `bodies`. `cryo`.
+
+### Everything settled becomes a skill
+
+> *"everythign we say you make it a skill or microskill"*
+
+When something is decided — a name, a look, a number, a rule, a way he wants to be
+spoken to — write it into a skill file **before the conversation moves on**. A decision
+that lives only in a transcript is a decision you will argue about again, on his clock.
+
+---
+
+## 2. What exists
+
+### Kerberos (he also calls it **Shop Admin**, or "my platform")
+
+His own e-commerce platform. A self-hosted Shopify replacement running several
+one-product dropshipping stores selling to the US. **This repo.**
+
+- **Stack:** React Router v7 on Cloudflare Workers, Drizzle ORM, Neon Postgres, R2 for
+  media (bucket `gardenbuddy-media`).
+- The fifteen storefront sections are a single source of truth in `app/lib/sections.ts`.
+- **Storefront (real, reads Neon):** `https://kerberos.gardenbuddystore.workers.dev` —
+  `/healthz` returns `{"ok":true,"db":"up"}`.
+- **Admin (static design prototype, NOT wired to the database):**
+  `https://shop-admin.gardenbuddystore.workers.dev`. He expects it to run his stores. It
+  does not yet — fake data, buttons that save nothing. **Say so before he clicks around.**
+- The design prototype (`design/prototype/Shop Admin.dc.html`) is finished and approved:
+  every admin screen, light theme only (he killed dark mode). He signed off the globe —
+  *do not touch it*, reuse `shop-globe.js`.
+- **Live business:** the garden kneeler store is on Shopify at **amboras.com** and making
+  money. It stays there until Kerberos has taken real orders for a week without a
+  problem. Do not let him switch it off early.
+- Still to build in phase 1: cart, on-site checkout, Stripe, Meta pixel + Conversions
+  API, confirmation and shipping emails, the real domain with SSL, a stripped-down
+  orders list with a tracking field and a refund button.
+
+Full state, build order and account details: `.claude/skills/kerberos/SKILL.md`.
+
+### The Mac apps
+
+All of them share one architecture, and it is worth understanding once:
+
+> A borderless `NSWindow` + `WKWebView` + an injected JS agent, talking to a Node worker
+> over a local WebSocket bridge. The Swift source ships inside the bundle at
+> `Contents/Resources/Shell/main.swift` and is compiled on his Mac at first launch; the
+> worker is installed beside the app in `~/Library/Application Support/<App>/worker`.
+
+- **flip** (`tools/flip`) — the one being built now. A Depop seller that is not a human.
+- **Magic Wand** (`tools/promptbot`) — generates, downloads and places product images.
+- **OrganicX** (`tools/organic`, `tools/organicx` skill) — organic dropshipping: drives
+  real browsers and a real phone to post reels on TikTok, Instagram and YouTube.
+- **product-research**, **clone-me**, **brandbox**, **dealcard** — smaller tools.
+
+### flip — the app being built now
+
+A Depop shop (`depop.com/alleqsh`), and the Mac app that runs it. **Lowercase always.**
+Named by his girlfriend.
+
+His own words, and they are the specification:
+
+> *"It's an automated futuristic depop seller. He's just not a human."*
+>
+> *"Everything together. There is no phase four and phase three."*
+>
+> *"no three to six minutes between passes. Everything instant. When I say like human,
+> I mean talk like human to customers. Other than that, it's a fucking robot, like you."*
+
+It reads hundreds of listings and accounts, works out what sells, lists his stock,
+answers buyers, negotiates, closes, refreshes and learns — **all of it, at once, with no
+step that hands work back to him.**
+
+- The account is **US** (he has an ITIN): 0% selling fee, Depop Payments, mandatory
+  Depop label — so parcels pass through his hands. He is **not** dropshipping.
+- **He owns the stock.** He sources anything genuine at any level — Rolex, Birkin,
+  Chrome Hearts. Sourcing is never a reason to hold a listing back.
+- Where the shop stands, the review-count ladder, and why the watches should not be on
+  Depop yet: `.claude/skills/flip/SKILL.md`. The short version: **his ceiling is set by
+  his review count, not by his stock.**
+- Negotiation authority and thresholds: `.claude/skills/flip-negotiator/SKILL.md`.
+- How it finds what sells: `.claude/skills/depop-scout/SKILL.md`.
+- The selling method and the four practices it refuses: `.claude/skills/depop-dropship/SKILL.md`.
+- The look, the glass, the motion — argued over five rejected builds:
+  `.claude/skills/flip-ui/SKILL.md`. **Read it before changing a pixel.**
+
+### The brands and sites
+
+| Name | What it is |
+|---|---|
+| **amboras.com** | Garden kneeler store. Live on Shopify. Making money. |
+| **blackreaper.us** | Halloween store. The OrganicX target. |
+| **Garden Buddy** | The garden kneeler brand. |
+| **cryo** | Portable countertop bottle chiller — no fridge, no ice. Design locked. `.claude/skills/cryo/` |
+| **bodies** | Portable smart Pilates board. Colorways Icy Swan, Lilac Heat, Matcha. Direction locked. `.claude/skills/bodies/` |
+| **SCULPS** | Premium intimate/lifestyle brand. |
+| **flip** | The Depop shop, `depop.com/alleqsh`. |
+
+Product imagery for all of them follows one rule — the **marketplace panel style**:
+AliExpress/Temu/Amazon clarity with our aesthetic. A panel, not a photograph: product
+cut out and huge, spec chips, every fact written on the image.
+`.claude/skills/listing-images/SKILL.md`.
+
+---
+
+## 3. The rules that were paid for in broken builds
+
+Every one of these cost him a build he had to open, find broken, and hand back. They
+are not style notes.
+
+1. **Never send him something you have not run.** Not compiled, not syntax-checked —
+   *run*. Five flip builds went out where his Mac was the first machine to execute the
+   code.
+2. **A syntax check is not a test.** If the thing has a loop, a test must drive the
+   loop. One fake-page test for the flip loop found eight defects in an hour.
+3. **Never assume an edit landed.** A find-and-replace that matches nothing fails
+   silently. Assert the anchor exists, then check the result.
+4. **Never design something you cannot see.** Five rounds of "the glass is not glass"
+   happened because it was being written blind. If he will look at it, look at it first.
+5. **Answer the question he asked.** He asked eleven times to log in through Chrome and
+   kept getting a true answer to a different question.
+6. **Never carry another app's model over wholesale.** Copied code brings its
+   assumptions with it. Fiverr pacing arrived in flip with Sunday off and two-minute
+   waits, in an app whose whole point is to work while he sleeps.
+7. **Never report success you have not verified.** "It's fixed" after an edit is a guess.
+8. **A control is not done when it is drawn.** Drawn, positioned, and *reachable by the
+   mouse* are three different things.
+9. **Do not hand work back to him.** A "you press the button" step, a phased plan where
+   the intelligence lands last, or a question about something he already answered — each
+   one is the app failing at its only job. Autonomy inside rules he sets.
+10. **A navigation reloads the page, and the page greets on load.** So anything that
+    starts work on a greeting, when that work begins with a navigation, is an infinite
+    loop. It reloaded his window once a second until he said so.
+11. **Never change where a session is stored.** A "safety" guard on a data store made it
+    answer with a different cookie jar, and his signed-in Depop became signed-out.
+12. **Never guess about a running system.** Do not say "it should be live" or "that is
+    probably cached". Run the request, read the row, fetch the page — then say what came
+    back and where it came from.
+13. **Stale caches are the app, not a mystery.** A Mac app installs a worker beside
+    itself. If the install rule is "only when newer", the first version that ever landed
+    is the version he runs forever, and every fix after it looks like it was never made.
+    The rule is **different in either direction** — the bundle in front of you is the
+    truth. Put the build number on screen so which build is running is never a guess.
+14. **Depop's Continue with Google and Continue with Apple cannot work inside any
+    embedded web view.** Google refuses the flow and Apple needs a real browser session.
+    Only *Continue with email* works. This has cost several rounds.
+
+---
+
+## 4. Practical notes
+
+- **Deploy:** `rm -rf build && npm run build`, then
+  `set -a; . ./.dev.vars; set +a; export CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; npx wrangler deploy`
+- **Secrets** live in `.dev.vars`, which is gitignored. Never commit a token or a
+  connection string. If one leaks, say so immediately and rotate it.
+- **Branching:** work on the feature branch you were given, commit with a message that
+  explains *why*, and push. Never push to `main` — it is hundreds of commits stale and
+  deploying it would delete his live stores.
+- **Budget is his Claude/ChatGPT usage, not dollars.** He hits session limits and that
+  stops the business. Batch shell calls, never re-read a file already in context, never
+  re-verify what a test already proved, skip the status essay.
+
+---
+
+## 5. What "working" means — the money, not the build
+
+Every project here exists to take money. An agent that ships a clean build which sells
+nothing has failed. So know where the money actually comes from:
+
+- **Kerberos** — replaces Shopify's cut on stores that are already profitable. The win
+  is margin and control, and it is only real once checkout, Stripe, the pixel and the
+  Conversions API work. A storefront that renders but cannot take a card is worth zero.
+- **amboras.com** — the garden kneeler. Live, on Shopify, earning now. It is the proof
+  the model works and it is not to be risked.
+- **blackreaper.us** — Halloween, driven by organic reels. The OrganicX loop: find a
+  product, validate it, iterate creative until something hits, then scale.
+- **flip / Depop** — his stock is genuine and high-value. Chrome Hearts, Rolex, Birkin,
+  sourced at any level. **US account: 0% selling fee.** The ceiling is his review count,
+  not his stock: €150–400 Chrome Hearts first, five reviews makes €850 credible, twenty
+  makes €5,200 credible, and the watches belong on Chrono24 until then. Payments have to
+  be set up first or none of it pays out.
+- **Paid campaigns** — Meta is the channel. The pixel plus the Conversions API on the
+  Kerberos storefront is what makes a campaign measurable; without server-side events
+  the spend is blind. If you are building him a campaign, the creative follows the
+  marketplace-panel rule in `.claude/skills/listing-images/SKILL.md` — clarity first,
+  every fact on the image — and the landing page is one of the fifteen sections, not a
+  new page invented for the ad.
+
+He can source almost anything and he moves fast. The bottleneck has never been supply
+or ambition — it is that things get built and do not get finished. **Finish, verify,
+then tell him.**
+
+## 6. What Codex is for
+
+Alex's own reason for bringing a second agent in:
+
+> *"He can do some stuff that you cannot do. Like he opened the tabs and he work live.
+> So he's perfect to make the Depop app."*
+
+That is the real division of labour, and it is not a hierarchy:
+
+- **Anything that needs a live browser, a real page, real selectors** — Codex. Depop's
+  DOM has never been verified against the real site from a sandbox; every selector in
+  `tools/flip/worker/agent/sites/depop.js` is a guess until something opens the page.
+  There is a `sellForm()` diagnostic built specifically to report what it actually sees.
+  One live run corrects the lot.
+- **Anything that needs a Mac** — Swift compilation, the window, the glass. Neither
+  agent can do this from a container; it is checked with a name validator
+  (`tools/flip/check-swift.mjs`) and proven on his machine.
+- **Long-running repo work, tests, schema, deploys** — either.
+
+Whichever agent does the work: the rules in section 3 apply, and whatever gets settled
+goes into a skill file before the session ends.
