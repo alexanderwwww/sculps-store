@@ -61,6 +61,8 @@ const state = {
 const history = Object.create(null);
 
 let page = null;
+/** Set by the first hello. Later ones are just the page reloading. */
+let greeted = false;
 /** Set by the panel's "Work anyway", cleared by the pass it buys. */
 let override = false;
 
@@ -260,13 +262,14 @@ async function onePass() {
   if (!who || who.signedIn !== true) {
     show({
       working: false,
+      signedOut: true,
       doing: null,
-      resting: "not signed in — open me, then Paste login or make a password",
+      resting: "not signed in — open me and paste your login",
       board: [],
     });
     return;
   }
-  show({ who: who.who ?? null });
+  show({ who: who.who ?? null, signedOut: false });
   /* His handle, as the page states it. Without one there is no shop floor to
      read, so the pass does the inbox and stops rather than reading Depop's
      front page and calling it his. */
@@ -416,9 +419,21 @@ bridge = await startBridge({
     if (message.t === "hello") {
       page = bridge;
       show({});
-      pass().catch((error) => {
-        cloud.log([{ line: `pass failed: ${error.message}` }]).catch(() => {});
-      });
+      /*
+       * Only the first hello starts a pass.
+       *
+       * The page says hello every time it loads — and a pass BEGINS with a
+       * navigation. So every pass caused a reload, every reload said hello,
+       * and every hello started another pass: the window reloading about once
+       * a second, forever, which is exactly what he saw. The timer below is
+       * the only thing that starts a pass now.
+       */
+      if (!greeted) {
+        greeted = true;
+        pass().catch((error) => {
+          cloud.log([{ line: `pass failed: ${error.message}` }]).catch(() => {});
+        });
+      }
     }
     if (message.t === "now") {
       override = true;

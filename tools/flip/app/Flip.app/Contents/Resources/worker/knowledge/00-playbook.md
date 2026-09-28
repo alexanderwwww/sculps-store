@@ -90,6 +90,21 @@ queues decisions for him has failed at the only thing it was built for.
 - Never ask which item to list. Reading the market is the app's job.
 - Never ask whether he has something. He has it.
 
+### Pace: it is a robot
+
+> no three to six minutes between passes. Everything instant. When I say like
+> human, I mean talk like human to customers. Other than that, it's a fucking
+> robot, like you.
+
+So: **no persona hours, no day off, no reading delay, no typing theatre.**
+Actions are 150–600ms apart, a pass every 20 seconds, keystrokes at 8ms. The
+only human thing left is the **words** — the voice in `flip-negotiator`.
+
+All of that crawling came from OrganicX, where looking like a person scrolling
+was the entire job. It is not the job here. What protects this account is the
+per-pass cap, the daily cap and the refresh rules — Depop's arithmetic, not
+mime — and those stay.
+
 ### The two things that are still real constraints
 
 Not preferences, and not me being cautious — they are how the account survives:

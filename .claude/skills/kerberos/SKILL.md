@@ -131,7 +131,18 @@ They are not style notes. Re-read them before shipping anything.
    he has already told me, is the app failing at its only job. Autonomy inside
    rules he sets — not a queue of decisions for him.
 
-10. **When he says it is broken, he is right.** Every single time. The argument
+10. **A navigation reloads the page, and the page greets on load.** So
+    anything that starts work on a greeting, when that work begins with a
+    navigation, is an infinite loop. It reloaded his window about once a second
+    until he told me. Start work on a timer; treat a greeting as news, not as a
+    trigger.
+
+11. **Never change where a session is stored.** A "safety" guard on the data
+    store made it answer with a different jar, and his signed-in Depop became a
+    signed-out one. Cookies live where they live; whatever returns that
+    location must never change again, for any reason, including a good one.
+
+12. **When he says it is broken, he is right.** Every single time. The argument
    about whether it is broken is time not spent finding out why.
 
 ## Naming — his rule, said plainly

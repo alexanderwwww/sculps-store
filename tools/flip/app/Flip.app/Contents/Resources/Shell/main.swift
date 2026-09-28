@@ -211,6 +211,8 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   var passwordButton: NSButton?
   var signInButton: NSButton?
   var pasteButton: NSButton?
+  /// What the page last said about whether he is signed in.
+  var signedOut = true
   var shape: Shape = .orb
 
   /** The crew's code, kept so a rebuilt view gets it too. */
@@ -643,6 +645,8 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       container.addSubview(button)
     }
     let bring = NSButton(title: "Paste login", target: self, action: #selector(importCookiesFromClipboard))
+    /* Shown only when the page says he is signed out. Four permanent chips
+       sitting over the panel was the pile-up he had to point at twice. */
     bring.isBordered = false
     bring.wantsLayer = true
     bring.font = NSFont.systemFont(ofSize: 11.5, weight: .semibold)
@@ -749,18 +753,16 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
   var saidOneStore = false
 
   func storeFor(_ idText: String) -> WKWebsiteDataStore {
-    /* The running binary lives outside the bundle — the launcher execs it from
-       Application Support — so Bundle.main has no identifier, and a data store
-       keyed to one is a gamble taken during launch where a raise is a dead
-       Dock icon. Only asked for when there is an identity to key it to. */
-    if #available(macOS 14.0, *), Bundle.main.bundleIdentifier != nil {
-      if let uuid = UUID(uuidString: idText) {
-        return WKWebsiteDataStore(forIdentifier: uuid)
-      }
-    } else if !saidOneStore {
-      saidOneStore = true
-      note("this Mac keeps one set of sign-ins (macOS 14 or newer keeps one per pane)")
-    }
+    /*
+     * One jar, always, and never conditionally.
+     *
+     * This used to hand out a per-pane store keyed to a UUID, and I then put a
+     * guard on it — so it silently started answering with a DIFFERENT store
+     * and his Depop session was left in the old one. A signed-in app became a
+     * signed-out app because of a safety fix. Whatever this returns must never
+     * change again: the default store is stable, survives quitting, and needs
+     * no bundle identity, which this process does not have anyway.
+     */
     return WKWebsiteDataStore.default()
   }
 
@@ -903,16 +905,24 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     frost?.isHidden = true
     collapse?.isHidden = shape == .orb || shape == .pill
     if shape == .working {
-      /* On the phone the controls live on the phone, floating over the page at
-         the bottom where a thumb is — never in a strip above it. */
+      /*
+       * One control: a small X, top right, over the page.
+       *
+       * The sign-in chips appear only while `signedOut` is true — which the
+       * worker sets from what the page actually says — and disappear the
+       * moment he is in. Permanent furniture on a phone is furniture in the
+       * way.
+       */
+      collapse?.title = "\u{2715}"
+      collapse?.frame = NSRect(x: bounds.width - 40, y: bounds.height - 44, width: 28, height: 28)
+      collapse?.layer?.cornerRadius = 14
+      collapse?.layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(0.10).cgColor
+
       let chipY: CGFloat = 26
-      collapse?.frame = NSRect(x: bounds.width - 96, y: chipY, width: 82, height: 26)
       signInButton?.frame = NSRect(x: 12, y: chipY, width: 100, height: 26)
       passwordButton?.frame = NSRect(x: 116, y: chipY, width: 104, height: 26)
-      pasteButton?.frame = NSRect(x: 12, y: chipY + 32, width: 92, height: 26)
-      /* The radius follows the height. Set once at 11 it left flat sides on a
-         26pt chip, which is a pill that is not a pill. */
-      for chip in [collapse, signInButton, passwordButton, pasteButton] {
+      pasteButton?.frame = NSRect(x: 224, y: chipY, width: 92, height: 26)
+      for chip in [signInButton, passwordButton, pasteButton] {
         chip?.layer?.cornerRadius = (chip?.frame.height ?? 22) / 2
       }
     } else {
@@ -922,9 +932,11 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       signInButton?.frame = NSRect(x: bounds.width - 96 - 126, y: chipY, width: 118, height: 22)
       passwordButton?.frame = NSRect(x: bounds.width - 96 - 126 - 118, y: chipY, width: 110, height: 22)
     }
-    passwordButton?.isHidden = shape == .orb || shape == .pill
-    signInButton?.isHidden = shape == .orb || shape == .pill
-    pasteButton?.isHidden = shape != .working
+    /* Only on the phone, and only while the page says he is signed out. */
+    let showSignIn = shape == .working && signedOut
+    passwordButton?.isHidden = !showSignIn
+    signInButton?.isHidden = !showSignIn
+    pasteButton?.isHidden = !showSignIn
     /* Hidden on the phone as well as the orb — left visible, the green dot and
        the word "flip" paint over the top of the 393-wide phone, exactly where
        the agent draws the island. */
@@ -1261,6 +1273,10 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       }
     /* The line, the dot, and the day's count — for the pill and for the glass. */
     case "status":
+      if let out = obj["signedOut"] as? Bool, out != signedOut {
+        signedOut = out
+        layoutChrome()
+      }
       setStatus(obj["text"] as? String, dot: obj["dot"] as? String)
       /* A telemetry line, if this status carried one. */
       if let note = obj["note"] as? String, !note.isEmpty,

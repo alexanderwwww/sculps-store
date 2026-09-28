@@ -340,6 +340,8 @@
           t: "window",
           do: "status",
           note: a.note || null,
+          /* So the window knows whether to show the sign-in chips at all. */
+          signedOut: next.signedOut === true,
           text: next.doing || next.resting || (next.working ? "on the board" : "resting"),
           dot: next.working ? "green" : "grey",
           taken: next.takenToday,
