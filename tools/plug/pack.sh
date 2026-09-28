@@ -12,6 +12,10 @@ SWIFT="$HERE/app/Plug.app/Contents/Resources/Shell/main.swift"
 # in it is checked instead. A wrong one reaches Alex as "Apple's build tools
 # are broken", which is a lie the launcher cannot help telling.
 node "$HERE/check-swift.mjs" "$SWIFT"
+# The mark is his, and it is rebuilt from his artwork every time — so nobody can
+# ever quietly leave another app's icon in this bundle again.
+[ -f "$HERE/design/icon-source.png" ] && node "$HERE/make-icon.mjs" \
+  "$HERE/design/icon-source.png" "$HERE/app/Plug.app/Contents/Resources/AppIcon.icns"
 # The page's code is rebuilt from its parts, so the bundle can never carry a
 # stale one: agent.built.js is generated, never edited.
 node "$HERE/worker/agent/build.mjs"
