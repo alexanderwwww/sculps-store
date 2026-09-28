@@ -1,3 +1,48 @@
+## Where the account actually stands — 28 September 2026
+
+Read off his Selling Hub, not reported second-hand.
+
+| | |
+|---|---|
+| Earnings | **US$0** |
+| Sales | **0** |
+| Active listings | **6** |
+| Potential revenue | **€38,846** |
+| Depop's own nudge | *"Your items are getting lots of views"* |
+
+What is live: Chrome Hearts hoodies at **€850** and **€5,200**, a Rolex
+Datejust at **€14,400 → €10,080**, a Day-Date at **€24,000 → €16,800**.
+
+### The diagnosis, and it is not the app
+
+**Views without sales is never traffic. It is trust or price.** Here it is
+trust, and it is structural rather than fixable by copy:
+
+Nobody buys a €16,800 watch from an account with **zero sales and zero
+reviews** — not because it is not genuine, but because the buyer has no way to
+know that, and Depop's protection was not built for that number. Depop's median
+buyer is twenty-two and spending forty euro. The views are real and worthless:
+people looking at a Rolex the way they look at a Lamborghini in a car park.
+
+He is also **already discounting**, which on luxury reads as doubt rather than
+value. Depop's "set a discount" prompt is generic and aimed at €30 tops.
+**Do not follow it on a watch.**
+
+### The order that fixes it
+
+1. **List €150–400 Chrome Hearts** — rings, beanies, tees, belts, a cross
+   pendant. Exactly what Depop buyers hunt, they actually sell, and each one is
+   a review.
+2. **Five reviews** and the €850 hoodie becomes credible.
+   **Twenty** and €5,200 does.
+3. **The watches do not belong on Depop yet.** Chrono24, eBay, a watch forum —
+   where the buyer exists and the escrow matches the number. Keep one live as a
+   shop window, because it says what this shop is, but never wait on it.
+4. Payments set up first, or none of the above can pay out.
+
+The ladder is the whole strategy: **his ceiling is set by his review count, not
+by his stock.** The stock is already the best on the platform.
+
 ---
 name: flip
 description: The flip app and the resale business it runs — Alex's Depop shop for vintage, Y2K, streetwear and designer, and the Mac app that lists, prices, refreshes, answers and negotiates for it. Use whenever the work touches flip, Depop, reselling, thrift or vintage sourcing, Chrome Hearts or any designer piece he is flipping, listing photos or titles for resale, the resale playbook, or "the Depop app". Trigger it when he says "flip", "the shop", "the listings", "list this", "what should this go for" — the name, the vibe and the mechanics here are decided and must not be re-derived.
