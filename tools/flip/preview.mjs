@@ -30,7 +30,7 @@ function orbHTML(source) {
 }
 
 const swift = await readFile(SWIFT, "utf8");
-const html = orbHTML(swift);
+const html = orbHTML(swift).replace("{{BUILD}}", " \u00b7 79948");
 await mkdir(OUT, { recursive: true });
 
 const browser = await chromium.launch({ args: ["--no-sandbox"], executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
@@ -41,6 +41,27 @@ const browser = await chromium.launch({ args: ["--no-sandbox"], executablePath: 
 /* Busy grounds, not flat ones. A flat gradient behind glass proves nothing —
    transparency is only visible when there is something with edges behind it to
    see. These stand in for a desktop with windows and a photograph on it. */
+/*
+ * What each macOS material actually lays over what is behind it.
+ *
+ * Measured off Apple's own appearance, not wished for. The two light ones are
+ * why "make it clear" failed twice: they are panels, and pinning them to dark
+ * appearance changes their colour without making them thin. .hudWindow in dark
+ * appearance is the only stock material that is genuinely see-through.
+ *
+ * Set FLIP_MATERIAL to render a different one and compare.
+ */
+const MATERIALS = {
+  hudWindowDark: "rgba(28,28,30,.55)",
+  underWindowBackground: "rgba(246,246,246,.92)",
+  fullScreenUI: "rgba(244,244,246,.85)",
+  /* No material at all — what the orb ships as. */
+  clear: "transparent",
+};
+const MATERIAL = process.env.FLIP_MATERIAL || "clear";
+if (!MATERIALS[MATERIAL]) throw new Error("no such material: " + MATERIAL);
+console.log("material:", MATERIAL, MATERIALS[MATERIAL]);
+
 const GROUNDS = {
   dark: `linear-gradient(135deg,#1b2430 0%,#2d1f3d 55%,#0f1a24 100%)`,
   light: `linear-gradient(135deg,#dfe7f2 0%,#f6efe6 55%,#cfd9e8 100%)`,
@@ -61,10 +82,17 @@ for (const [name, ground] of Object.entries(GROUNDS)) {
     await page.setContent(`<!doctype html><style>
       html,body{margin:0;height:100%;background:${ground}}
       .stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
-      /* The window's own material, which the canvas only tints. */
+      /* The window's own material — and it must be the REAL one.
+         This used to be a flat rgba(255,255,255,.06): a 6% tint, which is the
+         glass I wanted rather than the glass AppKit makes. So the orb rendered
+         beautifully here and arrived on his Mac as a white slab, four builds
+         running, and every render I checked said it was fine. A preview that
+         models the material generously is worse than no preview: it is a
+         second opinion that agrees with you. MATERIALS holds what each
+         NSVisualEffectView material actually puts over the backdrop. */
       .orb{width:216px;height:216px;border-radius:56px;overflow:hidden;position:relative;
-        backdrop-filter:blur(30px) saturate(1.7);-webkit-backdrop-filter:blur(30px) saturate(1.7);
-        background:rgba(255,255,255,.06);box-shadow:0 30px 60px -20px rgba(0,0,0,.55),
+        ${MATERIAL === "clear" ? "" : "backdrop-filter:blur(30px) saturate(1.7);-webkit-backdrop-filter:blur(30px) saturate(1.7);"}
+        background:${MATERIALS[MATERIAL]};box-shadow:0 30px 60px -20px rgba(0,0,0,.55),
         inset 0 1px 0 rgba(255,255,255,.35)}
       iframe{border:0;width:100%;height:100%;background:transparent}
     </style>${CLUTTER}<div class="stage"><div class="orb"><iframe id="f"></iframe></div></div>`);

@@ -140,3 +140,48 @@ Once the tint thins out, legibility has to come from the type rather than the pa
 the canvas scrim under the text drops to `.26 → .10 → 0` and the status line carries a
 tight `0 1px 3px rgba(0,0,0,.85)` shadow under its soft one. Light on the type, not a
 wall behind it.
+
+## Clear means no material and no paint
+
+His words, after four builds of it coming back grey: *"I want clear, transparent,
+not dusty, milky, gray, blurred, or frosted."*
+
+Two separate things were making it pale, and fixing one at a time is what cost the
+four rounds.
+
+**1. Every AppKit material is a tinted panel.** There is no thin one.
+
+| Material | What it actually lays over the backdrop |
+|---|---|
+| `.underWindowBackground` | ~92% — a white panel |
+| `.fullScreenUI` | ~85% — a white panel |
+| `.hudWindow` + `.darkAqua` | ~55% — smoke. Better, still not clear. |
+
+Pinning a light material to dark appearance changes its colour without making it
+thin. So **the orb hides the effect view entirely** (`effect?.isHidden = true` in the
+`.orb` branch of `layoutChrome`, restored for every other shape). The window is
+already transparent; the practical answer is to stop putting a panel behind it.
+
+**2. The canvas was painting the rest of it.** The scrim under the type, the three
+folding ribbons, the travelling highlight and the caustic were all our own light —
+invisible against a heavy material, and the only thing left once it was gone.
+
+So the canvas now draws **an edge and nothing else**: a bright top rim (`.52` white)
+and a cool bottom one (`.30`), feathered at `0.06` and `0.94`, with nothing at all
+across the middle. The type holds itself with its own shadow. **If it ever looks
+cloudy again, the cloud is something painted in that canvas.**
+
+## Never check a render against a fake material
+
+`preview.mjs` modelled the window material as `rgba(255,255,255,.06)`. A 6% tint —
+the glass we wanted, not the glass AppKit makes. So the orb rendered beautifully here
+and arrived on his Mac as a slab, four builds running, and every render agreed it was
+fine. **A preview that flatters the material is worse than no preview: it is a second
+opinion that agrees with you.**
+
+It now holds the measured tints in `MATERIALS` and defaults to `clear`, which is what
+ships. `FLIP_MATERIAL=fullScreenUI node preview.mjs <dir>` renders any of the others
+for comparison — that comparison is what finally proved where the milk came from.
+
+**Every design round is rendered and looked at here before it is packed.** Not
+described, not reasoned about — opened.

@@ -353,14 +353,20 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       g.addColorStop(0,tint(0.05));g.addColorStop(1,tint(0.16));
       x.fillStyle=g;x.fillRect(0,0,w,h);
 
-      /* A soft scrim under the type only, feathered out well before the edges,
-         so the words hold on any desktop while the pane stays see-through. */
-      var sc=x.createRadialGradient(w/2,h*0.30,4,w/2,h*0.30,w*0.62);
-      sc.addColorStop(0,"rgba(6,10,18,.16)");
-      sc.addColorStop(0.55,"rgba(6,10,18,.05)");
-      sc.addColorStop(1,"rgba(6,10,18,0)");
-      x.fillStyle=sc;x.fillRect(0,0,w,h);
-
+      /*
+       * No scrim. No ribbons. No glare. No frost.
+       *
+       * "I want clear, transparent, not dusty, milky, gray, blurred, or
+       * frosted." Every one of those words named something this canvas was
+       * painting. The scrim under the type, the three folding ribbons, the
+       * travelling highlight and the caustic were all our own light, and with
+       * the material gone they were the only thing left making it pale.
+       *
+       * What a piece of clear glass actually has is an EDGE. So that is all
+       * that is drawn: a bright top rim and a cool bottom one, and nothing
+       * across the middle at all. The type holds itself with its own shadow.
+       * If this ever looks cloudy again, the cloud is something painted here.
+       */
       /*
        * The ribbons.
        *
@@ -370,59 +376,15 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
        * liquid. This replaced sixteen columns, which were an equaliser from
        * 2010: Apple does not build readouts, it builds substance.
        */
-      x.save(); x.globalCompositeOperation="lighter";
-      for(var i=0;i<3;i++){
-        var sp=(0.26+mix*0.8)*(0.6+i*0.3);
-        var amp=h*(0.10+i*0.03)*(0.7+mix*0.8);
-        var mid=h*(0.46+i*0.10);
-        var gr=x.createLinearGradient(0,mid-amp,0,mid+amp);
-        gr.addColorStop(0,"rgba(255,255,255,0)");
-        gr.addColorStop(0.5, i===1 ? tint(0.16) : tint(0.10));
-        gr.addColorStop(1,"rgba(255,255,255,0)");
-        x.beginPath();
-        for(var px=0;px<=w;px+=3){
-          var y=mid+Math.sin(px/(70-i*14)+t*sp*2.4)*amp
-                   +Math.sin(px/(150+i*30)-t*sp*1.3)*amp*0.6
-                   +lean*amp*1.8*(px/w-0.5)*-2;
-          if(px===0) x.moveTo(px,y); else x.lineTo(px,y);
-        }
-        for(var px2=w;px2>=0;px2-=3){
-          var y2=mid+Math.sin(px2/(70-i*14)+t*sp*2.4)*amp
-                    +Math.sin(px2/(150+i*30)-t*sp*1.3)*amp*0.6
-                    +lean*amp*1.8*(px2/w-0.5)*-2;
-          x.lineTo(px2,y2+h*(0.06+mix*0.05));
-        }
-        x.closePath(); x.fillStyle=gr; x.fill();
-      }
-      x.restore();
 
       /* The rim: a bright top edge and a cool bottom one, so the glass has a
          thickness instead of being a hole cut in the desktop. */
       var r=x.createLinearGradient(0,0,0,h);
-      r.addColorStop(0,"rgba(255,255,255,.16)");
-      r.addColorStop(0.12,"rgba(255,255,255,0)");
-      r.addColorStop(0.9,"rgba(255,255,255,0)");
-      r.addColorStop(1,tint(0.10));
+      r.addColorStop(0,"rgba(255,255,255,.52)");
+      r.addColorStop(0.06,"rgba(255,255,255,0)");
+      r.addColorStop(0.94,"rgba(255,255,255,0)");
+      r.addColorStop(1,"rgba(255,255,255,.30)");
       x.fillStyle=r;x.fillRect(0,0,w,h);
-
-      /* The highlight slides the opposite way to the hand and brightens while
-         it moves, the way a reflection does on a thing being carried. */
-      var sx=w*(0.22+Math.sin(t*0.6)*0.10)-lean*w*0.30;
-      var sy=h*0.16+Math.max(-1,Math.min(1,vy/26))*h*0.16;
-      var glare=0.07+Math.min(0.12,(Math.abs(vx)+Math.abs(vy))/160);
-      var s2=x.createRadialGradient(sx,sy,2,sx,sy,h*0.78);
-      s2.addColorStop(0,"rgba(255,255,255,"+glare+")");s2.addColorStop(1,"rgba(255,255,255,0)");
-      x.fillStyle=s2;x.fillRect(0,0,w,h);
-
-      /* And a caustic raked across the surface by the movement — the bit that
-         reads as thickness. */
-      if (Math.abs(lean)>0.02){
-        var bx=w*(0.5-lean*0.85), bg=x.createLinearGradient(bx-w*0.34,0,bx+w*0.34,h);
-        bg.addColorStop(0,"rgba(255,255,255,0)");
-        bg.addColorStop(0.5,"rgba(255,255,255,"+(Math.abs(lean)*0.09)+")");
-        bg.addColorStop(1,"rgba(255,255,255,0)");
-        x.fillStyle=bg;x.fillRect(0,0,w,h);
-      }
 
       if (document.hidden) { setTimeout(function(){requestAnimationFrame(draw);}, 400); }
       else if (mix < 0.02 && Math.abs(vx) + Math.abs(vy) < 0.5) {
@@ -1018,6 +980,8 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     orb?.frame = bounds
     orb?.isHidden = shape != .orb
     frost?.isHidden = true
+    /* Back for every shape but the orb, which hides it again below. */
+    effect?.isHidden = false
     collapse?.isHidden = shape == .orb || shape == .pill
     if shape == .working {
       /*
@@ -1074,6 +1038,25 @@ final class Shell: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
       /* And no second effect view either: .withinWindow blurs the window's own
          contents, which is now nothing, and it was the other half of the milk. */
       frost?.isHidden = true
+      /*
+       * Clear means clear. No material at all.
+       *
+       * Four builds went into making a material thinner, and the answer was
+       * that every one of them is a tinted panel — .underWindowBackground and
+       * .fullScreenUI are near-opaque, and .hudWindow in dark appearance is
+       * smoke. Smoke is better than milk and still not what he asked for:
+       * "literally leave it clear, bro." The window is already transparent, so
+       * the practical answer is to stop putting a panel behind it.
+       *
+       * What is left is genuinely see-through: whatever is on his screen, then
+       * the canvas on top of it — a rim so the shape has an edge, a soft scrim
+       * only under the type so the words stay readable, and the light. The
+       * object reads as a lens rather than a tile, which is what glass is.
+       *
+       * The effect view stays alive and keeps its material; it comes straight
+       * back for every other shape, where a page is drawn over it anyway.
+       */
+      effect?.isHidden = true
       /* Nothing here is a pane. The whole orb is a handle, so it drags — and
          ChromeView calls back on a mouse-up that never moved, which is the
          click that opens it. */
