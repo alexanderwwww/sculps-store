@@ -66,6 +66,53 @@ means in practice:
   it, and send him the file.
 - **Do the work, do not describe it.** He is paying for a finished store, not a plan.
 
+## The fatal mistakes — mine, written down so they stop happening
+
+Every one of these cost him a build he had to open, find broken, and hand back.
+They are not style notes. Re-read them before shipping anything.
+
+1. **Never send him something I have not run.** Not compiled, not syntax-checked
+   — *run*. Five flip builds went out where his Mac was the first machine to
+   execute the code. `cloud.knowledge is not a function` reached him because
+   nothing between my keyboard and his Dock had ever started the worker.
+
+2. **A syntax check is not a test.** `node --check` passes on every file in a
+   dead app. If the thing has a loop, a test must drive the loop. The flip loop
+   had never been executed by anything until I wrote a fake page for it — and
+   that one test found eight defects in an hour.
+
+3. **Never assume an edit landed.** A find-and-replace that matches nothing
+   fails silently. `cloud.knowledge` was called in one file and never added to
+   the other because I targeted text from a different app's copy. Assert the
+   anchor exists, then check the result.
+
+4. **Never design something I cannot see.** Five rounds of "the glass is not
+   glass" happened because I was writing canvas code blind. The moment I
+   rendered it to a PNG I could see it was a grey tile in one look. If he will
+   look at it, I look at it first.
+
+5. **Answer the question he asked.** He asked eleven times to log in through
+   Chrome. I answered "the app cannot read Chrome's cookies" — true, and not
+   the question. The question was "how do I end up signed in", and it had an
+   answer the whole time.
+
+6. **Never carry another app's model over wholesale.** The Fiverr pacing came
+   to flip with Sunday off and two-minute waits between actions, in an app whose
+   whole point is to work while he sleeps. Copied code brings its assumptions
+   with it; each one has to be re-decided.
+
+7. **Never report success I have not verified.** "It's fixed" after an edit is
+   a guess. The worst version of this is code that does it too: a type that
+   failed inside the page was counted as typed, and the app told him work was
+   done that never happened.
+
+8. **A control is not done when it is drawn.** Three buttons did nothing for a
+   build because the window handed every click to the drag machinery. Drawn,
+   positioned, and *reachable by the mouse* are three separate things.
+
+9. **When he says it is broken, he is right.** Every single time. The argument
+   about whether it is broken is time not spent finding out why.
+
 ## Naming — his rule, said plainly
 
 > Stop giving ancient Greek names to apps that are Gen Z. If I want a Greek name, I
