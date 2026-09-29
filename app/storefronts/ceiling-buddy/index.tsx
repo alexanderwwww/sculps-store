@@ -591,24 +591,17 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               with the actual price beside it. Said twice it reads as a shop
               repeating itself; said once, next to the number it comes off,
               it reads as the offer. */}
+          {/* The banner: what is inside the box, said before anything else.
+              First thing in the column, orange, with the number as a block of
+              its own -- it has to be seen from a thumb's distance, because the
+              quieter version was read by nobody. It links down to the grid of
+              holograms when the page has one, so the claim and the proof are
+              one tap apart. A separate field from `badge`, which is
+              deliberately not drawn here: the pill that used to say "Save $59"
+              repeated the price line. */}
+          <Banner section={section} page={page} />
           <CouponBar offer={offer} currency={currency} />
           <Thrilled page={page} />
-          {/* The banner: what is inside the box, said before the price is.
-              It links down to the grid of holograms when the page has one, so
-              the claim and the proof are one tap apart. A separate field from
-              `badge`, which is deliberately not drawn here -- the pill that
-              used to say "Save $59" repeated the price line. */}
-          {has(v, "banner") ? (
-            page.sections.some((x) => x.type === "holo_grid" && !x.hidden) ? (
-              <a className="cb-banner" href="#holo">
-                <i className="cb-banner__dot" aria-hidden="true" />
-                <b>{val(v, "banner")}</b>
-                <span>See them all <em aria-hidden="true">↓</em></span>
-              </a>
-            ) : (
-              <div className="cb-banner"><i className="cb-banner__dot" aria-hidden="true" /><b>{val(v, "banner")}</b></div>
-            )
-          ) : null}
           <h1 className="cb-h1">{val(v, "heading") || page.product.title}</h1>
           {/* The score, before the price.
               Whoever is about to look at a number wants to know first whether
@@ -1986,6 +1979,30 @@ function RvThread({ r, gallery }: { r: LoadedProductPage["reviews"][number]; gal
  * tint where it does not, which is the difference between a nice effect and a
  * broken section.
  */
+/**
+ * The banner above the buy column. "20 hologram videos included" is split at
+ * its leading number, so the 20 can be a block of its own; a banner that does
+ * not start with a number simply has no block.
+ */
+function Banner({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
+  const v = section.values;
+  if (!has(v, "banner")) return null;
+  const text = val(v, "banner");
+  const m = /^(\d+)\s+(.+)$/.exec(text);
+  const grid = page.sections.some((x) => x.type === "holo_grid" && !x.hidden);
+  const inner = (
+    <>
+      {m ? <span className="cb-banner__num">{m[1]}</span> : null}
+      <span className="cb-banner__txt">
+        <b>{m ? m[2] : text}</b>
+        {has(v, "bannerSub") ? <small>{val(v, "bannerSub")}</small> : null}
+      </span>
+      {grid ? <span className="cb-banner__go">See them <em aria-hidden="true">↓</em></span> : null}
+    </>
+  );
+  return grid ? <a className="cb-banner" href="#holo">{inner}</a> : <div className="cb-banner">{inner}</div>;
+}
+
 /**
  * The hologram grid: every scene the projector can throw, twenty of them, in
  * two rows that drift past each other.

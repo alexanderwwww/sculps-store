@@ -55,6 +55,7 @@ export const SECTIONS: SectionDef[] = [
       subheading,
       { name: "badge", label: "Badge above heading", kind: "text" },
       { name: "banner", label: "Banner above the title", kind: "text", help: "One short line in a dark bar above the title, linking down to the holograms section if the page has one. Leave empty for none." },
+      { name: "bannerSub", label: "Banner second line", kind: "text", help: "The small line under the banner headline. Optional." },
       { name: "ctaLabel", label: "Button label", kind: "text" },
       { name: "reassurance", label: "Line under the button", kind: "text" },
       {
