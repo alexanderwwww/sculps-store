@@ -173,3 +173,31 @@ The general form, and it is the standing rule of this project: before sending
 any command to a running app, know what state it is in and what that command
 does *in that state*. Verify, then send. Guessing at a verb's meaning is the
 same failure as guessing at a fact.
+
+## Learned on the Haunted Projector rebuild (29 Sep 2026)
+
+**Placing a picture needs THREE files, not one.** The site reads `name.webp` for the full
+picture, `name-w640.webp` (640x640) for every card, wall and review thumbnail, and
+`name-t200.webp` (200x200) for gallery thumbnails. Upload only the full size and every card
+renders as an empty rectangle with alt text - which is exactly what he opened. Make and upload
+all three, then load the live page in a browser and count broken images before saying "done".
+(To inspect the live page from the sandbox the browser cannot use the proxy CA: have Node fetch
+each request and `route.fulfill` it. Never turn TLS verification off.)
+
+**Buy-box fields that actually draw.** Black Reaper's buy box is drawn by
+`storefronts/ceiling-buddy/index.tsx`, which renders `subheading`, `bundleTitle`, `bundleNote`
+and `reassurance` only. `badge` and `badges` are stored but never drawn there - putting the
+message in them looked done and showed nothing. Check the file that renders the store before
+choosing a field, then look at the live page.
+
+**The scene rules that finally worked** (see `bad-examples.md` for what did not):
+- One job, one chat, references attached once, every prompt a new house. No old picture as a
+  reference. No `parts`.
+- The brief pins scale to the remote control in the box photo, keeps the projector small and at
+  least ten feet from the camera, and describes the figure as upright, still and staring.
+- The hologram is "made of projected light": no frame, soft dissolving edges, the wall showing
+  through. Tight tiles frame the figure and leave the projector at the edge.
+- Read every result for a white border (tile 33 arrived with a 24px white frame) and for
+  film-character likenesses - a blank white mask plus coveralls, a white scream mask plus black
+  hood, and a red-haired clown are the trademarked looks, whatever the prompt says.
+- Gemini returns real JPEGs named `.png`; check `file` before converting.
