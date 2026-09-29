@@ -54,6 +54,7 @@ export const SECTIONS: SectionDef[] = [
       heading,
       subheading,
       { name: "badge", label: "Badge above heading", kind: "text" },
+      { name: "banner", label: "Banner above the title", kind: "text", help: "One short line in a dark bar above the title, linking down to the holograms section if the page has one. Leave empty for none." },
       { name: "ctaLabel", label: "Button label", kind: "text" },
       { name: "reassurance", label: "Line under the button", kind: "text" },
       {
@@ -425,6 +426,25 @@ export const SECTIONS: SectionDef[] = [
       fields: [
         { name: "image", label: "Picture", kind: "image" },
         { name: "caption", label: "Caption", kind: "text" },
+      ],
+    },
+  },
+  {
+    type: "holo_grid",
+    label: "Hologram grid",
+    hint: "Every scene it can throw, in two drifting rows",
+    fields: [
+      { name: "kicker", label: "Small line above the heading", kind: "text" },
+      heading,
+      subheading,
+      { name: "ctaLabel", label: "Button label", kind: "text" },
+    ],
+    blocks: {
+      label: "Holograms",
+      addLabel: "Add a hologram",
+      fields: [
+        { name: "image", label: "Picture", kind: "image" },
+        { name: "caption", label: "Name", kind: "text" },
       ],
     },
   },

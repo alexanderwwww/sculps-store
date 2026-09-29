@@ -3852,3 +3852,127 @@ html, body { margin: 0; }
   font-size: 13px; color: rgba(11, 11, 12, .5); text-decoration: underline;
 }
 .cb-code__err { margin: -6px 0 10px; font-size: 13.5px; color: #B3261E; }
+
+/* ============================================================ the banner
+ *
+ * One dark bar above the title on the projector page: what is inside the box,
+ * said before the price is. Ink on the page's own white, with a lime dot
+ * because the coupon bar above it is lime and the eye is already there. It is
+ * a link when the page has the hologram grid, so the claim and the proof are
+ * one tap apart.
+ * ====================================================================== */
+
+.cb-banner {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 12px; padding: 11px 14px;
+  border-radius: 14px;
+  background: #0E1118; color: #fff;
+  border: 1px solid rgba(255, 255, 255, .12);
+  box-shadow: 0 14px 30px -20px rgba(10, 12, 18, .9);
+  text-decoration: none;
+}
+.cb-banner b {
+  flex: 1; min-width: 0;
+  font-family: var(--display); font-weight: 800;
+  font-size: 13.5px; letter-spacing: .05em; text-transform: uppercase;
+}
+/* Bold type elsewhere in this column is ink; on this bar it has to be white. */
+.cb-buy__side .cb-banner b, .cb .cb-banner b { color: #fff; }
+.cb-banner span { flex: none; font-size: 12.5px; font-weight: 600; color: rgba(255, 255, 255, .7); }
+.cb-banner em { font-style: normal; display: inline-block; color: #CFFF3A; }
+.cb-banner__dot {
+  flex: none; width: 9px; height: 9px; border-radius: 50%;
+  background: #CFFF3A;
+  box-shadow: 0 0 0 0 rgba(207, 255, 58, .55);
+  animation: cb-banner-pulse 2.2s ease-out infinite;
+}
+@keyframes cb-banner-pulse { to { box-shadow: 0 0 0 9px rgba(207, 255, 58, 0); } }
+@keyframes cb-banner-nudge { 50% { transform: translateY(3px); } }
+.cb-banner em { animation: cb-banner-nudge 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .cb-banner__dot, .cb-banner em { animation: none; }
+}
+/* Above the title, under the crowd row: the promise comes before the name. */
+@media (max-width: 720px) {
+  .cb-buy__side > .cb-banner { order: 2; }
+}
+@media (max-width: 380px) { .cb-banner span { display: none; } }
+
+/* ======================================================= the hologram grid
+ *
+ * Twenty scenes, two rows of ten, drifting past each other. Same dark band as
+ * the clip rail above it in the file, and built the same phone-safe way: each
+ * row is a plain scroller (a finger can throw it), the drift is JS, there is
+ * no mask and no backdrop blur to cost a phone a layer, and the caption is a
+ * flat dark chip that reads on any picture.
+ * ====================================================================== */
+
+.cb-holo {
+  background:
+    radial-gradient(90% 120% at 50% 0%, #14203A 0%, #0A0C12 62%),
+    #0A0C12;
+  color: #fff;
+  padding: clamp(48px, 6vw, 80px) 0 clamp(52px, 6vw, 84px);
+  overflow: hidden;
+}
+.cb-holo .cb-wrap { text-align: center; }
+.cb-holo .cb-head h2, .cb-holo .cb-h2 { color: #fff; }
+.cb-holo .cb-head p { color: rgba(255, 255, 255, .6); }
+
+.cb-holo__kick {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin: 0 0 14px; padding: 6px 14px;
+  border: 1px solid rgba(207, 255, 58, .35); border-radius: 999px;
+  background: rgba(207, 255, 58, .08);
+  font-size: 11.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: #CFFF3A;
+}
+.cb-holo__kick i { width: 7px; height: 7px; border-radius: 50%; background: #CFFF3A; }
+
+.cb-holo__row {
+  margin-top: 14px;
+  overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  cursor: grab;
+}
+.cb-holo .cb-head + .cb-holo__row, .cb-holo .cb-wrap + .cb-holo__row { margin-top: 30px; }
+.cb-holo__row::-webkit-scrollbar { display: none; }
+.cb-holo__row:active { cursor: grabbing; }
+.cb-holo__track { display: flex; width: max-content; }
+.cb-holo__pass { display: flex; gap: 14px; padding-right: 14px; }
+
+.cb-holo__it {
+  position: relative; flex: 0 0 auto;
+  width: clamp(168px, 21vw, 300px);
+  aspect-ratio: 1 / 1;
+  margin: 0;
+  border-radius: 22px;
+  overflow: hidden;
+  background: #0E1118;
+  border: 1px solid rgba(255, 255, 255, .14);
+  box-shadow: 0 30px 60px -34px rgba(0, 0, 0, .95), inset 0 1px 0 rgba(255, 255, 255, .2);
+}
+.cb-holo__it img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cb-holo__n {
+  position: absolute; top: 10px; left: 10px;
+  padding: 3px 8px; border-radius: 999px;
+  background: rgba(10, 12, 18, .62);
+  font-size: 11px; font-weight: 700; letter-spacing: .06em; color: rgba(255, 255, 255, .85);
+  font-variant-numeric: tabular-nums;
+}
+.cb-holo__it figcaption {
+  position: absolute; left: 10px; bottom: 10px; max-width: calc(100% - 20px);
+  padding: 7px 11px; border-radius: 12px;
+  background: rgba(10, 12, 18, .66);
+  border: 1px solid rgba(255, 255, 255, .14);
+  font-size: 12.5px; font-weight: 700; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cb-holo__foot { margin-top: 30px; }
+.cb-holo__foot .cb-btn { display: inline-flex; width: auto; padding: 15px 30px; }
+@media (max-width: 520px) {
+  .cb-holo__pass { gap: 10px; padding-right: 10px; }
+  .cb-holo__it { border-radius: 18px; }
+}

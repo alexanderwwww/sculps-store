@@ -10,7 +10,7 @@
  * chrome and live here in code. Nothing on this page is invented — a section
  * with no content renders nothing rather than a placeholder.
  */
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type RefObject } from "react";
 import type { LoadedProductPage, LoadedSection } from "~/lib/store.server";
 import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
@@ -265,6 +265,7 @@ function Section({
     case "split_picks":   return <HersHis section={section} />;
     case "recommendations": return <Recommends section={section} page={page} storeParam={storeParam} />;
     case "ugc_wall":      return <UgcWall section={section} />;
+    case "holo_grid":     return <HoloGrid section={section} />;
     case "closing_cta":   return <Closing section={section} page={page} storeParam={storeParam} />;
     default:              return null;
   }
@@ -592,6 +593,22 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               it reads as the offer. */}
           <CouponBar offer={offer} currency={currency} />
           <Thrilled page={page} />
+          {/* The banner: what is inside the box, said before the price is.
+              It links down to the grid of holograms when the page has one, so
+              the claim and the proof are one tap apart. A separate field from
+              `badge`, which is deliberately not drawn here -- the pill that
+              used to say "Save $59" repeated the price line. */}
+          {has(v, "banner") ? (
+            page.sections.some((x) => x.type === "holo_grid" && !x.hidden) ? (
+              <a className="cb-banner" href="#holo">
+                <i className="cb-banner__dot" aria-hidden="true" />
+                <b>{val(v, "banner")}</b>
+                <span>See them all <em aria-hidden="true">↓</em></span>
+              </a>
+            ) : (
+              <div className="cb-banner"><i className="cb-banner__dot" aria-hidden="true" /><b>{val(v, "banner")}</b></div>
+            )
+          ) : null}
           <h1 className="cb-h1">{val(v, "heading") || page.product.title}</h1>
           {/* The score, before the price.
               Whoever is about to look at a number wants to know first whether
@@ -1969,6 +1986,120 @@ function RvThread({ r, gallery }: { r: LoadedProductPage["reviews"][number]; gal
  * tint where it does not, which is the difference between a nice effect and a
  * broken section.
  */
+/**
+ * The hologram grid: every scene the projector can throw, twenty of them, in
+ * two rows that drift past each other.
+ *
+ * Built the way the clip rail is built, on purpose. Each row is an ordinary
+ * horizontal scroller -- a finger or a trackpad already knows how to move it
+ * -- and the drift is a position written to scrollLeft, so grabbing a row
+ * stops it and letting go lets it carry on a couple of seconds later. The
+ * rows run in opposite directions, which is what makes it read as a wall of
+ * things happening rather than a strip. Each row prints its ten pictures
+ * twice so the lap has no seam, and the second copy names the same files, so
+ * the browser decodes ten bitmaps a row, not twenty.
+ *
+ * It only moves while it is on screen, and not at all for anybody who asked
+ * their phone for less motion -- they get the same rows to scroll by hand.
+ */
+function useDrift(ref: RefObject<HTMLDivElement | null>, dir: 1 | -1, count: number) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !count) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const SPEED = 0.6;           // px a frame, about 36px a second
+    const RESUME_AFTER = 2500;   // how long a touch holds it still
+    let raf = 0;
+    let visible = false;
+    let started = false;
+    let idleAt = 0;
+    let pos = 0;
+
+    const step = () => {
+      raf = requestAnimationFrame(step);
+      if (!visible) return;
+      const lap = el.scrollWidth / 2;
+      if (lap <= 0) return;
+      if (!started) {
+        // The rightward row starts a lap in, so it has a lap to travel back.
+        pos = dir === 1 ? 0 : lap;
+        el.scrollLeft = pos;
+        started = true;
+        return;
+      }
+      if (Date.now() < idleAt) { pos = el.scrollLeft; return; }
+      pos += dir * SPEED;
+      if (pos >= lap) pos -= lap;
+      if (pos < 0) pos += lap;
+      el.scrollLeft = pos;
+    };
+
+    const hold = () => { idleAt = Date.now() + RESUME_AFTER; };
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0 });
+    io.observe(el);
+    for (const type of ["pointerdown", "touchstart", "wheel"] as const) {
+      el.addEventListener(type, hold, { passive: true });
+    }
+    raf = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(raf);
+      io.disconnect();
+      for (const type of ["pointerdown", "touchstart", "wheel"] as const) {
+        el.removeEventListener(type, hold);
+      }
+    };
+  }, [ref, dir, count]);
+}
+
+function HoloGrid({ section }: { section: LoadedSection }) {
+  const tiles = section.blocks.filter((b) => has(b.values, "image"));
+  const upper = useRef<HTMLDivElement | null>(null);
+  const lower = useRef<HTMLDivElement | null>(null);
+  useDrift(upper, 1, tiles.length);
+  useDrift(lower, -1, tiles.length);
+  if (!tiles.length) return null;
+
+  const v = section.values;
+  const half = Math.ceil(tiles.length / 2);
+  const rows = [tiles.slice(0, half), tiles.slice(half)];
+  return (
+    <section className="cb-holo" id="holo">
+      <div className="cb-wrap">
+        {has(v, "kicker") ? <p className="cb-holo__kick"><i aria-hidden="true" />{val(v, "kicker")}</p> : null}
+        <Head section={section} />
+      </div>
+      {rows.map((row, r) => (
+        <div className="cb-holo__row" ref={r === 0 ? upper : lower} key={r}>
+          <div className="cb-holo__track">
+            {[0, 1].map((pass) => (
+              <div className="cb-holo__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
+                {row.map((b, i) => (
+                  <figure className="cb-holo__it" key={`${pass}-${b.id}`}>
+                    <Pic
+                      src={val(b.values, "image")}
+                      size="w640"
+                      alt={pass === 0 ? val(b.values, "caption") : ""}
+                      loading={pass === 0 && i < 3 ? "eager" : "lazy"}
+                    />
+                    <span className="cb-holo__n" aria-hidden="true">{String(r * half + i + 1).padStart(2, "0")}</span>
+                    {has(b.values, "caption") ? <figcaption>{val(b.values, "caption")}</figcaption> : null}
+                  </figure>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      {has(v, "ctaLabel") ? (
+        <div className="cb-wrap cb-holo__foot">
+          <a className="cb-btn" href="#buy">{val(v, "ctaLabel")}</a>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function UgcWall({ section }: { section: LoadedSection }) {
   const clips = section.blocks.filter((b) => has(b.values, "image"));
   const rail = useRef<HTMLDivElement | null>(null);
