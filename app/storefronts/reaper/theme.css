@@ -4431,3 +4431,8 @@ html, body { margin: 0; }
 .cb-acts::before { content: none; }
 .cb-wallet, .cb-wallet--pp { margin-top: 12px; }
 .cb-buy__side > .cb-ship { margin-top: 18px; }
+/* badge sits on the top border above the name column, clear of the price */
+.cb-tier__flag { top: -10px; right: auto; left: 110px; }
+.cb-tier { min-height: 96px !important; }
+@media (max-width: 400px) { .cb-tier__flag { left: 88px; } }
+.cb-tier { padding-top: 16px !important; padding-bottom: 12px !important; min-height: 100px !important; }
