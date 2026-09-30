@@ -4429,3 +4429,6 @@ html, body { margin: 0; }
   .cb-buy { padding-top: 0 !important; }
   .cb-gal__strip { padding-left: 12px; padding-right: 12px; }
 }
+
+/* the round avatars carry the product's own pictures, never invented people */
+.cb-promise__dots i { background-size: cover; background-position: center; width: 30px; height: 30px; }

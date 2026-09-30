@@ -622,7 +622,12 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
           {/* The honest version of the avatar row: same shape and rhythm, no invented people
               and no invented count. Shown only by themes that switch it on. */}
           <div className="cb-promise">
-            <span className="cb-promise__dots" aria-hidden="true"><i /><i /><i /><i /></span>
+            <span className="cb-promise__dots" aria-hidden="true">
+              {[0, 1, 2, 3].map((n) => {
+                const u = (page.product.images ?? []).filter((x) => x.url)[n + 4]?.url ?? (page.product.images ?? []).filter((x) => x.url)[n]?.url;
+                return <i key={n} style={u ? { backgroundImage: `url(${u.replace(/\.webp$/, "-t200.webp")})` } : undefined} />;
+              })}
+            </span>
             <span className="cb-promise__say">Try it for 30 days. If it's not right, send it back.</span>
           </div>
           <h1 className="cb-h1">{val(v, "heading") || page.product.title}</h1>
