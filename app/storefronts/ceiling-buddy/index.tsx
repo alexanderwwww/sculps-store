@@ -448,6 +448,23 @@ function Announce({
         amount ? `${amount} with code ${offer!.code}. ${brand.rail.join(". ")}.` : brand.rail.join(". ")
       }
     >
+      {/* Only Black Reaper's stylesheet shows this: three promises fading one
+          at a time beside a fixed code pill. Everyone else keeps the rail. */}
+      <div className="cb-ann__fade" aria-hidden="true">
+        <span className="cb-ann__msgs">
+          {[0, 1, 2].map((i) => (
+            <span key={i} className="cb-ann__msg" style={{ animationDelay: `${i * 4}s` }}>
+              {icons[i]} {brand.rail[i]}
+            </span>
+          ))}
+        </span>
+        {offer && amount ? (
+          <span className="cb-ann__code">
+            {amount}
+            <code>{offer.code}</code>
+          </span>
+        ) : null}
+      </div>
       <div className="cb-ann__t" aria-hidden="true">
         {[0, 1].map((n) => (
           <span key={n}>
@@ -836,8 +853,10 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
             <p className="cb-stock">
               <i aria-hidden="true" />
               {chosen.available <= 20
-                ? `Only ${chosen.available} left`
-                : "In stock"}
+                ? <span className="cb-stock__low">{`Only ${chosen.available} left`}</span>
+                : <span className="cb-stock__std">In stock</span>}
+              <span className="cb-stock__plain">In stock</span>
+              <span className="cb-stock__ship">Arrives 5-7 days after it ships</span>
             </p>
           ) : null}
 
