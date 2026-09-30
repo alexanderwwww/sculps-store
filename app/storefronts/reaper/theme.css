@@ -4110,3 +4110,23 @@ html, body { margin: 0; }
   font-size: 12px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,.6);
 }
 @media (max-width: 520px) { .cb-holo__pass { gap: 2px; padding-right: 2px; } }
+
+/* ---- the big-shop look: an orange promo bar and a boxed gallery ---------
+   Home Depot, Spirit and Amazon open the same way: a solid brand-colour
+   strip across the top, then a white page with the picture in a hairline
+   box. Shoppers read that as a shop they have used before. */
+.cb-ann { background: #F5821F; }
+.cb-ann__t i { color: #140A02; font-weight: 800; }
+.cb-ann__t i::after { background: rgba(20, 10, 2, .35); }
+.cb-ann__t i svg { opacity: 1; }
+.cb-ann__t i[data-pill] { background: #140A02; color: #fff; }
+.cb-ann__t i[data-pill] code { color: #fff; }
+
+.cb-gal__main {
+  border: 1px solid #E3E3E3 !important; border-radius: 8px !important;
+  overflow: hidden; background: #fff !important;
+}
+.cb-gal__thumb { border-radius: 6px !important; }
+@media (max-width: 720px) {
+  .cb-gal { padding-left: 12px; padding-right: 12px; }
+}
