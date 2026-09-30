@@ -157,6 +157,7 @@ async function add(
     .from(metaConfig)
     .where(eq(metaConfig.storeId, store.id))
     .limit(1);
+  let addToCart: { eventId: string; data: Record<string, unknown> } | null = null;
   if (pixel?.pixelId) {
     const [variant] = await context.db.select().from(variants).where(eq(variants.id, variantId)).limit(1);
     if (variant) {
@@ -183,7 +184,26 @@ async function add(
       );
       back.searchParams.set("fbe", eventId);
       back.searchParams.set("fbv", variant.id);
+      addToCart = {
+        eventId,
+        data: {
+          value: variant.priceCents / 100,
+          currency: store.currency,
+          content_type: "product",
+          content_ids: [variant.id],
+          contents: [{ id: variant.id, quantity: 1, item_price: variant.priceCents / 100 }],
+        },
+      };
     }
+  }
+
+  // The drawer adds with fetch and stays on the page, so it has no redirect to
+  // carry the event id. It asks for JSON and fires the browser half itself.
+  if (request.headers.get("X-Cart-Ajax") === "1") {
+    return new Response(JSON.stringify({ ok: true, addToCart }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", "Set-Cookie": cartCookie(token, url) },
+    });
   }
 
   return new Response(null, {

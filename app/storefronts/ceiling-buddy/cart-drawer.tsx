@@ -130,7 +130,17 @@ export function CartDrawerProvider({
       setOpen(true);
       const body = new FormData();
       body.set("variantId", variantId);
-      fetch(href("/cart/add"), { method: "POST", body })
+      fetch(href("/cart/add"), { method: "POST", body, headers: { "X-Cart-Ajax": "1" } })
+        .then(async (res) => {
+          try {
+            const j = (await res.json()) as { addToCart?: { eventId: string; data: Record<string, unknown> } | null };
+            const a = j.addToCart;
+            const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
+            if (a && typeof fbq === "function") fbq("track", "AddToCart", a.data, { eventID: a.eventId });
+          } catch {
+            /* tracking must never break the add */
+          }
+        })
         .then(() => reload())
         .finally(() => setBusy(false));
       // eslint-disable-next-line react-hooks/exhaustive-deps
