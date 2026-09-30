@@ -4450,3 +4450,24 @@ html, body { margin: 0; }
 .cb-promise__dots i:first-child { margin-left: 0; }
 .cb-promise::before { content: none; }
 .cb-promise__say { font-size: 14px; font-weight: 600; color: #111; line-height: 1.3; }
+
+/* ---- bundles, the way every Halloween shop does them ----------------------
+   A plain list: radio, small picture, name, price on the right, the saving as
+   one small red line. No flags, no quantity chips, nothing that grows. */
+.cb-tiers { gap: 10px !important; }
+.cb-tier { min-height: 68px !important; padding: 10px 12px !important; border-radius: 6px !important; column-gap: 10px !important; box-shadow: none !important; background: #fff !important; }
+.cb-tier[aria-checked="true"] { background: #fff !important; box-shadow: none !important; border-color: #111 !important; }
+.cb-tier__flag, .cb-tier__qty { display: none !important; }
+.cb-tier .cb-tier__pics .cb-tier__pic,
+.cb-tier[aria-checked="true"] .cb-tier__pics[data-n] .cb-tier__pic,
+.cb-tier:not([aria-checked="true"]) .cb-tier__pics[data-n] .cb-tier__pic { width: 52px !important; height: 52px !important; border-radius: 6px !important; }
+.cb-tier__name { font-size: 15px; font-weight: 700; }
+.cb-tier__price { font-size: 17px; font-weight: 800; }
+.cb-tier__under s { font-size: 13px; }
+.cb-tier__under b, .cb-tier__under .cb-tier__save { font-size: 13px; }
+.cb-tier__dot { width: 22px !important; height: 22px !important; }
+@media (max-width: 720px) {
+  .cb-tier .cb-tier__pics .cb-tier__pic,
+  .cb-tier[aria-checked="true"] .cb-tier__pics[data-n] .cb-tier__pic,
+  .cb-tier:not([aria-checked="true"]) .cb-tier__pics[data-n] .cb-tier__pic { width: 46px !important; height: 46px !important; }
+}
