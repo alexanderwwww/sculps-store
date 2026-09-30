@@ -1578,3 +1578,4 @@ body:has(.cb-drawer.is-open) .cb-buy__side .cb-wallet { visibility: hidden; }
 /* Reaper-only pieces of shared markup: hidden everywhere else. */
 .cb-ann__fade, .cb-stock__plain, .cb-stock__ship { display: none; }
 .cb-stock__std { display: inline; }
+.cb-tier__pic--extra, .cb-tier__qty { display: none; }

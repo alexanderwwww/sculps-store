@@ -4342,3 +4342,74 @@ html, body { margin: 0; }
 /* the price lives in the sticky bar and the bundle; the button just says what it does */
 .cb-acts .cb-btn__p, .cb-acts .cb-btn > span:last-child:not(:first-child) { display: none; }
 .cb-acts .cb-btn { justify-content: center; }
+
+/* ======================================================================
+   Round 2: bundle cards. One figure per unit, so 1 vs 2 vs 3 reads at a glance.
+   Border is always 2px (only its colour changes) so nothing moves on select.
+   ====================================================================== */
+.cb-buy__side > .cb-bundle { padding: 0 12px 12px; }
+.cb-tiers { gap: 14px; }
+.cb-tier {
+  display: grid !important; grid-template-columns: 28px auto minmax(0, 1fr) auto; align-items: center;
+  column-gap: 12px; min-height: 92px; padding: 14px 12px !important;
+  border: 2px solid #E0E0E0 !important; border-radius: 10px; background: #fff; text-align: left;
+  transition: border-color .12s, background-color .12s, box-shadow .12s;
+}
+.cb-tier[aria-checked="true"] { border-color: #111 !important; background: #FFF8F0; box-shadow: 0 0 0 3px rgba(245,130,31,.28); }
+/* the radio: 28px, a real thumb target */
+.cb-tier__dot { position: static !important; width: 26px !important; height: 26px !important; flex: none; margin: 0 !important; }
+/* the figures: one tile per unit, overlapped, all the same size */
+.cb-tier__pics { display: flex; align-items: center; margin: 0 !important; }
+.cb-tier__pics .cb-tier__pic { width: 60px !important; height: 60px !important; border-radius: 8px !important; border: 1px solid #DDD; background: #F4F4F4; }
+.cb-tier__pics .cb-tier__pic + .cb-tier__pic { margin-left: -22px !important; }
+.cb-tier .cb-tier__pic--extra { display: block; box-shadow: -2px 0 0 #fff; }
+.cb-tier__pics[data-n="3"] .cb-tier__pic { width: 52px !important; height: 52px !important; }
+.cb-tier__pics[data-n="3"] .cb-tier__pic + .cb-tier__pic { margin-left: -24px !important; }
+/* words */
+.cb-tier__main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cb-tier__name { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 16px; line-height: 1.2; }
+.cb-tier .cb-tier__qty {
+  display: inline-block; font-style: normal; font-size: 12px; font-weight: 800; line-height: 1;
+  background: #111; color: #fff; border-radius: 999px; padding: 4px 8px;
+}
+.cb-tier__under { font-size: 13px; }
+.cb-tier__under b { font-size: 13.5px; }
+.cb-tier__right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; }
+.cb-tier__price { font-size: 20px; line-height: 1.1; }
+.cb-tier__each { font-size: 12.5px; }
+/* Best value: only the deepest real saving, small, in the corner */
+.cb-tier__flag--best { display: block !important; top: -11px; right: 12px; left: auto; background: #C8102E; color: #fff; }
+.cb-tier[aria-checked="true"] .cb-tier__flag--best { background: #C8102E; color: #fff; }
+@media (max-width: 400px) {
+  .cb-tier { grid-template-columns: 24px auto minmax(0, 1fr) auto; column-gap: 8px; padding: 14px 8px !important; }
+  .cb-tier__dot { width: 24px !important; height: 24px !important; }
+  .cb-tier__pics .cb-tier__pic { width: 46px !important; height: 46px !important; }
+  .cb-tier__pics .cb-tier__pic + .cb-tier__pic { margin-left: -18px !important; }
+  .cb-tier__pics[data-n="3"] .cb-tier__pic { width: 40px !important; height: 40px !important; }
+  .cb-tier__pics[data-n="3"] .cb-tier__pic + .cb-tier__pic { margin-left: -20px !important; }
+  .cb-tier__name { font-size: 15px; }
+  .cb-tier__price { font-size: 18px; }
+}
+/* fixed picture well so the name column is the same width on every row */
+.cb-tier__pics { width: 88px; flex: none; justify-content: flex-start; }
+.cb-tier__pics .cb-tier__pic { width: 56px !important; height: 56px !important; }
+.cb-tier__pics .cb-tier__pic + .cb-tier__pic { margin-left: -24px !important; }
+.cb-tier__pics[data-n="3"] .cb-tier__pic { width: 46px !important; height: 46px !important; }
+.cb-tier__pics[data-n="3"] .cb-tier__pic + .cb-tier__pic { margin-left: -2px !important; }
+.cb-tier__under b, .cb-tier__each, .cb-tier__price { white-space: nowrap; }
+.cb-buy__side > .cb-bundle { padding: 0 10px 12px; }
+@media (max-width: 400px) {
+  .cb-tier__pics { width: 64px; }
+  .cb-tier__pics .cb-tier__pic { width: 42px !important; height: 42px !important; }
+  .cb-tier__pics .cb-tier__pic + .cb-tier__pic { margin-left: -20px !important; }
+  .cb-tier__pics[data-n="3"] .cb-tier__pic { width: 34px !important; height: 34px !important; }
+  .cb-tier__pics[data-n="3"] .cb-tier__pic + .cb-tier__pic { margin-left: -3px !important; }
+  .cb-tier__under span { display: none; }
+}
+.cb-tier__pics[data-n="3"] .cb-tier__pic { width: 40px !important; height: 40px !important; }
+.cb-tier__pics[data-n="3"] .cb-tier__pic + .cb-tier__pic { margin-left: -16px !important; }
+@media (max-width: 400px) {
+  .cb-tier__pics { width: 66px; }
+  .cb-tier__pics[data-n="3"] .cb-tier__pic { width: 30px !important; height: 30px !important; }
+  .cb-tier__pics[data-n="3"] .cb-tier__pic + .cb-tier__pic { margin-left: -12px !important; }
+}

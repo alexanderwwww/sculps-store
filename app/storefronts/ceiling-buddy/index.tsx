@@ -738,16 +738,23 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                         imgs.find((i) => i.url)?.url;
                       if (!pic) return null;
                       return (
-                        <span className="cb-tier__pics cb-tier__pics--1">
+                        <span className="cb-tier__pics cb-tier__pics--1" data-n={Math.min(qty, 3)}>
                           <span className="cb-tier__pic">
                             <Pic src={pic} size="t200" alt="" loading="lazy" />
                           </span>
+                          {/* Reaper only: one figure per unit, so 1 vs 2 vs 3 reads
+                              without words. Other themes hide these copies. */}
+                          {Array.from({ length: Math.min(qty, 3) - 1 }, (_, k) => (
+                            <span key={k} className="cb-tier__pic cb-tier__pic--extra" aria-hidden="true">
+                              <Pic src={pic} size="t200" alt="" loading="lazy" />
+                            </span>
+                          ))}
                         </span>
                       );
                     })()}
 
                     <span className="cb-tier__main">
-                      <span className="cb-tier__name">{x.label}</span>
+                      <span className="cb-tier__name">{x.label}{qty > 1 ? <em className="cb-tier__qty">{`\u00d7${qty}`}</em> : null}</span>
                       <span className="cb-tier__under">
                         {x.compareAtCents ? <s>{formatMoney(x.compareAtCents, currency)}</s> : null}
                         {save ? <b>Save {dollarsOff(save)}</b> : null}
