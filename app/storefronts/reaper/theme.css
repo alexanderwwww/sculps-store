@@ -4477,3 +4477,13 @@ html, body { margin: 0; }
   .cb-tier__price { font-size: 20px; }
   .cb-tier__under s { font-size: 14px; }
 }
+
+/* Bundle rows, tidy pass: the one-window line sits under the price like the
+   others' pill does, and the pictures are bigger so ONE vs THREE reads. */
+.cb-tier__under > span { grid-column: 2 / 4 !important; grid-row: 3 !important; line-height: 1.25; }
+.cb-tier { min-height: 118px !important; grid-template-columns: 26px auto 1fr 108px !important; }
+.cb-tier .cb-tier__pic { width: 104px !important; height: 104px !important; }
+@media (max-width: 400px) {
+  .cb-tier { grid-template-columns: 24px auto 1fr 92px !important; }
+  .cb-tier .cb-tier__pic { width: 90px !important; height: 90px !important; }
+}
