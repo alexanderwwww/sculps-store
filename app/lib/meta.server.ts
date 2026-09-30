@@ -178,11 +178,11 @@ export async function sendEvent(
           ? {
               custom_data: {
                 currency: event.currency.toUpperCase(),
-                value: (event.valueCents / 100).toFixed(2),
+                value: Number((event.valueCents / 100).toFixed(2)),
                 contents: event.contents.map((item) => ({
                   id: item.id,
                   quantity: item.quantity,
-                  item_price: (item.itemPrice / 100).toFixed(2),
+                  item_price: Number((item.itemPrice / 100).toFixed(2)),
                 })),
                 content_type: "product",
                 content_ids: event.contents.map((item) => item.id),
@@ -250,6 +250,7 @@ export function pixelScript(
   if (m?.region) match.st = m.region.trim().toLowerCase();
   if (m?.postalCode) match.zp = m.postalCode.trim();
   if (m?.country) match.country = m.country.trim().toLowerCase();
+  const off = `fbq('set','autoConfig',false,'${pixelId}');`;
   const init = Object.keys(match).length ? `fbq('init','${pixelId}',${JSON.stringify(match)});` : `fbq('init','${pixelId}');`;
   const view = options.pageViewEventId
     ? `fbq('track','PageView',{},{eventID:${JSON.stringify(options.pageViewEventId)}});`
@@ -275,7 +276,7 @@ n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-${init}${view}`;
+${off}${init}${view}`;
 }
 
 /**

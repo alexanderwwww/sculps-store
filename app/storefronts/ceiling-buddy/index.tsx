@@ -623,10 +623,9 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               and no invented count. Shown only by themes that switch it on. */}
           <div className="cb-promise">
             <span className="cb-promise__dots" aria-hidden="true">
-              {[0, 1, 2, 3].map((n) => {
-                const u = (page.product.images ?? []).filter((x) => x.url)[n + 4]?.url ?? (page.product.images ?? []).filter((x) => x.url)[n]?.url;
-                return <i key={n} style={u ? { backgroundImage: `url(${u.replace(/\.webp$/, "-t200.webp")})` } : undefined} />;
-              })}
+              {faceSet(page.product.id).map((n) => (
+                <i key={n} style={{ backgroundImage: `url(/media/face-${String(n).padStart(2, "0")}.webp)` }} />
+              ))}
             </span>
             <span className="cb-promise__say">Try it for 30 days. If it's not right, send it back.</span>
           </div>
@@ -3248,4 +3247,13 @@ function LazyVideo({ src }: { src: string }) {
     return () => io.disconnect();
   }, [src]);
   return <video ref={ref} muted loop playsInline preload="none" />;
+}
+
+
+/** Four of the sixteen portraits, a different four for each product, the same every time. */
+function faceSet(id: string): number[] {
+  let h = 0;
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const start = h % 16;
+  return [0, 1, 2, 3].map((k) => ((start + k * 5) % 16) + 1);
 }

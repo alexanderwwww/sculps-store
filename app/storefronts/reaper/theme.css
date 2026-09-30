@@ -4444,11 +4444,9 @@ html, body { margin: 0; }
   .cb-tier:not([aria-checked="true"]) .cb-tier__pics[data-n] .cb-tier__pic { width: 56px !important; height: 56px !important; }
 }
 
-/* the round pictures looked broken (cropped panels, blank discs): the promise is a clean line with a check */
-.cb-promise__dots { display: none !important; }
-.cb-promise { gap: 8px; }
-.cb-promise::before {
-  content: ""; flex: none; width: 20px; height: 20px; border-radius: 50%;
-  background: #1FA34A url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/13px no-repeat;
-}
-.cb-promise__say { font-size: 14px; font-weight: 600; }
+/* the round portraits: overlapping circles, a white ring, then the promise */
+.cb-promise__dots { display: inline-flex !important; }
+.cb-promise__dots i { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; margin-left: -9px; background-size: cover !important; background-position: center 30% !important; background-repeat: no-repeat !important; }
+.cb-promise__dots i:first-child { margin-left: 0; }
+.cb-promise::before { content: none; }
+.cb-promise__say { font-size: 14px; font-weight: 600; color: #111; line-height: 1.3; }
