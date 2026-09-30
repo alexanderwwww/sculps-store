@@ -2648,6 +2648,8 @@ function MapCard({ values }: { values: Record<string, string> }) {
  * customer on the tap: no code to copy, nothing to type. The amount is what
  * the server says it minted -- this component only shows it.
  */
+const SHOW_CLAIM_POPUP = false;
+
 function ClaimPopup({ money: moneyRaw, applied }: { money: (cents: number) => string; applied: string | null }) {
   // "$5 off", never "$5.00 off" -- the shop's rule for every discount it shows.
   const money = (cents: number) => moneyRaw(cents).replace(/[.,]00\b/, "");
@@ -4427,7 +4429,8 @@ function OnePage({
    * An untested giveaway is not a launch-day feature.
    */
   const scratch = store.slug === "reaper" ? (
-    <ClaimPopup money={money} applied={cart.discount?.code ?? null} />
+    // Off: the marketing panel found one discount beats three. REAPER20 stays.
+    SHOW_CLAIM_POPUP ? <ClaimPopup money={money} applied={cart.discount?.code ?? null} /> : null
   ) : (
     <ScratchCard
       odds={scratchOdds}

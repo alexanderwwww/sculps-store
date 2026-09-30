@@ -3995,3 +3995,57 @@ html, body { margin: 0; }
   .cb-holo__pass { gap: 10px; padding-right: 10px; }
   .cb-holo__it { border-radius: 18px; }
 }
+
+/* ======================================================================
+ * Conversion pass — what the marketing panel agreed on
+ *
+ * One loud thing near the price (the button), one saving instead of four,
+ * and nothing on the first screen that a stranger cannot check. Claims that
+ * are not backed by real orders are hidden here rather than deleted: the
+ * data stays, and they come back the day they are true.
+ * ====================================================================== */
+
+/* the bar follows the Add to cart button from the first screen */
+:root { --cb-sticky-early: 1; }
+
+/* unverifiable: an invented head-count, a score from placeholder reviews,
+   and a "verified buyer" badge on reviews that came from no order */
+.cb-thrilled, .cb-score, .cb-card__ok { display: none !important; }
+
+/* one saving, in the bar at the top: the boxed copy of the same code goes */
+.cb-buy__side > .cb-coupon { display: none !important; }
+
+/* "Best value" is a claim; the per-window price under it already says it */
+.cb-tier__flag--best { display: none !important; }
+
+/* the saving pill stops competing with the button */
+.cb-buy .cb-price__off {
+  background: transparent; color: #140A02;
+  border: 1.5px solid rgba(20, 10, 2, .35);
+}
+.cb-buy .cb-price__off svg { color: #140A02; }
+
+/* Buy now steps back: the orange one is the action */
+.cb-acts .cb-btn--ghost {
+  background: transparent; color: #140A02; border: 2px solid #140A02; box-shadow: none;
+}
+
+/* the same shipping / returns / pay-in-4 lines were printed three times in a row */
+.cb-pay4__line, .cb-reassure { display: none !important; }
+
+@media (max-width: 720px) {
+  /* title and price first; the banner becomes a slim line under the price */
+  .cb-buy__side > .cb-h1     { order: 1; margin-top: 6px; }
+  .cb-buy__side > .cb-price  { order: 2; margin-top: 6px; }
+  .cb-buy__side > .cb-banner { order: 3; margin: 10px 0; padding: 7px 10px 7px 8px; gap: 10px; border-radius: 12px; border-width: 1.5px; box-shadow: none; }
+  .cb-buy__side > .cb-banner .cb-banner__num { min-width: 34px; height: 34px; font-size: 21px; border-radius: 9px; }
+  .cb-buy__side > .cb-banner .cb-banner__txt b { font-size: 13.5px; }
+  .cb-buy__side > .cb-banner .cb-banner__txt small { display: none; }
+  .cb-buy__side > .cb-banner::after { display: none; }
+  .cb-buy__side > .cb-lede   { display: none; }
+  .cb-buy__side > .cb-bundle { order: 4; }
+  .cb-buy__side > .cb-stock  { order: 5; }
+  .cb-buy__side > .cb-acts   { order: 6; }
+  .cb-buy__side > .cb-wallet { order: 7; }
+  .cb-acts .cb-btn { min-height: 56px; }
+}

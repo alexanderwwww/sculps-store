@@ -3013,12 +3013,18 @@ function StickyBuy({ page, storeParam = "" }: { page: LoadedProductPage; storePa
   // Appears once the buy box has scrolled off, the way the sticky bar on the
   // other stores does. No buy box on the page means no bar.
   useEffect(() => {
-    const target = document.getElementById("buy");
+    /* A theme can ask for the bar from the first screen (--cb-sticky-early: 1):
+       it then follows the buy button itself rather than the whole buy box, so
+       a phone shopper never has to scroll to find a way to pay. */
+    const early = getComputedStyle(document.documentElement).getPropertyValue("--cb-sticky-early").trim() === "1";
+    const target = early
+      ? document.querySelector<HTMLElement>("#buy .cb-acts")
+      : document.getElementById("buy");
     if (!target) return;
     const io = new IntersectionObserver(
       ([e]) => {
         if (e.isIntersecting) seen.current = true;
-        setOn(seen.current && !e.isIntersecting);
+        setOn((early || seen.current) && !e.isIntersecting);
       },
       { threshold: 0 },
     );
