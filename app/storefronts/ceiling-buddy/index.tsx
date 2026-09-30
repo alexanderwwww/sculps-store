@@ -712,7 +712,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                     /* The ladder reads this to price an Engaged event at the
                        bundle the visitor actually touched. Nothing renders. */
                     data-variant={x.id}
-                    className={`cb-tier${flag ? " cb-tier--flagged" : ""}`}
+                    className={`cb-tier${flag ? " cb-tier--flagged" : ""}${qty > 1 ? " cb-tier--multi" : ""}`}
                     onClick={() => setPicked(x.id)}
                   >
                     {flag ? <span className={`cb-tier__flag cb-tier__flag--${flag[0]}`}>{flag[1]}</span> : null}

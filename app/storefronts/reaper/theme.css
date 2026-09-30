@@ -4343,77 +4343,6 @@ html, body { margin: 0; }
 .cb-acts .cb-btn__p, .cb-acts .cb-btn > span:last-child:not(:first-child) { display: none; }
 .cb-acts .cb-btn { justify-content: center; }
 
-/* ======================================================================
-   Round 2: bundle cards. One figure per unit, so 1 vs 2 vs 3 reads at a glance.
-   Border is always 2px (only its colour changes) so nothing moves on select.
-   ====================================================================== */
-.cb-buy__side > .cb-bundle { padding: 0 12px 12px; }
-.cb-tiers { gap: 14px; }
-.cb-tier {
-  display: grid !important; grid-template-columns: 28px auto minmax(0, 1fr) auto; align-items: center;
-  column-gap: 12px; min-height: 92px; padding: 14px 12px !important;
-  border: 2px solid #E0E0E0 !important; border-radius: 10px; background: #fff; text-align: left;
-  transition: border-color .12s, background-color .12s, box-shadow .12s;
-}
-.cb-tier[aria-checked="true"] { border-color: #111 !important; background: #fff; box-shadow: none; }
-/* the radio: 28px, a real thumb target */
-.cb-tier__dot { position: static !important; width: 26px !important; height: 26px !important; flex: none; margin: 0 !important; }
-/* the figures: one tile per unit, overlapped, all the same size */
-.cb-tier__pics { display: flex; align-items: center; margin: 0 !important; }
-.cb-tier__pics .cb-tier__pic { width: 60px !important; height: 60px !important; border-radius: 8px !important; border: 1px solid #DDD; background: #F4F4F4; }
-.cb-tier__pics .cb-tier__pic + .cb-tier__pic { margin-left: -22px !important; }
-.cb-tier .cb-tier__pic--extra { display: block; box-shadow: -2px 0 0 #fff; }
-.cb-tier__pics[data-n="3"] .cb-tier__pic { width: 52px !important; height: 52px !important; }
-.cb-tier__pics[data-n="3"] .cb-tier__pic + .cb-tier__pic { margin-left: -24px !important; }
-/* words */
-.cb-tier__main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.cb-tier__name { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 16px; line-height: 1.2; }
-.cb-tier .cb-tier__qty {
-  display: inline-block; font-style: normal; font-size: 12px; font-weight: 800; line-height: 1;
-  background: #111; color: #fff; border-radius: 999px; padding: 4px 8px;
-}
-.cb-tier__under { font-size: 13px; }
-.cb-tier__under b { font-size: 13.5px; }
-.cb-tier__right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; }
-.cb-tier__price { font-size: 20px; line-height: 1.1; }
-.cb-tier__each { font-size: 12.5px; }
-/* Best value: only the deepest real saving, small, in the corner */
-.cb-tier__flag--best { display: block !important; top: -11px; right: 12px; left: auto; background: #C8102E; color: #fff; }
-.cb-tier[aria-checked="true"] .cb-tier__flag--best { background: #C8102E; color: #fff; }
-@media (max-width: 400px) {
-  .cb-tier { grid-template-columns: 24px auto minmax(0, 1fr) auto; column-gap: 8px; padding: 14px 8px !important; }
-  .cb-tier__dot { width: 24px !important; height: 24px !important; }
-  .cb-tier__pics .cb-tier__pic { width: 46px !important; height: 46px !important; }
-  .cb-tier__pics .cb-tier__pic + .cb-tier__pic { margin-left: -18px !important; }
-  .cb-tier__pics[data-n="3"] .cb-tier__pic { width: 40px !important; height: 40px !important; }
-  .cb-tier__pics[data-n="3"] .cb-tier__pic + .cb-tier__pic { margin-left: -20px !important; }
-  .cb-tier__name { font-size: 15px; }
-  .cb-tier__price { font-size: 18px; }
-}
-/* fixed picture well so the name column is the same width on every row */
-.cb-tier__pics { width: 88px; flex: none; justify-content: flex-start; }
-.cb-tier__pics .cb-tier__pic { width: 56px !important; height: 56px !important; }
-.cb-tier__pics .cb-tier__pic + .cb-tier__pic { margin-left: -24px !important; }
-.cb-tier__pics[data-n="3"] .cb-tier__pic { width: 46px !important; height: 46px !important; }
-.cb-tier__pics[data-n="3"] .cb-tier__pic + .cb-tier__pic { margin-left: -2px !important; }
-.cb-tier__under b, .cb-tier__each, .cb-tier__price { white-space: nowrap; }
-.cb-buy__side > .cb-bundle { padding: 0 10px 12px; }
-@media (max-width: 400px) {
-  .cb-tier__pics { width: 64px; }
-  .cb-tier__pics .cb-tier__pic { width: 42px !important; height: 42px !important; }
-  .cb-tier__pics .cb-tier__pic + .cb-tier__pic { margin-left: -20px !important; }
-  .cb-tier__pics[data-n="3"] .cb-tier__pic { width: 34px !important; height: 34px !important; }
-  .cb-tier__pics[data-n="3"] .cb-tier__pic + .cb-tier__pic { margin-left: -3px !important; }
-  .cb-tier__under span { display: none; }
-}
-.cb-tier__pics[data-n="3"] .cb-tier__pic { width: 40px !important; height: 40px !important; }
-.cb-tier__pics[data-n="3"] .cb-tier__pic + .cb-tier__pic { margin-left: -16px !important; }
-@media (max-width: 400px) {
-  .cb-tier__pics { width: 66px; }
-  .cb-tier__pics[data-n="3"] .cb-tier__pic { width: 30px !important; height: 30px !important; }
-  .cb-tier__pics[data-n="3"] .cb-tier__pic + .cb-tier__pic { margin-left: -12px !important; }
-}
-
 /* ---- the carousel: full width, square, edge to edge, and it swipes -------
    `touch-action: pan-y` on a sideways-scrolling track told phones NOT to
    scroll it sideways, so the pictures could not be swiped. Both axes now. */
@@ -4433,17 +4362,6 @@ html, body { margin: 0; }
 /* the round avatars carry the product's own pictures, never invented people */
 .cb-promise__dots i { background-size: cover; background-position: center; width: 30px; height: 30px; }
 
-/* ---- bundle pictures: clean white-background product shots; the chosen one grows ---- */
-.cb-tier .cb-tier__pics, .cb-tier .cb-tier__pics[data-n] { width: auto !important; flex: none; }
-.cb-tier .cb-tier__pics .cb-tier__pic { background: #fff !important; transition: width .18s ease, height .18s ease; margin-left: 0 !important; }
-.cb-tier .cb-tier__pics .cb-tier__pic img { object-fit: contain !important; padding: 4px; background: #fff; }
-.cb-tier[aria-checked="true"] .cb-tier__pics[data-n] .cb-tier__pic { width: 104px !important; height: 104px !important; }
-.cb-tier:not([aria-checked="true"]) .cb-tier__pics[data-n] .cb-tier__pic { width: 64px !important; height: 64px !important; }
-@media (max-width: 720px) {
-  .cb-tier[aria-checked="true"] .cb-tier__pics[data-n] .cb-tier__pic { width: 88px !important; height: 88px !important; }
-  .cb-tier:not([aria-checked="true"]) .cb-tier__pics[data-n] .cb-tier__pic { width: 56px !important; height: 56px !important; }
-}
-
 /* the round portraits: overlapping circles, a white ring, then the promise */
 .cb-promise__dots { display: inline-flex !important; }
 .cb-promise__dots i { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; margin-left: -9px; background-size: cover !important; background-position: center 30% !important; background-repeat: no-repeat !important; }
@@ -4451,27 +4369,65 @@ html, body { margin: 0; }
 .cb-promise::before { content: none; }
 .cb-promise__say { font-size: 14px; font-weight: 600; color: #111; line-height: 1.3; }
 
-/* ---- bundles, the way every Halloween shop does them ----------------------
-   A plain list: radio, small picture, name, price on the right, the saving as
-   one small red line. No flags, no quantity chips, nothing that grows. */
-.cb-tiers { gap: 10px !important; }
-.cb-tier { min-height: 68px !important; padding: 10px 12px !important; border-radius: 6px !important; column-gap: 10px !important; box-shadow: none !important; background: #fff !important; }
-.cb-tier[aria-checked="true"] { background: #fff !important; box-shadow: none !important; border-color: #111 !important; }
-.cb-tier__flag, .cb-tier__qty { display: none !important; }
-.cb-tier .cb-tier__pics .cb-tier__pic,
-.cb-tier[aria-checked="true"] .cb-tier__pics[data-n] .cb-tier__pic,
-.cb-tier:not([aria-checked="true"]) .cb-tier__pics[data-n] .cb-tier__pic { width: 52px !important; height: 52px !important; border-radius: 6px !important; }
-.cb-tier__name { font-size: 15px; font-weight: 700; }
-.cb-tier__price { font-size: 17px; font-weight: 800; }
-.cb-tier__under s { font-size: 13px; }
-.cb-tier__under b, .cb-tier__under .cb-tier__save { font-size: 13px; }
-.cb-tier__dot { width: 22px !important; height: 22px !important; }
-@media (max-width: 720px) {
-  .cb-tier .cb-tier__pics .cb-tier__pic,
-  .cb-tier[aria-checked="true"] .cb-tier__pics[data-n] .cb-tier__pic,
-  .cb-tier:not([aria-checked="true"]) .cb-tier__pics[data-n] .cb-tier__pic { width: 46px !important; height: 46px !important; }
+/* ======================================================================
+   Bundles + buy box, round 3. One clean grid per row, flat, no motion.
+   Row: radio | picture | name + separate price | price + per-unit + saving.
+   Border is always 2px (colour only changes) so nothing moves on select.
+   Greys and whites only.
+   ====================================================================== */
+.cb-buy__side > .cb-bundle { margin: 0 0 16px; padding: 0 12px 14px; background: #fff; border: 1px solid #DDD; border-radius: 8px; }
+.cb-bundle__lid { padding: 14px 0 12px; font-size: 14px; font-weight: 700; color: #111; }
+.cb-tiers { display: grid; gap: 12px !important; }
+.cb-tier {
+  position: relative; display: grid !important; width: 100%; text-align: left; cursor: pointer;
+  grid-template-columns: 24px 60px minmax(0, 1fr) auto; grid-template-rows: auto auto auto;
+  column-gap: 12px !important; row-gap: 2px; align-content: center; align-items: center;
+  min-height: 88px !important; padding: 12px 14px !important; background: #fff !important;
+  border: 2px solid #E2E2E2 !important; border-radius: 8px !important; box-shadow: none !important;
+  transition: border-color .12s;
+}
+.cb-tier:hover { border-color: #B5B5B5 !important; }
+.cb-tier[aria-checked="true"] { border-color: #111 !important; background: #fff !important; }
+.cb-tier:focus-visible { outline: 3px solid #F5821F; outline-offset: 2px; }
+.cb-tier__main, .cb-tier__under, .cb-tier__right, .cb-tier__pics { display: contents; }
+.cb-tier__dot { grid-column: 1; grid-row: 1 / 4; align-self: center; position: static !important; width: 24px !important; height: 24px !important; margin: 0 !important; }
+.cb-tier .cb-tier__pic {
+  grid-column: 2; grid-row: 1 / 4; align-self: center; justify-self: center;
+  width: 60px !important; height: 60px !important; border-radius: 8px !important; overflow: hidden;
+  background: #fff !important; border: 1px solid #E2E2E2; margin: 0 !important; box-shadow: none;
+}
+.cb-tier .cb-tier__pic img { width: 100%; height: 100%; object-fit: contain !important; padding: 3px; background: #fff; display: block; }
+.cb-tier .cb-tier__pic--extra, .cb-tier__qty, .cb-tier__flag--pop { display: none !important; }
+.cb-tier__name { grid-column: 3; grid-row: 1; align-self: end; font-size: 16px; font-weight: 700; line-height: 1.2; color: #111; min-width: 0; }
+.cb-tier__under s { grid-column: 3; grid-row: 2; font-size: 13px; color: #6B6B6B; }
+.cb-tier__under > span { grid-column: 3; grid-row: 2; font-size: 13px; color: #6B6B6B; line-height: 1.3; }
+.cb-tier--multi .cb-tier__under s::before { content: "Separate price "; display: inline-block; text-decoration: none; }
+.cb-tier__price { grid-column: 4; grid-row: 1; justify-self: end; align-self: end; font-size: 18px; font-weight: 800; color: #111; white-space: nowrap; }
+.cb-tier__each { grid-column: 4; grid-row: 2; justify-self: end; font-size: 12.5px; color: #555; font-weight: 600; white-space: nowrap; }
+.cb-tier__under b { grid-column: 4; grid-row: 3; justify-self: end; font-size: 13px; font-weight: 800; color: #C8102E !important; white-space: nowrap; }
+.cb-tier__flag { top: -10px; right: 12px; left: auto; }
+.cb-tier__flag--best { display: inline-flex !important; background: #C8102E; color: #fff; border-radius: 4px; padding: 3px 9px; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+@media (max-width: 400px) {
+  .cb-buy__side > .cb-bundle { padding: 0 10px 12px; }
+  .cb-tier { grid-template-columns: 22px 48px minmax(0, 1fr) auto; column-gap: 10px !important; padding: 12px 10px !important; }
+  .cb-tier .cb-tier__pic { width: 48px !important; height: 48px !important; }
+  .cb-tier__dot { width: 22px !important; height: 22px !important; }
+  .cb-tier__name { font-size: 15px; }
+  .cb-tier__price { font-size: 17px; }
 }
 
-/* badges are fine: "Best value" comes back (it is worked out from the real saving), "Most popular" stays off */
-.cb-tier__flag--best { display: inline-flex !important; }
-.cb-tier__flag--pop { display: none !important; }
+/* ---- spacing rhythm down the column: 16 between blocks ---- */
+.cb-buy__side > .cb-price { margin: 4px 0 12px; }
+.cb-buy__side > .cb-lede { margin: 0 0 16px; }
+.cb-buy__side > .cb-coupon { margin: 0 0 16px; }
+.cb-buy__side > .cb-stock { margin: 0 0 16px; }
+.cb-acts { margin-bottom: 0; }
+
+/* ---- wallets: one divider, then the buttons, even spacing ---- */
+.cb-acts::after {
+  content: "or pay with"; display: flex; justify-content: center; margin-top: 8px;
+  font-size: 12.5px; font-weight: 600; color: #6B6B6B; text-transform: lowercase;
+}
+.cb-acts::before { content: none; }
+.cb-wallet, .cb-wallet--pp { margin-top: 12px; }
+.cb-buy__side > .cb-ship { margin-top: 18px; }
