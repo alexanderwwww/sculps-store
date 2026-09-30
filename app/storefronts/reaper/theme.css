@@ -4355,7 +4355,7 @@ html, body { margin: 0; }
   border: 2px solid #E0E0E0 !important; border-radius: 10px; background: #fff; text-align: left;
   transition: border-color .12s, background-color .12s, box-shadow .12s;
 }
-.cb-tier[aria-checked="true"] { border-color: #111 !important; background: #FFF8F0; box-shadow: 0 0 0 3px rgba(249,160,27,.28); }
+.cb-tier[aria-checked="true"] { border-color: #111 !important; background: #fff; box-shadow: none; }
 /* the radio: 28px, a real thumb target */
 .cb-tier__dot { position: static !important; width: 26px !important; height: 26px !important; flex: none; margin: 0 !important; }
 /* the figures: one tile per unit, overlapped, all the same size */
@@ -4471,3 +4471,7 @@ html, body { margin: 0; }
   .cb-tier[aria-checked="true"] .cb-tier__pics[data-n] .cb-tier__pic,
   .cb-tier:not([aria-checked="true"]) .cb-tier__pics[data-n] .cb-tier__pic { width: 46px !important; height: 46px !important; }
 }
+
+/* badges are fine: "Best value" comes back (it is worked out from the real saving), "Most popular" stays off */
+.cb-tier__flag--best { display: inline-flex !important; }
+.cb-tier__flag--pop { display: none !important; }
