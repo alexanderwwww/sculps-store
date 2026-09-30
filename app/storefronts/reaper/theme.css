@@ -4436,3 +4436,5 @@ html, body { margin: 0; }
 .cb-tier { min-height: 96px !important; }
 @media (max-width: 400px) { .cb-tier__flag { left: 88px; } }
 .cb-tier { padding-top: 16px !important; padding-bottom: 12px !important; min-height: 100px !important; }
+.cb-tier { min-height: 116px !important; }
+@media (max-width: 400px) { .cb-tier--multi .cb-tier__under s::before { content: none; } }
