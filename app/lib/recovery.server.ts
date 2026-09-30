@@ -150,7 +150,7 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
           currency: store.currency,
           lines,
           totalCents: total,
-          recoverUrl: `${site}/cart?recover=${encodeURIComponent(cart.token)}`,
+          recoverUrl: `${site}/cart?recover=${encodeURIComponent(cart.token)}&code=${encodeURIComponent(comeback)}`,
           discountCode: comeback,
           discountOffCents: COMEBACK_CENTS,
           imageUrl: absolute(site, firstImage(cart.items as CartLine[])) ?? EMAIL_HERO,
@@ -168,8 +168,9 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
       currency: store.currency,
       lines,
       totalCents: total,
-      // The token puts her cart back exactly as she left it.
-      recoverUrl: `${site}/cart?recover=${encodeURIComponent(cart.token)}`,
+      // The token puts her cart back exactly as she left it, and the code, when
+      // there is one, rides along so it is applied rather than promised.
+      recoverUrl: `${site}/cart?recover=${encodeURIComponent(cart.token)}${kind === "checkout" && live?.code ? `&code=${encodeURIComponent(live.code)}` : ""}`,
       // The shop's own live code, read from the database. It used to send
       // "COMEBACK10, 10% off" — a percentage, which this shop does not do,
       // and a code no row anywhere ever created, so anyone who tried it was

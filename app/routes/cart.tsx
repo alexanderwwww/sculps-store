@@ -89,6 +89,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       ? recoverParam
       : null
     : null;
+  // The email says the code is applied for her. It is: the link carries it and
+  // it goes onto the cart here, so the drawer opens on the discounted price.
+  // Only a code that exists for this store is written.
+  const recoverCode = url.searchParams.get("code");
+  if (recover && isNavigation && recoverCode) {
+    const found = await findDiscount(context.db, store.id, recoverCode);
+    if (found) await setCartDiscount(context.db, store.id, recover, found.code);
+  }
   if (recover && isNavigation) {
     // Stores with a cart drawer never show a cart page: the customer goes back
     // to the product with the drawer open, which is where they were.
