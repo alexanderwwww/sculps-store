@@ -4090,3 +4090,23 @@ html, body { margin: 0; }
 }
 /* the second copy of the shipping line, under the payment buttons */
 .cb-buy__side > .cb-ship { display: none; }
+
+/* The 20 scenes as a camera roll, not a display case: flat ground, square
+   tiles with hairline gaps, no rounded boxes, no number chips, no glass, and
+   the name as plain type on the picture. It reads as somebody's phone. */
+.cb-holo { background: #0E0A0C; }
+.cb-holo__kick { border: 0; background: none; padding: 0; color: rgba(255,255,255,.7); letter-spacing: .12em; }
+.cb-holo__kick i { display: none; }
+.cb-holo__pass { gap: 2px; padding-right: 2px; }
+.cb-holo__row { margin-top: 2px; }
+.cb-holo__it {
+  border-radius: 0 !important; border: 0; box-shadow: none; background: #000;
+  width: clamp(150px, 19vw, 260px);
+}
+.cb-holo__n { display: none; }
+.cb-holo__it figcaption {
+  left: 0; right: 0; bottom: 0; max-width: 100%; border: 0; border-radius: 0;
+  padding: 22px 10px 8px; background: linear-gradient(transparent, rgba(0,0,0,.72));
+  font-size: 12px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+@media (max-width: 520px) { .cb-holo__pass { gap: 2px; padding-right: 2px; } }
