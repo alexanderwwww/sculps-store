@@ -1,0 +1,13 @@
+# Brief for Claude Design — the buy box of blackreaper.us
+
+**Goal:** the most converting buy box for cold Meta traffic on phones (390px), Halloween decor, $99–$299. Everything below the buy box is approved and stays. Only the buy box (top of every product page) and the announcement bar are in scope.
+
+**Show Claude Design:** a screen recording of https://blackreaper.us/products/black-reaper and /products/crawling-zombie on a phone, plus https://gardenbuddy.store (the store that already converts — its bundle box is the pattern to beat: bold name, big price, struck old price, saving pill, product picture on the right, chosen row ringed, "Most popular" tag on the top edge).
+
+**What the buy box contains today (all live data, keep it):** gallery carousel (square, swipeable, full width); promise line "Try it for 30 days. If it's not right, send it back." with portraits; title; price; one-line description; REAPER20 code box ($20 off, auto-applied); "Choose your bundle" rows (name, price, struck "separate price", red/orange "Save $X", per-unit price, white-background product picture); stock + "Arrives 5-7 days after it ships" line; Add to cart (orange); Buy now (black); PayPal / Venmo / Pay Later (PayPal draws these, stacked); trust row (free shipping, 30-day returns, secure checkout); sticky Add to cart bar; orange announcement bar with a black REAPER20 pill.
+
+**Hard rules (from the owner):** no beige or cream anywhere (white, black, greys, and one orange #F9A01B); a buy button is never white (Add to cart orange, Buy now black); the cheapest bundle is pre-selected; badges are welcome ("Best value" on the deepest real saving); no invented reviews, counts, scarcity or countdowns; delivery wording only "Arrives 5-7 days after it ships"; the UGC video + iMessage chat section below is never removed; no changes to cart, checkout, payment or the Meta pixel.
+
+**Ask:** redesign the buy box and bundle selector so it feels premium, familiar and trustworthy to a Halloween shopper, stays stable on every phone width, and makes the cheapest option feel like a fair entry while the better deals are attractive. Deliver a design the engineering side can build with CSS and the existing markup (classes: .cb-buy, .cb-gal, .cb-price, .cb-coupon, .cb-bundle, .cb-tier, .cb-acts, .cb-wallet, .cb-ticks; theme file app/storefronts/reaper/theme.css).
+
+**Open questions for the owner:** real supplier delivery time (for a dated delivery line), real cost per unit (to set bundle prices), whether to show real customer faces once customers exist.
