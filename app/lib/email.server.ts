@@ -869,7 +869,11 @@ export interface AbandonInput extends BrandFields {
  * days left" and "last day" are different arguments. Outside the season it
  * returns nothing and the email simply does not carry the line.
  */
+// Off until the supplier's real US delivery time is confirmed: a deadline in an email is a delivery promise.
+const DEADLINE_CONFIRMED = false;
+
 function seasonalDeadline(now = new Date()): string | null {
+  if (!DEADLINE_CONFIRMED) return null;
   const year = now.getUTCFullYear();
   const cutoff = Date.UTC(year, 9, 20, 23, 59, 59); // 20 October
   const opens = Date.UTC(year, 8, 1); // 1 September

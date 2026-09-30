@@ -830,8 +830,8 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
             <p className="cb-stock">
               <i aria-hidden="true" />
               {chosen.available <= 20
-                ? `Only ${chosen.available} left — ships today`
-                : "In stock — ships today"}
+                ? `Only ${chosen.available} left`
+                : "In stock"}
             </p>
           ) : null}
 

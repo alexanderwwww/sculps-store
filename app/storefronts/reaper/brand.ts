@@ -20,10 +20,10 @@ export function reaperBrand(page: LoadedProductPage): CbBrand {
     logo: page.store.logoUrl,
     nav: links.length ? links : [["Shop", "/"], ["FAQ", "#faq"], ["Reviews", "#reviews"]],
     rail: [
-      "Free shipping on everything",
-      "Order by October 20 for Halloween",
+      "Free US shipping on every order",
+      "Tracking link sent by email",
       "30 days to send it back",
-      "Lit, staked and standing in a minute",
+      "Set up in a minute",
     ],
     marquee: [
       "Up in a minute",
