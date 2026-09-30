@@ -4049,3 +4049,44 @@ html, body { margin: 0; }
   .cb-buy__side > .cb-wallet { order: 8; }
   .cb-acts .cb-btn { min-height: 56px; }
 }
+
+/* ======================================================================
+ * Familiar-shop pass — what Spirit, Home Depot and Amazon all do
+ *
+ * White page, plain type, one orange for the buy button, red only for a
+ * discount, flat 8px corners, the trust line once and directly under the
+ * button. Nothing here removes content: it is tokens and order.
+ * ====================================================================== */
+
+/* the buy button: flat, full width, no gloss */
+.cb-btn, .cb-sticky .cb-btn, .cb-sticky__form button {
+  background: #F5821F !important; background-image: none !important;
+  border-radius: 8px !important; box-shadow: none !important;
+  font-family: var(--body); font-weight: 700; letter-spacing: 0;
+}
+.cb-btn--ghost { border-radius: 8px !important; }
+
+/* title and price in plain type, the display face stays for the logo */
+.cb-h1 { font-family: var(--body); font-weight: 700; letter-spacing: -.01em; }
+.cb-buy .cb-price__now { font-family: var(--body); font-weight: 700; letter-spacing: -.01em; }
+
+/* a saving is red, and only a saving */
+.cb-buy .cb-price__off {
+  background: transparent; border: 0; padding: 0; margin-left: 2px;
+  color: #C8102E; font-weight: 700; font-size: 15px;
+}
+.cb-buy .cb-price__off svg { display: none; }
+
+/* cards and the bundle box: 8px, hairline, no lift */
+.cb-bundle, .cb-tier, .cb-card { border-radius: 8px; box-shadow: none; }
+.cb-tier--flagged { box-shadow: none; }
+
+/* the shipping / returns line lives directly under the button, once */
+.cb-band { display: none; }
+
+/* Buy now stays the quiet one; the orange button is the only orange button */
+.cb-acts .cb-btn.cb-btn--ghost {
+  background: #fff !important; color: #111 !important; border: 1.5px solid #111 !important;
+}
+/* the second copy of the shipping line, under the payment buttons */
+.cb-buy__side > .cb-ship { display: none; }
