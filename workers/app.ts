@@ -96,6 +96,12 @@ export default {
      */
     const secured = new Response(response.body, response);
     secured.headers.set("Strict-Transport-Security", HSTS);
+    // Two headers that cost nothing and cannot break a page: the browser must
+    // trust the declared content type, and a link out never leaks the full URL.
+    // (No CSP and no frame rule here: Stripe, PayPal and the pixel need their
+    // own origins and the admin previews use frames, so those get tested first.)
+    secured.headers.set("X-Content-Type-Options", "nosniff");
+    if (!secured.headers.has("Referrer-Policy")) secured.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     return secured;
   },
 
