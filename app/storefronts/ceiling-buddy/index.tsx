@@ -745,11 +745,11 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                       return (
                         <span className="cb-tier__pics cb-tier__pics--1" data-n={Math.min(qty, 3)}>
                           <span className="cb-tier__pic">
-                            <Pic src={pic} size="t200" alt="" loading="lazy" />
+                            <Pic src={pic} size={x.imageUrl ? "w640" : "t200"} alt="" loading="lazy" />
                           </span>
                           {/* Reaper only: one figure per unit, so 1 vs 2 vs 3 reads
                               without words. Other themes hide these copies. */}
-                          {Array.from({ length: Math.min(qty, 3) - 1 }, (_, k) => (
+                          {Array.from({ length: x.imageUrl ? 0 : Math.min(qty, 3) - 1 }, (_, k) => (
                             <span key={k} className="cb-tier__pic cb-tier__pic--extra" aria-hidden="true">
                               <Pic src={pic} size="t200" alt="" loading="lazy" />
                             </span>
