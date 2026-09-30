@@ -4086,7 +4086,7 @@ html, body { margin: 0; }
 
 /* Buy now stays the quiet one; the orange button is the only orange button */
 .cb-acts .cb-btn.cb-btn--ghost {
-  background: #fff !important; color: #111 !important; border: 1.5px solid #111 !important;
+  background: #111 !important; color: #fff !important; border: 1.5px solid #111 !important;
 }
 /* the second copy of the shipping line, under the payment buttons */
 .cb-buy__side > .cb-ship { display: none; }
