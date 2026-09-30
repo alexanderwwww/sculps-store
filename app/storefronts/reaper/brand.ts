@@ -23,7 +23,7 @@ export function reaperBrand(page: LoadedProductPage): CbBrand {
       "Free US shipping on every order",
       "Arrives 5-7 days after it ships",
       "30 days to send it back",
-      "Set up in a minute",
+      "Tracking link on every order",
     ],
     marquee: [
       "Up in a minute",

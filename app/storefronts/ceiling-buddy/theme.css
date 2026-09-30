@@ -1571,3 +1571,6 @@
    swallowed the tap. The drawer now outranks them, and the product page's
    wallet row is taken out of the way while the drawer is open. */
 body:has(.cb-drawer.is-open) .cb-buy__side .cb-wallet { visibility: hidden; }
+
+/* off unless a store's theme switches it on */
+.cb-promise { display: none; }

@@ -602,6 +602,12 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
           <Banner section={section} page={page} />
           <CouponBar offer={offer} currency={currency} />
           <Thrilled page={page} />
+          {/* The honest version of the avatar row: same shape and rhythm, no invented people
+              and no invented count. Shown only by themes that switch it on. */}
+          <div className="cb-promise">
+            <span className="cb-promise__dots" aria-hidden="true"><i /><i /><i /><i /></span>
+            <span className="cb-promise__say">Try it for 30 days. If it's not right, send it back.</span>
+          </div>
           <h1 className="cb-h1">{val(v, "heading") || page.product.title}</h1>
           {/* The score, before the price.
               Whoever is about to look at a number wants to know first whether
