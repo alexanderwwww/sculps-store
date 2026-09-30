@@ -4012,8 +4012,7 @@ html, body { margin: 0; }
    and a "verified buyer" badge on reviews that came from no order */
 .cb-thrilled, .cb-score, .cb-card__ok { display: none !important; }
 
-/* one saving, in the bar at the top: the boxed copy of the same code goes */
-.cb-buy__side > .cb-coupon { display: none !important; }
+/* the boxed code stays: Alex wants the offer visible in the buy box as well as in the bar */
 
 /* "Best value" is a claim; the per-window price under it already says it */
 .cb-tier__flag--best { display: none !important; }
@@ -4035,6 +4034,7 @@ html, body { margin: 0; }
 
 @media (max-width: 720px) {
   /* title and price first; the banner becomes a slim line under the price */
+  .cb-buy__side > .cb-coupon { order: 3; margin: 8px 0; }
   .cb-buy__side > .cb-h1     { order: 1; margin-top: 6px; }
   .cb-buy__side > .cb-price  { order: 2; margin-top: 6px; }
   .cb-buy__side > .cb-banner { order: 4; margin: 10px 0; padding: 7px 10px 7px 8px; gap: 10px; border-radius: 12px; border-width: 1.5px; box-shadow: none; }
