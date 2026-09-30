@@ -4413,3 +4413,19 @@ html, body { margin: 0; }
   .cb-tier__pics[data-n="3"] .cb-tier__pic { width: 30px !important; height: 30px !important; }
   .cb-tier__pics[data-n="3"] .cb-tier__pic + .cb-tier__pic { margin-left: -12px !important; }
 }
+
+/* ---- the carousel: full width, square, edge to edge, and it swipes -------
+   `touch-action: pan-y` on a sideways-scrolling track told phones NOT to
+   scroll it sideways, so the pictures could not be swiped. Both axes now. */
+.cb-gal__track { touch-action: pan-x pan-y pinch-zoom !important; }
+.cb-gal__main {
+  border: 0 !important; border-radius: 0 !important; background: #000 !important;
+  box-shadow: none !important; aspect-ratio: 1 / 1;
+}
+.cb-gal__main img { padding: 0 !important; object-fit: cover !important; }
+.cb-gal__glow { display: none; }
+@media (max-width: 720px) {
+  .cb-gal { padding-left: 0 !important; padding-right: 0 !important; margin-left: -20px; margin-right: -20px; }
+  .cb-buy { padding-top: 0 !important; }
+  .cb-gal__strip { padding-left: 12px; padding-right: 12px; }
+}
