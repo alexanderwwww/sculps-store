@@ -4330,3 +4330,15 @@ html, body { margin: 0; }
   .cb-tier__name { font-size: 15px; }
   .cb-tier__right { flex: none; }
 }
+
+/* ---- Alex's fixes ------------------------------------------------------ */
+/* the cheapest bundle is the one pre-selected, so "Most popular" (which follows the default) goes */
+.cb-tier__flag--pop { display: none !important; }
+/* no awkward white gap between the header and the picture */
+.cb-buy { padding-top: 10px !important; }
+@media (min-width: 721px) { .cb-buy { padding-top: 24px !important; } }
+/* the carousel picture is a true square */
+.cb-gal__main { aspect-ratio: 1 / 1; }
+/* the price lives in the sticky bar and the bundle; the button just says what it does */
+.cb-acts .cb-btn__p, .cb-acts .cb-btn > span:last-child:not(:first-child) { display: none; }
+.cb-acts .cb-btn { justify-content: center; }
