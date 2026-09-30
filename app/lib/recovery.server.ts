@@ -17,6 +17,7 @@
 import { and, eq, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { carts, stores, products, variants, discounts } from "~/db/schema";
+import { isSuppressed, unsubscribeUrl } from "./suppression.server";
 import { sendAbandonEmail, sendComebackEmail, emailReady, type EmailLine } from "./email.server";
 
 /** What a cart's `items` json actually holds, as far as this file cares. */
@@ -94,6 +95,17 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
     const total = lines.reduce((sum, line) => sum + line.lineTotalCents, 0);
     const site = `https://${store.domain}`;
 
+    // Asked not to be emailed: stamp the cart so it is never picked up again, and move on.
+    if (await isSuppressed(db, cart.email as string)) {
+      await db.update(carts).set({ recoveryEmailedAt: new Date() }).where(eq(carts.id, cart.id));
+      continue;
+    }
+    const unsub = await unsubscribeUrl(env, site, cart.email as string);
+    const postalAddress =
+      [store.legalName ?? store.name, store.address1, store.city, [store.region, store.postalCode].filter(Boolean).join(" "), store.country]
+        .filter(Boolean)
+        .join(", ") || null;
+
     // The shop's own live code, in dollars. Read per store rather than
     // hardcoded, so turning the offer off in the admin turns it off in the
     // email too, and so the code in the email is one that actually works.
@@ -151,6 +163,8 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
           lines,
           totalCents: total,
           recoverUrl: `${site}/cart?recover=${encodeURIComponent(cart.token)}&code=${encodeURIComponent(comeback)}`,
+          unsubscribeUrl: unsub,
+          postalAddress,
           discountCode: comeback,
           discountOffCents: COMEBACK_CENTS,
           imageUrl: absolute(site, firstImage(cart.items as CartLine[])) ?? EMAIL_HERO,
@@ -160,6 +174,8 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
           accentColor: store.accentColor,
         })
       : await sendAbandonEmail(env, kind, {
+      unsubscribeUrl: unsub,
+      postalAddress,
       to: cart.email as string,
       customerName: null,
       storeName: store.name,

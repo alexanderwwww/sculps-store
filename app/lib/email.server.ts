@@ -41,6 +41,9 @@ export interface BrandFields {
    * and the wordmark sits at the bottom where a signature belongs.
    */
   heroImageUrl?: string | null;
+  /** Marketing-type mail only (recovery): one-tap unsubscribe and the sender's postal address. */
+  unsubscribeUrl?: string | null;
+  postalAddress?: string | null;
 }
 
 export interface OrderEmailInput extends BrandFields {
@@ -106,7 +109,7 @@ export function emailReady(env: Env): boolean {
 
 async function send(
   env: Env,
-  message: { from: string; to: string; replyTo?: string | null; subject: string; html: string; text: string },
+  message: { from: string; to: string; replyTo?: string | null; subject: string; html: string; text: string; headers?: Record<string, string> },
 ): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
   if (!env.RESEND_API_KEY) {
     return { ok: false, reason: "No Resend API key is set on the Worker." };
@@ -126,6 +129,7 @@ async function send(
         subject: message.subject,
         html: message.html,
         text: message.text,
+        ...(message.headers ? { headers: message.headers } : {}),
       }),
     });
 
@@ -178,6 +182,8 @@ export interface EmailBrand {
   brandColor: string | null;
   accentColor: string | null;
   heroImageUrl: string | null;
+  unsubscribeUrl?: string | null;
+  postalAddress?: string | null;
 }
 
 /**
@@ -225,7 +231,7 @@ ${
     : `<div style="font-size:14px;font-weight:700;color:#8C8678">${esc(brand.storeName)}</div>`
 }
 <div style="margin-top:8px;color:#8C8678;font-size:12px;line-height:1.6">
-You are receiving this because you shopped with us.
+${brand.unsubscribeUrl ? `You typed your email at checkout, so we sent this reminder. <a href="${esc(brand.unsubscribeUrl)}" style="color:#8C8678;text-decoration:underline">Unsubscribe</a>${brand.postalAddress ? `<br>${esc(brand.postalAddress)}` : ""}` : "You are receiving this because you shopped with us."}
 </div>
 </td></tr>
 
@@ -390,8 +396,9 @@ ${body}
 Free shipping &middot; 30 days to send it back${site ? ` &middot; <a href="${site}" style="color:${RV.meta};text-decoration:underline">${esc(brand.domain ?? "")}</a>` : ""}
 </div>
 <div style="margin-top:8px;font-family:${RV_BODY};font-size:11.5px;line-height:1.7;color:${RV.meta}">
-You are getting this because you shopped with us.
+${brand.unsubscribeUrl ? `You typed your email at checkout, so we sent this reminder. <a href="${esc(brand.unsubscribeUrl)}" style="color:${RV.meta};text-decoration:underline">Unsubscribe</a>` : "You are getting this because you shopped with us."}
 </div>
+${brand.postalAddress ? `<div style="margin-top:6px;font-family:${RV_BODY};font-size:11px;line-height:1.6;color:${RV.meta}">${esc(brand.postalAddress)}</div>` : ""}
 </td></tr>
 
 </table></td></tr></table></body></html>`;
@@ -431,6 +438,8 @@ function brandOf(input: BrandFields & { storeName: string }): EmailBrand {
     brandColor: input.brandColor ?? null,
     accentColor: input.accentColor ?? null,
     heroImageUrl: input.heroImageUrl ?? null,
+    unsubscribeUrl: input.unsubscribeUrl ?? null,
+    postalAddress: input.postalAddress ?? null,
   };
 }
 
@@ -1019,7 +1028,10 @@ export async function sendAbandonEmail(
     replyTo: input.replyTo,
     subject,
     html: abandonedBody({ ...input, kind }),
-    text,
+    text: input.unsubscribeUrl ? `${text}\n\nUnsubscribe: ${input.unsubscribeUrl}${input.postalAddress ? `\n${input.postalAddress}` : ""}` : text,
+    headers: input.unsubscribeUrl
+      ? { "List-Unsubscribe": `<${input.unsubscribeUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
+      : undefined,
   });
 }
 
@@ -1440,7 +1452,10 @@ export async function sendComebackEmail(
     replyTo: input.replyTo,
     subject: `$${off} off, if you still want it`,
     html: comebackBody(input),
-    text,
+    text: input.unsubscribeUrl ? `${text}\n\nUnsubscribe: ${input.unsubscribeUrl}${input.postalAddress ? `\n${input.postalAddress}` : ""}` : text,
+    headers: input.unsubscribeUrl
+      ? { "List-Unsubscribe": `<${input.unsubscribeUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
+      : undefined,
   });
 }
 

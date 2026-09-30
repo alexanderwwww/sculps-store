@@ -8,7 +8,7 @@ import type { Route } from "./+types/cart.add";
 import { resolveStore } from "~/lib/store.server";
 import { deviceFromRequest, geoFromContext, readVisitorSession, track } from "~/lib/visitor.server";
 import { metaSettings, newMetaEventId, readMetaCookies, sendEvent } from "~/lib/meta.server";
-import { metaConfig, products, variants, carts } from "~/db/schema";
+import { metaConfig, products, variants, carts, discounts } from "~/db/schema";
 import { and, eq } from "drizzle-orm";
 import { BUNDLE_OFF_CENTS } from "~/lib/money";
 import {
@@ -18,6 +18,8 @@ import {
   currentLines,
   addLine,
   saveCart,
+  setCartDiscount,
+  cartDiscountCode,
 } from "~/lib/cart.server";
 
 async function add(
@@ -130,6 +132,26 @@ async function add(
   }
 
   await saveCart(context.db, store.id, token, next);
+
+  /**
+   * The Reaper advertises its code in the top bar as plain text. Nobody should
+   * have to remember it and type it: when the cart has no code, the shop's own
+   * live one goes on. It is the same price the bar already promised.
+   */
+  if (store.slug === "reaper") {
+    try {
+      if (!(await cartDiscountCode(context.db, store.id, token))) {
+        const [live] = await context.db
+          .select({ code: discounts.code })
+          .from(discounts)
+          .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true), eq(discounts.kind, "fixed")))
+          .limit(1);
+        if (live) await setCartDiscount(context.db, store.id, token, live.code);
+      }
+    } catch {
+      /* the add has already happened; a missing code must not undo it */
+    }
+  }
 
   const sessionId = readVisitorSession(request);
   if (sessionId) {

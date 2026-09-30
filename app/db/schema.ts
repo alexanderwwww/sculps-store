@@ -1622,3 +1622,9 @@ export const ogTasks = pgTable(
   },
   (t) => [index("og_tasks_state_idx").on(t.state, t.notBefore)],
 );
+
+/** Addresses that asked not to get marketing-type mail (recovery emails). Checked before every send. */
+export const emailSuppressions = pgTable("email_suppressions", {
+  email: text("email").primaryKey(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

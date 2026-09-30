@@ -1433,7 +1433,7 @@ function ProofAndAnswers({ section, page }: { section: LoadedSection; page: Load
             </div>
           ) : video ? (
             <figure className="cb-ugc__i">
-              <video src={video} autoPlay muted loop playsInline preload="metadata" />
+              <LazyVideo src={video} />
             </figure>
           ) : shot ? (
             <figure className="cb-ugc__i">
@@ -3182,4 +3182,33 @@ function Head({ section }: { section: LoadedSection }) {
       {has(v, "subheading") ? <p className="cb-lede">{val(v, "subheading")}</p> : null}
     </div>
   );
+}
+
+
+/**
+ * A muted looping video that costs nothing until it is nearly on screen.
+ *
+ * It used to autoplay from page load, so a megabyte of video sat in the same
+ * queue as the hero picture on a phone connection and the picture lost.
+ */
+function LazyVideo({ src }: { src: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          if (!el.getAttribute("src")) el.setAttribute("src", src);
+          el.play().catch(() => undefined);
+        } else {
+          el.pause();
+        }
+      },
+      { rootMargin: "300px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [src]);
+  return <video ref={ref} muted loop playsInline preload="none" />;
 }
