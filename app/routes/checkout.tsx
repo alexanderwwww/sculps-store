@@ -3476,6 +3476,9 @@ function OnePage({
        */
       const payment = elements.create("payment", {
         layout: { type: "tabs" },
+        /* The terms line under the card is written with the Stripe ACCOUNT's
+           name, and two of these stores share one account. Say this store's. */
+        business: { name: store.name },
         wallets: { applePay: "auto", googlePay: "never" },
         /*
          * Link is off here. It drew its own grey panel — an "Optional" pill,
