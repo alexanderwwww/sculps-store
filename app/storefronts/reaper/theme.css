@@ -4037,15 +4037,15 @@ html, body { margin: 0; }
   /* title and price first; the banner becomes a slim line under the price */
   .cb-buy__side > .cb-h1     { order: 1; margin-top: 6px; }
   .cb-buy__side > .cb-price  { order: 2; margin-top: 6px; }
-  .cb-buy__side > .cb-banner { order: 3; margin: 10px 0; padding: 7px 10px 7px 8px; gap: 10px; border-radius: 12px; border-width: 1.5px; box-shadow: none; }
+  .cb-buy__side > .cb-banner { order: 4; margin: 10px 0; padding: 7px 10px 7px 8px; gap: 10px; border-radius: 12px; border-width: 1.5px; box-shadow: none; }
   .cb-buy__side > .cb-banner .cb-banner__num { min-width: 34px; height: 34px; font-size: 21px; border-radius: 9px; }
   .cb-buy__side > .cb-banner .cb-banner__txt b { font-size: 13.5px; }
   .cb-buy__side > .cb-banner .cb-banner__txt small { display: none; }
   .cb-buy__side > .cb-banner::after { display: none; }
-  .cb-buy__side > .cb-lede   { display: none; }
-  .cb-buy__side > .cb-bundle { order: 4; }
-  .cb-buy__side > .cb-stock  { order: 5; }
-  .cb-buy__side > .cb-acts   { order: 6; }
-  .cb-buy__side > .cb-wallet { order: 7; }
+  .cb-buy__side > .cb-lede   { order: 3; margin: 0 0 8px; font-size: 14.5px; line-height: 1.4; }
+  .cb-buy__side > .cb-bundle { order: 5; }
+  .cb-buy__side > .cb-stock  { order: 6; }
+  .cb-buy__side > .cb-acts   { order: 7; }
+  .cb-buy__side > .cb-wallet { order: 8; }
   .cb-acts .cb-btn { min-height: 56px; }
 }
