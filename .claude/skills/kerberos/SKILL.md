@@ -487,3 +487,18 @@ live, not in the buy box.
 **Bundle tier thumbnails use `contain` too.** `cover` on a 48px square turns an
 eight-and-a-half-foot figure into a swatch of grey robe, and three tiers of
 swatch is exactly why the bundles read as weak.
+
+## Black Reaper page rules (settled 30 Sep 2026)
+
+- **There is no home page in the funnel.** Ads land on `/products/<handle>`, and every sale happens
+  on a product page. Meta events (PageView, ViewContent, AddToCart, InitiateCheckout, Purchase) must
+  fire on every product handle — verified for crawling-zombie, black-reaper, halloween-movie-theater,
+  the-scream and haunted-projector. Test them all after any change.
+- **The UGC video and the iMessage phone chat (`video_faq`) always stay** on every product page.
+  Never hide, delete or reorder it out of the page. Headings around it can change; the video and the
+  chat cannot.
+- **The Buy now / any buy button is never white.** Add to cart is orange; Buy now is black.
+- **Reviews and the "real lawns" wall stay hidden until real** (data kept, not deleted).
+- **Delivery wording must match the truth.** No "before Halloween", "ships today" or "order by Oct 20"
+  until the supplier's real US delivery time is known. Ask Alex.
+- Alex gave the marketing team full latitude on look, announcement bar and bundles: the goal is sales.
