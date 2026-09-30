@@ -1,0 +1,22 @@
+<!doctype html><meta charset=utf-8><title>Fake sell page</title>
+<style>body{font:16px Helvetica;margin:0;padding:20px;background:#fafafa}h1{margin:0 0 16px}input,textarea,select,button{font:inherit;padding:10px;margin:6px 0;display:block;width:320px}
+button{background:#111;color:#fff;border:0;border-radius:8px;cursor:pointer}.pad{height:900px}a{display:block;margin:10px 0}#out{white-space:pre;font:12px monospace;background:#eee;padding:8px;margin-top:10px}.hover{}.b:hover{background:#F9A01B;color:#000}</style>
+<h1>Sell an item</h1>
+<label for=title>Title</label><input id=title placeholder="Title">
+<textarea id=desc placeholder="Description" rows=3></textarea>
+<select id=cond><option>Brand new</option><option>Used - like new</option></select>
+<input id=photos type=file multiple>
+<button class=b id=save>Save draft</button>
+<a href="page2.html" id=next>Next page</a>
+<div class=pad>scroll down</div>
+<button id=late style="display:none">Publish (appears after scroll)</button>
+<div id=out></div>
+<script>
+var out=document.getElementById('out'),clicks=0,events=[];
+function log(){out.textContent=JSON.stringify({clicks:clicks,title:title.value,desc:desc.value,cond:cond.value,files:photos.files.length,events:events.slice(-6)},null,1)}
+save.onclick=function(e){clicks++;events.push('save trusted='+e.isTrusted);log()};
+addEventListener('scroll',function(){if(scrollY>300)late.style.display='block'});
+late.onclick=function(e){events.push('publish trusted='+e.isTrusted);log()};
+addEventListener('mousemove',function(e){if(!window.__m)window.__m=0;window.__m++});
+title.oninput=log;desc.oninput=log;cond.onchange=log;photos.onchange=log;log();
+</script>
