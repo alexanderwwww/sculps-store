@@ -14,7 +14,7 @@ import { resolveStore, loadProductPage } from "~/lib/store.server";
 import { metaConfig, discounts } from "~/db/schema";
 import { providerForStore } from "~/lib/payments.server";
 import { paypalFor } from "~/lib/paypal.server";
-import { pixelScript } from "~/lib/meta.server";
+import { metaCookieHeaders, newMetaEventId, pixelScript, trackFunnelEvent } from "~/lib/meta.server";
 import { presenceScript, vitalsScript } from "~/lib/vitals";
 import { currentUser } from "~/lib/auth.server";
 import {
@@ -164,15 +164,60 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     .from(metaConfig)
     .where(eq(metaConfig.storeId, store.id))
     .limit(1);
-  const pixel = meta?.pixelId ? pixelScript(meta.pixelId, { match: { externalId: readVisitorSession(request) } }) : null;
+  /*
+   * The visitor id is decided BEFORE the pixel is written, so the pixel can
+   * carry it as external_id on the very first view. It used to be read from
+   * the request, which on a first visit — every ad click — has no cookie yet.
+   */
+  const tracked = shouldTrack(request, url);
+  const sessionId = tracked ? (readVisitorSession(request) ?? newVisitorSession()) : readVisitorSession(request);
+  const pageViewEventId = newMetaEventId();
+  let pixel = meta?.pixelId
+    ? pixelScript(meta.pixelId, { match: { externalId: sessionId }, pageViewEventId })
+    : null;
+
+  /*
+   * The tracking this page never had. Every /products/<handle> address — which
+   * is where an ad lands — is served by this route, but PageView (server half)
+   * and ViewContent were only ever wired into the home route. So Meta was
+   * sent people to a page and told nothing about what they looked at.
+   */
+  if (pixel && tracked) {
+    await trackFunnelEvent(context.db, context.cloudflare.env, context.cloudflare.ctx, {
+      storeId: store.id,
+      pixelId: meta?.pixelId ?? null,
+      request,
+      url,
+      name: "PageView",
+      valueCents: 0,
+      currency: store.currency,
+      contents: [],
+      identity: { externalId: sessionId },
+      eventId: pageViewEventId,
+    });
+  }
+  if (pixel) {
+    const viewContent = await trackFunnelEvent(context.db, context.cloudflare.env, context.cloudflare.ctx, {
+      storeId: store.id,
+      pixelId: meta?.pixelId ?? null,
+      request,
+      url,
+      name: "ViewContent",
+      valueCents: variant.priceCents,
+      currency: store.currency,
+      contents: [{ id: variant.id, quantity: 1, itemPrice: variant.priceCents }],
+      identity: { externalId: sessionId },
+    });
+    if (viewContent) pixel = `${pixel}\n${viewContent}`;
+  }
 
   const headers = new Headers();
   // Never let a browser, a home-screen app or a proxy keep an old copy of the page.
   headers.set("Cache-Control", "no-store, must-revalidate");
-  const tracked = shouldTrack(request, url);
-  if (tracked) {
-    const sessionId = readVisitorSession(request) ?? newVisitorSession();
+  if (tracked && sessionId) {
     headers.append("Set-Cookie", visitorCookie(sessionId, url));
+    // The ad click's fbclid arrives on THIS page: keep Meta's cookies for ninety days.
+    if (meta?.pixelId) for (const cookie of metaCookieHeaders(request, url)) headers.append("Set-Cookie", cookie);
     track(context.db, context.cloudflare.ctx, {
       storeId: store.id,
       sessionId,

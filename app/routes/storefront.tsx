@@ -9,7 +9,6 @@ import { passwordCookieValid } from "~/lib/password.server";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { metaCookieHeaders, newMetaEventId, pixelScript, trackFunnelEvent } from "~/lib/meta.server";
 import { presenceScript, vitalsScript } from "~/lib/vitals";
-import { ladderScript } from "~/lib/meta.signals";
 import {
   deviceFromRequest,
   geoFromContext,
@@ -209,10 +208,6 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     }
   }
 
-  // The event ladder's reporter. Only on a real visit to a store that has a
-  // pixel — a store without Meta gets no extra script at all, exactly as
-  // before.
-  if (pixel && trackedVisit) pixel = `${pixel}\n${ladderScript()}`;
   // Record the visit. This is what Live View and Analytics are made of.
   const headers = new Headers();
   headers.set("Cache-Control", "no-store, must-revalidate");

@@ -256,62 +256,26 @@ export function pixelScript(
     : `fbq('track','PageView');`;
 
   /*
-   * The PageView waits for a person.
+   * A normal pixel.
    *
-   * A pixel that fires on load fires for everything that runs JavaScript —
-   * scrapers, preview crawlers, headless browsers — and Meta learns from that
-   * pool: it goes looking for more of whoever it saw. Alex's call, 25 Sep
-   * 2026, and he is right about the trade: a visitor who never scrolls, never
-   * moves, never touches the screen was never going to buy, so teaching Meta
-   * to find more of them is worse than not counting them at all.
+   * Meta's own loader, straight from connect.facebook.net, and a PageView the
+   * moment the page runs. Nothing waits for a scroll and nothing goes through
+   * our own domain: the previous version did both, and the price was Meta's
+   * data. A pixel served from our address cannot carry Facebook's own cookies
+   * or the visitor's real address, so Meta credited fewer of the clicks it
+   * sent, and gating the PageView on a touch meant it never saw the ones who
+   * bounced. Fewer, worse signals is not a way to get better traffic — it is
+   * how a campaign ends up optimising on almost nothing.
    *
-   * What counts as a person: a scroll, a pointer that moves, a touch, a key,
-   * or a click. Touch is in there because most of this traffic is a phone,
-   * where nothing moves a mouse and a scroll is the first thing that happens.
-   *
-   * `autoConfig` off first, or Meta's own automatic events fire before this
-   * gate and defeat the whole thing.
-   *
-   * Two deliberate exceptions. A confirmation page fires at once — somebody
-   * who has just paid is not in question, and waiting for them to wiggle the
-   * mouse would lose the most valuable view on the site. And every other
-   * event — AddToCart, InitiateCheckout, Purchase — is ungated everywhere,
-   * because each one already required a human act to happen at all.
-   */
-  const gate = `(function(){var done=false,off=[];
-function fire(){if(done)return;done=true;for(var i=0;i<off.length;i++){try{off[i]()}catch(e){}}${view}}
-var paid=/thank|order-confirm|confirmation|success/i.test(location.pathname);
-if(paid){fire();return}
-var evs=['scroll','pointermove','pointerdown','touchstart','keydown','click','wheel'];
-for(var i=0;i<evs.length;i++){(function(n){var h=function(){fire()};
-window.addEventListener(n,h,{passive:true,once:true});
-off.push(function(){window.removeEventListener(n,h,{passive:true})})})(evs[i])}})();`;
-
-  /*
-   * The loader, pointed at our own domain first.
-   *
-   * `/px/fbevents.js` is this Worker proxying Meta's script and rewriting the
-   * endpoints inside it, so to the browser the whole pixel is first-party: no
-   * third-party request to block, no seven-day cap on what it stores. Roughly
-   * a fifth to a third of events were being lost to blockers before this.
-   *
-   * It has to be impossible for that proxy to cost a sale, so the tag carries
-   * its own fallback: if our copy 404s, errors or is blocked, `onerror` loads
-   * Meta's original from connect.facebook.net and the pixel behaves exactly as
-   * it did before. The proxy route itself redirects to Meta on an upstream
-   * failure, so there are two ways back to the old behaviour and none to a
-   * broken page.
+   * Bots are still kept off the Conversions API by the user-agent filter in
+   * meta.signals.ts; that part stays, because it is invisible to a real buyer.
    */
   return `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;t.onerror=function(){var r=b.createElement(e);r.async=!0;
-r.src='https://connect.facebook.net/en_US/fbevents.js';
-s.parentNode.insertBefore(r,s)};s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window,
-document,'script','/px/fbevents.js');
-fbq('set','autoConfig',false,'${pixelId}');
-${init}${gate}`;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+${init}${view}`;
 }
 
 /**
