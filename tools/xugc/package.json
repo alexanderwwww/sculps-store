@@ -30,7 +30,8 @@
       "renderer/**",
       "assets/**",
       "train/*.py",
-      "train/*.sh"
+      "train/*.sh",
+      "seed.json"
     ],
     "mac": {
       "category": "public.app-category.video",

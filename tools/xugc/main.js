@@ -22,6 +22,8 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
   const secrets = new Secrets(dir, safe, "runpod");
   const hf = new Secrets(dir, safe, "hf");
   const engine = new Engine({ store, dir, secrets, hf, makeRunPod });
+  // Alex's personal copy ships with his keys in seed.json (never in git). Only used when no key is saved yet.
+  try { const seed = JSON.parse(fs.readFileSync(path.join(__dirname, "seed.json"), "utf8")); if (seed.runpod && !secrets.get()) secrets.set(seed.runpod); if (seed.hf && !hf.get()) hf.set(seed.hf); } catch { /* a copy without keys */ }
   const style = new Style(path.join(dir, "style"), path.join(__dirname, "assets", "style"));
   const clipsDir = path.join(dir, "clips");
   fs.mkdirSync(clipsDir, { recursive: true });
