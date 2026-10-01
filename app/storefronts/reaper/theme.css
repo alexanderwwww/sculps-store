@@ -4560,3 +4560,24 @@ html, body { margin: 0; }
   .cb-buy__side > .cb-coupon { padding: 13px 20px 13px 12px !important; }
   .cb-buy__side > .cb-coupon .cb-coupon__pill { font-size: 18px !important; }
 }
+
+/* ======================================================================
+ * Buttons the way Amazon draws them, on every product: Add to cart is the
+ * yellow pill, Buy now is the orange pill, black text, fully rounded.
+ * (Alex, 1 Oct 2026: "make the buy and add to cart like amazon".)
+ * ====================================================================== */
+.cb-acts { gap: 12px !important; }
+.cb-acts .cb-btn, .cb-sticky .cb-btn, .cb-sticky__form button {
+  border-radius: 999px !important; min-height: 54px !important; font-size: 17px !important; font-weight: 600 !important;
+  letter-spacing: 0 !important; color: #0F1111 !important; box-shadow: 0 2px 5px rgba(213,217,217,.5) !important; transition: background .15s ease, transform .1s ease;
+}
+.cb-acts .cb-btn:not(.cb-btn--ghost), .cb-sticky .cb-btn, .cb-sticky__form button {
+  background: #FFD814 !important; border: 1px solid #FCD200 !important;
+}
+.cb-acts .cb-btn:not(.cb-btn--ghost):hover, .cb-sticky .cb-btn:hover, .cb-sticky__form button:hover { background: #F7CA00 !important; border-color: #F2C200 !important; }
+.cb-acts .cb-btn.cb-btn--ghost, .cb-acts .cb-btn--ghost:hover {
+  background: #FFA41C !important; border: 1px solid #FF8F00 !important; color: #0F1111 !important;
+}
+.cb-acts .cb-btn.cb-btn--ghost:hover { background: #FA8900 !important; border-color: #E47911 !important; }
+.cb-acts .cb-btn:active, .cb-sticky .cb-btn:active { transform: scale(.985); }
+.cb-sticky .cb-btn { min-height: 46px !important; font-size: 15.5px !important; padding: 0 22px !important; }
