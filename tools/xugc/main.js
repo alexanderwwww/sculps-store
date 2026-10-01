@@ -15,14 +15,14 @@ const { fetchProduct } = require("./product.js");
 const { Bridge } = require("./bridge.js");
 const { Collector, parseLinks } = require("./collect.js");
 
-const BUILD = 8;
+const BUILD = 9;
 const LATEST_NOTE = "";
 
-function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch, collector: collectorIn }) {
+function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch, collector: collectorIn, backupDir }) {
   const store = new Store(dir);
   const secrets = new Secrets(dir, safe, "runpod");
   const hf = new Secrets(dir, safe, "hf");
-  const engine = new Engine({ store, dir, secrets, hf, makeRunPod, fetchImpl: bridgeFetch });
+  const engine = new Engine({ store, dir, secrets, hf, makeRunPod, fetchImpl: bridgeFetch, backupDir });
   // Alex's personal copy ships with his keys in seed.json (never in git). Only used when no key is saved yet.
   try { const seed = JSON.parse(fs.readFileSync(path.join(__dirname, "seed.json"), "utf8")); if (seed.runpod && !secrets.get()) secrets.set(seed.runpod); if (seed.hf && !hf.get()) hf.set(seed.hf); } catch { /* a copy without keys */ }
   const style = new Style(path.join(dir, "style"), path.join(__dirname, "assets", "style"));
@@ -193,10 +193,11 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     const out = []; for (let i = 0; lists.some((l) => i < l.length); i++) for (const l of lists) if (i < l.length) out.push(l[i]);
     return out;
   };
-  ipcMain.handle("train:estimate", (_e, model, dry) => ({ ...estimateTrain({ model, dry: !!dry, volume: !!store.read().settings.volumeId }), pieces: Math.min(pieceList().length, dry ? 3 : 160) }));
+  ipcMain.handle("train:estimate", (_e, model, dry, budget) => ({ ...estimateTrain({ model, dry: !!dry, volume: !!store.read().settings.volumeId, budget: Number(budget) || 0 }), pieces: Math.min(pieceList().length, dry ? 3 : 160) }));
+  ipcMain.handle("train:finish", () => engine.finish());
   ipcMain.handle("train:start", async (e, spec) => {
     try {
-      const r = await engine.train({ model: spec.model, dry: !!spec.dry, pieces: pieceList() }, (p) => { try { e.sender.send("train", p); } catch {} });
+      const r = await engine.train({ model: spec.model, dry: !!spec.dry, budget: Number(spec.budget) || 0, pieces: pieceList() }, (p) => { try { e.sender.send("train", p); } catch {} });
       return { lora: r, ...view() };
     } catch (err) { return fail(err); }
   });
@@ -291,7 +292,7 @@ function createWindow() {
 
 if (!process.env.XUGC_NO_AUTOSTART) {
   app.whenReady().then(() => {
-    setup({ dir: path.join(app.getPath("userData"), "xugc"), safe: safeStorage });
+    setup({ dir: path.join(app.getPath("userData"), "xugc"), safe: safeStorage, backupDir: path.join(app.getPath("documents"), "XUGC Models") });
     createWindow();
     app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
   });

@@ -89,7 +89,8 @@ class FakeRunPod {
     return { saved: ["clip.mp4"], log: "", costUsd: 0.5, minutes: 6, hourly: 1.6 };
   }
 }
-const eng = new Engine({ store, dir, secrets, hf, makeRunPod: (o) => new FakeRunPod(o) });
+const bdir = join(dir, "backup");
+const eng = new Engine({ store, dir, secrets, hf, makeRunPod: (o) => new FakeRunPod(o), backupDir: bdir });
 const job = { prompt: "A woman in a hoodie plugs in a projector and a ghost appears on her window.", seconds: 15, quality: "hd", meta: { scene: "x", look: "Demo" } };
 const err = async (j) => { try { await eng.generate(j, () => {}); } catch (e) { return e; } return null; };
 
@@ -147,6 +148,13 @@ store.update((x) => { x.spent = { day: "", usd: 0 }; });
 const eh = await eng.generate({ ...job, engine: "hunyuan" }, () => {});
 ok(calls.filter((c) => c.run).at(-1).run === "gen_hunyuan.sh" && eh.id, "the engine switch runs the Hunyuan script");
 
+const b5 = estimateTrain({ model: "ltx", dry: false, budget: 5 });
+ok(b5.usd === 5 && b5.minutes === 75, "a $5 budget buys 75 GPU minutes at the dearest price", JSON.stringify(b5));
+const tb = await terr({ model: "ltx", dry: false, budget: 5, pieces: pile });
+const tbc = calls.filter((c) => c.run === "train_lora.sh").at(-1);
+ok(tb.file && tbc.env.BUDGET === "1" && tbc.cap <= 5 && tbc.maxMinutes === undefined, "a budgeted training is capped at its budget and told to time-box itself", "cap " + tbc.cap);
+ok(tb.backup && existsSync(tb.backup) && tb.backup !== tb.file, "the trained file is also copied outside the app's folder (Documents/XUGC Models)", tb.backup);
+ok(eng.finish() === false, "Stop and keep does nothing when no training runs");
 // ---- old builds' leftovers
 writeFileSync(join(dir, "xugc.json"), JSON.stringify({ takes: [{ id: "d", demo: true }], models: [{ id: "wan22" }, { id: "u", kind: "lora" }], dataset: [{ id: "seed-1", file: "assets/x.mp4" }], settings: { mode: "demo", capTrain: 40 } }));
 const re = new Store(dir).read();

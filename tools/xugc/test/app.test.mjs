@@ -270,6 +270,7 @@ app.whenReady().then(async () => {
     say(await until("document.querySelector('#collectgo').style.display !== 'none'", 3000), "…and the Collect button comes back when it is done");
     await shot("9-train-reallife");
     say((await run("document.querySelector('#trdryest').textContent")).includes("$") && (await run("document.querySelector('#trfullest').textContent")).includes("$"), "both training buttons show their price", await run("document.querySelector('#trdryest').textContent + ' / ' + document.querySelector('#trfullest').textContent"));
+    await run("document.querySelectorAll('#trmodels button')[1].click()"); await new Promise((r) => setTimeout(r, 300));
     await click("#trdry");
     say(await until("document.querySelector('#trmodal').style.display === 'flex' && document.querySelector('#trmt').textContent.includes('Dry run Wan 2.2')", 4000), "a dry run asks for Approve first, with the price and what it does", await run("document.querySelector('#trmb').textContent"));
     const nrun0 = log.filter((l) => l.run === "train_lora.sh").length;
@@ -280,10 +281,18 @@ app.whenReady().then(async () => {
     const tl = log.filter((l) => l.run === "train_lora.sh").at(-1);
     say(tl && tl.env.MODEL === "wan" && tl.env.DRY === "1" && tl.env.TRIGGER === "xugciphone", "the GPU got the right model, dry flag and trigger word");
     say((await run("document.querySelector('#lorals').textContent")).includes("XUGC Real Life · wan · dry run"), "the trained file is listed as XUGC Real Life");
+    say((await run("document.querySelectorAll('#trbudget button').length")) === 3 && (await run("document.querySelector('#trfullest').textContent")) === "up to $5.00", "the training button shows the $5 budget the user picked", await run("document.querySelector('#trfullest').textContent"));
+    await run("document.querySelectorAll('#trmodels button')[0].click()"); await new Promise((r) => setTimeout(r, 300));
+    await click("#trfull"); await until("document.querySelector('#trmodal').style.display === 'flex'", 3000);
+    say((await run("document.querySelector('#trmb').textContent")).includes("at most $5.00") && (await run("document.querySelector('#trmb').textContent")).includes("stop and keep"), "the approval says the most it can cost and that Stop keeps what is trained", await run("document.querySelector('#trmb').textContent"));
+    await click("#trmyes");
+    say(await until("document.querySelector('#trstat').textContent.startsWith('Done. XUGC Real Life (LTX-2.5)')", 20000), "the budgeted training runs and says Done");
+    const tl2 = log.filter((l) => l.run === "train_lora.sh").at(-1);
+    say(tl2 && tl2.env.MODEL === "ltx" && tl2.env.BUDGET === "1" && tl2.env.DRY === "0", "the GPU was told: LTX, budgeted, not a dry run");
     await view("create");
     say((await run("document.querySelectorAll('#engines button').length")) === 4, "Create has an engine switch with four engines");
     await run("document.querySelectorAll('#reallife button')[1].click()");
-    say((await run("document.querySelectorAll('#reallife button')[1].disabled")) === true, "Real Life stays off for an engine that has no trained file yet (only Wan was trained, Create runs LTX)");
+    say((await run("document.querySelectorAll('#reallife button')[1].disabled")) === false && (await run("document.querySelector('#rlnote').textContent")).includes('your trained file'), "with an LTX XUGC Real Life file trained, the Real Life switch on Create is available", await run("document.querySelector('#rlnote').textContent"));
     say(errors.length === 0, "no errors in the page console", errors.join(" | ").slice(0, 300));
   } catch (e) { say(false, "the probe crashed", String(e && e.stack || e)); }
   console.log("@@RESULT@@" + JSON.stringify(out));

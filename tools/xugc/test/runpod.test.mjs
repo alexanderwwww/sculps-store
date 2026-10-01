@@ -33,6 +33,14 @@ head -c 5000 /dev/urandom > "$JOB_ROOT/out/clip.mp4"
 echo "== 00:00:02 done"
 `);
 
+writeFileSync(join(scripts, "train_lora.sh"), `set -e
+echo "== 00:00:01 training"
+for i in $(seq 1 120); do [ -f "$JOB_ROOT/STOP" ] && break; sleep 0.1; done
+[ -f "$JOB_ROOT/STOP" ] && echo "stopped early, keeping the checkpoint" || echo "ran to the end"
+head -c 3000 /dev/urandom > "$JOB_ROOT/out/lora.safetensors"
+echo "== 00:00:02 done"
+`);
+
 /** Simulated RunPod REST API; each "pod" is a real pod_agent.py on localhost. */
 function world({ costPerHr = 1.6 } = {}) {
   const pods = new Map(); const log = []; let n = 0;
@@ -105,6 +113,13 @@ const dest = () => mkdtempSync(join(tmpdir(), "xugc-out-"));
   try { await rp.run({ label: "t", script: "generate.sh", inputs: {}, env: { SLOW: "1" }, outputs: [], required: [], destDir: dest(), capUsd: 5, signal: sig, onProgress: (p) => { if (p.stage === "making the video") sig.cancelled = true; } }); } catch (e) { err = e; }
   ok(err && err.code === "cancelled", "cancelling stops the job", err?.message);
   ok(w.pods.get("pod1").deleted && Date.now() - t0 < 4500, "…and deletes the pod without waiting for the job");
+}
+// 3b. "Stop and keep": the job is asked to finish, ends early, and its result still comes home
+{
+  const w = world(); const rp = mk(w); const sig = { cancelled: false, finish: false }; const d = dest(); const t0 = Date.now(); let r = null, err = null;
+  try { r = await rp.run({ label: "t", script: "train_lora.sh", inputs: {}, env: {}, outputs: ["lora.safetensors"], required: ["lora.safetensors"], destDir: d, capUsd: 5, signal: sig, onProgress: (p) => { if (p.stage === "training") sig.finish = true; } }); } catch (e) { err = e; }
+  ok(!err && r && r.saved.includes("lora.safetensors") && Date.now() - t0 < 9000, "Stop and keep ends the training early and the trained file still comes home", err?.message);
+  ok(w.pods.get("pod1").deleted, "…and the pod is deleted");
 }
 // 4. a GPU pricier than allowed is refused and returned before anything is sent
 {

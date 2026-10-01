@@ -20,6 +20,19 @@ fi
 echo "== $(date -u +%T) writing captions"
 TRIGGER="$TRIGGER" HF_HUB_ENABLE_HF_TRANSFER=1 python3 "$IN/caption_clips.py" "$IN" 2>&1 | tee "$OUT/caption.log" | tail -n 8
 
+# Time box: a budgeted run trains until shortly before the pod's own deadline (the money limit), saves checkpoints as it goes,
+# and a STOP file (the app's "Stop and keep") ends the trainer early. Whatever was saved last is what comes home.
+BUDGET="${BUDGET:-0}"; rm -f "$R/STOP"
+trainrun() {
+  local left ts
+  left=$(python3 -c "import os,time;print(int(float(os.environ.get('MAX_MINUTES','180'))*60-(time.time()-float(os.environ.get('AGENT_BOOT',str(time.time()))))))")
+  ts=$((left-600)); [ "$ts" -lt 180 ] && ts=180
+  echo "== $(date -u +%T) training for up to $((ts/60)) minutes"
+  ( while [ ! -f "$R/STOP" ]; do sleep 5; done; pkill -INT -f "ltx-trainer|train.py|wan_train_network|hv_1_5_train_network" || true ) &
+  local watcher=$!
+  timeout -s INT -k 90 "${ts}s" "$@" 2>&1 | tee -a "$OUT/train.log" || true
+  kill "$watcher" 2>/dev/null || true
+}
 case "$MODEL" in
 ltx)
   : "${HF_TOKEN:?}"; M=$W/models/ltx-2.5; mkdir -p "$M"
@@ -42,16 +55,17 @@ PY
   uv run python packages/ltx-trainer/scripts/process_dataset.py --help > "$OUT/help.txt" 2>&1 || true
   uv run python packages/ltx-trainer/scripts/process_dataset.py "$IN/dataset.json" --resolution-buckets "544x960x49" --model-path "$M" --output-dir "$W/pre" --lora-trigger "$TRIGGER" 2>&1 | tee -a "$OUT/train.log"
   if [ "$DRY" = "1" ]; then ST=60; else ST="${STEPS:-2000}"; fi
+  SCHED=linear; CK=250; if [ "$BUDGET" = "1" ]; then SCHED=constant; CK=100; ST=4000; fi
   cat > "$W/ltx_lora.yaml" <<YML
 model: {model_path: "$M", training_mode: lora}
 lora: {rank: 32, alpha: 32, dropout: 0.0, target_modules: [to_k, to_q, to_v, to_out.0]}
-optimization: {learning_rate: 1.0e-4, steps: $ST, batch_size: 1, optimizer_type: adamw, scheduler_type: linear, enable_gradient_checkpointing: true}
+optimization: {learning_rate: 1.0e-4, steps: $ST, batch_size: 1, optimizer_type: adamw, scheduler_type: $SCHED, enable_gradient_checkpointing: true}
 data: {preprocessed_data_root: "$W/pre"}
 training_strategy: {name: flexible, video: {is_generated: true}, audio: {is_generated: true}}
-checkpoints: {interval: 250, keep_last_n: 3}
+checkpoints: {interval: $CK, keep_last_n: 3}
 output_dir: "$OUT/ckpt"
 YML
-  uv run python packages/ltx-trainer/scripts/train.py "$W/ltx_lora.yaml" 2>&1 | tee -a "$OUT/train.log"
+  trainrun uv run python packages/ltx-trainer/scripts/train.py "$W/ltx_lora.yaml"
   ;;
 hunyuan|wan)
   [ -d musubi-tuner ] || git clone --depth 1 https://github.com/kohya-ss/musubi-tuner.git
@@ -66,7 +80,7 @@ hunyuan|wan)
     fi
     cp "$IN/$b.txt" "$D/$b.txt"
   done
-  if [ "$DRY" = "1" ]; then EP=2; else EP="${EPOCHS:-16}"; fi
+  if [ "$DRY" = "1" ]; then EP=2; elif [ "$BUDGET" = "1" ]; then EP=200; else EP="${EPOCHS:-16}"; fi
   if [ "$MODEL" = wan ]; then
     M=$W/models/wan22; mkdir -p "$M"
     HF_HUB_ENABLE_HF_TRANSFER=1 hf download Comfy-Org/Wan_2.2_ComfyUI_Repackaged --include "split_files/diffusion_models/wan2.2_t2v_low_noise_14B_fp16.safetensors" "split_files/diffusion_models/wan2.2_t2v_high_noise_14B_fp16.safetensors" "split_files/vae/wan_2.1_vae.safetensors" "split_files/text_encoders/umt5_xxl_fp16.safetensors" --local-dir "$M" 2>&1 | tail -2
@@ -85,12 +99,12 @@ T
     cd musubi-tuner
     python src/musubi_tuner/wan_cache_latents.py --dataset_config "$W/ds.toml" --vae "$M/split_files/vae/wan_2.1_vae.safetensors" 2>&1 | tee -a "$OUT/train.log"
     python src/musubi_tuner/wan_cache_text_encoder_outputs.py --dataset_config "$W/ds.toml" --t5 "$M/split_files/text_encoders/umt5_xxl_fp16.safetensors" --batch_size 4 2>&1 | tee -a "$OUT/train.log"
-    accelerate launch --num_cpu_threads_per_process 1 --mixed_precision bf16 src/musubi_tuner/wan_train_network.py --task t2v-A14B \
+    trainrun accelerate launch --num_cpu_threads_per_process 1 --mixed_precision bf16 src/musubi_tuner/wan_train_network.py --task t2v-A14B \
       --dit "$M/split_files/diffusion_models/wan2.2_t2v_low_noise_14B_fp16.safetensors" --dit_high_noise "$M/split_files/diffusion_models/wan2.2_t2v_high_noise_14B_fp16.safetensors" \
       --dataset_config "$W/ds.toml" --sdpa --mixed_precision bf16 --fp8_base --gradient_checkpointing --offload_inactive_dit \
       --optimizer_type adamw8bit --learning_rate 2e-4 --timestep_sampling shift --discrete_flow_shift 12.0 --timestep_boundary 0.875 \
       --network_module networks.lora_wan --network_dim 32 --max_train_epochs "$EP" --save_every_n_epochs 1 --seed 42 \
-      --output_dir "$OUT/ckpt" --output_name xugc_real_life 2>&1 | tee -a "$OUT/train.log"
+      --output_dir "$OUT/ckpt" --output_name xugc_real_life
   else
     M=$W/models/hy15; mkdir -p "$M"
     HF_HUB_ENABLE_HF_TRANSFER=1 hf download tencent/HunyuanVideo-1.5 --local-dir "$M" 2>&1 | tail -2
@@ -110,15 +124,15 @@ T
     python src/musubi_tuner/hv_1_5_cache_latents.py --help > "$OUT/help.txt" 2>&1 || true
     python src/musubi_tuner/hv_1_5_cache_latents.py --dataset_config "$W/ds.toml" --vae "$M/vae" 2>&1 | tee -a "$OUT/train.log"
     python src/musubi_tuner/hv_1_5_cache_text_encoder_outputs.py --dataset_config "$W/ds.toml" 2>&1 | tee -a "$OUT/train.log"
-    accelerate launch --num_cpu_threads_per_process 1 --mixed_precision bf16 src/musubi_tuner/hv_1_5_train_network.py \
+    trainrun accelerate launch --num_cpu_threads_per_process 1 --mixed_precision bf16 src/musubi_tuner/hv_1_5_train_network.py \
       --dataset_config "$W/ds.toml" --sdpa --mixed_precision bf16 --gradient_checkpointing \
       --optimizer_type adamw --learning_rate 1e-4 --network_module networks.lora_hv_1_5 --network_dim 32 --discrete_flow_shift 2.0 \
-      --max_train_epochs "$EP" --save_every_n_epochs 1 --seed 42 --output_dir "$OUT/ckpt" --output_name xugc_real_life 2>&1 | tee -a "$OUT/train.log"
+      --max_train_epochs "$EP" --save_every_n_epochs 1 --seed 42 --output_dir "$OUT/ckpt" --output_name xugc_real_life
   fi
   ;;
 *) echo "unknown MODEL $MODEL"; exit 2 ;;
 esac
-LAST=$(ls -t "$OUT"/ckpt/*.safetensors 2>/dev/null | head -1 || true)
+LAST=$(find "$OUT/ckpt" -name "*.safetensors" -printf "%T@ %p\n" 2>/dev/null | sort -n | tail -1 | cut -d" " -f2- || true)
 [ -n "$LAST" ] || { echo "the trainer produced no LoRA file"; exit 3; }
 cp "$LAST" "$OUT/lora.safetensors"
 ls -la "$OUT"; echo "== $(date -u +%T) done"

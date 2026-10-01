@@ -130,13 +130,14 @@ function renderEngine() {
   $("#reallife").querySelectorAll("button").forEach((b) => { b.classList.toggle("on", (b.dataset.v === "1") === !!ui.reallife); b.disabled = !have || !ltx; b.onclick = () => { ui.reallife = b.dataset.v === "1"; renderEngine(); }; });
   $("#rlnote").textContent = !ltx ? "Real Life works with the LTX engines for now. Hunyuan and Wan get it once their trained file passes its first test." : have ? "Real Life uses your trained file: " + (have.dry ? "dry run" : "full") + ", " + new Date(have.at).toLocaleDateString() + "." : "No trained file yet. Train it in the Train tab.";
 }
-const TR = { model: "wan" };
+const TR = { model: "ltx", budget: 5 };
 async function trainEstimates() {
-  const [d, f] = await Promise.all([window.xugc.trainEstimate(TR.model, true), window.xugc.trainEstimate(TR.model, false)]);
+  const [d, f] = await Promise.all([window.xugc.trainEstimate(TR.model, true), window.xugc.trainEstimate(TR.model, false, TR.budget)]);
   $("#trdryest").textContent = "up to $" + d.usd.toFixed(2); $("#trfullest").textContent = "up to $" + f.usd.toFixed(2); TR.d = d; TR.f = f;
 }
 function renderRealLife() {
-  seg($("#trmodels"), [["wan", "Wan 2.2"], ["hunyuan", "Hunyuan 1.5"], ["ltx", "LTX-2.5 (with sound)"]], TR.model, (k) => { TR.model = k; renderRealLife(); });
+  seg($("#trmodels"), [["ltx", "LTX-2.5 (with sound)"], ["wan", "Wan 2.2"], ["hunyuan", "Hunyuan 1.5"]], TR.model, (k) => { TR.model = k; renderRealLife(); });
+  seg($("#trbudget"), [["3", "$3"], ["5", "$5"], ["8", "$8"]], String(TR.budget), (k) => { TR.budget = Number(k); renderRealLife(); });
   trainEstimates();
   const n = S && META ? META.pile : { videos: 0, pieces: 0 };
   if (!ui.collecting) $("#colstat").textContent = ui.lastCollect ? ui.lastCollect : n.pieces ? `${n.videos} videos collected, ${n.pieces} pieces ready to train on.` : "Nothing collected yet. Collect downloads each video on this Mac, cuts it into 3 to 6 second pieces with real sound, and deletes the original.";
@@ -148,9 +149,9 @@ async function doTrain(dry) {
   $("#trerr").textContent = ""; const e = dry ? TR.d : TR.f;
   if (!e.pieces || e.pieces < 3) { $("#trerr").textContent = "The training pile is empty. Press Collect first."; return; }
   const name = { wan: "Wan 2.2", hunyuan: "Hunyuan 1.5", ltx: "LTX-2.5" }[TR.model];
-  if (!(await askTrain(`${dry ? "Dry run" : "Train"} ${name}?`, `This rents a GPU for about ${e.minutes} minutes and uses ${e.pieces} pieces. It costs at most $${e.usd.toFixed(2)} and the GPU is handed back when it ends. ${dry ? "A dry run only proves the training works." : "The result is a XUGC Real Life file for " + name + "."}`))) return;
+  if (!(await askTrain(`${dry ? "Dry run" : "Train"} ${name}?`, `This rents a GPU and uses ${e.pieces} pieces. It costs at most $${e.usd.toFixed(2)} and the GPU is handed back when it ends. ${dry ? "A dry run only proves the training works." : "The GPU has up to " + e.minutes + " minutes; about " + (e.setup || 30) + " go on setting up, the rest on training. It saves as it goes and you can stop and keep what is trained. The result is a XUGC Real Life file for " + name + ", kept forever."}`))) return;
   ui.training = true; $("#trdry").style.display = $("#trfull").style.display = "none"; $("#trstop").style.display = ""; $("#trstat").textContent = "Starting…";
-  const r = await window.xugc.trainStart({ model: TR.model, dry });
+  const r = await window.xugc.trainStart({ model: TR.model, dry, budget: dry ? 0 : TR.budget });
   ui.training = false; $("#trdry").style.display = $("#trfull").style.display = ""; $("#trstop").style.display = "none";
   if (r.error) { $("#trerr").textContent = r.error + (r.costUsd ? ` (This attempt cost $${r.costUsd.toFixed(2)}.)` : ""); $("#trstat").textContent = ""; await refresh(r); return; }
   $("#trstat").textContent = `Done. XUGC Real Life (${name}) trained on ${r.lora.clips} pieces for $${r.lora.cost.toFixed(2)}.`; await refresh(r);
@@ -174,7 +175,7 @@ window.xugc.onCollect((p) => {
 });
 $("#trdry").onclick = () => doTrain(true);
 $("#trfull").onclick = () => doTrain(false);
-$("#trstop").onclick = () => window.xugc.cancel();
+$("#trstop").onclick = () => { $("#trstat").textContent = "Finishing: saving what is trained so far…"; window.xugc.trainFinish(); };
 window.xugc.onTrain((p) => { if (ui.training) $("#trstat").textContent = `${p.stage} · ${p.minutes || 0} min · $${(p.costUsd || 0).toFixed(2)} so far`; });
 function renderAll() { renderEngine(); renderRealLife(); renderChips(); renderCreate(); renderLibrary(); renderTrain(); renderMcp(); renderSettings(); }
 function setView(v) { ui.view = v; $$(".view").forEach((x) => x.classList.toggle("on", x.id === "v-" + v)); $$("#nav button").forEach((b) => b.classList.toggle("on", b.dataset.view === v)); if (v === "mcp") refresh(); }

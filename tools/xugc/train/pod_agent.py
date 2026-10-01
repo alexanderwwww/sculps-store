@@ -128,11 +128,14 @@ class H(http.server.BaseHTTPRequestHandler):
             if script not in ALLOWED: return self.send_json({"error": "not an allowed script"}, 400)
             if STATE["proc"] is not None and STATE["proc"].poll() is None: return self.send_json({"error": "already running"}, 409)
             OUT.mkdir(parents=True, exist_ok=True)
-            env = dict(os.environ); env.update({str(k): str(v) for k, v in (body.get("env") or {}).items()}); env["JOB_ROOT"] = str(ROOT)
+            env = dict(os.environ); env.update({str(k): str(v) for k, v in (body.get("env") or {}).items()}); env["JOB_ROOT"] = str(ROOT); env["AGENT_BOOT"] = str(BOOT); env["MAX_MINUTES"] = str(MAX_MINUTES)
             LOG.write_text("")
             f = open(LOG, "ab")
             STATE.update(proc=subprocess.Popen(["bash", str(IN / script)], stdout=f, stderr=subprocess.STDOUT, env=env, cwd=str(ROOT), start_new_session=True), exit=None, script=script)
             return self.send_json({"started": script})
+        if self.path == "/finish":  # stop training gracefully, keep what is trained so far
+            (ROOT / "STOP").write_text("1")
+            return self.send_json({"finishing": True})
         if self.path == "/stop":
             p = STATE["proc"]
             if p is not None and p.poll() is None: os.killpg(os.getpgid(p.pid), signal.SIGTERM)

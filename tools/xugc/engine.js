@@ -30,7 +30,8 @@ function estimateGenerate({ seconds = 15, quality = "hd", volume = false } = {})
 
 // Training: minutes on an H100, a GUESS until the first dry run measures them. "dry" = 3 clips, a few steps: proves the pipeline.
 const TRAIN_MIN = { ltx: 150, hunyuan: 120, wan: 150 }, DRY_MIN = 45;
-function estimateTrain({ model = "wan", dry = true, volume = false } = {}) {
+function estimateTrain({ model = "wan", dry = true, volume = false, budget = 0 } = {}) {
+  if (budget && !dry) return { usd: r2(budget), minutes: Math.floor((budget / WORST_HOURLY) * 60), setup: volume ? 15 : 30 };
   const minutes = Math.ceil((dry ? DRY_MIN : TRAIN_MIN[model] || 150) + (volume ? 0 : 15));
   return { usd: r2((minutes / 60) * WORST_HOURLY), minutes };
 }
@@ -64,13 +65,16 @@ const SCRIPTS = { ltx: "generate.sh", ltx_full: "gen_ltx_full.sh", hunyuan: "gen
 
 class Engine {
   /** @param {{store, dir: string, secrets: {get():string}, hf: {get():string}, makeRunPod?: (o:object)=>RunPod}} o */
-  constructor({ store, dir, secrets, hf, makeRunPod, fetchImpl }) {
+  constructor({ store, dir, secrets, hf, makeRunPod, fetchImpl, backupDir }) {
+    this.backupDir = backupDir || "";
     this.store = store; this.dir = dir; this.secrets = secrets; this.hf = hf;
     this.makeRunPod = makeRunPod || ((o) => new RunPod(o));
     this.job = null; this.fetchImpl = fetchImpl;
     for (const d of ["takes", "work"]) fs.mkdirSync(path.join(dir, d), { recursive: true });
   }
   rp() { const apiKey = this.secrets.get(); if (!apiKey) { const e = new Error("Paste your RunPod key in Settings first."); e.code = "nokey"; throw e; } return this.makeRunPod({ apiKey, volumeId: this.store.read().settings.volumeId }); }
+  /** stop training gracefully and keep the checkpoint trained so far */
+  finish() { if (this.job && this.job.kind === "train") { this.job.signal.finish = true; return true; } return false; }
   cancel() { if (this.job) this.job.signal.cancelled = true; return !!this.job; }
   status() { return this.job ? { kind: this.job.kind } : null; }
   addSpend(usd) { const day = today(); this.store.update((s) => { s.spent = { day, usd: r2((s.spent.day === day ? s.spent.usd : 0) + (usd || 0)) }; }); }
@@ -140,7 +144,7 @@ class Engine {
     if (pieces.length < 3) throw new Error("The training pile has fewer than 3 pieces. Press Collect first.");
     const hf = this.hf.get();
     if (model === "ltx" && !hf) { const e = new Error("Paste your Hugging Face token in Settings first (LTX needs it)."); e.code = "nohf"; throw e; }
-    const est = estimateTrain({ model, dry: !!job.dry, volume: !!st.settings.volumeId });
+    const est = estimateTrain({ model, dry: !!job.dry, volume: !!st.settings.volumeId, budget: Number(job.budget) || 0 });
     const used = st.spent.day === today() ? st.spent.usd : 0;
     if (used + est.usd > st.settings.capDay) { const e = new Error(`Today you have used $${used.toFixed(2)} of your $${st.settings.capDay.toFixed(2)} daily limit. This training is estimated at up to $${est.usd.toFixed(2)}.`); e.code = "cap"; throw e; }
     const rp = this.rp();
@@ -154,16 +158,19 @@ class Engine {
       const dest = path.join(this.dir, "work", id);
       const r = await rp.run({
         label: "train", script: "train_lora.sh", inputs, extraScripts: ["caption_clips.py"],
-        env: { MODEL: model, DRY: job.dry ? "1" : "0", TRIGGER: "xugciphone", ...(hf ? { HF_TOKEN: hf } : {}) },
+        env: { MODEL: model, DRY: job.dry ? "1" : "0", BUDGET: job.budget ? "1" : "0", TRIGGER: "xugciphone", ...(hf ? { HF_TOKEN: hf } : {}) },
         outputs: ["lora.safetensors", "train.log", "caption.log", "help.txt", "layout.txt"], required: ["lora.safetensors"], destDir: dest,
-        capUsd: Math.min(est.usd * 1.3, st.settings.capDay - used), maxMinutes: est.minutes * 2, signal: this.job.signal, onProgress,
+        capUsd: Math.min(est.usd * (job.budget ? 1 : 1.3), st.settings.capDay - used), maxMinutes: job.budget ? undefined : est.minutes * 2, signal: this.job.signal, onProgress,
       });
       fs.mkdirSync(path.join(this.dir, "loras"), { recursive: true });
       const file = path.join(this.dir, "loras", id + ".safetensors");
       fs.copyFileSync(path.join(dest, "lora.safetensors"), file);
       let log = ""; try { log = fs.readFileSync(path.join(dest, "caption.log"), "utf8").split("\n").slice(0, 3).join("\n"); } catch {}
       fs.rmSync(dest, { recursive: true, force: true });
-      const entry = { id, model, dry: !!job.dry, at: Date.now(), clips: pieces.length, cost: r2(r.costUsd), file, name: "XUGC Real Life" };
+      // the money is paid once: a second copy outside the app's folder, so no app update or reinstall can lose it
+      let backup = "";
+      try { if (this.backupDir) { fs.mkdirSync(this.backupDir, { recursive: true }); backup = path.join(this.backupDir, id + ".safetensors"); fs.copyFileSync(file, backup); } } catch { backup = ""; }
+      const entry = { id, model, dry: !!job.dry, at: Date.now(), clips: pieces.length, cost: r2(r.costUsd), file, backup, name: "XUGC Real Life" };
       this.store.update((s) => { s.loras = [...(s.loras || []), entry]; });
       return { ...entry, sample: log };
     } catch (e) { if (spent) e.costUsd = spent; throw e; }

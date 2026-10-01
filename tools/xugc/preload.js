@@ -9,7 +9,7 @@ contextBridge.exposeInMainWorld("xugc", {
   verdict: call("verdict"), deleteTake: call("take:delete"),
   addClips: call("dataset:add"), addClipPaths: call("dataset:addPaths"), caption: call("dataset:caption"), removeClip: call("dataset:remove"),
   collectStarter: call("collect:starter"), collectRun: call("collect:run"), collectStop: call("collect:stop"), collectRemove: call("collect:remove"),
-  trainEstimate: call("train:estimate"), trainStart: call("train:start"), loraDelete: call("lora:delete"),
+  trainEstimate: call("train:estimate"), trainStart: call("train:start"), trainFinish: call("train:finish"), loraDelete: call("lora:delete"),
   onCollect: (cb) => ipcRenderer.on("collect", (_e, p) => cb(p)), onTrain: (cb) => ipcRenderer.on("train", (_e, p) => cb(p)),
   copy: call("clipboard:write"), refFromPath: call("reference:fromPath"), refPick: call("reference:pick"), refSave: call("reference:save"), refUpdate: call("reference:update"), refClear: call("reference:clear"),
   pathFor: (file) => { try { return require("electron").webUtils.getPathForFile(file); } catch { return ""; } }, preview: call("prompt:preview"), decide: call("claude:decide"),

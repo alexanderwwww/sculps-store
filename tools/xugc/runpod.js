@@ -185,9 +185,10 @@ class RunPod {
       const started = await af("POST", "/run", { json: { script: job.script, env: job.env || {} } });
       if (!started.ok) throw new RunPodError(`The GPU would not start the job (${started.status}).`, "run");
 
-      let status = null, lastMark = "Starting";
+      let status = null, lastMark = "Starting", finishSent = false;
       for (;;) {
         if (job.signal && job.signal.cancelled) { try { await af("POST", "/stop", { json: {} }); } catch {} throw new Cancelled(); }
+        if (job.signal && job.signal.finish && !finishSent) { finishSent = true; try { await af("POST", "/finish", { json: {} }); } catch {} }
         await this.sleep(this.pollMs);
         let r; try { r = await af("GET", "/status"); } catch { continue; }
         if (!r.ok) continue;

@@ -86,3 +86,10 @@ Written into the app as `assets/style/realism-rules.md` (the top part goes into 
 - NOT proven on a real GPU: train_lora.sh, caption_clips.py, gen_hunyuan.sh, gen_wan.sh, gen_ltx_full.sh (written from docs; the dry runs and bake-off prove them). The sound step for the silent models (Hunyuan, Wan) is NOT built.
 - To build: download bin/ first (yt-dlp_macos, ffmpeg-darwin-x64 from eugeneware/ffmpeg-static b6.0, linux copies for tests), `npx electron-builder --mac --dir --x64`, `rcodesign sign`, zip, R2 under an unguessable name. bin/ and dist/ are gitignored.
 - Do not pull keys out of old transcripts: the system blocks it. Keys live in the app on his Mac; the bake-off is ordered through the app's MCP (he taps Approve).
+
+## Build 9 (2026-10-01): budgeted training, nothing wasted
+- Alex pays $5 for the first real training, not $11. Train tab has a Budget ($3/$5/$8). The GPU's own deadline = budget / $4 per hour (75 min at $5); train_lora.sh trains until ~10 min before that deadline, saves checkpoints as it goes (LTX every 100 steps, constant LR), and the last checkpoint is what comes home.
+- "Stop and keep what is trained so far" (pod_agent /finish -> STOP file -> trainer gets SIGINT) ends early and still brings the LoRA home.
+- The trained file lives in the app's data folder (userData/xugc/loras), which new builds never touch, and is copied to Documents/XUGC Models. Never store a trained file inside the app bundle.
+- Setup (66 GB model download) eats ~30 of the 75 minutes without a RunPod network volume (~15 with one). Real value of a volume: more training per dollar.
+- The real run is its own smoke test: a wrong flag fails early and costs about the setup. A separate dry run pays that setup twice.
