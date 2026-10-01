@@ -16,6 +16,9 @@ A Mac app with the plug glass look and a real browser inside. Claude is the brai
 ## The cursor look (settled)
 Black like the Mac arrow, as **clear liquid glass**: dark tint, real backdrop blur clipped to the arrow, bright rim, specular sheen. Click ring is clear glass. Do not go back to the white arrow with an orange ring.
 
+## Scope and stop (settled 1 Oct 2026)
+Cursor is NOT a browser window: it moves its own black-glass cursor around his WHOLE Mac, in any app, and clicks and types when Claude commands it. He may see two cursors at once (his and Cursor's). A small liquid-glass pill in a screen corner shows it is on and has an ✕ he can click to stop it. **Command + Esc stops it instantly, from any app** (global shortcut; must cancel the in-flight command, hide the glass cursor, grey the pill). Needs macOS Accessibility + Screen Recording permission once; background clicking does not work in every app (Chrome is awkward) — say which apps need the real cursor.
+
 ## Not built yet
 1. The link that lets Claude command it (the Wand pattern).
 2. Wiring the hands into the plug window's shop views.
