@@ -4,8 +4,7 @@
  * a .webp renders as nothing in a lot of mail clients.
  *
  * Nothing here is invented: the box contents and the setup steps come from the product guide the product
- * page itself uses (./reaper-products.ts), and the apology line only appears when the first confirmation
- * really did fail.
+ * page itself uses (./reaper-products.ts). No apologies, no hedging: the store speaks with confidence.
  */
 import { reaperProduct } from "./reaper-products";
 
@@ -41,8 +40,6 @@ export interface ReaperReceiptInput {
   currency: string;
   shipName: string;
   shipLines: string[];
-  /** The first confirmation never reached them. Says so, once, plainly. */
-  late?: boolean;
   money: (cents: number, currency: string) => string;
 }
 
@@ -76,10 +73,6 @@ export function reaperReceiptHtml(i: ReaperReceiptInput): string {
     .map((s, n) => `<tr><td valign="top" width="34" style="padding:9px 0"><div style="width:24px;height:24px;border-radius:12px;background:${C.orange};text-align:center;font:800 13px/24px ${F};color:#0A0A0A">${n + 1}</div></td><td style="padding:9px 0;font:15px/1.5 ${B};color:${C.bone}">${esc(s)}</td></tr>`)
     .join("");
 
-  const late = i.late
-    ? `<tr><td style="padding:14px 32px 0"><table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #5a2a14;background:#1c120c;border-radius:10px"><tr><td style="padding:14px 16px;font:14px/1.55 ${B};color:#EBD9C8"><b style="color:${C.bone}">Sorry this is late.</b> The confirmation we should have sent you when you ordered never reached you. Your order has been safe and paid since the minute you bought it, and nothing about it has been delayed.</td></tr></table></td></tr>`
-    : "";
-
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet"></head>
 <body style="margin:0;background:${C.bg}"><div style="display:none;max-height:0;overflow:hidden">Order ${esc(i.reference)} confirmed &middot; ${m(i.totalCents)} paid</div>
@@ -90,7 +83,6 @@ ${hero ? `<tr><td style="padding:0;font-size:0;line-height:0;background:#000"><a
 <tr><td style="padding:30px 32px 6px"><div style="font:700 12px ${F};letter-spacing:.2em;color:${C.orange}">ORDER CONFIRMED</div>
 <div style="margin-top:10px;font:800 34px/1.08 ${F};letter-spacing:-.02em;color:${C.bone}">${i.handle === "the-scream" ? `Sixteen feet of nightmare is on its way, ${first}.` : `Your ${esc(productName.replace(/^The /, ""))} is on its way, ${first}.`}</div>
 <div style="margin-top:14px;font:16px/1.6 ${B};color:${C.body}">Payment went through and your order is being packed. The next email has your tracking number.</div></td></tr>
-${late}
 <tr><td style="padding:24px 32px 4px"><table width="100%" cellpadding="0" cellspacing="0"><tr>${step("PAID", "Confirmed", true)}${step("PACKING", "Today", true)}${step("ON ITS WAY", "Heading to you", false)}${step("TRACKING", "By email", false)}</tr></table></td></tr>
 <tr><td style="padding:26px 32px 0"><table width="100%" cellpadding="0" cellspacing="0" style="background:${C.card};border:1px solid ${C.rule};border-radius:12px"><tr><td style="padding:22px 22px 8px">
 <div style="font:700 11px ${F};letter-spacing:.18em;color:${C.meta}">YOUR ORDER &middot; ${esc(i.reference)}</div>

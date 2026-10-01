@@ -60,7 +60,7 @@ open("order-1005-projector%s.html" % sfx, "w").write(email(
     first="Adam", ref="BR234764", hero=pic("em-hp-ip-s02.jpg", "image/jpeg"), kicker="ORDER CONFIRMED",
     headline="Your Haunted Projector is on its way, Adam.",
     intro="Payment went through and your order is being packed. It throws a ghost across your window at night, and plugs in with one cord. The next email has your tracking number.",
-    banner="<b style='color:#F3EEE6'>Sorry this is late.</b> The confirmation we should have sent you on September 30 never reached you. Your order has been safe and paid since the minute you bought it, and nothing about it has been delayed.",
+    banner=None,
     item="The Haunted Projector — Two windows", qty=1, line_cents=12999, discount="REAPER20", disc_cents=2000, total=a["o"]["total_cents"], ship_city="Adam Fiorenza<br>2921 Westfield Road<br>Charlotte, NC 28209",
     steps_title="Set up in two minutes", steps=[("Plug it in", "One cord, no screens, no wifi."), ("Point it at the glass", "Any window; the film makes it look like it's inside."), ("Wait for dark", "The ghosts start drifting across.")],
     box=["The projector, with twelve loops built in", "Ground stake mount, adjustable angle", "Window film, for the indoor-glass effect", "16 ft outdoor extension cord", "Remote — loop and timer"], number=1005))

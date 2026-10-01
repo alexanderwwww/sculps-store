@@ -626,7 +626,7 @@ ${rvText("Reply to this email if anything is wrong with it. A person reads it.")
           domain: input.domain, first, reference: ref, handle: input.productHandle ?? null, lines: input.lines,
           subtotalCents: input.subtotalCents, discountCode: input.discountCode, discountCents: input.discountCents,
           shippingCents: input.shippingCents, taxCents: input.taxCents, totalCents: input.totalCents, currency: input.currency,
-          shipName: input.shipName ?? input.customerName, shipLines: input.shipLines ?? (city ? [city] : []), late: input.late, money: formatMoney,
+          shipName: input.shipName ?? input.customerName, shipLines: input.shipLines ?? (city ? [city] : []), money: formatMoney,
         })
       : shell({ ...brandOf(input), heroImageUrl: heroSrc }, body, `Order ${ref} confirmed — ${formatMoney(input.totalCents, input.currency)}`);
 

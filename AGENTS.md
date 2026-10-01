@@ -41,6 +41,9 @@ here.** That single fact explains almost every rule below.
   it works. Say "yes, I'll make it work and show you" or say the one concrete thing that is
   broken. Never "likely", "probably", "unknown until we see it", or a list of scenarios.
   Do the work, fix what breaks, and report the result. (Said angrily about XUGC, 2026-10-01.)
+- **Customer-facing copy is confident, never apologetic.** No "sorry", no "unfortunately", no "we hope", no
+  hedging, in any email, page or message that a customer of his sees. A late or failed email is fixed and
+  sent as if nothing happened. (Said angrily, 2026-10-01.)
 - He swears when he is angry, and he is angry because something does not work. Do not
   take it personally and do not apologise at length — fix it and show him.
 
