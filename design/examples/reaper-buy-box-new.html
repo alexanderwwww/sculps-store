@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Black Reaper buy box</title>
+<style>
+:root{--bg:#0B0B0B;--card:#151515;--line:#2a2a2a;--ink:#fff;--mut:#a3a3a3;--or:#F9A01B;--orink:#140A02;--ok:#7fe0a0}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.box{max-width:430px;margin:0 auto;padding:18px 16px 28px}
+.kick{font-size:12px;font-weight:800;letter-spacing:.16em;color:var(--or)}
+h1{font-size:24px;line-height:1.12;font-weight:900;text-transform:uppercase;margin-top:6px;letter-spacing:.005em}
+.sub{margin-top:6px;font-size:15px;color:var(--mut);font-weight:600}
+.stars{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;color:var(--mut)}.stars b{color:var(--or);letter-spacing:2px}
+.code{margin-top:14px;display:flex;align-items:center;gap:10px;background:#1d1608;border:1px dashed #6b4a12;border-radius:12px;padding:10px 12px;font-size:14px}
+.code b{background:var(--or);color:var(--orink);border-radius:8px;padding:4px 10px;letter-spacing:.1em;font-weight:900}
+.lab{margin:20px 0 12px;font-size:12px;font-weight:800;letter-spacing:.16em;color:var(--mut)}
+.tiers{display:grid;gap:14px}
+.tier{position:relative;display:grid;grid-template-columns:24px 1fr 98px;gap:12px;align-items:center;background:var(--card);border:2px solid #2d2d2d;border-radius:14px;padding:14px 12px 14px 14px;cursor:pointer}
+.tier.on{border-color:var(--or);box-shadow:0 0 0 3px rgba(249,160,27,.25)}
+.dot{width:22px;height:22px;border-radius:50%;border:2px solid #555;display:grid;place-items:center}
+.on .dot{border-color:var(--or)}.on .dot::after{content:"";width:11px;height:11px;border-radius:50%;background:var(--or)}
+.nm{font-size:17px;font-weight:900}
+.pr{margin-top:3px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.pr b{font-size:22px;font-weight:900}.pr s{font-size:15px;color:var(--mut);font-weight:600}
+.pill{display:inline-block;margin-top:6px;background:var(--or);color:var(--orink);border-radius:99px;padding:3px 10px;font-size:12px;font-weight:900}
+.each{margin-left:8px;font-size:13px;color:var(--mut);font-weight:600}
+.line{margin-top:5px;font-size:14px;color:var(--mut);line-height:1.3}
+.pic{width:98px;height:98px;border-radius:10px;background:#fff;overflow:hidden}.pic img{width:100%;height:100%;object-fit:contain;display:block}
+.flag{position:absolute;top:-11px;left:14px;background:#fff;color:#000;font-size:11px;font-weight:900;letter-spacing:.08em;padding:3px 10px;border-radius:99px}
+.stock{margin:18px 2px 14px;display:flex;align-items:center;gap:9px;font-size:14px;color:#cfcfcf}
+.stock i{width:10px;height:10px;border-radius:50%;background:#2ecc71;box-shadow:0 0 0 4px rgba(46,204,113,.2)}.stock b{color:var(--ok)}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:18px 12px;font-size:18px;font-weight:900;font-family:inherit;cursor:pointer}
+.add{background:var(--or);color:var(--orink)}
+.buy{margin-top:10px;background:#000;color:#fff;border:2px solid #3a3a3a}
+.trust{margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.t{border:1px solid var(--line);border-radius:12px;padding:11px 6px;text-align:center;font-size:12px;color:var(--mut);line-height:1.3}.t b{display:block;color:#fff;font-size:13px;margin-bottom:2px}
+</style></head><body>
+<div class="box">
+<div class="kick">BLACK REAPER • PROJECTOR</div>
+<h1>The Haunted Projector</h1>
+<div class="sub">Turn any window into the one everyone talks about</div>
+<div class="code">$20 off is applied for you <b>REAPER20</b></div>
+
+<div class="lab">CHOOSE YOUR BUNDLE</div>
+<div class="tiers" id="tiers">
+ <div class="tier on"><div class="dot"></div><div><div class="nm">One window</div><div class="pr"><b>$79.99</b></div><div class="line">The front window everyone walks past</div></div><div class="pic"><img src="https://kerberos.gardenbuddystore.workers.dev/media/bw-proj1-w640.webp" alt=""></div></div>
+ <div class="tier"><div class="dot"></div><div><div class="nm">Two windows</div><div class="pr"><b>$129.99</b><s>$159.98</s></div><span class="pill">Save $30</span><span class="each">$65.00 each</span></div><div class="pic"><img src="https://kerberos.gardenbuddystore.workers.dev/media/bw-proj2-w640.webp" alt=""></div></div>
+ <div class="tier"><span class="flag">BEST VALUE</span><div class="dot"></div><div><div class="nm">Three windows</div><div class="pr"><b>$179.99</b><s>$239.97</s></div><span class="pill">Save $60</span><span class="each">$60.00 each</span></div><div class="pic"><img src="https://kerberos.gardenbuddystore.workers.dev/media/bw-proj3-w640.webp" alt=""></div></div>
+</div>
+
+<div class="stock"><i></i><span><b>In stock</b> &nbsp;·&nbsp; Arrives 5–7 days after it ships</span></div>
+<button class="btn add">Put a ghost in my window</button>
+<button class="btn buy">Buy now</button>
+<div class="trust"><div class="t"><b>Free US shipping</b>every order</div><div class="t"><b>30 days</b>to send it back</div><div class="t"><b>Tracking</b>on every order</div></div>
+</div>
+<script>
+[].forEach.call(document.querySelectorAll('.tier'),function(t){t.onclick=function(){[].forEach.call(document.querySelectorAll('.tier'),function(x){x.classList.remove('on')});t.classList.add('on')}});
+</script></body></html>
