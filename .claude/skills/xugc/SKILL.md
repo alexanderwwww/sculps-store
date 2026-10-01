@@ -26,5 +26,8 @@ Mac app (remote control + library) → server (Cloudflare Worker + Neon + R2, al
 ## Money, said plainly
 The $10 is a prepaid balance, billed by the second; every video costs a little (roughly 15-50 cents per 5-second clip, $1-3 per finished ad — estimates until measured). Auto top-up off. The app must switch the GPU off the moment a job ends.
 
+## Built (1 Oct 2026) — build 1, DEMO MODE
+`tools/xugc` — Electron, x64 (his Mac is Intel), ad-hoc signed. Create / Library / Train / Settings. Demo engine: bundled sample clip, nothing rented, $0. Money rules live only in `engine.js`: per-video, per-day and per-training caps refuse a job BEFORE it starts; RunPod mode refuses out loud ("not connected yet"). 👍 on a take adds it to the training clips; the first training clip is his own UGC video from the projector page. Tests: `test/engine.test.mjs`, `test/app.test.mjs` (drives the real screens in Chromium under xvfb). Packed with `electron-builder --mac --dir --x64`, then `rcodesign sign`, zipped, put in R2 under an unguessable name. Not built yet: the RunPod engine, real captions (vision model), the training script.
+
 ## Open / needs Alex
 RunPod account + $10 + API key (Read & Write, named `studio`); Marketing Studio screenshots; Which NVIDIA GPU he saw (he mentioned one, not named).
