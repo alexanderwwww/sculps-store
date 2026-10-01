@@ -26,8 +26,8 @@ function renderChips() {
 }
 
 function renderReference() {
-  const r = S.reference; $("#refbody").style.display = r ? "flex" : "none"; $("#refdrop").style.display = r ? "none" : "flex";
-  if (!r) return;
+  const r = S.reference; $("#refbody").style.display = r ? "flex" : "none"; $("#refdrop").style.display = r ? "none" : ($("#refan").style.display === "flex" ? "none" : "flex");
+  if (!r) { if ($("#refan").style.display !== "flex" || $("#refan").classList.contains("done")) $("#refan").style.display = "none"; return; }
   $("#refsheet").src = src(r.sheet) + "?" + r.at;
   $("#refmeta").innerHTML = `<b>${esc(r.name)}</b> · ${r.duration}s · ${r.cuts.length + 1} shots${r.cuts.length ? " (cuts at " + r.cuts.map((c) => c + "s").join(", ") + ")" : ""}`;
   if ($("#refbeats") !== document.activeElement) $("#refbeats").value = r.beats || "";
@@ -190,29 +190,52 @@ window.xugc.onDone(async (r) => {
 /* ---- the reference ad: frames, cuts, a contact sheet ---- */
 const once = (el, ev) => new Promise((res, rej) => { el.addEventListener(ev, res, { once: true }); el.addEventListener("error", () => rej(new Error("The video could not be read.")), { once: true }); });
 const seek = (v, t) => new Promise((res) => { const done = () => { v.removeEventListener("seeked", done); res(); }; v.addEventListener("seeked", done); setTimeout(done, 2500); v.currentTime = t; });
-async function analyzeVideo(name, bytes) {
+async function analyzeVideo(name, bytes, on = () => {}) {
   const url = URL.createObjectURL(new Blob([bytes], { type: "video/mp4" })); const v = document.createElement("video"); v.muted = true; v.preload = "auto"; v.src = url;
   try {
+    on({ phase: "read", text: "Opening the video" });
     await Promise.race([once(v, "loadedmetadata"), new Promise((_, rej) => setTimeout(() => rej(new Error("The video could not be read.")), 8000))]); const dur = v.duration; if (!(dur > 0.5)) throw new Error("That video is too short.");
-    const n = Math.min(30, Math.max(6, Math.ceil(dur * 2))), tw = 24, th = 42, small = document.createElement("canvas"); small.width = tw; small.height = th; const sg = small.getContext("2d", { willReadFrequently: true });
+    on({ phase: "read", text: `${dur.toFixed(1)} seconds, ${v.videoWidth}x${v.videoHeight}` });
+    const n = Math.min(36, Math.max(8, Math.ceil(dur * 2.5))), tw = 24, th = 42, small = document.createElement("canvas"); small.width = tw; small.height = th; const sg = small.getContext("2d", { willReadFrequently: true });
     const sw = 120, sh = Math.round(120 * (v.videoHeight / v.videoWidth)) || 213, cols = 6, rows = Math.ceil(n / cols), sheet = document.createElement("canvas"); sheet.width = cols * sw; sheet.height = rows * sh; const g2 = sheet.getContext("2d"); g2.fillStyle = "#000"; g2.fillRect(0, 0, sheet.width, sheet.height);
-    let prev = null; const cuts = [];
+    let prev = null, motion = 0, bright = 0; const cuts = [], diffs = [];
     for (let i = 0; i < n; i++) {
       const t = Math.min(dur - 0.05, (i + 0.5) * (dur / n)); await seek(v, t);
       g2.drawImage(v, (i % cols) * sw, Math.floor(i / cols) * sh, sw, sh); g2.fillStyle = "rgba(0,0,0,.6)"; g2.fillRect((i % cols) * sw, Math.floor(i / cols) * sh, 34, 14); g2.fillStyle = "#D7FF1F"; g2.font = "bold 10px monospace"; g2.fillText(t.toFixed(1) + "s", (i % cols) * sw + 3, Math.floor(i / cols) * sh + 11);
-      sg.drawImage(v, 0, 0, tw, th); const d = sg.getImageData(0, 0, tw, th).data; const px = [];
-      for (let k = 0; k < d.length; k += 4) px.push((d[k] + d[k + 1] + d[k + 2]) / 3);
-      if (prev) { let s = 0; for (let k = 0; k < px.length; k++) s += Math.abs(px[k] - prev[k]); if (s / px.length > 38) cuts.push(Math.round(t * 10) / 10); }
+      sg.drawImage(v, 0, 0, tw, th); const d = sg.getImageData(0, 0, tw, th).data; const px = []; let lum = 0;
+      for (let k = 0; k < d.length; k += 4) { const y = (d[k] + d[k + 1] + d[k + 2]) / 3; px.push(y); lum += y; }
+      bright += lum / px.length; let isCut = false, df = 0;
+      if (prev) { let s = 0; for (let k = 0; k < px.length; k++) s += Math.abs(px[k] - prev[k]); df = s / px.length; diffs.push(df); if (df > 38) { cuts.push(Math.round(t * 10) / 10); isCut = true; } else motion += df; }
       prev = px;
+      const th2 = document.createElement("canvas"); th2.width = 40; th2.height = 70; th2.getContext("2d").drawImage(v, 0, 0, 40, 70);
+      on({ phase: "frame", i: i + 1, n, t, thumb: th2, cut: isCut, text: isCut ? `cut at ${t.toFixed(1)}s` : `frame ${i + 1}/${n} at ${t.toFixed(1)}s` });
     }
-    const bounds = [0, ...cuts, Math.round(dur * 10) / 10], beats = bounds.slice(0, -1).map((b, i) => `${b}-${bounds[i + 1]}s: (shot ${i + 1}: describe what happens)`).join("\n");
-    return { name, duration: dur, cuts, sheet: sheet.toDataURL("image/jpeg", 0.82), beats };
+    const calm = diffs.filter((d) => d <= 38); const motionAvg = calm.length ? motion / calm.length : 0; const lightAvg = bright / n;
+    const bounds = [0, ...cuts, Math.round(dur * 10) / 10], shots = bounds.length - 1;
+    const stats = { duration: Math.round(dur * 10) / 10, shots, avgShot: Math.round((dur / shots) * 10) / 10, motion: motionAvg > 9 ? "lots of movement" : motionAvg > 4 ? "moderate movement" : "steady", light: lightAvg < 70 ? "night / dark" : lightAvg < 130 ? "dusk / dim" : "bright" };
+    const beats = bounds.slice(0, -1).map((b, k) => `${b}-${bounds[k + 1]}s: (shot ${k + 1}: describe what happens)`).join("\n");
+    on({ phase: "done", text: "Building the contact sheet" });
+    return { name, duration: dur, cuts, sheet: sheet.toDataURL("image/jpeg", 0.82), beats, stats };
   } finally { URL.revokeObjectURL(url); }
 }
+let lastStats = null;
+function showStats(st) { $("#refan-stats").innerHTML = `<span>Length <b>${st.duration}s</b></span><span>Shots <b>${st.shots}</b></span><span>Average shot <b>${st.avgShot}s</b></span><span>Camera <b>${esc(st.motion)}</b></span><span>Light <b>${esc(st.light)}</b></span>`; }
 async function loadReference(f) {
   showErr($("#referr"), ""); if (!f) return; if (f.error) return showErr($("#referr"), f.error);
-  try { $("#refdrop").firstElementChild.textContent = "Reading the video…"; const r = await analyzeVideo(f.name, f.bytes); const out = await window.xugc.refSave(r); if (out.error) throw new Error(out.error); await refresh(out); }
-  catch (e) { showErr($("#referr"), e.message); } finally { $("#refdrop").firstElementChild.textContent = "Drop a video here"; }
+  const an = $("#refan"), strip = $("#refan-strip"); an.classList.remove("done"); an.style.display = "flex"; $("#refdrop").style.display = "none"; $("#refbody").style.display = "none"; strip.innerHTML = ""; $("#refan-stats").innerHTML = ""; $("#refan-title").textContent = "ANALYZING"; $("#refan-pct").textContent = "0%"; $("#refan-bar").style.width = "0%"; $("#refan-log").innerHTML = "";
+  const log = []; const say2 = (t) => { log.push(t); $("#refan-log").innerHTML = log.slice(-2).map((x, k, arr) => (k === arr.length - 1 ? "<b>> " : "> ") + esc(x) + (k === arr.length - 1 ? "</b>" : "")).join("<br>"); };
+  try {
+    const t0 = Date.now();
+    const r = await analyzeVideo(f.name, f.bytes, (p) => {
+      if (p.phase === "frame") { p.thumb.className = p.cut ? "cut" : ""; strip.appendChild(p.thumb); strip.scrollLeft = strip.scrollWidth; const pc = Math.round((p.i / p.n) * 92); $("#refan-bar").style.width = pc + "%"; $("#refan-pct").textContent = pc + "%"; }
+      say2(p.text);
+    });
+    const wait = Math.max(0, 2200 - (Date.now() - t0)); if (wait) await new Promise((res) => setTimeout(res, wait)); // a clip that analyses instantly still shows its work
+    $("#refan-title").textContent = "READING THE SHOTS"; $("#refan-bar").style.width = "97%"; $("#refan-pct").textContent = "97%";
+    const out = await window.xugc.refSave(r); if (out.error) throw new Error(out.error);
+    $("#refan-bar").style.width = "100%"; $("#refan-pct").textContent = "100%"; $("#refan-title").textContent = "ANALYSIS COMPLETE"; an.classList.add("done"); showStats(r.stats); lastStats = r.stats; say2(`${r.stats.shots} shot${r.stats.shots === 1 ? "" : "s"} found. Describe them below, or ask Claude to.`);
+    await refresh(out);
+  } catch (e) { an.style.display = "none"; $("#refdrop").style.display = "flex"; showErr($("#referr"), e.message); }
 }
 window.__loadReference = loadReference;
 $("#refpick").onclick = async () => loadReference(await window.xugc.refPick());
@@ -221,7 +244,7 @@ rd.ondragover = (e) => { e.preventDefault(); rd.classList.add("over"); }; rd.ond
 rd.ondrop = async (e) => { e.preventDefault(); rd.classList.remove("over"); const f = e.dataTransfer.files[0]; if (f) loadReference(await window.xugc.refFromPath(window.xugc.pathFor(f))); };
 $("#refbeats").onchange = (e) => window.xugc.refUpdate({ beats: e.target.value }).then(refresh);
 $("#refrange").oninput = (e) => window.xugc.refUpdate({ level: Number(e.target.value) }).then(refresh);
-$("#refclear").onclick = () => window.xugc.refClear().then(refresh);
+$("#refclear").onclick = () => window.xugc.refClear().then((r) => { $("#refan").style.display = "none"; return refresh(r); });
 
 /* ---- events ---- */
 $$("#nav button").forEach((b) => (b.onclick = () => setView(b.dataset.view)));

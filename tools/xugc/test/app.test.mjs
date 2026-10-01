@@ -20,7 +20,7 @@ const { app, BrowserWindow } = require("electron");
 const path = require("node:path"); const fs = require("node:fs"); const http = require("node:http");
 process.env.XUGC_NO_AUTOSTART = "1";
 const { setup } = require(${JSON.stringify(join(here, "main.js"))});
-const out = []; const say = (ok, what, extra) => out.push({ ok, what, extra: extra ?? null });
+const out = []; const say = (ok, what, extra) => { out.push({ ok, what, extra: extra ?? null }); fs.appendFileSync("/tmp/steps.log", (ok ? "ok   " : "FAIL ") + what + "\\n"); };
 const log = [];
 class FakeRunPod {
   constructor(o) { this.o = o; }
@@ -107,8 +107,14 @@ app.whenReady().then(async () => {
     // Reference ad
     say(await run("document.querySelector('#refdrop').style.display") !== "none" && await run("document.querySelector('#refbody').style.display") === "none", "the Reference ad box is there, empty, with a Choose button");
     run("window.xugc.refFromPath(" + JSON.stringify(${JSON.stringify(fixture)}) + ").then((f) => window.__loadReference(f)); 1");
+    say(await until("document.querySelector('#refan').style.display === 'flex' && document.querySelector('#refan-title').textContent === 'ANALYZING'", 5000), "the reference box shows the analysis working: ANALYZING");
+    say(await until("document.querySelectorAll('#refan-strip canvas').length >= 4 && parseInt(document.querySelector('#refan-pct').textContent) > 0", 10000), "frames appear live in a strip with a rising percentage", await run("document.querySelector('#refan-pct').textContent + ' ' + document.querySelectorAll('#refan-strip canvas').length + ' frames'"));
+    await shot("9-analyzing");
+    say(await until("document.querySelector('#refan-title').textContent === 'ANALYSIS COMPLETE' && document.querySelector('#refan').classList.contains('done')", 20000), "after a few seconds it marks ANALYSIS COMPLETE");
+    say((await run("document.querySelector('#refan-stats').textContent")).includes("Shots") && (await run("document.querySelector('#refan-stats').textContent")).includes("Camera"), "the result lists length, shots, average shot, camera and light", await run("document.querySelector('#refan-stats').textContent"));
+    await shot("9b-complete");
     say(await until("document.querySelector('#refbody').style.display === 'flex' && document.querySelector('#refsheet').complete && document.querySelector('#refsheet').naturalWidth > 300", 15000), "dropping a video reads its frames into a contact sheet", await run("document.querySelector('#refmeta').textContent"));
-    say(/\d+-\d+(\.\d+)?s: \(shot 1/.test(await run("document.querySelector('#refbeats').value")), "the shots are listed with timings, ready to be described");
+    say(/[0-9]+-[0-9.]+s: [(]shot 1/.test(await run("document.querySelector('#refbeats').value")), "the shots are listed with timings, ready to be described");
     await run("(function(){const i=document.querySelector('#refbeats'); i.value='0-1s: a man kneels beside a flat black heap and starts a blower. 1-2s: it rises and he steps back.'; i.dispatchEvent(new Event('change'))})()");
     await until("document.querySelector('#refhelp').textContent.length > 0");
     await run("(function(){const r=document.querySelector('#refrange'); r.value='3'; r.dispatchEvent(new Event('input'))})()");
@@ -258,7 +264,7 @@ app.whenReady().then(async () => {
   app.exit(0);
 });
 `;
-await writeFile(join(home, "probe.cjs"), probe);
+await writeFile(join(home, "probe.cjs"), probe); await writeFile("/tmp/probe-last.cjs", probe);
 const electron = join(here, "node_modules", ".bin", "electron");
 const child = spawn("xvfb-run", ["-a", "-s", "-screen 0 1400x900x24", electron, "--no-sandbox", "--disable-gpu", "--autoplay-policy=no-user-gesture-required", "--user-data-dir=" + join(home, "ud"), join(home, "probe.cjs")], { stdio: ["ignore", "pipe", "pipe"] });
 let stdout = "", stderr = "";

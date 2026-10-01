@@ -85,6 +85,13 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
 .dnote{display:none;gap:8px;max-width:420px}.dnote.on{display:flex}
 .fullp{display:none}.fullp.on{display:block}.fullp textarea{height:180px;font:11.5px/1.5 ui-monospace,Menlo,monospace;background:#07080b}
 .drop{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border-radius:14px;border:1.5px dashed rgba(255,255,255,.25);background:var(--glass);font-size:13px;color:#cfd2d6}.drop.over{border-color:var(--neon);background:rgba(215,255,31,.08)}
+.an{border:1px solid rgba(215,255,31,.4);border-radius:14px;padding:12px;background:linear-gradient(180deg,rgba(215,255,31,.07),transparent);display:flex;flex-direction:column;gap:9px}
+.anh{display:flex;align-items:center;gap:9px;font:800 12px ui-monospace,Menlo,monospace;letter-spacing:.08em;color:var(--neon)}.anh span{margin-left:auto;color:#cfd2d6}.anh .spin{width:12px;height:12px;border-radius:50%;border:2px solid rgba(215,255,31,.25);border-top-color:var(--neon);animation:sp .7s linear infinite}.an.done .spin{animation:none;border-color:var(--neon);background:var(--neon)}
+@keyframes sp{to{transform:rotate(360deg)}}
+.anbar{height:4px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden}.anbar i{display:block;height:100%;width:0;background:var(--neon);box-shadow:0 0 12px var(--neon);transition:width .15s}
+.anstrip{display:flex;gap:3px;overflow:hidden;position:relative;height:62px}.anstrip canvas{height:62px;width:auto;border-radius:4px;flex:none;border:1px solid rgba(255,255,255,.14)}.anstrip canvas.cut{border-color:#ff5a4f;box-shadow:0 0 0 1px #ff5a4f}
+.anlog{font:11px/1.55 ui-monospace,Menlo,monospace;color:#9aa0a6;min-height:34px}.anlog b{color:var(--neon);font-weight:600}
+.anstats{display:flex;gap:6px;flex-wrap:wrap}.anstats span{padding:4px 9px;border-radius:99px;background:var(--glass);border:1px solid var(--line);font-size:11.5px;font-weight:700}.anstats span b{color:var(--neon)}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 </style></head><body>
 <div class="modal" id="approve"><div class="mbox"><h2><img src="../assets/icon.png" alt=""><span id="ap-title">Claude wants to make a video</span></h2><div class="mrow" id="ap-meta"></div><div class="lab" style="margin:6px 0"><span>THE FINAL PROMPT <i>you can edit it before it runs</i></span></div><textarea id="ap-prompt"></textarea><div class="mbtn"><button class="go" id="ap-yes">Approve and render <span id="ap-cost"></span></button><button class="go ghost" id="ap-no" style="flex:0 0 130px;justify-content:center">No</button></div></div></div>
@@ -104,6 +111,7 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
     <div class="photos" id="pphotos"></div><div class="found" id="pfound">No product yet. The scene alone will do, but a product makes it specific.</div><div class="err" id="perr"></div></div>
    <div class="sec"><div class="lab">REFERENCE AD <i>A clip that went a little viral. Optional</i></div>
     <div class="drop" id="refdrop"><span>Drop a video here</span><button class="btn" id="refpick">Choose a video</button></div><div class="err" id="referr"></div>
+    <div class="an" id="refan" style="display:none"><div class="anh"><i class="spin"></i><b id="refan-title">ANALYZING</b><span id="refan-pct">0%</span></div><div class="anbar"><i id="refan-bar"></i></div><div class="anstrip" id="refan-strip"></div><div class="anlog" id="refan-log"></div><div class="anstats" id="refan-stats"></div></div>
     <div id="refbody" style="display:none;flex-direction:column;gap:8px"><img id="refsheet" alt="" style="width:100%;border-radius:10px;border:1px solid var(--line)"><div class="found" id="refmeta"></div>
      <textarea id="refbeats" style="height:96px" placeholder="What happens in each shot, with timings. Claude can write this for you after looking at the frames."></textarea>
      <div class="lab"><span>HOW CLOSE TO COPY</span><i id="reflvl"></i></div><input type="range" id="refrange" min="0" max="3" step="1" style="padding:0">
