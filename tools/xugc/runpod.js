@@ -21,7 +21,7 @@ const IMAGE = "runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04";
 // 80 GB cards: LTX-2.5 is a 22B model plus a 12B text encoder (66 GB of files).
 const GPUS = ["NVIDIA H100 PCIe", "NVIDIA H100 80GB HBM3", "NVIDIA A100 80GB PCIe", "NVIDIA A100-SXM4-80GB"];
 // What we ASSUME the dearest allowed GPU costs per hour. Used to size the deadline and the estimate.
-const WORST_HOURLY = 3.5;
+const WORST_HOURLY = 4.0;
 const CHUNK = 48 * 1024 * 1024;
 
 class RunPodError extends Error { constructor(msg, code) { super(msg); this.code = code || "runpod"; } }

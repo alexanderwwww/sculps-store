@@ -17,15 +17,18 @@ command -v ffmpeg >/dev/null || (apt-get update -qq && apt-get install -y -qq ff
 pip install -q uv "huggingface_hub[cli,hf_transfer]"
 [ -d LTX-2 ] || git clone --depth 1 https://github.com/Lightricks/LTX-2.git
 (cd LTX-2 && uv sync)
+(cd LTX-2 && uv run python -m ltx_pipelines.distilled --help > "$OUT/help.txt" 2>&1 || true)
+nvidia-smi > "$OUT/gpu.txt" 2>&1 || true
+df -h /workspace >> "$OUT/gpu.txt" 2>&1 || true
+if [ "${PROBE:-0}" = "1" ]; then echo "== $(date -u +%T) probe finished (no model downloaded, no video made)"; exit 0; fi
+SIZE=""; grep -q -- "--height" "$OUT/help.txt" && SIZE="--height $HEIGHT --width $WIDTH"
 FILES="diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors vae/ltx-2.5-video-vae-bf16.safetensors vae/ltx-2.5-audio-vae-bf16.safetensors latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors"
 if [ ! -f "$M/.complete" ]; then
   echo "== $(date -u +%T) downloading the model (66 GB, once)"
   HF_HUB_ENABLE_HF_TRANSFER=1 HF_TOKEN="$HF_TOKEN" hf download Lightricks/LTX-2.5 $FILES --local-dir "$M"
   touch "$M/.complete"
 fi
-cd LTX-2
-uv run python -m ltx_pipelines.distilled --help > "$OUT/help.txt" 2>&1 || true
-SIZE=""; grep -q -- "--height" "$OUT/help.txt" && SIZE="--height $HEIGHT --width $WIDTH"
+cd /workspace/LTX-2
 run() {
   uv run python -m ltx_pipelines.distilled \
     --transformer-path "$M/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors" \

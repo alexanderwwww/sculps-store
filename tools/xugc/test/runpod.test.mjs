@@ -82,7 +82,7 @@ const dest = () => mkdtempSync(join(tmpdir(), "xugc-out-"));
   const c = w.log[0].create;
   ok(c.dockerStartCmd.join(" ").includes("base64 -d") && c.env.AGENT_B64.length > 1000 && c.ports[0] === "8000/http", "the pod boots the agent from its start command");
   ok(!JSON.stringify(w.log).includes("KEY-123"), "the RunPod key never goes onto the pod");
-  ok(Number(c.env.MAX_MINUTES) === 51, "deadline comes from the money cap: $3 at $3.50/hour worst case = 51 min", c.env.MAX_MINUTES);
+  ok(Number(c.env.MAX_MINUTES) === 45, "deadline comes from the money cap: $3 at $4.00/hour worst case = 45 min", c.env.MAX_MINUTES);
 }
 // 2. a failing job still deletes the pod and shows the reason
 {

@@ -9,7 +9,7 @@
  *   - One GPU job at a time.
  *   - Whatever a job cost, even a failed one, is added to today's spending.
  *
- * Estimates assume the dearest GPU RunPod could give us, so they are a ceiling, not a hope.
+ * Estimates assume the dearest GPU RunPod could give us ($4.00 an hour; a real H100 came at $3.49), so they are a ceiling, not a hope.
  * The render minutes below are GUESSES until the first real run measures them.
  */
 const fs = require("node:fs");
