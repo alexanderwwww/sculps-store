@@ -77,9 +77,19 @@ class RunPod {
 
   agentFetch(podId, token) {
     const base = this.agentUrl(podId);
+    // RunPod's proxy answers 404/502/503/504 (or drops the connection) while a pod is still settling, even
+    // after it has answered once. Those mean "not delivered", so asking again is safe.
     return async (method, p, { body, headers, json } = {}) => {
-      const r = await this.fetch(base + p, { method, headers: { "X-Token": token, ...(json ? { "Content-Type": "application/json" } : {}), ...(headers || {}) }, body: json ? JSON.stringify(json) : body });
-      return r;
+      let last;
+      for (let i = 0; i < 8; i++) {
+        try {
+          const r = await this.fetch(base + p, { method, headers: { "X-Token": token, ...(json ? { "Content-Type": "application/json" } : {}), ...(headers || {}) }, body: json ? JSON.stringify(json) : body });
+          if (![404, 502, 503, 504].includes(r.status) || p === "/status") return r;
+          last = r;
+        } catch (e) { last = null; if (i === 7) throw e; }
+        await this.sleep(Math.min(this.pollMs, 3000));
+      }
+      return last;
     };
   }
 

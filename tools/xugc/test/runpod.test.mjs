@@ -84,6 +84,14 @@ const dest = () => mkdtempSync(join(tmpdir(), "xugc-out-"));
   ok(!JSON.stringify(w.log).includes("KEY-123"), "the RunPod key never goes onto the pod");
   ok(Number(c.env.MAX_MINUTES) === 45, "deadline comes from the money cap: $3 at $4.00/hour worst case = 45 min", c.env.MAX_MINUTES);
 }
+// 1b. the proxy answers 404/502 for a moment after the pod is up: the job must still go through
+{
+  const w = world(); let flaky = 0; const orig = w.f;
+  w.f = async (url, init = {}) => { if (String(url).includes("/in/") || String(url).includes("/run")) { if (flaky++ < 3) return new Response("not ready", { status: flaky % 2 ? 404 : 502 }); } return orig(url, init); };
+  const rp = mk(w); const d = dest();
+  const r = await rp.run({ label: "gen", script: "generate.sh", inputs: { "first.png": png }, env: { PROMPT: "p" }, outputs: ["clip.mp4"], required: ["clip.mp4"], destDir: d, capUsd: 3 });
+  ok(r.saved.includes("clip.mp4") && flaky > 3, "a 404/502 from the proxy while the pod settles is retried, not fatal", `${flaky} calls`);
+}
 // 2. a failing job still deletes the pod and shows the reason
 {
   const w = world(); const rp = mk(w); let err = null;
