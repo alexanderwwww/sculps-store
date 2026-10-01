@@ -177,7 +177,7 @@ class RunPod {
       if (!up) throw new RunPodError("The GPU never came up. It was handed back.", "boot");
 
       note("Sending your files", 10);
-      const scripts = [job.script];
+      const scripts = [job.script, ...(job.extraScripts || [])];
       for (const f of scripts) await this.put(af, f, fs.readFileSync(path.join(this.scriptsDir, f)));
       for (const [name, src] of Object.entries(job.inputs || {})) { check(); await this.put(af, name, Buffer.isBuffer(src) ? src : fs.readFileSync(src)); }
 

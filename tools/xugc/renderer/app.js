@@ -2,7 +2,7 @@
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 let S = null, META = null;
-const ui = { refs: null, view: "create", look: "Demo", secs: 15, qual: "hd", avmode: "broad", avatar: "maya", current: null, busy: false, t0: 0, timer: null, est: null, edit: null };
+const ui = { music: "soft", fullEdited: false, rendering: false, refs: null, view: "create", look: "Demo", secs: 15, qual: "hd", avmode: "broad", avatar: "maya", current: null, busy: false, t0: 0, timer: null, est: null, edit: null };
 
 const src = (p) => (!p ? "" : "file://" + encodeURI(p));
 const money = (n) => "$" + Number(n).toFixed(2);
@@ -42,6 +42,7 @@ function renderCreate() {
   seg($("#avpick"), META.avatars.filter((a) => a !== "broad").map((a) => [a, a[0].toUpperCase() + a.slice(1)]), ui.avatar, (k) => { ui.avatar = k; renderCreate(); });
   $("#avnote").textContent = ui.avmode === "broad" ? "Broad = the scene picks an ordinary, real-looking person." : ui.avmode === "pick" ? "A ready-made description of that person goes into the prompt." : "Describe the person in your own words.";
   seg($("#looks"), META.looks.map((l) => [l, l]), ui.look, (k) => { ui.look = k; renderCreate(); });
+  seg($("#musics"), [["none", "None"], ["soft", "Soft beat"], ["drop", "Beat drop"]], ui.music, (k) => { ui.music = k; renderCreate(); });
   seg($("#secs"), META.seconds.map((s) => [s, s + "s"]), ui.secs, (k) => { ui.secs = Number(k); refresh(); });
   seg($("#quals"), Object.entries(META.qualities), ui.qual, (k) => { ui.qual = k; refresh(); });
   const on = META.style.filter((f) => f.on);
@@ -95,6 +96,7 @@ function renderTrain() {
 
 function renderMcp() {
   const m = META.mcp;
+  $("#ap-on").classList.toggle("on", !S.settings.autoApprove); $("#ap-off").classList.toggle("on", !!S.settings.autoApprove);
   $("#mcp-on").classList.toggle("on", m.on); $("#mcp-off").classList.toggle("on", !m.on);
   $("#mcpstate").innerHTML = !m.on ? `<span class="dot"></span>Off. Claude cannot do anything.` : m.connected ? `<span class="dot on"></span>Connected to the XUGC line · Claude last called ${ago(m.claudeSeen)}` : `<span class="dot"></span>Not reachable right now (offline?). It retries by itself.`;
   $("#mcpurl").textContent = m.url;
@@ -143,11 +145,37 @@ function hud(line) {
   $("#hud").innerHTML = hudLines.map((l, i) => `<div class="${i < hudLines.length - 2 ? "d" : ""}${i === hudLines.length - 1 ? " cur" : ""}">${esc("> " + l)}</div>`).join("");
 }
 function progress(p) {
+  if (!ui.rendering) beginRender(); railSet(railFor(p.stage));
   $("#hp").textContent = Math.round(p.pct) + "%"; $("#hb").style.width = p.pct + "%";
   $("#hc").textContent = money(p.costUsd || 0) + " SO FAR"; $("#hs").textContent = String(p.stage || "").toUpperCase().slice(0, 28);
   hud(p.stage); if (p.log) hud(String(p.log).slice(0, 90));
 }
 window.xugc.onJob(progress);
+
+/* ---- Claude working in the app, live ---- */
+function typeInto(el, text, done) { el.value = ""; let i = 0; const t = setInterval(() => { el.value = text.slice(0, ++i); if (i >= text.length) { clearInterval(t); done && done(); } }, 22); }
+let cbT = 0;
+window.xugc.onClaude((e) => {
+  const bar = $("#cbar"); clearTimeout(cbT);
+  if (e.kind === "start") { setView("create"); bar.classList.add("on"); $("#cbtext").textContent = "CLAUDE · setting up a video"; }
+  if (e.kind === "product") { setView("create"); bar.classList.add("on"); $("#cbtext").textContent = "CLAUDE · reading the product page"; typeInto($("#purl"), e.url); }
+  if (e.kind === "refresh") { $("#purl").value = ""; $("#cbtext").textContent = "CLAUDE · product saved with all its photos"; refresh(); }
+  if (e.kind === "approve") {
+    bar.classList.add("on"); $("#cbtext").textContent = "CLAUDE · waiting for your OK"; $("#ap-title").textContent = (e.who || "Claude") + " wants to make a video";
+    $("#ap-meta").innerHTML = `<span>Product <b>${esc(e.product || "none")}</b></span><span>Length <b>${e.seconds}s</b></span><span>Quality <b>${esc(e.quality)}</b></span><span>Reference photos <b>${e.refs}</b></span><span>Prompt <b>${e.chars} chars</b></span>${(e.captions || []).map((c) => `<span>Caption <b>${esc(c)}</b></span>`).join("")}`;
+    $("#ap-prompt").value = e.prompt; $("#ap-cost").textContent = `up to ${money(e.usd)} · ~${e.minutes} min`; $("#approve").classList.add("on");
+  }
+  if (e.kind === "go") { $("#cbtext").textContent = "CLAUDE · rendering"; }
+  if (e.kind === "end") { $("#cbtext").textContent = "CLAUDE · " + e.text; cbT = setTimeout(() => bar.classList.remove("on"), 3500); }
+});
+const decide = (ok) => { const t = $("#ap-prompt").value; $("#approve").classList.remove("on"); window.xugc.decide(ok, ok ? t : null); };
+$("#ap-yes").onclick = () => decide(true); $("#ap-no").onclick = () => decide(false);
+window.xugc.onDone(async (r) => {
+  if (ui.busy) return; // a video he started himself is finished by its own button
+  endRender(); await refresh();
+  if (r.error) { showErr($("#err"), r.error + (r.costUsd ? ` (This attempt cost ${money(r.costUsd)}.)` : "")); return; }
+  ui.current = r.take.id; showTake(r.take);
+});
 
 /* ---- events ---- */
 $$("#nav button").forEach((b) => (b.onclick = () => setView(b.dataset.view)));
@@ -158,20 +186,37 @@ $("#pfetch").onclick = async () => {
 };
 $("#purl").onkeydown = (e) => { if (e.key === "Enter") $("#pfetch").click(); };
 
+const rails = ["Product", "Prompt", "GPU", "Model", "Render", "Sound", "Done"];
+function railSet(i) { $("#rail").innerHTML = rails.map((r, k) => `<div class="${k < i ? "done" : k === i ? "act" : ""}">${r.toUpperCase()}</div>`).join(""); }
+function railFor(stage) { const s = String(stage || "").toLowerCase(); return /renting|boot|sending/.test(s) ? 2 : /install|download/.test(s) ? 3 : /making/.test(s) ? 4 : /finish|bringing|handed/.test(s) ? 5 : 2; }
+function beginRender(who) {
+  if (ui.rendering) return; ui.rendering = true; ui.t0 = Date.now(); startFx(); railSet(2);
+  $("#hs").textContent = "STARTING"; $("#ht").textContent = "0:00"; $("#hp").textContent = "0%"; $("#hb").style.width = "2%"; $("#hc").textContent = "$0.00 SO FAR"; $("#ptag").style.display = "none";
+  clearInterval(ui.timer); ui.timer = setInterval(() => { $("#ht").textContent = clock(Date.now() - ui.t0); }, 500); renderCreate();
+}
+function endRender() { ui.rendering = false; clearInterval(ui.timer); $("#ptag").style.display = "block"; stopFx(); }
+const specNow = () => ({ scene: $("#script").value.trim(), look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: ui.secs, quality: ui.qual, music: ui.music, refs: ui.refs && ui.refs.length ? ui.refs : undefined });
+$("#showp").onclick = async () => {
+  const f = $("#fullp"); if (f.classList.contains("on")) { f.classList.remove("on"); $("#showp").textContent = "Show the full prompt"; return; }
+  const r = await window.xugc.preview(specNow()); $("#fulltext").value = r.prompt || r.error || ""; ui.fullEdited = false; f.classList.add("on"); $("#showp").textContent = "Hide the full prompt";
+  $("#fullnote").textContent = `${($("#fulltext").value || "").length} characters. Edit it and it is used exactly as written.`;
+};
+$("#fulltext").oninput = () => { ui.fullEdited = true; };
 $("#go").onclick = async () => {
   if (ui.busy) return; showErr($("#err"), "");
   const scene = $("#script").value.trim();
   if (scene.length < 10) return showErr($("#err"), "Write what happens in the video (a sentence or two).");
-  ui.busy = true; ui.t0 = Date.now(); startFx(); $("#hs").textContent = "STARTING"; $("#ht").textContent = "0:00"; $("#hp").textContent = "0%"; $("#hb").style.width = "2%"; $("#hc").textContent = "$0.00 SO FAR"; $("#ptag").style.display = "none";
-  clearInterval(ui.timer); ui.timer = setInterval(() => { $("#ht").textContent = clock(Date.now() - ui.t0); }, 500); renderCreate();
-  const r = await window.xugc.generate({ scene, look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: ui.secs, quality: ui.qual, refs: ui.refs && ui.refs.length ? ui.refs : undefined });
-  ui.busy = false; clearInterval(ui.timer); $("#ptag").style.display = "block"; stopFx();
+  ui.busy = true; beginRender();
+  const spec = specNow(); if (ui.fullEdited && $("#fullp").classList.contains("on")) spec.prompt = $("#fulltext").value;
+  const r = await window.xugc.generate(spec);
+  ui.busy = false; endRender();
   if (r.error) { await refresh(r); showErr($("#err"), r.error + (r.costUsd ? ` (This attempt cost ${money(r.costUsd)}.)` : "")); return; }
   ui.current = r.take.id; await refresh(r); showTake(r.take);
 };
 $("#stop").onclick = () => window.xugc.cancel();
 $("#vup").onclick = async () => { if (!ui.current) return; await window.xugc.verdict(ui.current, "up").then(refresh); const t = S.takes.find((x) => x.id === ui.current); if (t) showTake(t); };
-$("#vdown").onclick = async () => { if (!ui.current) return; await window.xugc.verdict(ui.current, "down").then(refresh); const t = S.takes.find((x) => x.id === ui.current); if (t) showTake(t); };
+$("#vdown").onclick = async () => { if (!ui.current) return; await window.xugc.verdict(ui.current, "down").then(refresh); const t = S.takes.find((x) => x.id === ui.current); if (t) showTake(t); $("#dnote").classList.toggle("on", !!(t && t.verdict === "down")); if (t && t.verdict === "down") $("#dnotein").focus(); };
+$("#dnotego").onclick = async () => { const n = $("#dnotein").value.trim(); if (!n || !ui.current) return; await window.xugc.verdict(ui.current, "down", n); await window.xugc.verdict(ui.current, "down"); $("#dnotein").value = ""; $("#dnote").classList.remove("on"); await refresh(); };
 $("#addclips").onclick = () => window.xugc.addClips().then(refresh);
 $("#styleadd").onclick = () => window.xugc.styleAdd().then(refresh);
 $("#stylenew").onclick = () => { ui.edit = "new-file.md"; $("#edwrap").style.display = "block"; $("#edname").textContent = "new-file.md (rename it by changing the first line)"; $("#editor").value = "# my-style.md\nWhat this file is for.\n\n## Prompt\n- \n\n## Never\n- \n"; renderTrain(); };
@@ -184,6 +229,8 @@ $("#edsave").onclick = async () => {
 };
 $("#eddel").onclick = async () => { if (!ui.edit) return; await window.xugc.styleDelete(ui.edit).then(refresh); ui.edit = null; $("#edwrap").style.display = "none"; };
 
+$("#ap-on").onclick = () => window.xugc.setSettings({ autoApprove: false }).then(refresh);
+$("#ap-off").onclick = () => window.xugc.setSettings({ autoApprove: true }).then(refresh);
 $("#mcp-on").onclick = () => window.xugc.setSettings({ mcpOn: true }).then(refresh);
 $("#mcp-off").onclick = () => window.xugc.setSettings({ mcpOn: false }).then(refresh);
 $("#mcpcopy").onclick = async () => { await window.xugc.copy(META.mcp.url); $("#mcpcopy").textContent = "Copied"; setTimeout(() => ($("#mcpcopy").textContent = "Copy URL"), 1500); };

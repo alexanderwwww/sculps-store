@@ -10,11 +10,11 @@ const fs = require("node:fs");
 const { Store } = require("./store.js");
 const { Secrets } = require("./secrets.js");
 const { Engine, estimateGenerate, today } = require("./engine.js");
-const { Style, compose, LOOKS, AVATARS, QUALITY, SECONDS, NAME } = require("./compose.js");
+const { Style, compose, parseCaption, LOOKS, AVATARS, QUALITY, SECONDS, NAME } = require("./compose.js");
 const { fetchProduct } = require("./product.js");
 const { Bridge } = require("./bridge.js");
 
-const BUILD = 4;
+const BUILD = 5;
 const LATEST_NOTE = "";
 
 function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch }) {
@@ -48,29 +48,52 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     const ok = new Set(product ? product.images : []);
     return want.filter((u) => typeof u === "string" && /^https?:\/\//i.test(u) && (ok.has(u) || spec.refsAnyUrl)).slice(0, 3).map((url) => ({ url }));
   };
-  /** One way to make a video, for the screen and for Claude alike. */
-  async function makeVideo(spec, emit) {
+  const send = (ch, p) => { for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send(ch, p); };
+
+  /** Everything a video needs, decided BEFORE any money moves: the product, the final prompt, the reference photos, the price. */
+  async function prepare(spec) {
     const st = store.read();
     let product = null;
-    if (spec.productUrl) { product = await (productFetch || fetchProduct)(spec.productUrl); store.update((s) => { s.product = product; }); }
+    if (spec.productUrl) { send("claude", { kind: "product", url: spec.productUrl }); product = await (productFetch || fetchProduct)(spec.productUrl); store.update((s) => { s.product = product; }); send("claude", { kind: "refresh" }); }
     else if (spec.useProduct !== false && st.product) product = st.product;
     const scene = String(spec.scene || "").trim(), given = String(spec.prompt || "").trim();
     if (!given && scene.length < 10) throw new Error("Write what happens in the video (a sentence or two).");
-    const seconds = Number(spec.seconds) || 15;
-    const prompt = given || compose({ scene, look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds }, style.gather(st.styleOff));
-    const take = await engine.generate({ prompt, seconds, quality: spec.quality || "hd", refs: refUrls(spec, product), meta: { scene: scene || undefined, look: spec.look || "", avatar: spec.avatar || (spec.avatarText ? "custom" : "broad"), product: product ? product.title : "" } }, (p) => { progress = { ...p, at: Date.now() }; emit && emit(p); });
-    store.update((s) => { s.takes.unshift(take); });
-    progress = null;
-    return take;
+    const seconds = Number(spec.seconds) || 15, quality = spec.quality || "hd";
+    const prompt = given || compose({ scene, look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music }, style.gather(st.styleOff));
+    const est = estimateGenerate({ seconds, quality, volume: !!st.settings.volumeId });
+    const asked = Array.isArray(spec.captions) ? spec.captions.map(parseCaption).filter(Boolean) : null;
+    const captions = (asked || style.gather(st.styleOff).captions).filter((c) => c.start < seconds).map((c) => ({ ...c, end: Math.min(c.end, seconds) }));
+    return { spec, product, scene, prompt, seconds, quality, captions, refs: refUrls(spec, product), usd: est.usd, minutes: est.minutes };
   }
+  async function render(pr, emit) {
+    const spec = pr.spec;
+    try {
+      const take = await engine.generate({ prompt: pr.prompt, seconds: pr.seconds, quality: pr.quality, refs: pr.refs, captions: pr.captions, meta: { scene: pr.scene || undefined, look: spec.look || "", avatar: spec.avatar || (spec.avatarText ? "custom" : "broad"), product: pr.product ? pr.product.title : "" } }, (p) => { progress = { ...p, at: Date.now() }; (emit || ((q) => send("job", q)))(p); });
+      store.update((s) => { s.takes.unshift(take); });
+      progress = null; send("job:done", { take, state: store.read() });
+      return take;
+    } catch (e) { progress = null; send("job:done", { error: e.message, costUsd: e.costUsd || 0 }); throw e; }
+  }
+  /** One way to make a video, for the screen and for Claude alike. */
+  async function makeVideo(spec, emit) { return render(await prepare(spec), emit); }
+
+  // Claude's videos wait for his OK on screen (unless he switched auto-approve on in the MCP tab).
+  let decision = null;
+  ipcMain.handle("claude:decide", (_e, ok, prompt) => { if (decision) { const d = decision; decision = null; d({ ok: !!ok, prompt: prompt && String(prompt).trim() ? String(prompt) : null }); } return true; });
+  const askApproval = (pr, who) => new Promise((resolve) => {
+    decision = resolve; send("claude", { kind: "approve", who, prompt: pr.prompt, seconds: pr.seconds, quality: pr.quality, usd: pr.usd, minutes: pr.minutes, refs: pr.refs.length, product: pr.product ? pr.product.title : "", chars: pr.prompt.length, captions: pr.captions.map((c) => `${c.start}-${c.end}s: ${c.text}`) });
+    setTimeout(() => { if (decision === resolve) { decision = null; resolve({ ok: false, timeout: true }); } }, 15 * 60 * 1000);
+  });
 
   ipcMain.handle("state:get", () => view());
+  ipcMain.handle("prompt:preview", async (_e, spec) => { try { const st = store.read(); const product = spec.useProduct !== false ? st.product : null; const seconds = Number(spec.seconds) || 15; return { prompt: compose({ scene: String(spec.scene || "").trim() || "(what happens goes here)", look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music }, style.gather(st.styleOff)) }; } catch (err) { return { error: err.message }; } });
   ipcMain.handle("estimate", (_e, seconds, quality) => estimate(seconds, quality));
   ipcMain.handle("settings:set", (_e, patch) => {
     store.update((s) => {
       for (const k of ["capJob", "capDay"]) if (patch[k] != null) { const v = Number(patch[k]); if (Number.isFinite(v) && v >= 0 && v <= 10000) s.settings[k] = v; }
       if (typeof patch.volumeId === "string") s.settings.volumeId = patch.volumeId.trim().slice(0, 40);
       if (typeof patch.mcpOn === "boolean") s.settings.mcpOn = patch.mcpOn;
+      if (typeof patch.autoApprove === "boolean") s.settings.autoApprove = patch.autoApprove;
     });
     syncBridge();
     return view();
@@ -106,7 +129,8 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     try { for (const f of r.filePaths) { const nm = path.basename(f).toLowerCase().replace(/[^a-z0-9.-]+/g, "-"); style.write(nm, fs.readFileSync(f, "utf8")); } return view(); } catch (err) { return fail(err); }
   });
 
-  ipcMain.handle("verdict", (_e, id, v) => {
+  ipcMain.handle("verdict", (_e, id, v, note) => {
+    if (v === "down" && note) style.addNever(note);
     store.update((s) => {
       const t = s.takes.find((x) => x.id === id); if (!t) return;
       t.verdict = t.verdict === v ? null : v;
@@ -155,7 +179,16 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     if (!store.read().settings.mcpOn) return { ok: false, error: "Claude control is switched off in XUGC (Settings, MCP)." };
     const t = o.type;
     if (t === "generate") {
-      const take = await makeVideo({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality, refs: o.refs }, null);
+      send("claude", { kind: "start", text: "Claude is setting up a video" });
+      const pr = await prepare({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality, refs: o.refs, music: o.music, captions: o.captions });
+      if (!store.read().settings.autoApprove) {
+        const d = await askApproval(pr, "Claude");
+        if (!d.ok) { send("claude", { kind: "end", text: d.timeout ? "No answer, so it was cancelled" : "You said no" }); return { ok: false, error: d.timeout ? "Alex did not answer in 15 minutes, nothing was rented." : "Alex said no on screen. Nothing was rented." }; }
+        if (d.prompt) { pr.prompt = d.prompt; pr.spec = { ...pr.spec, prompt: d.prompt }; }
+      }
+      send("claude", { kind: "go" });
+      const take = await render(pr, null);
+      send("claude", { kind: "end", text: "Done" });
       return { ok: true, takeId: take.id, cost: take.cost, minutes: take.minutes, audio: take.audio, seconds: take.seconds };
     }
     if (t === "cancel") return { ok: true, cancelled: engine.cancel() };

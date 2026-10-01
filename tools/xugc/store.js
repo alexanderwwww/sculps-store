@@ -4,7 +4,7 @@ const path = require("node:path");
 
 const BASE = { id: "xugc", name: "XUGC", kind: "base", note: "your engine" };
 const DEFAULTS = () => ({
-  settings: { capJob: 5, capDay: 20, volumeId: "", mcpOn: true },
+  settings: { capJob: 5, capDay: 20, volumeId: "", mcpOn: true, autoApprove: false },
   spent: { day: "", usd: 0 },
   styleOff: [],
   product: null,

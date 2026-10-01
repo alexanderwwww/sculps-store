@@ -44,3 +44,14 @@ The $10 is a prepaid balance, billed by the second; every video costs a little (
 - He wants VIDEO only: product + scene in, video out. Start frames are an internal step the app hides.
 - Build 3 scope: product from a link, avatar picker or "broad", length 5/10/15/20 s, quality choice, price shown before Generate, engine named "XUGC" (not the model name), his REAL icon (small) not my drawn eye, a futuristic render animation, MCP bridge so Claude can drive it (may be policy-blocked like the Cursor one), and a **Style Bible** section in Train: he drops .md files (iPhone look, handheld shake, audio, hooks) that are compiled with the product and scene into the shot prompt plus a never-do list. 👍 videos join the training pile, 👎 adds to the never-do list.
 - First: one real test clip on LTX-2 with his RunPod key, shown to him BEFORE building the rest. He must create the RunPod account, add $10 and paste a Read & Write key named xugc into XUGC Settings.
+
+## Build 5 (2026-10-01): what Alex asked for after the first real clip
+- First real clip (15 s, 704x1280, sound, $0.29, 5 min) looked like a real phone video but FAILED his brief: a man in a robe instead of an inflatable, every person the same, thin audio (near silent 0-2 s and 10-15 s), no breaking-news text. Lessons now built in:
+  - **Reference photos** (`--image PATH FRAME STRENGTH`): tap product photos in Create (max 3, first at frame 0); MCP `refs: "auto"` or URLs. The app reads ALL photos of a product page.
+  - **Approval:** every video Claude orders shows the full prompt, captions, price and a Prompt editor on screen and WAITS for Approve/No (MCP tab can switch to auto-run). Claude's orders move the app live (types the URL, shows the product, opens the render screen). Nothing is sent to Alex in chat: the video appears in the app.
+  - **Captions** are burned onto the finished video on the GPU by `train/burn_captions.py` (Pillow PNGs + ffmpeg overlay, tested). Style files: `## Captions` lines "start-end | text | top/bottom". Breaking news = caption only, never spoken.
+  - **12 starter style files** incl. people.md, crowd-realism.md, inflatable-physics.md, sound-layers.md, phone-flaws.md, tiktok-pacing.md, breaking-news.md and a long never-do.md. Default prompt is 6000+ chars. The distilled pipeline has no negative-prompt input, so the Avoid list is written into the prompt.
+  - Music option (None / Soft beat / Beat drop). 👎 asks "what looked fake?" and appends it to never-do.md.
+  - Starter style files are copied once per name, so new starters reach existing installs.
+- Alex wants next: a reference-VIDEO import (app extracts frames/cuts/timing, new version copies the structure), clean white-background product images via the Magic Wand, a product library, and training on every 👍/👎.
+- Never again: judging a video "fine" without comparing it to the brief frame by frame; spending before he says go; sending videos in chat.

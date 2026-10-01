@@ -48,6 +48,11 @@ run() {
 }
 echo "== $(date -u +%T) making the video"
 run || { echo "== $(date -u +%T) retrying with 8-bit weights (memory)"; run --quantization fp8-cast; }
+if [ -n "${CAPTIONS:-}" ]; then
+  echo "== $(date -u +%T) burning the captions"
+  apt-get install -y -qq fonts-dejavu-core >/dev/null 2>&1 || true; pip install -q pillow
+  python3 "$R/in/burn_captions.py" "$OUT/clip.mp4" "$HEIGHT" "$WIDTH" || echo "caption burn failed; the video is kept without captions"
+fi
 echo "== $(date -u +%T) finishing"
 ffprobe -v error -show_entries stream=codec_type,width,height,duration -of default=nw=1 "$OUT/clip.mp4" > "$OUT/info.txt" 2>&1 || true
 cat "$OUT/info.txt"; ls -la "$OUT"

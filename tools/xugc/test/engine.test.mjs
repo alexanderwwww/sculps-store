@@ -30,10 +30,10 @@ ok(pctFor("making the video", "") > pctFor("installing", "") && pctFor("making t
 // ---- Style Bible and prompt
 const dir = mkdtempSync(join(tmpdir(), "xugc-"));
 const style = new Style(join(dir, "style"), join(process.cwd(), "assets", "style"));
-ok(style.list().length === 5 && style.list().every((f) => f.on), "the five starter style files are installed and on");
+ok(style.list().length === 12 && style.list().every((f) => f.on), "the twelve starter style files are installed and on");
 const g = style.gather(["hooks.md"]);
-ok(g.prompt.some((l) => /iPhone/.test(l)) && !g.prompt.some((l) => /mid-action/.test(l)), "a switched-off file contributes nothing");
-ok(g.never.length > 5, "'## Never' lines are collected for the Avoid list", String(g.never.length));
+ok(g.prompt.some((l) => /iPhone/.test(l)) && !g.prompt.some((l) => /Ends abruptly, the way a real person/.test(l)), "a switched-off file contributes nothing");
+ok(g.never.length > 12, "a big '## Never' list is collected for the Avoid section", String(g.never.length));
 ok(sections("# x\nprose\n## Prompt\n- one\n- two\n## Other\n- no\n## Never\n- three").prompt.join() === "one,two", "only lines under '## Prompt' go into the prompt");
 const p1 = compose({ scene: "She plugs it in and a ghost appears on the window", look: "Demo", avatar: "maya", product: { title: "Haunted Projector", desc: "Plug-in ghost projector" }, seconds: 15 }, g);
 ok(p1.includes("Maya") && p1.includes("Haunted Projector") && p1.includes("a ghost appears on the window") && p1.includes("Avoid:") && p1.includes("15 seconds"), "the prompt carries person, product, scene, style, avoid list and length");
@@ -41,6 +41,11 @@ ok(p1 === compose({ scene: "She plugs it in and a ghost appears on the window", 
 let bad = null; try { style.write("../evil.md", "x"); } catch (e) { bad = e; } ok(!!bad, "a path-escaping style file name is refused");
 style.write("my-style.md", "# my-style.md\n## Prompt\n- She whispers\n"); ok(style.gather().prompt.includes("She whispers"), "a file written by Claude or by Alex is used straight away");
 
+ok(compose({ scene: "scene text here ok", seconds: 10, music: "drop" }, g).includes("bass drop") && !compose({ scene: "scene text here ok", seconds: 10, music: "none" }, g).includes("beat plays"), "music is an option: none, soft beat, or a beat drop");
+ok(compose({ scene: "scene text here ok", seconds: 10 }, g).length > 3500, "the prompt is huge by default (people, camera, sound, a long Avoid list)", String(compose({ scene: "scene text here ok", seconds: 10 }, g).length));
+style.addNever("the man looked like he was in a costume"); ok(style.gather().never.includes("the man looked like he was in a costume"), "a 👎 note is added to the Avoid list");
+ok(g.captions.length === 2 && g.captions[0].text === "BREAKING NEWS" && g.captions[0].end === 4, "the Style Bible's '## Captions' lines become on-screen captions with timings", JSON.stringify(g.captions[0]));
+ok(compose({ scene: "scene text here ok", seconds: 10 }, g).length > 6000, "with the deeper files the default prompt is very large", String(compose({ scene: "scene text here ok", seconds: 10 }, g).length));
 // ---- product from a link
 process.env.XUGC_ALLOW_LOCAL = "1";
 const srv = http.createServer((q, r) => { r.setHeader("content-type", "text/html"); r.end(`<html><head><script type="application/ld+json">{"@type":"Product","name":"Haunted Projector","description":"Plug-in <b>ghost</b> projector","image":["/p1.jpg"],"offers":{"price":"79.99","priceCurrency":"USD"}}</script><meta property="og:image" content="/a.jpg"></head></html>`); });
@@ -65,7 +70,7 @@ class FakeRunPod {
   async check() { return { ok: true, pods: 0 }; }
   async sweep() { return 0; }
   async run(job) {
-    calls.push({ run: job.script, env: job.env, cap: job.capUsd, maxMinutes: job.maxMinutes, inputs: job.inputs });
+    calls.push({ run: job.script, env: job.env, cap: job.capUsd, maxMinutes: job.maxMinutes, inputs: job.inputs, extra: job.extraScripts });
     job.onProgress({ stage: "installing", pct: 0, costUsd: 0.02, minutes: 0.5, log: "" });
     if (FakeRunPod.fail) { job.onProgress({ stage: "GPU handed back", pct: 100, costUsd: 0.4, minutes: 5, gone: true }); throw new Error("The GPU job failed (exit 3)."); }
     const { mkdirSync, writeFileSync } = await import("node:fs");
@@ -105,9 +110,12 @@ ok(Number(c1.maxMinutes) > 0 && c1.cap <= 5, "the job's own cap is passed down t
 await eng.generate({ ...job, refs: [{ bytes: Buffer.alloc(3000, 1), url: "x/a.webp" }, { bytes: Buffer.alloc(3000, 2), url: "x/b.jpg" }] }, () => {});
 const c3 = calls.filter((c) => c.run).at(-1);
 ok(Object.keys(c3.inputs).join() === "ref1.webp,ref2.jpg" && c3.env.REFS === "ref1.webp:0:1,ref2.jpg:184:0.7", "reference photos are uploaded and sent as file:frame:strength, the first at frame 0", c3.env.REFS);
+await eng.generate({ ...job, captions: [{ text: "BREAKING NEWS", start: 0, end: 4, pos: "top" }] }, () => {});
+const c4 = calls.filter((c) => c.run).at(-1);
+ok(JSON.parse(c4.env.CAPTIONS)[0].text === "BREAKING NEWS" && c4.extra.join() === "burn_captions.py", "captions are sent to the GPU job together with the script that burns them onto the video", c4.env.CAPTIONS);
 FakeRunPod.fail = true;
 let e5 = await err(job); ok(e5 && /exit 3/.test(e5.message) && e5.costUsd === 0.4, "a failed job reports why and what it cost");
-ok(Math.abs(store.read().spent.usd - 1.9) < 1e-9 && eng.job === null, "…its cost still counts today and the engine is free", String(store.read().spent.usd));
+ok(Math.abs(store.read().spent.usd - 2.4) < 1e-9 && eng.job === null, "…its cost still counts today and the engine is free", String(store.read().spent.usd));
 FakeRunPod.fail = false;
 const slow = eng.generate(job, () => {}); let e6 = await err(job); ok(e6 && e6.code === "busy", "a second job while one runs is refused"); await slow;
 

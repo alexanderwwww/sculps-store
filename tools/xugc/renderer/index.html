@@ -73,8 +73,20 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
 .note{font-size:12.5px;line-height:1.5;color:var(--mut)}.note b{color:#fff}
 .url{font:12px ui-monospace,Menlo,monospace;padding:10px 12px;border-radius:12px;background:#0b0c0f;border:1px solid var(--line);word-break:break-all;user-select:all;color:#cfd2d6}
 .log{font:11.5px/1.7 ui-monospace,Menlo,monospace;color:#9aa0a6;max-width:520px}.log b{color:var(--neon);font-weight:600}
+
+.cbar{position:absolute;top:0;left:0;right:0;z-index:30;display:none;align-items:center;gap:10px;padding:9px 16px;background:linear-gradient(90deg,rgba(215,255,31,.18),rgba(106,76,255,.16));border-bottom:1px solid rgba(215,255,31,.45);font:700 12.5px ui-monospace,Menlo,monospace;color:#eaffa6;letter-spacing:.03em}.cbar.on{display:flex}.cbar i{width:8px;height:8px;border-radius:50%;background:var(--neon);box-shadow:0 0 10px var(--neon);animation:pl 1s ease-in-out infinite}@keyframes pl{50%{opacity:.25}}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(3,4,8,.78);backdrop-filter:blur(8px);display:none;place-items:center}.modal.on{display:grid}
+.mbox{width:min(760px,92vw);max-height:88vh;overflow:auto;border-radius:20px;background:#0b0c10;border:1px solid rgba(215,255,31,.45);box-shadow:0 30px 90px rgba(0,0,0,.7),0 0 60px rgba(215,255,31,.12);padding:22px}
+.mbox h2{font-size:18px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}.mbox h2 img{width:22px}
+.mrow{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.mrow span{padding:6px 11px;border-radius:99px;background:var(--glass);border:1px solid var(--line);font-size:12.5px;font-weight:700}.mrow span b{color:var(--neon)}
+.mbox textarea{height:300px;font:12px/1.55 ui-monospace,Menlo,monospace;background:#07080b;user-select:text}
+.mbtn{display:flex;gap:10px;margin-top:14px}.mbtn .go{flex:1}
+.rail{position:absolute;left:14px;top:46px;z-index:7;display:flex;flex-direction:column;gap:7px;font:700 10.5px ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#59603a}.rail div{display:flex;align-items:center;gap:7px}.rail div::before{content:"";width:7px;height:7px;border-radius:2px;border:1px solid #59603a}.rail .done{color:#9dbd2c}.rail .done::before{background:#9dbd2c;border-color:#9dbd2c}.rail .act{color:var(--neon)}.rail .act::before{background:var(--neon);border-color:var(--neon);box-shadow:0 0 9px var(--neon);animation:pl .8s infinite}
+.dnote{display:none;gap:8px;max-width:420px}.dnote.on{display:flex}
+.fullp{display:none}.fullp.on{display:block}.fullp textarea{height:180px;font:11.5px/1.5 ui-monospace,Menlo,monospace;background:#07080b}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 </style></head><body>
+<div class="modal" id="approve"><div class="mbox"><h2><img src="../assets/icon.png" alt=""><span id="ap-title">Claude wants to make a video</span></h2><div class="mrow" id="ap-meta"></div><div class="lab" style="margin:6px 0"><span>THE FINAL PROMPT <i>you can edit it before it runs</i></span></div><textarea id="ap-prompt"></textarea><div class="mbtn"><button class="go" id="ap-yes">Approve and render <span id="ap-cost"></span></button><button class="go ghost" id="ap-no" style="flex:0 0 130px;justify-content:center">No</button></div></div></div>
 <div class="app">
  <header class="top">
   <div class="brand"><img src="../assets/icon.png" alt=""><b>XUGC</b></div>
@@ -96,23 +108,24 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
     <div class="found" id="avnote">Broad = the scene picks an ordinary, real-looking person.</div></div>
    <div class="sec"><div class="lab">3 · WHAT HAPPENS <i id="stylon">Style Bible on</i></div>
     <textarea id="script" placeholder="She plugs the projector in, points it at her front window, and a ghost appears on the glass. She steps back and laughs."></textarea>
-    <div class="seg" id="looks"></div><div class="styl" id="stylchips"></div></div>
+    <div class="seg" id="looks"></div><div class="styl" id="stylchips"></div><button class="btn" id="showp" style="align-self:flex-start">Show the full prompt</button><div class="fullp" id="fullp"><textarea id="fulltext"></textarea><div class="note" id="fullnote"></div></div></div>
+   <div class="sec"><div class="lab">MUSIC</div><div class="seg" id="musics"></div></div>
    <div class="sec"><div class="lab">4 · LENGTH</div><div class="seg" id="secs"></div></div>
    <div class="sec"><div class="lab">5 · QUALITY</div><div class="seg" id="quals"></div></div>
    <div class="sec"><div class="lab">ENGINE</div><div class="model"><img src="../assets/icon.png" alt="">XUGC<span>LTX-2.5 on your GPU</span></div></div>
    <div class="gobar"><button class="go" id="go">Generate <span id="goest">…</span></button><div class="err" id="err"></div>
     <div class="note" style="margin-top:8px">Each video rents a GPU just for that video and hands it back. The price shown is the most it can cost.</div></div>
   </div>
-  <div class="stage">
+  <div class="stage" style="position:relative"><div class="cbar" id="cbar"><i></i><span id="cbtext">Claude is working</span></div>
    <div class="phone" id="phone"><div class="tag" id="ptag">PREVIEW</div>
     <video id="pv" loop playsinline controls></video>
     <div class="idle" id="idle"><div><img src="../assets/icon.png" alt=""><p>Your video appears here.<br>Product, person, what happens, Generate.</p></div></div>
-    <div class="render" id="render"><div class="neb"></div><canvas id="cv"></canvas><div class="scan"></div><i class="ring"></i><i class="ring"></i><i class="ring"></i><img class="logo" src="../assets/icon.png" alt="">
+    <div class="render" id="render"><div class="neb"></div><div class="rail" id="rail"></div><canvas id="cv"></canvas><div class="scan"></div><i class="ring"></i><i class="ring"></i><i class="ring"></i><img class="logo" src="../assets/icon.png" alt="">
      <div class="hh"><span id="hs">STARTING</span><span id="ht">0:00</span></div>
      <div class="big"><span id="hp">0%</span><small id="hc">$0.00 SO FAR</small></div>
      <div class="bar"><i id="hb"></i></div><div class="hud" id="hud"></div><button class="stop" id="stop">Stop (hands the GPU back)</button></div></div>
    <div class="verd" id="verd" style="visibility:hidden"><button id="vup" title="Good: add to training clips">👍</button><button id="vdown" title="Bad">👎</button><span>👍 adds it to your training pile</span></div>
-   <div class="hint" id="hint"></div>
+   <div class="dnote" id="dnote"><input id="dnotein" placeholder="What looked fake? (it is added to the Avoid list)"><button class="btn" id="dnotego">Save</button></div><div class="hint" id="hint"></div>
   </div>
   <aside class="takes" id="takes"></aside>
  </section>
@@ -136,6 +149,7 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
 
  <section class="view" id="v-mcp"><div class="page"><h1>MCP</h1><p class="sub">Connect Claude to XUGC so it can make videos, write Style Bible files and review results for you. It can <b>not</b> change the app's code, your keys or your spending limits, and every video it asks for still goes through your limits.</p>
   <div class="fld"><label>CLAUDE CONTROL</label><div class="seg" style="max-width:260px"><button id="mcp-on">On</button><button id="mcp-off">Off</button></div></div>
+  <div class="fld"><label>APPROVAL</label><div class="seg" style="max-width:420px"><button id="ap-on">Ask me first</button><button id="ap-off">Run Claude's videos at once</button></div><div class="note">With “Ask me first” every video Claude orders shows the full prompt and the price on your screen and waits for you.</div></div>
   <div class="fld"><label>STATUS</label><div class="found" id="mcpstate"></div></div>
   <div class="fld"><label>YOUR CONNECTOR URL</label><div class="url" id="mcpurl"></div><div class="row"><button class="btn" id="mcpcopy" style="align-self:flex-start">Copy URL</button></div></div>
   <div class="fld"><label>HOW TO CONNECT</label><div class="note">In claude.ai: Settings → Connectors → Add custom connector → paste the URL above → name it XUGC. Then tell Claude: “check XUGC”.</div></div>

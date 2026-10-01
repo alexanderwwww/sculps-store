@@ -99,8 +99,8 @@ class Engine {
         refEnv.push(`${name}:${idx}:${k === 0 ? 1.0 : 0.7}`);
       }
       const r = await rp.run({
-        label: "gen", script: "generate.sh", inputs,
-        env: { ...(refEnv.length ? { REFS: refEnv.join(",") } : {}), PROMPT: prompt, HF_TOKEN: hf, FRAMES: String(SECONDS[seconds]), WIDTH: String(q.w), HEIGHT: String(q.h), SEED: String(Math.floor(Math.random() * 1e9)) },
+        label: "gen", script: "generate.sh", inputs, extraScripts: (job.captions || []).length ? ["burn_captions.py"] : [],
+        env: { ...(refEnv.length ? { REFS: refEnv.join(",") } : {}), ...((job.captions || []).length ? { CAPTIONS: JSON.stringify(job.captions) } : {}), PROMPT: prompt, HF_TOKEN: hf, FRAMES: String(SECONDS[seconds]), WIDTH: String(q.w), HEIGHT: String(q.h), SEED: String(Math.floor(Math.random() * 1e9)) },
         outputs: ["clip.mp4", "info.txt", "help.txt"], required: ["clip.mp4"], destDir: dest,
         capUsd: Math.min(st.settings.capJob, st.settings.capDay - used), maxMinutes: est.minutes * 2, signal: this.job.signal, onProgress,
       });

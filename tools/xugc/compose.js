@@ -9,6 +9,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
+const clean = (t) => String(t || "").replace(/\s+/g, " ").trim();
 const NAME = /^[a-z0-9][a-z0-9-]{0,38}\.md$/;
 const MAX_FILE = 20000;
 
@@ -27,13 +28,18 @@ const AVATARS = {
   sofia: "Sofia, 35, long dark hair, cream knit sweater, cosy front room at night.",
 };
 const QUALITY = { draft: { w: 512, h: 896, label: "Draft 480p", cost: 0.5 }, hd: { w: 704, h: 1280, label: "HD 720p", cost: 1 }, full: { w: 1088, h: 1920, label: "Full 1080p", cost: 2.2 } };
+const MUSIC = {
+  none: "",
+  soft: "A faint, low-volume trending phone-speaker beat plays far in the background of the whole video, quiet and slightly distorted, as if a neighbour's speaker is on.",
+  drop: "A trending TikTok-style beat plays from a phone speaker, low and slightly distorted, building quietly then dropping hard with one big bass drop at the biggest moment of the video.",
+};
 const SECONDS = { 5: 121, 10: 241, 15: 361, 20: 481 };
 
 function sections(md) {
-  const out = { prompt: [], never: [] }; let cur = null;
+  const out = { prompt: [], never: [], captions: [] }; let cur = null;
   for (const line of String(md).split("\n")) {
     const h = /^##\s+(.+?)\s*$/.exec(line);
-    if (h) { const k = h[1].toLowerCase(); cur = k === "prompt" ? "prompt" : k === "never" ? "never" : null; continue; }
+    if (h) { const k = h[1].toLowerCase(); cur = k === "prompt" ? "prompt" : k === "never" ? "never" : k === "captions" ? "captions" : null; continue; }
     const b = /^\s*[-*]\s+(.+?)\s*$/.exec(line);
     if (cur && b) out[cur].push(b[1].replace(/\s+/g, " "));
   }
@@ -44,7 +50,11 @@ class Style {
   /** @param {string} dir  where the .md files live  @param {string} seedDir  starter files shipped with the app */
   constructor(dir, seedDir) {
     this.dir = dir; fs.mkdirSync(dir, { recursive: true });
-    if (!fs.readdirSync(dir).some((f) => f.endsWith(".md")) && seedDir && fs.existsSync(seedDir)) for (const f of fs.readdirSync(seedDir)) if (NAME.test(f)) fs.copyFileSync(path.join(seedDir, f), path.join(dir, f));
+    // Starter files are copied once per name: new starters reach an existing install, deleted ones stay deleted.
+    const seenFile = path.join(dir, ".seeded.json"); let seen = [];
+    try { seen = JSON.parse(fs.readFileSync(seenFile, "utf8")); } catch { seen = fs.readdirSync(dir).filter((f) => NAME.test(f)); }
+    if (seedDir && fs.existsSync(seedDir)) for (const f of fs.readdirSync(seedDir)) if (NAME.test(f) && !seen.includes(f)) { if (!fs.existsSync(path.join(dir, f))) fs.copyFileSync(path.join(seedDir, f), path.join(dir, f)); seen.push(f); }
+    fs.writeFileSync(seenFile, JSON.stringify(seen));
   }
   list(off = []) {
     return fs.readdirSync(this.dir).filter((f) => NAME.test(f)).sort().map((f) => {
@@ -60,15 +70,27 @@ class Style {
     fs.writeFileSync(path.join(this.dir, name), t); return name;
   }
   remove(name) { if (!NAME.test(name)) throw new Error("Bad file name."); try { fs.unlinkSync(path.join(this.dir, name)); } catch {} }
+  /** A 👎 teaches the Avoid list: append one line under "## Never" in never-do.md. */
+  addNever(line) {
+    const l = clean(line).slice(0, 200); if (!l) return false;
+    let t = fs.existsSync(path.join(this.dir, "never-do.md")) ? fs.readFileSync(path.join(this.dir, "never-do.md"), "utf8") : "# never-do.md\n\n## Never\n";
+    if (!/^##\s+Never/m.test(t)) t += "\n## Never\n";
+    fs.writeFileSync(path.join(this.dir, "never-do.md"), t.replace(/\s*$/, "\n") + "- " + l + "\n"); return true;
+  }
   /** Lines to write into the prompt and lines to avoid, from the enabled files. */
   gather(off = []) {
-    const prompt = [], never = [];
-    for (const f of this.list(off)) { if (!f.on) continue; const s = sections(this.read(f.name)); prompt.push(...s.prompt); never.push(...s.never); }
-    return { prompt, never };
+    const prompt = [], never = [], captions = [];
+    for (const f of this.list(off)) { if (!f.on) continue; const s = sections(this.read(f.name)); prompt.push(...s.prompt); never.push(...s.never); captions.push(...s.captions); }
+    return { prompt, never, captions: captions.map(parseCaption).filter(Boolean) };
   }
 }
 
-const clean = (t) => String(t || "").replace(/\s+/g, " ").trim();
+/** "0-4 | BREAKING NEWS" or "10-15 | Comment spooky | bottom" -> {start, end, text, pos} */
+function parseCaption(x) {
+  if (x && typeof x === "object") { const t = clean(x.text); const s = Number(x.start), e = Number(x.end); return t && Number.isFinite(s) && Number.isFinite(e) && e > s ? { text: t.slice(0, 160), start: s, end: e, pos: x.pos === "bottom" ? "bottom" : "top" } : null; }
+  const m = /^\s*(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*\|\s*(.+?)\s*(?:\|\s*(top|bottom)\s*)?$/i.exec(String(x || ""));
+  return m ? parseCaption({ start: m[1], end: m[2], text: m[3], pos: (m[4] || "top").toLowerCase() }) : null;
+}
 const sentence = (t) => { const s = clean(t); return s ? (/[.!?]$/.test(s) ? s : s + ".") : ""; };
 
 /**
@@ -82,9 +104,10 @@ function compose(job, bible) {
   parts.push(sentence(LOOKS[job.look] || ""));
   parts.push(sentence(job.scene));
   if (bible.prompt.length) parts.push(bible.prompt.map(sentence).join(" "));
+  if (MUSIC[job.music]) parts.push(MUSIC[job.music]);
   if (bible.never.length) parts.push("Avoid: " + bible.never.map((l) => clean(l).replace(/[.]+$/, "")).join("; ") + ".");
   parts.push(`About ${job.seconds} seconds, one continuous take.`);
   return parts.filter(Boolean).join(" ");
 }
 
-module.exports = { Style, compose, sections, LOOKS, AVATARS, QUALITY, SECONDS, NAME };
+module.exports = { parseCaption, Style, compose, sections, LOOKS, AVATARS, QUALITY, SECONDS, NAME, MUSIC };
