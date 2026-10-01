@@ -28,7 +28,7 @@ TOKEN = os.environ.get("AGENT_TOKEN", "")
 MAX_MINUTES = float(os.environ.get("MAX_MINUTES", "120"))
 BOOT = time.time()
 STATE = {"proc": None, "exit": None, "script": None}
-ALLOWED = {"generate.sh"}
+ALLOWED = {"generate.sh", "gen_hunyuan.sh", "gen_wan.sh", "gen_ltx_full.sh", "train_lora.sh"}
 
 
 def delete_self(reason):

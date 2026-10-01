@@ -52,6 +52,9 @@ async function fetchImage(url, f = globalThis.fetch) {
   return b;
 }
 
+// open models the app can run; "ltx" (distilled) is the default
+const SCRIPTS = { ltx: "generate.sh", ltx_full: "gen_ltx_full.sh", hunyuan: "gen_hunyuan.sh", wan: "gen_wan.sh" };
+
 class Engine {
   /** @param {{store, dir: string, secrets: {get():string}, hf: {get():string}, makeRunPod?: (o:object)=>RunPod}} o */
   constructor({ store, dir, secrets, hf, makeRunPod, fetchImpl }) {
@@ -101,7 +104,7 @@ class Engine {
         refEnv.push(`${name}:${idx}:${strength}`);
       }
       const r = await rp.run({
-        label: "gen", script: "generate.sh", inputs, extraScripts: (job.captions || []).length ? ["burn_captions.py"] : [],
+        label: "gen", script: SCRIPTS[job.engine] || "generate.sh", inputs, extraScripts: (job.captions || []).length ? ["burn_captions.py"] : [],
         env: { ...(refEnv.length ? { REFS: refEnv.join(",") } : {}), ...((job.captions || []).length ? { CAPTIONS: JSON.stringify(job.captions) } : {}), PROMPT: prompt, HF_TOKEN: hf, FRAMES: String(SECONDS[seconds]), WIDTH: String(q.w), HEIGHT: String(q.h), SEED: String(Math.floor(Math.random() * 1e9)) },
         outputs: ["clip.mp4", "info.txt", "help.txt"], required: ["clip.mp4"], destDir: dest,
         capUsd: Math.min(st.settings.capJob, st.settings.capDay - used), maxMinutes: est.minutes * 2, signal: this.job.signal, onProgress,
