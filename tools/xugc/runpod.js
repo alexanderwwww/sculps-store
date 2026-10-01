@@ -18,8 +18,8 @@ const crypto = require("node:crypto");
 
 const API = "https://rest.runpod.io/v1";
 const IMAGE = "runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04";
-// Cheapest 80 GB first. Wan 2.2 14B does not fit comfortably on less.
-const GPUS = ["NVIDIA A100 80GB PCIe", "NVIDIA A100-SXM4-80GB", "NVIDIA H100 80GB HBM3"];
+// 80 GB cards: LTX-2.5 is a 22B model plus a 12B text encoder (66 GB of files).
+const GPUS = ["NVIDIA H100 PCIe", "NVIDIA H100 80GB HBM3", "NVIDIA A100 80GB PCIe", "NVIDIA A100-SXM4-80GB"];
 // What we ASSUME the dearest allowed GPU costs per hour. Used to size the deadline and the estimate.
 const WORST_HOURLY = 3.5;
 const CHUNK = 48 * 1024 * 1024;
@@ -113,7 +113,7 @@ class RunPod {
    *
    * @param {object} job
    * @param {string} job.label            for the pod's name and the progress lines
-   * @param {"train.sh"|"generate.sh"} job.script
+   * @param {"generate.sh"} job.script
    * @param {Record<string, string|Buffer>} job.inputs   remote name -> local file path or bytes
    * @param {Record<string,string>} job.env
    * @param {string[]} job.outputs         names to bring back (those that exist)
@@ -145,7 +145,7 @@ class RunPod {
         cloudType: "SECURE",
         containerDiskInGb: this.volumeId ? 40 : 160,
         ports: ["8000/http"],
-        env: { AGENT_B64: agentSrc.toString("base64"), AGENT_TOKEN: token, MAX_MINUTES: String(maxMinutes), HF_HUB_ENABLE_HF_TRANSFER: "0" },
+        env: { AGENT_B64: agentSrc.toString("base64"), AGENT_TOKEN: token, MAX_MINUTES: String(maxMinutes), },
         dockerStartCmd: ["bash", "-c", "echo \"$AGENT_B64\" | base64 -d > /agent.py && exec python3 /agent.py"],
       };
       if (this.volumeId) { body.networkVolumeId = this.volumeId; body.volumeMountPath = "/workspace"; } else { body.volumeInGb = 0; }
@@ -167,7 +167,7 @@ class RunPod {
       if (!up) throw new RunPodError("The GPU never came up. It was handed back.", "boot");
 
       note("Sending your files", 10);
-      const scripts = job.script === "train.sh" ? ["prep_dataset.py", "caption.py", "train.sh"] : ["generate.sh"];
+      const scripts = [job.script];
       for (const f of scripts) await this.put(af, f, fs.readFileSync(path.join(this.scriptsDir, f)));
       for (const [name, src] of Object.entries(job.inputs || {})) { check(); await this.put(af, name, Buffer.isBuffer(src) ? src : fs.readFileSync(src)); }
 

@@ -22,17 +22,16 @@ const freePort = () => new Promise((r) => { const s = net.createServer().listen(
 const here = process.cwd();
 const scripts = mkdtempSync(join(tmpdir(), "xugc-scripts-"));
 copyFileSync(join(here, "train/pod_agent.py"), join(scripts, "pod_agent.py"));
-for (const f of ["prep_dataset.py", "caption.py"]) writeFileSync(join(scripts, f), "# stub\n");
 // Fake job scripts: same contract as the real ones (inputs in $JOB_ROOT/in, results in $JOB_ROOT/out).
 writeFileSync(join(scripts, "generate.sh"), `set -e
+if [ "$FAIL" = "1" ]; then echo "== 00:00:01 making the video"; echo "CUDA out of memory"; exit 3; fi
+if [ "$SLOW" = "1" ]; then echo "== 00:00:01 making the video"; sleep 5; echo never; exit 0; fi
 echo "== 00:00:01 making the clip"; sleep 0.3
 sha256sum "$JOB_ROOT/in/first.png" | cut -d' ' -f1 > "$JOB_ROOT/out/seen.txt"
 echo "PROMPT=$PROMPT" >> "$JOB_ROOT/out/seen.txt"
 head -c 5000 /dev/urandom > "$JOB_ROOT/out/clip.mp4"
 echo "== 00:00:02 done"
 `);
-writeFileSync(join(scripts, "train.sh"), `if [ "$FAIL" = "1" ]; then echo "== 00:00:01 training"; echo "CUDA out of memory"; exit 3; fi
-echo "== 00:00:01 training"; sleep 5; echo never`);
 
 /** Simulated RunPod REST API; each "pod" is a real pod_agent.py on localhost. */
 function world({ costPerHr = 1.6 } = {}) {
@@ -88,14 +87,14 @@ const dest = () => mkdtempSync(join(tmpdir(), "xugc-out-"));
 // 2. a failing job still deletes the pod and shows the reason
 {
   const w = world(); const rp = mk(w); let err = null;
-  try { await rp.run({ label: "t", script: "train.sh", inputs: { "v-0001.mp4": png }, env: { FAIL: "1" }, outputs: [], required: ["x"], destDir: dest(), capUsd: 5 }); } catch (e) { err = e; }
+  try { await rp.run({ label: "t", script: "generate.sh", inputs: { "first.png": png }, env: { FAIL: "1" }, outputs: [], required: ["x"], destDir: dest(), capUsd: 5 }); } catch (e) { err = e; }
   ok(err && /exit 3/.test(err.message) && /out of memory/.test(err.message), "a failed job reports the exit code and the last log lines", err?.message.split("\n")[0]);
   ok(w.pods.get("pod1").deleted, "…and the pod is deleted anyway");
 }
 // 3. cancel
 {
   const w = world(); const rp = mk(w); const sig = { cancelled: false }; let err = null; const t0 = Date.now();
-  try { await rp.run({ label: "t", script: "train.sh", inputs: {}, env: {}, outputs: [], required: [], destDir: dest(), capUsd: 5, signal: sig, onProgress: (p) => { if (p.stage === "training") sig.cancelled = true; } }); } catch (e) { err = e; }
+  try { await rp.run({ label: "t", script: "generate.sh", inputs: {}, env: { SLOW: "1" }, outputs: [], required: [], destDir: dest(), capUsd: 5, signal: sig, onProgress: (p) => { if (p.stage === "making the video") sig.cancelled = true; } }); } catch (e) { err = e; }
   ok(err && err.code === "cancelled", "cancelling stops the job", err?.message);
   ok(w.pods.get("pod1").deleted && Date.now() - t0 < 4500, "…and deletes the pod without waiting for the job");
 }
@@ -109,7 +108,7 @@ const dest = () => mkdtempSync(join(tmpdir(), "xugc-out-"));
 // 5. the per-job cap stops a running job
 {
   const w = world({ costPerHr: 50000 }); const rp = mk(w, { worstHourly: 100000 }); let err = null;
-  try { await rp.run({ label: "t", script: "train.sh", inputs: {}, env: {}, outputs: [], required: [], destDir: dest(), capUsd: 0.5 }); } catch (e) { err = e; }
+  try { await rp.run({ label: "t", script: "generate.sh", inputs: {}, env: { SLOW: "1" }, outputs: [], required: [], destDir: dest(), capUsd: 0.5 }); } catch (e) { err = e; }
   ok(err && err.code === "cap", "a job that reaches its dollar limit is stopped", err?.message);
   ok(w.pods.get("pod1").deleted, "…and the pod is deleted");
 }
@@ -152,7 +151,7 @@ const dest = () => mkdtempSync(join(tmpdir(), "xugc-out-"));
   ok((await fetch(base + "/status", { headers: { "X-Token": "wrong" } })).status === 401, "a wrong token is refused");
   ok((await fetch(base + "/status")).status === 401, "no token is refused");
   const bad = await fetch(base + "/run", { method: "POST", headers: { "X-Token": "right" }, body: JSON.stringify({ script: "rm -rf /" }) });
-  ok(bad.status === 400, "an arbitrary command is refused; only train.sh and generate.sh run");
+  ok(bad.status === 400, "an arbitrary command is refused; only generate.sh runs");
   const esc = await fetch(base + "/in/..%2F..%2Fetc%2Fpasswd", { method: "PUT", headers: { "X-Token": "right" }, body: "x" });
   ok(!existsSync("/etc/passwd.part") && esc.status < 500, "a path-escaping file name cannot leave the job folder", String(esc.status));
   py.kill("SIGKILL");

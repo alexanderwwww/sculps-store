@@ -1,7 +1,7 @@
 {
   "name": "xugc",
   "productName": "XUGC",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "private": true,
   "type": "commonjs",
   "description": "Your own UGC video studio: a start frame + what happens, made on rented GPUs you control.",
@@ -24,6 +24,9 @@
       "store.js",
       "runpod.js",
       "secrets.js",
+      "compose.js",
+      "product.js",
+      "bridge.js",
       "renderer/**",
       "assets/**",
       "train/*.py",

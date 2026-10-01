@@ -17,7 +17,7 @@ const fixture = join(here, "test", "fixtures", "clip.mp4");
 
 const probe = `
 const { app, BrowserWindow } = require("electron");
-const path = require("node:path"); const fs = require("node:fs");
+const path = require("node:path"); const fs = require("node:fs"); const http = require("node:http");
 process.env.XUGC_NO_AUTOSTART = "1";
 const { setup } = require(${JSON.stringify(join(here, "main.js"))});
 const out = []; const say = (ok, what, extra) => out.push({ ok, what, extra: extra ?? null });
@@ -27,122 +27,185 @@ class FakeRunPod {
   async check() { if (/BAD/.test(this.o.apiKey)) { const e = new Error("RunPod refused the key. Make a new one with Read & Write access and paste it in Settings."); e.code = "auth"; throw e; } return { ok: true, pods: 0 }; }
   async sweep() { log.push("sweep"); return 2; }
   async run(job) {
-    log.push({ run: job.script, env: job.env, inputs: Object.keys(job.inputs) });
-    const t0 = Date.now(); const marks = job.script === "train.sh" ? ["installing", "downloading models", "training (1 epochs)"] : ["installing", "making the clip"];
-    let i = 0;
+    log.push({ run: job.script, env: job.env });
+    const t0 = Date.now(); const marks = ["installing", "downloading the model", "making the video"];
     for (;;) {
       if (job.signal.cancelled) { job.onProgress({ stage: "GPU handed back", pct: 100, costUsd: 0.11, minutes: 0.1, gone: true }); const e = new Error("Cancelled."); e.code = "cancelled"; throw e; }
       const el = Date.now() - t0;
-      job.onProgress({ stage: marks[Math.min(marks.length - 1, Math.floor(el / 900))], pct: 10, costUsd: 0.0003 * el, minutes: el / 60000, log: "step " + Math.floor(el / 100) + "/30  loss 0.0" + (el % 9) });
+      job.onProgress({ stage: marks[Math.min(2, Math.floor(el / 900))], pct: 10, costUsd: 0.0003 * el, minutes: el / 60000, log: "step " + Math.floor(el / 100) + "/30  40%|loss 0.0" + (el % 9) });
       if (el > 2700 && !globalThis.__hold) break;
       await new Promise((r) => setTimeout(r, 120));
     }
     fs.mkdirSync(job.destDir, { recursive: true });
-    for (const r of job.required) fs.copyFileSync(r.endsWith(".mp4") ? ${JSON.stringify(fixture)} : ${JSON.stringify(fixture)}, path.join(job.destDir, r));
-    fs.writeFileSync(path.join(job.destDir, "captions-sample.txt"), "UGC video. A woman holds a small black projector at her window.");
+    fs.copyFileSync(${JSON.stringify(fixture)}, path.join(job.destDir, "clip.mp4"));
+    fs.writeFileSync(path.join(job.destDir, "info.txt"), "codec_type=video\\ncodec_type=audio\\n");
     job.onProgress({ stage: "GPU handed back", pct: 100, costUsd: 0.81, minutes: 2.9, gone: true });
-    return { saved: job.required, log: "", costUsd: 0.81, minutes: 2.9, hourly: 1.6 };
+    return { saved: ["clip.mp4"], log: "", costUsd: 0.81, minutes: 2.9, hourly: 1.6 };
   }
 }
+// A stand-in for the Kerberos worker: same URLs, same shapes, in memory.
+const W = { status: null, statusPosts: 0, orders: [], results: [], uploads: [] };
+const worker = http.createServer((q, s) => {
+  const chunks = []; q.on("data", (d) => chunks.push(d)); q.on("end", () => {
+    const body = Buffer.concat(chunks); const u = new URL(q.url, "http://x"); const send = (o, c = 200) => { s.writeHead(c, { "content-type": "application/json" }); s.end(JSON.stringify(o)); };
+    if (u.pathname === "/status" && q.method === "POST") { W.status = JSON.parse(body); W.statusPosts++; return send({ ok: true }); }
+    if (u.pathname === "/orders" && q.method === "GET") return send({ orders: W.orders, mcpSeen: W.claudeAt ? { at: W.claudeAt } : null });
+    if (u.pathname === "/orders" && q.method === "POST") { const b = JSON.parse(body); W.orders = W.orders.filter((o) => !(b.ack || []).includes(o.id)); for (const r of b.results || []) W.results.push(r); return send({ ok: true }); }
+    if (u.pathname === "/take" && q.method === "POST") { W.uploads.push({ name: u.searchParams.get("name"), bytes: body.length }); return send({ ok: true, url: "https://example.test/" + u.searchParams.get("name") }); }
+    send({}, 404);
+  });
+});
 app.whenReady().then(async () => {
   try {
-    setup({ dir: ${JSON.stringify(join(home, "data"))}, makeRunPod: (o) => new FakeRunPod(o), sweepOnStart: false });
+    await new Promise((r) => worker.listen(0, r));
+    const prodStub = async (url) => ({ url, title: "Haunted Projector", desc: "Plug-in ghost projector for windows", price: "79.99", currency: "USD", images: [${JSON.stringify("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")}, ${JSON.stringify("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")}] });
+    const sys = setup({ dir: ${JSON.stringify(join(home, "data"))}, makeRunPod: (o) => new FakeRunPod(o), sweepOnStart: false, bridgeBase: "http://127.0.0.1:" + worker.address().port, bridgeMs: 250, productFetch: prodStub });
     const win = new BrowserWindow({ width: 1280, height: 820, show: true, backgroundColor: "#07080A", webPreferences: { preload: path.join(${JSON.stringify(here)}, "preload.js"), contextIsolation: true, nodeIntegration: false, sandbox: false } });
     const errors = [];
     win.webContents.on("console-message", (_e, level, msg) => { if (level >= 3) errors.push(msg); });
     await win.loadFile(path.join(${JSON.stringify(here)}, "renderer", "index.html"));
     const run = (js) => win.webContents.executeJavaScript(js);
     const until = async (js, ms = 6000) => { const t0 = Date.now(); for (;;) { try { const v = await run(js); if (v) return v; } catch {} if (Date.now() - t0 > ms) return false; await new Promise((r) => setTimeout(r, 60)); } };
+    const untilJs = async (fn, ms = 15000) => { const t0 = Date.now(); for (;;) { const v = fn(); if (v) return v; if (Date.now() - t0 > ms) return false; await new Promise((r) => setTimeout(r, 80)); } };
     const shot = async (name) => { await new Promise((r) => setTimeout(r, 350)); const img = await win.webContents.capturePage(); fs.writeFileSync(path.join(${JSON.stringify(shots)}, name + ".png"), img.toPNG()); };
     const view = (v) => run("document.querySelector('#nav [data-view=" + v + "]').click()");
     const type = (sel, v, ev = "input") => run("(function(){const i=document.querySelector(" + JSON.stringify(sel) + "); i.value=" + JSON.stringify(v) + "; i.dispatchEvent(new Event(" + JSON.stringify(ev) + "))})()");
+    const click = (sel) => run("document.querySelector(" + JSON.stringify(sel) + ").click()");
 
     say(await until("document.querySelector('#modechip').textContent.includes('NO RUNPOD KEY')"), "with no key, the header says so in plain words");
-    say(await until("document.querySelector('#nokey').style.display === 'block'"), "Create shows a banner pointing at Settings");
-    say(await run("!!document.querySelector('.brand svg use') && document.querySelector('.mark svg') !== null"), "the eye logo is in the header and on the empty stage");
+    say(await until("document.querySelector('#nokey').style.display === 'block' && document.querySelector('#nokey').textContent.includes('RunPod')"), "Create tells him what is missing before anything else");
+    say((await run("getComputedStyle(document.querySelector('.brand img')).width")) === "20px", "the logo in the header is small (20px) and is the real icon file", await run("document.querySelector('.brand img').getAttribute('src')"));
+    say(await run("document.querySelectorAll('#nav button').length") === 5 && (await run("document.querySelector('#nav').textContent")).includes("MCP"), "there is an MCP section in the navigation");
     await shot("1-empty");
-    await run("document.querySelector('#go').click()");
-    say(await until("document.querySelector('#err').textContent.includes('start frame')"), "Generate with no picture says what to do, rents nothing", await run("document.querySelector('#err').textContent"));
+    await click("#go");
+    say(await until("document.querySelector('#err').textContent.includes('what happens')"), "Generate with no scene says what to do");
 
-    // Settings: a bad key is refused and not kept; a good key is kept and works.
     await view("settings");
-    await type("#keyin", "rpa_BAD_KEY_0000000000"); await run("document.querySelector('#keysave').click()");
-    say(await until("document.querySelector('#keyerr').textContent.includes('refused the key')"), "a wrong key is refused with a plain message");
-    say(await until("document.querySelector('#keystate').textContent === 'No key saved.'"), "…and it is not kept");
-    await type("#keyin", "rpa_GOOD_KEY_1234567890"); await run("document.querySelector('#keysave').click()");
-    say(await until("document.querySelector('#keystate').textContent.includes('7890') && document.querySelector('#keystate').textContent.includes('works')"), "a good key is saved and tested", await run("document.querySelector('#keystate').textContent"));
-    say(!(await run("document.documentElement.innerHTML")).includes("GOOD_KEY_1234567890"), "the key is never written into the page");
-    say(await run("document.querySelector('#keyin').value") === "", "the key box is emptied after saving");
-    say(fs.readdirSync(${JSON.stringify(join(home, "data"))}).includes("runpod.key") && !(fs.existsSync(${JSON.stringify(join(home, "data", "xugc.json"))}) && fs.readFileSync(${JSON.stringify(join(home, "data", "xugc.json"))}, "utf8").includes("GOOD_KEY")), "the key is in its own file, not in the app's state");
-    await run("document.querySelector('#sweep').click()");
-    say(await until("document.querySelector('#sweepnote').textContent.includes('Stopped 2 GPUs')"), "Stop-the-meter button works and reports what it stopped");
+    await type("#keyin", "rpa_BAD_KEY_0000000000"); await click("#keysave");
+    say(await until("document.querySelector('#keyerr').textContent.includes('refused the key')"), "a wrong RunPod key is refused");
+    say(await until("document.querySelector('#keystate').textContent === 'No key saved.'"), "…and not kept");
+    await type("#keyin", "rpa_GOOD_KEY_1234567890"); await click("#keysave");
+    say(await until("document.querySelector('#keystate').textContent.includes('7890') && document.querySelector('#keystate').textContent.includes('works')"), "a good RunPod key is saved and tested");
+    await type("#hfin", "hf_GOODTOKEN_9876543210"); await click("#hfsave");
+    say(await until("document.querySelector('#hfstate').textContent.includes('3210')"), "the Hugging Face token is saved");
+    const html = await run("document.documentElement.innerHTML");
+    say(!html.includes("GOOD_KEY_1234567890") && !html.includes("GOODTOKEN_9876543210"), "neither key is ever written into the page");
+    const files = fs.readdirSync(${JSON.stringify(join(home, "data"))});
+    say(files.includes("runpod.key") && files.includes("hf.key"), "each key is in its own file");
+    say(!(fs.existsSync(${JSON.stringify(join(home, "data", "xugc.json"))}) && /GOOD_KEY|GOODTOKEN/.test(fs.readFileSync(${JSON.stringify(join(home, "data", "xugc.json"))}, "utf8"))), "and neither is in the app's state file");
+    await click("#sweep");
+    say(await until("document.querySelector('#sweepnote').textContent.includes('Stopped 2 GPUs')"), "Stop-the-meter reports what it stopped");
     await shot("2-settings");
 
-    // Create for real.
+    // Create
     await view("create");
-    say(await until("document.querySelector('#modechip').textContent.includes('RUNPOD')"), "the header now shows RUNPOD and today's spend");
-    const dataUrl = await run("(function(){const c=document.createElement('canvas');c.width=600;c.height=900;const g=c.getContext('2d');const gr=g.createLinearGradient(0,0,600,900);gr.addColorStop(0,'#2a3a55');gr.addColorStop(1,'#a06a3a');g.fillStyle=gr;g.fillRect(0,0,600,900);g.fillStyle='#e8c9a0';g.beginPath();g.arc(300,330,120,0,7);g.fill();g.fillStyle='#111';g.fillRect(230,560,140,120);return c.toDataURL('image/png')})()");
-    await run("window.__useFrame({ name: 'maya-with-projector.png', dataUrl: " + JSON.stringify(dataUrl) + " })");
-    say(await until("document.querySelector('#frame').classList.contains('has') && document.querySelector('#framename').textContent === 'maya-with-projector.png'"), "the picture shows as the start frame");
+    say(await until("document.querySelector('#modechip').textContent.includes('RUNPOD') && document.querySelector('#nokey').style.display === 'none'"), "with both keys the warning is gone and the header shows RUNPOD");
+    await type("#purl", "https://blackreaper.us/products/haunted-projector"); await click("#pfetch");
+    say(await until("document.querySelector('#pfound').textContent.includes('Haunted Projector') && document.querySelectorAll('#pphotos img').length === 2"), "a product link brings in the name and the photos", await run("document.querySelector('#pfound').textContent"));
+    await run("document.querySelector('#avmode [data-m=pick]').click()");
+    say(await until("document.querySelector('#avpick').style.display === 'flex' && document.querySelectorAll('#avpick button').length === 5"), "'Pick one' shows five people");
+    await run("[...document.querySelectorAll('#avpick button')].find((b) => b.textContent === 'Jordan').click()");
+    await run("document.querySelector('#secs button:nth-child(2)').click()");
+    await run("document.querySelector('#quals button:nth-child(1)').click()");
+    say(await until("document.querySelector('#secs button.on').textContent === '10s' && document.querySelector('#quals button.on').textContent.includes('Draft')"), "length and quality buttons select");
+    const est1 = await run("document.querySelector('#goest').textContent");
+    await run("document.querySelector('#secs button:nth-child(4)').click(); document.querySelector('#quals button:nth-child(3)').click()");
+    await until("document.querySelector('#goest').textContent !== " + JSON.stringify(est1));
+    say((await run("document.querySelector('#goest').textContent")) !== est1, "the price on the button changes with length and quality", est1 + " -> " + await run("document.querySelector('#goest').textContent"));
+    await run("document.querySelector('#secs button:nth-child(2)').click(); document.querySelector('#quals button:nth-child(1)').click()");
+    await until("document.querySelector('#secs button.on').textContent === '10s'");
     await type("#script", "She plugs the projector in, points it at her front window, and a ghost appears on the glass.");
-    await run("document.querySelector('#looks .pill:nth-child(3)').click()");
     await shot("3-ready");
-    await run("document.querySelector('#go').click()");
-    say(await until("document.querySelector('#prog').classList.contains('on')"), "pressing Generate shows the eye overlay");
-    await new Promise((r) => setTimeout(r, 1700));
-    say(await run("document.querySelector('#ptime').textContent") !== "0:00", "the timer is running", await run("document.querySelector('#ptime').textContent"));
-    say(await run("Number(document.querySelector('#pcost').textContent.slice(1))") > 0, "the live cost is going up", await run("document.querySelector('#pcost').textContent"));
-    say((await run("document.querySelector('#pstage').textContent")).length > 3 && (await run("document.querySelector('#plog').textContent")).includes("loss"), "the stage and the GPU's own log line are shown");
-    say(await run("document.querySelector('#go').disabled"), "the Generate button is locked while a job runs");
+    await click("#go");
+    say(await until("document.querySelector('#render').classList.contains('on')"), "pressing Generate opens the render screen");
+    await new Promise((r) => setTimeout(r, 1800));
+    say(await run("document.querySelector('#ht').textContent") !== "0:00", "the timer is running", await run("document.querySelector('#ht').textContent"));
+    say(await run("Number(document.querySelector('#hc').textContent.replace(/[^0-9.]/g,'').slice(0,4))") > 0, "the live cost is going up", await run("document.querySelector('#hc').textContent"));
+    say((await run("document.querySelector('#hud').textContent")).includes("> "), "the code lines of what the GPU is doing stream by", await run("document.querySelector('#hud').textContent.slice(0,80)"));
+    say(await run("document.querySelector('#go').disabled"), "Generate is locked while a job runs");
+    say(await run("(function(){const c=document.querySelector('#cv'),g=c.getContext('2d');const d=g.getImageData(0,0,c.width,c.height).data;let n=0;for(let i=0;i<d.length;i+=4*97)if(d[i+3]>40)n++;return n})()") > 5, "stars and code are really being drawn on the canvas");
     await shot("4-working");
-    say(await until("document.querySelectorAll('#takes .take').length === 1 && !document.querySelector('#prog').classList.contains('on')", 12000), "the finished video appears in the takes column");
-    say(await until("document.querySelector('#pv').src.endsWith('.mp4') && document.querySelector('#pv').readyState >= 1 && document.querySelector('#pv').style.display === 'block'", 8000), "the video element has really loaded the clip", await run("document.querySelector('#pv').readyState + ' ' + document.querySelector('#pv').src.slice(-26)"));
-    say((await run("document.querySelector('#ptag').textContent")).includes("$0.81"), "the take shows what it really cost");
+    say(await until("document.querySelectorAll('#takes .take').length === 1 && !document.querySelector('#render').classList.contains('on')", 12000), "the finished video appears in the takes column");
+    say(await until("document.querySelector('#pv').src.endsWith('.mp4') && document.querySelector('#pv').readyState >= 1 && document.querySelector('#pv').style.display === 'block'", 8000), "the video element has really loaded the clip");
+    say((await run("document.querySelector('#ptag').textContent")).includes("$0.81") && (await run("document.querySelector('#hint').textContent")).includes("with sound"), "the take shows what it cost and that it has sound");
     await shot("5-generated");
     const g1 = log.find((l) => l.run === "generate.sh");
-    say(g1 && g1.env.PROMPT.includes("ghost appears on the glass") && g1.env.PROMPT.includes("demonstrates the product") && g1.inputs.join() === "first.png", "the GPU was sent his words, the Demo look, and only the start frame");
+    say(g1 && g1.env.PROMPT.includes("Jordan") && g1.env.PROMPT.includes("Haunted Projector") && g1.env.PROMPT.includes("ghost appears on the glass") && g1.env.PROMPT.includes("iPhone") && g1.env.FRAMES === "241" && g1.env.WIDTH === "512", "the GPU got person + product + his words + the Style Bible, 10s = 241 frames, draft size");
     say((await run("document.querySelector('#modechip').textContent")).includes("$0.81"), "today's spending moved by the real cost");
 
-    // 👍 -> training list
+    // Train: the Style Bible
     await run("document.querySelector('#vup').click()");
     say(await until("document.querySelector('#vup').classList.contains('on')"), "👍 lights up");
-    await run("window.xugc.addClipPaths([" + JSON.stringify(${JSON.stringify(fixture)}) + "]).then(refresh)");
     await view("train");
-    say(await until("document.querySelector('#n-clips').textContent === '2'"), "the 👍 take and the added video are both training videos");
-    say(await run("document.querySelector('#train-go').disabled"), "full Train is locked until the test run has been done");
+    say(await until("document.querySelectorAll('#files .file').length === 5"), "the five starter Style Bible files are listed");
+    say(await until("document.querySelector('#n-clips').textContent === '1' && document.querySelector('#n-appr').textContent === '1'"), "the 👍 take is in the training pile");
+    await run("document.querySelectorAll('#files .file .tg')[2].click()");
+    say(await until("document.querySelectorAll('#files .tg.off').length === 1"), "a style file can be switched off");
+    await run("document.querySelectorAll('#files .file')[0].click()");
+    say(await until("document.querySelector('#editor').value.includes('## Prompt') && document.querySelector('#editor').value.includes('handheld')"), "clicking a file opens its text to read and edit");
+    await type("#editor", "# calm-voice.md\\nQuiet delivery.\\n\\n## Prompt\\n- She speaks softly, almost whispering\\n");
+    await run("document.querySelector('#stylenew').click()");
+    await type("#editor", "# calm-voice.md\\nQuiet delivery.\\n\\n## Prompt\\n- She speaks softly, almost whispering\\n"); await click("#edsave");
+    say(await until("document.querySelectorAll('#files .file').length === 6 && document.querySelector('#files').textContent.includes('calm-voice.md')"), "a new style file can be written and saved");
     await shot("6-train");
-    await run("document.querySelector('#test-go').click()");
-    say(await until("document.querySelector('#tprog').style.display === 'flex'"), "the test run shows the eye and progress");
-    await shot("7-training");
-    say(await until("document.querySelector('#tsample').style.display === 'block' && document.querySelector('#tsampletext').textContent.includes('projector')", 14000), "after the test run, the captions the GPU wrote are shown to read");
-    say(await until("!document.querySelector('#train-go').disabled"), "full Train unlocks after the test run");
-    say(await until("document.querySelectorAll('#tmodels .model').length === 2"), "the test model is in the list");
-    await run("document.querySelector('#train-go').click()");
-    say(await until("document.querySelectorAll('#tmodels .model').length === 3", 14000), "the real training finished and a third model exists");
-    const tr = log.filter((l) => l.run === "train.sh");
-    say(tr.length === 2 && tr[0].env.DRY === "1" && tr[1].env.DRY === "0", "the GPU was run twice: test first, then the real one");
     await view("create");
-    say(await until("document.querySelectorAll('#models .model').length === 3 && document.querySelector('#models .model.on').textContent.includes('UGC')"), "the new model is selectable and selected in Create");
+    say(await until("document.querySelectorAll('#stylchips span').length === 6 && document.querySelectorAll('#stylchips span.off').length === 1"), "Create shows which style files are on and off");
 
-    // Cancel: Stop hands the GPU back and nothing is saved.
-    await run("globalThis.__noop = 1"); 
+    // MCP
+    await view("mcp");
+    say((await run("document.querySelector('#mcpurl').textContent")).includes("http://127.0.0.1"), "the connector URL is shown for copying");
+    say(await until("document.querySelector('#mcpstate').textContent.includes('Connected')", 8000), "the app is connected to the line", await run("document.querySelector('#mcpstate').textContent"));
+    say(W.statusPosts > 2 && W.status.app === "XUGC" && W.status.keys.runpod === true && !JSON.stringify(W.status).includes("GOOD_KEY") && !JSON.stringify(W.status).includes("GOODTOKEN"), "the app reports its status to Claude, never a key", W.statusPosts + " posts");
+    say(W.status.takes.length === 1 && W.status.style.length === 6 && W.status.limits.perDay === 20, "the status shows takes, style files and the limits");
+    // Claude asks for a video
+    W.claudeAt = Date.now();
+    W.orders.push({ id: "o1", type: "generate", at: Date.now(), scene: "He holds the projector up to the window and a ghost appears", seconds: 5, quality: "draft", look: "Selfie", avatar: "leo", productUrl: "https://blackreaper.us/products/haunted-projector" });
+    say(await untilJs(() => W.results.some((r) => r.id === "o1" && r.state === "done"), 20000), "an order from Claude to make a video runs through the real engine and reports done", JSON.stringify(W.results.filter((r) => r.id === "o1").map((r) => r.state + (r.cost ? " $" + r.cost : ""))));
+    const g2 = log.filter((l) => l.run === "generate.sh")[1];
+    say(g2 && g2.env.PROMPT.includes("Leo") && g2.env.FRAMES === "121", "…using the same prompt builder and frame counts as the screen");
+    W.orders.push({ id: "o2", type: "style_write", at: Date.now(), name: "from-claude.md", content: "# from-claude.md\\n## Prompt\\n- Test line from Claude\\n" });
+    say(await untilJs(() => W.results.some((r) => r.id === "o2" && r.state === "done")), "Claude can write a Style Bible file");
+    W.orders.push({ id: "o3", type: "style_write", at: Date.now(), name: "../../evil.md", content: "x" });
+    say(await untilJs(() => W.results.some((r) => r.id === "o3" && r.state === "error")), "…but a path-escaping name is refused by the app too");
+    const t1 = JSON.parse(fs.readFileSync(${JSON.stringify(join(home, "data", "xugc.json"))}, "utf8")).takes[0].id;
+    W.orders.push({ id: "o5", type: "set_caps", at: Date.now(), capJob: 9999 });
+    say(await untilJs(() => W.results.some((r) => r.id === "o5" && r.state === "refused")), "an order that tries to change anything not on the list (like spending limits) is refused", JSON.stringify(W.results.filter((r) => r.id === "o5")));
+    say(JSON.parse(fs.readFileSync(${JSON.stringify(join(home, "data", "xugc.json"))}, "utf8")).settings.capJob === 5, "…and the limit is unchanged");
+    W.orders.push({ id: "o6", type: "share", at: Date.now(), takeId: t1 });
+    say(await untilJs(() => W.uploads.length === 1), "Claude can ask for a finished video to be uploaded for review", JSON.stringify(W.uploads));
+    say(W.uploads[0] && W.uploads[0].name === t1 + ".mp4" && W.uploads[0].bytes > 10000, "…and the right file went up whole");
+    await view("mcp");
+    say((await run("document.querySelector('#mcplog').textContent")).includes("Claude asked: generate"), "the MCP screen lists what Claude asked for");
+    await shot("7-mcp");
+    // switched off
+    await click("#mcp-off");
+    say(await until("document.querySelector('#mcpstate').textContent.includes('Off')"), "switching Claude control off shows Off");
+    const n0 = W.statusPosts; await new Promise((r) => setTimeout(r, 900));
+    say(W.statusPosts === n0, "…and the app stops talking to the line at all");
+    await click("#mcp-on");
+    say(await until("document.querySelector('#mcpstate').textContent.includes('Connected')", 8000), "…and switching it on again reconnects");
+
+    // Cancel
+    await view("create");
     const before = await run("document.querySelectorAll('#takes .take').length");
-    await run("document.querySelector('#go').click()");
-    await until("document.querySelector('#prog').classList.contains('on')");
+    await click("#go");
+    await until("document.querySelector('#render').classList.contains('on')");
     await new Promise((r) => setTimeout(r, 700));
-    await run("document.querySelector('#stop').click()");
+    await click("#stop");
     say(await until("document.querySelector('#err').classList.contains('on') && document.querySelector('#err').textContent.includes('Cancelled')", 8000), "Stop cancels the job and says what it cost", await run("document.querySelector('#err').textContent"));
     say(await run("document.querySelectorAll('#takes .take').length") === before, "…and no video was added");
-    say(!(await run("document.querySelector('#go').disabled")), "…and Generate works again");
 
-    // Caps.
+    // Caps, on screen and from Claude
     await view("settings");
     await type("#cap-job", "0.5", "change");
     await new Promise((r) => setTimeout(r, 250));
     await view("create");
-    await run("document.querySelector('#go').click()");
+    await click("#go");
     say(await until("document.querySelector('#err').textContent.includes('over your per-video limit')"), "over the per-video limit: refused on screen, before any GPU", await run("document.querySelector('#err').textContent"));
-    say(log.filter((l) => l.run === "generate.sh").length === 2, "…and the GPU was never started for it");
+    const runsBefore = log.filter((l) => l.run).length;
+    W.orders.push({ id: "o7", type: "generate", at: Date.now(), scene: "A long scene description here", seconds: 20, quality: "full" });
+    say(await untilJs(() => W.results.some((r) => r.id === "o7" && r.state === "error" && /per-video limit/.test(r.error || ""))), "Claude's video request is refused by the same limit");
+    say(log.filter((l) => l.run).length === runsBefore, "…and no GPU was started for either");
     await shot("8-cap");
 
     say(errors.length === 0, "no errors in the page console", errors.join(" | ").slice(0, 300));
