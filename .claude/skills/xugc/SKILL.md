@@ -78,3 +78,11 @@ Written into the app as `assets/style/realism-rules.md` (the top part goes into 
 - Training clips come from real creators' public videos, collected by the app on Alex's Mac (Collect box: paste a list, press one button; download, cut to 3-6 s, delete originals, keep clips only on his Mac, keep a source list). Alex decided this over my objection; clips never go into the app bundle, worker or R2, only the LoRA leaves the Mac.
 - ChatGPT/Codex builds the link list (message + pipe format are in the session; format: url | platform | creator | category | place | seconds | sound | what happens).
 - Do not build until Alex says build.
+
+## Build 8 (2026-10-01): Collect + Train + Real Life switch
+- Train tab: paste links (or "Load the starter list", train/links-001.txt, 59 TikTok links) -> Collect (collect.js: yt-dlp + ffmpeg bundled in Resources/bin; cuts 3-6 s pieces at scene changes, max 8 per video, drops silent pieces, deletes originals; pieces + sources.json stay in the app's data folder `pile/`).
+- Train: Wan 2.2 / Hunyuan 1.5 (both via musubi-tuner) / LTX (ltx-trainer). train/train_lora.sh + caption_clips.py (Qwen2.5-VL picture + faster-whisper speech + sound hint). Dry run = 3 pieces; full = up to 160 pieces round-robin over videos. Approve screen with price before any GPU. Result saved in `loras/` and listed as "XUGC Real Life".
+- Create tab: engine switch (ltx, ltx_full, hunyuan, wan) and a Real Life switch (LTX only for now: generate.sh / gen_ltx_full.sh pass `--lora`; Hunyuan/Wan generation with their musubi LoRA is NOT wired yet).
+- NOT proven on a real GPU: train_lora.sh, caption_clips.py, gen_hunyuan.sh, gen_wan.sh, gen_ltx_full.sh (written from docs; the dry runs and bake-off prove them). The sound step for the silent models (Hunyuan, Wan) is NOT built.
+- To build: download bin/ first (yt-dlp_macos, ffmpeg-darwin-x64 from eugeneware/ffmpeg-static b6.0, linux copies for tests), `npx electron-builder --mac --dir --x64`, `rcodesign sign`, zip, R2 under an unguessable name. bin/ and dist/ are gitignored.
+- Do not pull keys out of old transcripts: the system blocks it. Keys live in the app on his Mac; the bake-off is ordered through the app's MCP (he taps Approve).

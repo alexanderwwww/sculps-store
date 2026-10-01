@@ -36,6 +36,7 @@ class FakeRunPod {
       if (el > 2700 && !globalThis.__hold) break;
       await new Promise((r) => setTimeout(r, 120));
     }
+    if (job.script === "train_lora.sh") { fs.mkdirSync(job.destDir, { recursive: true }); fs.writeFileSync(path.join(job.destDir, "lora.safetensors"), "L".repeat(3000)); fs.writeFileSync(path.join(job.destDir, "caption.log"), "c001.mp4 -> xugciphone. [VISUAL] a woman shows a bottle\\n"); job.onProgress({ stage: "GPU handed back", pct: 100, costUsd: 0.9, minutes: 3, gone: true }); return { saved: ["lora.safetensors"], log: "", costUsd: 0.9, minutes: 3, hourly: 1.6 }; }
     fs.mkdirSync(job.destDir, { recursive: true });
     fs.copyFileSync(${JSON.stringify(fixture)}, path.join(job.destDir, "clip.mp4"));
     fs.writeFileSync(path.join(job.destDir, "info.txt"), "codec_type=video\\ncodec_type=audio\\n");
@@ -60,8 +61,11 @@ app.whenReady().then(async () => {
   try {
     await new Promise((r) => worker.listen(0, r));
     const IMG = (n) => "http://127.0.0.1:" + worker.address().port + "/img" + n + ".jpg";
+    const stubSrc = [];
+    const collectorStub = { pile: "/tmp/xugc-pile", count() { return { videos: stubSrc.length, pieces: stubSrc.reduce((n, x) => n + x.pieces.length, 0) }; }, sources() { return stubSrc; }, remove() { return 0; },
+      async all(items, onP) { let n = 0; for (let i = 0; i < Math.min(4, items.length); i++) { onP({ n: i + 1, of: items.length, id: items[i].id, creator: items[i].creator, state: "working" }); await new Promise((r) => setTimeout(r, 80)); stubSrc.push({ id: items[i].id, creator: items[i].creator, place: items[i].place, category: items[i].category, sound: items[i].sound, pieces: [{ file: "01.mp4", db: -20 }, { file: "02.mp4", db: -22 }, { file: "03.mp4", db: -19 }] }); n += 3; onP({ n: i + 1, of: items.length, id: items[i].id, creator: items[i].creator, state: "ok", pieces: 3, totals: this.count() }); } return { done: 4, skipped: 0, failed: [], pieces: n }; } };
     const prodStub = async (url) => ({ url, title: "Haunted Projector", desc: "Plug-in ghost projector for windows", price: "79.99", currency: "USD", images: [IMG(1), IMG(2), IMG(3)] });
-    const sys = setup({ dir: ${JSON.stringify(join(home, "data"))}, makeRunPod: (o) => new FakeRunPod(o), sweepOnStart: false, bridgeBase: "http://127.0.0.1:" + worker.address().port, bridgeMs: 250, productFetch: prodStub });
+    const sys = setup({ dir: ${JSON.stringify(join(home, "data"))}, makeRunPod: (o) => new FakeRunPod(o), sweepOnStart: false, bridgeBase: "http://127.0.0.1:" + worker.address().port, bridgeMs: 250, productFetch: prodStub, collector: collectorStub });
     const win = new BrowserWindow({ width: 1280, height: 820, show: true, backgroundColor: "#07080A", webPreferences: { preload: path.join(${JSON.stringify(here)}, "preload.js"), contextIsolation: true, nodeIntegration: false, sandbox: false } });
     const errors = [];
     win.webContents.on("console-message", (_e, level, msg) => { if (level >= 3) errors.push(msg); });
@@ -258,6 +262,28 @@ app.whenReady().then(async () => {
     say(log.filter((l) => l.run).length === runsBefore, "…and no GPU was started for either");
     await shot("8-cap");
 
+    await view("train");
+    await click("#linkstarter");
+    say((await run("document.querySelector('#linkbox').value")).includes("tiktok.com/@itsmodernmillie") && (await run("document.querySelector('#linkbox').value.split('\\\\n').filter(Boolean).length")) >= 59, "Load the starter list puts ChatGPT's 59 links in the box");
+    await click("#collectgo");
+    say(await until("document.querySelector('#colstat').textContent.includes('Finished. 4 new videos, 12 new pieces')", 8000), "Collect runs by itself and reports what it got", await run("document.querySelector('#colstat').textContent"));
+    say(await until("document.querySelector('#collectgo').style.display !== 'none'", 3000), "…and the Collect button comes back when it is done");
+    await shot("9-train-reallife");
+    say((await run("document.querySelector('#trdryest').textContent")).includes("$") && (await run("document.querySelector('#trfullest').textContent")).includes("$"), "both training buttons show their price", await run("document.querySelector('#trdryest').textContent + ' / ' + document.querySelector('#trfullest').textContent"));
+    await click("#trdry");
+    say(await until("document.querySelector('#trmodal').style.display === 'flex' && document.querySelector('#trmt').textContent.includes('Dry run Wan 2.2')", 4000), "a dry run asks for Approve first, with the price and what it does", await run("document.querySelector('#trmb').textContent"));
+    const nrun0 = log.filter((l) => l.run === "train_lora.sh").length;
+    await click("#trmno"); await new Promise((r) => setTimeout(r, 300));
+    say(log.filter((l) => l.run === "train_lora.sh").length === nrun0, "Cancel on the approval: no GPU was rented");
+    await click("#trdry"); await until("document.querySelector('#trmodal').style.display === 'flex'", 3000); await click("#trmyes");
+    say(await until("document.querySelector('#trstat').textContent.startsWith('Done. XUGC Real Life (Wan 2.2)')", 20000), "after Approve the training runs and says Done", await run("document.querySelector('#trstat').textContent"));
+    const tl = log.filter((l) => l.run === "train_lora.sh").at(-1);
+    say(tl && tl.env.MODEL === "wan" && tl.env.DRY === "1" && tl.env.TRIGGER === "xugciphone", "the GPU got the right model, dry flag and trigger word");
+    say((await run("document.querySelector('#lorals').textContent")).includes("XUGC Real Life · wan · dry run"), "the trained file is listed as XUGC Real Life");
+    await view("create");
+    say((await run("document.querySelectorAll('#engines button').length")) === 4, "Create has an engine switch with four engines");
+    await run("document.querySelectorAll('#reallife button')[1].click()");
+    say((await run("document.querySelectorAll('#reallife button')[1].disabled")) === true, "Real Life stays off for an engine that has no trained file yet (only Wan was trained, Create runs LTX)");
     say(errors.length === 0, "no errors in the page console", errors.join(" | ").slice(0, 300));
   } catch (e) { say(false, "the probe crashed", String(e && e.stack || e)); }
   console.log("@@RESULT@@" + JSON.stringify(out));

@@ -20,6 +20,7 @@ SIZE=""; grep -q -- "--height" "$OUT/help.txt" && SIZE="--height $HEIGHT --width
 IMG=""
 if [ -n "${REFS:-}" ]; then IFS=',' read -ra R_ <<< "$REFS"
   for r_ in "${R_[@]}"; do IFS=':' read -r f_ i_ st_ <<< "$r_"; [ -f "$R/in/$f_" ] && IMG="$IMG --image $R/in/$f_ $i_ $st_"; done; fi
+LORAARG=""; [ "${LORA:-0}" = "1" ] && [ -f "$R/in/lora.safetensors" ] && LORAARG="--lora $R/in/lora.safetensors 1.0"
 cd /workspace/LTX-2
 echo "== $(date -u +%T) making the video"
 uv run python -m ltx_pipelines.ti2vid_two_stages \
@@ -29,7 +30,7 @@ uv run python -m ltx_pipelines.ti2vid_two_stages \
   --audio-vae-path "$M/vae/ltx-2.5-audio-vae-bf16.safetensors" \
   --spatial-upsampler-path "$M/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors" \
   --distilled-lora "$M/loras/ltx-2.5-22b-distilled-lora-450-bf16.safetensors" \
-  --guidance-scale 7.5 --num-frames "$FRAMES" --seed "$SEED" $SIZE $IMG --quantization fp8-cast \
+  --guidance-scale 7.5 --num-frames "$FRAMES" --seed "$SEED" $SIZE $IMG $LORAARG --quantization fp8-cast \
   --output-path "$OUT/clip.mp4" --prompt "$PROMPT"
 ffprobe -v error -show_entries stream=codec_type,width,height,duration -of default=nw=1 "$OUT/clip.mp4" > "$OUT/info.txt" 2>&1 || true
 cat "$OUT/info.txt"; echo "== $(date -u +%T) done"

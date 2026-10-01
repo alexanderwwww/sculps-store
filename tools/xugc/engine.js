@@ -28,6 +28,13 @@ function estimateGenerate({ seconds = 15, quality = "hd", volume = false } = {})
   return { usd: r2((minutes / 60) * WORST_HOURLY), minutes };
 }
 
+// Training: minutes on an H100, a GUESS until the first dry run measures them. "dry" = 3 clips, a few steps: proves the pipeline.
+const TRAIN_MIN = { ltx: 150, hunyuan: 120, wan: 150 }, DRY_MIN = 45;
+function estimateTrain({ model = "wan", dry = true, volume = false } = {}) {
+  const minutes = Math.ceil((dry ? DRY_MIN : TRAIN_MIN[model] || 150) + (volume ? 0 : 15));
+  return { usd: r2((minutes / 60) * WORST_HOURLY), minutes };
+}
+
 /** Why a job may not start, or null. Pure: easy to test, impossible to forget. */
 function checkCaps(settings, spent, usd) {
   if (usd > settings.capJob) return `This video is estimated at up to $${usd.toFixed(2)}, over your per-video limit of $${settings.capJob.toFixed(2)}. Raise the limit in Settings if you want it.`;
@@ -103,9 +110,12 @@ class Engine {
         const strength = Number.isFinite(refs[k].strength) ? Math.min(1, Math.max(0.1, refs[k].strength)) : k === 0 ? 1.0 : 0.7;
         refEnv.push(`${name}:${idx}:${strength}`);
       }
+      // XUGC Real Life: the trained LoRA rides along (LTX engines only for now) and its trigger word leads the prompt
+      let useLora = null;
+      if (job.lora && /^ltx/.test(job.engine || "ltx")) { useLora = (st.loras || []).find((l) => l.id === job.lora && l.model === "ltx" && fs.existsSync(l.file)); if (useLora) inputs["lora.safetensors"] = useLora.file; }
       const r = await rp.run({
         label: "gen", script: SCRIPTS[job.engine] || "generate.sh", inputs, extraScripts: (job.captions || []).length ? ["burn_captions.py"] : [],
-        env: { ...(refEnv.length ? { REFS: refEnv.join(",") } : {}), ...((job.captions || []).length ? { CAPTIONS: JSON.stringify(job.captions) } : {}), PROMPT: prompt, HF_TOKEN: hf || "", FRAMES: String(SECONDS[seconds]), WIDTH: String(q.w), HEIGHT: String(q.h), SEED: String(Math.floor(Math.random() * 1e9)) },
+        env: { ...(refEnv.length ? { REFS: refEnv.join(",") } : {}), ...((job.captions || []).length ? { CAPTIONS: JSON.stringify(job.captions) } : {}), PROMPT: useLora ? "xugciphone. " + prompt : prompt, ...(useLora ? { LORA: "1" } : {}), HF_TOKEN: hf || "", FRAMES: String(SECONDS[seconds]), WIDTH: String(q.w), HEIGHT: String(q.h), SEED: String(Math.floor(Math.random() * 1e9)) },
         outputs: ["clip.mp4", "info.txt", "help.txt"], required: ["clip.mp4"], destDir: dest,
         capUsd: Math.min(st.settings.capJob, st.settings.capDay - used), maxMinutes: job.engine && job.engine !== "ltx" ? 45 : est.minutes * 2, signal: this.job.signal, onProgress,
       });
@@ -117,6 +127,48 @@ class Engine {
     } catch (e) { if (spent) e.costUsd = spent; throw e; }
     finally { this.addSpend(spent); this.job = null; }
   }
+  /**
+   * Train one "XUGC Real Life" LoRA from the pile. Same money rules: day cap checked first, GPU deleted at the end, whatever it cost is counted.
+   * @param {{model: "ltx"|"hunyuan"|"wan", dry?: boolean, pieces: {file: string, meta: object}[]}} job
+   */
+  async train(job, emit) {
+    const st = this.store.read();
+    if (this.job) { const e = new Error("A GPU job is already running. Wait for it, or press Stop."); e.code = "busy"; throw e; }
+    const model = job.model;
+    if (!TRAIN_MIN[model]) throw new Error("Pick a model to train: ltx, hunyuan or wan.");
+    const pieces = (job.pieces || []).slice(0, job.dry ? 3 : 160);
+    if (pieces.length < 3) throw new Error("The training pile has fewer than 3 pieces. Press Collect first.");
+    const hf = this.hf.get();
+    if (model === "ltx" && !hf) { const e = new Error("Paste your Hugging Face token in Settings first (LTX needs it)."); e.code = "nohf"; throw e; }
+    const est = estimateTrain({ model, dry: !!job.dry, volume: !!st.settings.volumeId });
+    const used = st.spent.day === today() ? st.spent.usd : 0;
+    if (used + est.usd > st.settings.capDay) { const e = new Error(`Today you have used $${used.toFixed(2)} of your $${st.settings.capDay.toFixed(2)} daily limit. This training is estimated at up to $${est.usd.toFixed(2)}.`); e.code = "cap"; throw e; }
+    const rp = this.rp();
+    const id = `lora-${model}-${job.dry ? "dry-" : ""}${Date.now()}`;
+    this.job = { kind: "train", signal: { cancelled: false } };
+    let spent = 0;
+    const onProgress = (p) => { spent = p.costUsd || spent; emit && emit({ id, stage: p.stage, pct: p.gone !== undefined ? 100 : 5, costUsd: p.costUsd, minutes: p.minutes, log: p.log }); };
+    try {
+      const inputs = {};
+      pieces.forEach((p, i) => { const n = "c" + String(i + 1).padStart(3, "0"); inputs[n + ".mp4"] = p.file; inputs[n + ".json"] = Buffer.from(JSON.stringify(p.meta || {})); });
+      const dest = path.join(this.dir, "work", id);
+      const r = await rp.run({
+        label: "train", script: "train_lora.sh", inputs, extraScripts: ["caption_clips.py"],
+        env: { MODEL: model, DRY: job.dry ? "1" : "0", TRIGGER: "xugciphone", ...(hf ? { HF_TOKEN: hf } : {}) },
+        outputs: ["lora.safetensors", "train.log", "caption.log", "help.txt", "layout.txt"], required: ["lora.safetensors"], destDir: dest,
+        capUsd: Math.min(est.usd * 1.3, st.settings.capDay - used), maxMinutes: est.minutes * 2, signal: this.job.signal, onProgress,
+      });
+      fs.mkdirSync(path.join(this.dir, "loras"), { recursive: true });
+      const file = path.join(this.dir, "loras", id + ".safetensors");
+      fs.copyFileSync(path.join(dest, "lora.safetensors"), file);
+      let log = ""; try { log = fs.readFileSync(path.join(dest, "caption.log"), "utf8").split("\n").slice(0, 3).join("\n"); } catch {}
+      fs.rmSync(dest, { recursive: true, force: true });
+      const entry = { id, model, dry: !!job.dry, at: Date.now(), clips: pieces.length, cost: r2(r.costUsd), file, name: "XUGC Real Life" };
+      this.store.update((s) => { s.loras = [...(s.loras || []), entry]; });
+      return { ...entry, sample: log };
+    } catch (e) { if (spent) e.costUsd = spent; throw e; }
+    finally { this.addSpend(spent); this.job = null; }
+  }
 }
 
-module.exports = { Engine, estimateGenerate, checkCaps, pctFor, today, RENDER_MIN };
+module.exports = { Engine, estimateTrain, estimateGenerate, checkCaps, pctFor, today, RENDER_MIN };

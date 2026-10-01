@@ -1,7 +1,7 @@
 {
   "name": "xugc",
   "productName": "XUGC",
-  "version": "7.0.0",
+  "version": "8.0.0",
   "private": true,
   "type": "commonjs",
   "description": "Your own UGC video studio: a start frame + what happens, made on rented GPUs you control.",
@@ -30,7 +30,9 @@
       "renderer/**",
       "assets/**",
       "train/*.py",
-      "train/*.sh"
+      "train/*.sh",
+      "collect.js",
+      "train/*.txt"
     ],
     "mac": {
       "category": "public.app-category.video",
@@ -43,6 +45,16 @@
           ]
         }
       ]
-    }
+    },
+    "extraResources": [
+      {
+        "from": "bin/ffmpeg-darwin-x64",
+        "to": "bin/ffmpeg-darwin-x64"
+      },
+      {
+        "from": "bin/yt-dlp_macos",
+        "to": "bin/yt-dlp_macos"
+      }
+    ]
   }
 }

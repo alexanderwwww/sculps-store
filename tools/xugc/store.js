@@ -12,6 +12,7 @@ const DEFAULTS = () => ({
   takes: [],
   dataset: [],
   models: [BASE],
+  loras: [],
 });
 
 class Store {

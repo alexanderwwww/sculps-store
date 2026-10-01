@@ -120,7 +120,63 @@ function renderSettings() {
   $("#hfstate").textContent = META.hfSet ? `Token saved (${META.hfTail}). It stays on this Mac.` : "No token saved.";
 }
 
-function renderAll() { renderChips(); renderCreate(); renderLibrary(); renderTrain(); renderMcp(); renderSettings(); }
+const ENGINES = [["ltx", "XUGC fast"], ["ltx_full", "LTX full"], ["hunyuan", "Hunyuan"], ["wan", "Wan"]];
+const ENG_NOTE = { ltx: "LTX-2.5 fast, with sound", ltx_full: "LTX-2.5 full quality, with sound (slower)", hunyuan: "HunyuanVideo 1.5, silent video", wan: "Wan 2.2, silent video" };
+function renderEngine() {
+  seg($("#engines"), ENGINES, ui.engine || "ltx", (k) => { ui.engine = k; renderEngine(); });
+  $("#engnote").textContent = ENG_NOTE[ui.engine || "ltx"];
+  const have = (S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0], ltx = /^ltx/.test(ui.engine || "ltx");
+  if (!have || !ltx) ui.reallife = false;
+  $("#reallife").querySelectorAll("button").forEach((b) => { b.classList.toggle("on", (b.dataset.v === "1") === !!ui.reallife); b.disabled = !have || !ltx; b.onclick = () => { ui.reallife = b.dataset.v === "1"; renderEngine(); }; });
+  $("#rlnote").textContent = !ltx ? "Real Life works with the LTX engines for now. Hunyuan and Wan get it once their trained file passes its first test." : have ? "Real Life uses your trained file: " + (have.dry ? "dry run" : "full") + ", " + new Date(have.at).toLocaleDateString() + "." : "No trained file yet. Train it in the Train tab.";
+}
+const TR = { model: "wan" };
+async function trainEstimates() {
+  const [d, f] = await Promise.all([window.xugc.trainEstimate(TR.model, true), window.xugc.trainEstimate(TR.model, false)]);
+  $("#trdryest").textContent = "up to $" + d.usd.toFixed(2); $("#trfullest").textContent = "up to $" + f.usd.toFixed(2); TR.d = d; TR.f = f;
+}
+function renderRealLife() {
+  seg($("#trmodels"), [["wan", "Wan 2.2"], ["hunyuan", "Hunyuan 1.5"], ["ltx", "LTX-2.5 (with sound)"]], TR.model, (k) => { TR.model = k; renderRealLife(); });
+  trainEstimates();
+  const n = S && META ? META.pile : { videos: 0, pieces: 0 };
+  if (!ui.collecting) $("#colstat").textContent = ui.lastCollect ? ui.lastCollect : n.pieces ? `${n.videos} videos collected, ${n.pieces} pieces ready to train on.` : "Nothing collected yet. Collect downloads each video on this Mac, cuts it into 3 to 6 second pieces with real sound, and deletes the original.";
+  const L = $("#lorals"); L.innerHTML = "";
+  for (const l of S.loras || []) { const d = document.createElement("div"); d.className = "found"; d.textContent = `XUGC Real Life · ${l.model} · ${l.dry ? "dry run" : "full"} · ${l.clips} pieces · $${l.cost.toFixed(2)} · ${new Date(l.at).toLocaleDateString()}  `; const b = document.createElement("button"); b.className = "btn"; b.textContent = "Delete"; b.onclick = () => window.xugc.loraDelete(l.id).then(refresh); d.appendChild(b); L.appendChild(d); }
+}
+function askTrain(title, body) { return new Promise((res) => { $("#trmt").textContent = title; $("#trmb").textContent = body; $("#trmodal").style.display = "flex"; $("#trmyes").onclick = () => { $("#trmodal").style.display = "none"; res(true); }; $("#trmno").onclick = () => { $("#trmodal").style.display = "none"; res(false); }; }); }
+async function doTrain(dry) {
+  $("#trerr").textContent = ""; const e = dry ? TR.d : TR.f;
+  if (!e.pieces || e.pieces < 3) { $("#trerr").textContent = "The training pile is empty. Press Collect first."; return; }
+  const name = { wan: "Wan 2.2", hunyuan: "Hunyuan 1.5", ltx: "LTX-2.5" }[TR.model];
+  if (!(await askTrain(`${dry ? "Dry run" : "Train"} ${name}?`, `This rents a GPU for about ${e.minutes} minutes and uses ${e.pieces} pieces. It costs at most $${e.usd.toFixed(2)} and the GPU is handed back when it ends. ${dry ? "A dry run only proves the training works." : "The result is a XUGC Real Life file for " + name + "."}`))) return;
+  ui.training = true; $("#trdry").style.display = $("#trfull").style.display = "none"; $("#trstop").style.display = ""; $("#trstat").textContent = "Starting…";
+  const r = await window.xugc.trainStart({ model: TR.model, dry });
+  ui.training = false; $("#trdry").style.display = $("#trfull").style.display = ""; $("#trstop").style.display = "none";
+  if (r.error) { $("#trerr").textContent = r.error + (r.costUsd ? ` (This attempt cost $${r.costUsd.toFixed(2)}.)` : ""); $("#trstat").textContent = ""; await refresh(r); return; }
+  $("#trstat").textContent = `Done. XUGC Real Life (${name}) trained on ${r.lora.clips} pieces for $${r.lora.cost.toFixed(2)}.`; await refresh(r);
+}
+$("#linkstarter").onclick = async () => { $("#linkbox").value = await window.xugc.collectStarter(); };
+$("#collectgo").onclick = async () => {
+  $("#colerr").textContent = ""; const r = await window.xugc.collectRun($("#linkbox").value);
+  if (r.error) { $("#colerr").textContent = r.error; return; }
+  ui.collecting = true; ui.lastCollect = ""; $("#collectgo").style.display = "none"; $("#collectstop").style.display = ""; $("#colbarw").style.display = ""; $("#colstat").textContent = `Starting… ${r.total} links`;
+};
+$("#collectstop").onclick = () => window.xugc.collectStop();
+window.xugc.onCollect((p) => {
+  if (p.state === "finished" || p.state === "error") {
+    ui.collecting = false; $("#collectgo").style.display = ""; $("#collectstop").style.display = "none"; $("#colbarw").style.display = "none";
+    ui.lastCollect = p.state === "error" ? "Stopped: " + p.why : `Finished. ${p.done} new videos, ${p.pieces} new pieces. ${p.skipped} already had, ${p.failed.length} would not download. In the pile now: ${p.totals.videos} videos, ${p.totals.pieces} pieces.`;
+    $("#colstat").textContent = ui.lastCollect;
+    window.xugc.get().then(refresh); return;
+  }
+  $("#colbar").style.width = Math.round((p.n / p.of) * 100) + "%";
+  $("#colstat").textContent = `${p.n} of ${p.of} · ${p.creator || ""} · ${p.state === "failed" ? "skipped (" + p.why + ")" : p.state}` + (p.totals ? ` · pile: ${p.totals.videos} videos, ${p.totals.pieces} pieces` : "");
+});
+$("#trdry").onclick = () => doTrain(true);
+$("#trfull").onclick = () => doTrain(false);
+$("#trstop").onclick = () => window.xugc.cancel();
+window.xugc.onTrain((p) => { if (ui.training) $("#trstat").textContent = `${p.stage} · ${p.minutes || 0} min · $${(p.costUsd || 0).toFixed(2)} so far`; });
+function renderAll() { renderEngine(); renderRealLife(); renderChips(); renderCreate(); renderLibrary(); renderTrain(); renderMcp(); renderSettings(); }
 function setView(v) { ui.view = v; $$(".view").forEach((x) => x.classList.toggle("on", x.id === "v-" + v)); $$("#nav button").forEach((b) => b.classList.toggle("on", b.dataset.view === v)); if (v === "mcp") refresh(); }
 
 /* ---- the render screen: stars streaming past, code pulsing down ---- */
@@ -268,7 +324,7 @@ function beginRender(who) {
   clearInterval(ui.timer); ui.timer = setInterval(() => { $("#ht").textContent = clock(Date.now() - ui.t0); }, 500); renderCreate();
 }
 function endRender() { ui.rendering = false; clearInterval(ui.timer); $("#ptag").style.display = "block"; stopFx(); }
-const specNow = () => ({ scene: $("#script").value.trim(), look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: ui.secs, quality: ui.qual, music: ui.music, refs: ui.refs && ui.refs.length ? ui.refs : undefined });
+const specNow = () => ({ scene: $("#script").value.trim(), look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: ui.secs, quality: ui.qual, music: ui.music, engine: ui.engine || "ltx", lora: ui.reallife ? ((S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0] || {}).id : undefined, refs: ui.refs && ui.refs.length ? ui.refs : undefined });
 $("#showp").onclick = async () => {
   const f = $("#fullp"); if (f.classList.contains("on")) { f.classList.remove("on"); $("#showp").textContent = "Show the full prompt"; return; }
   const r = await window.xugc.preview(specNow()); $("#fulltext").value = r.prompt || r.error || ""; ui.fullEdited = false; f.classList.add("on"); $("#showp").textContent = "Hide the full prompt";

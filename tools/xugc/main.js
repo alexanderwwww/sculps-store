@@ -9,15 +9,16 @@ const path = require("node:path");
 const fs = require("node:fs");
 const { Store } = require("./store.js");
 const { Secrets } = require("./secrets.js");
-const { Engine, estimateGenerate, today } = require("./engine.js");
+const { Engine, estimateGenerate, estimateTrain, today } = require("./engine.js");
 const { Style, compose, parseCaption, LEVELS, LOOKS, AVATARS, QUALITY, SECONDS, NAME } = require("./compose.js");
 const { fetchProduct } = require("./product.js");
 const { Bridge } = require("./bridge.js");
+const { Collector, parseLinks } = require("./collect.js");
 
-const BUILD = 7;
+const BUILD = 8;
 const LATEST_NOTE = "";
 
-function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch }) {
+function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch, collector: collectorIn }) {
   const store = new Store(dir);
   const secrets = new Secrets(dir, safe, "runpod");
   const hf = new Secrets(dir, safe, "hf");
@@ -27,6 +28,11 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
   const style = new Style(path.join(dir, "style"), path.join(__dirname, "assets", "style"));
   const clipsDir = path.join(dir, "clips");
   fs.mkdirSync(clipsDir, { recursive: true });
+  // yt-dlp and ffmpeg ship inside the app (Contents/Resources/bin); tests and the repo use ./bin
+  const binDir = fs.existsSync(path.join(process.resourcesPath || "", "bin")) ? path.join(process.resourcesPath, "bin") : path.join(__dirname, "bin");
+  const mac = process.platform === "darwin";
+  const collector = collectorIn || new Collector({ dir, ffmpeg: path.join(binDir, mac ? "ffmpeg-darwin-x64" : "ffmpeg-linux-x64"), ytdlp: path.join(binDir, mac ? "yt-dlp_macos" : "yt-dlp_linux") });
+  let collecting = null; // {signal, last}
   let progress = null; // the last progress line, for the status board
   let bridge = null;
 
@@ -36,7 +42,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     return {
       state: s, build: BUILD, keySet: !!secrets.get(), keyTail: secrets.tail(), hfSet: !!hf.get(), hfTail: hf.tail(), busy: engine.status(),
       looks: Object.keys(LOOKS), avatars: Object.keys(AVATARS), qualities: Object.fromEntries(Object.entries(QUALITY).map(([k, v]) => [k, v.label])), seconds: Object.keys(SECONDS).map(Number),
-      style: style.list(s.styleOff), levels: LEVELS, usedToday: s.spent.day === today() ? s.spent.usd : 0,
+      style: style.list(s.styleOff), levels: LEVELS, usedToday: s.spent.day === today() ? s.spent.usd : 0, pile: collector.count(), loras: s.loras || [], collecting: collecting ? { last: collecting.last } : null,
       mcp: { on: s.settings.mcpOn, url: bridge ? bridge.url() : new Bridge({ getStatus() {}, onOrder() {} }).url(), connected: !!(bridge && bridge.connected), lastOk: bridge ? bridge.lastOk : 0, claudeSeen: bridge && bridge.mcpSeen ? bridge.mcpSeen.at : 0, log: bridge ? bridge.log : [] },
     };
   };
@@ -67,12 +73,12 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     const est = estimateGenerate({ seconds, quality, volume: !!st.settings.volumeId });
     const asked = Array.isArray(spec.captions) ? spec.captions.map(parseCaption).filter(Boolean) : null;
     const captions = (asked || style.gather(st.styleOff).captions).filter((c) => c.start < seconds).map((c) => ({ ...c, end: Math.min(c.end, seconds) }));
-    return { spec, product, scene, prompt, seconds, quality, captions, refs: refUrls(spec, product), engine: spec.engine, usd: est.usd, minutes: est.minutes };
+    return { spec, product, scene, prompt, seconds, quality, captions, refs: refUrls(spec, product), engine: spec.engine, lora: spec.lora, usd: est.usd, minutes: est.minutes };
   }
   async function render(pr, emit) {
     const spec = pr.spec;
     try {
-      const take = await engine.generate({ prompt: pr.prompt, seconds: pr.seconds, quality: pr.quality, refs: pr.refs, captions: pr.captions, engine: pr.engine, meta: { scene: pr.scene || undefined, look: spec.look || "", avatar: spec.avatar || (spec.avatarText ? "custom" : "broad"), product: pr.product ? pr.product.title : "" } }, (p) => { progress = { ...p, at: Date.now() }; (emit || ((q) => send("job", q)))(p); });
+      const take = await engine.generate({ prompt: pr.prompt, seconds: pr.seconds, quality: pr.quality, refs: pr.refs, captions: pr.captions, engine: pr.engine, lora: pr.lora, meta: { scene: pr.scene || undefined, look: spec.look || "", avatar: spec.avatar || (spec.avatarText ? "custom" : "broad"), product: pr.product ? pr.product.title : "" } }, (p) => { progress = { ...p, at: Date.now() }; (emit || ((q) => send("job", q)))(p); });
       store.update((s) => { s.takes.unshift(take); });
       progress = null; send("job:done", { take, state: store.read() });
       return take;
@@ -166,6 +172,36 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
   });
   ipcMain.handle("dataset:caption", (_e, id, text) => { store.update((s) => { const c = s.dataset.find((x) => x.id === id); if (c) c.caption = String(text).slice(0, 600); }); return view(); });
   ipcMain.handle("dataset:remove", (_e, id) => { store.update((s) => { s.dataset = s.dataset.filter((c) => c.id !== id); }); return view(); });
+  /* ---- Collect + Train: real creators' public videos -> short pieces on this Mac -> a LoRA called "XUGC Real Life" ---- */
+  const starterLinks = () => { try { return fs.readFileSync(path.join(__dirname, "train", "links-001.txt"), "utf8"); } catch { return ""; } };
+  ipcMain.handle("collect:starter", () => starterLinks());
+  ipcMain.handle("collect:run", (e, text) => {
+    if (collecting) return { error: "Collecting is already running." };
+    const items = parseLinks(text || "");
+    if (!items.length) return { error: "No video links found. Paste lines that start with a TikTok or Instagram link." };
+    collecting = { signal: new AbortController(), last: null };
+    const tell = (p) => { collecting && (collecting.last = p); try { e.sender.send("collect", p); } catch {} };
+    collector.all(items, tell, collecting.signal.signal).then((res) => { collecting = null; try { e.sender.send("collect", { state: "finished", ...res, totals: collector.count() }); } catch {} })
+      .catch((err) => { collecting = null; try { e.sender.send("collect", { state: "error", why: err.message }); } catch {} });
+    return { ok: true, total: items.length };
+  });
+  ipcMain.handle("collect:stop", () => { if (collecting) collecting.signal.abort(); return true; });
+  ipcMain.handle("collect:remove", (_e, who) => { const n = collector.remove(String(who)); return { removed: n, ...view() }; });
+  const pieceList = () => {
+    // round-robin over videos so no creator dominates the training
+    const lists = collector.sources().map((x) => x.pieces.map((p) => ({ file: path.join(collector.pile, x.id, p.file), meta: { creator: x.creator, place: x.place, category: x.category, sound: x.sound, db: p.db } })));
+    const out = []; for (let i = 0; lists.some((l) => i < l.length); i++) for (const l of lists) if (i < l.length) out.push(l[i]);
+    return out;
+  };
+  ipcMain.handle("train:estimate", (_e, model, dry) => ({ ...estimateTrain({ model, dry: !!dry, volume: !!store.read().settings.volumeId }), pieces: Math.min(pieceList().length, dry ? 3 : 160) }));
+  ipcMain.handle("train:start", async (e, spec) => {
+    try {
+      const r = await engine.train({ model: spec.model, dry: !!spec.dry, pieces: pieceList() }, (p) => { try { e.sender.send("train", p); } catch {} });
+      return { lora: r, ...view() };
+    } catch (err) { return fail(err); }
+  });
+  ipcMain.handle("lora:delete", (_e, id) => { store.update((s) => { const l = (s.loras || []).find((x) => x.id === id); if (l) { try { fs.rmSync(l.file, { force: true }); } catch {} s.loras = s.loras.filter((x) => x.id !== id); } }); return view(); });
+
   /* ---- the reference ad: a video that went a little viral, used as inspiration only ---- */
   const refDir = path.join(dir, "reference"); fs.mkdirSync(refDir, { recursive: true });
   const readVideo = (p) => { if (!/\.(mp4|mov|m4v|webm)$/i.test(p)) throw new Error("Choose a video file (mp4 or mov)."); const st = fs.statSync(p); if (st.size > 150e6) throw new Error("That video is over 150 MB. Use a shorter or smaller one."); return { name: path.basename(p), bytes: fs.readFileSync(p) }; };
@@ -202,7 +238,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     const t = o.type;
     if (t === "generate") {
       send("claude", { kind: "start", text: "Claude is setting up a video" });
-      const pr = await prepare({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality, refs: o.refs, music: o.music, captions: o.captions, engine: o.engine });
+      const pr = await prepare({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality, refs: o.refs, music: o.music, captions: o.captions, engine: o.engine, lora: o.lora });
       if (!store.read().settings.autoApprove) {
         const d = await askApproval(pr, "Claude");
         if (!d.ok) { send("claude", { kind: "end", text: d.timeout ? "No answer, so it was cancelled" : "You said no" }); return { ok: false, error: d.timeout ? "Alex did not answer in 15 minutes, nothing was rented." : "Alex said no on screen. Nothing was rented." }; }

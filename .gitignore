@@ -35,3 +35,7 @@ tools/organic/app/Organic.app/Contents/Resources/worker/
 # scratch query helper, reads .dev.vars — never committed
 q.mjs
 tools/xugc/seed.json
+
+# yt-dlp and ffmpeg binaries for XUGC builds (downloaded at build time, see the xugc skill)
+tools/xugc/bin/
+tools/xugc/dist/

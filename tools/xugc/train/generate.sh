@@ -35,6 +35,7 @@ if [ -n "${REFS:-}" ]; then
   for r_ in "${R_[@]}"; do IFS=':' read -r f_ i_ st_ <<< "$r_"; [ -f "$R/in/$f_" ] && IMG="$IMG --image $R/in/$f_ $i_ $st_"; done
   echo "== $(date -u +%T) reference photos:$IMG"
 fi
+LORAARG=""; [ "${LORA:-0}" = "1" ] && [ -f "$R/in/lora.safetensors" ] && LORAARG="--lora $R/in/lora.safetensors 1.0"
 cd /workspace/LTX-2
 run() {
   uv run python -m ltx_pipelines.distilled \
@@ -43,7 +44,7 @@ run() {
     --video-vae-path "$M/vae/ltx-2.5-video-vae-bf16.safetensors" \
     --audio-vae-path "$M/vae/ltx-2.5-audio-vae-bf16.safetensors" \
     --spatial-upsampler-path "$M/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors" \
-    --num-frames "$FRAMES" --seed "$SEED" $SIZE $IMG "$@" \
+    --num-frames "$FRAMES" --seed "$SEED" $SIZE $IMG $LORAARG "$@" \
     --output-path "$OUT/clip.mp4" --prompt "$PROMPT"
 }
 echo "== $(date -u +%T) making the video"

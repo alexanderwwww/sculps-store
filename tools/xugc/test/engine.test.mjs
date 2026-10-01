@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import http from "node:http";
 const require = createRequire(import.meta.url);
-const { Engine, estimateGenerate, checkCaps, today, pctFor } = require("../engine.js");
+const { Engine, estimateGenerate, estimateTrain, checkCaps, today, pctFor } = require("../engine.js");
 const { Store } = require("../store.js");
 const { Secrets } = require("../secrets.js");
 const { Style, compose, sections } = require("../compose.js");
@@ -82,6 +82,7 @@ class FakeRunPod {
     if (FakeRunPod.fail) { job.onProgress({ stage: "GPU handed back", pct: 100, costUsd: 0.4, minutes: 5, gone: true }); throw new Error("The GPU job failed (exit 3)."); }
     const { mkdirSync, writeFileSync } = await import("node:fs");
     mkdirSync(job.destDir, { recursive: true });
+    if (job.script === "train_lora.sh") { writeFileSync(join(job.destDir, "lora.safetensors"), "L".repeat(4096)); writeFileSync(join(job.destDir, "caption.log"), "c001.mp4 -> xugciphone. [VISUAL] a woman holds a bottle\n"); job.onProgress({ stage: "GPU handed back", pct: 100, costUsd: 2.1, minutes: 40, gone: true }); return { saved: ["lora.safetensors"], log: "", costUsd: 2.1, minutes: 40, hourly: 3 }; }
     writeFileSync(join(job.destDir, "clip.mp4"), "x".repeat(2048)); writeFileSync(join(job.destDir, "info.txt"), "codec_type=video\ncodec_type=audio\n");
     await new Promise((r) => setTimeout(r, 60));
     job.onProgress({ stage: "GPU handed back", pct: 100, costUsd: 0.5, minutes: 6, gone: true });
@@ -125,6 +126,26 @@ let e5 = await err(job); ok(e5 && /exit 3/.test(e5.message) && e5.costUsd === 0.
 ok(Math.abs(store.read().spent.usd - 2.4) < 1e-9 && eng.job === null, "…its cost still counts today and the engine is free", String(store.read().spent.usd));
 FakeRunPod.fail = false;
 const slow = eng.generate(job, () => {}); let e6 = await err(job); ok(e6 && e6.code === "busy", "a second job while one runs is refused"); await slow;
+
+// ---- training
+const { writeFileSync: wf } = await import("node:fs");
+const pile = []; for (let i = 0; i < 5; i++) { const f = join(dir, `piece${i}.mp4`); wf(f, "v".repeat(500)); pile.push({ file: f, meta: { creator: "c" + i, sound: "voice" } }); }
+const terr = async (j) => { try { return await eng.train(j, () => {}); } catch (e) { return e; } };
+ok(estimateTrain({ model: "wan", dry: true }).usd < estimateTrain({ model: "wan", dry: false }).usd, "a dry run costs less than a full training");
+const spent0 = store.read().spent.usd;
+const t1 = await terr({ model: "wan", dry: true, pieces: pile });
+const tc = calls.filter((c) => c.run === "train_lora.sh").at(-1);
+ok(t1.file && existsSync(t1.file) && t1.name === "XUGC Real Life" && store.read().loras.length === 1, "a dry training brings home a XUGC Real Life file and lists it", t1.id);
+ok(tc.env.MODEL === "wan" && tc.env.DRY === "1" && tc.env.TRIGGER === "xugciphone" && tc.extra.join() === "caption_clips.py", "the GPU gets the model, dry flag, trigger word and the captioner");
+ok(Object.keys(tc.inputs).filter((k) => k.endsWith(".mp4")).length === 3 && "c001.json" in tc.inputs, "a dry run sends only 3 pieces, each with its notes");
+ok(Math.abs(store.read().spent.usd - spent0 - 2.1) < 1e-9 && eng.job === null, "…training cost counts today and the engine is free");
+ok((await terr({ model: "wan", dry: true, pieces: pile.slice(0, 2) })).message.includes("fewer than 3"), "too few pieces: refused before any GPU");
+ok((await terr({ model: "nope", pieces: pile })).message.includes("Pick a model"), "an unknown model is refused");
+store.update((x) => { x.spent = { day: today(), usd: 19.9 }; });
+ok((await terr({ model: "wan", dry: false, pieces: pile })).code === "cap", "training over the daily limit is refused before any GPU");
+store.update((x) => { x.spent = { day: "", usd: 0 }; });
+const eh = await eng.generate({ ...job, engine: "hunyuan" }, () => {});
+ok(calls.filter((c) => c.run).at(-1).run === "gen_hunyuan.sh" && eh.id, "the engine switch runs the Hunyuan script");
 
 // ---- old builds' leftovers
 writeFileSync(join(dir, "xugc.json"), JSON.stringify({ takes: [{ id: "d", demo: true }], models: [{ id: "wan22" }, { id: "u", kind: "lora" }], dataset: [{ id: "seed-1", file: "assets/x.mp4" }], settings: { mode: "demo", capTrain: 40 } }));

@@ -127,7 +127,8 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
    <div class="sec"><div class="lab">MUSIC</div><div class="seg" id="musics"></div></div>
    <div class="sec"><div class="lab">4 · LENGTH</div><div class="seg" id="secs"></div></div>
    <div class="sec"><div class="lab">5 · QUALITY</div><div class="seg" id="quals"></div></div>
-   <div class="sec"><div class="lab">ENGINE</div><div class="model"><img src="../assets/icon.png" alt="">XUGC<span>LTX-2.5 on your GPU</span></div></div>
+   <div class="sec"><div class="lab">ENGINE <i id="engnote">LTX-2.5 fast, with sound</i></div><div class="seg" id="engines"></div>
+    <div class="seg" id="reallife" style="margin-top:8px"><button data-v="0" class="on">Real Life off</button><button data-v="1">XUGC Real Life on</button></div><div class="found" id="rlnote">Real Life is the look trained from real phone footage. Train it in the Train tab.</div></div>
    <div class="gobar"><button class="go" id="go">Generate <span id="goest">…</span></button><div class="err" id="err"></div>
     <div class="note" style="margin-top:8px">Each video rents a GPU just for that video and hands it back. The price shown is the most it can cost.</div></div>
   </div>
@@ -148,7 +149,17 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
  <section class="view" id="v-library"><div class="page"><h1>Library</h1><p class="sub">Every video you've made.</p><div class="grid" id="libgrid"></div></div></section>
 
  <section class="view" id="v-train">
-  <div class="page"><h1>Train</h1><p class="sub">Two ways to teach XUGC. The <b>Style Bible</b> works instantly: .md files that are read before every video. <b>Video training</b> (teaching the model itself) comes after your first good videos; the pile it will learn from is on the right.</p>
+  <div class="page"><h1>Train</h1><p class="sub">Two ways to teach XUGC. The <b>Style Bible</b> works instantly: .md files that are read before every video. <b>XUGC Real Life</b> teaches the model itself from real phone footage.</p>
+   <div class="lab" style="margin-bottom:8px">XUGC REAL LIFE <i>teach the model itself, from real creators’ public videos</i></div>
+   <div class="rl" id="rlbox">
+    <textarea id="linkbox" style="height:110px" placeholder="Paste video links, one per line. The list ChatGPT made works as it is: url | platform | creator | category | place | seconds | sound | what happens"></textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn" id="linkstarter">Load the starter list (59 links)</button><button class="go" id="collectgo" style="padding:10px 18px">Collect</button><button class="btn" id="collectstop" style="display:none">Stop</button></div>
+    <div class="anbar" id="colbarw" style="display:none"><i id="colbar"></i></div><div class="found" id="colstat">Nothing collected yet. Collect downloads each video on this Mac, cuts it into 3 to 6 second pieces with real sound, and deletes the original.</div><div class="err" id="colerr"></div>
+    <div class="lab" style="margin:14px 0 6px">TRAIN <i>one small file per model, about the size of a photo album</i></div>
+    <div class="seg" id="trmodels"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn" id="trdry">Dry run <span id="trdryest"></span></button><button class="go" id="trfull" style="padding:10px 18px">Train for real <span id="trfullest"></span></button><button class="btn" id="trstop" style="display:none">Stop (hands the GPU back)</button></div>
+    <div class="found" id="trstat">A dry run uses 3 pieces and a few steps. It proves the training works before the real run spends more.</div><div class="err" id="trerr"></div>
+    <div id="lorals" style="display:flex;flex-direction:column;gap:6px;margin-top:10px"></div></div>
    <div class="lab" style="margin-bottom:8px">STYLE BIBLE <i>read before every video</i></div>
    <div class="files" id="files"></div>
    <div style="display:flex;gap:8px;margin-bottom:14px"><button class="btn" id="styleadd">+ Add .md files</button><button class="btn" id="stylenew">New file</button></div>
@@ -159,7 +170,7 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
    <div class="note">Mix in <b>real UGC you own</b>: training only on its own videos repeats its flaws. About 50–100 clips make a good round.</div>
    <button class="btn" id="addclips">+ Add videos</button>
    <div id="cliplist" style="display:flex;flex-direction:column;gap:8px"></div>
-   <div class="note">Model training is not switched on yet. It comes once the first videos look right.</div></aside>
+   <div class="note">Real Life training uses the pieces collected from creators’ videos, kept only on this Mac.</div></aside>
  </section>
 
  <section class="view" id="v-mcp"><div class="page"><h1>MCP</h1><p class="sub">Connect Claude to XUGC so it can make videos, write Style Bible files and review results for you. It can <b>not</b> change the app's code, your keys or your spending limits, and every video it asks for still goes through your limits.</p>
@@ -180,4 +191,5 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
   <div class="fld"><label>RUNPOD NETWORK VOLUME ID (OPTIONAL)</label><input type="text" id="volid" placeholder="keeps the 66 GB model between videos"><div class="note">Without it every video downloads the model again (about 20 minutes of GPU time). With a volume it is already there.</div></div>
   <p class="note">Build <b id="s-build">3</b>. Your keys and data live in your Mac's Application Support folder for XUGC, never in the app itself.</p></div></section>
 </div>
-<script src="app.js"></script></body></html>
+<script src="app.js"></script><div id="trmodal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:50;align-items:center;justify-content:center"><div style="background:var(--panel,#10140a);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:420px"><h2 id="trmt" style="margin:0 0 8px"></h2><p id="trmb" style="color:var(--dim,#9aa);font-size:14px;line-height:1.5"></p><div style="display:flex;gap:8px;margin-top:14px"><button class="go" id="trmyes" style="padding:10px 20px">Approve</button><button class="btn" id="trmno">Cancel</button></div></div></div>
+</body></html>
