@@ -72,3 +72,9 @@ Written into the app as `assets/style/realism-rules.md` (the top part goes into 
 - Training spec files by the specialist team: design/xugc/training/01-look-camera.md, 02-behavior.md, 03-environments.md, 04-sound.md. Train on look + behavior + rooms + sound, not look alone.
 - Plan: bake-off (~$3) -> dry run (~$2) -> real LoRA (~$6-8). Nothing is spent without his go; each stop waits for his Approve. Balance was $14.21.
 - Keys are never pulled from transcripts; they live on his Mac in the app.
+
+## Decisions 2026-10-01 (settled)
+- The trained look is named **XUGC Real Life**: one LoRA per model (Hunyuan, Wan, LTX), shown in the app as a "XUGC Real Life" switch. Trigger word in captions: xugciphone.
+- Training clips come from real creators' public videos, collected by the app on Alex's Mac (Collect box: paste a list, press one button; download, cut to 3-6 s, delete originals, keep clips only on his Mac, keep a source list). Alex decided this over my objection; clips never go into the app bundle, worker or R2, only the LoRA leaves the Mac.
+- ChatGPT/Codex builds the link list (message + pipe format are in the session; format: url | platform | creator | category | place | seconds | sound | what happens).
+- Do not build until Alex says build.
