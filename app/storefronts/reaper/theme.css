@@ -4581,3 +4581,68 @@ html, body { margin: 0; }
 .cb-acts .cb-btn.cb-btn--ghost:hover { background: #FA8900 !important; border-color: #E47911 !important; }
 .cb-acts .cb-btn:active, .cb-sticky .cb-btn:active { transform: scale(.985); }
 .cb-sticky .cb-btn { min-height: 46px !important; font-size: 15.5px !important; padding: 0 22px !important; }
+
+/* ======================================================================
+ * Phones: the bundle rows fit and sit centred at every width (320-430),
+ * and Buy now is black again (Add to cart stays yellow).
+ * The list kept an old 12px left pad and its columns were sized to their
+ * text, so a row measured 330px inside a 280px box and ran off the screen.
+ * ====================================================================== */
+.cb-bundle { width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
+.cb-tiers { padding: 0 !important; margin: 0 !important; grid-template-columns: minmax(0, 1fr) !important; width: 100% !important; }
+.cb-tier { width: 100% !important; min-width: 0 !important; box-sizing: border-box !important; margin: 0 !important;
+  grid-template-columns: 24px auto minmax(0, 1fr) 92px !important; column-gap: 8px !important; }
+.cb-tier .cb-tier__pic { width: 88px !important; height: 88px !important; }
+.cb-tier__each { white-space: normal !important; line-height: 1.2; }
+.cb-tier__main, .cb-tier__right { min-width: 0; }
+@media (max-width: 400px) {
+  .cb-tier { grid-template-columns: 22px auto minmax(0, 1fr) 76px !important; padding: 12px 10px 12px 12px !important; column-gap: 7px !important; }
+  .cb-tier .cb-tier__pic { width: 72px !important; height: 72px !important; }
+  .cb-tier__name { font-size: 16px !important; }
+  .cb-tier__price { font-size: 20px !important; }
+  .cb-tier__under s { font-size: 13.5px !important; }
+}
+.cb-acts .cb-btn.cb-btn--ghost, .cb-acts .cb-btn--ghost:hover, .cb-acts .cb-btn--ghost:focus {
+  background: #111 !important; border: 1px solid #111 !important; color: #fff !important;
+}
+.cb-acts .cb-btn.cb-btn--ghost:hover { background: #000 !important; }
+
+/* Coupon on a phone: title and tag on top, the code a full-width button under a
+   dashed tear line. Rows get a few pixels of air so the selected ring is not clipped. */
+.cb-tiers { padding: 4px !important; }
+@media (max-width: 520px) {
+  .cb-buy__side > .cb-coupon { grid-template-columns: 42px minmax(0, 1fr) !important; padding: 14px 16px 12px !important; row-gap: 0; }
+  .cb-buy__side > .cb-coupon .cb-coupon__in { grid-template-columns: minmax(0, 1fr) !important; row-gap: 2px; }
+  .cb-buy__side > .cb-coupon .cb-coupon__pill { font-size: 19px !important; white-space: normal; }
+  .cb-buy__side > .cb-coupon .cb-coupon__line {
+    grid-column: 1 / -1 !important; grid-row: 3 !important; border-left: 0 !important; padding: 12px 0 0 !important; margin-top: 12px;
+    border-top: 1.5px dashed #4a4a4a; position: relative;
+  }
+  .cb-buy__side > .cb-coupon .cb-coupon__code { width: 100%; justify-content: center; height: 42px; font-size: 14px; }
+  .cb-buy__side > .cb-coupon .cb-coupon__code code { font-size: 15px; }
+  /* the grid puts the tag and the title side by side; the tear line row spans both */
+  .cb-buy__side > .cb-coupon .cb-coupon__tag { grid-row: 1; }
+  .cb-buy__side > .cb-coupon::before, .cb-buy__side > .cb-coupon::after { top: auto; bottom: 53px; margin-top: 0; }
+}
+
+@media (max-width: 520px) {
+  .cb-buy__side > .cb-coupon { display: block !important; }
+  .cb-buy__side > .cb-coupon .cb-coupon__tag { position: absolute; left: 16px; top: 14px; }
+  .cb-buy__side > .cb-coupon .cb-coupon__in { display: block !important; padding-left: 54px; min-height: 42px; }
+  .cb-buy__side > .cb-coupon .cb-coupon__in::after { display: block; margin-top: 3px; }
+  .cb-buy__side > .cb-coupon .cb-coupon__line { display: block !important; }
+}
+
+@media (max-width: 520px) {
+  .cb-buy__side > .cb-coupon .cb-coupon__in { display: flex !important; flex-direction: column; }
+  .cb-buy__side > .cb-coupon .cb-coupon__pill { order: 1; }
+  .cb-buy__side > .cb-coupon .cb-coupon__in::after { order: 2; margin-top: 3px; }
+  .cb-buy__side > .cb-coupon .cb-coupon__line { order: 3; }
+  .cb-buy__side > .cb-coupon::before, .cb-buy__side > .cb-coupon::after { bottom: 56px !important; }
+}
+
+@media (max-width: 520px) {
+  .cb-buy__side > .cb-coupon .cb-coupon__in { align-items: stretch !important; text-align: left !important; }
+  .cb-buy__side > .cb-coupon .cb-coupon__line { width: 100% !important; }
+  .cb-buy__side > .cb-coupon .cb-coupon__code { width: 100% !important; display: flex !important; }
+}
