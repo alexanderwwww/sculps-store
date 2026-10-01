@@ -103,7 +103,7 @@ app.whenReady().then(async () => {
     await view("create");
     say(await until("document.querySelector('#modechip').textContent.includes('RUNPOD') && document.querySelector('#nokey').style.display === 'none'"), "with both keys the warning is gone and the header shows RUNPOD");
     await type("#purl", "https://blackreaper.us/products/haunted-projector"); await click("#pfetch");
-    say(await until("document.querySelector('#pfound').textContent.includes('Haunted Projector') && document.querySelectorAll('#pphotos img').length === 3 && document.querySelectorAll('#pphotos img.sel').length === 1"), "a product link brings in the name and the photos", await run("document.querySelector('#pfound').textContent"));
+    say(await until("document.querySelector('#pfound').textContent.includes('Haunted Projector') && document.querySelectorAll('#pphotos img').length === 3 && document.querySelectorAll('#pphotos img.sel').length === 0"), "a product link brings in the name and the photos", await run("document.querySelector('#pfound').textContent"));
     // Reference ad
     say(await run("document.querySelector('#refdrop').style.display") !== "none" && await run("document.querySelector('#refbody').style.display") === "none", "the Reference ad box is there, empty, with a Choose button");
     run("window.xugc.refFromPath(" + JSON.stringify(${JSON.stringify(fixture)}) + ").then((f) => window.__loadReference(f)); 1");
@@ -129,7 +129,7 @@ app.whenReady().then(async () => {
     say(await untilJs(() => W.results.some((r) => r.id === "r1" && r.state === "done")), "Claude can describe the shots and set how close to follow, over MCP");
     say(await until("document.querySelector('#refbeats').value.includes('a neighbour films') && document.querySelector('#reflvl').textContent === 'Same story'"), "…and the app shows it at once");
     await run("document.querySelectorAll('#pphotos img')[2].click()");
-    say(await until("document.querySelectorAll('#pphotos img.sel').length === 2 && document.querySelector('#pfound').textContent.includes('2 locked')"), "tapping a photo locks the video to it as well");
+    say(await until("document.querySelectorAll('#pphotos img.sel').length === 1 && document.querySelector('#pfound').textContent.includes('1 locked')"), "tapping a photo locks the video to it as well");
     await run("document.querySelector('#avmode [data-m=pick]').click()");
     say(await until("document.querySelector('#avpick').style.display === 'flex' && document.querySelectorAll('#avpick button').length === 5"), "'Pick one' shows five people");
     await run("[...document.querySelectorAll('#avpick button')].find((b) => b.textContent === 'Jordan').click()");
@@ -158,14 +158,14 @@ app.whenReady().then(async () => {
     say((await run("document.querySelector('#ptag').textContent")).includes("$0.81") && (await run("document.querySelector('#hint').textContent")).includes("with sound"), "the take shows what it cost and that it has sound");
     await shot("5-generated");
     const g1 = log.find((l) => l.run === "generate.sh");
-    say(g1 && g1.env.PROMPT.includes("Jordan") && g1.env.PROMPT.includes("Haunted Projector") && g1.env.PROMPT.includes("ghost appears on the glass") && g1.env.PROMPT.includes("iPhone") && g1.env.FRAMES === "241" && g1.env.WIDTH === "512" && /^ref1\\.jpg:0:1,ref2\\.jpg:120:0\\.7$/.test(g1.env.REFS || ""), "the GPU got person + product + his words + the Style Bible, 10s = 241 frames, draft size");
+    say(g1 && g1.env.PROMPT.includes("Jordan") && g1.env.PROMPT.includes("Haunted Projector") && g1.env.PROMPT.includes("ghost appears on the glass") && g1.env.PROMPT.includes("iPhone") && g1.env.FRAMES === "241" && g1.env.WIDTH === "512" && /^ref1[.]jpg:0:1$/.test(g1.env.REFS || ""), "the GPU got person + product + his words + the Style Bible, 10s = 241 frames, draft size");
     say((await run("document.querySelector('#modechip').textContent")).includes("$0.81"), "today's spending moved by the real cost");
 
     // Train: the Style Bible
     await run("document.querySelector('#vup').click()");
     say(await until("document.querySelector('#vup').classList.contains('on')"), "👍 lights up");
     await view("train");
-    say(await until("document.querySelectorAll('#files .file').length === 12"), "the twelve starter Style Bible files are listed");
+    say(await until("document.querySelectorAll('#files .file').length === 13"), "the thirteen starter Style Bible files are listed");
     say(await until("document.querySelector('#n-clips').textContent === '1' && document.querySelector('#n-appr').textContent === '1'"), "the 👍 take is in the training pile");
     await run("document.querySelectorAll('#files .file .tg')[2].click()");
     say(await until("document.querySelectorAll('#files .tg.off').length === 1"), "a style file can be switched off");
@@ -174,17 +174,17 @@ app.whenReady().then(async () => {
     await type("#editor", "# calm-voice.md\\nQuiet delivery.\\n\\n## Prompt\\n- She speaks softly, almost whispering\\n");
     await run("document.querySelector('#stylenew').click()");
     await type("#editor", "# calm-voice.md\\nQuiet delivery.\\n\\n## Prompt\\n- She speaks softly, almost whispering\\n"); await click("#edsave");
-    say(await until("document.querySelectorAll('#files .file').length === 13 && document.querySelector('#files').textContent.includes('calm-voice.md')"), "a new style file can be written and saved");
+    say(await until("document.querySelectorAll('#files .file').length === 14 && document.querySelector('#files').textContent.includes('calm-voice.md')"), "a new style file can be written and saved");
     await shot("6-train");
     await view("create");
-    say(await until("document.querySelectorAll('#stylchips span').length === 13 && document.querySelectorAll('#stylchips span.off').length === 1"), "Create shows which style files are on and off");
+    say(await until("document.querySelectorAll('#stylchips span').length === 14 && document.querySelectorAll('#stylchips span.off').length === 1"), "Create shows which style files are on and off");
 
     // MCP
     await view("mcp");
     say((await run("document.querySelector('#mcpurl').textContent")).includes("http://127.0.0.1"), "the connector URL is shown for copying");
     say(await until("document.querySelector('#mcpstate').textContent.includes('Connected')", 8000), "the app is connected to the line", await run("document.querySelector('#mcpstate').textContent"));
     say(W.statusPosts > 2 && W.status.app === "XUGC" && W.status.keys.runpod === true && !JSON.stringify(W.status).includes("GOOD_KEY") && !JSON.stringify(W.status).includes("GOODTOKEN"), "the app reports its status to Claude, never a key", W.statusPosts + " posts");
-    say(W.status.takes.length === 1 && W.status.style.length === 13 && W.status.limits.perDay === 20, "the status shows takes, style files and the limits");
+    say(W.status.takes.length === 1 && W.status.style.length === 14 && W.status.limits.perDay === 20, "the status shows takes, style files and the limits");
     // Claude asks for a video
     W.claudeAt = Date.now();
     const runsB = log.filter((l) => l.run).length;

@@ -14,13 +14,15 @@ const NAME = /^[a-z0-9][a-z0-9-]{0,38}\.md$/;
 const MAX_FILE = 20000;
 
 const LOOKS = {
+  None: "",
   Selfie: "She films herself selfie-style and talks straight to the camera.",
   Unboxing: "She unboxes the product on a table and shows it to the camera.",
   Demo: "She demonstrates the product and points at what it does.",
   Testimonial: "She talks to the camera like a friend recommending the product.",
 };
 const AVATARS = {
-  broad: "An ordinary, real-looking person with everyday clothes and a lived-in room behind them.",
+  none: "",
+  broad: "Ordinary, real-looking people in everyday clothes.",
   maya: "Maya, 24, light brown skin, dark wavy hair in a clip, oversized grey hoodie, bedroom with a desk lamp.",
   jordan: "Jordan, 27, tall, short cropped hair, black t-shirt, living room with a plant and a sofa.",
   ava: "Ava, 31, freckles, red hair tied back, denim shirt, bright kitchen.",
@@ -111,7 +113,7 @@ const sentence = (t) => { const s = clean(t); return s ? (/[.!?]$/.test(s) ? s :
  */
 function compose(job, bible) {
   const parts = [];
-  parts.push(sentence(AVATARS[job.avatar] || clean(job.avatarText) || AVATARS.broad));
+  if (job.avatar !== "none") parts.push(sentence(AVATARS[job.avatar] || clean(job.avatarText) || AVATARS.broad));
   if (job.product && clean(job.product.title)) parts.push(sentence(`The product is ${clean(job.product.title)}${job.product.desc ? ": " + clean(job.product.desc).slice(0, 220) : ""}`));
   parts.push(sentence(LOOKS[job.look] || ""));
   parts.push(sentence(job.scene));

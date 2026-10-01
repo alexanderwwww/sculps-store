@@ -95,8 +95,10 @@ class Engine {
         const ext = (/\.(png|jpe?g|webp)(?:$|\?)/i.exec(refs[k].url || "") || [, "jpg"])[1].toLowerCase();
         const name = `ref${k + 1}.${ext}`; inputs[name] = buf;
         // first photo opens the video, the others are spread through it; frame numbers sit on the model's 8-frame grid
-        const idx = k === 0 ? 0 : Math.round(((k / refs.length) * (frames - 1)) / 8) * 8;
-        refEnv.push(`${name}:${idx}:${k === 0 ? 1.0 : 0.7}`);
+        const at = Number.isFinite(refs[k].at) ? Math.min(1, Math.max(0, refs[k].at)) : k === 0 ? 0 : k / refs.length;
+        const idx = Math.round((at * (frames - 1)) / 8) * 8;
+        const strength = Number.isFinite(refs[k].strength) ? Math.min(1, Math.max(0.1, refs[k].strength)) : k === 0 ? 1.0 : 0.7;
+        refEnv.push(`${name}:${idx}:${strength}`);
       }
       const r = await rp.run({
         label: "gen", script: "generate.sh", inputs, extraScripts: (job.captions || []).length ? ["burn_captions.py"] : [],

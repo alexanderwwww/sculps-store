@@ -30,7 +30,7 @@ ok(pctFor("making the video", "") > pctFor("installing", "") && pctFor("making t
 // ---- Style Bible and prompt
 const dir = mkdtempSync(join(tmpdir(), "xugc-"));
 const style = new Style(join(dir, "style"), join(process.cwd(), "assets", "style"));
-ok(style.list().length === 12 && style.list().every((f) => f.on), "the twelve starter style files are installed and on");
+ok(style.list().length === 13 && style.list().every((f) => f.on), "the thirteen starter style files are installed and on");
 const g = style.gather(["hooks.md"]);
 ok(g.prompt.some((l) => /iPhone/.test(l)) && !g.prompt.some((l) => /Ends abruptly, the way a real person/.test(l)), "a switched-off file contributes nothing");
 ok(g.never.length > 12, "a big '## Never' list is collected for the Avoid section", String(g.never.length));

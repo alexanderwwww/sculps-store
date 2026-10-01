@@ -55,3 +55,14 @@ The $10 is a prepaid balance, billed by the second; every video costs a little (
   - Starter style files are copied once per name, so new starters reach existing installs.
 - Alex wants next: a reference-VIDEO import (app extracts frames/cuts/timing, new version copies the structure), clean white-background product images via the Magic Wand, a product library, and training on every 👍/👎.
 - Never again: judging a video "fine" without comparing it to the brief frame by frame; spending before he says go; sending videos in chat.
+
+## Realism rules (2026-10-01, after the Scream tests)
+Written into the app as `assets/style/realism-rules.md` (the top part goes into every prompt; the numbered rules are for Claude and Alex):
+1. One clip = one shot, 5-10 s. Multi-shot stories are several clips joined afterwards (stitching is NOT built yet).
+2. Show the finished state, never the transformation (no "heap inflates into a giant").
+3. Lock the product with ONE clean reference photo: no text, no diagram, no infographic. A photo with text is pasted into the video, text and all (Scream test 2 pasted "SIXTEEN FEET FOUR" and a silhouette).
+4. Place the reference on purpose with `refs: [{url, at, strength}]`; "auto" = the first clean photo only.
+5. Different people, each with a job; 2-3 clear ones beat a crowd.
+6. No contradictions (look Selfie vs a neighbour filming; broad avatar added "a lived-in room" to a lawn scene). Default look is now None; avatar "none" skips the person sentence.
+7. A human at the base for scale. 8. Audible sound from frame one; the app's video plays UNMUTED now (it used to play muted, so a take with a real -19 dB track sounded silent). 9. Judge frame by frame against the brief before showing him. 10. Captions are burned on, never drawn by the model.
+- Test 1 (man in robe, no references) and test 2 (infographic references, selfie look) both failed his brief; the fix is rules 1-6, not more prompt length.

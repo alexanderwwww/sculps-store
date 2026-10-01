@@ -2,7 +2,7 @@
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 let S = null, META = null;
-const ui = { music: "none", fullEdited: false, rendering: false, refs: null, view: "create", look: "Demo", secs: 15, qual: "hd", avmode: "broad", avatar: "maya", current: null, busy: false, t0: 0, timer: null, est: null, edit: null };
+const ui = { music: "soft", fullEdited: false, rendering: false, refs: null, view: "create", look: "None", secs: 15, qual: "hd", avmode: "broad", avatar: "maya", current: null, busy: false, t0: 0, timer: null, est: null, edit: null };
 
 const src = (p) => (!p ? "" : "file://" + encodeURI(p));
 const money = (n) => "$" + Number(n).toFixed(2);
@@ -41,15 +41,15 @@ function renderCreate() {
   if (missing) { w.innerHTML = `Before the first video: add ${missing[0]} in <button id="gokey">Settings</button>.`; $("#gokey").onclick = () => setView("settings"); }
   const p = S.product;
   $("#purl").placeholder = "https://yourstore.com/products/…";
-  if (p && (!ui.refs || ui.refsFor !== p.url)) { ui.refs = p.images.slice(0, 1); ui.refsFor = p.url; }
+  if (p && (!ui.refs || ui.refsFor !== p.url)) { ui.refs = []; ui.refsFor = p.url; }
   if (!p) ui.refs = null;
   const ph = $("#pphotos"); ph.innerHTML = "";
-  if (p) p.images.slice(0, 24).forEach((u) => { const im = document.createElement("img"); im.src = u; im.className = ui.refs.includes(u) ? "sel" : ""; im.title = "Tap to lock the video to this photo (up to 3)"; im.onclick = () => { ui.refs = ui.refs.includes(u) ? ui.refs.filter((x) => x !== u) : [...ui.refs, u].slice(-3); renderCreate(); }; ph.appendChild(im); });
+  if (p) p.images.slice(0, 24).forEach((u) => { const im = document.createElement("img"); im.src = u; im.className = ui.refs.includes(u) ? "sel" : ""; im.title = "Tap to lock the video to this photo (up to 3). Use clean photos with no text on them."; im.onclick = () => { ui.refs = ui.refs.includes(u) ? ui.refs.filter((x) => x !== u) : [...ui.refs, u].slice(-3); renderCreate(); }; ph.appendChild(im); });
   $("#pfound").innerHTML = p ? `<b>${esc(p.title)}</b>${p.price ? " · " + esc(p.currency) + " " + esc(p.price) : ""}${p.images.length ? " · " + p.images.length + " photos, " + (ui.refs || []).length + " locked" : ""} <button class="btn" id="pclear" style="padding:2px 9px;margin-left:6px">Remove</button>` : "No product yet. The scene alone will do, but a product makes it specific.";
   if (p) $("#pclear").onclick = () => window.xugc.clearProduct().then(refresh);
   $$("#avmode button").forEach((b) => { b.classList.toggle("on", b.dataset.m === ui.avmode); b.onclick = () => { ui.avmode = b.dataset.m; renderCreate(); }; });
   $("#avpick").style.display = ui.avmode === "pick" ? "flex" : "none"; $("#avown").style.display = ui.avmode === "own" ? "block" : "none";
-  seg($("#avpick"), META.avatars.filter((a) => a !== "broad").map((a) => [a, a[0].toUpperCase() + a.slice(1)]), ui.avatar, (k) => { ui.avatar = k; renderCreate(); });
+  seg($("#avpick"), META.avatars.filter((a) => a !== "broad" && a !== "none").map((a) => [a, a[0].toUpperCase() + a.slice(1)]), ui.avatar, (k) => { ui.avatar = k; renderCreate(); });
   $("#avnote").textContent = ui.avmode === "broad" ? "Broad = the scene picks an ordinary, real-looking person." : ui.avmode === "pick" ? "A ready-made description of that person goes into the prompt." : "Describe the person in your own words.";
   seg($("#looks"), META.looks.map((l) => [l, l]), ui.look, (k) => { ui.look = k; renderCreate(); });
   seg($("#musics"), [["none", "None"], ["soft", "Soft beat"], ["drop", "Beat drop"]], ui.music, (k) => { ui.music = k; renderCreate(); });
@@ -66,7 +66,7 @@ function renderCreate() {
 }
 
 function showTake(t) {
-  const v = $("#pv"); $("#idle").style.display = "none"; v.style.display = "block"; v.src = src(t.video); v.muted = true; v.play().catch(() => {});
+  const v = $("#pv"); $("#idle").style.display = "none"; v.style.display = "block"; v.src = src(t.video); v.muted = false; v.volume = 1; v.play().catch(() => { v.muted = true; v.play().catch(() => {}); syncSound(); }); syncSound();
   $("#ptag").textContent = `TAKE · ${t.seconds}s · ${money(t.cost)}`;
   $("#verd").style.visibility = "visible"; $("#vup").classList.toggle("on", t.verdict === "up"); $("#vdown").classList.toggle("on", t.verdict === "down");
   $("#hint").textContent = `${t.minutes} min on the GPU · ${t.audio ? "with sound (tap the speaker)" : "no sound track found"}`;
@@ -245,6 +245,10 @@ rd.ondrop = async (e) => { e.preventDefault(); rd.classList.remove("over"); cons
 $("#refbeats").onchange = (e) => window.xugc.refUpdate({ beats: e.target.value }).then(refresh);
 $("#refrange").oninput = (e) => window.xugc.refUpdate({ level: Number(e.target.value) }).then(refresh);
 $("#refclear").onclick = () => window.xugc.refClear().then((r) => { $("#refan").style.display = "none"; return refresh(r); });
+
+function syncSound() { const b = $("#sound"); const v = $("#pv"); if (b) b.style.display = v.style.display === "block" && v.muted ? "block" : "none"; }
+$("#sound").onclick = () => { const v = $("#pv"); v.muted = false; v.volume = 1; v.play().catch(() => {}); syncSound(); };
+$("#pv").onvolumechange = syncSound;
 
 /* ---- events ---- */
 $$("#nav button").forEach((b) => (b.onclick = () => setView(b.dataset.view)));

@@ -43,10 +43,14 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
   const fail = (err) => ({ error: err.message, code: err.code || "error", costUsd: err.costUsd || 0, ...view() });
 
   // Reference photos: the ones he ticked, or "auto" = the first two photos of the saved product.
+  const NOT_A_PHOTO = /(-s\d|spec|band|box|logo|text|chart|size|infograph|-rv-|-u\d|thumb|-t\d+\.|-w\d+\.)/i;
+  const cleanPhotos = (images) => images.filter((u) => !NOT_A_PHOTO.test(u.split("/").pop()));
   const refUrls = (spec, product) => {
-    const want = spec.refs === "auto" ? (product ? product.images.slice(0, 2) : []) : Array.isArray(spec.refs) ? spec.refs : [];
     const ok = new Set(product ? product.images : []);
-    return want.filter((u) => typeof u === "string" && /^https?:\/\//i.test(u) && (ok.has(u) || spec.refsAnyUrl)).slice(0, 3).map((url) => ({ url }));
+    const raw = spec.refs === "auto" ? (product ? cleanPhotos(product.images).slice(0, 1) : []) : Array.isArray(spec.refs) ? spec.refs : [];
+    return raw.map((r) => (typeof r === "string" ? { url: r } : { url: r && r.url, at: r && Number(r.at), strength: r && Number(r.strength) }))
+      .filter((r) => typeof r.url === "string" && /^https?:\/\//i.test(r.url) && (ok.has(r.url) || spec.refsAnyUrl)).slice(0, 3)
+      .map((r) => ({ url: r.url, ...(Number.isFinite(r.at) ? { at: r.at } : {}), ...(Number.isFinite(r.strength) ? { strength: r.strength } : {}) }));
   };
   const send = (ch, p) => { for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send(ch, p); };
 
