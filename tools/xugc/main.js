@@ -14,7 +14,7 @@ const { Style, compose, LOOKS, AVATARS, QUALITY, SECONDS, NAME } = require("./co
 const { fetchProduct } = require("./product.js");
 const { Bridge } = require("./bridge.js");
 
-const BUILD = 3;
+const BUILD = 4;
 const LATEST_NOTE = "";
 
 function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch }) {
