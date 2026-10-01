@@ -14,6 +14,7 @@ import type { DB } from "~/db/client";
 import { recordOrderEvent } from "./admin.server";
 import { formatMoney } from "./money";
 import { reaperProduct, reaperHandles, type ReaperProductGuide } from "./emails/reaper-products";
+import { reaperReceiptHtml } from "./emails/reaper-receipt";
 
 export interface EmailLine {
   label: string;
@@ -71,6 +72,12 @@ export interface OrderEmailInput extends BrandFields {
   shipRegion?: string | null;
   /** "GB084107" — the reference the customer quotes, not the row number. */
   reference?: string | null;
+  /** Black Reaper's receipt: which product it is (for the picture, the box and the setup steps) and who it ships to. */
+  productHandle?: string | null;
+  shipName?: string;
+  shipLines?: string[];
+  /** The first confirmation never reached them: the email says so. */
+  late?: boolean;
   /** The standing thank-you code, in dollars. */
   giftCode?: string | null;
   giftLabel?: string | null;
@@ -613,11 +620,15 @@ ${input.domain ? rvButton("Back to the shop", `https://${input.domain}`) : ""}
 ${rvText("Reply to this email if anything is wrong with it. A person reads it.")}
 `;
 
-  const html = shell(
-    { ...brandOf(input), heroImageUrl: heroSrc },
-    body,
-    `Order ${ref} confirmed — ${formatMoney(input.totalCents, input.currency)}`,
-  );
+  const html =
+    input.domain === "blackreaper.us"
+      ? reaperReceiptHtml({
+          domain: input.domain, first, reference: ref, handle: input.productHandle ?? null, lines: input.lines,
+          subtotalCents: input.subtotalCents, discountCode: input.discountCode, discountCents: input.discountCents,
+          shippingCents: input.shippingCents, taxCents: input.taxCents, totalCents: input.totalCents, currency: input.currency,
+          shipName: input.shipName ?? input.customerName, shipLines: input.shipLines ?? (city ? [city] : []), late: input.late, money: formatMoney,
+        })
+      : shell({ ...brandOf(input), heroImageUrl: heroSrc }, body, `Order ${ref} confirmed — ${formatMoney(input.totalCents, input.currency)}`);
 
   const result = await send(env, {
     from: `${input.storeName} <${from}>`,

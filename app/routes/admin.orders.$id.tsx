@@ -21,6 +21,7 @@ import {
 } from "~/lib/admin.server";
 import { money } from "~/lib/money";
 import { sendShippingNotice, sendRefundNotice, emailReady, trackingUrl } from "~/lib/email.server";
+import { resendConfirmation } from "~/lib/fulfilment.server";
 import { orders } from "~/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { recomputeCustomerTotals } from "~/lib/customers.server";
@@ -192,6 +193,11 @@ export async function action({ context, request, params }: Route.ActionArgs) {
       }
     }
     return { ok: true };
+  }
+
+  if (intent === "resend-confirmation") {
+    const result = await resendConfirmation(context.db, context.cloudflare.env, orderId);
+    return result.ok ? { ok: true } : { error: result.reason };
   }
 
   if (intent === "note") {
@@ -590,16 +596,12 @@ export default function OrderDetail({ loaderData, actionData }: Route.ComponentP
               >
                 Print packing slip
               </button>
-              {/* The order-confirmation email is sent by checkout; there is no
-                  resend path on this route yet. */}
-              <button
-                type="button"
-                disabled
-                title="Resending the order confirmation is not wired up — only the shipping and refund emails can be sent from here"
-                style={deadMenuItem}
-              >
-                Resend order confirmation
-              </button>
+              <Form method="post" onSubmit={() => setMoreMenuOpen(false)}>
+                <input type="hidden" name="intent" value="resend-confirmation" />
+                <button type="submit" className="k-hover" style={menuItem} title="Send the customer their order confirmation again">
+                  Resend order confirmation
+                </button>
+              </Form>
               <button
                 type="button"
                 onClick={() => {

@@ -8,7 +8,7 @@
  */
 import { and, eq, inArray } from "drizzle-orm";
 import type { DB } from "~/db/client";
-import { orders, orderEvents, stores, variants, discounts } from "~/db/schema";
+import { orders, orderEvents, stores, variants, products, discounts } from "~/db/schema";
 import { loadOrder, recordOrderEvent } from "./admin.server";
 import { sendOrderConfirmation, sendMerchantNewOrder, emailReady, orderReference } from "./email.server";
 import { metaSettings, sendPurchase } from "./meta.server";
@@ -24,6 +24,84 @@ import { redeemDiscount } from "./discounts.server";
 async function alreadyDone(db: DB, orderId: string, type: string): Promise<boolean> {
   const rows = await db.select().from(orderEvents).where(eq(orderEvents.orderId, orderId));
   return rows.some((row) => row.type === type);
+}
+
+
+type LoadedOrder = NonNullable<Awaited<ReturnType<typeof loadOrder>>>;
+
+/** Everything the receipt needs, in one place so the first send and a resend are the same email. */
+async function confirmationInput(
+  db: DB,
+  { order, store, items }: Pick<LoadedOrder, "order" | "store" | "items">,
+  gift: { code: string; offCents: number } | null,
+  extra: { late?: boolean } = {},
+) {
+  const ids = items.map((item) => item.variantId).filter((id): id is string => Boolean(id));
+  const handleRows = ids.length
+    ? await db.select({ id: variants.id, handle: products.handle }).from(variants).innerJoin(products, eq(products.id, variants.productId)).where(inArray(variants.id, ids))
+    : [];
+  return {
+    to: order.email,
+    customerName: order.customerName,
+    storeName: store.name,
+    fromAddress: store.emailFrom,
+    replyTo: store.contactEmail,
+    // The store's own look, so the receipt is recognisably from the shop
+    // she just bought from rather than from a white box with a name on it.
+    domain: store.domain,
+    // the 25KB copy, not the 778KB storefront original
+    logoUrl: "/media/em-logo-brown.jpg",
+    brandColor: store.brandColor,
+    accentColor: store.accentColor,
+    heroImageUrl: await receiptHero(db, items),
+    orderNumber: order.number,
+    currency: order.currency,
+    lines: items.map((item) => ({
+      label: item.label,
+      quantity: item.quantity,
+      lineTotalCents: item.unitPriceCents * item.quantity,
+    })),
+    subtotalCents: order.subtotalCents,
+    taxCents: order.taxCents,
+    shippingCents: order.shippingCents,
+    totalCents: order.totalCents,
+    discountCode: order.discountCode,
+    discountCents: order.discountCents,
+    // Theirs, out of the shipping address — the tracking animation is one
+    // file for everyone and this is the line that makes it personal.
+    shipCity: order.city,
+    shipRegion: order.region,
+    reference: orderReference(store.name, order.number),
+    // The standing thank-you, read out of the shop's own discounts. It
+    // used to print "GET10" on every receipt — a code nothing in this
+    // system has ever created, so the one person who tried to use it was
+    // told it was invalid. No live code, no gift block.
+    giftCode: gift?.code ?? null,
+    giftLabel: gift ? `$${(gift.offCents / 100).toFixed(0)} off your next one.` : null,
+    productHandle: handleRows.find((row) => row.id === items[0]?.variantId)?.handle ?? null,
+    shipName: order.customerName,
+    shipLines: [[order.address1, order.address2].filter(Boolean).join(", "), [order.city, order.region, order.postalCode].filter(Boolean).join(", ")].filter(Boolean),
+    late: extra.late,
+  };
+}
+
+/**
+ * Send the order confirmation again, from the order page.
+ *
+ * If the first one never went out (the timeline shows it failed and never succeeded) the email carries a
+ * one-line apology; if it did go out once, this is a plain second copy.
+ */
+export async function resendConfirmation(db: DB, env: Env, orderId: string): Promise<{ ok: boolean; reason?: string }> {
+  const loaded = await loadOrder(db, orderId);
+  if (!loaded) return { ok: false, reason: "That order does not exist." };
+  if (loaded.order.paymentStatus !== "paid") return { ok: false, reason: "The order is not paid yet, so there is nothing to confirm." };
+  if (!emailReady(env)) return { ok: false, reason: "Email is not configured on this Worker." };
+  const events = await db.select().from(orderEvents).where(eq(orderEvents.orderId, orderId));
+  const sentBefore = events.some((e) => e.type === "email:confirmation");
+  const [giftRow] = await db.select().from(discounts).where(and(eq(discounts.storeId, loaded.store.id), eq(discounts.active, true), eq(discounts.kind, "fixed"))).limit(1);
+  const gift = giftRow && Number(giftRow.value) > 0 ? { code: giftRow.code, offCents: Number(giftRow.value) } : null;
+  const ok = await sendOrderConfirmation(db, env, orderId, await confirmationInput(db, loaded, gift, { late: !sentBefore }));
+  return ok ? { ok: true } : { ok: false, reason: "The email service refused it. The timeline says why." };
 }
 
 export async function afterPaymentConfirmed(
@@ -92,45 +170,7 @@ export async function afterPaymentConfirmed(
   // 2. The receipt.
   if (!(await alreadyDone(db, orderId, "email:confirmation"))) {
     if (emailReady(env)) {
-      await sendOrderConfirmation(db, env, orderId, {
-        to: order.email,
-        customerName: order.customerName,
-        storeName: store.name,
-        fromAddress: store.emailFrom,
-        replyTo: store.contactEmail,
-        // The store's own look, so the receipt is recognisably from the shop
-        // she just bought from rather than from a white box with a name on it.
-        domain: store.domain,
-        // the 25KB copy, not the 778KB storefront original
-        logoUrl: "/media/em-logo-brown.jpg",
-        brandColor: store.brandColor,
-        accentColor: store.accentColor,
-        heroImageUrl: await receiptHero(db, items),
-        orderNumber: order.number,
-        currency: order.currency,
-        lines: items.map((item) => ({
-          label: item.label,
-          quantity: item.quantity,
-          lineTotalCents: item.unitPriceCents * item.quantity,
-        })),
-        subtotalCents: order.subtotalCents,
-        taxCents: order.taxCents,
-        shippingCents: order.shippingCents,
-        totalCents: order.totalCents,
-        discountCode: order.discountCode,
-        discountCents: order.discountCents,
-        // Theirs, out of the shipping address — the tracking animation is one
-        // file for everyone and this is the line that makes it personal.
-        shipCity: order.city,
-        shipRegion: order.region,
-        reference: orderReference(store.name, order.number),
-        // The standing thank-you, read out of the shop's own discounts. It
-        // used to print "GET10" on every receipt — a code nothing in this
-        // system has ever created, so the one person who tried to use it was
-        // told it was invalid. No live code, no gift block.
-        giftCode: gift?.code ?? null,
-        giftLabel: gift ? `$${(gift.offCents / 100).toFixed(0)} off your next one.` : null,
-      });
+      await sendOrderConfirmation(db, env, orderId, await confirmationInput(db, { order, store, items }, gift));
     } else {
       // Say so on the timeline rather than leaving a silent gap that looks
       // like the email was sent.
