@@ -52,6 +52,7 @@ export default [
   // The Magic Wand's status board, order desk and MCP server. Everything
   // behind it is guarded by the key in the path.
   route("wand/*", "routes/wand.$.tsx"),
+  route("xugc/*", "routes/xugc.$.tsx"),
   route("organicx/*", "routes/organicx.$.tsx"),
   route("organic/*", "routes/organic.$.tsx"),
   route("research/*", "routes/research.$.tsx"),
