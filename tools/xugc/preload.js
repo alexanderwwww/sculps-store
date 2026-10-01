@@ -2,7 +2,12 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("xugc", {
   get: () => ipcRenderer.invoke("state:get"),
   setSettings: (patch) => ipcRenderer.invoke("settings:set", patch),
+  setKey: (key) => ipcRenderer.invoke("key:set", key),
+  clearKey: () => ipcRenderer.invoke("key:clear"),
+  testKey: () => ipcRenderer.invoke("key:test"),
+  sweep: () => ipcRenderer.invoke("pods:sweep"),
   generate: (job) => ipcRenderer.invoke("generate", job),
+  cancel: () => ipcRenderer.invoke("cancel"),
   verdict: (id, v) => ipcRenderer.invoke("verdict", id, v),
   deleteTake: (id) => ipcRenderer.invoke("take:delete", id),
   addClips: () => ipcRenderer.invoke("dataset:add"),
@@ -10,7 +15,9 @@ contextBridge.exposeInMainWorld("xugc", {
   caption: (id, text) => ipcRenderer.invoke("dataset:caption", id, text),
   removeClip: (id) => ipcRenderer.invoke("dataset:remove", id),
   train: (opts) => ipcRenderer.invoke("train", opts),
-  pickImages: () => ipcRenderer.invoke("pick:images"),
+  deleteModel: (id) => ipcRenderer.invoke("model:delete", id),
+  pickFrame: () => ipcRenderer.invoke("pick:frame"),
+  readImage: (p) => ipcRenderer.invoke("read:image", p),
   onJob: (cb) => ipcRenderer.on("job", (_e, p) => cb(p)),
   onTrain: (cb) => ipcRenderer.on("train", (_e, p) => cb(p)),
 });

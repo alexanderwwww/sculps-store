@@ -9,9 +9,9 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .app{height:100%;display:grid;grid-template-rows:56px 1fr;background:radial-gradient(900px 520px at 50% -12%,rgba(215,255,31,.11),transparent 60%),radial-gradient(700px 500px at 0% 115%,rgba(120,90,255,.09),transparent 60%),var(--bg)}
 .top{display:flex;align-items:center;gap:14px;padding:0 18px 0 84px;border-bottom:1px solid var(--line);-webkit-app-region:drag}
 .top button,.top .chip{-webkit-app-region:no-drag}
-.brand{display:flex;align-items:center;gap:9px}.brand img{width:26px;height:26px;border-radius:7px}.brand b{font-size:15px;font-weight:800;letter-spacing:.04em}
+.brand{display:flex;align-items:center;gap:9px}.brand b{font-size:15px;font-weight:800;letter-spacing:.04em}
 .nav{display:flex;gap:4px;margin-left:12px}.nav button{padding:8px 15px;border-radius:999px;font-size:13.5px;font-weight:700;color:#c6c9ce}.nav button.on{background:var(--neon);color:#10140a}
-.sp{flex:1}.chip{padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--glass);font-size:12px;font-weight:700;color:#cfd2d6}.chip b{color:var(--neon)}.chip.demo{border-color:rgba(215,255,31,.5)}
+.sp{flex:1}.chip{padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--glass);font-size:12px;font-weight:700;color:#cfd2d6}.chip b{color:var(--neon)}.chip.hot{border-color:rgba(215,255,31,.5)}
 .view{display:none;min-height:0}.view.on{display:grid}
 #v-create{grid-template-columns:372px 1fr 168px}
 .ctl{padding:16px 18px 0;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:11px;overflow:auto;scrollbar-width:none;background:rgba(255,255,255,.02)}.ctl::-webkit-scrollbar{display:none}
@@ -19,9 +19,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .drop{display:flex;gap:11px;align-items:center;padding:9px;border-radius:14px;background:var(--glass);border:1px solid var(--line)}.drop img{width:58px;height:58px;border-radius:10px;object-fit:cover;background:#fff}
 .drop b{font-size:14px;display:block}.drop span{font-size:12px;color:var(--mut)}.chk{margin-left:auto;font-size:11px;font-weight:800;color:#10140a;background:var(--neon);padding:4px 9px;border-radius:99px}
 .btn{padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--glass);font-size:12.5px;font-weight:700}.btn:hover{border-color:rgba(255,255,255,.3)}
-.avs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.av{aspect-ratio:1;border-radius:11px;background-size:cover;background-position:center;border:2px solid transparent;cursor:pointer}.av.on{border-color:var(--neon);box-shadow:0 0 0 3px rgba(215,255,31,.2)}
-.av.add{display:grid;place-items:center;background:var(--glass);border:1.5px dashed rgba(255,255,255,.25);font-size:22px;color:#cfd2d6}
-textarea,input[type=text],input[type=number]{width:100%;padding:10px 12px;border-radius:12px;background:var(--glass);border:1px solid var(--line);color:#e6e8ea;font:inherit;font-size:13px;line-height:1.45;outline:none;user-select:text}
+textarea,input[type=text],input[type=number],input[type=password]{width:100%;padding:10px 12px;border-radius:12px;background:var(--glass);border:1px solid var(--line);color:#e6e8ea;font:inherit;font-size:13px;line-height:1.45;outline:none;user-select:text}
 textarea:focus,input:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none;height:92px}
 .row{display:flex;gap:8px;flex-wrap:wrap}.pill{flex:1 1 auto;text-align:center;padding:7px 8px;border-radius:11px;background:var(--glass);border:1px solid var(--line);font-size:12.5px;font-weight:700;color:#cfd2d6;white-space:nowrap}.pill.on{border-color:var(--neon);color:#fff;box-shadow:inset 0 0 0 1px var(--neon)}
 .model{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:13px;background:var(--glass);border:1px solid var(--line);font-size:13.5px;font-weight:700;cursor:pointer;width:100%;text-align:left}.model.on{border-color:var(--neon);box-shadow:inset 0 0 0 1px var(--neon)}.model span{margin-left:auto;color:var(--mut);font-weight:600;font-size:12px}
@@ -35,7 +33,7 @@ textarea:focus,input:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
 .tag{position:absolute;top:12px;left:12px;z-index:3;padding:4px 10px;border-radius:99px;background:rgba(0,0,0,.55);border:1px solid var(--line);font-size:11px;font-weight:800;letter-spacing:.06em}
 .prod{position:absolute;right:12px;top:12px;z-index:3;width:54px;height:54px;border-radius:12px;border:2px solid var(--neon);overflow:hidden;background:#fff}.prod img{width:100%;height:100%;object-fit:cover}
 .cap{position:absolute;left:12px;right:12px;bottom:26px;z-index:3;text-align:center;font-weight:900;font-size:18px;line-height:1.15;text-shadow:0 2px 8px #000}.cap b{background:var(--neon);color:#10140a;padding:1px 6px;border-radius:5px}
-.prog{position:absolute;inset:0;z-index:5;background:rgba(7,8,10,.82);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:30px;text-align:center}.prog.on{display:flex}
+.prog{position:absolute;inset:0;z-index:5;background:rgba(7,8,10,.94);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:30px;text-align:center}.prog.on{display:flex}
 .prog b{font-size:16px}.prog small{color:var(--mut);font-size:12.5px}.bar{width:80%;height:6px;border-radius:9px;background:rgba(255,255,255,.18)}.bar i{display:block;height:100%;width:0;border-radius:9px;background:var(--neon);transition:width .3s}
 .verd{display:flex;gap:10px;align-items:center}.verd button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--glass);font-size:19px}.verd button.on{background:var(--neon);color:#10140a;border-color:var(--neon)}.verd small{color:var(--mut);font-size:12px}
 .hint{font-size:12.5px;color:var(--mut);text-align:center}.hint b{color:var(--neon)}
@@ -53,34 +51,71 @@ textarea:focus,input:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
 .stat{display:flex;gap:10px}.stat div{flex:1;padding:12px;border-radius:13px;background:var(--glass);border:1px solid var(--line)}.stat b{display:block;font-size:22px}.stat small{color:var(--mut);font-size:11.5px}
 .fld{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-width:420px}.fld label{font-size:12px;font-weight:800;color:var(--mut);letter-spacing:.06em}
 .note{font-size:12.5px;line-height:1.5;color:var(--mut)}.note b{color:#fff}
+</style><style>
+.eye{display:block;overflow:visible}
+/* these style the symbol's own shapes (a <use> clone is styled from where the symbol lives, not from .eye) */
+.rim{fill:none;stroke:#D7FF1F;stroke-width:9;stroke-linejoin:round}
+.arc{fill:none;stroke:#D7FF1F;stroke-width:9;stroke-linecap:round;stroke-dasharray:118 46;transform-origin:100px 60px;animation:spin 7s linear infinite}
+.ball{fill:url(#ball);stroke:#D7FF1F;stroke-width:3}
+.pupil{animation:look 5s ease-in-out infinite}
+.brand .eye{width:34px;height:21px;filter:drop-shadow(0 0 5px rgba(215,255,31,.6))}
+@keyframes look{0%,100%{transform:translate(0,0)}30%{transform:translate(-9px,2px)}60%{transform:translate(7px,-3px)}80%{transform:translate(2px,3px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.big{position:relative;width:210px;height:140px;display:grid;place-items:center}
+.big .eye{width:200px;height:120px;position:relative;z-index:2;animation:breathe 2.4s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1);filter:drop-shadow(0 0 10px rgba(215,255,31,.35))}50%{transform:scale(1.06);filter:drop-shadow(0 0 26px rgba(215,255,31,.75))}}
+.big i{position:absolute;inset:50% auto auto 50%;width:100px;height:100px;margin:-50px;border-radius:50%;border:1.5px solid rgba(215,255,31,.55);animation:ring 2.8s ease-out infinite;opacity:0}
+.big i:nth-child(2){animation-delay:.9s}.big i:nth-child(3){animation-delay:1.8s}
+@keyframes ring{0%{transform:scale(.5);opacity:.8}100%{transform:scale(2.7);opacity:0}}
+.scan{position:absolute;left:0;right:0;height:90px;top:-90px;background:linear-gradient(transparent,rgba(215,255,31,.18) 70%,rgba(215,255,31,.55));border-bottom:1.5px solid var(--neon);animation:scan 3.4s linear infinite;pointer-events:none;z-index:4}
+@keyframes scan{to{transform:translateY(calc(100% * 7))}}
+.mark{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.mark .eye{width:230px;opacity:.16;filter:drop-shadow(0 0 16px rgba(215,255,31,.4))}
+.mark small{position:absolute;bottom:62px;left:24px;right:24px;text-align:center;color:#b8bcc2;font-size:13px;line-height:1.5}
+.live{display:flex;gap:18px;align-items:baseline;font-variant-numeric:tabular-nums}.live b{font-size:26px;letter-spacing:-.02em}.live span{color:var(--neon)}
+.logline{font:11px ui-monospace,Menlo,monospace;color:#9aa0a6;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:14px}
+.stop{padding:9px 20px;border-radius:99px;border:1px solid rgba(255,107,107,.55);color:#ffd0d0;font-weight:800;font-size:13px;background:rgba(255,107,107,.1)}
+.frame{display:flex;gap:11px;align-items:center;padding:9px;border-radius:14px;background:var(--glass);border:1px solid var(--line)}
+.frame .th{width:54px;height:96px;border-radius:9px;object-fit:cover;background:#111 center/cover;border:1px dashed rgba(255,255,255,.25);display:grid;place-items:center;color:#7d8187;font-size:22px;flex:none}
+.frame.has .th{border:1px solid var(--neon)}
+.frame b{font-size:14px;display:block}.frame span{font-size:12px;color:var(--mut);line-height:1.4;display:block}
+.warn{padding:10px 12px;border-radius:12px;background:rgba(215,255,31,.08);border:1px solid rgba(215,255,31,.35);font-size:12.5px;line-height:1.45;color:#e8f5a8}
+.warn button{color:var(--neon);font-weight:800;text-decoration:underline}
+.keyrow{display:flex;gap:8px;max-width:520px}.keyrow input{flex:1}
+.ok{color:var(--neon);font-size:12.5px;font-weight:700}
+.sample{font-size:12px;line-height:1.5;color:#cfd2d6;padding:10px 12px;border-radius:12px;background:var(--glass);border:1px solid var(--line);white-space:pre-wrap;user-select:text}
+.model button.x{margin-left:8px;color:var(--mut);font-size:12px;font-weight:700}
+.chip.warnchip{border-color:rgba(255,107,107,.55);color:#ffd0d0;cursor:pointer}
+.go.ghost{background:var(--glass);color:#fff;border:1px solid var(--line);box-shadow:none}
+.go.ghost span{color:var(--mut)}
 </style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs><radialGradient id="ball" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="#3a3f25"/><stop offset=".55" stop-color="#0b0c08"/><stop offset="1" stop-color="#000"/></radialGradient>
+<symbol id="eyesym" viewBox="0 0 200 120"><path class="rim" d="M8 60 Q100 -14 192 60 Q100 134 8 60 Z"/><path class="arc" d="M100 34 A26 26 0 1 0 126 60"/><g class="pupil"><circle class="ball" cx="116" cy="54" r="13"/></g></symbol></defs></svg>
 <div class="app">
  <header class="top">
-  <div class="brand"><img src="../assets/icon.png" alt=""><b>XUGC</b></div>
+  <div class="brand"><svg class="eye" viewBox="0 0 200 120"><use href="#eyesym"/></svg><b>XUGC</b></div>
   <nav class="nav" id="nav"><button data-view="create" class="on">Create</button><button data-view="library">Library</button><button data-view="train">Train</button><button data-view="settings">Settings</button></nav>
   <div class="sp"></div>
-  <div class="chip demo" id="modechip">DEMO · <b>$0.00</b> spent today</div>
-  <div class="chip" id="buildchip">Build 1</div>
+  <div class="chip" id="modechip">…</div>
+  <div class="chip" id="buildchip">Build 2</div>
  </header>
 
  <section class="view on" id="v-create">
   <div class="ctl">
-   <div class="sec"><div class="lab">1 · PRODUCT <i>Product lock on</i></div>
-    <div class="drop"><img id="prodimg" src="../assets/samples/bw-proj1.webp" alt=""><div><b id="prodname">Haunted Projector</b><span id="prodsub">3 photos · from Black Reaper</span></div><button class="btn" id="prodchange">Change</button></div></div>
-   <div class="sec"><div class="lab">2 · AVATAR <i>Same face every video</i></div><div class="avs" id="avs"></div></div>
-   <div class="sec"><div class="lab">3 · SCRIPT</div><textarea id="script"></textarea>
-    <div class="row"><button class="btn" id="write">Write with Claude</button><button class="btn" id="voice">Voice: Emma</button></div></div>
-   <div class="sec"><div class="lab">4 · LOOK</div>
-    <div class="row" id="looks"><button class="pill on" data-look="Selfie">Selfie</button><button class="pill" data-look="Unboxing">Unboxing</button><button class="pill" data-look="Demo">Demo</button><button class="pill" data-look="Testimonial">Testimonial</button></div>
-    <div class="row"><button class="pill on" data-len="15">15s</button><button class="pill" data-len="30">30s</button><button class="pill on" id="capt">Captions</button></div></div>
+   <div class="warn" id="nokey" style="display:none">No RunPod key yet, so nothing can be made. <button id="gokey">Add it in Settings</button></div>
+   <div class="sec"><div class="lab">1 · START FRAME <i>The model sees only this</i></div>
+    <div class="frame" id="frame"><div class="th" id="frameth">+</div><div><b id="framename">No picture yet</b><span id="framesub">A photo of your person holding your product. The video starts from it.</span></div><button class="btn" id="framebtn" style="margin-left:auto">Choose</button></div></div>
+   <div class="sec"><div class="lab">2 · WHAT HAPPENS</div><textarea id="script" placeholder="She plugs the projector in, points it at her front window, and a ghost appears on the glass. She steps back and laughs."></textarea>
+    <div class="row" id="looks"></div></div>
    <div class="sec"><div class="lab">MODEL</div><div id="models" style="display:flex;flex-direction:column;gap:8px"></div></div>
-   <div class="gobar"><button class="go" id="go">Generate <span id="goest">about $1.20 · 2 min</span></button><div class="err" id="err"></div></div>
+   <div class="gobar"><button class="go" id="go">Generate 5 sec <span id="goest">up to $1.63 · about 28 min</span></button><div class="err" id="err"></div>
+    <div class="note" style="margin-top:8px">Each video rents a GPU for just this clip and hands it back. The price shown is the most it can cost.</div></div>
   </div>
   <div class="stage">
-   <div class="phone" id="phone"><video id="pv" loop muted playsinline></video><img class="bg" id="pbg" alt=""><div class="shade"></div><div class="tag" id="ptag">PREVIEW</div><div class="prod"><img id="pprod" src="../assets/samples/bw-proj1.webp" alt=""></div><div class="cap" id="pcap"></div>
-    <div class="prog" id="prog"><b id="pstage">Starting</b><div class="bar"><i id="pbar"></i></div><small id="pnote">Demo mode: nothing is rented and nothing is charged.</small></div></div>
+   <div class="phone" id="phone"><video id="pv" loop muted playsinline style="display:none"></video><div class="mark" id="mark"><svg class="eye" viewBox="0 0 200 120"><use href="#eyesym"/></svg><small>Your video appears here.<br>Pick a start frame, say what happens, press Generate.</small></div><div class="shade"></div><div class="tag" id="ptag">PREVIEW</div>
+    <div class="prog" id="prog"><div class="scan"></div><div class="big"><i></i><i></i><i></i><svg class="eye" viewBox="0 0 200 120"><use href="#eyesym"/></svg></div><b id="pstage">Starting</b><div class="live"><b id="ptime">0:00</b><b><span id="pcost">$0.00</span></b></div><div class="bar"><i id="pbar"></i></div><div class="logline" id="plog"></div><button class="stop" id="stop">Stop and hand the GPU back</button></div></div>
    <div class="verd" id="verd" style="visibility:hidden"><button id="vup" title="Good: add to training clips">👍</button><button id="vdown" title="Bad">👎</button><small>👍 adds it to your training clips</small></div>
-   <div class="hint" id="hint"><b>Product lock</b> keeps your projector looking like your projector in every frame.</div>
+   <div class="hint" id="hint">Silent 5-second clips for now. Voice and stitching come next.</div>
   </div>
   <aside class="takes" id="takes"></aside>
  </section>
@@ -88,24 +123,28 @@ textarea:focus,input:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
  <section class="view" id="v-library"><div class="page"><h1>Library</h1><p class="sub">Every video you've made. 👍 sends one to your training clips.</p><div class="grid" id="libgrid"></div></div></section>
 
  <section class="view" id="v-train"><div class="page"><h1>Train</h1>
-  <p class="sub">Teach your own model what good UGC looks like. Start from your own videos. Each clip needs a short caption saying what happens in it. Videos you 👍 in the Library join this list automatically, so training can keep going.</p>
-  <div class="stat"><div><b id="n-clips">0</b><small>training clips</small></div><div><b id="n-appr">0</b><small>approved from your takes</small></div><div><b id="n-models">1</b><small>models</small></div></div>
+  <p class="sub">Teach your own model what good UGC looks like. Add videos you own. A short caption on each saying what happens helps; any left empty are captioned by the GPU. Videos you 👍 join this list automatically, so training can keep going.</p>
+  <div class="stat"><div><b id="n-clips">0</b><small>videos</small></div><div><b id="n-appr">0</b><small>approved from your takes</small></div><div><b id="n-models">1</b><small>models</small></div></div>
   <div style="height:16px"></div><div class="row" style="margin-bottom:14px"><button class="btn" id="addclips">+ Add videos</button></div>
   <div id="cliplist"></div></div>
   <aside class="side"><h2 style="font-size:16px">Train a model</h2>
    <div class="fld"><label>MODEL NAME</label><input type="text" id="mname" value="UGC-02"></div>
-   <div class="note">Estimated: <b id="t-est">about $18 · about 6 hours</b><br>The app stops and refuses if this is over your training limit (<b id="t-cap">$40</b>).</div>
-   <button class="go" id="train-go">Train <span id="t-go">demo</span></button><div class="err" id="terr"></div>
-   <div class="prog" id="tprog" style="position:static;display:none;background:none;padding:0;align-items:stretch;text-align:left"><b id="tstage">Starting</b><div class="bar" style="width:100%"><i id="tbar"></i></div></div>
+   <div class="note"><b>Step 1 · Test run</b><br>3 clips, 1 round. Proves the whole chain before real money goes in. About <b id="tt-est">$2</b> at most.</div>
+   <button class="go ghost" id="test-go">Test run <span id="t-test">up to $1.81</span></button>
+   <div class="note"><b>Step 2 · Train</b><br>Every video, the full run. About <b id="t-est">$19</b> at most, within your <b id="t-cap">$40</b> limit.</div>
+   <button class="go" id="train-go">Train <span id="t-go">up to $19</span></button><div class="err" id="terr"></div>
+   <div class="prog" id="tprog" style="position:static;display:none;background:none;padding:0;align-items:center;text-align:center;gap:10px"><div class="big" style="transform:scale(.7);margin:-14px 0"><i></i><i></i><i></i><svg class="eye" viewBox="0 0 200 120"><use href="#eyesym"/></svg></div><b id="tstage">Starting</b><div class="live"><b id="ttime">0:00</b><b><span id="tcost">$0.00</span></b></div><div class="bar" style="width:100%"><i id="tbar"></i></div><div class="logline" id="tlog"></div><button class="stop" id="tstop">Stop and hand the GPU back</button></div>
+   <div id="tsample" style="display:none"><div class="lab" style="margin-bottom:6px">WHAT THE GPU WROTE AS CAPTIONS (read these)</div><div class="sample" id="tsampletext"></div></div>
    <div class="lab" style="margin-top:6px">YOUR MODELS</div><div id="tmodels" style="display:flex;flex-direction:column;gap:8px"></div>
-   <div class="note">Demo mode: training is pretend and free, so you can see the whole flow. Real training starts only when RunPod is connected and the test clips look good.</div>
   </aside></section>
 
- <section class="view" id="v-settings"><div class="page"><h1>Settings</h1><p class="sub">Spending limits are enforced by the app itself. A job over a limit is refused before anything is rented.</p>
+ <section class="view" id="v-settings"><div class="page"><h1>Settings</h1><p class="sub">Spending limits are enforced by the app itself. A job over a limit is refused before anything is rented, and a running job is stopped when it reaches its limit.</p>
+  <div class="fld"><label>RUNPOD KEY</label><div class="keyrow"><input type="password" id="keyin" placeholder="rpa_…" autocomplete="off"><button class="btn" id="keysave">Save and test</button></div><div class="ok" id="keystate"></div><div class="err" id="keyerr"></div></div>
+  <div class="fld"><label>STOP THE METER</label><div class="row"><button class="btn" id="sweep">Stop every XUGC GPU now</button></div><div class="note" id="sweepnote">Every GPU also deletes itself at its deadline, even if this app is closed.</div></div>
   <div class="fld"><label>MOST PER VIDEO ($)</label><input type="number" id="cap-job" min="0" step="0.5"></div>
   <div class="fld"><label>MOST PER DAY ($)</label><input type="number" id="cap-day" min="0" step="1"></div>
   <div class="fld"><label>MOST PER TRAINING RUN ($)</label><input type="number" id="cap-train" min="0" step="1"></div>
-  <div class="fld"><label>ENGINE</label><div class="row"><button class="pill on" id="m-demo">Demo (free)</button><button class="pill" id="m-runpod">RunPod (not connected)</button></div></div>
-  <p class="note">Build <b id="s-build">1</b>. Data lives in your Mac's Application Support folder for XUGC.</p></div></section>
+  <div class="fld"><label>RUNPOD NETWORK VOLUME ID (OPTIONAL)</label><input type="text" id="volid" placeholder="saves the 60 GB model between videos"><div class="note">Without it every video downloads the model again (about 15 minutes of GPU time each). With a volume it is already there.</div></div>
+  <p class="note">Build <b id="s-build">2</b>. Your key and data live in your Mac's Application Support folder for XUGC, never in the app itself.</p></div></section>
 </div>
 <script src="app.js"></script></body></html>

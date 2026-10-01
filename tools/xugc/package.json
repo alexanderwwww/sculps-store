@@ -4,11 +4,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "commonjs",
-  "description": "Your own UGC video studio: product + avatar + script, made on rented GPUs you control.",
+  "description": "Your own UGC video studio: a start frame + what happens, made on rented GPUs you control.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node test/engine.test.mjs && node test/app.test.mjs"
+    "test": "node test/engine.test.mjs && node test/runpod.test.mjs && node test/app.test.mjs"
   },
   "devDependencies": {
     "electron": "^44.4.5",
@@ -17,11 +17,29 @@
   "build": {
     "appId": "us.blackreaper.xugc",
     "productName": "XUGC",
-    "files": ["main.js", "preload.js", "engine.js", "store.js", "renderer/**", "assets/**"],
+    "files": [
+      "main.js",
+      "preload.js",
+      "engine.js",
+      "store.js",
+      "runpod.js",
+      "secrets.js",
+      "renderer/**",
+      "assets/**",
+      "train/*.py",
+      "train/*.sh"
+    ],
     "mac": {
       "category": "public.app-category.video",
       "icon": "assets/AppIcon.icns",
-      "target": [{ "target": "dir", "arch": ["x64"] }]
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
     }
   }
 }
