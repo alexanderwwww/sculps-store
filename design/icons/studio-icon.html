@@ -1,0 +1,49 @@
+<!doctype html><meta charset=utf-8><style>body{margin:0;background:#222;display:flex;gap:24px;padding:24px}svg{display:block}</style>
+<div id=root></div>
+<script>
+const Y='#D7FF1F';
+const defs=`
+<defs>
+ <linearGradient id="fill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".55" stop-color="#fff" stop-opacity=".02"/><stop offset="1" stop-color="#fff" stop-opacity=".22"/></linearGradient>
+ <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset=".45" stop-color="#fff" stop-opacity=".15"/><stop offset="1" stop-color="#fff" stop-opacity=".75"/></linearGradient>
+ <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".95"/></linearGradient>
+ <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14"/></filter>
+ <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+ <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="26" stdDeviation="24" flood-color="#000" flood-opacity=".38"/></filter>
+</defs>`;
+/* A glass piece: shape path d, the backdrop group id to magnify, lens scale about (cx,cy) */
+function glass(id,d,cx,cy,scale,hl){
+ return `
+ <clipPath id="c${id}"><path d="${d}"/></clipPath>
+ <g filter="url(#shadow)"><path d="${d}" fill="#000" fill-opacity=".001"/></g>
+ <g clip-path="url(#c${id})">
+   <g transform="translate(${cx} ${cy}) scale(${scale}) translate(${-cx} ${-cy})"><use href="#back"/></g>
+   <g transform="translate(${cx+7} ${cy}) scale(${scale}) translate(${-cx} ${-cy})" style="mix-blend-mode:screen;opacity:.0"><use href="#back"/></g>
+   <path d="${d}" fill="url(#fill)"/>
+   <path d="${d}" fill="none" stroke="#fff" stroke-opacity=".0" stroke-width="40" filter="url(#soft)"/>
+   <path d="${d}" fill="none" stroke="url(#glow)" stroke-width="34" filter="url(#blur6)"/>
+   <ellipse cx="${hl[0]}" cy="${hl[1]}" rx="${hl[2]}" ry="${hl[3]}" fill="#fff" fill-opacity=".85" filter="url(#blur6)" transform="rotate(${hl[4]} ${hl[0]} ${hl[1]})"/>
+ </g>
+ <path d="${d}" fill="none" stroke="url(#rim)" stroke-width="7"/>`;
+}
+const wrap=(inner,k)=>{inner=inner.replaceAll('#back','#back'+k).replaceAll('id="back"','id="back'+k+'"');return `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 1024 1024">${defs}
+<clipPath id="app"><rect width="1024" height="1024" rx="230"/></clipPath>
+<g clip-path="url(#app)"><rect width="1024" height="1024" fill="${Y}"/>${inner}</g></svg>`};
+/* A: lens over a black play triangle */
+const A=wrap(`
+<g id="back"><path d="M250 190 L250 834 L830 512 Z" fill="#0A0A0A" stroke="#0A0A0A" stroke-width="60" stroke-linejoin="round"/></g>
+<use href="#back"/>
+${glass('A','M640 330a260 260 0 1 0 .01 0z',640,600,1.22,[560,470,110,44,-35])}`,'A');
+/* B: glass play button over a black disc */
+const B=wrap(`
+<g id="back"><circle cx="512" cy="512" r="330" fill="#0A0A0A"/></g>
+<use href="#back"/>
+${glass('B','M392 300 Q356 300 356 340 L356 684 Q356 724 392 704 L740 548 Q790 512 740 476 Z',560,512,1.28,[440,380,90,40,-30])}`,'B');
+/* C: glass phone 9:16 over black blob + play */
+const C=wrap(`
+<g id="back"><circle cx="380" cy="640" r="270" fill="#0A0A0A"/><path d="M470 360 L470 664 L690 512 Z" fill="${Y}" stroke="${Y}" stroke-width="40" stroke-linejoin="round" transform="translate(40 0)"/></g>
+<use href="#back"/>
+${glass('C','M372 190 h300 a70 70 0 0 1 70 70 v504 a70 70 0 0 1 -70 70 h-300 a70 70 0 0 1 -70 -70 v-504 a70 70 0 0 1 70 -70z',522,512,1.22,[420,260,110,40,-20])}`,'C');
+document.getElementById('root').outerHTML=`<div style="display:flex;gap:24px">${A}${B}${C}</div>`;
+window.__svgs={A,B,C};
+</script>
