@@ -37,6 +37,10 @@ here.** That single fact explains almost every rule below.
   contradicts an earlier one, follow the latest and say so in one line.
 - **When he says it is broken, he is right.** Every time. Arguing about whether it is
   broken is time not spent finding out why.
+- **No hedging, no philosophy about uncertainty.** He pays for a function and wants to know
+  it works. Say "yes, I'll make it work and show you" or say the one concrete thing that is
+  broken. Never "likely", "probably", "unknown until we see it", or a list of scenarios.
+  Do the work, fix what breaks, and report the result. (Said angrily about XUGC, 2026-10-01.)
 - He swears when he is angry, and he is angry because something does not work. Do not
   take it personally and do not apologise at length — fix it and show him.
 

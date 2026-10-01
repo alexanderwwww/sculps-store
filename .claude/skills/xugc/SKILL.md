@@ -39,3 +39,10 @@ The $10 is a prepaid balance, billed by the second; every video costs a little (
 
 ## Open / needs Alex
 RunPod account + $10 + API key (Read & Write, named `studio`); Marketing Studio screenshots; Which NVIDIA GPU he saw (he mentioned one, not named).
+
+
+## Direction settled with Alex (2026-10-01, after build 2)
+- Engine is **self-hosted on rented NVIDIA via RunPod**; he dislikes hosted APIs. Wan 2.2 is out: about 10 min per 5 s clip is unusable. Switch to **LTX-2** (open weights, about 18x faster than Wan on an H100, up to 20 s clips, makes audio too). Generation on an RTX 5090 ($0.99/h), training on an H100 ($2.89/h). Kling/Veo may be added later as OPTIONAL engines for hero shots, never required.
+- He wants VIDEO only: product + scene in, video out. Start frames are an internal step the app hides.
+- Build 3 scope: product from a link, avatar picker or "broad", length 5/10/15/20 s, quality choice, price shown before Generate, engine named "XUGC" (not the model name), his REAL icon (small) not my drawn eye, a futuristic render animation, MCP bridge so Claude can drive it (may be policy-blocked like the Cursor one), and a **Style Bible** section in Train: he drops .md files (iPhone look, handheld shake, audio, hooks) that are compiled with the product and scene into the shot prompt plus a never-do list. 👍 videos join the training pile, 👎 adds to the never-do list.
+- First: one real test clip on LTX-2 with his RunPod key, shown to him BEFORE building the rest. He must create the RunPod account, add $10 and paste a Read & Write key named xugc into XUGC Settings.
