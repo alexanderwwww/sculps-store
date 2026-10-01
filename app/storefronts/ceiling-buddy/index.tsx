@@ -686,7 +686,9 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                   x.id === deepest.id && !x.isDefault && (savedPercent(x.priceCents, x.compareAtCents) ?? 0) > 0
                     ? ["best", "Best value"] as const
                     : x.isDefault && variants.length > 1
-                      ? ["pop", "Most popular"] as const
+                      ? (has(v, "popularLabel")
+                          ? ["pick", val(v, "popularLabel")] as const
+                          : ["pop", "Most popular"] as const)
                       : null;
                 const off = savedPercent(x.priceCents, x.compareAtCents);
                 const save = savedAmount(x.priceCents, x.compareAtCents);
@@ -863,11 +865,11 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
           {chosen && chosen.available > 0 ? (
             <p className="cb-stock">
               <i aria-hidden="true" />
-              {chosen.available <= 20
+              {chosen.available <= (Number(val(v, "lowStockAt")) || 20)
                 ? <span className="cb-stock__low">{`Only ${chosen.available} left`}</span>
                 : <span className="cb-stock__std">In stock</span>}
               <span className="cb-stock__plain">In stock</span>
-              <span className="cb-stock__ship">Arrives 5-7 days after it ships</span>
+              <span className="cb-stock__ship">{has(v, "shipLine") ? val(v, "shipLine") : "Arrives 5-7 days after it ships"}</span>
             </p>
           ) : null}
 

@@ -4646,3 +4646,17 @@ html, body { margin: 0; }
   .cb-buy__side > .cb-coupon .cb-coupon__line { width: 100% !important; }
   .cb-buy__side > .cb-coupon .cb-coupon__code { width: 100% !important; display: flex !important; }
 }
+
+/* A bundle the owner has marked as the popular pick shows an orange tag; real stock
+   below the threshold shows the real number, in red. Both are driven by the page's own data. */
+.cb-tier__flag--pick {
+  display: inline-flex !important; position: absolute; top: -11px; left: 14px; z-index: 2; background: #F9A01B; color: #140A02;
+  border-radius: 999px; padding: 3px 11px; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+}
+.cb-stock:has(.cb-stock__low) .cb-stock__plain { display: none; }
+.cb-stock .cb-stock__low { display: inline !important; color: #C8102E; font-weight: 800; }
+.cb-stock:has(.cb-stock__low) i { background: #C8102E; box-shadow: 0 0 0 4px rgba(200,16,46,.15); }
+.cb-tier .cb-tier__flag--pick, .cb-tier[aria-checked] .cb-tier__flag--pick { background: #F9A01B !important; color: #140A02 !important; border-radius: 999px !important; }
+.cb-stock:has(.cb-stock__low) .cb-stock__ship::before { content: none; margin: 0; }
+.cb-stock:has(.cb-stock__low) { row-gap: 2px; }
+.cb-stock:has(.cb-stock__low) .cb-stock__ship { flex-basis: 100%; padding-left: 18px; }
