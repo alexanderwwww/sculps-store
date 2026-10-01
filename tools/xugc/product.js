@@ -34,6 +34,22 @@ async function fetchProduct(url, fetchImpl = globalThis.fetch) {
   const add = (x) => { for (const i of [].concat(x || [])) { const s = typeof i === "string" ? i : i && (i.url || i.contentUrl); if (s) { try { const a = new URL(s, u.href).href; if (!imgs.includes(a)) imgs.push(a); } catch {} } } };
   if (ld) add(ld.image);
   for (const i of m["og:image"] || []) add(i);
+  // A shop page's own markup often lists one picture. The rest of the gallery is on the page under the same
+  // file-name family (scr-s1-hero, scr-s2-scale ...), once per size. Take every picture of that family, once.
+  const fam = imgs[0] && /\/([a-z0-9]+)-[^/]*$/i.exec(new URL(imgs[0]).pathname);
+  if (fam) {
+    const host = new URL(imgs[0]).host, seen = new Set(imgs.map((i) => new URL(i).pathname));
+    const extra = [];
+    for (const m of html.matchAll(/(?:https?:\/\/[^"'\s)]+)?\/[^"'\s)]*?\/(?:[a-z0-9]+)-[^"'\s)]*?\.(?:webp|jpe?g|png)/gi)) {
+      let a; try { a = new URL(m[0], u.href); } catch { continue; }
+      const base = a.pathname.split("/").pop();
+      if (a.host !== host || !base.toLowerCase().startsWith(fam[1].toLowerCase() + "-") || /-(?:t|w)\d+\.\w+$/i.test(base) || seen.has(a.pathname)) continue;
+      seen.add(a.pathname); extra.push(a.href);
+    }
+    // product shots first (s1, s2 ...), the rest after
+    extra.sort((x, y) => (/-s\d/.test(y) ? 1 : 0) - (/-s\d/.test(x) ? 1 : 0) || x.localeCompare(y));
+    imgs.push(...extra);
+  }
   const offer = ld && [].concat(ld.offers || [])[0];
   const title = clean((ld && ld.name) || first("og:title") || (/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html) || [])[1]);
   if (!title) throw new Error("Could not find a product on that page.");
@@ -42,7 +58,7 @@ async function fetchProduct(url, fetchImpl = globalThis.fetch) {
     desc: clean((ld && ld.description) || first("og:description") || first("description")).slice(0, 400),
     price: (offer && (offer.price || (offer.priceSpecification && offer.priceSpecification.price))) || first("product:price:amount") || first("og:price:amount") || "",
     currency: (offer && offer.priceCurrency) || first("product:price:currency") || "",
-    images: imgs.slice(0, 8),
+    images: imgs.slice(0, 24),
   };
 }
 module.exports = { fetchProduct };

@@ -48,6 +48,12 @@ await new Promise((r) => srv.listen(0, r));
 const prod = await fetchProduct(`http://127.0.0.1:${srv.address().port}/p`);
 ok(prod.title === "Haunted Projector" && prod.price === "79.99" && prod.images.length === 2 && !/</.test(prod.desc), "a product page is read: name, price, photos, clean description");
 srv.close();
+const srv2 = http.createServer((q, r) => { r.setHeader("content-type", "text/html"); r.end(`<html><head><script type="application/ld+json">{"@type":"Product","name":"P","image":["/media/scr-s1-hero.webp"]}</script></head><body><img src="/media/scr-s1-hero-t200.webp"><img src="/media/scr-s2-scale.webp"><img src="/media/scr-s2-scale-w640.webp"><img srcset="/media/scr-s3-does.webp 1x"><img src="/media/bw-other1.webp"><img src="/media/scr-s2-scale.webp"></body></html>`); });
+await new Promise((r) => srv2.listen(0, r));
+process.env.XUGC_ALLOW_LOCAL = "1";
+const prod2 = await fetchProduct(`http://127.0.0.1:${srv2.address().port}/p`);
+ok(prod2.images.map((x) => x.split("/").pop()).join() === "scr-s1-hero.webp,scr-s2-scale.webp,scr-s3-does.webp", "ALL of the product's photos are read from the page (same family, once each, no thumbnails, no other products)", prod2.images.map((x) => x.split("/").pop()).join());
+srv2.close();
 let pe = null; try { await fetchProduct("ftp://x.y"); } catch (e) { pe = e; } ok(!!pe, "only web links are accepted");
 delete process.env.XUGC_ALLOW_LOCAL; let pe2 = null; try { await fetchProduct("http://192.168.1.1/x"); } catch (e) { pe2 = e; } ok(pe2 && /private/.test(pe2.message), "private network addresses are refused");
 
