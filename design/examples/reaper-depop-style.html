@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Black Reaper — product page, Depop-clean</title>
+<style>
+:root{--bg:#0B0B0B;--card:#161616;--line:#262626;--ink:#fff;--mut:#9b9b9b;--or:#F9A01B;--orink:#140A02}
+*{box-sizing:border-box;margin:0}
+html,body{background:var(--bg);color:var(--ink);font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.app{max-width:430px;margin:0 auto;min-height:100vh;padding-bottom:104px;position:relative}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(11,11,11,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top img{height:34px}.ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#1c1c1c}
+.ic svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.strip{background:var(--or);color:var(--orink);font-weight:800;font-size:12.5px;display:flex;justify-content:center;gap:8px;padding:9px 8px;letter-spacing:.01em;white-space:nowrap;overflow:hidden}
+.strip i{opacity:.4;font-style:normal}
+.gal{position:relative}
+.track{display:flex;align-items:flex-start;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;touch-action:pan-x pan-y pinch-zoom}
+.track::-webkit-scrollbar{display:none}
+.track img{flex:0 0 100%;width:100%;height:auto;max-height:none;aspect-ratio:1/1;object-fit:cover;scroll-snap-align:center;background:#111}
+.dots{position:absolute;left:0;right:0;bottom:14px;display:flex;justify-content:center;gap:7px}
+.dots b{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.45)}.dots b.on{background:#fff;width:20px;border-radius:4px}
+.fab{position:absolute;right:14px;width:46px;height:46px;border-radius:50%;background:rgba(20,20,20,.72);backdrop-filter:blur(6px);display:grid;place-items:center;border:1px solid rgba(255,255,255,.18)}
+.fab svg{width:21px;height:21px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.head{padding:18px 16px 14px;border-bottom:1px solid var(--line)}
+.kick{font-size:13px;font-weight:800;letter-spacing:.14em;color:var(--or)}
+h1{font-size:22px;font-weight:800;letter-spacing:.01em;margin-top:6px;line-height:1.15;text-transform:uppercase}
+.meta{margin-top:6px;font-size:15px;color:var(--mut);font-weight:600}
+.rate{margin-top:10px;display:flex;align-items:center;gap:8px;font-size:14px;color:var(--mut)}.rate b{color:#fff}
+.sec{padding:16px;border-bottom:1px solid var(--line)}
+.lab{font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--mut);margin-bottom:10px}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chip{border:2px solid #2d2d2d;border-radius:12px;padding:10px 6px;text-align:center;background:var(--card);cursor:pointer;position:relative}
+.chip.on{border-color:var(--or);background:#1d1608}
+.chip b{display:block;font-size:15px}.chip span{display:block;font-size:13px;color:var(--mut);margin-top:2px}.chip.on span{color:#ffd48a}
+.chip em{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--or);color:var(--orink);font-style:normal;font-size:10px;font-weight:900;letter-spacing:.08em;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.desc{font-size:16px;line-height:1.5;color:#e4e4e4}
+.desc p+p{margin-top:12px}
+.more{font-weight:800;color:#fff;cursor:pointer}
+.list{display:grid;gap:12px}.row{display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.4;color:#e4e4e4}
+.row i{flex:0 0 28px;height:28px;border-radius:50%;background:#1d1608;border:1px solid #4a3410;display:grid;place-items:center;color:var(--or);font-style:normal;font-weight:900;font-size:14px}
+.row b{display:block;color:#fff}
+.seller{display:flex;align-items:center;gap:12px}.seller img{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#fff}
+.seller b{display:block}.seller span{font-size:14px;color:var(--mut)}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(11,11,11,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:12px 16px calc(14px + env(safe-area-inset-bottom))}
+.bar-in{max-width:430px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.price b{display:block;font-size:24px;font-weight:900;letter-spacing:-.01em}.price s{color:var(--mut);font-size:14px;margin-right:6px;font-weight:600}
+.price span{font-size:13px;font-weight:700;color:#7fe0a0}
+.btn{flex:1;border:0;border-radius:12px;padding:16px 10px;font-size:17px;font-weight:900;cursor:pointer;font-family:inherit}
+.b1{background:var(--or);color:var(--orink)}
+.b2{flex:0 0 auto;padding:16px 16px;background:transparent;color:#fff;border:2px solid #444;font-size:15px}
+</style></head>
+<body><div class="app">
+
+<div class="top"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></div>
+<img src="https://kerberos.gardenbuddystore.workers.dev/media/br-logo.webp" alt="Black Reaper">
+<div style="display:flex;gap:8px"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg></div>
+<div class="ic"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8zM9 8a3 3 0 016 0"/></svg></div></div></div>
+
+<div class="strip">Free US shipping <i>|</i> Arrives 5–7 days after it ships</div>
+
+<div class="gal"><div class="track" id="track">
+<img src="https://kerberos.gardenbuddystore.workers.dev/media/hp-ip-s02.webp" alt="">
+<img src="https://kerberos.gardenbuddystore.workers.dev/media/hp-house.webp" alt="">
+<img src="https://kerberos.gardenbuddystore.workers.dev/media/bw-proj1.webp" alt="">
+<img src="https://kerberos.gardenbuddystore.workers.dev/media/hp-garage-c.webp" alt="">
+<img src="https://kerberos.gardenbuddystore.workers.dev/media/hp-ip-s01.webp" alt="">
+<img src="https://kerberos.gardenbuddystore.workers.dev/media/hp-box-f.webp" alt="">
+</div>
+<div class="fab" style="top:14px"><svg viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4M5 14v5h14v-5"/></svg></div>
+<div class="dots" id="dots"></div></div>
+
+<div class="head"><div class="kick">BLACK REAPER • PROJECTOR</div>
+<h1>The Haunted Projector</h1>
+<div class="meta">Window &amp; garage • Brand new • Plug in, point, done</div></div>
+
+<div class="sec"><div class="lab">CHOOSE YOUR WINDOWS</div>
+<div class="chips" id="chips">
+<div class="chip on" data-p="79.99" data-w="" data-n="One"><b>1 window</b><span>$79.99</span></div>
+<div class="chip" data-p="129.99" data-w="159.98" data-n="Two"><em>SAVE $30</em><b>2 windows</b><span>$129.99</span></div>
+<div class="chip" data-p="179.99" data-w="239.97" data-n="Three"><em>BEST VALUE</em><b>3 windows</b><span>$179.99</span></div>
+</div></div>
+
+<div class="sec"><div class="desc" id="desc">
+<p>Turns a plain window into the one house everybody talks about. A screaming face, a figure stepping out of the dark, a ghost drifting past, and your neighbours stop in the street.</p>
+<p id="more" style="display:none">Stake it in the lawn or stand it on the porch, point it at glass or a garage door, and switch it on. No screen needed. Works in the dark from dusk, and the scenes loop on their own all night.</p>
+<p><span class="more" id="tog">… show more</span></p></div></div>
+
+<div class="sec"><div class="lab">WHAT YOU GET</div><div class="list">
+<div class="row"><i>1</i><div><b>The projector + ground stake</b>Brand new, packed in the box shown.</div></div>
+<div class="row"><i>2</i><div><b>Power lead</b>One plug. Nothing to build.</div></div>
+<div class="row"><i>3</i><div><b>Free US shipping</b>Tracking link on every order.</div></div>
+<div class="row"><i>4</i><div><b>30 days to send it back</b>If it isn't scary enough, return it.</div></div>
+</div></div>
+
+<div class="sec"><div class="seller"><img src="https://kerberos.gardenbuddystore.workers.dev/media/br-logo.webp" alt="" style="object-fit:contain;background:#000;padding:4px"><div><b>blackreaper.us</b><span>Halloween, done seriously • ships from the US</span></div></div></div>
+
+<div class="bar"><div class="bar-in">
+<div class="price"><b id="pr">$79.99</b><span>Free shipping</span></div>
+<button class="btn b2">Buy now</button><button class="btn b1">Add to cart</button>
+</div></div>
+</div>
+<script>
+var t=document.getElementById('track'),n=t.children.length,d=document.getElementById('dots');
+for(var i=0;i<n;i++){d.appendChild(document.createElement('b'))}
+function dot(){var k=Math.round(t.scrollLeft/t.clientWidth);[].forEach.call(d.children,function(b,j){b.className=j===k?'on':''})}
+t.addEventListener('scroll',dot);dot();
+document.getElementById('tog').onclick=function(){var m=document.getElementById('more'),o=m.style.display==='none';m.style.display=o?'block':'none';this.textContent=o?'show less':'… show more'};
+[].forEach.call(document.querySelectorAll('.chip'),function(c){c.onclick=function(){[].forEach.call(document.querySelectorAll('.chip'),function(x){x.className='chip'});c.className='chip on';var w=c.dataset.w;document.getElementById('pr').innerHTML=(w?'<s>$'+w+'</s>':'')+'$'+c.dataset.p}});
+</script></body></html>
