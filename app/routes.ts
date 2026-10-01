@@ -53,6 +53,7 @@ export default [
   // behind it is guarded by the key in the path.
   route("wand/*", "routes/wand.$.tsx"),
   route("xugc/*", "routes/xugc.$.tsx"),
+  route("ops/*", "routes/ops.$.tsx"),
   route("organicx/*", "routes/organicx.$.tsx"),
   route("organic/*", "routes/organic.$.tsx"),
   route("research/*", "routes/research.$.tsx"),
