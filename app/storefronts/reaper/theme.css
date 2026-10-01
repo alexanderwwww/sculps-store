@@ -4487,3 +4487,76 @@ html, body { margin: 0; }
   .cb-tier { grid-template-columns: 24px auto 1fr 92px !important; }
   .cb-tier .cb-tier__pic { width: 90px !important; height: 90px !important; }
 }
+
+/* ======================================================================
+ * The top of the buy box, made to sell. Title, price, line, coupon.
+ * Kept: the orange banner and the bundle rows. Changed: everything above
+ * them gets weight, rhythm and a coupon that looks like a ticket you want
+ * to use. White page, black ink, one orange. Never beige.
+ * ====================================================================== */
+.cb-buy__side > .cb-h1 {
+  font-size: clamp(30px, 8.4vw, 36px) !important; line-height: 1.02 !important; font-weight: 900 !important;
+  letter-spacing: -.028em !important; color: #0B0B0B !important; margin: 2px 0 4px !important; text-wrap: balance;
+}
+.cb-buy__side > .cb-h1::before {
+  content: "BLACK REAPER"; display: block; margin-bottom: 7px;
+  font-size: 12px; font-weight: 800; letter-spacing: .2em; color: #F9A01B;
+}
+.cb-buy__side > .cb-price { display: flex !important; align-items: center !important; flex-wrap: wrap; gap: 6px 12px !important; margin: 8px 0 12px !important; }
+.cb-buy__side > .cb-price .cb-price__now { font-size: 46px !important; line-height: 1 !important; font-weight: 900 !important; letter-spacing: -.035em !important; color: #0B0B0B !important; }
+.cb-buy__side > .cb-price .cb-price__was { font-size: 21px !important; color: #8a8a8a !important; font-weight: 600 !important; }
+.cb-buy__side > .cb-price::after {
+  content: "FREE US SHIPPING"; display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px;
+  background: #E5F7EC; color: #0A7A3A; font-size: 11.5px; font-weight: 800; letter-spacing: .08em;
+}
+.cb-buy__side > .cb-lede {
+  font-size: 17px !important; line-height: 1.5 !important; color: #333 !important; margin: 0 0 18px !important;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* The coupon: a black ticket with notches, the saving big, the code one tap. */
+.cb-buy__side > .cb-coupon {
+  position: relative; display: grid !important; grid-template-columns: 42px minmax(0,1fr); align-items: center; gap: 0 12px;
+  margin: 0 0 18px !important; padding: 14px 22px 14px 16px !important; background: #0B0B0B !important; color: #fff;
+  border: 0 !important; border-radius: 16px !important; box-shadow: 0 12px 28px rgba(0,0,0,.2);
+}
+.cb-buy__side > .cb-coupon::before, .cb-buy__side > .cb-coupon::after {
+  content: ""; position: absolute; top: 50%; width: 20px; height: 20px; margin-top: -10px; border-radius: 50%; background: #fff;
+}
+.cb-buy__side > .cb-coupon::before { left: -10px; }
+.cb-buy__side > .cb-coupon::after { right: -10px; }
+.cb-buy__side > .cb-coupon .cb-coupon__tag {
+  width: 42px !important; height: 42px !important; margin: 0 !important; display: grid; place-items: center;
+  border-radius: 50%; background: #F9A01B !important; color: #140A02 !important;
+}
+.cb-buy__side > .cb-coupon .cb-coupon__tag svg { width: 22px !important; height: 22px !important; }
+.cb-buy__side > .cb-coupon .cb-coupon__in { display: grid !important; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 2px 12px; min-width: 0; }
+.cb-buy__side > .cb-coupon .cb-coupon__pill {
+  grid-column: 1; background: none !important; color: #fff !important; padding: 0 !important; border-radius: 0 !important;
+  font-size: 19px !important; font-weight: 900 !important; letter-spacing: -.015em !important; line-height: 1.1;
+}
+.cb-buy__side > .cb-coupon .cb-coupon__in::after {
+  content: "Applied for you"; grid-column: 1; grid-row: 2; font-size: 12px; color: #b9b9b9; font-weight: 600;
+}
+.cb-buy__side > .cb-coupon .cb-coupon__line {
+  grid-column: 2; grid-row: 1 / span 2; font-size: 0 !important; color: transparent !important; display: block; padding-left: 12px; border-left: 1.5px dashed #444;
+}
+.cb-buy__side > .cb-coupon .cb-coupon__code {
+  display: inline-flex !important; align-items: center; gap: 6px; font-size: 13px; height: 38px; padding: 0 10px;
+  background: #F9A01B !important; color: #140A02 !important; border: 0 !important; border-radius: 10px !important; font-weight: 900; cursor: pointer;
+}
+.cb-buy__side > .cb-coupon .cb-coupon__code code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13.5px; font-weight: 900; letter-spacing: .05em; color: #140A02 !important; background: none !important; }
+.cb-buy__side > .cb-coupon .cb-coupon__do svg { width: 16px; height: 16px; color: #140A02; }
+.cb-buy__side > .cb-coupon .cb-coupon__did { font-size: 12px; font-weight: 800; color: #140A02; }
+
+/* Bundle badges that read as badges. */
+.cb-tier__flag--pop { background: #F9A01B !important; color: #140A02 !important; }
+.cb-tier__flag--best { background: #0B0B0B !important; color: #fff !important; }
+.cb-tier { transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease; }
+.cb-tier:active { transform: scale(.992); }
+
+@media (max-width: 400px) {
+  .cb-buy__side > .cb-price .cb-price__now { font-size: 42px !important; }
+  .cb-buy__side > .cb-coupon { padding: 13px 20px 13px 12px !important; }
+  .cb-buy__side > .cb-coupon .cb-coupon__pill { font-size: 18px !important; }
+}
