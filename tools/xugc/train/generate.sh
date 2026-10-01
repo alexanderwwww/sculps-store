@@ -28,6 +28,13 @@ if [ ! -f "$M/.complete" ]; then
   HF_HUB_ENABLE_HF_TRANSFER=1 HF_TOKEN="$HF_TOKEN" hf download Lightricks/LTX-2.5 $FILES --local-dir "$M"
   touch "$M/.complete"
 fi
+# Reference photos of the product: REFS="ref1.webp:0:1.0,ref2.webp:176:0.8" = file:frame:strength (uploaded into $R/in)
+IMG=""
+if [ -n "${REFS:-}" ]; then
+  IFS=',' read -ra R_ <<< "$REFS"
+  for r_ in "${R_[@]}"; do IFS=':' read -r f_ i_ st_ <<< "$r_"; [ -f "$R/in/$f_" ] && IMG="$IMG --image $R/in/$f_ $i_ $st_"; done
+  echo "== $(date -u +%T) reference photos:$IMG"
+fi
 cd /workspace/LTX-2
 run() {
   uv run python -m ltx_pipelines.distilled \
@@ -36,7 +43,7 @@ run() {
     --video-vae-path "$M/vae/ltx-2.5-video-vae-bf16.safetensors" \
     --audio-vae-path "$M/vae/ltx-2.5-audio-vae-bf16.safetensors" \
     --spatial-upsampler-path "$M/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors" \
-    --num-frames "$FRAMES" --seed "$SEED" $SIZE "$@" \
+    --num-frames "$FRAMES" --seed "$SEED" $SIZE $IMG "$@" \
     --output-path "$OUT/clip.mp4" --prompt "$PROMPT"
 }
 echo "== $(date -u +%T) making the video"

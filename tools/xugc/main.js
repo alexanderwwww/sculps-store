@@ -21,7 +21,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
   const store = new Store(dir);
   const secrets = new Secrets(dir, safe, "runpod");
   const hf = new Secrets(dir, safe, "hf");
-  const engine = new Engine({ store, dir, secrets, hf, makeRunPod });
+  const engine = new Engine({ store, dir, secrets, hf, makeRunPod, fetchImpl: bridgeFetch });
   // Alex's personal copy ships with his keys in seed.json (never in git). Only used when no key is saved yet.
   try { const seed = JSON.parse(fs.readFileSync(path.join(__dirname, "seed.json"), "utf8")); if (seed.runpod && !secrets.get()) secrets.set(seed.runpod); if (seed.hf && !hf.get()) hf.set(seed.hf); } catch { /* a copy without keys */ }
   const style = new Style(path.join(dir, "style"), path.join(__dirname, "assets", "style"));
@@ -42,6 +42,12 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
   };
   const fail = (err) => ({ error: err.message, code: err.code || "error", costUsd: err.costUsd || 0, ...view() });
 
+  // Reference photos: the ones he ticked, or "auto" = the first two photos of the saved product.
+  const refUrls = (spec, product) => {
+    const want = spec.refs === "auto" ? (product ? product.images.slice(0, 2) : []) : Array.isArray(spec.refs) ? spec.refs : [];
+    const ok = new Set(product ? product.images : []);
+    return want.filter((u) => typeof u === "string" && /^https?:\/\//i.test(u) && (ok.has(u) || spec.refsAnyUrl)).slice(0, 3).map((url) => ({ url }));
+  };
   /** One way to make a video, for the screen and for Claude alike. */
   async function makeVideo(spec, emit) {
     const st = store.read();
@@ -52,7 +58,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     if (!given && scene.length < 10) throw new Error("Write what happens in the video (a sentence or two).");
     const seconds = Number(spec.seconds) || 15;
     const prompt = given || compose({ scene, look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds }, style.gather(st.styleOff));
-    const take = await engine.generate({ prompt, seconds, quality: spec.quality || "hd", meta: { scene: scene || undefined, look: spec.look || "", avatar: spec.avatar || (spec.avatarText ? "custom" : "broad"), product: product ? product.title : "" } }, (p) => { progress = { ...p, at: Date.now() }; emit && emit(p); });
+    const take = await engine.generate({ prompt, seconds, quality: spec.quality || "hd", refs: refUrls(spec, product), meta: { scene: scene || undefined, look: spec.look || "", avatar: spec.avatar || (spec.avatarText ? "custom" : "broad"), product: product ? product.title : "" } }, (p) => { progress = { ...p, at: Date.now() }; emit && emit(p); });
     store.update((s) => { s.takes.unshift(take); });
     progress = null;
     return take;
@@ -149,7 +155,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     if (!store.read().settings.mcpOn) return { ok: false, error: "Claude control is switched off in XUGC (Settings, MCP)." };
     const t = o.type;
     if (t === "generate") {
-      const take = await makeVideo({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality }, null);
+      const take = await makeVideo({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality, refs: o.refs }, null);
       return { ok: true, takeId: take.id, cost: take.cost, minutes: take.minutes, audio: take.audio, seconds: take.seconds };
     }
     if (t === "cancel") return { ok: true, cancelled: engine.cancel() };

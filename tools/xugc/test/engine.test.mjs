@@ -65,7 +65,7 @@ class FakeRunPod {
   async check() { return { ok: true, pods: 0 }; }
   async sweep() { return 0; }
   async run(job) {
-    calls.push({ run: job.script, env: job.env, cap: job.capUsd, maxMinutes: job.maxMinutes });
+    calls.push({ run: job.script, env: job.env, cap: job.capUsd, maxMinutes: job.maxMinutes, inputs: job.inputs });
     job.onProgress({ stage: "installing", pct: 0, costUsd: 0.02, minutes: 0.5, log: "" });
     if (FakeRunPod.fail) { job.onProgress({ stage: "GPU handed back", pct: 100, costUsd: 0.4, minutes: 5, gone: true }); throw new Error("The GPU job failed (exit 3)."); }
     const { mkdirSync, writeFileSync } = await import("node:fs");
@@ -102,9 +102,12 @@ await eng.generate({ ...job, seconds: 5, quality: "draft" }, () => {});
 const c2 = calls.filter((c) => c.run).at(-1); ok(c2.env.FRAMES === "121" && c2.env.WIDTH === "512" && c2.env.HEIGHT === "896", "5s draft = 121 frames at 512x896");
 ok(Number(c1.maxMinutes) > 0 && c1.cap <= 5, "the job's own cap is passed down to the GPU runner", String(c1.cap));
 
+await eng.generate({ ...job, refs: [{ bytes: Buffer.alloc(3000, 1), url: "x/a.webp" }, { bytes: Buffer.alloc(3000, 2), url: "x/b.jpg" }] }, () => {});
+const c3 = calls.filter((c) => c.run).at(-1);
+ok(Object.keys(c3.inputs).join() === "ref1.webp,ref2.jpg" && c3.env.REFS === "ref1.webp:0:1,ref2.jpg:184:0.7", "reference photos are uploaded and sent as file:frame:strength, the first at frame 0", c3.env.REFS);
 FakeRunPod.fail = true;
 let e5 = await err(job); ok(e5 && /exit 3/.test(e5.message) && e5.costUsd === 0.4, "a failed job reports why and what it cost");
-ok(Math.abs(store.read().spent.usd - 1.4) < 1e-9 && eng.job === null, "…its cost still counts today and the engine is free", String(store.read().spent.usd));
+ok(Math.abs(store.read().spent.usd - 1.9) < 1e-9 && eng.job === null, "…its cost still counts today and the engine is free", String(store.read().spent.usd));
 FakeRunPod.fail = false;
 const slow = eng.generate(job, () => {}); let e6 = await err(job); ok(e6 && e6.code === "busy", "a second job while one runs is refused"); await slow;
 

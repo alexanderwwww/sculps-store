@@ -20,7 +20,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 input,textarea{width:100%;padding:10px 12px;border-radius:12px;background:var(--glass);border:1px solid var(--line);color:#e6e8ea;font:inherit;font-size:13px;line-height:1.45;outline:none;user-select:text}
 input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none;height:84px}
 .linkrow{display:flex;gap:8px}.btn{padding:8px 13px;border-radius:99px;border:1px solid var(--line);background:var(--glass);font-size:12.5px;font-weight:700;white-space:nowrap}.btn:hover{border-color:rgba(255,255,255,.3)}
-.photos{display:flex;gap:7px;overflow:hidden}.photos img{width:56px;height:56px;border-radius:10px;border:1px solid var(--line);background:#f4f4f2;object-fit:cover}
+.photos{display:flex;gap:7px;overflow:hidden}.photos{flex-wrap:wrap;max-height:122px;overflow:auto}.photos img{width:56px;height:56px;border-radius:10px;border:2px solid var(--line);background:#f4f4f2;object-fit:cover;cursor:pointer}.photos img.sel{border-color:var(--neon);box-shadow:0 0 0 2px rgba(215,255,31,.25)}
 .found{font-size:12px;color:var(--mut);line-height:1.45}.found b{color:#fff}
 .seg{display:flex;gap:6px}.seg button{flex:1;padding:8px 6px;border-radius:11px;background:var(--glass);border:1px solid var(--line);font-size:12.5px;font-weight:700;color:#cfd2d6}.seg button.on{border-color:var(--neon);color:#fff;box-shadow:inset 0 0 0 1px var(--neon)}
 .styl{display:flex;gap:6px;flex-wrap:wrap}.styl span{padding:5px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:rgba(215,255,31,.1);border:1px solid rgba(215,255,31,.4);color:#e6f7a0}.styl span.off{opacity:.35}

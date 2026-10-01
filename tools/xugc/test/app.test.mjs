@@ -51,6 +51,7 @@ const worker = http.createServer((q, s) => {
     if (u.pathname === "/status" && q.method === "POST") { W.status = JSON.parse(body); W.statusPosts++; return send({ ok: true }); }
     if (u.pathname === "/orders" && q.method === "GET") return send({ orders: W.orders, mcpSeen: W.claudeAt ? { at: W.claudeAt } : null });
     if (u.pathname === "/orders" && q.method === "POST") { const b = JSON.parse(body); W.orders = W.orders.filter((o) => !(b.ack || []).includes(o.id)); for (const r of b.results || []) W.results.push(r); return send({ ok: true }); }
+    if (u.pathname.startsWith("/img")) { s.writeHead(200, { "content-type": "image/jpeg" }); return s.end(Buffer.alloc(4000, 7)); }
     if (u.pathname === "/take" && q.method === "POST") { W.uploads.push({ name: u.searchParams.get("name"), bytes: body.length }); return send({ ok: true, url: "https://example.test/" + u.searchParams.get("name") }); }
     send({}, 404);
   });
@@ -58,7 +59,8 @@ const worker = http.createServer((q, s) => {
 app.whenReady().then(async () => {
   try {
     await new Promise((r) => worker.listen(0, r));
-    const prodStub = async (url) => ({ url, title: "Haunted Projector", desc: "Plug-in ghost projector for windows", price: "79.99", currency: "USD", images: [${JSON.stringify("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")}, ${JSON.stringify("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")}] });
+    const IMG = (n) => "http://127.0.0.1:" + worker.address().port + "/img" + n + ".jpg";
+    const prodStub = async (url) => ({ url, title: "Haunted Projector", desc: "Plug-in ghost projector for windows", price: "79.99", currency: "USD", images: [IMG(1), IMG(2), IMG(3)] });
     const sys = setup({ dir: ${JSON.stringify(join(home, "data"))}, makeRunPod: (o) => new FakeRunPod(o), sweepOnStart: false, bridgeBase: "http://127.0.0.1:" + worker.address().port, bridgeMs: 250, productFetch: prodStub });
     const win = new BrowserWindow({ width: 1280, height: 820, show: true, backgroundColor: "#07080A", webPreferences: { preload: path.join(${JSON.stringify(here)}, "preload.js"), contextIsolation: true, nodeIntegration: false, sandbox: false } });
     const errors = [];
@@ -101,7 +103,9 @@ app.whenReady().then(async () => {
     await view("create");
     say(await until("document.querySelector('#modechip').textContent.includes('RUNPOD') && document.querySelector('#nokey').style.display === 'none'"), "with both keys the warning is gone and the header shows RUNPOD");
     await type("#purl", "https://blackreaper.us/products/haunted-projector"); await click("#pfetch");
-    say(await until("document.querySelector('#pfound').textContent.includes('Haunted Projector') && document.querySelectorAll('#pphotos img').length === 2"), "a product link brings in the name and the photos", await run("document.querySelector('#pfound').textContent"));
+    say(await until("document.querySelector('#pfound').textContent.includes('Haunted Projector') && document.querySelectorAll('#pphotos img').length === 3 && document.querySelectorAll('#pphotos img.sel').length === 1"), "a product link brings in the name and the photos", await run("document.querySelector('#pfound').textContent"));
+    await run("document.querySelectorAll('#pphotos img')[2].click()");
+    say(await until("document.querySelectorAll('#pphotos img.sel').length === 2 && document.querySelector('#pfound').textContent.includes('2 locked')"), "tapping a photo locks the video to it as well");
     await run("document.querySelector('#avmode [data-m=pick]').click()");
     say(await until("document.querySelector('#avpick').style.display === 'flex' && document.querySelectorAll('#avpick button').length === 5"), "'Pick one' shows five people");
     await run("[...document.querySelectorAll('#avpick button')].find((b) => b.textContent === 'Jordan').click()");
@@ -130,7 +134,7 @@ app.whenReady().then(async () => {
     say((await run("document.querySelector('#ptag').textContent")).includes("$0.81") && (await run("document.querySelector('#hint').textContent")).includes("with sound"), "the take shows what it cost and that it has sound");
     await shot("5-generated");
     const g1 = log.find((l) => l.run === "generate.sh");
-    say(g1 && g1.env.PROMPT.includes("Jordan") && g1.env.PROMPT.includes("Haunted Projector") && g1.env.PROMPT.includes("ghost appears on the glass") && g1.env.PROMPT.includes("iPhone") && g1.env.FRAMES === "241" && g1.env.WIDTH === "512", "the GPU got person + product + his words + the Style Bible, 10s = 241 frames, draft size");
+    say(g1 && g1.env.PROMPT.includes("Jordan") && g1.env.PROMPT.includes("Haunted Projector") && g1.env.PROMPT.includes("ghost appears on the glass") && g1.env.PROMPT.includes("iPhone") && g1.env.FRAMES === "241" && g1.env.WIDTH === "512" && /^ref1\\.jpg:0:1,ref2\\.jpg:120:0\\.7$/.test(g1.env.REFS || ""), "the GPU got person + product + his words + the Style Bible, 10s = 241 frames, draft size");
     say((await run("document.querySelector('#modechip').textContent")).includes("$0.81"), "today's spending moved by the real cost");
 
     // Train: the Style Bible

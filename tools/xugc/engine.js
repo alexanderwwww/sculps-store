@@ -44,12 +44,20 @@ function pctFor(mark, log) {
   return pct;
 }
 
+async function fetchImage(url, f = globalThis.fetch) {
+  const r = await f(url, { headers: { "User-Agent": "Mozilla/5.0 XUGC" } });
+  if (!r.ok) throw new Error(`Could not download a product photo (${r.status}).`);
+  const b = Buffer.from(await r.arrayBuffer());
+  if (b.length < 1000 || b.length > 12 * 1024 * 1024) throw new Error("A product photo was empty or too big.");
+  return b;
+}
+
 class Engine {
   /** @param {{store, dir: string, secrets: {get():string}, hf: {get():string}, makeRunPod?: (o:object)=>RunPod}} o */
-  constructor({ store, dir, secrets, hf, makeRunPod }) {
+  constructor({ store, dir, secrets, hf, makeRunPod, fetchImpl }) {
     this.store = store; this.dir = dir; this.secrets = secrets; this.hf = hf;
     this.makeRunPod = makeRunPod || ((o) => new RunPod(o));
-    this.job = null;
+    this.job = null; this.fetchImpl = fetchImpl;
     for (const d of ["takes", "work"]) fs.mkdirSync(path.join(dir, d), { recursive: true });
   }
   rp() { const apiKey = this.secrets.get(); if (!apiKey) { const e = new Error("Paste your RunPod key in Settings first."); e.code = "nokey"; throw e; } return this.makeRunPod({ apiKey, volumeId: this.store.read().settings.volumeId }); }
@@ -80,9 +88,19 @@ class Engine {
     const onProgress = (p) => { spent = p.costUsd || spent; emit({ id, stage: p.stage, pct: p.gone !== undefined ? 100 : pctFor(p.stage, p.log), costUsd: p.costUsd, minutes: p.minutes, log: p.log }); };
     try {
       const dest = path.join(this.dir, "work", id);
+      const frames = SECONDS[seconds], inputs = {}, refEnv = [];
+      const refs = (job.refs || []).slice(0, 3);
+      for (let k = 0; k < refs.length; k++) {
+        const buf = refs[k].bytes || (await fetchImage(refs[k].url, this.fetchImpl));
+        const ext = (/\.(png|jpe?g|webp)(?:$|\?)/i.exec(refs[k].url || "") || [, "jpg"])[1].toLowerCase();
+        const name = `ref${k + 1}.${ext}`; inputs[name] = buf;
+        // first photo opens the video, the others are spread through it; frame numbers sit on the model's 8-frame grid
+        const idx = k === 0 ? 0 : Math.round(((k / refs.length) * (frames - 1)) / 8) * 8;
+        refEnv.push(`${name}:${idx}:${k === 0 ? 1.0 : 0.7}`);
+      }
       const r = await rp.run({
-        label: "gen", script: "generate.sh", inputs: {},
-        env: { PROMPT: prompt, HF_TOKEN: hf, FRAMES: String(SECONDS[seconds]), WIDTH: String(q.w), HEIGHT: String(q.h), SEED: String(Math.floor(Math.random() * 1e9)) },
+        label: "gen", script: "generate.sh", inputs,
+        env: { ...(refEnv.length ? { REFS: refEnv.join(",") } : {}), PROMPT: prompt, HF_TOKEN: hf, FRAMES: String(SECONDS[seconds]), WIDTH: String(q.w), HEIGHT: String(q.h), SEED: String(Math.floor(Math.random() * 1e9)) },
         outputs: ["clip.mp4", "info.txt", "help.txt"], required: ["clip.mp4"], destDir: dest,
         capUsd: Math.min(st.settings.capJob, st.settings.capDay - used), maxMinutes: est.minutes * 2, signal: this.job.signal, onProgress,
       });

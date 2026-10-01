@@ -2,7 +2,7 @@
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 let S = null, META = null;
-const ui = { view: "create", look: "Demo", secs: 15, qual: "hd", avmode: "broad", avatar: "maya", current: null, busy: false, t0: 0, timer: null, est: null, edit: null };
+const ui = { refs: null, view: "create", look: "Demo", secs: 15, qual: "hd", avmode: "broad", avatar: "maya", current: null, busy: false, t0: 0, timer: null, est: null, edit: null };
 
 const src = (p) => (!p ? "" : "file://" + encodeURI(p));
 const money = (n) => "$" + Number(n).toFixed(2);
@@ -31,8 +31,11 @@ function renderCreate() {
   if (missing) { w.innerHTML = `Before the first video: add ${missing[0]} in <button id="gokey">Settings</button>.`; $("#gokey").onclick = () => setView("settings"); }
   const p = S.product;
   $("#purl").placeholder = "https://yourstore.com/products/…";
-  $("#pphotos").innerHTML = p ? p.images.slice(0, 5).map((u) => `<img src="${esc(u)}" alt="">`).join("") : "";
-  $("#pfound").innerHTML = p ? `<b>${esc(p.title)}</b>${p.price ? " · " + esc(p.currency) + " " + esc(p.price) : ""}${p.images.length ? " · " + p.images.length + " photos" : ""} <button class="btn" id="pclear" style="padding:2px 9px;margin-left:6px">Remove</button>` : "No product yet. The scene alone will do, but a product makes it specific.";
+  if (p && (!ui.refs || ui.refsFor !== p.url)) { ui.refs = p.images.slice(0, 1); ui.refsFor = p.url; }
+  if (!p) ui.refs = null;
+  const ph = $("#pphotos"); ph.innerHTML = "";
+  if (p) p.images.slice(0, 24).forEach((u) => { const im = document.createElement("img"); im.src = u; im.className = ui.refs.includes(u) ? "sel" : ""; im.title = "Tap to lock the video to this photo (up to 3)"; im.onclick = () => { ui.refs = ui.refs.includes(u) ? ui.refs.filter((x) => x !== u) : [...ui.refs, u].slice(-3); renderCreate(); }; ph.appendChild(im); });
+  $("#pfound").innerHTML = p ? `<b>${esc(p.title)}</b>${p.price ? " · " + esc(p.currency) + " " + esc(p.price) : ""}${p.images.length ? " · " + p.images.length + " photos, " + (ui.refs || []).length + " locked" : ""} <button class="btn" id="pclear" style="padding:2px 9px;margin-left:6px">Remove</button>` : "No product yet. The scene alone will do, but a product makes it specific.";
   if (p) $("#pclear").onclick = () => window.xugc.clearProduct().then(refresh);
   $$("#avmode button").forEach((b) => { b.classList.toggle("on", b.dataset.m === ui.avmode); b.onclick = () => { ui.avmode = b.dataset.m; renderCreate(); }; });
   $("#avpick").style.display = ui.avmode === "pick" ? "flex" : "none"; $("#avown").style.display = ui.avmode === "own" ? "block" : "none";
@@ -161,7 +164,7 @@ $("#go").onclick = async () => {
   if (scene.length < 10) return showErr($("#err"), "Write what happens in the video (a sentence or two).");
   ui.busy = true; ui.t0 = Date.now(); startFx(); $("#hs").textContent = "STARTING"; $("#ht").textContent = "0:00"; $("#hp").textContent = "0%"; $("#hb").style.width = "2%"; $("#hc").textContent = "$0.00 SO FAR"; $("#ptag").style.display = "none";
   clearInterval(ui.timer); ui.timer = setInterval(() => { $("#ht").textContent = clock(Date.now() - ui.t0); }, 500); renderCreate();
-  const r = await window.xugc.generate({ scene, look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: ui.secs, quality: ui.qual });
+  const r = await window.xugc.generate({ scene, look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: ui.secs, quality: ui.qual, refs: ui.refs && ui.refs.length ? ui.refs : undefined });
   ui.busy = false; clearInterval(ui.timer); $("#ptag").style.display = "block"; stopFx();
   if (r.error) { await refresh(r); showErr($("#err"), r.error + (r.costUsd ? ` (This attempt cost ${money(r.costUsd)}.)` : "")); return; }
   ui.current = r.take.id; await refresh(r); showTake(r.take);
