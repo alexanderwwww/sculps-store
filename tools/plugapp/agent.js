@@ -40,14 +40,29 @@ const OVERLAY = `
   var el = document.createElement("div");
   el.id = "__plug_cursor";
   el.setAttribute("style", "position:fixed;left:0;top:0;width:0;height:0;z-index:2147483647;pointer-events:none;transform:translate(-200px,-200px);will-change:transform");
+  /* A Mac arrow in black glass: a real backdrop blur clipped to the arrow so
+     the page genuinely bends behind it, a dark tint so it still reads as the
+     black cursor, a bright rim and a specular sheen so it reads as glass. */
+  var ARROW = "M3 2 L3 23 L8.6 18.2 L12.4 27 L16.2 25.3 L12.4 16.8 L19.8 16.6 Z";
   el.innerHTML =
-    '<svg width="26" height="30" viewBox="0 0 26 30" style="position:absolute;left:-2px;top:-2px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))">' +
-    '<path d="M3 2 L3 23 L8.6 18.2 L12.4 27 L16.2 25.3 L12.4 16.8 L19.8 16.6 Z" fill="#fff" stroke="#111" stroke-width="2" stroke-linejoin="round"/></svg>' +
-    '<div style="position:absolute;left:20px;top:22px;padding:3px 9px;border-radius:999px;font:600 11px/1.2 -apple-system,Helvetica,Arial,sans-serif;color:#fff;background:rgba(17,17,17,.82);white-space:nowrap;letter-spacing:.02em">plug</div>';
+    '<div id="__plug_glass" style="position:absolute;left:-2px;top:-2px;width:26px;height:30px;backdrop-filter:blur(2.5px) saturate(1.5) brightness(.9);-webkit-backdrop-filter:blur(2.5px) saturate(1.5) brightness(.9)"></div>' +
+    '<svg width="26" height="30" viewBox="0 0 26 30" style="position:absolute;left:-2px;top:-2px;overflow:visible;filter:drop-shadow(0 3px 5px rgba(0,0,0,.35))">' +
+    '<defs>' +
+    '<linearGradient id="pc-body" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a2a2e" stop-opacity=".78"/><stop offset="1" stop-color="#000" stop-opacity=".9"/></linearGradient>' +
+    '<linearGradient id="pc-sheen" x1="0" y1="0" x2=".7" y2=".9"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".45" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+    '<linearGradient id="pc-rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset=".5" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity=".85"/></linearGradient>' +
+    '<clipPath id="pc-clip"><path d="' + ARROW + '"/></clipPath>' +
+    '</defs>' +
+    '<path d="' + ARROW + '" fill="url(#pc-body)"/>' +
+    '<g clip-path="url(#pc-clip)"><path d="M0 0 H26 V11 Q13 15 0 7 Z" fill="url(#pc-sheen)"/>' +
+    '<path d="' + ARROW + '" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="5" style="filter:blur(2.2px)" transform="translate(0.6 0.9)"/></g>' +
+    '<path d="' + ARROW + '" fill="none" stroke="url(#pc-rim)" stroke-width="1.4" stroke-linejoin="round"/>' +
+    '</svg>';
+  el.firstChild.style.clipPath = 'path("' + ARROW + '")';
   function put(x, y) { el.style.transform = "translate(" + x + "px," + y + "px)"; }
   function ring(x, y) {
     var r = document.createElement("div");
-    r.setAttribute("style", "position:fixed;left:" + (x - 14) + "px;top:" + (y - 14) + "px;width:28px;height:28px;border-radius:50%;border:2px solid #F9A01B;z-index:2147483646;pointer-events:none;opacity:.9;transition:transform .35s ease-out,opacity .35s ease-out");
+    r.setAttribute("style", "position:fixed;left:" + (x - 14) + "px;top:" + (y - 14) + "px;width:28px;height:28px;border-radius:50%;border:1.5px solid rgba(255,255,255,.9);box-shadow:0 0 0 1px rgba(0,0,0,.25),inset 0 0 8px rgba(255,255,255,.5);z-index:2147483646;pointer-events:none;opacity:.9;transition:transform .35s ease-out,opacity .35s ease-out");
     document.documentElement.appendChild(r);
     requestAnimationFrame(function () { r.style.transform = "scale(2.1)"; r.style.opacity = "0"; });
     setTimeout(function () { r.remove(); }, 420);
