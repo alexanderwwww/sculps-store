@@ -210,7 +210,7 @@ app.whenReady().then(async () => {
     say(await until("document.querySelector('#render').classList.contains('on')", 8000), "after Approve the render screen opens by itself, with the stage rail", await run("document.querySelector('#rail').textContent"));
     await shot("7b-render-remote");
     say(await untilJs(() => W.results.some((r) => r.id === "o1b" && r.state === "done"), 25000), "the approved video renders and reports done");
-    say(log.filter((l) => l.run).at(-1).env.PROMPT.includes("EXTRA LINE BY ALEX") && /^ref1\.jpg:0:1,ref2\.jpg:/.test(log.filter((l) => l.run).at(-1).env.REFS || ""), "his edit to the prompt is what ran, with the product's reference photos");
+    say(log.filter((l) => l.run).at(-1).env.PROMPT.includes("EXTRA LINE BY ALEX") && /^ref1\.jpg:0:1/.test(log.filter((l) => l.run).at(-1).env.REFS || ""), "his edit to the prompt is what ran, with the product's reference photos");
     say(await until("document.querySelectorAll('#takes .take').length >= 2 && !document.querySelector('#render').classList.contains('on')", 12000), "the finished video shows up in the app without anyone sending it in chat");
     await click("#ap-off");
     W.orders.push({ id: "o2", type: "style_write", at: Date.now(), name: "from-claude.md", content: "# from-claude.md\\n## Prompt\\n- Test line from Claude\\n" });

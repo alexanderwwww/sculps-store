@@ -79,7 +79,7 @@ class Engine {
     const seconds = Number(job.seconds), q = QUALITY[job.quality];
     if (!SECONDS[seconds] || !q) throw new Error("Pick a length (5, 10, 15 or 20 seconds) and a quality.");
     const hf = this.hf.get();
-    if (!hf) { const e = new Error("Paste your Hugging Face token in Settings first. The LTX model is free but you have to accept its terms once."); e.code = "nohf"; throw e; }
+    if (!hf && (!job.engine || /^ltx/.test(job.engine))) { const e = new Error("Paste your Hugging Face token in Settings first. The LTX model is free but you have to accept its terms once."); e.code = "nohf"; throw e; }
     const est = estimateGenerate({ seconds, quality: job.quality, volume: !!st.settings.volumeId });
     const why = checkCaps(st.settings, st.spent, est.usd);
     if (why) { const e = new Error(why); e.code = "cap"; throw e; }
@@ -105,9 +105,9 @@ class Engine {
       }
       const r = await rp.run({
         label: "gen", script: SCRIPTS[job.engine] || "generate.sh", inputs, extraScripts: (job.captions || []).length ? ["burn_captions.py"] : [],
-        env: { ...(refEnv.length ? { REFS: refEnv.join(",") } : {}), ...((job.captions || []).length ? { CAPTIONS: JSON.stringify(job.captions) } : {}), PROMPT: prompt, HF_TOKEN: hf, FRAMES: String(SECONDS[seconds]), WIDTH: String(q.w), HEIGHT: String(q.h), SEED: String(Math.floor(Math.random() * 1e9)) },
+        env: { ...(refEnv.length ? { REFS: refEnv.join(",") } : {}), ...((job.captions || []).length ? { CAPTIONS: JSON.stringify(job.captions) } : {}), PROMPT: prompt, HF_TOKEN: hf || "", FRAMES: String(SECONDS[seconds]), WIDTH: String(q.w), HEIGHT: String(q.h), SEED: String(Math.floor(Math.random() * 1e9)) },
         outputs: ["clip.mp4", "info.txt", "help.txt"], required: ["clip.mp4"], destDir: dest,
-        capUsd: Math.min(st.settings.capJob, st.settings.capDay - used), maxMinutes: est.minutes * 2, signal: this.job.signal, onProgress,
+        capUsd: Math.min(st.settings.capJob, st.settings.capDay - used), maxMinutes: job.engine && job.engine !== "ltx" ? 45 : est.minutes * 2, signal: this.job.signal, onProgress,
       });
       const video = path.join(this.dir, "takes", `${id}.mp4`);
       fs.copyFileSync(path.join(dest, "clip.mp4"), video);

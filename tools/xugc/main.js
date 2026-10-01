@@ -14,7 +14,7 @@ const { Style, compose, parseCaption, LEVELS, LOOKS, AVATARS, QUALITY, SECONDS, 
 const { fetchProduct } = require("./product.js");
 const { Bridge } = require("./bridge.js");
 
-const BUILD = 6;
+const BUILD = 7;
 const LATEST_NOTE = "";
 
 function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch }) {
@@ -67,12 +67,12 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     const est = estimateGenerate({ seconds, quality, volume: !!st.settings.volumeId });
     const asked = Array.isArray(spec.captions) ? spec.captions.map(parseCaption).filter(Boolean) : null;
     const captions = (asked || style.gather(st.styleOff).captions).filter((c) => c.start < seconds).map((c) => ({ ...c, end: Math.min(c.end, seconds) }));
-    return { spec, product, scene, prompt, seconds, quality, captions, refs: refUrls(spec, product), usd: est.usd, minutes: est.minutes };
+    return { spec, product, scene, prompt, seconds, quality, captions, refs: refUrls(spec, product), engine: spec.engine, usd: est.usd, minutes: est.minutes };
   }
   async function render(pr, emit) {
     const spec = pr.spec;
     try {
-      const take = await engine.generate({ prompt: pr.prompt, seconds: pr.seconds, quality: pr.quality, refs: pr.refs, captions: pr.captions, meta: { scene: pr.scene || undefined, look: spec.look || "", avatar: spec.avatar || (spec.avatarText ? "custom" : "broad"), product: pr.product ? pr.product.title : "" } }, (p) => { progress = { ...p, at: Date.now() }; (emit || ((q) => send("job", q)))(p); });
+      const take = await engine.generate({ prompt: pr.prompt, seconds: pr.seconds, quality: pr.quality, refs: pr.refs, captions: pr.captions, engine: pr.engine, meta: { scene: pr.scene || undefined, look: spec.look || "", avatar: spec.avatar || (spec.avatarText ? "custom" : "broad"), product: pr.product ? pr.product.title : "" } }, (p) => { progress = { ...p, at: Date.now() }; (emit || ((q) => send("job", q)))(p); });
       store.update((s) => { s.takes.unshift(take); });
       progress = null; send("job:done", { take, state: store.read() });
       return take;
@@ -202,7 +202,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     const t = o.type;
     if (t === "generate") {
       send("claude", { kind: "start", text: "Claude is setting up a video" });
-      const pr = await prepare({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality, refs: o.refs, music: o.music, captions: o.captions });
+      const pr = await prepare({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality, refs: o.refs, music: o.music, captions: o.captions, engine: o.engine });
       if (!store.read().settings.autoApprove) {
         const d = await askApproval(pr, "Claude");
         if (!d.ok) { send("claude", { kind: "end", text: d.timeout ? "No answer, so it was cancelled" : "You said no" }); return { ok: false, error: d.timeout ? "Alex did not answer in 15 minutes, nothing was rented." : "Alex said no on screen. Nothing was rented." }; }

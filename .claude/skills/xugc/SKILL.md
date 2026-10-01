@@ -66,3 +66,9 @@ Written into the app as `assets/style/realism-rules.md` (the top part goes into 
 6. No contradictions (look Selfie vs a neighbour filming; broad avatar added "a lived-in room" to a lawn scene). Default look is now None; avatar "none" skips the person sentence.
 7. A human at the base for scale. 8. Audible sound from frame one; the app's video plays UNMUTED now (it used to play muted, so a take with a real -19 dB track sounded silent). 9. Judge frame by frame against the brief before showing him. 10. Captions are burned on, never drawn by the model.
 - Test 1 (man in robe, no references) and test 2 (infographic references, selfie look) both failed his brief; the fix is rules 1-6, not more prompt length.
+
+## Build 7 and the bake-off (2026-10-01)
+- Build 7: engine switch (ltx, ltx_full, hunyuan, wan) on orders and MCP; train/gen_*.sh scripts; no keys in the bundle.
+- Training spec files by the specialist team: design/xugc/training/01-look-camera.md, 02-behavior.md, 03-environments.md, 04-sound.md. Train on look + behavior + rooms + sound, not look alone.
+- Plan: bake-off (~$3) -> dry run (~$2) -> real LoRA (~$6-8). Nothing is spent without his go; each stop waits for his Approve. Balance was $14.21.
+- Keys are never pulled from transcripts; they live on his Mac in the app.
