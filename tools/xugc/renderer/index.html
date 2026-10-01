@@ -84,6 +84,7 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
 .rail{position:absolute;left:14px;top:46px;z-index:7;display:flex;flex-direction:column;gap:7px;font:700 10.5px ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#59603a}.rail div{display:flex;align-items:center;gap:7px}.rail div::before{content:"";width:7px;height:7px;border-radius:2px;border:1px solid #59603a}.rail .done{color:#9dbd2c}.rail .done::before{background:#9dbd2c;border-color:#9dbd2c}.rail .act{color:var(--neon)}.rail .act::before{background:var(--neon);border-color:var(--neon);box-shadow:0 0 9px var(--neon);animation:pl .8s infinite}
 .dnote{display:none;gap:8px;max-width:420px}.dnote.on{display:flex}
 .fullp{display:none}.fullp.on{display:block}.fullp textarea{height:180px;font:11.5px/1.5 ui-monospace,Menlo,monospace;background:#07080b}
+.drop{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border-radius:14px;border:1.5px dashed rgba(255,255,255,.25);background:var(--glass);font-size:13px;color:#cfd2d6}.drop.over{border-color:var(--neon);background:rgba(215,255,31,.08)}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 </style></head><body>
 <div class="modal" id="approve"><div class="mbox"><h2><img src="../assets/icon.png" alt=""><span id="ap-title">Claude wants to make a video</span></h2><div class="mrow" id="ap-meta"></div><div class="lab" style="margin:6px 0"><span>THE FINAL PROMPT <i>you can edit it before it runs</i></span></div><textarea id="ap-prompt"></textarea><div class="mbtn"><button class="go" id="ap-yes">Approve and render <span id="ap-cost"></span></button><button class="go ghost" id="ap-no" style="flex:0 0 130px;justify-content:center">No</button></div></div></div>
@@ -101,6 +102,12 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
    <div class="sec"><div class="lab">1 · PRODUCT <i>Paste a link</i></div>
     <div class="linkrow"><input id="purl" placeholder="https://yourstore.com/products/…"><button class="btn" id="pfetch">Fetch</button></div>
     <div class="photos" id="pphotos"></div><div class="found" id="pfound">No product yet. The scene alone will do, but a product makes it specific.</div><div class="err" id="perr"></div></div>
+   <div class="sec"><div class="lab">REFERENCE AD <i>A clip that went a little viral. Optional</i></div>
+    <div class="drop" id="refdrop"><span>Drop a video here</span><button class="btn" id="refpick">Choose a video</button></div><div class="err" id="referr"></div>
+    <div id="refbody" style="display:none;flex-direction:column;gap:8px"><img id="refsheet" alt="" style="width:100%;border-radius:10px;border:1px solid var(--line)"><div class="found" id="refmeta"></div>
+     <textarea id="refbeats" style="height:96px" placeholder="What happens in each shot, with timings. Claude can write this for you after looking at the frames."></textarea>
+     <div class="lab"><span>HOW CLOSE TO COPY</span><i id="reflvl"></i></div><input type="range" id="refrange" min="0" max="3" step="1" style="padding:0">
+     <div class="note" id="refhelp"></div><button class="btn" id="refclear" style="align-self:flex-start">Remove the reference</button></div></div>
    <div class="sec"><div class="lab">2 · PERSON</div>
     <div class="seg" id="avmode"><button data-m="broad" class="on">Broad (auto)</button><button data-m="pick">Pick one</button><button data-m="own">Describe</button></div>
     <div class="seg" id="avpick" style="display:none;flex-wrap:wrap"></div>

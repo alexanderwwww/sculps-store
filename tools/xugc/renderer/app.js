@@ -2,7 +2,7 @@
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 let S = null, META = null;
-const ui = { music: "soft", fullEdited: false, rendering: false, refs: null, view: "create", look: "Demo", secs: 15, qual: "hd", avmode: "broad", avatar: "maya", current: null, busy: false, t0: 0, timer: null, est: null, edit: null };
+const ui = { music: "none", fullEdited: false, rendering: false, refs: null, view: "create", look: "Demo", secs: 15, qual: "hd", avmode: "broad", avatar: "maya", current: null, busy: false, t0: 0, timer: null, est: null, edit: null };
 
 const src = (p) => (!p ? "" : "file://" + encodeURI(p));
 const money = (n) => "$" + Number(n).toFixed(2);
@@ -25,7 +25,17 @@ function renderChips() {
   $("#buildchip").textContent = "Build " + META.build; $("#s-build").textContent = META.build;
 }
 
+function renderReference() {
+  const r = S.reference; $("#refbody").style.display = r ? "flex" : "none"; $("#refdrop").style.display = r ? "none" : "flex";
+  if (!r) return;
+  $("#refsheet").src = src(r.sheet) + "?" + r.at;
+  $("#refmeta").innerHTML = `<b>${esc(r.name)}</b> · ${r.duration}s · ${r.cuts.length + 1} shots${r.cuts.length ? " (cuts at " + r.cuts.map((c) => c + "s").join(", ") + ")" : ""}`;
+  if ($("#refbeats") !== document.activeElement) $("#refbeats").value = r.beats || "";
+  $("#refrange").value = r.level; $("#reflvl").textContent = META.levels[r.level];
+  $("#refhelp").textContent = ["The reference is ignored.", "Only the mood and energy of the reference go into the prompt.", "The same story beats, in the same order, with different people and our product.", "The same shot order and timing, with different people and our product."][r.level] + (r.beats && r.beats.trim() ? "" : " (Nothing is used until the shots are described above.)");
+}
 function renderCreate() {
+  renderReference();
   const missing = !META.keySet ? ["a RunPod key", "settings"] : !META.hfSet ? ["a Hugging Face token", "settings"] : null;
   const w = $("#nokey"); w.style.display = missing ? "block" : "none";
   if (missing) { w.innerHTML = `Before the first video: add ${missing[0]} in <button id="gokey">Settings</button>.`; $("#gokey").onclick = () => setView("settings"); }
@@ -176,6 +186,42 @@ window.xugc.onDone(async (r) => {
   if (r.error) { showErr($("#err"), r.error + (r.costUsd ? ` (This attempt cost ${money(r.costUsd)}.)` : "")); return; }
   ui.current = r.take.id; showTake(r.take);
 });
+
+/* ---- the reference ad: frames, cuts, a contact sheet ---- */
+const once = (el, ev) => new Promise((res, rej) => { el.addEventListener(ev, res, { once: true }); el.addEventListener("error", () => rej(new Error("The video could not be read.")), { once: true }); });
+const seek = (v, t) => new Promise((res) => { const done = () => { v.removeEventListener("seeked", done); res(); }; v.addEventListener("seeked", done); setTimeout(done, 2500); v.currentTime = t; });
+async function analyzeVideo(name, bytes) {
+  const url = URL.createObjectURL(new Blob([bytes], { type: "video/mp4" })); const v = document.createElement("video"); v.muted = true; v.preload = "auto"; v.src = url;
+  try {
+    await Promise.race([once(v, "loadedmetadata"), new Promise((_, rej) => setTimeout(() => rej(new Error("The video could not be read.")), 8000))]); const dur = v.duration; if (!(dur > 0.5)) throw new Error("That video is too short.");
+    const n = Math.min(30, Math.max(6, Math.ceil(dur * 2))), tw = 24, th = 42, small = document.createElement("canvas"); small.width = tw; small.height = th; const sg = small.getContext("2d", { willReadFrequently: true });
+    const sw = 120, sh = Math.round(120 * (v.videoHeight / v.videoWidth)) || 213, cols = 6, rows = Math.ceil(n / cols), sheet = document.createElement("canvas"); sheet.width = cols * sw; sheet.height = rows * sh; const g2 = sheet.getContext("2d"); g2.fillStyle = "#000"; g2.fillRect(0, 0, sheet.width, sheet.height);
+    let prev = null; const cuts = [];
+    for (let i = 0; i < n; i++) {
+      const t = Math.min(dur - 0.05, (i + 0.5) * (dur / n)); await seek(v, t);
+      g2.drawImage(v, (i % cols) * sw, Math.floor(i / cols) * sh, sw, sh); g2.fillStyle = "rgba(0,0,0,.6)"; g2.fillRect((i % cols) * sw, Math.floor(i / cols) * sh, 34, 14); g2.fillStyle = "#D7FF1F"; g2.font = "bold 10px monospace"; g2.fillText(t.toFixed(1) + "s", (i % cols) * sw + 3, Math.floor(i / cols) * sh + 11);
+      sg.drawImage(v, 0, 0, tw, th); const d = sg.getImageData(0, 0, tw, th).data; const px = [];
+      for (let k = 0; k < d.length; k += 4) px.push((d[k] + d[k + 1] + d[k + 2]) / 3);
+      if (prev) { let s = 0; for (let k = 0; k < px.length; k++) s += Math.abs(px[k] - prev[k]); if (s / px.length > 38) cuts.push(Math.round(t * 10) / 10); }
+      prev = px;
+    }
+    const bounds = [0, ...cuts, Math.round(dur * 10) / 10], beats = bounds.slice(0, -1).map((b, i) => `${b}-${bounds[i + 1]}s: (shot ${i + 1}: describe what happens)`).join("\n");
+    return { name, duration: dur, cuts, sheet: sheet.toDataURL("image/jpeg", 0.82), beats };
+  } finally { URL.revokeObjectURL(url); }
+}
+async function loadReference(f) {
+  showErr($("#referr"), ""); if (!f) return; if (f.error) return showErr($("#referr"), f.error);
+  try { $("#refdrop").firstElementChild.textContent = "Reading the video…"; const r = await analyzeVideo(f.name, f.bytes); const out = await window.xugc.refSave(r); if (out.error) throw new Error(out.error); await refresh(out); }
+  catch (e) { showErr($("#referr"), e.message); } finally { $("#refdrop").firstElementChild.textContent = "Drop a video here"; }
+}
+window.__loadReference = loadReference;
+$("#refpick").onclick = async () => loadReference(await window.xugc.refPick());
+const rd = $("#refdrop");
+rd.ondragover = (e) => { e.preventDefault(); rd.classList.add("over"); }; rd.ondragleave = () => rd.classList.remove("over");
+rd.ondrop = async (e) => { e.preventDefault(); rd.classList.remove("over"); const f = e.dataTransfer.files[0]; if (f) loadReference(await window.xugc.refFromPath(window.xugc.pathFor(f))); };
+$("#refbeats").onchange = (e) => window.xugc.refUpdate({ beats: e.target.value }).then(refresh);
+$("#refrange").oninput = (e) => window.xugc.refUpdate({ level: Number(e.target.value) }).then(refresh);
+$("#refclear").onclick = () => window.xugc.refClear().then(refresh);
 
 /* ---- events ---- */
 $$("#nav button").forEach((b) => (b.onclick = () => setView(b.dataset.view)));

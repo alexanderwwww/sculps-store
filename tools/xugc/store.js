@@ -8,6 +8,7 @@ const DEFAULTS = () => ({
   spent: { day: "", usd: 0 },
   styleOff: [],
   product: null,
+  reference: null,
   takes: [],
   dataset: [],
   models: [BASE],

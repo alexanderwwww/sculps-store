@@ -8,7 +8,8 @@ contextBridge.exposeInMainWorld("xugc", {
   styleToggle: call("style:toggle"), styleRead: call("style:read"), styleWrite: call("style:write"), styleDelete: call("style:delete"), styleAdd: call("style:add"),
   verdict: call("verdict"), deleteTake: call("take:delete"),
   addClips: call("dataset:add"), addClipPaths: call("dataset:addPaths"), caption: call("dataset:caption"), removeClip: call("dataset:remove"),
-  copy: call("clipboard:write"), preview: call("prompt:preview"), decide: call("claude:decide"),
+  copy: call("clipboard:write"), refFromPath: call("reference:fromPath"), refPick: call("reference:pick"), refSave: call("reference:save"), refUpdate: call("reference:update"), refClear: call("reference:clear"),
+  pathFor: (file) => { try { return require("electron").webUtils.getPathForFile(file); } catch { return ""; } }, preview: call("prompt:preview"), decide: call("claude:decide"),
   onClaude: (cb) => ipcRenderer.on("claude", (_e, p) => cb(p)), onDone: (cb) => ipcRenderer.on("job:done", (_e, p) => cb(p)),
   onJob: (cb) => ipcRenderer.on("job", (_e, p) => cb(p)),
 });

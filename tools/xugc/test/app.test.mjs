@@ -104,6 +104,24 @@ app.whenReady().then(async () => {
     say(await until("document.querySelector('#modechip').textContent.includes('RUNPOD') && document.querySelector('#nokey').style.display === 'none'"), "with both keys the warning is gone and the header shows RUNPOD");
     await type("#purl", "https://blackreaper.us/products/haunted-projector"); await click("#pfetch");
     say(await until("document.querySelector('#pfound').textContent.includes('Haunted Projector') && document.querySelectorAll('#pphotos img').length === 3 && document.querySelectorAll('#pphotos img.sel').length === 1"), "a product link brings in the name and the photos", await run("document.querySelector('#pfound').textContent"));
+    // Reference ad
+    say(await run("document.querySelector('#refdrop').style.display") !== "none" && await run("document.querySelector('#refbody').style.display") === "none", "the Reference ad box is there, empty, with a Choose button");
+    run("window.xugc.refFromPath(" + JSON.stringify(${JSON.stringify(fixture)}) + ").then((f) => window.__loadReference(f)); 1");
+    say(await until("document.querySelector('#refbody').style.display === 'flex' && document.querySelector('#refsheet').complete && document.querySelector('#refsheet').naturalWidth > 300", 15000), "dropping a video reads its frames into a contact sheet", await run("document.querySelector('#refmeta').textContent"));
+    say(/\d+-\d+(\.\d+)?s: \(shot 1/.test(await run("document.querySelector('#refbeats').value")), "the shots are listed with timings, ready to be described");
+    await run("(function(){const i=document.querySelector('#refbeats'); i.value='0-1s: a man kneels beside a flat black heap and starts a blower. 1-2s: it rises and he steps back.'; i.dispatchEvent(new Event('change'))})()");
+    await until("document.querySelector('#refhelp').textContent.length > 0");
+    await run("(function(){const r=document.querySelector('#refrange'); r.value='3'; r.dispatchEvent(new Event('input'))})()");
+    say(await until("document.querySelector('#reflvl').textContent === 'Same shots and timing'"), "the 'how close' slider has four stops and says which one is on");
+    await run("document.querySelector('#showp').click()");
+    say(await until("document.querySelector('#fulltext').value.includes('shot order and the timing') && document.querySelector('#fulltext').value.includes('a man kneels beside a flat black heap')"), "the full prompt shows exactly how much of the reference goes in");
+    await run("document.querySelector('#showp').click()");
+    await run("(function(){const r=document.querySelector('#refrange'); r.value='1'; r.dispatchEvent(new Event('input'))})()");
+    say(await until("document.querySelector('#reflvl').textContent === 'Mood only'"), "moving the slider changes it");
+    say(await untilJs(() => W.uploads.some((u) => u.name === "ref-sheet.jpg" && u.bytes > 500), 10000), "the contact sheet is sent up so Claude can look at the frames");
+    W.orders.push({ id: "r1", type: "reference_set", at: Date.now(), beats: "0-1s: a neighbour films a man starting a blower. 1-2s: the figure stands up.", level: 2 });
+    say(await untilJs(() => W.results.some((r) => r.id === "r1" && r.state === "done")), "Claude can describe the shots and set how close to follow, over MCP");
+    say(await until("document.querySelector('#refbeats').value.includes('a neighbour films') && document.querySelector('#reflvl').textContent === 'Same story'"), "…and the app shows it at once");
     await run("document.querySelectorAll('#pphotos img')[2].click()");
     say(await until("document.querySelectorAll('#pphotos img.sel').length === 2 && document.querySelector('#pfound').textContent.includes('2 locked')"), "tapping a photo locks the video to it as well");
     await run("document.querySelector('#avmode [data-m=pick]').click()");
@@ -198,8 +216,8 @@ app.whenReady().then(async () => {
     say(await untilJs(() => W.results.some((r) => r.id === "o5" && r.state === "refused")), "an order that tries to change anything not on the list (like spending limits) is refused", JSON.stringify(W.results.filter((r) => r.id === "o5")));
     say(JSON.parse(fs.readFileSync(${JSON.stringify(join(home, "data", "xugc.json"))}, "utf8")).settings.capJob === 5, "…and the limit is unchanged");
     W.orders.push({ id: "o6", type: "share", at: Date.now(), takeId: t1 });
-    say(await untilJs(() => W.uploads.length === 1), "Claude can ask for a finished video to be uploaded for review", JSON.stringify(W.uploads));
-    say(W.uploads[0] && W.uploads[0].name === t1 + ".mp4" && W.uploads[0].bytes > 10000, "…and the right file went up whole");
+    say(await untilJs(() => W.uploads.filter((u) => u.name !== "ref-sheet.jpg").length === 1), "Claude can ask for a finished video to be uploaded for review", JSON.stringify(W.uploads));
+    say(W.uploads.some((u) => u.name === t1 + ".mp4" && u.bytes > 10000), "…and the right file went up whole");
     await view("mcp");
     say((await run("document.querySelector('#mcplog').textContent")).includes("Claude asked: generate"), "the MCP screen lists what Claude asked for");
     await shot("7-mcp");
@@ -245,7 +263,7 @@ const electron = join(here, "node_modules", ".bin", "electron");
 const child = spawn("xvfb-run", ["-a", "-s", "-screen 0 1400x900x24", electron, "--no-sandbox", "--disable-gpu", "--autoplay-policy=no-user-gesture-required", "--user-data-dir=" + join(home, "ud"), join(home, "probe.cjs")], { stdio: ["ignore", "pipe", "pipe"] });
 let stdout = "", stderr = "";
 child.stdout.on("data", (d) => (stdout += d)); child.stderr.on("data", (d) => (stderr += d));
-const code = await new Promise((r) => { const t = setTimeout(() => { child.kill("SIGKILL"); r("timeout"); }, 170000); child.on("close", (c) => { clearTimeout(t); r(c); }); });
+const code = await new Promise((r) => { const t = setTimeout(() => { child.kill("SIGKILL"); r("timeout"); }, 300000); child.on("close", (c) => { clearTimeout(t); r(c); }); });
 const line = stdout.split("\n").find((l) => l.startsWith("@@RESULT@@"));
 let failed = 0;
 if (!line) { console.log("FAIL  no result from electron (" + code + ")\n" + stderr.slice(-1500) + stdout.slice(-600)); failed = 1; }

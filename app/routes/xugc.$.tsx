@@ -70,6 +70,13 @@ function cleanOrder(type: string, a: Record<string, unknown>): { error: string }
     const music = ["none", "soft", "drop"].includes(str(a.music, 10)) ? str(a.music, 10) : "";
     return { order: { type, scene, prompt, seconds, quality, look, refs, music, captions, avatar: str(a.avatar, 20), avatarText: str(a.avatarText, 400), productUrl } };
   }
+  if (type === "reference_set") {
+    const beats = String(a.beats ?? "").trim().slice(0, 3000);
+    const level = a.level === undefined ? undefined : Number(a.level);
+    if (level !== undefined && !(Number.isInteger(level) && level >= 0 && level <= 3)) return { error: "level must be 0 (off), 1 (mood only), 2 (same story) or 3 (same shots and timing)" };
+    if (!beats && level === undefined) return { error: "give beats (what happens in the reference, shot by shot) and/or a level" };
+    return { order: { type, beats, level } };
+  }
   if (type === "cancel") return { order: { type } };
   if (type === "style_write") {
     const name = str(a.name, 40), content = String(a.content ?? "");
@@ -103,6 +110,7 @@ async function send(env: Env, type: string, args: Record<string, unknown>) {
 const TOOLS = [
   { name: "xugc_status", description: "What XUGC is doing right now on Alex's Mac: whether a video is rendering, today's spend against the limits, the Style Bible files, the product, recent videos and their cost, and the last results of orders sent. Read this before answering anything about whether XUGC is working.", inputSchema: { type: "object", properties: {} } },
   { name: "xugc_generate", description: "Make a video. XUGC shows the finished prompt and price on Alex's screen and WAITS for him to press Approve (unless he switched auto-approve on); the page moves live as you order it. Goes through XUGC's own money rules, so it is refused if over the per-video or daily limit. Give either 'scene' (what happens; XUGC adds the Style Bible, avatar and product) or 'prompt' (a finished prompt used as written). seconds 5/10/15/20. quality draft/hd/full. Returns an orderId; poll xugc_result.", inputSchema: { type: "object", properties: { scene: { type: "string" }, prompt: { type: "string" }, seconds: { type: "number", enum: SECONDS }, quality: { type: "string", enum: QUALITIES }, look: { type: "string", enum: LOOKS }, avatar: { type: "string", description: "broad, maya, jordan, ava, leo or sofia" }, avatarText: { type: "string", description: "your own description of the person" }, productUrl: { type: "string" }, captions: { type: "array", items: { type: "string" }, description: "Text burned onto the video by the app (the model cannot draw text). Each: \"start-end | text | top or bottom\", e.g. \"0-4 | BREAKING NEWS\". Omit to use the Style Bible captions; pass [] for none." }, music: { type: "string", enum: ["none", "soft", "drop"], description: "none, a soft beat bed, or a beat that drops at the biggest moment" }, refs: { description: "Reference photos that lock the product: \"auto\" (the first two photos of the product) or up to 3 photo URLs from the product page. The first opens the video.", anyOf: [{ type: "string", enum: ["auto"] }, { type: "array", items: { type: "string" } }] } } } },
+  { name: "xugc_reference_set", description: "Describe the reference ad Alex loaded (a video that went a little viral) and set how closely to follow it. First call xugc_status: status.reference has the timings and the cuts, and xugc_takes lists ref-sheet.jpg, a contact sheet of the frames with a url you can look at. Write 'beats': what happens in each shot with its timing, e.g. '0-3s: a man kneels beside a flat black heap and starts a blower. 3-6s: ...'. level: 0 off, 1 mood only, 2 same story, 3 same shots and timing.", inputSchema: { type: "object", properties: { beats: { type: "string" }, level: { type: "number", enum: [0, 1, 2, 3] } } } },
   { name: "xugc_cancel", description: "Stop the video that is rendering and hand the GPU back.", inputSchema: { type: "object", properties: {} } },
   { name: "xugc_result", description: "The outcome of an order sent earlier (started, done with cost, or the exact error).", inputSchema: { type: "object", properties: { orderId: { type: "string" } }, required: ["orderId"] } },
   { name: "xugc_style_write", description: "Create or replace a Style Bible .md file. Lines under '## Prompt' are written into every video prompt; lines under '## Never' become the Avoid list. Everything else is for humans.", inputSchema: { type: "object", properties: { name: { type: "string" }, content: { type: "string" } }, required: ["name", "content"] } },
@@ -128,7 +136,7 @@ async function callTool(env: Env, name: string, a: Record<string, unknown>) {
     for (const o of page.objects) out.push({ name: o.key.slice(TAKES.length), size: o.size, url: `https://kerberos.gardenbuddystore.workers.dev/xugc/${KEY}/file/${o.key.slice(TAKES.length)}` });
     return { count: out.length, takes: out };
   }
-  const map: Record<string, string> = { xugc_generate: "generate", xugc_cancel: "cancel", xugc_style_write: "style_write", xugc_style_toggle: "style_toggle", xugc_style_delete: "style_delete", xugc_share: "share" };
+  const map: Record<string, string> = { xugc_generate: "generate", xugc_cancel: "cancel", xugc_reference_set: "reference_set", xugc_style_write: "style_write", xugc_style_toggle: "style_toggle", xugc_style_delete: "style_delete", xugc_share: "share" };
   if (map[name]) return send(env, map[name], a);
   return { ok: false, error: `no such tool: ${name}` };
 }
@@ -179,11 +187,11 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   if (what === "take") {
     const url = new URL(request.url);
     const name = (url.searchParams.get("name") || "").replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 80);
-    if (!/^take-\d+\.mp4$/.test(name)) return json({ ok: false, error: "name must be take-<digits>.mp4" }, 400);
+    if (!/^(take-\d+\.mp4|ref-sheet\.jpg)$/.test(name)) return json({ ok: false, error: "name must be take-<digits>.mp4 or ref-sheet.jpg" }, 400);
     const bytes = await request.arrayBuffer();
     if (!bytes.byteLength) return json({ ok: false, error: "empty" }, 400);
     if (bytes.byteLength > 90_000_000) return json({ ok: false, error: "too big" }, 413);
-    await env.MEDIA.put(TAKES + name, bytes, { httpMetadata: { contentType: "video/mp4" } });
+    await env.MEDIA.put(TAKES + name, bytes, { httpMetadata: { contentType: name.endsWith(".jpg") ? "image/jpeg" : "video/mp4" } });
     return json({ ok: true, url: `${url.origin}/xugc/${KEY}/file/${name}` });
   }
 

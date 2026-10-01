@@ -10,7 +10,7 @@ const fs = require("node:fs");
 const { Store } = require("./store.js");
 const { Secrets } = require("./secrets.js");
 const { Engine, estimateGenerate, today } = require("./engine.js");
-const { Style, compose, parseCaption, LOOKS, AVATARS, QUALITY, SECONDS, NAME } = require("./compose.js");
+const { Style, compose, parseCaption, LEVELS, LOOKS, AVATARS, QUALITY, SECONDS, NAME } = require("./compose.js");
 const { fetchProduct } = require("./product.js");
 const { Bridge } = require("./bridge.js");
 
@@ -36,7 +36,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     return {
       state: s, build: BUILD, keySet: !!secrets.get(), keyTail: secrets.tail(), hfSet: !!hf.get(), hfTail: hf.tail(), busy: engine.status(),
       looks: Object.keys(LOOKS), avatars: Object.keys(AVATARS), qualities: Object.fromEntries(Object.entries(QUALITY).map(([k, v]) => [k, v.label])), seconds: Object.keys(SECONDS).map(Number),
-      style: style.list(s.styleOff), usedToday: s.spent.day === today() ? s.spent.usd : 0,
+      style: style.list(s.styleOff), levels: LEVELS, usedToday: s.spent.day === today() ? s.spent.usd : 0,
       mcp: { on: s.settings.mcpOn, url: bridge ? bridge.url() : new Bridge({ getStatus() {}, onOrder() {} }).url(), connected: !!(bridge && bridge.connected), lastOk: bridge ? bridge.lastOk : 0, claudeSeen: bridge && bridge.mcpSeen ? bridge.mcpSeen.at : 0, log: bridge ? bridge.log : [] },
     };
   };
@@ -59,7 +59,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     const scene = String(spec.scene || "").trim(), given = String(spec.prompt || "").trim();
     if (!given && scene.length < 10) throw new Error("Write what happens in the video (a sentence or two).");
     const seconds = Number(spec.seconds) || 15, quality = spec.quality || "hd";
-    const prompt = given || compose({ scene, look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music }, style.gather(st.styleOff));
+    const prompt = given || compose({ scene, look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music, reference: spec.useReference === false ? null : st.reference }, style.gather(st.styleOff));
     const est = estimateGenerate({ seconds, quality, volume: !!st.settings.volumeId });
     const asked = Array.isArray(spec.captions) ? spec.captions.map(parseCaption).filter(Boolean) : null;
     const captions = (asked || style.gather(st.styleOff).captions).filter((c) => c.start < seconds).map((c) => ({ ...c, end: Math.min(c.end, seconds) }));
@@ -86,7 +86,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
   });
 
   ipcMain.handle("state:get", () => view());
-  ipcMain.handle("prompt:preview", async (_e, spec) => { try { const st = store.read(); const product = spec.useProduct !== false ? st.product : null; const seconds = Number(spec.seconds) || 15; return { prompt: compose({ scene: String(spec.scene || "").trim() || "(what happens goes here)", look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music }, style.gather(st.styleOff)) }; } catch (err) { return { error: err.message }; } });
+  ipcMain.handle("prompt:preview", async (_e, spec) => { try { const st = store.read(); const product = spec.useProduct !== false ? st.product : null; const seconds = Number(spec.seconds) || 15; return { prompt: compose({ scene: String(spec.scene || "").trim() || "(what happens goes here)", look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music, reference: spec.useReference === false ? null : st.reference }, style.gather(st.styleOff)) }; } catch (err) { return { error: err.message }; } });
   ipcMain.handle("estimate", (_e, seconds, quality) => estimate(seconds, quality));
   ipcMain.handle("settings:set", (_e, patch) => {
     store.update((s) => {
@@ -162,6 +162,23 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
   });
   ipcMain.handle("dataset:caption", (_e, id, text) => { store.update((s) => { const c = s.dataset.find((x) => x.id === id); if (c) c.caption = String(text).slice(0, 600); }); return view(); });
   ipcMain.handle("dataset:remove", (_e, id) => { store.update((s) => { s.dataset = s.dataset.filter((c) => c.id !== id); }); return view(); });
+  /* ---- the reference ad: a video that went a little viral, used as inspiration only ---- */
+  const refDir = path.join(dir, "reference"); fs.mkdirSync(refDir, { recursive: true });
+  const readVideo = (p) => { if (!/\.(mp4|mov|m4v|webm)$/i.test(p)) throw new Error("Choose a video file (mp4 or mov)."); const st = fs.statSync(p); if (st.size > 150e6) throw new Error("That video is over 150 MB. Use a shorter or smaller one."); return { name: path.basename(p), bytes: fs.readFileSync(p) }; };
+  ipcMain.handle("reference:fromPath", (_e, p) => { try { return readVideo(String(p)); } catch (err) { return { error: err.message }; } });
+  ipcMain.handle("reference:pick", async () => { const r = await dialog.showOpenDialog({ title: "Choose the reference ad", properties: ["openFile"], filters: [{ name: "Video", extensions: ["mp4", "mov", "m4v", "webm"] }] }); if (r.canceled) return null; try { return readVideo(r.filePaths[0]); } catch (err) { return { error: err.message }; } });
+  const shareSheet = () => { try { const f = path.join(refDir, "sheet.jpg"); if (bridge && store.read().settings.mcpOn && fs.existsSync(f)) bridge.upload("ref-sheet.jpg", fs.readFileSync(f)).catch(() => {}); } catch {} };
+  ipcMain.handle("reference:save", (_e, r) => {
+    try {
+      const jpg = Buffer.from(String(r.sheet || "").split(",")[1] || "", "base64"); if (jpg.length < 500) throw new Error("No frames were read from that video.");
+      fs.writeFileSync(path.join(refDir, "sheet.jpg"), jpg);
+      const cuts = (r.cuts || []).map(Number).filter((x) => Number.isFinite(x)).slice(0, 40);
+      store.update((s) => { s.reference = { name: String(r.name || "reference").slice(0, 80), duration: Math.round(Number(r.duration) * 10) / 10, cuts, beats: String(r.beats || "").slice(0, 3000), level: 2, sheet: path.join(refDir, "sheet.jpg"), at: Date.now() }; });
+      shareSheet(); return view();
+    } catch (err) { return fail(err); }
+  });
+  ipcMain.handle("reference:update", (_e, patch) => { store.update((s) => { if (!s.reference) return; if (typeof patch.beats === "string") s.reference.beats = patch.beats.slice(0, 3000); if (Number.isInteger(patch.level) && patch.level >= 0 && patch.level <= 3) s.reference.level = patch.level; }); return view(); });
+  ipcMain.handle("reference:clear", () => { store.update((s) => { s.reference = null; }); return view(); });
   ipcMain.handle("clipboard:write", (_e, text) => { clipboard.writeText(String(text)); return true; });
 
   /* ---- Claude's line: a short fixed list of orders, each re-checked here ---- */
@@ -172,6 +189,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
       limits: { perVideo: s.settings.capJob, perDay: s.settings.capDay }, keys: { runpod: !!secrets.get(), huggingface: !!hf.get() }, volume: !!s.settings.volumeId,
       style: style.list(s.styleOff).map((f) => ({ name: f.name, on: f.on, lines: f.lines })), product: s.product ? { title: s.product.title, url: s.product.url, price: s.product.price } : null,
       takes: s.takes.slice(0, 15).map((t) => ({ id: t.id, at: t.at, seconds: t.seconds, quality: t.quality, cost: t.cost, minutes: t.minutes, audio: t.audio, verdict: t.verdict, scene: t.scene, prompt: (t.prompt || "").slice(0, 400) })),
+      reference: s.reference ? { name: s.reference.name, duration: s.reference.duration, cuts: s.reference.cuts, level: s.reference.level, beats: s.reference.beats, sheet: "ref-sheet.jpg (see xugc_takes)" } : null,
       claudeLog: bridge ? bridge.log.slice(-8) : [],
     };
   };
@@ -190,6 +208,11 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
       const take = await render(pr, null);
       send("claude", { kind: "end", text: "Done" });
       return { ok: true, takeId: take.id, cost: take.cost, minutes: take.minutes, audio: take.audio, seconds: take.seconds };
+    }
+    if (t === "reference_set") {
+      if (!store.read().reference) return { ok: false, error: "No reference ad is loaded in the app yet. Alex has to drop one into Create first." };
+      store.update((s) => { if (typeof o.beats === "string" && o.beats.trim()) s.reference.beats = o.beats.slice(0, 3000); if (Number.isInteger(o.level) && o.level >= 0 && o.level <= 3) s.reference.level = o.level; });
+      send("claude", { kind: "refresh" }); return { ok: true };
     }
     if (t === "cancel") return { ok: true, cancelled: engine.cancel() };
     if (t === "style_write") { style.write(o.name, o.content); return { ok: true, name: o.name }; }

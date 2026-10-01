@@ -28,6 +28,18 @@ const AVATARS = {
   sofia: "Sofia, 35, long dark hair, cream knit sweater, cosy front room at night.",
 };
 const QUALITY = { draft: { w: 512, h: 896, label: "Draft 480p", cost: 0.5 }, hd: { w: 704, h: 1280, label: "HD 720p", cost: 1 }, full: { w: 1088, h: 1920, label: "Full 1080p", cost: 2.2 } };
+const LEVELS = ["Off", "Mood only", "Same story", "Same shots and timing"];
+/** How much of a viral reference ad goes into the prompt: 0 nothing, 1 mood, 2 story beats, 3 shot-by-shot with timings. */
+function referenceText(ref, productTitle) {
+  if (!ref || !ref.level || !String(ref.beats || "").trim()) return "";
+  const beats = String(ref.beats).replace(/\s+/g, " ").trim().slice(0, 1800);
+  const own = productTitle ? `Our product is ${clean(productTitle)}: show it, not anything from the reference.` : "";
+  const never = "Do not copy any faces, clothes, text or the product design from the reference.";
+  const better = "Make it better than the reference: more real and different people, a more convincing product, richer real sound, more believable phone footage.";
+  if (ref.level === 1) return `Capture only the mood and energy of a clip that went viral: ${beats.split(/[.;]/)[0]}. ${never} ${own} ${better}`;
+  if (ref.level === 2) return `Follow the same story beats, in the same order, as a clip that went viral: ${beats} ${never} ${own} ${better}`;
+  return `Copy the shot order and the timing of a clip that went viral as closely as possible. Shot list with timings: ${beats} ${never} ${own} ${better}`;
+}
 const MUSIC = {
   none: "",
   soft: "A faint, low-volume trending phone-speaker beat plays far in the background of the whole video, quiet and slightly distorted, as if a neighbour's speaker is on.",
@@ -103,6 +115,7 @@ function compose(job, bible) {
   if (job.product && clean(job.product.title)) parts.push(sentence(`The product is ${clean(job.product.title)}${job.product.desc ? ": " + clean(job.product.desc).slice(0, 220) : ""}`));
   parts.push(sentence(LOOKS[job.look] || ""));
   parts.push(sentence(job.scene));
+  const rt = referenceText(job.reference, job.product && job.product.title); if (rt) parts.push(rt);
   if (bible.prompt.length) parts.push(bible.prompt.map(sentence).join(" "));
   if (MUSIC[job.music]) parts.push(MUSIC[job.music]);
   if (bible.never.length) parts.push("Avoid: " + bible.never.map((l) => clean(l).replace(/[.]+$/, "")).join("; ") + ".");
@@ -110,4 +123,4 @@ function compose(job, bible) {
   return parts.filter(Boolean).join(" ");
 }
 
-module.exports = { parseCaption, Style, compose, sections, LOOKS, AVATARS, QUALITY, SECONDS, NAME, MUSIC };
+module.exports = { LEVELS, referenceText, parseCaption, Style, compose, sections, LOOKS, AVATARS, QUALITY, SECONDS, NAME, MUSIC };

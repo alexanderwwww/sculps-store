@@ -40,7 +40,7 @@ class Bridge {
   }
   /** Send a finished video up so Claude can watch it. */
   async upload(name, buffer) {
-    const r = await this.fetch(`${this.base}/take?name=${encodeURIComponent(name)}`, { method: "POST", headers: { "content-type": "video/mp4" }, body: buffer });
+    const r = await this.fetch(`${this.base}/take?name=${encodeURIComponent(name)}`, { method: "POST", headers: { "content-type": /\.jpe?g$/i.test(name) ? "image/jpeg" : "video/mp4" }, body: buffer });
     if (!r.ok) throw new Error(`upload ${r.status}`); return (await r.json()).url;
   }
   start() { if (this.timer) return; this.tick(); this.timer = setInterval(() => this.tick(), this.intervalMs); }

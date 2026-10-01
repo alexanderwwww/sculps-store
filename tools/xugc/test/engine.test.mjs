@@ -46,6 +46,13 @@ ok(compose({ scene: "scene text here ok", seconds: 10 }, g).length > 3500, "the 
 style.addNever("the man looked like he was in a costume"); ok(style.gather().never.includes("the man looked like he was in a costume"), "a 👎 note is added to the Avoid list");
 ok(g.captions.length === 2 && g.captions[0].text === "BREAKING NEWS" && g.captions[0].end === 4, "the Style Bible's '## Captions' lines become on-screen captions with timings", JSON.stringify(g.captions[0]));
 ok(compose({ scene: "scene text here ok", seconds: 10 }, g).length > 6000, "with the deeper files the default prompt is very large", String(compose({ scene: "scene text here ok", seconds: 10 }, g).length));
+const ref = { level: 2, beats: "0-3s: a man kneels beside a flat black heap and starts a blower. 3-6s: it rises." };
+const pr0 = compose({ scene: "scene text here ok", seconds: 10 }, g), pr1 = compose({ scene: "scene text here ok", seconds: 10, reference: { ...ref, level: 1 } }, g), pr2 = compose({ scene: "scene text here ok", seconds: 10, reference: ref, product: { title: "The 16 ft Scream" } }, g), pr3 = compose({ scene: "scene text here ok", seconds: 10, reference: { ...ref, level: 3 } }, g);
+ok(!/viral/.test(pr0) && !/viral/.test(compose({ scene: "scene text here ok", seconds: 10, reference: { ...ref, level: 0 } }, g)), "no reference, or level Off: nothing from it is in the prompt");
+ok(/mood and energy/.test(pr1) && !pr1.includes("3-6s"), "level 1 (mood only) takes the feeling, not the shots");
+ok(pr2.includes("same story beats") && pr2.includes("3-6s: it rises") && pr2.includes("Do not copy any faces") && pr2.includes("The 16 ft Scream") && pr2.includes("Make it better"), "level 2 follows the story, forbids copying faces/product, names our product, and says make it better");
+ok(/shot order and the timing/.test(pr3) && pr3.includes("0-3s"), "level 3 copies shot order and timing");
+ok(!/viral/.test(compose({ scene: "scene text here ok", seconds: 10, reference: { level: 3, beats: "  " } }, g)), "a reference with no shots described adds nothing");
 // ---- product from a link
 process.env.XUGC_ALLOW_LOCAL = "1";
 const srv = http.createServer((q, r) => { r.setHeader("content-type", "text/html"); r.end(`<html><head><script type="application/ld+json">{"@type":"Product","name":"Haunted Projector","description":"Plug-in <b>ghost</b> projector","image":["/p1.jpg"],"offers":{"price":"79.99","priceCurrency":"USD"}}</script><meta property="og:image" content="/a.jpg"></head></html>`); });
