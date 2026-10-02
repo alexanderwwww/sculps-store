@@ -16,22 +16,28 @@ const { Bridge } = require("./bridge.js");
 const { Collector, parseLinks } = require("./collect.js");
 const { Google, estimate: adEstimate, VEO } = require("./google.js");
 const presets = require("./presets.js");
+const falLib = require("./fal.js");
+// which filter rules a model gets (word caps and notation per engine, filter.js)
+const FILTER_AS = { veo: "veo", fal_veo: "veo", seedance: "seedance", kling: "kling", fal_wan: "wan" };
+const isAdEngine = (e) => e === "veo" || falLib.isFal(e);
 const filter = require("./filter.js");
 
 const BUILD = 12;
 const LATEST_NOTE = "";
 
-function setup({ dir, googleFetch, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch, collector: collectorIn, backupDir }) {
+function setup({ dir, googleFetch, falFetch, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch, collector: collectorIn, backupDir }) {
   const store = new Store(dir);
   const secrets = new Secrets(dir, safe, "runpod");
   const hf = new Secrets(dir, safe, "hf");
   const gkey = new Secrets(dir, safe, "google");
   const google = new Google({ key: () => gkey.get(), fetchImpl: googleFetch });
+  const falKey = new Secrets(dir, safe, "fal");
+  const fal = new falLib.Fal({ key: () => falKey.get(), fetchImpl: falFetch || googleFetch });
   // yt-dlp and ffmpeg ship inside the app (Contents/Resources/bin); tests and the repo use ./bin
   const binDir = fs.existsSync(path.join(process.resourcesPath || "", "bin")) ? path.join(process.resourcesPath, "bin") : path.join(__dirname, "bin");
   const mac = process.platform === "darwin";
   const ffmpegBin = path.join(binDir, mac ? "ffmpeg-darwin-x64" : "ffmpeg-linux-x64");
-  const engine = new Engine({ store, dir, secrets, hf, makeRunPod, fetchImpl: bridgeFetch, backupDir, google, ffmpeg: ffmpegBin });
+  const engine = new Engine({ store, dir, secrets, hf, makeRunPod, fetchImpl: bridgeFetch, backupDir, google, fal, ffmpeg: ffmpegBin });
   // Alex's personal copy ships with his keys in seed.json (never in git). Only used when no key is saved yet.
   try { const seed = JSON.parse(fs.readFileSync(path.join(__dirname, "seed.json"), "utf8")); if (seed.runpod && !secrets.get()) secrets.set(seed.runpod); if (seed.hf && !hf.get()) hf.set(seed.hf); } catch { /* a copy without keys */ }
   const style = new Style(path.join(dir, "style"), path.join(__dirname, "assets", "style"));
@@ -46,7 +52,7 @@ function setup({ dir, googleFetch, makeRunPod, safe = null, sweepOnStart = true,
   const view = () => {
     const s = store.read();
     return {
-      state: s, build: BUILD, keySet: !!secrets.get(), keyTail: secrets.tail(), hfSet: !!hf.get(), hfTail: hf.tail(), googleSet: !!gkey.get(), googleTail: gkey.tail(), presets: presets.list(), veo: Object.fromEntries(Object.entries(VEO).map(([k, v]) => [k, v.label])), busy: engine.status(),
+      state: s, build: BUILD, keySet: !!secrets.get(), keyTail: secrets.tail(), hfSet: !!hf.get(), hfTail: hf.tail(), googleSet: !!gkey.get(), googleTail: gkey.tail(), falSet: !!falKey.get(), falTail: falKey.tail(), presets: presets.list(), veo: Object.fromEntries(Object.entries(VEO).map(([k, v]) => [k, v.label])), busy: engine.status(),
       looks: Object.keys(LOOKS), avatars: Object.keys(AVATARS), qualities: Object.fromEntries(Object.entries(QUALITY).map(([k, v]) => [k, v.label])), seconds: Object.keys(SECONDS).map(Number),
       style: style.list(s.styleOff), levels: LEVELS, usedToday: s.spent.day === today() ? s.spent.usd : 0, pile: collector.count(), lastTrain: s.lastTrain || null, loras: s.loras || [], collecting: collecting ? { last: collecting.last } : null,
       mcp: { on: s.settings.mcpOn, url: bridge ? bridge.url() : new Bridge({ getStatus() {}, onOrder() {} }).url(), connected: !!(bridge && bridge.connected), lastOk: bridge ? bridge.lastOk : 0, claudeSeen: bridge && bridge.mcpSeen ? bridge.mcpSeen.at : 0, log: bridge ? bridge.log : [] },
@@ -70,16 +76,28 @@ function setup({ dir, googleFetch, makeRunPod, safe = null, sweepOnStart = true,
    * Real Life clip prompts from a text (one clip per blank-line block), each through the filter. The product title is swapped
    * for a placeholder while checking, so a title like "Kids Art Easel" is never mistaken for a child in the scene.
    */
-  function veoClips(text, n, title) {
+  function veoClips(text, n, title, engineName = "veo") {
     const parts = String(text).split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean);
     const list = parts.length === n ? parts : Array(n).fill(parts.join(" "));
     const t = title ? String(title).replace(/"/g, "\u2033") : "";
     return list.map((p, i) => {
       const hide = t && p.includes(t) ? p.split(t).join("the product item") : p;
-      const c = filter.check(hide, "veo");
+      const c = filter.check(hide, FILTER_AS[engineName] || "veo");
       if (!c.ok) throw new Error(`The prompt filter stopped clip ${i + 1} before any money was spent: ` + c.problems.filter((q) => q.severity === "block").map((q) => q.text).join(" "));
       return t ? c.prompt.split("the product item").join(t) : c.prompt;
     });
+  }
+  /** pictures he dropped or pasted: data URLs from the screen, checked to be real pictures, at most 3, at most 8 MB each */
+  function localRefs(list) {
+    if (!Array.isArray(list)) return [];
+    const out = [];
+    for (const r of list.slice(0, 3)) {
+      const m = /^data:image\/(png|jpe?g|webp);base64,([A-Za-z0-9+/=]+)$/.exec(String((r && r.dataUrl) || ""));
+      if (!m) continue;
+      const bytes = Buffer.from(m[2], "base64");
+      if (bytes.length > 1000 && bytes.length < 8 * 1024 * 1024) out.push({ bytes });
+    }
+    return out;
   }
   /** Everything a video needs, decided BEFORE any money moves: the product, the final prompt, the reference photos, the price. */
   async function prepare(spec) {
@@ -90,14 +108,14 @@ function setup({ dir, googleFetch, makeRunPod, safe = null, sweepOnStart = true,
     const scene = String(spec.scene || "").trim(), given = String(spec.prompt || "").trim();
     if (!given && scene.length < 10) throw new Error("Write what happens in the video (a sentence or two).");
     const seconds = Number(spec.seconds) || 15, quality = spec.quality || "hd";
-    if (spec.engine === "veo") {
+    if (isAdEngine(spec.engine)) {
       // the preset recipe writes the scene; the filter checks it before any money moves
       const n = Math.max(1, Math.ceil(seconds / 8));
       const pc = presets.clips(spec.preset || "review", { product: product ? { title: product.title, features: product.features || [] } : null, avatarText: spec.avatarText || "", scene }, n);
-      const clipPrompts = veoClips(given || pc.clips.join("\n\n"), n, product && product.title);
+      const clipPrompts = veoClips(given || pc.clips.join("\n\n"), n, product && product.title, spec.engine);
       const veoScene = clipPrompts.join("\n\n");
-      const est = { ...adEstimate({ seconds, tier: spec.tier || "lite" }), minutes: 3 * Math.ceil(seconds / 8) };
-      return { spec, product, scene: veoScene, prompt: veoScene, imageScene: pc.image, clipPrompts, seconds, quality: "720p", captions: [], refs: refUrls(spec.refs ? spec : { ...spec, refs: "auto" }, product), engine: "veo", usd: est.usd, minutes: est.minutes };
+      const est = { ...(spec.engine === "veo" ? adEstimate({ seconds, tier: spec.tier || "lite" }) : falLib.estimate({ engine: spec.engine, seconds, tier: spec.tier || "lite", res: spec.res })), minutes: 3 * Math.ceil(seconds / 8) };
+      return { spec, product, scene: veoScene, prompt: veoScene, imageScene: pc.image, clipPrompts, seconds, quality: "720p", captions: [], refs: refUrls(spec.refs ? spec : { ...spec, refs: "auto" }, product), refsLocal: localRefs(spec.refsLocal), engine: spec.engine, usd: est.usd, minutes: est.minutes };
     }
     const prompt = given || compose({ scene, look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music, reference: spec.useReference === false ? null : st.reference }, style.gather(st.styleOff));
     const est = spec.engine === "veo" ? { ...adEstimate({ seconds, tier: spec.tier || "lite" }), minutes: 3 * Math.ceil(seconds / 8) } : estimateGenerate({ seconds, quality, volume: !!st.settings.volumeId });
@@ -109,11 +127,11 @@ function setup({ dir, googleFetch, makeRunPod, safe = null, sweepOnStart = true,
     const spec = pr.spec;
     try {
       const onJob = (p) => { progress = { ...p, at: Date.now() }; (emit || ((q) => send("job", q)))(p); };
-      if (pr.engine === "veo") {
+      if (isAdEngine(pr.engine)) {
         // product photos go to the IMAGE model only (ad.js); Veo never sees a carousel picture
-        const refs = [];
+        const refs = [...(pr.refsLocal || [])];
         for (const r of pr.refs) refs.push({ bytes: await fetchImage(r.url, bridgeFetch), mime: /\.png(\?|$)/i.test(r.url) ? "image/png" : "image/jpeg" });
-        const take = await engine.generateAd({ scene: pr.scene || pr.prompt, imageScene: pr.imageScene, clipPrompts: pr.clipPrompts, seconds: pr.seconds, tier: spec.tier || "lite", refs, meta: { scene: pr.scene || undefined, look: spec.look || "", avatar: spec.avatar || "broad", product: pr.product ? pr.product.title : "", preset: spec.preset || "" } }, onJob);
+        const take = await engine.generateAd({ engine: pr.engine, res: spec.res, scene: pr.scene || pr.prompt, imageScene: pr.imageScene, clipPrompts: pr.clipPrompts, seconds: pr.seconds, tier: spec.tier || "lite", refs, meta: { scene: pr.scene || undefined, look: spec.look || "", avatar: spec.avatar || "broad", product: pr.product ? pr.product.title : "", preset: spec.preset || "" } }, onJob);
         store.update((s) => { s.takes.unshift(take); });
         progress = null; send("job:done", { take, state: store.read() });
         return take;
@@ -136,8 +154,8 @@ function setup({ dir, googleFetch, makeRunPod, safe = null, sweepOnStart = true,
   });
 
   ipcMain.handle("state:get", () => view());
-  ipcMain.handle("prompt:preview", async (_e, spec) => { try { if (spec.engine === "veo") { const st = store.read(); const product = spec.useProduct !== false ? st.product : null; const n = Math.max(1, Math.ceil((Number(spec.seconds) || 16) / 8)); const pc = presets.clips(spec.preset || "review", { product: product ? { title: product.title, features: product.features || [] } : null, avatarText: spec.avatarText || "", scene: String(spec.scene || "").trim() }, n); return { prompt: veoClips(pc.clips.join("\n\n"), n, product && product.title).join("\n\n") }; } const st = store.read(); const product = spec.useProduct !== false ? st.product : null; const seconds = Number(spec.seconds) || 15; return { prompt: compose({ scene: String(spec.scene || "").trim() || "(what happens goes here)", look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music, reference: spec.useReference === false ? null : st.reference }, style.gather(st.styleOff)) }; } catch (err) { return { error: err.message }; } });
-  ipcMain.handle("estimate", (_e, seconds, quality, engineName, tier) => engineName === "veo" ? { ...adEstimate({ seconds: Number(seconds) || 16, tier: tier || "lite" }), minutes: 3 * Math.ceil((Number(seconds) || 16) / 8) } : estimate(seconds, quality));
+  ipcMain.handle("prompt:preview", async (_e, spec) => { try { if (isAdEngine(spec.engine)) { const st = store.read(); const product = spec.useProduct !== false ? st.product : null; const n = Math.max(1, Math.ceil((Number(spec.seconds) || 16) / 8)); const pc = presets.clips(spec.preset || "review", { product: product ? { title: product.title, features: product.features || [] } : null, avatarText: spec.avatarText || "", scene: String(spec.scene || "").trim() }, n); return { prompt: veoClips(pc.clips.join("\n\n"), n, product && product.title, spec.engine).join("\n\n") }; } const st = store.read(); const product = spec.useProduct !== false ? st.product : null; const seconds = Number(spec.seconds) || 15; return { prompt: compose({ scene: String(spec.scene || "").trim() || "(what happens goes here)", look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music, reference: spec.useReference === false ? null : st.reference }, style.gather(st.styleOff)) }; } catch (err) { return { error: err.message }; } });
+  ipcMain.handle("estimate", (_e, seconds, quality, engineName, tier, res) => falLib.isFal(engineName) ? { ...falLib.estimate({ engine: engineName, seconds: Number(seconds) || 16, tier: tier || "lite", res }), minutes: 3 * Math.ceil((Number(seconds) || 16) / 8) } : engineName === "veo" ? { ...adEstimate({ seconds: Number(seconds) || 16, tier: tier || "lite" }), minutes: 3 * Math.ceil((Number(seconds) || 16) / 8) } : estimate(seconds, quality));
   ipcMain.handle("settings:set", (_e, patch) => {
     store.update((s) => {
       for (const k of ["capJob", "capDay"]) if (patch[k] != null) { const v = Number(patch[k]); if (Number.isFinite(v) && v >= 0 && v <= 10000) s.settings[k] = v; }
@@ -159,6 +177,11 @@ function setup({ dir, googleFetch, makeRunPod, safe = null, sweepOnStart = true,
     try { gkey.set(key); } catch (err) { return fail(err); }
     try { const r = await google.test(); return { ok: true, veoModels: r.veo, ...view() }; }
     catch (err) { if (err.code === "googleauth") gkey.clear(); return fail(err); }
+  });
+  ipcMain.handle("fal:set", async (_e, key) => {
+    try { falKey.set(key); } catch (err) { return fail(err); }
+    try { await fal.test(); return { ok: true, ...view() }; }
+    catch (err) { if (err.code === "falauth") falKey.clear(); return fail(err); }
   });
   ipcMain.handle("google:test", async () => { try { const r = await google.test(); return { ok: true, veoModels: r.veo, ...view() }; } catch (err) { return fail(err); } });
   ipcMain.handle("hf:set", (_e, key) => { try { hf.set(key); return { ok: true, ...view() }; } catch (err) { return fail(err); } });
@@ -285,11 +308,11 @@ function setup({ dir, googleFetch, makeRunPod, safe = null, sweepOnStart = true,
     const t = o.type;
     if (t === "generate") {
       send("claude", { kind: "start", text: "Claude is setting up a video" });
-      const pr = await prepare({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality, refs: o.refs, music: o.music, captions: o.captions, engine: o.engine, lora: o.lora, preset: o.preset, tier: o.tier });
+      const pr = await prepare({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality, refs: o.refs, music: o.music, captions: o.captions, engine: o.engine, lora: o.lora, preset: o.preset, tier: o.tier, res: o.res });
       if (!store.read().settings.autoApprove) {
         const d = await askApproval(pr, "Claude");
         if (!d.ok) { send("claude", { kind: "end", text: d.timeout ? "No answer, so it was cancelled" : "You said no" }); return { ok: false, error: d.timeout ? "Alex did not answer in 15 minutes, nothing was rented." : "Alex said no on screen. Nothing was rented." }; }
-        if (d.prompt && pr.engine === "veo") { pr.clipPrompts = veoClips(d.prompt, pr.clipPrompts.length, pr.product && pr.product.title); pr.prompt = pr.scene = pr.clipPrompts.join("\n\n"); }
+        if (d.prompt && isAdEngine(pr.engine)) { pr.clipPrompts = veoClips(d.prompt, pr.clipPrompts.length, pr.product && pr.product.title, pr.engine); pr.prompt = pr.scene = pr.clipPrompts.join("\n\n"); }
         else if (d.prompt) { pr.prompt = d.prompt; pr.spec = { ...pr.spec, prompt: d.prompt }; }
       }
       send("claude", { kind: "go" });

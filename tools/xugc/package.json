@@ -28,6 +28,7 @@
       "ad.js",
       "presets.js",
       "filter.js",
+      "fal.js",
       "compose.js",
       "product.js",
       "bridge.js",

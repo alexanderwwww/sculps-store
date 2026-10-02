@@ -68,6 +68,18 @@ const googleFetch = async (url, init = {}) => {
   if (url.includes("g.test/v.mp4")) { const b = fs.readFileSync(${JSON.stringify(fixture)}); return { ok: true, status: 200, text: async () => "", arrayBuffer: async () => b }; }
   return { ok: false, status: 404, text: async () => "nope" };
 };
+const FAL = { subs: [], uploads: {}, n: 0 };
+const falFetch = async (url, init = {}) => {
+  const j = (o, st = 200) => ({ ok: st < 300, status: st, text: async () => JSON.stringify(o), arrayBuffer: async () => Buffer.from(JSON.stringify(o)) });
+  if (url.includes("rest.fal.ai/storage/upload/initiate")) { if (!String((init.headers || {}).Authorization).startsWith("Key ")) return j({ detail: "no key" }, 401); const id = ++FAL.n; return j({ upload_url: "https://up.fal/" + id, file_url: "https://cdn.fal/" + id }); }
+  if (url.startsWith("https://up.fal/")) { const b = Buffer.from(init.body || []); FAL.uploads["https://cdn.fal/" + url.split("/").pop()] = b.length === 4000 && b[0] === 7 ? "product" : b.slice(1, 4).toString() === "PNG" ? "frame" : "other"; return j({}); }
+  if (url.startsWith("https://queue.fal.run/") && init.method === "POST") { const endpoint = url.slice("https://queue.fal.run/".length); const id = "r" + (++FAL.n); FAL.subs.push({ endpoint, body: JSON.parse(init.body) }); const base = "https://queue.fal.run/" + endpoint.split("/").slice(0, 2).join("/") + "/requests/" + id; FAL[id] = endpoint; return j({ request_id: id, status_url: base + "/status", response_url: base }); }
+  if (url.endsWith("/status")) return j({ status: "COMPLETED" });
+  if (url.includes("/requests/")) { const id = url.split("/").pop(); return FAL[id] === "fal-ai/nano-banana-2/edit" ? j({ images: [{ url: "https://v3b.fal.media/img" + id + ".png" }] }) : j({ video: { url: "https://v3b.fal.media/vid.mp4" } }); }
+  if (url.startsWith("https://v3b.fal.media/img")) { const b = Buffer.concat([PNG, Buffer.from("frame")]); return { ok: true, status: 200, text: async () => "", arrayBuffer: async () => b }; }
+  if (url === "https://v3b.fal.media/vid.mp4") { const b = fs.readFileSync(${JSON.stringify(fixture)}); return { ok: true, status: 200, text: async () => "", arrayBuffer: async () => b }; }
+  return googleFetch(url, init);
+};
 app.whenReady().then(async () => {
   try {
     await new Promise((r) => worker.listen(0, r));
@@ -76,7 +88,7 @@ app.whenReady().then(async () => {
     const collectorStub = { pile: "/tmp/xugc-pile", count() { return { videos: stubSrc.length, pieces: stubSrc.reduce((n, x) => n + x.pieces.length, 0) }; }, sources() { return stubSrc; }, remove() { return 0; },
       async all(items, onP) { let n = 0; for (let i = 0; i < Math.min(4, items.length); i++) { onP({ n: i + 1, of: items.length, id: items[i].id, creator: items[i].creator, state: "working" }); await new Promise((r) => setTimeout(r, 80)); stubSrc.push({ id: items[i].id, creator: items[i].creator, place: items[i].place, category: items[i].category, sound: items[i].sound, pieces: [{ file: "01.mp4", db: -20 }, { file: "02.mp4", db: -22 }, { file: "03.mp4", db: -19 }] }); n += 3; onP({ n: i + 1, of: items.length, id: items[i].id, creator: items[i].creator, state: "ok", pieces: 3, totals: this.count() }); } return { done: 4, skipped: 0, failed: [], pieces: n }; } };
     const prodStub = async (url) => ({ url, title: "Haunted Projector", desc: "Plug-in ghost projector for windows", price: "79.99", currency: "USD", images: [IMG(1), IMG(2), IMG(3)] });
-    const sys = setup({ googleFetch, dir: ${JSON.stringify(join(home, "data"))}, makeRunPod: (o) => new FakeRunPod(o), sweepOnStart: false, bridgeBase: "http://127.0.0.1:" + worker.address().port, bridgeMs: 250, productFetch: prodStub, collector: collectorStub });
+    const sys = setup({ googleFetch, falFetch, dir: ${JSON.stringify(join(home, "data"))}, makeRunPod: (o) => new FakeRunPod(o), sweepOnStart: false, bridgeBase: "http://127.0.0.1:" + worker.address().port, bridgeMs: 250, productFetch: prodStub, collector: collectorStub });
     const win = new BrowserWindow({ width: 1280, height: 820, show: true, backgroundColor: "#07080A", webPreferences: { preload: path.join(${JSON.stringify(here)}, "preload.js"), contextIsolation: true, nodeIntegration: false, sandbox: false } });
     const errors = [];
     win.webContents.on("console-message", (_e, level, msg) => { if (level >= 3) errors.push(msg); });
@@ -88,10 +100,11 @@ app.whenReady().then(async () => {
     const view = (v) => run("document.querySelector('#nav [data-view=" + v + "]').click()");
     const type = (sel, v, ev = "input") => run("(function(){const i=document.querySelector(" + JSON.stringify(sel) + "); i.value=" + JSON.stringify(v) + "; i.dispatchEvent(new Event(" + JSON.stringify(ev) + "))})()");
     const click = (sel) => run("document.querySelector(" + JSON.stringify(sel) + ").click()");
+    const pick = async (id) => { await run("document.querySelector('#mpick').click()"); await new Promise((r) => setTimeout(r, 150)); await run("document.querySelector('#mpop [data-id=" + id + "]').click()"); await new Promise((r) => setTimeout(r, 350)); };
 
     say(await until("document.querySelector('#modechip').textContent.includes('NO KEY YET')"), "with no key, the header says so in plain words");
-    say(await until("document.querySelector('#nokey').style.display === 'block' && document.querySelector('#nokey').textContent.includes('Google')"), "Create opens on Real Life (Veo) and asks for the Google key first");
-    await run("document.querySelectorAll('#engines button')[1].click()"); await new Promise((r) => setTimeout(r, 400));
+    say(await until("document.querySelector('#nokey').style.display === 'block' && document.querySelector('#nokey').textContent.includes('fal.ai')"), "Create opens on Seedance and asks for the fal.ai key first");
+    await pick("ltx");
     say(await until("document.querySelector('#nokey').style.display === 'block' && document.querySelector('#nokey').textContent.includes('RunPod')"), "Create tells him what is missing before anything else");
     say((await run("getComputedStyle(document.querySelector('.brand img')).width")) === "20px", "the logo in the header is small (20px) and is the real icon file", await run("document.querySelector('.brand img').getAttribute('src')"));
     say(await run("document.querySelectorAll('#nav button').length") === 5 && (await run("document.querySelector('#nav').textContent")).includes("MCP"), "there is an MCP section in the navigation");
@@ -304,7 +317,7 @@ app.whenReady().then(async () => {
     say(tl2 && tl2.env.MODEL === "ltx" && tl2.env.BUDGET === "1" && tl2.env.DRY === "0", "the GPU was told: LTX, budgeted, not a dry run");
     say((await run("document.querySelector('#trreport').style.display")) !== "none" && (await run("document.querySelector('#trreport').textContent")).includes("LAST TRAINING"), "the Train tab shows a report of the last training", await run("document.querySelector('#trreport').textContent.slice(0,90)"));
     await view("create");
-    say((await run("document.querySelectorAll('#engines button').length")) === 5, "Create has an engine switch with five engines, Real Life (Veo) first");
+    say((await run("document.querySelectorAll('#mpop [data-id]').length")) === 9, "the model list has 9 models: 5 rented, 4 of ours");
     await run("document.querySelectorAll('#reallife button')[1].click()");
     say((await run("document.querySelectorAll('#reallife button')[1].disabled")) === false && (await run("document.querySelector('#rlnote').textContent")).includes('your trained file'), "with an LTX XUGC Real Life file trained, the Real Life switch on Create is available", await run("document.querySelector('#rlnote').textContent"));
     // ---- Real Life on Google: key, preset, hidden frames, clips, one video; product photos never reach Veo ----
@@ -313,7 +326,7 @@ app.whenReady().then(async () => {
     await shot("10b-settings-google");
     say(await until("document.querySelector('#gstate').textContent.includes('7890')"), "the Google key saves, is tested with Google, and shows only its last 4", await run("document.querySelector('#gstate').textContent"));
     await view("create");
-    await run("document.querySelectorAll('#engines button')[0].click()"); await new Promise((r) => setTimeout(r, 400));
+    await pick("veo");
     say(await until("document.querySelector('#vrow').style.display !== 'none' && document.querySelectorAll('#presets button').length >= 8"), "Real Life shows the presets (8) and the Veo tier", await run("[...document.querySelectorAll('#presets button')].map(b=>b.textContent).join(', ')"));
     await run("[...document.querySelectorAll('#presets button')].find(b=>/news/i.test(b.textContent)).click()"); await new Promise((r) => setTimeout(r, 300));
     say(/[$][01][.]/.test(await run("document.querySelector('#goest').textContent")), "the button shows the Google price (about a dollar), not the GPU price", await run("document.querySelector('#goest').textContent"));
@@ -327,11 +340,13 @@ app.whenReady().then(async () => {
     say(await run("(async()=>{const u=specNow().refsLocal[0].dataUrl;const i=new Image();await new Promise(r=>{i.onload=r;i.src=u});return i.naturalWidth===1024&&i.naturalHeight===512})()"), "it is downscaled to 1024 px and goes in the spec as refsLocal");
     await run("document.querySelector('#ptile').click()"); await new Promise((r) => setTimeout(r, 200));
     await run("document.querySelector('.ctl').scrollTop = 0"); await shot("10e-product-sheet"); await run("document.querySelector('#ptile').click(); document.querySelector('#ithumbs .ith button').click()");
+    await run("document.querySelector('#mpick').scrollIntoView({block:'start'})");
     await run("document.querySelector('#mpick').click()"); await new Promise((r) => setTimeout(r, 200));
     say(await run("(function(){const rows=[...document.querySelectorAll('#mpop .mitem')];return rows.length===9&&rows.every(r=>{r.scrollIntoView({block:'nearest'});const b=r.getBoundingClientRect();const e=document.elementFromPoint(b.left+b.width/2,b.top+b.height/2);return e&&e.closest('.mitem')===r;})})()"), "the model list opens and every model row is reachable by the mouse");
     await shot("10d-model-open");
     await run("document.querySelector('#mpop [data-id=seedance]').click()");
-    say((await run("document.querySelector('#mname').textContent")) === "Seedance" && (await run("document.querySelector('#nokey').textContent")).includes("fal"), "picking a fal model shows it and asks for the fal key");
+    await until("document.querySelector('#mname').textContent === 'Seedance 2.5'", 3000);
+    say((await run("document.querySelector('#mname').textContent")) === "Seedance 2.5" && (await run("document.querySelector('#nokey').textContent")).includes("fal"), "picking a fal model shows it and asks for the fal key", await run("document.querySelector('#mname').textContent + ' | ' + document.querySelector('#nokey').textContent + ' | ' + document.querySelector('#nokey').style.display"));
     await run("document.querySelector('#mpick').click()"); await run("document.querySelector('#mpop [data-id=veo]').click()"); await new Promise((r) => setTimeout(r, 300));
     await run("window.xugc.setSettings({ capJob: 5, capDay: 50 })"); await run("window.xugc.get()");
     G.images = 0; G.clips = []; await click("#go");
@@ -343,6 +358,25 @@ app.whenReady().then(async () => {
     say(G.clips.every((b) => !JSON.stringify(b).includes(G.productB64)), "no raw product photo was ever sent to Veo (only to the image model)");
     say(G.clips.every((b) => /natural hands/i.test(b.instances[0].prompt) && !/cinematic|8K/i.test(b.instances[0].prompt)), "every clip prompt passed the filter: hands rule in, cinematic words out");
     say(G.clips.length < 2 || G.clips[0].instances[0].prompt !== G.clips[1].instances[0].prompt, "clip 2 continues the story, it does not repeat clip 1");
+    // ---- Seedance 2.5 on fal: one key, the same presets, filter and hidden frames ----
+    await view("settings");
+    await run("(document.querySelector('[data-conn=fal]')||{click(){}}).click()"); await type("#falin", "fal-key-1234567890abcdef"); await click("#falsave");
+    say(await until("document.querySelector('#falstate').textContent.includes('cdef')"), "the fal.ai key saves, is tested with fal, and shows only its last 4", await run("document.querySelector('#falstate').textContent"));
+    await view("create"); await pick("seedance");
+    say(await until("document.querySelector('#nokey').style.display === 'none' && document.querySelector('#vrow').style.display !== 'none'"), "with the fal key, Seedance is ready and shows the presets");
+    say(/[$][0-9]+[.][0-9]{2}/.test(await run("document.querySelector('#goest').textContent")) && (await run("document.querySelector('#goest').textContent")).includes("7.81"), "the button shows the Seedance price for 16 s (2 clips + 3 frames = $7.81)", await run("document.querySelector('#goest').textContent"));
+    await run("[...document.querySelectorAll('#resp button')].find(b=>b.textContent==='480p').click()");
+    say(await until("document.querySelector('#goest').textContent.includes('3.77')"), "480p shows the lower Seedance price ($3.77 for 16 s)", await run("document.querySelector('#goest').textContent"));
+    await run("[...document.querySelectorAll('#resp button')].find(b=>b.textContent==='720p').click()"); await until("document.querySelector('#goest').textContent.includes('7.81')");
+    await run("[...document.querySelectorAll('#presets button')].find(b=>/news/i.test(b.textContent)).click()");
+    await run("window.xugc.setSettings({ capJob: 10, capDay: 50 })"); await run("window.xugc.get()");
+    FAL.subs = []; FAL.uploads = {}; await click("#go");
+    say(await until("window.xugc.get().then((v) => v.state.takes[0] && /Seedance/.test(v.state.takes[0].model))", 20000), "the Seedance ad finishes and is saved as a take", await run("window.xugc.get().then((v) => JSON.stringify({ model: v.state.takes[0].model, cost: v.state.takes[0].cost, err: document.querySelector('#err').textContent }))"));
+    const vids = FAL.subs.filter((x) => x.endpoint === "bytedance/seedance-2.5/image-to-video"), imgs = FAL.subs.filter((x) => x.endpoint === "fal-ai/nano-banana-2/edit");
+    say(imgs.length === 3 && vids.length === 2, "3 hidden frames on Nano Banana, 2 Seedance clips", imgs.length + " frames, " + vids.length + " clips");
+    say(vids.every((v) => FAL.uploads[v.body.image_url] === "frame" && FAL.uploads[v.body.end_image_url] === "frame"), "Seedance only ever got the hidden frames, never a product photo");
+    say(imgs[0] && imgs[0].body.image_urls.some((u) => FAL.uploads[u] === "product"), "the product photo went to the frame maker");
+    say(vids.every((v) => v.body.duration === "8" && v.body.resolution === "720p" && /natural hands/i.test(v.body.prompt) && v.body.prompt.split(/\s+/).length < 160), "each clip: 8 s, 720p, filtered prompt within Seedance's limit");
     say(errors.length === 0, "no errors in the page console", errors.join(" | ").slice(0, 300));
   } catch (e) { say(false, "the probe crashed", String(e && e.stack || e)); }
   console.log("@@RESULT@@" + JSON.stringify(out));

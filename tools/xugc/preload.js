@@ -2,7 +2,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 const call = (ch) => (...a) => ipcRenderer.invoke(ch, ...a);
 contextBridge.exposeInMainWorld("xugc", {
   get: call("state:get"), estimate: call("estimate"), setSettings: call("settings:set"),
-  setKey: call("key:set"), testKey: call("key:test"), setHf: call("hf:set"), setGoogle: call("google:set"), testGoogle: call("google:test"), sweep: call("pods:sweep"),
+  setKey: call("key:set"), testKey: call("key:test"), setHf: call("hf:set"), setGoogle: call("google:set"), setFal: call("fal:set"), testGoogle: call("google:test"), sweep: call("pods:sweep"),
   fetchProduct: call("product:fetch"), clearProduct: call("product:clear"),
   generate: call("generate"), cancel: call("cancel"),
   styleToggle: call("style:toggle"), styleRead: call("style:read"), styleWrite: call("style:write"), styleDelete: call("style:delete"), styleAdd: call("style:add"),

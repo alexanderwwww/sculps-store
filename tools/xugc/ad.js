@@ -29,8 +29,12 @@ async function join(ffmpeg, files, out) {
  * @returns {{file: string, usd: number, clips: number, landmarks: string[]}}
  */
 async function makeAd(o) { let paid = { usd: 0 }; try { return await makeAdInner(o, paid); } catch (e) { e.costUsd = Math.round(paid.usd * 100) / 100; throw e; } }
-async function makeAdInner({ google, ffmpeg, dir, scene, imageScene, clipPrompts, seconds, tier = "lite", refs = [], signal = {}, onStage = () => {} }, paid) {
+async function makeAdInner({ google, images, video, imageUsd, clipCost, ffmpeg, dir, scene, imageScene, clipPrompts, seconds, tier = "lite", refs = [], signal = {}, onStage = () => {} }, paid) {
   const { VEO, IMAGE_USD } = require("./google.js");
+  // any provider with .image() and .clip(): Google direct, or fal (Seedance, Kling, Veo, Wan) — same frames, same money rules
+  images = images || google; video = video || google;
+  if (imageUsd == null) imageUsd = IMAGE_USD;
+  if (clipCost == null) clipCost = CLIP * (VEO[tier] || VEO.lite).perSec;
   const clips = clipsFor(seconds), total = clips;
   fs.mkdirSync(dir, { recursive: true });
   const moment = MOMENTS(clips, total);
@@ -39,14 +43,14 @@ async function makeAdInner({ google, ffmpeg, dir, scene, imageScene, clipPrompts
   for (let i = 0; i <= clips; i++) {
     stop(); onStage({ stage: "pictures", step: i + 1, of: clips + 1, usd });
     // the previous landmark rides along so the person and the room stay the same
-    const img = await google.image(landmarkPrompt(imageScene || scene, moment(i)), [...refs, ...(lms.length ? [lms[lms.length - 1]] : [])].slice(0, 14));
-    usd += IMAGE_USD; paid.usd = usd; lms.push(img);
+    const img = await images.image(landmarkPrompt(imageScene || scene, moment(i)), [...refs, ...(lms.length ? [lms[lms.length - 1]] : [])].slice(0, 14));
+    usd += imageUsd; paid.usd = usd; lms.push(img);
     const f = path.join(dir, `landmark-${i}.png`); fs.writeFileSync(f, img.bytes); lmFiles.push(f);
   }
   const files = [];
   for (let i = 0; i < clips; i++) {
     stop(); onStage({ stage: "making", step: i + 1, of: clips, usd });
-    const v = await google.clip({ prompt: (clipPrompts && clipPrompts[i]) || beatPrompt(scene, i ? "Continue the same scene without a cut." : ""), tier, first: lms[i], last: lms[i + 1], signal, onStarted: () => { usd += CLIP * (VEO[tier] || VEO.lite).perSec; paid.usd = usd; } });
+    const v = await video.clip({ prompt: (clipPrompts && clipPrompts[i]) || beatPrompt(scene, i ? "Continue the same scene without a cut." : ""), tier, first: lms[i], last: lms[i + 1], signal, onStarted: () => { usd += clipCost; paid.usd = usd; } });
     const f = path.join(dir, `clip-${i + 1}.mp4`); fs.writeFileSync(f, v.bytes); files.push(f);
   }
   stop(); onStage({ stage: "finishing", usd });

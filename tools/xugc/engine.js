@@ -18,6 +18,7 @@ const { RunPod, WORST_HOURLY } = require("./runpod.js");
 const { QUALITY, SECONDS } = require("./compose.js");
 const { estimate: adEstimate } = require("./google.js");
 const { makeAd } = require("./ad.js");
+const falLib = require("./fal.js");
 
 const today = () => new Date().toISOString().slice(0, 10);
 const r2 = (n) => Math.round(n * 100) / 100;
@@ -67,8 +68,8 @@ const SCRIPTS = { ltx: "generate.sh", ltx_full: "gen_ltx_full.sh", hunyuan: "gen
 
 class Engine {
   /** @param {{store, dir: string, secrets: {get():string}, hf: {get():string}, makeRunPod?: (o:object)=>RunPod}} o */
-  constructor({ store, dir, secrets, hf, makeRunPod, fetchImpl, backupDir, google, ffmpeg }) {
-    this.google = google; this.ffmpeg = ffmpeg;
+  constructor({ store, dir, secrets, hf, makeRunPod, fetchImpl, backupDir, google, fal, ffmpeg }) {
+    this.google = google; this.fal = fal; this.ffmpeg = ffmpeg;
     this.backupDir = backupDir || "";
     this.store = store; this.dir = dir; this.secrets = secrets; this.hf = hf;
     this.makeRunPod = makeRunPod || ((o) => new RunPod(o));
@@ -141,26 +142,29 @@ class Engine {
   async generateAd(job, emit) {
     const st = this.store.read();
     if (this.job) { const e = new Error("A job is already running. Wait for it, or press Stop."); e.code = "busy"; throw e; }
-    if (!this.google) throw new Error("Google is not set up in this build.");
+    const onFal = falLib.isFal(job.engine);
+    const provider = onFal ? this.fal : this.google;
+    if (!provider) throw new Error("This model is not set up in this build.");
     const scene = String(job.scene || "").trim();
     if (scene.length < 20) throw new Error("Write what happens in the video (a sentence or two).");
     const seconds = Number(job.seconds) || 16, tier = job.tier || "lite";
-    const est = adEstimate({ seconds, tier });
+    const res = job.res === "480p" ? "480p" : "720p";
+    const est = onFal ? falLib.estimate({ engine: job.engine, seconds, tier, res }) : adEstimate({ seconds, tier });
     const why = checkCaps(st.settings, st.spent, est.usd);
     if (why) { const e = new Error(why); e.code = "cap"; throw e; }
-    this.google.hdr(); // no key = clear message before anything starts
+    if (onFal) this.fal.auth(); else this.google.hdr(); // no key = clear message before anything starts
     const id = `take-${Date.now()}`;
     this.job = { kind: "generate", signal: { cancelled: false } };
     let spent = 0;
     try {
       const dir = path.join(this.dir, "work", id);
       const pct = { pictures: 10, making: 40, finishing: 92 };
-      const r = await makeAd({ google: this.google, ffmpeg: this.ffmpeg, dir, scene, imageScene: job.imageScene, clipPrompts: job.clipPrompts, seconds, tier, refs: job.refs || [], signal: this.job.signal,
+      const r = await makeAd({ google: this.google, ffmpeg: this.ffmpeg, dir, ...(onFal ? { images: this.fal, video: { clip: (o) => this.fal.clip({ ...o, engine: job.engine, res }) }, imageUsd: falLib.IMAGE.usd, clipCost: falLib.MODELS[job.engine].perSec({ tier, res }) * falLib.CLIP } : {}), scene, imageScene: job.imageScene, clipPrompts: job.clipPrompts, seconds, tier, refs: job.refs || [], signal: this.job.signal,
         onStage: (p) => { spent = p.usd || spent; if (emit) emit({ id, stage: p.stage === "pictures" ? `making hidden frame ${p.step} of ${p.of}` : p.stage === "making" ? `making clip ${p.step} of ${p.of}` : "finishing", pct: pct[p.stage] + (p.step ? Math.round(((p.step - 1) / p.of) * 40) : 0), costUsd: spent }); } });
       spent = r.usd;
       const video = path.join(this.dir, "takes", `${id}.mp4`);
       fs.copyFileSync(r.file, video);
-      return { id, at: Date.now(), cost: r2(r.usd), prompt: scene, ...(job.meta || {}), seconds: r.clips * 8, quality: "720p", model: "Real Life · Veo " + tier, audio: true, video, poster: null, verdict: null, landmarks: r.landmarks };
+      return { id, at: Date.now(), cost: r2(r.usd), prompt: scene, ...(job.meta || {}), seconds: r.clips * 8, quality: "720p", model: onFal ? "Real Life · " + falLib.MODELS[job.engine].label + (job.engine === "fal_veo" ? " " + tier : "") : "Real Life · Veo " + tier, audio: true, video, poster: null, verdict: null, landmarks: r.landmarks };
     } catch (e) { spent = Math.max(spent, e.costUsd || 0); e.costUsd = spent; throw e; }
     finally { this.addSpend(spent); this.job = null; }
   }

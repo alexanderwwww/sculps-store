@@ -11,10 +11,14 @@ const esc = (t) => String(t == null ? "" : t).replace(/[&<>"]/g, (c) => ({ "&": 
 const ago = (t) => { if (!t) return "never"; const s = Math.round((Date.now() - t) / 1000); return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.round(s / 60)} min ago` : `${Math.round(s / 3600)} h ago`; };
 const showErr = (el, msg) => { el.textContent = msg || ""; el.classList.toggle("on", !!msg); };
 
-const isVeoNow = () => (ui.engine || "veo") === "veo";
+// Seedance on fal is the default: it is what Higgsfield's Marketing Studio runs on
+const DEF_ENGINE = "seedance";
+const AD_ENGINES = ["seedance", "kling", "fal_veo", "fal_wan", "veo"];
+// the rented models make an ad from hidden frames + 8 s clips: lengths 8/16/24, presets, no quality setting
+const isVeoNow = () => AD_ENGINES.includes(ui.engine || DEF_ENGINE);
 // Veo makes 8 s clips, so Real Life lengths are what he is billed for and gets: 8, 16 or 24 s
 const secsNow = () => (isVeoNow() ? ui.vsecs || 16 : ui.secs);
-async function refresh(r) { if (r) ui.connOpen = null; const v = r || (await window.xugc.get()); S = v.state; META = v; try { ui.est = /^(seedance|kling|fal_)/.test(ui.engine || "") ? null : await window.xugc.estimate(secsNow(), ui.qual, ui.engine || "veo", ui.tier || "lite"); } catch { ui.est = null; } renderAll(); }
+async function refresh(r) { if (r) ui.connOpen = null; const v = r || (await window.xugc.get()); S = v.state; META = v; try { ui.est = await window.xugc.estimate(secsNow(), ui.qual, ui.engine || DEF_ENGINE, ui.tier || "lite", ui.res || "720p"); } catch { ui.est = null; } renderAll(); }
 
 function seg(el, items, cur, on) {
   el.innerHTML = "";
@@ -39,7 +43,8 @@ function renderReference() {
 }
 function renderCreate() {
   renderReference();
-  const missing = needsFal(model()) ? ["a fal.ai key", "settings"] : (ui.engine || "veo") === "veo" ? (!META.googleSet ? ["your Google key", "settings"] : null) : !META.keySet ? ["a RunPod key", "settings"] : !META.hfSet ? ["a Hugging Face token", "settings"] : null;
+  const mm = model();
+  const missing = mm.need === "fal" ? (!META.falSet ? ["your fal.ai key", "settings"] : null) : mm.need === "google" ? (!META.googleSet ? ["your Google key", "settings"] : null) : !META.keySet ? ["a RunPod key", "settings"] : !META.hfSet ? ["a Hugging Face token", "settings"] : null;
   const w = $("#nokey"); w.style.display = missing ? "block" : "none";
   if (missing) { w.innerHTML = `Before the first video: add ${missing[0]} in <button id="gokey">Settings</button>.`; $("#gokey").onclick = () => setView("settings"); }
   const p = S.product;
@@ -142,20 +147,20 @@ function renderSettings() {
 // One line per model. group "rented" = someone else's GPU, no training; "ours" = our GPU, trainable.
 // need: "fal" marks a model that waits for the fal.ai key. quality: the model has a Draft/HD/Max setting.
 const MODELS = [
-  { id: "veo", name: "Veo 3.1", maker: "Google", group: "rented", glyph: "V3", tags: ["with sound", "720p"], price: "$0.40 / 8 s", note: "Hidden frames at the golden-ratio moments. Your photos teach the frames and never go into the video." },
-  { id: "seedance", name: "Seedance", maker: "ByteDance · via fal", group: "rented", glyph: "SD", tags: [], need: "fal", note: "Seedance through fal.ai. Arrives with the fal key." },
-  { id: "kling", name: "Kling", maker: "Kuaishou · via fal", group: "rented", glyph: "KL", tags: [], need: "fal", note: "Kling through fal.ai. Arrives with the fal key." },
-  { id: "fal_veo", name: "Veo 3", maker: "Google · via fal", group: "rented", glyph: "V3", tags: ["with sound"], need: "fal", note: "Veo through fal.ai, billed by fal instead of Google." },
-  { id: "fal_wan", name: "Wan", maker: "Alibaba · via fal", group: "rented", glyph: "WN", tags: [], need: "fal", note: "Wan through fal.ai, no GPU to rent." },
+  { id: "seedance", name: "Seedance 2.5", maker: "ByteDance · fal", group: "rented", glyph: "SD", tags: ["with sound", "720p"], price: "$3.78 / 8 s", need: "fal", note: "The Higgsfield Marketing Studio engine. Best people and motion. Hidden frames at the golden-ratio moments; your photos teach the frames only." },
+  { id: "kling", name: "Kling 3.0 Pro", maker: "Kuaishou · fal", group: "rented", glyph: "KL", tags: ["with sound"], price: "$1.34 / 8 s", need: "fal", note: "Strong hands-on demos and product handling. Start and end frame." },
+  { id: "fal_veo", name: "Veo 3.1", maker: "Google · fal", group: "rented", glyph: "V3", tags: ["with sound", "720p"], price: "$0.40 / 8 s", need: "fal", note: "Cheapest with sound (Lite). Good talking heads. Fast tier for more polish." },
+  { id: "fal_wan", name: "Wan 3.0", maker: "Alibaba · fal", group: "rented", glyph: "WN", tags: ["with sound", "720p"], price: "$0.80 / 8 s", need: "fal", note: "Cheap and quick. Good for testing a script before a Seedance final." },
+  { id: "veo", name: "Veo 3.1 direct", maker: "Google key", group: "rented", glyph: "G", tags: ["with sound", "720p"], price: "$0.40 / 8 s", need: "google", note: "Same Veo, billed by Google instead of fal. Only if you add a Google key." },
   { id: "ltx", name: "XUGC fast", maker: "LTX-2.5 · your GPU", group: "ours", glyph: "XF", tags: ["with sound"], quality: true, note: "LTX-2.5 fast, with sound. Trainable with XUGC Real Life." },
   { id: "ltx_full", name: "LTX full", maker: "LTX-2.5 · your GPU", group: "ours", glyph: "LX", tags: ["with sound", "slower"], quality: true, note: "LTX-2.5 full quality, with sound (slower)." },
   { id: "hunyuan", name: "Hunyuan", maker: "HunyuanVideo 1.5 · your GPU", group: "ours", glyph: "HY", tags: ["silent"], quality: true, note: "HunyuanVideo 1.5, silent video." },
   { id: "wan", name: "Wan 2.2", maker: "Wan 2.2 · your GPU", group: "ours", glyph: "WN", tags: ["silent"], quality: true, note: "Wan 2.2, silent video." },
 ];
 const GROUPS = [["rented", "RENTED · NO TRAINING"], ["ours", "OURS · TRAINED"]];
-const model = () => MODELS.find((m) => m.id === (ui.engine || "veo")) || MODELS[0];
-const needsFal = (m) => m.need === "fal" && !(META && META.falSet);
-const tagsHtml = (m) => (needsFal(m) ? `<span class="mtag key">needs fal key</span>` : "") + m.tags.map((t) => `<span class="mtag">${esc(t)}</span>`).join("") + (m.price ? `<span class="mtag pr">${esc(m.price)}</span>` : "");
+const model = () => MODELS.find((m) => m.id === (ui.engine || DEF_ENGINE)) || MODELS[0];
+const needsFal = (m) => (m.need === "fal" && !(META && META.falSet)) || (m.need === "google" && !(META && META.googleSet));
+const tagsHtml = (m) => (needsFal(m) ? `<span class="mtag key">needs ${m.need === "google" ? "Google" : "fal"} key</span>` : "") + m.tags.map((t) => `<span class="mtag">${esc(t)}</span>`).join("") + (m.price ? `<span class="mtag pr">${esc(m.price)}</span>` : "");
 // Simple line drawings, one per preset, so the cards read at a glance.
 const PGLYPH = {
   review: '<rect x="52" y="6" width="22" height="34" rx="4"/><circle cx="63" cy="18" r="5"/><path d="M55 34c2-6 14-6 16 0"/><path d="M80 14c3 3 3 9 0 12M84 10c5 5 5 15 0 20"/>',
@@ -195,10 +200,14 @@ function renderEngine() {
   }
   $("#presetnote").textContent = "";
   seg($("#tiers"), Object.entries(META.veo || {}).filter(([k]) => k !== "standard"), ui.tier || "lite", (k) => { ui.tier = k; refresh(); });
-  const isVeo = cur === "veo";
+  const isVeo = AD_ENGINES.includes(cur);
   $("#vrow").style.display = isVeo ? "" : "none";
+  $("#tiers").closest(".trow").style.display = cur === "veo" || cur === "fal_veo" ? "" : "none";
+  // Seedance and Wan bill by resolution: 480p is about half of 720p
+  $("#resrow").style.display = cur === "seedance" || cur === "fal_wan" ? "" : "none";
+  seg($("#resp"), [["480p", "480p"], ["720p", "720p"]], ui.res || "720p", (k) => { ui.res = k; refresh(); });
   $("#rlrow").style.display = $("#reallife").style.display = $("#rlnote").style.display = m.group === "ours" ? "" : "none";
-  $("#gonote").textContent = isVeo ? "Made on Google: hidden frames, then 8-second clips joined into one video. The price shown is the most it can cost." : m.need ? "This model runs on fal.ai and is billed there per video." : "Each video rents a GPU just for that video and hands it back. The price shown is the most it can cost.";
+  $("#gonote").textContent = isVeo ? "Hidden frames, then 8-second clips joined into one video. Billed per video by " + (cur === "veo" ? "Google" : "fal.ai") + "; the price shown is the most it can cost." : "Each video rents a GPU just for that video and hands it back. The price shown is the most it can cost.";
   if (ui.lastEngine && ui.lastEngine !== ui.engine) showErr($("#err"), "");
   ui.lastEngine = ui.engine;
   const have = (S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0], ltx = /^ltx/.test(cur);
@@ -409,7 +418,7 @@ function beginRender(who) {
   clearInterval(ui.timer); ui.timer = setInterval(() => { $("#ht").textContent = clock(Date.now() - ui.t0); }, 500); renderCreate();
 }
 function endRender() { ui.rendering = false; clearInterval(ui.timer); $("#ptag").style.display = "block"; stopFx(); }
-const specNow = () => ({ refsLocal: ui.refsLocal && ui.refsLocal.length ? ui.refsLocal.map(({ dataUrl, name }) => ({ dataUrl, name })) : undefined, scene: $("#script").value.trim(), look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: secsNow(), quality: ui.qual, music: ui.music, engine: ui.engine || "veo", preset: ui.preset || "review", tier: ui.tier || "lite", lora: ui.reallife ? ((S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0] || {}).id : undefined, refs: ui.refs && ui.refs.length ? ui.refs : undefined });
+const specNow = () => ({ refsLocal: ui.refsLocal && ui.refsLocal.length ? ui.refsLocal.map(({ dataUrl, name }) => ({ dataUrl, name })) : undefined, scene: $("#script").value.trim(), look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: secsNow(), quality: ui.qual, music: ui.music, engine: ui.engine || DEF_ENGINE, preset: ui.preset || "review", tier: ui.tier || "lite", res: ui.res || "720p", lora: ui.reallife ? ((S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0] || {}).id : undefined, refs: ui.refs && ui.refs.length ? ui.refs : undefined });
 $("#showp").onclick = async () => {
   const f = $("#fullp"); if (f.classList.contains("on")) { f.classList.remove("on"); $("#showp").textContent = "Show the full prompt"; return; }
   const r = await window.xugc.preview(specNow()); $("#fulltext").value = r.prompt || r.error || ""; ui.fullEdited = false; f.classList.add("on"); $("#showp").textContent = "Hide the full prompt";
@@ -459,7 +468,7 @@ $("#keysave").onclick = async () => {
   $("#keyin").value = ""; $("#keystate").textContent = `Key saved (${META.keyTail}) and it works. ${r.pods} GPU${r.pods === 1 ? "" : "s"} running right now.`;
 };
 $("#gsave").onclick = async () => { showErr($("#gerr"), ""); const r = await window.xugc.setGoogle($("#gin").value); await refresh(r); if (r.error) return showErr($("#gerr"), r.error); $("#gin").value = ""; };
-$("#falsave").onclick = async () => { showErr($("#falerr"), ""); if (!window.xugc.setFal) { ui.falMsg = true; $("#falstate").textContent = "fal.ai arrives in build 13"; return; } const r = await window.xugc.setFal($("#falin").value); await refresh(r); if (r.error) return showErr($("#falerr"), r.error); $("#falin").value = ""; ui.connOpen = null; renderSettings(); };
+$("#falsave").onclick = async () => { showErr($("#falerr"), ""); const r = await window.xugc.setFal($("#falin").value); await refresh(r); if (r.error) return showErr($("#falerr"), r.error); $("#falin").value = ""; ui.connOpen = null; renderSettings(); };
 $("#hfsave").onclick = async () => { showErr($("#hferr"), ""); const r = await window.xugc.setHf($("#hfin").value); await refresh(r); if (r.error) return showErr($("#hferr"), r.error); $("#hfin").value = ""; };
 $("#sweep").onclick = async () => { const r = await window.xugc.sweep(); await refresh(r); $("#sweepnote").textContent = r.error ? r.error : `Stopped ${r.stopped} GPU${r.stopped === 1 ? "" : "s"}. Nothing of yours is running.`; };
 
