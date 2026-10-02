@@ -1,0 +1,313 @@
+{
+  "site": {
+    "name": "Mysterious Archive",
+    "city": "New York",
+    "selection": "PRIVATE CLIENT SELECTION",
+    "line": "Chrome Hearts · Eight pieces · October 2026",
+    "date": "October 2026",
+    "foot": "One of each · Prices in USD · First to confirm",
+    "contact": {
+      "email": "EMAIL-PLACEHOLDER@example.com",
+      "instagram": "INSTAGRAM-PLACEHOLDER"
+    },
+    "disclaimer": "Mysterious Archive is an independent reseller and is not affiliated with Chrome Hearts."
+  },
+  "pieces": [
+    {
+      "number": 1,
+      "slug": "cashmere-blend-henley",
+      "title": "Cashmere-Blend Henley",
+      "subtitle": "Fleur-de-lis buttons",
+      "model": "Chrome Hearts long-sleeve henley in a black cashmere-blend knit. Four-button placket with fleur-de-lis silver buttons and a leather tab at the back neck. No printed graphics.",
+      "condition": "Pre-owned, very good. Even black colour, knit holds its shape, buttons and neck tab intact. No holes or stains visible.",
+      "rarity": "Uncommon. Knitwear with silver hardware is produced in far smaller numbers than the printed hoodies and tees, and turns up on the resale market only occasionally.",
+      "size": "M",
+      "price": 650,
+      "sold": false,
+      "hero": "assets/photos/piece-01/hero.jpg",
+      "heroThumb": "assets/photos/piece-01/hero-600.jpg",
+      "photos": [
+        "assets/photos/piece-01/detail-1.jpg",
+        "assets/photos/piece-01/detail-2.jpg",
+        "assets/photos/piece-01/detail-3.jpg"
+      ],
+      "heroSize": [
+        1003,
+        1300
+      ],
+      "photoSizes": [
+        [
+          338,
+          700
+        ],
+        [
+          337,
+          700
+        ],
+        [
+          338,
+          700
+        ]
+      ]
+    },
+    {
+      "number": 2,
+      "slug": "los-angeles-pocket-tee",
+      "title": "Los Angeles Pocket Tee",
+      "subtitle": "Plus cross back print",
+      "model": "Chrome Hearts short-sleeve pocket tee in black. Large plus cross with \"Chrome Hearts Los Angeles\" scroll on the back, matching print on the chest pocket, horseshoe neck stamp. The striped long sleeve shown underneath is not included.",
+      "condition": "Pre-owned, good. Visible cracking across the back print and general fade from wear and washing. No holes.",
+      "rarity": "Common. A core Los Angeles store style that is restocked regularly. Priced as an entry piece.",
+      "size": "S",
+      "price": 220,
+      "sold": false,
+      "hero": "assets/photos/piece-02/hero.jpg",
+      "heroThumb": "assets/photos/piece-02/hero-600.jpg",
+      "photos": [
+        "assets/photos/piece-02/detail-1.jpg",
+        "assets/photos/piece-02/detail-2.jpg",
+        "assets/photos/piece-02/detail-3.jpg",
+        "assets/photos/piece-02/detail-4.jpg"
+      ],
+      "heroSize": [
+        1003,
+        1300
+      ],
+      "photoSizes": [
+        [
+          337,
+          700
+        ],
+        [
+          337,
+          700
+        ],
+        [
+          337,
+          700
+        ],
+        [
+          337,
+          700
+        ]
+      ]
+    },
+    {
+      "number": 3,
+      "slug": "vintage-thermal-lined-zip-hoodie",
+      "title": "Vintage Thermal-Lined Zip Hoodie",
+      "subtitle": "Dagger hood, floral cross sleeves",
+      "model": "Vintage Chrome Hearts zip hoodie in black with a waffle thermal lining. Dagger and roses print on the hood, large floral cross on each sleeve, horseshoe on the back, silver dagger zipper pull. Older Made in USA label.",
+      "condition": "Pre-owned, very good for its age. Prints are strong and bright, zipper pull is complete, lining is clean. Light overall wear.",
+      "rarity": "Rare. Earlier-production thermal with the hood print and the older label. These are no longer made in this form and are the hardest piece in this selection to replace.",
+      "size": "L",
+      "price": 1600,
+      "sold": false,
+      "hero": "assets/photos/piece-03/hero.jpg",
+      "heroThumb": "assets/photos/piece-03/hero-600.jpg",
+      "photos": [
+        "assets/photos/piece-03/detail-1.jpg",
+        "assets/photos/piece-03/detail-2.jpg",
+        "assets/photos/piece-03/detail-3.jpg",
+        "assets/photos/piece-03/detail-4.jpg"
+      ],
+      "heroSize": [
+        1003,
+        1300
+      ],
+      "photoSizes": [
+        [
+          337,
+          700
+        ],
+        [
+          337,
+          700
+        ],
+        [
+          337,
+          700
+        ],
+        [
+          337,
+          700
+        ]
+      ]
+    },
+    {
+      "number": 4,
+      "slug": "purple-glitter-floral-cross-hoodie",
+      "title": "Purple Glitter Floral Cross Hoodie",
+      "subtitle": "\"Chrome Hearts U.S.A.\" back",
+      "model": "Chrome Hearts pullover hoodie in black with purple glitter prints: horseshoe on the chest, floral cross down each sleeve, \"Chrome Hearts U.S.A.\" arch on the upper back and scroll logo at the hem. Original tags attached.",
+      "condition": "Near new. Glitter prints are complete with no flaking, fabric is deep black, tags still on the garment.",
+      "rarity": "Limited. The purple glitter colourway was a short run and is seen much less often than the standard white print.",
+      "size": "XL",
+      "price": 1100,
+      "sold": false,
+      "hero": "assets/photos/piece-04/hero.jpg",
+      "heroThumb": "assets/photos/piece-04/hero-600.jpg",
+      "photos": [
+        "assets/photos/piece-04/detail-1.jpg",
+        "assets/photos/piece-04/detail-2.jpg"
+      ],
+      "heroSize": [
+        1002,
+        1300
+      ],
+      "photoSizes": [
+        [
+          461,
+          700
+        ],
+        [
+          461,
+          700
+        ]
+      ]
+    },
+    {
+      "number": 5,
+      "slug": "floral-cross-sleeve-zip-hoodie",
+      "title": "Floral Cross Sleeve Zip Hoodie",
+      "subtitle": "Horseshoe chest, dagger zip",
+      "model": "Chrome Hearts zip hoodie in black. White floral cross down each sleeve, horseshoe on the chest, tonal horseshoe neck stamp, silver dagger zipper pull. Current-production label.",
+      "condition": "Pre-owned, very good. Sleeve prints are clean and unbroken, zipper pull is complete, light surface wear on the fleece.",
+      "rarity": "High demand. The most requested Chrome Hearts hoodie on the resale market. It is restocked by the brand, but sells through quickly at every level.",
+      "size": "M",
+      "price": 1750,
+      "sold": false,
+      "hero": "assets/photos/piece-05/hero.jpg",
+      "heroThumb": "assets/photos/piece-05/hero-600.jpg",
+      "photos": [
+        "assets/photos/piece-05/detail-1.jpg",
+        "assets/photos/piece-05/detail-2.jpg",
+        "assets/photos/piece-05/detail-3.jpg"
+      ],
+      "heroSize": [
+        1003,
+        1300
+      ],
+      "photoSizes": [
+        [
+          337,
+          700
+        ],
+        [
+          337,
+          700
+        ],
+        [
+          337,
+          700
+        ]
+      ]
+    },
+    {
+      "number": 6,
+      "slug": "new-york-exclusive-hoodie",
+      "title": "New York Exclusive Hoodie",
+      "subtitle": "Horseshoe, \"New York\" back",
+      "model": "Chrome Hearts pullover hoodie in faded black. Horseshoe on the chest, large horseshoe with \"New York\" on the back, stamped Made in U.S.A. neck print.",
+      "condition": "Pre-owned, fair. Heavy fade, cracking in the prints, small holes and snags on both sleeves near the elbows and one light mark. All shown in the photos and reflected in the price.",
+      "rarity": "Store exclusive. Sold only through the New York location. The style itself is not scarce; this one is priced for its wear.",
+      "size": "L",
+      "price": 550,
+      "sold": false,
+      "hero": "assets/photos/piece-06/hero.jpg",
+      "heroThumb": "assets/photos/piece-06/hero-600.jpg",
+      "photos": [
+        "assets/photos/piece-06/detail-1.jpg",
+        "assets/photos/piece-06/detail-2.jpg",
+        "assets/photos/piece-06/detail-3.jpg",
+        "assets/photos/piece-06/detail-4.jpg"
+      ],
+      "heroSize": [
+        1003,
+        1300
+      ],
+      "photoSizes": [
+        [
+          337,
+          700
+        ],
+        [
+          337,
+          700
+        ],
+        [
+          338,
+          700
+        ],
+        [
+          338,
+          700
+        ]
+      ]
+    },
+    {
+      "number": 7,
+      "slug": "malibu-exclusive-zip-hoodie",
+      "title": "Malibu Exclusive Zip Hoodie",
+      "subtitle": "\"Chrome Hearts U.S.A.\" dagger back",
+      "model": "Chrome Hearts zip hoodie in black. Plus cross and scroll on the chest, \"Chrome Hearts U.S.A.\" arch over a tonal dagger on the back, \"Malibu\" at the lower back, tonal CH on the pocket, silver dagger zipper pull.",
+      "condition": "Pre-owned, very good. Back print is crisp with no cracking, zipper pull is complete, colour is still a strong black.",
+      "rarity": "Store exclusive. Sold only through the Malibu location, so supply outside California depends on resale.",
+      "size": "M",
+      "price": 1000,
+      "sold": false,
+      "hero": "assets/photos/piece-07/hero.jpg",
+      "heroThumb": "assets/photos/piece-07/hero-600.jpg",
+      "photos": [
+        "assets/photos/piece-07/detail-1.jpg",
+        "assets/photos/piece-07/detail-2.jpg"
+      ],
+      "heroSize": [
+        1003,
+        1300
+      ],
+      "photoSizes": [
+        [
+          461,
+          700
+        ],
+        [
+          461,
+          700
+        ]
+      ]
+    },
+    {
+      "number": 8,
+      "slug": "matty-boy-chomper-hoodie",
+      "title": "Matty Boy \"Chomper\" Hoodie",
+      "subtitle": "Red lips back print",
+      "model": "Chrome Hearts x Matty Boy pullover hoodie in black. Red lips and teeth \"Chomper\" graphic on the back, tonal horseshoe on the front, tonal floral cross on the sleeves, red CH on the pocket.",
+      "condition": "Pre-owned, good. Back graphic is bright and intact. Some fade to the body and hood, in keeping with the tonal prints.",
+      "rarity": "Limited collaboration. Matty Boy pieces are released in small runs and are among the most collected Chrome Hearts graphics.",
+      "size": "M",
+      "price": 1150,
+      "sold": false,
+      "hero": "assets/photos/piece-08/hero.jpg",
+      "heroThumb": "assets/photos/piece-08/hero-600.jpg",
+      "photos": [
+        "assets/photos/piece-08/detail-1.jpg",
+        "assets/photos/piece-08/detail-2.jpg"
+      ],
+      "heroSize": [
+        1003,
+        1300
+      ],
+      "photoSizes": [
+        [
+          461,
+          700
+        ],
+        [
+          461,
+          700
+        ]
+      ]
+    }
+  ]
+}
