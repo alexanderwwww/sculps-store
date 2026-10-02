@@ -14,7 +14,7 @@
 set -u
 
 BUNDLE="$(cd "$(dirname "$0")" && pwd)"
-BUILD="72"
+BUILD="75"
 # One working directory, not one per build. The browser engine underneath it
 # is a hundred megabytes and there is no reason to fetch it again because a
 # script changed.
@@ -78,6 +78,8 @@ mkdir -p "$WORK" "$OUT" || die "Couldn't create $WORK"
 # Always refresh the scripts, never the installed packages: this is also how
 # an updated app picks up new code without reinstalling anything.
 cp "$BUNDLE"/*.mjs "$BUNDLE/package.json" "$WORK/" 2>/dev/null
+# The bundle in front of us is the truth: forget any build number a previous sitting left behind.
+rm -f "$WORK/build.txt"
 cd "$WORK" || die "Couldn't open $WORK"
 
 # Every launch is a clean slate for the queue. The list of finished jobs

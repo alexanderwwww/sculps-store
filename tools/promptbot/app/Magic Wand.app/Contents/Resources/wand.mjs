@@ -105,21 +105,22 @@ export const OVERLAY = `(() => {
     wash: "rgba(255,255,255,.10)",
     glass: {
       background:
-        "radial-gradient(120% 90% at 12% -14%, rgba(255,255,255,.13) 0%, rgba(255,255,255,0) 58%)," +
-        "linear-gradient(to bottom, rgba(255,255,255,0) 60%, rgba(0,0,0,.10) 100%)," +
-        "rgba(255,255,255,.06)",
+        "radial-gradient(140% 110% at 10% -30%, rgba(255,255,255,.34) 0%, rgba(255,255,255,.08) 42%, rgba(255,255,255,0) 66%)," +
+        "linear-gradient(to bottom, rgba(255,255,255,.07) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,.14) 100%)," +
+        "rgba(255,255,255,.07)",
       backdropFilter: "blur(20px) saturate(160%)",
       border: "0.5px solid",
-      borderColor: "rgba(255,255,255,.34) rgba(255,255,255,.18) rgba(255,255,255,.12) rgba(255,255,255,.26)",
+      borderColor: "rgba(255,255,255,.55) rgba(255,255,255,.26) rgba(255,255,255,.16) rgba(255,255,255,.40)",
     },
     textShadow: "0 1px 3px rgba(0,0,0,.85), 0 0 1px rgba(0,0,0,.5)",
     sheen:
       "linear-gradient(90deg, rgba(255,255,255,0) 22%, rgba(255,255,255,.20) 42%, rgba(255,255,255,.55) 50%, rgba(255,255,255,.20) 58%, rgba(255,255,255,0) 78%)",
     rim:
-      "inset 0 1.6px 0 rgba(255,255,255,.35)," +
-      "inset 1px 0 0 rgba(255,255,255,.12)," +
-      "inset 0 -1px 0 rgba(255,255,255,.14)," +
-      "inset 0 -12px 12px -8px rgba(0,0,0,.16)",
+      "inset 0 1.6px 0 rgba(255,255,255,.55)," +
+      "inset 1px 0 0 rgba(255,255,255,.18)," +
+      "inset 0 -1px 0 rgba(255,255,255,.20)," +
+      "inset 0 -14px 14px -8px rgba(0,0,0,.22)," +
+      "inset 0 0 22px rgba(255,255,255,.07)",
     drop:
       "0 4px 24px rgba(0,0,0,.12)",
     halo: (up) => (up ? "0 0 34px 6px rgba(255,255,255,.16)" : "0 0 10px 0 rgba(255,255,255,.05)"),

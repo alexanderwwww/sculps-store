@@ -23,5 +23,6 @@ Dock icon content must fill 820 of 1024 px (bbox 102–922), like XUGC's. The ol
 Pass: attachbug, card, flow, harness, job-shape, order, save, sound, sparkle, zip, signin. **endtoend, pause, pin, refs, resilience fail identically on the untouched Sep 20 code in the sandbox (fixture/environment), so they prove nothing about changes** — fix their fixtures before relying on them for loop changes.
 
 ## Build log
+- 75: clean-install zip, bundle is truth (build.txt cleared on launch), clearer liquid-glass pill.
 - 74: pill keeps Pause/Add pictures with long job names, no breathing-glow timer, no nested blur (lag). 73: composer probe.
 - 72 (2026-10-02): clear glass, 820-grid icon, hands off sign-in pages.
