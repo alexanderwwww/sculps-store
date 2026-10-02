@@ -136,3 +136,6 @@ Cite key: [xugc skill] = `.claude/skills/xugc/SKILL.md` (section named) | [bible
 - [ ] No text, no logo not on the product, no hooded/robed hate-adjacent look, no testimonial claim, no apology.
 - [ ] Inside the engine's word cap and field rules; `filter.js` returned ok.
 - [ ] Price stated and Alex said go. Then render, then judge frame by frame (judge.md), then say what you saw.
+
+## Scale is told by the real number and the camera angle, never by exaggeration (Alex, 2026-10-02)
+"16 feet / 5 metres is not a crazy big giant." The Scream is 16 ft 4 in: about 2.8 adults stacked, head level with the upstairs windows, deflated about the length of a parked car. Write the true size and a parked car / door / person as the scale cue. The drama comes from the CAMERA: low angle, close to the base, looking up along the figure, wide phone lens. Never write "towering", "colossal", "covers the lawn", "gigantic" for a yard prop.
