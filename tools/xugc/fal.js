@@ -12,7 +12,7 @@ const { sniff } = require("./google.js");
 
 const QUEUE = "https://queue.fal.run";
 const STORAGE = "https://rest.fal.ai/storage/upload/initiate?storage_type=fal-cdn-v3";
-const IMAGE = { id: "fal-ai/nano-banana-2/edit", usd: 0.08 };
+const IMAGE = { id: "fal-ai/nano-banana-2/edit", text: "fal-ai/nano-banana-2", usd: 0.08 }; // edit needs pictures; with none, the text model (same price)
 
 /** price per second with sound, at the resolution we send (fal's pages). Each model's body is built from its own schema. */
 const MODELS = {
@@ -63,8 +63,14 @@ class Fal {
   }
   /** free call that needs a valid key: start an upload of 1 byte (nothing is billed for storage) */
   async test() { const up = await this.json(STORAGE, { method: "POST", body: JSON.stringify({ content_type: "text/plain", file_name: "xugc-key-test.txt" }) }); return { ok: !!up.upload_url }; }
-  /** local picture -> public fal CDN url */
+  /** local picture -> public fal CDN url (the same picture is uploaded once: hidden frames reuse the product and the previous frame) */
   async upload(bytes, name = "frame") {
+    const key = require("node:crypto").createHash("sha1").update(Buffer.from(bytes)).digest("hex");
+    this.cache = this.cache || new Map();
+    if (this.cache.has(key)) return this.cache.get(key);
+    const url = await this.uploadOnce(bytes, name); this.cache.set(key, url); return url;
+  }
+  async uploadOnce(bytes, name) {
     const mime = sniff(bytes), ext = mime.split("/")[1];
     const up = await this.json(STORAGE, { method: "POST", body: JSON.stringify({ content_type: mime, file_name: `${name}.${ext}` }) });
     if (!up.upload_url || !up.file_url) throw new Error("fal did not give an upload address: " + JSON.stringify(up).slice(0, 200));
@@ -87,7 +93,8 @@ class Fal {
       }
       await this.sleep(pollMs);
     }
-    const e = new Error("fal took too long on this job."); e.code = "fal"; throw e;
+    try { await this.json(sub.cancel_url || sub.status_url.replace(/\/status$/, "/cancel"), { method: "PUT" }); } catch { /* best effort */ }
+    const e = new Error(`fal took longer than ${Math.round((maxPolls * pollMs) / 60000)} minutes on this job, so it was cancelled.`); e.code = "fal"; throw e;
   }
   async download(url) { const r = await this.f(url); if (!r.ok) throw new Error(`Could not download from fal (${r.status}).`); return Buffer.from(await r.arrayBuffer()); }
 
@@ -95,7 +102,7 @@ class Fal {
   async image(prompt, refs = [], o = {}) {
     const urls = [];
     for (let k = 0; k < refs.length; k++) urls.push(await this.upload(refs[k].bytes, "ref" + (k + 1)));
-    const out = await this.run(IMAGE.id, { prompt, ...(urls.length ? { image_urls: urls } : {}), aspect_ratio: "9:16", num_images: 1, output_format: "png" }, o);
+    const out = await this.run(urls.length ? IMAGE.id : IMAGE.text, { prompt, ...(urls.length ? { image_urls: urls } : {}), aspect_ratio: "9:16", num_images: 1, output_format: "png" }, o);
     const u = out.images && out.images[0] && out.images[0].url;
     if (!u) { const e = new Error("fal answered but sent no picture: " + JSON.stringify(out).slice(0, 300)); e.code = "noimage"; throw e; }
     const bytes = await this.download(u); return { bytes, mime: sniff(bytes) };
@@ -105,7 +112,7 @@ class Fal {
     const m = MODELS[engine]; if (!m) throw new Error("Unknown fal model " + engine);
     const firstUrl = await this.upload(first.bytes, "first"), lastUrl = last ? await this.upload(last.bytes, "last") : null;
     const o = { prompt, tier, res, first: firstUrl, last: lastUrl, seconds: CLIP };
-    const out = await this.run(m.id(o), m.body(o), { signal, onStarted });
+    const out = await this.run(m.id(o), m.body(o), { signal, onStarted, maxPolls: engine === "seedance" ? 450 : 225 }); // Seedance 720p can take long: 30 min
     const u = out.video && out.video.url;
     if (!u) { const e = new Error("fal answered but sent no video: " + JSON.stringify(out).slice(0, 300)); e.code = "fal"; throw e; }
     return { bytes: await this.download(u), uri: u };

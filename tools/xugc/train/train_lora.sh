@@ -103,7 +103,9 @@ YML
   trainrun uv run python packages/ltx-trainer/scripts/train.py "$W/ltx_lora.yaml"
   ;;
 hunyuan|wan)
-  [ -d musubi-tuner ] || git clone --depth 1 https://github.com/kohya-ss/musubi-tuner.git
+  # pinned to the exact musubi-tuner commit whose flags, loaders and dependencies were read (2026-10-02); a newer one could change them
+  MUSUBI=f8a1b03794a49239a3539015075f5123d6c07d66
+  [ -d musubi-tuner ] || { mkdir musubi-tuner && (cd musubi-tuner && git init -q && git remote add origin https://github.com/kohya-ss/musubi-tuner.git && git fetch -q --depth 1 origin "$MUSUBI" && git checkout -q FETCH_HEAD); }
   # musubi-tuner README: install PyTorch for the CUDA version FIRST (2.6.0 or later is required: its transformers 5.x
   # switches PyTorch off below 2.5, which is exactly how the first Wan run died). The pod image is CUDA 12.4 / Python 3.11 / torch 2.4.
   pip install -q torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124

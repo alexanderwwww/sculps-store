@@ -56,3 +56,35 @@ test("COMPLETED with an error is a failure, not a video", async () => {
   const f = async (url) => ({ ok: true, status: 200, text: async () => JSON.stringify(url.endsWith("/status") ? { status: "COMPLETED", error: "blocked", error_type: "content_policy_violation" } : { status_url: "https://q/s/status", response_url: "https://q/s" }) });
   await assert.rejects(() => new F.Fal({ key: () => "k", fetchImpl: f, sleep: async () => {} }).run("x/y", {}), /blocked/);
 });
+
+function fakeFal(over = {}) {
+  const calls = [];
+  const f = async (url, init = {}) => {
+    calls.push({ url, init }); const j = (x, st = 200) => ({ ok: st < 300, status: st, text: async () => JSON.stringify(x), arrayBuffer: async () => Buffer.from([0x89, 0x50, 0x4e, 0x47]) });
+    if (over[url]) return j(over[url]());
+    if (url.includes("storage/upload/initiate")) return j({ upload_url: "https://up/" + calls.length, file_url: "https://cdn/" + calls.length });
+    if (url.startsWith("https://up/")) return j({});
+    if (url.startsWith("https://queue.fal.run/") && init.method === "POST") return j({ request_id: "r", status_url: "https://q/r/status", response_url: "https://q/r", cancel_url: "https://q/r/cancel" });
+    if (url === "https://q/r/status") return j({ status: "COMPLETED" });
+    if (url === "https://q/r") return j({ images: [{ url: "https://img/x.png" }] });
+    if (url === "https://q/r/cancel") return j({ status: "CANCELLATION_REQUESTED" });
+    return j({});
+  };
+  return { f, calls };
+}
+test("a hidden frame with no pictures uses the text model, and its body matches that schema", async () => {
+  const { f, calls } = fakeFal(); await new F.Fal({ key: () => "k", fetchImpl: f, sleep: async () => {} }).image("a woman on a street", []);
+  const sub = calls.find((c) => c.url.startsWith("https://queue.fal.run/"));
+  assert.equal(sub.url, "https://queue.fal.run/fal-ai/nano-banana-2"); check("fal-ai/nano-banana-2", JSON.parse(sub.init.body));
+});
+test("the same picture is uploaded once", async () => {
+  const { f, calls } = fakeFal(); const fal = new F.Fal({ key: () => "k", fetchImpl: f, sleep: async () => {} });
+  const p = { bytes: Buffer.from([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]) };
+  await fal.image("x", [p]); await fal.image("y", [p, p]);
+  assert.equal(calls.filter((c) => c.url.includes("upload/initiate")).length, 1);
+});
+test("a job that takes too long is cancelled at fal (not left running and billed)", async () => {
+  const { f, calls } = fakeFal({ "https://q/r/status": () => ({ status: "IN_PROGRESS" }) });
+  await assert.rejects(() => new F.Fal({ key: () => "k", fetchImpl: f, sleep: async () => {} }).run("x/y", {}, { maxPolls: 3 }), /cancelled/);
+  assert.ok(calls.some((c) => c.url === "https://q/r/cancel" && c.init.method === "PUT"));
+});

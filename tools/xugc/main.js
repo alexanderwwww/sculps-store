@@ -22,7 +22,7 @@ const FILTER_AS = { veo: "veo", fal_veo: "veo", seedance: "seedance", kling: "kl
 const isAdEngine = (e) => e === "veo" || falLib.isFal(e);
 const filter = require("./filter.js");
 
-const BUILD = 12;
+const BUILD = 14;
 const LATEST_NOTE = "";
 
 function setup({ dir, googleFetch, falFetch, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch, collector: collectorIn, backupDir }) {
@@ -96,6 +96,7 @@ function setup({ dir, googleFetch, falFetch, makeRunPod, safe = null, sweepOnSta
       if (!m) continue;
       const bytes = Buffer.from(m[2], "base64");
       if (bytes.length > 1000 && bytes.length < 8 * 1024 * 1024) out.push({ bytes });
+      else throw new Error(`The picture "${String((r && r.name) || "you added")}" could not be used (${bytes.length < 1000 ? "it is almost empty" : "it is over 8 MB"}). Remove it or add another one.`);
     }
     return out;
   }
@@ -308,7 +309,7 @@ function setup({ dir, googleFetch, falFetch, makeRunPod, safe = null, sweepOnSta
     const t = o.type;
     if (t === "generate") {
       send("claude", { kind: "start", text: "Claude is setting up a video" });
-      const pr = await prepare({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality, refs: o.refs, music: o.music, captions: o.captions, engine: o.engine, lora: o.lora, preset: o.preset, tier: o.tier, res: o.res });
+      const pr = await prepare({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality, refs: o.refs, music: o.music, captions: o.captions, engine: o.engine || "seedance", lora: o.lora, preset: o.preset, tier: o.tier, res: o.res });
       if (!store.read().settings.autoApprove) {
         const d = await askApproval(pr, "Claude");
         if (!d.ok) { send("claude", { kind: "end", text: d.timeout ? "No answer, so it was cancelled" : "You said no" }); return { ok: false, error: d.timeout ? "Alex did not answer in 15 minutes, nothing was rented." : "Alex said no on screen. Nothing was rented." }; }

@@ -152,7 +152,7 @@ class Engine {
     const est = onFal ? falLib.estimate({ engine: job.engine, seconds, tier, res }) : adEstimate({ seconds, tier });
     const why = checkCaps(st.settings, st.spent, est.usd);
     if (why) { const e = new Error(why); e.code = "cap"; throw e; }
-    if (onFal) this.fal.auth(); else this.google.hdr(); // no key = clear message before anything starts
+    if (onFal) { this.fal.auth(); this.fal.cache = new Map(); } else this.google.hdr(); // no key = clear message before anything starts
     const id = `take-${Date.now()}`;
     this.job = { kind: "generate", signal: { cancelled: false } };
     let spent = 0;

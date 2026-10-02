@@ -218,7 +218,7 @@ app.whenReady().then(async () => {
     // Claude asks for a video
     W.claudeAt = Date.now();
     const runsB = log.filter((l) => l.run).length;
-    W.orders.push({ id: "o0", type: "generate", at: Date.now(), scene: "He holds the projector up to the window and a ghost appears", seconds: 5, quality: "draft", look: "Selfie", avatar: "leo", music: "drop", productUrl: "https://blackreaper.us/products/haunted-projector", refs: "auto" });
+    W.orders.push({ id: "o0", type: "generate", engine: "ltx", at: Date.now(), scene: "He holds the projector up to the window and a ghost appears", seconds: 5, quality: "draft", look: "Selfie", avatar: "leo", music: "drop", productUrl: "https://blackreaper.us/products/haunted-projector", refs: "auto" });
     say(await until("document.querySelector('#approve').classList.contains('on') && document.querySelector('#ap-prompt').value.includes('Leo')", 15000), "a video Claude orders shows its full prompt and price on screen and WAITS", await run("document.querySelector('#ap-meta').textContent"));
     say((await run("document.querySelector('#cbtext').textContent")).includes("waiting for your OK") && (await run("document.querySelector('#ap-prompt').value.length")) > 3500, "the Claude bar says it is waiting, and the prompt shown is the huge one");
     say((await run("document.querySelector('#ap-prompt').value")).includes("bass drop"), "the music choice is in the prompt");
@@ -229,12 +229,12 @@ app.whenReady().then(async () => {
     say(await untilJs(() => W.results.some((r) => r.id === "o0" && r.state === "refused")), "pressing No cancels it with nothing rented", JSON.stringify(W.results.filter((r) => r.id === "o0").map((r) => r.error || r.state)));
     await run("document.querySelector('#nav [data-view=mcp]').click()"); await click("#ap-off");
     await until("document.querySelector('#ap-off').classList.contains('on')");
-    W.orders.push({ id: "o1", type: "generate", at: Date.now(), scene: "He holds the projector up to the window and a ghost appears", seconds: 5, quality: "draft", look: "Selfie", avatar: "leo", productUrl: "https://blackreaper.us/products/haunted-projector" });
+    W.orders.push({ id: "o1", type: "generate", engine: "ltx", at: Date.now(), scene: "He holds the projector up to the window and a ghost appears", seconds: 5, quality: "draft", look: "Selfie", avatar: "leo", productUrl: "https://blackreaper.us/products/haunted-projector" });
     say(await untilJs(() => W.results.some((r) => r.id === "o1" && r.state === "done"), 20000), "an order from Claude to make a video runs through the real engine and reports done", JSON.stringify(W.results.filter((r) => r.id === "o1").map((r) => r.state + (r.cost ? " $" + r.cost : ""))));
     const g2 = log.filter((l) => l.run === "generate.sh")[1];
     say(g2 && g2.env.PROMPT.includes("Leo") && g2.env.FRAMES === "121", "…using the same prompt builder and frame counts as the screen");
     await click("#ap-on"); await until("document.querySelector('#ap-on').classList.contains('on')");
-    W.orders.push({ id: "o1b", type: "generate", at: Date.now(), scene: "A neighbour films the giant figure rising on the lawn", seconds: 5, quality: "draft", music: "soft", productUrl: "https://blackreaper.us/products/haunted-projector", refs: "auto" });
+    W.orders.push({ id: "o1b", type: "generate", engine: "ltx", at: Date.now(), scene: "A neighbour films the giant figure rising on the lawn", seconds: 5, quality: "draft", music: "soft", productUrl: "https://blackreaper.us/products/haunted-projector", refs: "auto" });
     say(await until("document.querySelector('#approve').classList.contains('on')", 15000), "with 'Ask me first' on, the next order waits again");
     await run("document.querySelector('#ap-prompt').value = document.querySelector('#ap-prompt').value + ' EXTRA LINE BY ALEX'"); await click("#ap-yes");
     say(await until("document.querySelector('#render').classList.contains('on')", 8000), "after Approve the render screen opens by itself, with the stage rail", await run("document.querySelector('#rail').textContent"));
@@ -283,7 +283,7 @@ app.whenReady().then(async () => {
     await click("#go");
     say(await until("document.querySelector('#err').textContent.includes('over your per-video limit')"), "over the per-video limit: refused on screen, before any GPU", await run("document.querySelector('#err').textContent"));
     const runsBefore = log.filter((l) => l.run).length;
-    W.orders.push({ id: "o7", type: "generate", at: Date.now(), scene: "A long scene description here", seconds: 20, quality: "full" });
+    W.orders.push({ id: "o7", type: "generate", engine: "ltx", at: Date.now(), scene: "A long scene description here", seconds: 20, quality: "full" });
     say(await untilJs(() => W.results.some((r) => r.id === "o7" && r.state === "error" && /per-video limit/.test(r.error || ""))), "Claude's video request is refused by the same limit");
     say(log.filter((l) => l.run).length === runsBefore, "…and no GPU was started for either");
     await shot("8-cap");
@@ -364,6 +364,11 @@ app.whenReady().then(async () => {
     say(await until("document.querySelector('#falstate').textContent.includes('cdef')"), "the fal.ai key saves, is tested with fal, and shows only its last 4", await run("document.querySelector('#falstate').textContent"));
     await view("create"); await pick("seedance");
     say(await until("document.querySelector('#nokey').style.display === 'none' && document.querySelector('#vrow').style.display !== 'none'"), "with the fal key, Seedance is ready and shows the presets");
+    await run("window.xugc.setSettings({ capJob: 10, capDay: 50, autoApprove: false })");
+    W.orders.push({ id: "o9", type: "generate", at: Date.now(), scene: "A woman shows the projector to her phone in a dark living room." });
+    say(await until("document.querySelector('#approve').classList.contains('on')", 8000), "an order from Claude with no model named goes to Seedance (the screen default) and waits for Approve", await run("document.querySelector('#ap-cost').textContent") + " | " + JSON.stringify(W.results.filter((r) => r.id === "o9")) + " | orders left " + W.orders.length);
+    say((await run("document.querySelector('#ap-cost').textContent")).includes("7.81"), "the approval shows the Seedance price, not a GPU price", await run("document.querySelector('#ap-cost').textContent"));
+    await click("#ap-no"); await until("!document.querySelector('#approve').classList.contains('on')", 3000);
     say(/[$][0-9]+[.][0-9]{2}/.test(await run("document.querySelector('#goest').textContent")) && (await run("document.querySelector('#goest').textContent")).includes("7.81"), "the button shows the Seedance price for 16 s (2 clips + 3 frames = $7.81)", await run("document.querySelector('#goest').textContent"));
     await run("[...document.querySelectorAll('#resp button')].find(b=>b.textContent==='480p').click()");
     say(await until("document.querySelector('#goest').textContent.includes('3.77')"), "480p shows the lower Seedance price ($3.77 for 16 s)", await run("document.querySelector('#goest').textContent"));

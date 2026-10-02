@@ -147,11 +147,11 @@ function renderSettings() {
 // One line per model. group "rented" = someone else's GPU, no training; "ours" = our GPU, trainable.
 // need: "fal" marks a model that waits for the fal.ai key. quality: the model has a Draft/HD/Max setting.
 const MODELS = [
-  { id: "seedance", name: "Seedance 2.5", maker: "ByteDance · fal", group: "rented", glyph: "SD", tags: ["with sound", "720p"], price: "$3.78 / 8 s", need: "fal", note: "The Higgsfield Marketing Studio engine. Best people and motion. Hidden frames at the golden-ratio moments; your photos teach the frames only." },
-  { id: "kling", name: "Kling 3.0 Pro", maker: "Kuaishou · fal", group: "rented", glyph: "KL", tags: ["with sound"], price: "$1.34 / 8 s", need: "fal", note: "Strong hands-on demos and product handling. Start and end frame." },
-  { id: "fal_veo", name: "Veo 3.1", maker: "Google · fal", group: "rented", glyph: "V3", tags: ["with sound", "720p"], price: "$0.40 / 8 s", need: "fal", note: "Cheapest with sound (Lite). Good talking heads. Fast tier for more polish." },
-  { id: "fal_wan", name: "Wan 3.0", maker: "Alibaba · fal", group: "rented", glyph: "WN", tags: ["with sound", "720p"], price: "$0.80 / 8 s", need: "fal", note: "Cheap and quick. Good for testing a script before a Seedance final." },
-  { id: "veo", name: "Veo 3.1 direct", maker: "Google key", group: "rented", glyph: "G", tags: ["with sound", "720p"], price: "$0.40 / 8 s", need: "google", note: "Same Veo, billed by Google instead of fal. Only if you add a Google key." },
+  { id: "seedance", name: "Seedance 2.5", maker: "ByteDance · fal", group: "rented", glyph: "SD", tags: ["with sound", "720p"], rate: () => (ui.res === "480p" ? 0.2205 : 0.473), need: "fal", note: "The Higgsfield Marketing Studio engine. Best people and motion. Hidden frames at the golden-ratio moments; your photos teach the frames only." },
+  { id: "kling", name: "Kling 3.0 Pro", maker: "Kuaishou · fal", group: "rented", glyph: "KL", tags: ["with sound"], rate: () => 0.168, need: "fal", note: "Strong hands-on demos and product handling. Start and end frame." },
+  { id: "fal_veo", name: "Veo 3.1", maker: "Google · fal", group: "rented", glyph: "V3", tags: ["with sound", "720p"], rate: () => (ui.tier === "fast" ? 0.15 : 0.05), need: "fal", note: "Cheapest with sound (Lite). Good talking heads. Fast tier for more polish." },
+  { id: "fal_wan", name: "Wan 3.0", maker: "Alibaba · fal", group: "rented", glyph: "WN", tags: ["with sound", "720p"], rate: () => (ui.res === "480p" ? 0.05 : 0.1), need: "fal", note: "Cheap and quick. Good for testing a script before a Seedance final." },
+  { id: "veo", name: "Veo 3.1 direct", maker: "Google key", group: "rented", glyph: "G", tags: ["with sound", "720p"], rate: () => (ui.tier === "fast" ? 0.1 : 0.05), need: "google", note: "Same Veo, billed by Google instead of fal. Only if you add a Google key." },
   { id: "ltx", name: "XUGC fast", maker: "LTX-2.5 · your GPU", group: "ours", glyph: "XF", tags: ["with sound"], quality: true, note: "LTX-2.5 fast, with sound. Trainable with XUGC Real Life." },
   { id: "ltx_full", name: "LTX full", maker: "LTX-2.5 · your GPU", group: "ours", glyph: "LX", tags: ["with sound", "slower"], quality: true, note: "LTX-2.5 full quality, with sound (slower)." },
   { id: "hunyuan", name: "Hunyuan", maker: "HunyuanVideo 1.5 · your GPU", group: "ours", glyph: "HY", tags: ["silent"], quality: true, note: "HunyuanVideo 1.5, silent video." },
@@ -160,7 +160,7 @@ const MODELS = [
 const GROUPS = [["rented", "RENTED · NO TRAINING"], ["ours", "OURS · TRAINED"]];
 const model = () => MODELS.find((m) => m.id === (ui.engine || DEF_ENGINE)) || MODELS[0];
 const needsFal = (m) => (m.need === "fal" && !(META && META.falSet)) || (m.need === "google" && !(META && META.googleSet));
-const tagsHtml = (m) => (needsFal(m) ? `<span class="mtag key">needs ${m.need === "google" ? "Google" : "fal"} key</span>` : "") + m.tags.map((t) => `<span class="mtag">${esc(t)}</span>`).join("") + (m.price ? `<span class="mtag pr">${esc(m.price)}</span>` : "");
+const tagsHtml = (m) => (needsFal(m) ? `<span class="mtag key">needs ${m.need === "google" ? "Google" : "fal"} key</span>` : "") + m.tags.map((t) => `<span class="mtag">${esc(t)}</span>`).join("") + (m.rate ? `<span class="mtag pr">$${m.rate().toFixed(2)}/s + frames</span>` : "");
 // Simple line drawings, one per preset, so the cards read at a glance.
 const PGLYPH = {
   review: '<rect x="52" y="6" width="22" height="34" rx="4"/><circle cx="63" cy="18" r="5"/><path d="M55 34c2-6 14-6 16 0"/><path d="M80 14c3 3 3 9 0 12M84 10c5 5 5 15 0 20"/>',
@@ -177,7 +177,7 @@ function openPop(on) { ui.pop = on; $("#mpop").classList.toggle("on", on); $("#m
 function pickModel(id) { openPop(false); ui.engine = id; refresh(); }
 function renderEngine() {
   const m = model(), cur = m.id;
-  $("#mglyph").textContent = m.glyph; $("#mname").textContent = m.name; $("#mmaker").textContent = m.maker; $("#mtags").innerHTML = tagsHtml({ ...m, tags: m.tags.slice(0, m.price ? 1 : 2) });
+  $("#mglyph").textContent = m.glyph; $("#mname").textContent = m.name; $("#mmaker").textContent = m.maker; $("#mtags").innerHTML = tagsHtml({ ...m, tags: m.rate ? [] : m.tags.slice(0, 2) });
   $("#engnote").textContent = m.note;
   const E = $("#engines"); E.innerHTML = "";
   for (const [g, label] of GROUPS) {
@@ -187,7 +187,7 @@ function renderEngine() {
       const r = document.createElement(x.need ? "div" : "button"); r.className = "mitem" + (x.id === cur ? " on" : "") + (needsFal(x) ? " off" : "");
       if (x.need) { r.setAttribute("role", "button"); r.tabIndex = 0; }
       r.dataset.id = x.id;
-      r.innerHTML = `<span class="mg">${esc(x.glyph)}</span><span class="mn"><b>${esc(x.name)}</b><small>${esc(x.maker)}</small></span><span class="mtags">${x.tags.map((t) => `<span class="mtag">${esc(t)}</span>`).join("")}${x.price ? `<span class="mtag pr">${esc(x.price)}</span>` : ""}</span>${needsFal(x) ? '<a class="addk">add key</a>' : ""}`;
+      r.innerHTML = `<span class="mg">${esc(x.glyph)}</span><span class="mn"><b>${esc(x.name)}</b><small>${esc(x.maker)}</small></span><span class="mtags">${(x.rate ? [] : x.tags).map((t) => `<span class="mtag">${esc(t)}</span>`).join("")}${x.rate ? `<span class="mtag pr">$${x.rate().toFixed(2)}/s</span>` : ""}</span>${needsFal(x) ? '<a class="addk">add key</a>' : ""}`;
       r.onclick = (ev) => { if (ev.target.classList.contains("addk")) { openPop(false); setView("settings"); ui.connOpen = "fal"; renderSettings(); return; } pickModel(x.id); };
       E.appendChild(r);
     }
