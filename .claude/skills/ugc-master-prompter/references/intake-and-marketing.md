@@ -27,7 +27,7 @@ Alex hates questions [AGENTS]. Ask at most 2, only when the answer changes cost 
 
 Say defaults like this: "Defaults: dusk front lawn, 2 neighbours, no price in-frame, Kling, 8 s." One line, then go. Alex's working style: lead with the answer, one step at a time, do it in the turn he asks, never hand work back, never guess [AGENTS].
 
-Ask Alex ONLY one question for the Reaper: the hooded robe is the product, but the bible's forbidden list bans robed/hooded figures [bible 12.2a]. Recommended answer: keep the product as-is, black hood + skull face, standing figure on a stake, no person in costume, no white pointed hood [UNVERIFIED decision].
+RESOLVED (2026-10-02): the Black Reaper is a skull-faced Grim Reaper decoration, which is allowed (see the precise hooded-figure rule in SKILL.md). Keep the product as-is: black hood + visible skull face + lantern + ghost-souls, standing prop on a stake, no person in costume, never a white or pointed hood. Do not ask Alex again.
 
 ---
 ## 2. MARKETING KNOWLEDGE collected in this repo
@@ -128,7 +128,7 @@ sound     bed wind + traffic + dog + leaves; close breathing/fabric; no cord/fan
 frames    6 landmarks 0/1.17/3.06/4.94/6.11/8.00 from the one clean photo + a yard photo; second clip (8-16 s): ref slot 3 reused for the man
 engine    scale -> Seedance/Kling; reaction close-up -> Veo; scout cheap first [bible s1]
 forbidden crowds beyond A+B, kids' faces, text/price in frame, any logo not on photo, cord/solar, person inside the robe, white pointed hood,
-          cult/ritual imagery. OVERRIDE of bible "robed or hooded figures": the product IS a hooded decoration (note + ask Alex once)
+          cult/ritual imagery. OVERRIDE of bible "robed or hooded figures": the product IS a skull-faced hooded decoration (resolved, do not ask)
 notes     defaults: English, dusk, no price. Speech 6+2 words. Never "before Halloween" delivery wording.
 ```
 
