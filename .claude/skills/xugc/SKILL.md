@@ -147,3 +147,7 @@ Never guess. Inspect and investigate first: read the real source / --help of eve
 - **Create redesigned like Higgsfield** (Alex hated the text-box UI): model dropdown, preset cards, product = ONE card (hero photo; other photos in a sheet), references by drag-drop / Cmd+V (max 3, downscaled to 1024 px, refsLocal), Connections list in Settings, 480p/720p for Seedance/Wan.
 - Claude orders with no engine go to Seedance (same as the screen) and wait for Approve; caps apply. Timed-out fal jobs are cancelled at fal. Each picture uploaded once per ad.
 - Unproven until the first real fal call: everything is tested against a fake fal that enforces fal's schemas; first paid test should be Wan 3.0 480p 8 s (~$0.56 with 2 frames) or Seedance 480p.
+
+
+## The master prompter (2026-10-02)
+Every prompt for XUGC and for any engine is written with `.claude/skills/ugc-master-prompter/SKILL.md` (and its references). It is also AGENTS.md rule 16. Kling is connected through its official MCP (`https://kling.ai/mcp`, verified facts in `design/xugc/real-life/09-kling-mcp.md`; account had 0 credits). Magic Wand makes the hidden golden-ratio frames when no image key is available.

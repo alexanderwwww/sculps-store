@@ -206,6 +206,15 @@ are not style notes.
     paid run as cheap as possible and unable to fail silently. Training/rental flags are never "from memory" and never "from the README
     summary": they come from the code of the exact version installed.
 
+16. **EVERY video, UGC, ad, frame or image prompt goes through `.claude/skills/ugc-master-prompter/SKILL.md`. Always, to the fullest.**
+    (Alex, 2026-10-02: "from this point moving forward, everything will be excellent… save it in your memory that you will always use
+    this skill.") Load it before writing the first word of any such prompt, for any engine (Kling, Seedance, Veo, Wan, LTX, Higgsfield,
+    Dreamina, Magic Wand/Gemini), in the XUGC app or by hand. It means: read the real product and LOOK at its real photos first;
+    class and real size; shot spec on the golden-ratio times (0, 1.17, 3.06, 4.94, 6.11, 8.00 s); clean hidden frames, never raw
+    product photos, into the video model; the master prompt anatomy; the filter (`tools/xugc/filter.js`); price stated and Alex's OK
+    before any paid call; frame-by-frame judging before claiming quality. Do not improvise a "quick" prompt: the one-line Kling
+    prompt on 2026-10-02 was rejected on the spot ("after everything we did, this is your prompt?").
+
 ---
 
 ## 4. Practical notes
