@@ -110,3 +110,9 @@ Never guess. Inspect and investigate first: read the real source / --help of eve
 - Read packages/ltx-trainer/scripts/process_dataset.py and src/ltx_trainer/config.py. Required for the split pack: --model-path = the transformer FILE (not the folder), --text-encoder-path = the packed gemma FILE, --video-vae-path and --audio-vae-path (files), --resolution-buckets "WxHxF" (544x960x49 is portrait). Dataset paths are relative to the dataset file's folder. Outputs: latents/, audio_latents/, conditions/ under --output-dir; train.py reads data.preprocessed_data_root.
 - Verified here (no GPU): the YAML the script writes passes ltx_trainer's own LtxTrainerConfig; process_dataset.py with these flags runs past argument parsing and only stops at the (empty placeholder) checkpoint. 80 GB (H100) is the trainer's own recommendation for the standard (non-quantized) config.
 - NOT verified: everything after preprocessing on a real GPU (train.py run, checkpoint file names, speed), and the whole Wan / Hunyuan branches (musubi flags have not been read from source; do not run them until they have been).
+
+## Naming (Alex, 2026-10-02)
+- Company: **XUGC**. Model: **Real Life**. Motto: "Real life, real life, real life."
+- Versions are named, never numbered: **Dawn** (the LTX LoRA trained on real phone clips, $3.81), **Daylight** (Veo + Seedance + Kling chained with a judge, product and avatar locked), **Golden Hour** (prompt-understanding layer, director shot specs, spec-checking judge, multi-shot ads), **Midnight** (premium: top resolution, voice and lip-sync, finished ads). Full name example: "XUGC Real Life Golden Hour".
+- The model is a SYSTEM (chain + judge + LoRA + Style Bible), not a foundation model; the big closed models are rented from their makers' own APIs, no middleman (Alex: no Higgsfield).
+- Team files for the recipe: design/xugc/real-life/01..06; the lead's recipe is 00-real-life-recipe.md.
