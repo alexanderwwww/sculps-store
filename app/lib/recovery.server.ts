@@ -19,6 +19,7 @@ import type { DB } from "~/db/client";
 import { carts, stores, products, variants, discounts } from "~/db/schema";
 import { isSuppressed, unsubscribeUrl } from "./suppression.server";
 import { sendAbandonEmail, sendComebackEmail, emailReady, type EmailLine } from "./email.server";
+import { reaperProduct } from "./emails/reaper-products";
 
 /** What a cart's `items` json actually holds, as far as this file cares. */
 interface CartLine {
@@ -167,7 +168,7 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
           postalAddress,
           discountCode: comeback,
           discountOffCents: COMEBACK_CENTS,
-          imageUrl: absolute(site, firstImage(cart.items as CartLine[])) ?? EMAIL_HERO,
+          imageUrl: (await reaperHero(db, site, store.domain, cart.items as CartLine[])) ?? absolute(site, firstImage(cart.items as CartLine[])) ?? EMAIL_HERO,
           domain: store.domain,
           logoUrl: "/media/em-967546d2b092584a.jpg",
           brandColor: store.brandColor,
@@ -195,7 +196,7 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
       discountOffCents: kind === "checkout" ? (live?.offCents ?? null) : null,
       // The cart's own photo when it has one, otherwise the store's hero —
       // an email about a product with no product in it is a wasted send.
-      imageUrl: absolute(site, firstImage(cart.items as CartLine[])) ?? EMAIL_HERO,
+      imageUrl: (await reaperHero(db, site, store.domain, cart.items as CartLine[])) ?? absolute(site, firstImage(cart.items as CartLine[])) ?? EMAIL_HERO,
       domain: store.domain,
       logoUrl: "/media/em-967546d2b092584a.jpg",
       brandColor: store.brandColor,
@@ -210,6 +211,30 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
   }
 
   return summary;
+}
+
+
+/**
+ * Black Reaper's recovery emails lead with the product's own approved email picture
+ * (the same JPG the order emails use), found from the product in the cart. The cart's
+ * stored photo is a storefront .webp that a lot of mail clients draw as nothing, and
+ * the fallback below it is an old shop photo; neither is what a person who left a
+ * Reaper product should see.
+ */
+export async function reaperHero(db: DB, site: string, domain: string | null, items: CartLine[]): Promise<string | null> {
+  if (domain !== "blackreaper.us") return null;
+  for (const item of items) {
+    let productId = item.productId ?? null;
+    if (!productId && item.variantId) {
+      const [v] = await db.select({ productId: variants.productId }).from(variants).where(eq(variants.id, item.variantId)).limit(1);
+      productId = v?.productId ?? null;
+    }
+    if (!productId) continue;
+    const [p] = await db.select({ handle: products.handle }).from(products).where(eq(products.id, productId)).limit(1);
+    const image = reaperProduct(p?.handle ?? null)?.image;
+    if (image) return absolute(site, image);
+  }
+  return null;
 }
 
 /** An email client has no origin, so every image URL has to be absolute. */

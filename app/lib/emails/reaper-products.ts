@@ -24,7 +24,7 @@ export type ReaperProductHandle =
 export interface ReaperProductGuide {
   /** The name as the page prints it. */
   name: string;
-  /** A site-relative photo of the thing, for the top of the message. */
+  /** A site-relative JPG of the thing, for the top of the message (never .webp: a lot of mail clients draw nothing for it). */
   image: string;
   /** Numbered, in the order a person actually does them. */
   setupSteps: string[];
@@ -41,7 +41,7 @@ export interface ReaperProductGuide {
 export const REAPER_PRODUCTS: Record<ReaperProductHandle, ReaperProductGuide> = {
   "black-reaper": {
     name: "The Black Reaper",
-    image: "/media/br-s1-hero.webp",
+    image: "/media/em-s1-reaper.jpg",
     setupSteps: [
       "Push the sectional steel stake into the lawn where he can see the front door.",
       "Slide the figure onto the stake and let the robe and hood fall straight.",
@@ -79,7 +79,7 @@ export const REAPER_PRODUCTS: Record<ReaperProductHandle, ReaperProductGuide> = 
 
   "the-scream": {
     name: "The Scream",
-    image: "/media/scr-s1-hero.webp",
+    image: "/media/em-s1-scream.jpg",
     setupSteps: [
       "Unroll him flat on the lawn with the mask facing the street.",
       "Plug the blower's sealed outdoor lead into an ordinary outdoor extension cord. It pulls about as much as a table lamp.",
@@ -117,7 +117,7 @@ export const REAPER_PRODUCTS: Record<ReaperProductHandle, ReaperProductGuide> = 
 
   "crawling-zombie": {
     name: "The Crawling Zombie",
-    image: "/media/cz-s1c-hero.webp",
+    image: "/media/em-s1-zombie.jpg",
     setupSteps: [
       "Lift it out, unfold the arms and head, and pull the torn clothing straight.",
       "Put it down on the path or the lawn, facing the way people walk up.",
@@ -157,7 +157,7 @@ export const REAPER_PRODUCTS: Record<ReaperProductHandle, ReaperProductGuide> = 
 
   "halloween-movie-theater": {
     name: "The Halloween Movie Theater",
-    image: "/media/mt-s1-hero.webp",
+    image: "/media/em-s1-theater.jpg",
     setupSteps: [
       "Unroll the screen on the grass with the front facing where everyone will sit.",
       "Plug the blower into its outdoor lead. It stands the screen up on its own.",
@@ -197,7 +197,7 @@ export const REAPER_PRODUCTS: Record<ReaperProductHandle, ReaperProductGuide> = 
 
   "haunted-projector": {
     name: "The Haunted Projector",
-    image: "/media/hp-o1-hero.webp",
+    image: "/media/em-s1-projector.jpg",
     setupSteps: [
       "Stick the window film on the inside of a front window and smooth it flat.",
       "Stand the projector on the windowsill inside, lens pointed at the glass.",

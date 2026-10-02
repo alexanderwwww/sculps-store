@@ -682,6 +682,8 @@ export async function sendShippingNotice(
 
   const accent = input.accentColor || "#E8B33C";
   const ink = input.brandColor || "#16223A";
+  // Black Reaper's frame is near-black: headings outside the white card must be light there, never the navy of the generic frame.
+  const headInk = input.domain === "blackreaper.us" ? "#F3EEE6" : ink;
   const html = shell(
     brandOf(input),
     `<div style="text-align:center;margin:0 0 22px">
@@ -916,6 +918,8 @@ function abandonedBody(
   const brand = brandOf({ ...input, heroImageUrl: input.imageUrl ?? input.heroImageUrl });
   const accent = input.accentColor || "#E8B33C";
   const ink = input.brandColor || "#16223A";
+  // Black Reaper's frame is near-black: headings outside the white card must be light there, never the navy of the generic frame.
+  const headInk = input.domain === "blackreaper.us" ? "#F3EEE6" : ink;
   const heading = input.kind === "checkout" ? "You were one tap away." : "It's still in your cart.";
   const lead =
     input.kind === "checkout"
@@ -940,7 +944,7 @@ function abandonedBody(
 <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">
 ${input.kind === "checkout" ? "Almost yours" : "Still waiting"}
 </div>
-<h1 style="margin:10px 0 10px;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-.03em;color:${ink}">${heading}</h1>
+<h1 style="margin:10px 0 10px;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-.03em;color:${headInk}">${heading}</h1>
 <p style="margin:0 0 ${deadline ? "18px" : "24px"};font-size:15.5px;line-height:1.6;color:#6E7480">${lead}</p>
 ${
   deadline
@@ -984,9 +988,9 @@ ${button(input.kind === "checkout" ? "Finish my order" : "Take me back to it", i
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:26px;border-top:1px solid #EEEAE0">
 <tr>
-<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Free shipping</strong>on every order</td>
-<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">30-day returns</strong>no questions</td>
-<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Secure checkout</strong>Apple&nbsp;Pay &amp; card</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${headInk};font-size:13px">Free shipping</strong>on every order</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${headInk};font-size:13px">30-day returns</strong>no questions</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${headInk};font-size:13px">Secure checkout</strong>Apple&nbsp;Pay &amp; card</td>
 </tr></table>
 
 <p style="margin:22px 0 0;font-size:12px;line-height:1.6;color:#A3A79E;text-align:center">
@@ -1156,6 +1160,8 @@ function deliveredBody(
 ): string {
   const accent = input.accentColor || "#E8B33C";
   const ink = input.brandColor || "#16223A";
+  // Black Reaper's frame is near-black: headings outside the white card must be light there, never the navy of the generic frame.
+  const headInk = input.domain === "blackreaper.us" ? "#F3EEE6" : ink;
   const first = (input.customerName || "").split(" ")[0] || "there";
   const guides = input.products.map((line) => ({ line, guide: reaperProduct(line.handle) }));
   const lead = guides[0]?.guide;
@@ -1252,6 +1258,8 @@ function reviewBody(
 ): string {
   const accent = input.accentColor || "#E8B33C";
   const ink = input.brandColor || "#16223A";
+  // Black Reaper's frame is near-black: headings outside the white card must be light there, never the navy of the generic frame.
+  const headInk = input.domain === "blackreaper.us" ? "#F3EEE6" : ink;
   const guide = reaperProduct(input.productHandle);
   const name = guide?.name ?? input.productLabel ?? input.productHandle;
   const first = (input.customerName || "").split(" ")[0] || "there";
@@ -1369,6 +1377,8 @@ export interface ComebackInput extends BrandFields {
 function comebackBody(input: ComebackInput): string {
   const accent = input.accentColor || "#E8B33C";
   const ink = input.brandColor || "#16223A";
+  // Black Reaper's frame is near-black: headings outside the white card must be light there, never the navy of the generic frame.
+  const headInk = input.domain === "blackreaper.us" ? "#F3EEE6" : ink;
   const guide = reaperProduct(input.productHandle);
   const brand = brandOf({ ...input, heroImageUrl: input.imageUrl ?? guide?.image ?? input.heroImageUrl ?? null });
   const off = Math.round((input.discountOffCents ?? 3000) / 100);
@@ -1379,7 +1389,7 @@ function comebackBody(input: ComebackInput): string {
     brand,
     `<div style="text-align:center">
 <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">Still in your cart</div>
-<h1 style="margin:10px 0 10px;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-.03em;color:${ink}">$${off} off, if you still want it.</h1>
+<h1 style="margin:10px 0 10px;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-.03em;color:${headInk}">$${off} off, if you still want it.</h1>
 <p style="margin:0 0 ${deadline ? "18px" : "24px"};font-size:15.5px;line-height:1.6;color:#6E7480">You left ${esc(name)} in your cart. It is still there, and this code takes $${off} off it. No minimum.</p>
 ${
   deadline
@@ -1419,9 +1429,9 @@ ${button("Take me back to it", input.recoverUrl, accent)}
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:26px;border-top:1px solid #EEEAE0">
 <tr>
-<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Free shipping</strong>on every order</td>
-<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">30-day returns</strong>no questions</td>
-<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Secure checkout</strong>Apple&nbsp;Pay &amp; card</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${headInk};font-size:13px">Free shipping</strong>on every order</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${headInk};font-size:13px">30-day returns</strong>no questions</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${headInk};font-size:13px">Secure checkout</strong>Apple&nbsp;Pay &amp; card</td>
 </tr></table>
 
 <p style="margin:22px 0 0;font-size:12px;line-height:1.6;color:#A3A79E;text-align:center">
@@ -1482,6 +1492,8 @@ export function previewEmail(
   const brand = brandOf(input);
   const accent = input.accentColor || "#E8B33C";
   const ink = input.brandColor || "#16223A";
+  // Black Reaper's frame is near-black: headings outside the white card must be light there, never the navy of the generic frame.
+  const headInk = input.domain === "blackreaper.us" ? "#F3EEE6" : ink;
   const lines: EmailLine[] = [
     { label: "Garden Buddy + Tool Set", quantity: 1, lineTotalCents: 9999 },
   ];
