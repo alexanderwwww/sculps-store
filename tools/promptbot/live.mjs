@@ -1638,6 +1638,44 @@ function originals(url) {
  * into, and the form or container it sits in. Nothing in the thread above it
  * is counted, whatever URL scheme it uses.
  */
+/**
+ * Say what the composer actually looks like.
+ *
+ * On a new ChatGPT account the composer showed every picture attached while
+ * the app counted none. The counter looks for blob: images inside the
+ * composer, and the page does not have to draw them that way. Rather than
+ * guess at the new markup, this reports the real one -- every image or
+ * background picture near the message box, what it points at, and the
+ * elements it sits inside -- to the board, where it can be read.
+ */
+async function probeComposer(page) {
+  const lines = await page.evaluate((askSelectors) => {
+    let box = null;
+    for (const sel of askSelectors) { box = document.querySelector(sel); if (box) break; }
+    if (!box) return ["probe: no message box found"];
+    const out = [];
+    const b = box.getBoundingClientRect();
+    const name = (el) => el.tagName.toLowerCase() +
+      (el.getAttribute("data-testid") ? `[${el.getAttribute("data-testid")}]` : "") +
+      (typeof el.className === "string" && el.className ? "." + el.className.split(/\s+/).slice(0, 2).join(".") : "");
+    const near = (r) => Math.abs(r.top - b.top) < 520 && r.bottom > b.top - 520;
+    let n = 0;
+    for (const el of document.querySelectorAll("img, video, canvas, [style*='background-image']")) {
+      const r = el.getBoundingClientRect();
+      if (r.width < 24 || r.height < 24 || !near(r)) continue;
+      const src = (el.currentSrc || el.src || el.style.backgroundImage || "").slice(0, 48);
+      const chain = [];
+      for (let p = el.parentElement, i = 0; p && i < 6; p = p.parentElement, i++) chain.push(name(p));
+      out.push(`probe ${name(el)} ${Math.round(r.width)}x${Math.round(r.height)} src=${src} in ${chain.join(" < ")}`);
+      if (++n >= 6) break;
+    }
+    if (!n) out.push("probe: no pictures near the message box");
+    out.push("probe: box " + name(box) + " in " + (() => { const c = []; for (let p = box.parentElement, i = 0; p && i < 6; p = p.parentElement, i++) c.push(name(p)); return c.join(" < "); })());
+    return out;
+  }, site.ask).catch((e) => [`probe failed: ${String(e).slice(0, 80)}`]);
+  for (const l of lines) log(`  \x1b[2m${l}\x1b[0m`);
+}
+
 async function blobCount(page) {
   return page.evaluate(([askSelectors, composerSelectors, threadSelectors]) => {
     let box = null;
@@ -1889,6 +1927,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       }
     }
     if (fresh.length && (!how || landedCount < fresh.length)) {
+      await probeComposer(page);
       log(`  \x1b[31m!! only ${landedCount} of ${fresh.length} reference pictures would attach — NOT sending this one\x1b[0m`);
       await say(label, `${n} of ${total} — references wouldn't attach, skipped`);
       report("waiting for pictures", {
