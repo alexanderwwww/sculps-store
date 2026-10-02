@@ -47,7 +47,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   await requireUser(context.db, request);
   const url = new URL(request.url);
   const { store } = await resolveAdminStore(context.db, url);
-  if (!store) return { store: null, stripe: null, paypal: null, encryption: false, balances: null };
+  if (!store) return { store: null, stripe: null, paypal: null, encryption: false, balances: null, bnpl: null };
 
   const rows = await context.db
     .select()
@@ -56,6 +56,9 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 
   const stripeRow = rows.find((row: typeof rows[number]) => row.provider === "stripe") ?? null;
   const paypalRow = rows.find((row: typeof rows[number]) => row.provider === "paypal") ?? null;
+  /* The second Stripe (Klarna + Affirm). Switched off by renaming the row, so
+     the storefront sees no account and the keys stay saved for switching back. */
+  const bnplRow = rows.find((row: typeof rows[number]) => row.provider === "stripe_bnpl" || row.provider === "stripe_bnpl_off") ?? null;
 
   const stripeSecret = await decryptSecret(context.cloudflare.env, stripeRow?.secretKeyEnc ?? null);
   const paypalSecret = await decryptSecret(context.cloudflare.env, paypalRow?.secretKeyEnc ?? null);
@@ -107,6 +110,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       domain: storeDomain,
       applePayOn: Boolean(storeDomain && applePayDomains?.includes(storeDomain)),
     },
+    bnpl: bnplRow ? { on: bnplRow.provider === "stripe_bnpl" } : null,
     paypal: {
       clientId: paypalRow?.publishableKey ?? "",
       secretMask: maskSecret(paypalSecret),
@@ -136,6 +140,18 @@ export async function action({ context, request }: Route.ActionArgs) {
       .limit(1);
     return row ?? null;
   };
+
+  if (intent === "bnpl-toggle") {
+    const turnOn = text("on") === "1";
+    const from = turnOn ? "stripe_bnpl_off" : "stripe_bnpl";
+    const updated = await context.db
+      .update(paymentProviders)
+      .set({ provider: turnOn ? "stripe_bnpl" : "stripe_bnpl_off" })
+      .where(and(eq(paymentProviders.storeId, store.id), eq(paymentProviders.provider, from)))
+      .returning({ id: paymentProviders.id });
+    if (!updated.length) return { error: "No second Stripe saved for this store." };
+    return { ok: turnOn ? "Klarna and Affirm are on." : "Klarna and Affirm are off. Keys kept." };
+  }
 
   /* ------------------------------------------------------------- stripe */
   if (intent === "stripe-save") {
@@ -282,7 +298,7 @@ function when(iso: string | null) {
 }
 
 export default function Payments({ loaderData }: Route.ComponentProps) {
-  const { store, stripe, paypal, encryption } = loaderData;
+  const { store, stripe, paypal, encryption, bnpl } = loaderData;
   const fetcher = useFetcher<typeof action>();
   const [editStripe, setEditStripe] = useState(false);
   const [editPaypal, setEditPaypal] = useState(false);
@@ -507,6 +523,24 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
             ) : null}
           </div>
         </GlassPanel>
+
+        {bnpl ? (
+          <GlassPanel
+            title="Klarna + Affirm"
+            sub="Second Stripe account. Off hides every Klarna and Affirm button on the store; the keys stay saved."
+            aside={<StateBadge state={bnpl.on ? "on" : "off"} label={bnpl.on ? "On" : "Off"} />}
+          >
+            <div style={glassBody}>
+              <fetcher.Form method="post">
+                <input type="hidden" name="intent" value="bnpl-toggle" />
+                <input type="hidden" name="on" value={bnpl.on ? "0" : "1"} />
+                <PrimaryAction type="submit" disabled={busy}>
+                  {bnpl.on ? "Turn off" : "Turn on"}
+                </PrimaryAction>
+              </fetcher.Form>
+            </div>
+          </GlassPanel>
+        ) : null}
       </GlassGround>
     </div>
   );
