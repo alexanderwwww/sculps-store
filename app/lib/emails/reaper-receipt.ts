@@ -18,10 +18,10 @@ const esc = (v: unknown) => String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&
 const HERO: Record<string, string> = {
   "the-scream": "em-scr-hero.jpg",
   "haunted-projector": "em-hp-ip-s02.jpg",
-  "black-reaper": "em-br-m1-hero.jpg",
-  "crawling-zombie": "em-bw-zombie1.jpg",
-  "halloween-movie-theater": "em-bw-thea1.jpg",
-  "giant-skeleton-12ft": "em-bw-sk1.jpg",
+  "black-reaper": "em-s1-reaper.jpg",
+  "crawling-zombie": "em-s1-zombie.jpg",
+  "halloween-movie-theater": "em-s1-theater.jpg",
+  "giant-skeleton-12ft": "em-s1-skeleton.jpg",
 };
 const SHIP_TITLE: Record<string, string> = { "the-scream": "Up in ninety seconds", "haunted-projector": "Setting it up" };
 
