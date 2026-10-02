@@ -3262,7 +3262,7 @@ function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: str
         </div>
 
         <div className="cb-wrap cb-footer__bar">
-          <span>© 2026 {page.store.name}</span>
+          <span>© 2026 {page.store.name}{page.store.slug === "reaper" ? " · Aigis LLC" : ""}</span>
           <span>{promises(page).join(" · ")}</span>
         </div>
       </footer>
