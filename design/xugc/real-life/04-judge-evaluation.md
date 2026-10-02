@@ -215,3 +215,63 @@ Pairwise tie-break prompt (Stage 2, only when top two totals differ by <4 points
 6. Later: rented-GPU VideoReward/VBench scoring as a second opinion once there are hundreds of takes.
 
 Nothing in this document has been run; the first test is step 1 on real clips.
+
+---
+
+## 10. Spec-compliance check (added on Alex's requirement: "Real life, real life, real life")
+
+The general rubric (sections 3-7) asks "is it good". This section asks "is it exactly what the director specified, and does it obey real physics". It runs in the same Stage 1 call (one vision call, extra fields) so it costs nothing extra in calls. Spec-driven checklists are the VisionReward pattern (many yes/no questions, aggregated): https://arxiv.org/pdf/2412.21059 ; verifying evidence before scoring follows FIRM-Video: https://arxiv.org/pdf/2608.21839 ; physics/commonsense/human-fidelity as separate judged groups follows VBench-2.0: https://arxiv.org/html/2503.21755v2 .
+
+### 10.1 Shot spec fields the director must emit (JSON, every field required, ids stable)
+`product{name, shape, colour, material, label_text, size_vs_hand, reference_image_id}` | `person{count, age_range, gender, hair, skin_tone, wardrobe, identity_ref_id}` | `setting{room, surfaces, props_allowed[], time_of_day, light_direction, light_colour}` | `beats[]{id, t_start, t_end, action, cause, effect, camera, sound}` | `speech{line, language, start_beat, voice}` | `text_rules{allowed_text[], captions:false|true, watermark:false}` | `forbidden[]` (default list in 10.4) | `duration`.
+Every beat must name a physical cause for every movement (hand pushes lid, lid moves). A beat with an effect and no cause is rejected by the director before rendering.
+
+### 10.2 How each field is verified (frames and yes/no questions)
+Frames: the 10 standard frames (section 4) are replaced by spec-driven sampling: F1 (t=0.1s), one frame at the START and one at the END of every beat (t_start+0.1s, t_end-0.1s), plus 2 hand close-ups at the beat that touches the product, plus the last frame (duration-0.1s). For a 3-beat 15 s ad that is about 10-12 frames; cap 14. Audio: transcript with word timestamps and per-beat loudness/silence from ffmpeg (Stage 0), mapped to beat windows.
+
+| Field | Frames | Questions (answer YES / NO / NOT_VISIBLE, each with frame id) |
+|---|---|---|
+| product.shape/colour/material | all frames where product visible | Is the product the same shape as the reference in every visible frame? Is the colour within the same hue family as the reference? Any part added, missing, or changed size between frames? |
+| product.label_text | product close-up frames | Is any text on the product legible, and does it equal label_text exactly? Is any other text present? |
+| product.size_vs_hand | hand close-ups | Is the product's size relative to the hand within the spec ratio? |
+| person.count | every frame | Count visible people (including reflections, photos, background figures). Equals spec count? Any extra person at any time? |
+| person.attributes/identity | F1, mid, last | Same person in first, middle, last frame (face shape, hair, skin tone, wardrobe unchanged)? Matches identity ref? |
+| setting | F1, mid, last | Same room and same props throughout? Any prop not in props_allowed or prop appearing/disappearing between frames? Light direction and colour consistent? |
+| beats | start/end frame pair per beat | Is the beat's action completed between the start and end frames? Did the stated cause occur before the stated effect (see 10.3)? |
+| sound per beat | audio facts + transcript | Is the specified sound present in that window (for example "lid click" = a transient)? Any unspecified music? |
+| speech | transcript + 3 mouth frames at word onsets | Does the transcript equal the line word for word (edit distance <= 10%)? Does speech start inside the specified beat? Is the mouth open at word onsets? |
+| text_rules | every frame | Any caption, subtitle, watermark, logo or sign text not in allowed_text? |
+| forbidden | every frame + transcript | Any item from the forbidden list present? |
+| duration | ffprobe | Within 10% of spec? |
+
+### 10.3 Physics and "real life" questions (every beat pair)
+1. Does any object change position between consecutive frames with no visible hand, body or force contacting it? (movement without cause)
+2. Does any object appear, vanish, multiply, change size, or change colour between frames?
+3. Do hands grip the product with plausible contact (fingers wrap or press, no hover, no pass-through)?
+4. Does liquid, fabric, hair respond in the right direction to the action (gravity, momentum)?
+5. Do shadows and highlights keep the spec'd light direction as the object moves?
+6. Is the camera motion handheld-plausible (small continuous drift) rather than gliding, teleporting or snap-zooming?
+7. Is the pace of the action human (no instant completion of a multi-second action)?
+Any YES to 1, 2 (or NO to 3) is a physics hard-fail `PHYSICS` with the beat id.
+
+### 10.4 Spec hard-fail codes (added to section 3)
+`WRONG_PRODUCT`, `EXTRA_PERSON` (person count differs at any frame), `TEXT_OR_CAPTION` (any text not allowed; includes subtitles and watermarks), `HANDS`, `FACE`, `PHYSICS`, `SETTING_DRIFT` (props or room change), `SPEECH_MISMATCH` (>10% word edit distance or wrong beat), `FORBIDDEN`, `UNSAFE` (hateful, cult-like or occult symbols, ritual or group-chant imagery, sexual, violent, real-celebrity likeness). Default forbidden list: logos of other brands, extra people, captions, music, text overlays, mirrors showing a second person, pets unless specified, medical/health claims.
+
+### 10.5 Reporting the failing field so the prompt repairs itself
+Judge returns, in addition to section 7 JSON:
+```
+"spec_check":[{"field":"beats[2].action","verdict":"FAIL","frames":["F6","F7"],
+               "observed":"lid is open in F6 with no hand touching it",
+               "expected":"hand presses lid closed, then lid is closed",
+               "code":"PHYSICS","repair":"add to beat 2: 'her thumb visibly presses the lid down before it closes'"}]
+```
+Rules: `field` is the spec path, so the app maps it to the exact prompt sentence generated from that field. `observed` must cite a frame. Repair strategy by code: PHYSICS/beat fails -> make the cause explicit and slower in that beat's sentence; EXTRA_PERSON -> add "only one person in the frame, no one else visible, empty background" and move to forbidden; TEXT_OR_CAPTION -> add "no text, no captions, no logos anywhere"; WRONG_PRODUCT -> attach reference image again and restate shape/colour/label first in the prompt; SETTING_DRIFT -> shorten the shot or lock the prop list; SPEECH_MISMATCH -> shorten the line. The app edits only the failing field's sentence, never rewrites the whole prompt, so passing fields stay passing. Repairs are logged as candidate Style Bible rules (section 8.3).
+
+### 10.6 Retry policy and cost cap
+- Per shot: round 1 = 3 models in parallel (section 6). Judge all.
+- Pass = no hard fail and total >= 70 and all `spec_check` fields PASS.
+- If no model passes: repair loop 1: apply the repairs to the best-scoring model's prompt AND to the second best (2 takes). Judge.
+- Still failing: repair loop 2: 2 takes on the single model with fewest failing fields. Judge.
+- Max 2 repair loops, max 7 generations per shot total. After that, the app stops and shows Alex the best take with the exact failing fields in plain language ("hands are fused in the middle beat"), and offers one button: "Try 2 more" or "Accept". It never loops silently past the cap.
+- Cost cap: per-shot budget set in Settings (default = 7 generations at the cheapest model prices). The app shows the running cost on the render screen and stops at the cap. A spec that fails identically on the same field in both loops is a spec problem; flag the field to the director to simplify it instead of burning takes.
+- The same failing field on 3 different shots logs a Style Bible rule proposal (section 8.3).
