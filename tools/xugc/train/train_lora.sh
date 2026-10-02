@@ -56,16 +56,48 @@ PY
   cd LTX-2
   ls packages 2>/dev/null | tee "$OUT/layout.txt"
   uv run python packages/ltx-trainer/scripts/process_dataset.py --help > "$OUT/help.txt" 2>&1 || true
-  uv run python packages/ltx-trainer/scripts/process_dataset.py "$IN/dataset.json" --resolution-buckets "544x960x49" --model-path "$M" --output-dir "$W/pre" --lora-trigger "$TRIGGER" 2>&1 | tee -a "$OUT/train.log"
+  # Flags below are from the trainer's own source (packages/ltx-trainer/scripts/process_dataset.py): the model, text encoder and both VAEs are FILES of the split pack.
+  TX="$M/diffusion_models/ltx-2.5-22b-dev-transformer-bf16.safetensors"; TE="$M/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors"
+  VV="$M/vae/ltx-2.5-video-vae-bf16.safetensors"; AV="$M/vae/ltx-2.5-audio-vae-bf16.safetensors"
+  uv run python packages/ltx-trainer/scripts/process_dataset.py "$IN/dataset.json" --resolution-buckets "544x960x49" \
+    --model-path "$TX" --text-encoder-path "$TE" --video-vae-path "$VV" --audio-vae-path "$AV" --output-dir "$W/pre" --lora-trigger "$TRIGGER" --overwrite 2>&1 | tee -a "$OUT/train.log"
   if [ "$DRY" = "1" ]; then ST=60; else ST="${STEPS:-2000}"; fi
   SCHED=linear; CK=250; if [ "$BUDGET" = "1" ]; then SCHED=constant; CK=100; ST=4000; fi
   cat > "$W/ltx_lora.yaml" <<YML
-model: {model_path: "$M", training_mode: lora}
-lora: {rank: 32, alpha: 32, dropout: 0.0, target_modules: [to_k, to_q, to_v, to_out.0]}
-optimization: {learning_rate: 1.0e-4, steps: $ST, batch_size: 1, optimizer_type: adamw, scheduler_type: $SCHED, enable_gradient_checkpointing: true}
-data: {preprocessed_data_root: "$W/pre"}
-training_strategy: {name: flexible, video: {is_generated: true}, audio: {is_generated: true}}
-checkpoints: {interval: $CK, keep_last_n: 3}
+model:
+  model_path: "$TX"
+  text_encoder_path: "$TE"
+  video_vae_path: "$VV"
+  audio_vae_path: "$AV"
+  training_mode: "lora"
+lora:
+  rank: 32
+  alpha: 32
+  dropout: 0.0
+  target_modules: ["to_k", "to_q", "to_v", "to_out.0"]
+training_strategy:
+  name: "flexible"
+  video: {is_generated: true, latents_dir: "latents"}
+  audio: {is_generated: true, latents_dir: "audio_latents"}
+optimization:
+  learning_rate: 1e-4
+  steps: $ST
+  batch_size: 1
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  optimizer_type: "adamw"
+  scheduler_type: "$SCHED"
+  enable_gradient_checkpointing: true
+acceleration:
+  mixed_precision_mode: "bf16"
+  quantization: null
+  load_text_encoder_in_8bit: false
+data:
+  preprocessed_data_root: "$W/pre"
+  num_dataloader_workers: 2
+checkpoints:
+  interval: $CK
+  keep_last_n: 3
 output_dir: "$OUT/ckpt"
 YML
   trainrun uv run python packages/ltx-trainer/scripts/train.py "$W/ltx_lora.yaml"

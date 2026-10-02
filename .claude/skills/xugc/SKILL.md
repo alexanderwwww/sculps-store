@@ -104,3 +104,9 @@ Written into the app as `assets/style/realism-rules.md` (the top part goes into 
 
 ## THE RULE (Alex, 2026-10-02, after the second wasted training run)
 Never guess. Inspect and investigate first: read the real source / --help of every tool (LTX trainer, musubi, RunPod, yt-dlp), validate configs against the tool's own validator where it runs here, and only then spend his money. The LTX run died because `process_dataset.py` needs --model-path (the transformer FILE), --text-encoder-path, --video-vae-path and --audio-vae-path; I had passed a folder and left three out. See AGENTS.md rule 15.
+
+## Build 11 (2026-10-02): the LTX flags, from the source
+- Failure seen in the Build 10 report (the visible report worked): `process_dataset.py` "Missing option '--text-encoder-path'". Captioning had passed (100 rows) and the model had downloaded.
+- Read packages/ltx-trainer/scripts/process_dataset.py and src/ltx_trainer/config.py. Required for the split pack: --model-path = the transformer FILE (not the folder), --text-encoder-path = the packed gemma FILE, --video-vae-path and --audio-vae-path (files), --resolution-buckets "WxHxF" (544x960x49 is portrait). Dataset paths are relative to the dataset file's folder. Outputs: latents/, audio_latents/, conditions/ under --output-dir; train.py reads data.preprocessed_data_root.
+- Verified here (no GPU): the YAML the script writes passes ltx_trainer's own LtxTrainerConfig; process_dataset.py with these flags runs past argument parsing and only stops at the (empty placeholder) checkpoint. 80 GB (H100) is the trainer's own recommendation for the standard (non-quantized) config.
+- NOT verified: everything after preprocessing on a real GPU (train.py run, checkpoint file names, speed), and the whole Wan / Hunyuan branches (musubi flags have not been read from source; do not run them until they have been).

@@ -15,7 +15,7 @@ const { fetchProduct } = require("./product.js");
 const { Bridge } = require("./bridge.js");
 const { Collector, parseLinks } = require("./collect.js");
 
-const BUILD = 10;
+const BUILD = 11;
 const LATEST_NOTE = "";
 
 function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch, collector: collectorIn, backupDir }) {
