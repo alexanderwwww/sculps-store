@@ -18,6 +18,8 @@ Gathered from the reports of: the preset-library, filter, engines, realism/lesso
 | D11 | **Filter never cuts timed actions**; over-cap prompts lose adjectives and SFX first; "no zoom" bans are not camera moves | filter specialist + build-12 inspector | actions are the direction |
 | D12 | **Adults only** in every prompt (no teen/child faces) | filter MINOR_FACE | safety + policy |
 
+| D13 | **No 'BREAKING NEWS' caption or news framing by default** (Alex, 2026-10-02: "this breaking news looks fake"). The hook is the real neighbours' reaction; add a news caption only if he asks | breaking-news.md style chip and the breaking-news preset | it reads as an ad; real reactions carry the trust |
+
 ## B. Open items (verify before relying on them)
 1. **Kling:** MCP prompt cap and per-call credit cost [UNVERIFIED]; fal Kling gets 9:16 from the start image [UNVERIFIED]; the account showed 0 credits on the MCP but 66 + 3 free 1080p trials on the web.
 2. **fal:** Veo reference-image count, Wan 3.0 max duration and prompt cap, Seedance 2.0 fast 480p price, Seedance audio notation per route, reference-strength exposure, minimum top-up and spend limits, Nano Banana "9:16" works in code but is absent from the schema enum.
