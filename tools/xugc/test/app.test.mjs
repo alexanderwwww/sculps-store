@@ -57,6 +57,17 @@ const worker = http.createServer((q, s) => {
     send({}, 404);
   });
 });
+const G = { images: 0, clips: [], productB64: Buffer.alloc(4000, 7).toString("base64") };
+const PNG = Buffer.from("89504e470d0a1a0a0000000d49484452", "hex");
+const googleFetch = async (url, init = {}) => {
+  const j = (o) => ({ ok: true, status: 200, text: async () => JSON.stringify(o), arrayBuffer: async () => Buffer.from(JSON.stringify(o)) });
+  if (url.includes("/models?")) return j({ models: [{ name: "models/veo-3.1-lite-generate-preview" }] });
+  if (url.endsWith("/interactions")) { G.images++; return j({ steps: [{ type: "model_output", content: [{ type: "image", mime_type: "image/png", data: Buffer.concat([PNG, Buffer.from("frame" + G.images)]).toString("base64") }] }] }); }
+  if (url.endsWith(":predictLongRunning")) { G.clips.push(JSON.parse(init.body)); return j({ name: "operations/op" + G.clips.length }); }
+  if (url.includes("operations/op")) return j({ done: true, response: { generateVideoResponse: { generatedSamples: [{ video: { uri: "https://g.test/v.mp4" } }] } } });
+  if (url.includes("g.test/v.mp4")) { const b = fs.readFileSync(${JSON.stringify(fixture)}); return { ok: true, status: 200, text: async () => "", arrayBuffer: async () => b }; }
+  return { ok: false, status: 404, text: async () => "nope" };
+};
 app.whenReady().then(async () => {
   try {
     await new Promise((r) => worker.listen(0, r));
@@ -65,7 +76,7 @@ app.whenReady().then(async () => {
     const collectorStub = { pile: "/tmp/xugc-pile", count() { return { videos: stubSrc.length, pieces: stubSrc.reduce((n, x) => n + x.pieces.length, 0) }; }, sources() { return stubSrc; }, remove() { return 0; },
       async all(items, onP) { let n = 0; for (let i = 0; i < Math.min(4, items.length); i++) { onP({ n: i + 1, of: items.length, id: items[i].id, creator: items[i].creator, state: "working" }); await new Promise((r) => setTimeout(r, 80)); stubSrc.push({ id: items[i].id, creator: items[i].creator, place: items[i].place, category: items[i].category, sound: items[i].sound, pieces: [{ file: "01.mp4", db: -20 }, { file: "02.mp4", db: -22 }, { file: "03.mp4", db: -19 }] }); n += 3; onP({ n: i + 1, of: items.length, id: items[i].id, creator: items[i].creator, state: "ok", pieces: 3, totals: this.count() }); } return { done: 4, skipped: 0, failed: [], pieces: n }; } };
     const prodStub = async (url) => ({ url, title: "Haunted Projector", desc: "Plug-in ghost projector for windows", price: "79.99", currency: "USD", images: [IMG(1), IMG(2), IMG(3)] });
-    const sys = setup({ dir: ${JSON.stringify(join(home, "data"))}, makeRunPod: (o) => new FakeRunPod(o), sweepOnStart: false, bridgeBase: "http://127.0.0.1:" + worker.address().port, bridgeMs: 250, productFetch: prodStub, collector: collectorStub });
+    const sys = setup({ googleFetch, dir: ${JSON.stringify(join(home, "data"))}, makeRunPod: (o) => new FakeRunPod(o), sweepOnStart: false, bridgeBase: "http://127.0.0.1:" + worker.address().port, bridgeMs: 250, productFetch: prodStub, collector: collectorStub });
     const win = new BrowserWindow({ width: 1280, height: 820, show: true, backgroundColor: "#07080A", webPreferences: { preload: path.join(${JSON.stringify(here)}, "preload.js"), contextIsolation: true, nodeIntegration: false, sandbox: false } });
     const errors = [];
     win.webContents.on("console-message", (_e, level, msg) => { if (level >= 3) errors.push(msg); });
@@ -79,6 +90,8 @@ app.whenReady().then(async () => {
     const click = (sel) => run("document.querySelector(" + JSON.stringify(sel) + ").click()");
 
     say(await until("document.querySelector('#modechip').textContent.includes('NO RUNPOD KEY')"), "with no key, the header says so in plain words");
+    say(await until("document.querySelector('#nokey').style.display === 'block' && document.querySelector('#nokey').textContent.includes('Google')"), "Create opens on Real Life (Veo) and asks for the Google key first");
+    await run("document.querySelectorAll('#engines button')[1].click()"); await new Promise((r) => setTimeout(r, 400));
     say(await until("document.querySelector('#nokey').style.display === 'block' && document.querySelector('#nokey').textContent.includes('RunPod')"), "Create tells him what is missing before anything else");
     say((await run("getComputedStyle(document.querySelector('.brand img')).width")) === "20px", "the logo in the header is small (20px) and is the real icon file", await run("document.querySelector('.brand img').getAttribute('src')"));
     say(await run("document.querySelectorAll('#nav button').length") === 5 && (await run("document.querySelector('#nav').textContent")).includes("MCP"), "there is an MCP section in the navigation");
@@ -264,7 +277,7 @@ app.whenReady().then(async () => {
 
     await view("train");
     await click("#linkstarter");
-    say((await run("document.querySelector('#linkbox').value")).includes("tiktok.com/@itsmodernmillie") && (await run("document.querySelector('#linkbox').value.split('\\\\n').filter(Boolean).length")) >= 59, "Load the starter list puts ChatGPT's 59 links in the box");
+    say(await until("document.querySelector('#linkbox').value.includes('tiktok.com/@itsmodernmillie') && document.querySelector('#linkbox').value.split(String.fromCharCode(10)).filter(Boolean).length >= 59"), "Load the starter list puts ChatGPT's 59 links in the box");
     await click("#collectgo");
     say(await until("document.querySelector('#colstat').textContent.includes('Finished. 4 new videos, 12 new pieces')", 8000), "Collect runs by itself and reports what it got", await run("document.querySelector('#colstat').textContent"));
     say(await until("document.querySelector('#collectgo').style.display !== 'none'", 3000), "…and the Collect button comes back when it is done");
@@ -291,9 +304,28 @@ app.whenReady().then(async () => {
     say(tl2 && tl2.env.MODEL === "ltx" && tl2.env.BUDGET === "1" && tl2.env.DRY === "0", "the GPU was told: LTX, budgeted, not a dry run");
     say((await run("document.querySelector('#trreport').style.display")) !== "none" && (await run("document.querySelector('#trreport').textContent")).includes("LAST TRAINING"), "the Train tab shows a report of the last training", await run("document.querySelector('#trreport').textContent.slice(0,90)"));
     await view("create");
-    say((await run("document.querySelectorAll('#engines button').length")) === 4, "Create has an engine switch with four engines");
+    say((await run("document.querySelectorAll('#engines button').length")) === 5, "Create has an engine switch with five engines, Real Life (Veo) first");
     await run("document.querySelectorAll('#reallife button')[1].click()");
     say((await run("document.querySelectorAll('#reallife button')[1].disabled")) === false && (await run("document.querySelector('#rlnote').textContent")).includes('your trained file'), "with an LTX XUGC Real Life file trained, the Real Life switch on Create is available", await run("document.querySelector('#rlnote').textContent"));
+    // ---- Real Life on Google: key, preset, hidden frames, clips, one video; product photos never reach Veo ----
+    await view("settings");
+    await type("#gin", "AIzaFAKEKEY1234567890"); await click("#gsave");
+    say(await until("document.querySelector('#gstate').textContent.includes('7890')"), "the Google key saves, is tested with Google, and shows only its last 4", await run("document.querySelector('#gstate').textContent"));
+    await view("create");
+    await run("document.querySelectorAll('#engines button')[0].click()"); await new Promise((r) => setTimeout(r, 400));
+    say(await until("document.querySelector('#vrow').style.display !== 'none' && document.querySelectorAll('#presets button').length >= 8"), "Real Life shows the presets (8) and the Veo tier", await run("[...document.querySelectorAll('#presets button')].map(b=>b.textContent).join(', ')"));
+    await run("[...document.querySelectorAll('#presets button')].find(b=>/news/i.test(b.textContent)).click()"); await new Promise((r) => setTimeout(r, 300));
+    say(/[$][01][.]/.test(await run("document.querySelector('#goest').textContent")), "the button shows the Google price (about a dollar), not the GPU price", await run("document.querySelector('#goest').textContent"));
+    await type("#script", "A woman on a busy street in Athens shows the garden kneeler.");
+    await run("window.xugc.setSettings({ capJob: 5, capDay: 50 })"); await run("window.xugc.get()");
+    G.images = 0; G.clips = []; await click("#go");
+    say(await until("window.xugc.get().then((v) => v.state.takes[0] && /Veo/.test(v.state.takes[0].model) && v.state.takes[0].audio)", 20000), "the Veo ad finishes, is saved as a take with sound, and appears in the takes", await run("window.xugc.get().then((v) => JSON.stringify({ model: v.state.takes[0].model, cost: v.state.takes[0].cost, seconds: v.state.takes[0].seconds }))"));
+    say(await run("document.querySelectorAll('#takes video, #takes .take').length") >= 1, "the takes column shows it");
+    say(G.images >= 2 && G.clips.length >= 1 && G.images === G.clips.length + 1, "hidden frames = clips + 1, each clip between two frames", G.images + " frames, " + G.clips.length + " clips");
+    say(G.clips.every((b) => b.instances[0].image && b.instances[0].lastFrame && !b.instances[0].referenceImages), "every Veo clip got a first and last frame and no product photos");
+    say(G.clips.every((b) => !JSON.stringify(b).includes(G.productB64)), "no raw product photo was ever sent to Veo (only to the image model)");
+    say(G.clips.every((b) => /natural hands/.test(b.instances[0].prompt) && !/cinematic|8K/i.test(b.instances[0].prompt)), "every clip prompt passed the filter: hands rule in, cinematic words out");
+    say(G.clips.length < 2 || G.clips[0].instances[0].prompt !== G.clips[1].instances[0].prompt, "clip 2 continues the story, it does not repeat clip 1");
     say(errors.length === 0, "no errors in the page console", errors.join(" | ").slice(0, 300));
   } catch (e) { say(false, "the probe crashed", String(e && e.stack || e)); }
   console.log("@@RESULT@@" + JSON.stringify(out));

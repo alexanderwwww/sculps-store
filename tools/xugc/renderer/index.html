@@ -128,7 +128,9 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
    <div class="sec"><div class="lab">4 · LENGTH</div><div class="seg" id="secs"></div></div>
    <div class="sec"><div class="lab">5 · QUALITY</div><div class="seg" id="quals"></div></div>
    <div class="sec"><div class="lab">ENGINE <i id="engnote">LTX-2.5 fast, with sound</i></div><div class="seg" id="engines"></div>
-    <div class="seg" id="reallife" style="margin-top:8px"><button data-v="0" class="on">Real Life off</button><button data-v="1">XUGC Real Life on</button></div><div class="found" id="rlnote">Real Life is the look trained from real phone footage. Train it in the Train tab.</div></div>
+    <div class="seg" id="reallife" style="margin-top:8px"><button data-v="0" class="on">Real Life off</button><button data-v="1">XUGC Real Life on</button></div><div class="found" id="rlnote">Real Life is the look trained from real phone footage. Train it in the Train tab.</div>
+    <div id="vrow"><div class="lab" style="margin-top:12px">PRESET <i id="presetnote"></i></div><div class="seg" id="presets"></div>
+    <div class="lab" style="margin-top:10px">VEO <i>Lite ≈ $0.40 per 8 s · Fast ≈ $0.80 · plus $0.07 per hidden frame</i></div><div class="seg" id="tiers"></div></div></div>
    <div class="gobar"><button class="go" id="go">Generate <span id="goest">…</span></button><div class="err" id="err"></div>
     <div class="note" style="margin-top:8px">Each video rents a GPU just for that video and hands it back. The price shown is the most it can cost.</div></div>
   </div>
@@ -186,6 +188,8 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
 
  <section class="view" id="v-settings"><div class="page"><h1>Settings</h1><p class="sub">Spending limits are enforced by the app itself. A job over a limit is refused before anything is rented, and a running job is stopped when it reaches its limit.</p>
   <div class="fld"><label>RUNPOD KEY</label><div class="keyrow"><input type="password" id="keyin" placeholder="rpa_…" autocomplete="off"><button class="btn" id="keysave">Save and test</button></div><div class="ok" id="keystate"></div><div class="err" id="keyerr"></div></div>
+  <div class="fld"><label>GOOGLE KEY (VEO + HIDDEN FRAMES)</label><div class="keyrow"><input type="password" id="gin" placeholder="AIza…" autocomplete="off"><button class="btn" id="gsave">Save</button></div><div class="ok" id="gstate"></div><div class="note">Google AI Studio → Get API key. Billing: prepay $5, monthly cap $10. One key makes the hidden frames and the Veo video. It stays on this Mac.</div><div class="err" id="gerr"></div></div>
+  <div class="fld"><label>BYTEPLUS (SEEDANCE) · KLING</label><div class="note">Their boxes arrive with the build that adds those engines, after Veo passes its first test.</div></div>
   <div class="fld"><label>HUGGING FACE TOKEN (READ)</label><div class="keyrow"><input type="password" id="hfin" placeholder="hf_…" autocomplete="off"><button class="btn" id="hfsave">Save</button></div><div class="ok" id="hfstate"></div><div class="note">Free. The LTX model is gated: make a Hugging Face account, open huggingface.co/Lightricks/LTX-2.5 and accept the terms, then make a Read token.</div><div class="err" id="hferr"></div></div>
   <div class="fld"><label>STOP THE METER</label><div class="row"><button class="btn" id="sweep">Stop every XUGC GPU now</button></div><div class="note" id="sweepnote">Every GPU also deletes itself at its deadline, even if this app is closed.</div></div>
   <div class="fld"><label>MOST PER VIDEO ($)</label><input type="number" id="cap-job" min="0" step="0.5"></div>

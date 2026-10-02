@@ -16,6 +16,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { RunPod, WORST_HOURLY } = require("./runpod.js");
 const { QUALITY, SECONDS } = require("./compose.js");
+const { estimate: adEstimate } = require("./google.js");
+const { makeAd } = require("./ad.js");
 
 const today = () => new Date().toISOString().slice(0, 10);
 const r2 = (n) => Math.round(n * 100) / 100;
@@ -65,7 +67,8 @@ const SCRIPTS = { ltx: "generate.sh", ltx_full: "gen_ltx_full.sh", hunyuan: "gen
 
 class Engine {
   /** @param {{store, dir: string, secrets: {get():string}, hf: {get():string}, makeRunPod?: (o:object)=>RunPod}} o */
-  constructor({ store, dir, secrets, hf, makeRunPod, fetchImpl, backupDir }) {
+  constructor({ store, dir, secrets, hf, makeRunPod, fetchImpl, backupDir, google, ffmpeg }) {
+    this.google = google; this.ffmpeg = ffmpeg;
     this.backupDir = backupDir || "";
     this.store = store; this.dir = dir; this.secrets = secrets; this.hf = hf;
     this.makeRunPod = makeRunPod || ((o) => new RunPod(o));
@@ -132,6 +135,36 @@ class Engine {
     finally { this.addSpend(spent); this.job = null; }
   }
   /**
+   * An ad on Google's API (Veo + landmark pictures). Same money rules as the GPU: caps checked before anything is paid, spend always counted.
+   * @param {{scene: string, seconds: number, tier?: string, refs?: {bytes: Buffer, mime?: string}[], meta?: object}} job
+   */
+  async generateAd(job, emit) {
+    const st = this.store.read();
+    if (this.job) { const e = new Error("A job is already running. Wait for it, or press Stop."); e.code = "busy"; throw e; }
+    if (!this.google) throw new Error("Google is not set up in this build.");
+    const scene = String(job.scene || "").trim();
+    if (scene.length < 20) throw new Error("Write what happens in the video (a sentence or two).");
+    const seconds = Number(job.seconds) || 16, tier = job.tier || "lite";
+    const est = adEstimate({ seconds, tier });
+    const why = checkCaps(st.settings, st.spent, est.usd);
+    if (why) { const e = new Error(why); e.code = "cap"; throw e; }
+    this.google.hdr(); // no key = clear message before anything starts
+    const id = `take-${Date.now()}`;
+    this.job = { kind: "generate", signal: { cancelled: false } };
+    let spent = 0;
+    try {
+      const dir = path.join(this.dir, "work", id);
+      const pct = { pictures: 10, making: 40, finishing: 92 };
+      const r = await makeAd({ google: this.google, ffmpeg: this.ffmpeg, dir, scene, imageScene: job.imageScene, clipPrompts: job.clipPrompts, seconds, tier, refs: job.refs || [], signal: this.job.signal,
+        onStage: (p) => { spent = p.usd || spent; if (emit) emit({ id, stage: p.stage === "pictures" ? `making hidden frame ${p.step} of ${p.of}` : p.stage === "making" ? `making clip ${p.step} of ${p.of}` : "finishing", pct: pct[p.stage] + (p.step ? Math.round(((p.step - 1) / p.of) * 40) : 0), costUsd: spent }); } });
+      spent = r.usd;
+      const video = path.join(this.dir, "takes", `${id}.mp4`);
+      fs.copyFileSync(r.file, video);
+      return { id, at: Date.now(), cost: r2(r.usd), prompt: scene, ...(job.meta || {}), seconds: r.clips * 8, quality: "720p", model: "Real Life · Veo " + tier, audio: true, video, poster: null, verdict: null, landmarks: r.landmarks };
+    } catch (e) { spent = Math.max(spent, e.costUsd || 0); e.costUsd = spent; throw e; }
+    finally { this.addSpend(spent); this.job = null; }
+  }
+  /**
    * Train one "XUGC Real Life" LoRA from the pile. Same money rules: day cap checked first, GPU deleted at the end, whatever it cost is counted.
    * @param {{model: "ltx"|"hunyuan"|"wan", dry?: boolean, pieces: {file: string, meta: object}[]}} job
    */
@@ -185,4 +218,4 @@ class Engine {
   }
 }
 
-module.exports = { Engine, estimateTrain, estimateGenerate, checkCaps, pctFor, today, RENDER_MIN };
+module.exports = { Engine, adEstimate, fetchImage, estimateTrain, estimateGenerate, checkCaps, pctFor, today, RENDER_MIN };

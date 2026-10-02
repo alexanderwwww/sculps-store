@@ -9,29 +9,35 @@ const path = require("node:path");
 const fs = require("node:fs");
 const { Store } = require("./store.js");
 const { Secrets } = require("./secrets.js");
-const { Engine, estimateGenerate, estimateTrain, today } = require("./engine.js");
+const { Engine, estimateGenerate, estimateTrain, today, fetchImage } = require("./engine.js");
 const { Style, compose, parseCaption, LEVELS, LOOKS, AVATARS, QUALITY, SECONDS, NAME } = require("./compose.js");
 const { fetchProduct } = require("./product.js");
 const { Bridge } = require("./bridge.js");
 const { Collector, parseLinks } = require("./collect.js");
+const { Google, estimate: adEstimate, VEO } = require("./google.js");
+const presets = require("./presets.js");
+let filter = null; try { filter = require("./filter.js"); } catch { /* arrives with the filter */ }
 
-const BUILD = 11;
+const BUILD = 12;
 const LATEST_NOTE = "";
 
-function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch, collector: collectorIn, backupDir }) {
+function setup({ dir, googleFetch, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch, collector: collectorIn, backupDir }) {
   const store = new Store(dir);
   const secrets = new Secrets(dir, safe, "runpod");
   const hf = new Secrets(dir, safe, "hf");
-  const engine = new Engine({ store, dir, secrets, hf, makeRunPod, fetchImpl: bridgeFetch, backupDir });
+  const gkey = new Secrets(dir, safe, "google");
+  const google = new Google({ key: () => gkey.get(), fetchImpl: googleFetch });
+  // yt-dlp and ffmpeg ship inside the app (Contents/Resources/bin); tests and the repo use ./bin
+  const binDir = fs.existsSync(path.join(process.resourcesPath || "", "bin")) ? path.join(process.resourcesPath, "bin") : path.join(__dirname, "bin");
+  const mac = process.platform === "darwin";
+  const ffmpegBin = path.join(binDir, mac ? "ffmpeg-darwin-x64" : "ffmpeg-linux-x64");
+  const engine = new Engine({ store, dir, secrets, hf, makeRunPod, fetchImpl: bridgeFetch, backupDir, google, ffmpeg: ffmpegBin });
   // Alex's personal copy ships with his keys in seed.json (never in git). Only used when no key is saved yet.
   try { const seed = JSON.parse(fs.readFileSync(path.join(__dirname, "seed.json"), "utf8")); if (seed.runpod && !secrets.get()) secrets.set(seed.runpod); if (seed.hf && !hf.get()) hf.set(seed.hf); } catch { /* a copy without keys */ }
   const style = new Style(path.join(dir, "style"), path.join(__dirname, "assets", "style"));
   const clipsDir = path.join(dir, "clips");
   fs.mkdirSync(clipsDir, { recursive: true });
-  // yt-dlp and ffmpeg ship inside the app (Contents/Resources/bin); tests and the repo use ./bin
-  const binDir = fs.existsSync(path.join(process.resourcesPath || "", "bin")) ? path.join(process.resourcesPath, "bin") : path.join(__dirname, "bin");
-  const mac = process.platform === "darwin";
-  const collector = collectorIn || new Collector({ dir, ffmpeg: path.join(binDir, mac ? "ffmpeg-darwin-x64" : "ffmpeg-linux-x64"), ytdlp: path.join(binDir, mac ? "yt-dlp_macos" : "yt-dlp_linux") });
+  const collector = collectorIn || new Collector({ dir, ffmpeg: ffmpegBin, ytdlp: path.join(binDir, mac ? "yt-dlp_macos" : "yt-dlp_linux") });
   let collecting = null; // {signal, last}
   let progress = null; // the last progress line, for the status board
   let bridge = null;
@@ -40,7 +46,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
   const view = () => {
     const s = store.read();
     return {
-      state: s, build: BUILD, keySet: !!secrets.get(), keyTail: secrets.tail(), hfSet: !!hf.get(), hfTail: hf.tail(), busy: engine.status(),
+      state: s, build: BUILD, keySet: !!secrets.get(), keyTail: secrets.tail(), hfSet: !!hf.get(), hfTail: hf.tail(), googleSet: !!gkey.get(), googleTail: gkey.tail(), presets: presets.list(), veo: Object.fromEntries(Object.entries(VEO).map(([k, v]) => [k, v.label])), busy: engine.status(),
       looks: Object.keys(LOOKS), avatars: Object.keys(AVATARS), qualities: Object.fromEntries(Object.entries(QUALITY).map(([k, v]) => [k, v.label])), seconds: Object.keys(SECONDS).map(Number),
       style: style.list(s.styleOff), levels: LEVELS, usedToday: s.spent.day === today() ? s.spent.usd : 0, pile: collector.count(), lastTrain: s.lastTrain || null, loras: s.loras || [], collecting: collecting ? { last: collecting.last } : null,
       mcp: { on: s.settings.mcpOn, url: bridge ? bridge.url() : new Bridge({ getStatus() {}, onOrder() {} }).url(), connected: !!(bridge && bridge.connected), lastOk: bridge ? bridge.lastOk : 0, claudeSeen: bridge && bridge.mcpSeen ? bridge.mcpSeen.at : 0, log: bridge ? bridge.log : [] },
@@ -69,8 +75,19 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     const scene = String(spec.scene || "").trim(), given = String(spec.prompt || "").trim();
     if (!given && scene.length < 10) throw new Error("Write what happens in the video (a sentence or two).");
     const seconds = Number(spec.seconds) || 15, quality = spec.quality || "hd";
+    if (spec.engine === "veo") {
+      // the preset recipe writes the scene; the filter checks it before any money moves
+      const n = Math.max(1, Math.ceil(seconds / 8));
+      const pc = presets.clips(spec.preset || "review", { product: product ? { title: product.title, features: product.features || [] } : null, avatarText: spec.avatarText || "", scene }, n);
+      const parts = given ? given.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean) : null;
+      let clipPrompts = parts ? (parts.length === n ? parts : Array(n).fill(parts.join(" "))) : pc.clips;
+      if (filter) clipPrompts = clipPrompts.map((p, i) => { const c = filter.check(p, "veo"); if (!c.ok) throw new Error(`The prompt filter stopped clip ${i + 1} before any money was spent: ` + c.problems.filter((q) => q.severity === "block").map((q) => q.text).join(" ")); return c.prompt; });
+      const veoScene = clipPrompts.join("\n\n");
+      const est = { ...adEstimate({ seconds, tier: spec.tier || "lite" }), minutes: 3 * Math.ceil(seconds / 8) };
+      return { spec, product, scene: veoScene, prompt: veoScene, imageScene: pc.image, clipPrompts, seconds, quality: "720p", captions: [], refs: refUrls(spec, product), engine: "veo", usd: est.usd, minutes: est.minutes };
+    }
     const prompt = given || compose({ scene, look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music, reference: spec.useReference === false ? null : st.reference }, style.gather(st.styleOff));
-    const est = estimateGenerate({ seconds, quality, volume: !!st.settings.volumeId });
+    const est = spec.engine === "veo" ? { ...adEstimate({ seconds, tier: spec.tier || "lite" }), minutes: 3 * Math.ceil(seconds / 8) } : estimateGenerate({ seconds, quality, volume: !!st.settings.volumeId });
     const asked = Array.isArray(spec.captions) ? spec.captions.map(parseCaption).filter(Boolean) : null;
     const captions = (asked || style.gather(st.styleOff).captions).filter((c) => c.start < seconds).map((c) => ({ ...c, end: Math.min(c.end, seconds) }));
     return { spec, product, scene, prompt, seconds, quality, captions, refs: refUrls(spec, product), engine: spec.engine, lora: spec.lora, usd: est.usd, minutes: est.minutes };
@@ -78,6 +95,16 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
   async function render(pr, emit) {
     const spec = pr.spec;
     try {
+      const onJob = (p) => { progress = { ...p, at: Date.now() }; (emit || ((q) => send("job", q)))(p); };
+      if (pr.engine === "veo") {
+        // product photos go to the IMAGE model only (ad.js); Veo never sees a carousel picture
+        const refs = [];
+        for (const r of pr.refs) refs.push({ bytes: await fetchImage(r.url, bridgeFetch), mime: /\.png(\?|$)/i.test(r.url) ? "image/png" : "image/jpeg" });
+        const take = await engine.generateAd({ scene: pr.scene || pr.prompt, imageScene: pr.imageScene, clipPrompts: pr.clipPrompts, seconds: pr.seconds, tier: spec.tier || "lite", refs, meta: { scene: pr.scene || undefined, look: spec.look || "", avatar: spec.avatar || "broad", product: pr.product ? pr.product.title : "", preset: spec.preset || "" } }, onJob);
+        store.update((s) => { s.takes.unshift(take); });
+        progress = null; send("job:done", { take, state: store.read() });
+        return take;
+      }
       const take = await engine.generate({ prompt: pr.prompt, seconds: pr.seconds, quality: pr.quality, refs: pr.refs, captions: pr.captions, engine: pr.engine, lora: pr.lora, meta: { scene: pr.scene || undefined, look: spec.look || "", avatar: spec.avatar || (spec.avatarText ? "custom" : "broad"), product: pr.product ? pr.product.title : "" } }, (p) => { progress = { ...p, at: Date.now() }; (emit || ((q) => send("job", q)))(p); });
       store.update((s) => { s.takes.unshift(take); });
       progress = null; send("job:done", { take, state: store.read() });
@@ -97,7 +124,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
 
   ipcMain.handle("state:get", () => view());
   ipcMain.handle("prompt:preview", async (_e, spec) => { try { const st = store.read(); const product = spec.useProduct !== false ? st.product : null; const seconds = Number(spec.seconds) || 15; return { prompt: compose({ scene: String(spec.scene || "").trim() || "(what happens goes here)", look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music, reference: spec.useReference === false ? null : st.reference }, style.gather(st.styleOff)) }; } catch (err) { return { error: err.message }; } });
-  ipcMain.handle("estimate", (_e, seconds, quality) => estimate(seconds, quality));
+  ipcMain.handle("estimate", (_e, seconds, quality, engineName, tier) => engineName === "veo" ? { ...adEstimate({ seconds: Number(seconds) || 16, tier: tier || "lite" }), minutes: 3 * Math.ceil((Number(seconds) || 16) / 8) } : estimate(seconds, quality));
   ipcMain.handle("settings:set", (_e, patch) => {
     store.update((s) => {
       for (const k of ["capJob", "capDay"]) if (patch[k] != null) { const v = Number(patch[k]); if (Number.isFinite(v) && v >= 0 && v <= 10000) s.settings[k] = v; }
@@ -115,6 +142,12 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     catch (err) { if (err.code === "auth") secrets.clear(); return fail(err); }
   });
   ipcMain.handle("key:test", async () => { try { const r = await engine.testKey(); return { ok: true, pods: r.pods, ...view() }; } catch (err) { return fail(err); } });
+  ipcMain.handle("google:set", async (_e, key) => {
+    try { gkey.set(key); } catch (err) { return fail(err); }
+    try { const r = await google.test(); return { ok: true, veoModels: r.veo, ...view() }; }
+    catch (err) { if (err.code === "googleauth") gkey.clear(); return fail(err); }
+  });
+  ipcMain.handle("google:test", async () => { try { const r = await google.test(); return { ok: true, veoModels: r.veo, ...view() }; } catch (err) { return fail(err); } });
   ipcMain.handle("hf:set", (_e, key) => { try { hf.set(key); return { ok: true, ...view() }; } catch (err) { return fail(err); } });
   ipcMain.handle("pods:sweep", async () => { try { const n = await engine.sweep(); return { ok: true, stopped: n, ...view() }; } catch (err) { return fail(err); } });
 
@@ -239,7 +272,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     const t = o.type;
     if (t === "generate") {
       send("claude", { kind: "start", text: "Claude is setting up a video" });
-      const pr = await prepare({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality, refs: o.refs, music: o.music, captions: o.captions, engine: o.engine, lora: o.lora });
+      const pr = await prepare({ scene: o.scene, prompt: o.prompt, look: o.look, avatar: o.avatar, avatarText: o.avatarText, productUrl: o.productUrl || undefined, seconds: o.seconds, quality: o.quality, refs: o.refs, music: o.music, captions: o.captions, engine: o.engine, lora: o.lora, preset: o.preset, tier: o.tier });
       if (!store.read().settings.autoApprove) {
         const d = await askApproval(pr, "Claude");
         if (!d.ok) { send("claude", { kind: "end", text: d.timeout ? "No answer, so it was cancelled" : "You said no" }); return { ok: false, error: d.timeout ? "Alex did not answer in 15 minutes, nothing was rented." : "Alex said no on screen. Nothing was rented." }; }

@@ -11,7 +11,7 @@ const esc = (t) => String(t == null ? "" : t).replace(/[&<>"]/g, (c) => ({ "&": 
 const ago = (t) => { if (!t) return "never"; const s = Math.round((Date.now() - t) / 1000); return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.round(s / 60)} min ago` : `${Math.round(s / 3600)} h ago`; };
 const showErr = (el, msg) => { el.textContent = msg || ""; el.classList.toggle("on", !!msg); };
 
-async function refresh(r) { const v = r || (await window.xugc.get()); S = v.state; META = v; ui.est = await window.xugc.estimate(ui.secs, ui.qual); renderAll(); }
+async function refresh(r) { const v = r || (await window.xugc.get()); S = v.state; META = v; ui.est = await window.xugc.estimate(ui.secs, ui.qual, ui.engine || "veo", ui.tier || "lite"); renderAll(); }
 
 function seg(el, items, cur, on) {
   el.innerHTML = "";
@@ -36,7 +36,7 @@ function renderReference() {
 }
 function renderCreate() {
   renderReference();
-  const missing = !META.keySet ? ["a RunPod key", "settings"] : !META.hfSet ? ["a Hugging Face token", "settings"] : null;
+  const missing = (ui.engine || "veo") === "veo" ? (!META.googleSet ? ["your Google key", "settings"] : null) : !META.keySet ? ["a RunPod key", "settings"] : !META.hfSet ? ["a Hugging Face token", "settings"] : null;
   const w = $("#nokey"); w.style.display = missing ? "block" : "none";
   if (missing) { w.innerHTML = `Before the first video: add ${missing[0]} in <button id="gokey">Settings</button>.`; $("#gokey").onclick = () => setView("settings"); }
   const p = S.product;
@@ -117,15 +117,20 @@ function renderSettings() {
   for (const [id, k] of [["#cap-job", "capJob"], ["#cap-day", "capDay"]]) if ($(id) !== document.activeElement) $(id).value = S.settings[k];
   if ($("#volid") !== document.activeElement) $("#volid").value = S.settings.volumeId || "";
   $("#keystate").textContent = META.keySet ? `Key saved (${META.keyTail}). It stays on this Mac.` : "No key saved.";
+  $("#gstate").textContent = META.googleSet ? `Key saved (${META.googleTail}). Tested with Google.` : "No key saved.";
   $("#hfstate").textContent = META.hfSet ? `Token saved (${META.hfTail}). It stays on this Mac.` : "No token saved.";
 }
 
-const ENGINES = [["ltx", "XUGC fast"], ["ltx_full", "LTX full"], ["hunyuan", "Hunyuan"], ["wan", "Wan"]];
-const ENG_NOTE = { ltx: "LTX-2.5 fast, with sound", ltx_full: "LTX-2.5 full quality, with sound (slower)", hunyuan: "HunyuanVideo 1.5, silent video", wan: "Wan 2.2, silent video" };
+const ENGINES = [["veo", "Real Life · Veo"], ["ltx", "XUGC fast"], ["ltx_full", "LTX full"], ["hunyuan", "Hunyuan"], ["wan", "Wan"]];
+const ENG_NOTE = { veo: "Google Veo 3.1 Lite, 720p, with sound. Hidden frames at the golden-ratio moments; your photos only teach the frames, never go into the video.", ltx: "LTX-2.5 fast, with sound", ltx_full: "LTX-2.5 full quality, with sound (slower)", hunyuan: "HunyuanVideo 1.5, silent video", wan: "Wan 2.2, silent video" };
 function renderEngine() {
-  seg($("#engines"), ENGINES, ui.engine || "ltx", (k) => { ui.engine = k; renderEngine(); });
-  $("#engnote").textContent = ENG_NOTE[ui.engine || "ltx"];
-  const have = (S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0], ltx = /^ltx/.test(ui.engine || "ltx");
+  seg($("#engines"), ENGINES, ui.engine || "veo", (k) => { ui.engine = k; refresh(); });
+  $("#engnote").textContent = ENG_NOTE[ui.engine || "veo"];
+  seg($("#presets"), (META.presets || []).map((p) => [p.id, p.name]), ui.preset || "review", (k) => { ui.preset = k; renderEngine(); });
+  $("#presetnote").textContent = ((META.presets || []).find((p) => p.id === (ui.preset || "review")) || {}).blurb || "";
+  seg($("#tiers"), Object.entries(META.veo || {}).filter(([k]) => k !== "standard"), ui.tier || "lite", (k) => { ui.tier = k; refresh(); });
+  $("#vrow").style.display = (ui.engine || "veo") === "veo" ? "" : "none";
+  const have = (S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0], ltx = /^ltx/.test(ui.engine || "veo");
   if (!have || !ltx) ui.reallife = false;
   $("#reallife").querySelectorAll("button").forEach((b) => { b.classList.toggle("on", (b.dataset.v === "1") === !!ui.reallife); b.disabled = !have || !ltx; b.onclick = () => { ui.reallife = b.dataset.v === "1"; renderEngine(); }; });
   $("#rlnote").textContent = !ltx ? "Real Life works with the LTX engines for now. Hunyuan and Wan get it once their trained file passes its first test." : have ? "Real Life uses your trained file: " + (have.dry ? "dry run" : "full") + ", " + new Date(have.at).toLocaleDateString() + "." : "No trained file yet. Train it in the Train tab.";
@@ -328,7 +333,7 @@ function beginRender(who) {
   clearInterval(ui.timer); ui.timer = setInterval(() => { $("#ht").textContent = clock(Date.now() - ui.t0); }, 500); renderCreate();
 }
 function endRender() { ui.rendering = false; clearInterval(ui.timer); $("#ptag").style.display = "block"; stopFx(); }
-const specNow = () => ({ scene: $("#script").value.trim(), look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: ui.secs, quality: ui.qual, music: ui.music, engine: ui.engine || "ltx", lora: ui.reallife ? ((S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0] || {}).id : undefined, refs: ui.refs && ui.refs.length ? ui.refs : undefined });
+const specNow = () => ({ scene: $("#script").value.trim(), look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: ui.secs, quality: ui.qual, music: ui.music, engine: ui.engine || "veo", preset: ui.preset || "review", tier: ui.tier || "lite", lora: ui.reallife ? ((S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0] || {}).id : undefined, refs: ui.refs && ui.refs.length ? ui.refs : undefined });
 $("#showp").onclick = async () => {
   const f = $("#fullp"); if (f.classList.contains("on")) { f.classList.remove("on"); $("#showp").textContent = "Show the full prompt"; return; }
   const r = await window.xugc.preview(specNow()); $("#fulltext").value = r.prompt || r.error || ""; ui.fullEdited = false; f.classList.add("on"); $("#showp").textContent = "Hide the full prompt";
@@ -377,6 +382,7 @@ $("#keysave").onclick = async () => {
   if (r.error) return showErr($("#keyerr"), r.error);
   $("#keyin").value = ""; $("#keystate").textContent = `Key saved (${META.keyTail}) and it works. ${r.pods} GPU${r.pods === 1 ? "" : "s"} running right now.`;
 };
+$("#gsave").onclick = async () => { showErr($("#gerr"), ""); const r = await window.xugc.setGoogle($("#gin").value); await refresh(r); if (r.error) return showErr($("#gerr"), r.error); $("#gin").value = ""; };
 $("#hfsave").onclick = async () => { showErr($("#hferr"), ""); const r = await window.xugc.setHf($("#hfin").value); await refresh(r); if (r.error) return showErr($("#hferr"), r.error); $("#hfin").value = ""; };
 $("#sweep").onclick = async () => { const r = await window.xugc.sweep(); await refresh(r); $("#sweepnote").textContent = r.error ? r.error : `Stopped ${r.stopped} GPU${r.stopped === 1 ? "" : "s"}. Nothing of yours is running.`; };
 
