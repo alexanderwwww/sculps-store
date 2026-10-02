@@ -104,7 +104,14 @@ YML
   ;;
 hunyuan|wan)
   [ -d musubi-tuner ] || git clone --depth 1 https://github.com/kohya-ss/musubi-tuner.git
+  # musubi-tuner README: install PyTorch for the CUDA version FIRST (2.6.0 or later is required: its transformers 5.x
+  # switches PyTorch off below 2.5, which is exactly how the first Wan run died). The pod image is CUDA 12.4 / Python 3.11 / torch 2.4.
+  pip install -q torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
   (cd musubi-tuner && pip install -q -e .)
+  # fail in a minute, before the big model download, if the trainer cannot see PyTorch or the GPU
+  if ! python3 -c "import torch, transformers; from transformers.utils import is_torch_available as ok; assert ok(), 'transformers cannot use torch ' + torch.__version__; assert torch.cuda.is_available(), 'no GPU visible'; print('preflight ok: torch', torch.__version__, 'transformers', transformers.__version__, torch.cuda.get_device_name(0))" >> "$OUT/train.log" 2>&1; then
+    tail -n 5 "$OUT/train.log"; echo "preflight failed: stopping before any model download"; exit 4
+  fi
   D="$W/ds"; mkdir -p "$D"; find "${D:?}" -mindepth 1 -delete
   for f in "$IN"/c*.mp4; do
     b=$(basename "$f" .mp4); [ -f "$IN/$b.txt" ] || continue
