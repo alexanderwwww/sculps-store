@@ -2,6 +2,8 @@
 
 Role: director / cinematographer / prompt specialist. Scope: photoreal iPhone-style UGC video ads, 9:16, via Veo 3.1, Seedance 2.x and Kling 3.0 official APIs, with product photo(s) + avatar photo as references, clips 4-15 s stitched into 15-30 s ads.
 
+**Read section 12 (Prompt-Understanding Layer) first: every generation starts from a SHOT SPEC, not from Alex's raw sentence.**
+
 Rule of the bible: every engine fact below is from a source in section 11. Items marked **[house rule]** are my production decisions built on those facts, not vendor statements. Items marked **[verify at integration]** must be checked against the exact API parameter list when the call is wired (vendor guides are written for the consumer UIs; field names differ in APIs).
 
 ---
@@ -447,3 +449,183 @@ If a take fails: (1) wrong face → check reference slot order and strength; (2)
 14. Structure and format conversion guidance (hook 0-3 s, value 3-15 s, proof 15-25 s, CTA last 5 s; problem-solution, before/after, demo, unboxing): search-result synthesis from myugc.studio https://myugc.studio/blog/ugc-video-ads-tiktok-hooks-angles-creative-matrix.html , mbadv https://www.mbadv.agency/tiktok-ads/creative-best-practices , conbersa https://www.conbersa.ai/learn/tiktok-ad-creative-best-practices .
 
 Limits of the research: vendor guides describe consumer/UI behaviour; API field names, Seedance 2.5 audio notation on the chosen provider route, and any negative-prompt field must be confirmed when the API calls are wired. Everything marked **[house rule]** is a production default to be tuned on real A/B results.
+
+---
+
+## 12. PROMPT-UNDERSTANDING LAYER ("Real life, real life, real life")
+
+Alex: the videos advertise and make money, so the machine must understand the prompt deeply, take care of every micro detail, and keep a physical, natural flow of real life. **Nothing goes to Veo, Seedance or Kling until a SHOT SPEC exists and passes the self-check (12.5).** The engine prompt (sections 5-6) is a *rendering* of the spec, never a rewrite of Alex's sentence.
+
+Pipeline: `raw scene (1-2 sentences) -> 12.1 parse -> 12.3 contradictions/gaps -> (max 2 questions to Alex) -> SHOT SPEC (12.2) -> 12.5 self-check -> 12.6 render per engine -> generate -> 12.7 post-check`.
+This is **[house rule]**; it applies the engine guidance in section 11 (one action and one camera idea per shot (4), verbs and physical consequences over adjectives (6), visible triggers for emotion (8), references with explicit jobs (6, 8)).
+
+### 12.1 What the parser does with the raw sentence
+1. Extract: product, person, place, action, mood, duration, ad type (demo / unboxing / testimonial / reaction), any quoted speech.
+2. Pull product facts from the product record + reference images (never from the sentence alone); pull person facts from the avatar record.
+3. Split the action into **atomic beats** (one verb chain each, 1-4 s) and attach physical cause-and-effect to every beat.
+4. Detect contradictions and gaps (12.3).
+5. Apply safe defaults (12.4), then write the spec.
+
+### 12.2 SHOT SPEC schema (every field mandatory; "n/a" must be justified)
+
+```
+SPEC_ID / AD_TYPE / ENGINE_PLAN (which engine per shot, from section 1 routing)
+
+1 GOAL
+  ad_goal:        what the ad sells and to whom
+  viewer_action:  the ONE thing the viewer should do (tap link / buy before date)
+  hook_type:      from section 3 library (# number)
+
+2 PRODUCT FACTS (IMMUTABLE — copied verbatim into every shot)
+  shape / silhouette, size in cm AND in human terms ("16 ft = 4.9 m, about 2.7x a 1.8 m adult"),
+  colours (named), materials/finish, parts (fan, tether stakes, cable, plug, button),
+  how it is used (step order), power / what must be on, what it must NEVER do,
+  label/logo = only what is in the reference image (never generated)
+  look_description: by shape and colour only (never a film/franchise name)
+
+3 PERSON FACTS (IMMUTABLE)
+  age band, build, skin/hair/eyes, one wardrobe sentence (verbatim every shot),
+  accessories, avatar_ref id, voice descriptor, same person across all shots = yes
+
+4 SETTING
+  place (one noun, constant), time of day, season, weather, light source & direction,
+  colour temperature, background objects (3 specific, stable), who is NOT present
+
+5 CAMERA
+  phone model look (e.g. "iPhone 15 main camera, 1x, 24 mm-equivalent look, slight auto-exposure hunt"),
+  capture mode (selfie / propped / POV / friend-holds), hold (handheld sway amplitude low/med),
+  movement (ONE per shot), framing, lens look, aspect 9:16 (set in API, not in prompt)
+
+6 TIMELINE (seconds, beat by beat). For every beat:
+  t_start-t_end | who does what | PHYSICS: what touches what, direction of force, weight,
+  gravity, timing of cause then effect | camera state | visible emotional trigger
+
+7 SOUND per beat: speech, room tone, 1-2 SFX tied to the physical event (not generic), music = none
+
+8 SPOKEN LINE: verbatim, language, who, delivery, <= 18 words per 8 s, no apologies/hedges
+
+9 ON-SCREEN TEXT: none inside the generation unless Alex asked; if asked, exact characters, timing,
+  position, and rendered in post by default
+
+10 FORBIDDEN LIST (always printed into the spec; see 12.2a)
+
+11 CONTINUITY: first-frame ref (if chained), last-frame hand-off state, what the next shot inherits
+```
+
+**12.2a Standing FORBIDDEN list (appended to every spec; extend per job)**
+- crowds, extra people, bystanders, pets, children's faces — unless Alex asked (then list each by role, count, and position)
+- captions, subtitles, watermarks, UI overlays, price/URL text inside the generation unless asked
+- any logo, brand mark or label not present in the product reference image
+- hateful, cult-like or extremist imagery; robed or hooded figures; white pointed hoods; cloaked ritual figures; flags/symbols of any group
+- famous film/TV characters, franchises or celebrities, by name or lookalike
+- changing the product (shape, colour, size, parts, label) between shots
+- second camera move in one shot; cinematic grading words; beauty-filter faces
+- medical/cure/guarantee claims; unverified superlatives
+- music in the generation (added in post)
+- anything physically impossible for the product (an inflatable standing unsupported before the fan runs, a plugged-in product with no cable, a box that opens itself)
+
+### 12.3 Contradiction detection and resolution
+
+Run these checks on the raw sentence + records. **Rule of resolution:** the latest and most specific instruction wins; state the resolution in one line in the spec's `notes`; ask Alex only when the choice changes what he is paying for.
+
+| # | Contradiction pattern | Example | Resolution |
+|---|---|---|---|
+| C1 | Duration vs content | "unbox, assemble, demo and reaction in 8 s" | split into 2-4 clips or cut beats; one state change per beat; default 1 beat per 2 s |
+| C2 | Scale vs setting | "16 ft inflatable on a balcony" | flag: scale cannot fit; move to yard/driveway, or change product size; **ask Alex** (this is a Q) |
+| C3 | Time of day vs light | "at night, sunny" | pick night (lighting words follow the time), note it |
+| C4 | Capture mode vs action | "selfie video while assembling with both hands" | switch to propped or POV |
+| C5 | Reference vs text | avatar ref is brunette, prompt says "blonde" | reference wins for identity; ask only if blonde is the intent |
+| C6 | Product facts vs prompt | prompt says "red", product record says "white/black" | product record wins; flag |
+| C7 | Speech vs length | 40-word script for 8 s | trim to <= 18 words or split across clips; keep Alex's key phrase |
+| C8 | Number of people | "family reacting" with 1 avatar | forbidden-list conflict: crowds only if asked; "family" = request, so count them and generate as separate off-hero shots |
+| C9 | Physics | "inflatable stands up instantly" | the fan runs ~3-6 s to fill: write the fill; inflatable does not stand before airflow |
+| C10 | Camera stack | "orbit while zooming and dolly" | one move; the rest becomes separate shots |
+| C11 | Mood vs line | "angry" + "I love it" | map to visible triggers; pick delivery that matches the line |
+| C12 | Safety/content | hooded cloak design asked for | switch to a bare/skeleton/pumpkin/ghost-free design; say so in one line |
+| C13 | Text asked on screen | "show price on the video" | render in post; engine prompts leave the text out |
+| C14 | Season vs date | "snow, Halloween" | possible; keep, but check light and costume realism |
+
+### 12.4 Ask vs default
+
+**Ask Alex at most 2 questions, only for things that change cost or meaning, never for taste.** Format: one line each, with a recommended answer already chosen ("Reply Y to use it").
+Ask when: (a) the scale/setting is impossible (C2); (b) the speaker/avatar is unspecified and there are several avatars; (c) the claim or price in the speech is not in the product record; (d) the target engine/length would exceed budget.
+Everything else is filled with defaults and listed in `notes`:
+
+| Missing | Safe default |
+|---|---|
+| duration | 8 s per clip, 24 s ad = 3 clips |
+| capture | selfie for speech, POV for hands-on |
+| time of day | late afternoon golden window light (indoor) / dusk (Halloween, lights on) |
+| location | the product's natural place (yard/driveway for inflatables, kitchen/living room otherwise) |
+| wardrobe | the avatar record's default outfit sentence |
+| language / voice | English (US), relaxed, slightly amused |
+| speech | one hook line from section 3 matched to the ad type |
+| music / text | none in generation; both added in post |
+| extra people | none |
+| camera move | static handheld sway; one slow push-in at most |
+| sound | room tone + one SFX tied to the main physical event |
+
+### 12.5 Self-check the spec must pass (all yes, or fix; log the result)
+1. Is the goal one viewer action, and does shot 1 show the product or its effect within 3 s?
+2. Are product facts copied from the record, with size in human terms, and does every shot contain the same product sentence?
+3. Is the person's wardrobe sentence identical in every shot, and is the avatar ref attached with a job sentence?
+4. Is there ONE place, ONE time of day, and one stable light direction across the ad?
+5. Is there exactly ONE camera move per shot, and does the capture mode make physical sense for the action (can the hand that holds the phone also do the action)?
+6. Does every beat have a physical cause then effect, in time order, with plausible timing (inflation 3-6 s, fabric lag, weight)?
+7. Does the hand-off at every cut (position, motion, product state) match the next shot's opening?
+8. Is the spoken line verbatim, <= 18 words per 8 s, free of apologies/hedges, and does each word have a visible/audible moment?
+9. Are sound effects tied to physical events and is music "none"?
+10. Is on-screen text "none" unless asked, and logos only from the reference?
+11. Is the FORBIDDEN list printed and are all its items absent from the beats?
+12. Total words in each engine prompt: Seedance 60-100; Veo 60-120 plus dialogue; Kling master 2 sentences plus shots.
+13. Are the number of people, props and locations the minimum needed?
+14. Does the natural-flow test pass: read the beats as a film of a real afternoon, and nothing happens without a cause?
+
+### 12.6 Worked examples (raw -> spec -> engine prompts)
+
+**Example A — raw: "girl shows the Halloween skeleton going up in her yard, she's excited"**
+
+SHOT SPEC (excerpt of mandatory fields):
+- Goal: sell {INFL}; viewer taps link before Halloween; hook #73 "16 feet. Sixteen. Look at it."
+- Product: 16 ft (4.9 m) tall inflatable skeleton, white bone body, glowing orange eyes, wide toothy grin, black base skirt, internal fan hose at the back, 4 ground stakes with rope tethers; stands only when the fan runs; about 2.7x a 1.8 m adult; no robe, no hood, no logos.
+- Person: {CREATOR}, 27, wavy shoulder-length dark-brown hair, light-grey crewneck sweatshirt, small gold hoops; same face in every shot.
+- Setting: front lawn of a suburban house, dusk, warm porch lamp left, blue sky right; garage door and a trash bin in the background; nobody else.
+- Camera: propped phone, 1x, low on a flowerpot, slight sway; one slow tilt-up.
+- Timeline: 0-1 s she steps into frame holding the plug: "Sixteen feet. Watch." | 1-3 s she plugs into the outdoor outlet, hand on the switch (touch: thumb presses, fan whirs on) | 3-6 s fabric lifts from a pile on the grass; the head rises first, arms swing up and sway; rope tethers go taut one by one | 6-8 s the eyes glow orange; she steps back, looks up, grins: "Look at it!"
+- Sound: fan whir rising, fabric flutter, rope creak, crickets; no music.
+- Line: "Sixteen feet. Watch... Look at it!" (7 words).
+- Text: none. Forbidden: standing list.
+Self-check result: C9 resolved (fill 3 s), C4 resolved (propped, not selfie).
+
+*Veo 3.1 prompt (8 s, refs: creator, product, yard):*
+```
+Phone propped low on a flowerpot at dusk, locked-off with slight handheld sway, one slow tilt up. The woman from the first reference image (grey crewneck sweatshirt, gold hoop earrings) steps into frame holding an extension plug and says, "Sixteen feet. Watch." She plugs it into the outdoor outlet and presses the switch with her thumb; the fan whirs on, the inflatable skeleton from the second reference image, a pile of white fabric on the grass, lifts head first, arms swinging up, tether ropes pulling taut one by one until it stands 16 ft tall, orange eyes glowing. She steps back, looks up and says, "Look at it!" Front lawn, warm porch lamp, blue sky, garage door behind. Unpolished iPhone look. Ambient noise: crickets. SFX: fan whir rising, fabric flutter, rope creak. No music, no text.
+```
+*Seedance 2.x/2.5 prompt (8 s):*
+```
+@Image1 = the woman (face, hair, outfit; hold in all shots). @Image2 = the inflatable skeleton (shape, colours exactly; do not add logos).
+She plugs a cord into an outdoor outlet and presses the switch; the white fabric pile on the grass fills, rising head first, arms swinging up, tether ropes tightening, until it stands 16 ft tall with glowing orange eyes. Front lawn at dusk, warm porch lamp. Camera: propped phone, one slow tilt up, ending on the full figure. Phone-video look. {She says in English, excited: Look at it!} <fan whir, fabric flutter, rope creak, crickets> no music.
+```
+*Kling 3.0 (multi-shot, 8 s):*
+```
+MASTER: The creator (grey crewneck, gold hoops) and the 16 ft inflatable skeleton with orange glowing eyes, front lawn at dusk, unpolished phone video, handheld, no music.
+Shot 1 (3 s): wide static, she plugs in and presses the switch, fan whirs on, fabric lifts. [Creator, calm excited voice]: "Sixteen feet. Watch."
+Shot 2 (3 s): low angle tilt up as the skeleton rises head first, tethers going taut. SFX: fan, fabric flutter, rope creak.
+Shot 3 (2 s): medium, she steps back and grins up at it. [Creator, delighted voice]: "Look at it!"
+```
+
+**Example B — raw: "unbox the product and say it's better than the pictures"** (general product, kitchen)
+SPEC highlights: POV for the unbox, selfie for the line; kitchen counter, morning window light left; box size from record; beats: 0-2 s knife slits tape (blade cuts, flaps spring up) | 2-5 s hands lift product out of foam (weight: two-handed, slight dip) | 5-8 s selfie, small smile, "Okay, it's actually better than the pictures." Forbidden: captions, extra people, logo not on box. Contradiction: POV + selfie in one 8 s clip -> two-shot split (resolved, noted). Defaults used: English, relaxed.
+*Veo:* `POV first-person video, her hands visible, phone in one hand, kitchen counter, morning window light from the left. Her free hand slits the tape with a knife and the flaps spring up; both hands lift the {product look from reference} out of the foam, slight dip from its weight. Cut to front-camera selfie, she smiles and says, "Okay, it's actually better than the pictures." Ambient noise: fridge hum. SFX: tape rip, cardboard crackle. No music, no text.`
+*Seedance:* `@Image1 = creator, @Image2 = product exactly. POV, her hands slit the tape, lift the product from foam (two-handed, slight dip), set it on the counter. Kitchen, morning window light. Camera: static POV. {She says: Okay, it's actually better than the pictures.} <tape rip, cardboard crackle> no music.`
+*Kling:* `MASTER: creator ({wardrobe}), {product look}, kitchen, morning window light, phone video. Shot 1 (3 s): POV, hands slit the tape. Shot 2 (3 s): POV, two hands lift the product out of the foam. Shot 3 (2 s): front-camera selfie. [Creator, relaxed voice]: "Okay, it's actually better than the pictures."`
+
+**Example C — raw: "the neighbour sees the 16 ft inflatable and loves it"** (reaction)
+Contradiction C8: "neighbour" = a second person, allowed because Alex asked (count: 1 adult man, off-hero, filmed from behind/side). C3: if "at night", lighting words follow night. Questions to Alex (max 2): none needed; defaults: dusk, English, neighbour speaks 6 words.
+SPEC beats: 0-2 s friend-holds, pan from road to the lit inflatable (hand holds phone, slight shake, exposure adapts) | 2-5 s a man in a puffer jacket walking a leashed dog stops mid-stride, leash tightens, the dog sits, he looks up | 5-8 s he turns and says, "Where did you get that?"; {CREATOR} off-frame laughs "Link's in my bio." Sound: fan hum, crickets, leash clink. Forbidden: crowd, kids' faces, hood, logo, captions.
+*Veo:* `Filmed by a friend on a phone at dusk, slightly shaky, panning from the street to a 16 ft inflatable white skeleton with orange glowing eyes on a lawn. A man in a puffer jacket walking a leashed dog stops mid-stride, the leash tightens, the dog sits; he looks up and says, "Where did you get that?" Off-screen a woman laughs. Ambient noise: crickets, fan hum. SFX: leash clink. No music, no text.`
+*Seedance:* `@Image1 = inflatable skeleton (exact look). A man in a puffer jacket with a leashed dog stops mid-stride on the pavement; the leash tightens, the dog sits; he looks up at the 16 ft glowing skeleton. Dusk, warm porch lamp. Camera: handheld pan from the road to the figure. {He says in English: Where did you get that?} <leash clink, fan hum, crickets> no music.`
+*Kling:* `MASTER: 16 ft inflatable skeleton with orange glowing eyes on a lawn at dusk, friend-filmed phone video, no music. Shot 1 (3 s): pan from the road to the lit figure. Shot 2 (2 s): a man in a puffer jacket with a leashed dog stops, leash tightens, dog sits. Shot 3 (3 s): close on his face looking up. [Neighbour, amazed voice]: "Where did you get that?"`
+
+### 12.7 Post-generation check (what to reject)
+Reject and regenerate if: product shape/colour/label differs; second person appears; text or watermark rendered; inflatable stands before the fan or without tethers; fabric moves without wind/air; hand or gravity errors (object floats, passes through a hand); face drifts; lips off; light direction flips; any forbidden item. Each rejection logs the failure type so the parser's defaults improve.
