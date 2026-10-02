@@ -96,7 +96,10 @@ export async function action({ request, context }: Route.ActionArgs) {
   const [provider] = await context.db
     .select()
     .from(paymentProviders)
-    .where(eq(paymentProviders.storeId, storeId))
+    // The card account's own secret. A store can also hold a separate
+    // pay-over-time account (stripe_bnpl); without this filter Postgres may
+    // hand that row back and every card webhook fails its signature check.
+    .where(and(eq(paymentProviders.storeId, storeId), eq(paymentProviders.provider, "stripe")))
     .limit(1);
 
   const signingSecret = await decryptSecret(context.cloudflare.env, provider?.webhookSecretEnc ?? null);
