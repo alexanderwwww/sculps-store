@@ -69,6 +69,7 @@ export function CartDrawerProvider({
   photo,
   paypalClientId = null,
   publishableKey = null,
+  bnpl = false,
   children,
 }: {
   page: LoadedProductPage;
@@ -78,6 +79,8 @@ export function CartDrawerProvider({
   paypalClientId?: string | null;
   /** Stripe's publishable key, for the Apple Pay button. */
   publishableKey?: string | null;
+  /** Klarna / Affirm are connected, so the drawer can say so. */
+  bnpl?: boolean;
   children: React.ReactNode;
 }) {
   const href = (path: string) => `${path}${storeParam}`;
@@ -375,11 +378,30 @@ export function CartDrawerProvider({
               <span>Subtotal</span>
               <span>{money(cart?.subtotalCents ?? 0, currency)}</span>
             </div>
+            {/* The code takes its dollars off right here, so the number above
+                the button is the number that will be charged. */}
+            {cart?.discount ? (
+              <div className="cb-drawer__sum cb-drawer__sum--disc">
+                <span>Discount · {cart.discount.code}</span>
+                <span>−{money(cart.discount.amountCents, currency)}</span>
+              </div>
+            ) : null}
+            {cart?.discount ? (
+              <div className="cb-drawer__sum cb-drawer__sum--total">
+                <span>Total</span>
+                <span>{money(Math.max(0, (cart.subtotalCents ?? 0) - cart.discount.amountCents), currency)}</span>
+              </div>
+            ) : null}
             {saved > 0 ? (
               <div className="cb-drawer__saved">You save {money(saved, currency)}</div>
             ) : null}
             <a className="cb-btn" href={href("/checkout")} aria-disabled={lines.length === 0}>
               Checkout
+              {lines.length ? (
+                <span className="cb-btn__p">
+                  {money(Math.max(0, (cart?.subtotalCents ?? 0) - (cart?.discount?.amountCents ?? 0)), currency)}
+                </span>
+              ) : null}
             </a>
             {/* Apple Pay and PayPal, side by side and half-width each, so the
                 two of them together take the room one used to. Venmo and Pay
@@ -408,6 +430,11 @@ export function CartDrawerProvider({
                     <PayPalExpress clientId={paypalClientId} currency={currency} storeParam={storeParam} only="paypal" />
                   </div>
                 ) : null}
+              </div>
+            ) : null}
+            {bnpl && lines.length ? (
+              <div className="cb-drawer__over">
+                Or pay over time with <b className="cb-bnpl__k">Klarna</b> or <b className="cb-bnpl__a">Affirm</b> at checkout
               </div>
             ) : null}
             <div className="cb-reassure">Free shipping · 30-day returns</div>

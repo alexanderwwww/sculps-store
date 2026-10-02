@@ -1,0 +1,16 @@
+import { chromium } from '/home/user/sculps-store/node_modules/playwright/index.mjs';
+const b = await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
+const ctx = await b.newContext({viewport:{width:430,height:900},ignoreHTTPSErrors:true});
+import('fs').then(()=>{});
+ await ctx.addCookies([{"name": "kerberos_cart", "value": "3662bd9f0b471df2ff67d09934c106a50f56c2f3a12c932a", "domain": "blackreaper.us", "path": "/"}]); const pg = await ctx.newPage(); pg.setDefaultTimeout(60000);
+await pg.goto('https://blackreaper.us/products/the-scream?cart=1',{waitUntil:'domcontentloaded'});
+await pg.waitForFunction(()=>{const e=document.querySelector('.cb-btn');return e&&getComputedStyle(e).borderRadius!=='0px'},null,{timeout:90000}).catch(()=>{});
+await pg.waitForTimeout(6000);
+await pg.waitForSelector('.cb-drawer.is-open',{timeout:30000});
+await pg.waitForTimeout(3500);
+const info = await pg.evaluate(()=>{const f=document.querySelector('.cb-drawer__foot');return f?f.innerText.replace(/\n+/g,' | ').slice(0,300):'no foot'});
+console.log(info);
+const bb = await pg.evaluate(()=>{const a=document.querySelector('.cb-drawer__foot .cb-btn');const r=a.getBoundingClientRect();const cs=getComputedStyle(a);return {w:Math.round(r.width),h:Math.round(r.height),radius:cs.borderRadius,disp:cs.display,justify:cs.justifyContent}});
+console.log(JSON.stringify(bb));
+await pg.locator('.cb-drawer__panel').screenshot({path:'drawer.png'});
+await b.close();

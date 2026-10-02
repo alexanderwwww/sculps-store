@@ -3444,7 +3444,15 @@ html, body { margin: 0; }
 .cb-drawer__foot .cb-btn {
   position: relative;
   z-index: 3;
-  display: block;
+  /* The same button as Add to cart: centred label, price on the button, pill. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  border-radius: 999px;
+  padding: 15px 22px;
+  font-size: 16.5px;
 }
 /* And when the wallets make the foot taller than the screen, the foot
    scrolls rather than swallowing the button. */
@@ -4727,3 +4735,9 @@ html, body { margin: 0; }
 .cb-bnpl__k { background: #ffb3c7; color: #17120f; }
 .cb-bnpl__a { background: #4a4af4; color: #fff; }
 .cb-bnpl i { font-style: normal; opacity: .6; font-size: 13px; }
+
+/* Cart drawer: discount and total rows, and the pay-over-time line. */
+.cb-drawer__sum--disc { color: #0b7a3b; font-size: 15px; }
+.cb-drawer__sum--total { font-weight: 800; }
+.cb-drawer__over { margin: 12px 0 0; text-align: center; font-size: 14px; line-height: 1.5; opacity: .85; }
+.cb-drawer__over b { font-weight: 800; padding: 1px 8px; border-radius: 999px; font-size: 13px; }

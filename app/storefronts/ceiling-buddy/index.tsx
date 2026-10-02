@@ -184,6 +184,7 @@ export function CeilingBuddyStorefront({
       photo={photo}
       paypalClientId={paypalClientId}
       publishableKey={publishableKey}
+      bnpl={bnpl}
     >
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

@@ -1,0 +1,16 @@
+import { chromium } from '/home/user/sculps-store/node_modules/playwright/index.mjs';
+const b = await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
+const ctx = await b.newContext({viewport:{width:430,height:900},ignoreHTTPSErrors:true}); const pg = await ctx.newPage(); pg.setDefaultTimeout(60000);
+await pg.goto('https://blackreaper.us/products/the-scream',{waitUntil:'domcontentloaded'});
+await pg.waitForFunction(()=>{const e=document.querySelector('.cb-btn');return e&&getComputedStyle(e).borderRadius!=='0px'},null,{timeout:90000}).catch(()=>{});
+await pg.waitForTimeout(6000);
+const btn = pg.locator('button.cb-btn', {hasText:'Add to cart'}).first();
+await btn.scrollIntoViewIfNeeded(); await btn.click();
+await pg.waitForSelector('.cb-drawer.is-open',{timeout:30000});
+await pg.waitForTimeout(3500);
+const info = await pg.evaluate(()=>{const f=document.querySelector('.cb-drawer__foot');return f?f.innerText.replace(/\n+/g,' | ').slice(0,300):'no foot'});
+console.log(info);
+const bb = await pg.evaluate(()=>{const a=document.querySelector('.cb-drawer__foot .cb-btn');const r=a.getBoundingClientRect();const cs=getComputedStyle(a);return {w:Math.round(r.width),h:Math.round(r.height),radius:cs.borderRadius,disp:cs.display,justify:cs.justifyContent}});
+console.log(JSON.stringify(bb));
+await pg.locator('.cb-drawer__panel').screenshot({path:'drawer.png'});
+await b.close();
