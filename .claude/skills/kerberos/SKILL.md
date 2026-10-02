@@ -505,3 +505,9 @@ swatch is exactly why the bundles read as weak.
 
 ## PayPal paused (2026-10-02)
 Alex's PayPal (sole proprietor "Helios", EIN on CP575) is under review (ref PP-L-874675488158, deadline Nov 15): withdraw/send/pay blocked, receive allowed. On his order PayPal was PAUSED on reaper (blackreaper.us) and garden-buddy: `payment_providers.publishable_key` set to null, the client id kept in `label` as `PAUSED <clientId>`, encrypted secret untouched. Storefront "Pay in 4 with PayPal" lines (template + ceiling-buddy BuyBox) now render only when the store's PayPal is on. Stripe + Apple Pay unchanged. Restore: `update payment_providers set publishable_key = substring(label from 8), label = null where provider='paypal' and label like 'PAUSED %';` — only when Alex says.
+
+## Payments: the facts Alex has already told me (2026-10-02) — do not ask again
+- **His Stripe account is Greek** (a Greek entity). He has a **US LLC** and wants money from the LLC separately.
+- **Klarna: he wants his OWN Klarna merchant account under the US LLC, signed up directly on Klarna's website. Not Klarna through Stripe, no Stripe involved.** (I wrongly offered "Klarna through Stripe" first; that would have tied it to the Greek Stripe account.) He signs up himself; I then integrate Klarna's own payments into the Kerberos checkout (Klarna's direct merchant integration, not Stripe's payment element) once he has the merchant account and credentials.
+- PayPal: sole proprietor "Helios", EIN on CP575, under review (see above). Withdraw/send/pay blocked until PayPal clears it; he cannot use the balance before then.
+- Rule: when Alex states a fact about his money, accounts or entities, write it here the same turn.
