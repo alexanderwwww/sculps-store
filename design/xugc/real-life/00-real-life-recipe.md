@@ -425,3 +425,13 @@ Claude tells Alex when each field exists in XUGC Settings; he never opens a term
 **What is NOT yet known (verify before building):** which image model makes the landmarks (candidate: a Gemini image model on the same Google key [N]); its price per image [N]; whether it keeps one person and one product identical across 5 stills when given the product photo and avatar as references [N] (a $1 test decides); whether Seedance and Kling accept a last frame [S].
 
 **Build placement:** new milestone before the first full-ad render, after M12 (avatar and product stills). First test: make 3 landmarks of one simple shot with the locked product photo, then render the same 8 s shot twice on Veo Lite (with and without landmarks) and compare. Cost to be quoted from the verified price of the image model before Alex approves anything.
+
+### D22 update (2026-10-02): golden-ratio timing and the image model, VERIFIED on Google's own pages
+
+**Timing (Alex's rule):** the curator places landmarks at golden-ratio points of the clip. For an 8 s clip: 0.382 x 8 = **3.06 s** and 0.618 x 8 = **4.94 s**, then the same cut inside the two outer spans: 3.06 x 0.382 = **1.17 s** and 4.94 + 0.382 x (8 - 4.94) = **6.11 s**. Landmarks: **0, 1.17, 3.06, 4.94, 6.11, 8.00 s**. Story shape: setup 0-3.06, build to the hook/reaction peak at 4.94, settle 6.11-8. Longer clips scale the same fractions. This is a pacing rule, not a proven realism gain: A/B it against even spacing in the first landmark test.
+
+**Image model [V] (ai.google.dev image-generation + pricing pages):** `gemini-3.1-flash-image` (Nano Banana 2): `aspect_ratio` includes `9:16`; up to 14 input images (10 objects + 4 characters kept consistent); **$0.067 per 1K image**. `gemini-3.1-flash-lite-image` (Nano Banana 2 Lite): 1K only, up to 14 images, **$0.0336** per image. `gemini-3-pro-image` (Nano Banana Pro): up to 14 images (6 objects + 5 characters + 3 style references), **$0.134** per 1K/2K image. Every image carries a SynthID watermark. Same Google API key as Veo: no extra account, runs inside XUGC.
+
+**Cost of one set of landmarks (6 stills):** $0.40 with Nano Banana 2, $0.20 with Lite, $0.80 with Pro.
+
+**Use of the six stills per engine:** Veo: landmark 0 = `image` (first frame), landmark 8.00 = `lastFrame`, up to 3 of the middle four as `referenceImages` (8 s required); the rest are described in the prompt and used by the judge. Hidden storage: the stills and one contact sheet stay in the app's own data folder and are never shown in the ad.
