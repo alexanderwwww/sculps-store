@@ -1,0 +1,12 @@
+import { chromium } from '/home/user/sculps-store/node_modules/playwright/index.mjs';
+const b = await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
+const ctx = await b.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,ignoreHTTPSErrors:true,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'});
+const pg = await ctx.newPage(); pg.setDefaultTimeout(90000);
+const errs=[]; pg.on('pageerror',e=>errs.push(String(e).slice(0,200)));
+await pg.goto('https://blackreaper.us/products/the-scream',{waitUntil:'domcontentloaded'});
+await pg.waitForFunction(()=>{const e=document.querySelector('.cb-price');return e&&getComputedStyle(e).display==='flex'});
+await pg.waitForTimeout(5000);
+const box = await pg.evaluate(()=>{const e=document.querySelector('.cb-price');const r=e.getBoundingClientRect();return {y:r.top+scrollY}});
+await pg.screenshot({path:'mob1.png',clip:{x:0,y:Math.max(0,box.y-500),width:390,height:1400},fullPage:true});
+console.log('errors',JSON.stringify(errs));
+await b.close();
