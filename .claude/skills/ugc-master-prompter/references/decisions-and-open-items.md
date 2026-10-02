@@ -27,6 +27,7 @@ Gathered from the reports of: the preset-library, filter, engines, realism/lesso
 6. **Composed (untested) judge pieces:** the ffmpeg extraction lines (fps=2, hand crop, tile) and the codes LANDMARK_DRIFT, CROWD_CLONE, SCALE, SILENCE, STYLE_AD are composed; the 12 design-doc codes are quoted as written.
 7. **Billing nuance:** Veo/Google counts a clip when the operation starts; fal bills only successful outputs (08-fal-api.md) — the app counts fal when the job starts (safe side).
 8. **Stake-prop lesson and Klan-robe incident** have no repo record beyond the SKILL text and the first real clip; kept as lessons.
+9b. **AI-disclosure on Meta/TikTok:** the official policy pages did not load for the specialist; the rules in micro-trust/references/formula-and-psychology.md §7 come from secondary blogs. Working decision: label every ad that shows synthetic people as AI-generated on both platforms until the official wording is read and recorded here.
 9. **Real-footage study:** 237 pieces from 41 public creator videos live only on Alex's Mac (pile/); their transcripts/captions are the best source for authentic speech and have not been mined into the skills yet.
 
 ## C. App fixes still owed (the app's presets.js / compose.js still get these wrong)
