@@ -406,3 +406,22 @@ Claude tells Alex when each field exists in XUGC Settings; he never opens a term
 5. Render the new screens (M9a) and look at them myself before showing Alex.
 6. Hand Alex step 1 of section 14 as the first thing he does. Report each milestone as what he has now, then stop.
 7. Do not spend, rent or call a vendor until Alex presses Approve on M10, and never claim an engine fact that carries an [S] or [N] mark.
+
+---
+
+## D22. Landmark frames (Alex, 2026-10-02): hidden keyframes shared by every engine
+
+**Problem (Alex):** three engines read the same prompt three ways and draw three different shots.
+**Decision:** before any video render, a "curator" step makes hidden still images ("landmarks") of the shot at its key moments (typical: 0 s, 2 s, 4 s, 6 s, 8 s of an 8 s clip). All landmarks share one person, one product and one place (made from the locked product photo and avatar). They are never shown in the ad.
+
+**How the engines use them**
+- Veo 3.1 [V, Google docs]: first frame `image`, last frame `lastFrame` (duration must be 8), up to 3 `referenceImages` (duration must be 8). So an 8 s clip = landmark 0 as first frame, landmark 8 as last frame, landmarks 2/4/6 described in the prompt and, if room remains, passed as reference images.
+- Seedance [S, unverified until Codex reads the BytePlus console]: roles `first_frame`, `last_frame`, `reference_image` reported.
+- Kling 3.0 [S, unverified]: start/end frames and elements reported.
+- A 15 s or 30 s ad: the last landmark of clip n is the first frame of clip n+1 (continuity chain from the director's bible).
+
+**Judge use:** sample the finished clip at the landmark seconds and compare each frame with its landmark (product, person, place, light, pose). A frame that is far from its landmark fails the take; the failing second and field go back into the repair prompt. A cheap image-similarity check runs first; the vision judge decides the rest.
+
+**What is NOT yet known (verify before building):** which image model makes the landmarks (candidate: a Gemini image model on the same Google key [N]); its price per image [N]; whether it keeps one person and one product identical across 5 stills when given the product photo and avatar as references [N] (a $1 test decides); whether Seedance and Kling accept a last frame [S].
+
+**Build placement:** new milestone before the first full-ad render, after M12 (avatar and product stills). First test: make 3 landmarks of one simple shot with the locked product photo, then render the same 8 s shot twice on Veo Lite (with and without landmarks) and compare. Cost to be quoted from the verified price of the image model before Alex approves anything.
