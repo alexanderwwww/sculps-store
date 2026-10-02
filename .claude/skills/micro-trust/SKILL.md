@@ -48,3 +48,11 @@ Glassy gimbal smoothness; perfect exposure; centred hero framing; symmetric crow
 5. When two cues conflict with an engine's limits (word cap), keep the cue, drop an adjective.
 
 Related: `.claude/skills/ugc-master-prompter` (the procedure), its `references/realism.md` and `judge.md`, `tools/xugc/assets/style/*.md` (the source rules).
+
+## The deep sheets (read the one for the channel you are writing)
+- `references/camera-forensics.md` — 40 timed camera cues, 5 capture modes (signature + breakers), dusk/night, 18 AI camera tells with replacement sentences, per-engine camera phrasing, 10-point camera checklist. (Write "bloom/halo", never "lens flare": never-do bans flare.)
+- `references/speech-and-tone.md` — 12 laws of real speech, a 140-line bank by situation and speaker, the tone palette and desire arc, per-engine speech syntax and caps, caption rules and banned phrases, 0–3 speech checklist (pass 22/30, no zero row).
+- `references/sound-and-world.md` — 40 sound cues and a second-by-second map at the golden times, 40 world cues + the dusk light recipe + the six-frame stability list, product-in-place per class, sound/world AI tells, engine audio handling (with the verified Kling argument correction), desire layer, checklist.
+- `references/formula-and-psychology.md` — the five-stage formula table, the one-second verdict model, desire engineering, security cues, 30 hooks (10 written for the Reaper), testing loop, compliance guard rails (AI-disclosure: label synthetic-person ads until the official text is read), the 25-line brain card.
+- `references/library.md` — the compact copy-paste cues and the 0–3 micro-trust score used by the judge.
+Open evidence gaps are listed in `.claude/skills/ugc-master-prompter/references/decisions-and-open-items.md`.
