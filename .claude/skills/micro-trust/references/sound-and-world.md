@@ -217,3 +217,7 @@ Pass: each block >= 8/12 and no line at 0 [matches library §7 pass rule; scale 
 Repo: tools/xugc/assets/style/*.md; design/xugc/real-life/03-audio-voice.md; 05-directors-bible.md; design/xugc/training/03-environments.md, 04-sound.md; tools/xugc/fal.js, presets.js; app/lib/emails/reaper-products.ts; HANDOFF.md.
 Web (read via search results this session): patents.google.com/patent/US8135148B2 (AGC); image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/11043228 (wind detection); dpreview.com/forums/threads/white-balance-in-blue-hour.4682256 and photopills.com/articles/blue-hour-photography-guide (blue hour balance); budgetpixel.com/blog/why-ai-videos-feel-fakeand-how-consistency-changes-everything, blog.picassoia.com/4-reasons-your-ai-video-looks-fake, morphic.com/resources/how-to/how-to-make-ai-video-look-real (AI tells); blog.fal.ai/kling-3-0-prompting-guide (fetched).
 Not verified on the web: behaviour of crowds around odd objects (composed from repo crowd-realism), dusk soundscape specifics, any engine param beyond fal.js.
+
+
+---
+CORRECTION (lead, verified from Kling MCP `who_am_i`, 2026-10-02): through the **Kling MCP**, `enable_audio` (true/false) IS a documented argument on kling-video-v3_0, v3_0_omni and v2_5/v2_6 (v2_6 only at 1080p, not with a tail image); `audio_prompt`, `music_prompt` and `enable_asmr` exist ONLY on kling-video-v2_5. Through **fal**, the fields are `generate_audio` (Seedance, Kling, Veo) and `audio` (Wan) as fal.js sends them. Use the field names of the route you call. [design/xugc/real-life/09-kling-mcp.md]
