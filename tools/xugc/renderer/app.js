@@ -141,25 +141,28 @@ function renderRealLife() {
   trainEstimates();
   const n = S && META ? META.pile : { videos: 0, pieces: 0 };
   if (!ui.collecting) $("#colstat").textContent = ui.lastCollect ? ui.lastCollect : n.pieces ? `${n.videos} videos collected, ${n.pieces} pieces ready to train on.` : "Nothing collected yet. Collect downloads each video on this Mac, cuts it into 3 to 6 second pieces with real sound, and deletes the original.";
+  const lt = META && META.lastTrain, rep = $("#trreport");
+  rep.style.display = $("#trcopy").style.display = lt ? "" : "none";
+  if (lt) { rep.textContent = `LAST TRAINING · ${lt.model} · ${lt.ok ? "finished" : "STOPPED"} · $${(lt.cost || 0).toFixed(2)} · ${new Date(lt.at).toLocaleString()}\n${lt.error ? lt.error + "\n" : ""}${lt.tail || ""}`; $("#trcopy").onclick = () => window.xugc.copy(rep.textContent); }
   const L = $("#lorals"); L.innerHTML = "";
   for (const l of S.loras || []) { const d = document.createElement("div"); d.className = "found"; d.textContent = `XUGC Real Life · ${l.model} · ${l.dry ? "dry run" : "full"} · ${l.clips} pieces · $${l.cost.toFixed(2)} · ${new Date(l.at).toLocaleDateString()}  `; const b = document.createElement("button"); b.className = "btn"; b.textContent = "Delete"; b.onclick = () => window.xugc.loraDelete(l.id).then(refresh); d.appendChild(b); L.appendChild(d); }
 }
 function askTrain(title, body) { return new Promise((res) => { $("#trmt").textContent = title; $("#trmb").textContent = body; $("#trmodal").style.display = "flex"; $("#trmyes").onclick = () => { $("#trmodal").style.display = "none"; res(true); }; $("#trmno").onclick = () => { $("#trmodal").style.display = "none"; res(false); }; }); }
 async function doTrain(dry) {
-  $("#trerr").textContent = ""; const e = dry ? TR.d : TR.f;
-  if (!e.pieces || e.pieces < 3) { $("#trerr").textContent = "The training pile is empty. Press Collect first."; return; }
+  showErr($("#trerr"), ""); const e = dry ? TR.d : TR.f;
+  if (!e.pieces || e.pieces < 3) { showErr($("#trerr"), "The training pile is empty. Press Collect first."); return; }
   const name = { wan: "Wan 2.2", hunyuan: "Hunyuan 1.5", ltx: "LTX-2.5" }[TR.model];
   if (!(await askTrain(`${dry ? "Dry run" : "Train"} ${name}?`, `This rents a GPU and uses ${e.pieces} pieces. It costs at most $${e.usd.toFixed(2)} and the GPU is handed back when it ends. ${dry ? "A dry run only proves the training works." : "The GPU has up to " + e.minutes + " minutes; about " + (e.setup || 30) + " go on setting up, the rest on training. It saves as it goes and you can stop and keep what is trained. The result is a XUGC Real Life file for " + name + ", kept forever."}`))) return;
   ui.training = true; $("#trdry").style.display = $("#trfull").style.display = "none"; $("#trstop").style.display = ""; $("#trstat").textContent = "Starting…";
   const r = await window.xugc.trainStart({ model: TR.model, dry, budget: dry ? 0 : TR.budget });
   ui.training = false; $("#trdry").style.display = $("#trfull").style.display = ""; $("#trstop").style.display = "none";
-  if (r.error) { $("#trerr").textContent = r.error + (r.costUsd ? ` (This attempt cost $${r.costUsd.toFixed(2)}.)` : ""); $("#trstat").textContent = ""; await refresh(r); return; }
+  if (r.error) { showErr($("#trerr"), "Training stopped: " + r.error + (r.costUsd ? ` (This attempt cost $${r.costUsd.toFixed(2)}.)` : "")); $("#trstat").textContent = "The GPU was handed back. The report below says what happened."; await refresh(r); return; }
   $("#trstat").textContent = `Done. XUGC Real Life (${name}) trained on ${r.lora.clips} pieces for $${r.lora.cost.toFixed(2)}.`; await refresh(r);
 }
 $("#linkstarter").onclick = async () => { $("#linkbox").value = await window.xugc.collectStarter(); };
 $("#collectgo").onclick = async () => {
-  $("#colerr").textContent = ""; const r = await window.xugc.collectRun($("#linkbox").value);
-  if (r.error) { $("#colerr").textContent = r.error; return; }
+  showErr($("#colerr"), ""); const r = await window.xugc.collectRun($("#linkbox").value);
+  if (r.error) { showErr($("#colerr"), r.error); return; }
   ui.collecting = true; ui.lastCollect = ""; $("#collectgo").style.display = "none"; $("#collectstop").style.display = ""; $("#colbarw").style.display = ""; $("#colstat").textContent = `Starting… ${r.total} links`;
 };
 $("#collectstop").onclick = () => window.xugc.collectStop();
@@ -176,7 +179,7 @@ window.xugc.onCollect((p) => {
 $("#trdry").onclick = () => doTrain(true);
 $("#trfull").onclick = () => doTrain(false);
 $("#trstop").onclick = () => { $("#trstat").textContent = "Finishing: saving what is trained so far…"; window.xugc.trainFinish(); };
-window.xugc.onTrain((p) => { if (ui.training) $("#trstat").textContent = `${p.stage} · ${p.minutes || 0} min · $${(p.costUsd || 0).toFixed(2)} so far`; });
+window.xugc.onTrain((p) => { if (ui.training) $("#trstat").textContent = `${p.stage} · ${p.minutes || 0} min · $${(p.costUsd || 0).toFixed(2)} so far` + (p.log ? "\n" + String(p.log).slice(0, 140) : ""); });
 function renderAll() { renderEngine(); renderRealLife(); renderChips(); renderCreate(); renderLibrary(); renderTrain(); renderMcp(); renderSettings(); }
 function setView(v) { ui.view = v; $$(".view").forEach((x) => x.classList.toggle("on", x.id === "v-" + v)); $$("#nav button").forEach((b) => b.classList.toggle("on", b.dataset.view === v)); if (v === "mcp") refresh(); }
 

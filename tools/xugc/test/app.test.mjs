@@ -289,6 +289,7 @@ app.whenReady().then(async () => {
     say(await until("document.querySelector('#trstat').textContent.startsWith('Done. XUGC Real Life (LTX-2.5)')", 20000), "the budgeted training runs and says Done");
     const tl2 = log.filter((l) => l.run === "train_lora.sh").at(-1);
     say(tl2 && tl2.env.MODEL === "ltx" && tl2.env.BUDGET === "1" && tl2.env.DRY === "0", "the GPU was told: LTX, budgeted, not a dry run");
+    say((await run("document.querySelector('#trreport').style.display")) !== "none" && (await run("document.querySelector('#trreport').textContent")).includes("LAST TRAINING"), "the Train tab shows a report of the last training", await run("document.querySelector('#trreport').textContent.slice(0,90)"));
     await view("create");
     say((await run("document.querySelectorAll('#engines button').length")) === 4, "Create has an engine switch with four engines");
     await run("document.querySelectorAll('#reallife button')[1].click()");

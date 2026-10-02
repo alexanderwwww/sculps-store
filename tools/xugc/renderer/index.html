@@ -160,6 +160,7 @@ input:focus,textarea:focus{border-color:rgba(215,255,31,.6)}textarea{resize:none
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn" id="trdry">Dry run <span id="trdryest"></span></button><button class="go" id="trfull" style="padding:10px 18px">Train XUGC Real Life <span id="trfullest"></span></button><button class="btn" id="trstop" style="display:none">Stop and keep what is trained so far</button></div>
     <div class="lab" style="margin:6px 0"><span>BUDGET</span><i>the most this training can cost. The GPU is handed back when the time it buys is used up</i></div><div class="seg" id="trbudget"></div>
     <div class="found" id="trstat">Training runs for as long as your budget buys, saves as it goes, and keeps the result forever (also copied to Documents/XUGC Models). A dry run uses 3 pieces and a few steps.</div><div class="err" id="trerr"></div>
+    <div class="found" id="trreport" style="display:none;white-space:pre-wrap;font:12px ui-monospace,Menlo,monospace;max-height:220px;overflow:auto;user-select:text"></div><button class="btn" id="trcopy" style="display:none;align-self:flex-start;margin-top:6px">Copy the report</button>
     <div id="lorals" style="display:flex;flex-direction:column;gap:6px;margin-top:10px"></div></div>
    <div class="lab" style="margin-bottom:8px">STYLE BIBLE <i>read before every video</i></div>
    <div class="files" id="files"></div>

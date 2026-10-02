@@ -140,7 +140,7 @@ class Engine {
     if (this.job) { const e = new Error("A GPU job is already running. Wait for it, or press Stop."); e.code = "busy"; throw e; }
     const model = job.model;
     if (!TRAIN_MIN[model]) throw new Error("Pick a model to train: ltx, hunyuan or wan.");
-    const pieces = (job.pieces || []).slice(0, job.dry ? 3 : 160);
+    const pieces = (job.pieces || []).slice(0, job.dry ? 3 : job.budget ? 100 : 160); // captioning every piece costs GPU minutes, so a budgeted run takes 100
     if (pieces.length < 3) throw new Error("The training pile has fewer than 3 pieces. Press Collect first.");
     const hf = this.hf.get();
     if (model === "ltx" && !hf) { const e = new Error("Paste your Hugging Face token in Settings first (LTX needs it)."); e.code = "nohf"; throw e; }
@@ -172,8 +172,15 @@ class Engine {
       try { if (this.backupDir) { fs.mkdirSync(this.backupDir, { recursive: true }); backup = path.join(this.backupDir, id + ".safetensors"); fs.copyFileSync(file, backup); } } catch { backup = ""; }
       const entry = { id, model, dry: !!job.dry, at: Date.now(), clips: pieces.length, cost: r2(r.costUsd), file, backup, name: "XUGC Real Life" };
       this.store.update((s) => { s.loras = [...(s.loras || []), entry]; });
+      this.store.update((x) => { x.lastTrain = { at: Date.now(), model, ok: true, error: "", tail: String(r.log || "").trim().split("\n").slice(-12).join("\n").slice(-1500), cost: r2(r.costUsd) }; });
       return { ...entry, sample: log };
-    } catch (e) { if (spent) e.costUsd = spent; throw e; }
+    } catch (e) {
+      if (spent) e.costUsd = spent;
+      // the reason is kept and shown, never lost: the last lines of what the GPU printed, or the error itself
+      const tail = String(e.log || e.message || "").trim().split("\n").slice(-40).join("\n");
+      this.store.update((x) => { x.lastTrain = { at: Date.now(), model, ok: false, error: String(e.message || e).split("\n")[0].slice(0, 300), tail: tail.slice(-3500), cost: r2(spent) }; });
+      throw e;
+    }
     finally { this.addSpend(spent); this.job = null; }
   }
 }

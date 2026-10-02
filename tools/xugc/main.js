@@ -15,7 +15,7 @@ const { fetchProduct } = require("./product.js");
 const { Bridge } = require("./bridge.js");
 const { Collector, parseLinks } = require("./collect.js");
 
-const BUILD = 9;
+const BUILD = 10;
 const LATEST_NOTE = "";
 
 function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch, bridgeBase, bridgeMs, startBridge = true, productFetch, collector: collectorIn, backupDir }) {
@@ -42,7 +42,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     return {
       state: s, build: BUILD, keySet: !!secrets.get(), keyTail: secrets.tail(), hfSet: !!hf.get(), hfTail: hf.tail(), busy: engine.status(),
       looks: Object.keys(LOOKS), avatars: Object.keys(AVATARS), qualities: Object.fromEntries(Object.entries(QUALITY).map(([k, v]) => [k, v.label])), seconds: Object.keys(SECONDS).map(Number),
-      style: style.list(s.styleOff), levels: LEVELS, usedToday: s.spent.day === today() ? s.spent.usd : 0, pile: collector.count(), loras: s.loras || [], collecting: collecting ? { last: collecting.last } : null,
+      style: style.list(s.styleOff), levels: LEVELS, usedToday: s.spent.day === today() ? s.spent.usd : 0, pile: collector.count(), lastTrain: s.lastTrain || null, loras: s.loras || [], collecting: collecting ? { last: collecting.last } : null,
       mcp: { on: s.settings.mcpOn, url: bridge ? bridge.url() : new Bridge({ getStatus() {}, onOrder() {} }).url(), connected: !!(bridge && bridge.connected), lastOk: bridge ? bridge.lastOk : 0, claudeSeen: bridge && bridge.mcpSeen ? bridge.mcpSeen.at : 0, log: bridge ? bridge.log : [] },
     };
   };
@@ -193,7 +193,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
     const out = []; for (let i = 0; lists.some((l) => i < l.length); i++) for (const l of lists) if (i < l.length) out.push(l[i]);
     return out;
   };
-  ipcMain.handle("train:estimate", (_e, model, dry, budget) => ({ ...estimateTrain({ model, dry: !!dry, volume: !!store.read().settings.volumeId, budget: Number(budget) || 0 }), pieces: Math.min(pieceList().length, dry ? 3 : 160) }));
+  ipcMain.handle("train:estimate", (_e, model, dry, budget) => ({ ...estimateTrain({ model, dry: !!dry, volume: !!store.read().settings.volumeId, budget: Number(budget) || 0 }), pieces: Math.min(pieceList().length, dry ? 3 : Number(budget) ? 100 : 160) }));
   ipcMain.handle("train:finish", () => engine.finish());
   ipcMain.handle("train:start", async (e, spec) => {
     try {
@@ -231,7 +231,7 @@ function setup({ dir, makeRunPod, safe = null, sweepOnStart = true, bridgeFetch,
       style: style.list(s.styleOff).map((f) => ({ name: f.name, on: f.on, lines: f.lines })), product: s.product ? { title: s.product.title, url: s.product.url, price: s.product.price } : null,
       takes: s.takes.slice(0, 15).map((t) => ({ id: t.id, at: t.at, seconds: t.seconds, quality: t.quality, cost: t.cost, minutes: t.minutes, audio: t.audio, verdict: t.verdict, scene: t.scene, prompt: (t.prompt || "").slice(0, 400) })),
       reference: s.reference ? { name: s.reference.name, duration: s.reference.duration, cuts: s.reference.cuts, level: s.reference.level, beats: s.reference.beats, sheet: "ref-sheet.jpg (see xugc_takes)" } : null,
-      claudeLog: bridge ? bridge.log.slice(-8) : [],
+      claudeLog: bridge ? bridge.log.slice(-8) : [], lastTrain: store.read().lastTrain || null, loras: (store.read().loras || []).map((l) => ({ id: l.id, model: l.model, dry: l.dry, cost: l.cost, clips: l.clips })),
     };
   };
   async function onOrder(o) {

@@ -155,6 +155,13 @@ const tbc = calls.filter((c) => c.run === "train_lora.sh").at(-1);
 ok(tb.file && tbc.env.BUDGET === "1" && tbc.cap <= 5 && tbc.maxMinutes === undefined, "a budgeted training is capped at its budget and told to time-box itself", "cap " + tbc.cap);
 ok(tb.backup && existsSync(tb.backup) && tb.backup !== tb.file, "the trained file is also copied outside the app's folder (Documents/XUGC Models)", tb.backup);
 ok(eng.finish() === false, "Stop and keep does nothing when no training runs");
+FakeRunPod.fail = true;
+const tfail = await terr({ model: "wan", dry: true, pieces: pile });
+const lt = store.read().lastTrain;
+ok(tfail instanceof Error && lt && lt.ok === false && lt.model === "wan" && /GPU job failed/.test(lt.error), "a failed training keeps its reason in lastTrain", lt && lt.error);
+FakeRunPod.fail = false;
+await terr({ model: "wan", dry: true, pieces: pile });
+ok(store.read().lastTrain.ok === true, "…and a good training replaces the report");
 // ---- old builds' leftovers
 writeFileSync(join(dir, "xugc.json"), JSON.stringify({ takes: [{ id: "d", demo: true }], models: [{ id: "wan22" }, { id: "u", kind: "lora" }], dataset: [{ id: "seed-1", file: "assets/x.mp4" }], settings: { mode: "demo", capTrain: 40 } }));
 const re = new Store(dir).read();

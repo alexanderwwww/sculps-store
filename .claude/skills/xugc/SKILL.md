@@ -93,3 +93,11 @@ Written into the app as `assets/style/realism-rules.md` (the top part goes into 
 - The trained file lives in the app's data folder (userData/xugc/loras), which new builds never touch, and is copied to Documents/XUGC Models. Never store a trained file inside the app bundle.
 - Setup (66 GB model download) eats ~30 of the 75 minutes without a RunPod network volume (~15 with one). Real value of a volume: more training per dollar.
 - The real run is its own smoke test: a wrong flag fails early and costs about the setup. A separate dry run pays that setup twice.
+
+## Build 10 (2026-10-02): the first $5 training failed silently - what was found
+- Evidence: balance fell ~$1, header showed $0.60, no file in Documents/XUGC Models, no LoRA line. The GPU stopped after ~10 minutes.
+- Fault 1 (mine, certain): the training error box was hidden. `.err` is display:none until `showErr()` adds class "on"; doTrain set textContent only. ALWAYS use showErr for any red message.
+- Fault 2 (reproduced): the captioner read video with qwen-vl-utils, which calls torchvision.io.read_video (gone in new torchvision) and crashes. Now: ffmpeg frames -> list of jpgs; per-clip fallback caption; whole-model fallback to plain captions; whisper on CPU int8 (a missing CUDA lib aborts a process); optional pip installs are non-fatal; transformers pinned <5 on the pod. Tested locally with real libs and a tiny stand-in model, plus the fallback path.
+- The actual cause of the $0.60 failure is NOT proven (the GPU's log was lost). Build 10 keeps and shows a "LAST TRAINING" report (also on the status board as lastTrain) so the next failure is readable.
+- Budgeted run now captions at most 100 pieces (captioning costs GPU minutes).
+- Rule re-learned: when a replace may not match, assert it. One lastTrain edit silently did not land until a grep showed it.

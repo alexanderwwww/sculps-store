@@ -9,7 +9,9 @@ R="${JOB_ROOT:-/workspace/job}"; OUT="$R/out"; IN="$R/in"; W=/workspace
 mkdir -p "$OUT"; cd "$W"
 echo "== $(date -u +%T) installing"
 command -v ffmpeg >/dev/null || (apt-get update -qq && apt-get install -y -qq ffmpeg >/dev/null)
-pip install -q uv "huggingface_hub[cli,hf_transfer]" faster-whisper qwen-vl-utils "transformers>=4.49" accelerate pillow
+pip install -q uv "huggingface_hub[cli,hf_transfer]"
+# captioning helpers are optional: if one fails to install, captions fall back to plain ones and the run goes on
+pip install -q faster-whisper qwen-vl-utils "transformers>=4.49,<5" accelerate pillow || echo "== $(date -u +%T) caption helpers did not all install; plain captions will be used"
 nvidia-smi > "$OUT/gpu.txt" 2>&1 || true
 NCLIPS=$(ls "$IN"/c*.mp4 2>/dev/null | wc -l); echo "clips: $NCLIPS"
 [ "$NCLIPS" -ge 1 ] || { echo "no clips uploaded"; exit 2; }
@@ -18,7 +20,8 @@ if [ "$DRY" = "1" ]; then  # dry run: 3 clips only
 fi
 
 echo "== $(date -u +%T) writing captions"
-TRIGGER="$TRIGGER" HF_HUB_ENABLE_HF_TRANSFER=1 python3 "$IN/caption_clips.py" "$IN" 2>&1 | tee "$OUT/caption.log" | tail -n 8
+TRIGGER="$TRIGGER" HF_HUB_ENABLE_HF_TRANSFER=1 python3 "$IN/caption_clips.py" "$IN" 2>&1 | tee "$OUT/caption.log" | tail -n 8 || echo "== $(date -u +%T) the captioner stopped; using plain captions for what is missing"
+for f in "$IN"/c*.mp4; do b="${f%.mp4}"; [ -s "$b.txt" ] || echo "$TRIGGER. [VISUAL] A person films a product video on a phone, handheld, real room light. [SPEECH] No speech. [SOUNDS] close phone-microphone voice, faint room tone. [TEXT] None." > "$b.txt"; done
 
 # Time box: a budgeted run trains until shortly before the pod's own deadline (the money limit), saves checkpoints as it goes,
 # and a STOP file (the app's "Stop and keep") ends the trainer early. Whatever was saved last is what comes home.
