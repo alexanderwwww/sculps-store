@@ -265,3 +265,10 @@ Two more, from the same round:
   screen. A pale wallpaper with a dark patch beneath the glass averages "light"
   and picks dark type exactly where it cannot be read. And carry a halo of the
   opposite tone regardless — over clear glass the background is a photograph.
+
+
+## Magic Wand, 2026-10-02: how a working app got broken in a day
+The Wand worked. His new ChatGPT account changed the page; the fault was the app no longer finding the message box (no `#prompt-textarea`) and counting
+attachments only as `blob:` images. I spent builds 72-76 on glass, icon, sign-in guards and lag instead of reading the page first. Rules: evidence first
+(the probe in live.mjs prints what the page really has), one fix per build, keep the last good build published (71 is the last one that worked on his old
+account), confirm in `wand_status` that the build number changed, then say done. A runner busy in a retry loop only updates after a stop + `update` order.

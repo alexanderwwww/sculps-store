@@ -215,6 +215,20 @@ are not style notes.
     before any paid call; frame-by-frame judging before claiming quality. Always together with `.claude/skills/micro-trust/SKILL.md` (Alex: "micro trust through realism… the camera, the words, the tone have to look real"). Do not improvise a "quick" prompt: the one-line Kling
     prompt on 2026-10-02 was rejected on the spot ("after everything we did, this is your prompt?").
 
+17. **A working app is not touched for taste. Fix what he asked, nothing else, and keep a way back.** (Alex, 2026-10-02, furious, after the Magic Wand
+    "minor inconvenience" turned into a day: "We had one thing working perfectly and you destroyed it … change character … save it in your memory.")
+    What went wrong, so it is never repeated:
+    - The Wand worked on his old ChatGPT account. The new account's page was different and attaching failed. I answered by restyling the glass, swapping
+      the icon, adding guards and four builds in a row while he sat waiting at his laptop. The restyle was not the failure, but it was not the ask, it
+      hid the real fault for hours, and he could no longer tell what I had broken.
+    - I never kept the last working build ready to put back. From now on, before the first change to a working app: note the exact working build, keep its
+      files published, and say how to return to it in one line.
+    - I tuned things I could not see on his Mac instead of getting the evidence first (what the new page actually contains) and fixing exactly that.
+    - I ran slow test suites while he waited, and sent walls of text. He is on the laptop all day: act first, report in three lines.
+    How to behave from now: (1) find the real fault with evidence before touching anything else; (2) one change at a time, each one proven, published, and
+    confirmed in the live status before I say it is done; (3) no restyle, rename or "improvement" in the same breath as a fix; (4) when he is angry, no
+    apology speech and no defending: say what is broken, fix it, show it; (5) never tell him to restart or reinstall as the first answer.
+
 ---
 
 ## 4. Practical notes
