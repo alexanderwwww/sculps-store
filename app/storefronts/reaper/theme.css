@@ -4668,7 +4668,7 @@ html, body { margin: 0; }
   .cb-night--cards .cb-night__row--cards {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: calc((100% - 24px) / 4);
+    grid-auto-columns: calc((100% - 8px) / 2);
     grid-template-columns: none;
     gap: 8px;
     overflow-x: auto;
@@ -4677,4 +4677,26 @@ html, body { margin: 0; }
   }
   .cb-night--cards .cb-night__row--cards::-webkit-scrollbar { display: none; }
   .cb-night--cards .cb-night__row--cards img { scroll-snap-align: start; }
+}
+
+/* One finished card on its own: the card's own blue runs edge to edge. */
+.cb-night--one { background: #0147d5; }
+@media (min-width: 900px) {
+  .cb-night--one .cb-night__row--cards {
+    display: block;
+    max-width: 560px;
+    overflow: visible;
+  }
+  .cb-night--one .cb-night__row--cards img { border-radius: 0; }
+}
+
+/* The lone blue card is a little smaller than the screen on a phone: its blue
+   carries on around it. */
+@media (max-width: 899px) {
+  .cb-night--one { padding-top: 22px; padding-bottom: 22px; }
+  .cb-night--one .cb-night__row--cards img {
+    width: 84%;
+    margin: 0 auto;
+    border-radius: 6px;
+  }
 }

@@ -1411,7 +1411,7 @@ function AdCards({ section }: { section: LoadedSection }) {
   const heading = val(section.values, "heading");
   const sub = val(section.values, "subheading");
   return (
-    <section className="cb-night cb-night--cards" id="cards">
+    <section className={`cb-night cb-night--cards${cards.length === 1 ? " cb-night--one" : ""}`} id="cards">
       {heading ? (
         <div className="cb-wrap cb-night__head">
           <h2 className="cb-h2">{heading}</h2>

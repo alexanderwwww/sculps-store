@@ -246,6 +246,7 @@ function Section({
     case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
+    case "ad_cards":      return <AdCards section={section} />;
     case "yard_plan":     return <YardPlan section={section} page={page} />;
     case "tier_ladder":   return <TierLadder section={section} />;
     case "install_weekend": return <InstallWeekend section={section} />;
@@ -1120,6 +1121,38 @@ function Features({ section }: { section: LoadedSection }) {
 }
 
 /* ------------------------------------------------------------- proof wall */
+
+/**
+ * Finished ad cards, each with its own words, swiped. Same full-bleed swipe as
+ * the photo wall on a phone; on a desktop a row that scrolls sideways, four in
+ * view. A lone card sits on its own colour, centred.
+ */
+function AdCards({ section }: { section: LoadedSection }) {
+  const cards = section.blocks.filter((b) => has(b.values, "image"));
+  if (!cards.length) return null;
+  const heading = val(section.values, "heading");
+  const sub = val(section.values, "subheading");
+  return (
+    <section className={`cb-night cb-night--cards${cards.length === 1 ? " cb-night--one" : ""}`} id="cards">
+      {heading ? (
+        <div className="cb-wrap cb-night__head">
+          <h2 className="cb-h2">{heading}</h2>
+          {sub ? <p>{sub}</p> : null}
+        </div>
+      ) : null}
+      <div className="cb-night__row cb-night__row--cards">
+        {cards.map((card, i) => (
+          <img
+            key={`${val(card.values, "image")}-${i}`}
+            src={val(card.values, "image")}
+            alt={val(card.values, "caption")}
+            loading="lazy"
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function ProofWall({ section }: { section: LoadedSection }) {
   /*
