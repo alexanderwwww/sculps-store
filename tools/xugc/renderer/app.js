@@ -14,7 +14,7 @@ const showErr = (el, msg) => { el.textContent = msg || ""; el.classList.toggle("
 const isVeoNow = () => (ui.engine || "veo") === "veo";
 // Veo makes 8 s clips, so Real Life lengths are what he is billed for and gets: 8, 16 or 24 s
 const secsNow = () => (isVeoNow() ? ui.vsecs || 16 : ui.secs);
-async function refresh(r) { const v = r || (await window.xugc.get()); S = v.state; META = v; ui.est = await window.xugc.estimate(secsNow(), ui.qual, ui.engine || "veo", ui.tier || "lite"); renderAll(); }
+async function refresh(r) { if (r) ui.connOpen = null; const v = r || (await window.xugc.get()); S = v.state; META = v; try { ui.est = /^(seedance|kling|fal_)/.test(ui.engine || "") ? null : await window.xugc.estimate(secsNow(), ui.qual, ui.engine || "veo", ui.tier || "lite"); } catch { ui.est = null; } renderAll(); }
 
 function seg(el, items, cur, on) {
   el.innerHTML = "";
@@ -39,17 +39,22 @@ function renderReference() {
 }
 function renderCreate() {
   renderReference();
-  const missing = (ui.engine || "veo") === "veo" ? (!META.googleSet ? ["your Google key", "settings"] : null) : !META.keySet ? ["a RunPod key", "settings"] : !META.hfSet ? ["a Hugging Face token", "settings"] : null;
+  const missing = needsFal(model()) ? ["a fal.ai key", "settings"] : (ui.engine || "veo") === "veo" ? (!META.googleSet ? ["your Google key", "settings"] : null) : !META.keySet ? ["a RunPod key", "settings"] : !META.hfSet ? ["a Hugging Face token", "settings"] : null;
   const w = $("#nokey"); w.style.display = missing ? "block" : "none";
   if (missing) { w.innerHTML = `Before the first video: add ${missing[0]} in <button id="gokey">Settings</button>.`; $("#gokey").onclick = () => setView("settings"); }
   const p = S.product;
   $("#purl").placeholder = "https://yourstore.com/products/…";
-  if (p && (!ui.refs || ui.refsFor !== p.url)) { ui.refs = []; ui.refsFor = p.url; }
+  if (p && (!ui.refs || ui.refsFor !== p.url)) { ui.refs = p.images.length ? [p.images[0]] : []; ui.refsFor = p.url; }
   if (!p) ui.refs = null;
   const ph = $("#pphotos"); ph.innerHTML = "";
-  if (p) p.images.slice(0, 24).forEach((u) => { const im = document.createElement("img"); im.src = u; im.className = ui.refs.includes(u) ? "sel" : ""; im.title = "Tap to lock the video to this photo (up to 3). Use clean photos with no text on them."; im.onclick = () => { ui.refs = ui.refs.includes(u) ? ui.refs.filter((x) => x !== u) : [...ui.refs, u].slice(-3); renderCreate(); }; ph.appendChild(im); });
-  $("#pfound").innerHTML = p ? `<b>${esc(p.title)}</b>${p.price ? " · " + esc(p.currency) + " " + esc(p.price) : ""}${p.images.length ? " · " + p.images.length + " photos, " + (ui.refs || []).length + " locked" : ""} <button class="btn" id="pclear" style="padding:2px 9px;margin-left:6px">Remove</button>` : "No product yet. The scene alone will do, but a product makes it specific.";
-  if (p) $("#pclear").onclick = () => window.xugc.clearProduct().then(refresh);
+  if (p) p.images.slice(0, 24).forEach((u) => { const im = document.createElement("img"); im.src = u; im.className = ui.refs.includes(u) ? "sel" : ""; im.title = "Make this the hero photo. Clean photos with no text work best."; im.onclick = () => { ui.refs = [u]; renderCreate(); }; ph.appendChild(im); });
+  const tile = $("#ptile"), hero = p && ui.refs && ui.refs[0];
+  tile.classList.toggle("empty", !p); $("#phero").style.backgroundImage = hero ? `url("${hero.replace(/"/g, "%22")}")` : "";
+  if (!p) ui.sheet = false; tile.classList.toggle("open", !!ui.sheet); $("#psheet").classList.toggle("on", !!ui.sheet);
+  tile.onclick = () => { if (p) { ui.sheet = !ui.sheet; renderCreate(); } };
+  $("#pfound").innerHTML = p ? `<b>${esc(p.title)}</b>${p.price ? esc(p.currency) + " " + esc(p.price) + " · " : ""}${p.images.length ? p.images.length + " photos, " + (ui.refs || []).length + " locked" : "no photos"} <button class="slink" id="pclear" style="margin-left:6px">Remove</button>` : "No product yet. Paste a link above.";
+  if (p) $("#pclear").onclick = (e) => { e.stopPropagation(); window.xugc.clearProduct().then(refresh); };
+  renderLocal();
   $$("#avmode button").forEach((b) => { b.classList.toggle("on", b.dataset.m === ui.avmode); b.onclick = () => { ui.avmode = b.dataset.m; renderCreate(); }; });
   $("#avpick").style.display = ui.avmode === "pick" ? "flex" : "none"; $("#avown").style.display = ui.avmode === "own" ? "block" : "none";
   seg($("#avpick"), META.avatars.filter((a) => a !== "broad" && a !== "none").map((a) => [a, a[0].toUpperCase() + a.slice(1)]), ui.avatar, (k) => { ui.avatar = k; renderCreate(); });
@@ -58,10 +63,11 @@ function renderCreate() {
   seg($("#musics"), [["none", "None"], ["soft", "Soft beat"], ["drop", "Beat drop"]], ui.music, (k) => { ui.music = k; renderCreate(); });
   if (isVeoNow()) seg($("#secs"), [8, 16, 24].map((s) => [s, s + "s"]), ui.vsecs || 16, (k) => { ui.vsecs = Number(k); refresh(); });
   else seg($("#secs"), META.seconds.map((s) => [s, s + "s"]), ui.secs, (k) => { ui.secs = Number(k); refresh(); });
-  $("#quals").closest(".sec").style.display = isVeoNow() ? "none" : "";
+  $("#quals").closest(".sec").style.display = model().quality ? "" : "none";
   seg($("#quals"), Object.entries(META.qualities), ui.qual, (k) => { ui.qual = k; refresh(); });
   const on = META.style.filter((f) => f.on);
   $("#stylon").textContent = on.length ? `Style Bible: ${on.length} on` : "Style Bible off";
+  $("#styltog").textContent = (ui.stylOpen ? "Hide" : "Show") + " the style files"; $("#stylchips").style.display = ui.stylOpen ? "flex" : "none"; $("#styltog").onclick = () => { ui.stylOpen = !ui.stylOpen; renderCreate(); };
   $("#stylchips").innerHTML = META.style.map((f) => `<span class="${f.on ? "" : "off"}">${esc(f.name)}</span>`).join("");
   $("#goest").textContent = ui.est ? `up to ${money(ui.est.usd)} · about ${ui.est.minutes} min` : "";
   $("#go").disabled = ui.busy || !!META.busy;
@@ -124,27 +130,87 @@ function renderSettings() {
   $("#keystate").textContent = META.keySet ? `Key saved (${META.keyTail}). It stays on this Mac.` : "No key saved.";
   $("#gstate").textContent = META.googleSet ? `Key saved (${META.googleTail}). Tested with Google.` : "No key saved.";
   $("#hfstate").textContent = META.hfSet ? `Token saved (${META.hfTail}). It stays on this Mac.` : "No token saved.";
+  if (!ui.falMsg) $("#falstate").textContent = META.falSet ? `Key saved (${META.falTail}).` : "Not connected";
+  for (const [k, set] of [["fal", META.falSet], ["rp", META.keySet], ["hf", META.hfSet], ["g", META.googleSet]]) {
+    const c = $("#c-" + k); $("#" + k + "dot").classList.toggle("on", !!set); c.querySelector(".ctail").classList.toggle("dim", !set);
+    const open = !set || ui.connOpen === k; c.classList.toggle("open", open);
+    const b = c.querySelector(".cbtn"); b.textContent = set ? (ui.connOpen === k ? "Cancel" : "Replace") : "Connect"; b.style.visibility = set ? "" : "hidden";
+    b.onclick = () => { ui.connOpen = ui.connOpen === k ? null : k; renderSettings(); };
+  }
 }
 
-const ENGINES = [["veo", "Real Life · Veo"], ["ltx", "XUGC fast"], ["ltx_full", "LTX full"], ["hunyuan", "Hunyuan"], ["wan", "Wan"]];
-const ENG_NOTE = { veo: "Google Veo 3.1 Lite, 720p, with sound. Hidden frames at the golden-ratio moments; your photos only teach the frames, never go into the video.", ltx: "LTX-2.5 fast, with sound", ltx_full: "LTX-2.5 full quality, with sound (slower)", hunyuan: "HunyuanVideo 1.5, silent video", wan: "Wan 2.2, silent video" };
+// One line per model. group "rented" = someone else's GPU, no training; "ours" = our GPU, trainable.
+// need: "fal" marks a model that waits for the fal.ai key. quality: the model has a Draft/HD/Max setting.
+const MODELS = [
+  { id: "veo", name: "Veo 3.1", maker: "Google", group: "rented", glyph: "V3", tags: ["with sound", "720p"], price: "$0.40 / 8 s", note: "Hidden frames at the golden-ratio moments. Your photos teach the frames and never go into the video." },
+  { id: "seedance", name: "Seedance", maker: "ByteDance · via fal", group: "rented", glyph: "SD", tags: [], need: "fal", note: "Seedance through fal.ai. Arrives with the fal key." },
+  { id: "kling", name: "Kling", maker: "Kuaishou · via fal", group: "rented", glyph: "KL", tags: [], need: "fal", note: "Kling through fal.ai. Arrives with the fal key." },
+  { id: "fal_veo", name: "Veo 3", maker: "Google · via fal", group: "rented", glyph: "V3", tags: ["with sound"], need: "fal", note: "Veo through fal.ai, billed by fal instead of Google." },
+  { id: "fal_wan", name: "Wan", maker: "Alibaba · via fal", group: "rented", glyph: "WN", tags: [], need: "fal", note: "Wan through fal.ai, no GPU to rent." },
+  { id: "ltx", name: "XUGC fast", maker: "LTX-2.5 · your GPU", group: "ours", glyph: "XF", tags: ["with sound"], quality: true, note: "LTX-2.5 fast, with sound. Trainable with XUGC Real Life." },
+  { id: "ltx_full", name: "LTX full", maker: "LTX-2.5 · your GPU", group: "ours", glyph: "LX", tags: ["with sound", "slower"], quality: true, note: "LTX-2.5 full quality, with sound (slower)." },
+  { id: "hunyuan", name: "Hunyuan", maker: "HunyuanVideo 1.5 · your GPU", group: "ours", glyph: "HY", tags: ["silent"], quality: true, note: "HunyuanVideo 1.5, silent video." },
+  { id: "wan", name: "Wan 2.2", maker: "Wan 2.2 · your GPU", group: "ours", glyph: "WN", tags: ["silent"], quality: true, note: "Wan 2.2, silent video." },
+];
+const GROUPS = [["rented", "RENTED · NO TRAINING"], ["ours", "OURS · TRAINED"]];
+const model = () => MODELS.find((m) => m.id === (ui.engine || "veo")) || MODELS[0];
+const needsFal = (m) => m.need === "fal" && !(META && META.falSet);
+const tagsHtml = (m) => (needsFal(m) ? `<span class="mtag key">needs fal key</span>` : "") + m.tags.map((t) => `<span class="mtag">${esc(t)}</span>`).join("") + (m.price ? `<span class="mtag pr">${esc(m.price)}</span>` : "");
+// Simple line drawings, one per preset, so the cards read at a glance.
+const PGLYPH = {
+  review: '<rect x="52" y="6" width="22" height="34" rx="4"/><circle cx="63" cy="18" r="5"/><path d="M55 34c2-6 14-6 16 0"/><path d="M80 14c3 3 3 9 0 12M84 10c5 5 5 15 0 20"/>',
+  "product-only": '<rect x="54" y="12" width="18" height="24" rx="3"/><path d="M34 36c4-6 10-8 18-6M92 36c-4-6-10-8-18-6"/><path d="M58 18h10"/>',
+  unboxing: '<path d="M44 22l19-8 19 8-19 8z"/><path d="M44 22v14l19 8 19-8V22M63 30v14"/><path d="M63 4v6M56 6l3 5M70 6l-3 5"/>',
+  "try-on": '<rect x="70" y="6" width="20" height="34" rx="3"/><circle cx="48" cy="12" r="5"/><path d="M48 17v14M40 24h16M48 31l-5 9M48 31l5 9"/>',
+  tutorial: '<circle cx="38" cy="23" r="7"/><circle cx="63" cy="23" r="7"/><circle cx="88" cy="23" r="7"/><path d="M45 23h11M70 23h11"/>',
+  "breaking-news-start": '<rect x="30" y="8" width="66" height="30" rx="3"/><path d="M30 32h66"/><circle cx="38" cy="16" r="2.5"/><path d="M45 16h18"/>',
+  "demo-in-motion": '<circle cx="63" cy="23" r="9"/><path d="M30 23h16M34 15h10M34 31h10"/><path d="M80 14a14 14 0 0 1 0 18"/>',
+  "before-after": '<rect x="30" y="8" width="30" height="30" rx="3"/><rect x="66" y="8" width="30" height="30" rx="3"/><path d="M36 30l6-8 5 5 7-9M74 24l5 5 10-11"/>',
+};
+function placePop() { const r = $("#mpick").getBoundingClientRect(), p = $("#mpop"); p.style.left = r.left + "px"; p.style.width = Math.max(r.width, 340) + "px"; const below = innerHeight - r.bottom - 12, above = r.top - 64; if (below >= Math.min(460, above)) { p.style.top = r.bottom + 6 + "px"; p.style.bottom = "auto"; p.style.maxHeight = Math.min(below, 520) + "px"; } else { p.style.top = "auto"; p.style.bottom = innerHeight - r.top + 6 + "px"; p.style.maxHeight = Math.min(above, 520) + "px"; } }
+function openPop(on) { ui.pop = on; $("#mpop").classList.toggle("on", on); $("#mpick").classList.toggle("open", on); if (on) placePop(); }
+function pickModel(id) { openPop(false); ui.engine = id; refresh(); }
 function renderEngine() {
-  seg($("#engines"), ENGINES, ui.engine || "veo", (k) => { ui.engine = k; refresh(); });
-  $("#engnote").textContent = ENG_NOTE[ui.engine || "veo"];
-  seg($("#presets"), (META.presets || []).map((p) => [p.id, p.name]), ui.preset || "review", (k) => { ui.preset = k; renderEngine(); });
-  $("#presetnote").textContent = ((META.presets || []).find((p) => p.id === (ui.preset || "review")) || {}).blurb || "";
+  const m = model(), cur = m.id;
+  $("#mglyph").textContent = m.glyph; $("#mname").textContent = m.name; $("#mmaker").textContent = m.maker; $("#mtags").innerHTML = tagsHtml({ ...m, tags: m.tags.slice(0, m.price ? 1 : 2) });
+  $("#engnote").textContent = m.note;
+  const E = $("#engines"); E.innerHTML = "";
+  for (const [g, label] of GROUPS) {
+    const h = document.createElement("div"); h.className = "mgrp"; h.textContent = label; E.appendChild(h);
+    for (const x of MODELS.filter((y) => y.group === g)) {
+      // Rows waiting for the fal key are not <button>s, so "#engines button" stays the five working engines.
+      const r = document.createElement(x.need ? "div" : "button"); r.className = "mitem" + (x.id === cur ? " on" : "") + (needsFal(x) ? " off" : "");
+      if (x.need) { r.setAttribute("role", "button"); r.tabIndex = 0; }
+      r.dataset.id = x.id;
+      r.innerHTML = `<span class="mg">${esc(x.glyph)}</span><span class="mn"><b>${esc(x.name)}</b><small>${esc(x.maker)}</small></span><span class="mtags">${x.tags.map((t) => `<span class="mtag">${esc(t)}</span>`).join("")}${x.price ? `<span class="mtag pr">${esc(x.price)}</span>` : ""}</span>${needsFal(x) ? '<a class="addk">add key</a>' : ""}`;
+      r.onclick = (ev) => { if (ev.target.classList.contains("addk")) { openPop(false); setView("settings"); ui.connOpen = "fal"; renderSettings(); return; } pickModel(x.id); };
+      E.appendChild(r);
+    }
+  }
+  const P = $("#presets"); P.innerHTML = "";
+  for (const p of META.presets || []) {
+    const b = document.createElement("button"); b.className = "pcard" + (p.id === (ui.preset || "review") ? " on" : ""); b.title = p.blurb;
+    b.innerHTML = `<svg viewBox="0 0 126 46">${PGLYPH[p.id] || '<rect x="48" y="8" width="30" height="30" rx="4"/>'}</svg><b>${esc(p.name)}</b><span>${esc(p.blurb)}</span>`;
+    b.onclick = () => { ui.preset = p.id; renderEngine(); }; P.appendChild(b);
+  }
+  $("#presetnote").textContent = "";
   seg($("#tiers"), Object.entries(META.veo || {}).filter(([k]) => k !== "standard"), ui.tier || "lite", (k) => { ui.tier = k; refresh(); });
-  const isVeo = (ui.engine || "veo") === "veo";
+  const isVeo = cur === "veo";
   $("#vrow").style.display = isVeo ? "" : "none";
-  $("#reallife").style.display = $("#rlnote").style.display = isVeo ? "none" : "";
-  $("#gonote").textContent = isVeo ? "Made on Google: hidden frames, then 8-second clips joined into one video. The price shown is the most it can cost." : "Each video rents a GPU just for that video and hands it back. The price shown is the most it can cost.";
+  $("#rlrow").style.display = $("#reallife").style.display = $("#rlnote").style.display = m.group === "ours" ? "" : "none";
+  $("#gonote").textContent = isVeo ? "Made on Google: hidden frames, then 8-second clips joined into one video. The price shown is the most it can cost." : m.need ? "This model runs on fal.ai and is billed there per video." : "Each video rents a GPU just for that video and hands it back. The price shown is the most it can cost.";
   if (ui.lastEngine && ui.lastEngine !== ui.engine) showErr($("#err"), "");
   ui.lastEngine = ui.engine;
-  const have = (S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0], ltx = /^ltx/.test(ui.engine || "veo");
+  const have = (S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0], ltx = /^ltx/.test(cur);
   if (!have || !ltx) ui.reallife = false;
   $("#reallife").querySelectorAll("button").forEach((b) => { b.classList.toggle("on", (b.dataset.v === "1") === !!ui.reallife); b.disabled = !have || !ltx; b.onclick = () => { ui.reallife = b.dataset.v === "1"; renderEngine(); }; });
-  $("#rlnote").textContent = !ltx ? "Real Life works with the LTX engines for now. Hunyuan and Wan get it once their trained file passes its first test." : have ? "Real Life uses your trained file: " + (have.dry ? "dry run" : "full") + ", " + new Date(have.at).toLocaleDateString() + "." : "No trained file yet. Train it in the Train tab.";
+  $("#rlnote").textContent = !ltx ? "Works with the LTX models for now. Hunyuan and Wan get it once their trained file passes its first test." : have ? "Uses your trained file: " + (have.dry ? "dry run" : "full") + ", " + new Date(have.at).toLocaleDateString() + "." : "No trained file yet. Train it in the Train tab.";
 }
+$("#mpick").onclick = (e) => { e.stopPropagation(); openPop(!ui.pop); };
+document.addEventListener("mousedown", (e) => { if (ui.pop && !e.target.closest("#mpop") && !e.target.closest("#mpick")) openPop(false); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && ui.pop) openPop(false); });
+addEventListener("resize", () => ui.pop && placePop());
+$(".ctl").addEventListener("scroll", () => ui.pop && placePop());
 const TR = { model: "ltx", budget: 5 };
 async function trainEstimates() {
   const [d, f] = await Promise.all([window.xugc.trainEstimate(TR.model, true), window.xugc.trainEstimate(TR.model, false, TR.budget)]);
@@ -343,7 +409,7 @@ function beginRender(who) {
   clearInterval(ui.timer); ui.timer = setInterval(() => { $("#ht").textContent = clock(Date.now() - ui.t0); }, 500); renderCreate();
 }
 function endRender() { ui.rendering = false; clearInterval(ui.timer); $("#ptag").style.display = "block"; stopFx(); }
-const specNow = () => ({ scene: $("#script").value.trim(), look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: secsNow(), quality: ui.qual, music: ui.music, engine: ui.engine || "veo", preset: ui.preset || "review", tier: ui.tier || "lite", lora: ui.reallife ? ((S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0] || {}).id : undefined, refs: ui.refs && ui.refs.length ? ui.refs : undefined });
+const specNow = () => ({ refsLocal: ui.refsLocal && ui.refsLocal.length ? ui.refsLocal.map(({ dataUrl, name }) => ({ dataUrl, name })) : undefined, scene: $("#script").value.trim(), look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: secsNow(), quality: ui.qual, music: ui.music, engine: ui.engine || "veo", preset: ui.preset || "review", tier: ui.tier || "lite", lora: ui.reallife ? ((S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0] || {}).id : undefined, refs: ui.refs && ui.refs.length ? ui.refs : undefined });
 $("#showp").onclick = async () => {
   const f = $("#fullp"); if (f.classList.contains("on")) { f.classList.remove("on"); $("#showp").textContent = "Show the full prompt"; return; }
   const r = await window.xugc.preview(specNow()); $("#fulltext").value = r.prompt || r.error || ""; ui.fullEdited = false; f.classList.add("on"); $("#showp").textContent = "Hide the full prompt";
@@ -393,7 +459,34 @@ $("#keysave").onclick = async () => {
   $("#keyin").value = ""; $("#keystate").textContent = `Key saved (${META.keyTail}) and it works. ${r.pods} GPU${r.pods === 1 ? "" : "s"} running right now.`;
 };
 $("#gsave").onclick = async () => { showErr($("#gerr"), ""); const r = await window.xugc.setGoogle($("#gin").value); await refresh(r); if (r.error) return showErr($("#gerr"), r.error); $("#gin").value = ""; };
+$("#falsave").onclick = async () => { showErr($("#falerr"), ""); if (!window.xugc.setFal) { ui.falMsg = true; $("#falstate").textContent = "fal.ai arrives in build 13"; return; } const r = await window.xugc.setFal($("#falin").value); await refresh(r); if (r.error) return showErr($("#falerr"), r.error); $("#falin").value = ""; ui.connOpen = null; renderSettings(); };
 $("#hfsave").onclick = async () => { showErr($("#hferr"), ""); const r = await window.xugc.setHf($("#hfin").value); await refresh(r); if (r.error) return showErr($("#hferr"), r.error); $("#hfin").value = ""; };
 $("#sweep").onclick = async () => { const r = await window.xugc.sweep(); await refresh(r); $("#sweepnote").textContent = r.error ? r.error : `Stopped ${r.stopped} GPU${r.stopped === 1 ? "" : "s"}. Nothing of yours is running.`; };
 
 refresh();
+
+// Reference images: dropped from Finder, picked, or pasted anywhere on Create. Max 3, downscaled to 1024 px.
+ui.refsLocal = [];
+function renderLocal() {
+  const T = $("#ithumbs"); T.innerHTML = "";
+  ui.refsLocal.forEach((r, i) => { const d = document.createElement("div"); d.className = "ith"; d.style.backgroundImage = `url("${r.dataUrl}")`; d.title = r.name; const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.onclick = (e) => { e.preventDefault(); e.stopPropagation(); ui.refsLocal.splice(i, 1); renderLocal(); }; d.appendChild(x); T.appendChild(d); });
+  $("#iadd").style.display = ui.refsLocal.length >= 3 ? "none" : ""; $("#iadd").lastChild.textContent = ui.refsLocal.length ? "Add" : "Drop or paste images";
+  $("#ilcount").textContent = ui.refsLocal.length + " / 3";
+}
+function shrink(file) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader(); fr.onerror = () => rej(fr.error);
+    fr.onload = () => { const im = new Image(); im.onerror = () => rej(new Error("not an image")); im.onload = () => { const k = Math.min(1, 1024 / Math.max(im.naturalWidth, im.naturalHeight)); const c = document.createElement("canvas"); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res({ dataUrl: c.toDataURL("image/jpeg", 0.9), name: file.name || "pasted.jpg" }); }; im.src = fr.result; };
+    fr.readAsDataURL(file);
+  });
+}
+async function addLocal(files) {
+  for (const f of [...files].filter((f) => /^image\//.test(f.type))) { if (ui.refsLocal.length >= 3) break; try { ui.refsLocal.push(await shrink(f)); } catch {} }
+  renderLocal();
+}
+window.__addLocal = addLocal;
+const idr = $("#idrop");
+idr.ondragover = (e) => { e.preventDefault(); idr.classList.add("over"); }; idr.ondragleave = () => idr.classList.remove("over");
+idr.ondrop = (e) => { e.preventDefault(); idr.classList.remove("over"); addLocal(e.dataTransfer.files); };
+$("#ifile").onchange = (e) => { addLocal(e.target.files); e.target.value = ""; };
+document.addEventListener("paste", (e) => { if (ui.view !== "create") return; const imgs = [...(e.clipboardData ? e.clipboardData.files : [])].filter((f) => /^image\//.test(f.type)); if (!imgs.length) return; e.preventDefault(); addLocal(imgs); });

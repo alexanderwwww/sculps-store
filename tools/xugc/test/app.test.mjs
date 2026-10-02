@@ -120,7 +120,7 @@ app.whenReady().then(async () => {
     await view("create");
     say(await until("document.querySelector('#modechip').textContent.includes('SPENT') && document.querySelector('#nokey').style.display === 'none'"), "with both keys the warning is gone and the header shows what was spent today");
     await type("#purl", "https://blackreaper.us/products/haunted-projector"); await click("#pfetch");
-    say(await until("document.querySelector('#pfound').textContent.includes('Haunted Projector') && document.querySelectorAll('#pphotos img').length === 3 && document.querySelectorAll('#pphotos img.sel').length === 0"), "a product link brings in the name and the photos", await run("document.querySelector('#pfound').textContent"));
+    say(await until("document.querySelector('#pfound').textContent.includes('Haunted Projector') && document.querySelectorAll('#pphotos img').length === 3 && document.querySelectorAll('#pphotos img.sel').length === 1 && document.querySelector('#psheet').offsetParent === null"), "a product link brings in ONE product tile; the first photo is the hero, the others wait in a hidden sheet", await run("document.querySelector('#pfound').textContent"));
     // Reference ad
     say(await run("document.querySelector('#refdrop').style.display") !== "none" && await run("document.querySelector('#refbody').style.display") === "none", "the Reference ad box is there, empty, with a Choose button");
     run("window.xugc.refFromPath(" + JSON.stringify(${JSON.stringify(fixture)}) + ").then((f) => window.__loadReference(f)); 1");
@@ -319,6 +319,20 @@ app.whenReady().then(async () => {
     say(/[$][01][.]/.test(await run("document.querySelector('#goest').textContent")), "the button shows the Google price (about a dollar), not the GPU price", await run("document.querySelector('#goest').textContent"));
     await type("#script", "A woman on a busy street in Athens shows the garden kneeler.");
     await shot("10-veo-create");
+    await run("document.querySelector('#mpick').scrollIntoView({block:'start'})"); await new Promise((r) => setTimeout(r, 200));
+    say((await run("document.querySelector('.ctl').scrollTop")) > 0, "the left column scrolls");
+    await shot("10c-model");
+    await run("(async()=>{const c=document.createElement('canvas');c.width=2000;c.height=1000;const x=c.getContext('2d');x.fillStyle='#d7ff1f';x.fillRect(0,0,2000,1000);const b=await new Promise(r=>c.toBlob(r,'image/png'));const dt=new DataTransfer();dt.items.add(new File([b],'a.png',{type:'image/png'}));document.dispatchEvent(new ClipboardEvent('paste',{clipboardData:dt}));})()");
+    say(await until("document.querySelectorAll('#ithumbs .ith').length === 1"), "an image pasted on Create becomes a reference thumbnail");
+    say(await run("(async()=>{const u=specNow().refsLocal[0].dataUrl;const i=new Image();await new Promise(r=>{i.onload=r;i.src=u});return i.naturalWidth===1024&&i.naturalHeight===512})()"), "it is downscaled to 1024 px and goes in the spec as refsLocal");
+    await run("document.querySelector('#ptile').click()"); await new Promise((r) => setTimeout(r, 200));
+    await run("document.querySelector('.ctl').scrollTop = 0"); await shot("10e-product-sheet"); await run("document.querySelector('#ptile').click(); document.querySelector('#ithumbs .ith button').click()");
+    await run("document.querySelector('#mpick').click()"); await new Promise((r) => setTimeout(r, 200));
+    say(await run("(function(){const rows=[...document.querySelectorAll('#mpop .mitem')];return rows.length===9&&rows.every(r=>{r.scrollIntoView({block:'nearest'});const b=r.getBoundingClientRect();const e=document.elementFromPoint(b.left+b.width/2,b.top+b.height/2);return e&&e.closest('.mitem')===r;})})()"), "the model list opens and every model row is reachable by the mouse");
+    await shot("10d-model-open");
+    await run("document.querySelector('#mpop [data-id=seedance]').click()");
+    say((await run("document.querySelector('#mname').textContent")) === "Seedance" && (await run("document.querySelector('#nokey').textContent")).includes("fal"), "picking a fal model shows it and asks for the fal key");
+    await run("document.querySelector('#mpick').click()"); await run("document.querySelector('#mpop [data-id=veo]').click()"); await new Promise((r) => setTimeout(r, 300));
     await run("window.xugc.setSettings({ capJob: 5, capDay: 50 })"); await run("window.xugc.get()");
     G.images = 0; G.clips = []; await click("#go");
     say(await until("window.xugc.get().then((v) => v.state.takes[0] && /Veo/.test(v.state.takes[0].model) && v.state.takes[0].audio)", 20000), "the Veo ad finishes, is saved as a take with sound, and appears in the takes", await run("window.xugc.get().then((v) => JSON.stringify({ model: v.state.takes[0].model, cost: v.state.takes[0].cost, seconds: v.state.takes[0].seconds }))"));
