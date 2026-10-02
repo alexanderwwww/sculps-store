@@ -6,7 +6,7 @@
  * returning from Stripe, and the webhook — must do exactly the same thing, and
  * must do it only once however many times they fire.
  */
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull, asc } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { orders, orderEvents, stores, variants, products, discounts } from "~/db/schema";
 import { loadOrder, recordOrderEvent } from "./admin.server";
@@ -98,7 +98,7 @@ export async function resendConfirmation(db: DB, env: Env, orderId: string): Pro
   if (!emailReady(env)) return { ok: false, reason: "Email is not configured on this Worker." };
   const events = await db.select().from(orderEvents).where(eq(orderEvents.orderId, orderId));
   const sentBefore = events.some((e) => e.type === "email:confirmation");
-  const [giftRow] = await db.select().from(discounts).where(and(eq(discounts.storeId, loaded.store.id), eq(discounts.active, true), eq(discounts.kind, "fixed"))).limit(1);
+  const [giftRow] = await db.select().from(discounts).where(and(eq(discounts.storeId, loaded.store.id), eq(discounts.active, true), eq(discounts.kind, "fixed"), isNull(discounts.usageLimit))).orderBy(asc(discounts.createdAt)).limit(1);
   const gift = giftRow && Number(giftRow.value) > 0 ? { code: giftRow.code, offCents: Number(giftRow.value) } : null;
   const ok = await sendOrderConfirmation(db, env, orderId, await confirmationInput(db, loaded, gift, { late: !sentBefore }));
   return ok ? { ok: true } : { ok: false, reason: "The email service refused it. The timeline says why." };
@@ -142,7 +142,9 @@ export async function afterPaymentConfirmed(
   const [giftRow] = await db
     .select()
     .from(discounts)
-    .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true), eq(discounts.kind, "fixed")))
+    .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true), eq(discounts.kind, "fixed"), isNull(discounts.usageLimit)))
+          // The shop's own standing code, never a one-use code minted for one customer.
+          .orderBy(asc(discounts.createdAt))
     .limit(1);
   const gift = giftRow && Number(giftRow.value) > 0
     ? { code: giftRow.code, offCents: Number(giftRow.value) }

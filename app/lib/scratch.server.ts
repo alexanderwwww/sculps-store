@@ -139,14 +139,22 @@ export async function claimExtraFor(
   // `kind` is whatever the discounts row holds; only two of its values matter here.
   already: { kind: string; value: number } | null,
   subtotalCents: number,
+  /** The code on the cart right now. */
+  currentCode: string | null = null,
 ): Promise<ClaimPlay> {
   const [existing] = await db
     .select({ amountCents: scratchPlays.amountCents, code: scratchPlays.code })
     .from(scratchPlays)
     .where(and(eq(scratchPlays.storeId, storeId), eq(scratchPlays.cartToken, cartToken)))
     .limit(1);
-  if (existing && existing.amountCents) {
+  // Already claimed and still on the cart: the same code again. If the cart
+  // has since been given a different code, the old claim is stale -- it was
+  // priced on what the cart held then -- so a fresh one is minted below.
+  if (existing && existing.amountCents && (!currentCode || currentCode === existing.code)) {
     return { code: existing.code, amountCents: existing.amountCents, extraCents: CLAIM_EXTRA_CENTS };
+  }
+  if (existing) {
+    await db.delete(scratchPlays).where(and(eq(scratchPlays.storeId, storeId), eq(scratchPlays.cartToken, cartToken)));
   }
 
   // What they walked in with, as dollars, so the new code never pays less.

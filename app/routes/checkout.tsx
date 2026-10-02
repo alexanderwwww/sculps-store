@@ -693,6 +693,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       cartToken,
       current ? { kind: current.kind, value: current.value } : null,
       cart.subtotalCents,
+      cart.discount?.code ?? null,
     );
     await setCartDiscount(context.db, store.id, cartToken, play.code);
     return Response.json(

@@ -9,7 +9,7 @@ import { resolveStore } from "~/lib/store.server";
 import { deviceFromRequest, geoFromContext, readVisitorSession, track } from "~/lib/visitor.server";
 import { metaSettings, newMetaEventId, readMetaCookies, sendEvent } from "~/lib/meta.server";
 import { metaConfig, products, variants, carts, discounts } from "~/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, asc } from "drizzle-orm";
 import { BUNDLE_OFF_CENTS } from "~/lib/money";
 import {
   readCartToken,
@@ -147,7 +147,9 @@ async function add(
         const [live] = await context.db
           .select({ code: discounts.code })
           .from(discounts)
-          .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true), eq(discounts.kind, "fixed")))
+          .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true), eq(discounts.kind, "fixed"), isNull(discounts.usageLimit)))
+          // The shop's own standing code, never a one-use code minted for one customer.
+          .orderBy(asc(discounts.createdAt))
           .limit(1);
         if (live) await setCartDiscount(context.db, store.id, token, live.code);
       }

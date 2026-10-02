@@ -14,7 +14,7 @@
  * One email per cart, ever. The row is stamped before the send, so a retry of
  * the same run can never send twice.
  */
-import { and, eq, isNotNull, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, lt, sql, asc } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { carts, stores, products, variants, discounts } from "~/db/schema";
 import { isSuppressed, unsubscribeUrl } from "./suppression.server";
@@ -113,7 +113,9 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
     const [liveRow] = await db
       .select()
       .from(discounts)
-      .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true), eq(discounts.kind, "fixed")))
+      .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true), eq(discounts.kind, "fixed"), isNull(discounts.usageLimit)))
+          // The shop's own standing code, never a one-use code minted for one customer.
+          .orderBy(asc(discounts.createdAt))
       .limit(1);
     const live = liveRow && Number(liveRow.value) > 0
       ? { code: liveRow.code, offCents: Number(liveRow.value) }

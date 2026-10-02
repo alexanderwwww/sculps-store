@@ -8,7 +8,7 @@
  * minutes and three days old and settles it the same way the return page
  * would: paid on `succeeded`, failed when the attempt is dead.
  */
-import { and, eq, gt, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gt, lt, sql } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { orders } from "~/db/schema";
 import { bnplFor, readBnplIntent } from "./bnpl.server";
@@ -28,7 +28,9 @@ export async function reconcileBnpl(db: DB, env: Env) {
         gt(orders.createdAt, new Date(now - 3 * 24 * 60 * 60_000)),
       ),
     )
-    .limit(50);
+    // Newest first, so a pile of abandoned attempts never pushes a paid one out.
+    .orderBy(desc(orders.createdAt))
+    .limit(200);
 
   const summary = { checked: 0, paid: 0, failed: 0 };
   const accounts = new Map<string, Awaited<ReturnType<typeof bnplFor>>>();
