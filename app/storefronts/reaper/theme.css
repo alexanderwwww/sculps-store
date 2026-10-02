@@ -4668,7 +4668,7 @@ html, body { margin: 0; }
   .cb-night--cards .cb-night__row--cards {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: calc((100% - 8px) / 2);
+    grid-auto-columns: calc((100% - 8px) / 2.3);
     grid-template-columns: none;
     gap: 8px;
     overflow-x: auto;
@@ -4699,4 +4699,16 @@ html, body { margin: 0; }
     margin: 0 auto;
     border-radius: 6px;
   }
+}
+
+/* The four cards, a touch smaller on a phone: each is 92% of the screen, the
+   next one peeking in, so it is plain there is more to come. */
+@media (max-width: 899px) {
+  .cb-night--cards:not(.cb-night--one) .cb-night__row--cards {
+    grid-auto-columns: 92vw;
+    gap: 6px;
+    padding: 0 4vw;
+    scroll-padding: 0 4vw;
+  }
+  .cb-night--cards:not(.cb-night--one) .cb-night__row--cards img { border-radius: 8px; scroll-snap-align: center; }
 }

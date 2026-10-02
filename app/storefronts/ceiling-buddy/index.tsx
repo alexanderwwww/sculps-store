@@ -1132,31 +1132,30 @@ function AdCards({ section }: { section: LoadedSection }) {
   const row = useRef<HTMLDivElement>(null);
   /*
    * It moves on its own: one card every 2.4 seconds, back to the first at the
-   * end, only while the row is on screen, and it stops for good the moment a
-   * finger or mouse touches it. A visitor who asks for less motion gets none.
+   * end, only while the row is on screen. It never stops for a touch -- a
+   * visitor can swipe, and it carries on. Less motion asked for, none given.
    */
   useEffect(() => {
     const el = row.current;
     if (!el || cards.length < 2) return;
     if (typeof window === "undefined" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let onScreen = false;
-    let stopped = false;
     const io = new IntersectionObserver(([e]) => { onScreen = Boolean(e?.isIntersecting); }, { threshold: 0.4 });
     io.observe(el);
-    const stop = () => { stopped = true; };
-    el.addEventListener("pointerdown", stop, { passive: true });
-    el.addEventListener("wheel", stop, { passive: true });
-    el.addEventListener("touchstart", stop, { passive: true });
     const timer = window.setInterval(() => {
-      if (stopped || !onScreen) return;
-      const a = el.children[0] as HTMLElement | undefined;
-      const c = el.children[1] as HTMLElement | undefined;
-      if (!a || !c) return;
-      const step = c.offsetLeft - a.offsetLeft;
-      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
-      el.scrollTo({ left: atEnd ? 0 : Math.round(el.scrollLeft / step) * step + step, behavior: "smooth" });
+      if (!onScreen) return;
+      const kids = Array.from(el.children) as HTMLElement[];
+      if (kids.length < 2) return;
+      const base = kids[0].offsetLeft;
+      // The card nearest the left edge now, then the one after it, wrapping.
+      let here = 0;
+      kids.forEach((k, i) => {
+        if (Math.abs(k.offsetLeft - base - el.scrollLeft) < Math.abs(kids[here].offsetLeft - base - el.scrollLeft)) here = i;
+      });
+      const next = (here + 1) % kids.length;
+      el.scrollTo({ left: kids[next].offsetLeft - base, behavior: "smooth" });
     }, 2400);
-    return () => { window.clearInterval(timer); io.disconnect(); el.removeEventListener("pointerdown", stop); el.removeEventListener("wheel", stop); el.removeEventListener("touchstart", stop); };
+    return () => { window.clearInterval(timer); io.disconnect(); };
   }, [cards.length]);
   if (!cards.length) return null;
   const heading = val(section.values, "heading");

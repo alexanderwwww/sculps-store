@@ -7,5 +7,5 @@ await pg.evaluate(()=>{const r=document.querySelectorAll('[data-section="ad_card
 await pg.waitForTimeout(800);
 console.log('manual', await pg.evaluate(async()=>{const r=document.querySelectorAll('[data-section="ad_cards"] .cb-night__row')[1]; r.scrollTo({left:390,behavior:'smooth'}); await new Promise(x=>setTimeout(x,1200)); return r.scrollLeft}));
 await pg.evaluate(()=>{document.querySelectorAll('[data-section="ad_cards"] .cb-night__row')[1].scrollTo({left:0})});
-for(let i=0;i<7;i++){await pg.waitForTimeout(2500); console.log('auto',await pg.evaluate(()=>document.querySelectorAll('[data-section="ad_cards"] .cb-night__row')[1].scrollLeft));}
+for(let i=0;i<6;i++){await pg.waitForTimeout(2500); console.log('auto',await pg.evaluate(()=>document.querySelectorAll('[data-section="ad_cards"] .cb-night__row')[1].scrollLeft));}
 await b.close();

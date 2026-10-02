@@ -1,0 +1,12 @@
+import { chromium } from '/home/user/sculps-store/node_modules/playwright/index.mjs';
+const b = await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
+const ctx = await b.newContext({viewport:{width:390,height:844},ignoreHTTPSErrors:true}); const pg = await ctx.newPage(); pg.setDefaultTimeout(90000);
+pg.on('pageerror',e=>console.log('PAGEERR',String(e).slice(0,200))); pg.on('console',m=>{if(m.type()==='error')console.log('CONSOLE',m.text().slice(0,160))});
+await pg.goto('https://blackreaper.us/products/the-scream',{waitUntil:'domcontentloaded'});
+await pg.waitForFunction(()=>{const r=document.querySelectorAll('[data-section="ad_cards"] .cb-night__row')[1];return r&&getComputedStyle(r).display==='grid'});
+await pg.waitForTimeout(8000);
+console.log(await pg.evaluate(()=>{const k=Object.keys(document.body).find(k=>k.startsWith('__react'))||Object.keys(document.documentElement).join(',');return String(k)+' scripts:'+[...document.scripts].length+' hyd:'+!!window.__reactRouterContext}));
+await pg.evaluate(()=>document.querySelectorAll('[data-section="ad_cards"] .cb-night__row')[1].scrollIntoView({block:'center'}));
+await pg.waitForTimeout(3000);
+console.log(await pg.evaluate(()=>{const r=document.querySelectorAll('[data-section="ad_cards"] .cb-night__row')[1];const a=r.children[0],c=r.children[1];const b=r.getBoundingClientRect();return JSON.stringify({sl:r.scrollLeft,step:c.offsetLeft-a.offsetLeft,top:b.top,h:b.height})}));
+await b.close();
