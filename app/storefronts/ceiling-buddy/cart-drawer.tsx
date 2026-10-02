@@ -381,16 +381,16 @@ export function CartDrawerProvider({
             </div>
             {/* The code takes its dollars off right here, so the number above
                 the button is the number that will be charged. */}
-            {cart?.discount ? (
+            {cart?.discount && cart.discount.amountCents > 0 ? (
               <div className="cb-drawer__sum cb-drawer__sum--disc">
                 <span>Discount · {cart.discount.code}</span>
                 <span>−{money(cart.discount.amountCents, currency)}</span>
               </div>
             ) : null}
-            {cart?.discount ? (
+            {cart?.discount && cart.discount.amountCents > 0 ? (
               <div className="cb-drawer__sum cb-drawer__sum--total">
                 <span>Total</span>
-                <span>{money(Math.max(0, (cart.subtotalCents ?? 0) - cart.discount.amountCents), currency)}</span>
+                <span>{money((cart.totalCents ?? 0), currency)}</span>
               </div>
             ) : null}
             {saved > 0 ? (
@@ -400,7 +400,7 @@ export function CartDrawerProvider({
               Checkout
               {lines.length ? (
                 <span className="cb-btn__p">
-                  {money(Math.max(0, (cart?.subtotalCents ?? 0) - (cart?.discount?.amountCents ?? 0)), currency)}
+                  {money((cart?.totalCents ?? 0), currency)}
                 </span>
               ) : null}
             </a>
@@ -435,7 +435,7 @@ export function CartDrawerProvider({
             ) : null}
             {bnpl && lines.length ? (
               <div className="cb-drawer__over">
-                <PayLaterLine amountCents={Math.max(0, (cart?.subtotalCents ?? 0) - (cart?.discount?.amountCents ?? 0))} currency={currency} />
+                <PayLaterLine amountCents={(cart?.totalCents ?? 0)} currency={currency} />
               </div>
             ) : null}
             <div className="cb-reassure">Free shipping · 30-day returns</div>

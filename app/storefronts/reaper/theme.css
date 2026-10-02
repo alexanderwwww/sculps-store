@@ -4774,3 +4774,6 @@ html, body { margin: 0; }
 /* Cart drawer line */
 .cb-drawer__over { margin: 12px 0 0; display: flex; justify-content: center; }
 .cb-drawer__over .pl-line { justify-content: center; font-size: 13px; }
+@media (prefers-reduced-motion: reduce) {
+  .cb-ann__msgs--4 .cb-ann__msg { animation: none; }
+}

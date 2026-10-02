@@ -474,7 +474,7 @@ function Announce({
           ))}
           {payLaterCents > 0 ? (
             <span className="cb-ann__msg cb-ann__msg--pl" style={{ animationDelay: "12s" }}>
-              <KlarnaMark /> <span>4 interest-free payments of <b>{quarter(payLaterCents, currency)}</b></span> <AffirmMark light />
+              <KlarnaMark /> <span>4 interest-free payments of <b>{quarter(payLaterCents, currency)}</b></span> <AffirmMark />
             </span>
           ) : null}
         </span>
