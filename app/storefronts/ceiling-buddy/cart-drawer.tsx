@@ -6,6 +6,7 @@
  * rather than a shared one because the drawer's styling is part of the theme,
  * and the themes are deliberately not shared between stores.
  */
+import { BnplMessage } from "../shared/bnpl-message";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import type { LoadedProductPage, VariantRow } from "~/lib/store.server";
@@ -69,7 +70,7 @@ export function CartDrawerProvider({
   photo,
   paypalClientId = null,
   publishableKey = null,
-  bnpl = false,
+  bnpl = null,
   children,
 }: {
   page: LoadedProductPage;
@@ -79,8 +80,8 @@ export function CartDrawerProvider({
   paypalClientId?: string | null;
   /** Stripe's publishable key, for the Apple Pay button. */
   publishableKey?: string | null;
-  /** Klarna / Affirm are connected, so the drawer can say so. */
-  bnpl?: boolean;
+  /** Publishable key of the Klarna / Affirm Stripe account, when the store has one. */
+  bnpl?: string | null;
   children: React.ReactNode;
 }) {
   const href = (path: string) => `${path}${storeParam}`;
@@ -433,9 +434,13 @@ export function CartDrawerProvider({
               </div>
             ) : null}
             {bnpl && lines.length ? (
-              <div className="cb-drawer__over">
-                Or pay over time with <b className="cb-bnpl__k">Klarna</b> or <b className="cb-bnpl__a">Affirm</b> at checkout
-              </div>
+              <BnplMessage
+                className="cb-drawer__over"
+                publishableKey={bnpl}
+                amountCents={Math.max(0, (cart?.subtotalCents ?? 0) - (cart?.discount?.amountCents ?? 0))}
+                currency={currency}
+                fallback={<span>Or pay over time with <b className="cb-bnpl__k">Klarna</b> or <b className="cb-bnpl__a">Affirm</b> at checkout</span>}
+              />
             ) : null}
             <div className="cb-reassure">Free shipping · 30-day returns</div>
           </div>

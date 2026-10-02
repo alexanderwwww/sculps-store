@@ -288,8 +288,8 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     .catch(() => null);
   // Klarna / Affirm on the LLC's Stripe: the page only needs to know it exists.
   const bnpl = await bnplFor(context.db, context.cloudflare.env, store.id)
-    .then((account) => Boolean(account))
-    .catch(() => false);
+    .then((account) => account?.publishableKey ?? null)
+    .catch(() => null);
   return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, bnpl, offer: offer ?? null, crowd }, { headers });
 }
 

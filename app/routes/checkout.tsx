@@ -463,8 +463,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   // Klarna and Affirm run on a separate Stripe account. Whether the store has
   // them is all the page needs to know; the keys never leave the Worker.
   const bnpl = await bnplFor(context.db, context.cloudflare.env, store.id)
-    .then((account) => Boolean(account))
-    .catch(() => false);
+    .then((account) => account?.publishableKey ?? null)
+    .catch(() => null);
 
   if (providerResult.ok) {
     publishableKey = providerResult.value.publishableKey;
@@ -1951,7 +1951,7 @@ function DeliveryFields({
             label="Country/region"
             value={country}
             autoComplete="country"
-            options={COUNTRIES}
+            options={store.slug === "reaper" ? [["US", "United States"]] : COUNTRIES}
             onValue={onField}
             onTouch={onBlur}
           />
@@ -3186,7 +3186,7 @@ function OnePage({
   paymentsMessage: string | null;
   publishableKey: string | null;
   paypalClientId: string | null;
-  bnpl: boolean;
+  bnpl: string | null;
   appearance: unknown;
   trust: React.ReactNode;
   /** this skin lays the whole page out from in here, so the wallets can sit
@@ -4112,6 +4112,11 @@ function OnePage({
    */
   const [bnplBusy, setBnplBusy] = useState<"klarna" | "affirm" | null>(null);
   useEffect(() => {
+    const unstick = () => setBnplBusy(null);
+    window.addEventListener("pageshow", unstick);
+    return () => window.removeEventListener("pageshow", unstick);
+  }, []);
+  useEffect(() => {
     if (new URLSearchParams(window.location.search).get("installments") === "declined") {
       setPayError("Your Klarna or Affirm payment was not completed. Nothing has been charged.");
     }
@@ -4318,28 +4323,28 @@ function OnePage({
               anything — it takes them to the first missing field, because the
               order needs somewhere to ship to. */}
           {bnpl ? (
-            <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
+            <div className="gb-co__bnplrow" style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
               <button
                 type="button"
                 onClick={() => void payInstallments("klarna")}
                 disabled={working || bnplBusy !== null}
                 aria-label="Pay over time with Klarna"
-                style={{ minHeight: 48, borderRadius: 999, border: "1px solid #ffb3c7", background: "#ffb3c7", color: "#17120f", fontWeight: 800, fontSize: 17, letterSpacing: "-.01em", cursor: "pointer" }}
+                style={{ height: 52, borderRadius: 8, border: 0, background: "#ffb3c7", color: "#17120f", fontWeight: 800, fontSize: 18, letterSpacing: "-.01em", cursor: "pointer", whiteSpace: "nowrap", opacity: bnplBusy === "klarna" ? 0.7 : 1 }}
               >
-                {bnplBusy === "klarna" ? "One moment…" : "Klarna"}
+                Klarna
               </button>
               <button
                 type="button"
                 onClick={() => void payInstallments("affirm")}
                 disabled={working || bnplBusy !== null}
                 aria-label="Pay over time with Affirm"
-                style={{ minHeight: 48, borderRadius: 999, border: "1px solid #4a4af4", background: "#4a4af4", color: "#fff", fontWeight: 800, fontSize: 17, letterSpacing: "-.01em", cursor: "pointer" }}
+                style={{ height: 52, borderRadius: 8, border: 0, background: "#4a4af4", color: "#fff", fontWeight: 800, fontSize: 18, letterSpacing: "-.01em", cursor: "pointer", whiteSpace: "nowrap", opacity: bnplBusy === "affirm" ? 0.7 : 1 }}
               >
-                {bnplBusy === "affirm" ? "One moment…" : "Affirm"}
+                Affirm
               </button>
             </div>
           ) : null}
-          {buddy ? (
+          {buddy && !bnpl ? (
             <button type="button" className="gb-co__express-card" onClick={goToCard}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
                 <rect x="2.5" y="5" width="19" height="14" rx="2.6" />

@@ -10,7 +10,7 @@
  * chrome and live here in code. Nothing on this page is invented — a section
  * with no content renders nothing rather than a placeholder.
  */
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type RefObject } from "react";
+import { Fragment, createContext, useCallback, useContext, useEffect, useRef, useState, type RefObject } from "react";
 import type { LoadedProductPage, LoadedSection } from "~/lib/store.server";
 import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
@@ -18,6 +18,7 @@ import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
 import { PayPalExpress } from "../garden-buddy/paypal-express";
 import { EmailPopup } from "./popup";
 import { PhoneChat } from "../shared/phone-chat";
+import { BnplMessage } from "../shared/bnpl-message";
 import { ProductExpress } from "../garden-buddy/product-express";
 import { embedFor, isOwnVideo } from "./embeds";
 
@@ -150,7 +151,7 @@ export function CeilingBuddyStorefront({
   storeParam = "",
   publishableKey = null,
   paypalClientId = null,
-  bnpl = false,
+  bnpl = null,
   offer = null,
   brand = BRAND,
 }: {
@@ -158,8 +159,8 @@ export function CeilingBuddyStorefront({
   storeParam?: string;
   publishableKey?: string | null;
   paypalClientId?: string | null;
-  /** Klarna / Affirm are connected for this store. */
-  bnpl?: boolean;
+  /** Publishable key of the Klarna / Affirm Stripe account, when the store has one. */
+  bnpl?: string | null;
   /** The live code the bar is shouting about, straight from the database. */
   offer?: { code: string; kind: string; value: number } | null;
   /** Mark, links and rail. Omitted, this is Ceiling Buddy. */
@@ -197,20 +198,23 @@ export function CeilingBuddyStorefront({
         <Header page={page} storeParam={storeParam} offer={offer} brand={brand} />
         <main id="MainContent" role="main">
           {sections.map((s) => (
-            // A plain block wrapper carrying the attribute the theme editor
-            // looks for. It was `display: contents` for a while, to add no
-            // box — but the editor puts `position: relative`, an outline and
-            // an absolutely-positioned label on this node, and a node with no
-            // box cannot hold any of those; Safari in particular misbehaves.
-            // Every section here is block-level anyway, so a block wrapper
-            // changes nothing about the layout.
-            <div key={s.id} data-section={s.type}>
+            <Fragment key={s.id}>
+            {/* A plain block wrapper carrying the attribute the theme editor
+            looks for. It was `display: contents` for a while, to add no
+            box — but the editor puts `position: relative`, an outline and
+            an absolutely-positioned label on this node, and a node with no
+            box cannot hold any of those; Safari in particular misbehaves.
+            Every section here is block-level anyway, so a block wrapper
+            changes nothing about the layout. */}
+            <div data-section={s.type}>
               <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} bnpl={bnpl} offer={offer} />
             </div>
+            {s.type === "buy_box" && bnpl ? <BnplBar page={page} bnpl={bnpl} /> : null}
+            </Fragment>
           ))}
         </main>
         <Footer page={page} storeParam={storeParam} />
-        <StickyBuy page={page} storeParam={storeParam} />
+        <StickyBuy page={page} storeParam={storeParam} bnpl={bnpl} />
         {/* Last, so it can never be what somebody reaches before the price. */}
         <EmailPopup
           storeParam={storeParam}
@@ -245,7 +249,7 @@ function Section({
   brand: CbBrand;
   publishableKey: string | null;
   paypalClientId: string | null;
-  bnpl: boolean;
+  bnpl: string | null;
   offer: { code: string; kind: string; value: number } | null;
 }) {
   switch (section.type) {
@@ -489,7 +493,7 @@ function Announce({
 
 /* ---------------------------------------------------------------- buy box */
 
-function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalClientId = null, bnpl = false, offer = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; paypalClientId?: string | null; bnpl?: boolean; offer?: { code: string; kind: string; value: number } | null }) {
+function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalClientId = null, bnpl = null, offer = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; paypalClientId?: string | null; bnpl?: string | null; offer?: { code: string; kind: string; value: number } | null }) {
   const v = section.values;
   const drawer = useCartDrawer();
   // The product's own pictures come first — they are managed on the Products
@@ -655,24 +659,22 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               ) : null}
             </div>
           ) : null}
+          {/* Pay over time, written by Stripe for this exact price and bundle,
+              right under the number it divides. */}
+          {bnpl && chosen ? (
+            <BnplMessage
+              className="cb-bnpl"
+              publishableKey={bnpl}
+              amountCents={chosen.priceCents}
+              currency={currency}
+              fallback={<span className="cb-bnpl__fb">Pay over time with <b className="cb-bnpl__k">Klarna</b> or <b className="cb-bnpl__a">Affirm</b></span>}
+            />
+          ) : null}
 
           {/* Pay in 4 lives inside the bundle box, under the rows it is a
               quarter of. A product sold one way has no bundle box, so the
               line would vanish entirely -- it goes under the price instead,
               which is the same place relative to the number it divides. */}
-          {/* Pay over time. Always on when the store has Klarna and Affirm: this
-              shop only sells to the United States, so no one is excluded. It
-              promises no figure -- the plan a customer is offered is Klarna's
-              and Affirm's to decide at checkout. */}
-          {bnpl ? (
-            <div className="cb-bnpl">
-              <span>
-                Pay over time with <b className="cb-bnpl__k">Klarna</b> or <b className="cb-bnpl__a">Affirm</b>
-              </span>
-              <i>Choose at checkout</i>
-            </div>
-          ) : null}
-
           {chosen && paypalClientId && variants.length <= 1 ? (
             <div className="cb-bundle__p4 cb-bundle__p4--bare">
               <img className="cb-pp cb-pp--word" src={PAYPAL_WORDMARK} alt="PayPal" />
@@ -3113,9 +3115,35 @@ function StartSmaller({ section }: { section: LoadedSection }) {
   );
 }
 
+/* ------------------------------------------------------ pay-over-time bar */
+
+/**
+ * A slim bar straight under the buy box. It says, for the bundle that is
+ * picked right now, what Klarna and Affirm would let this customer pay over
+ * time -- the sentence is Stripe's, written from the live price.
+ */
+function BnplBar({ page, bnpl }: { page: LoadedProductPage; bnpl: string }) {
+  const fallback = (page.variants.find((x) => x.isDefault) ?? page.variants[0])?.id ?? "";
+  const { id } = usePicked(fallback);
+  const buy = page.variants.find((x) => x.id === id) ?? page.variants.find((x) => x.isDefault) ?? page.variants[0] ?? null;
+  if (!buy) return null;
+  return (
+    <div className="cb-bnplbar" role="note">
+      <div className="cb-wrap cb-bnplbar__in">
+        <BnplMessage
+          publishableKey={bnpl}
+          amountCents={buy.priceCents}
+          currency={page.store.currency}
+          fallback={<span>Pay over time with <b className="cb-bnpl__k">Klarna</b> or <b className="cb-bnpl__a">Affirm</b></span>}
+        />
+      </div>
+    </div>
+  );
+}
+
 /* --------------------------------------------------------------- sticky */
 
-function StickyBuy({ page, storeParam = "" }: { page: LoadedProductPage; storeParam?: string }) {
+function StickyBuy({ page, storeParam = "", bnpl = null }: { page: LoadedProductPage; storeParam?: string; bnpl?: string | null }) {
   const drawer = useCartDrawer();
   const [on, setOn] = useState(false);
   const seen = useRef(false);
@@ -3175,6 +3203,9 @@ function StickyBuy({ page, storeParam = "" }: { page: LoadedProductPage; storePa
             {buy.compareAtCents ? <s>{formatMoney(buy.compareAtCents, page.store.currency)}</s> : null}
             <span className="cb-sticky__v">{buy.label}</span>
           </div>
+          {bnpl ? (
+            <BnplMessage className="cb-sticky__bnpl" publishableKey={bnpl} amountCents={buy.priceCents} currency={page.store.currency} compact />
+          ) : null}
         </div>
         <form
           className="cb-sticky__form"

@@ -575,3 +575,6 @@
    every page sat eight pixels in from both edges -- the pale border down
    the sides of the whole site. */
 html, body { margin: 0; }
+
+/* Apple/Google Pay full width on top; Klarna and Affirm, equal, beneath it. */
+.gb-co__express-grid:has(.gb-co__bnplrow) { grid-template-columns: 1fr; }
