@@ -4852,3 +4852,12 @@ html, body { margin: 0; }
 .cb-xpl__b:active { transform: translateY(1px); }
 .cb-xpl__b--klarna { background: #FFB3C7; }
 .cb-xpl__b--affirm { background: #4A4AF4; }
+
+/* Review fixes: room for the bundle badge under the last row, a shorter
+   drawer foot on short phones, and Klarna's pill in Klarna's own pink. */
+.cb-bundle .cb-tiers { padding-bottom: 18px !important; }
+@media (max-height: 700px) {
+  .cb-drawer__plnote, .cb-drawer__xlabel { display: none; }
+  .cb-drawer__plb { height: 42px; }
+}
+.cb-drawer__plb--klarna, .cb-xpl__b--klarna { background: #FFA8CD; }
