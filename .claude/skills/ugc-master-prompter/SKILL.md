@@ -36,6 +36,7 @@ Word caps (Veo ~120 excluding quoted speech, Seedance ~100, Kling long-form, LTX
 - **Frames first, video second.** One clean reference photo per product job; never an old picture as a reference.
 - **Every paid call needs Alex's OK and a stated price**; show the price before spending. Failed calls still count.
 - **Inspect before claiming** (rule 7). Quote what you saw in the frames.
+- **Hooded figures (precise rule).** The bible bans imagery that resembles hate groups. A **skull-faced Grim Reaper** (black hood, visible skull, lantern, ghost-souls) is a normal Halloween decoration and is allowed — it is the Black Reaper product. Always keep the skull face, lantern and ghost-souls visible in the frame and the prompt; NEVER a white or pointed hood, a faceless hood, several hooded figures together, crosses, fire or flags. If an engine refuses it, change the framing (closer on skull and lantern), do not argue. (Alex confirmed the product is the Reaper; first cheap scout decides.)
 - Customer-facing copy: confident, never apologetic, no fake testimonials of real people, no medical or false-claim hooks.
 - Keep Alex's working style: lead with the answer, one step at a time, no hedging, no questions he already answered, no terminal instructions.
 
