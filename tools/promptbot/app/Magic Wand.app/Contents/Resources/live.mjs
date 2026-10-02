@@ -985,7 +985,33 @@ function isFront(u) {
   return !k || k === chatKey(site.url);
 }
 
+/**
+ * Is this address somewhere a person signs in?
+ *
+ * Alex changed ChatGPT accounts and could not: every second the runner came
+ * back, re-injected its panel over the sign-in page and went looking for a
+ * message box that a login screen does not have. It has to keep its hands off
+ * any page where an account is being chosen -- Google's, OpenAI's, Apple's --
+ * and off the site's own login and logout addresses.
+ */
+function isAuthUrl(u) {
+  try {
+    const x = new URL(u);
+    if (/(^|\.)(accounts\.google\.com|appleid\.apple\.com|login\.live\.com|login\.microsoftonline\.com)$/.test(x.host)) return true;
+    if (/(^|\.)(auth0?\.openai\.com)$/.test(x.host)) return true;
+    if (/(^|\.)(chatgpt\.com|chat\.openai\.com|openai\.com|gemini\.google\.com)$/.test(x.host) &&
+        /^\/(auth|login|log-in|logout|signin|sign-in)(\/|$)/i.test(x.pathname)) return true;
+  } catch {}
+  return false;
+}
+
+/** True while any open tab is on a sign-in page: the app waits, untouched. */
+function signingIn() {
+  try { return Boolean(context?.pages().some((pg) => !pg.isClosed() && isAuthUrl(pg.url()))); } catch { return false; }
+}
+
 async function ensurePage({ create = true } = {}) {
+  if (signingIn()) { report("waiting", { waitingFor: "you to finish signing in" }); return false; }
   const host = new URL(site.url).host;
   const ok = (pg) => {
     if (!pg || pg.isClosed()) return false;
