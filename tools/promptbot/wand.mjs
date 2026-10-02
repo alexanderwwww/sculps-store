@@ -17,18 +17,6 @@
 
 /** Injected on every page load. Calling it twice is a no-op. */
 export const OVERLAY = `(() => {
-  /*
-   * Never on a sign-in page. This script is added to every page load in the
-   * tab, so it used to draw its panels, its cursor and its Escape-to-stop
-   * listener over Google's and OpenAI's login screens -- and a person trying
-   * to change account could not get through them.
-   */
-  {
-    const h = location.host, p = location.pathname;
-    if (/(^|\\.)(accounts\\.google\\.com|appleid\\.apple\\.com|login\\.live\\.com|login\\.microsoftonline\\.com|auth0?\\.openai\\.com)$/.test(h)) return false;
-    if (/(^|\\.)(chatgpt\\.com|chat\\.openai\\.com|openai\\.com|gemini\\.google\\.com)$/.test(h) &&
-        /^\\/(auth|login|log-in|logout|signin|sign-in)(\\/|$)/i.test(p)) return false;
-  }
   if (window.__wand) { try { window.__wand.retheme(true); } catch {} return true; }
 
   const css = (el, s) => { for (const k in s) el.style[k] = s[k]; return el; };
@@ -105,24 +93,26 @@ export const OVERLAY = `(() => {
     wash: "rgba(255,255,255,.10)",
     glass: {
       background:
-        "radial-gradient(140% 110% at 10% -30%, rgba(255,255,255,.34) 0%, rgba(255,255,255,.08) 42%, rgba(255,255,255,0) 66%)," +
-        "linear-gradient(to bottom, rgba(255,255,255,.07) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,.14) 100%)," +
-        "rgba(255,255,255,.07)",
-      backdropFilter: "blur(20px) saturate(160%)",
+        "radial-gradient(120% 95% at 14% -12%, rgba(255,255,255,.42) 0%, rgba(255,255,255,.14) 30%, rgba(255,255,255,0) 62%)," +
+        "radial-gradient(80% 60% at 36% 18%, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 70%)," +
+        "linear-gradient(155deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,0) 46%, rgba(0,0,0,.14) 100%)," +
+        "linear-gradient(to bottom, rgba(0,0,0,0) 58%, rgba(0,0,0,.20) 100%)," +
+        "rgba(22,22,24,.54)",
+      backdropFilter: "blur(28px) saturate(190%) contrast(1.06) brightness(1.08)",
       border: "0.5px solid",
-      borderColor: "rgba(255,255,255,.55) rgba(255,255,255,.26) rgba(255,255,255,.16) rgba(255,255,255,.40)",
+      borderColor: "rgba(255,255,255,.36) rgba(255,255,255,.16) rgba(255,255,255,.10) rgba(255,255,255,.30)",
     },
-    textShadow: "0 1px 3px rgba(0,0,0,.85), 0 0 1px rgba(0,0,0,.5)",
     sheen:
       "linear-gradient(90deg, rgba(255,255,255,0) 22%, rgba(255,255,255,.20) 42%, rgba(255,255,255,.55) 50%, rgba(255,255,255,.20) 58%, rgba(255,255,255,0) 78%)",
     rim:
-      "inset 0 1.6px 0 rgba(255,255,255,.55)," +
-      "inset 1px 0 0 rgba(255,255,255,.18)," +
-      "inset 0 -1px 0 rgba(255,255,255,.20)," +
-      "inset 0 -14px 14px -8px rgba(0,0,0,.22)," +
-      "inset 0 0 22px rgba(255,255,255,.07)",
+      "inset 0 1px 0 rgba(255,255,255,.58)," +
+      "inset 1px 0 0 rgba(255,255,255,.20)," +
+      "inset 0 -1px 0 rgba(0,0,0,.45)," +
+      "inset -1px 0 0 rgba(0,0,0,.22)," +
+      "inset 0 12px 28px -16px rgba(255,255,255,.22)",
     drop:
-      "0 4px 24px rgba(0,0,0,.12)",
+      "0 1px 1.5px rgba(0,0,0,.48)," +
+      "0 22px 54px -16px rgba(0,0,0,.66)",
     halo: (up) => (up ? "0 0 34px 6px rgba(255,255,255,.16)" : "0 0 10px 0 rgba(255,255,255,.05)"),
     bloom: "0 0 48px 14px rgba(255,255,255,.22)",
     key: {
@@ -135,13 +125,13 @@ export const OVERLAY = `(() => {
     },
     ghost: {
       background:
-        "radial-gradient(110% 90% at 16% -14%, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 60%)," +
-        "rgba(255,255,255,.07)",
-      border: "0.5px solid rgba(255,255,255,.30)",
+        "radial-gradient(110% 90% at 16% -14%, rgba(255,255,255,.34) 0%, rgba(255,255,255,0) 60%)," +
+        "linear-gradient(to bottom, rgba(255,255,255,.14) 0%, rgba(255,255,255,.04) 60%, rgba(0,0,0,.10) 100%)",
+      border: "0.5px solid rgba(255,255,255,.24)",
       boxShadow:
-        "inset 0 1.4px 0 rgba(255,255,255,.34), inset 0 -8px 8px -6px rgba(0,0,0,.14)",
+        "inset 0 1px 0 rgba(255,255,255,.42), inset 1px 0 0 rgba(255,255,255,.10)," +
+        "inset 0 -1px 0 rgba(0,0,0,.28), 0 1px 1px rgba(0,0,0,.30)",
       color: "#F5F5F7",
-      textShadow: "0 1px 2px rgba(0,0,0,.8)",
     },
   };
   const LIGHT = {
@@ -152,24 +142,27 @@ export const OVERLAY = `(() => {
     wash: "rgba(0,0,0,.05)",
     glass: {
       background:
-        "radial-gradient(120% 90% at 12% -14%, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 58%)," +
-        "linear-gradient(to bottom, rgba(255,255,255,0) 60%, rgba(0,0,0,.05) 100%)," +
-        "rgba(255,255,255,.14)",
-      backdropFilter: "blur(20px) saturate(160%)",
+        "radial-gradient(120% 95% at 14% -12%, rgba(255,255,255,.98) 0%, rgba(255,255,255,.50) 30%, rgba(255,255,255,0) 62%)," +
+        "radial-gradient(80% 60% at 36% 18%, rgba(255,255,255,.40) 0%, rgba(255,255,255,0) 70%)," +
+        "linear-gradient(155deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,0) 46%, rgba(0,0,0,.06) 100%)," +
+        "linear-gradient(to bottom, rgba(0,0,0,0) 58%, rgba(0,0,0,.08) 100%)," +
+        "rgba(250,250,252,.64)",
+      backdropFilter: "blur(26px) saturate(180%) contrast(1.03) brightness(1.02)",
       border: "0.5px solid",
-      borderColor: "rgba(255,255,255,.95) rgba(255,255,255,.55) rgba(0,0,0,.10) rgba(255,255,255,.80)",
+      borderColor: "rgba(255,255,255,.98) rgba(255,255,255,.60) rgba(0,0,0,.06) rgba(255,255,255,.92)",
     },
-    textShadow: "0 1px 2px rgba(255,255,255,.55)",
     sheen:
       "linear-gradient(90deg, rgba(0,0,0,0) 22%, rgba(0,0,0,.04) 40%, rgba(255,255,255,.95) 50%, rgba(0,0,0,.04) 60%, rgba(0,0,0,0) 78%)",
     rim:
-      "inset 0 1.6px 0 rgba(255,255,255,.95)," +
-      "inset 1px 0 0 rgba(255,255,255,.60)," +
+      "inset 0 1px 0 rgba(255,255,255,1)," +
+      "inset 1px 0 0 rgba(255,255,255,.70)," +
       "inset 0 -1px 0 rgba(0,0,0,.10)," +
-      "inset 0 -12px 12px -8px rgba(0,0,0,.08)",
+      "inset -1px 0 0 rgba(0,0,0,.05)," +
+      "inset 0 12px 28px -16px rgba(255,255,255,.90)",
     drop:
-      "0 0 0 0.5px rgba(0,0,0,.14)," +
-      "0 4px 24px rgba(0,0,0,.14)",
+      "0 0 0 0.5px rgba(0,0,0,.12)," +
+      "0 1px 1.5px rgba(0,0,0,.16)," +
+      "0 22px 54px -16px rgba(0,0,0,.30)",
     halo: (up) => (up ? "0 0 30px 4px rgba(0,0,0,.12)" : "0 0 8px 0 rgba(0,0,0,.03)"),
     bloom: "0 0 44px 12px rgba(0,0,0,.14)",
     key: {
@@ -182,13 +175,13 @@ export const OVERLAY = `(() => {
     },
     ghost: {
       background:
-        "radial-gradient(110% 90% at 16% -14%, rgba(255,255,255,.80) 0%, rgba(255,255,255,0) 60%)," +
-        "rgba(255,255,255,.18)",
+        "radial-gradient(110% 90% at 16% -14%, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 60%)," +
+        "linear-gradient(to bottom, rgba(255,255,255,.70) 0%, rgba(255,255,255,.30) 60%, rgba(0,0,0,.03) 100%)",
       border: "0.5px solid rgba(255,255,255,.90)",
       boxShadow:
-        "inset 0 1.4px 0 #FFFFFF, inset 0 -8px 8px -6px rgba(0,0,0,.07), 0 0 0 0.5px rgba(0,0,0,.14)",
+        "inset 0 1px 0 #FFFFFF, inset 0 -1px 0 rgba(0,0,0,.08)," +
+        "0 0 0 0.5px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.10)",
       color: "#111113",
-      textShadow: "0 1px 2px rgba(255,255,255,.5)",
     },
   };
 
@@ -215,7 +208,7 @@ export const OVERLAY = `(() => {
     }
     css(el, p.glass);
     el.style.WebkitBackdropFilter = p.glass.backdropFilter;
-    css(el, { color: p.text, boxShadow: restShadow(), overflow: "hidden", textShadow: p.textShadow });
+    css(el, { color: p.text, boxShadow: restShadow(), overflow: "hidden" });
     if (!el.__sheen) {
       // The sheen sits between the panel's own background and its content:
       // a negative z-index inside the panel's stacking context, which the
@@ -346,8 +339,7 @@ export const OVERLAY = `(() => {
   applyMaterial(hud, "panel");
   const title = css(document.createElement("div"), {
     fontSize: "10px", letterSpacing: ".06em", textTransform: "uppercase",
-    color: "rgba(255,255,255,.92)", fontWeight: "700", flex: "0 1 auto",
-    minWidth: "0", maxWidth: "58%", overflow: "hidden", textOverflow: "ellipsis",
+    color: "rgba(255,255,255,.92)", fontWeight: "700", flex: "0 0 auto",
   });
   const body = css(document.createElement("div"), {
     opacity: ".9", overflow: "hidden", textOverflow: "ellipsis", minWidth: "0",
@@ -510,12 +502,15 @@ export const OVERLAY = `(() => {
       hud.style.boxShadow = restShadow();
       return;
     }
-    // One static lift, no timer. The breathing glow re-drew a blurred
-    // backdrop every frame for as long as the app ran, which is what made
-    // ChatGPT's heavy page lag.
-    const p = P();
-    hud.style.transition = "box-shadow .6s ease";
-    hud.style.boxShadow = p.rim + "," + p.halo(true) + "," + p.drop;
+    let up = true;
+    const breathe = () => {
+      const p = P();
+      hud.style.transition = "box-shadow 1.2s cubic-bezier(.45,.05,.55,.95)";
+      hud.style.boxShadow = p.rim + "," + p.halo(up) + "," + p.drop;
+      up = !up;
+    };
+    breathe();
+    glowTimer = setInterval(breathe, 1200);
   }
 
   function assemble() {

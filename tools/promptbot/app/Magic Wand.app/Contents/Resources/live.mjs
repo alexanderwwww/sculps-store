@@ -583,7 +583,7 @@ const SITES = {
   chatgpt: {
     name: "ChatGPT",
     url: "https://chatgpt.com/",
-    ask: ['div#prompt-textarea[contenteditable="true"]', "textarea#prompt-textarea", "textarea"],
+    ask: ['div#prompt-textarea[contenteditable="true"]', "textarea#prompt-textarea", "textarea", 'div[role="textbox"][contenteditable="true"]', 'div.ProseMirror[contenteditable="true"]'],
     composer: ['form[data-type="unified-composer"]', "form"],
     thread: ['[data-message-author-role]', "article"],
     send: ['button[data-testid="send-button"]', 'button[data-testid="composer-submit-button"]', 'button[aria-label*="Send" i]'],
@@ -985,33 +985,7 @@ function isFront(u) {
   return !k || k === chatKey(site.url);
 }
 
-/**
- * Is this address somewhere a person signs in?
- *
- * Alex changed ChatGPT accounts and could not: every second the runner came
- * back, re-injected its panel over the sign-in page and went looking for a
- * message box that a login screen does not have. It has to keep its hands off
- * any page where an account is being chosen -- Google's, OpenAI's, Apple's --
- * and off the site's own login and logout addresses.
- */
-function isAuthUrl(u) {
-  try {
-    const x = new URL(u);
-    if (/(^|\.)(accounts\.google\.com|appleid\.apple\.com|login\.live\.com|login\.microsoftonline\.com)$/.test(x.host)) return true;
-    if (/(^|\.)(auth0?\.openai\.com)$/.test(x.host)) return true;
-    if (/(^|\.)(chatgpt\.com|chat\.openai\.com|openai\.com|gemini\.google\.com)$/.test(x.host) &&
-        /^\/(auth|login|log-in|logout|signin|sign-in)(\/|$)/i.test(x.pathname)) return true;
-  } catch {}
-  return false;
-}
-
-/** True while any open tab is on a sign-in page: the app waits, untouched. */
-function signingIn() {
-  try { return Boolean(context?.pages().some((pg) => !pg.isClosed() && isAuthUrl(pg.url()))); } catch { return false; }
-}
-
 async function ensurePage({ create = true } = {}) {
-  if (signingIn()) { report("waiting", { waitingFor: "you to finish signing in" }); return false; }
   const host = new URL(site.url).host;
   const ok = (pg) => {
     if (!pg || pg.isClosed()) return false;
@@ -1638,44 +1612,6 @@ function originals(url) {
  * into, and the form or container it sits in. Nothing in the thread above it
  * is counted, whatever URL scheme it uses.
  */
-/**
- * Say what the composer actually looks like.
- *
- * On a new ChatGPT account the composer showed every picture attached while
- * the app counted none. The counter looks for blob: images inside the
- * composer, and the page does not have to draw them that way. Rather than
- * guess at the new markup, this reports the real one -- every image or
- * background picture near the message box, what it points at, and the
- * elements it sits inside -- to the board, where it can be read.
- */
-async function probeComposer(page) {
-  const lines = await page.evaluate((askSelectors) => {
-    let box = null;
-    for (const sel of askSelectors) { box = document.querySelector(sel); if (box) break; }
-    if (!box) return ["probe: no message box found"];
-    const out = [];
-    const b = box.getBoundingClientRect();
-    const name = (el) => el.tagName.toLowerCase() +
-      (el.getAttribute("data-testid") ? `[${el.getAttribute("data-testid")}]` : "") +
-      (typeof el.className === "string" && el.className ? "." + el.className.split(/\s+/).slice(0, 2).join(".") : "");
-    const near = (r) => Math.abs(r.top - b.top) < 520 && r.bottom > b.top - 520;
-    let n = 0;
-    for (const el of document.querySelectorAll("img, video, canvas, [style*='background-image']")) {
-      const r = el.getBoundingClientRect();
-      if (r.width < 24 || r.height < 24 || !near(r)) continue;
-      const src = (el.currentSrc || el.src || el.style.backgroundImage || "").slice(0, 48);
-      const chain = [];
-      for (let p = el.parentElement, i = 0; p && i < 6; p = p.parentElement, i++) chain.push(name(p));
-      out.push(`probe ${name(el)} ${Math.round(r.width)}x${Math.round(r.height)} src=${src} in ${chain.join(" < ")}`);
-      if (++n >= 6) break;
-    }
-    if (!n) out.push("probe: no pictures near the message box");
-    out.push("probe: box " + name(box) + " in " + (() => { const c = []; for (let p = box.parentElement, i = 0; p && i < 6; p = p.parentElement, i++) c.push(name(p)); return c.join(" < "); })());
-    return out;
-  }, site.ask).catch((e) => [`probe failed: ${String(e).slice(0, 80)}`]);
-  for (const l of lines) log(`  \x1b[2m${l}\x1b[0m`);
-}
-
 async function blobCount(page) {
   return page.evaluate(([askSelectors, composerSelectors, threadSelectors]) => {
     let box = null;
@@ -1709,10 +1645,18 @@ async function blobCount(page) {
     // preview of the same attachment, and two elements for one file must not
     // read as a duplicate upload. A genuine second upload has its own URL.
     const seen = new Set();
-    for (const el of root.querySelectorAll('img[src^="blob:"], video[src^="blob:"]')) {
+    for (const el of root.querySelectorAll('img, video')) {
       if (el.closest("[data-wand]")) continue;
       if (threadSelectors.some((t) => el.closest(t))) continue;
-      seen.add(el.currentSrc || el.src);
+      const src = el.currentSrc || el.src || "";
+      if (!src) continue;
+      // The new composer draws attachments as ordinary https images, not blob:
+      // ones. A real thumbnail counts; an icon or logo does not.
+      if (!src.startsWith("blob:")) {
+        const r = el.getBoundingClientRect();
+        if (r.width < 56 || r.height < 56) continue;
+      }
+      seen.add(src);
     }
     return seen.size;
   }, [site.ask, site.composer ?? [], site.thread ?? []]).catch(() => 0);
@@ -1927,7 +1871,6 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       }
     }
     if (fresh.length && (!how || landedCount < fresh.length)) {
-      await probeComposer(page);
       log(`  \x1b[31m!! only ${landedCount} of ${fresh.length} reference pictures would attach — NOT sending this one\x1b[0m`);
       await say(label, `${n} of ${total} — references wouldn't attach, skipped`);
       report("waiting for pictures", {

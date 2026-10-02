@@ -26,3 +26,10 @@ Pass: attachbug, card, flow, harness, job-shape, order, save, sound, sparkle, zi
 - 75: clean-install zip, bundle is truth (build.txt cleared on launch), clearer liquid-glass pill.
 - 74: pill keeps Pause/Add pictures with long job names, no breathing-glow timer, no nested blur (lag). 73: composer probe.
 - 72 (2026-10-02): clear glass, 820-grid icon, hands off sign-in pages.
+
+## 2026-10-02 evening: rolled back to the 71 look, kept two fixes (build 79)
+Builds 72-78 (clear glass, pill layout, sign-in guard, probe) were reverted at Alex's demand: wand.mjs is the original build-71 file again (the wand cursor and
+the panels he likes), and they stay in git history if ever wanted. Kept: the 820/1024 Dock icon, and two fixes in live.mjs for his new ChatGPT account:
+(1) ChatGPT's composer no longer has `#prompt-textarea` (the terminal said "probe: no message box found"), so `ask` also matches `div[role=textbox]` / ProseMirror;
+(2) attachments there are plain https thumbnails, not `blob:`, so `blobCount` counts any image of 56px or more in the composer (the app re-uploaded the four
+pictures every retry because it saw none). Test: `test/count.mjs`. Do not restyle this app again unless he asks.
