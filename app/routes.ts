@@ -21,6 +21,7 @@ export default [
   route("checkout/pay", "routes/checkout.pay.tsx"),
   // PayPal: create the order, then capture it. Two steps, one route.
   route("checkout/paypal", "routes/checkout.paypal.tsx"),
+  route("checkout/bnpl", "routes/checkout.bnpl.tsx"),
   route("checkout/diag", "routes/checkout.diag.tsx"),
   route("push/log", "routes/push.log.tsx"),
   route("thanks", "routes/thanks.tsx"),

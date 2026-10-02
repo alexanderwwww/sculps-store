@@ -51,6 +51,7 @@ import type { PinMap } from "~/lib/map.client";
 import { providerForStore, PaymentsNotConfigured, PAYABLE_INTENT_STATUSES } from "~/lib/payments.server";
 import { placeOrder, orderByPaymentRef } from "~/lib/admin.server";
 import { paypalFor } from "~/lib/paypal.server";
+import { bnplFor } from "~/lib/bnpl.server";
 import { deviceFromRequest, geoFromContext, readVisitorSession, shouldTrack, track } from "~/lib/visitor.server";
 import {
   metaConfig,
@@ -459,6 +460,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     .then((client) => client?.clientId ?? null)
     .catch(() => null);
 
+  // Klarna and Affirm run on a separate Stripe account. Whether the store has
+  // them is all the page needs to know; the keys never leave the Worker.
+  const bnpl = await bnplFor(context.db, context.cloudflare.env, store.id)
+    .then((account) => Boolean(account))
+    .catch(() => false);
+
   if (providerResult.ok) {
     publishableKey = providerResult.value.publishableKey;
     if (!publishableKey) {
@@ -611,6 +618,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
      * addressed with. The secret never leaves the Worker.
      */
     paypalClientId,
+    bnpl,
   };
 }
 
@@ -1256,7 +1264,7 @@ function fieldForMessage(message: string): string | null {
 /* --------------------------------------------------------------- the page */
 
 export default function Checkout({ loaderData }: Route.ComponentProps) {
-  const { store, cart, paymentsReady, preview, paymentsMessage, publishableKey, paypalClientId, pixel, footerLinks, photo } =
+  const { store, cart, paymentsReady, preview, paymentsMessage, publishableKey, paypalClientId, bnpl, pixel, footerLinks, photo } =
     loaderData;
   const storeParam = `?store=${store.slug}`;
   const buddy = BRANDED_CHECKOUT.has(store.slug);
@@ -1325,6 +1333,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       paymentsMessage={paymentsMessage}
       publishableKey={publishableKey}
       paypalClientId={paypalClientId}
+      bnpl={bnpl}
       appearance={buddy ? BUDDY_APPEARANCE : KNEELER_APPEARANCE}
       trust={buddy ? <TrustRow /> : null}
       shell={buddy}
@@ -3159,6 +3168,7 @@ function OnePage({
   paymentsMessage,
   publishableKey,
   paypalClientId,
+  bnpl,
   appearance,
   trust,
   shell,
@@ -3176,6 +3186,7 @@ function OnePage({
   paymentsMessage: string | null;
   publishableKey: string | null;
   paypalClientId: string | null;
+  bnpl: boolean;
   appearance: unknown;
   trust: React.ReactNode;
   /** this skin lays the whole page out from in here, so the wallets can sit
@@ -4094,6 +4105,43 @@ function OnePage({
     if (!done) setWorking(false);
   };
 
+  /**
+   * Klarna and Affirm. Same typed details as a card payment, but the customer
+   * leaves for the provider and comes back to /checkout/bnpl, where the
+   * server asks Stripe what happened. Nothing is charged here.
+   */
+  const [bnplBusy, setBnplBusy] = useState<"klarna" | "affirm" | null>(null);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("installments") === "declined") {
+      setPayError("Your Klarna or Affirm payment was not completed. Nothing has been charged.");
+    }
+  }, []);
+  const payInstallments = async (method: "klarna" | "affirm") => {
+    if (working || bnplBusy) return;
+    setSubmitted(true);
+    if (Object.keys(clientErrors).length > 0) {
+      formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+      return;
+    }
+    setPayError(null);
+    setBnplBusy(method);
+    try {
+      const body = detailsFromForm();
+      body.set("method", method);
+      const response = await fetch("/checkout/bnpl", { method: "POST", body });
+      const payload = (await response.json()) as { url?: string; error?: string };
+      if (!response.ok || !payload.url) {
+        setPayError(payload.error ?? "That could not be started. Nothing has been charged.");
+        setBnplBusy(null);
+        return;
+      }
+      window.location.href = payload.url;
+    } catch {
+      setPayError("That could not be reached. Nothing has been charged — try again or pay by card.");
+      setBnplBusy(null);
+    }
+  };
+
   /* No intent, no form. A page that cannot take money does not draw a box
      that looks like it can. */
   if ((!paymentsReady || !publishableKey) && !preview) {
@@ -4244,7 +4292,7 @@ function OnePage({
           It collapses only once Stripe has actually said there are none. */}
       <section
         className={buddy ? "gb-co__express" : undefined}
-        style={walletsAnswered && !wallets && !paypalClientId ? { display: "none" } : undefined}
+        style={walletsAnswered && !wallets && !paypalClientId && !bnpl ? { display: "none" } : undefined}
         aria-label="Express checkout"
       >
         <p className={buddy ? "gb-co__express-lead" : undefined} style={buddy ? undefined : { textAlign: "center" }}>
@@ -4265,6 +4313,32 @@ function OnePage({
               know, and they are only here when the store has PayPal
               connected. */}
           {paypalClientId ? <div className="gb-co__paypal" ref={paypalRef} /> : null}
+          {/* Klarna and Affirm: pay over time, next to Apple Pay and PayPal.
+              Tapping one with the delivery details still empty does not start
+              anything — it takes them to the first missing field, because the
+              order needs somewhere to ship to. */}
+          {bnpl && total >= 5000 ? (
+            <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
+              <button
+                type="button"
+                onClick={() => void payInstallments("klarna")}
+                disabled={working || bnplBusy !== null}
+                aria-label="Pay over time with Klarna"
+                style={{ minHeight: 48, borderRadius: 999, border: "1px solid #ffb3c7", background: "#ffb3c7", color: "#17120f", fontWeight: 800, fontSize: 17, letterSpacing: "-.01em", cursor: "pointer" }}
+              >
+                {bnplBusy === "klarna" ? "One moment…" : "Klarna"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void payInstallments("affirm")}
+                disabled={working || bnplBusy !== null}
+                aria-label="Pay over time with Affirm"
+                style={{ minHeight: 48, borderRadius: 999, border: "1px solid #4a4af4", background: "#4a4af4", color: "#fff", fontWeight: 800, fontSize: 17, letterSpacing: "-.01em", cursor: "pointer" }}
+              >
+                {bnplBusy === "affirm" ? "One moment…" : "Affirm"}
+              </button>
+            </div>
+          ) : null}
           {buddy ? (
             <button type="button" className="gb-co__express-card" onClick={goToCard}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -4290,7 +4364,7 @@ function OnePage({
       <div
         className={buddy ? "gb-co__or" : undefined}
         style={
-          walletsAnswered && !wallets && !paypalClientId
+          walletsAnswered && !wallets && !paypalClientId && !bnpl
             ? { display: "none" }
             : buddy
               ? undefined
