@@ -1129,6 +1129,35 @@ function Features({ section }: { section: LoadedSection }) {
  */
 function AdCards({ section }: { section: LoadedSection }) {
   const cards = section.blocks.filter((b) => has(b.values, "image"));
+  const row = useRef<HTMLDivElement>(null);
+  /*
+   * It moves on its own: one card every 2.4 seconds, back to the first at the
+   * end, only while the row is on screen, and it stops for good the moment a
+   * finger or mouse touches it. A visitor who asks for less motion gets none.
+   */
+  useEffect(() => {
+    const el = row.current;
+    if (!el || cards.length < 2) return;
+    if (typeof window === "undefined" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let onScreen = false;
+    let stopped = false;
+    const io = new IntersectionObserver(([e]) => { onScreen = Boolean(e?.isIntersecting); }, { threshold: 0.4 });
+    io.observe(el);
+    const stop = () => { stopped = true; };
+    el.addEventListener("pointerdown", stop, { passive: true });
+    el.addEventListener("wheel", stop, { passive: true });
+    el.addEventListener("touchstart", stop, { passive: true });
+    const timer = window.setInterval(() => {
+      if (stopped || !onScreen) return;
+      const a = el.children[0] as HTMLElement | undefined;
+      const c = el.children[1] as HTMLElement | undefined;
+      if (!a || !c) return;
+      const step = c.offsetLeft - a.offsetLeft;
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+      el.scrollTo({ left: atEnd ? 0 : Math.round(el.scrollLeft / step) * step + step, behavior: "smooth" });
+    }, 2400);
+    return () => { window.clearInterval(timer); io.disconnect(); el.removeEventListener("pointerdown", stop); el.removeEventListener("wheel", stop); el.removeEventListener("touchstart", stop); };
+  }, [cards.length]);
   if (!cards.length) return null;
   const heading = val(section.values, "heading");
   const sub = val(section.values, "subheading");
@@ -1140,7 +1169,7 @@ function AdCards({ section }: { section: LoadedSection }) {
           {sub ? <p>{sub}</p> : null}
         </div>
       ) : null}
-      <div className="cb-night__row cb-night__row--cards">
+      <div className="cb-night__row cb-night__row--cards" ref={row}>
         {cards.map((card, i) => (
           <img
             key={`${val(card.values, "image")}-${i}`}
