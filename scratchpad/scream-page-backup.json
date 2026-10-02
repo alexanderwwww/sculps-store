@@ -1,0 +1,90 @@
+{
+ "images": [
+  {
+   "alt": "Sixteen feet four, seen from the street",
+   "url": "/media/scr-s1-hero.webp",
+   "kind": "photo"
+  },
+  {
+   "alt": "Sixteen feet four beside a grown adult",
+   "url": "/media/scr-s2-scale.webp",
+   "kind": "photo"
+  },
+  {
+   "alt": "Everything it does",
+   "url": "/media/scr-s3-does.webp",
+   "kind": "photo"
+  },
+  {
+   "alt": "Real in daylight, lit after dark",
+   "url": "/media/scr-s4-daynight.webp",
+   "kind": "photo"
+  },
+  {
+   "alt": "Up in ninety seconds",
+   "url": "/media/scr-s5-steps.webp",
+   "kind": "photo"
+  },
+  {
+   "alt": "Built for rain, six stakes down",
+   "url": "/media/scr-s6-weather.webp",
+   "kind": "photo"
+  },
+  {
+   "alt": "The mask, up close",
+   "url": "/media/scr-s7-detail.webp",
+   "kind": "photo"
+  },
+  {
+   "alt": "The whole street slows down for it",
+   "url": "/media/scr-s8-feel.webp",
+   "kind": "photo"
+  }
+ ],
+ "secs": [
+  {
+   "id": "d43eacd8-7760-4535-8a50-46b7dc6c772d",
+   "position": 0
+  },
+  {
+   "id": "a2fff389-c32a-4034-960a-ac03cc79170f",
+   "position": 1
+  },
+  {
+   "id": "e53fa45f-2041-40ee-b4fa-4f46809e3c23",
+   "position": 2
+  },
+  {
+   "id": "af8981e5-3782-461d-b390-90e62ab42493",
+   "position": 3
+  },
+  {
+   "id": "579264e8-2c7a-4ca2-ba4e-08b5c02992f4",
+   "position": 4
+  },
+  {
+   "id": "b5cb91f6-80a4-4fb7-82b2-61f44deee4e0",
+   "position": 5
+  },
+  {
+   "id": "88e21564-b96d-451b-82f9-18b2a5162347",
+   "position": 6
+  },
+  {
+   "id": "b2a5cc6a-28c4-4db2-a750-de9db2ae4529",
+   "position": 7
+  },
+  {
+   "id": "a0bb6aaa-0182-48a3-b345-f8495eec4c0a",
+   "position": 8
+  },
+  {
+   "id": "55ca0a7e-75e0-4db5-8777-43c07a2fa6ac",
+   "position": 9
+  },
+  {
+   "id": "49a0fa88-1d01-4c92-bea2-d78ce773e38e",
+   "position": 10
+  }
+ ]
+}
