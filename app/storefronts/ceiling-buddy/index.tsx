@@ -18,7 +18,7 @@ import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
 import { PayPalExpress } from "../garden-buddy/paypal-express";
 import { EmailPopup } from "./popup";
 import { PhoneChat } from "../shared/phone-chat";
-import { BnplMessage } from "../shared/bnpl-message";
+import { KlarnaMark, AffirmMark, PayLaterLine, quarter } from "../shared/paylater";
 import { ProductExpress } from "../garden-buddy/product-express";
 import { embedFor, isOwnVideo } from "./embeds";
 
@@ -195,7 +195,7 @@ export function CeilingBuddyStorefront({
       />
 
       <div className="cb">
-        <Header page={page} storeParam={storeParam} offer={offer} brand={brand} />
+        <Header page={page} storeParam={storeParam} offer={offer} brand={brand} bnpl={bnpl} />
         <main id="MainContent" role="main">
           {sections.map((s) => (
             <Fragment key={s.id}>
@@ -209,7 +209,6 @@ export function CeilingBuddyStorefront({
             <div data-section={s.type}>
               <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} bnpl={bnpl} offer={offer} />
             </div>
-            {s.type === "buy_box" && bnpl ? <BnplBar page={page} bnpl={bnpl} /> : null}
             </Fragment>
           ))}
         </main>
@@ -322,9 +321,11 @@ function Header({
   storeParam,
   offer,
   brand,
+  bnpl = null,
 }: {
   page: LoadedProductPage;
   storeParam: string;
+  bnpl?: string | null;
   offer: { code: string; kind: string; value: number } | null;
   brand: CbBrand;
 }) {
@@ -342,7 +343,7 @@ function Header({
   }, [menu]);
   return (
     <>
-      <Announce offer={offer} currency={page.store.currency} brand={brand} />
+      <Announce offer={offer} currency={page.store.currency} brand={brand} payLaterCents={bnpl ? ((page.variants.find((x) => x.isDefault) ?? page.variants[0])?.priceCents ?? 0) : 0} />
       <header className="cb-header">
         <div className="cb-wrap cb-header__in">
           <a className="cb-logo" href={href("/")} aria-label={page.store.name}>
@@ -406,10 +407,13 @@ function Announce({
   offer,
   currency,
   brand,
+  payLaterCents = 0,
 }: {
   offer: { code: string; kind: string; value: number } | null;
   currency: string;
   brand: CbBrand;
+  /** The product's price, when Klarna and Affirm are on: a fourth message. */
+  payLaterCents?: number;
 }) {
   const amount =
     offer && offer.kind === "fixed"
@@ -462,12 +466,17 @@ function Announce({
       {/* Only Black Reaper's stylesheet shows this: three promises fading one
           at a time beside a fixed code pill. Everyone else keeps the rail. */}
       <div className="cb-ann__fade" aria-hidden="true">
-        <span className="cb-ann__msgs">
+        <span className={`cb-ann__msgs${payLaterCents > 0 ? " cb-ann__msgs--4" : ""}`}>
           {[0, 1, 2].map((i) => (
             <span key={i} className="cb-ann__msg" style={{ animationDelay: `${i * 4}s` }}>
               {icons[i]} {brand.rail[i]}
             </span>
           ))}
+          {payLaterCents > 0 ? (
+            <span className="cb-ann__msg cb-ann__msg--pl" style={{ animationDelay: "12s" }}>
+              <KlarnaMark /> <span>4 interest-free payments of <b>{quarter(payLaterCents, currency)}</b></span> <AffirmMark light />
+            </span>
+          ) : null}
         </span>
         {offer && amount ? (
           <span className="cb-ann__code">
@@ -657,18 +666,9 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               {off ? (
                 <span className="cb-price__off">{IcoTag} Save {dollarsOff(off)}</span>
               ) : null}
+              {/* Klarna and Affirm, right beside the number they divide. */}
+              {bnpl ? <PayLaterLine className="cb-price__pl" amountCents={chosen.priceCents} currency={currency} /> : null}
             </div>
-          ) : null}
-          {/* Pay over time, written by Stripe for this exact price and bundle,
-              right under the number it divides. */}
-          {bnpl && chosen ? (
-            <BnplMessage
-              className="cb-bnpl"
-              publishableKey={bnpl}
-              amountCents={chosen.priceCents}
-              currency={currency}
-              fallback={<span className="cb-bnpl__fb">Pay over time with <b className="cb-bnpl__k">Klarna</b> or <b className="cb-bnpl__a">Affirm</b></span>}
-            />
           ) : null}
 
           {/* Pay in 4 lives inside the bundle box, under the rows it is a
@@ -3115,32 +3115,6 @@ function StartSmaller({ section }: { section: LoadedSection }) {
   );
 }
 
-/* ------------------------------------------------------ pay-over-time bar */
-
-/**
- * A slim bar straight under the buy box. It says, for the bundle that is
- * picked right now, what Klarna and Affirm would let this customer pay over
- * time -- the sentence is Stripe's, written from the live price.
- */
-function BnplBar({ page, bnpl }: { page: LoadedProductPage; bnpl: string }) {
-  const fallback = (page.variants.find((x) => x.isDefault) ?? page.variants[0])?.id ?? "";
-  const { id } = usePicked(fallback);
-  const buy = page.variants.find((x) => x.id === id) ?? page.variants.find((x) => x.isDefault) ?? page.variants[0] ?? null;
-  if (!buy) return null;
-  return (
-    <div className="cb-bnplbar" role="note">
-      <div className="cb-wrap cb-bnplbar__in">
-        <BnplMessage
-          publishableKey={bnpl}
-          amountCents={buy.priceCents}
-          currency={page.store.currency}
-          fallback={<span>Pay over time with <b className="cb-bnpl__k">Klarna</b> or <b className="cb-bnpl__a">Affirm</b></span>}
-        />
-      </div>
-    </div>
-  );
-}
-
 /* --------------------------------------------------------------- sticky */
 
 function StickyBuy({ page, storeParam = "", bnpl = null }: { page: LoadedProductPage; storeParam?: string; bnpl?: string | null }) {
@@ -3204,7 +3178,10 @@ function StickyBuy({ page, storeParam = "", bnpl = null }: { page: LoadedProduct
             <span className="cb-sticky__v">{buy.label}</span>
           </div>
           {bnpl ? (
-            <BnplMessage className="cb-sticky__bnpl" publishableKey={bnpl} amountCents={buy.priceCents} currency={page.store.currency} compact />
+            <div className="cb-sticky__pl" aria-label={`Pay in 4 interest-free payments of ${quarter(buy.priceCents, page.store.currency)} with Klarna, or monthly with Affirm`}>
+              <span className="cb-sticky__plk"><KlarnaMark /> 4 × <b>{quarter(buy.priceCents, page.store.currency)}</b></span>
+              <span className="cb-sticky__pla"><AffirmMark /> pay monthly</span>
+            </div>
           ) : null}
         </div>
         <form

@@ -4721,33 +4721,56 @@ html, body { margin: 0; }
   .cb-night--cards:not(.cb-night--one) .cb-night__row--cards img { border-radius: 8px; scroll-snap-align: center; }
 }
 
-/* Pay over time, under the price: Klarna and Affirm. */
-.cb-bnpl {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-  margin: 10px 0 2px;
-  font-size: 15px;
-  line-height: 1.35;
-}
-.cb-bnpl b { font-weight: 800; padding: 1px 8px; border-radius: 999px; font-size: 14px; }
-.cb-bnpl__k { background: #ffb3c7; color: #17120f; }
-.cb-bnpl__a { background: #4a4af4; color: #fff; }
-.cb-bnpl i { font-style: normal; opacity: .6; font-size: 13px; }
+
 
 /* Cart drawer: discount and total rows, and the pay-over-time line. */
 .cb-drawer__sum--disc { color: #0b7a3b; font-size: 15px; }
 .cb-drawer__sum--total { font-weight: 800; }
-.cb-drawer__over { margin: 12px 0 0; text-align: center; font-size: 14px; line-height: 1.5; opacity: .85; }
-.cb-drawer__over b { font-weight: 800; padding: 1px 8px; border-radius: 999px; font-size: 13px; }
 
-/* Pay over time: next to the price, in a slim bar under the buy box, on the
-   sticky bar and in the cart. The words inside are Stripe's. */
-.cb-bnpl { margin: 8px 0 4px; min-height: 22px; }
-.cb-bnpl__fb { font-size: 15px; }
-.cb-bnplbar { background: #fff7ed; border-top: 1px solid #f3dcc0; border-bottom: 1px solid #f3dcc0; padding: 10px 0; }
-.cb-bnplbar__in { display: flex; justify-content: center; text-align: center; min-height: 24px; font-size: 15px; }
-.cb-bnplbar__in > div { width: 100%; max-width: 760px; }
-.cb-sticky__bnpl { margin-top: 2px; max-width: 360px; line-height: 1.2; }
-.cb-drawer__over { margin: 12px 0 0; }
+
+
+
+/* ==== Klarna + Affirm (Black Reaper) ====================================
+   Brand colours only: Klarna pink, Affirm blue, our black and orange. */
+.cb-price { flex-wrap: wrap; }
+.cb-price__pl { flex-basis: 100%; }
+.pl-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 14px; line-height: 1.3; color: #140A02; }
+.pl-line__k, .pl-line__a { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.pl-line b { font-weight: 800; }
+.pl-line__a span { color: #5b524b; }
+.cb-price__pl { margin-top: 6px; }
+
+/* Announcement bar: Klarna and Affirm take a fourth turn. */
+.cb-ann__msgs--4 .cb-ann__msg { animation-name: reaper-ann-fade4; animation-duration: 16s; }
+@keyframes reaper-ann-fade4 {
+  0% { opacity: 0; transform: translateY(6px); } 4% { opacity: 1; transform: none; }
+  22% { opacity: 1; transform: none; } 26%, 100% { opacity: 0; transform: translateY(-6px); }
+}
+.cb-ann__msg--pl { gap: 8px; }
+.cb-ann__msg--pl b { font-weight: 800; }
+
+/* Sticky bar: Klarna, then Affirm, popping in turn. */
+.cb-sticky__pl { position: relative; height: 22px; margin-top: 4px; font-size: 13px; color: #140A02; }
+.cb-sticky__plk, .cb-sticky__pla {
+  position: absolute; left: 0; top: 0; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  opacity: 0; transform: scale(.85) translateY(4px); transform-origin: left center;
+  animation: reaper-pl-pop 6s infinite both;
+}
+.cb-sticky__pla { animation-delay: 3s; }
+.cb-sticky__pl b { font-weight: 800; }
+@keyframes reaper-pl-pop {
+  0% { opacity: 0; transform: scale(.85) translateY(4px); }
+  6% { opacity: 1; transform: scale(1.06); }
+  10% { transform: scale(1); }
+  44% { opacity: 1; transform: scale(1); }
+  50%, 100% { opacity: 0; transform: scale(.92) translateY(-4px); }
+}
+.cb-sticky:not(.is-on) .cb-sticky__plk, .cb-sticky:not(.is-on) .cb-sticky__pla { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .cb-sticky__plk { opacity: 1; transform: none; animation: none; }
+  .cb-sticky__pla { display: none; }
+}
+
+/* Cart drawer line */
+.cb-drawer__over { margin: 12px 0 0; display: flex; justify-content: center; }
+.cb-drawer__over .pl-line { justify-content: center; font-size: 13px; }

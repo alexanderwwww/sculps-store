@@ -6,7 +6,7 @@
  * rather than a shared one because the drawer's styling is part of the theme,
  * and the themes are deliberately not shared between stores.
  */
-import { BnplMessage } from "../shared/bnpl-message";
+import { PayLaterLine } from "../shared/paylater";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import type { LoadedProductPage, VariantRow } from "~/lib/store.server";
@@ -434,13 +434,9 @@ export function CartDrawerProvider({
               </div>
             ) : null}
             {bnpl && lines.length ? (
-              <BnplMessage
-                className="cb-drawer__over"
-                publishableKey={bnpl}
-                amountCents={Math.max(0, (cart?.subtotalCents ?? 0) - (cart?.discount?.amountCents ?? 0))}
-                currency={currency}
-                fallback={<span>Or pay over time with <b className="cb-bnpl__k">Klarna</b> or <b className="cb-bnpl__a">Affirm</b> at checkout</span>}
-              />
+              <div className="cb-drawer__over">
+                <PayLaterLine amountCents={Math.max(0, (cart?.subtotalCents ?? 0) - (cart?.discount?.amountCents ?? 0))} currency={currency} />
+              </div>
             ) : null}
             <div className="cb-reassure">Free shipping · 30-day returns</div>
           </div>

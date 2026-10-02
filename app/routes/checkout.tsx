@@ -52,6 +52,7 @@ import { providerForStore, PaymentsNotConfigured, PAYABLE_INTENT_STATUSES } from
 import { placeOrder, orderByPaymentRef } from "~/lib/admin.server";
 import { paypalFor } from "~/lib/paypal.server";
 import { bnplFor } from "~/lib/bnpl.server";
+import { AffirmMark } from "~/storefronts/shared/paylater";
 import { deviceFromRequest, geoFromContext, readVisitorSession, shouldTrack, track } from "~/lib/visitor.server";
 import {
   metaConfig,
@@ -4322,25 +4323,36 @@ function OnePage({
               Tapping one with the delivery details still empty does not start
               anything — it takes them to the first missing field, because the
               order needs somewhere to ship to. */}
+          {/* Three pills under Apple Pay: Klarna, Affirm, card. Same height,
+              same width, same fully rounded shape. */}
           {bnpl ? (
-            <div className="gb-co__bnplrow" style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
+            <div className="gb-co__bnplrow">
               <button
                 type="button"
+                className="gb-co__pill gb-co__pill--klarna"
                 onClick={() => void payInstallments("klarna")}
                 disabled={working || bnplBusy !== null}
                 aria-label="Pay over time with Klarna"
-                style={{ height: 52, borderRadius: 8, border: 0, background: "#ffb3c7", color: "#17120f", fontWeight: 800, fontSize: 18, letterSpacing: "-.01em", cursor: "pointer", whiteSpace: "nowrap", opacity: bnplBusy === "klarna" ? 0.7 : 1 }}
+                data-busy={bnplBusy === "klarna" ? "1" : undefined}
               >
-                Klarna
+                Klarna.
               </button>
               <button
                 type="button"
+                className="gb-co__pill gb-co__pill--affirm"
                 onClick={() => void payInstallments("affirm")}
                 disabled={working || bnplBusy !== null}
                 aria-label="Pay over time with Affirm"
-                style={{ height: 52, borderRadius: 8, border: 0, background: "#4a4af4", color: "#fff", fontWeight: 800, fontSize: 18, letterSpacing: "-.01em", cursor: "pointer", whiteSpace: "nowrap", opacity: bnplBusy === "affirm" ? 0.7 : 1 }}
+                data-busy={bnplBusy === "affirm" ? "1" : undefined}
               >
-                Affirm
+                <AffirmMark light />
+              </button>
+              <button type="button" className="gb-co__pill gb-co__pill--card" onClick={goToCard} aria-label="Pay with card">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <rect x="2.5" y="5" width="19" height="14" rx="2.6" />
+                  <path d="M2.5 9.5h19" />
+                </svg>
+                <span>Card</span>
               </button>
             </div>
           ) : null}

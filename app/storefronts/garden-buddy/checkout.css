@@ -576,5 +576,23 @@
    the sides of the whole site. */
 html, body { margin: 0; }
 
-/* Apple/Google Pay full width on top; Klarna and Affirm, equal, beneath it. */
+/* Apple/Google Pay full width on top; Klarna, Affirm and Card beneath it as
+   three equal, fully rounded pills. */
 .gb-co__express-grid:has(.gb-co__bnplrow) { grid-template-columns: 1fr; }
+.gb-co__express-grid:has(.gb-co__bnplrow) .gb-co__express-row { border-radius: 999px; overflow: hidden; }
+.gb-co__bnplrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.gb-co__pill {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 48px; padding: 0 12px; border: 0; border-radius: 999px; cursor: pointer;
+  font-family: var(--font-b); font-size: 17px; font-weight: 800; letter-spacing: -.02em;
+  white-space: nowrap; transition: transform .12s ease, filter .15s ease, opacity .15s ease;
+}
+.gb-co__pill:hover { filter: brightness(.96); }
+.gb-co__pill:active { transform: translateY(1px); }
+.gb-co__pill:disabled { cursor: default; }
+.gb-co__pill[data-busy="1"] { opacity: .65; }
+.gb-co__pill--klarna { background: #FFB3C7; color: #0B051D; }
+.gb-co__pill--affirm { background: #4A4AF4; color: #fff; font-size: 16px; }
+.gb-co__pill--card { background: #111; color: #fff; font-size: 15px; font-weight: 700; }
+.gb-co__pill--card svg { width: 18px; height: 18px; flex: 0 0 18px; }
+@media (max-width: 380px) { .gb-co__pill--card svg { display: none; } }
