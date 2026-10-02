@@ -6,7 +6,7 @@ test("a 16 s ad: 3 pictures, 2 clips between them, one joined video, cost counte
   const log = []; const mp4 = tiny(2);
   const google = {
     image: async (p, refs) => { log.push(["image", p, refs.length]); return { bytes: Buffer.from("PNG" + log.length), mime: "image/png" }; },
-    clip: async (o) => { log.push(["clip", o.first.bytes.toString(), o.last.bytes.toString(), o.tier]); return { bytes: mp4 }; },
+    clip: async (o) => { o.onStarted && o.onStarted("op"); log.push(["clip", o.first.bytes.toString(), o.last.bytes.toString(), o.tier]); return { bytes: mp4 }; },
   };
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ad-"));
   const r = await makeAd({ google, ffmpeg: ff, dir, scene: "A woman films a mug on a street.", seconds: 16, tier: "lite", refs: [{ bytes: Buffer.from("REF") }] });

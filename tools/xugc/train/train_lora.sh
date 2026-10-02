@@ -118,7 +118,9 @@ hunyuan|wan)
   if [ "$DRY" = "1" ]; then EP=2; elif [ "$BUDGET" = "1" ]; then EP=200; else EP="${EPOCHS:-16}"; fi
   if [ "$MODEL" = wan ]; then
     M=$W/models/wan22; mkdir -p "$M"
-    HF_HUB_ENABLE_HF_TRANSFER=1 hf download Comfy-Org/Wan_2.2_ComfyUI_Repackaged --include "split_files/diffusion_models/wan2.2_t2v_low_noise_14B_fp16.safetensors" "split_files/diffusion_models/wan2.2_t2v_high_noise_14B_fp16.safetensors" "split_files/vae/wan_2.1_vae.safetensors" "split_files/text_encoders/umt5_xxl_fp16.safetensors" --local-dir "$M" 2>&1 | tail -2
+    HF_HUB_ENABLE_HF_TRANSFER=1 hf download Comfy-Org/Wan_2.2_ComfyUI_Repackaged --include "split_files/diffusion_models/wan2.2_t2v_low_noise_14B_fp16.safetensors" "split_files/diffusion_models/wan2.2_t2v_high_noise_14B_fp16.safetensors" "split_files/vae/wan_2.1_vae.safetensors" --local-dir "$M" 2>&1 | tail -2
+    # musubi-tuner loads Wan's OWN T5 file (docs/wan.md; wan/modules/t5.py loads it strict); Comfy's umt5 file has different key names
+    HF_HUB_ENABLE_HF_TRANSFER=1 hf download Wan-AI/Wan2.1-T2V-14B models_t5_umt5-xxl-enc-bf16.pth --local-dir "$M/t5" 2>&1 | tail -2
     cat > "$W/ds.toml" <<T
 [general]
 resolution = [544, 960]
@@ -133,7 +135,7 @@ frame_extraction = "head"
 T
     cd musubi-tuner
     python src/musubi_tuner/wan_cache_latents.py --dataset_config "$W/ds.toml" --vae "$M/split_files/vae/wan_2.1_vae.safetensors" 2>&1 | tee -a "$OUT/train.log"
-    python src/musubi_tuner/wan_cache_text_encoder_outputs.py --dataset_config "$W/ds.toml" --t5 "$M/split_files/text_encoders/umt5_xxl_fp16.safetensors" --batch_size 4 2>&1 | tee -a "$OUT/train.log"
+    python src/musubi_tuner/wan_cache_text_encoder_outputs.py --dataset_config "$W/ds.toml" --t5 "$M/t5/models_t5_umt5-xxl-enc-bf16.pth" --batch_size 4 2>&1 | tee -a "$OUT/train.log"
     trainrun accelerate launch --num_cpu_threads_per_process 1 --mixed_precision bf16 src/musubi_tuner/wan_train_network.py --task t2v-A14B \
       --dit "$M/split_files/diffusion_models/wan2.2_t2v_low_noise_14B_fp16.safetensors" --dit_high_noise "$M/split_files/diffusion_models/wan2.2_t2v_high_noise_14B_fp16.safetensors" \
       --dataset_config "$W/ds.toml" --sdpa --mixed_precision bf16 --fp8_base --gradient_checkpointing --offload_inactive_dit \

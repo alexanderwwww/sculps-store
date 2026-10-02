@@ -11,7 +11,10 @@ const esc = (t) => String(t == null ? "" : t).replace(/[&<>"]/g, (c) => ({ "&": 
 const ago = (t) => { if (!t) return "never"; const s = Math.round((Date.now() - t) / 1000); return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.round(s / 60)} min ago` : `${Math.round(s / 3600)} h ago`; };
 const showErr = (el, msg) => { el.textContent = msg || ""; el.classList.toggle("on", !!msg); };
 
-async function refresh(r) { const v = r || (await window.xugc.get()); S = v.state; META = v; ui.est = await window.xugc.estimate(ui.secs, ui.qual, ui.engine || "veo", ui.tier || "lite"); renderAll(); }
+const isVeoNow = () => (ui.engine || "veo") === "veo";
+// Veo makes 8 s clips, so Real Life lengths are what he is billed for and gets: 8, 16 or 24 s
+const secsNow = () => (isVeoNow() ? ui.vsecs || 16 : ui.secs);
+async function refresh(r) { const v = r || (await window.xugc.get()); S = v.state; META = v; ui.est = await window.xugc.estimate(secsNow(), ui.qual, ui.engine || "veo", ui.tier || "lite"); renderAll(); }
 
 function seg(el, items, cur, on) {
   el.innerHTML = "";
@@ -20,8 +23,8 @@ function seg(el, items, cur, on) {
 
 function renderChips() {
   const c = $("#modechip");
-  if (!META.keySet) { c.className = "chip warnchip"; c.textContent = "NO RUNPOD KEY · add it in Settings"; c.onclick = () => setView("settings"); }
-  else { c.className = "chip hot"; c.onclick = null; c.innerHTML = `RUNPOD · <b>${money(META.usedToday)}</b> of ${money(S.settings.capDay)} today`; }
+  if (!META.keySet && !META.googleSet) { c.className = "chip warnchip"; c.textContent = "NO KEY YET · add your Google key in Settings"; c.onclick = () => setView("settings"); }
+  else { c.className = "chip hot"; c.onclick = null; c.innerHTML = `SPENT · <b>${money(META.usedToday)}</b> of ${money(S.settings.capDay)} today`; }
   $("#buildchip").textContent = "Build " + META.build; $("#s-build").textContent = META.build;
 }
 
@@ -53,7 +56,9 @@ function renderCreate() {
   $("#avnote").textContent = ui.avmode === "broad" ? "Broad = the scene picks an ordinary, real-looking person." : ui.avmode === "pick" ? "A ready-made description of that person goes into the prompt." : "Describe the person in your own words.";
   seg($("#looks"), META.looks.map((l) => [l, l]), ui.look, (k) => { ui.look = k; renderCreate(); });
   seg($("#musics"), [["none", "None"], ["soft", "Soft beat"], ["drop", "Beat drop"]], ui.music, (k) => { ui.music = k; renderCreate(); });
-  seg($("#secs"), META.seconds.map((s) => [s, s + "s"]), ui.secs, (k) => { ui.secs = Number(k); refresh(); });
+  if (isVeoNow()) seg($("#secs"), [8, 16, 24].map((s) => [s, s + "s"]), ui.vsecs || 16, (k) => { ui.vsecs = Number(k); refresh(); });
+  else seg($("#secs"), META.seconds.map((s) => [s, s + "s"]), ui.secs, (k) => { ui.secs = Number(k); refresh(); });
+  $("#quals").closest(".sec").style.display = isVeoNow() ? "none" : "";
   seg($("#quals"), Object.entries(META.qualities), ui.qual, (k) => { ui.qual = k; refresh(); });
   const on = META.style.filter((f) => f.on);
   $("#stylon").textContent = on.length ? `Style Bible: ${on.length} on` : "Style Bible off";
@@ -69,7 +74,7 @@ function showTake(t) {
   const v = $("#pv"); $("#idle").style.display = "none"; v.style.display = "block"; v.src = src(t.video); v.muted = false; v.volume = 1; v.play().catch(() => { v.muted = true; v.play().catch(() => {}); syncSound(); }); syncSound();
   $("#ptag").textContent = `TAKE · ${t.seconds}s · ${money(t.cost)}`;
   $("#verd").style.visibility = "visible"; $("#vup").classList.toggle("on", t.verdict === "up"); $("#vdown").classList.toggle("on", t.verdict === "down");
-  $("#hint").textContent = `${t.minutes} min on the GPU · ${t.audio ? "with sound (tap the speaker)" : "no sound track found"}`;
+  $("#hint").textContent = `${/Veo/.test(t.model || "") ? "Real Life on Google Veo · 720p" : (t.minutes || 0) + " min on the GPU"} · ${t.audio ? "with sound (tap the speaker)" : "no sound track found"}`;
 }
 
 function renderLibrary() {
@@ -129,7 +134,12 @@ function renderEngine() {
   seg($("#presets"), (META.presets || []).map((p) => [p.id, p.name]), ui.preset || "review", (k) => { ui.preset = k; renderEngine(); });
   $("#presetnote").textContent = ((META.presets || []).find((p) => p.id === (ui.preset || "review")) || {}).blurb || "";
   seg($("#tiers"), Object.entries(META.veo || {}).filter(([k]) => k !== "standard"), ui.tier || "lite", (k) => { ui.tier = k; refresh(); });
-  $("#vrow").style.display = (ui.engine || "veo") === "veo" ? "" : "none";
+  const isVeo = (ui.engine || "veo") === "veo";
+  $("#vrow").style.display = isVeo ? "" : "none";
+  $("#reallife").style.display = $("#rlnote").style.display = isVeo ? "none" : "";
+  $("#gonote").textContent = isVeo ? "Made on Google: hidden frames, then 8-second clips joined into one video. The price shown is the most it can cost." : "Each video rents a GPU just for that video and hands it back. The price shown is the most it can cost.";
+  if (ui.lastEngine && ui.lastEngine !== ui.engine) showErr($("#err"), "");
+  ui.lastEngine = ui.engine;
   const have = (S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0], ltx = /^ltx/.test(ui.engine || "veo");
   if (!have || !ltx) ui.reallife = false;
   $("#reallife").querySelectorAll("button").forEach((b) => { b.classList.toggle("on", (b.dataset.v === "1") === !!ui.reallife); b.disabled = !have || !ltx; b.onclick = () => { ui.reallife = b.dataset.v === "1"; renderEngine(); }; });
@@ -333,7 +343,7 @@ function beginRender(who) {
   clearInterval(ui.timer); ui.timer = setInterval(() => { $("#ht").textContent = clock(Date.now() - ui.t0); }, 500); renderCreate();
 }
 function endRender() { ui.rendering = false; clearInterval(ui.timer); $("#ptag").style.display = "block"; stopFx(); }
-const specNow = () => ({ scene: $("#script").value.trim(), look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: ui.secs, quality: ui.qual, music: ui.music, engine: ui.engine || "veo", preset: ui.preset || "review", tier: ui.tier || "lite", lora: ui.reallife ? ((S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0] || {}).id : undefined, refs: ui.refs && ui.refs.length ? ui.refs : undefined });
+const specNow = () => ({ scene: $("#script").value.trim(), look: ui.look, avatar: ui.avmode === "pick" ? ui.avatar : ui.avmode === "broad" ? "broad" : undefined, avatarText: ui.avmode === "own" ? $("#avown").value : undefined, seconds: secsNow(), quality: ui.qual, music: ui.music, engine: ui.engine || "veo", preset: ui.preset || "review", tier: ui.tier || "lite", lora: ui.reallife ? ((S.loras || []).filter((l) => l.model === "ltx").slice(-1)[0] || {}).id : undefined, refs: ui.refs && ui.refs.length ? ui.refs : undefined });
 $("#showp").onclick = async () => {
   const f = $("#fullp"); if (f.classList.contains("on")) { f.classList.remove("on"); $("#showp").textContent = "Show the full prompt"; return; }
   const r = await window.xugc.preview(specNow()); $("#fulltext").value = r.prompt || r.error || ""; ui.fullEdited = false; f.classList.add("on"); $("#showp").textContent = "Hide the full prompt";

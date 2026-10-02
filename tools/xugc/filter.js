@@ -112,7 +112,7 @@ function repair(prompt, engine) {
   const c = cap(engine);
   if (c != null && wordCount(t, engine) > c) {
     let ss = sentences(t);
-    const protectedS = s => HANDS_RE.test(s) || CLEAN_RE.test(s) || SOLO_RE.test(s) || /"/.test(s);
+    const protectedS = s => HANDS_RE.test(s) || CLEAN_RE.test(s) || SOLO_RE.test(s) || /"/.test(s) || /\b\d:\d\d\.\d\d\b/.test(s); // timed actions are the direction: never cut
     let dropped = 0;
     for (let i = ss.length - 1; i > 0 && wordCount(ss.join(" "), engine) > c; i--) {
       if (!protectedS(ss[i])) { ss.splice(i, 1); dropped++; }

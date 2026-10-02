@@ -16,7 +16,7 @@ const { Bridge } = require("./bridge.js");
 const { Collector, parseLinks } = require("./collect.js");
 const { Google, estimate: adEstimate, VEO } = require("./google.js");
 const presets = require("./presets.js");
-let filter = null; try { filter = require("./filter.js"); } catch { /* arrives with the filter */ }
+const filter = require("./filter.js");
 
 const BUILD = 12;
 const LATEST_NOTE = "";
@@ -66,6 +66,21 @@ function setup({ dir, googleFetch, makeRunPod, safe = null, sweepOnStart = true,
   };
   const send = (ch, p) => { for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send(ch, p); };
 
+  /**
+   * Real Life clip prompts from a text (one clip per blank-line block), each through the filter. The product title is swapped
+   * for a placeholder while checking, so a title like "Kids Art Easel" is never mistaken for a child in the scene.
+   */
+  function veoClips(text, n, title) {
+    const parts = String(text).split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean);
+    const list = parts.length === n ? parts : Array(n).fill(parts.join(" "));
+    const t = title ? String(title).replace(/"/g, "\u2033") : "";
+    return list.map((p, i) => {
+      const hide = t && p.includes(t) ? p.split(t).join("the product item") : p;
+      const c = filter.check(hide, "veo");
+      if (!c.ok) throw new Error(`The prompt filter stopped clip ${i + 1} before any money was spent: ` + c.problems.filter((q) => q.severity === "block").map((q) => q.text).join(" "));
+      return t ? c.prompt.split("the product item").join(t) : c.prompt;
+    });
+  }
   /** Everything a video needs, decided BEFORE any money moves: the product, the final prompt, the reference photos, the price. */
   async function prepare(spec) {
     const st = store.read();
@@ -79,12 +94,10 @@ function setup({ dir, googleFetch, makeRunPod, safe = null, sweepOnStart = true,
       // the preset recipe writes the scene; the filter checks it before any money moves
       const n = Math.max(1, Math.ceil(seconds / 8));
       const pc = presets.clips(spec.preset || "review", { product: product ? { title: product.title, features: product.features || [] } : null, avatarText: spec.avatarText || "", scene }, n);
-      const parts = given ? given.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean) : null;
-      let clipPrompts = parts ? (parts.length === n ? parts : Array(n).fill(parts.join(" "))) : pc.clips;
-      if (filter) clipPrompts = clipPrompts.map((p, i) => { const c = filter.check(p, "veo"); if (!c.ok) throw new Error(`The prompt filter stopped clip ${i + 1} before any money was spent: ` + c.problems.filter((q) => q.severity === "block").map((q) => q.text).join(" ")); return c.prompt; });
+      const clipPrompts = veoClips(given || pc.clips.join("\n\n"), n, product && product.title);
       const veoScene = clipPrompts.join("\n\n");
       const est = { ...adEstimate({ seconds, tier: spec.tier || "lite" }), minutes: 3 * Math.ceil(seconds / 8) };
-      return { spec, product, scene: veoScene, prompt: veoScene, imageScene: pc.image, clipPrompts, seconds, quality: "720p", captions: [], refs: refUrls(spec, product), engine: "veo", usd: est.usd, minutes: est.minutes };
+      return { spec, product, scene: veoScene, prompt: veoScene, imageScene: pc.image, clipPrompts, seconds, quality: "720p", captions: [], refs: refUrls(spec.refs ? spec : { ...spec, refs: "auto" }, product), engine: "veo", usd: est.usd, minutes: est.minutes };
     }
     const prompt = given || compose({ scene, look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music, reference: spec.useReference === false ? null : st.reference }, style.gather(st.styleOff));
     const est = spec.engine === "veo" ? { ...adEstimate({ seconds, tier: spec.tier || "lite" }), minutes: 3 * Math.ceil(seconds / 8) } : estimateGenerate({ seconds, quality, volume: !!st.settings.volumeId });
@@ -123,7 +136,7 @@ function setup({ dir, googleFetch, makeRunPod, safe = null, sweepOnStart = true,
   });
 
   ipcMain.handle("state:get", () => view());
-  ipcMain.handle("prompt:preview", async (_e, spec) => { try { const st = store.read(); const product = spec.useProduct !== false ? st.product : null; const seconds = Number(spec.seconds) || 15; return { prompt: compose({ scene: String(spec.scene || "").trim() || "(what happens goes here)", look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music, reference: spec.useReference === false ? null : st.reference }, style.gather(st.styleOff)) }; } catch (err) { return { error: err.message }; } });
+  ipcMain.handle("prompt:preview", async (_e, spec) => { try { if (spec.engine === "veo") { const st = store.read(); const product = spec.useProduct !== false ? st.product : null; const n = Math.max(1, Math.ceil((Number(spec.seconds) || 16) / 8)); const pc = presets.clips(spec.preset || "review", { product: product ? { title: product.title, features: product.features || [] } : null, avatarText: spec.avatarText || "", scene: String(spec.scene || "").trim() }, n); return { prompt: veoClips(pc.clips.join("\n\n"), n, product && product.title).join("\n\n") }; } const st = store.read(); const product = spec.useProduct !== false ? st.product : null; const seconds = Number(spec.seconds) || 15; return { prompt: compose({ scene: String(spec.scene || "").trim() || "(what happens goes here)", look: spec.look, avatar: spec.avatar, avatarText: spec.avatarText, product, seconds, music: spec.music, reference: spec.useReference === false ? null : st.reference }, style.gather(st.styleOff)) }; } catch (err) { return { error: err.message }; } });
   ipcMain.handle("estimate", (_e, seconds, quality, engineName, tier) => engineName === "veo" ? { ...adEstimate({ seconds: Number(seconds) || 16, tier: tier || "lite" }), minutes: 3 * Math.ceil((Number(seconds) || 16) / 8) } : estimate(seconds, quality));
   ipcMain.handle("settings:set", (_e, patch) => {
     store.update((s) => {
@@ -276,7 +289,8 @@ function setup({ dir, googleFetch, makeRunPod, safe = null, sweepOnStart = true,
       if (!store.read().settings.autoApprove) {
         const d = await askApproval(pr, "Claude");
         if (!d.ok) { send("claude", { kind: "end", text: d.timeout ? "No answer, so it was cancelled" : "You said no" }); return { ok: false, error: d.timeout ? "Alex did not answer in 15 minutes, nothing was rented." : "Alex said no on screen. Nothing was rented." }; }
-        if (d.prompt) { pr.prompt = d.prompt; pr.spec = { ...pr.spec, prompt: d.prompt }; }
+        if (d.prompt && pr.engine === "veo") { pr.clipPrompts = veoClips(d.prompt, pr.clipPrompts.length, pr.product && pr.product.title); pr.prompt = pr.scene = pr.clipPrompts.join("\n\n"); }
+        else if (d.prompt) { pr.prompt = d.prompt; pr.spec = { ...pr.spec, prompt: d.prompt }; }
       }
       send("claude", { kind: "go" });
       const take = await render(pr, null);

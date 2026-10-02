@@ -19,7 +19,7 @@ function run(bin, args) { return new Promise((res, rej) => execFile(bin, args, {
 
 async function join(ffmpeg, files, out) {
   if (files.length === 1) { fs.copyFileSync(files[0], out); return; }
-  const list = out + ".txt"; fs.writeFileSync(list, files.map((f) => `file '${f.replace(/'/g, "'\\''")}'`).join("\n"));
+  const list = out + ".txt"; fs.writeFileSync(list, files.map((f, i) => `file '${f.replace(/'/g, "'\\''")}'` + (i ? "\ninpoint 0.05" : "")).join("\n"));
   await run(ffmpeg, ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", list, "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", out]);
   fs.unlinkSync(list);
 }
@@ -46,8 +46,7 @@ async function makeAdInner({ google, ffmpeg, dir, scene, imageScene, clipPrompts
   const files = [];
   for (let i = 0; i < clips; i++) {
     stop(); onStage({ stage: "making", step: i + 1, of: clips, usd });
-    const v = await google.clip({ prompt: (clipPrompts && clipPrompts[i]) || beatPrompt(scene, i ? "Continue the same scene without a cut." : ""), tier, first: lms[i], last: lms[i + 1], signal });
-    usd += CLIP * (VEO[tier] || VEO.lite).perSec; paid.usd = usd;
+    const v = await google.clip({ prompt: (clipPrompts && clipPrompts[i]) || beatPrompt(scene, i ? "Continue the same scene without a cut." : ""), tier, first: lms[i], last: lms[i + 1], signal, onStarted: () => { usd += CLIP * (VEO[tier] || VEO.lite).perSec; paid.usd = usd; } });
     const f = path.join(dir, `clip-${i + 1}.mp4`); fs.writeFileSync(f, v.bytes); files.push(f);
   }
   stop(); onStage({ stage: "finishing", usd });

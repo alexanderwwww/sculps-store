@@ -26,7 +26,7 @@ test("clip: frames mode sends image+lastFrame, polls, downloads", async () => {
   assert.equal(r.bytes.toString(), "MP4");
   const sub = f.calls[0]; assert.match(sub.url, /veo-3\.1-lite-generate-preview:predictLongRunning/);
   const b = JSON.parse(sub.init.body); assert.ok(b.instances[0].image.inlineData.data); assert.ok(b.instances[0].lastFrame.inlineData.data);
-  assert.equal(b.parameters.aspectRatio, "9:16"); assert.equal(b.parameters.resolution, "720p"); assert.equal(b.parameters.durationSeconds, 8); assert.equal(b.parameters.personGeneration, "allow_adult");
+  assert.equal(b.parameters.aspectRatio, "9:16"); assert.equal(b.parameters.resolution, "720p"); assert.equal(b.parameters.durationSeconds, "8"); assert.equal(b.parameters.personGeneration, "allow_adult");
 });
 test("clip: reference mode and filtered result", async () => {
   const f = fake([[":predictLongRunning", () => ({ json: { name: "operations/z" } })], ["operations/z", () => ({ json: { done: true, response: { generateVideoResponse: { raiMediaFilteredReasons: ["face"] } } } })]]);

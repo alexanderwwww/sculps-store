@@ -19,6 +19,14 @@ const VEO = {
 const CLIP = 8; // frames and reference modes need 8 s; a longer ad is several 8 s clips joined
 
 const r2 = (n) => Math.round(n * 100) / 100;
+/** the real type of a picture, from its first bytes (Shopify serves .webp under .jpg names) */
+function sniff(b) {
+  b = Buffer.from(b);
+  if (b[0] === 0x89 && b[1] === 0x50) return "image/png";
+  if (b[0] === 0xff && b[1] === 0xd8) return "image/jpeg";
+  if (b.slice(0, 4).toString() === "RIFF" && b.slice(8, 12).toString() === "WEBP") return "image/webp";
+  return "image/jpeg";
+}
 
 /** Alex's rule: golden-ratio landmark times inside a clip of L seconds. For 8 s: 0, 1.17, 3.06, 4.94, 6.11, 8.00 */
 function goldenTimes(L = CLIP) {
@@ -68,7 +76,7 @@ class Google {
 
   /** one 9:16 picture. refs = [{bytes: Buffer, mime}] (product, avatar...). Returns {bytes, mime} */
   async image(prompt, refs = []) {
-    const input = [{ type: "text", text: prompt }, ...refs.map((r) => ({ type: "image", mime_type: r.mime || "image/jpeg", data: Buffer.from(r.bytes).toString("base64") }))];
+    const input = [{ type: "text", text: prompt }, ...refs.map((r) => ({ type: "image", mime_type: sniff(r.bytes), data: Buffer.from(r.bytes).toString("base64") }))];
     const j = await this.call(`${BASE}/interactions`, { method: "POST", headers: this.hdr(), body: JSON.stringify({ model: IMAGE_MODEL, input, response_format: { type: "image", aspect_ratio: "9:16" } }) });
     for (const s of j.steps || (j.interaction && j.interaction.steps) || []) {
       if (s.type !== "model_output") continue;
@@ -80,16 +88,17 @@ class Google {
   }
 
   /** one 8 s clip. first/last = {bytes, mime} (frames mode) or refs = up to 3 (reference mode). Returns {bytes, uri, op} */
-  async clip({ prompt, tier = "lite", first, last, refs = [], seed, onProgress, signal, pollMs = 10000, maxPolls = 60 }) {
+  async clip({ prompt, tier = "lite", first, last, refs = [], seed, onProgress, onStarted, signal, pollMs = 10000, maxPolls = 60 }) {
     const v = VEO[tier] || VEO.lite;
-    const b64 = (x) => ({ inlineData: { mimeType: x.mime || "image/png", data: Buffer.from(x.bytes).toString("base64") } });
+    const b64 = (x) => ({ inlineData: { mimeType: sniff(x.bytes), data: Buffer.from(x.bytes).toString("base64") } });
     const inst = { prompt };
     if (first) inst.image = b64(first);
     if (last) inst.lastFrame = b64(last);
     if (!first && refs.length) inst.referenceImages = refs.slice(0, 3).map((x) => ({ image: b64(x), referenceType: "asset" }));
-    const parameters = { aspectRatio: "9:16", resolution: "720p", durationSeconds: CLIP, personGeneration: first || refs.length ? "allow_adult" : "allow_all", ...(Number.isFinite(seed) ? { seed } : {}) };
+    const parameters = { aspectRatio: "9:16", resolution: "720p", durationSeconds: String(CLIP), personGeneration: first || refs.length ? "allow_adult" : "allow_all", ...(Number.isFinite(seed) ? { seed } : {}) };
     const op = await this.call(`${BASE}/models/${v.id}:predictLongRunning`, { method: "POST", headers: this.hdr(), body: JSON.stringify({ instances: [inst], parameters }) });
     if (!op.name) { const e = new Error("Google did not start the video: " + JSON.stringify(op).slice(0, 300)); e.code = "google"; throw e; }
+    if (onStarted) onStarted(op.name); // Google bills from here, whatever happens next
     for (let i = 0; i < maxPolls; i++) {
       if (signal && signal.cancelled) { const e = new Error("Cancelled."); e.code = "cancelled"; throw e; }
       const s = await this.call(`${BASE}/${op.name}`, { headers: this.hdr() });
@@ -110,4 +119,4 @@ class Google {
   }
 }
 
-module.exports = { Google, VEO, CLIP, IMAGE_MODEL, IMAGE_USD, goldenTimes, clipsFor, estimate, beatPrompt, landmarkPrompt, CLEAN };
+module.exports = { Google, VEO, CLIP, IMAGE_MODEL, IMAGE_USD, sniff, goldenTimes, clipsFor, estimate, beatPrompt, landmarkPrompt, CLEAN };

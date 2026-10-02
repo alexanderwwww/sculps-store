@@ -142,21 +142,27 @@ function fill(id, inputs = {}) {
  * so no line is said twice and nothing is cut by the word cap. The full scene text goes to the IMAGE model (no cap).
  */
 const SLOTS = { 1: [0], 2: [0, 4.94], 3: [0, 3.06, 4.94], 4: [0, 1.17, 3.06, 4.94], 5: [0, 1.17, 3.06, 4.94, 6.11] };
+const MAX_BEATS = 3; // more than three actions in 8 s is what made the old videos move wrong
+const clean = (t) => one(t).replace(/"/g, "\u2033"); // a quote in a product title (12") would break the dialogue counting
 function clips(id, inputs = {}, n = 2) {
   const p = get(id); const f = fill(id, inputs);
-  const prod = inputs.product || {}; const title = one(prod.title) || "the product";
+  const prod = inputs.product || {}; const title = clean(prod.title) || "the product";
   const part = PARTMAP[p.capture] || PARTS; const hand = (x) => x.replace(/\{part\}/g, part);
-  const face = one(inputs.avatarText) || "a relaxed woman in her late twenties with natural skin and loose hair";
-  const room = one(inputs.scene) || "an ordinary lived-in room with a few everyday objects";
-  const handsRule = (p.rules.map(hand).find((r) => /^Hands:/i.test(r)) || "Hands: natural hands, five fingers visible, holding the product by its " + part + ".");
-  const core = `Unpolished iPhone video, ${p.capture} capture, handheld, natural light, ambient sound. ${face.replace(/[.]+$/, "")}. Setting: ${room.replace(/[.]+$/, "")}. The product is ${title}, exactly as in the first frame; do not redesign it.`;
-  const per = Math.ceil(p.beats.length / n), out = [];
+  const face = clean(inputs.avatarText) || "a relaxed woman in her late twenties";
+  const room = clean(inputs.scene) || "a lived-in room";
+  const handsRule = "Natural hands, five fingers visible, holding the product by its " + part + ".";
+  const core = `Unpolished iPhone video, ${p.capture} capture, handheld, natural light. ${face.replace(/[.]+$/, "")}. Setting: ${room.replace(/[.]+$/, "")}. The product is ${title}, exactly as in the first frame.`;
+  // share the beats out in order; at most MAX_BEATS per 8 s clip
+  const groups = Array.from({ length: n }, () => []);
+  p.beats.forEach((b, k) => groups[Math.min(n - 1, Math.floor((k * n) / p.beats.length))].push(b));
+  const out = [];
   for (let i = 0; i < n; i++) {
-    let bs = p.beats.slice(i * per, (i + 1) * per);
+    let bs = groups[i].slice(0, MAX_BEATS);
     if (!bs.length) bs = [{ action: "She keeps using the product naturally, then settles and holds it in frame", sfx: "room tone" }];
-    const slots = SLOTS[Math.min(5, bs.length)];
-    const beats = bs.map((b, k) => `${mmss(slots[k])} ${hand(b.action).replace(/[.]+$/, "")}.${b.say ? ` She says: "${b.say}"` : ""} SFX: ${String(b.sfx).replace(/[.]+$/, "")}.`).join(" ");
-    out.push([core, i ? "Same person, same room, continuing without a cut." : "", beats, handsRule].filter(Boolean).join(" "));
+    const slots = SLOTS[bs.length];
+    const beats = bs.map((b, k) => `${mmss(slots[k])} ${hand(b.action).replace(/[.]+$/, "")}${b.say ? `, saying "${b.say.replace(/[.]+$/, "")}"` : ""}.`).join(" ");
+    const sounds = [...new Set(bs.map((b) => String(b.sfx || "").split(",")[0].replace(/[.]+$/, "").trim()).filter(Boolean))].join(", ");
+    out.push([core, i ? "Same person and place, continuing." : "", beats, sounds ? `Sound: ${sounds}.` : "", handsRule].filter(Boolean).join(" "));
   }
   return { image: f.scene, clips: out, refsPlan: f.refsPlan };
 }
