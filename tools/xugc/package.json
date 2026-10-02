@@ -8,7 +8,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node test/engine.test.mjs && node test/runpod.test.mjs && node test/app.test.mjs"
+    "test": "node --test test/pack.test.mjs test/google.test.mjs test/ad.test.mjs test/presets.test.mjs test/filter.test.mjs && node test/engine.test.mjs && node test/runpod.test.mjs && node test/app.test.mjs"
   },
   "devDependencies": {
     "electron": "^44.4.5",

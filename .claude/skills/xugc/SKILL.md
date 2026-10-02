@@ -128,3 +128,15 @@ Never guess. Inspect and investigate first: read the real source / --help of eve
 - **Test path without Google key:** Alex opens Magic Wand; Claude orders clean frames there; they are placed at golden-ratio moments through the existing LTX reference positions (`refs[].at`) with the trained LoRA. Costs RunPod only.
 - **His setup step for Veo:** Google AI Studio account + key, prepay $5, $10 monthly cap, paste the key only into XUGC Settings.
 - **Open:** Cursor (permission decision), Mysterious Archive (email/Instagram/publish), supplier replies, BytePlus/Kling request shapes unread, Seedance 2.5 API availability unconfirmed.
+
+## Build 12 (2026-10-02): Real Life on Google, presets, the filter — shipped
+- Link: https://kerberos.gardenbuddystore.workers.dev/media/xugc-12-d0dce2a8fcbdd620f0cf.zip (x64, rcodesign-signed, downloaded back and byte-identical; no keys inside).
+- Create opens on **Real Life · Veo** (default). Flow: preset (8: review, product-only, unboxing, try-on, tutorial, breaking-news-start, demo-in-motion, before-after) -> hidden landmark frames (gemini-3.1-flash-image, product photos go ONLY here) -> 8 s Veo clips first/last frame -> ffmpeg join (clip 2+ start 0.05 s in). Lengths 8/16/24 s (what Google bills). Lite $0.40 / Fast $0.80 per clip + $0.067 per frame; 16 s Lite = $1.00.
+- **The filter (filter.js) is the gate for every generation**: lint/repair/check per engine; Veo cap 120 words (dialogue not counted); timed actions never trimmed; hands rule, clean-frame sentence, one person; carousel-copy prompts blocked. Product title is hidden while checking (Kids/Baby titles). Claude's approved edits and the preview go through the same per-clip path (main.js veoClips).
+- Money: caps checked before any call; a Veo clip counts as paid when Google starts it (cancel/timeout/download failure still counted).
+- Settings: Google key box (tested with a free list-models call). BytePlus/Kling boxes come with their engines.
+- Connector: xugc_generate takes engine veo + preset + tier (deployed, verified in tools/list).
+- Inspector pass found 12 issues; all fixed before packing (missing packed files, filter cutting actions, title false-positives, uncounted spend, approval edits ignored, Wan T5 file).
+- **Wan training fixed but not yet run:** T5 is Wan's own models_t5_umt5-xxl-enc-bf16.pth (musubi loads strict; Comfy's umt5 keys differ — verified by reading both). Clips 45 frames at 16 fps. Train tab -> Wan 2.2 -> Budget -> Approve.
+- Unverified until the first paid call: Google's real reply to /v1beta/interactions (parser reads steps[].content[] image blocks, else output_image, else a loud error) and Veo accepting durationSeconds "8". First paid test = 8 s Lite ($0.47).
+- Tests: npm test = pack + google + ad + presets + filter + engine + runpod + app (110 app checks incl. a full Veo ad with a fake Google).
