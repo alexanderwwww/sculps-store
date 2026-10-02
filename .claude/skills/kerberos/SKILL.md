@@ -502,3 +502,6 @@ swatch is exactly why the bundles read as weak.
 - **Delivery wording must match the truth.** No "before Halloween", "ships today" or "order by Oct 20"
   until the supplier's real US delivery time is known. Ask Alex.
 - Alex gave the marketing team full latitude on look, announcement bar and bundles: the goal is sales.
+
+## PayPal paused (2026-10-02)
+Alex's PayPal (sole proprietor "Helios", EIN on CP575) is under review (ref PP-L-874675488158, deadline Nov 15): withdraw/send/pay blocked, receive allowed. On his order PayPal was PAUSED on reaper (blackreaper.us) and garden-buddy: `payment_providers.publishable_key` set to null, the client id kept in `label` as `PAUSED <clientId>`, encrypted secret untouched. Storefront "Pay in 4 with PayPal" lines (template + ceiling-buddy BuyBox) now render only when the store's PayPal is on. Stripe + Apple Pay unchanged. Restore: `update payment_providers set publishable_key = substring(label from 8), label = null where provider='paypal' and label like 'PAUSED %';` — only when Alex says.

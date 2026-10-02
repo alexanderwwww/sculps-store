@@ -644,7 +644,7 @@ function BuyBox({ section, page, storeParam = "", brand, publishableKey = null, 
             was doing that job in 13px grey inside the bundle box. It sits
             under the thing being looked at, at the width of the picture, with
             PayPal's own mark at a size somebody actually sees. */}
-        {brand.payLater === "inline" ? null : <PayLater page={page} wide />}
+        {brand.payLater === "inline" || !paypalClientId ? null : <PayLater page={page} wide />}
 
         {/* The right-hand column. `cb-buy__side` exists so a phone can reorder
             it — price and buttons first, the reading matter after — without
@@ -824,7 +824,7 @@ function BuyBox({ section, page, storeParam = "", brand, publishableKey = null, 
                   the same breath as the price above it -- which is the only
                   version of this line worth printing. A number that says
                   $49.75 while the row above says $299 is worse than nothing. */}
-              {chosen ? (
+              {chosen && paypalClientId ? (
                 <div className="cb-bundle__p4">
                   <img className="cb-pp cb-pp--word" src={PAYPAL_WORDMARK} alt="PayPal" />
                   <span>
@@ -944,11 +944,11 @@ function BuyBox({ section, page, storeParam = "", brand, publishableKey = null, 
               button off the first screen. */}
         </div>
       </div>
-      <PayLaterToast
+      {paypalClientId ? <PayLaterToast
         handle={page.product.handle}
         amountCents={chosen ? chosen.priceCents : null}
         currency={currency}
-      />
+      /> : null}
     </section>
   );
 }

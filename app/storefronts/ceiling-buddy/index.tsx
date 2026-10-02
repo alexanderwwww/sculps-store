@@ -653,7 +653,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               quarter of. A product sold one way has no bundle box, so the
               line would vanish entirely -- it goes under the price instead,
               which is the same place relative to the number it divides. */}
-          {chosen && variants.length <= 1 ? (
+          {chosen && paypalClientId && variants.length <= 1 ? (
             <div className="cb-bundle__p4 cb-bundle__p4--bare">
               <img className="cb-pp cb-pp--word" src={PAYPAL_WORDMARK} alt="PayPal" />
               <span>
@@ -800,7 +800,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                   the same breath as the price above it -- which is the only
                   version of this line worth printing. A number that says
                   $49.75 while the row above says $299 is worse than nothing. */}
-              {chosen ? (
+              {chosen && paypalClientId ? (
                 <div className="cb-bundle__p4">
                   <img className="cb-pp cb-pp--word" src={PAYPAL_WORDMARK} alt="PayPal" />
                   <span>
@@ -914,7 +914,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               <li key={t}>{IcoCheck}<span>{t}</span></li>
             ))}
           </ul>
-          {chosen ? (
+          {chosen && paypalClientId ? (
             <div className="cb-pay4__line">
               {IcoPaypal}
               or 4 payments of <b>{formatMoney(Math.round(chosen.priceCents / 4), currency)}</b>
@@ -929,11 +929,11 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
           </div>
         </div>
       </div>
-      <PayLaterToast
+      {paypalClientId ? <PayLaterToast
         handle={page.product.handle}
         amountCents={chosen ? chosen.priceCents : null}
         currency={currency}
-      />
+      /> : null}
     </section>
   );
 }
