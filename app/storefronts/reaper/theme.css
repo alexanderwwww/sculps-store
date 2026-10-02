@@ -2444,7 +2444,9 @@
        rows here left both in force — eight columns and eight rows inside a
        93px track, so every thumbnail came out a vertical sliver. */
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: repeat(8, minmax(0, 1fr));
+    /* As many equal rows as there are pictures -- not a fixed eight, which a
+       ninth picture broke out of. */
+    grid-template-rows: none;
     grid-auto-rows: minmax(0, 1fr);
     grid-auto-flow: row;
     gap: 8px;
@@ -2487,7 +2489,10 @@
   }
   .cb-gal__strip {
     display: grid;
-    grid-template-columns: repeat(8, minmax(0, 1fr));
+    /* As many equal columns as there are pictures. A fixed eight sent a
+       ninth picture into a column of its own, full width, under the strip. */
+    grid-template-columns: none;
+    grid-auto-columns: minmax(0, 1fr);
     grid-auto-flow: column;
     gap: 6px;
     margin-top: 10px;
