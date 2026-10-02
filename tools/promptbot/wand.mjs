@@ -108,7 +108,7 @@ export const OVERLAY = `(() => {
         "radial-gradient(120% 90% at 12% -14%, rgba(255,255,255,.13) 0%, rgba(255,255,255,0) 58%)," +
         "linear-gradient(to bottom, rgba(255,255,255,0) 60%, rgba(0,0,0,.10) 100%)," +
         "rgba(255,255,255,.06)",
-      backdropFilter: "blur(24px) saturate(170%)",
+      backdropFilter: "blur(20px) saturate(160%)",
       border: "0.5px solid",
       borderColor: "rgba(255,255,255,.34) rgba(255,255,255,.18) rgba(255,255,255,.12) rgba(255,255,255,.26)",
     },
@@ -140,8 +140,6 @@ export const OVERLAY = `(() => {
       boxShadow:
         "inset 0 1.4px 0 rgba(255,255,255,.34), inset 0 -8px 8px -6px rgba(0,0,0,.14)",
       color: "#F5F5F7",
-      backdropFilter: "blur(14px) saturate(170%)",
-      WebkitBackdropFilter: "blur(14px) saturate(170%)",
       textShadow: "0 1px 2px rgba(0,0,0,.8)",
     },
   };
@@ -156,7 +154,7 @@ export const OVERLAY = `(() => {
         "radial-gradient(120% 90% at 12% -14%, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 58%)," +
         "linear-gradient(to bottom, rgba(255,255,255,0) 60%, rgba(0,0,0,.05) 100%)," +
         "rgba(255,255,255,.14)",
-      backdropFilter: "blur(24px) saturate(170%)",
+      backdropFilter: "blur(20px) saturate(160%)",
       border: "0.5px solid",
       borderColor: "rgba(255,255,255,.95) rgba(255,255,255,.55) rgba(0,0,0,.10) rgba(255,255,255,.80)",
     },
@@ -189,8 +187,6 @@ export const OVERLAY = `(() => {
       boxShadow:
         "inset 0 1.4px 0 #FFFFFF, inset 0 -8px 8px -6px rgba(0,0,0,.07), 0 0 0 0.5px rgba(0,0,0,.14)",
       color: "#111113",
-      backdropFilter: "blur(14px) saturate(170%)",
-      WebkitBackdropFilter: "blur(14px) saturate(170%)",
       textShadow: "0 1px 2px rgba(255,255,255,.5)",
     },
   };
@@ -349,7 +345,8 @@ export const OVERLAY = `(() => {
   applyMaterial(hud, "panel");
   const title = css(document.createElement("div"), {
     fontSize: "10px", letterSpacing: ".06em", textTransform: "uppercase",
-    color: "rgba(255,255,255,.92)", fontWeight: "700", flex: "0 0 auto",
+    color: "rgba(255,255,255,.92)", fontWeight: "700", flex: "0 1 auto",
+    minWidth: "0", maxWidth: "58%", overflow: "hidden", textOverflow: "ellipsis",
   });
   const body = css(document.createElement("div"), {
     opacity: ".9", overflow: "hidden", textOverflow: "ellipsis", minWidth: "0",
@@ -512,15 +509,12 @@ export const OVERLAY = `(() => {
       hud.style.boxShadow = restShadow();
       return;
     }
-    let up = true;
-    const breathe = () => {
-      const p = P();
-      hud.style.transition = "box-shadow 1.2s cubic-bezier(.45,.05,.55,.95)";
-      hud.style.boxShadow = p.rim + "," + p.halo(up) + "," + p.drop;
-      up = !up;
-    };
-    breathe();
-    glowTimer = setInterval(breathe, 1200);
+    // One static lift, no timer. The breathing glow re-drew a blurred
+    // backdrop every frame for as long as the app ran, which is what made
+    // ChatGPT's heavy page lag.
+    const p = P();
+    hud.style.transition = "box-shadow .6s ease";
+    hud.style.boxShadow = p.rim + "," + p.halo(true) + "," + p.drop;
   }
 
   function assemble() {
