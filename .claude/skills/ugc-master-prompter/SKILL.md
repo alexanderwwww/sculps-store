@@ -17,7 +17,7 @@ Alex's standing order (2026-10-02): **everything from here on is an excellent pr
 6. **Render** the cheapest honest way (scout cheap, final on the winner) — only after money is approved. Read prices in `references/engines.md`.
 7. **Judge frame by frame** (`references/judge.md`) before saying a word about quality. Fix the prompt or the frame, not the story.
 
-## Master prompt anatomy (blocks, in this order)
+## Master prompt anatomy (blocks, in this order; block 8 is the micro-trust pass)
 
 1. **CAPTURE + LOOK** — "Unpolished iPhone video, vertical 9:16, one continuous handheld shot, natural light only (name the real light sources), ordinary phone colour, slight sensor noise, real skin, auto-exposure shifts." (`references/realism.md`)
 2. **PERSON** — ONE sentence on the filmer/persona (age, clothes, vibe). More words = more face drift. Faces small or turned in crowds; no close-up faces of minors.
@@ -26,7 +26,8 @@ Alex's standing order (2026-10-02): **everything from here on is an excellent pr
 5. **TIMED BEATS** on the golden times — one action and one camera idea per beat, verbs not adjectives, every emotion with a visible trigger, speech in quotes (short, imperfect, no ad language).
 6. **SOUND** — never silent: ambient bed, close sounds, the product's own sound, overlapping voices at different distances, ONE deep low hit at the peak. Voices as quoted speech.
 7. **HANDS/FACES RULE** — "Natural hands, five fingers visible, holding the product by its <part>." No fine finger choreography; no second beat of finger action in one shot.
-8. **HARD BANS** — no text/captions/logos/graphics drawn in the picture (captions are burned on afterwards by ffmpeg), no TV/anchor/broadcast overlay, no cuts or slow motion or zoom effects, no extra fingers or warped faces, no morphing product or street, same people throughout.
+8. **MICRO-TRUST PASS** (skill `micro-trust`) — at least 8 concrete timed cues across camera, words, tone, sound and world; the viewer-brain order hook → impress → micro-trust → security → desire; crisp product inside a real phone shot. Score it with `micro-trust/references/library.md` §7.
+9. **HARD BANS** — no text/captions/logos/graphics drawn in the picture (captions are burned on afterwards by ffmpeg), no TV/anchor/broadcast overlay, no cuts or slow motion or zoom effects, no extra fingers or warped faces, no morphing product or street, same people throughout.
 
 Word caps (Veo ~120 excluding quoted speech, Seedance ~100, Kling long-form, LTX trigger word `xugciphone.`): see `references/engines.md`. When over the cap, drop SFX words and adjectives first; **never drop timed actions**.
 
@@ -47,6 +48,7 @@ Word caps (Veo ~120 excluding quoted speech, Seedance ~100, Kling long-form, LTX
 `references/intake-and-marketing.md` — intake defaults, hooks, persona, shot-spec schema with worked examples.
 `references/judge.md` — frame-by-frame inspection protocol and hard-fail codes.
 `references/lessons.md` — every mistake already paid for.
+Sibling skill **`micro-trust`** (`.claude/skills/micro-trust/`) — the camera/words/tone/sound/world details that make a clip read as real, and the viewer-brain formula. Use it in every prompt.
 Code: `tools/xugc/presets.js`, `filter.js`, `google.js`, `fal.js`, `ad.js`. Research: `design/xugc/real-life/*.md` (00 recipe, 05 director's bible, 07 Higgsfield, 08 fal API, 09 Kling MCP).
 
 ## Worked example in one screen — Black Reaper, "neighbours film it at dusk"

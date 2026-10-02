@@ -65,3 +65,11 @@ test("all six engines defined with required fields", () => {
   assert.deepEqual(Object.keys(f.ENGINES).sort(), ["hunyuan", "kling", "ltx", "seedance", "veo", "wan"]);
   for (const e of Object.values(f.ENGINES)) assert.ok("maxWords" in e && "notes" in e && "sound" in e && "aspectInFields" in e);
 });
+
+test("a ban like 'no zoom effects' is not counted as a camera move", async () => {
+  const { createRequire } = await import("node:module"); const F = createRequire(import.meta.url)("../filter.js");
+  const ok = F.lint("The phone tilts up to the skull face. No cuts, no slow motion, no zoom effects.", "kling");
+  assert.ok(!ok.problems.some((x) => x.code === "TWO_CAMERA_MOVES"));
+  const bad = F.lint("The phone tilts up, then a slow push-in toward the face.", "kling");
+  assert.ok(bad.problems.some((x) => x.code === "TWO_CAMERA_MOVES"));
+});

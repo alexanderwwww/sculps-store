@@ -80,7 +80,9 @@ function lint(prompt, engine, opts = {}) {
   if (CINE.test(body)) add("CINEMATIC_WORDS", "block", "Cinematic/beauty wording makes the video look like AI.", "Remove: cinematic, 8K, epic, studio lighting, beauty, flawless.");
   CINE.lastIndex = 0;
   for (const seg of split(body)) {
-    const kinds = CAM.filter(([, re]) => re.test(seg)).map(([k]) => k);
+    // a ban such as "no zoom effects, no slow motion" is not a camera move: drop negated clauses before counting
+    const asked = seg.replace(/\b(?:no|never|without|not)\b[^.;\n]*/gi, " ");
+    const kinds = CAM.filter(([, re]) => re.test(asked)).map(([k]) => k);
     if (kinds.length > 1) { add("TWO_CAMERA_MOVES", "block", `Camera moves stacked in one shot: ${kinds.join(" + ")}.`, "Keep ONE camera move per shot; delete the rest."); break; }
   }
   if (HELD.test(body) && !HANDS_RE.test(p)) add("NO_HANDS_RULE", "block", "Product is held but there is no hands rule.", `Add: "${HANDS}"`);
