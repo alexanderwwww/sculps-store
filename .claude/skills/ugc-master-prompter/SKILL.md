@@ -48,6 +48,7 @@ Word caps (Veo ~120 excluding quoted speech, Seedance ~100, Kling long-form, LTX
 `references/intake-and-marketing.md` — intake defaults, hooks, persona, shot-spec schema with worked examples.
 `references/judge.md` — frame-by-frame inspection protocol and hard-fail codes.
 `references/lessons.md` — every mistake already paid for.
+`references/decisions-and-open-items.md` — every specialist finding: decisions made and why, open items to verify, app fixes still owed. Read before assuming any rule is open.
 Sibling skill **`micro-trust`** (`.claude/skills/micro-trust/`) — the camera/words/tone/sound/world details that make a clip read as real, and the viewer-brain formula. Use it in every prompt.
 Code: `tools/xugc/presets.js`, `filter.js`, `google.js`, `fal.js`, `ad.js`. Research: `design/xugc/real-life/*.md` (00 recipe, 05 director's bible, 07 Higgsfield, 08 fal API, 09 Kling MCP).
 
