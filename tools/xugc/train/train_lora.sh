@@ -128,7 +128,7 @@ enable_bucket = true
 [[datasets]]
 video_directory = "$D"
 cache_directory = "$W/cache"
-target_frames = [81]
+target_frames = [45]
 frame_extraction = "head"
 T
     cd musubi-tuner
