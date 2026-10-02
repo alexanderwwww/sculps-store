@@ -131,6 +131,25 @@ export const SECTIONS: SectionDef[] = [
     },
   },
   {
+    /*
+     * The finished ad cards, swiped. Unlike social_proof_images (plain photos,
+     * three at most, nothing written on them) these are made panels with their
+     * own headlines, so they get their own section and show every card.
+     */
+    type: "ad_cards",
+    label: "Swipe cards",
+    hint: "Finished square cards with their own words, swiped one after another",
+    fields: [heading, subheading],
+    blocks: {
+      label: "Card",
+      addLabel: "Add card",
+      fields: [
+        { name: "image", label: "Card", kind: "image" },
+        { name: "caption", label: "Caption", kind: "text" },
+      ],
+    },
+  },
+  {
     type: "video_clips",
     label: "Video clips",
     hint: "Short clips of the product in use",

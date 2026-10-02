@@ -4660,3 +4660,21 @@ html, body { margin: 0; }
 .cb-stock:has(.cb-stock__low) .cb-stock__ship::before { content: none; margin: 0; }
 .cb-stock:has(.cb-stock__low) { row-gap: 2px; }
 .cb-stock:has(.cb-stock__low) .cb-stock__ship { flex-basis: 100%; padding-left: 18px; }
+
+
+/* Swipe cards: every finished ad card, one row you swipe. Phone = the same
+   full-bleed one-per-screen as the photo wall above; desktop = four in view. */
+@media (min-width: 900px) {
+  .cb-night--cards .cb-night__row--cards {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 24px) / 4);
+    grid-template-columns: none;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .cb-night--cards .cb-night__row--cards::-webkit-scrollbar { display: none; }
+  .cb-night--cards .cb-night__row--cards img { scroll-snap-align: start; }
+}
