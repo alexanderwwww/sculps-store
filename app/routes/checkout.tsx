@@ -52,7 +52,8 @@ import { providerForStore, PaymentsNotConfigured, PAYABLE_INTENT_STATUSES } from
 import { placeOrder, orderByPaymentRef } from "~/lib/admin.server";
 import { paypalFor } from "~/lib/paypal.server";
 import { bnplFor } from "~/lib/bnpl.server";
-import { AffirmMark } from "~/storefronts/shared/paylater";
+import { isPromoted } from "~/lib/promote";
+import { AffirmMark, KlarnaMark } from "~/storefronts/shared/paylater";
 import { deviceFromRequest, geoFromContext, readVisitorSession, shouldTrack, track } from "~/lib/visitor.server";
 import {
   metaConfig,
@@ -577,6 +578,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
           available: variantsTable.available,
           imageUrl: variantsTable.imageUrl,
           productTitle: productsTable.title,
+          handle: productsTable.handle,
         })
         .from(variantsTable)
         .innerJoin(productsTable, eq(variantsTable.productId, productsTable.id))
@@ -584,8 +586,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         .orderBy(asc(variantsTable.position))
     : [];
   const upsells = upsellRows
-    .filter((row) => row.available > 0 && !inCart.has(row.id))
-    .map(({ available, ...rest }) => rest);
+    .filter((row) => row.available > 0 && !inCart.has(row.id) && isPromoted(store.slug, row.handle))
+    .map(({ available, handle, ...rest }) => rest);
 
   return {
     pixel,
@@ -2731,6 +2733,50 @@ function ClaimPopup({ money: moneyRaw, applied }: { money: (cents: number) => st
   );
 }
 
+/**
+ * "Extra $5 off" as a ticket under the express buttons. One tap claims it:
+ * the server mints a code worth whatever the order already had plus $5 and
+ * puts it on the cart, the totals re-read, and the ticket is stamped
+ * CLAIMED. A cart already holding a claimed code shows the stamp straight
+ * away, so a refresh never offers it twice.
+ */
+function ClaimCard({ money: moneyRaw, applied }: { money: (cents: number) => string; applied: string | null }) {
+  const money = (cents: number) => moneyRaw(cents).replace(/[.,]00\b/, "");
+  const fetcher = useFetcher<ActionReply>();
+  const busy = fetcher.state !== "idle";
+  const justClaimed = Boolean(fetcher.data && "claim" in fetcher.data && fetcher.data.claim);
+  const claimed = justClaimed || Boolean(applied && /^EXTRA/i.test(applied));
+  return (
+    <div className={`gb-tkt${claimed ? " is-claimed" : ""}${justClaimed ? " is-new" : ""}`} aria-live="polite">
+      <div className="gb-tkt__l">
+        <span className="gb-tkt__amt">{money(CLAIM_EXTRA_CENTS)}</span>
+        <span className="gb-tkt__off">OFF</span>
+      </div>
+      <div className="gb-tkt__r">
+        {claimed ? (
+          <>
+            <b className="gb-tkt__h">Claimed. It's on this order.</b>
+            <span className="gb-tkt__p">An extra {money(CLAIM_EXTRA_CENTS)} off, on top of your discount.</span>
+          </>
+        ) : (
+          <>
+            <b className="gb-tkt__h">Extra {money(CLAIM_EXTRA_CENTS)} off your order</b>
+            <span className="gb-tkt__p">On top of your discount. One tap.</span>
+          </>
+        )}
+      </div>
+      {claimed ? (
+        <span className="gb-tkt__stamp" aria-hidden="true">CLAIMED</span>
+      ) : (
+        <fetcher.Form method="post" className="gb-tkt__f">
+          <input type="hidden" name="intent" value="claim" />
+          <button type="submit" className="gb-tkt__btn" disabled={busy}>{busy ? "…" : "Claim"}</button>
+        </fetcher.Form>
+      )}
+    </div>
+  );
+}
+
 function ScratchCard({
   odds,
   applied,
@@ -4112,6 +4158,12 @@ function OnePage({
    * server asks Stripe what happened. Nothing is charged here.
    */
   const [bnplBusy, setBnplBusy] = useState<"klarna" | "affirm" | null>(null);
+  // Arriving from the cart's Klarna / Affirm button: that pill is lit.
+  const [expressPick, setExpressPick] = useState<"klarna" | "affirm" | null>(null);
+  useEffect(() => {
+    const want = new URLSearchParams(window.location.search).get("express");
+    if (want === "klarna" || want === "affirm") setExpressPick(want);
+  }, []);
   useEffect(() => {
     const unstick = () => setBnplBusy(null);
     window.addEventListener("pageshow", unstick);
@@ -4134,7 +4186,7 @@ function OnePage({
     try {
       const body = detailsFromForm();
       body.set("method", method);
-      const response = await fetch("/checkout/bnpl", { method: "POST", body });
+      const response = await fetch(`/checkout/bnpl${window.location.search}`, { method: "POST", body });
       const payload = (await response.json()) as { url?: string; error?: string };
       if (!response.ok || !payload.url) {
         setPayError(payload.error ?? "That could not be started. Nothing has been charged.");
@@ -4329,23 +4381,23 @@ function OnePage({
             <div className="gb-co__bnplrow">
               <button
                 type="button"
-                className="gb-co__pill gb-co__pill--klarna"
+                className={`gb-co__pill gb-co__pill--klarna${expressPick === "klarna" ? " gb-co__pill--lit" : ""}`}
                 onClick={() => void payInstallments("klarna")}
                 disabled={working || bnplBusy !== null}
                 aria-label="Pay over time with Klarna"
                 data-busy={bnplBusy === "klarna" ? "1" : undefined}
               >
-                Klarna.
+                <KlarnaMark height="30px" />
               </button>
               <button
                 type="button"
-                className="gb-co__pill gb-co__pill--affirm"
+                className={`gb-co__pill gb-co__pill--affirm${expressPick === "affirm" ? " gb-co__pill--lit" : ""}`}
                 onClick={() => void payInstallments("affirm")}
                 disabled={working || bnplBusy !== null}
                 aria-label="Pay over time with Affirm"
                 data-busy={bnplBusy === "affirm" ? "1" : undefined}
               >
-                <AffirmMark light />
+                <AffirmMark tone="white" height="24px" />
               </button>
               <button type="button" className="gb-co__pill gb-co__pill--card" onClick={goToCard} aria-label="Pay with card">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -4524,7 +4576,8 @@ function OnePage({
    */
   const scratch = store.slug === "reaper" ? (
     // Off: the marketing panel found one discount beats three. REAPER20 stays.
-    SHOW_CLAIM_POPUP ? <ClaimPopup money={money} applied={cart.discount?.code ?? null} /> : null
+    // Every Reaper order: an extra $5 off, one tap, right under the wallets.
+    <ClaimCard money={money} applied={cart.discount?.code ?? null} />
   ) : (
     <ScratchCard
       odds={scratchOdds}

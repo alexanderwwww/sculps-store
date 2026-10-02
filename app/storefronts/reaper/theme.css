@@ -4782,3 +4782,73 @@ html, body { margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   .cb-ann__msgs--4 .cb-ann__msg { animation: none; }
 }
+
+/* ---- Klarna / Affirm, round two ------------------------------------- */
+.pl-mark { display: inline-block; }
+
+/* The picked bundle: a sticker pops onto its bottom edge with the split. */
+.cb-tier__pl {
+  position: absolute; right: 12px; bottom: -13px; z-index: 3;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px 4px 5px; border-radius: 999px;
+  background: #fff; color: #111; border: 1.5px solid #111;
+  font-size: 12px; font-weight: 700; line-height: 1; white-space: nowrap;
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, .35);
+  transform-origin: right center;
+  /* Pops in, holds about three seconds, goes -- again on every pick. */
+  animation: reaper-tier-pl 3.4s cubic-bezier(.2, 1.4, .4, 1) both;
+  pointer-events: none;
+}
+.cb-tier__pl b { font-weight: 900; }
+.cb-tier__pl i { width: 1px; height: 14px; background: #DDD; }
+@keyframes reaper-tier-pl {
+  0% { opacity: 0; transform: translateY(6px) scale(.6); }
+  12% { opacity: 1; transform: scale(1.06); }
+  18% { transform: none; }
+  85% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-4px) scale(.95); }
+}
+.cb-tier[aria-checked="true"] { margin-bottom: 4px; }
+@media (max-width: 400px) {
+  .cb-tier__pl { right: 8px; font-size: 11px; gap: 5px; padding: 3px 8px 3px 4px; }
+}
+
+/* The belt before the reviews: black, moving, the brands going past. */
+.cb-belt { background: #111; color: #fff; overflow: hidden; padding: 14px 0; border-block: 1px solid #222; }
+.cb-belt__t { display: flex; width: max-content; animation: reaper-belt 38s linear infinite; }
+.cb-belt__t > span { display: flex; align-items: center; flex: none; }
+.cb-belt__i { display: inline-flex; align-items: center; gap: 10px; padding: 0 22px; font-size: 15px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; }
+.cb-belt__i b { color: #F9A01B; font-weight: 900; }
+.cb-belt__dot { width: 6px; height: 6px; border-radius: 50%; background: #F9A01B; flex: none; }
+@keyframes reaper-belt { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.cb-belt:hover .cb-belt__t { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .cb-belt__t { animation: none; } }
+
+/* Cart drawer: one clean button, then the express row. */
+.cb-drawer__foot .cb-drawer__go { gap: 10px; font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+.cb-drawer__go svg { width: 18px; height: 18px; flex: none; }
+.cb-drawer__xlabel { display: flex; align-items: center; gap: 10px; margin: 14px 0 0; color: #777; font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.cb-drawer__xlabel::before, .cb-drawer__xlabel::after { content: ""; flex: 1; height: 1px; background: #E5E5E5; }
+.cb-drawer__pl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.cb-drawer__plb {
+  display: flex; align-items: center; justify-content: center; height: 48px; border-radius: 999px;
+  transition: transform .12s ease, filter .15s ease; text-decoration: none;
+}
+.cb-drawer__plb:hover { filter: brightness(.96); }
+.cb-drawer__plb:active { transform: translateY(1px); }
+.cb-drawer__plb--klarna { background: #FFB3C7; }
+.cb-drawer__plb--affirm { background: #4A4AF4; }
+.cb-drawer__plnote { margin-top: 8px; text-align: center; font-size: 12.5px; color: #555; line-height: 1.4; }
+.cb-drawer__plnote b { color: #111; font-weight: 800; }
+
+/* Buy box: Klarna and Affirm express buttons under Apple Pay. */
+.cb-xpl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0 4px; }
+.cb-xpl form { margin: 0; }
+.cb-xpl__b {
+  display: flex; align-items: center; justify-content: center; width: 100%; height: 48px;
+  border: 0; border-radius: 999px; cursor: pointer; transition: transform .12s ease, filter .15s ease;
+}
+.cb-xpl__b:hover { filter: brightness(.96); }
+.cb-xpl__b:active { transform: translateY(1px); }
+.cb-xpl__b--klarna { background: #FFB3C7; }
+.cb-xpl__b--affirm { background: #4A4AF4; }

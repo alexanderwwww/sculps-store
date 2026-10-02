@@ -4,6 +4,7 @@ import { makeDb } from "../app/db/client";
 import { domains, stores } from "../app/db/schema";
 import { runRecovery } from "../app/lib/recovery.server";
 import { runAftercare } from "../app/lib/aftercare.server";
+import { reconcileBnpl } from "../app/lib/bnpl-reconcile.server";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -134,6 +135,13 @@ export default {
           );
         } catch (error) {
           console.error("recovery run failed", error);
+        }
+        // Separate try: a Klarna check that fails must not stop recovery, or the reverse.
+        try {
+          const bnpl = await reconcileBnpl(makeDb(env.DATABASE_URL), env);
+          console.log(`bnpl ${event.cron} · checked ${bnpl.checked} · paid ${bnpl.paid} · failed ${bnpl.failed}`);
+        } catch (error) {
+          console.error("bnpl reconcile failed", error);
         }
       })(),
     );

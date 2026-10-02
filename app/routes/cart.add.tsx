@@ -72,6 +72,9 @@ async function add(
     const to = new URL("/checkout", url.origin);
     const store = url.searchParams.get("store");
     if (store) to.searchParams.set("store", store);
+    // From a Klarna / Affirm button: the checkout lights that button.
+    const express = url.searchParams.get("express");
+    if (express === "klarna" || express === "affirm") to.searchParams.set("express", express);
     back = to;
   }
 

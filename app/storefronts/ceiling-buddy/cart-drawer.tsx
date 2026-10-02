@@ -6,7 +6,7 @@
  * rather than a shared one because the drawer's styling is part of the theme,
  * and the themes are deliberately not shared between stores.
  */
-import { PayLaterLine } from "../shared/paylater";
+import { KlarnaMark, AffirmMark, quarter } from "../shared/paylater";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import type { LoadedProductPage, VariantRow } from "~/lib/store.server";
@@ -396,18 +396,20 @@ export function CartDrawerProvider({
             {saved > 0 ? (
               <div className="cb-drawer__saved">You save {money(saved, currency)}</div>
             ) : null}
-            <a className="cb-btn" href={href("/checkout")} aria-disabled={lines.length === 0}>
-              Checkout
-              {lines.length ? (
-                <span className="cb-btn__p">
-                  {money((cart?.totalCents ?? 0), currency)}
-                </span>
-              ) : null}
+            <a className="cb-btn cb-drawer__go" href={href("/checkout")} aria-disabled={lines.length === 0}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="5" y="10.5" width="14" height="10" rx="2.4" />
+                <path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7" />
+              </svg>
+              Secure checkout
             </a>
             {/* Apple Pay and PayPal, side by side and half-width each, so the
                 two of them together take the room one used to. Venmo and Pay
                 Later are gone from here -- three ways to pay is a choice, six
                 is a menu. */}
+            {lines.length && (publishableKey || paypalClientId || bnpl) ? (
+              <div className="cb-drawer__xlabel"><span>Express checkout</span></div>
+            ) : null}
             {lines.length && (publishableKey || paypalClientId) ? (
               <div className="cb-drawer__wallets">
                 {publishableKey ? (
@@ -433,10 +435,22 @@ export function CartDrawerProvider({
                 ) : null}
               </div>
             ) : null}
+            {/* Klarna and Affirm, as express buttons. Both need a delivery
+                address, so they open the checkout with that button lit. */}
             {bnpl && lines.length ? (
-              <div className="cb-drawer__over">
-                <PayLaterLine amountCents={(cart?.totalCents ?? 0)} currency={currency} />
-              </div>
+              <>
+                <div className="cb-drawer__pl">
+                  <a className="cb-drawer__plb cb-drawer__plb--klarna" href={`${href("/checkout")}${storeParam ? "&" : "?"}express=klarna`} aria-label="Pay with Klarna">
+                    <KlarnaMark height="28px" />
+                  </a>
+                  <a className="cb-drawer__plb cb-drawer__plb--affirm" href={`${href("/checkout")}${storeParam ? "&" : "?"}express=affirm`} aria-label="Pay with Affirm">
+                    <AffirmMark tone="white" height="22px" />
+                  </a>
+                </div>
+                <div className="cb-drawer__plnote">
+                  4 interest-free payments of <b>{quarter(cart?.totalCents ?? 0, currency)}</b> with Klarna, or monthly with Affirm
+                </div>
+              </>
             ) : null}
             <div className="cb-reassure">Free shipping · 30-day returns</div>
           </div>

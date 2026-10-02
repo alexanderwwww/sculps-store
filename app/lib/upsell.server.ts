@@ -27,7 +27,8 @@
  */
 import { and, asc, eq, ne } from "drizzle-orm";
 import type { DB } from "~/db/client";
-import { orderItems, orders, products, variants } from "~/db/schema";
+import { orderItems, orders, products, stores, variants } from "~/db/schema";
+import { isPromoted } from "~/lib/promote";
 import { providerForStore } from "./payments.server";
 import { recordOrderEvent } from "./admin.server";
 
@@ -66,6 +67,9 @@ const MIN_OFFER_CENTS = 100;
 export async function offersForOrder(db: DB, orderId: string): Promise<PostPurchaseOffer[]> {
   const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
   if (!order || order.paymentStatus !== "paid" || !order.paymentRef) return [];
+  // One tap re-charges the saved card on the card account. Klarna, Affirm and
+  // PayPal orders have no card there to charge, so they are offered nothing.
+  if (order.paymentProvider !== "stripe") return [];
   /* Only a no ends it.
      This also stopped at "taken", so adding one thing closed the whole
      shelf. The card is still on file after the first add and the page is
@@ -84,6 +88,7 @@ export async function offersForOrder(db: DB, orderId: string): Promise<PostPurch
       priceCents: variants.priceCents,
       variantImage: variants.imageUrl,
       productTitle: products.title,
+      handle: products.handle,
       images: products.images,
       available: variants.available,
     })
@@ -101,9 +106,12 @@ export async function offersForOrder(db: DB, orderId: string): Promise<PostPurch
      offered rotates with the order rather than being fixed. The rotation is
      derived from the order's own id, so a refresh shows the same offer and
      the countdown means something. */
+  const [shop] = await db.select({ slug: stores.slug }).from(stores).where(eq(stores.id, order.storeId)).limit(1);
   const eligible: typeof rows = [];
   const seenProducts = new Set<string>();
   for (const r of rows) {
+    // Only what the shop chose to push after a sale.
+    if (!isPromoted(shop?.slug, r.handle)) continue;
     if (seenProducts.has(r.productTitle)) continue;
     if (boughtVariants.has(r.variantId) || boughtTitles.has(r.productTitle)) continue;
     if (r.available <= 0) continue;

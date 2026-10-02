@@ -14,6 +14,7 @@ import { resolveStore, storeNav } from "~/lib/store.server";
 import { readCartToken, markCartConverted } from "~/lib/cart.server";
 import { loadOrder, markOrderPaid, recordVisitorEvent } from "~/lib/admin.server";
 import { providerForStore } from "~/lib/payments.server";
+import { bnplFor, readBnplIntent } from "~/lib/bnpl.server";
 import { afterPaymentConfirmed } from "~/lib/fulfilment.server";
 import { metaConfig } from "~/db/schema";
 import { pixelScript, purchasePixelScript } from "~/lib/meta.server";
@@ -57,7 +58,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   let paymentStatus = loaded.order.paymentStatus;
   if (paymentStatus === "pending" && loaded.order.paymentRef) {
     try {
-      const provider = await providerForStore(context.db, context.cloudflare.env, store.id);
+      // Klarna / Affirm orders live on the separate pay-over-time account.
+      const bnplAccount =
+        loaded.order.paymentProvider === "stripe_bnpl" ? await bnplFor(context.db, context.cloudflare.env, store.id) : null;
+      const provider = bnplAccount
+        ? { name: "stripe_bnpl", readIntent: (id: string) => readBnplIntent(bnplAccount, id) }
+        : await providerForStore(context.db, context.cloudflare.env, store.id);
       const intent = await provider.readIntent(loaded.order.paymentRef);
       if (intent.status === "succeeded") {
         // The webhook races this page for the claim; whoever gets it does the

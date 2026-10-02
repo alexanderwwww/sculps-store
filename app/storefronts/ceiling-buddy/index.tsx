@@ -195,7 +195,7 @@ export function CeilingBuddyStorefront({
       />
 
       <div className="cb">
-        <Header page={page} storeParam={storeParam} offer={offer} brand={brand} bnpl={bnpl} />
+        <Header page={page} storeParam={storeParam} offer={offer} brand={brand} />
         <main id="MainContent" role="main">
           {sections.map((s) => (
             <Fragment key={s.id}>
@@ -209,6 +209,7 @@ export function CeilingBuddyStorefront({
             <div data-section={s.type}>
               <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} bnpl={bnpl} offer={offer} />
             </div>
+            {s.type === "video_faq" && bnpl ? <PayLaterBelt page={page} /> : null}
             </Fragment>
           ))}
         </main>
@@ -740,6 +741,17 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                     onClick={() => setPicked(x.id)}
                   >
                     {flag ? <span className={`cb-tier__flag cb-tier__flag--${flag[0]}`}>{flag[1]}</span> : null}
+                    {/* The picked bundle, split four ways: pops in every time
+                        a bundle is chosen, including the one chosen for them. */}
+                    {on && bnpl ? (
+                      <span key={`pl-${x.id}`} className="cb-tier__pl" aria-hidden="true">
+                        <KlarnaMark height="18px" />
+                        <span>4 × <b>{quarter(x.priceCents, currency)}</b></span>
+                        <i />
+                        <AffirmMark height="15px" />
+                        <span>monthly</span>
+                      </span>
+                    ) : null}
 
                     <span className="cb-tier__dot" aria-hidden="true" />
 
@@ -855,6 +867,22 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                 storeParam={storeParam}
                 onReady={() => {}}
               />
+            </div>
+          ) : null}
+
+          {/* Klarna and Affirm, as express buttons beside Apple Pay: straight
+              to checkout with this bundle, that button lit. Everyone sees
+              these, so a phone without a wallet still has an express way. */}
+          {chosen && bnpl ? (
+            <div className="cb-xpl">
+              {(["klarna", "affirm"] as const).map((m) => (
+                <form key={m} method="post" action={`/cart/add${storeParam ? storeParam + "&" : "?"}next=checkout&replace=1&express=${m}`}>
+                  <input type="hidden" name="variantId" value={chosen.id} />
+                  <button type="submit" className={`cb-xpl__b cb-xpl__b--${m}`} aria-label={m === "klarna" ? "Buy with Klarna" : "Buy with Affirm"}>
+                    {m === "klarna" ? <KlarnaMark height="28px" /> : <AffirmMark tone="white" height="22px" />}
+                  </button>
+                </form>
+              ))}
             </div>
           ) : null}
 
@@ -3112,6 +3140,39 @@ function StartSmaller({ section }: { section: LoadedSection }) {
         {has(section.values, "note") ? <p className="cb-two__note">{val(section.values, "note")}</p> : null}
       </div>
     </section>
+  );
+}
+
+/* ------------------------------------------------------- pay-over-time belt */
+
+/**
+ * A black belt that runs before the reviews: Klarna and Affirm going past
+ * with the real split of the bundle that is picked. Words only the two plans
+ * actually promise -- four interest-free payments, or monthly with Affirm.
+ */
+function PayLaterBelt({ page }: { page: LoadedProductPage }) {
+  const fallback = (page.variants.find((x) => x.isDefault) ?? page.variants[0])?.id ?? "";
+  const { id } = usePicked(fallback);
+  const buy = page.variants.find((x) => x.id === id) ?? page.variants.find((x) => x.isDefault) ?? page.variants[0] ?? null;
+  if (!buy) return null;
+  const q = quarter(buy.priceCents, page.store.currency);
+  const items = (
+    <>
+      <span className="cb-belt__i"><KlarnaMark height="22px" /> 4 interest-free payments of <b>{q}</b></span>
+      <span className="cb-belt__dot" />
+      <span className="cb-belt__i"><AffirmMark tone="white-arc" height="20px" /> Pay monthly with Affirm</span>
+      <span className="cb-belt__dot" />
+      <span className="cb-belt__i">Choose your plan at checkout</span>
+      <span className="cb-belt__dot" />
+    </>
+  );
+  return (
+    <div className="cb-belt" aria-label={`Pay in 4 interest-free payments of ${q} with Klarna, or monthly with Affirm. Choose at checkout.`}>
+      <div className="cb-belt__t" aria-hidden="true">
+        <span>{items}{items}</span>
+        <span>{items}{items}</span>
+      </div>
+    </div>
   );
 }
 

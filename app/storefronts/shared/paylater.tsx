@@ -1,6 +1,9 @@
 /**
- * Klarna and Affirm, as marks and short lines, for the product page, the
- * sticky bar, the cart and the announcement bar.
+ * Klarna and Affirm, with their own official marks, for the product page,
+ * the bundle picker, the sticky bar, the cart and the checkout.
+ *
+ * The marks are the brands' own files (Klarna's badge from Klarna's CDN,
+ * Affirm's logo from Affirm's CDN), served from /pay/ so nothing is redrawn.
  *
  * The figures are not guesses. Through Stripe in the US, Klarna's "Pay in 4"
  * is four interest-free payments for orders of $1-$2,000 (Stripe's Klarna
@@ -14,36 +17,40 @@ import { formatMoney } from "~/lib/money";
 export const KLARNA_PINK = "#FFB3C7";
 export const AFFIRM_BLUE = "#4A4AF4";
 
-/** Klarna's pink badge with its wordmark. */
-export function KlarnaMark({ className = "" }: { className?: string }) {
+/** Klarna's own pink badge. Height follows the text around it. */
+export function KlarnaMark({ className = "", height = "1.45em" }: { className?: string; height?: string }) {
   return (
-    <span
-      className={`pl-klarna ${className}`}
-      aria-label="Klarna"
-      style={{
-        display: "inline-flex", alignItems: "center", background: KLARNA_PINK, color: "#0B051D",
-        borderRadius: "999px", padding: ".18em .6em .2em", fontWeight: 800, fontSize: ".86em",
-        letterSpacing: "-.02em", lineHeight: 1.05, whiteSpace: "nowrap", verticalAlign: "middle",
-      }}
-    >
-      Klarna.
-    </span>
+    <img
+      className={`pl-mark pl-mark--klarna ${className}`}
+      src="/pay/klarna.svg"
+      alt="Klarna"
+      width={45}
+      height={20}
+      style={{ height, width: "auto", display: "inline-block", verticalAlign: "middle" }}
+    />
   );
 }
 
-/** Affirm's wordmark with the blue arc over it. */
-export function AffirmMark({ className = "", light = false }: { className?: string; light?: boolean }) {
+/** Affirm's own logo. `tone`: black letters, white letters with the blue arc, or all white. */
+export function AffirmMark({
+  className = "",
+  height = "1.35em",
+  tone = "dark",
+}: {
+  className?: string;
+  height?: string;
+  tone?: "dark" | "white" | "white-arc";
+}) {
+  const src = tone === "white" ? "/pay/affirm-white.svg" : tone === "white-arc" ? "/pay/affirm-white-arc.svg" : "/pay/affirm.svg";
   return (
-    <span
-      className={`pl-affirm ${className}`}
-      aria-label="Affirm"
-      style={{ display: "inline-flex", alignItems: "center", color: light ? "#fff" : "#0B051D", verticalAlign: "middle", lineHeight: 0 }}
-    >
-      <svg viewBox="0 0 64 22" aria-hidden="true" style={{ height: "1.35em", width: "auto", overflow: "visible" }}>
-        <path d="M20 8.5 C 28 0.5, 46 0.5, 54 8.5" fill="none" stroke={AFFIRM_BLUE} strokeWidth="3.2" strokeLinecap="round" />
-        <text x="32" y="20.5" textAnchor="middle" fontSize="15" fontWeight="800" fill="currentColor" fontFamily="inherit" letterSpacing="-.3">affirm</text>
-      </svg>
-    </span>
+    <img
+      className={`pl-mark pl-mark--affirm ${className}`}
+      src={src}
+      alt="Affirm"
+      width={50}
+      height={20}
+      style={{ height, width: "auto", display: "inline-block", verticalAlign: "middle" }}
+    />
   );
 }
 
