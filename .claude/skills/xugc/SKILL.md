@@ -101,3 +101,6 @@ Written into the app as `assets/style/realism-rules.md` (the top part goes into 
 - The actual cause of the $0.60 failure is NOT proven (the GPU's log was lost). Build 10 keeps and shows a "LAST TRAINING" report (also on the status board as lastTrain) so the next failure is readable.
 - Budgeted run now captions at most 100 pieces (captioning costs GPU minutes).
 - Rule re-learned: when a replace may not match, assert it. One lastTrain edit silently did not land until a grep showed it.
+
+## THE RULE (Alex, 2026-10-02, after the second wasted training run)
+Never guess. Inspect and investigate first: read the real source / --help of every tool (LTX trainer, musubi, RunPod, yt-dlp), validate configs against the tool's own validator where it runs here, and only then spend his money. The LTX run died because `process_dataset.py` needs --model-path (the transformer FILE), --text-encoder-path, --video-vae-path and --audio-vae-path; I had passed a folder and left three out. See AGENTS.md rule 15.

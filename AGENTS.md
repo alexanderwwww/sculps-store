@@ -199,6 +199,13 @@ are not style notes.
     embedded web view.** Google refuses the flow and Apple needs a real browser session.
     Only *Continue with email* works. This has cost several rounds.
 
+15. **NEVER GUESS. Read the source, run it, then write it.** (Said angrily by Alex, 2026-10-02, after a day and real money were lost to guessed
+    trainer flags: "I told you more than 15 times to never guess.") Before writing any command-line flag, config key, API shape or file path for
+    software you did not write: open that software's own source or `--help` and read it, and where it can run here, run it. A guess that
+    costs a GPU run costs Alex's time and money. If it cannot be checked here, say so BEFORE he spends anything, and make the first
+    paid run as cheap as possible and unable to fail silently. Training/rental flags are never "from memory" and never "from the README
+    summary": they come from the code of the exact version installed.
+
 ---
 
 ## 4. Practical notes
