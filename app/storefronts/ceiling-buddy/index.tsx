@@ -150,6 +150,7 @@ export function CeilingBuddyStorefront({
   storeParam = "",
   publishableKey = null,
   paypalClientId = null,
+  bnpl = false,
   offer = null,
   brand = BRAND,
 }: {
@@ -157,6 +158,8 @@ export function CeilingBuddyStorefront({
   storeParam?: string;
   publishableKey?: string | null;
   paypalClientId?: string | null;
+  /** Klarna / Affirm are connected for this store. */
+  bnpl?: boolean;
   /** The live code the bar is shouting about, straight from the database. */
   offer?: { code: string; kind: string; value: number } | null;
   /** Mark, links and rail. Omitted, this is Ceiling Buddy. */
@@ -201,7 +204,7 @@ export function CeilingBuddyStorefront({
             // Every section here is block-level anyway, so a block wrapper
             // changes nothing about the layout.
             <div key={s.id} data-section={s.type}>
-              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} />
+              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} bnpl={bnpl} offer={offer} />
             </div>
           ))}
         </main>
@@ -232,6 +235,7 @@ function Section({
   brand,
   publishableKey,
   paypalClientId,
+  bnpl,
   offer,
 }: {
   section: LoadedSection;
@@ -240,10 +244,11 @@ function Section({
   brand: CbBrand;
   publishableKey: string | null;
   paypalClientId: string | null;
+  bnpl: boolean;
   offer: { code: string; kind: string; value: number } | null;
 }) {
   switch (section.type) {
-    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} />;
+    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} paypalClientId={paypalClientId} bnpl={bnpl} offer={offer} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
     case "ad_cards":      return <AdCards section={section} />;
@@ -483,7 +488,7 @@ function Announce({
 
 /* ---------------------------------------------------------------- buy box */
 
-function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalClientId = null, offer = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; paypalClientId?: string | null; offer?: { code: string; kind: string; value: number } | null }) {
+function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalClientId = null, bnpl = false, offer = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; paypalClientId?: string | null; bnpl?: boolean; offer?: { code: string; kind: string; value: number } | null }) {
   const v = section.values;
   const drawer = useCartDrawer();
   // The product's own pictures come first — they are managed on the Products
@@ -654,6 +659,19 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               quarter of. A product sold one way has no bundle box, so the
               line would vanish entirely -- it goes under the price instead,
               which is the same place relative to the number it divides. */}
+          {/* Pay over time. Always on when the store has Klarna and Affirm: this
+              shop only sells to the United States, so no one is excluded. It
+              promises no figure -- the plan a customer is offered is Klarna's
+              and Affirm's to decide at checkout. */}
+          {bnpl ? (
+            <div className="cb-bnpl">
+              <span>
+                Pay over time with <b className="cb-bnpl__k">Klarna</b> or <b className="cb-bnpl__a">Affirm</b>
+              </span>
+              <i>Choose at checkout</i>
+            </div>
+          ) : null}
+
           {chosen && paypalClientId && variants.length <= 1 ? (
             <div className="cb-bundle__p4 cb-bundle__p4--bare">
               <img className="cb-pp cb-pp--word" src={PAYPAL_WORDMARK} alt="PayPal" />

@@ -4317,7 +4317,7 @@ function OnePage({
               Tapping one with the delivery details still empty does not start
               anything — it takes them to the first missing field, because the
               order needs somewhere to ship to. */}
-          {bnpl && total >= 5000 ? (
+          {bnpl ? (
             <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
               <button
                 type="button"

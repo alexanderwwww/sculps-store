@@ -14,6 +14,7 @@ import { resolveStore, loadProductPage } from "~/lib/store.server";
 import { metaConfig, discounts } from "~/db/schema";
 import { providerForStore } from "~/lib/payments.server";
 import { paypalFor } from "~/lib/paypal.server";
+import { bnplFor } from "~/lib/bnpl.server";
 import { metaCookieHeaders, newMetaEventId, pixelScript, trackFunnelEvent } from "~/lib/meta.server";
 import { presenceScript, vitalsScript } from "~/lib/vitals";
 import { currentUser } from "~/lib/auth.server";
@@ -241,15 +242,19 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const paypalClientId = await paypalFor(context.db, context.cloudflare.env, store.id)
     .then((client) => client?.clientId ?? null)
     .catch(() => null);
+  // Klarna / Affirm on the LLC's Stripe: the page only needs to know it exists.
+  const bnpl = await bnplFor(context.db, context.cloudflare.env, store.id)
+    .then((account) => Boolean(account))
+    .catch(() => false);
 
   return withHeaders(
-    { store, page, variant, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, offer: offer ?? null },
+    { store, page, variant, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, bnpl, offer: offer ?? null },
     { headers },
   );
 }
 
 export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
-  const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, offer } = loaderData;
+  const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, bnpl, offer } = loaderData;
 
   /**
    * Black Reaper sells seven things off one template, so a product page here
@@ -270,6 +275,7 @@ export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
           storeParam={storeParam}
           publishableKey={publishableKey}
           paypalClientId={paypalClientId}
+          bnpl={bnpl}
           offer={offer}
           brand={reaperBrand(page)}
         />

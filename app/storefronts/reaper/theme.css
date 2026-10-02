@@ -4712,3 +4712,18 @@ html, body { margin: 0; }
   }
   .cb-night--cards:not(.cb-night--one) .cb-night__row--cards img { border-radius: 8px; scroll-snap-align: center; }
 }
+
+/* Pay over time, under the price: Klarna and Affirm. */
+.cb-bnpl {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 10px 0 2px;
+  font-size: 15px;
+  line-height: 1.35;
+}
+.cb-bnpl b { font-weight: 800; padding: 1px 8px; border-radius: 999px; font-size: 14px; }
+.cb-bnpl__k { background: #ffb3c7; color: #17120f; }
+.cb-bnpl__a { background: #4a4af4; color: #fff; }
+.cb-bnpl i { font-style: normal; opacity: .6; font-size: 13px; }

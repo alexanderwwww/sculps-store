@@ -3,6 +3,7 @@ import { data } from "react-router";
 import { resolveStore, loadProductPage } from "~/lib/store.server";
 import { providerForStore } from "~/lib/payments.server";
 import { paypalFor } from "~/lib/paypal.server";
+import { bnplFor } from "~/lib/bnpl.server";
 import { currentUser } from "~/lib/auth.server";
 import { pages, metaConfig, themes, discounts, events } from "~/db/schema";
 import { passwordCookieValid } from "~/lib/password.server";
@@ -285,11 +286,15 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const paypalClientId = await paypalFor(context.db, context.cloudflare.env, store.id)
     .then((client) => client?.clientId ?? null)
     .catch(() => null);
-  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, offer: offer ?? null, crowd }, { headers });
+  // Klarna / Affirm on the LLC's Stripe: the page only needs to know it exists.
+  const bnpl = await bnplFor(context.db, context.cloudflare.env, store.id)
+    .then((account) => Boolean(account))
+    .catch(() => false);
+  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, bnpl, offer: offer ?? null, crowd }, { headers });
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {
-  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, offer, crowd } = loaderData;
+  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, bnpl, offer, crowd } = loaderData;
 
   if (!page) {
     return (
@@ -378,6 +383,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
           storeParam={storeParam}
           publishableKey={publishableKey}
           paypalClientId={paypalClientId}
+          bnpl={bnpl}
           offer={offer}
           brand={store.slug === REAPER ? reaperBrand(page) : undefined}
         />

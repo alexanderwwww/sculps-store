@@ -75,9 +75,6 @@ export async function action({ context, request }: Route.ActionArgs) {
   if (!customer.state) missing.push("state");
   if (!customer.postalCode) missing.push("ZIP code");
   if (missing.length) return json({ error: `Please fill in your ${missing.join(", ")} first.` }, 400);
-  if (customer.country !== "US") {
-    return json({ error: "Klarna and Affirm are for delivery in the United States." }, 400);
-  }
 
   let intentId: string;
   try {
