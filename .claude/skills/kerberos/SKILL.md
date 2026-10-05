@@ -529,3 +529,6 @@ Alex's PayPal (sole proprietor "Helios", EIN on CP575) is under review (ref PP-L
 
 ### 2026-10-05 — PayPal closed too
 PayPal permanently deactivated the account ("activity we cannot support"). Funds held up to 120 days; seller protection gone; High Volume Dispute fee applies. Stripe (Greek) also final. Both closures point at the same pattern: paid-now, made-to-order-in-China, ships weeks later. Any new processor (Airwallex) will see it too unless orders ship fast with tracking. Priority: ship every paid order, keep customers informed, avoid disputes (they come out of held funds).
+
+### 2026-10-05 — Square (AIGIS LLC) is the next processor
+Square account for AIGIS LLC, Square Checking as payout bank. Address must match IRS 147C: 7047 SW 47 ST STE 0029, Miami FL 33155. Owner address proof (Neighborhood Trust FCU letter, 505 W 162nd St Apt 506, NY 10032) submitted; review 1–3 business days. Developer app "kerberos": production location L71PX3G9FAAJA, ACTIVE, CREDIT_CARD_PROCESSING. Keys live only in .dev.vars (SQUARE_ACCESS_TOKEN, SQUARE_APPLICATION_ID). Square checkout NOT built yet — wait for Alex's "build". Tell Square the truth about the business.
