@@ -4315,7 +4315,8 @@ function OnePage({
     if (!squareOnly || !squareApp || sqReady || sqFailed) return;
     const t = window.setTimeout(() => setSqFailed(true), 8000);
     return () => window.clearTimeout(t);
-  }, [squareOnly, squareApp, sqReady, sqFailed]);
+    // appId, not the object: a new object every render reset the timer forever.
+  }, [squareOnly, squareApp?.appId, sqReady, sqFailed]);
 
   /** Sends a token and the details to the server; goes to the thank-you page. */
   const chargeToken = async (body: FormData, token: string): Promise<boolean> => {
@@ -4338,10 +4339,19 @@ function OnePage({
   };
 
   const payOnSite = async () => {
-    if (sqPaying || (!sqCard.current && !sqCashToken)) return;
+    (window as any).__sqDebug = { at: "payOnSite", card: Boolean(sqCard.current), paying: sqPaying, errors: Object.keys(clientErrors) };
+    if (sqPaying) return;
     setSubmitted(true);
     if (Object.keys(clientErrors).length > 0) {
-      formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+      // Never silent: say what is missing, then take them to it.
+      setPayError("Please complete the highlighted delivery details, then press Pay again.");
+      window.setTimeout(() => formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(), 50);
+      return;
+    }
+    if (!sqCard.current && !sqCashToken) {
+      // The card field is not usable in this browser: Square's own page always is.
+      (window as any).__sqDebug.fallback = "no card";
+      await payWithSquare();
       return;
     }
     setPayError(null);
@@ -4362,6 +4372,10 @@ function OnePage({
         amount: (cart.totalCents / 100).toFixed(2),
         currencyCode: cart.currency.toUpperCase(),
         intent: "CHARGE",
+        // Required by Square's buyer verification: without these two every card
+        // is refused before it is charged ("customerInitiated is required").
+        customerInitiated: true,
+        sellerKeyedIn: false,
         billingContact: {
           givenName,
           familyName: rest.join(" "),
@@ -4373,15 +4387,22 @@ function OnePage({
           countryCode: String(body.get("country") ?? "US") || "US",
         },
       });
+      (window as any).__sqDebug.tokenize = result.status;
       if (result.status !== "OK" || !result.token) {
-        setPayError(result.errors?.[0]?.message ?? "The card details were not accepted. Nothing has been charged.");
+        setPayError(
+          result.errors?.[0]?.message
+            ? `${String(result.errors[0].message).replace(/[.\s]*$/, "")}. Nothing has been charged.`
+            : "Please check the card number, expiry date and CVV. Nothing has been charged.",
+        );
         setSqPaying(false);
         return;
       }
       if (!(await chargeToken(body, result.token))) setSqPaying(false);
-    } catch {
-      setPayError("The card could not be read. Nothing has been charged. Please try again.");
+    } catch (error) {
+      (window as any).__sqDebug.thrown = String(error);
+      // The card field failed in this browser: Square's own page takes over.
       setSqPaying(false);
+      await payWithSquare();
     }
   };
 
@@ -4955,7 +4976,9 @@ function OnePage({
             <button
               className={buddy ? "gb-co__pay" : cn.btn}
               type="submit"
-              disabled={squareApp && !sqFailed ? !sqReady || sqPaying : squareBusy}
+              /* Never disabled while waiting for the card field: pressed before
+                 it is ready, Pay goes to Square's own page instead. */
+              disabled={sqPaying || squareBusy}
               aria-busy={sqPaying || squareBusy || undefined}
               style={buddy ? undefined : { width: "100%", marginTop: 18, opacity: sqPaying || squareBusy ? 0.6 : 1 }}
             >

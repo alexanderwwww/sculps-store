@@ -6,7 +6,7 @@ import { paypalFor } from "~/lib/paypal.server";
 import { squareFor, advertisedMethods } from "~/lib/square.server";
 import { bnplFor } from "~/lib/bnpl.server";
 import { currentUser } from "~/lib/auth.server";
-import { pages, metaConfig, themes, discounts, events } from "~/db/schema";
+import { pages, metaConfig, themes, discounts, events, menus, menuLinks } from "~/db/schema";
 import { passwordCookieValid } from "~/lib/password.server";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { metaCookieHeaders, newMetaEventId, pixelScript, trackFunnelEvent } from "~/lib/meta.server";
@@ -153,7 +153,20 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     }
   }
 
-  const page = await loadProductPage(context.db, store, { themeId, includeHidden });
+  // The home page is the product the shop's main menu leads with — so an
+  // add-on that is for sale (sold from the checkout) never becomes the front door.
+  const [lead] = await context.db
+    .select({ url: menuLinks.url })
+    .from(menuLinks)
+    .innerJoin(menus, eq(menus.id, menuLinks.menuId))
+    .where(and(eq(menus.storeId, store.id), eq(menus.handle, "main"), sql`${menuLinks.url} like '/products/%'`))
+    .orderBy(menuLinks.position)
+    .limit(1)
+    .catch(() => []);
+  const leadHandle = lead?.url?.replace(/^\/products\//, "").replace(/[?#].*$/, "") || undefined;
+  const page =
+    (leadHandle ? await loadProductPage(context.db, store, { themeId, includeHidden, handle: leadHandle }) : null) ??
+    (await loadProductPage(context.db, store, { themeId, includeHidden }));
 
   // The browser pixel. Only rendered when this store actually has one, so a
   // store without Meta gets no third-party script at all.

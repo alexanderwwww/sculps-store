@@ -377,9 +377,9 @@ function Header({
           </nav>
           <div className="cb-header__right">
             <button type="button" className="cb-cart" onClick={() => drawer?.open()} aria-label="Open cart">
-              <svg className="cb-cart__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M5.5 8h13l-1 12.5h-11z" />
-                <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
+              <svg className="cb-cart__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4.8 8.2h14.4l-1.1 11.3a1.6 1.6 0 0 1-1.6 1.5H7.5a1.6 1.6 0 0 1-1.6-1.5z" />
+                <path d="M8.6 10.5V7a3.4 3.4 0 0 1 6.8 0v3.5" />
               </svg>
               {drawer && drawer.itemCount > 0 ? <span className="cb-cart__n">{drawer.itemCount}</span> : null}
             </button>

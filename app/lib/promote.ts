@@ -6,7 +6,7 @@
  * Haunted Projector.
  */
 export const PROMOTED_HANDLES: Record<string, readonly string[]> = {
-  reaper: ["the-scream", "black-reaper", "haunted-projector"],
+  reaper: ["the-scream", "black-reaper", "haunted-projector", "crawling-zombie"],
 };
 
 export function isPromoted(storeSlug: string | null | undefined, handle: string | null | undefined): boolean {
