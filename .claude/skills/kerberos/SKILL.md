@@ -544,3 +544,8 @@ Confirmed by Alex: the Greek Stripe was registered for Garden Buddy only; Black 
 4. After 3–6 months of clean Square history on AIGIS LLC: apply for a direct bank merchant account (not an aggregator). PaymentCloud requires a US-citizen owner/guarantor — Alex is not one; never answer otherwise.
 RULE (Alex, 2026-10-06): never run a $1 / small test charge on a fresh live processor account. On the Greek Stripe a $1 test then $50 then $400 inflated the "growth %" and fed the 33,000% spike flag. Test in test mode only; the first live charge is a real order.
 LLC Stripe (acct_1UMDzFRTJdDCKVYD) as of 10-06: charges on, no bank attached, website still blackreaper.us, MCC 5712 (furniture) — both must change before any sale. Klarna, Affirm, Apple Pay, Cash App, Link, Amazon Pay already on; Google Pay off (Alex toggles it in Dashboard); Afterpay unavailable.
+
+## Mysterious Archive (settled 2026-10-06)
+- Chrome Hearts only. Style = Vestiaire Collective's look (white page, #f5f6f8 grey tiles, 4:5 images, Inter + Playfair headings, #1e1e1e 4px buttons, 1px #ebebeb hairlines, no shadows) — never their name, logo or wording.
+- Rebuilt in `sites/mysterious-archive` (build.mjs + src/styles.css, data in data/products.json). Not online yet: needs a domain and the real email + Instagram (placeholders now).
+- Alex: "we will recreate that on the 10th" (Oct 10, 2026) — pick it up then.
