@@ -536,3 +536,9 @@ Square checkout plan (Web Payments SDK, on-site, no redirect): cards (Visa/MC/Am
 New one-product store idea (2026-10-05): "Giant Scream" — The Scream only (16 ft + 10 ft). Domains free on 10-05: giantscream.com, 16footscream.com. Checkout on Square, not the LLC Stripe. Never "Ghostface" in names (trademark).
 RULE (2026-10-05): one store = one payment account (MID) approved for that store's product. Never run a second store or product through another store's processor. The Greek Stripe carried Black Reaper AND Garden Buddy (#1016) — likely part of why it was closed. PaymentCloud: one MID per DBA under AIGIS LLC; Shop Admin keeps per-store keys.
 Confirmed by Alex: the Greek Stripe was registered for Garden Buddy only; Black Reaper's website was added only after the closure. Unregistered second business on the account = most likely main cause. Website + product on every processor must match the store before the first sale.
+
+## Payments stability plan (Alex, 2026-10-06: "something stable nobody can close")
+1. Always two live processors; Shop Admin can switch per store in a minute. Square now; second = Airwallex or a merchant account.
+2. Register each store's real product + website before first sale; ship fast with tracking; no long preorders; ramp volume gradually; warn the provider before big ad pushes; one store per account.
+3. Sweep payouts to the bank every few days — a freeze only catches a little.
+4. After 3–6 months of clean Square history on AIGIS LLC: apply for a direct bank merchant account (not an aggregator). PaymentCloud requires a US-citizen owner/guarantor — Alex is not one; never answer otherwise.
