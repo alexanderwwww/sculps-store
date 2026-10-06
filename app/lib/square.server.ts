@@ -32,6 +32,8 @@ export interface SquareAccount {
    * method is only advertised once somebody has seen it on Square's own page.
    */
   methods: string[];
+  /** the Square application id the on-site card form is addressed with — public */
+  appId: string | null;
 }
 
 export const SQUARE_METHODS = ["applepay", "googlepay", "cashapp", "afterpay"] as const;
@@ -54,7 +56,8 @@ export async function squareFor(db: DB, env: Env, storeId: string): Promise<Squa
   if (!accessToken) return null;
   const listed = /methods:([a-z,]*)/.exec(row.label ?? "")?.[1] ?? "";
   const methods = listed.split(",").filter((m): m is (typeof SQUARE_METHODS)[number] => (SQUARE_METHODS as readonly string[]).includes(m));
-  return { accessToken, locationId: row.publishableKey, methods };
+  const appId = /app:(sq0idp-[A-Za-z0-9_-]+)/.exec(row.label ?? "")?.[1] ?? null;
+  return { accessToken, locationId: row.publishableKey, methods, appId };
 }
 
 async function call(account: SquareAccount, method: string, path: string, body?: unknown): Promise<any> {
@@ -370,4 +373,123 @@ export async function refundSquarePayment(
     ...(input.reason ? { reason: input.reason.slice(0, 192) } : {}),
   });
   return { id: refund.id, status: refund.status };
+}
+
+
+/* ------------------------------------------------------- on-site payments */
+
+/** What a customer should read when Square turns a card down. */
+function friendlyDecline(code: string | undefined, detail: string | undefined): string {
+  switch (code) {
+    case "CARD_DECLINED":
+    case "GENERIC_DECLINE":
+    case "CARD_DECLINED_CALL_ISSUER":
+    case "CARD_DECLINED_VERIFICATION_REQUIRED":
+      return "Your card was declined. Nothing has been charged. Please try another card.";
+    case "INSUFFICIENT_FUNDS":
+      return "That card has insufficient funds. Nothing has been charged. Please try another card.";
+    case "CVV_FAILURE":
+      return "The security code did not match. Nothing has been charged. Please check it and try again.";
+    case "ADDRESS_VERIFICATION_FAILURE":
+    case "INVALID_POSTAL_CODE":
+      return "The ZIP code did not match the card. Nothing has been charged. Please check it and try again.";
+    case "CARD_EXPIRED":
+    case "INVALID_EXPIRATION":
+      return "That card has expired. Nothing has been charged. Please use another card.";
+    case "PAN_FAILURE":
+    case "INVALID_CARD":
+      return "That card number was not accepted. Nothing has been charged. Please check it and try again.";
+    default:
+      return detail ? `${detail.replace(/[.\s]*$/, "")}. Nothing has been charged.` : "The payment could not be completed. Nothing has been charged.";
+  }
+}
+
+export class SquareDeclined extends Error {}
+
+/**
+ * A Square order for exactly this cart, to pay against. Priced by Square from
+ * the lines and checked against ours: if the totals differ, nothing is
+ * charged.
+ */
+export async function createSquareOrder(
+  account: SquareAccount,
+  input: {
+    lines: SquareLine[];
+    shippingCents: number;
+    taxCents: number;
+    protectionCents: number;
+    discountCents: number;
+    discountName: string | null;
+    totalCents: number;
+    currency: string;
+    referenceId: string;
+  },
+): Promise<{ id: string }> {
+  const currency = input.currency.toUpperCase();
+  const money = (amount: number) => ({ amount, currency });
+  const line_items: any[] = input.lines.map((line) => ({
+    name: line.name.slice(0, 500),
+    quantity: String(line.quantity),
+    base_price_money: money(line.unitPriceCents),
+    ...(line.variantId ? { metadata: { variantId: line.variantId, ...(line.label ? { label: line.label.slice(0, 200) } : {}) } } : {}),
+  }));
+  if (input.shippingCents > 0) line_items.push({ name: "Shipping", quantity: "1", base_price_money: money(input.shippingCents) });
+  if (input.taxCents > 0) line_items.push({ name: "Tax", quantity: "1", base_price_money: money(input.taxCents) });
+  if (input.protectionCents > 0) line_items.push({ name: "Shipping protection", quantity: "1", base_price_money: money(input.protectionCents) });
+  const payload = await call(account, "POST", "/orders", {
+    idempotency_key: crypto.randomUUID(),
+    order: {
+      location_id: account.locationId,
+      reference_id: input.referenceId,
+      line_items,
+      ...(input.discountCents > 0
+        ? { discounts: [{ name: (input.discountName ?? "Discount").slice(0, 255), amount_money: money(input.discountCents), scope: "ORDER" }] }
+        : {}),
+    },
+  });
+  const order = payload.order;
+  if (cents(order?.total_money) !== input.totalCents) {
+    throw new Error("Square could not price this order correctly. Nothing has been charged.");
+  }
+  return { id: order.id as string };
+}
+
+/**
+ * Charge a card (or wallet) token against a Square order. Completed when
+ * Square says so; a decline throws SquareDeclined with words a customer can
+ * act on.
+ */
+export async function createSquarePayment(
+  account: SquareAccount,
+  input: {
+    sourceId: string;
+    orderId: string;
+    amountCents: number;
+    currency: string;
+    idempotencyKey: string;
+    referenceId: string;
+    buyerEmail: string;
+  },
+): Promise<{ id: string; status: string; amountCents: number }> {
+  const response = await fetch(`${API}/payments`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${account.accessToken}`, "Square-Version": VERSION, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      source_id: input.sourceId,
+      idempotency_key: input.idempotencyKey.slice(0, 45),
+      amount_money: { amount: input.amountCents, currency: input.currency.toUpperCase() },
+      order_id: input.orderId,
+      location_id: account.locationId,
+      reference_id: input.referenceId.slice(0, 40),
+      buyer_email_address: input.buyerEmail,
+      autocomplete: true,
+    }),
+  });
+  const payload = (await response.json().catch(() => ({}))) as any;
+  if (!response.ok) {
+    const err = payload?.errors?.[0];
+    throw new SquareDeclined(friendlyDecline(err?.code, err?.detail));
+  }
+  const payment = payload.payment;
+  return { id: payment.id, status: payment.status, amountCents: cents(payment.total_money ?? payment.amount_money) };
 }

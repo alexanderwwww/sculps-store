@@ -474,6 +474,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const squareAccount = await squareFor(context.db, context.cloudflare.env, store.id).catch(() => null);
   const square = Boolean(squareAccount);
   const squareMethods = advertisedMethods(squareAccount, url);
+  // Public by design: what the on-site card form is addressed with.
+  const squareApp = squareAccount?.appId ? { appId: squareAccount.appId, locationId: squareAccount.locationId } : null;
 
   if (providerResult.ok) {
     publishableKey = providerResult.value.publishableKey;
@@ -631,6 +633,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     bnpl,
     square,
     squareMethods,
+    squareApp,
   };
 }
 
@@ -1277,7 +1280,7 @@ function fieldForMessage(message: string): string | null {
 /* --------------------------------------------------------------- the page */
 
 export default function Checkout({ loaderData }: Route.ComponentProps) {
-  const { store, cart, paymentsReady, preview, paymentsMessage, publishableKey, paypalClientId, bnpl, square, squareMethods, pixel, footerLinks, photo } =
+  const { store, cart, paymentsReady, preview, paymentsMessage, publishableKey, paypalClientId, bnpl, square, squareMethods, squareApp, pixel, footerLinks, photo } =
     loaderData;
   const storeParam = `?store=${store.slug}`;
   const buddy = BRANDED_CHECKOUT.has(store.slug);
@@ -1349,6 +1352,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       bnpl={bnpl}
       square={square}
       squareMethods={squareMethods}
+      squareApp={squareApp}
       appearance={buddy ? BUDDY_APPEARANCE : KNEELER_APPEARANCE}
       trust={buddy ? <TrustRow /> : null}
       shell={buddy}
@@ -3230,6 +3234,7 @@ function OnePage({
   bnpl,
   square,
   squareMethods,
+  squareApp,
   appearance,
   trust,
   shell,
@@ -3252,6 +3257,8 @@ function OnePage({
   square: boolean;
   /** the ways to pay to name, as agreed for this store */
   squareMethods: string[];
+  /** what the on-site Square card form needs; null falls back to Square's own page */
+  squareApp: { appId: string; locationId: string } | null;
   appearance: unknown;
   trust: React.ReactNode;
   /** this skin lays the whole page out from in here, so the wallets can sit
@@ -4235,6 +4242,196 @@ function OnePage({
       setPayError("That payment was not completed. Nothing has been charged.");
     }
   }, []);
+  /**
+   * The card, Apple Pay and Google Pay on this page.
+   *
+   * Square's own card field is mounted into the Payment box (their iframe, so
+   * card numbers never touch this store), and Apple Pay / Google Pay are
+   * drawn above the form. Whatever is tapped yields a token, and the server
+   * does the charging: it re-prices the cart and refuses a total that differs
+   * from the one on screen. If Square's script cannot load at all, the page
+   * falls back to Square's hosted page rather than leaving nobody able to pay.
+   */
+  const sqCardRef = useRef<HTMLDivElement>(null);
+  const sqGoogleRef = useRef<HTMLDivElement>(null);
+  const sqApple = useRef<{ tokenize: () => Promise<any> } | null>(null);
+  const sqCard = useRef<any>(null);
+  const sqPayments = useRef<any>(null);
+  const [sqReady, setSqReady] = useState(false);
+  const [sqFailed, setSqFailed] = useState(false);
+  const [sqApplePay, setSqApplePay] = useState(false);
+  const [sqPaying, setSqPaying] = useState(false);
+
+  useEffect(() => {
+    if (!squareOnly || !squareApp) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!(window as any).Square) {
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://web.squarecdn.com/v1/square.js";
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error("square.js"));
+            document.head.appendChild(script);
+          });
+        }
+        const payments = (window as any).Square.payments(squareApp.appId, squareApp.locationId);
+        const card = await payments.card({
+          style: {
+            ".input-container": { borderRadius: "8px", borderColor: "#d8d4cb" },
+            ".input-container.is-focus": { borderColor: "#111" },
+            input: { fontSize: "16px" },
+          },
+        });
+        if (cancelled || !sqCardRef.current) return;
+        await card.attach(sqCardRef.current);
+        sqPayments.current = payments;
+        sqCard.current = card;
+        setSqReady(true);
+      } catch {
+        if (!cancelled) setSqFailed(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      try {
+        sqCard.current?.destroy?.();
+      } catch {
+        /* nothing to tear down */
+      }
+      sqCard.current = null;
+    };
+    // Once per page: the card field belongs to the page, not to a render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [squareOnly, squareApp?.appId]);
+
+  /** Sends a token and the details to the server; goes to the thank-you page. */
+  const chargeToken = async (body: FormData, token: string): Promise<boolean> => {
+    body.set("mode", "pay");
+    body.set("sourceId", token);
+    body.set("expectedCents", String(cart.totalCents));
+    try {
+      const response = await fetch(`/checkout/square${window.location.search}`, { method: "POST", body });
+      const payload = (await response.json()) as { ok?: boolean; orderId?: string; error?: string };
+      if (!response.ok || !payload.ok || !payload.orderId) {
+        setPayError(payload.error ?? "The payment could not be completed. Nothing has been charged.");
+        return false;
+      }
+      window.location.href = `/thanks?order=${payload.orderId}`;
+      return true;
+    } catch {
+      setPayError("That could not be reached. Nothing has been charged. Please try again.");
+      return false;
+    }
+  };
+
+  const payOnSite = async () => {
+    if (sqPaying || !sqCard.current) return;
+    setSubmitted(true);
+    if (Object.keys(clientErrors).length > 0) {
+      formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+      return;
+    }
+    setPayError(null);
+    setSqPaying(true);
+    try {
+      const body = detailsFromForm();
+      const fullName = String(body.get("name") ?? "");
+      const [givenName, ...rest] = fullName.split(" ");
+      const result = await sqCard.current.tokenize({
+        amount: (cart.totalCents / 100).toFixed(2),
+        currencyCode: cart.currency.toUpperCase(),
+        intent: "CHARGE",
+        billingContact: {
+          givenName,
+          familyName: rest.join(" "),
+          email: String(body.get("email") ?? ""),
+          addressLines: [String(body.get("address1") ?? "")],
+          city: String(body.get("city") ?? ""),
+          state: String(body.get("region") ?? ""),
+          postalCode: String(body.get("postalCode") ?? ""),
+          countryCode: String(body.get("country") ?? "US") || "US",
+        },
+      });
+      if (result.status !== "OK" || !result.token) {
+        setPayError(result.errors?.[0]?.message ?? "The card details were not accepted. Nothing has been charged.");
+        setSqPaying(false);
+        return;
+      }
+      if (!(await chargeToken(body, result.token))) setSqPaying(false);
+    } catch {
+      setPayError("The card could not be read. Nothing has been charged. Please try again.");
+      setSqPaying(false);
+    }
+  };
+
+  /* Apple Pay and Google Pay: the wallet hands back who and where, so nothing
+     is typed. Built again when the total moves, so the sheet always shows the
+     price on screen. */
+  useEffect(() => {
+    if (!squareOnly || !squareApp || !sqReady || !sqPayments.current) return;
+    let cancelled = false;
+    const payments = sqPayments.current;
+    const request = payments.paymentRequest({
+      countryCode: "US",
+      currencyCode: cart.currency.toUpperCase(),
+      total: { amount: (cart.totalCents / 100).toFixed(2), label: store.name },
+      requestShippingContact: true,
+    });
+    const fromWallet = async (result: any) => {
+      if (result?.status !== "OK" || !result.token) {
+        if (result?.status !== "Cancel") setPayError(result?.errors?.[0]?.message ?? "The wallet payment was not completed. Nothing has been charged.");
+        return;
+      }
+      const contact = result.details?.shipping?.contact ?? result.details?.billing ?? {};
+      const body = new FormData();
+      body.set("name", [contact.givenName, contact.familyName].filter(Boolean).join(" "));
+      body.set("email", String(contact.email ?? ""));
+      body.set("phone", String(contact.phone ?? ""));
+      body.set("address1", String((contact.addressLines ?? [])[0] ?? ""));
+      body.set("address2", String((contact.addressLines ?? [])[1] ?? ""));
+      body.set("city", String(contact.city ?? ""));
+      body.set("region", String(contact.state ?? ""));
+      body.set("postalCode", String(contact.postalCode ?? ""));
+      body.set("country", String(contact.countryCode ?? "US"));
+      setPayError(null);
+      setSqPaying(true);
+      if (!(await chargeToken(body, result.token))) setSqPaying(false);
+    };
+    (async () => {
+      try {
+        const google = await payments.googlePay(request);
+        if (cancelled || !sqGoogleRef.current) return;
+        sqGoogleRef.current.innerHTML = "";
+        await google.attach(sqGoogleRef.current, { buttonColor: "black", buttonSizeMode: "fill", buttonType: "pay" });
+        sqGoogleRef.current.onclick = async (event) => {
+          event.preventDefault();
+          await fromWallet(await google.tokenize());
+        };
+      } catch {
+        /* this browser has no Google Pay; nothing is drawn */
+      }
+      try {
+        const apple = await payments.applePay(request);
+        if (cancelled) return;
+        sqApple.current = {
+          tokenize: async () => {
+            await fromWallet(await apple.tokenize());
+          },
+        };
+        setSqApplePay(true);
+      } catch {
+        sqApple.current = null;
+        setSqApplePay(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [squareOnly, sqReady, cart.totalCents]);
+
   const payWithSquare = async () => {
     if (squareBusy) return;
     setSubmitted(true);
@@ -4402,7 +4599,37 @@ function OnePage({
     if (!existing) document.head.appendChild(script);
   }, [paypalClientId, cart.currency]);
 
-  const express = squareOnly ? null : (
+  const express = squareOnly ? (
+    squareApp && !sqFailed ? (
+      <>
+        <section className={buddy ? "gb-co__express" : undefined} aria-label="Express checkout">
+          <p className={buddy ? "gb-co__express-lead" : undefined} style={buddy ? undefined : { textAlign: "center" }}>
+            Express checkout
+          </p>
+          <div className={buddy ? "gb-co__express-grid" : undefined}>
+            {sqApplePay ? (
+              <button
+                type="button"
+                className="gb-co__applepay"
+                aria-label="Pay with Apple Pay"
+                disabled={sqPaying}
+                onClick={() => void sqApple.current?.tokenize()}
+              />
+            ) : null}
+            <div className={buddy ? "gb-co__express-row" : undefined} ref={sqGoogleRef} />
+          </div>
+          {payError ? (
+            <p className="gb-co__express-err" role="alert">
+              {payError}
+            </p>
+          ) : null}
+        </section>
+        <div className={buddy ? "gb-co__or" : undefined} style={buddy ? undefined : { textAlign: "center", margin: "18px 0" }}>
+          OR
+        </div>
+      </>
+    ) : null
+  ) : (
     <>
       {/* The space is held from the first paint. Hiding it until Stripe
           answered meant the page visibly jumped when the wallets arrived —
@@ -4521,7 +4748,7 @@ function OnePage({
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
-        void (squareOnly ? payWithSquare() : pay());
+        void (squareOnly ? (squareApp && !sqFailed ? payOnSite() : payWithSquare()) : pay());
       }}
     >
       {section(
@@ -4567,17 +4794,30 @@ function OnePage({
                 {payError ?? serverMessage}
               </div>
             ) : null}
+            {squareApp && !sqFailed ? (
+              /* The card box, where Stripe's used to be: Square's field in a
+                 white card, with the waiting state laid over it until it is
+                 ready. */
+              <div className={buddy ? "gb-co__card" : undefined} style={{ position: "relative", minHeight: buddy ? undefined : 120 }}>
+                <div ref={sqCardRef} />
+                {!sqReady ? (
+                  <div className="gb-co__card--wait" style={{ position: "absolute", inset: 0, background: "#fff", borderRadius: 8 }} aria-live="polite">
+                    <span className="gb-co__skel" />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             <button
               className={buddy ? "gb-co__pay" : cn.btn}
               type="submit"
-              disabled={squareBusy}
-              aria-busy={squareBusy || undefined}
-              style={buddy ? undefined : { width: "100%", marginTop: 18, opacity: squareBusy ? 0.6 : 1 }}
+              disabled={squareApp && !sqFailed ? !sqReady || sqPaying : squareBusy}
+              aria-busy={sqPaying || squareBusy || undefined}
+              style={buddy ? undefined : { width: "100%", marginTop: 18, opacity: sqPaying || squareBusy ? 0.6 : 1 }}
             >
-              {squareBusy ? (
+              {sqPaying || squareBusy ? (
                 <>
                   {buddy ? <span className="gb-co__spin" aria-hidden="true" /> : null}
-                  One moment…
+                  {sqPaying ? "Paying…" : "One moment…"}
                 </>
               ) : (
                 `Pay ${money(total)}`
@@ -4594,7 +4834,9 @@ function OnePage({
               {squareMethods.includes("afterpay") ? <li>Afterpay</li> : null}
             </ul>
             <p className={cn.note}>
-              You finish on Square's secure payment page. Card details never touch this store.
+              {squareApp && !sqFailed
+                ? "Card details go straight to Square. They never touch this store."
+                : "You finish on Square's secure payment page. Card details never touch this store."}
             </p>
             {trust}
           </>

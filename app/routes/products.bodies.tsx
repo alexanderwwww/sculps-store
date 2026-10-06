@@ -249,16 +249,19 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     .catch(() => null);
 
   // The Square ways to pay this store names on the page.
-  const squareMethods = advertisedMethods(await squareFor(context.db, context.cloudflare.env, store.id).catch(() => null), url);
+  const squareAccount = await squareFor(context.db, context.cloudflare.env, store.id).catch(() => null);
+  const squareMethods = advertisedMethods(squareAccount, url);
+  // Public: what Apple Pay / Google Pay under Buy now are addressed with.
+  const squareApp = squareAccount?.appId ? { appId: squareAccount.appId, locationId: squareAccount.locationId } : null;
 
   return withHeaders(
-    { store, page, variant, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, bnpl, squareMethods, offer: offer ?? null },
+    { store, page, variant, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, bnpl, squareMethods, squareApp, offer: offer ?? null },
     { headers },
   );
 }
 
 export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
-  const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, bnpl, squareMethods, offer } = loaderData;
+  const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, bnpl, squareMethods, squareApp, offer } = loaderData;
 
   /**
    * Black Reaper sells seven things off one template, so a product page here
@@ -281,6 +284,7 @@ export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
           paypalClientId={paypalClientId}
           bnpl={bnpl}
           squareMethods={squareMethods}
+          squareApp={squareApp}
           offer={offer}
           brand={reaperBrand(page)}
         />

@@ -10,6 +10,7 @@
  * chrome and live here in code. Nothing on this page is invented — a section
  * with no content renders nothing rather than a placeholder.
  */
+import { SquareWallets } from "~/storefronts/shared/square-wallets";
 import { Fragment, createContext, useCallback, useContext, useEffect, useRef, useState, type RefObject } from "react";
 import type { LoadedProductPage, LoadedSection } from "~/lib/store.server";
 import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
@@ -152,6 +153,7 @@ export function CeilingBuddyStorefront({
   publishableKey = null,
   paypalClientId = null,
   squareMethods = [],
+  squareApp = null,
   bnpl = null,
   offer = null,
   brand = BRAND,
@@ -161,6 +163,7 @@ export function CeilingBuddyStorefront({
   publishableKey?: string | null;
   paypalClientId?: string | null;
   squareMethods?: string[];
+  squareApp?: { appId: string; locationId: string } | null;
   /** Publishable key of the Klarna / Affirm Stripe account, when the store has one. */
   bnpl?: string | null;
   /** The live code the bar is shouting about, straight from the database. */
@@ -209,7 +212,7 @@ export function CeilingBuddyStorefront({
             Every section here is block-level anyway, so a block wrapper
             changes nothing about the layout. */}
             <div data-section={s.type}>
-              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} bnpl={bnpl} squareMethods={squareMethods} offer={offer} />
+              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} bnpl={bnpl} squareMethods={squareMethods} squareApp={squareApp} offer={offer} />
             </div>
             {s.type === "video_faq" && bnpl ? <PayLaterBelt page={page} /> : null}
             </Fragment>
@@ -243,6 +246,7 @@ function Section({
   publishableKey,
   paypalClientId,
   squareMethods,
+  squareApp,
   bnpl,
   offer,
 }: {
@@ -253,11 +257,12 @@ function Section({
   publishableKey: string | null;
   paypalClientId: string | null;
   squareMethods: string[];
+  squareApp: { appId: string; locationId: string } | null;
   bnpl: string | null;
   offer: { code: string; kind: string; value: number } | null;
 }) {
   switch (section.type) {
-    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} paypalClientId={paypalClientId} bnpl={bnpl} squareMethods={squareMethods} offer={offer} />;
+    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} paypalClientId={paypalClientId} bnpl={bnpl} squareMethods={squareMethods} squareApp={squareApp} offer={offer} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
     case "ad_cards":      return <AdCards section={section} />;
@@ -507,7 +512,7 @@ function Announce({
 
 /* ---------------------------------------------------------------- buy box */
 
-function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalClientId = null, bnpl = null, squareMethods = [], offer = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; paypalClientId?: string | null; bnpl?: string | null; squareMethods?: string[]; offer?: { code: string; kind: string; value: number } | null }) {
+function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalClientId = null, bnpl = null, squareMethods = [], squareApp = null, offer = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; paypalClientId?: string | null; bnpl?: string | null; squareMethods?: string[]; squareApp?: { appId: string; locationId: string } | null; offer?: { code: string; kind: string; value: number } | null }) {
   const v = section.values;
   const drawer = useCartDrawer();
   // The product's own pictures come first — they are managed on the Products
@@ -958,6 +963,19 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               </button>
             </form>
           </div>
+
+          {/* Apple Pay and Google Pay, straight under Buy now, on Square. */}
+          {squareApp && chosen ? (
+            <SquareWallets
+              appId={squareApp.appId}
+              locationId={squareApp.locationId}
+              variantId={chosen.id}
+              amountCents={chosen.priceCents}
+              currency={currency}
+              storeName={page.store.name}
+              storeParam={storeParam}
+            />
+          ) : null}
 
           {/* The ways to pay, said once under the buttons: what Square's own
               page offers, and Afterpay's four payments on a price it covers.
