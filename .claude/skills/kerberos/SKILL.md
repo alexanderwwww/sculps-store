@@ -542,3 +542,5 @@ Confirmed by Alex: the Greek Stripe was registered for Garden Buddy only; Black 
 2. Register each store's real product + website before first sale; ship fast with tracking; no long preorders; ramp volume gradually; warn the provider before big ad pushes; one store per account.
 3. Sweep payouts to the bank every few days — a freeze only catches a little.
 4. After 3–6 months of clean Square history on AIGIS LLC: apply for a direct bank merchant account (not an aggregator). PaymentCloud requires a US-citizen owner/guarantor — Alex is not one; never answer otherwise.
+RULE (Alex, 2026-10-06): never run a $1 / small test charge on a fresh live processor account. On the Greek Stripe a $1 test then $50 then $400 inflated the "growth %" and fed the 33,000% spike flag. Test in test mode only; the first live charge is a real order.
+LLC Stripe (acct_1UMDzFRTJdDCKVYD) as of 10-06: charges on, no bank attached, website still blackreaper.us, MCC 5712 (furniture) — both must change before any sale. Klarna, Affirm, Apple Pay, Cash App, Link, Amazon Pay already on; Google Pay off (Alex toggles it in Dashboard); Afterpay unavailable.
