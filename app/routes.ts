@@ -22,6 +22,8 @@ export default [
   // PayPal: create the order, then capture it. Two steps, one route.
   route("checkout/paypal", "routes/checkout.paypal.tsx"),
   route("checkout/bnpl", "routes/checkout.bnpl.tsx"),
+  // Square: hosted payment link out, verified return in.
+  route("checkout/square", "routes/checkout.square.tsx"),
   route("checkout/diag", "routes/checkout.diag.tsx"),
   route("push/log", "routes/push.log.tsx"),
   route("thanks", "routes/thanks.tsx"),

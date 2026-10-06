@@ -5,6 +5,7 @@ import { domains, stores } from "../app/db/schema";
 import { runRecovery } from "../app/lib/recovery.server";
 import { runAftercare } from "../app/lib/aftercare.server";
 import { reconcileBnpl } from "../app/lib/bnpl-reconcile.server";
+import { reconcileSquare } from "../app/lib/square-reconcile.server";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -142,6 +143,13 @@ export default {
           console.log(`bnpl ${event.cron} · checked ${bnpl.checked} · paid ${bnpl.paid} · failed ${bnpl.failed}`);
         } catch (error) {
           console.error("bnpl reconcile failed", error);
+        }
+        // And Square: a customer who paid and closed the tab is still paid.
+        try {
+          const square = await reconcileSquare(makeDb(env.DATABASE_URL), env);
+          console.log(`square ${event.cron} · checked ${square.checked} · paid ${square.paid}`);
+        } catch (error) {
+          console.error("square reconcile failed", error);
         }
       })(),
     );

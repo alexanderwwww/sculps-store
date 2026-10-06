@@ -52,6 +52,7 @@ import { providerForStore, PaymentsNotConfigured, PAYABLE_INTENT_STATUSES } from
 import { placeOrder, orderByPaymentRef } from "~/lib/admin.server";
 import { paypalFor } from "~/lib/paypal.server";
 import { bnplFor } from "~/lib/bnpl.server";
+import { squareFor } from "~/lib/square.server";
 import { isPromoted } from "~/lib/promote";
 import { AffirmMark, KlarnaMark } from "~/storefronts/shared/paylater";
 import { deviceFromRequest, geoFromContext, readVisitorSession, shouldTrack, track } from "~/lib/visitor.server";
@@ -468,6 +469,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     .then((account) => account?.publishableKey ?? null)
     .catch(() => null);
 
+  // Square is a card processor in its own right: a store can run on it alone.
+  // Only whether it exists is sent to the page; the token stays on the Worker.
+  const square = await squareFor(context.db, context.cloudflare.env, store.id)
+    .then((account) => Boolean(account))
+    .catch(() => false);
+
   if (providerResult.ok) {
     publishableKey = providerResult.value.publishableKey;
     if (!publishableKey) {
@@ -622,6 +629,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
      */
     paypalClientId,
     bnpl,
+    square,
   };
 }
 
@@ -1268,7 +1276,7 @@ function fieldForMessage(message: string): string | null {
 /* --------------------------------------------------------------- the page */
 
 export default function Checkout({ loaderData }: Route.ComponentProps) {
-  const { store, cart, paymentsReady, preview, paymentsMessage, publishableKey, paypalClientId, bnpl, pixel, footerLinks, photo } =
+  const { store, cart, paymentsReady, preview, paymentsMessage, publishableKey, paypalClientId, bnpl, square, pixel, footerLinks, photo } =
     loaderData;
   const storeParam = `?store=${store.slug}`;
   const buddy = BRANDED_CHECKOUT.has(store.slug);
@@ -1338,6 +1346,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       publishableKey={publishableKey}
       paypalClientId={paypalClientId}
       bnpl={bnpl}
+      square={square}
       appearance={buddy ? BUDDY_APPEARANCE : KNEELER_APPEARANCE}
       trust={buddy ? <TrustRow /> : null}
       shell={buddy}
@@ -3217,6 +3226,7 @@ function OnePage({
   publishableKey,
   paypalClientId,
   bnpl,
+  square,
   appearance,
   trust,
   shell,
@@ -3235,6 +3245,8 @@ function OnePage({
   publishableKey: string | null;
   paypalClientId: string | null;
   bnpl: string | null;
+  /** the store takes cards through the hosted Square page */
+  square: boolean;
   appearance: unknown;
   trust: React.ReactNode;
   /** this skin lays the whole page out from in here, so the wallets can sit
@@ -4201,9 +4213,51 @@ function OnePage({
     }
   };
 
+  /**
+   * Square. The same typed details as any other payment, but the customer
+   * finishes on Square's own page and comes back to /checkout/square, where
+   * the server asks Square what happened. Nothing is charged here.
+   */
+  const squareOnly = square && !publishableKey;
+  const [squareBusy, setSquareBusy] = useState(false);
+  useEffect(() => {
+    const unstick = () => setSquareBusy(false);
+    window.addEventListener("pageshow", unstick);
+    return () => window.removeEventListener("pageshow", unstick);
+  }, []);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("card") === "declined") {
+      setPayError("That payment was not completed. Nothing has been charged.");
+    }
+  }, []);
+  const payWithSquare = async () => {
+    if (squareBusy) return;
+    setSubmitted(true);
+    if (Object.keys(clientErrors).length > 0) {
+      formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+      return;
+    }
+    setPayError(null);
+    setSquareBusy(true);
+    try {
+      const body = detailsFromForm();
+      const response = await fetch(`/checkout/square${window.location.search}`, { method: "POST", body });
+      const payload = (await response.json()) as { url?: string; error?: string };
+      if (!response.ok || !payload.url) {
+        setPayError(payload.error ?? "That could not be started. Nothing has been charged.");
+        setSquareBusy(false);
+        return;
+      }
+      window.location.href = payload.url;
+    } catch {
+      setPayError("That could not be reached. Nothing has been charged. Please try again.");
+      setSquareBusy(false);
+    }
+  };
+
   /* No intent, no form. A page that cannot take money does not draw a box
      that looks like it can. */
-  if ((!paymentsReady || !publishableKey) && !preview) {
+  if ((!paymentsReady || !publishableKey) && !squareOnly && !preview) {
     const stopped = (
       <div>
         <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 0 }}>
@@ -4343,7 +4397,7 @@ function OnePage({
     if (!existing) document.head.appendChild(script);
   }, [paypalClientId, cart.currency]);
 
-  const express = (
+  const express = squareOnly ? null : (
     <>
       {/* The space is held from the first paint. Hiding it until Stripe
           answered meant the page visibly jumped when the wallets arrived —
@@ -4462,7 +4516,7 @@ function OnePage({
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
-        void pay();
+        void (squareOnly ? payWithSquare() : pay());
       }}
     >
       {section(
@@ -4500,6 +4554,37 @@ function OnePage({
       {section(
         "Payment",
         "All transactions are secure and encrypted.",
+        squareOnly ? (
+          <>
+            <div ref={paymentRef} style={{ scrollMarginTop: 12 }} />
+            {payError || (serverMessage && !serverField) ? (
+              <div className={cn.alert} style={{ marginTop: 16, marginBottom: 0 }} role="alert">
+                {payError ?? serverMessage}
+              </div>
+            ) : null}
+            <button
+              className={buddy ? "gb-co__pay" : cn.btn}
+              type="submit"
+              disabled={squareBusy}
+              aria-busy={squareBusy || undefined}
+              style={buddy ? undefined : { width: "100%", marginTop: 18, opacity: squareBusy ? 0.6 : 1 }}
+            >
+              {squareBusy ? (
+                <>
+                  {buddy ? <span className="gb-co__spin" aria-hidden="true" /> : null}
+                  One moment…
+                </>
+              ) : (
+                `Pay ${money(total)}`
+              )}
+            </button>
+            <p className={cn.note}>
+              You finish on Square's secure payment page: card, Apple Pay, Google Pay, Cash App or
+              Afterpay. Card details never touch this store.
+            </p>
+            {trust}
+          </>
+        ) : (
         <>
           <div ref={paymentRef} style={{ scrollMarginTop: 12 }} />
           {/* Stripe mounts into the box below. It is never hidden — an element
@@ -4552,7 +4637,8 @@ function OnePage({
 
           <p className={cn.note}>Card details go straight to Stripe. They never touch this store.</p>
           {trust}
-        </>,
+        </>
+        ),
       )}
     </form>
   );
