@@ -74,8 +74,8 @@ Report the result as a short table. Anything unchecked = blocked, with the one-l
 
 ## Current state (2026-10-06)
 
-- **Square (AIGIS LLC):** active, card processing on, location L71PX3G9FAAJA, payouts to Square
-  Checking pending address review. Primary for the next store.
+- **Square (AIGIS LLC):** active, card processing on, location L71PX3G9FAAJA, **Square Checking APPROVED
+  2026-10-06 20:04** (email "AIGIS LLC is approved for Square Checking"); free debit card to order. Primary for the next store.
 - **LLC Stripe acct_1UMDzFRTJdDCKVYD:** charges on, no bank, website still blackreaper.us,
   MCC 5712 — blocked until website + category fixed. Klarna/Affirm/Apple Pay/Cash App on.
 - **Next store:** Giant Scream (giantscream.com, not yet bought) — The Scream only.
