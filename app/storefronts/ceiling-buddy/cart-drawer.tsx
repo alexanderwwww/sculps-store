@@ -401,15 +401,12 @@ export function CartDrawerProvider({
               <div className="cb-drawer__saved">You save {money(saved, currency)}</div>
             ) : null}
             <a className="cb-btn cb-drawer__go" href={href("/checkout")} aria-disabled={lines.length === 0}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="5" y="10.5" width="14" height="10" rx="2.4" />
-                <path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7" />
-              </svg>
-              Secure checkout
+              Checkout
             </a>
             {/* Apple Pay / Google Pay on Square: the cart is the order. */}
             {squareApp && lines.length && cart ? (
               <SquareWallets
+                row
                 appId={squareApp.appId}
                 locationId={squareApp.locationId}
                 amountCents={cart.totalCents}

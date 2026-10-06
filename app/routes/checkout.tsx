@@ -22,6 +22,7 @@
  * It used to import the garden kneeler stylesheet unconditionally, so every
  * store's checkout came out brown.
  */
+import { PayBadges } from "~/storefronts/shared/pay-badges";
 import { Link, useFetcher, useSearchParams } from "react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
@@ -4916,16 +4917,7 @@ function OnePage({
             {squareApp && !sqFailed ? (
               <div className="gb-co__cashapp" ref={sqCashRef} hidden={!sqCash} onPointerDownCapture={keepForCashApp} />
             ) : null}
-            <ul className="gb-co__methods" aria-label="Ways to pay">
-              <li>Visa</li>
-              <li>Mastercard</li>
-              <li>Amex</li>
-              <li>Discover</li>
-              {squareMethods.includes("applepay") ? <li>Apple Pay</li> : null}
-              {squareMethods.includes("googlepay") ? <li>Google Pay</li> : null}
-              {squareMethods.includes("cashapp") ? <li>Cash App Pay</li> : null}
-              {squareMethods.includes("afterpay") ? <li>Afterpay</li> : null}
-            </ul>
+            <PayBadges methods={squareMethods} />
             <p className={cn.note}>
               {squareApp && !sqFailed
                 ? "Card details go straight to Square. They never touch this store."

@@ -13,6 +13,7 @@
  * section with no content renders nothing, an unmeasured spec renders
  * "Spec pending", and there are no reviews because there are no customers.
  */
+import { PayBadges } from "~/storefronts/shared/pay-badges";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { LoadedProductPage, LoadedSection } from "~/lib/store.server";
 import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
@@ -937,18 +938,9 @@ function BuyBox({ section, page, storeParam = "", brand, publishableKey = null, 
               Only the methods agreed for this store appear. */}
           {squareMethods.length > 0 ? (
             <div className="cb-sqpay">
-              <ul aria-label="Ways to pay">
-                <li>Visa</li>
-                <li>Mastercard</li>
-                <li>Amex</li>
-                <li>Discover</li>
-                {squareMethods.includes("applepay") ? <li>Apple Pay</li> : null}
-                {squareMethods.includes("googlepay") ? <li>Google Pay</li> : null}
-                {squareMethods.includes("cashapp") ? <li>Cash App Pay</li> : null}
-                {squareMethods.includes("afterpay") ? <li>Afterpay</li> : null}
-              </ul>
+              <PayBadges methods={squareMethods} />
               {squareMethods.includes("afterpay") && chosen && chosen.priceCents <= 100000 ? (
-                <p>
+                <p className="cb-sqpay__ap">
                   Or 4 payments of {formatMoney(Math.ceil(chosen.priceCents / 4), currency)} with Afterpay.
                 </p>
               ) : null}

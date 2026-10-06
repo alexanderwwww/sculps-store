@@ -39,6 +39,7 @@ export function SquareWallets({
   currency,
   storeName,
   storeParam = "",
+  row = false,
 }: {
   appId: string;
   locationId: string;
@@ -48,6 +49,8 @@ export function SquareWallets({
   currency: string;
   storeName: string;
   storeParam?: string;
+  /** side by side, half width each, under a small "Express checkout" label (the cart drawer) */
+  row?: boolean;
 }) {
   const googleRef = useRef<HTMLDivElement>(null);
   const apple = useRef<any>(null);
@@ -145,7 +148,8 @@ export function SquareWallets({
   }, [appId, locationId, amountCents]);
 
   return (
-    <div className="cb-wallet cb-sqwallet" data-ready={hasApple || hasGoogle ? "1" : undefined}>
+    <div className={`cb-wallet cb-sqwallet${row ? " cb-sqwallet--row" : ""}`} data-ready={hasApple || hasGoogle ? "1" : undefined}>
+      {row ? <div className="cb-sqwallet__label"><span>Express checkout</span></div> : null}
       {hasApple ? (
         <button
           type="button"

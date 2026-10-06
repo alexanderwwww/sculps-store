@@ -4865,7 +4865,6 @@ html, body { margin: 0; }
 /* The ways to pay, under Buy now. */
 .cb-sqpay { margin: 14px 0 0; }
 .cb-sqpay ul { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; }
-.cb-sqpay li { border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 600; line-height: 1; white-space: nowrap; opacity: .9; }
 .cb-sqpay p { margin: 10px 0 0; font-size: 13px; opacity: .85; }
 
 /* Apple Pay / Google Pay on Square, right under Buy now and its "or pay with". */
@@ -4876,5 +4875,15 @@ html, body { margin: 0; }
 .cb-sqwallet__google[hidden] { display: none; }
 .cb-sqwallet__err { margin: 0; font-size: 13px; color: #b42318; text-align: center; }
 /* the pay badges on a light page */
-.cb-sqpay li { border-color: #dcdcdc; color: #333; }
 .cb-buy__side > .cb-sqpay { order: 12; }
+
+/* Drawer: a plain "Checkout" pill, then the wallets side by side. */
+.cb-drawer__foot .cb-drawer__go { border-radius: 999px; min-height: 56px; font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
+.cb-sqwallet--row { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.cb-sqwallet--row .cb-sqwallet__label { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; color: #777; font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.cb-sqwallet--row .cb-sqwallet__label::before, .cb-sqwallet--row .cb-sqwallet__label::after { content: ""; flex: 1; height: 1px; background: #E5E5E5; }
+.cb-sqwallet--row .cb-sqwallet__apple, .cb-sqwallet--row .cb-sqwallet__google { height: 48px; min-height: 48px; }
+.cb-sqwallet--row .cb-sqwallet__err { grid-column: 1 / -1; }
+.cb-sqwallet--row:has(.cb-sqwallet__google[hidden]) .cb-sqwallet__apple,
+.cb-sqwallet--row:not(:has(.cb-sqwallet__apple)) .cb-sqwallet__google { grid-column: 1 / -1; }
+.cb-sqpay__ap { margin: 10px 0 0; text-align: center; font-size: 13.5px; color: #333; }
