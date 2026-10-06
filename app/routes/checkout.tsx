@@ -4254,6 +4254,8 @@ function OnePage({
    */
   const sqCardRef = useRef<HTMLDivElement>(null);
   const sqGoogleRef = useRef<HTMLDivElement>(null);
+  const sqAfterRef = useRef<HTMLDivElement>(null);
+  const [sqAfter, setSqAfter] = useState(false);
   const sqApple = useRef<{ tokenize: () => Promise<any> } | null>(null);
   const sqCard = useRef<any>(null);
   const sqPayments = useRef<any>(null);
@@ -4419,6 +4421,32 @@ function OnePage({
         };
       } catch {
         /* this browser has no Google Pay; nothing is drawn */
+      }
+      // Afterpay, only when Square says this account and total qualify.
+      try {
+        const after = await payments.afterpayClearpay(request);
+        after.addEventListener("afterpay_shippingaddresschanged", () => ({
+          shippingOptions: [
+            {
+              id: "free",
+              label: "Free shipping",
+              amount: "0.00",
+              total: (cart.totalCents / 100).toFixed(2),
+              taxLineItems: [{ label: "Tax", amount: "0.00" }],
+            },
+          ],
+        }));
+        if (!cancelled && sqAfterRef.current) {
+          sqAfterRef.current.innerHTML = "";
+          await after.attach(sqAfterRef.current);
+          sqAfterRef.current.onclick = async (event) => {
+            event.preventDefault();
+            await fromWallet(await after.tokenize());
+          };
+          setSqAfter(true);
+        }
+      } catch {
+        if (!cancelled) setSqAfter(false);
       }
       try {
         const apple = await payments.applePay(request);
@@ -4719,6 +4747,7 @@ function OnePage({
             ) : null}
             <div className={buddy ? "gb-co__express-row" : undefined} ref={sqGoogleRef} />
             <div className="gb-co__cashapp" ref={sqCashRef} hidden={!sqCash} onPointerDownCapture={keepForCashApp} />
+            <div className="gb-co__afterpay" ref={sqAfterRef} hidden={!sqAfter} />
           </div>
           {sqCashToken ? (
             <p className="gb-co__express-ok" role="status">

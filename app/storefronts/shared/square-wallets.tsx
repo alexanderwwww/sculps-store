@@ -53,6 +53,9 @@ export function SquareWallets({
   row?: boolean;
 }) {
   const googleRef = useRef<HTMLDivElement>(null);
+  const afterRef = useRef<HTMLDivElement>(null);
+  const afterMsgRef = useRef<HTMLDivElement>(null);
+  const [hasAfter, setHasAfter] = useState(false);
   const apple = useRef<any>(null);
   const [hasApple, setHasApple] = useState(false);
   const [hasGoogle, setHasGoogle] = useState(false);
@@ -136,6 +139,36 @@ export function SquareWallets({
         } catch {
           if (!cancelled) setHasGoogle(false);
         }
+        // Afterpay: Square only gives it when the account and this amount
+        // qualify, so it appears exactly when it can be paid with.
+        try {
+          const ap = await payments.afterpayClearpay(request);
+          ap.addEventListener("afterpay_shippingaddresschanged", () => ({
+            shippingOptions: [
+              {
+                id: "free",
+                label: "Free shipping",
+                amount: "0.00",
+                total: (amountCents / 100).toFixed(2),
+                taxLineItems: [{ label: "Tax", amount: "0.00" }],
+              },
+            ],
+          }));
+          if (cancelled || !afterRef.current) return;
+          afterRef.current.innerHTML = "";
+          await ap.attach(afterRef.current);
+          afterRef.current.onclick = async (event) => {
+            event.preventDefault();
+            await charge(await ap.tokenize());
+          };
+          if (afterMsgRef.current) {
+            afterMsgRef.current.innerHTML = "";
+            await ap.attachMessaging(afterMsgRef.current).catch(() => undefined);
+          }
+          setHasAfter(true);
+        } catch {
+          if (!cancelled) setHasAfter(false);
+        }
       } catch {
         /* Square could not load; the Buy now button still works */
       }
@@ -148,7 +181,7 @@ export function SquareWallets({
   }, [appId, locationId, amountCents]);
 
   return (
-    <div className={`cb-wallet cb-sqwallet${row ? " cb-sqwallet--row" : ""}`} data-ready={hasApple || hasGoogle ? "1" : undefined}>
+    <div className={`cb-wallet cb-sqwallet${row ? " cb-sqwallet--row" : ""}`} data-ready={hasApple || hasGoogle || hasAfter ? "1" : undefined}>
       {row ? <div className="cb-sqwallet__label"><span>Express checkout</span></div> : null}
       {hasApple ? (
         <button
@@ -164,6 +197,8 @@ export function SquareWallets({
         />
       ) : null}
       <div className="cb-sqwallet__google" ref={googleRef} hidden={!hasGoogle} />
+      <div className="cb-sqwallet__after" ref={afterRef} hidden={!hasAfter} />
+      {row ? null : <div className="cb-sqwallet__aftermsg" ref={afterMsgRef} hidden={!hasAfter} />}
       {error ? (
         <p className="cb-sqwallet__err" role="alert">
           {error}

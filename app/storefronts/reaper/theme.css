@@ -4923,3 +4923,6 @@ html, body { margin: 0; }
 .paymarquee .paybadges li { height: 32px !important; font-size: 13px !important; padding: 0 12px !important; }
 /* drawer: the shop stays visible behind it */
 .cb-drawer__veil { background: rgba(14,17,22,.12) !important; backdrop-filter: none !important; }
+.cb-sqwallet__after { min-height: 0; }
+.cb-sqwallet__after[hidden], .cb-sqwallet__aftermsg[hidden] { display: none; }
+.cb-sqwallet__aftermsg { text-align: center; font-size: 13px; }
