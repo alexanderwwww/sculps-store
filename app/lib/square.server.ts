@@ -63,6 +63,9 @@ export interface SquareLine {
   name: string;
   quantity: number;
   unitPriceCents: number;
+  /** carried on the Square line so an order can be rebuilt from Square alone */
+  variantId?: string;
+  label?: string | null;
 }
 
 export interface SquareCustomer {
@@ -97,18 +100,28 @@ export async function createPaymentLink(
     storeName: string;
     referenceId: string;
     redirectUrl: string;
-    customer: SquareCustomer;
+    /** known from the checkout form; absent on an express checkout */
+    customer?: SquareCustomer;
     supportEmail: string | null;
+    /**
+     * Express checkout: the customer has typed nothing, so Square's own page
+     * asks for the shipping address, and the whole order is stored on the
+     * Square order so it can be rebuilt from it after payment.
+     */
+    express?: { storeId: string; discountCode: string | null };
   },
 ): Promise<{ id: string; url: string; orderId: string }> {
   const currency = input.currency.toUpperCase();
   const money = (amount: number) => ({ amount, currency });
 
   const itemised = () => {
-    const line_items = input.lines.map((line) => ({
+    const line_items: any[] = input.lines.map((line) => ({
       name: line.name.slice(0, 500),
       quantity: String(line.quantity),
       base_price_money: money(line.unitPriceCents),
+      ...(line.variantId
+        ? { metadata: { variantId: line.variantId, ...(line.label ? { label: line.label.slice(0, 200) } : {}) } }
+        : {}),
     }));
     if (input.shippingCents > 0) line_items.push({ name: "Shipping", quantity: "1", base_price_money: money(input.shippingCents) });
     if (input.taxCents > 0) line_items.push({ name: "Tax", quantity: "1", base_price_money: money(input.taxCents) });
@@ -131,24 +144,38 @@ export async function createPaymentLink(
         reference_id: input.referenceId,
         line_items: shape.line_items,
         ...(shape.discounts ? { discounts: shape.discounts } : {}),
+        ...(input.express
+          ? {
+              // Square rejects an empty metadata value, so a missing code is left out.
+              metadata: {
+                express: "1",
+                storeId: input.express.storeId,
+                ...(input.express.discountCode ? { code: input.express.discountCode.slice(0, 200) } : {}),
+              },
+            }
+          : {}),
       },
       checkout_options: {
         redirect_url: input.redirectUrl,
-        ask_for_shipping_address: false,
+        ask_for_shipping_address: Boolean(input.express),
         accepted_payment_methods: { apple_pay: true, google_pay: true, cash_app_pay: true, afterpay_clearpay: true },
         ...(input.supportEmail ? { merchant_support_email: input.supportEmail } : {}),
       },
-      pre_populated_data: {
-        buyer_email: input.customer.email,
-        ...(input.customer.phone ? { buyer_phone_number: input.customer.phone } : {}),
-        buyer_address: {
-          address_line_1: input.customer.line1,
-          locality: input.customer.city,
-          administrative_district_level_1: input.customer.state,
-          postal_code: input.customer.postalCode,
-          country: input.customer.country,
-        },
-      },
+      ...(input.customer
+        ? {
+            pre_populated_data: {
+              buyer_email: input.customer.email,
+              ...(input.customer.phone ? { buyer_phone_number: input.customer.phone } : {}),
+              buyer_address: {
+                address_line_1: input.customer.line1,
+                locality: input.customer.city,
+                administrative_district_level_1: input.customer.state,
+                postal_code: input.customer.postalCode,
+                country: input.customer.country,
+              },
+            },
+          }
+        : {}),
     });
     const link = payload.payment_link;
     const total: number | undefined = payload.related_resources?.orders?.[0]?.total_money?.amount;
@@ -156,6 +183,12 @@ export async function createPaymentLink(
   };
 
   let made = await make(itemised());
+  if (made.total !== input.totalCents && input.express) {
+    // An express order is rebuilt from its lines, so it cannot fall back to a
+    // single line. Better no express than an order nobody can reconstruct.
+    await call(account, "DELETE", `/online-checkout/payment-links/${made.id}`).catch(() => undefined);
+    throw new Error("Express checkout could not price this order. Please use the normal checkout.");
+  }
   if (made.total !== input.totalCents) {
     // Not the right money. Remove it and send one line for the exact amount.
     await call(account, "DELETE", `/online-checkout/payment-links/${made.id}`).catch(() => undefined);
@@ -168,6 +201,26 @@ export async function createPaymentLink(
   return { id: made.id, url: made.url, orderId: made.orderId };
 }
 
+export interface SquareOrderLine {
+  name: string;
+  quantity: number;
+  unitPriceCents: number;
+  variantId: string | null;
+  label: string | null;
+}
+
+export interface SquareBuyer {
+  name: string;
+  email: string;
+  phone: string | null;
+  line1: string | null;
+  line2: string | null;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+  country: string | null;
+}
+
 export interface SquareSettlement {
   /** the order has been paid in full */
   paid: boolean;
@@ -175,6 +228,74 @@ export interface SquareSettlement {
   amountCents: number | null;
   /** Square has closed the order without payment */
   dead: boolean;
+  /** what Square holds about the order and who paid for it */
+  order: {
+    id: string;
+    referenceId: string | null;
+    metadata: Record<string, string>;
+    lines: SquareOrderLine[];
+    shippingCents: number;
+    taxCents: number;
+    protectionCents: number;
+    discountCents: number;
+    totalCents: number;
+    buyer: SquareBuyer;
+  };
+}
+
+const cents = (money: any): number => (typeof money?.amount === "number" ? money.amount : Number(money?.amount ?? 0));
+
+function viewOf(order: any, payment: any | null): SquareSettlement["order"] {
+  const lines: SquareOrderLine[] = [];
+  let shippingCents = 0;
+  let taxCents = 0;
+  let protectionCents = 0;
+  for (const item of order?.line_items ?? []) {
+    const total = cents(item.base_price_money) * Number(item.quantity ?? 1);
+    if (item.metadata?.variantId) {
+      lines.push({
+        name: item.name,
+        quantity: Number(item.quantity ?? 1),
+        unitPriceCents: cents(item.base_price_money),
+        variantId: item.metadata.variantId,
+        label: item.metadata.label || null,
+      });
+    } else if (item.name === "Shipping") shippingCents += total;
+    else if (item.name === "Tax") taxCents += total;
+    else if (item.name === "Shipping protection") protectionCents += total;
+    else
+      lines.push({ name: item.name, quantity: Number(item.quantity ?? 1), unitPriceCents: cents(item.base_price_money), variantId: null, label: null });
+  }
+
+  const recipient = order?.fulfillments?.find((f: any) => f?.shipment_details)?.shipment_details?.recipient ?? null;
+  const address = recipient?.address ?? payment?.shipping_address ?? payment?.billing_address ?? null;
+  // Square leaves a single space in the name until the buyer has typed one.
+  const name =
+    String(recipient?.display_name ?? "").trim() ||
+    [address?.first_name, address?.last_name].filter(Boolean).join(" ").trim() ||
+    "";
+  return {
+    id: order?.id ?? "",
+    referenceId: order?.reference_id ?? null,
+    metadata: order?.metadata ?? {},
+    lines,
+    shippingCents,
+    taxCents,
+    protectionCents,
+    discountCents: cents(order?.total_discount_money),
+    totalCents: cents(order?.total_money),
+    buyer: {
+      name,
+      email: (recipient?.email_address || payment?.buyer_email_address || "").toLowerCase(),
+      phone: recipient?.phone_number || null,
+      line1: address?.address_line_1 ?? null,
+      line2: address?.address_line_2 ?? null,
+      city: address?.locality ?? null,
+      state: address?.administrative_district_level_1 ?? null,
+      postalCode: address?.postal_code ?? null,
+      country: address?.country ?? null,
+    },
+  };
 }
 
 /**
@@ -195,10 +316,31 @@ export async function readSquareOrder(account: SquareAccount, squareOrderId: str
         paymentId: payment.id,
         amountCents: payment.total_money?.amount ?? payment.amount_money?.amount ?? null,
         dead: false,
+        order: viewOf(order, payment),
       };
     }
   }
-  return { paid: false, paymentId: null, amountCents: null, dead: order?.state === "CANCELED" };
+  return { paid: false, paymentId: null, amountCents: null, dead: order?.state === "CANCELED", order: viewOf(order, null) };
+}
+
+/**
+ * Square orders at this location that are open or completed since a time —
+ * the scheduled check uses this to find express orders that were paid and
+ * never came back to the site, since those have no row of ours yet.
+ */
+export async function recentSquareOrderIds(account: SquareAccount, sinceIso: string): Promise<string[]> {
+  const { orders } = await call(account, "POST", "/orders/search", {
+    location_ids: [account.locationId],
+    query: {
+      filter: {
+        state_filter: { states: ["OPEN", "COMPLETED"] },
+        date_time_filter: { created_at: { start_at: sinceIso } },
+      },
+      sort: { sort_field: "CREATED_AT", sort_order: "DESC" },
+    },
+    limit: 100,
+  });
+  return (orders ?? []).filter((o: any) => o?.metadata?.express === "1" && (o.tenders ?? []).length > 0).map((o: any) => o.id as string);
 }
 
 export async function refundSquarePayment(

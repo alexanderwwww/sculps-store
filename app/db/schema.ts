@@ -419,6 +419,11 @@ export const orders = pgTable(
       // Real Stripe payments only: the simulated orders seeded for the Live
       // View demo all share one reference and are not payments at all.
       .where(sql`${t.paymentRef} like 'pi_%'`),
+    // One order per Square order, so the return page and the scheduled check
+    // can never both create the order for the same payment.
+    uniqueIndex("orders_square_ref_idx")
+      .on(t.paymentRef)
+      .where(sql`${t.paymentProvider} = 'square' and ${t.paymentRef} not like 'square:pending:%'`),
   ],
 );
 
