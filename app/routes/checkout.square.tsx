@@ -113,7 +113,11 @@ export async function action({ context, request }: Route.ActionArgs) {
   try {
     const link = await createPaymentLink(account, {
       lines: cart.lines.map((line) => ({
-        name: line.label ? `${line.productTitle} — ${line.label}` : line.productTitle,
+        // "The 16 ft Scream — The 16 ft Scream" when the variant is named like its product.
+        name:
+          line.label && line.label.trim().toLowerCase() !== line.productTitle.trim().toLowerCase()
+            ? `${line.productTitle} — ${line.label}`
+            : line.productTitle,
         quantity: line.quantity,
         unitPriceCents: line.unitPriceCents,
       })),
