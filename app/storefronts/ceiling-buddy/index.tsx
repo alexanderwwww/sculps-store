@@ -221,7 +221,7 @@ export function CeilingBuddyStorefront({
           ))}
         </main>
         <Footer page={page} storeParam={storeParam} />
-        <StickyBuy page={page} storeParam={storeParam} bnpl={bnpl} />
+        <StickyBuy page={page} storeParam={storeParam} bnpl={bnpl} squareMethods={squareMethods} />
         {/* Last, so it can never be what somebody reaches before the price. */}
         <EmailPopup
           storeParam={storeParam}
@@ -3216,7 +3216,7 @@ function PayLaterBelt({ page }: { page: LoadedProductPage }) {
 
 /* --------------------------------------------------------------- sticky */
 
-function StickyBuy({ page, storeParam = "", bnpl = null }: { page: LoadedProductPage; storeParam?: string; bnpl?: string | null }) {
+function StickyBuy({ page, storeParam = "", bnpl = null, squareMethods = [] }: { page: LoadedProductPage; storeParam?: string; bnpl?: string | null; squareMethods?: string[] }) {
   const drawer = useCartDrawer();
   const [on, setOn] = useState(false);
   const seen = useRef(false);
@@ -3280,6 +3280,20 @@ function StickyBuy({ page, storeParam = "", bnpl = null }: { page: LoadedProduct
             <div className="cb-sticky__pl" aria-label={`Pay in 4 interest-free payments of ${quarter(buy.priceCents, page.store.currency)} with Klarna, or monthly with Affirm`}>
               <span className="cb-sticky__plk"><KlarnaMark /> 4 × <b>{quarter(buy.priceCents, page.store.currency)}</b></span>
               <span className="cb-sticky__pla"><AffirmMark /> pay monthly</span>
+            </div>
+          ) : squareMethods.length ? (
+            /* The same two-line turn the Klarna line had, with the ways to pay
+               this shop actually takes: the wallets, then Cash App. */
+            <div className="cb-sticky__pl" aria-label="Pay with Apple Pay, Google Pay or Cash App Pay">
+              <span className="cb-sticky__plk">
+                {squareMethods.includes("applepay") ? <i className="cb-mk cb-mk--apple"> Pay</i> : null}
+                {squareMethods.includes("googlepay") ? <i className="cb-mk cb-mk--google">G Pay</i> : null}
+                <span>one-tap checkout</span>
+              </span>
+              <span className="cb-sticky__pla">
+                {squareMethods.includes("cashapp") ? <i className="cb-mk cb-mk--cash">$ Cash App Pay</i> : null}
+                <span>free shipping</span>
+              </span>
             </div>
           ) : null}
         </div>
