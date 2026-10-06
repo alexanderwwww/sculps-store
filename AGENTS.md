@@ -231,6 +231,10 @@ are not style notes.
 
 ---
 
+18. **No store takes a live payment until its processor account has been read through the API and passes the checklist in `.claude/skills/payments/SKILL.md`.** (Oct 2026: Stripe registered for Garden Buddy carried Black Reaper; a $1 test inflated the spike; Stripe and PayPal closed, ~$800 frozen, Halloween lost. The keys were in hand and nobody looked.) Website, category, one store per account, bank, no live test charges, two processors before ads.
+
+---
+
 ## 4. Practical notes
 
 - **Deploy:** `rm -rf build && npm run build`, then
