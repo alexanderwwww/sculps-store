@@ -4926,3 +4926,14 @@ html, body { margin: 0; }
 .cb-sqwallet__after { min-height: 0; }
 .cb-sqwallet__after[hidden], .cb-sqwallet__aftermsg[hidden] { display: none; }
 .cb-sqwallet__aftermsg { text-align: center; font-size: 13px; }
+
+/* Drawer Checkout = the Add to cart button: Amazon yellow pill, same type. */
+.cb-drawer__foot .cb-drawer__go, .cb-drawer__foot a.cb-btn.cb-drawer__go {
+  background: #FFD814 !important; border: 1px solid #FCD200 !important; color: #0F1111 !important;
+  border-radius: 999px !important; min-height: 54px !important; font-size: 17px !important; font-weight: 600 !important;
+  letter-spacing: 0 !important; box-shadow: 0 2px 5px rgba(213,217,217,.5) !important; text-decoration: none;
+}
+.cb-drawer__foot .cb-drawer__go:hover { background: #F7CA00 !important; border-color: #F2C200 !important; }
+/* the old Stripe/PayPal express block has nothing to show on Square */
+.cb-drawer__xlabel, .cb-drawer__wallets, .cb-drawer__pl, .cb-drawer__plnote { display: none !important; }
+.cb-sqwallet--row .cb-sqwallet__apple, .cb-sqwallet--row .cb-sqwallet__google { border-radius: 999px; }

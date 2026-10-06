@@ -654,3 +654,13 @@ html, body { margin: 0; }
 .gb-co__express-grid .gb-co__cashapp { margin: 0; min-height: 48px; }
 .gb-co__express-ok { margin: 10px 0 0; font-size: 13px; color: #0a7a3a; text-align: center; }
 .gb-co__afterpay[hidden] { display: none; }
+
+/* Express checkout on Square: every button the same height and shape, two per row on wider screens. */
+.gb-co__express-grid > * { min-height: 48px; border-radius: 10px; overflow: hidden; }
+.gb-co__express-grid > [hidden] { display: none !important; }
+.gb-co__applepay { border-radius: 10px; }
+.gb-co__express-grid .gb-co__cashapp > *, .gb-co__express-grid .gb-co__afterpay > *, .gb-co__express-row > * { width: 100% !important; height: 48px !important; }
+@media (min-width: 560px) {
+  .gb-co__express-grid:has(> .gb-co__cashapp:not([hidden])) { grid-template-columns: 1fr 1fr; }
+  .gb-co__express-grid:has(> .gb-co__cashapp:not([hidden])) .gb-co__express-row { grid-column: auto; }
+}
