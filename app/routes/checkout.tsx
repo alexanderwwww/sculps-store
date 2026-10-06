@@ -4308,6 +4308,15 @@ function OnePage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [squareOnly, squareApp?.appId]);
 
+  // A card field that never becomes ready (a blocked script, an in-app
+  // browser) must not leave a customer with a dead Pay button: after 8 s the
+  // page switches to Square's own payment page, which always works.
+  useEffect(() => {
+    if (!squareOnly || !squareApp || sqReady || sqFailed) return;
+    const t = window.setTimeout(() => setSqFailed(true), 8000);
+    return () => window.clearTimeout(t);
+  }, [squareOnly, squareApp, sqReady, sqFailed]);
+
   /** Sends a token and the details to the server; goes to the thank-you page. */
   const chargeToken = async (body: FormData, token: string): Promise<boolean> => {
     body.set("mode", "pay");
@@ -4959,6 +4968,11 @@ function OnePage({
                 `Pay ${money(total)}`
               )}
             </button>
+            {squareApp && !sqFailed ? (
+              <button type="button" className="gb-co__alt" onClick={() => void payWithSquare()} disabled={squareBusy}>
+                {squareBusy ? "One moment…" : "Or pay on Square's secure page"}
+              </button>
+            ) : null}
             <p className={cn.note}>
               {squareApp && !sqFailed
                 ? "Card details go straight to Square. They never touch this store."

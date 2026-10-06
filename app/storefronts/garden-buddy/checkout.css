@@ -664,3 +664,5 @@ html, body { margin: 0; }
   .gb-co__express-grid:has(> .gb-co__cashapp:not([hidden])) { grid-template-columns: 1fr 1fr; }
   .gb-co__express-grid:has(> .gb-co__cashapp:not([hidden])) .gb-co__express-row { grid-column: auto; }
 }
+.gb-co__alt { display: block; width: 100%; margin-top: 10px; height: 46px; border: 1px solid #d8d4cb; border-radius: 999px; background: #fff; color: #111; font-weight: 600; font-size: 15px; cursor: pointer; }
+.gb-co__alt:hover { border-color: #111; }
