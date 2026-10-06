@@ -292,12 +292,15 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     .then((account) => account?.publishableKey ?? null)
     .catch(() => null);
   // Which Square ways to pay this store names on the page.
-  const squareMethods = advertisedMethods(await squareFor(context.db, context.cloudflare.env, store.id).catch(() => null), new URL(request.url));
-  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, bnpl, squareMethods, offer: offer ?? null, crowd }, { headers });
+  const squareAccount = await squareFor(context.db, context.cloudflare.env, store.id).catch(() => null);
+  const squareMethods = advertisedMethods(squareAccount, new URL(request.url));
+  // Public: what Apple Pay / Google Pay / Afterpay on the page are addressed with.
+  const squareApp = squareAccount?.appId ? { appId: squareAccount.appId, locationId: squareAccount.locationId } : null;
+  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, bnpl, squareMethods, squareApp, offer: offer ?? null, crowd }, { headers });
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {
-  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, bnpl, squareMethods, offer, crowd } = loaderData;
+  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, bnpl, squareMethods, squareApp, offer, crowd } = loaderData;
 
   if (!page) {
     return (
@@ -388,6 +391,8 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
           publishableKey={publishableKey}
           paypalClientId={paypalClientId}
           bnpl={bnpl}
+          squareMethods={squareMethods}
+          squareApp={squareApp}
           offer={offer}
           brand={store.slug === REAPER ? reaperBrand(page) : undefined}
         />

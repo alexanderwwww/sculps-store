@@ -377,7 +377,10 @@ function Header({
           </nav>
           <div className="cb-header__right">
             <button type="button" className="cb-cart" onClick={() => drawer?.open()} aria-label="Open cart">
-              {IcoCart}
+              <svg className="cb-cart__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M5.5 8h13l-1 12.5h-11z" />
+                <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
+              </svg>
               {drawer && drawer.itemCount > 0 ? <span className="cb-cart__n">{drawer.itemCount}</span> : null}
             </button>
             <button
@@ -973,7 +976,9 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
             </form>
           </div>
 
-          {/* Apple Pay and Google Pay, straight under Buy now, on Square. */}
+          {/* Apple Pay (or Google Pay) and Cash App: two pills side by side,
+              straight under Buy now. */}
+          <div className="cb-paypills">
           {squareApp && chosen ? (
             <SquareWallets
               appId={squareApp.appId}
@@ -997,6 +1002,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               </button>
             </form>
           ) : null}
+          </div>
 
           {/* The ways to pay, said once under the buttons: what Square's own
               page offers, and Afterpay's four payments on a price it covers.

@@ -4937,3 +4937,24 @@ html, body { margin: 0; }
 /* the old Stripe/PayPal express block has nothing to show on Square */
 .cb-drawer__xlabel, .cb-drawer__wallets, .cb-drawer__pl, .cb-drawer__plnote { display: none !important; }
 .cb-sqwallet--row .cb-sqwallet__apple, .cb-sqwallet--row .cb-sqwallet__google { border-radius: 999px; }
+
+/* Two pills under Buy now: the wallet the device has (Apple Pay on an iPhone,
+   Google Pay elsewhere) and Cash App, side by side, same height. */
+.cb-buy__side > .cb-paypills { order: 10; }
+.cb-paypills { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.cb-paypills > .cb-sqwallet { display: contents; }
+.cb-paypills > .cb-sqwallet:not([data-ready]) { display: none; }
+.cb-paypills .cb-sqwallet__aftermsg, .cb-paypills .cb-sqwallet__err { grid-column: 1 / -1; }
+.cb-paypills .cb-cashpill { margin: 0; }
+.cb-paypills .cb-sqwallet__apple, .cb-paypills .cb-sqwallet__google, .cb-paypills .cb-sqwallet__after, .cb-paypills .cb-cashpill button { height: 48px !important; min-height: 48px !important; border-radius: 999px; }
+.cb-paypills .cb-cashpill button { font-size: 15px; }
+.cb-paypills .cb-cashpill__s { width: 20px; height: 20px; border-radius: 5px; font-size: 13px; }
+/* only one pill: it takes the whole row */
+.cb-paypills:has(> .cb-cashpill):not(:has(.cb-sqwallet[data-ready])) .cb-cashpill { grid-column: 1 / -1; }
+
+/* Header cart: a clean bag, same size as the menu icon, no bubble. */
+.cb-cart { width: 42px; height: 42px; display: inline-grid; place-items: center; background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; position: relative; color: #111; padding: 0; }
+.cb-cart > svg:not(.cb-cart__ico) { display: none; }
+.cb-cart__ico { width: 26px; height: 26px; }
+.cb-cart__n { position: absolute; top: 3px; right: 1px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #F7931E; color: #fff; font-size: 11px; font-weight: 800; line-height: 18px; text-align: center; }
+.cb-header__right { display: flex; align-items: center; gap: 4px; }
