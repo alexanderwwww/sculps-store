@@ -22,7 +22,6 @@
  * It used to import the garden kneeler stylesheet unconditionally, so every
  * store's checkout came out brown.
  */
-import { PayBadges } from "~/storefronts/shared/pay-badges";
 import { Link, useFetcher, useSearchParams } from "react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
@@ -4328,7 +4327,7 @@ function OnePage({
   };
 
   const payOnSite = async () => {
-    if (sqPaying || !sqCard.current) return;
+    if (sqPaying || (!sqCard.current && !sqCashToken)) return;
     setSubmitted(true);
     if (Object.keys(clientErrors).length > 0) {
       formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
@@ -4336,6 +4335,14 @@ function OnePage({
     }
     setPayError(null);
     setSqPaying(true);
+    if (sqCashToken) {
+      // Cash App already approved this amount; pay with it, not the card.
+      if (!(await chargeToken(detailsFromForm(), sqCashToken))) {
+        setSqCashToken(null);
+        setSqPaying(false);
+      }
+      return;
+    }
     try {
       const body = detailsFromForm();
       const fullName = String(body.get("name") ?? "");
@@ -4445,6 +4452,8 @@ function OnePage({
   clientErrorsNow.current = clientErrors;
   const [sqCash, setSqCash] = useState(false);
   const CASH_KEY = "gb-co-cashapp-details";
+  // Approved in Cash App before the delivery details were typed: kept, and Pay uses it.
+  const [sqCashToken, setSqCashToken] = useState<string | null>(null);
   useEffect(() => {
     if (!squareOnly || !squareApp || !sqReady || !sqPayments.current) return;
     let cancelled = false;
@@ -4484,7 +4493,8 @@ function OnePage({
           }
           setSubmitted(true);
           if (Object.keys(clientErrorsNow.current).length > 0) {
-            setPayError("Please fill in your delivery details first, then tap Cash App Pay again. Nothing has been charged.");
+            setSqCashToken(tokenResult.token);
+            setPayError(null);
             formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
             return;
           }
@@ -4708,7 +4718,13 @@ function OnePage({
               />
             ) : null}
             <div className={buddy ? "gb-co__express-row" : undefined} ref={sqGoogleRef} />
+            <div className="gb-co__cashapp" ref={sqCashRef} hidden={!sqCash} onPointerDownCapture={keepForCashApp} />
           </div>
+          {sqCashToken ? (
+            <p className="gb-co__express-ok" role="status">
+              Cash App approved. Fill in your delivery details below and press Pay.
+            </p>
+          ) : null}
           {payError ? (
             <p className="gb-co__express-err" role="alert">
               {payError}
@@ -4914,10 +4930,6 @@ function OnePage({
                 `Pay ${money(total)}`
               )}
             </button>
-            {squareApp && !sqFailed ? (
-              <div className="gb-co__cashapp" ref={sqCashRef} hidden={!sqCash} onPointerDownCapture={keepForCashApp} />
-            ) : null}
-            <PayBadges methods={squareMethods} />
             <p className={cn.note}>
               {squareApp && !sqFailed
                 ? "Card details go straight to Square. They never touch this store."
