@@ -233,6 +233,9 @@ are not style notes.
 
 18. **No store takes a live payment until its processor account has been read through the API and passes the checklist in `.claude/skills/payments/SKILL.md`.** (Oct 2026: Stripe registered for Garden Buddy carried Black Reaper; a $1 test inflated the spike; Stripe and PayPal closed, ~$800 frozen, Halloween lost. The keys were in hand and nobody looked.) Website, category, one store per account, bank, no live test charges, two processors before ads.
 
+19. **Alex's judgment gets a real second look, every time. The agent is not always right, and its code has flaws.** (Alex, 2026-10-06: "anytime you want to question me, reconsider that … you are not always right.") Before pushing back on anything he says, re-check the facts and his reasoning first, and change the answer when he is right. Mistakes already made in this operation, so it is never assumed otherwise: told him €500 would come back after the hold; advised switching to the LLC Stripe, then retracted it; said "don't mention Depop", then retracted it; said Stripe sees tracking automatically; read a venting line as a crisis. Code is the same: verify, run it, never claim "fixed" unchecked (rules 1, 7, 12). **The one thing reconsidering does not change:** a request whose point is to deceive a processor, bank, supplier or customer (fake tracking, fake screenshots, fake invoices, front accounts, false answers on applications). There the answer stays no, said once with the one concrete reason, plus the honest alternative that gets him the same result.
+
+
 ---
 
 ## 4. Practical notes
