@@ -4910,3 +4910,16 @@ html, body { margin: 0; }
 @media (prefers-reduced-motion: reduce) { .paymarquee__track { animation: none; } }
 /* the old static row under the buttons is gone; keep only the Afterpay line when it exists */
 .cb-sqpay:empty { display: none; }
+
+/* Cash App pill under the wallets. */
+.cb-cashpill { margin-top: 10px; }
+.cb-cashpill button { width: 100%; height: 56px; border: 0; border-radius: 999px; background: #00D64F; color: #fff; font: 800 18px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.cb-cashpill button:hover { background: #00C247; }
+.cb-cashpill__s { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; background: #fff; color: #00D64F; font-weight: 900; }
+/* marks beside the price */
+.cb-price__marks { display: inline-flex; gap: 5px; margin-left: 8px; vertical-align: middle; }
+/* the band under the buy box: dark, bigger marks, easy to see */
+.paymarquee { background: #0B0B0C !important; border: 0 !important; padding: 14px 0 !important; margin-top: 26px !important; }
+.paymarquee .paybadges li { height: 32px !important; font-size: 13px !important; padding: 0 12px !important; }
+/* drawer: the shop stays visible behind it */
+.cb-drawer__veil { background: rgba(14,17,22,.12) !important; backdrop-filter: none !important; }

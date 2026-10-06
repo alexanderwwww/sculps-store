@@ -680,6 +680,13 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               ) : null}
               {/* Klarna and Affirm, right beside the number they divide. */}
               {bnpl ? <PayLaterLine className="cb-price__pl" amountCents={chosen.priceCents} currency={currency} /> : null}
+              {/* Small marks beside the price: the wallets this shop takes. */}
+              {squareMethods.length ? (
+                <span className="cb-price__marks" aria-label="Pay with Apple Pay or Cash App">
+                  {squareMethods.includes("applepay") ? <i className="cb-mk cb-mk--apple"> Pay</i> : null}
+                  {squareMethods.includes("cashapp") ? <i className="cb-mk cb-mk--cash">$ Cash App</i> : null}
+                </span>
+              ) : null}
             </div>
           ) : null}
 
@@ -977,6 +984,18 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               storeName={page.store.name}
               storeParam={storeParam}
             />
+          ) : null}
+
+          {/* Cash App as a pill under the wallets: it pays at the checkout,
+              where the delivery address is typed, so the pill takes them
+              straight to it with Cash App on top. */}
+          {squareMethods.includes("cashapp") && picked ? (
+            <form className="cb-wallet cb-cashpill" method="post" action={`/cart/add${storeParam ? storeParam + "&" : "?"}next=checkout&replace=1`}>
+              <input type="hidden" name="variantId" value={picked} />
+              <button type="submit" aria-label="Pay with Cash App Pay">
+                <span className="cb-cashpill__s" aria-hidden="true">$</span> Cash App Pay
+              </button>
+            </form>
           ) : null}
 
           {/* The ways to pay, said once under the buttons: what Square's own
