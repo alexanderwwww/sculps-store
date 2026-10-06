@@ -26,6 +26,20 @@ const VERSION = "2025-10-16";
 export interface SquareAccount {
   accessToken: string;
   locationId: string;
+  /**
+   * Which ways to pay this store tells customers about: applepay, googlepay,
+   * cashapp, afterpay. Kept in the provider row's label as `methods:a,b` so a
+   * method is only advertised once somebody has seen it on Square's own page.
+   */
+  methods: string[];
+}
+
+export const SQUARE_METHODS = ["applepay", "googlepay", "cashapp", "afterpay"] as const;
+
+/** The methods to advertise: the store's list, or all of them for `?methods=all`. */
+export function advertisedMethods(account: SquareAccount | null, url: URL): string[] {
+  if (!account) return [];
+  return url.searchParams.get("methods") === "all" ? [...SQUARE_METHODS] : account.methods;
 }
 
 /** The store's Square account, or null when it has none. */
@@ -38,7 +52,9 @@ export async function squareFor(db: DB, env: Env, storeId: string): Promise<Squa
   if (!row?.publishableKey) return null;
   const accessToken = await decryptSecret(env, row.secretKeyEnc);
   if (!accessToken) return null;
-  return { accessToken, locationId: row.publishableKey };
+  const listed = /methods:([a-z,]*)/.exec(row.label ?? "")?.[1] ?? "";
+  const methods = listed.split(",").filter((m): m is (typeof SQUARE_METHODS)[number] => (SQUARE_METHODS as readonly string[]).includes(m));
+  return { accessToken, locationId: row.publishableKey, methods };
 }
 
 async function call(account: SquareAccount, method: string, path: string, body?: unknown): Promise<any> {

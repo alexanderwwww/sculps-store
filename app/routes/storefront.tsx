@@ -3,6 +3,7 @@ import { data } from "react-router";
 import { resolveStore, loadProductPage } from "~/lib/store.server";
 import { providerForStore } from "~/lib/payments.server";
 import { paypalFor } from "~/lib/paypal.server";
+import { squareFor, advertisedMethods } from "~/lib/square.server";
 import { bnplFor } from "~/lib/bnpl.server";
 import { currentUser } from "~/lib/auth.server";
 import { pages, metaConfig, themes, discounts, events } from "~/db/schema";
@@ -290,11 +291,13 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const bnpl = await bnplFor(context.db, context.cloudflare.env, store.id)
     .then((account) => account?.publishableKey ?? null)
     .catch(() => null);
-  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, bnpl, offer: offer ?? null, crowd }, { headers });
+  // Which Square ways to pay this store names on the page.
+  const squareMethods = advertisedMethods(await squareFor(context.db, context.cloudflare.env, store.id).catch(() => null), new URL(request.url));
+  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, bnpl, squareMethods, offer: offer ?? null, crowd }, { headers });
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {
-  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, bnpl, offer, crowd } = loaderData;
+  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, bnpl, squareMethods, offer, crowd } = loaderData;
 
   if (!page) {
     return (
@@ -364,6 +367,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
           storeParam={storeParam}
           publishableKey={publishableKey}
           paypalClientId={paypalClientId}
+          squareMethods={squareMethods}
           offer={offer}
           crowd={crowd}
           brand={cryoBrand(page)}

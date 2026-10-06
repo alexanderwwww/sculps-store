@@ -52,7 +52,7 @@ import { providerForStore, PaymentsNotConfigured, PAYABLE_INTENT_STATUSES } from
 import { placeOrder, orderByPaymentRef } from "~/lib/admin.server";
 import { paypalFor } from "~/lib/paypal.server";
 import { bnplFor } from "~/lib/bnpl.server";
-import { squareFor } from "~/lib/square.server";
+import { squareFor, advertisedMethods } from "~/lib/square.server";
 import { isPromoted } from "~/lib/promote";
 import { AffirmMark, KlarnaMark } from "~/storefronts/shared/paylater";
 import { deviceFromRequest, geoFromContext, readVisitorSession, shouldTrack, track } from "~/lib/visitor.server";
@@ -471,9 +471,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   // Square is a card processor in its own right: a store can run on it alone.
   // Only whether it exists is sent to the page; the token stays on the Worker.
-  const square = await squareFor(context.db, context.cloudflare.env, store.id)
-    .then((account) => Boolean(account))
-    .catch(() => false);
+  const squareAccount = await squareFor(context.db, context.cloudflare.env, store.id).catch(() => null);
+  const square = Boolean(squareAccount);
+  const squareMethods = advertisedMethods(squareAccount, url);
 
   if (providerResult.ok) {
     publishableKey = providerResult.value.publishableKey;
@@ -630,6 +630,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     paypalClientId,
     bnpl,
     square,
+    squareMethods,
   };
 }
 
@@ -1276,7 +1277,7 @@ function fieldForMessage(message: string): string | null {
 /* --------------------------------------------------------------- the page */
 
 export default function Checkout({ loaderData }: Route.ComponentProps) {
-  const { store, cart, paymentsReady, preview, paymentsMessage, publishableKey, paypalClientId, bnpl, square, pixel, footerLinks, photo } =
+  const { store, cart, paymentsReady, preview, paymentsMessage, publishableKey, paypalClientId, bnpl, square, squareMethods, pixel, footerLinks, photo } =
     loaderData;
   const storeParam = `?store=${store.slug}`;
   const buddy = BRANDED_CHECKOUT.has(store.slug);
@@ -1347,6 +1348,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       paypalClientId={paypalClientId}
       bnpl={bnpl}
       square={square}
+      squareMethods={squareMethods}
       appearance={buddy ? BUDDY_APPEARANCE : KNEELER_APPEARANCE}
       trust={buddy ? <TrustRow /> : null}
       shell={buddy}
@@ -3227,6 +3229,7 @@ function OnePage({
   paypalClientId,
   bnpl,
   square,
+  squareMethods,
   appearance,
   trust,
   shell,
@@ -3247,6 +3250,8 @@ function OnePage({
   bnpl: string | null;
   /** the store takes cards through the hosted Square page */
   square: boolean;
+  /** the ways to pay to name, as agreed for this store */
+  squareMethods: string[];
   appearance: unknown;
   trust: React.ReactNode;
   /** this skin lays the whole page out from in here, so the wallets can sit
@@ -4578,9 +4583,18 @@ function OnePage({
                 `Pay ${money(total)}`
               )}
             </button>
+            <ul className="gb-co__methods" aria-label="Ways to pay">
+              <li>Visa</li>
+              <li>Mastercard</li>
+              <li>Amex</li>
+              <li>Discover</li>
+              {squareMethods.includes("applepay") ? <li>Apple Pay</li> : null}
+              {squareMethods.includes("googlepay") ? <li>Google Pay</li> : null}
+              {squareMethods.includes("cashapp") ? <li>Cash App Pay</li> : null}
+              {squareMethods.includes("afterpay") ? <li>Afterpay</li> : null}
+            </ul>
             <p className={cn.note}>
-              You finish on Square's secure payment page: card, Apple Pay, Google Pay, Cash App or
-              Afterpay. Card details never touch this store.
+              You finish on Square's secure payment page. Card details never touch this store.
             </p>
             {trust}
           </>

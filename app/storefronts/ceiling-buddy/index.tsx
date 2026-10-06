@@ -151,6 +151,7 @@ export function CeilingBuddyStorefront({
   storeParam = "",
   publishableKey = null,
   paypalClientId = null,
+  squareMethods = [],
   bnpl = null,
   offer = null,
   brand = BRAND,
@@ -159,6 +160,7 @@ export function CeilingBuddyStorefront({
   storeParam?: string;
   publishableKey?: string | null;
   paypalClientId?: string | null;
+  squareMethods?: string[];
   /** Publishable key of the Klarna / Affirm Stripe account, when the store has one. */
   bnpl?: string | null;
   /** The live code the bar is shouting about, straight from the database. */
@@ -207,7 +209,7 @@ export function CeilingBuddyStorefront({
             Every section here is block-level anyway, so a block wrapper
             changes nothing about the layout. */}
             <div data-section={s.type}>
-              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} bnpl={bnpl} offer={offer} />
+              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} bnpl={bnpl} squareMethods={squareMethods} offer={offer} />
             </div>
             {s.type === "video_faq" && bnpl ? <PayLaterBelt page={page} /> : null}
             </Fragment>
@@ -240,6 +242,7 @@ function Section({
   brand,
   publishableKey,
   paypalClientId,
+  squareMethods,
   bnpl,
   offer,
 }: {
@@ -249,11 +252,12 @@ function Section({
   brand: CbBrand;
   publishableKey: string | null;
   paypalClientId: string | null;
+  squareMethods: string[];
   bnpl: string | null;
   offer: { code: string; kind: string; value: number } | null;
 }) {
   switch (section.type) {
-    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} paypalClientId={paypalClientId} bnpl={bnpl} offer={offer} />;
+    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} paypalClientId={paypalClientId} bnpl={bnpl} squareMethods={squareMethods} offer={offer} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
     case "ad_cards":      return <AdCards section={section} />;
@@ -503,7 +507,7 @@ function Announce({
 
 /* ---------------------------------------------------------------- buy box */
 
-function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalClientId = null, bnpl = null, offer = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; paypalClientId?: string | null; bnpl?: string | null; offer?: { code: string; kind: string; value: number } | null }) {
+function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalClientId = null, bnpl = null, squareMethods = [], offer = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; paypalClientId?: string | null; bnpl?: string | null; squareMethods?: string[]; offer?: { code: string; kind: string; value: number } | null }) {
   const v = section.values;
   const drawer = useCartDrawer();
   // The product's own pictures come first — they are managed on the Products
@@ -954,6 +958,29 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               </button>
             </form>
           </div>
+
+          {/* The ways to pay, said once under the buttons: what Square's own
+              page offers, and Afterpay's four payments on a price it covers.
+              Only the methods agreed for this store appear. */}
+          {squareMethods.length > 0 ? (
+            <div className="cb-sqpay">
+              <ul aria-label="Ways to pay">
+                <li>Visa</li>
+                <li>Mastercard</li>
+                <li>Amex</li>
+                <li>Discover</li>
+                {squareMethods.includes("applepay") ? <li>Apple Pay</li> : null}
+                {squareMethods.includes("googlepay") ? <li>Google Pay</li> : null}
+                {squareMethods.includes("cashapp") ? <li>Cash App Pay</li> : null}
+                {squareMethods.includes("afterpay") ? <li>Afterpay</li> : null}
+              </ul>
+              {squareMethods.includes("afterpay") && chosen && chosen.priceCents <= 100000 ? (
+                <p>
+                  Or 4 payments of {formatMoney(Math.ceil(chosen.priceCents / 4), currency)} with Afterpay.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           {/* The three promises, as ticks, under the buttons.
               They come from the Trust icons section rather than being written

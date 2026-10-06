@@ -93,3 +93,8 @@ No card setup is un-closable. Layers: (1) two card processors live (Square + LLC
 - Verified live without a charge: checkout renders "Pay $…", link is created with the right total, unpaid return → back to checkout, order marked failed (cron can still pay it). NOT yet verified: the paid path — the first real order proves it; watch it.
 - Not built yet: admin refund button for Square orders (refund from the Square dashboard; `refundSquarePayment` exists in square.server.ts), Square webhooks, post-purchase upsell on Square orders.
 - Website + description set via API; category (MCC 5999) must be changed to seasonal decor in the Square dashboard by Alex.
+
+## Naming ways to pay (2026-10-06)
+- Square's own page decides what a customer can actually use. Do not advertise a method nobody has seen on that page. The methods to name live in the `square` provider row's label as `methods:applepay,googlepay,cashapp,afterpay` (empty = cards only). `?methods=all` on the checkout or a product page shows all four for Alex to preview.
+- Cash App Pay and Afterpay were NOT yet confirmed on Square's page (Afterpay depends on the account's MCC being supported). Alex goes through checkout to Square's page (no paying), screenshots which methods show; then set the label.
+- Afterpay line ("4 payments of $X") only on prices ≤ $1,000 until the real limits are read off a real order.

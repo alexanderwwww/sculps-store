@@ -14,6 +14,7 @@ import { resolveStore, loadProductPage } from "~/lib/store.server";
 import { metaConfig, discounts } from "~/db/schema";
 import { providerForStore } from "~/lib/payments.server";
 import { paypalFor } from "~/lib/paypal.server";
+import { squareFor, advertisedMethods } from "~/lib/square.server";
 import { bnplFor } from "~/lib/bnpl.server";
 import { metaCookieHeaders, newMetaEventId, pixelScript, trackFunnelEvent } from "~/lib/meta.server";
 import { presenceScript, vitalsScript } from "~/lib/vitals";
@@ -247,14 +248,17 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     .then((account) => account?.publishableKey ?? null)
     .catch(() => null);
 
+  // The Square ways to pay this store names on the page.
+  const squareMethods = advertisedMethods(await squareFor(context.db, context.cloudflare.env, store.id).catch(() => null), url);
+
   return withHeaders(
-    { store, page, variant, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, bnpl, offer: offer ?? null },
+    { store, page, variant, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, bnpl, squareMethods, offer: offer ?? null },
     { headers },
   );
 }
 
 export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
-  const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, bnpl, offer } = loaderData;
+  const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, bnpl, squareMethods, offer } = loaderData;
 
   /**
    * Black Reaper sells seven things off one template, so a product page here
@@ -276,6 +280,7 @@ export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
           publishableKey={publishableKey}
           paypalClientId={paypalClientId}
           bnpl={bnpl}
+          squareMethods={squareMethods}
           offer={offer}
           brand={reaperBrand(page)}
         />
