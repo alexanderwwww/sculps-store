@@ -4432,6 +4432,96 @@ function OnePage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [squareOnly, sqReady, cart.totalCents]);
 
+  /**
+   * Cash App Pay, under the card. Cash App does not hand back an address, so
+   * it pays for the details typed above. On a phone the customer leaves for
+   * the Cash App and comes back to this page, which is reloaded by then: the
+   * typed details are kept in this tab for that trip and put back.
+   */
+  const sqCashRef = useRef<HTMLDivElement>(null);
+  // The listener lives across renders; it must read today's errors, not the first render's.
+  const clientErrorsNow = useRef(clientErrors);
+  clientErrorsNow.current = clientErrors;
+  const [sqCash, setSqCash] = useState(false);
+  const CASH_KEY = "gb-co-cashapp-details";
+  useEffect(() => {
+    if (!squareOnly || !squareApp || !sqReady || !sqPayments.current) return;
+    let cancelled = false;
+    const payments = sqPayments.current;
+    // Put back what was typed before a trip to the Cash App.
+    try {
+      const saved = sessionStorage.getItem(CASH_KEY);
+      if (saved && formRef.current) {
+        const fields = JSON.parse(saved) as Record<string, string>;
+        for (const [name, value] of Object.entries(fields)) {
+          const input = formRef.current.elements.namedItem(name) as HTMLInputElement | null;
+          if (input && "value" in input && !input.value) {
+            input.value = value;
+            onField(name, value);
+          }
+        }
+      }
+    } catch {
+      /* nothing kept */
+    }
+    (async () => {
+      try {
+        const request = payments.paymentRequest({
+          countryCode: "US",
+          currencyCode: cart.currency.toUpperCase(),
+          total: { amount: (cart.totalCents / 100).toFixed(2), label: store.name },
+        });
+        const cash = await payments.cashAppPay(request, { redirectURL: window.location.href, referenceId: `cart-${cart.totalCents}` });
+        if (cancelled || !sqCashRef.current) return;
+        sqCashRef.current.innerHTML = "";
+        await cash.attach(sqCashRef.current, { shape: "semiround", width: "full", size: "medium" });
+        cash.addEventListener("ontokenization", async (event: any) => {
+          const { tokenResult, error } = event.detail ?? {};
+          if (error || tokenResult?.status !== "OK" || !tokenResult?.token) {
+            if (tokenResult?.status !== "Cancel") setPayError("The Cash App payment was not completed. Nothing has been charged.");
+            return;
+          }
+          setSubmitted(true);
+          if (Object.keys(clientErrorsNow.current).length > 0) {
+            setPayError("Please fill in your delivery details first, then tap Cash App Pay again. Nothing has been charged.");
+            formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+            return;
+          }
+          setPayError(null);
+          setSqPaying(true);
+          const ok = await chargeToken(detailsFromForm(), tokenResult.token);
+          if (ok) {
+            try {
+              sessionStorage.removeItem(CASH_KEY);
+            } catch {
+              /* fine */
+            }
+          } else setSqPaying(false);
+        });
+        setSqCash(true);
+      } catch {
+        if (!cancelled) setSqCash(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [squareOnly, sqReady, cart.totalCents]);
+  /** Keeps the typed details for the trip to the Cash App and back. */
+  const keepForCashApp = () => {
+    try {
+      const body = new FormData(formRef.current!);
+      const fields: Record<string, string> = {};
+      body.forEach((value, key) => {
+        if (typeof value === "string" && value) fields[key] = value;
+      });
+      sessionStorage.setItem(CASH_KEY, JSON.stringify(fields));
+    } catch {
+      /* private mode: the desktop QR flow does not need it */
+    }
+  };
+
   const payWithSquare = async () => {
     if (squareBusy) return;
     setSubmitted(true);
@@ -4823,6 +4913,9 @@ function OnePage({
                 `Pay ${money(total)}`
               )}
             </button>
+            {squareApp && !sqFailed ? (
+              <div className="gb-co__cashapp" ref={sqCashRef} hidden={!sqCash} onPointerDownCapture={keepForCashApp} />
+            ) : null}
             <ul className="gb-co__methods" aria-label="Ways to pay">
               <li>Visa</li>
               <li>Mastercard</li>

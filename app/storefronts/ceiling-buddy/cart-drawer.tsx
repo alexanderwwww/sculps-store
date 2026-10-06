@@ -6,6 +6,7 @@
  * rather than a shared one because the drawer's styling is part of the theme,
  * and the themes are deliberately not shared between stores.
  */
+import { SquareWallets } from "~/storefronts/shared/square-wallets";
 import { KlarnaMark, AffirmMark, quarter } from "../shared/paylater";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
@@ -71,6 +72,7 @@ export function CartDrawerProvider({
   paypalClientId = null,
   publishableKey = null,
   bnpl = null,
+  squareApp = null,
   children,
 }: {
   page: LoadedProductPage;
@@ -82,6 +84,8 @@ export function CartDrawerProvider({
   publishableKey?: string | null;
   /** Publishable key of the Klarna / Affirm Stripe account, when the store has one. */
   bnpl?: string | null;
+  /** Square, for Apple Pay / Google Pay under the checkout button */
+  squareApp?: { appId: string; locationId: string } | null;
   children: React.ReactNode;
 }) {
   const href = (path: string) => `${path}${storeParam}`;
@@ -403,6 +407,17 @@ export function CartDrawerProvider({
               </svg>
               Secure checkout
             </a>
+            {/* Apple Pay / Google Pay on Square: the cart is the order. */}
+            {squareApp && lines.length && cart ? (
+              <SquareWallets
+                appId={squareApp.appId}
+                locationId={squareApp.locationId}
+                amountCents={cart.totalCents}
+                currency={currency}
+                storeName={page.store.name}
+                storeParam={storeParam}
+              />
+            ) : null}
             {/* Apple Pay and PayPal, side by side and half-width each, so the
                 two of them together take the room one used to. Venmo and Pay
                 Later are gone from here -- three ways to pay is a choice, six

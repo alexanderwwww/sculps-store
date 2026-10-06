@@ -42,7 +42,8 @@ export function SquareWallets({
 }: {
   appId: string;
   locationId: string;
-  variantId: string;
+  /** the bundle to buy; absent in the cart drawer, where the cart is already the order */
+  variantId?: string;
   amountCents: number;
   currency: string;
   storeName: string;
@@ -66,8 +67,10 @@ export function SquareWallets({
     setBusy(true);
     setError(null);
     try {
-      const add = new URLSearchParams({ variantId: live.current.variantId, replace: "1" });
-      await fetch(`/cart/add${storeParam}`, { method: "POST", body: add, headers: { "X-Cart-Ajax": "1" }, credentials: "same-origin" });
+      if (live.current.variantId) {
+        const add = new URLSearchParams({ variantId: live.current.variantId, replace: "1" });
+        await fetch(`/cart/add${storeParam}`, { method: "POST", body: add, headers: { "X-Cart-Ajax": "1" }, credentials: "same-origin" });
+      }
       const contact = result.details?.shipping?.contact ?? result.details?.billing ?? {};
       const body = new FormData();
       body.set("mode", "pay");
