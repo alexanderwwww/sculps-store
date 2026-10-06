@@ -80,3 +80,4 @@ Report the result as a short table. Anything unchecked = blocked, with the one-l
   MCC 5712 — blocked until website + category fixed. Klarna/Affirm/Apple Pay/Cash App on.
 - **Next store:** Giant Scream (giantscream.com, not yet bought) — The Scream only.
 - Airwallex: pending. PaymentCloud: blocked on US-citizen rule.
+- **PayPal:** the closed account was personal (Alex), never the LLC. Both store connections (Garden Buddy, Black Reaper) paused in Shop Admin. A new PayPal Business for AIGIS LLC would still be linked to Alex as owner — treat as high risk, disclose if asked.
