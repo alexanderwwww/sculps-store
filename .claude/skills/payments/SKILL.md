@@ -98,3 +98,8 @@ No card setup is un-closable. Layers: (1) two card processors live (Square + LLC
 - Square's own page decides what a customer can actually use. Do not advertise a method nobody has seen on that page. The methods to name live in the `square` provider row's label as `methods:applepay,googlepay,cashapp,afterpay` (empty = cards only). `?methods=all` on the checkout or a product page shows all four for Alex to preview.
 - Cash App Pay and Afterpay were NOT yet confirmed on Square's page (Afterpay depends on the account's MCC being supported). Alex goes through checkout to Square's page (no paying), screenshots which methods show; then set the label.
 - Afterpay line ("4 payments of $X") only on prices ≤ $1,000 until the real limits are read off a real order.
+
+## Writing to processors and banks (Alex, 2026-10-07 — said angrily, keep it)
+- Any email about money, a merchant account or a bank: answer exactly what was asked, short, confident, American-business tone. Never volunteer a detail that invites doubt.
+- Never name Square / Square Checking as the business bank in a processor application: a processor will not accept another processor's account as the settlement bank (PaymentCloud said so). Alex has other US bank accounts: use the real US bank he names.
+- Facts only from Alex; leave a [fill in] where a fact is his to give. Still never a false statement (rule 19).
