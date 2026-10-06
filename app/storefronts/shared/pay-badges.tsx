@@ -24,7 +24,21 @@ export function PayBadges({ methods, className = "" }: { methods: string[]; clas
           aria-label={m === "applepay" ? "Apple Pay" : m === "googlepay" ? "Google Pay" : undefined}
           style={{ display: "inline-flex", alignItems: "center", height: 26, padding: "0 10px", borderRadius: 6, fontSize: 12, lineHeight: 1, whiteSpace: "nowrap", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif", ...BADGE[m].style }}
         >
-          {BADGE[m].label}
+          {m === "applepay" ? (
+            <>
+              <svg viewBox="0 0 14 17" width="11" height="13" fill="currentColor" aria-hidden="true" style={{ marginRight: 3 }}>
+                <path d="M11.6 9c0-2 1.7-3 1.8-3-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.5.8-3.2.8-.6 0-1.6-.7-2.7-.7C3.1 4.5 1.8 5.3 1 6.6c-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.5 2.2 2.6 2.1 1.1 0 1.4-.7 2.7-.7s1.6.7 2.7.7c1.1 0 1.8-1 2.5-2.1.8-1.2 1.1-2.3 1.1-2.4 0 0-2.1-.8-2.1-3.8zM9.6 3c.6-.7 1-1.7.9-2.7-.9 0-1.9.6-2.5 1.3-.5.6-1 1.6-.9 2.6 1 .1 1.9-.5 2.5-1.2z" />
+              </svg>
+              Pay
+            </>
+          ) : m === "cashapp" ? (
+            <>
+              <span aria-hidden="true" style={{ display: "inline-grid", placeItems: "center", width: 16, height: 16, borderRadius: 4, background: "#fff", color: "#00D64F", fontWeight: 900, fontSize: 12, marginRight: 5 }}>$</span>
+              Cash App Pay
+            </>
+          ) : (
+            BADGE[m].label
+          )}
         </li>
       ))}
     </ul>
