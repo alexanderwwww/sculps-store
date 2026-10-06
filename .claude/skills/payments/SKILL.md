@@ -81,3 +81,4 @@ Report the result as a short table. Anything unchecked = blocked, with the one-l
 - **Next store:** Giant Scream (giantscream.com, not yet bought) — The Scream only.
 - Airwallex: pending. PaymentCloud: blocked on US-citizen rule.
 - **PayPal:** the closed account was personal (Alex), never the LLC. Both store connections (Garden Buddy, Black Reaper) paused in Shop Admin. A new PayPal Business for AIGIS LLC would still be linked to Alex as owner — treat as high risk, disclose if asked.
+- **Lesson (10-06):** telling a PayPal buyer to "Report a problem" to get money back = a dispute. PayPal refunded Gary $279.99, kept its sale fee, added a dispute fee (High Tier) → Helios balance −$40.26. When the seller can still refund, refund directly; only send customers to the dispute route when the account cannot refund, and budget the fee.
