@@ -16,9 +16,18 @@ const priceOf = (p) => (p.sold ? "SOLD" : usd(p.price));
 const count = pieces.length;
 const words = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
 
+const BRAND = "Chrome Hearts";
+const ICON = {
+  search: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
+  heart: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
+  bag: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.5 8h13l-1 12.5h-11z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 10-4-1.6-7-5.4-7-10V6z"/><path d="M8.8 11.8l2.3 2.3 4.2-4.4"/></svg>',
+  box: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/></svg>',
+  one: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8.5"/><path d="M11 9l1.5-1v8"/></svg>',
+};
+
 function page({ depth, title, desc, body, bodyClass = "" }) {
   const up = depth ? "../".repeat(depth) : "./";
-  const nav = [["Selection", up], ["How to reserve", up + "reserve/"], ["About", up + "about/"]];
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -28,18 +37,33 @@ function page({ depth, title, desc, body, bodyClass = "" }) {
 <meta name="description" content="${esc(desc)}">
 <meta name="theme-color" content="#ffffff">
 <link rel="icon" href="${up}assets/logo_black.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Playfair+Display:wght@400&display=swap">
 <link rel="stylesheet" href="${up}assets/styles.css">
 </head>
 <body class="${bodyClass}">
-<header class="top">
-  <a class="brand" href="${up}" aria-label="Mysterious Archive, New York"><img src="${up}assets/logo_black.png" alt="Mysterious Archive, New York" width="2024" height="599"></a>
-  <nav class="nav" aria-label="Main">${nav.map(([t, h]) => `<a href="${h}">${esc(t)}</a>`).join("")}</nav>
+<div class="promo">${esc(BRAND)} only &nbsp;·&nbsp; Every piece one of one &nbsp;·&nbsp; Tracked shipping from New York</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <a class="word" href="${up}">MYSTERIOUS ARCHIVE</a>
+    <div class="search" role="search">${ICON.search}<span>Search ${esc(BRAND)}</span></div>
+    <div class="icons"><a href="${up}" aria-label="Favourites">${ICON.heart}</a><a href="${up}reserve/" aria-label="Reserve">${ICON.bag}</a></div>
+  </div>
+  <nav class="cats" aria-label="Main"><a href="${up}">${esc(BRAND)}</a><a href="${up}#hoodies">Hoodies</a><a href="${up}#tops">Tops</a><a href="${up}reserve/">How to buy</a><a href="${up}about/">About</a></nav>
 </header>
 ${body}
+<section class="trust">
+  <div>${ICON.shield}<b>Checked piece by piece</b><span>Every piece examined and described as it is, flaws stated plainly.</span></div>
+  <div>${ICON.one}<b>One of one</b><span>Each piece exists once in this selection.</span></div>
+  <div>${ICON.box}<b>Tracked shipping</b><span>Sent from New York, tracked, quoted at confirmation.</span></div>
+</section>
 <footer class="foot">
-  <a class="foot-logo" href="${up}" aria-label="Mysterious Archive, New York"><img src="${up}assets/logo_black.png" alt="Mysterious Archive, New York" width="2024" height="599" loading="lazy"></a>
-  <div class="row"><span class="label">Mysterious Archive &nbsp;·&nbsp; New York</span><span class="label">${esc(site.date)}</span></div>
-  <p class="disclaimer">${esc(site.disclaimer)}</p>
+  <div class="foot-cols">
+    <div><b>Mysterious Archive</b><a href="${up}about/">About</a><a href="${up}reserve/">How to buy</a></div>
+    <div><b>Shop</b><a href="${up}">${esc(BRAND)}</a><a href="${up}#hoodies">Hoodies</a><a href="${up}#tops">Tops</a></div>
+    <div><b>Contact</b><a href="mailto:${esc(site.contact.email)}">Email</a><a href="https://instagram.com/${esc(String(site.contact.instagram).replace(/^@/, ""))}">Instagram</a></div>
+  </div>
+  <p class="legal">© ${esc(site.date.split(" ").pop())} Mysterious Archive, New York. ${esc(site.disclaimer)}</p>
 </footer>
 <script src="${up}assets/app.js" defer></script>
 </body>
@@ -47,128 +71,99 @@ ${body}
 `;
 }
 
+const isHoodie = (p) => /hood/i.test(p.title);
+
 function card(p, up) {
   return `<a class="card" href="${up}piece/${p.slug}/">
-    <span class="frame"><img src="${up}${p.heroThumb}" alt="${esc(p.title)}" width="${p.heroSize[0] > 700 ? 600 : p.heroSize[0]}" height="${Math.round((600 * p.heroSize[1]) / p.heroSize[0])}" loading="lazy"></span>
+    <span class="img"><img src="${up}${p.heroThumb}" alt="${esc(BRAND)} ${esc(p.title)}" loading="lazy"><i class="tag">One of one</i><i class="like">${ICON.heart}</i></span>
+    <b class="cbrand">${esc(BRAND.toUpperCase())}</b>
     <span class="cname">${esc(p.title)}</span>
-    <span class="cmeta"><span class="label">Size ${esc(p.size)}</span><span class="label ${p.sold ? "sold" : "price"}">${priceOf(p)}</span></span>
+    <span class="csize">Size ${esc(p.size)}</span>
+    <span class="cprice ${p.sold ? "sold" : ""}">${priceOf(p)}</span>
   </a>`;
 }
 
 function home() {
   const up = "./";
-  const rows = pieces.map((p) => `<li><a class="prow ${p.sold ? "is-sold" : ""}" href="${up}piece/${p.slug}/"><span class="num label">${pad(p.number)}</span><span class="pname">${esc(p.title)}</span><span class="pprice">${priceOf(p)}</span></a></li>`).join("\n");
-  const body = `<main>
-<section class="cover">
-  <img class="cover-logo" src="${up}assets/logo_black.png" alt="Mysterious Archive, New York" width="2024" height="599">
-  <hr class="rule short">
-  <h1 class="label silver wide">${esc(site.selection)}</h1>
-  <p class="label muted">${esc(site.line)}</p>
-</section>
-<section class="list" aria-label="The selection">
-  <ol>
-${rows}
-  </ol>
-  <div class="total"><span>Selection total</span><span>${usd(total)}</span></div>
-  <p class="label muted center small">${esc(site.foot)}</p>
-</section>
-<section class="grid" aria-label="Pieces">
-${pieces.map((p) => card(p, up)).join("\n")}
-</section>
+  const group = (id, name, list) => list.length ? `<h2 class="sec" id="${id}">${name}</h2><div class="grid">${list.map((p) => card(p, up)).join("\n")}</div>` : "";
+  const body = `<main class="wrap">
+<div class="crumbs"><a href="${up}">Home</a> / ${esc(BRAND)}</div>
+<h1 class="display">${esc(BRAND)}</h1>
+<p class="lede">${esc(site.selection.charAt(0) + site.selection.slice(1).toLowerCase())} · ${count} pieces, each one of one.</p>
+<div class="bar"><span>${count} items</span><div class="chips"><span class="chip on">All</span><a class="chip" href="#hoodies">Hoodies</a><a class="chip" href="#tops">Tops</a></div><span class="sort">Sort by: Featured</span></div>
+${group("hoodies", "Hoodies", pieces.filter(isHoodie))}
+${group("tops", "Tops", pieces.filter((p) => !isHoodie(p)))}
 </main>`;
-  return page({ depth: 0, title: "Mysterious Archive · New York · Private Client Selection", desc: `${site.selection}. ${site.line}. Rare Chrome Hearts archive pieces, New York.`, body, bodyClass: "home" });
+  return page({ depth: 0, title: `${BRAND} · Mysterious Archive`, desc: `${count} rare ${BRAND} pieces, each one of one. ${site.line}.`, body, bodyClass: "home" });
 }
 
-function reserveHref(p) {
-  const subject = `Reserve Piece ${pad(p.number)} / ${pad(count)} · ${p.title}`;
-  const bodyText = `I would like to reserve Piece ${pad(p.number)}: ${p.title} (size ${p.size}).`;
-  return `mailto:${site.contact.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+function mail(p, kind) {
+  const subject = `${kind === "offer" ? "Offer" : "Reserve"}: Piece ${pad(p.number)} · ${p.title}`;
+  const text = kind === "offer" ? `I'd like to make an offer on Piece ${pad(p.number)}: ${p.title} (size ${p.size}). My offer: $` : `I would like to reserve Piece ${pad(p.number)}: ${p.title} (size ${p.size}).`;
+  return `mailto:${site.contact.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
 }
 
 function product(p) {
   const up = "../../";
   const imgs = [p.hero, ...p.photos];
-  const ratio = (s) => (s[0] / s[1]).toFixed(4);
-  const heroImg = `<button class="frame hero" type="button" data-lb="0" aria-label="Open photo"><img src="${up}${p.hero}" alt="${esc(p.title)}" width="${p.heroSize[0]}" height="${p.heroSize[1]}" fetchpriority="high"></button>`;
-  const det = p.photos.map((src, i) => `<button class="frame thumb" type="button" data-lb="${i + 1}" style="flex:${ratio(p.photoSizes[i])} 1 0" aria-label="Open detail photo ${i + 1}"><img src="${up}${src}" alt="${esc(p.title)}, detail ${i + 1}" width="${p.photoSizes[i][0]}" height="${p.photoSizes[i][1]}" loading="lazy"></button>`).join("");
-  const prev = pieces.find((x) => x.number === p.number - 1), next = pieces.find((x) => x.number === p.number + 1);
-  const body = `<main class="piece" data-photos='${esc(JSON.stringify(imgs.map((s) => up + s)))}'>
-  <div class="pgrid">
-    <div class="area-hero">${heroImg}</div>
-    <div class="area-head">
-      <p class="label muted">Piece ${pad(p.number)} / ${pad(count)}</p>
-      <h1 class="ptitle">${esc(p.title)}</h1>
-      <p class="psub">${esc(p.subtitle)}</p>
-      <hr class="rule">
-    </div>
-    <div class="area-text">
-      <h2 class="label silver">Model</h2><p>${esc(p.model)}</p>
-      <h2 class="label silver">Condition</h2><p>${esc(p.condition)}</p>
-      <h2 class="label silver">Rarity</h2><p>${esc(p.rarity)}</p>
-    </div>
-    <div class="area-panel">
-      <div class="panel">
-        <div><span class="label muted">Size</span><span class="size">${esc(p.size)}</span></div>
-        <div class="pr"><span class="label muted">Price</span><span class="bigprice ${p.sold ? "sold" : ""}">${priceOf(p)}</span></div>
+  const acc = (t, body, open = false) => `<details${open ? " open" : ""}><summary>${t}</summary><div>${body}</div></details>`;
+  const body = `<main class="wrap pdp">
+  <div class="crumbs"><a href="${up}">Home</a> / <a href="${up}">${esc(BRAND)}</a> / ${esc(p.title)}</div>
+  <div class="pdp-grid">
+    <div class="gallery">${imgs.map((src, i) => `<span class="gimg"><img src="${up}${src}" alt="${esc(BRAND)} ${esc(p.title)}${i ? `, detail ${i}` : ""}" ${i ? 'loading="lazy"' : 'fetchpriority="high"'}></span>`).join("")}</div>
+    <aside class="info">
+      <a class="pbrand" href="${up}">${esc(BRAND.toUpperCase())}</a>
+      <h1 class="pname">${esc(p.title)}</h1>
+      <p class="pmeta">${esc(p.subtitle)} · Size ${esc(p.size)} · Pre-owned</p>
+      <p class="pprice ${p.sold ? "sold" : ""}">${priceOf(p)}</p>
+      ${p.sold ? `<span class="btn dark disabled">Sold</span>` : `<a class="btn dark" href="${esc(mail(p, "reserve"))}">Reserve this piece</a><a class="btn light" href="${esc(mail(p, "offer"))}">Make an offer</a>`}
+      <div class="auth">${ICON.shield}<div><b>Checked piece by piece</b><span>Examined and photographed as it is. Piece ${pad(p.number)} of ${pad(count)}, one of one.</span></div></div>
+      <div class="seller"><span class="av">MA</span><div><b>Mysterious Archive</b><span>New York, USA · Private client selection</span></div></div>
+      <ul class="ship"><li>${ICON.box}Tracked shipping from New York</li><li>${ICON.one}Held for the first client to confirm</li></ul>
+      <div class="acc">
+        ${acc("Description", `<p>${esc(p.model)}</p>`, true)}
+        ${acc("Condition", `<p>${esc(p.condition)}</p>`)}
+        ${acc("Rarity", `<p>${esc(p.rarity)}</p>`)}
+        ${acc("Shipping &amp; buying", `<p>Prices in US dollars, per piece. Shipping is tracked and quoted at confirmation. Measurements and more photos on request.</p>`)}
       </div>
-      ${p.sold ? `<span class="btn disabled" aria-disabled="true">Sold</span>` : `<a class="btn" href="${esc(reserveHref(p))}">Reserve this piece</a>`}
-    </div>
-    <div class="area-photos"><div class="photos">${det}</div></div>
+    </aside>
   </div>
-  <nav class="pnav" aria-label="Pieces">
-    ${prev ? `<a class="label" href="${up}piece/${prev.slug}/">&larr; Piece ${pad(prev.number)}</a>` : `<span></span>`}
-    <a class="label" href="${up}">All pieces</a>
-    ${next ? `<a class="label" href="${up}piece/${next.slug}/">Piece ${pad(next.number)} &rarr;</a>` : `<span></span>`}
-  </nav>
-</main>
-<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Photo viewer">
-  <button class="lb-close label" type="button" data-lb-close>Close</button>
-  <button class="lb-prev label" type="button" data-lb-prev aria-label="Previous photo">&larr;</button>
-  <img class="lb-img" alt="">
-  <button class="lb-next label" type="button" data-lb-next aria-label="Next photo">&rarr;</button>
-  <span class="lb-count label"></span>
-</div>`;
-  return page({ depth: 2, title: `${p.title} · Mysterious Archive`, desc: `${p.title}. ${p.subtitle}. Size ${p.size}. ${p.sold ? "Sold." : usd(p.price) + "."} Piece ${pad(p.number)} of ${pad(count)}.`, body, bodyClass: "product" });
+  <h2 class="sec">More from ${esc(BRAND)}</h2>
+  <div class="grid">${pieces.filter((x) => x.number !== p.number).slice(0, 4).map((x) => card(x, up)).join("\n")}</div>
+</main>`;
+  return page({ depth: 2, title: `${BRAND} ${p.title} · Mysterious Archive`, desc: `${BRAND} ${p.title}. ${p.subtitle}. Size ${p.size}. ${p.sold ? "Sold." : usd(p.price) + "."}`, body, bodyClass: "product" });
 }
 
 function reserve() {
   const c = site.contact;
-  const body = `<main class="center-page">
-  <h1 class="bigcaps">How to reserve</h1>
+  const body = `<main class="wrap narrow">
+  <h1 class="display">How to buy</h1>
   <div class="prose">
-    <p>Reply to your Mysterious Archive contact with the piece number.</p>
-    <p>Each piece is one of one in this selection and is held for the first client to confirm.</p>
-    <p>Prices are in US dollars and are per piece. Shipping is tracked and quoted at confirmation.</p>
-    <p>Measurements and additional photographs of any piece are available on request.</p>
-  </div>
-  <img class="mid-logo" src="../assets/logo_black.png" alt="Mysterious Archive, New York" width="2024" height="599" loading="lazy">
-  <div class="contact">
-    <p class="label muted">Contact</p>
-    <p><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p>
-    <p><a href="https://instagram.com/${esc(String(c.instagram).replace(/^@/, ""))}">@${esc(String(c.instagram).replace(/^@/, ""))}</a></p>
+    <p>Open the piece you want and press <b>Reserve this piece</b>, or <b>Make an offer</b>. An email opens with the piece already filled in.</p>
+    <p>Each piece is one of one and is held for the first client to confirm. Prices are in US dollars, per piece. Shipping is tracked and quoted at confirmation.</p>
+    <p>Measurements and more photos of any piece are available on request.</p>
+    <p>Email <a href="mailto:${esc(c.email)}">${esc(c.email)}</a> · Instagram <a href="https://instagram.com/${esc(String(c.instagram).replace(/^@/, ""))}">@${esc(String(c.instagram).replace(/^@/, ""))}</a></p>
   </div>
 </main>`;
-  return page({ depth: 1, title: "How to Reserve · Mysterious Archive", desc: "How to reserve a piece from the Mysterious Archive private client selection.", body, bodyClass: "reserve" });
+  return page({ depth: 1, title: "How to buy · Mysterious Archive", desc: "How to reserve a piece from Mysterious Archive.", body, bodyClass: "reserve" });
 }
 
 function about() {
-  const body = `<main class="center-page">
-  <h1 class="bigcaps">About</h1>
+  const body = `<main class="wrap narrow">
+  <h1 class="display">About</h1>
   <div class="prose">
-    <p>Mysterious Archive is a boutique in New York for rare Chrome Hearts archive pieces, offered to private clients.</p>
-    <p>Selections are small and each piece is one of one. Every piece is photographed, priced and described as it is, with its condition and any flaws stated plainly.</p>
-    <p>To reserve a piece, see <a href="../reserve/">How to reserve</a>.</p>
+    <p>Mysterious Archive is a New York reseller of rare ${esc(BRAND)} pieces. Selections are small and every piece is one of one.</p>
+    <p>Every piece is photographed, priced and described as it is, with its condition and any flaws stated plainly.</p>
   </div>
 </main>`;
-  return page({ depth: 1, title: "About · Mysterious Archive", desc: "Mysterious Archive is a New York boutique for rare Chrome Hearts archive pieces, offered to private clients.", body, bodyClass: "about" });
+  return page({ depth: 1, title: "About · Mysterious Archive", desc: `Mysterious Archive is a New York reseller of rare ${BRAND} pieces.`, body, bodyClass: "about" });
 }
 
 fs.rmSync(dist, { recursive: true, force: true });
 fs.mkdirSync(dist, { recursive: true });
 fs.cpSync(path.join(root, "assets"), path.join(dist, "assets"), { recursive: true });
 fs.cpSync(path.join(root, "src"), path.join(dist, "assets"), { recursive: true });
-const css = fs.readFileSync(path.join(root, "assets/fonts/fonts.css"), "utf8");
-fs.writeFileSync(path.join(dist, "assets/styles.css"), css + fs.readFileSync(path.join(root, "src/styles.css"), "utf8"));
+fs.writeFileSync(path.join(dist, "assets/styles.css"), fs.readFileSync(path.join(root, "src/styles.css"), "utf8"));
 const w = (rel, html) => { const f = path.join(dist, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, html); };
 w("index.html", home());
 for (const p of pieces) w(`piece/${p.slug}/index.html`, product(p));
