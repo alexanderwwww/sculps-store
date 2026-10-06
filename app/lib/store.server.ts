@@ -130,12 +130,18 @@ export async function loadProductPage(
   if (themeId) scope.push(eq(pages.themeId, themeId));
   if (options.handle) scope.push(eq(pages.handle, options.handle));
 
-  const [page] = await db
-    .select()
+  // The home page has no handle: it is the first product that is actually for
+  // sale, never a hidden one (that showed "No product page yet" once the first
+  // product alphabetically was taken off sale).
+  if (!options.handle && !options.includeHidden) scope.push(eq(products.status, "active"));
+  const [found] = await db
+    .select({ page: pages })
     .from(pages)
+    .leftJoin(products, eq(products.id, pages.productId))
     .where(and(...scope))
     .orderBy(asc(pages.handle))
     .limit(1);
+  const page = found?.page;
   if (!page || !page.productId) return null;
 
   const [product] = await db.select().from(products).where(eq(products.id, page.productId)).limit(1);
