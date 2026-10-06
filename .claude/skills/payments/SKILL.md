@@ -86,3 +86,10 @@ Report the result as a short table. Anything unchecked = blocked, with the one-l
 
 ## Most-secure setup, ranked (Alex asked 2026-10-06: "nobody can ban me or hold my payout")
 No card setup is un-closable. Layers: (1) two card processors live (Square + LLC Stripe), switchable per store; (2) daily payouts so a hold catches one day; (3) a crypto checkout (USDC to Alex's own wallet) as a freeze-proof third option; (4) later a direct bank merchant account after 3–6 months of clean history + an ACTIVE LLC. First money spent = Wyoming reinstatement of AIGIS LLC, before scaling ads.
+
+## Square checkout live on Black Reaper (2026-10-06)
+- Black Reaper (`reaper`) runs on **Square (AIGIS LLC, location L71PX3G9FAAJA)**: `payment_providers` row `square` (publishable_key = location id, secret_key_enc = access token). The closed Greek Stripe row was renamed `stripe_closed`; PayPal paused; Klarna/Affirm off.
+- Flow: checkout form → `POST /checkout/square` (server prices the cart, writes a pending order, builds a Square payment link, checks Square's total equals ours, returns the URL) → customer pays on Square's page → `GET /checkout/square?order=` asks Square and marks paid only for a COMPLETED payment of the full amount; cron `reconcileSquare` (every 15 min) catches customers who paid and closed the tab. Code: `app/lib/square.server.ts`, `app/routes/checkout.square.tsx`, `app/lib/square-reconcile.server.ts`.
+- Verified live without a charge: checkout renders "Pay $…", link is created with the right total, unpaid return → back to checkout, order marked failed (cron can still pay it). NOT yet verified: the paid path — the first real order proves it; watch it.
+- Not built yet: admin refund button for Square orders (refund from the Square dashboard; `refundSquarePayment` exists in square.server.ts), Square webhooks, post-purchase upsell on Square orders.
+- Website + description set via API; category (MCC 5999) must be changed to seasonal decor in the Square dashboard by Alex.
