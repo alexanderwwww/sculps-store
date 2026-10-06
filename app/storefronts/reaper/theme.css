@@ -4899,3 +4899,14 @@ html, body { margin: 0; }
 .cb-sqwallet__google { height: 56px !important; min-height: 0 !important; overflow: hidden; border-radius: 999px; }
 .cb-sqwallet__google > div, .cb-sqwallet__google button, .cb-sqwallet__google iframe { height: 100% !important; width: 100% !important; border-radius: 999px !important; }
 .cb-sqwallet--row .cb-sqwallet__google { height: 48px !important; }
+
+/* Ways-to-pay band: a slow endless drift of the marks under the buy box. */
+.paymarquee { overflow: hidden; margin: 22px 0 0; padding: 12px 0; border-top: 1px solid #EEE; border-bottom: 1px solid #EEE; background: #FAFAFA;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.paymarquee__track { display: flex; width: max-content; animation: paymarquee 28s linear infinite; }
+.paymarquee .paymarquee__row { flex-wrap: nowrap !important; margin: 0 !important; padding-right: 8px !important; gap: 8px !important; }
+.paymarquee:hover .paymarquee__track { animation-play-state: paused; }
+@keyframes paymarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .paymarquee__track { animation: none; } }
+/* the old static row under the buttons is gone; keep only the Afterpay line when it exists */
+.cb-sqpay:empty { display: none; }

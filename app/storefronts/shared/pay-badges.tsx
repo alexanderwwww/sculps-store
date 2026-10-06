@@ -44,3 +44,23 @@ export function PayBadges({ methods, className = "" }: { methods: string[]; clas
     </ul>
   );
 }
+
+
+/**
+ * The ways to pay as a slow moving band under the buy box: the marks drift
+ * past in a loop, the way the big shops show them. Two copies of the row
+ * side by side make the loop seamless.
+ */
+export function PayMarquee({ methods }: { methods: string[] }) {
+  if (!methods.length) return null;
+  return (
+    <div className="paymarquee" aria-label="Ways to pay">
+      <div className="paymarquee__track">
+        <PayBadges methods={methods} className="paymarquee__row" />
+        <PayBadges methods={methods} className="paymarquee__row" />
+        <PayBadges methods={methods} className="paymarquee__row" />
+        <PayBadges methods={methods} className="paymarquee__row" />
+      </div>
+    </div>
+  );
+}

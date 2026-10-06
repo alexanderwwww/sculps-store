@@ -10,7 +10,7 @@
  * chrome and live here in code. Nothing on this page is invented — a section
  * with no content renders nothing rather than a placeholder.
  */
-import { PayBadges } from "~/storefronts/shared/pay-badges";
+import { PayMarquee } from "~/storefronts/shared/pay-badges";
 import { SquareWallets } from "~/storefronts/shared/square-wallets";
 import { Fragment, createContext, useCallback, useContext, useEffect, useRef, useState, type RefObject } from "react";
 import type { LoadedProductPage, LoadedSection } from "~/lib/store.server";
@@ -984,7 +984,6 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               Only the methods agreed for this store appear. */}
           {squareMethods.length > 0 ? (
             <div className="cb-sqpay">
-              <PayBadges methods={squareMethods} />
               {squareMethods.includes("afterpay") && chosen && chosen.priceCents <= 100000 ? (
                 <p className="cb-sqpay__ap">
                   Or 4 payments of {formatMoney(Math.ceil(chosen.priceCents / 4), currency)} with Afterpay.
@@ -1017,6 +1016,8 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
           </div>
         </div>
       </div>
+      {/* The ways to pay, moving, under the buy box. */}
+      <PayMarquee methods={squareMethods} />
       {paypalClientId ? <PayLaterToast
         handle={page.product.handle}
         amountCents={chosen ? chosen.priceCents : null}
