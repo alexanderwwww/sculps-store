@@ -666,3 +666,6 @@ html, body { margin: 0; }
 }
 .gb-co__alt { display: block; width: 100%; margin-top: 10px; height: 46px; border: 1px solid #d8d4cb; border-radius: 999px; background: #fff; color: #111; font-weight: 600; font-size: 15px; cursor: pointer; }
 .gb-co__alt:hover { border-color: #111; }
+.gb-co__under-m { margin: 0 0 16px; }
+@media (min-width: 960px) { .gb-co__under-m { display: none; } }
+.gb-sug__close { justify-content: center; text-align: center; font-weight: 600; color: var(--dim); border-top: 1px solid var(--line); }

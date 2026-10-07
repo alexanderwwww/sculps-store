@@ -1901,7 +1901,7 @@ function AddressCell({
         aria-controls={listId}
         aria-autocomplete="list"
         onValue={(f, v) => { onValue(f, v); ask(v); }}
-        onTouch={onTouch}
+        onTouch={(f) => { onTouch(f); window.setTimeout(() => setOpen(false), 150); }}
         onFocus={() => { if (list.length) setOpen(true); }}
         onKeyDown={(e) => {
           if (!open) return;
@@ -1926,6 +1926,11 @@ function AddressCell({
               <span>{[sug.city, sug.region, sug.postalCode].filter(Boolean).join(", ")}</span>
             </li>
           ))}
+          {/* A way out that is not a guess: the list sits over the next
+              fields, so it must be dismissible without picking an address. */}
+          <li role="option" aria-selected={false} className="gb-sug__item gb-sug__close" onMouseDown={(e) => { e.preventDefault(); setOpen(false); }}>
+            <span>Not listed — keep my address as typed</span>
+          </li>
         </ul>
       ) : null}
     </div>
@@ -3120,6 +3125,16 @@ function DiscountBox({
 }) {
   const fetcher = useFetcher<{ discountError?: string | null }>();
   const busy = fetcher.state !== "idle";
+  // A link like /checkout?code=GARY30 applies the code by itself, once.
+  const linked = useRef(false);
+  useEffect(() => {
+    if (linked.current || locked) return;
+    const want = new URLSearchParams(window.location.search).get("code")?.trim().toUpperCase();
+    if (!want || applied?.code === want) return;
+    linked.current = true;
+    fetcher.submit({ intent: "discount", code: want }, { method: "post" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const error = fetcher.data?.discountError ?? reason;
   const buddy = cn === BUDDY;
 
@@ -3133,6 +3148,7 @@ function DiscountBox({
 
   if (applied) {
     return (
+      <>
       <fetcher.Form method="post" style={{ marginTop: 16 }}>
         <input type="hidden" name="intent" value="discount-remove" />
         <p className={cn.note} style={{ margin: 0 }}>
@@ -3146,6 +3162,23 @@ function DiscountBox({
           </button>
         </p>
       </fetcher.Form>
+      {/* Another code replaces the applied one: a personal code (GARY30) must
+          be typeable even when the shop's own code is already on. */}
+      <fetcher.Form method="post" className="gb-co__disc" style={{ marginTop: 8 }}>
+        <input type="hidden" name="intent" value="discount" />
+        <div className="gb-co__disc-row">
+          <input className="gb-co__disc-in" type="text" name="code" placeholder="Have another code?" aria-label="Discount code" />
+          <button type="submit" className="gb-co__disc-btn" disabled={busy}>
+            Apply
+          </button>
+        </div>
+        {fetcher.data?.discountError ? (
+          <ul className="gb-sf__errs" role="alert">
+            <li>{fetcher.data.discountError}</li>
+          </ul>
+        ) : null}
+      </fetcher.Form>
+      </>
     );
   }
 
@@ -5140,6 +5173,9 @@ function OnePage({
             </summary>
             <div className="gb-co__msum-body">{summary}</div>
           </details>
+          {/* The add-ons live in the right-hand column on a desk; a phone has
+              none, so they come here too (one copy shows at each size). */}
+          <div className="gb-co__under-m">{under}</div>
           {form}
         </div>
         {chrome?.footer}
