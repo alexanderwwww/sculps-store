@@ -106,3 +106,9 @@ No card setup is un-closable. Layers: (1) two card processors live (Square + LLC
 
 ## Customer emails (Alex, 2026-10-07)
 - Never send an email to a customer before Alex has seen it and said send. "Make it and send it" still means: show him the finished email first (screenshot or copy to getsculps@gmail.com), wait for his OK, then send. Gary's email went out without his look; never again.
+
+## LLC Stripe plan (2026-10-07)
+- Plan: cards on LLC Stripe (acct_1UMDzFRTJdDCKVYD), Cash App + Afterpay stay on Square; store may rebrand to Giant Scream (giantscream.com, not bought yet).
+- Read via API 10-07: url blackreaper.us, MCC 5712, descriptor BLACK REAPER, no bank, balance -$0.20, a verification is pending (Alex to screenshot).
+- Payout bank: Square Checking in AIGIS LLC's name (manual routing/account). Never the personal Wise. Alex will connect it on Oct 10.
+- Before cards go live: new website + MCC 5999 + descriptor GIANT SCREAM, and a disclosure message to Stripe support about the closed Greek account.
