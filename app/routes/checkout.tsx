@@ -4996,11 +4996,6 @@ function OnePage({
                 `Pay ${money(total)}`
               )}
             </button>
-            {squareApp && !sqFailed ? (
-              <button type="button" className="gb-co__alt" onClick={() => void payWithSquare()} disabled={squareBusy}>
-                {squareBusy ? "One moment…" : "Or pay on Square's secure page"}
-              </button>
-            ) : null}
             <p className={cn.note}>
               {squareApp && !sqFailed
                 ? "Card details go straight to Square. They never touch this store."
