@@ -3388,7 +3388,12 @@ function OnePage({
   const setPayError = useCallback(
     (message: string | null) => {
       setPayErrorState(message);
-      if (message) report("pay-error", message);
+      if (message) {
+        report("pay-error", message);
+        // The message sits in the Payment box; bring it into view wherever
+        // the button pressed was (Express checkout is far above it on a phone).
+        window.setTimeout(() => document.querySelector('[role="alert"]')?.scrollIntoView({ block: "center", behavior: "smooth" }), 60);
+      }
     },
     [report],
   );
@@ -4459,6 +4464,9 @@ function OnePage({
     if (!squareOnly || !squareApp || !sqReady || !sqPayments.current) return;
     let cancelled = false;
     const payments = sqPayments.current;
+    // Every wallet built for an older total is destroyed, so no stale button
+    // can charge the old amount.
+    const made: any[] = [];
     const request = payments.paymentRequest({
       countryCode: "US",
       currencyCode: cart.currency.toUpperCase(),
@@ -4492,9 +4500,11 @@ function OnePage({
     (async () => {
       try {
         const google = await payments.googlePay(request);
+        made.push(google);
         if (cancelled || !sqGoogleRef.current) return;
         sqGoogleRef.current.innerHTML = "";
-        await google.attach(sqGoogleRef.current, { buttonColor: "black", buttonSizeMode: "fill", buttonType: "pay" });
+        await google.attach(sqGoogleRef.current, { buttonColor: "black", buttonSizeMode: "fill", buttonType: "long" });
+        if (cancelled) return;
         sqGoogleRef.current.onclick = async (event) => {
           event.preventDefault();
           if (busyNow.current) return;
@@ -4506,6 +4516,7 @@ function OnePage({
       // Afterpay, only when Square says this account and total qualify.
       try {
         const after = await payments.afterpayClearpay(request);
+        made.push(after);
         after.addEventListener("afterpay_shippingaddresschanged", () => ({
           shippingOptions: [
             {
@@ -4520,6 +4531,7 @@ function OnePage({
         if (!cancelled && sqAfterRef.current) {
           sqAfterRef.current.innerHTML = "";
           await after.attach(sqAfterRef.current);
+          if (cancelled) return;
           sqAfterRef.current.onclick = async (event) => {
             event.preventDefault();
             if (busyNow.current) return;
@@ -4546,6 +4558,7 @@ function OnePage({
     })();
     return () => {
       cancelled = true;
+      for (const w of made) Promise.resolve(w?.destroy?.()).catch(() => undefined);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [squareOnly, sqReady, cart.totalCents]);
@@ -4587,6 +4600,7 @@ function OnePage({
     } catch {
       /* nothing kept */
     }
+    let cashMade: any = null;
     (async () => {
       try {
         const request = payments.paymentRequest({
@@ -4595,9 +4609,11 @@ function OnePage({
           total: { amount: (cart.totalCents / 100).toFixed(2), label: store.name },
         });
         const cash = await payments.cashAppPay(request, { redirectURL: window.location.href, referenceId: `cart-${cart.totalCents}` });
+        cashMade = cash;
         if (cancelled || !sqCashRef.current) return;
         sqCashRef.current.innerHTML = "";
         await cash.attach(sqCashRef.current, { shape: "semiround", width: "full", size: "medium" });
+        if (cancelled) return;
         cash.addEventListener("ontokenization", async (event: any) => {
           const { tokenResult, error } = event.detail ?? {};
           if (error || tokenResult?.status !== "OK" || !tokenResult?.token) {
@@ -4629,6 +4645,8 @@ function OnePage({
     })();
     return () => {
       cancelled = true;
+      // Cash App cannot change its amount: the old one goes, a new one is built.
+      Promise.resolve(cashMade?.destroy?.()).catch(() => undefined);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [squareOnly, sqReady, cart.totalCents]);

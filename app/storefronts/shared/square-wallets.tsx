@@ -76,8 +76,16 @@ export function SquareWallets({
     setError(null);
     try {
       if (live.current.variantId) {
-        const add = new URLSearchParams({ variantId: live.current.variantId, replace: "1" });
-        await fetch(`/cart/add${storeParam}`, { method: "POST", body: add, headers: { "X-Cart-Ajax": "1" }, credentials: "same-origin" });
+        // replace=1 is read from the address, not the body: this cart becomes
+        // exactly the bundle on the sheet, so the totals match.
+        const add = new URLSearchParams({ variantId: live.current.variantId });
+        const addUrl = `/cart/add${storeParam ? `${storeParam}&` : "?"}replace=1`;
+        const added = await fetch(addUrl, { method: "POST", body: add, headers: { "X-Cart-Ajax": "1" }, credentials: "same-origin" });
+        if (!added.ok) {
+          setError("That bundle could not be added. Nothing has been charged.");
+          setBusy(false);
+          return;
+        }
       }
       const contact = result.details?.shipping?.contact ?? result.details?.billing ?? {};
       const body = new FormData();
@@ -95,7 +103,7 @@ export function SquareWallets({
       body.set("postalCode", String(contact.postalCode ?? ""));
       body.set("country", String(contact.countryCode ?? "US"));
       const response = await fetch(`/checkout/square${storeParam}`, { method: "POST", body, credentials: "same-origin" });
-      const payload = (await response.json()) as { ok?: boolean; orderId?: string; error?: string };
+      const payload = (await response.json().catch(() => ({ error: "The payment could not be completed. Nothing has been charged." }))) as { ok?: boolean; orderId?: string; error?: string };
       if (!response.ok || !payload.ok || !payload.orderId) {
         setError(payload.error ?? "The payment could not be completed. Nothing has been charged.");
         setBusy(false);
@@ -110,6 +118,7 @@ export function SquareWallets({
 
   useEffect(() => {
     let cancelled = false;
+    const made: any[] = [];
     (async () => {
       try {
         await loadSquare();
@@ -131,9 +140,11 @@ export function SquareWallets({
         }
         try {
           const gp = await payments.googlePay(request);
+          made.push(gp);
           if (cancelled || !googleRef.current) return;
           googleRef.current.innerHTML = "";
-          await gp.attach(googleRef.current, { buttonColor: "black", buttonSizeMode: "fill", buttonType: "buy" });
+          await gp.attach(googleRef.current, { buttonColor: "black", buttonSizeMode: "fill", buttonType: "long" });
+          if (cancelled) return;
           googleRef.current.onclick = async (event) => {
             event.preventDefault();
             if (busyRef.current) return;
@@ -147,6 +158,7 @@ export function SquareWallets({
         // qualify, so it appears exactly when it can be paid with.
         try {
           const ap = await payments.afterpayClearpay(request);
+          made.push(ap);
           ap.addEventListener("afterpay_shippingaddresschanged", () => ({
             shippingOptions: [
               {
@@ -161,6 +173,7 @@ export function SquareWallets({
           if (cancelled || !afterRef.current) return;
           afterRef.current.innerHTML = "";
           await ap.attach(afterRef.current);
+          if (cancelled) return;
           afterRef.current.onclick = async (event) => {
             event.preventDefault();
             if (busyRef.current) return;
@@ -180,6 +193,7 @@ export function SquareWallets({
     })();
     return () => {
       cancelled = true;
+      for (const w of made) Promise.resolve(w?.destroy?.()).catch(() => undefined);
     };
     // Rebuilt when the bundle (and so the price on the sheet) changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -198,7 +212,7 @@ export function SquareWallets({
           onClick={() => {
             if (busyRef.current) return;
             const pending = apple.current?.tokenize();
-            if (pending) void pending.then(charge);
+            if (pending) void pending.then(charge).catch(() => setError("Apple Pay was not completed. Nothing has been charged."));
           }}
         />
       ) : null}
