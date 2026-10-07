@@ -644,26 +644,87 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
   );
 }
 
-/** The $30 personal store credit, as a card the customer wants to screenshot. */
+/** The $30 personal store credit: a reward ticket that unlocks, counts up and shines. */
+const CREDIT_CSS = `
+.sc{position:relative;margin:30px 0;perspective:900px}
+.sc__t{position:relative;display:flex;border-radius:22px;overflow:hidden;background:linear-gradient(135deg,#140B04 0%,#0B0B0C 55%,#22120A 100%);color:#fff;box-shadow:0 30px 60px -28px rgba(245,130,31,.55),0 0 0 1px rgba(245,130,31,.35) inset;animation:sc-in .9s cubic-bezier(.2,1.4,.4,1) both}
+.sc__l{flex:1;padding:26px 22px 24px;text-align:left;min-width:0}
+.sc__r{width:132px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:linear-gradient(180deg,#F5821F,#E8590C);color:#0B0B0C;position:relative}
+.sc__r:before{content:"";position:absolute;left:-1px;top:14px;bottom:14px;border-left:3px dotted rgba(11,11,12,.55)}
+.sc__t:after,.sc__t:before{content:"";position:absolute;left:calc(100% - 132px - 13px);width:26px;height:26px;border-radius:50%;background:#fff;z-index:2}
+.sc__t:before{top:-13px}.sc__t:after{bottom:-13px}
+.sc__k{font-size:11px;letter-spacing:3px;font-weight:800;color:#F5821F;display:flex;align-items:center;gap:8px}
+.sc__dot{width:8px;height:8px;border-radius:50%;background:#3BE37A;box-shadow:0 0 0 0 rgba(59,227,122,.7);animation:sc-ping 1.6s infinite}
+.sc__amt{font-family:Poppins,Inter,sans-serif;font-size:64px;font-weight:800;line-height:1;margin:12px 0 4px;letter-spacing:-2px;background:linear-gradient(90deg,#fff 0%,#FFD9B0 40%,#fff 60%,#fff 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sc-gold 3.2s linear infinite}
+.sc__sub{font-size:14px;color:#CFC9BE}
+.sc__code{margin-top:16px;display:inline-flex;align-items:center;gap:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px 14px;cursor:pointer;color:#fff;font:inherit}
+.sc__code b{font-family:Menlo,Consolas,monospace;font-size:19px;letter-spacing:2.5px;white-space:nowrap}
+.sc__code span{font-size:12px;font-weight:700;background:#fff;color:#0B0B0C;border-radius:999px;padding:5px 11px}
+.sc__code.ok span{background:#3BE37A}
+.sc__off{font-family:Poppins,Inter,sans-serif;font-size:30px;font-weight:800;line-height:1}
+.sc__off small{display:block;font-size:11px;letter-spacing:2px;text-align:center;margin-top:4px}
+.sc__stamp{position:absolute;top:14px;right:148px;font-size:10px;font-weight:900;letter-spacing:2px;color:#3BE37A;border:2px solid #3BE37A;border-radius:6px;padding:3px 7px;transform:rotate(-8deg) scale(2.4);opacity:0;animation:sc-stamp .5s .9s cubic-bezier(.3,1.6,.5,1) forwards}
+.sc__shine{position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.22) 48%,transparent 60%);transform:translateX(-120%);animation:sc-shine 3.8s 1.2s ease-in-out infinite}
+.sc__note{font-size:12.5px;color:#8A8478;margin-top:12px;text-align:center}
+.sc__bits{position:absolute;inset:-20px;pointer-events:none;overflow:visible}
+.sc__bits i{position:absolute;left:50%;top:40%;width:8px;height:12px;border-radius:2px;opacity:0;animation:sc-pop 1.3s .35s cubic-bezier(.15,.7,.3,1) forwards}
+@keyframes sc-in{0%{opacity:0;transform:rotateX(35deg) translateY(30px) scale(.92)}100%{opacity:1;transform:none}}
+@keyframes sc-gold{0%{background-position:100% 0}100%{background-position:-150% 0}}
+@keyframes sc-shine{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
+@keyframes sc-ping{0%{box-shadow:0 0 0 0 rgba(59,227,122,.7)}80%,100%{box-shadow:0 0 0 9px rgba(59,227,122,0)}}
+@keyframes sc-stamp{to{opacity:1;transform:rotate(-8deg) scale(1)}}
+@keyframes sc-pop{0%{opacity:1;transform:translate(-50%,0) rotate(0)}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--r))}}
+@media (max-width:520px){.sc__r{width:84px}.sc__t:after,.sc__t:before{left:calc(100% - 84px - 13px)}.sc__l{padding:22px 16px 20px}.sc__k{font-size:10px;letter-spacing:1.6px;white-space:nowrap}.sc__stamp{top:auto;bottom:16px;right:96px}.sc__amt{font-size:52px}.sc__sub{font-size:13px}.sc__code{gap:8px;padding:9px 10px}.sc__code b{font-size:15px;letter-spacing:1.2px;white-space:nowrap}.sc__off{font-size:24px}}
+@media (prefers-reduced-motion:reduce){.sc *,.sc__t{animation:none!important}.sc__stamp{opacity:1;transform:rotate(-8deg)}.sc__amt{color:#fff}}
+`;
+const BITS = Array.from({ length: 22 }, (_, i) => {
+  const a = (i / 22) * Math.PI * 2;
+  const d = 120 + (i % 5) * 28;
+  return { x: `${Math.round(Math.cos(a) * d * 1.6)}px`, y: `${Math.round(Math.sin(a) * d)}px`, r: `${(i * 67) % 360}deg`, c: ["#F5821F", "#FFD9B0", "#3BE37A", "#fff"][i % 4], delay: `${0.35 + (i % 6) * 0.03}s` };
+});
+
 function CreditCard({ code, name }: { code: string; name: string | null }) {
   const [copied, setCopied] = useState(false);
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const start = performance.now() + 450;
+    const tick = (t: number) => {
+      const k = Math.min(1, Math.max(0, (t - start) / 900));
+      setN(Math.round(30 * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const copy = () => {
+    navigator.clipboard?.writeText(code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); }).catch(() => undefined);
+  };
   return (
-    <div style={{ margin: "26px 0", background: "#0B0B0C", border: "2px dashed #F5821F", borderRadius: 18, padding: "26px 20px", textAlign: "center", color: "#fff" }}>
-      <div style={{ fontSize: 12, letterSpacing: 3, fontWeight: 800, color: "#F5821F" }}>
-        STORE CREDIT UNLOCKED{name ? ` · MADE FOR ${name.toUpperCase()}` : ""}
+    <div className="sc">
+      <style dangerouslySetInnerHTML={{ __html: CREDIT_CSS }} />
+      <div className="sc__bits" aria-hidden="true">
+        {BITS.map((b, i) => (
+          <i key={i} style={{ background: b.c, animationDelay: b.delay, ["--x" as any]: b.x, ["--y" as any]: b.y, ["--r" as any]: b.r }} />
+        ))}
       </div>
-      <div style={{ fontSize: 56, fontWeight: 900, lineHeight: 1.1, padding: "10px 0 2px" }}>$30</div>
-      <div style={{ fontSize: 15, color: "#CFC9BE", paddingBottom: 16 }}>off your next order, just for you</div>
-      <button
-        type="button"
-        onClick={() => {
-          navigator.clipboard?.writeText(code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); }).catch(() => undefined);
-        }}
-        style={{ background: "#fff", color: "#0B0B0C", border: 0, borderRadius: 12, padding: "12px 20px", fontFamily: "Menlo, Consolas, monospace", fontSize: 22, fontWeight: 900, letterSpacing: 3, cursor: "pointer" }}
-      >
-        {code} <span style={{ fontFamily: "Inter, sans-serif", fontSize: 13, letterSpacing: 0, marginLeft: 8, color: copied ? "#1F8A4C" : "#8A8478" }}>{copied ? "Copied" : "Copy"}</span>
-      </button>
-      <div style={{ fontSize: 13, color: "#8A8478", paddingTop: 14 }}>It is in your receipt email too. One use, yours only.</div>
+      <div className="sc__t">
+        <div className="sc__shine" aria-hidden="true" />
+        <span className="sc__stamp">UNLOCKED</span>
+        <div className="sc__l">
+          <div className="sc__k"><span className="sc__dot" />STORE CREDIT{name ? ` · FOR ${name.toUpperCase()}` : ""}</div>
+          <div className="sc__amt">${n}</div>
+          <div className="sc__sub">off your next order. Made just for you.</div>
+          <button type="button" className={`sc__code${copied ? " ok" : ""}`} onClick={copy}>
+            <b>{code}</b>
+            <span>{copied ? "Copied" : "Copy"}</span>
+          </button>
+        </div>
+        <div className="sc__r">
+          <div className="sc__off">$30<small>OFF</small></div>
+        </div>
+      </div>
+      <div className="sc__note">Also in your receipt email. One use, yours only.</div>
     </div>
   );
 }
