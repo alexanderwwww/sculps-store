@@ -112,3 +112,6 @@ No card setup is un-closable. Layers: (1) two card processors live (Square + LLC
 - Read via API 10-07: url blackreaper.us, MCC 5712, descriptor BLACK REAPER, no bank, balance -$0.20, a verification is pending (Alex to screenshot).
 - Payout bank: Square Checking in AIGIS LLC's name (manual routing/account). Never the personal Wise. Alex will connect it on Oct 10.
 - Before cards go live: new website + MCC 5999 + descriptor GIANT SCREAM, and a disclosure message to Stripe support about the closed Greek account.
+
+## Checkout law (Alex, 2026-10-07)
+No mistakes in checkout, on any platform. Full-flow tests in code, processor API/SDK read first, no live test charges (sandbox or dry run), failed payment never marks an order paid, charge never without an order, confirm the live checkout after every deploy. Full wording: AGENTS.md rule 20.

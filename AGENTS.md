@@ -236,6 +236,13 @@ are not style notes.
 19. **Alex's judgment gets a real second look, every time. The agent is not always right, and its code has flaws.** (Alex, 2026-10-06: "anytime you want to question me, reconsider that … you are not always right.") Before pushing back on anything he says, re-check the facts and his reasoning first, and change the answer when he is right. Mistakes already made in this operation, so it is never assumed otherwise: told him €500 would come back after the hold; advised switching to the LLC Stripe, then retracted it; said "don't mention Depop", then retracted it; said Stripe sees tracking automatically; read a venting line as a crisis. Code is the same: verify, run it, never claim "fixed" unchecked (rules 1, 7, 12). **The one thing reconsidering does not change:** a request whose point is to deceive a processor, bank, supplier or customer (fake tracking, fake screenshots, fake invoices, front accounts, false answers on applications). There the answer stays no, said once with the one concrete reason, plus the honest alternative that gets him the same result.
 
 
+
+20. **Checkout never gets a mistake. On any platform, for any store.** (Alex, 2026-10-07, after a checkout bug on Black Reaper broke Gary's payments and forced a live $1 test that triggered Square's questions and a held balance.) Checkout is the one place where a mistake costs real money, a customer, and the processor account.
+    - Before any change to checkout, payment or order code ships: drive the whole flow in code (every branch: success, decline, wallet, empty fields, double submit), read the processor's own API or SDK source for what it requires, and check the live response, never from memory (rules 1, 2, 12, 15).
+    - Never test with a live charge (rule 18). Use the processor sandbox or an API dry run, and say plainly what could not be proven before Alex has to spend or risk anything.
+    - A failed payment must never leave an order marked paid, and a charge must never go through without an order. After every deploy, load the live checkout and confirm it renders and the key calls answer.
+    - If a checkout fix is not proven, say so before shipping. Do not ship on a guess.
+
 ---
 
 ## 4. Practical notes
