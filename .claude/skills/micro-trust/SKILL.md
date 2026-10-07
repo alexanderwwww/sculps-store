@@ -56,3 +56,12 @@ Related: `.claude/skills/ugc-master-prompter` (the procedure), its `references/r
 - `references/formula-and-psychology.md` — the five-stage formula table, the one-second verdict model, desire engineering, security cues, 30 hooks (10 written for the Reaper), testing loop, compliance guard rails (AI-disclosure: label synthetic-person ads until the official text is read), the 25-line brain card.
 - `references/library.md` — the compact copy-paste cues and the 0–3 micro-trust score used by the judge.
 Open evidence gaps are listed in `.claude/skills/ugc-master-prompter/references/decisions-and-open-items.md`.
+
+## REALISTIC PHOTO ≠ AD (Alex, 2026-10-07 — said angrily, never repeat)
+When Alex asks for a "realistic picture" (a listing photo he "took with his phone"), every imperfection goes in at once, in the FIRST prompt:
+- camera NOT straight overhead: tilted, off-centre, slightly crooked horizon, part of the item cut off by the frame edge;
+- item thrown down, asymmetric, one sleeve twisted, hood half-collapsed, uneven folds, lint, fuzz, faded patches; never a neat symmetrical flat lay;
+- uneven window light (one side brighter), a little overexposure, slight motion blur or soft focus, phone noise, a stray hair/thread;
+- his black loafers only partly in frame, scuffed, one at an odd angle;
+- props small and casual (a blank tiny white paper scrap, torn, unevenly placed) — no text on it unless asked.
+A centred, symmetrical, evenly lit, perfectly sharp result is a FAIL even if every detail is "correct".
