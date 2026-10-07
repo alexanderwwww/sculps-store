@@ -4619,12 +4619,14 @@ function OnePage({
         });
         const cash = await payments.cashAppPay(request, { redirectURL: window.location.href, referenceId: `cart-${cart.totalCents}` });
         cashMade = cash;
+        report("cash", { at: "created", total: cart.totalCents, returning: /cash|square/i.test(document.referrer) || location.search.length > 0 });
         if (cancelled || !sqCashRef.current) return;
         sqCashRef.current.innerHTML = "";
         await cash.attach(sqCashRef.current, { shape: "semiround", width: "full", size: "medium" });
         if (cancelled) return;
         cash.addEventListener("ontokenization", async (event: any) => {
           const { tokenResult, error } = event.detail ?? {};
+          report("cash", { at: "tokenization", status: tokenResult?.status ?? null, token: Boolean(tokenResult?.token), error: error ? String(error?.message ?? error) : null, cancelled, missing: Object.keys(clientErrorsNow.current) });
           if (error || tokenResult?.status !== "OK" || !tokenResult?.token) {
             if (tokenResult?.status !== "Cancel") setPayError("The Cash App payment was not completed. Nothing has been charged.");
             return;
@@ -4639,6 +4641,7 @@ function OnePage({
           setPayError(null);
           setSqPaying(true);
           const ok = await chargeToken(detailsFromForm(), tokenResult.token);
+          report("cash", { at: "charged", ok });
           if (ok) {
             try {
               sessionStorage.removeItem(CASH_KEY);
@@ -4648,7 +4651,8 @@ function OnePage({
           } else setSqPaying(false);
         });
         setSqCash(true);
-      } catch {
+      } catch (e) {
+        report("cash", { at: "unavailable", error: String((e as any)?.message ?? e) });
         if (!cancelled) setSqCash(false);
       }
     })();
