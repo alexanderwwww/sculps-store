@@ -16,7 +16,7 @@ import { loadOrder, markOrderPaid, recordVisitorEvent } from "~/lib/admin.server
 import { providerForStore } from "~/lib/payments.server";
 import { bnplFor, readBnplIntent } from "~/lib/bnpl.server";
 import { afterPaymentConfirmed } from "~/lib/fulfilment.server";
-import { metaConfig } from "~/db/schema";
+import { metaConfig, orderEvents } from "~/db/schema";
 import { pixelScript, purchasePixelScript } from "~/lib/meta.server";
 import { readVisitorSession } from "~/lib/visitor.server";
 import { formatMoney } from "~/lib/money";
@@ -175,7 +175,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       ? await geocodeAddress(addressLine(loaded.order)).catch(() => null)
       : null;
 
+  // The personal $30 store credit minted when the order was paid.
+  const creditRow = paymentStatus === "paid"
+    ? (await context.db.select().from(orderEvents).where(eq(orderEvents.orderId, loaded.order.id))).find((e) => e.type === "credit:minted")
+    : undefined;
+  const credit = creditRow ? String((creditRow.meta as any)?.code ?? "") || null : null;
+
   return data({
+    credit,
+    creditName: (loaded.order.customerName ?? "").split(" ")[0] || null,
     pin,
     shipEstimate: store.shipEstimate ?? null,
     /** the offer is good for twenty minutes from now; the clock runs in the browser */
@@ -501,7 +509,7 @@ const BRANDED_THANKS = new Set(["garden-buddy", "ceiling-buddy", "reaper", "cryo
 const THANKS_SKIN: Record<string, string> = { reaper: "gb-co-sec--reaper" };
 
 export default function Thanks({ loaderData }: Route.ComponentProps) {
-  const { store, order, items, pixel, footerLinks, offers, orderId, pin, shipEstimate, offerUntil } = loaderData;
+  const { store, order, items, pixel, footerLinks, offers, orderId, pin, shipEstimate, offerUntil, credit, creditName } = loaderData;
   const paid = order.paymentStatus === "paid";
 
   /* Garden Buddy: the last page a paying customer sees is the store's own,
@@ -552,6 +560,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
                   <span>Total</span>
                   <b>{order.total}</b>
                 </div>
+                {credit ? <CreditCard code={credit} name={creditName} /> : null}
                 {paid ? <OfferShelf offers={offers} orderId={orderId} until={offerUntil} /> : null}
                 {store.contactEmail ? (
                   <p className="gb-co__note">
@@ -631,6 +640,30 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
           </Link>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** The $30 personal store credit, as a card the customer wants to screenshot. */
+function CreditCard({ code, name }: { code: string; name: string | null }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div style={{ margin: "26px 0", background: "#0B0B0C", border: "2px dashed #F5821F", borderRadius: 18, padding: "26px 20px", textAlign: "center", color: "#fff" }}>
+      <div style={{ fontSize: 12, letterSpacing: 3, fontWeight: 800, color: "#F5821F" }}>
+        STORE CREDIT UNLOCKED{name ? ` · MADE FOR ${name.toUpperCase()}` : ""}
+      </div>
+      <div style={{ fontSize: 56, fontWeight: 900, lineHeight: 1.1, padding: "10px 0 2px" }}>$30</div>
+      <div style={{ fontSize: 15, color: "#CFC9BE", paddingBottom: 16 }}>off your next order, just for you</div>
+      <button
+        type="button"
+        onClick={() => {
+          navigator.clipboard?.writeText(code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); }).catch(() => undefined);
+        }}
+        style={{ background: "#fff", color: "#0B0B0C", border: 0, borderRadius: 12, padding: "12px 20px", fontFamily: "Menlo, Consolas, monospace", fontSize: 22, fontWeight: 900, letterSpacing: 3, cursor: "pointer" }}
+      >
+        {code} <span style={{ fontFamily: "Inter, sans-serif", fontSize: 13, letterSpacing: 0, marginLeft: 8, color: copied ? "#1F8A4C" : "#8A8478" }}>{copied ? "Copied" : "Copy"}</span>
+      </button>
+      <div style={{ fontSize: 13, color: "#8A8478", paddingTop: 14 }}>It is in your receipt email too. One use, yours only.</div>
     </div>
   );
 }

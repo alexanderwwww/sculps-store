@@ -630,13 +630,25 @@ ${rvText("Reply to this email if anything is wrong with it. A person reads it.")
         })
       : shell({ ...brandOf(input), heroImageUrl: heroSrc }, body, `Order ${ref} confirmed — ${formatMoney(input.totalCents, input.currency)}`);
 
+  // The personal store credit, minted for this customer when the order was paid.
+  const creditBlock = input.giftCode
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:8px 16px 32px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#0B0B0C;border-radius:18px;border:2px dashed #F5821F"><tr><td align="center" style="padding:28px 20px;font-family:Helvetica,Arial,sans-serif">
+<div style="font-size:12px;letter-spacing:3px;font-weight:800;color:#F5821F">STORE CREDIT UNLOCKED · MADE FOR ${esc(first.toUpperCase())}</div>
+<div style="font-size:56px;font-weight:900;color:#FFFFFF;line-height:1.1;padding:10px 0 4px">$${esc(input.giftLabel?.match(/\d+/)?.[0] ?? "30")}</div>
+<div style="font-size:15px;color:#CFC9BE;padding-bottom:16px">off your next order, just for you</div>
+<div style="display:inline-block;background:#FFFFFF;color:#0B0B0C;border-radius:12px;padding:12px 22px;font-family:Menlo,Consolas,monospace;font-size:24px;font-weight:900;letter-spacing:3px">${esc(input.giftCode)}</div>
+<div style="font-size:13px;color:#8A8478;padding-top:14px">Enter it at checkout on ${esc(input.domain ?? "our store")}. One use, yours only.</div>
+</td></tr></table></td></tr></table>`
+    : "";
+  const htmlOut = creditBlock && html.includes("</body>") ? html.replace("</body>", `${creditBlock}</body>`) : html + creditBlock;
   const result = await send(env, {
     from: `${input.storeName} <${from}>`,
     to: input.to,
     replyTo: input.replyTo,
     subject,
-    html,
-    text,
+    html: htmlOut,
+    text: input.giftCode ? `${text}\n\nYour $${input.giftLabel?.match(/\d+/)?.[0] ?? "30"} store credit: ${input.giftCode} — use it on your next order.` : text,
   });
 
   await recordOrderEvent(

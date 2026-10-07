@@ -21,6 +21,27 @@ import { redeemDiscount } from "./discounts.server";
  * The timeline is the record, so it is also the lock. No extra column, and it
  * survives anything that replays an event.
  */
+const CREDIT_CENTS = 3000;
+
+/** One personal $30 code per paid order, e.g. GARY30-K7Q2. Idempotent through the timeline. */
+export async function mintStoreCredit(db: DB, storeId: string, orderId: string, name: string | null, totalCents: number): Promise<{ code: string; offCents: number } | null> {
+  // A test-sized order earns nothing.
+  if (totalCents < 5000) return null;
+  const rows = await db.select().from(orderEvents).where(eq(orderEvents.orderId, orderId));
+  const done = rows.find((r) => r.type === "credit:minted");
+  if (done) return { code: String((done.meta as any)?.code ?? ""), offCents: CREDIT_CENTS };
+  const first = (name ?? "").split(" ")[0].toUpperCase().replace(/[^A-Z]/g, "").slice(0, 10) || "VIP";
+  const tail = Array.from(crypto.getRandomValues(new Uint8Array(4)), (b) => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[b % 31]).join("");
+  const code = `${first}30-${tail}`;
+  try {
+    await db.insert(discounts).values({ storeId, code, kind: "fixed", value: CREDIT_CENTS, usageLimit: 1, active: true, minimumSubtotalCents: 5000 } as any);
+    await recordOrderEvent(db, orderId, "credit:minted", `Store credit ${code} ($30) created for the next order.`, { code });
+    return { code, offCents: CREDIT_CENTS };
+  } catch {
+    return null;
+  }
+}
+
 async function alreadyDone(db: DB, orderId: string, type: string): Promise<boolean> {
   const rows = await db.select().from(orderEvents).where(eq(orderEvents.orderId, orderId));
   return rows.some((row) => row.type === type);
@@ -146,9 +167,15 @@ export async function afterPaymentConfirmed(
           // The shop's own standing code, never a one-use code minted for one customer.
           .orderBy(asc(discounts.createdAt))
     .limit(1);
-  const gift = giftRow && Number(giftRow.value) > 0
+  let gift = giftRow && Number(giftRow.value) > 0
     ? { code: giftRow.code, offCents: Number(giftRow.value) }
     : null;
+
+  // The $30 personal store credit (Alex, 2026-10-07): every paid order mints
+  // a one-use code with the customer's first name, sent in the receipt and
+  // shown on the thank-you page.
+  const credit = await mintStoreCredit(db, store.id, orderId, order.customerName, order.totalCents);
+  if (credit) gift = credit;
 
   // 1. The sound on his phone.
   //
