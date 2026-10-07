@@ -103,3 +103,6 @@ No card setup is un-closable. Layers: (1) two card processors live (Square + LLC
 - Any email about money, a merchant account or a bank: answer exactly what was asked, short, confident, American-business tone. Never volunteer a detail that invites doubt.
 - Never name Square / Square Checking as the business bank in a processor application: a processor will not accept another processor's account as the settlement bank (PaymentCloud said so). Alex has other US bank accounts: use the real US bank he names.
 - Facts only from Alex; leave a [fill in] where a fact is his to give. Still never a false statement (rule 19).
+
+## Customer emails (Alex, 2026-10-07)
+- Never send an email to a customer before Alex has seen it and said send. "Make it and send it" still means: show him the finished email first (screenshot or copy to getsculps@gmail.com), wait for his OK, then send. Gary's email went out without his look; never again.
