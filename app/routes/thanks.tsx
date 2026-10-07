@@ -343,7 +343,8 @@ function ArrivalCard({
 
   // The window inside the ring is the store's own shipping estimate, which
   // is the only number this page is allowed to promise.
-  const window_ = shipEstimate || "On its way";
+  // No delivery promise here (Alex, 2026-10-07): the ring says where the order is, not when it lands.
+  const window_ = paid ? "Order confirmed" : "Confirming";
   return (
     <div className="gb-th__arrive">
       <div className="gb-th__ring" aria-hidden="true">
@@ -354,7 +355,7 @@ function ArrivalCard({
         </svg>
         <div className="gb-th__ring-in">
           <b>{window_}</b>
-          <span>{paid ? "packing now" : "confirming"}</span>
+          {paid ? <span>packing now</span> : null}
         </div>
       </div>
       <h1 className="gb-th__h">{paid ? "We've got your order." : "We have your order."}</h1>
@@ -524,7 +525,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
         />
         <link rel="stylesheet" href={buddyHref} precedence="high" />
         {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
-        <div className={`gb-co-sec${skin ? ` ${skin}` : ""}`}>
+        <div className={`gb-co-sec gb-th-page${skin ? ` ${skin}` : ""}`}>
           <div className="gb-co__pane">
             <div className="gb-co__pane-in">
               <CheckoutHeader store={store} home={home} />

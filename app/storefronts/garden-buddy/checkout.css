@@ -670,3 +670,6 @@ html, body { margin: 0; }
 .gb-co__under-m { margin: 0 0 16px; }
 @media (min-width: 960px) { .gb-co__under-m { display: none; } }
 .gb-sug__close { justify-content: center; text-align: center; font-weight: 600; color: var(--dim); border-top: 1px solid var(--line); }
+
+/* Thank-you page: one centred column on every screen, not the checkout's right half. */
+.gb-th-page .gb-co__pane-in { margin: 0 auto !important; max-width: 620px; padding-right: clamp(16px, 4vw, 40px) !important; }
