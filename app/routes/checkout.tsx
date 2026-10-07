@@ -1870,7 +1870,10 @@ function AddressCell({
         const res = await fetch(`/checkout/suggest?q=${encodeURIComponent(q)}&country=${encodeURIComponent(country)}`);
         const rows = (await res.json()) as Suggestion[];
         if (n !== seq.current) return;
-        setList(rows); setOpen(rows.length > 0); setActive(-1);
+        // Only open while they are still in the address box: an answer that
+        // lands after they moved on to ZIP must not cover it.
+        const still = boxRef.current?.contains(document.activeElement) ?? false;
+        setList(rows); setOpen(still && rows.length > 0); setActive(-1);
       } catch { /* the box still works as a plain box */ }
     }, 220);
   };
@@ -1894,9 +1897,15 @@ function AddressCell({
   };
 
   useEffect(() => {
-    const away = (e: MouseEvent) => { if (!boxRef.current?.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener("mousedown", away);
-    return () => document.removeEventListener("mousedown", away);
+    const away = (e: Event) => { if (!boxRef.current?.contains(e.target as Node)) setOpen(false); };
+    // Closed only after focus or the tap has landed: the list sits in the
+    // page, so closing it on touch-down would move the field being tapped.
+    document.addEventListener("click", away);
+    document.addEventListener("focusin", away);
+    return () => {
+      document.removeEventListener("click", away);
+      document.removeEventListener("focusin", away);
+    };
   }, []);
 
   const listId = "address1-suggest";
