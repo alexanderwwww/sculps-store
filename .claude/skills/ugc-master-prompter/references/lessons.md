@@ -139,3 +139,8 @@ Cite key: [xugc skill] = `.claude/skills/xugc/SKILL.md` (section named) | [bible
 
 ## Scale is told by the real number and the camera angle, never by exaggeration (Alex, 2026-10-02)
 "16 feet / 5 metres is not a crazy big giant." The Scream is 16 ft 4 in: about 2.8 adults stacked, head level with the upstairs windows, deflated about the length of a parked car. Write the true size and a parked car / door / person as the scale cue. The drama comes from the CAMERA: low angle, close to the base, looking up along the figure, wide phone lens. Never write "towering", "colossal", "covers the lawn", "gigantic" for a yard prop.
+
+## Approved ad (2026-10-07): Scream inflation, posted by Alex
+- Recipe that worked: Nano Banana Pro end frame (product photos as reference, adults for scale) -> edit to a start frame (flat glowing heap) -> Kling 3.0 pro 10 s start/end frames, sound on (blower, wind, couple reacting). 31 credits total.
+- Caption style Alex wants (his own winning image): separate red boxes per line, big white Anton caps on top ("I FOUND THE MOST / RIDICULOUSLY TALL / HALLOWEEN SCARE ONLINE"), glowing red SHOP NOW pill under it, sky extended above the video so nothing covers the product. Burned on with ffmpeg, never drawn by the model. A full-width news banner was rejected.
+- Higgsfield has no music model: an original music-box + drone + boom track made in numpy was mixed under the Kling audio.
