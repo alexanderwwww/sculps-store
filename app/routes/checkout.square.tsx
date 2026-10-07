@@ -89,7 +89,11 @@ export async function action({ context, request }: Route.ActionArgs) {
   };
   const missing: string[] = [];
   if (!customer.name) missing.push("name");
-  if (!/^\S+@\S+\.\S+$/.test(customer.email)) missing.push("email");
+  // A wallet (Apple Pay / Google Pay) is trusted for who is paying even when
+  // it does not hand over an email; the order is flagged so the customer is
+  // contacted, rather than a paid-for sheet being refused.
+  const fromWallet = field("source") === "wallet";
+  if (!fromWallet && !/^\S+@\S+\.\S+$/.test(customer.email)) missing.push("email");
   if (!customer.line1) missing.push("address");
   if (!customer.city) missing.push("city");
   if (!customer.state) missing.push("state");
@@ -179,6 +183,9 @@ export async function action({ context, request }: Route.ActionArgs) {
       });
       await context.db.update(ordersTable).set({ paymentRef: squareOrder.id }).where(eq(ordersTable.id, order.id));
       await recordOrderEvent(context.db, order.id, "payment:started", "Card payment started on the site.").catch(() => undefined);
+      if (fromWallet && !customer.email) {
+        await recordOrderEvent(context.db, order.id, "wallet:incomplete", "Paid with a wallet that gave no email. Find the customer's email in Square before shipping.").catch(() => undefined);
+      }
       const payment = await createSquarePayment(account, {
         sourceId: field("sourceId"),
         orderId: squareOrder.id,

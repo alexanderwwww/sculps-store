@@ -4308,15 +4308,10 @@ function OnePage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [squareOnly, squareApp?.appId]);
 
-  // A card field that never becomes ready (a blocked script, an in-app
-  // browser) must not leave a customer with a dead Pay button: after 8 s the
-  // page switches to Square's own payment page, which always works.
-  useEffect(() => {
-    if (!squareOnly || !squareApp || sqReady || sqFailed) return;
-    const t = window.setTimeout(() => setSqFailed(true), 8000);
-    return () => window.clearTimeout(t);
-    // appId, not the object: a new object every render reset the timer forever.
-  }, [squareOnly, squareApp?.appId, sqReady, sqFailed]);
+  // No timer that gives up on Square: on a slow connection it fired before the
+  // card field arrived and took Express checkout away for good. Pay is never
+  // disabled, and pressed before the card field is ready it goes to Square's
+  // own page; "Or pay on Square's secure page" is always there.
 
   /** Sends a token and the details to the server; goes to the thank-you page. */
   const chargeToken = async (body: FormData, token: string): Promise<boolean> => {
@@ -4425,16 +4420,20 @@ function OnePage({
         return;
       }
       const contact = result.details?.shipping?.contact ?? result.details?.billing ?? {};
+      const typed = formRef.current ? new FormData(formRef.current) : null;
+      const pick = (v: unknown, name: string) => String(v ?? "") || String(typed?.get(name) ?? "");
       const body = new FormData();
+      body.set("source", "wallet");
       body.set("name", [contact.givenName, contact.familyName].filter(Boolean).join(" "));
-      body.set("email", String(contact.email ?? ""));
-      body.set("phone", String(contact.phone ?? ""));
-      body.set("address1", String((contact.addressLines ?? [])[0] ?? ""));
-      body.set("address2", String((contact.addressLines ?? [])[1] ?? ""));
-      body.set("city", String(contact.city ?? ""));
-      body.set("region", String(contact.state ?? ""));
-      body.set("postalCode", String(contact.postalCode ?? ""));
-      body.set("country", String(contact.countryCode ?? "US"));
+      body.set("email", pick(contact.email, "email"));
+      body.set("phone", pick(contact.phone, "phone"));
+      body.set("address1", pick((contact.addressLines ?? [])[0], "address1"));
+      body.set("address2", pick((contact.addressLines ?? [])[1], "address2"));
+      body.set("city", pick(contact.city, "city"));
+      body.set("region", pick(contact.state, "region"));
+      body.set("postalCode", pick(contact.postalCode, "postalCode"));
+      body.set("country", String(contact.countryCode ?? "US") || "US");
+      if (!String(body.get("name"))) body.set("name", `${typed?.get("firstName") ?? ""} ${typed?.get("lastName") ?? ""}`.trim());
       setPayError(null);
       setSqPaying(true);
       if (!(await chargeToken(body, result.token))) setSqPaying(false);

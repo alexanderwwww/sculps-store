@@ -80,6 +80,7 @@ export function SquareWallets({
       const contact = result.details?.shipping?.contact ?? result.details?.billing ?? {};
       const body = new FormData();
       body.set("mode", "pay");
+      body.set("source", "wallet");
       body.set("sourceId", result.token);
       body.set("maxCents", String(live.current.amountCents));
       body.set("name", [contact.givenName, contact.familyName].filter(Boolean).join(" "));
