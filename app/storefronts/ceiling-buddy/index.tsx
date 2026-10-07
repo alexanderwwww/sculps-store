@@ -1002,6 +1002,18 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               </button>
             </form>
           ) : null}
+
+          {/* Afterpay as the same pill: it pays at the checkout, where Square's
+              own Afterpay button sits, so all four pills line up two by two. */}
+          {squareApp && picked ? (
+            <form className="cb-wallet cb-afterpill" method="post" action={`/cart/add${storeParam ? storeParam + "&" : "?"}next=checkout&replace=1`}>
+              <input type="hidden" name="variantId" value={picked} />
+              <button type="submit" aria-label="Pay with Afterpay">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 8.5 12 6l5 2.5v7L12 18l-5-2.5z" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round"/><path d="m10 10.5 2 1 2-1" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/></svg>
+                afterpay
+              </button>
+            </form>
+          ) : null}
           </div>
 
           {/* The ways to pay, said once under the buttons: what Square's own
