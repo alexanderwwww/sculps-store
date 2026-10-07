@@ -563,4 +563,5 @@ LLC Stripe (acct_1UMDzFRTJdDCKVYD) as of 10-06: charges on, no bank attached, we
 ## Square verification, state on 2026-10-07 (evening)
 - AIGIS LLC reinstated and Active, all standings Good. PDFs in hand: Articles of Organization (filed 2024-05-30, ID 2024-001466031), Certificate of Reinstatement (2026-006975532), 2025 and 2026 annual reports ($60 each), EIN 147C letter.
 - Square Checking (AIGIS LLC) holds $1.00 and is days old, so it has no statement. Square needs LLC-named bank history; Plaid or PDF statements from a bank in the LLC's name. Personal Revolut EUR is NOT the right account.
+- **AIGIS LLC EIN is 35-2854086 (IRS 147C letter, 2024-06-10).** The CP 575 G (EIN 42-3564124, July 2026, New York address) is a DIFFERENT entity: never use it for the LLC. Good Standing certificate obtained 2026-10-07 (wyobiz ViewCertificate.aspx).
 - Decision: open the LLC business account FIRST (Revolut Business, Mercury or Airwallex, with the Good Standing certificate), then connect it in Square. The Revolut Business account is NOT opened yet.
