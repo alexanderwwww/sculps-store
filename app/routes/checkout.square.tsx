@@ -169,6 +169,7 @@ export async function action({ context, request }: Route.ActionArgs) {
       variantId: line.variantId,
       label: line.label,
     }));
+    let charging = false;
     try {
       const squareOrder = await createSquareOrder(account, {
         lines: lineShape,
@@ -186,7 +187,9 @@ export async function action({ context, request }: Route.ActionArgs) {
       if (fromWallet && !customer.email) {
         await recordOrderEvent(context.db, order.id, "wallet:incomplete", "Paid with a wallet that gave no email. Find the customer's email in Square before shipping.").catch(() => undefined);
       }
+      charging = true;
       const payment = await createSquarePayment(account, {
+        shipping: customer,
         sourceId: field("sourceId"),
         orderId: squareOrder.id,
         amountCents: cart.totalCents,
@@ -205,10 +208,14 @@ export async function action({ context, request }: Route.ActionArgs) {
       // the scheduled check finds it once Square has it.
       return json({ ok: true, orderId: order.id, pending: payment.status !== "COMPLETED" });
     } catch (error) {
-      if (error instanceof SquareDeclined) {
-        // Square answered and said no: nothing was charged.
+      if (error instanceof SquareDeclined || !charging) {
+        // Square said no, or the charge was never sent: nothing was charged.
         await context.db.update(ordersTable).set({ paymentStatus: "failed", updatedAt: new Date() }).where(eq(ordersTable.id, order.id));
-        return json({ error: error.message }, 402);
+        if (!charging) await recordOrderEvent(context.db, order.id, "payment:not-started", `Square order could not be created (${error instanceof Error ? error.message : "unknown"}).`).catch(() => undefined);
+        return json(
+          { error: error instanceof SquareDeclined ? error.message : "The payment could not be started. Nothing has been charged. Please try again." },
+          error instanceof SquareDeclined ? 402 : 502,
+        );
       }
       // Anything else (a dropped connection, a timeout) may have charged the
       // card. The order stays pending, the scheduled check settles it from

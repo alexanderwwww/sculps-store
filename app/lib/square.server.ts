@@ -473,6 +473,7 @@ export async function createSquarePayment(
     idempotencyKey: string;
     referenceId: string;
     buyerEmail: string;
+    shipping?: { name: string; line1: string; line2?: string | null; city: string; state: string; postalCode: string; country: string } | null;
   },
 ): Promise<{ id: string; status: string; amountCents: number }> {
   const response = await fetch(`${API}/payments`, {
@@ -485,14 +486,36 @@ export async function createSquarePayment(
       order_id: input.orderId,
       location_id: account.locationId,
       reference_id: input.referenceId.slice(0, 40),
-      buyer_email_address: input.buyerEmail,
+      // Square refuses an empty email; a wallet may not give one.
+      ...(input.buyerEmail ? { buyer_email_address: input.buyerEmail } : {}),
+      // Afterpay needs where it ships; harmless for every other method.
+      ...(input.shipping?.line1
+        ? {
+            shipping_address: {
+              address_line_1: input.shipping.line1,
+              ...(input.shipping.line2 ? { address_line_2: input.shipping.line2 } : {}),
+              locality: input.shipping.city,
+              administrative_district_level_1: input.shipping.state,
+              postal_code: input.shipping.postalCode,
+              country: input.shipping.country || "US",
+            },
+          }
+        : {}),
       autocomplete: true,
     }),
   });
   const payload = (await response.json().catch(() => ({}))) as any;
   if (!response.ok) {
     const err = payload?.errors?.[0];
-    throw new SquareDeclined(friendlyDecline(err?.code, err?.detail));
+    // Only a clear "no" from Square means nothing was charged. A server error,
+    // a rate limit or a reused key may still have taken the money: those go to
+    // the unconfirmed path, which the scheduled check settles from Square.
+    const definite =
+      response.status >= 400 && response.status < 500 && response.status !== 429 &&
+      err?.code !== "IDEMPOTENCY_KEY_REUSED" &&
+      (err?.category === "PAYMENT_METHOD_ERROR" || err?.category === "INVALID_REQUEST_ERROR" || response.status === 402);
+    if (definite) throw new SquareDeclined(friendlyDecline(err?.code, err?.detail));
+    throw new Error(`Square answered ${response.status} ${err?.code ?? ""}`.trim());
   }
   const payment = payload.payment;
   return { id: payment.id, status: payment.status, amountCents: cents(payment.total_money ?? payment.amount_money) };
