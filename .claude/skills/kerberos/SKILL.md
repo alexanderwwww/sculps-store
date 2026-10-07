@@ -559,3 +559,8 @@ LLC Stripe (acct_1UMDzFRTJdDCKVYD) as of 10-06: charges on, no bank attached, we
 - REAPER20 needs ≥ $50. $1 "test-order" product stays draft; flip to active only for a test, then back.
 - /pay-transfer?ref=CODE: bank-transfer page with one-tap Copy buttons (Alex's Wise USD details), linked from customer emails.
 - Customer emails: shown to Alex and sent only on his "send". Gary (JUSTFORGARRY) and Betty (JUSTFORBETTY) got the reserved/transfer email.
+
+## Square verification, state on 2026-10-07 (evening)
+- AIGIS LLC reinstated and Active, all standings Good. PDFs in hand: Articles of Organization (filed 2024-05-30, ID 2024-001466031), Certificate of Reinstatement (2026-006975532), 2025 and 2026 annual reports ($60 each), EIN 147C letter.
+- Square Checking (AIGIS LLC) holds $1.00 and is days old, so it has no statement. Square needs LLC-named bank history; Plaid or PDF statements from a bank in the LLC's name. Personal Revolut EUR is NOT the right account.
+- Decision: open the LLC business account FIRST (Revolut Business, Mercury or Airwallex, with the Good Standing certificate), then connect it in Square. The Revolut Business account is NOT opened yet.
