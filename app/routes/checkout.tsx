@@ -4328,7 +4328,8 @@ function OnePage({
       window.location.href = `/thanks?order=${payload.orderId}`;
       return true;
     } catch {
-      setPayError("That could not be reached. Nothing has been charged. Please try again.");
+      // The answer was lost, not necessarily the payment: never invite a second charge.
+      setPayError("We could not confirm your payment. Please check your email for a receipt before trying again, or contact hello@blackreaper.us.");
       return false;
     }
   };
@@ -4446,6 +4447,7 @@ function OnePage({
         await google.attach(sqGoogleRef.current, { buttonColor: "black", buttonSizeMode: "fill", buttonType: "pay" });
         sqGoogleRef.current.onclick = async (event) => {
           event.preventDefault();
+          if (busyNow.current) return;
           await fromWallet(await google.tokenize());
         };
       } catch {
@@ -4470,6 +4472,7 @@ function OnePage({
           await after.attach(sqAfterRef.current);
           sqAfterRef.current.onclick = async (event) => {
             event.preventDefault();
+            if (busyNow.current) return;
             await fromWallet(await after.tokenize());
           };
           setSqAfter(true);
@@ -4504,6 +4507,9 @@ function OnePage({
    * typed details are kept in this tab for that trip and put back.
    */
   const sqCashRef = useRef<HTMLDivElement>(null);
+  // Read by the wallet buttons' own click handlers, which outlive renders.
+  const busyNow = useRef(false);
+  busyNow.current = sqPaying;
   // The listener lives across renders; it must read today's errors, not the first render's.
   const clientErrorsNow = useRef(clientErrors);
   clientErrorsNow.current = clientErrors;
@@ -4771,7 +4777,7 @@ function OnePage({
                 className="gb-co__applepay"
                 aria-label="Pay with Apple Pay"
                 disabled={sqPaying}
-                onClick={() => void sqApple.current?.tokenize()}
+                onClick={() => { if (!busyNow.current) void sqApple.current?.tokenize(); }}
               />
             ) : null}
             <div className={buddy ? "gb-co__express-row" : undefined} ref={sqGoogleRef} />

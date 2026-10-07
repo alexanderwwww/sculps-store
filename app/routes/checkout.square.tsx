@@ -205,9 +205,16 @@ export async function action({ context, request }: Route.ActionArgs) {
       // the scheduled check finds it once Square has it.
       return json({ ok: true, orderId: order.id, pending: payment.status !== "COMPLETED" });
     } catch (error) {
-      await context.db.update(ordersTable).set({ paymentStatus: "failed", updatedAt: new Date() }).where(eq(ordersTable.id, order.id));
-      const declined = error instanceof SquareDeclined;
-      return json({ error: error instanceof Error ? error.message : "The payment could not be completed. Nothing has been charged." }, declined ? 402 : 502);
+      if (error instanceof SquareDeclined) {
+        // Square answered and said no: nothing was charged.
+        await context.db.update(ordersTable).set({ paymentStatus: "failed", updatedAt: new Date() }).where(eq(ordersTable.id, order.id));
+        return json({ error: error.message }, 402);
+      }
+      // Anything else (a dropped connection, a timeout) may have charged the
+      // card. The order stays pending, the scheduled check settles it from
+      // Square, and the customer is sent to their order, never told to pay again.
+      await recordOrderEvent(context.db, order.id, "payment:unconfirmed", `The payment answer did not arrive (${error instanceof Error ? error.message : "unknown"}). The scheduled check will confirm it from Square.`).catch(() => undefined);
+      return json({ ok: true, orderId: order.id, pending: true });
     }
   }
 
@@ -295,6 +302,9 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     ).catch(() => undefined);
     throw redirect(`/thanks?order=${order.id}`);
   }
+
+  // Paid but still settling (Cash App, Afterpay, a slow card): it is theirs, not failed.
+  if (settled.settling) throw redirect(`/thanks?order=${order.id}`);
 
   // Closed or abandoned before paying: nothing was charged.
   await context.db

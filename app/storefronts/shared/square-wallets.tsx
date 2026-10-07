@@ -60,6 +60,8 @@ export function SquareWallets({
   const [hasApple, setHasApple] = useState(false);
   const [hasGoogle, setHasGoogle] = useState(false);
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  busyRef.current = busy;
   const [error, setError] = useState<string | null>(null);
   // The click handlers read the current bundle, not the one at mount.
   const live = useRef({ variantId, amountCents });
@@ -101,7 +103,7 @@ export function SquareWallets({
       }
       window.location.href = `/thanks?order=${payload.orderId}`;
     } catch {
-      setError("That could not be reached. Nothing has been charged. Please try again.");
+      setError("We could not confirm your payment. Please check your email for a receipt before trying again.");
       setBusy(false);
     }
   };
@@ -134,6 +136,7 @@ export function SquareWallets({
           await gp.attach(googleRef.current, { buttonColor: "black", buttonSizeMode: "fill", buttonType: "buy" });
           googleRef.current.onclick = async (event) => {
             event.preventDefault();
+            if (busyRef.current) return;
             await charge(await gp.tokenize());
           };
           setHasGoogle(true);
@@ -160,6 +163,7 @@ export function SquareWallets({
           await ap.attach(afterRef.current);
           afterRef.current.onclick = async (event) => {
             event.preventDefault();
+            if (busyRef.current) return;
             await charge(await ap.tokenize());
           };
           if (afterMsgRef.current) {
@@ -192,6 +196,7 @@ export function SquareWallets({
           disabled={busy}
           // tokenize must be the first thing the click does, or Safari refuses the sheet.
           onClick={() => {
+            if (busyRef.current) return;
             const pending = apple.current?.tokenize();
             if (pending) void pending.then(charge);
           }}

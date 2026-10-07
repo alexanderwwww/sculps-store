@@ -247,6 +247,8 @@ export interface SquareSettlement {
   amountCents: number | null;
   /** Square has closed the order without payment */
   dead: boolean;
+  /** a payment exists but is not COMPLETED yet (Cash App, Afterpay, a slow card) */
+  settling?: boolean;
   /** what Square holds about the order and who paid for it */
   order: {
     id: string;
@@ -325,10 +327,12 @@ function viewOf(order: any, payment: any | null): SquareSettlement["order"] {
 export async function readSquareOrder(account: SquareAccount, squareOrderId: string): Promise<SquareSettlement> {
   const { order } = await call(account, "GET", `/orders/${squareOrderId}`);
   const tenders: any[] = order?.tenders ?? [];
+  let settling = false;
   for (const tender of tenders) {
     const paymentId = tender.payment_id ?? tender.id;
     if (!paymentId) continue;
     const { payment } = await call(account, "GET", `/payments/${paymentId}`);
+    if (payment?.status === "APPROVED" || payment?.status === "PENDING") settling = true;
     if (payment?.status === "COMPLETED") {
       return {
         paid: true,
@@ -339,7 +343,7 @@ export async function readSquareOrder(account: SquareAccount, squareOrderId: str
       };
     }
   }
-  return { paid: false, paymentId: null, amountCents: null, dead: order?.state === "CANCELED", order: viewOf(order, null) };
+  return { paid: false, paymentId: null, amountCents: null, dead: order?.state === "CANCELED", settling, order: viewOf(order, null) };
 }
 
 /**
