@@ -27,6 +27,7 @@ export default [
   route("checkout/diag", "routes/checkout.diag.tsx"),
   route("push/log", "routes/push.log.tsx"),
   route("thanks", "routes/thanks.tsx"),
+  route("pay-transfer", "routes/pay-transfer.ts"),
   route("subscribe", "routes/subscribe.tsx"),
   route("unsubscribe", "routes/unsubscribe.tsx"),
   // The store's second product. The root sells the first one.
