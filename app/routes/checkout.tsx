@@ -1303,6 +1303,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
                 <CheckoutHeader store={store} home={home} />
               <div className="gb-co__empty">
                 <p>Your cart is empty.</p>
+                <EmptyCode />
                 <Link className="gb-co__btn" to={home} style={{ textDecoration: "none", maxWidth: 320, margin: "0 auto" }}>
                   Back to the product
                 </Link>
@@ -1325,6 +1326,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
         <div className="gk-shell">
           <div className="gk-panel" style={{ textAlign: "center" }}>
             <p style={{ fontSize: 20, marginTop: 0 }}>Your cart is empty.</p>
+            <EmptyCode />
             <Link className="gk-cta" to={home} style={{ display: "inline-block", textDecoration: "none" }}>
               Back to the product
             </Link>
@@ -1382,7 +1384,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
         <BuddyFonts />
         {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
         <link rel="stylesheet" href={buddyHref} precedence="high" />
-        <PayBoot />
+        {publishableKey ? <PayBoot /> : null}
         {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
         {/* Two halves of the screen. OnePage lays out both of them, because
             the same pieces have to sit in different places on a phone: the
@@ -1472,6 +1474,18 @@ const PAY_BOOT = `(function(){
     navigator.sendBeacon && navigator.sendBeacon('/checkout/diag', new Blob([new URLSearchParams({kind:'capabilities',detail:JSON.stringify(can)}).toString()],{type:'application/x-www-form-urlencoded'}));
   }catch(e){}
 })();`;
+
+/** /checkout?code=X with an empty cart: keep the code for when they come back with the product. */
+function EmptyCode() {
+  const [code, setCode] = useState<string | null>(null);
+  useEffect(() => {
+    const want = new URLSearchParams(window.location.search).get("code")?.trim().toUpperCase();
+    if (!want) return;
+    try { sessionStorage.setItem("co-code", want); } catch {}
+    setCode(want);
+  }, []);
+  return code ? <p style={{ fontWeight: 600 }}>Code {code} is saved and will apply at checkout.</p> : null;
+}
 
 function PayBoot() {
   return (
@@ -3129,7 +3143,10 @@ function DiscountBox({
   const linked = useRef(false);
   useEffect(() => {
     if (linked.current || locked) return;
-    const want = new URLSearchParams(window.location.search).get("code")?.trim().toUpperCase();
+    let saved: string | null = null;
+    try { saved = sessionStorage.getItem("co-code"); } catch {}
+    const want = (new URLSearchParams(window.location.search).get("code") || saved || "").trim().toUpperCase();
+    try { sessionStorage.removeItem("co-code"); } catch {}
     if (!want || applied?.code === want) return;
     linked.current = true;
     fetcher.submit({ intent: "discount", code: want }, { method: "post" });
@@ -3931,7 +3948,7 @@ function OnePage({
     }
     // And the intent is moved in the background, so it is already right when
     // the pay button is pressed.
-    void askForIntent((params.get("region") ?? "").trim()).catch(() => undefined);
+    if (publishableKey) void askForIntent((params.get("region") ?? "").trim()).catch(() => undefined);
   }, [cart.totalCents]);
 
   /** Reads the typed fields. The amounts are not among them — they are the
@@ -4822,7 +4839,7 @@ function OnePage({
               Cash App approved. Fill in your delivery details below and press Pay.
             </p>
           ) : null}
-          {payError ? (
+          {payError && !squareOnly ? (
             <p className="gb-co__express-err" role="alert">
               {payError}
             </p>
