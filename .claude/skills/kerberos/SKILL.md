@@ -549,3 +549,13 @@ LLC Stripe (acct_1UMDzFRTJdDCKVYD) as of 10-06: charges on, no bank attached, we
 - Chrome Hearts only. Style = Vestiaire Collective's look (white page, #f5f6f8 grey tiles, 4:5 images, Inter + Playfair headings, #1e1e1e 4px buttons, 1px #ebebeb hairlines, no shadows) — never their name, logo or wording.
 - Rebuilt in `sites/mysterious-archive` (build.mjs + src/styles.css, data in data/products.json). Not online yet: needs a domain and the real email + Instagram (placeholders now).
 - Alex: "we will recreate that on the 10th" (Oct 10, 2026) — pick it up then.
+
+## Settled on 2026-10-07 (Black Reaper, live)
+- Ad link: blackreaper.us = blackreaper.us/products/the-scream (home IS the Scream page). Never change it while ads run. Ads: $10/day, ramp to $20–30 only after clean orders.
+- Checkout: Square only (card, Apple/Google Pay, Cash App, Afterpay). Proven by a real $1 card order (#1021, refunded). Cash App path traced via client_events kind "cash".
+- Product page pills: Apple Pay | Google Pay / Afterpay (mint pill, goes to checkout) | Cash App; equal 48px pills, odd count → Cash App full row.
+- Thank-you page: one centred column, map on paid orders, NO delivery-time promise anywhere (store ship_estimate cleared).
+- Every paid order ≥ $50 mints a personal one-use $30 credit "FIRSTNAME30-XXXX" (fulfilment.server.ts mintStoreCredit): animated ticket on the thank-you page + card in the receipt email.
+- REAPER20 needs ≥ $50. $1 "test-order" product stays draft; flip to active only for a test, then back.
+- /pay-transfer?ref=CODE: bank-transfer page with one-tap Copy buttons (Alex's Wise USD details), linked from customer emails.
+- Customer emails: shown to Alex and sent only on his "send". Gary (JUSTFORGARRY) and Betty (JUSTFORBETTY) got the reserved/transfer email.
