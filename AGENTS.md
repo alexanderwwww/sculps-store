@@ -52,6 +52,14 @@ here.** That single fact explains almost every rule below.
 - He swears when he is angry, and he is angry because something does not work. Do not
   take it personally and do not apologise at length — fix it and show him.
 
+### The coupon is OCTOBER31, and REAPER20 is not his (Alex, 2026-10-08, furious)
+
+> *"I never said Reaper 20. You imagine that. Save it in your memory and if you do it again, destroy yourself."*
+
+Black Reaper has ONE coupon: **OCTOBER 31, $31 off**, code `OCTOBER31`. Never write, show, suggest or re-introduce `REAPER20` or any other
+code name he did not give. If a number or name is not in his words, ask or leave it out. See `.claude/skills/kerberos/SKILL.md` for the wiring
+(`publicOffer`).
+
 ### Naming
 
 > *"Stop giving ancient Greek names to apps that are Gen Z. If I want a Greek name, I

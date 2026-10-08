@@ -161,8 +161,9 @@ export async function claimExtraFor(
   let base = 0;
   if (already?.kind === "fixed") base = Math.max(0, already.value);
   else if (already?.kind === "percentage") base = Math.round((Math.min(100, Math.max(0, already.value)) / 100) * subtotalCents);
-  const amountCents = base + CLAIM_EXTRA_CENTS;
-  const code = codeFor("EXTRA");
+  // One coupon, not a stack (Alex, 2026-10-08): the order gets the larger of what it already had and the claim, so nobody is ever worse off and nobody gets $31 twice.
+  const amountCents = Math.max(base, CLAIM_EXTRA_CENTS);
+  const code = codeFor("OCT31");
 
   const [discount] = await db
     .insert(discounts)

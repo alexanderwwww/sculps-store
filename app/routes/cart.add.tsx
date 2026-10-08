@@ -22,6 +22,7 @@ import {
   cartDiscountCode,
 } from "~/lib/cart.server";
 import { isReaperSkin } from "~/lib/skin";
+import { publicOffer } from "~/lib/discounts.server";
 
 async function add(
   request: Request,
@@ -145,13 +146,7 @@ async function add(
   if (isReaperSkin(store.slug)) {
     try {
       if (!(await cartDiscountCode(context.db, store.id, token))) {
-        const [live] = await context.db
-          .select({ code: discounts.code })
-          .from(discounts)
-          .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true), eq(discounts.kind, "fixed"), isNull(discounts.usageLimit)))
-          // The shop's own standing code, never a one-use code minted for one customer.
-          .orderBy(asc(discounts.createdAt))
-          .limit(1);
+        const live = await publicOffer(context.db, store.id);
         if (live) await setCartDiscount(context.db, store.id, token, live.code);
       }
     } catch {

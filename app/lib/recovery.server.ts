@@ -20,6 +20,7 @@ import { carts, stores, products, variants, discounts } from "~/db/schema";
 import { isSuppressed, unsubscribeUrl } from "./suppression.server";
 import { sendAbandonEmail, sendComebackEmail, emailReady, type EmailLine } from "./email.server";
 import { reaperProduct } from "./emails/reaper-products";
+import { publicOffer } from "./discounts.server";
 
 /** What a cart's `items` json actually holds, as far as this file cares. */
 interface CartLine {
@@ -110,13 +111,8 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
     // The shop's own live code, in dollars. Read per store rather than
     // hardcoded, so turning the offer off in the admin turns it off in the
     // email too, and so the code in the email is one that actually works.
-    const [liveRow] = await db
-      .select()
-      .from(discounts)
-      .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true), eq(discounts.kind, "fixed"), isNull(discounts.usageLimit)))
-          // The shop's own standing code, never a one-use code minted for one customer.
-          .orderBy(asc(discounts.createdAt))
-      .limit(1);
+    const standing = await publicOffer(db, store.id);
+    const liveRow = standing && standing.kind === "fixed" ? standing : null;
     const live = liveRow && Number(liveRow.value) > 0
       ? { code: liveRow.code, offCents: Number(liveRow.value) }
       : null;

@@ -2889,32 +2889,31 @@ function ClaimCard({ money: moneyRaw, applied }: { money: (cents: number) => str
   const fetcher = useFetcher<ActionReply>();
   const busy = fetcher.state !== "idle";
   const justClaimed = Boolean(fetcher.data && "claim" in fetcher.data && fetcher.data.claim);
-  const claimed = justClaimed || Boolean(applied && /^EXTRA/i.test(applied));
+  const claimed = justClaimed || Boolean(applied && /^(EXTRA|OCT(OBER)?31)/i.test(applied));
   return (
-    <div className={`gb-tkt${claimed ? " is-claimed" : ""}${justClaimed ? " is-new" : ""}`} aria-live="polite">
-      <div className="gb-tkt__l">
-        <span className="gb-tkt__amt">{money(CLAIM_EXTRA_CENTS)}</span>
-        <span className="gb-tkt__off">OFF</span>
+    <div className={`gb-oct${claimed ? " is-claimed" : ""}${justClaimed ? " is-new" : ""}`} aria-live="polite">
+      <div className="gb-oct__date" aria-hidden="true">
+        <span>OCT</span>
+        <b>31</b>
       </div>
-      <div className="gb-tkt__r">
+      <div className="gb-oct__txt">
+        <b className="gb-oct__h">OCTOBER 31</b>
         {claimed ? (
-          <>
-            <b className="gb-tkt__h">Claimed. It's on this order.</b>
-            <span className="gb-tkt__p">An extra {money(CLAIM_EXTRA_CENTS)} off, on top of your discount.</span>
-          </>
+          <span className="gb-oct__p">Claimed. {money(CLAIM_EXTRA_CENTS)} off is on this order.</span>
         ) : (
-          <>
-            <b className="gb-tkt__h">Extra {money(CLAIM_EXTRA_CENTS)} off your order</b>
-            <span className="gb-tkt__p">On top of your discount. One tap.</span>
-          </>
+          <span className="gb-oct__p">{money(CLAIM_EXTRA_CENTS)} off your whole order. One tap.</span>
         )}
       </div>
+      <div className="gb-oct__amt">
+        <b>{money(CLAIM_EXTRA_CENTS)}</b>
+        <span>OFF</span>
+      </div>
       {claimed ? (
-        <span className="gb-tkt__stamp" aria-hidden="true">CLAIMED</span>
+        <span className="gb-oct__stamp" aria-hidden="true">CLAIMED</span>
       ) : (
-        <fetcher.Form method="post" className="gb-tkt__f">
+        <fetcher.Form method="post" className="gb-oct__f">
           <input type="hidden" name="intent" value="claim" />
-          <button type="submit" className="gb-tkt__btn" disabled={busy}>{busy ? "…" : "Claim"}</button>
+          <button type="submit" className="gb-oct__btn" disabled={busy}>{busy ? "…" : `Claim ${money(CLAIM_EXTRA_CENTS)} off`}</button>
         </fetcher.Form>
       )}
     </div>

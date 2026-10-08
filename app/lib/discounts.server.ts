@@ -10,7 +10,7 @@
  *    order is paid, never when a code is typed, so "used 3 times" is a count
  *    of three orders that exist.
  */
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, notLike, sql } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { discounts, discountRedemptions } from "~/db/schema";
 import { formatMoney } from "./money";
@@ -275,4 +275,35 @@ export async function redemptionTotals(
     map.set(row.discountId, { count: row.count, amountCents: row.amountCents });
   }
   return map;
+}
+
+
+/**
+ * The one code a store shouts about and puts on a cart for the customer: the
+ * newest standing code that anyone can use any number of times. Never a code
+ * the checkout minted for one claim (LUCKY / EXTRA / OCT31), never a single-use
+ * or once-per-customer code. The top bar, the buy box and the cart all ask
+ * this, so they cannot disagree. Alex, 2026-10-08: the coupon is OCTOBER31.
+ */
+export async function publicOffer(
+  db: DB,
+  storeId: string,
+): Promise<{ code: string; kind: string; value: number } | null> {
+  const [row] = await db
+    .select({ code: discounts.code, kind: discounts.kind, value: discounts.value })
+    .from(discounts)
+    .where(
+      and(
+        eq(discounts.storeId, storeId),
+        eq(discounts.active, true),
+        isNull(discounts.usageLimit),
+        eq(discounts.oncePerCustomer, false),
+        notLike(discounts.code, "LUCKY%"),
+        notLike(discounts.code, "EXTRA%"),
+        notLike(discounts.code, "OCT31%"),
+      ),
+    )
+    .orderBy(desc(discounts.createdAt))
+    .limit(1);
+  return row ?? null;
 }

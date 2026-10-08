@@ -606,3 +606,10 @@ Alex asked for an express option at $29.99 for Black Reaper. Built the same way 
 - The checkout "Extra $ off" claim ticket is now **$30** (`CLAIM_EXTRA_CENTS = 3000` in `app/lib/claim.ts`, one constant, stacks on top of whatever code the cart holds). Alex: "give $30."
 - 2026-10-08 night (Alex): checkout claim ticket is **$31** ("October 31"), `CLAIM_EXTRA_CENTS = 3100`. The 10 ft Scream is **$299.99** (variant 31355a90-0751-47e3-8f8b-db332a22350d, was $229.99); the 16 ft stays $339.99.
 - 2026-10-08 night: the orange announcement bar showed a leftover $5 "LUCKY…" code because its query took ANY active discount (`limit 1`). Fixed in `app/routes/storefront.tsx`: only a code with no usage limit, not once-per-customer, not LUCKY%/EXTRA%, oldest first (today REAPER20, "$20.00 off"). The 12 unused $5 LUCKY/EXTRA leftover codes were switched off. Rule: the bar never shows a minted or single-use code.
+
+### THE COUPON IS OCTOBER31 — never REAPER20 (Alex, 2026-10-08)
+Alex: "I never said Reaper 20." The one coupon is **OCTOBER 31, $31 off**, code `OCTOBER31` (fixed 3100, unlimited, public).
+- `publicOffer()` in `app/lib/discounts.server.ts` is the ONLY lookup of the code the store shouts about and puts on a cart: newest active unlimited, not once-per-customer, not minted (LUCKY / EXTRA / OCT31). Used by the top bar, the buy box, `cart.add` auto-apply, the receipt gift code and the abandoned-cart email.
+- The checkout ticket ("OCTOBER 31", calendar leaf, $31, Claim button, CLAIMED stamp) is `ClaimCard` in `checkout.tsx`. One coupon, no stack: the claim mints `max(code already on the cart, $31)`, and a cart already holding OCTOBER31 shows CLAIMED. A $339.99 order pays $308.99.
+- `REAPER20` still exists in the database only because 77 open carts and 11 past orders hold it. It is never shown or applied to anyone new. Do not switch it off without telling Alex (those carts would silently go up $20).
+- Never name, invent or reintroduce a code Alex did not name.

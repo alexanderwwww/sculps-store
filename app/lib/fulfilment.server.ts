@@ -14,6 +14,7 @@ import { sendOrderConfirmation, sendMerchantNewOrder, emailReady, orderReference
 import { metaSettings, sendPurchase } from "./meta.server";
 import { notifyAdmins, money } from "./notify.server";
 import { redeemDiscount } from "./discounts.server";
+import { publicOffer } from "~/lib/discounts.server";
 
 /**
  * True when this side effect has already run for this order.
@@ -119,7 +120,8 @@ export async function resendConfirmation(db: DB, env: Env, orderId: string): Pro
   if (!emailReady(env)) return { ok: false, reason: "Email is not configured on this Worker." };
   const events = await db.select().from(orderEvents).where(eq(orderEvents.orderId, orderId));
   const sentBefore = events.some((e) => e.type === "email:confirmation");
-  const [giftRow] = await db.select().from(discounts).where(and(eq(discounts.storeId, loaded.store.id), eq(discounts.active, true), eq(discounts.kind, "fixed"), isNull(discounts.usageLimit))).orderBy(asc(discounts.createdAt)).limit(1);
+  const standingGift = await publicOffer(db, loaded.store.id);
+  const giftRow = standingGift && standingGift.kind === "fixed" ? standingGift : null;
   const gift = giftRow && Number(giftRow.value) > 0 ? { code: giftRow.code, offCents: Number(giftRow.value) } : null;
   const ok = await sendOrderConfirmation(db, env, orderId, await confirmationInput(db, loaded, gift, { late: !sentBefore }));
   return ok ? { ok: true } : { ok: false, reason: "The email service refused it. The timeline says why." };
@@ -160,13 +162,8 @@ export async function afterPaymentConfirmed(
   }
 
   // The shop's live repeat-purchase code, if it has one switched on.
-  const [giftRow] = await db
-    .select()
-    .from(discounts)
-    .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true), eq(discounts.kind, "fixed"), isNull(discounts.usageLimit)))
-          // The shop's own standing code, never a one-use code minted for one customer.
-          .orderBy(asc(discounts.createdAt))
-    .limit(1);
+  const standing = await publicOffer(db, store.id);
+  const giftRow = standing && standing.kind === "fixed" ? standing : null;
   let gift = giftRow && Number(giftRow.value) > 0
     ? { code: giftRow.code, offCents: Number(giftRow.value) }
     : null;

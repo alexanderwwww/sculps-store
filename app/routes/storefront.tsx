@@ -8,7 +8,7 @@ import { bnplFor } from "~/lib/bnpl.server";
 import { currentUser } from "~/lib/auth.server";
 import { pages, metaConfig, themes, discounts, events, menus, menuLinks } from "~/db/schema";
 import { passwordCookieValid } from "~/lib/password.server";
-import { and, asc, eq, gte, isNull, notLike, sql } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { metaCookieHeaders, newMetaEventId, pixelScript, trackFunnelEvent } from "~/lib/meta.server";
 import { presenceScript, vitalsScript } from "~/lib/vitals";
 import {
@@ -39,6 +39,7 @@ import { XeroStorefront } from "~/storefronts/xero";
 import reaperThemeHref from "~/storefronts/reaper/theme.css?url";
 import xeroThemeHref from "~/storefronts/xero/theme.css?url";
 import { isReaperSkin } from "~/lib/skin";
+import { publicOffer } from "~/lib/discounts.server";
 
 /**
  * Which theme a store gets. Design lives in code, one theme per store, so this
@@ -255,25 +256,8 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   // The code the store is currently shouting about, if it has one. The
   // storefront only ever prints it; the cart re-reads the row and prices it,
   // so a code shown here can never be a code the checkout honours by mistake.
-  // Only the store's real public code: never a one-off the checkout minted
-  // for somebody's claim (LUCKY/EXTRA...), never a single-use or once-per-
-  // customer code, and always the same one (oldest first) so the bar cannot
-  // change its mind from visit to visit.
-  const [offer] = await context.db
-    .select({ code: discounts.code, kind: discounts.kind, value: discounts.value })
-    .from(discounts)
-    .where(
-      and(
-        eq(discounts.storeId, store.id),
-        eq(discounts.active, true),
-        isNull(discounts.usageLimit),
-        eq(discounts.oncePerCustomer, false),
-        notLike(discounts.code, "LUCKY%"),
-        notLike(discounts.code, "EXTRA%"),
-      ),
-    )
-    .orderBy(asc(discounts.createdAt))
-    .limit(1);
+  // The one public code (see publicOffer): the bar only prints it, the cart re-reads and prices it.
+  const offer = await publicOffer(context.db, store.id);
 
   /**
    * How many real people have been on this store in the last thirty days.
