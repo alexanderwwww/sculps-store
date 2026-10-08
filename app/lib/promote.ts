@@ -3,10 +3,11 @@
  * offers. A store not listed here offers everything it sells.
  *
  * Black Reaper (Alex, 2026-10-02): only the Scream, the Reaper and the
- * Haunted Projector.
+ * Haunted Projector. Alex, 2026-10-08: the zombie and the projector are out of
+ * the checkout add-ons and the after-purchase offers.
  */
 export const PROMOTED_HANDLES: Record<string, readonly string[]> = {
-  reaper: ["the-scream", "black-reaper", "haunted-projector", "crawling-zombie"],
+  reaper: ["the-scream", "black-reaper"],
 };
 
 export function isPromoted(storeSlug: string | null | undefined, handle: string | null | undefined): boolean {
