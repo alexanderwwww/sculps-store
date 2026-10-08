@@ -201,3 +201,6 @@ choosing a field, then look at the live page.
   film-character likenesses - a blank white mask plus coveralls, a white scream mask plus black
   hood, and a red-haired clown are the trademarked looks, whatever the prompt says.
 - Gemini returns real JPEGs named `.png`; check `file` before converting.
+
+## One product = one chat (Alex, 2026-10-08)
+Never queue one product as several `parts`: each part opens a new chat, so eight panels became eight chats. Use a flat job (`refs` + `prompts`, one chat). When each panel needs its own reference (e.g. a style panel plus the old version of that panel), attach all of them once, label them IMAGE 1..N in the brief, and let each prompt say which one it redoes. See the magic-wand skill.

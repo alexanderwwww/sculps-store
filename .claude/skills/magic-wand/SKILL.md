@@ -33,3 +33,10 @@ the panels he likes), and they stay in git history if ever wanted. Kept: the 820
 (1) ChatGPT's composer no longer has `#prompt-textarea` (the terminal said "probe: no message box found"), so `ask` also matches `div[role=textbox]` / ProseMirror;
 (2) attachments there are plain https thumbnails, not `blob:`, so `blobCount` counts any image of 56px or more in the composer (the app re-uploaded the four
 pictures every retry because it saw none). Test: `test/count.mjs`. Do not restyle this app again unless he asks.
+
+## RULE (Alex, 2026-10-08, furious): ONE PRODUCT = ONE CHAT. Never `parts` for a single product.
+`parts` opens a NEW CHAT for every part. I queued the 8 Scream buy-box panels as 8 parts and the Wand opened 8 chats for 8 pictures. Alex: "Never do that shit again."
+- A job for one product is a FLAT job: top-level `refs` (attached once) and `prompts` (run one after another in the same chat), `newChat: true` once at the start. One image per prompt.
+- Use `parts` ONLY when there are genuinely several products that must not share a chat, and say so to Alex first.
+- Several reference pictures per image (a style reference plus an "old version" per panel): attach them ALL once, label them IMAGE 1..N in the brief, and have each prompt name which one it redoes. Do not give each prompt its own refs.
+- Before sending `wand_queue_set`, check the shape: `parts` present on a one-product job = wrong.
