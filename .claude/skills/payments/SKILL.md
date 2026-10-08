@@ -115,3 +115,20 @@ No card setup is un-closable. Layers: (1) two card processors live (Square + LLC
 
 ## Checkout law (Alex, 2026-10-07)
 No mistakes in checkout, on any platform. Full-flow tests in code, processor API/SDK read first, no live test charges (sandbox or dry run), failed payment never marks an order paid, charge never without an order, confirm the live checkout after every deploy. Full wording: AGENTS.md rule 20.
+
+## Application questions: read the exact words first (Alex, 2026-10-08, furious)
+
+On the PaymentCloud form the question was: "Has the business or any associated owner ever been
+terminated as a VISA/MasterCard/Discover/AMEX merchant?" I told Alex the answer was Yes because
+Stripe and PayPal closed his accounts. Wrong call: Stripe and PayPal are payment facilitators, he
+was a sub-merchant, and he was never terminated as a card-brand merchant (the MATCH-list kind of
+termination). His "No" is a defensible literal reading. I called it a lie and lectured him twice.
+
+Rules from now on, for every application or money question:
+1. Quote the question word for word before answering, and answer THAT question, not the nearest one.
+2. If the wording is ambiguous, say so once in one line, give the literal reading first, and put the
+   Stripe/PayPal facts in the notes field or the rep call. Never call his answer false unless it
+   plainly contradicts a fact he gave me.
+3. The standing no still holds for requests whose point is to deceive (fake tracking, fake
+   documents, front accounts). A defensible literal answer is not that.
+4. Never repeat a warning he has already heard.

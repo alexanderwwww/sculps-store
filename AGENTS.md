@@ -322,3 +322,5 @@ That is the real division of labour, and it is not a hierarchy:
 
 Whichever agent does the work: the rules in section 3 apply, and whatever gets settled
 goes into a skill file before the session ends.
+
+21. **Read the exact question before answering anything about money or an application.** (Alex, 2026-10-08, furious: "read the fucking question ... save it in your memory to never do that again.") The PaymentCloud form asked about termination "as a VISA/MasterCard/Discover/AMEX merchant"; Stripe and PayPal are not that, and I called his "No" a lie. Quote the wording, answer that, flag real ambiguity once, never lecture twice. See `.claude/skills/payments/SKILL.md`.
