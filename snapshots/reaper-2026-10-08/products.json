@@ -1,0 +1,371 @@
+[
+ {
+  "id": "f384555a-b9a4-4ead-9910-589ae4903db5",
+  "store_id": "7d9f7d09-09b9-4880-922b-77213f020d84",
+  "handle": "giant-skeleton-12ft",
+  "title": "The 12 ft Giant Skeleton",
+  "description": "A 12-foot-tall poseable skeleton that stands on its own in the yard, with glowing red eyes. Twice the height of your front door.",
+  "status": "draft",
+  "supplier_name": null,
+  "supplier_url": null,
+  "cost_cents": 0,
+  "created_at": "2026-09-30T07:11:56.358Z",
+  "images": [
+   {
+    "alt": "The 12 ft Skeleton",
+    "url": "/media/sk12-p1.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "How big is 12 ft?",
+    "url": "/media/sk12-p2.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Everything it does",
+    "url": "/media/sk12-p3.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Glowing red eyes, up close",
+    "url": "/media/sk12-p4.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "The whole street stops",
+    "url": "/media/sk12-p5.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Kids on the sidewalk",
+    "url": "/media/sk12-p7.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Real size, next to a car",
+    "url": "/media/sk12-p9.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "The neighbours on the pavement",
+    "url": "/media/sk12-p10.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Pose it: arms and hands bend at the joints",
+    "url": "/media/bw-skpose.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "The whole family stops",
+    "url": "/media/bw-skfam.webp",
+    "kind": "photo"
+   }
+  ]
+ },
+ {
+  "id": "380e529d-c07e-4d9c-b174-cd6802bdf364",
+  "store_id": "7d9f7d09-09b9-4880-922b-77213f020d84",
+  "handle": "crawling-zombie",
+  "title": "The Crawling Zombie",
+  "description": "An animated ground prop that drags itself forward, turns its head and screams. Lit eyes, motion triggered, battery powered with a remote. The one people film.",
+  "status": "active",
+  "supplier_name": null,
+  "supplier_url": null,
+  "cost_cents": 1200,
+  "created_at": "2026-09-18T08:31:29.337Z",
+  "images": [
+   {
+    "alt": "It crawls at them",
+    "url": "/media/cz-s1c-hero.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Three feet, beside a grown adult",
+    "url": "/media/cz-s2-scale.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Everything it does",
+    "url": "/media/cz-s3-does.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Real in daylight, lit after dark",
+    "url": "/media/cz-s4-daynight.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Up and running in a minute",
+    "url": "/media/cz-s5b-steps.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Built for rain, any lawn",
+    "url": "/media/cz-s6-weather.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "The face and the red eyes, up close",
+    "url": "/media/cz-s7-detail.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "The house they talk about",
+    "url": "/media/cz-s8b-feel.webp",
+    "kind": "photo"
+   }
+  ]
+ },
+ {
+  "id": "e96ea523-f14c-4384-8e9d-df69eaf0016c",
+  "store_id": "7d9f7d09-09b9-4880-922b-77213f020d84",
+  "handle": "the-haunted-build",
+  "title": "The Haunted Build",
+  "description": "<p>Everybody buys one prop at a time. One inflatable in October, a string of lights the year after, and the house still looks like a house with something in the garden.</p>\n<p>This is the whole yard, in one delivery, built to work together. The lights are the colours that make the fog read. The fog sits low because it is chilled. The sound comes from behind the graves, not from the porch. Every piece is chosen because of what it does to the piece next to it.</p>\n<p>You are not buying decorations. You are buying the house the street walks to.</p>",
+  "status": "draft",
+  "supplier_name": "Black Reaper",
+  "supplier_url": null,
+  "cost_cents": 34000,
+  "created_at": "2026-09-19T10:23:25.955Z",
+  "images": [
+   {
+    "alt": "The whole front, built and running",
+    "url": "/media/scr-c1-street.webp",
+    "kind": "photo"
+   }
+  ]
+ },
+ {
+  "id": "56045eb4-d6fe-430b-a6fc-770df03cd00f",
+  "store_id": "7d9f7d09-09b9-4880-922b-77213f020d84",
+  "handle": "black-reaper",
+  "title": "The Black Reaper",
+  "description": "A soul lantern for the front yard. Souls climb out of the lawn, twist upward and vanish into the lantern. Runs on its own batteries, lights itself at dusk, nothing to plug in.",
+  "status": "draft",
+  "supplier_name": null,
+  "supplier_url": null,
+  "cost_cents": null,
+  "created_at": "2026-09-17T23:56:34.479Z",
+  "images": [
+   {
+    "alt": "Eight feet six, seen from the street",
+    "url": "/media/br-s1-hero.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Eight feet six beside a grown adult",
+    "url": "/media/br-s2-scale.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Everything it does",
+    "url": "/media/br-s3-does.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Real in daylight, lit after dark",
+    "url": "/media/br-s4-daynight.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Up in one minute",
+    "url": "/media/br-s5-steps.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Built for rain, staked down",
+    "url": "/media/br-s6-weather.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "The skull and the lantern, up close",
+    "url": "/media/br-s7-detail.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Three cars stopped to take a photo",
+    "url": "/media/br-s8-feel.webp",
+    "kind": "photo"
+   }
+  ]
+ },
+ {
+  "id": "9fd09868-1763-4617-b3f9-7ec4fb8a6764",
+  "store_id": "7d9f7d09-09b9-4880-922b-77213f020d84",
+  "handle": "test-order",
+  "title": "Test order",
+  "description": "<p>A fifty cent item used to test the checkout. Not for sale.</p>",
+  "status": "draft",
+  "supplier_name": null,
+  "supplier_url": null,
+  "cost_cents": null,
+  "created_at": "2026-09-21T00:22:46.879Z",
+  "images": [
+   {
+    "alt": "Test order",
+    "url": "/media/br-logo.webp",
+    "kind": "photo"
+   }
+  ]
+ },
+ {
+  "id": "660f66ca-1511-4f92-bf1e-df23aaab7691",
+  "store_id": "7d9f7d09-09b9-4880-922b-77213f020d84",
+  "handle": "the-scream",
+  "title": "The 16 ft Scream",
+  "description": "Sixteen feet four of hooded phantom over the front lawn. White screaming mask, blade in hand, lit from inside. Visible from the end of the street, and from the car before you reach the driveway.",
+  "status": "active",
+  "supplier_name": null,
+  "supplier_url": null,
+  "cost_cents": null,
+  "created_at": "2026-09-18T01:46:40.506Z",
+  "images": [
+   {
+    "alt": "Everything in one look: red-lit head, 16 ft 4 in, blower, stakes and ropes",
+    "url": "/media/scr-ad-6-box.jpg",
+    "kind": "photo"
+   },
+   {
+    "alt": "Sixteen feet four, seen from the street",
+    "url": "/media/scr-s1-hero.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Sixteen feet four beside a grown adult",
+    "url": "/media/scr-s2-scale.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Everything it does",
+    "url": "/media/scr-s3-does.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Real in daylight, lit after dark",
+    "url": "/media/scr-s4-daynight.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Up in ninety seconds",
+    "url": "/media/scr-s5-steps.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Built for rain, six stakes down",
+    "url": "/media/scr-s6-weather.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "The mask, up close",
+    "url": "/media/scr-s7-detail.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "The whole street slows down for it",
+    "url": "/media/scr-s8-feel.webp",
+    "kind": "photo"
+   }
+  ]
+ },
+ {
+  "id": "4cec8210-2cd3-41ec-8157-6754d4df0bed",
+  "store_id": "7d9f7d09-09b9-4880-922b-77213f020d84",
+  "handle": "halloween-movie-theater",
+  "title": "The Halloween Movie Theater",
+  "description": "The whole back garden becomes a cinema. A giant inflatable screen that stands itself up in two minutes, the projector that fills it, and everything in between. One box, one evening, the film going on over the grass.",
+  "status": "draft",
+  "supplier_name": null,
+  "supplier_url": null,
+  "cost_cents": 3000,
+  "created_at": "2026-09-19T05:25:18.641Z",
+  "images": [
+   {
+    "alt": "Twelve feet of screen on your own grass",
+    "url": "/media/mt-s1-hero.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Twelve feet wide, beside a grown adult",
+    "url": "/media/mt-s2-scale.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Everything it does",
+    "url": "/media/mt-s3-does.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Real in daylight, lit after dark",
+    "url": "/media/mt-s4-daynight.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Up in two minutes: unroll, peg, play",
+    "url": "/media/mt-s5-steps.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Built for rain, pegged down",
+    "url": "/media/mt-s6-weather.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Pegged and guyed at the base",
+    "url": "/media/mt-s7-detail.webp",
+    "kind": "photo"
+   },
+   {
+    "alt": "Every kid on the street on your grass",
+    "url": "/media/mt-s8-feel.webp",
+    "kind": "photo"
+   }
+  ]
+ },
+ {
+  "id": "d699b5f3-20cf-40e8-8fcf-e839ce63c0c5",
+  "store_id": "7d9f7d09-09b9-4880-922b-77213f020d84",
+  "handle": "haunted-projector",
+  "title": "The Haunted Projector",
+  "description": "Ghosts drifting across your front window all night, seen from the end of the street. The projector sits inside on the sill and points out through the glass.",
+  "status": "active",
+  "supplier_name": null,
+  "supplier_url": null,
+  "cost_cents": null,
+  "created_at": "2026-09-17T23:56:34.881Z",
+  "images": [
+   {
+    "alt": "The Haunted Projector on a windowsill, a green witch filling the front window of an American house at dusk",
+    "url": "/media/hp-v2-01.webp"
+   },
+   {
+    "alt": "Everything it does: sits on the sill, one plug, silent, four or six hour timer",
+    "url": "/media/hp-v2-02.webp"
+   },
+   {
+    "alt": "How big it gets: thirteen feet wide from sixteen feet back",
+    "url": "/media/hp-v2-03.webp"
+   },
+   {
+    "alt": "It plugs in — the sixteen foot cord and the remote on the windowsill",
+    "url": "/media/hp-v2-04.webp"
+   },
+   {
+    "alt": "Three steps: film on the glass, projector on the sill, walk outside and look",
+    "url": "/media/hp-v2-05.webp"
+   },
+   {
+    "alt": "Everything in the box: projector, stake mount, window film, sixteen foot cord, remote",
+    "url": "/media/hp-v2-06.webp"
+   },
+   {
+    "alt": "Close on the cream-white projector throwing its light at the window glass",
+    "url": "/media/hp-v2-07.webp"
+   },
+   {
+    "alt": "Trick-or-treaters stopped on the sidewalk by a green witch in the front window",
+    "url": "/media/hp-v2-08.webp"
+   }
+  ]
+ }
+]

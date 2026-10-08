@@ -1,0 +1,16 @@
+[
+ {
+  "id": "de60bf55-dd60-4e63-8950-28df4dc02e05",
+  "store_id": "7d9f7d09-09b9-4880-922b-77213f020d84",
+  "handle": "main",
+  "title": "Header menu",
+  "updated_at": "2026-09-18T01:26:45.030Z"
+ },
+ {
+  "id": "63fc6ee0-943b-4a4b-8f44-5311e926f0f2",
+  "store_id": "7d9f7d09-09b9-4880-922b-77213f020d84",
+  "handle": "footer",
+  "title": "Footer menu",
+  "updated_at": "2026-09-18T01:26:45.081Z"
+ }
+]

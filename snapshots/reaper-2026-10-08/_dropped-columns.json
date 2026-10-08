@@ -1,0 +1,21 @@
+{
+ "stores": [
+  "password_hash"
+ ],
+ "pages": [],
+ "products": [],
+ "sections": [],
+ "variants": [],
+ "blocks": [],
+ "themes": [],
+ "menus": [],
+ "media": [],
+ "domains": [],
+ "meta_config": [
+  "capi_token_enc"
+ ],
+ "discounts": [],
+ "reviews": [],
+ "tax_rates": [],
+ "menu_links": []
+}

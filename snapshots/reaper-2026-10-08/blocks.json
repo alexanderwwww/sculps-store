@@ -1,0 +1,3200 @@
+[
+ {
+  "id": "16468c4c-8c87-4154-a9af-07bb3e1a6d03",
+  "section_id": "9210d122-5a8b-40e5-9776-9e54236b671d",
+  "position": 0,
+  "values": {
+   "alt": "It crawls at them",
+   "image": "/media/cz-s1c-hero.webp"
+  }
+ },
+ {
+  "id": "e05e04fd-d170-492a-b0ba-783e3a9ff68d",
+  "section_id": "9210d122-5a8b-40e5-9776-9e54236b671d",
+  "position": 1,
+  "values": {
+   "alt": "Three feet, beside a grown adult",
+   "image": "/media/cz-s2-scale.webp"
+  }
+ },
+ {
+  "id": "6bb268d6-8568-4167-8146-1a1793b39ffc",
+  "section_id": "9210d122-5a8b-40e5-9776-9e54236b671d",
+  "position": 2,
+  "values": {
+   "alt": "Everything it does",
+   "image": "/media/cz-s3-does.webp"
+  }
+ },
+ {
+  "id": "107fe448-74b1-491c-aa19-6b400d420d93",
+  "section_id": "9210d122-5a8b-40e5-9776-9e54236b671d",
+  "position": 3,
+  "values": {
+   "alt": "Real in daylight, lit after dark",
+   "image": "/media/cz-s4-daynight.webp"
+  }
+ },
+ {
+  "id": "d09c14b8-bbbe-4ae0-a495-eca8ed7fcdf7",
+  "section_id": "9210d122-5a8b-40e5-9776-9e54236b671d",
+  "position": 4,
+  "values": {
+   "alt": "Up and running in a minute",
+   "image": "/media/cz-s5b-steps.webp"
+  }
+ },
+ {
+  "id": "a341c7cf-1942-48df-a604-b8e44d7ade24",
+  "section_id": "9210d122-5a8b-40e5-9776-9e54236b671d",
+  "position": 5,
+  "values": {
+   "alt": "Built for rain, any lawn",
+   "image": "/media/cz-s6-weather.webp"
+  }
+ },
+ {
+  "id": "5c4d08af-456f-4b4e-907d-76602ad71431",
+  "section_id": "9210d122-5a8b-40e5-9776-9e54236b671d",
+  "position": 6,
+  "values": {
+   "alt": "The face and the red eyes, up close",
+   "image": "/media/cz-s7-detail.webp"
+  }
+ },
+ {
+  "id": "17ed8728-f968-47a7-bb02-c9c1d4c35938",
+  "section_id": "9210d122-5a8b-40e5-9776-9e54236b671d",
+  "position": 7,
+  "values": {
+   "alt": "The house they talk about",
+   "image": "/media/cz-s8b-feel.webp"
+  }
+ },
+ {
+  "id": "22926d64-b177-43b6-9435-4ebb66c73eb9",
+  "section_id": "9ef99259-04a3-4813-8f16-f34d84d374a8",
+  "position": 0,
+  "values": {
+   "at": "7:41pm",
+   "side": "them",
+   "text": "motion detected at front door"
+  }
+ },
+ {
+  "id": "5dce9432-249e-42db-b2a9-a2fc520581b6",
+  "section_id": "9ef99259-04a3-4813-8f16-f34d84d374a8",
+  "position": 1,
+  "values": {
+   "at": "7:44pm",
+   "side": "us",
+   "text": "babe did the amazon guy come yet"
+  }
+ },
+ {
+  "id": "e6c2e6b1-44ca-4a9b-8be7-c5e88de65fc6",
+  "section_id": "9ef99259-04a3-4813-8f16-f34d84d374a8",
+  "position": 2,
+  "values": {
+   "at": "7:45pm",
+   "side": "them",
+   "text": "watch the clip"
+  }
+ },
+ {
+  "id": "f2ab95fa-8183-4ec7-9919-de95b9d45e9e",
+  "section_id": "9ef99259-04a3-4813-8f16-f34d84d374a8",
+  "position": 3,
+  "values": {
+   "at": "7:46pm",
+   "side": "us",
+   "text": "HE LEFT IT ON THE PATH AND RAN"
+  }
+ },
+ {
+  "id": "0273969c-d14f-40e8-aff5-a601a4defeed",
+  "section_id": "9ef99259-04a3-4813-8f16-f34d84d374a8",
+  "position": 4,
+  "values": {
+   "at": "7:46pm",
+   "side": "them",
+   "text": "he did not ring the bell"
+  }
+ },
+ {
+  "id": "5f4a6b06-d0fd-4624-9bb5-fce2649bb052",
+  "section_id": "af8981e5-3782-461d-b390-90e62ab42493",
+  "position": 0,
+  "values": {
+   "at": "18:02",
+   "side": "us",
+   "text": "hey mum how are you"
+  }
+ },
+ {
+  "id": "295f3a0a-a63d-4846-ab71-f3eb0e384cc1",
+  "section_id": "af8981e5-3782-461d-b390-90e62ab42493",
+  "position": 1,
+  "values": {
+   "at": "19:40",
+   "side": "them",
+   "text": "sorry for the late reply"
+  }
+ },
+ {
+  "id": "b13ec5f9-12bd-4180-8e30-9f7b5be4bbe0",
+  "section_id": "af8981e5-3782-461d-b390-90e62ab42493",
+  "position": 2,
+  "values": {
+   "at": "19:40",
+   "side": "them",
+   "text": "im a little overstimulated rn"
+  }
+ },
+ {
+  "id": "34840d4e-6674-45e5-b4d2-fcd63104dd3c",
+  "section_id": "d5dda023-bd31-45a4-ba20-3f88dc60c3b6",
+  "position": 5,
+  "values": {
+   "text": "On, off, and the motion trigger",
+   "title": "Remote"
+  }
+ },
+ {
+  "id": "6ab1711c-2842-44f7-b067-4cb22a6c2b39",
+  "section_id": "af8981e5-3782-461d-b390-90e62ab42493",
+  "position": 4,
+  "values": {
+   "at": "19:41",
+   "side": "them",
+   "text": "its in the front yard"
+  }
+ },
+ {
+  "id": "f204a302-a319-4997-877c-4bf23d840f42",
+  "section_id": "57be6589-2e77-4fed-b4ec-ab3003efe5db",
+  "position": 0,
+  "values": {
+   "text": "Head at the upstairs windows. This is the one they see from the end of the road.",
+   "title": "The 16 ft Scream · 16.4 ft"
+  }
+ },
+ {
+  "id": "93f3a687-2144-42a0-96d5-1bc4919df0b1",
+  "section_id": "b9541043-80b8-4d0f-a4c7-13cc6f620ef2",
+  "position": 1,
+  "values": {
+   "text": "Start with The Haunted House or Horror Night. Every build is the same system — same stakes, same lights, same fluid, same colours — so what you add next year sits into what you already own instead of beside it. Nothing you buy now gets replaced later.",
+   "title": "Build it over two Octobers"
+  }
+ },
+ {
+  "id": "5d6689b3-70d3-4290-a213-2d1d0670c6cf",
+  "section_id": "6e354fda-3fbf-4b38-bebe-932d241761d1",
+  "position": 1,
+  "values": {
+   "n": "2",
+   "x": "150",
+   "y": "196",
+   "from": "1",
+   "text": "Rows break up. Stones lean, face different ways, and leave one gap wide enough to walk into.",
+   "title": "Sixteen tombstones"
+  }
+ },
+ {
+  "id": "ac9f8f19-8ae6-4ace-b818-5bf0e87869ef",
+  "section_id": "29a818b0-a32c-45f0-bbd9-c28016ee35e9",
+  "position": 0,
+  "values": {
+   "icon": "",
+   "text": "On every order, no minimum",
+   "title": "Free shipping"
+  }
+ },
+ {
+  "id": "60adafc0-c8dd-4ba2-8c7b-3bfe4999d9c2",
+  "section_id": "29a818b0-a32c-45f0-bbd9-c28016ee35e9",
+  "position": 2,
+  "values": {
+   "icon": "",
+   "text": "Didn't land? Send it back",
+   "title": "30-day returns"
+  }
+ },
+ {
+  "id": "29fdf6ec-eccd-4c4c-be0c-c91c4966ae74",
+  "section_id": "29a818b0-a32c-45f0-bbd9-c28016ee35e9",
+  "position": 3,
+  "values": {
+   "icon": "",
+   "text": "A person answers, same day",
+   "title": "Real support"
+  }
+ },
+ {
+  "id": "d0bf794d-28ba-479c-ae83-11290ed4a7a1",
+  "section_id": "af8981e5-3782-461d-b390-90e62ab42493",
+  "position": 5,
+  "values": {
+   "at": "19:41",
+   "side": "us",
+   "text": "WHAT"
+  }
+ },
+ {
+  "id": "62c81660-c5a7-4f34-9e75-9a622d28d3c6",
+  "section_id": "097c7866-7881-4358-8c1d-298bb1ae7959",
+  "position": 0,
+  "values": {
+   "at": "8:12pm",
+   "side": "them",
+   "text": "is that your house"
+  }
+ },
+ {
+  "id": "37fb1b07-6eb5-4916-9a76-4f568f94c722",
+  "section_id": "097c7866-7881-4358-8c1d-298bb1ae7959",
+  "position": 1,
+  "values": {
+   "at": "8:12pm",
+   "side": "us",
+   "text": "yes"
+  }
+ },
+ {
+  "id": "87344246-220b-40b2-b7c6-03e5a7a73446",
+  "section_id": "097c7866-7881-4358-8c1d-298bb1ae7959",
+  "position": 2,
+  "values": {
+   "at": "8:12pm",
+   "side": "them",
+   "text": "there are ghosts ON THE WALL"
+  }
+ },
+ {
+  "id": "87193534-8e95-43c6-97d8-1a2229745167",
+  "section_id": "097c7866-7881-4358-8c1d-298bb1ae7959",
+  "position": 3,
+  "values": {
+   "at": "8:13pm",
+   "side": "us",
+   "text": "yes"
+  }
+ },
+ {
+  "id": "09b4cfac-d73c-4409-a250-3171074127c4",
+  "section_id": "097c7866-7881-4358-8c1d-298bb1ae7959",
+  "position": 4,
+  "values": {
+   "at": "8:13pm",
+   "side": "them",
+   "text": "im coming over"
+  }
+ },
+ {
+  "id": "061c048b-54e3-48aa-a6c8-5c65c85fae70",
+  "section_id": "57be6589-2e77-4fed-b4ec-ab3003efe5db",
+  "position": 1,
+  "values": {
+   "text": "Low on the path where nobody looks. Batteries and a remote, no cable across the lawn.",
+   "title": "The Crawling Zombie"
+  }
+ },
+ {
+  "id": "ff822a7f-5bdb-4218-b288-80bc04cb8015",
+  "section_id": "57be6589-2e77-4fed-b4ec-ab3003efe5db",
+  "position": 2,
+  "values": {
+   "text": "Two windows lit at once, so the house looks occupied rather than decorated.",
+   "title": "Two Haunted Projectors"
+  }
+ },
+ {
+  "id": "ff74c936-aa60-4bc2-b123-544502e299ff",
+  "section_id": "57be6589-2e77-4fed-b4ec-ab3003efe5db",
+  "position": 3,
+  "values": {
+   "text": "Hung off the porch on a line. She moves in any wind.",
+   "title": "The flying witch"
+  }
+ },
+ {
+  "id": "d98c9abd-6689-4668-a044-4a4cd53375a1",
+  "section_id": "57be6589-2e77-4fed-b4ec-ab3003efe5db",
+  "position": 4,
+  "values": {
+   "text": "The chiller is the whole trick — it keeps the fog on the ground instead of in the trees.",
+   "title": "Fog machine and chiller"
+  }
+ },
+ {
+  "id": "c2d32d98-1f27-45b8-a7cd-02110271668d",
+  "section_id": "57be6589-2e77-4fed-b4ec-ab3003efe5db",
+  "position": 5,
+  "values": {
+   "text": "Orange, green and purple. These are the colours that make fog read at night.",
+   "title": "Six flood lights"
+  }
+ },
+ {
+  "id": "f5609a9c-ff26-4545-8f82-4651aabf805b",
+  "section_id": "57be6589-2e77-4fed-b4ec-ab3003efe5db",
+  "position": 6,
+  "values": {
+   "text": "Enough to make a graveyard rather than a row.",
+   "title": "Sixteen tombstones"
+  }
+ },
+ {
+  "id": "0f6a4751-8336-498e-9277-34c1621e0644",
+  "section_id": "bbff6e81-1806-4d47-a83b-5f046a0a3ce7",
+  "position": 0,
+  "values": {
+   "image": "/media/cz-r1-ca.webp",
+   "caption": "Ours, first night"
+  }
+ },
+ {
+  "id": "4c17ba58-0fec-435c-8878-c0f00ae3cf7b",
+  "section_id": "bbff6e81-1806-4d47-a83b-5f046a0a3ce7",
+  "position": 1,
+  "values": {
+   "image": "/media/cz-r3-nv.webp",
+   "caption": "Set him by the drive"
+  }
+ },
+ {
+  "id": "8d732710-f857-460c-95e4-9c8bbfd7e800",
+  "section_id": "bbff6e81-1806-4d47-a83b-5f046a0a3ce7",
+  "position": 2,
+  "values": {
+   "image": "/media/cz-r4-ga.webp",
+   "caption": "Out back on the lawn"
+  }
+ },
+ {
+  "id": "dc0c79e6-206a-450a-9b65-30e095067e83",
+  "section_id": "bbff6e81-1806-4d47-a83b-5f046a0a3ce7",
+  "position": 3,
+  "values": {
+   "image": "/media/cz-r6-nj.webp",
+   "caption": "From the car"
+  }
+ },
+ {
+  "id": "e812ccb9-7c8d-4ae9-9284-ccdd1264abdb",
+  "section_id": "8c5a4589-b951-4afc-9489-2e4c30d94581",
+  "position": 0,
+  "values": {
+   "image": "/media/br-17.webp",
+   "answer": "Eight and a half feet — 2.6 metres. Taller than your front door, so it looks straight at anyone coming up the path.",
+   "question": "How big is it? 🎃"
+  }
+ },
+ {
+  "id": "c805f70b-2efa-4902-9d14-de0d176ff12b",
+  "section_id": "bbff6e81-1806-4d47-a83b-5f046a0a3ce7",
+  "position": 4,
+  "values": {
+   "image": "/media/cz-r8-fl.webp",
+   "caption": "After the storm"
+  }
+ },
+ {
+  "id": "412f3c82-ecde-4969-af72-aea657598f49",
+  "section_id": "61c043ac-3328-4585-87bb-809b9e78ec59",
+  "position": 0,
+  "values": {
+   "image": "/media/cz-r2-pa.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "a04e9784-8ba2-4d66-bf56-e103a8c5148c",
+  "section_id": "61c043ac-3328-4585-87bb-809b9e78ec59",
+  "position": 1,
+  "values": {
+   "image": "/media/cz-r5-mi.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "d542b87e-02ea-4064-8d2c-706d0d60f711",
+  "section_id": "61c043ac-3328-4585-87bb-809b9e78ec59",
+  "position": 2,
+  "values": {
+   "image": "/media/cz-r7-co.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "16d7dd52-52bb-4516-9d6e-27de8ad76795",
+  "section_id": "579264e8-2c7a-4ca2-ba4e-08b5c02992f4",
+  "position": 0,
+  "values": {
+   "image": "/media/scr-u1-az.webp",
+   "caption": "From the car, driving home"
+  }
+ },
+ {
+  "id": "1e15c6c3-b567-4dd4-ba44-c95e25dfde99",
+  "section_id": "579264e8-2c7a-4ca2-ba4e-08b5c02992f4",
+  "position": 1,
+  "values": {
+   "image": "/media/scr-u3-pnw.webp",
+   "caption": "Walking the dog past it"
+  }
+ },
+ {
+  "id": "5b97f7e7-7207-44e1-bdfb-d0e191f1188c",
+  "section_id": "6e354fda-3fbf-4b38-bebe-932d241761d1",
+  "position": 2,
+  "values": {
+   "n": "3",
+   "x": "86",
+   "y": "232",
+   "from": "1",
+   "text": "Behind the graves, never on the porch. The chiller is why the fog stays at ankle height and crosses the lawn instead of lifting.",
+   "title": "Fog machine and chiller"
+  }
+ },
+ {
+  "id": "e5445b33-11fb-4903-8ca5-8c1e5719d010",
+  "section_id": "6e354fda-3fbf-4b38-bebe-932d241761d1",
+  "position": 3,
+  "values": {
+   "n": "4",
+   "x": "200",
+   "y": "58",
+   "from": "1",
+   "text": "The gutter line and the fence. Put these up first — everything else gets placed against them.",
+   "title": "150 ft of orange lights"
+  }
+ },
+ {
+  "id": "d9dae487-8e1b-48a0-9895-88ef84fa4763",
+  "section_id": "6e354fda-3fbf-4b38-bebe-932d241761d1",
+  "position": 4,
+  "values": {
+   "n": "5",
+   "x": "258",
+   "y": "148",
+   "from": "1",
+   "text": "On the ground, aimed up. Orange, green and purple. Colour is what makes fog read after dark.",
+   "title": "Six flood lights"
+  }
+ },
+ {
+  "id": "b258874d-701e-4c94-af53-30daad706df1",
+  "section_id": "579264e8-2c7a-4ca2-ba4e-08b5c02992f4",
+  "position": 2,
+  "values": {
+   "image": "/media/scr-u6-fl.webp",
+   "caption": "Still up after the storm"
+  }
+ },
+ {
+  "id": "8cfb2900-e2d0-4b7e-9e04-f6a230718533",
+  "section_id": "cb971e75-c770-4ebe-912d-f9d7e2c0be16",
+  "position": 0,
+  "values": {
+   "image": "/media/br-ugc-01.webp",
+   "caption": "First night up"
+  }
+ },
+ {
+  "id": "539e3a39-02cf-4491-bdad-2d9442a8ed86",
+  "section_id": "cb971e75-c770-4ebe-912d-f9d7e2c0be16",
+  "position": 1,
+  "values": {
+   "image": "/media/br-ugc-04.webp",
+   "caption": "The girls next door"
+  }
+ },
+ {
+  "id": "3f42ba5b-4f52-447c-8015-aaed4abd1cc4",
+  "section_id": "cb971e75-c770-4ebe-912d-f9d7e2c0be16",
+  "position": 2,
+  "values": {
+   "image": "/media/br-ugc-03.webp",
+   "caption": "Ten minutes, one stake"
+  }
+ },
+ {
+  "id": "fadf4ac6-1e24-4626-91cd-7c9cdb54f46e",
+  "section_id": "6e354fda-3fbf-4b38-bebe-932d241761d1",
+  "position": 5,
+  "values": {
+   "n": "6",
+   "x": "120",
+   "y": "46",
+   "from": "1",
+   "text": "Lit from inside two upstairs windows, so the house looks occupied rather than decorated.",
+   "title": "Two haunted projectors"
+  }
+ },
+ {
+  "id": "497c827f-fd1e-4048-b064-2319b832c80c",
+  "section_id": "6e354fda-3fbf-4b38-bebe-932d241761d1",
+  "position": 6,
+  "values": {
+   "n": "7",
+   "x": "208",
+   "y": "244",
+   "from": "1",
+   "text": "Low on the path where nobody looks down. Batteries and a remote, so there is no cable across the walkway.",
+   "title": "The Crawling Zombie"
+  }
+ },
+ {
+  "id": "11d43ddc-b598-4e6b-940d-e98445e6e05e",
+  "section_id": "6e354fda-3fbf-4b38-bebe-932d241761d1",
+  "position": 7,
+  "values": {
+   "n": "8",
+   "x": "170",
+   "y": "112",
+   "from": "2",
+   "text": "Either side of the door, lanterns lit. They are the last thing anyone sees before they knock.",
+   "title": "Two Reapers · 8 ft 6 each"
+  }
+ },
+ {
+  "id": "fdd51722-d9b6-412a-8cbe-0768e74f0f69",
+  "section_id": "e53fa45f-2041-40ee-b4fa-4f46809e3c23",
+  "position": 0,
+  "values": {
+   "image": "/media/scr-u2-ne.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "3728420b-8a03-43d3-ac86-124f05f7dfba",
+  "section_id": "e53fa45f-2041-40ee-b4fa-4f46809e3c23",
+  "position": 1,
+  "values": {
+   "image": "/media/scr-u4-tx.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "65e5355e-34ca-46c8-a06f-034ced321c71",
+  "section_id": "e53fa45f-2041-40ee-b4fa-4f46809e3c23",
+  "position": 2,
+  "values": {
+   "image": "/media/scr-u5-mw.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "cd6dc46e-c47c-4ff2-8e58-b5a135f726f2",
+  "section_id": "10cb6be1-e701-4a7f-b523-7cf59aa471c1",
+  "position": 0,
+  "values": {
+   "image": "/media/mt-r1-oh.webp",
+   "caption": "Our first one"
+  }
+ },
+ {
+  "id": "8e6e1727-03d9-4a47-b4a4-09cc7c598e28",
+  "section_id": "10cb6be1-e701-4a7f-b523-7cf59aa471c1",
+  "position": 1,
+  "values": {
+   "image": "/media/mt-r3-ga.webp",
+   "caption": "Two families, one lawn"
+  }
+ },
+ {
+  "id": "16208482-f897-468a-867b-0731880d1049",
+  "section_id": "10cb6be1-e701-4a7f-b523-7cf59aa471c1",
+  "position": 2,
+  "values": {
+   "image": "/media/mt-r4-ma.webp",
+   "caption": "Coats over costumes"
+  }
+ },
+ {
+  "id": "c4bba487-2203-49b5-aafe-2a6e8ebf61ca",
+  "section_id": "10cb6be1-e701-4a7f-b523-7cf59aa471c1",
+  "position": 3,
+  "values": {
+   "image": "/media/mt-r6-wa.webp",
+   "caption": "Mist in the beam"
+  }
+ },
+ {
+  "id": "1b725f9f-9e6e-416f-8e1e-25546a7cb8da",
+  "section_id": "d9a5a5fa-271b-4045-8f72-936fa114b697",
+  "position": 1,
+  "values": {
+   "image": "/media/hp-ip-s02.webp",
+   "caption": "In the front window"
+  }
+ },
+ {
+  "id": "da25df5e-8fd7-4db7-9847-8a0a053bd419",
+  "section_id": "10cb6be1-e701-4a7f-b523-7cf59aa471c1",
+  "position": 4,
+  "values": {
+   "image": "/media/mt-r8-co.webp",
+   "caption": "Hats and blankets"
+  }
+ },
+ {
+  "id": "dcb4fa5d-718b-4dbb-b02c-1fcbfd23d5dc",
+  "section_id": "e7c1e6f9-7972-4b0a-9760-c66b519b9747",
+  "position": 0,
+  "values": {
+   "image": "/media/mt-r2-az.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "fa73dc3e-b7ea-41a6-97a7-e609d0a46713",
+  "section_id": "e7c1e6f9-7972-4b0a-9760-c66b519b9747",
+  "position": 1,
+  "values": {
+   "image": "/media/mt-r5-tx.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "e925be64-bcef-4ab8-ac32-894e76e274cf",
+  "section_id": "e7c1e6f9-7972-4b0a-9760-c66b519b9747",
+  "position": 2,
+  "values": {
+   "image": "/media/mt-r7-fl.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "d99c8ee5-ed53-477e-b97b-1a3e0f8bb538",
+  "section_id": "b0ad27d2-327d-4c07-9771-8466bd020fda",
+  "position": 1,
+  "values": {
+   "text": "Fitted, lit, with the ghost strand",
+   "title": "The lantern"
+  }
+ },
+ {
+  "id": "4f8ed2c7-747a-416b-a3cd-8d6aa77a03ea",
+  "section_id": "b0ad27d2-327d-4c07-9771-8466bd020fda",
+  "position": 2,
+  "values": {
+   "text": "Sectional, pushes into a lawn",
+   "title": "Steel ground stake"
+  }
+ },
+ {
+  "id": "2b85ed19-63e7-413e-a368-019941d763c5",
+  "section_id": "b0ad27d2-327d-4c07-9771-8466bd020fda",
+  "position": 3,
+  "values": {
+   "text": "For a driveway or decking",
+   "title": "Sandbag loops"
+  }
+ },
+ {
+  "id": "17efdbe1-a38f-455b-a2c1-e686da53cbe6",
+  "section_id": "b0ad27d2-327d-4c07-9771-8466bd020fda",
+  "position": 4,
+  "values": {
+   "text": "Fitted, plus a spare set",
+   "title": "Batteries"
+  }
+ },
+ {
+  "id": "62ddffa4-c24b-4532-b5b9-1507094db869",
+  "section_id": "8c5a4589-b951-4afc-9489-2e4c30d94581",
+  "position": 1,
+  "values": {
+   "image": "/media/br-35.webp",
+   "answer": "A real metal lantern in its hand, lit cold blue, with small glowing ghosts spilling out of the bottom. That is the part people photograph.",
+   "question": "What is the lantern? 🏮"
+  }
+ },
+ {
+  "id": "5cfeb2cd-b739-430e-a2f3-dc37b0a97465",
+  "section_id": "8c5a4589-b951-4afc-9489-2e4c30d94581",
+  "position": 2,
+  "values": {
+   "image": "/media/br-40.webp",
+   "answer": "No. The lantern and the ghost lights run on batteries, so it can stand anywhere in the garden with nothing trailing to it.",
+   "question": "Does it need a plug? 🔌"
+  }
+ },
+ {
+  "id": "df81d3b1-0339-4f8a-bfb4-463a7b7fff16",
+  "section_id": "8c5a4589-b951-4afc-9489-2e4c30d94581",
+  "position": 3,
+  "values": {
+   "image": "/media/br-41.webp",
+   "answer": "A steel ground stake pushes into the lawn and the figure slides onto it. Under a minute, no tools.",
+   "question": "How does it stand up? ⚰️"
+  }
+ },
+ {
+  "id": "09869f3f-4ce9-4e04-a03c-8f7b79dcc02d",
+  "section_id": "8c5a4589-b951-4afc-9489-2e4c30d94581",
+  "position": 4,
+  "values": {
+   "image": "/media/br-09.webp",
+   "answer": "The fabric is weather-treated and it is out for the whole month. Bring it in for a real storm.",
+   "question": "Will it survive the rain? 🌧️"
+  }
+ },
+ {
+  "id": "ee850f2b-8506-4097-a24e-dd092729668a",
+  "section_id": "8c5a4589-b951-4afc-9489-2e4c30d94581",
+  "position": 5,
+  "values": {
+   "image": "/media/br-37.webp",
+   "answer": "Yes — there are sandbag loops at the base for concrete, decking or a driveway.",
+   "question": "Can it go on a hard path? 🪦"
+  }
+ },
+ {
+  "id": "8128ac06-9c46-442d-b183-b45f505aa4c3",
+  "section_id": "8c5a4589-b951-4afc-9489-2e4c30d94581",
+  "position": 6,
+  "values": {
+   "image": "/media/br-13.webp",
+   "answer": "Most people do, one each side of the drive. There is a two-pack above that saves you money.",
+   "question": "Should I get two? 👻"
+  }
+ },
+ {
+  "id": "3dedbb25-9a74-4469-b12c-95db1cace444",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 0,
+  "values": {
+   "image": "/media/hp-ip-t01.webp",
+   "caption": "The Gremlin"
+  }
+ },
+ {
+  "id": "488b7dee-47d6-47cc-9c1b-9187198b11ac",
+  "section_id": "19a5aa6d-666f-4864-81f6-3602b4d8b174",
+  "position": 4,
+  "values": {
+   "image": "/media/hp-white.webp",
+   "answer": "It makes no sound at all. It's a projector, not a speaker.",
+   "question": "Is it loud?"
+  }
+ },
+ {
+  "id": "6236b58d-09bb-4e91-a2f4-e338373cf55d",
+  "section_id": "77c3dee0-e7e5-423e-b866-5be51ca7b6e9",
+  "position": 5,
+  "values": {
+   "note": "story Maddie 6:21pm",
+   "image": "/media/br-17.webp",
+   "title": "ok this is way bigger than i thought"
+  }
+ },
+ {
+  "id": "362731c0-6109-46d1-8d24-998b10ac58e6",
+  "section_id": "19a5aa6d-666f-4864-81f6-3602b4d8b174",
+  "position": 5,
+  "values": {
+   "image": "/media/hp-counter-c.webp",
+   "answer": "There's a timer — on at dusk, off after four or six hours, your choice.",
+   "question": "Does it turn itself off? 🕯️"
+  }
+ },
+ {
+  "id": "8603f3fe-2674-4224-bab6-f9f17dbb10a1",
+  "section_id": "19a5aa6d-666f-4864-81f6-3602b4d8b174",
+  "position": 1,
+  "values": {
+   "image": "/media/hp-garage-c.webp",
+   "answer": "Thirteen feet wide from about sixteen feet back. That's a full house front.",
+   "question": "How big does the picture get? 🎃"
+  }
+ },
+ {
+  "id": "fa08a21a-8034-4648-806f-782ed5c4a710",
+  "section_id": "19a5aa6d-666f-4864-81f6-3602b4d8b174",
+  "position": 2,
+  "values": {
+   "image": "/media/hp-meta-street-c.webp",
+   "answer": "Yes. Stick the film that comes with it on the inside of a window and the ghosts walk across it from the street.",
+   "question": "Does it work on glass?"
+  }
+ },
+ {
+  "id": "311d5ad8-0cbb-4082-a08a-ca3caad3ea97",
+  "section_id": "19a5aa6d-666f-4864-81f6-3602b4d8b174",
+  "position": 3,
+  "values": {
+   "image": "/media/hp-ugc7-c.webp",
+   "answer": "The housing is weather-sealed for outdoor use. The plug end needs to stay dry — use an outdoor socket cover.",
+   "question": "Can it stay out in the rain? 🌧️"
+  }
+ },
+ {
+  "id": "4a6af86f-9583-42d2-a990-79120ab75eca",
+  "section_id": "b0ad27d2-327d-4c07-9771-8466bd020fda",
+  "position": 0,
+  "values": {
+   "text": "8 ft 6 in / 2.6 m, 4.2 lb, robe, hood and skull",
+   "title": "The Black Reaper"
+  }
+ },
+ {
+  "id": "74bb4a42-9df2-4b43-8089-64ed9ff34e4e",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 1,
+  "values": {
+   "image": "/media/hp-ip-t02.webp",
+   "caption": "The Masked Killer"
+  }
+ },
+ {
+  "id": "cf2fc635-c9dc-4505-85bf-8b8872be8df8",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 2,
+  "values": {
+   "image": "/media/hp-ip-t03.webp",
+   "caption": "The Screaming Ghost"
+  }
+ },
+ {
+  "id": "9707a1cc-4e9e-488a-9965-7662390d7b2d",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 3,
+  "values": {
+   "image": "/media/hp-ip-t04.webp",
+   "caption": "The Crawling Girl"
+  }
+ },
+ {
+  "id": "de2929d5-3884-4f1d-81e2-18f813d29c7d",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 4,
+  "values": {
+   "image": "/media/hp-ip-t05.webp",
+   "caption": "The Witch"
+  }
+ },
+ {
+  "id": "df332bcf-9f5b-4315-bc42-c1f1daac6d81",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 5,
+  "values": {
+   "image": "/media/hp-ip-t06.webp",
+   "caption": "The Clown"
+  }
+ },
+ {
+  "id": "cca689ff-5985-4f44-bc8f-56ba3d92dab2",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 6,
+  "values": {
+   "image": "/media/hp-ip-t07.webp",
+   "caption": "The Possessed Bride"
+  }
+ },
+ {
+  "id": "b05e0bfa-7ec4-4d69-a5e3-0c5b879b7ca5",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 7,
+  "values": {
+   "image": "/media/hp-ip-t08.webp",
+   "caption": "The Nun"
+  }
+ },
+ {
+  "id": "6ef03ee4-ba1a-4f51-a8ef-2246e398e68e",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 8,
+  "values": {
+   "image": "/media/hp-ip-t09.webp",
+   "caption": "The Skeleton Hands"
+  }
+ },
+ {
+  "id": "6a9cfe61-e1a4-4822-b770-2b19615be550",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 9,
+  "values": {
+   "image": "/media/hp-ip-t10.webp",
+   "caption": "The Blood Wall"
+  }
+ },
+ {
+  "id": "dd72630a-b33d-4ff6-b84a-59feb3972ed1",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 10,
+  "values": {
+   "image": "/media/hp-ip-t11.webp",
+   "caption": "The Screaming Woman"
+  }
+ },
+ {
+  "id": "8cd1c272-660e-4154-bae9-f16e0dba0343",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 11,
+  "values": {
+   "image": "/media/hp-ip-t12.webp",
+   "caption": "The Zombie Horde"
+  }
+ },
+ {
+  "id": "9196d218-ee54-445b-beb9-e61fa63ffffa",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 12,
+  "values": {
+   "image": "/media/hp-ip-t13.webp",
+   "caption": "The Spider Swarm"
+  }
+ },
+ {
+  "id": "488d526b-ec6d-49be-8a6f-67973f3d5bd0",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 13,
+  "values": {
+   "image": "/media/hp-ip-t14.webp",
+   "caption": "The Reaper"
+  }
+ },
+ {
+  "id": "72affd8d-1f62-45c7-8b5d-4f9d90da4746",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 14,
+  "values": {
+   "image": "/media/hp-ip-t15.webp",
+   "caption": "The Demon"
+  }
+ },
+ {
+  "id": "2421243a-da85-42d6-a6a8-b72428eb0234",
+  "section_id": "d9a5a5fa-271b-4045-8f72-936fa114b697",
+  "position": 0,
+  "values": {
+   "image": "/media/hp-ip-s01.webp",
+   "caption": "On the garage door"
+  }
+ },
+ {
+  "id": "f3556c76-1554-4fa1-8fa5-87b05c9695f5",
+  "section_id": "474f1395-9682-4118-8de1-b6cea04306a5",
+  "position": 0,
+  "values": {
+   "icon": "",
+   "text": "On every order, no minimum",
+   "title": "Free shipping"
+  }
+ },
+ {
+  "id": "8bf1306d-bd14-4873-8df5-db940d3a8cb4",
+  "section_id": "474f1395-9682-4118-8de1-b6cea04306a5",
+  "position": 2,
+  "values": {
+   "icon": "",
+   "text": "Didn't land? Send it back",
+   "title": "30-day returns"
+  }
+ },
+ {
+  "id": "7eeed9a3-e9b9-4978-8aa6-b32fb081dbb9",
+  "section_id": "474f1395-9682-4118-8de1-b6cea04306a5",
+  "position": 3,
+  "values": {
+   "icon": "",
+   "text": "A person answers, same day",
+   "title": "Real support"
+  }
+ },
+ {
+  "id": "e16a7a56-e3e3-479b-92c4-e9fbc4796650",
+  "section_id": "b9879dc5-e2a9-493d-bd6f-e0db9316896f",
+  "position": 0,
+  "values": {
+   "image": "/media/cz-pumpkins-c.webp",
+   "answer": "It crawls. The arms pull, the body drags forward, the head lifts and turns, and it screams. Then it resets and waits for the next person.",
+   "question": "What does it actually do? 🧟"
+  }
+ },
+ {
+  "id": "1f649c8a-219b-4f47-a3d7-336ac7025c7a",
+  "section_id": "b9879dc5-e2a9-493d-bd6f-e0db9316896f",
+  "position": 6,
+  "values": {
+   "image": "/media/cz-scale2-c.webp",
+   "answer": "Two either side of the walk is the setup people film. There is a two-pack above that saves you money.",
+   "question": "Should I get two? 🧟"
+  }
+ },
+ {
+  "id": "fb9d91fd-6bf9-41a6-beb5-99a84f42ff88",
+  "section_id": "49006cb7-ed47-4067-8709-2cbcec735817",
+  "position": 0,
+  "values": {
+   "image": "/media/hp-v3-h01.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "d9cf445e-fca3-4418-835c-a4837663ff29",
+  "section_id": "57be6589-2e77-4fed-b4ec-ab3003efe5db",
+  "position": 7,
+  "values": {
+   "text": "Hands coming up out of the grass between the stones.",
+   "title": "Four ground-breaker arms"
+  }
+ },
+ {
+  "id": "31c9d7a6-a029-49e7-9e78-69f4a71a1c63",
+  "section_id": "33fb3381-5dbf-4da6-9ec8-d3102978d4f0",
+  "position": 1,
+  "values": {
+   "text": "Made to sit outside all October.",
+   "title": "Weather-sealed housing"
+  }
+ },
+ {
+  "id": "79b7eadb-d24e-46e2-93e9-8f3b4f15b352",
+  "section_id": "33fb3381-5dbf-4da6-9ec8-d3102978d4f0",
+  "position": 2,
+  "values": {
+   "text": "Angle it up a wall or flat at a window.",
+   "title": "Adjustable stake mount"
+  }
+ },
+ {
+  "id": "68f174e1-c3a9-4d8c-ab71-809e37fd18ab",
+  "section_id": "33fb3381-5dbf-4da6-9ec8-d3102978d4f0",
+  "position": 3,
+  "values": {
+   "text": "Four or six hours, then off.",
+   "title": "Built-in timer"
+  }
+ },
+ {
+  "id": "7dc01f6c-46fa-4023-b474-7de78ff62628",
+  "section_id": "49006cb7-ed47-4067-8709-2cbcec735817",
+  "position": 1,
+  "values": {
+   "image": "/media/hp-v3-h02.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "6da273fc-31e9-4128-bedf-9de5860f1300",
+  "section_id": "af8981e5-3782-461d-b390-90e62ab42493",
+  "position": 3,
+  "values": {
+   "at": "19:41",
+   "side": "them",
+   "text": "your dad bought a 16 foot ghost"
+  }
+ },
+ {
+  "id": "6c2e23b7-e3aa-4d00-947e-8a67e01fddd2",
+  "section_id": "b9879dc5-e2a9-493d-bd6f-e0db9316896f",
+  "position": 5,
+  "values": {
+   "image": "/media/cz-costumes-c.webp",
+   "answer": "Honestly, yes. Most people put it off the main path so trick-or-treaters choose whether to go near it.",
+   "question": "Will it scare a small kid? 🎃"
+  }
+ },
+ {
+  "id": "2d994d4b-b06a-4fac-83fc-e75671d733f1",
+  "section_id": "b19d5f05-5cae-4e70-8e61-f70440295da1",
+  "position": 3,
+  "values": {
+   "text": "16 ft",
+   "title": "Outdoor extension cord"
+  }
+ },
+ {
+  "id": "a26bb7b7-face-4665-abde-721a535c644f",
+  "section_id": "b19d5f05-5cae-4e70-8e61-f70440295da1",
+  "position": 1,
+  "values": {
+   "text": "Adjustable angle",
+   "title": "Ground stake mount"
+  }
+ },
+ {
+  "id": "61e35704-ad2e-4a5a-a5c1-a980e76ee233",
+  "section_id": "b19d5f05-5cae-4e70-8e61-f70440295da1",
+  "position": 2,
+  "values": {
+   "text": "For the indoor-glass effect",
+   "title": "Window film"
+  }
+ },
+ {
+  "id": "8dd1a7e1-37dc-4e08-a224-edf366ef89f9",
+  "section_id": "b19d5f05-5cae-4e70-8e61-f70440295da1",
+  "position": 4,
+  "values": {
+   "text": "Loop and timer",
+   "title": "Remote"
+  }
+ },
+ {
+  "id": "c7a02251-2496-4d05-8a04-d6082464d22a",
+  "section_id": "cb811a88-f04e-4ccf-906b-e23f759e2f03",
+  "position": 0,
+  "values": {
+   "at": "9:12pm",
+   "side": "them",
+   "text": "motion detected at front path"
+  }
+ },
+ {
+  "id": "b34ccb50-ee27-416e-98ea-311f523defd1",
+  "section_id": "49006cb7-ed47-4067-8709-2cbcec735817",
+  "position": 2,
+  "values": {
+   "image": "/media/hp-v3-h03.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "8b5ea652-1e42-4977-be8b-fe105930ad6b",
+  "section_id": "d9a5a5fa-271b-4045-8f72-936fa114b697",
+  "position": 4,
+  "values": {
+   "image": "/media/hp-ip-s05.webp",
+   "caption": "From the car"
+  }
+ },
+ {
+  "id": "20b7d6c0-d766-4f37-8e2d-fc0381d1cdf6",
+  "section_id": "474f1395-9682-4118-8de1-b6cea04306a5",
+  "position": 1,
+  "values": {
+   "icon": "",
+   "text": "A tracking link by email",
+   "title": "Arrives 5-7 days after it ships"
+  }
+ },
+ {
+  "id": "ddece037-949f-4707-9c32-12d5e41a37fa",
+  "section_id": "d9a5a5fa-271b-4045-8f72-936fa114b697",
+  "position": 3,
+  "values": {
+   "image": "/media/hp-ip-s04.webp",
+   "caption": "On a sheet in the carport"
+  }
+ },
+ {
+  "id": "95b49685-d29e-4011-b947-80094bccb327",
+  "section_id": "6e354fda-3fbf-4b38-bebe-932d241761d1",
+  "position": 8,
+  "values": {
+   "n": "9",
+   "x": "320",
+   "y": "196",
+   "from": "2",
+   "text": "Horror Night lights and fogs the second approach, so the yard works from both ends of the street.",
+   "title": "The driveway side"
+  }
+ },
+ {
+  "id": "ced4504b-f2bf-4a63-8874-148199bbc2e1",
+  "section_id": "6e354fda-3fbf-4b38-bebe-932d241761d1",
+  "position": 9,
+  "values": {
+   "n": "10",
+   "x": "48",
+   "y": "170",
+   "from": "3",
+   "text": "Spread down the far side. At Night of the Dead the yard stops being a front and becomes a route.",
+   "title": "Three more standing figures"
+  }
+ },
+ {
+  "id": "fafeddf7-c3e4-414c-a077-7f8854622268",
+  "section_id": "6e354fda-3fbf-4b38-bebe-932d241761d1",
+  "position": 10,
+  "values": {
+   "n": "11",
+   "x": "268",
+   "y": "228",
+   "from": "3",
+   "text": "Full height, along the path. They give the graveyard a horizon instead of a flat field of stones.",
+   "title": "Four crypt pieces"
+  }
+ },
+ {
+  "id": "0fdf8bf3-fe11-4745-a6e4-b025fc2eded9",
+  "section_id": "19a5aa6d-666f-4864-81f6-3602b4d8b174",
+  "position": 6,
+  "values": {
+   "image": "/media/hp-ugc2-c.webp",
+   "answer": "That's the good version. Reaper on the lawn, ghosts on the wall behind it.",
+   "question": "Will it work with a Reaper in the yard?"
+  }
+ },
+ {
+  "id": "1a174c7d-0bb5-4247-8d02-f322ba754fd8",
+  "section_id": "b9879dc5-e2a9-493d-bd6f-e0db9316896f",
+  "position": 3,
+  "values": {
+   "image": "/media/cz-kids2-c.webp",
+   "answer": "Loud enough to hear from the sidewalk, not loud enough to argue with the neighbors about. There is a volume switch underneath.",
+   "question": "How loud is the scream? 🔊"
+  }
+ },
+ {
+  "id": "7ef516f8-77ed-4b8d-9e0b-3ffbc38d0409",
+  "section_id": "b9879dc5-e2a9-493d-bd6f-e0db9316896f",
+  "position": 4,
+  "values": {
+   "image": "/media/cz-webs-c.webp",
+   "answer": "Yes. Keep the base out of standing water and bring it in for a real storm. It lives outdoors the rest of the time.",
+   "question": "Can it go outside all month? 🌧️"
+  }
+ },
+ {
+  "id": "bfb65a21-cbea-4f87-aaf4-4c0bac956d69",
+  "section_id": "b9879dc5-e2a9-493d-bd6f-e0db9316896f",
+  "position": 2,
+  "values": {
+   "image": "/media/cz-flat.webp",
+   "answer": "Batteries, and they are already in it. There is no cable to run across the lawn and nothing to plug in — put it down, switch it on, done. A remote comes with it for on, off and the motion trigger.",
+   "question": "How does it run? 🔌"
+  }
+ },
+ {
+  "id": "fac5ca01-f09b-4474-820e-a7e5b451235c",
+  "section_id": "19a5aa6d-666f-4864-81f6-3602b4d8b174",
+  "position": 0,
+  "values": {
+   "image": "/media/hp-house.webp",
+   "answer": "Twenty holograms — a gremlin, a masked killer, a crawling girl, a witch, a clown, a possessed bride, bats, spiders, blood down the wall and more. They cycle on their own or you pick one with the remote.",
+   "question": "What does it actually show? 👻"
+  }
+ },
+ {
+  "id": "5386635b-e622-43a5-8742-e552418edc3a",
+  "section_id": "b9879dc5-e2a9-493d-bd6f-e0db9316896f",
+  "position": 1,
+  "values": {
+   "image": "/media/cz-close-c.webp",
+   "answer": "A motion sensor in the chest. Somebody steps onto the path and it starts on its own. There is a switch for always-on if you want it running for a party.",
+   "question": "How does it know someone is there? 👀"
+  }
+ },
+ {
+  "id": "6ebb65d6-1c29-4fec-879e-bfecc2b41d99",
+  "section_id": "57be6589-2e77-4fed-b4ec-ab3003efe5db",
+  "position": 8,
+  "values": {
+   "text": "The gutter line and the fence. The frame everything else sits inside.",
+   "title": "150 ft of orange lights"
+  }
+ },
+ {
+  "id": "f4e6dea0-5710-4746-a045-89f7eb1ab2fa",
+  "section_id": "57be6589-2e77-4fed-b4ec-ab3003efe5db",
+  "position": 9,
+  "values": {
+   "text": "Behind the graves, never on the porch. Sound coming from the dark is the difference.",
+   "title": "Outdoor speaker and track"
+  }
+ },
+ {
+  "id": "8ba6edfb-6bfa-441a-8829-9eebe1077507",
+  "section_id": "33fb3381-5dbf-4da6-9ec8-d3102978d4f0",
+  "position": 0,
+  "values": {
+   "text": "Killers, ghosts, a gremlin, a witch, bats — cycling or fixed.",
+   "title": "Twenty built-in holograms"
+  }
+ },
+ {
+  "id": "99a5138c-e90f-4bca-a00e-592c140e4bcc",
+  "section_id": "b19d5f05-5cae-4e70-8e61-f70440295da1",
+  "position": 0,
+  "values": {
+   "text": "With twenty holograms built in",
+   "title": "The projector"
+  }
+ },
+ {
+  "id": "9fc76a87-7c00-46b5-9747-770714aff96d",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 15,
+  "values": {
+   "image": "/media/hp-ip-t16.webp",
+   "caption": "The Murder Silhouette"
+  }
+ },
+ {
+  "id": "7f69d234-dbed-4d52-a5a1-1d9175790b59",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 16,
+  "values": {
+   "image": "/media/hp-ip-t17.webp",
+   "caption": "The Burning Skeleton"
+  }
+ },
+ {
+  "id": "c01d27b7-e976-4182-956f-e6d262012414",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 17,
+  "values": {
+   "image": "/media/hp-ip-t18.webp",
+   "caption": "The Pumpkin Face"
+  }
+ },
+ {
+  "id": "862f5b6b-89bb-4a89-a0d8-cf94013055d6",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 18,
+  "values": {
+   "image": "/media/hp-ip-t19.webp",
+   "caption": "The Axe Man"
+  }
+ },
+ {
+  "id": "9595289b-cc53-463c-bd3d-10270b22feb9",
+  "section_id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "position": 19,
+  "values": {
+   "image": "/media/hp-ip-t20.webp",
+   "caption": "The Haunted Mirror"
+  }
+ },
+ {
+  "id": "f4a6c647-3891-4925-be17-337b4cf38a7f",
+  "section_id": "d9a5a5fa-271b-4045-8f72-936fa114b697",
+  "position": 2,
+  "values": {
+   "image": "/media/hp-ip-s03.webp",
+   "caption": "Out of an upstairs window"
+  }
+ },
+ {
+  "id": "36d211d7-c4df-4a44-9ebb-f84560aee8d3",
+  "section_id": "77c3dee0-e7e5-423e-b866-5be51ca7b6e9",
+  "position": 0,
+  "values": {
+   "note": "them 6:12pm",
+   "title": "its here"
+  }
+ },
+ {
+  "id": "f21405d9-cf96-4728-9c11-83a45624ca38",
+  "section_id": "77c3dee0-e7e5-423e-b866-5be51ca7b6e9",
+  "position": 1,
+  "values": {
+   "note": "us 6:14pm",
+   "title": "did you put it up"
+  }
+ },
+ {
+  "id": "182602ab-2571-4a44-acb3-a27a91bd33ff",
+  "section_id": "77c3dee0-e7e5-423e-b866-5be51ca7b6e9",
+  "position": 2,
+  "values": {
+   "note": "them 6:14pm",
+   "title": "its already up"
+  }
+ },
+ {
+  "id": "6bc8fc78-e3bb-40b1-81f1-4f4078bc7ad3",
+  "section_id": "77c3dee0-e7e5-423e-b866-5be51ca7b6e9",
+  "position": 3,
+  "values": {
+   "note": "them 6:15pm",
+   "title": "the lantern is ON"
+  }
+ },
+ {
+  "id": "3dc478fc-03a8-41a6-b289-fae3e54b2aad",
+  "section_id": "77c3dee0-e7e5-423e-b866-5be51ca7b6e9",
+  "position": 4,
+  "values": {
+   "note": "us 6:15pm",
+   "title": "send a picture"
+  }
+ },
+ {
+  "id": "07c97ad9-c417-4802-86cb-95ac035c4285",
+  "section_id": "d43eacd8-7760-4535-8a50-46b7dc6c772d",
+  "position": 0,
+  "values": {
+   "alt": "Sixteen feet four, seen from the street",
+   "image": "/media/scr-s1-hero.webp"
+  }
+ },
+ {
+  "id": "caa63483-7b3f-4758-979a-5160e3be89a6",
+  "section_id": "d43eacd8-7760-4535-8a50-46b7dc6c772d",
+  "position": 1,
+  "values": {
+   "alt": "Sixteen feet four beside a grown adult",
+   "image": "/media/scr-s2-scale.webp"
+  }
+ },
+ {
+  "id": "a495b020-c998-4bbd-a765-c4b83ec1d9ac",
+  "section_id": "d43eacd8-7760-4535-8a50-46b7dc6c772d",
+  "position": 2,
+  "values": {
+   "alt": "Everything it does",
+   "image": "/media/scr-s3-does.webp"
+  }
+ },
+ {
+  "id": "e2f2e8b6-5a29-40cf-9d1d-53b4c761a721",
+  "section_id": "d43eacd8-7760-4535-8a50-46b7dc6c772d",
+  "position": 3,
+  "values": {
+   "alt": "Real in daylight, lit after dark",
+   "image": "/media/scr-s4-daynight.webp"
+  }
+ },
+ {
+  "id": "0fdd03fa-190c-4a72-86f6-d4db871c5504",
+  "section_id": "d43eacd8-7760-4535-8a50-46b7dc6c772d",
+  "position": 4,
+  "values": {
+   "alt": "Up in ninety seconds",
+   "image": "/media/scr-s5-steps.webp"
+  }
+ },
+ {
+  "id": "9025228a-2a6b-4806-a5bb-ef6508189922",
+  "section_id": "d43eacd8-7760-4535-8a50-46b7dc6c772d",
+  "position": 5,
+  "values": {
+   "alt": "Built for rain, six stakes down",
+   "image": "/media/scr-s6-weather.webp"
+  }
+ },
+ {
+  "id": "55b05400-c728-4a12-8736-c18cc284ce59",
+  "section_id": "cb971e75-c770-4ebe-912d-f9d7e2c0be16",
+  "position": 3,
+  "values": {
+   "image": "/media/br-ugc-05.webp",
+   "caption": "It arrived"
+  }
+ },
+ {
+  "id": "126da205-2009-4813-afb7-3c10cf023572",
+  "section_id": "616f7d5f-82e9-4b75-8672-5c30759350e2",
+  "position": 0,
+  "values": {
+   "image": "/media/br-20.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "b516c53d-5953-4ed3-bd0d-13b96ed48f8f",
+  "section_id": "616f7d5f-82e9-4b75-8672-5c30759350e2",
+  "position": 1,
+  "values": {
+   "image": "/media/br-ugc-02.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "66dc5a1a-0f87-4b11-b571-558dc6182827",
+  "section_id": "d43eacd8-7760-4535-8a50-46b7dc6c772d",
+  "position": 6,
+  "values": {
+   "alt": "The mask, up close",
+   "image": "/media/scr-s7-detail.webp"
+  }
+ },
+ {
+  "id": "73f9a0bb-906b-4021-ae2d-68c9846166e0",
+  "section_id": "d43eacd8-7760-4535-8a50-46b7dc6c772d",
+  "position": 7,
+  "values": {
+   "alt": "The whole street slows down for it",
+   "image": "/media/scr-s8-feel.webp"
+  }
+ },
+ {
+  "id": "592f7e26-de1c-4539-8bf1-19b6f7898f9e",
+  "section_id": "cb811a88-f04e-4ccf-906b-e23f759e2f03",
+  "position": 1,
+  "values": {
+   "at": "9:13pm",
+   "side": "us",
+   "text": "who is at the door"
+  }
+ },
+ {
+  "id": "636968ba-55ac-41b2-863c-bb6cf4180154",
+  "section_id": "cb811a88-f04e-4ccf-906b-e23f759e2f03",
+  "position": 2,
+  "values": {
+   "at": "9:13pm",
+   "side": "them",
+   "text": "nobody. watch it"
+  }
+ },
+ {
+  "id": "c155d584-9b3e-4dec-8c22-641e944ab792",
+  "section_id": "cb811a88-f04e-4ccf-906b-e23f759e2f03",
+  "position": 3,
+  "values": {
+   "at": "9:14pm",
+   "side": "us",
+   "text": "WHY IS IT CRAWLING"
+  }
+ },
+ {
+  "id": "1283d366-0b94-4551-9ffb-d2257b77ebd1",
+  "section_id": "cb811a88-f04e-4ccf-906b-e23f759e2f03",
+  "position": 4,
+  "values": {
+   "at": "9:14pm",
+   "side": "them",
+   "text": "told you"
+  }
+ },
+ {
+  "id": "ad8182b1-a72c-4a16-b5fc-e5e3799bbef8",
+  "section_id": "616f7d5f-82e9-4b75-8672-5c30759350e2",
+  "position": 2,
+  "values": {
+   "image": "/media/br-ugc-06.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "f68cff23-5e79-4685-9dcd-65e465c43813",
+  "section_id": "e525f89c-8ccc-48a9-9cc0-38d2a7c7a726",
+  "position": 1,
+  "values": {
+   "icon": "",
+   "text": "A tracking link by email",
+   "title": "Arrives 5-7 days after it ships"
+  }
+ },
+ {
+  "id": "fb21ea6a-9bee-4197-98b7-d3448a0d0238",
+  "section_id": "29a818b0-a32c-45f0-bbd9-c28016ee35e9",
+  "position": 1,
+  "values": {
+   "icon": "",
+   "text": "A tracking link by email",
+   "title": "Arrives 5-7 days after it ships"
+  }
+ },
+ {
+  "id": "cf31de94-f275-43fc-ab16-bc2d5c741345",
+  "section_id": "d5dda023-bd31-45a4-ba20-3f88dc60c3b6",
+  "position": 0,
+  "values": {
+   "text": "Arms, torso, head, torn clothing",
+   "title": "The Crawling Zombie"
+  }
+ },
+ {
+  "id": "151d971f-ceee-4762-8234-0038a407cc5f",
+  "section_id": "d5dda023-bd31-45a4-ba20-3f88dc60c3b6",
+  "position": 1,
+  "values": {
+   "text": "Fitted, sealed into the body",
+   "title": "The motor unit"
+  }
+ },
+ {
+  "id": "554f7680-451c-4e00-a02f-60d0d7c6757d",
+  "section_id": "d5dda023-bd31-45a4-ba20-3f88dc60c3b6",
+  "position": 2,
+  "values": {
+   "text": "In the chest, with an always-on switch",
+   "title": "Motion sensor"
+  }
+ },
+ {
+  "id": "5c414c60-7e6c-46cc-b068-26c99431be00",
+  "section_id": "d5dda023-bd31-45a4-ba20-3f88dc60c3b6",
+  "position": 3,
+  "values": {
+   "text": "Fitted, red, on while it moves",
+   "title": "Lit eyes"
+  }
+ },
+ {
+  "id": "b96b3fb6-35f8-47a1-812f-b28ea0ccca50",
+  "section_id": "c4269799-f808-4170-9088-35b14b1f469d",
+  "position": 0,
+  "values": {
+   "note": "them 8:41pm",
+   "title": "its here"
+  }
+ },
+ {
+  "id": "ede3bac5-b559-4f28-994b-f0281b5f5452",
+  "section_id": "c4269799-f808-4170-9088-35b14b1f469d",
+  "position": 1,
+  "values": {
+   "note": "us 8:44pm",
+   "title": "did you put it out"
+  }
+ },
+ {
+  "id": "c8676069-eb47-49de-95c7-68a06d0909fc",
+  "section_id": "c4269799-f808-4170-9088-35b14b1f469d",
+  "position": 2,
+  "values": {
+   "note": "them 8:45pm",
+   "title": "its on the path"
+  }
+ },
+ {
+  "id": "2ec9bb62-9ad8-4609-a369-3210b2126fc8",
+  "section_id": "c4269799-f808-4170-9088-35b14b1f469d",
+  "position": 3,
+  "values": {
+   "note": "them 8:47pm",
+   "title": "the mailman just ran"
+  }
+ },
+ {
+  "id": "e3e9f6c4-853f-4afd-9337-8c02782ee775",
+  "section_id": "c4269799-f808-4170-9088-35b14b1f469d",
+  "position": 4,
+  "values": {
+   "note": "us 8:47pm",
+   "title": "SEND THE CLIP"
+  }
+ },
+ {
+  "id": "4810faef-f715-4269-b414-139dc90beb7b",
+  "section_id": "e525f89c-8ccc-48a9-9cc0-38d2a7c7a726",
+  "position": 0,
+  "values": {
+   "icon": "",
+   "text": "On every order, no minimum",
+   "title": "Free shipping"
+  }
+ },
+ {
+  "id": "263257ac-c1a6-44c8-a8fe-4698e354e477",
+  "section_id": "e525f89c-8ccc-48a9-9cc0-38d2a7c7a726",
+  "position": 2,
+  "values": {
+   "icon": "",
+   "text": "Didn't land? Send it back",
+   "title": "30-day returns"
+  }
+ },
+ {
+  "id": "2d7223dc-c239-4501-9762-69f5bde63eed",
+  "section_id": "e525f89c-8ccc-48a9-9cc0-38d2a7c7a726",
+  "position": 3,
+  "values": {
+   "icon": "",
+   "text": "A person answers, same day",
+   "title": "Real support"
+  }
+ },
+ {
+  "id": "cf9f7733-72be-43a1-ab7c-9a61b01c0d83",
+  "section_id": "86d8dd0d-7c00-4edb-9965-c0bcc6f9a313",
+  "position": 0,
+  "values": {
+   "alt": "Eight feet six, seen from the street",
+   "image": "/media/br-s1-hero.webp"
+  }
+ },
+ {
+  "id": "a7917ea1-1c3a-4052-af19-1ff99860b171",
+  "section_id": "86d8dd0d-7c00-4edb-9965-c0bcc6f9a313",
+  "position": 1,
+  "values": {
+   "alt": "Eight feet six beside a grown adult",
+   "image": "/media/br-s2-scale.webp"
+  }
+ },
+ {
+  "id": "30325a38-8c72-45a8-aa5d-5cdef821aab5",
+  "section_id": "86d8dd0d-7c00-4edb-9965-c0bcc6f9a313",
+  "position": 2,
+  "values": {
+   "alt": "Everything it does",
+   "image": "/media/br-s3-does.webp"
+  }
+ },
+ {
+  "id": "e5e8eea3-d9ae-4e1d-a28e-1d1c908d217b",
+  "section_id": "d5dda023-bd31-45a4-ba20-3f88dc60c3b6",
+  "position": 4,
+  "values": {
+   "text": "Fitted, plus a spare set",
+   "title": "Batteries"
+  }
+ },
+ {
+  "id": "0e9e15bb-e767-45b6-81d5-5fa2a7c57b90",
+  "section_id": "86d8dd0d-7c00-4edb-9965-c0bcc6f9a313",
+  "position": 3,
+  "values": {
+   "alt": "Real in daylight, lit after dark",
+   "image": "/media/br-s4-daynight.webp"
+  }
+ },
+ {
+  "id": "0006b123-b38a-4e60-9509-983ce7a8ac9c",
+  "section_id": "86d8dd0d-7c00-4edb-9965-c0bcc6f9a313",
+  "position": 4,
+  "values": {
+   "alt": "Up in one minute",
+   "image": "/media/br-s5-steps.webp"
+  }
+ },
+ {
+  "id": "c5d2eb72-42b6-4caf-a238-507d2f772b02",
+  "section_id": "86d8dd0d-7c00-4edb-9965-c0bcc6f9a313",
+  "position": 5,
+  "values": {
+   "alt": "Built for rain, staked down",
+   "image": "/media/br-s6-weather.webp"
+  }
+ },
+ {
+  "id": "de6a4947-6696-47cc-a0e4-a4d2b2d70907",
+  "section_id": "86d8dd0d-7c00-4edb-9965-c0bcc6f9a313",
+  "position": 6,
+  "values": {
+   "alt": "The skull and the lantern, up close",
+   "image": "/media/br-s7-detail.webp"
+  }
+ },
+ {
+  "id": "9b39a775-73c0-44a1-95a1-36a56ed20ae8",
+  "section_id": "86d8dd0d-7c00-4edb-9965-c0bcc6f9a313",
+  "position": 7,
+  "values": {
+   "alt": "Three cars stopped to take a photo",
+   "image": "/media/br-s8-feel.webp"
+  }
+ },
+ {
+  "id": "f20efde5-f780-41db-a9a0-8b7bdfe84374",
+  "section_id": "d9a5a5fa-271b-4045-8f72-936fa114b697",
+  "position": 5,
+  "values": {
+   "image": "/media/hp-ip-s06.webp",
+   "caption": "In the window, phone up"
+  }
+ },
+ {
+  "id": "9c6d1a32-7510-4329-a3d6-dd92ad67a1ee",
+  "section_id": "d9a5a5fa-271b-4045-8f72-936fa114b697",
+  "position": 6,
+  "values": {
+   "image": "/media/hp-ip-s07.webp",
+   "caption": "A whole window of them"
+  }
+ },
+ {
+  "id": "56c3fcec-986b-4512-a85e-c8208b6f832d",
+  "section_id": "a2fff389-c32a-4034-960a-ac03cc79170f",
+  "position": 0,
+  "values": {
+   "image": "/media/scr-spec.webp",
+   "answer": "16.4 feet — 5 metres. Its head sits level with the upstairs windows, and you can see it from the end of the street.",
+   "question": "How tall is it really? 👻"
+  }
+ },
+ {
+  "id": "ee468d4b-e154-4264-b350-0d6a19c72068",
+  "section_id": "a2fff389-c32a-4034-960a-ac03cc79170f",
+  "position": 1,
+  "values": {
+   "image": "/media/scr-hero.webp",
+   "answer": "A silent fan runs the whole time it's out. Plug it in, it's standing in about ninety seconds. 🎃",
+   "question": "Does it stay up by itself?"
+  }
+ },
+ {
+  "id": "a63bd8dc-142c-4e8f-9e59-e0fb3d057ce9",
+  "section_id": "a2fff389-c32a-4034-960a-ac03cc79170f",
+  "position": 2,
+  "values": {
+   "image": "/media/scr-street.webp",
+   "answer": "Six ground stakes and four guy ropes are in the box. Staked properly it handles an ordinary autumn night. In a storm, unplug it and it lays down flat.",
+   "question": "What if it's windy?"
+  }
+ },
+ {
+  "id": "8b0267ad-bf95-46fa-88a2-dc4847bf4677",
+  "section_id": "a2fff389-c32a-4034-960a-ac03cc79170f",
+  "position": 3,
+  "values": {
+   "image": "/media/scr-night.webp",
+   "answer": "Yes. LEDs inside the head and body, so the face glows from the inside after dark. That's the shot everyone films.",
+   "question": "Is it lit at night? 🕯️"
+  }
+ },
+ {
+  "id": "030f990b-0b87-4288-b243-1459cd293815",
+  "section_id": "5d682297-048e-440a-9358-1d7e601d829b",
+  "position": 0,
+  "values": {
+   "alt": "Twelve feet of screen on your own grass",
+   "image": "/media/mt-s1-hero.webp"
+  }
+ },
+ {
+  "id": "000beb13-ca47-450d-91a4-6a832522e47f",
+  "section_id": "5d682297-048e-440a-9358-1d7e601d829b",
+  "position": 1,
+  "values": {
+   "alt": "Twelve feet wide, beside a grown adult",
+   "image": "/media/mt-s2-scale.webp"
+  }
+ },
+ {
+  "id": "71c07ed8-e48a-4782-899b-4f8e117975be",
+  "section_id": "88e21564-b96d-451b-82f9-18b2a5162347",
+  "position": 2,
+  "values": {
+   "text": "Steel, 10 in",
+   "title": "Six ground stakes"
+  }
+ },
+ {
+  "id": "2cad77ef-cf36-4e9d-84e4-062876aebd69",
+  "section_id": "88e21564-b96d-451b-82f9-18b2a5162347",
+  "position": 0,
+  "values": {
+   "text": "16.4 ft / 5 m, weatherproof nylon, lit from inside",
+   "title": "The 16 ft Scream"
+  }
+ },
+ {
+  "id": "9afb5905-fd49-48aa-a139-46bb5394d829",
+  "section_id": "5d682297-048e-440a-9358-1d7e601d829b",
+  "position": 2,
+  "values": {
+   "alt": "Everything it does",
+   "image": "/media/mt-s3-does.webp"
+  }
+ },
+ {
+  "id": "66a728ba-0ca5-413f-a2c3-191ea3ec042c",
+  "section_id": "a0bb6aaa-0182-48a3-b345-f8495eec4c0a",
+  "position": 0,
+  "values": {
+   "icon": "",
+   "text": "On every order, no minimum",
+   "title": "Free shipping"
+  }
+ },
+ {
+  "id": "c867e93c-1ac5-4a09-8be0-472e5ce967b5",
+  "section_id": "a0bb6aaa-0182-48a3-b345-f8495eec4c0a",
+  "position": 2,
+  "values": {
+   "icon": "",
+   "text": "Didn't land? Send it back",
+   "title": "30-day returns"
+  }
+ },
+ {
+  "id": "1ec9e7f9-05eb-4903-9b6c-5c10fb8677d9",
+  "section_id": "a0bb6aaa-0182-48a3-b345-f8495eec4c0a",
+  "position": 3,
+  "values": {
+   "icon": "",
+   "text": "A person answers, same day",
+   "title": "Real support"
+  }
+ },
+ {
+  "id": "d596283b-5d2a-46b0-923f-aca95e28d036",
+  "section_id": "4f185f81-20c8-4d2a-b07a-4f79ca2feb79",
+  "position": 4,
+  "values": {
+   "image": "/media/mt-watching-sq2.webp",
+   "answer": "That is most of the value. It is a garden cinema in June as well — it just happens to arrive in October.",
+   "question": "Can we use it after Halloween? 🎬"
+  }
+ },
+ {
+  "id": "f220b70c-2979-44ad-9f9f-69c3e2e5c6e4",
+  "section_id": "5d682297-048e-440a-9358-1d7e601d829b",
+  "position": 3,
+  "values": {
+   "alt": "Real in daylight, lit after dark",
+   "image": "/media/mt-s4-daynight.webp"
+  }
+ },
+ {
+  "id": "7b6c32eb-f25f-4461-b7ff-41ed2d4be0eb",
+  "section_id": "a2fff389-c32a-4034-960a-ac03cc79170f",
+  "position": 6,
+  "values": {
+   "image": "/media/scr-kids.webp",
+   "answer": "Order by October 20 and it's at your door before Halloween. After that we can't promise it.",
+   "question": "Will it arrive in time?"
+  }
+ },
+ {
+  "id": "6c08812a-941d-464d-bbea-5ded6263b628",
+  "section_id": "5e81c741-3bf1-46d8-a512-fbd0270acf05",
+  "position": 0,
+  "values": {
+   "icon": "",
+   "text": "On every order, no minimum",
+   "title": "Free shipping"
+  }
+ },
+ {
+  "id": "8f0e9ae0-1df0-41a1-9ab4-3957ceae100d",
+  "section_id": "5e81c741-3bf1-46d8-a512-fbd0270acf05",
+  "position": 2,
+  "values": {
+   "icon": "",
+   "text": "Didn't land? Send it back",
+   "title": "30-day returns"
+  }
+ },
+ {
+  "id": "08393db4-2b8a-485b-9390-7d23a3a5fc4c",
+  "section_id": "5e81c741-3bf1-46d8-a512-fbd0270acf05",
+  "position": 3,
+  "values": {
+   "icon": "",
+   "text": "A person answers, same day",
+   "title": "Real support"
+  }
+ },
+ {
+  "id": "02976d04-2f62-41b5-bc7f-ec9c2a00db77",
+  "section_id": "77c3dee0-e7e5-423e-b866-5be51ca7b6e9",
+  "position": 6,
+  "values": {
+   "note": "story Dev 6:28pm",
+   "image": "/media/br-21.webp",
+   "title": "the whole street stopped at yours"
+  }
+ },
+ {
+  "id": "edc29a87-8bef-458c-8998-37af0df1d2d9",
+  "section_id": "77c3dee0-e7e5-423e-b866-5be51ca7b6e9",
+  "position": 7,
+  "values": {
+   "note": "story Jules 7:02pm",
+   "image": "/media/br-18.webp",
+   "title": "my kid will not walk past it"
+  }
+ },
+ {
+  "id": "110b7ec1-20ab-460b-8c4f-eb267cd526b0",
+  "section_id": "77c3dee0-e7e5-423e-b866-5be51ca7b6e9",
+  "position": 8,
+  "values": {
+   "note": "story Nate 9:40pm",
+   "image": "/media/br-20.webp",
+   "title": "doorbell cam caught it. unreal"
+  }
+ },
+ {
+  "id": "6482d3b2-9bf8-485d-8cc1-e183bbdee517",
+  "section_id": "a2fff389-c32a-4034-960a-ac03cc79170f",
+  "position": 4,
+  "values": {
+   "image": "/media/scr-hero.webp",
+   "answer": "About the same as a table lamp. Ordinary outdoor extension cord, no special supply.",
+   "question": "How much power does it pull?"
+  }
+ },
+ {
+  "id": "1bc48a54-3941-438d-b4d1-15c72c1b7862",
+  "section_id": "a2fff389-c32a-4034-960a-ac03cc79170f",
+  "position": 5,
+  "values": {
+   "image": "/media/scr-hero.webp",
+   "answer": "It folds into the bag it arrived in. One person can carry it. It goes back in the garage until next October.",
+   "question": "How do I put it away? 🪦"
+  }
+ },
+ {
+  "id": "c99a312e-57a8-45e5-8274-1bf6927a9fb5",
+  "section_id": "5d682297-048e-440a-9358-1d7e601d829b",
+  "position": 4,
+  "values": {
+   "alt": "Up in two minutes: unroll, peg, play",
+   "image": "/media/mt-s5-steps.webp"
+  }
+ },
+ {
+  "id": "632f93d4-15d8-46f1-919f-de3d5f8a4ffe",
+  "section_id": "5d682297-048e-440a-9358-1d7e601d829b",
+  "position": 5,
+  "values": {
+   "alt": "Built for rain, pegged down",
+   "image": "/media/mt-s6-weather.webp"
+  }
+ },
+ {
+  "id": "1f36a66c-da3e-43f3-8489-49f93509cc95",
+  "section_id": "5d682297-048e-440a-9358-1d7e601d829b",
+  "position": 6,
+  "values": {
+   "alt": "Pegged and guyed at the base",
+   "image": "/media/mt-s7-detail.webp"
+  }
+ },
+ {
+  "id": "0fea2468-1c3f-4675-90e1-e9d26929f8c2",
+  "section_id": "5d682297-048e-440a-9358-1d7e601d829b",
+  "position": 7,
+  "values": {
+   "alt": "Every kid on the street on your grass",
+   "image": "/media/mt-s8-feel.webp"
+  }
+ },
+ {
+  "id": "98de3517-30e6-47de-aba3-f47a38a077bf",
+  "section_id": "88e21564-b96d-451b-82f9-18b2a5162347",
+  "position": 1,
+  "values": {
+   "text": "Fitted, with a sealed outdoor lead",
+   "title": "Blower unit"
+  }
+ },
+ {
+  "id": "9ee2b357-8e4f-4697-84b7-cd2b59200699",
+  "section_id": "88e21564-b96d-451b-82f9-18b2a5162347",
+  "position": 3,
+  "values": {
+   "text": "With tensioners",
+   "title": "Four guy ropes"
+  }
+ },
+ {
+  "id": "72c1cc44-ab7c-485a-9bdf-89a27b1f0f91",
+  "section_id": "88e21564-b96d-451b-82f9-18b2a5162347",
+  "position": 4,
+  "values": {
+   "text": "Because things happen",
+   "title": "Repair patch kit"
+  }
+ },
+ {
+  "id": "520d22e7-ffe7-45c6-974b-68859d8abdfe",
+  "section_id": "4f185f81-20c8-4d2a-b07a-4f79ca2feb79",
+  "position": 5,
+  "values": {
+   "image": "",
+   "answer": "It is a fan, and it is quieter than the film. The sound comes off your own speaker.",
+   "question": "Will the neighbours hear the blower?"
+  }
+ },
+ {
+  "id": "a277857f-7354-41c5-8f12-875f22d2b8f8",
+  "section_id": "726f44e1-754b-4ad7-add9-c65ea4aff6d7",
+  "position": 0,
+  "values": {
+   "at": "7:41pm",
+   "side": "them",
+   "text": "what is in your garden"
+  }
+ },
+ {
+  "id": "10bae233-7363-440e-8e5f-a18c36408588",
+  "section_id": "4f185f81-20c8-4d2a-b07a-4f79ca2feb79",
+  "position": 0,
+  "values": {
+   "image": "/media/mt-garden-sq.webp",
+   "answer": "Twelve feet across — 3.6 metres — standing on the grass. Everybody sits on the lawn and nobody has to see round anybody.",
+   "question": "How big is it really? 🍿"
+  }
+ },
+ {
+  "id": "9da01030-f955-4361-9698-bb5e67f7cbb7",
+  "section_id": "4f185f81-20c8-4d2a-b07a-4f79ca2feb79",
+  "position": 3,
+  "values": {
+   "image": "/media/mt-beam-sq.webp",
+   "answer": "Anything your phone or laptop plays. Plug it in, press play, sit down.",
+   "question": "What do we watch on it?"
+  }
+ },
+ {
+  "id": "f625e55c-e2e5-432d-855e-6c2ab0b15c02",
+  "section_id": "4f185f81-20c8-4d2a-b07a-4f79ca2feb79",
+  "position": 1,
+  "values": {
+   "image": "/media/mt-dusk-sq.webp",
+   "answer": "Two minutes. The blower runs the whole evening and holds it up — you peg the four corners and that is the job.",
+   "question": "How long does it take to put up? ⏱️"
+  }
+ },
+ {
+  "id": "844325b9-a3dd-4718-bee0-50b9b563f330",
+  "section_id": "4f185f81-20c8-4d2a-b07a-4f79ca2feb79",
+  "position": 2,
+  "values": {
+   "image": "/media/mt-box-white-sq.webp",
+   "answer": "Yes. That is the whole point — screen, projector, blower, cable, pegs, one box. Nothing else to buy.",
+   "question": "Does the projector come with it?"
+  }
+ },
+ {
+  "id": "f58532ea-fd38-4c84-a68d-d314b0955f20",
+  "section_id": "4f185f81-20c8-4d2a-b07a-4f79ca2feb79",
+  "position": 6,
+  "values": {
+   "image": "/media/mt-unbox-sq.webp",
+   "answer": "Back in its bag, on a shelf in the garage. It packs down smaller than a folding chair.",
+   "question": "Where does it live the rest of the year?"
+  }
+ },
+ {
+  "id": "7cffcaf5-9a98-461b-be5f-e7bc3b6fb63d",
+  "section_id": "9fa13dc6-0c69-4f72-880d-65ceecceee60",
+  "position": 0,
+  "values": {
+   "alt": "The Haunted Projector, with a green witch filling the front window of an American house at dusk",
+   "image": "/media/hp-v2-01.webp"
+  }
+ },
+ {
+  "id": "04c99481-5b2a-486f-adfe-31f4e897be23",
+  "section_id": "b6d455c1-092a-40aa-aaa6-ad6faa6c43e5",
+  "position": 0,
+  "values": {
+   "alt": "The whole front, built and running",
+   "image": "/media/scr-c1-street.webp"
+  }
+ },
+ {
+  "id": "6bbc9bee-fa90-4275-a32f-696c0b86675b",
+  "section_id": "b6d455c1-092a-40aa-aaa6-ad6faa6c43e5",
+  "position": 1,
+  "values": {
+   "alt": "Up in an afternoon",
+   "image": "/media/scr-c1-setup.webp"
+  }
+ },
+ {
+  "id": "d672be4f-5da3-44af-a465-dcc69b55f4ce",
+  "section_id": "b6d455c1-092a-40aa-aaa6-ad6faa6c43e5",
+  "position": 2,
+  "values": {
+   "alt": "What the street does when it sees it",
+   "image": "/media/cz-c1-kids.webp"
+  }
+ },
+ {
+  "id": "56e2a9b0-4bf6-4275-ac99-e062639aaa32",
+  "section_id": "b6d455c1-092a-40aa-aaa6-ad6faa6c43e5",
+  "position": 3,
+  "values": {
+   "alt": "Every window, at once",
+   "image": "/media/hp-house-q.webp"
+  }
+ },
+ {
+  "id": "cea94f51-afc4-43ed-8821-23441c000b2c",
+  "section_id": "6e354fda-3fbf-4b38-bebe-932d241761d1",
+  "position": 11,
+  "values": {
+   "n": "12",
+   "x": "58",
+   "y": "250",
+   "from": "3",
+   "text": "Behind the stones, out of sight. Sound coming from somewhere you cannot see is the whole difference.",
+   "title": "The speaker, in the dark"
+  }
+ },
+ {
+  "id": "c7489860-f53c-4a9e-9ea0-e618bc739fe8",
+  "section_id": "9fa13dc6-0c69-4f72-880d-65ceecceee60",
+  "position": 1,
+  "values": {
+   "alt": "Everything it does: sits on the sill, one plug, silent, four or six hour timer",
+   "image": "/media/hp-v2-02.webp"
+  }
+ },
+ {
+  "id": "15752bcb-cd37-40ca-8df3-0aff68a69990",
+  "section_id": "d9a5a5fa-271b-4045-8f72-936fa114b697",
+  "position": 7,
+  "values": {
+   "image": "/media/hp-ip-s08.webp",
+   "caption": "From inside, on the glass"
+  }
+ },
+ {
+  "id": "85927140-4fc0-4b95-933e-e918592f2191",
+  "section_id": "d9a5a5fa-271b-4045-8f72-936fa114b697",
+  "position": 8,
+  "values": {
+   "image": "/media/hp-ip-s09.webp",
+   "caption": "On fire, upstairs"
+  }
+ },
+ {
+  "id": "c1824d7c-01b5-41ee-a583-e54f28585c0b",
+  "section_id": "d9a5a5fa-271b-4045-8f72-936fa114b697",
+  "position": 9,
+  "values": {
+   "image": "/media/hp-ip-s10.webp",
+   "caption": "Two windows at once"
+  }
+ },
+ {
+  "id": "30c618ef-6505-4a49-a362-d1d6fb1f2b84",
+  "section_id": "22f86879-b41c-407f-840c-2ff3d8c00f28",
+  "position": 0,
+  "values": {
+   "image": "/media/hp-r3-nm.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "eea8bc9e-0d77-4b46-86b6-ed4cda66bed2",
+  "section_id": "22f86879-b41c-407f-840c-2ff3d8c00f28",
+  "position": 1,
+  "values": {
+   "image": "/media/mt-r3-ga.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "34213d9d-6d3b-4a3e-b410-f7858e29b6d2",
+  "section_id": "c816312a-a0c7-4ae2-a2cd-7687543e28de",
+  "position": 0,
+  "values": {
+   "text": "12 ft / 3.6 m wide, inflatable, stands on the grass",
+   "title": "The screen"
+  }
+ },
+ {
+  "id": "9e6eb453-4b32-49b1-bfd7-2c9fe046cc71",
+  "section_id": "c816312a-a0c7-4ae2-a2cd-7687543e28de",
+  "position": 1,
+  "values": {
+   "text": "Plays from a phone, a laptop or a stick",
+   "title": "The projector"
+  }
+ },
+ {
+  "id": "c8ae04a1-4510-4eed-9dd5-6b5cf4150409",
+  "section_id": "c816312a-a0c7-4ae2-a2cd-7687543e28de",
+  "position": 2,
+  "values": {
+   "text": "Runs quietly the whole evening and holds the screen up",
+   "title": "The blower"
+  }
+ },
+ {
+  "id": "6d227901-050d-4a9b-bc40-25fac9b8dc11",
+  "section_id": "c816312a-a0c7-4ae2-a2cd-7687543e28de",
+  "position": 3,
+  "values": {
+   "text": "Four corners, one minute",
+   "title": "Ground pegs and tethers"
+  }
+ },
+ {
+  "id": "5e240b23-8795-4a48-8eba-7c6c8b497add",
+  "section_id": "c816312a-a0c7-4ae2-a2cd-7687543e28de",
+  "position": 4,
+  "values": {
+   "text": "Outdoor lead for the blower, HDMI for the projector",
+   "title": "Cables"
+  }
+ },
+ {
+  "id": "fd6dfe5c-159b-46d1-bc49-8ba19cea54ca",
+  "section_id": "c816312a-a0c7-4ae2-a2cd-7687543e28de",
+  "position": 5,
+  "values": {
+   "text": "Everything back in it, back in the garage",
+   "title": "The bag"
+  }
+ },
+ {
+  "id": "5ab89383-bd81-4b4b-939c-448e11e06323",
+  "section_id": "9bd8109a-fa22-4e02-928f-5541aa6b9555",
+  "position": 0,
+  "values": {
+   "text": "Big enough that the whole street's worth of children can see it from the grass.",
+   "title": "Twelve feet of screen"
+  }
+ },
+ {
+  "id": "139f65c4-3a3c-454a-b976-75edd20318f3",
+  "section_id": "9bd8109a-fa22-4e02-928f-5541aa6b9555",
+  "position": 1,
+  "values": {
+   "text": "The blower does the standing up. You peg the corners.",
+   "title": "Up in two minutes"
+  }
+ },
+ {
+  "id": "b9373e64-3caf-439d-84f3-bae09e0b7607",
+  "section_id": "9fa13dc6-0c69-4f72-880d-65ceecceee60",
+  "position": 2,
+  "values": {
+   "alt": "How big it gets — thirteen feet wide from sixteen feet back",
+   "image": "/media/hp-v2-03.webp"
+  }
+ },
+ {
+  "id": "c3c80adf-5ece-4afa-955f-10e8431cfe50",
+  "section_id": "9fa13dc6-0c69-4f72-880d-65ceecceee60",
+  "position": 3,
+  "values": {
+   "alt": "It plugs in: the sixteen foot cord and the remote on the windowsill",
+   "image": "/media/hp-v2-04.webp"
+  }
+ },
+ {
+  "id": "0a17ffd7-313d-48e6-a941-7ea09a3f58bf",
+  "section_id": "9fa13dc6-0c69-4f72-880d-65ceecceee60",
+  "position": 4,
+  "values": {
+   "alt": "Three steps — film on the glass, projector on the sill, walk outside and look",
+   "image": "/media/hp-v2-05.webp"
+  }
+ },
+ {
+  "id": "74b51546-1adf-479b-b7ed-9bda10a7f531",
+  "section_id": "9bd8109a-fa22-4e02-928f-5541aa6b9555",
+  "position": 2,
+  "values": {
+   "text": "Your phone, your laptop, a streaming stick. Whatever is on, is on.",
+   "title": "Plays anything"
+  }
+ },
+ {
+  "id": "e941fdd6-7129-4fb8-b5e9-e911ca40b4e5",
+  "section_id": "9bd8109a-fa22-4e02-928f-5541aa6b9555",
+  "position": 3,
+  "values": {
+   "text": "It is a garden cinema all summer. It simply arrives in time for Halloween.",
+   "title": "Not just October"
+  }
+ },
+ {
+  "id": "a8c82982-6442-467c-9049-6954043a96d2",
+  "section_id": "726f44e1-754b-4ad7-add9-c65ea4aff6d7",
+  "position": 1,
+  "values": {
+   "at": "7:41pm",
+   "side": "us",
+   "text": "cinema"
+  }
+ },
+ {
+  "id": "e9c6738f-c7e0-4299-b2ba-a04c4bfec14d",
+  "section_id": "726f44e1-754b-4ad7-add9-c65ea4aff6d7",
+  "position": 2,
+  "values": {
+   "at": "7:42pm",
+   "side": "them",
+   "text": "what do you mean cinema"
+  }
+ },
+ {
+  "id": "a2779979-f857-4670-94c8-105ecf548fc2",
+  "section_id": "726f44e1-754b-4ad7-add9-c65ea4aff6d7",
+  "position": 3,
+  "values": {
+   "at": "7:42pm",
+   "side": "us",
+   "text": "twelve foot screen. hocus pocus is on"
+  }
+ },
+ {
+  "id": "55e6a93e-a11c-4348-a603-607f030c42f6",
+  "section_id": "726f44e1-754b-4ad7-add9-c65ea4aff6d7",
+  "position": 4,
+  "values": {
+   "at": "7:43pm",
+   "side": "them",
+   "text": "we are coming. bringing chairs"
+  }
+ },
+ {
+  "id": "378b2f46-878d-4906-bd13-ba22ba33f9fc",
+  "section_id": "726f44e1-754b-4ad7-add9-c65ea4aff6d7",
+  "position": 5,
+  "values": {
+   "at": "7:44pm",
+   "side": "us",
+   "text": "bring a blanket, the grass is wet"
+  }
+ },
+ {
+  "id": "f984c101-86c1-451a-9336-fc76f54fff52",
+  "section_id": "22f86879-b41c-407f-840c-2ff3d8c00f28",
+  "position": 2,
+  "values": {
+   "image": "/media/scr-u1-az.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "bbe9044b-f91a-4447-93b3-679bc9dd5ce2",
+  "section_id": "9fa13dc6-0c69-4f72-880d-65ceecceee60",
+  "position": 5,
+  "values": {
+   "alt": "Everything in the box: projector, stake mount, window film, sixteen foot cord, remote",
+   "image": "/media/hp-v2-06.webp"
+  }
+ },
+ {
+  "id": "e588837f-90e6-4ea1-bfd4-cb7c74f5522c",
+  "section_id": "9fa13dc6-0c69-4f72-880d-65ceecceee60",
+  "position": 6,
+  "values": {
+   "alt": "Close on the cream-white projector throwing its light at the window glass",
+   "image": "/media/hp-v2-07.webp"
+  }
+ },
+ {
+  "id": "cecef2ea-da4c-415b-a6c7-7dfb65524df7",
+  "section_id": "9fa13dc6-0c69-4f72-880d-65ceecceee60",
+  "position": 7,
+  "values": {
+   "alt": "Trick-or-treaters stopped on the sidewalk by a green witch in the front window",
+   "image": "/media/hp-v2-08.webp"
+  }
+ },
+ {
+  "id": "86e8b8fe-8e28-431f-88b6-8f0883f9bb10",
+  "section_id": "3a8c9749-47f5-4be1-b06b-ec657a00115a",
+  "position": 3,
+  "values": {
+   "image": "/media/scr-c1-size.webp",
+   "answer": "The Haunted House build is sized for an ordinary American front yard. If you have more room than that, Horror Night and Night of the Dead exist for it.",
+   "question": "Is this too much for a normal garden? 🏡"
+  }
+ },
+ {
+  "id": "7ca3ddfc-5461-4d92-8c6a-720b732c19a4",
+  "section_id": "3a8c9749-47f5-4be1-b06b-ec657a00115a",
+  "position": 6,
+  "values": {
+   "image": "/media/scr-c1-setup.webp",
+   "answer": "Back in the boxes it came in, and they are sized to stack. The Haunted House build is about four feet of a garage wall. Night of the Dead is closer to a parking space. Say so out loud before you buy the big one.",
+   "question": "Where does all of it live in November? 📦"
+  }
+ },
+ {
+  "id": "bae32fe0-81ab-4e13-95f5-9e6a8e080f5e",
+  "section_id": "163ffc9c-e127-484c-b6c3-11d80bf703da",
+  "position": 1,
+  "values": {
+   "icon": "",
+   "text": "A tracking link by email",
+   "title": "Arrives 5-7 days after it ships"
+  }
+ },
+ {
+  "id": "2258a0f2-4c32-45aa-89c9-54bfe6739791",
+  "section_id": "a96142fb-e29b-43ef-93ff-31906664af89",
+  "position": 0,
+  "values": {
+   "was": "$1,199",
+   "name": "The Haunted House",
+   "price": "$852",
+   "street": "The house on the street that clearly did something. People slow down at your mailbox.",
+   "values": "1 · The Scream, 16.4 ft\n16\n4\n150 ft orange, 6 floods\n1 machine and chiller\n2 windows"
+  }
+ },
+ {
+  "id": "7cf44dbd-5df8-41ea-8d1e-82bd75cd2011",
+  "section_id": "a96142fb-e29b-43ef-93ff-31906664af89",
+  "position": 1,
+  "values": {
+   "was": "$2,099",
+   "name": "Horror Night",
+   "price": "$1,500",
+   "street": "They cross the road to come to you. Parents take a photo while the kids are still on the path.",
+   "values": "3 · The Scream and two Reapers\n22\n6\n200 ft orange, 8 floods\n2 machines, both chilled\n3 windows"
+  }
+ },
+ {
+  "id": "b55443a4-f1ad-44e6-a96b-e7ec9361d6f5",
+  "section_id": "a96142fb-e29b-43ef-93ff-31906664af89",
+  "position": 2,
+  "values": {
+   "top": "1",
+   "was": "$4,799",
+   "name": "Night of the Dead",
+   "price": "$3,500",
+   "street": "People drive here. The fog reaches the sidewalk, the figures stand taller than your porch roof, and the yard has a route through it.",
+   "values": "6 · The Scream, two Reapers, three more standing figures\n28, plus four crypt pieces\n8\n300 ft orange, 10 floods\n3 machines, both ends of the yard and one at the door\n4 windows, plus the garage door"
+  }
+ },
+ {
+  "id": "4a657b93-c099-4850-ace2-f2301636c1aa",
+  "section_id": "09447795-c1b4-4ad7-85d8-0f19da76c84b",
+  "position": 0,
+  "values": {
+   "text": "Onto the driveway, boxed and labelled by zone — lawn, house, path. You open nothing on Friday.",
+   "when": "Friday · 30 minutes",
+   "title": "The pallet comes off the truck"
+  }
+ },
+ {
+  "id": "1f25a2e3-9bdd-4de0-8e91-70a10f3f6fe4",
+  "section_id": "09447795-c1b4-4ad7-85d8-0f19da76c84b",
+  "position": 1,
+  "values": {
+   "text": "Along the gutter line and the fence, because everything else gets placed against them. Stones take one stake each and go in with your foot. This is the long part and it is the easy part.",
+   "when": "Saturday morning · 3 hours",
+   "title": "Lights first, then the graves"
+  }
+ },
+ {
+  "id": "f38edc43-4743-454b-a755-488688c10178",
+  "section_id": "3a8c9749-47f5-4be1-b06b-ec657a00115a",
+  "position": 0,
+  "values": {
+   "image": "/media/scr-c1-setup.webp",
+   "answer": "One afternoon, two people. The inflatables are ninety seconds each — stake, tether, plug. The graves and the lights are the slow part, and neither is hard.",
+   "question": "How long does it take to put up? 🔨"
+  }
+ },
+ {
+  "id": "667946ac-f4cc-4af8-98c1-f76af5328813",
+  "section_id": "3a8c9749-47f5-4be1-b06b-ec657a00115a",
+  "position": 1,
+  "values": {
+   "image": "/media/hp-house-q.webp",
+   "answer": "Two outdoor sockets is plenty. The inflatables and the projectors share one, the fog and the lights share the other. The zombie runs on its own batteries.",
+   "question": "How many plugs do I need? 🔌"
+  }
+ },
+ {
+  "id": "3a3db888-fe1a-4294-9c0f-480027338912",
+  "section_id": "3a8c9749-47f5-4be1-b06b-ec657a00115a",
+  "position": 2,
+  "values": {
+   "image": "/media/scr-c1-setup.webp",
+   "answer": "Everything outdoor-rated and staked. In a real storm you take the inflatables down — sixty seconds each — and put them back up the next morning.",
+   "question": "Will it survive rain and wind? 🌧️"
+  }
+ },
+ {
+  "id": "442ef2dc-1954-4f13-bbfb-da6c65efea96",
+  "section_id": "3a8c9749-47f5-4be1-b06b-ec657a00115a",
+  "position": 4,
+  "values": {
+   "image": "/media/scr-c1-street.webp",
+   "answer": "Four payments, no interest, at checkout. The first one is taken when it ships.",
+   "question": "Can I pay for it over time? 💳"
+  }
+ },
+ {
+  "id": "3d0c13fa-ce04-4827-bf18-a5ac23cc97f5",
+  "section_id": "3a8c9749-47f5-4be1-b06b-ec657a00115a",
+  "position": 5,
+  "values": {
+   "image": "/media/cz-c1-kids.webp",
+   "answer": "Order by October 20 and it is on your lawn with days to spare. Shipping is free on every build.",
+   "question": "Will it get here in time? 📦"
+  }
+ },
+ {
+  "id": "96e22d4e-08e7-4500-8bd4-37d9c118657c",
+  "section_id": "163ffc9c-e127-484c-b6c3-11d80bf703da",
+  "position": 0,
+  "values": {
+   "icon": "",
+   "text": "On every build, no minimum",
+   "title": "Free shipping"
+  }
+ },
+ {
+  "id": "5cdb47c4-983c-40de-8b19-30345e1b28da",
+  "section_id": "163ffc9c-e127-484c-b6c3-11d80bf703da",
+  "position": 2,
+  "values": {
+   "icon": "",
+   "text": "No interest, at checkout",
+   "title": "Four payments"
+  }
+ },
+ {
+  "id": "35a51f7d-68d7-4941-ac83-a17c3dacd0ad",
+  "section_id": "163ffc9c-e127-484c-b6c3-11d80bf703da",
+  "position": 3,
+  "values": {
+   "icon": "",
+   "text": "Send it back if it is not the house you wanted",
+   "title": "30 days back"
+  }
+ },
+ {
+  "id": "2d064a89-caff-458d-871b-67349f106a22",
+  "section_id": "09447795-c1b4-4ad7-85d8-0f19da76c84b",
+  "position": 2,
+  "values": {
+   "text": "Each inflatable is ninety seconds to stand, then stakes and tethers. The Reapers push into the ground on a steel stake. Floods get aimed after dark, not before.",
+   "when": "Saturday afternoon · 2 hours",
+   "title": "The figures go up"
+  }
+ },
+ {
+  "id": "aebd53f7-f825-429d-8ace-707ebc3bcb91",
+  "section_id": "09447795-c1b4-4ad7-85d8-0f19da76c84b",
+  "position": 3,
+  "values": {
+   "text": "Run it once in daylight to find the cables, then once at dark to see what you built.",
+   "when": "Sunday morning · 1 hour",
+   "title": "Fog, sound and the projectors"
+  }
+ },
+ {
+  "id": "7ec96d92-2887-4931-969f-94b9d3e4b13a",
+  "section_id": "fdd06a33-76fa-4ffe-9f34-bdd0256698ac",
+  "position": 0,
+  "values": {
+   "text": "Nothing. Everything is outdoor-rated and every connection sits off the ground. You leave it running.",
+   "title": "Ordinary rain"
+  }
+ },
+ {
+  "id": "6569fa87-31ed-4ed1-9988-20000e7a38b1",
+  "section_id": "fdd06a33-76fa-4ffe-9f34-bdd0256698ac",
+  "position": 1,
+  "values": {
+   "text": "Take the inflatables down. Sixty seconds each, unplug and fold, they go in the garage. Graves, lights and fog stay out. Back up in five minutes the next morning.",
+   "title": "Wind over about 25 mph"
+  }
+ },
+ {
+  "id": "487ad820-a93a-4415-930e-d68a9a1303c9",
+  "section_id": "fdd06a33-76fa-4ffe-9f34-bdd0256698ac",
+  "position": 2,
+  "values": {
+   "text": "The fog machine has less work to do, so turn it down. Drizzle hanging in the flood lights is the best this yard ever looks.",
+   "title": "Heavy wet fog or drizzle"
+  }
+ },
+ {
+  "id": "828b9941-ccf2-4415-a26e-7e8c22d40ad8",
+  "section_id": "fdd06a33-76fa-4ffe-9f34-bdd0256698ac",
+  "position": 3,
+  "values": {
+   "text": "Fog fluid does not like freezing. Bring the bottle inside overnight; the machine is fine where it is.",
+   "title": "Frost or a cold snap"
+  }
+ },
+ {
+  "id": "4d430689-6054-49a8-b25d-9bbd9d428355",
+  "section_id": "b9541043-80b8-4d0f-a4c7-13cc6f620ef2",
+  "position": 0,
+  "values": {
+   "text": "One delivery, one weekend, one bill. The yard is finished the first October anyone sees it, and you never stand on the lawn in year two trying to match a colour of light you bought a year ago.",
+   "title": "Build it all at once"
+  }
+ },
+ {
+  "id": "dfe90198-6750-4bac-89b1-4a71248efd1b",
+  "section_id": "786e0a27-5a4e-46e3-afae-9a394ba40f9d",
+  "position": 0,
+  "values": {
+   "image": "/media/cz-r2-pa.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "c3c2911e-6ff1-4a15-a755-6f451556f7f3",
+  "section_id": "786e0a27-5a4e-46e3-afae-9a394ba40f9d",
+  "position": 1,
+  "values": {
+   "image": "/media/cz-r5-mi.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "1d21352e-274a-442a-a694-03b132355afb",
+  "section_id": "786e0a27-5a4e-46e3-afae-9a394ba40f9d",
+  "position": 2,
+  "values": {
+   "image": "/media/cz-r7-co.webp",
+   "caption": ""
+  }
+ },
+ {
+  "id": "ba9c62cb-5c2a-4237-855c-2beed50adeab",
+  "section_id": "dd615ff6-8d4b-4559-a5d3-edb51ff5c8ae",
+  "position": 0,
+  "values": {
+   "at": "9:12pm",
+   "side": "them",
+   "text": "motion detected at front path"
+  }
+ },
+ {
+  "id": "da7d529c-2b00-464f-a652-5e86266ef835",
+  "section_id": "dd615ff6-8d4b-4559-a5d3-edb51ff5c8ae",
+  "position": 1,
+  "values": {
+   "at": "9:13pm",
+   "side": "us",
+   "text": "who is at the door"
+  }
+ },
+ {
+  "id": "0f8b1866-0572-47c1-9710-fef5ba1d624f",
+  "section_id": "dd615ff6-8d4b-4559-a5d3-edb51ff5c8ae",
+  "position": 2,
+  "values": {
+   "at": "9:13pm",
+   "side": "them",
+   "text": "nobody. watch it"
+  }
+ },
+ {
+  "id": "3e535ecb-d427-4879-b347-86b7b79f4577",
+  "section_id": "dd615ff6-8d4b-4559-a5d3-edb51ff5c8ae",
+  "position": 3,
+  "values": {
+   "at": "9:14pm",
+   "side": "us",
+   "text": "WHY IS IT CRAWLING"
+  }
+ },
+ {
+  "id": "7046cd75-b18c-4b99-8902-47bf2039f357",
+  "section_id": "dd615ff6-8d4b-4559-a5d3-edb51ff5c8ae",
+  "position": 4,
+  "values": {
+   "at": "9:14pm",
+   "side": "them",
+   "text": "told you"
+  }
+ },
+ {
+  "id": "e0168e8c-5afd-4715-851d-5eb5bb770aa6",
+  "section_id": "2313775c-a706-4a76-9f44-142031981587",
+  "position": 0,
+  "values": {
+   "text": "Arms, torso, head, torn clothing",
+   "title": "The 12 ft Giant Skeleton"
+  }
+ },
+ {
+  "id": "c9b3fede-8db9-4f01-b060-d16c6c287de3",
+  "section_id": "2313775c-a706-4a76-9f44-142031981587",
+  "position": 1,
+  "values": {
+   "text": "Fitted, sealed into the body",
+   "title": "The motor unit"
+  }
+ },
+ {
+  "id": "bd58ebc2-3a79-4950-bc3a-b53578d807b1",
+  "section_id": "2313775c-a706-4a76-9f44-142031981587",
+  "position": 2,
+  "values": {
+   "text": "In the chest, with an always-on switch",
+   "title": "Motion sensor"
+  }
+ },
+ {
+  "id": "abe31345-ec6e-4a96-abd4-18d32fe77266",
+  "section_id": "2313775c-a706-4a76-9f44-142031981587",
+  "position": 3,
+  "values": {
+   "text": "Fitted, red, on while it moves",
+   "title": "Lit eyes"
+  }
+ },
+ {
+  "id": "a6701793-906c-49a0-a634-31a90c3f9d4e",
+  "section_id": "2313775c-a706-4a76-9f44-142031981587",
+  "position": 4,
+  "values": {
+   "text": "Fitted, plus a spare set",
+   "title": "Batteries"
+  }
+ },
+ {
+  "id": "91e5b737-7380-415c-bafd-87b212a2ed7b",
+  "section_id": "2313775c-a706-4a76-9f44-142031981587",
+  "position": 5,
+  "values": {
+   "text": "On, off, and the motion trigger",
+   "title": "Remote"
+  }
+ },
+ {
+  "id": "42642ed2-1019-4b27-a78e-a14449096967",
+  "section_id": "e224331e-dfdb-4c68-b167-41ae1da41082",
+  "position": 0,
+  "values": {
+   "note": "them 8:41pm",
+   "title": "its here"
+  }
+ },
+ {
+  "id": "8f1f9d44-dce3-47e8-a2ef-d76b1d0b2523",
+  "section_id": "e224331e-dfdb-4c68-b167-41ae1da41082",
+  "position": 1,
+  "values": {
+   "note": "us 8:44pm",
+   "title": "did you put it out"
+  }
+ },
+ {
+  "id": "ad3a4813-8565-4ce4-96db-680f7052da4f",
+  "section_id": "e224331e-dfdb-4c68-b167-41ae1da41082",
+  "position": 2,
+  "values": {
+   "note": "them 8:45pm",
+   "title": "its on the path"
+  }
+ },
+ {
+  "id": "2b5ac743-939f-4f6b-9262-9322f5d77546",
+  "section_id": "e224331e-dfdb-4c68-b167-41ae1da41082",
+  "position": 3,
+  "values": {
+   "note": "them 8:47pm",
+   "title": "the mailman just ran"
+  }
+ },
+ {
+  "id": "9c67ff52-8e30-4d71-b4ef-b8306b223ca9",
+  "section_id": "e224331e-dfdb-4c68-b167-41ae1da41082",
+  "position": 4,
+  "values": {
+   "note": "us 8:47pm",
+   "title": "SEND THE CLIP"
+  }
+ },
+ {
+  "id": "1ff44eb3-6c54-40b8-b036-636bf0a22aeb",
+  "section_id": "eac35b25-144e-4715-a6f1-2e203bbec9ae",
+  "position": 0,
+  "values": {
+   "icon": "",
+   "text": "On every order, no minimum",
+   "title": "Free shipping"
+  }
+ },
+ {
+  "id": "e5f32f06-c085-4c36-9cf3-139789fbb94a",
+  "section_id": "eac35b25-144e-4715-a6f1-2e203bbec9ae",
+  "position": 2,
+  "values": {
+   "icon": "",
+   "text": "Didn't land? Send it back",
+   "title": "30-day returns"
+  }
+ },
+ {
+  "id": "84923bca-63dc-4ddd-9b32-1adaef2e1d9a",
+  "section_id": "eac35b25-144e-4715-a6f1-2e203bbec9ae",
+  "position": 3,
+  "values": {
+   "icon": "",
+   "text": "A person answers, same day",
+   "title": "Real support"
+  }
+ },
+ {
+  "id": "12f55e1e-1fb1-4572-9b18-909a1033d9b5",
+  "section_id": "eac35b25-144e-4715-a6f1-2e203bbec9ae",
+  "position": 1,
+  "values": {
+   "icon": "",
+   "text": "A tracking link by email",
+   "title": "Arrives 5-7 days after it ships"
+  }
+ },
+ {
+  "id": "0a1bbbda-ce30-40cc-8377-146195373465",
+  "section_id": "5e81c741-3bf1-46d8-a512-fbd0270acf05",
+  "position": 1,
+  "values": {
+   "icon": "",
+   "text": "A tracking link by email",
+   "title": "Arrives 5-7 days after it ships"
+  }
+ },
+ {
+  "id": "1ac819d1-3da1-442f-9891-3eeb1a4b843a",
+  "section_id": "a0bb6aaa-0182-48a3-b345-f8495eec4c0a",
+  "position": 1,
+  "values": {
+   "icon": "",
+   "text": "A tracking link by email",
+   "title": "Arrives 5-7 days after it ships"
+  }
+ },
+ {
+  "id": "d2e1e189-ae00-4eb7-b102-8adfd39adec9",
+  "section_id": "5937cf6f-3436-4fd8-9cd4-5dc4514a5de2",
+  "position": 0,
+  "values": {
+   "alt": "The 12 ft Skeleton",
+   "image": "/media/sk12-p1.webp"
+  }
+ },
+ {
+  "id": "0d6a7865-2358-4143-b3a9-c2d9f7949ae3",
+  "section_id": "5937cf6f-3436-4fd8-9cd4-5dc4514a5de2",
+  "position": 1,
+  "values": {
+   "alt": "How big is 12 ft?",
+   "image": "/media/sk12-p2.webp"
+  }
+ },
+ {
+  "id": "b4d0f4e5-0f51-40d5-9561-a842464f0222",
+  "section_id": "5937cf6f-3436-4fd8-9cd4-5dc4514a5de2",
+  "position": 2,
+  "values": {
+   "alt": "Everything it does",
+   "image": "/media/sk12-p3.webp"
+  }
+ },
+ {
+  "id": "defff9ab-baf3-49e6-894e-34fc3b5a6d47",
+  "section_id": "5937cf6f-3436-4fd8-9cd4-5dc4514a5de2",
+  "position": 3,
+  "values": {
+   "alt": "Glowing red eyes, up close",
+   "image": "/media/sk12-p4.webp"
+  }
+ },
+ {
+  "id": "eed8f1a4-b31a-4b96-a375-1b8830306a4d",
+  "section_id": "5937cf6f-3436-4fd8-9cd4-5dc4514a5de2",
+  "position": 4,
+  "values": {
+   "alt": "The whole street stops",
+   "image": "/media/sk12-p5.webp"
+  }
+ },
+ {
+  "id": "993721ec-17b5-4750-9fa5-648d48290fd4",
+  "section_id": "5937cf6f-3436-4fd8-9cd4-5dc4514a5de2",
+  "position": 5,
+  "values": {
+   "alt": "Kids on the sidewalk",
+   "image": "/media/sk12-p7.webp"
+  }
+ },
+ {
+  "id": "dbaf8d62-ad4f-498b-ba89-40ea2fbd9666",
+  "section_id": "5937cf6f-3436-4fd8-9cd4-5dc4514a5de2",
+  "position": 6,
+  "values": {
+   "alt": "Real size, next to a car",
+   "image": "/media/sk12-p9.webp"
+  }
+ },
+ {
+  "id": "4713fdca-65db-4de4-b02e-9e0b65a974e1",
+  "section_id": "5937cf6f-3436-4fd8-9cd4-5dc4514a5de2",
+  "position": 7,
+  "values": {
+   "alt": "The neighbours on the pavement",
+   "image": "/media/sk12-p10.webp"
+  }
+ },
+ {
+  "id": "1c5a36ff-a288-4b80-b8fe-810c9a2b0d31",
+  "section_id": "7b84043e-ac75-454e-82e7-ccab0cb7c839",
+  "position": 0,
+  "values": {
+   "image": "/media/sk12-p5.webp",
+   "caption": "At the front lawn"
+  }
+ },
+ {
+  "id": "d2fbe796-700b-4ba0-80fd-e09e66eb5db1",
+  "section_id": "7b84043e-ac75-454e-82e7-ccab0cb7c839",
+  "position": 1,
+  "values": {
+   "image": "/media/sk12-p7.webp",
+   "caption": "Trick-or-treaters"
+  }
+ },
+ {
+  "id": "ac7bed07-93c3-41ce-9a9d-868c13257b57",
+  "section_id": "7b84043e-ac75-454e-82e7-ccab0cb7c839",
+  "position": 2,
+  "values": {
+   "image": "/media/sk12-p6.webp",
+   "caption": "The mail carrier"
+  }
+ },
+ {
+  "id": "433c06be-18a2-4afd-ac1f-6264dfc6c428",
+  "section_id": "7b84043e-ac75-454e-82e7-ccab0cb7c839",
+  "position": 3,
+  "values": {
+   "image": "/media/sk12-p8.webp",
+   "caption": "From across the road"
+  }
+ },
+ {
+  "id": "dc202c9a-20cc-49f5-a46c-8d6796207c71",
+  "section_id": "7b84043e-ac75-454e-82e7-ccab0cb7c839",
+  "position": 4,
+  "values": {
+   "image": "/media/sk12-p9.webp",
+   "caption": "In daylight, for scale"
+  }
+ },
+ {
+  "id": "7ae58d7d-6bb1-428b-8c83-5220d4d2f8b8",
+  "section_id": "7b84043e-ac75-454e-82e7-ccab0cb7c839",
+  "position": 5,
+  "values": {
+   "image": "/media/sk12-p10.webp",
+   "caption": "The whole street"
+  }
+ },
+ {
+  "id": "a0af36c4-3399-4c8d-a71e-bd9d86d4349c",
+  "section_id": "e4778948-e9cc-434c-b77e-b645225935a8",
+  "position": 0,
+  "values": {
+   "image": "/media/sk12-p9.webp",
+   "answer": "Twelve feet, about 3.7 metres. That is twice the height of your front door, and next to a two-storey house it reaches the upstairs windows.",
+   "question": "How big is it really? 💀"
+  }
+ },
+ {
+  "id": "94e7153e-3261-4d0b-b0b4-f6ff853dc681",
+  "section_id": "e4778948-e9cc-434c-b77e-b645225935a8",
+  "position": 1,
+  "values": {
+   "image": "/media/sk12-p1.webp",
+   "answer": "Yes. It stands on a black metal frame with ground stakes at the feet, so it holds its place on your lawn or driveway.",
+   "question": "Does it stand up on its own?"
+  }
+ },
+ {
+  "id": "1b7edf36-a139-4ac9-bc4b-1daca50fe098",
+  "section_id": "e4778948-e9cc-434c-b77e-b645225935a8",
+  "position": 2,
+  "values": {
+   "image": "/media/sk12-p3.webp",
+   "answer": "The arms and hands bend at the joints, so you can wave it, point it or hold it out over the path.",
+   "question": "Can I change the pose? 🖐️"
+  }
+ },
+ {
+  "id": "cfd476ec-cee8-417a-9f5e-82ca294797eb",
+  "section_id": "e4778948-e9cc-434c-b77e-b645225935a8",
+  "position": 3,
+  "values": {
+   "image": "/media/sk12-p4.webp",
+   "answer": "Yes. It has red LED eyes that glow in the dark sockets after dusk.",
+   "question": "Do the eyes light up?"
+  }
+ },
+ {
+  "id": "f35084bb-5e94-4789-9ca3-bdd89fe65527",
+  "section_id": "e4778948-e9cc-434c-b77e-b645225935a8",
+  "position": 4,
+  "values": {
+   "image": "/media/sk12-p5.webp",
+   "answer": "Shipping is free. It arrives 5-7 days after it ships, and you get a tracking link by email.",
+   "question": "How long does delivery take?"
+  }
+ },
+ {
+  "id": "da8a4e59-4e92-47f1-8b78-373104cc9fb4",
+  "section_id": "e4778948-e9cc-434c-b77e-b645225935a8",
+  "position": 5,
+  "values": {
+   "image": "/media/sk12-p10.webp",
+   "answer": "You have 30 days to send it back.",
+   "question": "What if I don't like it?"
+  }
+ },
+ {
+  "id": "c236aa30-660e-46b6-a418-2c01ff3ea3df",
+  "section_id": "5937cf6f-3436-4fd8-9cd4-5dc4514a5de2",
+  "position": 8,
+  "values": {
+   "alt": "Pose it: arms and hands bend at the joints",
+   "image": "/media/bw-skpose.webp"
+  }
+ },
+ {
+  "id": "21bedea5-4e01-4052-bd18-e007ec26677d",
+  "section_id": "5937cf6f-3436-4fd8-9cd4-5dc4514a5de2",
+  "position": 9,
+  "values": {
+   "alt": "The whole family stops",
+   "image": "/media/bw-skfam.webp"
+  }
+ },
+ {
+  "id": "1a8ac7b8-91cd-49e5-8efa-4375ad30da42",
+  "section_id": "6e354fda-3fbf-4b38-bebe-932d241761d1",
+  "position": 0,
+  "values": {
+   "n": "1",
+   "x": "96",
+   "y": "126",
+   "from": "1",
+   "text": "At the corner of the house, head level with the upstairs windows. Set back from the path so people walk under it, not past it.",
+   "title": "The 16 ft Scream · 16.4 ft"
+  }
+ },
+ {
+  "id": "ecc5710a-b066-412d-bdeb-a8576c57fd05",
+  "section_id": "c320dcac-ffeb-4fd1-8075-23101de2c6d5",
+  "position": 0,
+  "values": {
+   "image": "/media/scr-ad-4-ease.jpg",
+   "caption": "About 90 seconds. From box to standing."
+  }
+ },
+ {
+  "id": "75241247-412a-4215-aa80-dd5a0fd379ab",
+  "section_id": "ce30e146-934b-4ee1-9542-085bd8de9c51",
+  "position": 0,
+  "values": {
+   "image": "/media/scr-ad-3-scale.jpg",
+   "caption": "16 ft 4 in"
+  }
+ },
+ {
+  "id": "4af1d222-bb23-493a-bd17-855289f963cf",
+  "section_id": "ce30e146-934b-4ee1-9542-085bd8de9c51",
+  "position": 1,
+  "values": {
+   "image": "/media/scr-ad-5-moment.jpg",
+   "caption": "Then it wakes up"
+  }
+ },
+ {
+  "id": "4404c85b-723d-4b5b-a1fc-a9b9b68d87b1",
+  "section_id": "ce30e146-934b-4ee1-9542-085bd8de9c51",
+  "position": 2,
+  "values": {
+   "image": "/media/scr-ad-6-box.jpg",
+   "caption": "Big scare, all here"
+  }
+ },
+ {
+  "id": "4691437a-3527-406e-8768-297e383b36d5",
+  "section_id": "ce30e146-934b-4ee1-9542-085bd8de9c51",
+  "position": 3,
+  "values": {
+   "image": "/media/scr-ad-8-close.jpg",
+   "caption": "Make this Halloween yours"
+  }
+ }
+]

@@ -1,0 +1,26 @@
+[
+ {
+  "id": "51470cac-2e21-4680-96fd-e3365403f617",
+  "menu_id": "de60bf55-dd60-4e63-8950-28df4dc02e05",
+  "position": 3,
+  "label": "16 ft Scream",
+  "destination": "custom",
+  "url": "/products/the-scream"
+ },
+ {
+  "id": "730dfdcb-e514-46a8-a1ac-c950319cb0aa",
+  "menu_id": "de60bf55-dd60-4e63-8950-28df4dc02e05",
+  "position": 50,
+  "label": "Reviews",
+  "destination": "custom",
+  "url": "/products/the-scream#reviews"
+ },
+ {
+  "id": "8cd6e481-9084-426c-8e60-a05ff38b01b9",
+  "menu_id": "de60bf55-dd60-4e63-8950-28df4dc02e05",
+  "position": 51,
+  "label": "FAQ",
+  "destination": "custom",
+  "url": "/products/the-scream#faq"
+ }
+]

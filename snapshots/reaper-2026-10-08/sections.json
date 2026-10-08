@@ -1,0 +1,1034 @@
+[
+ {
+  "id": "4f185f81-20c8-4d2a-b07a-4f79ca2feb79",
+  "page_id": "3e9a21e9-bfb9-4b2d-a426-22323e9c084b",
+  "type": "video_faq",
+  "position": 1,
+  "values": {
+   "still": "/media/mt-night-sq.webp",
+   "video": "/media/br-ugc-halloween-movie-theater.mp4",
+   "heading": "Questions",
+   "subheading": "What people ask before they buy."
+  },
+  "hidden": false
+ },
+ {
+  "id": "cb971e75-c770-4ebe-912d-f9d7e2c0be16",
+  "page_id": "98c38eeb-ef4a-43e7-b194-ffdc7f20badd",
+  "type": "ugc_wall",
+  "position": 5,
+  "values": {
+   "heading": "Out there, on real lawns",
+   "subheading": "Filmed by people who paid for it."
+  },
+  "hidden": false
+ },
+ {
+  "id": "bbff6e81-1806-4d47-a83b-5f046a0a3ce7",
+  "page_id": "56efa4c5-965d-449f-9184-52fa7d11fd10",
+  "type": "ugc_wall",
+  "position": 4,
+  "values": {
+   "heading": "Out there, on real lawns",
+   "subheading": "Filmed by people who paid for it."
+  },
+  "hidden": false
+ },
+ {
+  "id": "097c7866-7881-4358-8c1d-298bb1ae7959",
+  "page_id": "afb2cb87-171a-4569-9d61-d6b92dc775cc",
+  "type": "split_picks",
+  "position": 4,
+  "values": {
+   "image": "",
+   "heading": "the whole house is haunted now",
+   "leftNote": "Ghosts on the brickwork",
+   "leftTitle": "8:10pm",
+   "rightNote": "Three cars slowed down",
+   "rightTitle": "8:11pm",
+   "subheading": "One plug. Twenty holograms. Nobody walks past without stopping."
+  },
+  "hidden": false
+ },
+ {
+  "id": "9ef99259-04a3-4813-8f16-f34d84d374a8",
+  "page_id": "98c38eeb-ef4a-43e7-b194-ffdc7f20badd",
+  "type": "split_picks",
+  "position": 3,
+  "values": {
+   "image": "/media/br-20.webp",
+   "heading": "He did not ring the bell",
+   "leftNote": "Motion at the front door",
+   "leftTitle": "7:41pm",
+   "rightNote": "Parcel on the mat. No driver.",
+   "rightTitle": "7:42pm",
+   "subheading": "Front door camera, 7:42pm, 28 October."
+  },
+  "hidden": false
+ },
+ {
+  "id": "616f7d5f-82e9-4b75-8672-5c30759350e2",
+  "page_id": "98c38eeb-ef4a-43e7-b194-ffdc7f20badd",
+  "type": "social_proof_images",
+  "position": 2,
+  "values": {},
+  "hidden": false
+ },
+ {
+  "id": "d9a5a5fa-271b-4045-8f72-936fa114b697",
+  "page_id": "afb2cb87-171a-4569-9d61-d6b92dc775cc",
+  "type": "ugc_wall",
+  "position": 5,
+  "values": {
+   "heading": "See it in action",
+   "subheading": "Illustrations of what the projector throws — your scene will look like this at night."
+  },
+  "hidden": false
+ },
+ {
+  "id": "79aad75d-e411-473b-8e7f-80fd7a347272",
+  "page_id": "afb2cb87-171a-4569-9d61-d6b92dc775cc",
+  "type": "recommendations",
+  "position": 10,
+  "values": {
+   "heading": "You may also like",
+   "ctaLabel": "Add",
+   "subheading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "b9879dc5-e2a9-493d-bd6f-e0db9316896f",
+  "page_id": "56efa4c5-965d-449f-9184-52fa7d11fd10",
+  "type": "video_faq",
+  "position": 1,
+  "values": {
+   "still": "/media/br-zombie-front.webp",
+   "video": "/media/br-ugc-crawling-zombie.mp4",
+   "heading": "Questions",
+   "subheading": "What people ask before they buy."
+  },
+  "hidden": false
+ },
+ {
+  "id": "c816312a-a0c7-4ae2-a2cd-7687543e28de",
+  "page_id": "3e9a21e9-bfb9-4b2d-a426-22323e9c084b",
+  "type": "whats_in_the_box",
+  "position": 6,
+  "values": {
+   "image": "/media/mt-box-f.webp",
+   "heading": "In the box",
+   "subheading": "One bag, and a twelve foot cinema comes out of it. Screen, projector, blower, pegs and cables."
+  },
+  "hidden": false
+ },
+ {
+  "id": "786e0a27-5a4e-46e3-afae-9a394ba40f9d",
+  "page_id": "b0df3fe1-62ed-49f4-90ff-927ed597b2b5",
+  "type": "social_proof_images",
+  "position": 2,
+  "values": {},
+  "hidden": true
+ },
+ {
+  "id": "16167c22-b5a8-4671-84b9-e6a0ff21bf2a",
+  "page_id": "98c38eeb-ef4a-43e7-b194-ffdc7f20badd",
+  "type": "closing_cta",
+  "position": 10,
+  "values": {
+   "heading": "Eight and a half feet, on your lawn by Halloween",
+   "ctaLabel": "Add to cart",
+   "subheading": "Free shipping, arrives 5-7 days after it ships, 30 days to send it back."
+  },
+  "hidden": false
+ },
+ {
+  "id": "e4778948-e9cc-434c-b77e-b645225935a8",
+  "page_id": "b0df3fe1-62ed-49f4-90ff-927ed597b2b5",
+  "type": "video_faq",
+  "position": 1,
+  "values": {
+   "still": "/media/sk12-p5.webp",
+   "video": "",
+   "heading": "Questions",
+   "subheading": "What people ask before they buy."
+  },
+  "hidden": false
+ },
+ {
+  "id": "a96142fb-e29b-43ef-93ff-31906664af89",
+  "page_id": "688b7015-cd52-4b37-a138-d307d1c17ae0",
+  "type": "tier_ladder",
+  "position": 2,
+  "values": {
+   "rows": "Big figures\nTombstones\nGround-breaker arms\nLights\nFog\nProjectors",
+   "heading": "What the three builds actually are",
+   "subheading": "The difference is not a longer list. It is how far down the street it reads."
+  },
+  "hidden": false
+ },
+ {
+  "id": "09447795-c1b4-4ad7-85d8-0f19da76c84b",
+  "page_id": "688b7015-cd52-4b37-a138-d307d1c17ae0",
+  "type": "install_weekend",
+  "position": 3,
+  "values": {
+   "note": "Every stake, tether, sandbag loop and extension lead is on the pallet. The only thing you supply is two outdoor sockets and someone to hold the other end.",
+   "heading": "What the weekend actually looks like",
+   "subheading": "Two people, one Saturday, one Sunday morning. No ladder work above the gutter."
+  },
+  "hidden": false
+ },
+ {
+  "id": "cb811a88-f04e-4ccf-906b-e23f759e2f03",
+  "page_id": "56efa4c5-965d-449f-9184-52fa7d11fd10",
+  "type": "split_picks",
+  "position": 3,
+  "values": {
+   "image": "",
+   "heading": "It moved",
+   "leftNote": "Motion at the front path",
+   "leftTitle": "9:12pm",
+   "rightNote": "He did not make it to the door.",
+   "rightTitle": "9:12pm",
+   "subheading": "Front door camera, 9:12pm, 29 October."
+  },
+  "hidden": false
+ },
+ {
+  "id": "fdd06a33-76fa-4ffe-9f34-bdd0256698ac",
+  "page_id": "688b7015-cd52-4b37-a138-d307d1c17ae0",
+  "type": "weather_plan",
+  "position": 5,
+  "values": {
+   "heading": "What happens if it rains",
+   "promise": "If anything on the pallet fails in October, we ship the replacement the day you tell us. No photographs and no argument. Halloween is one night, and it is not a night to spend waiting on a claim form.",
+   "subheading": "It rains in October. Here is what each thing does about it."
+  },
+  "hidden": false
+ },
+ {
+  "id": "b9541043-80b8-4d0f-a4c7-13cc6f620ef2",
+  "page_id": "688b7015-cd52-4b37-a138-d307d1c17ae0",
+  "type": "start_smaller",
+  "position": 6,
+  "values": {
+   "note": "Whatever you start with, keep the box the lights came in. That is the one thing people tell us they wish they had done.",
+   "heading": "You do not have to build all of it this year",
+   "subheading": "Most people build once and add once. Both ways work, and they cost about the same."
+  },
+  "hidden": false
+ },
+ {
+  "id": "726f44e1-754b-4ad7-add9-c65ea4aff6d7",
+  "page_id": "3e9a21e9-bfb9-4b2d-a426-22323e9c084b",
+  "type": "split_picks",
+  "position": 3,
+  "values": {
+   "image": "/media/mt-night-sq.webp",
+   "heading": "the whole street came over",
+   "leftNote": "Twelve feet of screen on the grass",
+   "leftTitle": "7:41pm",
+   "rightNote": "Chairs, blankets, popcorn",
+   "rightTitle": "8:11pm",
+   "subheading": "One plug. Twelve loops. Nobody walks past without stopping."
+  },
+  "hidden": false
+ },
+ {
+  "id": "55ca0a7e-75e0-4db5-8777-43c07a2fa6ac",
+  "page_id": "0d632b2f-9a81-45b2-976a-7e54aa1da59c",
+  "type": "recommendations",
+  "position": 11,
+  "values": {
+   "heading": "You may also like",
+   "ctaLabel": "Add",
+   "subheading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "579264e8-2c7a-4ca2-ba4e-08b5c02992f4",
+  "page_id": "0d632b2f-9a81-45b2-976a-7e54aa1da59c",
+  "type": "ugc_wall",
+  "position": 6,
+  "values": {
+   "heading": "Out there, on real lawns",
+   "subheading": "Filmed by people who paid for it."
+  },
+  "hidden": false
+ },
+ {
+  "id": "e525f89c-8ccc-48a9-9cc0-38d2a7c7a726",
+  "page_id": "3e9a21e9-bfb9-4b2d-a426-22323e9c084b",
+  "type": "trust_icons",
+  "position": 8,
+  "values": {
+   "heading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "af8981e5-3782-461d-b390-90e62ab42493",
+  "page_id": "0d632b2f-9a81-45b2-976a-7e54aa1da59c",
+  "type": "split_picks",
+  "position": 5,
+  "values": {
+   "image": "",
+   "heading": "your dad bought a 16 foot ghost",
+   "leftNote": "a little overstimulated rn",
+   "leftTitle": "Mom",
+   "rightNote": "WHAT",
+   "rightTitle": "Her daughter",
+   "subheading": "It is in the front yard. It is fighting the wind."
+  },
+  "hidden": false
+ },
+ {
+  "id": "6e354fda-3fbf-4b38-bebe-932d241761d1",
+  "page_id": "688b7015-cd52-4b37-a138-d307d1c17ae0",
+  "type": "yard_plan",
+  "position": 1,
+  "values": {
+   "heading": "Where every piece goes",
+   "subheading": "This is a plan, not a pile. Every number is a place something stands, and why it stands there and not somewhere else."
+  },
+  "hidden": false
+ },
+ {
+  "id": "eac35b25-144e-4715-a6f1-2e203bbec9ae",
+  "page_id": "b0df3fe1-62ed-49f4-90ff-927ed597b2b5",
+  "type": "trust_icons",
+  "position": 8,
+  "values": {
+   "heading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "b8744724-598e-4d87-89c0-a80a95a7fc85",
+  "page_id": "b0df3fe1-62ed-49f4-90ff-927ed597b2b5",
+  "type": "recommendations",
+  "position": 9,
+  "values": {
+   "heading": "You may also like",
+   "ctaLabel": "Add",
+   "subheading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "a1531cf3-2a2b-43cc-b13d-107ce6d6ce40",
+  "page_id": "b0df3fe1-62ed-49f4-90ff-927ed597b2b5",
+  "type": "closing_cta",
+  "position": 10,
+  "values": {
+   "heading": "Put it on the path this Halloween",
+   "ctaLabel": "Add to cart",
+   "subheading": "Free shipping, arrives 5-7 days after it ships, 30 days to send it back."
+  },
+  "hidden": false
+ },
+ {
+  "id": "5d682297-048e-440a-9358-1d7e601d829b",
+  "page_id": "3e9a21e9-bfb9-4b2d-a426-22323e9c084b",
+  "type": "buy_box",
+  "position": 0,
+  "values": {
+   "badge": "Screen and projector, one box",
+   "heading": "The Halloween Movie Theater",
+   "ctaLabel": "Add to cart",
+   "bundleNote": "",
+   "subheading": "A twelve-foot screen on the grass and the film going on over it. Up in two minutes, no ladder, no wall.",
+   "bundleTitle": "Choose your bundle",
+   "reassurance": "Free shipping · Arrives 5-7 days after it ships · 30 days to send it back"
+  },
+  "hidden": false
+ },
+ {
+  "id": "dd615ff6-8d4b-4559-a5d3-edb51ff5c8ae",
+  "page_id": "b0df3fe1-62ed-49f4-90ff-927ed597b2b5",
+  "type": "split_picks",
+  "position": 3,
+  "values": {
+   "image": "",
+   "heading": "It moved",
+   "leftNote": "Motion at the front path",
+   "leftTitle": "9:12pm",
+   "rightNote": "He did not make it to the door.",
+   "rightTitle": "9:12pm",
+   "subheading": "Front door camera, 9:12pm, 29 October."
+  },
+  "hidden": true
+ },
+ {
+  "id": "e224331e-dfdb-4c68-b167-41ae1da41082",
+  "page_id": "b0df3fe1-62ed-49f4-90ff-927ed597b2b5",
+  "type": "product_grid",
+  "position": 7,
+  "values": {
+   "image": "/media/cz-band.webp",
+   "heading": "It crawls.\nIt screams.\nIt waits for the next one.",
+   "footnote": "Your 12 ft Giant Skeleton is out for delivery",
+   "subheading": "Friday, October 24"
+  },
+  "hidden": true
+ },
+ {
+  "id": "2313775c-a706-4a76-9f44-142031981587",
+  "page_id": "b0df3fe1-62ed-49f4-90ff-927ed597b2b5",
+  "type": "whats_in_the_box",
+  "position": 6,
+  "values": {
+   "image": "/media/cz-box-f.webp",
+   "heading": "In the box",
+   "subheading": "One box, batteries in, and a remote. Nothing to plug in and no cable across the lawn."
+  },
+  "hidden": true
+ },
+ {
+  "id": "a46f6c69-c124-4a4f-a3bf-bb590b20cfe2",
+  "page_id": "b0df3fe1-62ed-49f4-90ff-927ed597b2b5",
+  "type": "reviews",
+  "position": 5,
+  "values": {
+   "heading": "What the street said",
+   "direction": "across",
+   "subheading": ""
+  },
+  "hidden": true
+ },
+ {
+  "id": "7b84043e-ac75-454e-82e7-ccab0cb7c839",
+  "page_id": "b0df3fe1-62ed-49f4-90ff-927ed597b2b5",
+  "type": "ugc_wall",
+  "position": 4,
+  "values": {
+   "heading": "See it in action",
+   "subheading": "Illustrations of the 12 ft skeleton in a real yard."
+  },
+  "hidden": false
+ },
+ {
+  "id": "c320dcac-ffeb-4fd1-8075-23101de2c6d5",
+  "page_id": "0d632b2f-9a81-45b2-976a-7e54aa1da59c",
+  "type": "ad_cards",
+  "position": 3,
+  "values": {},
+  "hidden": false
+ },
+ {
+  "id": "c4269799-f808-4170-9088-35b14b1f469d",
+  "page_id": "56efa4c5-965d-449f-9184-52fa7d11fd10",
+  "type": "product_grid",
+  "position": 7,
+  "values": {
+   "image": "/media/cz-band.webp",
+   "heading": "It crawls.\nIt screams.\nIt waits for the next one.",
+   "footnote": "Your Crawling Zombie is out for delivery",
+   "subheading": "Friday, October 24"
+  },
+  "hidden": false
+ },
+ {
+  "id": "5e81c741-3bf1-46d8-a512-fbd0270acf05",
+  "page_id": "56efa4c5-965d-449f-9184-52fa7d11fd10",
+  "type": "trust_icons",
+  "position": 8,
+  "values": {
+   "heading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "a434ee16-4b83-4dbb-be63-86fc1ad8e1cb",
+  "page_id": "3e9a21e9-bfb9-4b2d-a426-22323e9c084b",
+  "type": "product_grid",
+  "position": 7,
+  "values": {
+   "image": "/media/mt-night-sq.webp",
+   "heading": "The rest of the yard",
+   "footnote": "",
+   "subheading": "The garden is already a cinema. These are what people put around it."
+  },
+  "hidden": false
+ },
+ {
+  "id": "e7c1e6f9-7972-4b0a-9760-c66b519b9747",
+  "page_id": "3e9a21e9-bfb9-4b2d-a426-22323e9c084b",
+  "type": "social_proof_images",
+  "position": 2,
+  "values": {},
+  "hidden": false
+ },
+ {
+  "id": "474f1395-9682-4118-8de1-b6cea04306a5",
+  "page_id": "afb2cb87-171a-4569-9d61-d6b92dc775cc",
+  "type": "trust_icons",
+  "position": 9,
+  "values": {
+   "heading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "2a07c869-52c0-403e-9f56-10ffa1cb8450",
+  "page_id": "afb2cb87-171a-4569-9d61-d6b92dc775cc",
+  "type": "product_grid",
+  "position": 8,
+  "values": {
+   "image": "/media/hp-band.webp",
+   "heading": "The rest of the yard",
+   "footnote": "",
+   "subheading": "Everything here runs off the same plug and packs into the same garage."
+  },
+  "hidden": false
+ },
+ {
+  "id": "49006cb7-ed47-4067-8709-2cbcec735817",
+  "page_id": "afb2cb87-171a-4569-9d61-d6b92dc775cc",
+  "type": "social_proof_images",
+  "position": 3,
+  "values": {},
+  "hidden": false
+ },
+ {
+  "id": "3924cbf6-d025-4bea-a362-60b50b1e68ae",
+  "page_id": "afb2cb87-171a-4569-9d61-d6b92dc775cc",
+  "type": "reviews",
+  "position": 6,
+  "values": {
+   "heading": "What the street said",
+   "direction": "across",
+   "subheading": ""
+  },
+  "hidden": true
+ },
+ {
+  "id": "8c5a4589-b951-4afc-9489-2e4c30d94581",
+  "page_id": "98c38eeb-ef4a-43e7-b194-ffdc7f20badd",
+  "type": "video_faq",
+  "position": 1,
+  "values": {
+   "still": "/media/br-17.webp",
+   "video": "/media/br-ugc-black-reaper.mp4",
+   "heading": "Questions",
+   "subheading": "What people ask before they buy."
+  },
+  "hidden": false
+ },
+ {
+  "id": "5c5b990b-cf49-4102-9fd9-8f0429d11309",
+  "page_id": "98c38eeb-ef4a-43e7-b194-ffdc7f20badd",
+  "type": "recommendations",
+  "position": 9,
+  "values": {
+   "heading": "You may also like",
+   "ctaLabel": "Add",
+   "subheading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "adff03d0-e0eb-4578-a27b-a86ff29d741f",
+  "page_id": "56efa4c5-965d-449f-9184-52fa7d11fd10",
+  "type": "recommendations",
+  "position": 9,
+  "values": {
+   "heading": "You may also like",
+   "ctaLabel": "Add",
+   "subheading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "d829c68f-7d32-4909-91e2-ce97f13ddf6c",
+  "page_id": "56efa4c5-965d-449f-9184-52fa7d11fd10",
+  "type": "closing_cta",
+  "position": 10,
+  "values": {
+   "heading": "Put it on the path this Halloween",
+   "ctaLabel": "Add to cart",
+   "subheading": "Free shipping, arrives 5-7 days after it ships, 30 days to send it back."
+  },
+  "hidden": false
+ },
+ {
+  "id": "9210d122-5a8b-40e5-9776-9e54236b671d",
+  "page_id": "56efa4c5-965d-449f-9184-52fa7d11fd10",
+  "type": "buy_box",
+  "position": 0,
+  "values": {
+   "badge": "Motion triggered",
+   "heading": "The Crawling Zombie",
+   "ctaLabel": "Add to cart",
+   "bundleNote": "",
+   "subheading": "It drags itself out of the dark, turns its head and screams. Nobody walks up that path twice.",
+   "bundleTitle": "Choose your bundle",
+   "reassurance": "Free shipping · Arrives 5-7 days after it ships · 30 days to send it back"
+  },
+  "hidden": false
+ },
+ {
+  "id": "b6d455c1-092a-40aa-aaa6-ad6faa6c43e5",
+  "page_id": "688b7015-cd52-4b37-a138-d307d1c17ae0",
+  "type": "buy_box",
+  "position": 0,
+  "values": {
+   "badge": "One delivery. The whole yard.",
+   "heading": "Your whole yard, arriving on one pallet.",
+   "ctaLabel": "Build my house",
+   "bundleNote": "",
+   "subheading": "Graves, fog, lights, and figures that stand taller than the door. Chosen to work together, delivered together, up in a weekend.",
+   "bundleTitle": "Choose your bundle",
+   "reassurance": "Free shipping · Arrives 5-7 days after it ships · 30 days to send it back"
+  },
+  "hidden": false
+ },
+ {
+  "id": "5937cf6f-3436-4fd8-9cd4-5dc4514a5de2",
+  "page_id": "b0df3fe1-62ed-49f4-90ff-927ed597b2b5",
+  "type": "buy_box",
+  "position": 0,
+  "values": {
+   "badge": "12 ft tall",
+   "heading": "The 12 ft Giant Skeleton",
+   "ctaLabel": "Add to cart",
+   "bundleNote": "",
+   "subheading": "Twelve feet of bone with glowing red eyes. Twice the height of your front door, and it stands on its own in the yard.",
+   "bundleTitle": "Choose your bundle",
+   "reassurance": "Free shipping · Arrives 5-7 days after it ships · 30 days to send it back"
+  },
+  "hidden": false
+ },
+ {
+  "id": "d5dda023-bd31-45a4-ba20-3f88dc60c3b6",
+  "page_id": "56efa4c5-965d-449f-9184-52fa7d11fd10",
+  "type": "whats_in_the_box",
+  "position": 6,
+  "values": {
+   "image": "/media/cz-box-f.webp",
+   "heading": "In the box",
+   "subheading": "One box, batteries in, and a remote. Nothing to plug in and no cable across the lawn."
+  },
+  "hidden": false
+ },
+ {
+  "id": "33fb3381-5dbf-4da6-9ec8-d3102978d4f0",
+  "page_id": "afb2cb87-171a-4569-9d61-d6b92dc775cc",
+  "type": "features",
+  "position": 12,
+  "values": {
+   "heading": "What it is",
+   "subheading": ""
+  },
+  "hidden": true
+ },
+ {
+  "id": "e53fa45f-2041-40ee-b4fa-4f46809e3c23",
+  "page_id": "0d632b2f-9a81-45b2-976a-7e54aa1da59c",
+  "type": "social_proof_images",
+  "position": 2,
+  "values": {},
+  "hidden": false
+ },
+ {
+  "id": "19a5aa6d-666f-4864-81f6-3602b4d8b174",
+  "page_id": "afb2cb87-171a-4569-9d61-d6b92dc775cc",
+  "type": "video_faq",
+  "position": 2,
+  "values": {
+   "still": "/media/br-projector-wall.webp",
+   "video": "/media/br-ugc-haunted-projector.mp4",
+   "heading": "Questions",
+   "subheading": "What people ask before they buy."
+  },
+  "hidden": false
+ },
+ {
+  "id": "57be6589-2e77-4fed-b4ec-ab3003efe5db",
+  "page_id": "688b7015-cd52-4b37-a138-d307d1c17ae0",
+  "type": "whats_in_the_box",
+  "position": 4,
+  "values": {
+   "image": "/media/scr-c1-setup.webp",
+   "heading": "In the box",
+   "subheading": "The Haunted House build, piece by piece, and why each one is in there. Horror Night and Night of the Dead are this list with more of it."
+  },
+  "hidden": false
+ },
+ {
+  "id": "3a8c9749-47f5-4be1-b06b-ec657a00115a",
+  "page_id": "688b7015-cd52-4b37-a138-d307d1c17ae0",
+  "type": "video_faq",
+  "position": 7,
+  "values": {
+   "still": "/media/scr-c1-street.webp",
+   "video": "",
+   "heading": "Questions",
+   "subheading": "What people ask before they buy."
+  },
+  "hidden": false
+ },
+ {
+  "id": "361a3009-c83a-4355-99d7-2c53f4c2cdf7",
+  "page_id": "3e9a21e9-bfb9-4b2d-a426-22323e9c084b",
+  "type": "recommendations",
+  "position": 9,
+  "values": {
+   "heading": "You may also like",
+   "ctaLabel": "Add",
+   "subheading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "f484ef4c-2dec-4583-a3d8-75768e914750",
+  "page_id": "56efa4c5-965d-449f-9184-52fa7d11fd10",
+  "type": "reviews",
+  "position": 5,
+  "values": {
+   "heading": "What the street said",
+   "direction": "across",
+   "subheading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "61c043ac-3328-4585-87bb-809b9e78ec59",
+  "page_id": "56efa4c5-965d-449f-9184-52fa7d11fd10",
+  "type": "social_proof_images",
+  "position": 2,
+  "values": {},
+  "hidden": false
+ },
+ {
+  "id": "7c4bd526-81c8-495c-8539-4d1ae9fcf002",
+  "page_id": "688b7015-cd52-4b37-a138-d307d1c17ae0",
+  "type": "reviews",
+  "position": 9,
+  "values": {
+   "heading": "What the street said",
+   "direction": "across",
+   "subheading": "People who thought about it for a while first."
+  },
+  "hidden": false
+ },
+ {
+  "id": "10cb6be1-e701-4a7f-b523-7cf59aa471c1",
+  "page_id": "3e9a21e9-bfb9-4b2d-a426-22323e9c084b",
+  "type": "ugc_wall",
+  "position": 4,
+  "values": {
+   "heading": "Out there, on real lawns",
+   "subheading": "Sent in by people who paid for it."
+  },
+  "hidden": false
+ },
+ {
+  "id": "5e8dfc4e-cfd5-4553-953c-f3341dbe5a47",
+  "page_id": "3e9a21e9-bfb9-4b2d-a426-22323e9c084b",
+  "type": "reviews",
+  "position": 5,
+  "values": {
+   "heading": "What the street said",
+   "direction": "across",
+   "subheading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "163ffc9c-e127-484c-b6c3-11d80bf703da",
+  "page_id": "688b7015-cd52-4b37-a138-d307d1c17ae0",
+  "type": "trust_icons",
+  "position": 10,
+  "values": {
+   "heading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "9bd8109a-fa22-4e02-928f-5541aa6b9555",
+  "page_id": "3e9a21e9-bfb9-4b2d-a426-22323e9c084b",
+  "type": "features",
+  "position": 11,
+  "values": {
+   "heading": "What it is",
+   "subheading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "a2fff389-c32a-4034-960a-ac03cc79170f",
+  "page_id": "0d632b2f-9a81-45b2-976a-7e54aa1da59c",
+  "type": "video_faq",
+  "position": 1,
+  "values": {
+   "still": "/media/br-scream-yard.webp",
+   "video": "/media/br-ugc-the-scream.mp4",
+   "heading": "Questions",
+   "subheading": "What people ask before they buy."
+  },
+  "hidden": false
+ },
+ {
+  "id": "b7535622-9a1e-498d-8a1b-4d2965ddc15b",
+  "page_id": "afb2cb87-171a-4569-9d61-d6b92dc775cc",
+  "type": "closing_cta",
+  "position": 11,
+  "values": {
+   "heading": "One plug. One window. Everyone slows down.",
+   "subheading": "Free shipping, arrives 5-7 days after it ships, 30 days to send it back."
+  },
+  "hidden": false
+ },
+ {
+  "id": "c57d9aa6-2faf-4954-8fc9-86331f34fe47",
+  "page_id": "688b7015-cd52-4b37-a138-d307d1c17ae0",
+  "type": "closing_cta",
+  "position": 12,
+  "values": {
+   "heading": "Be the house they walk to",
+   "ctaLabel": "Build my house",
+   "subheading": "Free shipping, arrives 5-7 days after it ships, 30 days to send it back."
+  },
+  "hidden": false
+ },
+ {
+  "id": "9fecf976-08bf-40df-8b8a-334d98f05921",
+  "page_id": "3e9a21e9-bfb9-4b2d-a426-22323e9c084b",
+  "type": "closing_cta",
+  "position": 10,
+  "values": {
+   "heading": "A cinema in the back garden, this weekend",
+   "subheading": "Free shipping, arrives 5-7 days after it ships, 30 days to send it back."
+  },
+  "hidden": false
+ },
+ {
+  "id": "86d8dd0d-7c00-4edb-9965-c0bcc6f9a313",
+  "page_id": "98c38eeb-ef4a-43e7-b194-ffdc7f20badd",
+  "type": "buy_box",
+  "position": 0,
+  "values": {
+   "badge": "Save $59 on the pair",
+   "heading": "The Black Reaper",
+   "ctaLabel": "Add to cart",
+   "bundleNote": "",
+   "subheading": "Eight and a half feet — 2.6 metres — lantern lit, watching the front door.",
+   "bundleTitle": "Choose your bundle",
+   "reassurance": "Free shipping · Arrives 5-7 days after it ships · 30 days to send it back"
+  },
+  "hidden": false
+ },
+ {
+  "id": "b19d5f05-5cae-4e70-8e61-f70440295da1",
+  "page_id": "afb2cb87-171a-4569-9d61-d6b92dc775cc",
+  "type": "whats_in_the_box",
+  "position": 7,
+  "values": {
+   "image": "/media/hp-box-f.webp",
+   "heading": "In the box",
+   "subheading": "One small box. It stands on the windowsill inside and throws the whole thing onto the glass."
+  },
+  "hidden": false
+ },
+ {
+  "id": "049d87a5-4742-4c5f-8630-c972d385e5f4",
+  "page_id": "688b7015-cd52-4b37-a138-d307d1c17ae0",
+  "type": "recommendations",
+  "position": 11,
+  "values": {
+   "heading": "You may also like",
+   "ctaLabel": "Add",
+   "subheading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "b0ad27d2-327d-4c07-9771-8466bd020fda",
+  "page_id": "98c38eeb-ef4a-43e7-b194-ffdc7f20badd",
+  "type": "whats_in_the_box",
+  "position": 7,
+  "values": {
+   "image": "/media/br-box-f.webp",
+   "heading": "In the box",
+   "subheading": "One box, one stake, nothing to plug in. Here is the lot."
+  },
+  "hidden": false
+ },
+ {
+  "id": "22f86879-b41c-407f-840c-2ff3d8c00f28",
+  "page_id": "688b7015-cd52-4b37-a138-d307d1c17ae0",
+  "type": "social_proof_images",
+  "position": 8,
+  "values": {},
+  "hidden": false
+ },
+ {
+  "id": "48d5cab6-41c8-487a-a881-8e3ac7ac9876",
+  "page_id": "98c38eeb-ef4a-43e7-b194-ffdc7f20badd",
+  "type": "reviews",
+  "position": 4,
+  "values": {
+   "heading": "What the street said",
+   "direction": "across",
+   "subheading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "77c3dee0-e7e5-423e-b866-5be51ca7b6e9",
+  "page_id": "98c38eeb-ef4a-43e7-b194-ffdc7f20badd",
+  "type": "product_grid",
+  "position": 6,
+  "values": {
+   "image": "/media/br-night-band.webp",
+   "heading": "Eight and a half feet.\n2.6 metres of it.\nWatching the door.",
+   "footnote": "Your Black Reaper is out for delivery",
+   "subheading": "Friday, October 24"
+  },
+  "hidden": false
+ },
+ {
+  "id": "29a818b0-a32c-45f0-bbd9-c28016ee35e9",
+  "page_id": "98c38eeb-ef4a-43e7-b194-ffdc7f20badd",
+  "type": "trust_icons",
+  "position": 8,
+  "values": {
+   "heading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "49a0fa88-1d01-4c92-bea2-d78ce773e38e",
+  "page_id": "0d632b2f-9a81-45b2-976a-7e54aa1da59c",
+  "type": "closing_cta",
+  "position": 12,
+  "values": {
+   "heading": "Sixteen feet four, up this weekend",
+   "subheading": "Free shipping, arrives 5-7 days after it ships, 30 days to send it back."
+  },
+  "hidden": false
+ },
+ {
+  "id": "ce30e146-934b-4ee1-9542-085bd8de9c51",
+  "page_id": "0d632b2f-9a81-45b2-976a-7e54aa1da59c",
+  "type": "ad_cards",
+  "position": 4,
+  "values": {},
+  "hidden": false
+ },
+ {
+  "id": "14b133a9-4913-4f01-82bc-83904d89a87b",
+  "page_id": "13fc9bf5-ab80-40b3-9b19-30cc7a56f6e9",
+  "type": "buy_box",
+  "position": 0,
+  "values": {
+   "heading": "Test order",
+   "ctaLabel": "Buy the test",
+   "bundleNote": "",
+   "subheading": "Fifty cents. This exists to prove the checkout works.",
+   "bundleTitle": "Choose your bundle",
+   "reassurance": "Free shipping · Arrives 5-7 days after it ships · 30 days to send it back"
+  },
+  "hidden": false
+ },
+ {
+  "id": "87ef7b9c-60a3-4eed-8450-fc3c9a9e4a66",
+  "page_id": "afb2cb87-171a-4569-9d61-d6b92dc775cc",
+  "type": "holo_grid",
+  "position": 1,
+  "values": {
+   "kicker": "Included in every box",
+   "heading": "Pick your scare. All 20 are already inside.",
+   "ctaLabel": "Add to cart",
+   "subheading": "No screen, no sheet. Killers, ghosts, a gremlin, a witch and more, all already inside. Let them cycle on their own or pick one with the remote."
+  },
+  "hidden": false
+ },
+ {
+  "id": "9fa13dc6-0c69-4f72-880d-65ceecceee60",
+  "page_id": "afb2cb87-171a-4569-9d61-d6b92dc775cc",
+  "type": "buy_box",
+  "position": 0,
+  "values": {
+   "badge": "20 hologram videos included",
+   "banner": "20 scenes. No screen needed.",
+   "heading": "The Haunted Projector",
+   "ctaLabel": "Add to cart",
+   "bannerSub": "Plug in, point it at a window, garage door or wall",
+   "bundleNote": "",
+   "subheading": "No screen or sheet. A life-size ghost, 13 ft wide from 16 ft back. Weather-sealed, 16 ft cord, remote, 4 or 6 hour timer.",
+   "bundleTitle": "Choose your bundle",
+   "reassurance": "Free shipping · Arrives 5-7 days after it ships · 30 days to send it back"
+  },
+  "hidden": false
+ },
+ {
+  "id": "a0bb6aaa-0182-48a3-b345-f8495eec4c0a",
+  "page_id": "0d632b2f-9a81-45b2-976a-7e54aa1da59c",
+  "type": "trust_icons",
+  "position": 10,
+  "values": {
+   "heading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "b2a5cc6a-28c4-4db2-a750-de9db2ae4529",
+  "page_id": "0d632b2f-9a81-45b2-976a-7e54aa1da59c",
+  "type": "product_grid",
+  "position": 9,
+  "values": {
+   "image": "/media/scr-band.webp",
+   "heading": "16.4 feet.\n5 metres of him.\nOver the whole front lawn.",
+   "footnote": "",
+   "subheading": "Everything here runs off the same plug and packs into the same garage."
+  },
+  "hidden": false
+ },
+ {
+  "id": "88e21564-b96d-451b-82f9-18b2a5162347",
+  "page_id": "0d632b2f-9a81-45b2-976a-7e54aa1da59c",
+  "type": "whats_in_the_box",
+  "position": 8,
+  "values": {
+   "image": "/media/scr-box-big.webp",
+   "heading": "In the box",
+   "subheading": "One box, and sixteen feet of him inside it. The blower, the stakes and the ropes are all in there."
+  },
+  "hidden": false
+ },
+ {
+  "id": "b5cb91f6-80a4-4fb7-82b2-61f44deee4e0",
+  "page_id": "0d632b2f-9a81-45b2-976a-7e54aa1da59c",
+  "type": "reviews",
+  "position": 7,
+  "values": {
+   "heading": "What the street said",
+   "direction": "across",
+   "subheading": ""
+  },
+  "hidden": false
+ },
+ {
+  "id": "d43eacd8-7760-4535-8a50-46b7dc6c772d",
+  "page_id": "0d632b2f-9a81-45b2-976a-7e54aa1da59c",
+  "type": "buy_box",
+  "position": 0,
+  "values": {
+   "badge": "16 FT GHOST",
+   "heading": "The 16 ft Scream",
+   "ctaLabel": "Add to cart",
+   "shipLine": "Ships in 1-2 business days · Arrives 5-7 days after",
+   "bundleNote": "",
+   "lowStockAt": "50",
+   "subheading": "A 16-foot ghost on your front lawn. Screaming mask, blade in hand, lit from inside. The whole street sees him.",
+   "bundleTitle": "Choose your bundle",
+   "reassurance": "Free shipping · Arrives 5-7 days after it ships · 30 days to send it back",
+   "popularLabel": "Most popular"
+  },
+  "hidden": false
+ }
+]
