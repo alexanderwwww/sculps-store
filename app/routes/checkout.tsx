@@ -74,6 +74,7 @@ import { formatMoney } from "~/lib/money";
 import { CheckoutHeader, CheckoutFooter, TrustRow } from "~/storefronts/garden-buddy/checkout-chrome";
 import kneelerHref from "~/storefronts/garden-kneeler/theme.css?url";
 import buddyHref from "~/storefronts/garden-buddy/checkout.css?url";
+import { isReaperSkin } from "~/lib/skin";
 
 const GARDEN_BUDDY = "garden-buddy";
 
@@ -85,14 +86,14 @@ const GARDEN_BUDDY = "garden-buddy";
  * leaving a store out of here is how a customer ends up paying on a page that
  * looks like a different shop.
  */
-const BRANDED_CHECKOUT = new Set(["garden-buddy", "ceiling-buddy", "reaper", "cryo"]);
+const BRANDED_CHECKOUT = new Set(["garden-buddy", "ceiling-buddy", "reaper", "giant-scream", "cryo"]);
 
 /**
  * A store that wants the split checkout in its own colours rather than the
  * default warm grey. The layout is shared — this is one class on the
  * wrapper and a block of variables, not a second checkout to keep working.
  */
-const CHECKOUT_SKIN: Record<string, string> = { reaper: "gb-co-sec--reaper" };
+const CHECKOUT_SKIN: Record<string, string> = { reaper: "gb-co-sec--reaper", "giant-scream": "gb-co-sec--reaper" };
 
 /**
  * The other skin's stylesheet and fonts used to be declared here, which meant
@@ -2019,7 +2020,7 @@ function DeliveryFields({
             label="Country/region"
             value={country}
             autoComplete="country"
-            options={store.slug === "reaper" ? [["US", "United States"]] : COUNTRIES}
+            options={isReaperSkin(store.slug) ? [["US", "United States"]] : COUNTRIES}
             onValue={onField}
             onTouch={onBlur}
           />
@@ -5265,7 +5266,7 @@ function OnePage({
    * quietly turned into $9.95 and would have been right to be angry about it.
    * An untested giveaway is not a launch-day feature.
    */
-  const scratch = store.slug === "reaper" ? (
+  const scratch = isReaperSkin(store.slug) ? (
     // Off: the marketing panel found one discount beats three. REAPER20 stays.
     // Every Reaper order: an extra $5 off, one tap, right under the wallets.
     <ClaimCard money={money} applied={cart.discount?.code ?? null} />

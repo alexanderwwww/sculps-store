@@ -36,6 +36,7 @@ import { CeilingBuddyStorefront } from "~/storefronts/ceiling-buddy";
 import ceilingBuddyThemeHref from "~/storefronts/ceiling-buddy/theme.css?url";
 import reaperThemeHref from "~/storefronts/reaper/theme.css?url";
 import { reaperBrand } from "~/storefronts/reaper/brand";
+import { isReaperSkin } from "~/lib/skin";
 
 export function meta({ data: loaded }: Route.MetaArgs) {
   if (!loaded?.variant) return [{ title: "Not found" }];
@@ -131,7 +132,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
    * payment keys — is the same either way, which is why this is one route
    * with two openings rather than two routes.
    */
-  const perProduct = store.slug === "reaper";
+  const perProduct = isReaperSkin(store.slug);
   if (!perProduct && store.slug !== "bodies") {
     // Every other store keeps the old Shopify-shaped redirect to the root.
     return new Response(null, { status: 301, headers: { Location: `/${url.search}` } });
@@ -269,7 +270,7 @@ export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
    * about the chrome differs, which is why it reuses the component rather
    * than owning a second copy of it.
    */
-  if (page.store.slug === "reaper") {
+  if (isReaperSkin(page.store.slug)) {
     return (
       <>
         <link rel="stylesheet" href={ceilingBuddyThemeHref} precedence="high" />

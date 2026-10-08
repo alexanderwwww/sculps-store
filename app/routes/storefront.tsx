@@ -38,6 +38,7 @@ import ceilingBuddyThemeHref from "~/storefronts/ceiling-buddy/theme.css?url";
 import { XeroStorefront } from "~/storefronts/xero";
 import reaperThemeHref from "~/storefronts/reaper/theme.css?url";
 import xeroThemeHref from "~/storefronts/xero/theme.css?url";
+import { isReaperSkin } from "~/lib/skin";
 
 /**
  * Which theme a store gets. Design lives in code, one theme per store, so this
@@ -54,7 +55,6 @@ const XERO = "xero";
  * top of it. That store's CSS is written against tokens, so the whole
  * eighteen-section template comes across and only the colours change.
  */
-const REAPER = "reaper";
 
 export function links() {
   return [
@@ -392,11 +392,11 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
     );
   }
 
-  if (store.slug === CEILING_BUDDY || store.slug === REAPER) {
+  if (store.slug === CEILING_BUDDY || isReaperSkin(store.slug)) {
     return (
       <>
         <link rel="stylesheet" href={ceilingBuddyThemeHref} precedence="high" />
-        {store.slug === REAPER ? <link rel="stylesheet" href={reaperThemeHref} precedence="high" /> : null}
+        {isReaperSkin(store.slug) ? <link rel="stylesheet" href={reaperThemeHref} precedence="high" /> : null}
         {head}
         <CeilingBuddyStorefront
           page={page}
@@ -407,7 +407,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
           squareMethods={squareMethods}
           squareApp={squareApp}
           offer={offer}
-          brand={store.slug === REAPER ? reaperBrand(page) : undefined}
+          brand={isReaperSkin(store.slug) ? reaperBrand(page) : undefined}
         />
       </>
     );

@@ -8,6 +8,7 @@
  */
 export const PROMOTED_HANDLES: Record<string, readonly string[]> = {
   reaper: ["the-scream", "black-reaper"],
+  "giant-scream": ["the-scream", "black-reaper"],
 };
 
 export function isPromoted(storeSlug: string | null | undefined, handle: string | null | undefined): boolean {

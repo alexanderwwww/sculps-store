@@ -20,9 +20,9 @@ import kneelerHref from "~/storefronts/garden-kneeler/theme.css?url";
 import buddyHref from "~/storefronts/garden-buddy/theme.css?url";
 import ceilingBuddyHref from "~/storefronts/ceiling-buddy/theme.css?url";
 import reaperHref from "~/storefronts/reaper/theme.css?url";
+import { isReaperSkin } from "~/lib/skin";
 
 const GARDEN_BUDDY = "garden-buddy";
-const REAPER = "reaper";
 
 /*
  * No links() export here on purpose.
@@ -181,7 +181,7 @@ export default function StandalonePage({ loaderData }: Route.ComponentProps) {
    * It borrows the shop's own header and footer classes rather than inventing
    * a second set, so it keeps matching when the theme changes.
    */
-  if (store.slug === REAPER) {
+  if (isReaperSkin(store.slug)) {
     const home = `/${storeParam}`;
     return (
       <>

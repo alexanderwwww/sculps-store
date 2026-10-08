@@ -21,6 +21,7 @@ import {
   setCartDiscount,
   cartDiscountCode,
 } from "~/lib/cart.server";
+import { isReaperSkin } from "~/lib/skin";
 
 async function add(
   request: Request,
@@ -141,7 +142,7 @@ async function add(
    * have to remember it and type it: when the cart has no code, the shop's own
    * live one goes on. It is the same price the bar already promised.
    */
-  if (store.slug === "reaper") {
+  if (isReaperSkin(store.slug)) {
     try {
       if (!(await cartDiscountCode(context.db, store.id, token))) {
         const [live] = await context.db
