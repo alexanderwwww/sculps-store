@@ -156,7 +156,10 @@ export function SquareWallets({
         }
         // Afterpay: Square only gives it when the account and this amount
         // qualify, so it appears exactly when it can be paid with.
+        // In the cart drawer (row) Afterpay is a plain pill that opens the
+        // checkout instead: the SDK button rendered clipped as "Clearpay".
         try {
+          if (row) throw new Error("afterpay is a pill in the drawer");
           const ap = await payments.afterpayClearpay(request);
           made.push(ap);
           ap.addEventListener("afterpay_shippingaddresschanged", () => ({

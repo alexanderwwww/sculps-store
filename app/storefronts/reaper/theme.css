@@ -4989,3 +4989,16 @@ html, body { margin: 0; }
 /* Odd count (only one of Apple Pay / Google Pay on this phone): Cash App takes the full row. */
 .cb-paypills:not(:has(.cb-sqwallet__apple)):has(.cb-sqwallet__google:not([hidden])) .cb-cashpill,
 .cb-paypills:has(.cb-sqwallet__apple):has(.cb-sqwallet__google[hidden]) .cb-cashpill { grid-column: 1 / -1; }
+
+/* Cart drawer: Cash App Pay and Afterpay as two pills under the wallets. */
+.cb-drawer__pills { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.cb-drawer__cash, .cb-drawer__after {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; border-radius: 999px;
+  text-decoration: none; transition: transform .12s ease, filter .15s ease;
+  font: 800 15px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.cb-drawer__cash { background: #00D64F; color: #fff; }
+.cb-drawer__after { background: #B2FCE4; color: #000; font-size: 17px; letter-spacing: -.02em; }
+.cb-drawer__cash:hover, .cb-drawer__after:hover { filter: brightness(.96); }
+.cb-drawer__cash:active, .cb-drawer__after:active { transform: translateY(1px); }
+.cb-drawer__cash .cb-cashpill__s { width: 20px; height: 20px; border-radius: 5px; font-size: 13px; }

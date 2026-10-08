@@ -588,3 +588,8 @@ Alex asked for an express option at $29.99 for Black Reaper. Built the same way 
 - Proven: `_prio.test` style run against the real priceCart (off/on, qty 2, percent code, spent code, free-shipping code cannot erase the fee, store without the option ignores a forced flag, empty cart, Square lines and read-back) and the live checkout (tick = +$29.99, untick = back).
 - NOT proven: an actual Square payment link created with the priority line (would create a real pending order). The server already refuses a charge whose total differs from ours.
 - **Switch:** ON = `update stores set priority_ship_cents=2999, priority_ship_copy='Your order moves to the front of the line.' where slug='reaper'`. OFF = set both to null. It stays OFF until Alex has the supplier's express cost and days — we do not sell a paid speed-up the supplier has not confirmed. Customer copy never states days.
+
+### 2026-10-08 later: priority shipping is LIVE; drawer and checkout changes
+- Priority shipping ($29.99, `stores.priority_ship_cents=2999`) switched ON at Alex's word. Its row sits directly under the Express checkout buttons on checkout (before OR), not in the order summary; the summary still shows the "Priority shipping" line. Off = set both store columns to null. Orders bought as priority are flagged on the admin order page; ship them first.
+- Cart drawer: Alex said the Clearpay button looked broken (Square's Afterpay button localises to "Clearpay" and clips in the half-width row). Removed from the drawer; Cash App Pay and Afterpay are plain pills that open /checkout, same as the product page. Wallets (Google/Apple Pay) in the drawer are unchanged.
+- Zombie and projector removed from checkout add-ons and post-purchase offers (`app/lib/promote.ts`).

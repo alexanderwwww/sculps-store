@@ -415,6 +415,20 @@ export function CartDrawerProvider({
                 storeParam={storeParam}
               />
             ) : null}
+            {/* Cash App Pay and Afterpay: plain pills. Both finish at the
+                checkout, where the delivery address is typed and each one's
+                own button sits at the top, so they open it. */}
+            {squareApp && lines.length && cart ? (
+              <div className="cb-drawer__pills">
+                <a className="cb-drawer__cash" href={href("/checkout")} aria-label="Pay with Cash App Pay">
+                  <span className="cb-cashpill__s" aria-hidden="true">$</span> Cash App Pay
+                </a>
+                <a className="cb-drawer__after" href={href("/checkout")} aria-label="Pay with Afterpay">
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 8.5 12 6l5 2.5v7L12 18l-5-2.5z" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round"/><path d="m10 10.5 2 1 2-1" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/></svg>
+                  afterpay
+                </a>
+              </div>
+            ) : null}
             {/* Apple Pay and PayPal, side by side and half-width each, so the
                 two of them together take the room one used to. Venmo and Pay
                 Later are gone from here -- three ways to pay is a choice, six

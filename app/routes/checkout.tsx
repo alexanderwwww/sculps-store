@@ -2245,7 +2245,6 @@ function Summary({
         ))}
       </ul>
 
-      {buddy ? <PriorityRow cart={cart} money={money} locked={locked} /> : null}
       {buddy ? <ProtectionRow cart={cart} money={money} locked={locked} /> : null}
 
       <DiscountBox cn={cn} applied={cart.discount} reason={cart.discountReason} locked={locked} />
@@ -4926,6 +4925,9 @@ function OnePage({
     if (!existing) document.head.appendChild(script);
   }, [paypalClientId, cart.currency]);
 
+  const priorityMoney = (cents: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: cart.currency || "USD" }).format(cents / 100);
+
   const express = squareOnly ? (
     squareApp && !sqFailed ? (
       <>
@@ -4958,6 +4960,7 @@ function OnePage({
             </p>
           ) : null}
         </section>
+        {buddy ? <PriorityRow cart={cart} money={priorityMoney} locked={false} /> : null}
         <div className={buddy ? "gb-co__or" : undefined} style={buddy ? undefined : { textAlign: "center", margin: "18px 0" }}>
           OR
         </div>
@@ -5051,6 +5054,7 @@ function OnePage({
           </p>
         ) : null}
       </section>
+      {buddy ? <PriorityRow cart={cart} money={priorityMoney} locked={false} /> : null}
       <div
         className={buddy ? "gb-co__or" : undefined}
         style={
