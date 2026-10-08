@@ -673,3 +673,67 @@ html, body { margin: 0; }
 
 /* Thank-you page: one centred column on every screen, not the checkout's right half. */
 .gb-th-page .gb-co__pane-in { margin: 0 auto !important; max-width: 620px; padding-right: clamp(16px, 4vw, 40px) !important; }
+
+/* ---------------------------------------------------------------------
+ * Priority shipping — the one upgrade on this page, so it is dressed like one:
+ * a dark card, a parcel gliding along a track with speed lines behind it, a
+ * slow shine across the surface, and an orange ring that calls for the tap
+ * until it is taken. Motion stops for anyone who has asked for less of it.
+ * ------------------------------------------------------------------- */
+.gb-co__pri-wrap { margin: 14px 0 6px; }
+.gb-co__pri {
+  position: relative; display: flex; align-items: center; gap: 12px; padding: 16px 14px 14px 12px;
+  border-radius: 14px; cursor: pointer; overflow: hidden; isolation: isolate; color: #fff;
+  background: radial-gradient(120% 140% at 0% 0%, #2a2a26 0%, #14140F 62%);
+  border: 1.5px solid rgba(245, 130, 31, .55);
+  box-shadow: 0 6px 18px rgba(20, 20, 15, .22), 0 0 0 0 rgba(245, 130, 31, .5);
+  animation: gb-pri-call 2.6s ease-out infinite;
+  transition: border-color .16s var(--ease), transform .12s var(--ease);
+}
+.gb-co__pri:active { transform: scale(.992); }
+.gb-co__pri[data-busy="1"] { opacity: .7; }
+.gb-co__pri[data-on="1"] { border-color: #F5821F; animation: none; box-shadow: 0 8px 22px rgba(245, 130, 31, .28); }
+.gb-co__pri::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, .13) 50%, transparent 62%);
+  transform: translateX(-120%); animation: gb-pri-shine 4.2s ease-in-out infinite;
+}
+.gb-co__pri-box { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.gb-co__pri-box:focus-visible ~ .gb-co__pri-side .gb-co__pri-tick { outline: 2px solid #fff; outline-offset: 2px; }
+.gb-co__pri-tag {
+  position: absolute; top: 0; left: 14px; padding: 2px 8px 3px; border-radius: 0 0 8px 8px;
+  background: #F5821F; color: #fff; font: 800 9.5px/1.2 var(--font-b); letter-spacing: .14em; text-transform: uppercase;
+}
+.gb-co__pri-fx { position: relative; flex: 0 0 74px; height: 44px; margin-top: 8px; }
+.gb-co__pri-pkg { position: absolute; left: 0; top: 5px; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .45)); animation: gb-pri-glide 2.2s cubic-bezier(.5, 0, .2, 1) infinite; }
+.gb-co__pri-line { position: absolute; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(255, 179, 107, 0), rgba(255, 179, 107, .95)); animation: gb-pri-streak 2.2s ease-in infinite; }
+.gb-co__pri-line--a { left: 0; top: 14px; width: 26px; }
+.gb-co__pri-line--b { left: 4px; top: 22px; width: 34px; animation-delay: .12s; }
+.gb-co__pri-line--c { left: 0; top: 30px; width: 20px; animation-delay: .24s; }
+.gb-co__pri-body { flex: 1 1 auto; min-width: 0; display: grid; gap: 3px; margin-top: 8px; }
+.gb-co__pri-title { font: 800 16px/1.15 var(--font-h); letter-spacing: -.01em; }
+.gb-co__pri-copy { color: rgba(255, 255, 255, .72); font-size: 12.5px; line-height: 1.4; }
+.gb-co__pri-side { flex: 0 0 auto; display: grid; justify-items: end; gap: 7px; margin-top: 8px; }
+.gb-co__pri-price { font: 800 18px/1 var(--font-h); color: #FFB36B; white-space: nowrap; }
+.gb-co__pri-tick {
+  display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .55); color: transparent; transition: background .16s var(--ease), border-color .16s var(--ease), color .16s var(--ease);
+}
+.gb-co__pri[data-on="1"] .gb-co__pri-tick { background: #F5821F; border-color: #F5821F; color: #fff; }
+.gb-co__pri[data-on="1"] .gb-co__pri-pkg { animation-duration: 1.1s; }
+.gb-co__pri[data-on="1"] .gb-co__pri-line { animation-duration: 1.1s; }
+@keyframes gb-pri-glide { 0% { transform: translateX(-4px) rotate(-3deg); } 55% { transform: translateX(34px) rotate(2deg); } 100% { transform: translateX(-4px) rotate(-3deg); } }
+@keyframes gb-pri-streak { 0% { opacity: 0; transform: translateX(-10px) scaleX(.3); } 35% { opacity: 1; } 70% { opacity: 0; transform: translateX(22px) scaleX(1); } 100% { opacity: 0; } }
+@keyframes gb-pri-shine { 0%, 55% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
+@keyframes gb-pri-call { 0% { box-shadow: 0 6px 18px rgba(20, 20, 15, .22), 0 0 0 0 rgba(245, 130, 31, .55); } 70%, 100% { box-shadow: 0 6px 18px rgba(20, 20, 15, .22), 0 0 0 10px rgba(245, 130, 31, 0); } }
+@media (prefers-reduced-motion: reduce) {
+  .gb-co__pri, .gb-co__pri::before, .gb-co__pri-pkg, .gb-co__pri-line { animation: none !important; }
+  .gb-co__pri-pkg { transform: translateX(14px); }
+  .gb-co__pri-line { opacity: .6; }
+}
+@media (max-width: 420px) {
+  .gb-co__pri { gap: 9px; padding-right: 12px; }
+  .gb-co__pri-fx { flex-basis: 62px; }
+  .gb-co__pri-title { font-size: 15px; }
+  .gb-co__pri-price { font-size: 16px; }
+}

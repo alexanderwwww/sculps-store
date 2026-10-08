@@ -4956,7 +4956,7 @@ html, body { margin: 0; }
 .cb-cart { width: 42px; height: 42px; display: inline-grid; place-items: center; background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; position: relative; color: #111; padding: 0; }
 .cb-cart > svg:not(.cb-cart__ico) { display: none; }
 .cb-cart__ico { width: 26px; height: 26px; }
-.cb-cart__n { position: absolute; top: 3px; right: 1px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #F7931E; color: #fff; font-size: 11px; font-weight: 800; line-height: 18px; text-align: center; }
+.cb-cart__n { position: absolute; top: 3px; right: 1px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #E11D2E; color: #fff; font-size: 11px; font-weight: 800; line-height: 18px; text-align: center; }
 .cb-header__right { display: flex; align-items: center; gap: 4px; }
 
 /* Cart = the menu button's twin: same round white button, same size, a bold bag,
@@ -4965,7 +4965,7 @@ html, body { margin: 0; }
 .cb-cart { width: 48px !important; height: 48px !important; border-radius: 50% !important; background: #fff !important; border: 1.5px solid #E4E4E4 !important; box-shadow: none !important; color: #111 !important; }
 .cb-cart:hover { border-color: #111 !important; }
 .cb-cart__ico { width: 23px !important; height: 23px !important; stroke-width: 2.1; }
-.cb-cart__n { top: -3px !important; right: -3px !important; min-width: 20px !important; height: 20px !important; line-height: 20px !important; font-size: 11.5px !important; background: #F7931E !important; border: 2px solid #fff; box-sizing: content-box; }
+.cb-cart__n { top: -3px !important; right: -3px !important; min-width: 20px !important; height: 20px !important; line-height: 20px !important; font-size: 11.5px !important; background: #E11D2E !important; border: 2px solid #fff; box-sizing: content-box; }
 
 /* Add to cart is black (Alex, 2026-10-07): the buy box, the sticky bar and the
    drawer's Checkout. Buy now becomes the white outlined twin beside it. */

@@ -2391,12 +2391,13 @@ function PriorityRow({
   }
 
   return (
-    <fetcher.Form method="post" className="gb-co__prot">
+    <fetcher.Form method="post" className="gb-co__pri-wrap">
       <input type="hidden" name="intent" value="priority" />
-      <label className="gb-co__prot-row" data-busy={busy ? "1" : undefined}>
+      <label className="gb-co__pri" data-on={cart.priorityChosen ? "1" : undefined} data-busy={busy ? "1" : undefined}>
         <input
           type="checkbox"
           name="wanted"
+          className="gb-co__pri-box"
           aria-label="Add priority shipping"
           checked={cart.priorityChosen}
           disabled={busy}
@@ -2407,11 +2408,28 @@ function PriorityRow({
             fetcher.submit(body, { method: "post" });
           }}
         />
-        <span className="gb-co__prot-body">
-          <span className="gb-co__prot-title">Priority shipping</span>
-          <span className="gb-co__prot-copy">{cart.priorityCopy}</span>
+        <span className="gb-co__pri-tag" aria-hidden="true">Priority</span>
+        <span className="gb-co__pri-fx" aria-hidden="true">
+          <i className="gb-co__pri-line gb-co__pri-line--a" />
+          <i className="gb-co__pri-line gb-co__pri-line--b" />
+          <i className="gb-co__pri-line gb-co__pri-line--c" />
+          <svg className="gb-co__pri-pkg" viewBox="0 0 40 40" width="34" height="34">
+            <path d="M20 4 35 11.5v17L20 36 5 28.5v-17z" fill="#F5821F" />
+            <path d="M20 4 35 11.5 20 19 5 11.5z" fill="#FFB36B" />
+            <path d="M20 19v17" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" opacity=".85" />
+            <path d="m12.5 7.8 14.8 7.4" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" opacity=".85" />
+          </svg>
         </span>
-        <span className="gb-co__prot-price">{money(cart.priorityOfferCents)}</span>
+        <span className="gb-co__pri-body">
+          <span className="gb-co__pri-title">Priority shipping</span>
+          <span className="gb-co__pri-copy">{cart.priorityCopy}</span>
+        </span>
+        <span className="gb-co__pri-side">
+          <span className="gb-co__pri-price">{money(cart.priorityOfferCents)}</span>
+          <span className="gb-co__pri-tick" aria-hidden="true">
+            <svg viewBox="0 0 16 16" width="14" height="14"><path d="m3.5 8.5 3 3 6-7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </span>
+        </span>
       </label>
     </fetcher.Form>
   );
