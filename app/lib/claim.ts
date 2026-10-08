@@ -7,4 +7,4 @@
  * The server remains the authority on what was actually minted; the browser
  * only uses this to say what it is offering.
  */
-export const CLAIM_EXTRA_CENTS = 500;
+export const CLAIM_EXTRA_CENTS = 3000;

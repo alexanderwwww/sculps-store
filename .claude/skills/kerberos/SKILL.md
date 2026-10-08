@@ -600,3 +600,7 @@ Alex asked for an express option at $29.99 for Black Reaper. Built the same way 
 - Preview only: https://kerberos.gardenbuddystore.workers.dev/?store=giant-scream . Domain giantscream.com not bought, not routed. No payment provider on it, so it cannot take money.
 - Still shows Black Reaper's logo, "BLACK REAPER" eyebrow and product photos with the Black Reaper box. Needs its own wordmark and text before a second Square account is registered against it: a processor must see one consistent business. Receipts for the new domain use the generic email shell.
 - Condition set with Alex: truthful, same LLC, disclose to Square if asked; a sister store is not a hiding place if the first account closes for cause.
+
+### 2026-10-08 late: Scream gallery redone in the bright style; claim coupon $30
+- The Scream gallery (`products.images`, store reaper): picture 1 `scr-ad-6-box.jpg` UNCHANGED; pictures 2-7 and 9 replaced by the bright set `scr-b-street / scale / does / daynight / steps / weather / feel .webp` (Wand job "The Scream - buy box v3 one chat", ChatGPT, one chat). Picture 8, the real mask photo `scr-s7-detail.webp`, KEPT at Alex's word. Way back: `snapshots/reaper-2026-10-08/the-scream-images-BEFORE-bright-redo.json` (the old `scr-s*.webp` files are still in R2).
+- The checkout "Extra $ off" claim ticket is now **$30** (`CLAIM_EXTRA_CENTS = 3000` in `app/lib/claim.ts`, one constant, stacks on top of whatever code the cart holds). Alex: "give $30."
