@@ -39,6 +39,7 @@ import {
   newCartToken,
   cartCookie,
   setCartProtection,
+  setCartPriority,
   currentLines,
   addLine,
   saveCart,
@@ -745,6 +746,22 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   /**
+   * Priority shipping, on or off. Same shape as protection: the browser sends
+   * the choice and nothing else, the fee is the store's column, and priceCart
+   * folds it into shipping when this page reloads.
+   */
+  if (formIntent === "priority") {
+    let cartToken = token;
+    let setCookie: string | null = null;
+    if (!cartToken) {
+      cartToken = newCartToken();
+      setCookie = cartCookie(cartToken, url);
+    }
+    await setCartPriority(context.db, store.id, cartToken, form.get("wanted") === "on");
+    return Response.json({ priority: true }, setCookie ? { headers: { "Set-Cookie": setCookie } } : undefined);
+  }
+
+  /**
    * The upsell's Add. A variant id, checked against this store's own live
    * products and its stock before it is allowed onto the cart; the price is
    * never sent and never read from here. Adding re-prices the cart on the next
@@ -1032,6 +1049,7 @@ async function payAction({
     // Priced by the server from the store's own column, the same as every
     // other figure here — so the intent, the order row and the receipt agree.
     protectionCents: cart.protectionCents,
+    shippingMethod: cart.priorityChosen ? "priority" : "standard",
   };
   const lines = cart.lines.map((line) => ({
     variantId: line.variantId,
@@ -1109,6 +1127,9 @@ async function payAction({
         .set({ protectionCents: cart.protectionCents })
         .where(eq(ordersTable.id, order.id));
     }
+    if (cart.priorityChosen) {
+      await context.db.update(ordersTable).set({ shippingMethod: "priority" }).where(eq(ordersTable.id, order.id));
+    }
   }
 
   // The cart is NOT finished here. An order row exists, but nothing has been
@@ -1170,7 +1191,7 @@ type LoadedStore = Awaited<ReturnType<typeof loader>>["store"];
 /** What the action can answer with, from this page's point of view. */
 type ActionReply =
   | { error: string }
-  | { discountError?: string | null; protection?: boolean; added?: boolean }
+  | { discountError?: string | null; protection?: boolean; priority?: boolean; added?: boolean }
   | { scratch: { percent: number; code: string } }
   | { claim: { code: string; amountCents: number; extraCents: number } }
   | {
@@ -2224,6 +2245,7 @@ function Summary({
         ))}
       </ul>
 
+      {buddy ? <PriorityRow cart={cart} money={money} locked={locked} /> : null}
       {buddy ? <ProtectionRow cart={cart} money={money} locked={locked} /> : null}
 
       <DiscountBox cn={cn} applied={cart.discount} reason={cart.discountReason} locked={locked} />
@@ -2243,13 +2265,20 @@ function Summary({
           </div>
         ) : null}
 
-        <div className={`${cn.tot}${buddy && cart.shippingCents === 0 ? " gb-co__tot--free" : ""}`}>
+        <div className={`${cn.tot}${buddy && cart.shippingCents - cart.priorityCents === 0 ? " gb-co__tot--free" : ""}`}>
           <span>
             Shipping
             {shipEstimate ? <span className={buddy ? "gb-co__line-sub" : "gk-quiet"}> · {shipEstimate}</span> : null}
           </span>
-          <b>{cart.shippingCents > 0 ? money(cart.shippingCents) : "Free"}</b>
+          <b>{cart.shippingCents - cart.priorityCents > 0 ? money(cart.shippingCents - cart.priorityCents) : "Free"}</b>
         </div>
+
+        {cart.priorityCents > 0 ? (
+          <div className={cn.tot}>
+            <span>Priority shipping</span>
+            <b>{money(cart.priorityCents)}</b>
+          </div>
+        ) : null}
 
         {cart.protectionCents > 0 ? (
           <div className={cn.tot}>
@@ -2331,6 +2360,59 @@ function ProtectionRow({
           <span className="gb-co__prot-copy">{cart.protectionCopy}</span>
         </span>
         <span className="gb-co__prot-price">{money(cart.protectionOfferCents)}</span>
+      </label>
+    </fetcher.Form>
+  );
+}
+
+/**
+ * Priority shipping.
+ *
+ * Mirrors package protection: the store sets whether it is offered and what
+ * it costs, the row only records the choice and starts off, and it does not
+ * render when the store has no price. The figure beside it is the server's.
+ */
+function PriorityRow({
+  cart,
+  money,
+  locked,
+}: {
+  cart: Awaited<ReturnType<typeof loader>>["cart"];
+  money: (cents: number) => string;
+  locked: boolean;
+}) {
+  const fetcher = useFetcher<ActionReply>();
+  const busy = fetcher.state !== "idle";
+  if (cart.priorityOfferCents == null || !cart.priorityCopy) return null;
+
+  if (locked) {
+    return cart.priorityChosen ? (
+      <p className="gb-co__note">Priority shipping is included in this payment.</p>
+    ) : null;
+  }
+
+  return (
+    <fetcher.Form method="post" className="gb-co__prot">
+      <input type="hidden" name="intent" value="priority" />
+      <label className="gb-co__prot-row" data-busy={busy ? "1" : undefined}>
+        <input
+          type="checkbox"
+          name="wanted"
+          aria-label="Add priority shipping"
+          checked={cart.priorityChosen}
+          disabled={busy}
+          onChange={(event) => {
+            const body = new FormData();
+            body.set("intent", "priority");
+            body.set("wanted", event.currentTarget.checked ? "on" : "");
+            fetcher.submit(body, { method: "post" });
+          }}
+        />
+        <span className="gb-co__prot-body">
+          <span className="gb-co__prot-title">Priority shipping</span>
+          <span className="gb-co__prot-copy">{cart.priorityCopy}</span>
+        </span>
+        <span className="gb-co__prot-price">{money(cart.priorityOfferCents)}</span>
       </label>
     </fetcher.Form>
   );
@@ -3736,7 +3818,7 @@ function OnePage({
                 // The parcel goes where the buyer says, which is not always
                 // where their card is registered.
                 shippingAddressRequired: true,
-                shippingRates: [{ id: "standard", amount: cart.shippingCents, displayName: "Shipping" }],
+                shippingRates: [{ id: "standard", amount: cart.shippingCents, displayName: cart.priorityChosen ? "Priority shipping" : "Shipping" }],
               }
             : { buttonHeight: 48 },
         );
@@ -3798,7 +3880,7 @@ function OnePage({
           express.on("shippingaddresschange", (event: any) => {
             try {
               event.resolve({
-                shippingRates: [{ id: "standard", amount: cart.shippingCents, displayName: "Shipping" }],
+                shippingRates: [{ id: "standard", amount: cart.shippingCents, displayName: cart.priorityChosen ? "Priority shipping" : "Shipping" }],
               });
             } catch {
               /* nothing to do */
@@ -3954,7 +4036,7 @@ function OnePage({
       requestRef.current?.update?.({
         total: { label: store.name, amount: Math.max(50, cart.totalCents) },
         shippingOptions: [
-          { id: "standard", label: "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
+          { id: "standard", label: cart.priorityChosen ? "Priority shipping" : "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
         ],
       });
     } catch {
@@ -4031,7 +4113,7 @@ function OnePage({
         requestPayerPhone: store.phoneMode === "required",
         requestShipping: true,
         shippingOptions: [
-          { id: "standard", label: "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
+          { id: "standard", label: cart.priorityChosen ? "Priority shipping" : "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
         ],
       });
       // Kept so a later change of total moves the sheet's figure too. A sheet

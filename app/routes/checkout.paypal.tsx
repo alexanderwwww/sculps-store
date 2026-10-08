@@ -150,6 +150,9 @@ export async function action({ context, request }: Route.ActionArgs) {
         .set({ protectionCents: cart.protectionCents })
         .where(eq(ordersTable.id, order.id));
     }
+    if (cart.priorityChosen) {
+      await context.db.update(ordersTable).set({ shippingMethod: "priority" }).where(eq(ordersTable.id, order.id));
+    }
 
     /**
      * What PayPal took, against what the cart said. They should be equal;

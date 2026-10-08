@@ -66,6 +66,15 @@ export interface PricedCart {
   protectionOfferCents: number | null;
   protectionCopy: string | null;
   protectionChosen: boolean;
+  /**
+   * Priority shipping. The fee is folded into shippingCents so every payment
+   * path that already charges "Shipping" charges it; these say what it is.
+   */
+  priorityOfferCents: number | null;
+  priorityCopy: string | null;
+  priorityChosen: boolean;
+  /** the part of shippingCents that is the priority fee */
+  priorityCents: number;
   totalCents: number;
   currency: string;
   itemCount: number;
@@ -152,6 +161,7 @@ async function loadCartRow(db: DB, storeId: string, token: string | null) {
         orderId: null,
         discountCode: null,
         packageProtection: false,
+        shippingPriority: false,
         paymentIntentId: null,
         paymentIntentAmount: null,
         paymentIntentSecret: null,
@@ -221,13 +231,22 @@ export async function priceCart(
 
   // Shipping comes from Settings → Shipping, in this order: always free wins,
   // then the free-over threshold, then the flat rate.
-  const shippingCents = !lines.length
+  const baseShippingCents = !lines.length
     ? 0
     : store.shipAlwaysFree
       ? 0
       : store.shipFreeOverCents != null && subtotalCents >= store.shipFreeOverCents
         ? 0
         : store.shipFlatCents;
+
+  // Priority shipping: the price is the store's, the cart row carries only the
+  // choice. No lines, no fee. It sits on top of the base rate and no discount
+  // touches it, so a free-shipping code cannot make it free.
+  const priorityOfferCents =
+    store.priorityShipCents != null && store.priorityShipCents > 0 ? store.priorityShipCents : null;
+  const priorityChosen = Boolean(row?.shippingPriority) && lines.length > 0 && priorityOfferCents != null;
+  const priorityCents = priorityChosen ? (priorityOfferCents as number) : 0;
+  const shippingCents = baseShippingCents + priorityCents;
 
   // The discount is worked out here, from the row in the database, and never
   // taken from the browser. The cart row only ever carries the code as text.
@@ -244,7 +263,7 @@ export async function priceCart(
       currency: store.currency,
     });
     if (check.ok) {
-      const amounts = applyDiscount(check.discount, { subtotalCents, shippingCents });
+      const amounts = applyDiscount(check.discount, { subtotalCents, shippingCents: baseShippingCents });
       discountOrderCents = amounts.orderCents;
       discountShippingCents = amounts.shippingCents;
       discount = {
@@ -258,7 +277,7 @@ export async function priceCart(
   }
 
   const discountedSubtotal = Math.max(0, subtotalCents - discountOrderCents);
-  const discountedShipping = Math.max(0, shippingCents - discountShippingCents);
+  const discountedShipping = Math.max(0, baseShippingCents - discountShippingCents) + priorityCents;
 
   // Package protection. The price is the store's; the cart row only carries
   // the choice. No lines, no protection — there is nothing to protect.
@@ -287,6 +306,10 @@ export async function priceCart(
     protectionOfferCents,
     protectionCopy: store.packageProtectionCopy ?? null,
     protectionChosen,
+    priorityOfferCents,
+    priorityCopy: store.priorityShipCopy ?? null,
+    priorityChosen,
+    priorityCents,
     totalCents: Math.max(
       0,
       (store.pricesIncludeTax
@@ -365,6 +388,27 @@ export async function setCartProtection(
       .where(eq(carts.id, existing.id));
   } else {
     await db.insert(carts).values({ storeId, token, items: [], status: "open", packageProtection: wanted });
+  }
+}
+
+/**
+ * Records whether the customer wants priority shipping. Only the choice is
+ * written; priceCart reads the price off the store row every time.
+ */
+export async function setCartPriority(
+  db: DB,
+  storeId: string,
+  token: string,
+  wanted: boolean,
+): Promise<void> {
+  const existing = await loadCartRow(db, storeId, token);
+  if (existing) {
+    await db
+      .update(carts)
+      .set({ shippingPriority: wanted, updatedAt: new Date() })
+      .where(eq(carts.id, existing.id));
+  } else {
+    await db.insert(carts).values({ storeId, token, items: [], status: "open", shippingPriority: wanted });
   }
 }
 

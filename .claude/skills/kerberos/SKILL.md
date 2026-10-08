@@ -579,3 +579,12 @@ LLC Stripe (acct_1UMDzFRTJdDCKVYD) as of 10-06: charges on, no bank attached, we
 
 ## Customer copy law (2026-10-08, Alex)
 Never mention shipping dates, delays, refunds, tests, payment issues or fixes to customers. Dreamy marketing only. Show every customer email to Alex first; send only on 'send'. The site line 'Ships in 1-2 business days' stays as it was.
+
+## Priority shipping (built 2026-10-08, deployed, switched OFF)
+
+Alex asked for an express option at $29.99 for Black Reaper. Built the same way as package protection: the store row sets the price, the cart row only holds the choice, `priceCart` folds the fee into `shippingCents` so Square, Klarna/Affirm, PayPal, Stripe and the wallet sheets all charge it with no extra code.
+- Columns: `stores.priority_ship_cents`, `stores.priority_ship_copy`, `carts.shipping_priority`, `orders.shipping_method` ('standard' | 'priority').
+- Square names it its own line "Priority shipping"; `viewOf` reads it back, so wallet orders are marked priority too. Admin order page shows "Priority shipping / Ship this one first".
+- Proven: `_prio.test` style run against the real priceCart (off/on, qty 2, percent code, spent code, free-shipping code cannot erase the fee, store without the option ignores a forced flag, empty cart, Square lines and read-back) and the live checkout (tick = +$29.99, untick = back).
+- NOT proven: an actual Square payment link created with the priority line (would create a real pending order). The server already refuses a charge whose total differs from ours.
+- **Switch:** ON = `update stores set priority_ship_cents=2999, priority_ship_copy='Your order moves to the front of the line.' where slug='reaper'`. OFF = set both to null. It stays OFF until Alex has the supplier's express cost and days — we do not sell a paid speed-up the supplier has not confirmed. Customer copy never states days.

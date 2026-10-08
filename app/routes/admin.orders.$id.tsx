@@ -118,6 +118,7 @@ export async function loader({ context, request, params }: Route.LoaderArgs) {
       country: order.country,
       itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
       shippingIsFree: order.shippingCents === 0,
+      shippingMethod: order.shippingMethod,
       taxRate:
         order.subtotalCents > 0 ? `${((order.taxCents / order.subtotalCents) * 100).toFixed(2)}%` : "—",
     },
@@ -768,8 +769,12 @@ export default function OrderDetail({ loaderData, actionData }: Route.ComponentP
                 {order.region ? `${order.region} state · ${order.taxRate}` : order.taxRate}
               </span>
               <span style={{ textAlign: "right" }}>{order.tax}</span>
-              <span>Shipping</span>
-              <span style={{ color: "var(--ink-2)" }}>{order.shippingIsFree ? "Free shipping" : ""}</span>
+              <span style={order.shippingMethod === "priority" ? { fontWeight: 650 } : undefined}>
+                {order.shippingMethod === "priority" ? "Priority shipping" : "Shipping"}
+              </span>
+              <span style={{ color: "var(--ink-2)" }}>
+                {order.shippingMethod === "priority" ? "Ship this one first" : order.shippingIsFree ? "Free shipping" : ""}
+              </span>
               <span style={{ textAlign: "right" }}>{order.shipping}</span>
               <span style={{ fontWeight: 650, paddingTop: 6, borderTop: "1px solid var(--border)" }}>
                 Total

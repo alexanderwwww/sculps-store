@@ -133,6 +133,9 @@ export async function action({ context, request }: Route.ActionArgs) {
   if (cart.protectionCents > 0) {
     await context.db.update(ordersTable).set({ protectionCents: cart.protectionCents }).where(eq(ordersTable.id, order.id));
   }
+  if (cart.priorityChosen) {
+    await context.db.update(ordersTable).set({ shippingMethod: "priority" }).where(eq(ordersTable.id, order.id));
+  }
   await recordOrderEvent(context.db, order.id, "payment:started", `${method === "klarna" ? "Klarna" : "Affirm"} started.`).catch(() => undefined);
 
   try {

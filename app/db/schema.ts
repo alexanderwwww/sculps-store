@@ -87,6 +87,12 @@ export const stores = pgTable("stores", {
    */
   packageProtectionCents: integer("package_protection_cents"),
   packageProtectionCopy: text("package_protection_copy"),
+  /**
+   * Priority shipping, priced by the store and never by the browser. Null
+   * means this store does not offer it and no row is drawn at all.
+   */
+  priorityShipCents: integer("priority_ship_cents"),
+  priorityShipCopy: text("priority_ship_copy"),
 
   /* Branding — emails and checkout only, never the storefront layout */
   logoUrl: text("logo_url"),
@@ -373,6 +379,8 @@ export const orders = pgTable(
     discountCents: integer("discount_cents").notNull().default(0),
     /** what was charged for package protection on this order, in cents */
     protectionCents: integer("protection_cents").notNull().default(0),
+    /** standard | priority — so the admin shows which orders were bought as priority */
+    shippingMethod: text("shipping_method").notNull().default("standard"),
 
     paymentProvider: text("payment_provider"),
     paymentRef: text("payment_ref"),
@@ -495,6 +503,11 @@ export const carts = pgTable(
      * what it costs is read from the store row when the cart is priced.
      */
     packageProtection: boolean("package_protection").notNull().default(false),
+    /**
+     * The customer ticked priority shipping. Only the choice lives here —
+     * what it costs is read from the store row when the cart is priced.
+     */
+    shippingPriority: boolean("shipping_priority").notNull().default(false),
     /**
      * The Stripe PaymentIntent this cart is paying with.
      *

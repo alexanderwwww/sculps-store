@@ -157,6 +157,9 @@ export async function action({ context, request }: Route.ActionArgs) {
   if (cart.protectionCents > 0) {
     await context.db.update(ordersTable).set({ protectionCents: cart.protectionCents }).where(eq(ordersTable.id, order.id));
   }
+  if (cart.priorityChosen) {
+    await context.db.update(ordersTable).set({ shippingMethod: "priority" }).where(eq(ordersTable.id, order.id));
+  }
 
   if (payMode) {
     const lineShape = cart.lines.map((line) => ({
@@ -174,6 +177,7 @@ export async function action({ context, request }: Route.ActionArgs) {
       const squareOrder = await createSquareOrder(account, {
         lines: lineShape,
         shippingCents: cart.shippingCents,
+        priorityCents: cart.priorityCents,
         taxCents: cart.taxCents,
         protectionCents: cart.protectionCents,
         discountCents: cart.discount?.amountCents ?? 0,
@@ -237,6 +241,7 @@ export async function action({ context, request }: Route.ActionArgs) {
         unitPriceCents: line.unitPriceCents,
       })),
       shippingCents: cart.shippingCents,
+      priorityCents: cart.priorityCents,
       taxCents: cart.taxCents,
       protectionCents: cart.protectionCents,
       discountCents: cart.discount?.amountCents ?? 0,

@@ -112,6 +112,10 @@ export async function settleExpressOrder(
     await ctx.db.update(ordersTable).set({ protectionCents: sq.protectionCents }).where(eq(ordersTable.id, created.id));
   }
 
+  if (sq.priorityCents > 0) {
+    await ctx.db.update(ordersTable).set({ shippingMethod: "priority" }).where(eq(ordersTable.id, created.id));
+  }
+
   if (settled.amountCents !== sq.totalCents) {
     await recordOrderEvent(
       ctx.db,

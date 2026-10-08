@@ -110,6 +110,8 @@ export async function createPaymentLink(
   input: {
     lines: SquareLine[];
     shippingCents: number;
+    /** the part of shippingCents that is the priority fee — its own named line */
+    priorityCents?: number;
     taxCents: number;
     protectionCents: number;
     discountCents: number;
@@ -142,7 +144,7 @@ export async function createPaymentLink(
         ? { metadata: { variantId: line.variantId, ...(line.label ? { label: line.label.slice(0, 200) } : {}) } }
         : {}),
     }));
-    if (input.shippingCents > 0) line_items.push({ name: "Shipping", quantity: "1", base_price_money: money(input.shippingCents) });
+    shippingLineItems(input.shippingCents, input.priorityCents ?? 0, money).forEach((item) => line_items.push(item));
     if (input.taxCents > 0) line_items.push({ name: "Tax", quantity: "1", base_price_money: money(input.taxCents) });
     if (input.protectionCents > 0) line_items.push({ name: "Shipping protection", quantity: "1", base_price_money: money(input.protectionCents) });
     const discounts = input.discountCents > 0
@@ -256,6 +258,8 @@ export interface SquareSettlement {
     metadata: Record<string, string>;
     lines: SquareOrderLine[];
     shippingCents: number;
+    /** the part of shippingCents that was bought as priority shipping */
+    priorityCents: number;
     taxCents: number;
     protectionCents: number;
     discountCents: number;
@@ -264,13 +268,31 @@ export interface SquareSettlement {
   };
 }
 
+/**
+ * The shipping lines of a Square order: the base rate as "Shipping" and the
+ * priority fee as its own "Priority shipping" line. Square only ever sees
+ * these two names, and viewOf() reads them back the same way.
+ */
+export function shippingLineItems(
+  shippingCents: number,
+  priorityCents: number,
+  money: (amount: number) => { amount: number; currency: string },
+): any[] {
+  const base = Math.max(0, shippingCents - priorityCents);
+  const items: any[] = [];
+  if (base > 0) items.push({ name: "Shipping", quantity: "1", base_price_money: money(base) });
+  if (priorityCents > 0) items.push({ name: "Priority shipping", quantity: "1", base_price_money: money(priorityCents) });
+  return items;
+}
+
 const cents = (money: any): number => (typeof money?.amount === "number" ? money.amount : Number(money?.amount ?? 0));
 
-function viewOf(order: any, payment: any | null): SquareSettlement["order"] {
+export function viewOf(order: any, payment: any | null): SquareSettlement["order"] {
   const lines: SquareOrderLine[] = [];
   let shippingCents = 0;
   let taxCents = 0;
   let protectionCents = 0;
+  let priorityCents = 0;
   for (const item of order?.line_items ?? []) {
     const total = cents(item.base_price_money) * Number(item.quantity ?? 1);
     if (item.metadata?.variantId) {
@@ -282,6 +304,10 @@ function viewOf(order: any, payment: any | null): SquareSettlement["order"] {
         label: item.metadata.label || null,
       });
     } else if (item.name === "Shipping") shippingCents += total;
+    else if (item.name === "Priority shipping") {
+      shippingCents += total;
+      priorityCents += total;
+    }
     else if (item.name === "Tax") taxCents += total;
     else if (item.name === "Shipping protection") protectionCents += total;
     else
@@ -301,6 +327,7 @@ function viewOf(order: any, payment: any | null): SquareSettlement["order"] {
     metadata: order?.metadata ?? {},
     lines,
     shippingCents,
+    priorityCents,
     taxCents,
     protectionCents,
     discountCents: cents(order?.total_discount_money),
@@ -420,6 +447,8 @@ export async function createSquareOrder(
   input: {
     lines: SquareLine[];
     shippingCents: number;
+    /** the part of shippingCents that is the priority fee — its own named line */
+    priorityCents?: number;
     taxCents: number;
     protectionCents: number;
     discountCents: number;
@@ -437,7 +466,7 @@ export async function createSquareOrder(
     base_price_money: money(line.unitPriceCents),
     ...(line.variantId ? { metadata: { variantId: line.variantId, ...(line.label ? { label: line.label.slice(0, 200) } : {}) } } : {}),
   }));
-  if (input.shippingCents > 0) line_items.push({ name: "Shipping", quantity: "1", base_price_money: money(input.shippingCents) });
+  shippingLineItems(input.shippingCents, input.priorityCents ?? 0, money).forEach((item) => line_items.push(item));
   if (input.taxCents > 0) line_items.push({ name: "Tax", quantity: "1", base_price_money: money(input.taxCents) });
   if (input.protectionCents > 0) line_items.push({ name: "Shipping protection", quantity: "1", base_price_money: money(input.protectionCents) });
   const payload = await call(account, "POST", "/orders", {
