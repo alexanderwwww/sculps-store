@@ -5002,3 +5002,33 @@ html, body { margin: 0; }
 .cb-drawer__cash:hover, .cb-drawer__after:hover { filter: brightness(.96); }
 .cb-drawer__cash:active, .cb-drawer__after:active { transform: translateY(1px); }
 .cb-drawer__cash .cb-cashpill__s { width: 20px; height: 20px; border-radius: 5px; font-size: 13px; }
+
+/* The coupon in the buy box: one thin white pill. White, black, grey and the one orange. NEVER beige or cream (Alex, 2026-10-08). */
+.cb-buy__side > .cb-coupon {
+  display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; gap: 10px;
+  min-height: 0 !important; margin: 0 0 14px !important; padding: 6px 6px 6px 8px !important;
+  background: #fff !important; color: #111 !important; border: 1px solid #E2E2E2 !important; border-radius: 999px !important; box-shadow: none !important;
+}
+.cb-buy__side > .cb-coupon::before, .cb-buy__side > .cb-coupon::after { content: none !important; display: none !important; }
+.cb-buy__side > .cb-coupon .cb-coupon__tag { display: none !important; }
+.cb-buy__side > .cb-coupon .cb-coupon__leaf {
+  flex: none; width: 30px; border-radius: 6px; overflow: hidden; background: #fff; text-align: center; line-height: 1;
+  border: 1px solid #D8D8D8; box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+}
+.cb-buy__side > .cb-coupon .cb-coupon__leaf i { display: block; padding: 2px 0 1px; background: #F9A01B; color: #111; font: 800 7.5px/1 var(--font-b, Inter, sans-serif); font-style: normal; letter-spacing: .14em; }
+.cb-buy__side > .cb-coupon .cb-coupon__leaf b { display: block; padding: 2px 0 3px; color: #111; font: 900 14px/1 var(--font-h, Archivo, Inter, sans-serif); }
+.cb-buy__side > .cb-coupon .cb-coupon__in { padding: 0 !important; min-height: 0 !important; display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; flex: 1 1 auto; align-items: center !important; justify-content: space-between; gap: 8px; min-width: 0; }
+.cb-buy__side > .cb-coupon .cb-coupon__in::after { content: none !important; }
+.cb-buy__side > .cb-coupon .cb-coupon__pill {
+  order: 1 !important; flex: 1 1 auto; min-width: 0; text-align: left !important; color: #111 !important; background: none !important; padding: 0 !important; font-size: 13px !important; font-weight: 800 !important;
+  letter-spacing: .02em !important; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cb-buy__side > .cb-coupon .cb-coupon__line { display: contents !important; font-size: 0 !important; border: 0 !important; padding: 0 !important; }
+.cb-buy__side > .cb-coupon .cb-coupon__code {
+  order: 2 !important; flex: 0 0 auto !important; width: auto !important; margin: 0 !important; height: 30px !important; min-height: 0 !important; padding: 0 10px !important; gap: 5px;
+  display: inline-flex !important; align-items: center; background: #111 !important; color: #fff !important; border: 0 !important; border-radius: 999px !important;
+}
+.cb-buy__side > .cb-coupon .cb-coupon__code code { font-size: 12px !important; letter-spacing: .06em; font-weight: 800; color: #fff !important; background: none !important; }
+.cb-buy__side > .cb-coupon .cb-coupon__do { color: #F9A01B !important; }
+.cb-buy__side > .cb-coupon .cb-coupon__do svg { width: 13px !important; height: 13px !important; color: #F9A01B !important; }
+.cb-buy__side > .cb-coupon .cb-coupon__did { font-size: 11px; color: #F9A01B; }

@@ -23,6 +23,7 @@ import { PhoneChat } from "../shared/phone-chat";
 import { KlarnaMark, AffirmMark, PayLaterLine, quarter } from "../shared/paylater";
 import { ProductExpress } from "../garden-buddy/product-express";
 import { embedFor, isOwnVideo } from "./embeds";
+import { isReaperSkin } from "~/lib/skin";
 
 type Vals = Record<string, string>;
 /*
@@ -652,7 +653,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               deliberately not drawn here: the pill that used to say "Save $59"
               repeated the price line. */}
           <Banner section={section} page={page} />
-          <CouponBar offer={offer} currency={currency} />
+          <CouponBar offer={offer} currency={currency} named={isReaperSkin(page.store.slug)} />
           <Thrilled page={page} />
           {/* The honest version of the avatar row: same shape and rhythm, no invented people
               and no invented count. Shown only by themes that switch it on. */}
@@ -1939,7 +1940,7 @@ function sinceText(when: Date | string | null): string {
  * Always the dollars, never a percentage: "$20 off" is a number somebody can
  * picture against a $199 price, and "15% off" is arithmetic homework.
  */
-function CouponBar({ offer, currency }: { offer: { code: string; kind: string; value: number } | null; currency: string }) {
+function CouponBar({ offer, currency, named = false }: { offer: { code: string; kind: string; value: number } | null; currency: string; named?: boolean }) {
   const [copied, setCopied] = useState(false);
   if (!offer?.code) return null;
   // "$20 off", not "$20.00 off". The cents are noise on a round number and
@@ -1965,8 +1966,14 @@ function CouponBar({ offer, currency }: { offer: { code: string; kind: string; v
   return (
     <div className="cb-coupon">
       <span className="cb-coupon__tag" aria-hidden="true">{IcoTag}</span>
+      {named ? (
+        <span className="cb-coupon__leaf" aria-hidden="true">
+          <i>{offer.code.replace(/\d+$/, "").slice(0, 3)}</i>
+          <b>{(offer.code.match(/\d+$/) ?? [""])[0]}</b>
+        </span>
+      ) : null}
       <span className="cb-coupon__in">
-        <span className="cb-coupon__pill">Get {amount} today</span>
+        <span className="cb-coupon__pill">{named ? `${amount} your order` : `Get ${amount} today`}</span>
         <span className="cb-coupon__line">
           Get {amount} with the code:{" "}
           {/* The code and the copy are one target. On a phone the thing
