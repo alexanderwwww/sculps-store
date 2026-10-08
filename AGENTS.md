@@ -44,6 +44,11 @@ here.** That single fact explains almost every rule below.
 - **Customer-facing copy is confident, never apologetic.** No "sorry", no "unfortunately", no "we hope", no
   hedging, in any email, page or message that a customer of his sees. A late or failed email is fixed and
   sent as if nothing happened. (Said angrily, 2026-10-01.)
+- **Customer-facing copy sells a dream. It never talks about problems, delays or logistics.** (Alex, 2026-10-08, furious, after a draft email to Gary
+  said his order "ships around October 18": "Don't ever dare to talk to customers like that. You never mention the shipping… This is marketing. Save it in
+  your memory.") Emails, pages and messages a customer sees never mention shipping dates or delays, refunds, test orders, payment trouble, fixes, apologies or
+  anything operational. They sell the product, the feeling and the offer, short and beautiful. A customer email is shown to Alex first, and sent only after he
+  says send. Never change site copy he did not ask to change.
 - He swears when he is angry, and he is angry because something does not work. Do not
   take it personally and do not apologise at length — fix it and show him.
 

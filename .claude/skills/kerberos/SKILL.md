@@ -576,3 +576,6 @@ LLC Stripe (acct_1UMDzFRTJdDCKVYD) as of 10-06: charges on, no bank attached, we
 - **Supplier invoice in hand:** Qihe County Mango Technology Co., LTD, invoice MGYA2026-10-8, 35 x The 16 ft Scream, $2,610.15 (35 x $74.57 = $2,609.95, $0.20 rounding gap). For Revolut "Supplier Contract or Invoice".
 - **Waiting on banks:** Mercury (approved, $10 deposit pending, balance unavailable), Revolut (last item: nature of business), Relay (support chat for 2 saved addresses), Airwallex (domain proof), Wise (reviewing). Square form saved for later; only the bank step left.
 - **Open fix:** cart accepts a client-sent bundle price lower than the variant price (cart.server.ts ~line 204). Alex has not said "fix it" yet.
+
+## Customer copy law (2026-10-08, Alex)
+Never mention shipping dates, delays, refunds, tests, payment issues or fixes to customers. Dreamy marketing only. Show every customer email to Alex first; send only on 'send'. The site line 'Ships in 1-2 business days' stays as it was.
