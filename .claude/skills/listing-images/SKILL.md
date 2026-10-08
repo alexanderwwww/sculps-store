@@ -65,3 +65,6 @@ powered and what arrives in the box. Every one of those questions is a reason to
 6. **Never invent a fact.** Sizes, power, what is in the box — from the product record,
    not from the imagination. Getting a fact wrong on an image is worse than having no
    image.
+
+## Black Reaper / The Scream buy box: the first picture is NEVER changed (Alex, 2026-10-08)
+The first image of The Scream gallery (`/media/scr-ad-6-box.jpg`, the bright marketing-team panel "BIG SCARE. ALL HERE.") is untouchable: not redrawn, not replaced, not reordered. It is also the style reference for every other picture of the gallery: bright white and pale grey, product huge, black condensed type, red headline blocks. The gallery pictures 2 to 9 were redone in that style on 2026-10-08 (Wand job "The Scream - buy box v3 one chat"); the old dark-blue versions (`scr-s1-hero.webp` … `scr-s8-feel.webp`) stay in R2 as the way back. Replace only after Alex has seen and accepted the new pictures.
