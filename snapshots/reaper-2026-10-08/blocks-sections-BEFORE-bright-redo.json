@@ -1,0 +1,53 @@
+{
+ "blocks": [
+  {
+   "id": "07c97ad9-c417-4802-86cb-95ac035c4285",
+   "v": "{\"alt\": \"Sixteen feet four, seen from the street\", \"image\": \"/media/scr-s1-hero.webp\"}",
+   "type": "buy_box",
+   "handle": "the-scream"
+  },
+  {
+   "id": "caa63483-7b3f-4758-979a-5160e3be89a6",
+   "v": "{\"alt\": \"Sixteen feet four beside a grown adult\", \"image\": \"/media/scr-s2-scale.webp\"}",
+   "type": "buy_box",
+   "handle": "the-scream"
+  },
+  {
+   "id": "a495b020-c998-4bbd-a765-c4b83ec1d9ac",
+   "v": "{\"alt\": \"Everything it does\", \"image\": \"/media/scr-s3-does.webp\"}",
+   "type": "buy_box",
+   "handle": "the-scream"
+  },
+  {
+   "id": "e2f2e8b6-5a29-40cf-9d1d-53b4c761a721",
+   "v": "{\"alt\": \"Real in daylight, lit after dark\", \"image\": \"/media/scr-s4-daynight.webp\"}",
+   "type": "buy_box",
+   "handle": "the-scream"
+  },
+  {
+   "id": "0fdd03fa-190c-4a72-86f6-d4db871c5504",
+   "v": "{\"alt\": \"Up in ninety seconds\", \"image\": \"/media/scr-s5-steps.webp\"}",
+   "type": "buy_box",
+   "handle": "the-scream"
+  },
+  {
+   "id": "9025228a-2a6b-4806-a5bb-ef6508189922",
+   "v": "{\"alt\": \"Built for rain, six stakes down\", \"image\": \"/media/scr-s6-weather.webp\"}",
+   "type": "buy_box",
+   "handle": "the-scream"
+  },
+  {
+   "id": "66dc5a1a-0f87-4b11-b571-558dc6182827",
+   "v": "{\"alt\": \"The mask, up close\", \"image\": \"/media/scr-s7-detail.webp\"}",
+   "type": "buy_box",
+   "handle": "the-scream"
+  },
+  {
+   "id": "73f9a0bb-906b-4021-ae2d-68c9846166e0",
+   "v": "{\"alt\": \"The whole street slows down for it\", \"image\": \"/media/scr-s8-feel.webp\"}",
+   "type": "buy_box",
+   "handle": "the-scream"
+  }
+ ],
+ "secs": []
+}
