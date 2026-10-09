@@ -146,3 +146,12 @@ Rules from now on, for every application or money question:
 - No live test charges, ever. Sandbox or API dry run only. Checkout never gets a mistake (AGENTS.md rule 20).
 - Halloween deadline: one working processor is the bottleneck. Stripe LLC bank + category on Oct 10; Square appeal; Authorize.net and
   PaymentCloud applied 2026-10-09; Hurry Pay is an orchestration layer, not a processor (ask whose merchant account it uses).
+
+## Never test on a live processor account (Alex, 2026-10-09, furious)
+
+- Never suggest fake cards, test charges, or "try a small payment" on any LIVE Stripe, Square, PayPal or
+  merchant account. Alex was told to test with fake cards and called it a path to another closure. Refuse that idea.
+- Test checkout only in a true sandbox (Authorize.net sandbox, Stripe test mode with a test key Alex supplies
+  himself). Without a test key, do not build or switch live checkout. Say so and wait.
+- When a processor closes or a mistake happens, stop and report the one fact, not a plan that adds risk.
+- Keep customer and processor work truthful and boring: same LLC, same site, same category, no shortcuts.
