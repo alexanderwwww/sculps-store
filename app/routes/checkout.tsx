@@ -4305,7 +4305,11 @@ function OnePage({
       clientSecret: answer.clientSecret,
       confirmParams: { return_url: answer.returnTo, ...(billing ?? {}) },
     });
-    if (wallet && result?.error) report("wallet-step", `Stripe: ${result.error.code ?? ""} ${result.error.message ?? ""}`);
+    if (wallet) report("wallet-confirm", JSON.stringify({
+      error: result?.error ? { code: result.error.code ?? null, type: result.error.type ?? null, message: result.error.message ?? null } : null,
+      keys: Object.keys(result ?? {}),
+      redirect: result?.paymentIntent?.status ?? null,
+    }));
 
     if (result?.error) {
       setPayError(result.error.message ?? "The payment did not go through.");
