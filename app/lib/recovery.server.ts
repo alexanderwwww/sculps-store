@@ -126,14 +126,14 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
       .where(and(eq(carts.id, cart.id), isNull(carts.recoveryEmailedAt)));
 
     /*
-     * A cart that reached payment and stopped gets the come-back: thirty
+     * A cart that reached payment and stopped gets the come-back: fifty
      * dollars off, on a code minted for this cart alone, single use. Minted
      * rather than the store's public code because the number in this email
      * has to be bigger than the one she already saw, or there is no reason
      * to come back -- and because a code that any visitor can type is not an
      * offer, it is a price.
      */
-    const COMEBACK_CENTS = 3000;
+    const COMEBACK_CENTS = 5000;
     let comeback: string | null = null;
     if (kind === "checkout") {
       const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

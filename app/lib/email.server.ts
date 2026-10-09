@@ -1378,7 +1378,7 @@ export interface ComebackInput extends BrandFields {
   recoverUrl: string;
   /** The code the caller created for this cart. The email never invents one. */
   discountCode: string;
-  /** What it takes off, in cents. Defaults to $30. Dollars only, never "%". */
+  /** What it takes off, in cents. Defaults to $50. Dollars only, never "%". */
   discountOffCents?: number | null;
   /** the hero image of what she left, absolute URL */
   imageUrl?: string | null;
@@ -1466,7 +1466,7 @@ export async function sendComebackEmail(
   input: ComebackInput,
 ): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
   const from = input.fromAddress || "orders@resend.dev";
-  const off = Math.round((input.discountOffCents ?? 3000) / 100);
+  const off = Math.round((input.discountOffCents ?? 5000) / 100);
   const guide = reaperProduct(input.productHandle);
   const name = guide?.name ?? input.lines[0]?.label ?? "it";
 

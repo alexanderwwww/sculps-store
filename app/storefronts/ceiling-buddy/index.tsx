@@ -653,7 +653,6 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
               deliberately not drawn here: the pill that used to say "Save $59"
               repeated the price line. */}
           <Banner section={section} page={page} />
-          <CouponBar offer={offer} currency={currency} named={isReaperSkin(page.store.slug)} />
           <Thrilled page={page} />
           {/* The honest version of the avatar row: same shape and rhythm, no invented people
               and no invented count. Shown only by themes that switch it on. */}
@@ -1056,6 +1055,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
       </div>
       {/* The ways to pay, moving, under the buy box. */}
       <PayMarquee methods={squareMethods} />
+      <CouponBar offer={offer} currency={currency} named={isReaperSkin(page.store.slug)} />
       {paypalClientId ? <PayLaterToast
         handle={page.product.handle}
         amountCents={chosen ? chosen.priceCents : null}
