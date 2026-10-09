@@ -5061,3 +5061,25 @@ html, body { margin: 0; }
 }
 .cb-coupon .cb-coupon__do, .cb-coupon .cb-coupon__did { color: #F9A01B !important; font-size: 11px; }
 .cb-coupon .cb-coupon__do svg { width: 11px !important; height: 11px !important; }
+
+/* The 1+1 deal: a green badge and a light lavender badge on the bundle that gives the second one half off. */
+.cb-tier__deal { display: inline-flex; gap: 6px; margin-left: 8px; vertical-align: middle; }
+.cb-tier__badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 800; line-height: 1; white-space: nowrap; }
+.cb-tier__badge--green { background: #16A34A; color: #fff; }
+.cb-tier__badge--lav { background: #E9D8FD; color: #5B21B6; }
+
+/* Phone: the coupon as one clean row. Resets the older absolute-position rules
+   that made the tag, the offer line and the code sit on top of each other. */
+@media (max-width: 720px) {
+  .cb-buy__side > .cb-coupon, .cb-coupon {
+    display: flex !important; flex-direction: row !important; align-items: center !important; gap: 10px !important;
+    padding: 10px 12px !important; position: relative !important; margin: 10px 0 0 !important;
+  }
+  .cb-coupon::before, .cb-coupon::after { display: none !important; content: none !important; }
+  .cb-coupon .cb-coupon__tag { position: static !important; left: auto !important; top: auto !important; flex: none !important; margin: 0 !important; }
+  .cb-coupon .cb-coupon__in { display: flex !important; flex-direction: column !important; align-items: flex-start !important; gap: 4px !important; flex: 1 1 auto; min-width: 0; }
+  .cb-coupon .cb-coupon__in::after { content: none !important; display: none !important; }
+  .cb-coupon .cb-coupon__pill { position: static !important; transform: none !important; grid-column: auto !important; grid-row: auto !important; font-size: 15px !important; line-height: 1.2 !important; }
+  .cb-coupon .cb-coupon__line { position: static !important; display: flex !important; flex-wrap: wrap !important; align-items: center; gap: 6px; font-size: 12px; }
+  .cb-coupon .cb-coupon__code { position: static !important; }
+}

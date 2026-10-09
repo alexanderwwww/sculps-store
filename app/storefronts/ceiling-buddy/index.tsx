@@ -762,6 +762,12 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                     onClick={() => setPicked(x.id)}
                   >
                     {flag ? <span className={`cb-tier__flag cb-tier__flag--${flag[0]}`}>{flag[1]}</span> : null}
+                    {x.label.startsWith("1+1") ? (
+                      <span className="cb-tier__deal" aria-hidden="true">
+                        <span className="cb-tier__badge cb-tier__badge--green">1+1</span>
+                        <span className="cb-tier__badge cb-tier__badge--lav">50% off</span>
+                      </span>
+                    ) : null}
                     {/* The picked bundle, split four ways: pops in every time
                         a bundle is chosen, including the one chosen for them. */}
                     {on && bnpl ? (
