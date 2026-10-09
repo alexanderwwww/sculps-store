@@ -132,3 +132,17 @@ Rules from now on, for every application or money question:
 3. The standing no still holds for requests whose point is to deceive (fake tracking, fake
    documents, front accounts). A defensible literal answer is not that.
 4. Never repeat a warning he has already heard.
+
+## Many stores, one LLC (Alex, 2026-10-09)
+
+- Black Reaper is the proven template: ~$20 of ads produced a sale. Every new store clones it on Kerberos.
+- Each store gets its OWN processor application per processor (Square, Stripe, merchant account), with that
+  store's own website, product, category and refund/shipping/privacy/terms/contact pages. Never two stores on one account.
+- The same AIGIS LLC, EIN and Mercury bank are reused. Stripe's docs tie each account to one legal entity; a second account
+  for another site under the same entity is likely allowed (secondary source, confirm with Stripe support before relying on it).
+- Every application discloses the same owner and LLC and answers past closures truthfully. A different email or site is fine
+  for a different brand; it is never used to hide that it is the same owner after a closure. A closed account is never
+  re-opened under a new name (Square closed AIGIS LLC on 2026-10-09 after the $1 live test; appeal only).
+- No live test charges, ever. Sandbox or API dry run only. Checkout never gets a mistake (AGENTS.md rule 20).
+- Halloween deadline: one working processor is the bottleneck. Stripe LLC bank + category on Oct 10; Square appeal; Authorize.net and
+  PaymentCloud applied 2026-10-09; Hurry Pay is an orchestration layer, not a processor (ask whose merchant account it uses).
