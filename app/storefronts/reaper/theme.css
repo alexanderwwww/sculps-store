@@ -5094,3 +5094,7 @@ html, body { margin: 0; }
 .cb-coupon .cb-coupon__in { display: block !important; }
 .cb-coupon .cb-coupon__in::after { content: none !important; display: none !important; }
 .cb-coupon .cb-coupon__pill { font-size: 13px !important; font-weight: 800 !important; color: #F9A01B !important; position: static !important; transform: none !important; }
+
+/* The product-page coupon pill: orange with black text, so it reads as a badge and not a black smudge. */
+.cb-buy__side > .cb-coupon, .cb-coupon { background: #F9A01B !important; border: 0 !important; }
+.cb-coupon .cb-coupon__pill { color: #140A02 !important; }
