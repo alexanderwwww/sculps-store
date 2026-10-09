@@ -330,3 +330,5 @@ goes into a skill file before the session ends.
 23. **Care about the work, and check it twice before it ships.** (Alex, 2026-10-09: "we have built all the stuff with our hands, put some love in it, don't do mistakes.") Every store, checkout and message is built by hand and by a small team of two. Treat each change as something Alex is proud of: verify before shipping, keep the warmth in the copy, and never leave him to clean up a mistake.
 
 24. **When Alex gives an instruction, act on it. Do not ask him to "say go" first.** (Alex, 2026-10-09: "Don't ask me say go. Do it when I say something.") Confirm only for irreversible money or account actions, and say what you did in one line.
+
+25. **No blind checkout fixes. Evidence first.** (Alex, 2026-10-09, furious after lost orders: "if you do a blind fix again…") For any checkout problem: read the live `client_events` and `order_events` rows, read the Stripe payment intent (read-only), trace the exact line, and report it. Change code only after the evidence names the line, and never test with a live charge. Pause ads when checkout cannot take payment.
