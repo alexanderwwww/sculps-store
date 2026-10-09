@@ -1172,6 +1172,16 @@ async function payAction({
           `Paid with a wallet; it did not provide: ${missing.join(", ")}. Message the customer before shipping.`,
         ).catch(() => undefined);
       }
+      // Server-side record of the total comparison, so a wallet payment that stops before Stripe
+      // is explained by a row the browser cannot block.
+      if (fromWallet) {
+        await recordOrderEvent(
+          context.db,
+          orderId,
+          "wallet:totals",
+          `shown ${Number.isFinite(shownTotal) ? shownTotal : "none"} · server ${cart.totalCents} · repriced ${changed} · wallet gave: ${["name", "email", "address1", "city", "region", "postalCode"].filter((f) => String(form.get(f) || "").trim()).join(",") || "nothing"}`,
+        ).catch(() => undefined);
+      }
       return {};
     })()),
     /**
