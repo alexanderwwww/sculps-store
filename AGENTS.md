@@ -328,3 +328,5 @@ goes into a skill file before the session ends.
 22. **Never suggest test charges or fake cards on a live processor account.** (Alex, 2026-10-09: "if I get closed again I'm gonna do something very serious.") Test only in a sandbox with a test key Alex provides. Without one, do not switch live checkout. See `.claude/skills/payments/SKILL.md`.
 
 23. **Care about the work, and check it twice before it ships.** (Alex, 2026-10-09: "we have built all the stuff with our hands, put some love in it, don't do mistakes.") Every store, checkout and message is built by hand and by a small team of two. Treat each change as something Alex is proud of: verify before shipping, keep the warmth in the copy, and never leave him to clean up a mistake.
+
+24. **When Alex gives an instruction, act on it. Do not ask him to "say go" first.** (Alex, 2026-10-09: "Don't ask me say go. Do it when I say something.") Confirm only for irreversible money or account actions, and say what you did in one line.
