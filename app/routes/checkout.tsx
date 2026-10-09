@@ -747,7 +747,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   /**
-   * Priority shipping, on or off. Same shape as protection: the browser sends
+   * Ultra express, on or off. Same shape as protection: the browser sends
    * the choice and nothing else, the fee is the store's column, and priceCart
    * folds it into shipping when this page reloads.
    */
@@ -2275,7 +2275,7 @@ function Summary({
 
         {cart.priorityCents > 0 ? (
           <div className={cn.tot}>
-            <span>Priority shipping</span>
+            <span>Ultra express</span>
             <b>{money(cart.priorityCents)}</b>
           </div>
         ) : null}
@@ -2366,7 +2366,7 @@ function ProtectionRow({
 }
 
 /**
- * Priority shipping.
+ * Ultra express.
  *
  * Mirrors package protection: the store sets whether it is offered and what
  * it costs, the row only records the choice and starts off, and it does not
@@ -2387,7 +2387,7 @@ function PriorityRow({
 
   if (locked) {
     return cart.priorityChosen ? (
-      <p className="gb-co__note">Priority shipping is included in this payment.</p>
+      <p className="gb-co__note">Ultra express is included in this payment.</p>
     ) : null;
   }
 
@@ -2422,7 +2422,7 @@ function PriorityRow({
           </svg>
         </span>
         <span className="gb-co__pri-body">
-          <span className="gb-co__pri-title">Priority shipping</span>
+          <span className="gb-co__pri-title">Ultra express</span>
           <span className="gb-co__pri-copy">{cart.priorityCopy}</span>
         </span>
         <span className="gb-co__pri-side">
@@ -3836,7 +3836,7 @@ function OnePage({
                 // The parcel goes where the buyer says, which is not always
                 // where their card is registered.
                 shippingAddressRequired: true,
-                shippingRates: [{ id: "standard", amount: cart.shippingCents, displayName: cart.priorityChosen ? "Priority shipping" : "Shipping" }],
+                shippingRates: [{ id: "standard", amount: cart.shippingCents, displayName: cart.priorityChosen ? "Ultra express" : "Shipping" }],
               }
             : { buttonHeight: 48 },
         );
@@ -3898,7 +3898,7 @@ function OnePage({
           express.on("shippingaddresschange", (event: any) => {
             try {
               event.resolve({
-                shippingRates: [{ id: "standard", amount: cart.shippingCents, displayName: cart.priorityChosen ? "Priority shipping" : "Shipping" }],
+                shippingRates: [{ id: "standard", amount: cart.shippingCents, displayName: cart.priorityChosen ? "Ultra express" : "Shipping" }],
               });
             } catch {
               /* nothing to do */
@@ -4054,7 +4054,7 @@ function OnePage({
       requestRef.current?.update?.({
         total: { label: store.name, amount: Math.max(50, cart.totalCents) },
         shippingOptions: [
-          { id: "standard", label: cart.priorityChosen ? "Priority shipping" : "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
+          { id: "standard", label: cart.priorityChosen ? "Ultra express" : "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
         ],
       });
     } catch {
@@ -4131,7 +4131,7 @@ function OnePage({
         requestPayerPhone: store.phoneMode === "required",
         requestShipping: true,
         shippingOptions: [
-          { id: "standard", label: cart.priorityChosen ? "Priority shipping" : "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
+          { id: "standard", label: cart.priorityChosen ? "Ultra express" : "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
         ],
       });
       // Kept so a later change of total moves the sheet's figure too. A sheet

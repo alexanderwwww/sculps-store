@@ -62,7 +62,7 @@ export function reaperReceiptHtml(i: ReaperReceiptInput): string {
     row("Subtotal", m(i.subtotalCents)),
     i.discountCode && i.discountCents ? row(esc(i.discountCode), `&minus;${m(i.discountCents)}`, C.orange) : "",
     // This store ships free, so any shipping charged is the priority option.
-    row(i.shippingCents ? "Priority shipping" : "Shipping", i.shippingCents ? m(i.shippingCents) : "Free"),
+    row(i.shippingCents ? "Ultra express" : "Shipping", i.shippingCents ? m(i.shippingCents) : "Free"),
     i.taxCents ? row("Tax", m(i.taxCents)) : "",
     `<tr><td style="padding:14px 0 0;border-top:1px solid ${C.rule};font:800 17px ${F};color:${C.bone}">Total paid</td><td align="right" style="padding:14px 0 0;border-top:1px solid ${C.rule};font:800 22px ${F};color:${C.orange}">${m(i.totalCents)}</td></tr>`,
   ].join("");
