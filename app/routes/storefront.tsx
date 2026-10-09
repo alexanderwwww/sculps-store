@@ -304,7 +304,9 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     .catch(() => null);
   // Which Square ways to pay this store names on the page.
   const squareAccount = await squareFor(context.db, context.cloudflare.env, store.id).catch(() => null);
-  const squareMethods = advertisedMethods(squareAccount, new URL(request.url));
+  // Black Reaper's ways to pay come from its Stripe account now (checked through the API on 2026-10-09:
+  // Apple Pay runs on card payments, Cash App Pay is active). Square is no longer shown on this store.
+  const squareMethods = store.slug === "reaper" ? ["applepay", "cashapp"] : advertisedMethods(squareAccount, new URL(request.url));
   // Public: what Apple Pay / Google Pay / Afterpay on the page are addressed with.
   const squareApp = squareAccount?.appId ? { appId: squareAccount.appId, locationId: squareAccount.locationId } : null;
   return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, bnpl, squareMethods, squareApp, offer: offer ?? null, crowd }, { headers });
