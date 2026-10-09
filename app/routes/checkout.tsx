@@ -4054,7 +4054,7 @@ function OnePage({
       requestRef.current?.update?.({
         total: { label: store.name, amount: Math.max(50, cart.totalCents) },
         shippingOptions: [
-          { id: "standard", label: cart.priorityChosen ? "Ultra express" : "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
+          { id: "standard", label: cart.priorityChosen ? "Ultra express" : cart.shippingCents === 0 ? "Free shipping" : "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
         ],
       });
     } catch {
@@ -4131,7 +4131,7 @@ function OnePage({
         requestPayerPhone: store.phoneMode === "required",
         requestShipping: true,
         shippingOptions: [
-          { id: "standard", label: cart.priorityChosen ? "Ultra express" : "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
+          { id: "standard", label: cart.priorityChosen ? "Ultra express" : cart.shippingCents === 0 ? "Free shipping" : "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
         ],
       });
       // Kept so a later change of total moves the sheet's figure too. A sheet
