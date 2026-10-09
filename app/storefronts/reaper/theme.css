@@ -5116,3 +5116,6 @@ html, body { margin: 0; }
   .cb-price__marks { flex-basis: 100% !important; display: flex !important; flex-wrap: wrap !important; gap: 6px !important; }
   .cb-price__marks .cb-mk { font-size: 11px !important; height: 22px !important; padding: 0 8px !important; }
 }
+
+/* The 1+1 flag on the deal bundle is black. Only the 50% off badge stays beside it. */
+.cb-tier__flag--best { background: #111 !important; color: #fff !important; }

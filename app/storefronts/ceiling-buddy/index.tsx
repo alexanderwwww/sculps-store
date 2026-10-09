@@ -729,7 +729,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                   variants[0]);
                 const flag =
                   x.id === deepest.id && !x.isDefault && (savedPercent(x.priceCents, x.compareAtCents) ?? 0) > 0
-                    ? ["best", "Best value"] as const
+                    ? ["best", x.label.startsWith("1+1") ? "1+1" : "Best value"] as const
                     : x.isDefault && variants.length > 1
                       ? (has(v, "popularLabel")
                           ? ["pick", val(v, "popularLabel")] as const
@@ -765,7 +765,6 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                     {flag ? <span className={`cb-tier__flag cb-tier__flag--${flag[0]}`}>{flag[1]}</span> : null}
                     {x.label.startsWith("1+1") ? (
                       <span className="cb-tier__deal" aria-hidden="true">
-                        <span className="cb-tier__badge cb-tier__badge--green">1+1</span>
                         <span className="cb-tier__badge cb-tier__badge--lav">50% off</span>
                       </span>
                     ) : null}
