@@ -3823,7 +3823,8 @@ function OnePage({
                    brand arguing for the same tap. */
                 paymentMethods: {
                   applePay: typeof (window as any).ApplePaySession !== "undefined" ? "always" : "never",
-                  googlePay: "never",
+                  googlePay: "always",
+                  amazonPay: "never",
                   link: "auto",
                 },
                 emailRequired: true,
