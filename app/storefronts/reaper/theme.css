@@ -5108,3 +5108,11 @@ html, body { margin: 0; }
 @media (max-width: 720px) {
   .cb-tier__deal { display: flex !important; flex-wrap: wrap; margin: 4px 0 0 0 !important; position: relative; z-index: 2; }
 }
+
+/* Phone: the price row sits as a tidy block. The price on its own line, the pay-later line and the wallet marks each on their own short row beneath it. */
+@media (max-width: 720px) {
+  .cb-price { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 6px 10px !important; }
+  .cb-price__pl { flex-basis: 100% !important; font-size: 12px !important; line-height: 1.4 !important; margin: 0 !important; }
+  .cb-price__marks { flex-basis: 100% !important; display: flex !important; flex-wrap: wrap !important; gap: 6px !important; }
+  .cb-price__marks .cb-mk { font-size: 11px !important; height: 22px !important; padding: 0 8px !important; }
+}
