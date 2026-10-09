@@ -5083,3 +5083,14 @@ html, body { margin: 0; }
   .cb-coupon .cb-coupon__line { position: static !important; display: flex !important; flex-wrap: wrap !important; align-items: center; gap: 6px; font-size: 12px; }
   .cb-coupon .cb-coupon__code { position: static !important; }
 }
+
+/* Product page: the coupon is a small pill only. The code and the claim live on the checkout. */
+.cb-buy__side > .cb-coupon, .cb-coupon {
+  display: inline-flex !important; grid-template-columns: none !important; align-items: center !important;
+  margin: 10px 0 14px !important; padding: 6px 14px !important; border-radius: 999px !important;
+  background: #0B0B0B !important; border: 0 !important; box-shadow: none !important; color: #fff;
+}
+.cb-coupon .cb-coupon__tag, .cb-coupon .cb-coupon__leaf, .cb-coupon .cb-coupon__line { display: none !important; }
+.cb-coupon .cb-coupon__in { display: block !important; }
+.cb-coupon .cb-coupon__in::after { content: none !important; display: none !important; }
+.cb-coupon .cb-coupon__pill { font-size: 13px !important; font-weight: 800 !important; color: #F9A01B !important; position: static !important; transform: none !important; }
