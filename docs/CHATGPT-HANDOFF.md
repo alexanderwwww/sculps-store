@@ -35,3 +35,10 @@ Read this file, then `AGENTS.md` at the repo root. Both are safe to read. This f
 
 ## Open problem
 Customers reported that checkout failed for several people. The cause is not yet known. Start with the checkout code paths listed above, then compare them with the exact error the customers saw.
+
+## Checkout status (2026-10-10, work paused)
+- Attempt on a low-balance card reached the card issuer (insufficient funds). This shows the request reached the bank, NOT that a payment and order flow succeed end to end. Not verified.
+- Not deployed. Production `kerberos` is version 39c888bd, deployed manually; its commit is unknown.
+- Codex branch `codex/checkout-fixes` (7dd9765): not on origin, not reviewed by Claude.
+- UNRESOLVED: server-side concurrency. The browser guard stops one tab double-sending. Two tabs or two requests can still create two payments for one cart. Needs a server-side guard and tests before ads scale.
+- Reported as fixed by Codex, not reviewed: (1) readIntent failure now returns an error; (2) only `canceled` may start a new payment.
