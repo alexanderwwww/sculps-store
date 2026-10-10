@@ -91,6 +91,9 @@ export function ProductExpress(props: Props) {
         amount: Math.max(50, latest.current.amountCents),
         currency: currency.toLowerCase(),
         appearance: { variables: { borderRadius: "999px" } },
+        // Must match the server's intents (payments.server.ts sets off_session), or Stripe refuses
+        // the confirmation with: "provided setup_future_usage (off_session) does not match the expected (null)".
+        setupFutureUsage: "off_session",
       });
       stripeRef.current = stripe;
       elementsRef.current = elements;
