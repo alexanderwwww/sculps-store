@@ -613,3 +613,6 @@ Alex: "I never said Reaper 20." The one coupon is **OCTOBER 31, $31 off**, code 
 - The checkout ticket ("OCTOBER 31", calendar leaf, $31, Claim button, CLAIMED stamp) is `ClaimCard` in `checkout.tsx`. One coupon, no stack: the claim mints `max(code already on the cart, $31)`, and a cart already holding OCTOBER31 shows CLAIMED. A $339.99 order pays $308.99.
 - `REAPER20` still exists in the database only because 77 open carts and 11 past orders hold it. It is never shown or applied to anyone new. Do not switch it off without telling Alex (those carts would silently go up $20).
 - Never name, invent or reintroduce a code Alex did not name.
+
+## Links in customer emails (Alex, 2026-10-13)
+Only ever link the clean store address (https://blackreaper.us). Never /products/... — those are the old funnel without the payment bar. Applies to every store.
