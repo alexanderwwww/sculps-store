@@ -763,6 +763,9 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                     onClick={() => setPicked(x.id)}
                   >
                     {flag ? <span className={`cb-tier__flag cb-tier__flag--${flag[0]}`}>{flag[1]}</span> : null}
+                    {/* The real count on this bundle, in its corner. Hidden
+                        unless a store's theme shows it. */}
+                    {x.available > 0 ? <span className="cb-tier__left">{x.available} left</span> : null}
                     {x.label.startsWith("1+1") ? (
                       <span className="cb-tier__deal" aria-hidden="true">
                         <span className="cb-tier__badge cb-tier__badge--lav">50% off</span>

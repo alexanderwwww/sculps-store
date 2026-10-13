@@ -1579,3 +1579,6 @@ body:has(.cb-drawer.is-open) .cb-buy__side .cb-wallet { visibility: hidden; }
 .cb-ann__fade, .cb-stock__plain, .cb-stock__ship { display: none; }
 .cb-stock__std { display: inline; }
 .cb-tier__pic--extra, .cb-tier__qty { display: none; }
+
+/* Per-bundle stock badge: off unless a store's theme turns it on. */
+.cb-tier__left { display: none; }
