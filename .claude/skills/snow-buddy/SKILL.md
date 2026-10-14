@@ -27,3 +27,10 @@ Settled with Alex on 2026-10-12.
 - UPDATED (Alex, 2026-10-14 night): two sizes, 16 ft ($699.99, was $899.99) and 10 ft ($499.99, was $649.99); he also plays Christmas music (built-in speaker). Logo in the Black Reaper logo style (chunky bubble letters, 'Mr.' cream, 'Snowman' red, black outline). Buy-box panel 1 in the exact layout of the Scream's scr-ad-6-box panel. The site must explain how he makes snow (cut-away: machine at base, hoses to hat and both hands).
 - LOGO LOCKED (Alex, 2026-10-14): https://blackreaper.us/media/mrsnowman-logo-square-v1.webp (square, navy) and /media/mrsnowman-logo-v1.png (store logo). 'Mr.' cream, 'Snowman' red, black outline, top hat with snowflakes on the M, TM. Use it everywhere, never redraw it.
 - RULE (Alex, 2026-10-14, furious): NEVER attach a Black Reaper image (scr-ad-6-box.jpg etc.) as a style reference for Mr. Snowman. Gemini copied the Black Reaper logo onto the snowman's box. Describe the style in words; the only references are the snowman hero and the Mr. Snowman logo.
+
+## Mr. Snowman product facts, locked by Alex on 2026-10-14
+- He is inflated once and stays up. The snow machine is built inside him. You plug him in and press the snow button.
+- He throws snow from his hands and plays Christmas music.
+- No fan, blower, hoses, remote, stakes or ropes, in pictures or in copy. Alex may add a controller later.
+- The box uses Black Reaper's colours and font, a big picture of the snowman on the front, the Mr. Snowman logo and "MAKES SNOW". It never carries the Black Reaper logo.
+- The v5 pictures are on R2 as /media/mrsnowman-v5-NN.webp. Picture 05 was rejected because its text said "blower".
