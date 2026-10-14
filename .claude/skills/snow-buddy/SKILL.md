@@ -18,6 +18,6 @@ Settled with Alex on 2026-10-12.
 - Never use film characters (Grinch, Elf and the like): trademarked.
 
 ## The snow-making snowman (Alex's idea, 2026-10-14): the hero Christmas product
-- A 7 ft glossy hard-shell snowman (red scarf, black top hat, glowing eyes) that IS the snow machine: snow bursts up out of his hat and streams from his mittened hands.
+- SETTLED (Alex, 2026-10-14): a 12 ft INFLATABLE snowman, Black Reaper / Scream style and scale. Carrot nose, black top hat, red scarf. He IS the snow machine: snow is blown through hoses and blasts out of his hat and both hands. Price around $700. (An earlier 7 ft hard-shell draft was rejected.)
 - Alex: "This motherfucker literally makes snow. I'm bringing back the magic of Christmas." Positioning: the magic of Christmas, made real at your house. Name still to choose.
-- Full 8-panel buy-box gallery queued on the Magic Wand (job "Snow-making snowman - full gallery - one chat"), in the Scream gallery style. Specs on the panels (7 ft, snow reaches 15 ft, timer, remote, plug-in) are placeholders until a supplier is chosen.
+- Full 8-panel buy-box gallery queued on the Magic Wand (job "Snow-making snowman - full gallery - one chat"), in the Scream gallery style. Specs on the panels (12 ft, snow reaches 20 ft, timer, remote, plug-in) are placeholders until a supplier is chosen.
