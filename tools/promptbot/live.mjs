@@ -2178,9 +2178,25 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     ).catch(() => []);
     // A reference is not an answer. Known by its bytes, it is put with what
     // was there before, so it is never waited on and never saved.
-    for (const u of urls) {
-      const hit = CAPTURED.get(u);
-      if (hit && REF_HASHES.has(sha1(hit))) already.add(u);
+    if (REF_HASHES.size) {
+      for (const u of urls) {
+        if (seen.has(u) || already.has(u)) continue;
+        let hit = CAPTURED.get(u);
+        // A pasted file is drawn from a blob the network never saw, so its
+        // bytes are read where they live.
+        if (!hit && /^(blob|data):/.test(u)) {
+          const b64 = await page.evaluate(async (x) => {
+            try {
+              const r = await fetch(x, { signal: AbortSignal.timeout(5000) });
+              const a = new Uint8Array(await r.arrayBuffer());
+              let t = ""; for (let j = 0; j < a.length; j++) t += String.fromCharCode(a[j]);
+              return btoa(t);
+            } catch { return null; }
+          }, u).catch(() => null);
+          if (b64) hit = Buffer.from(b64, "base64");
+        }
+        if (hit && REF_HASHES.has(sha1(hit))) already.add(u);
+      }
     }
     const fresh = urls.filter((u) => !seen.has(u) && !already.has(u));
     fresh.forEach((u) => seen.add(u));
