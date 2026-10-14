@@ -43,3 +43,10 @@ pictures every retry because it saw none). Test: `test/count.mjs`. Do not restyl
 
 ## RULE (Alex, 2026-10-14, furious again): ALL products in ONE chat. Never `parts`, not even for several products.
 I queued 8 Christmas concepts as 8 parts. Alex: "all must be on the same thing on the same chat." Every job is FLAT: one `prompts` list, `newChat: true` once, house rules in the first prompt, then "Image N: ..." one per prompt. Then gather every picture with wand_shots and show them all to him together.
+
+## Build 80 (2026-10-14): only move on once ChatGPT has made the picture
+Alex, furious: "Only when he makes images, you will do it."
+- Build 79 broke on ChatGPT in two ways. It saved the pasted reference as panel 1, because ChatGPT re-renders the attachment as a new full-size image. It also gave up after two minutes of nothing, while ChatGPT was still drawing.
+- Build 80 recognises the job's references by their bytes (sha1), both while waiting and while saving, so a reference is never waited on or saved. The "nothing yet" limit is now the job's full wait (default 240 s), and the Wand never gives up while the Stop button is showing.
+- Proof: `test/chatgpt-slow.mjs` uses a fake ChatGPT that takes 40 s to draw and echoes the reference. Build 79 saves 3 pictures, one of them the reference. Build 80 saves exactly 2, neither of them the reference. The two "card" checks fail on both builds because the app no longer shows the card.
+- Way back: republish build 79 with `{"build":"79","files":{"live.mjs":".../wand-79-live.mjs","wand.mjs":".../wand-79-wand.mjs"}}` to `/wand/<key>/runtime`.
