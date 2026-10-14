@@ -1,3 +1,5 @@
+> **SUPERSEDED (2026-10-14).** Do not use. Alex later ruled out acted reactions (the scared dad, "oh no", "bro"), showing the 90-second inflation squeezed into a few seconds, day turning to night inside one take, and the bass hit. The current prompt set is Codex's `docs/creative/scream-phone-video-prompts-2026-10-14.md`: three separate takes (5, 6 and 6 seconds), real location sound, no dialogue.
+
 You are my creative director for one ad. Read all of this before you answer, then help me make it on Higgsfield step by step. Ask me nothing you can decide yourself.
 
 ## The business
