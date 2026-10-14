@@ -2382,7 +2382,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
      */
 
     if (!buf) {
-      log(`  \x1b[31m!! couldn't save one of the pictures\x1b[0m`);
+      log(`  \x1b[31m!! couldn't save one of the pictures\x1b[0m` + (process.env.WAND_DEBUG ? " " + url.slice(0, 80) + " refs=" + REF_HASHES.size : ""));
       continue;
     }
 

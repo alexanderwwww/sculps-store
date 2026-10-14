@@ -119,7 +119,7 @@ const app = spawn(process.execPath, [
 ], {
   cwd: work,
   env: {
-    ...process.env,
+    ...process.env, WAND_DEBUG: "1",
     QUEUE: `${apiUrl}/queue.json`,
     CONTROL: `${apiUrl}/control.json`,
     WAND_SITES: JSON.stringify({ fake: {
