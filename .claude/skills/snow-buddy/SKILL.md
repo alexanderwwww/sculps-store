@@ -16,3 +16,8 @@ Settled with Alex on 2026-10-12.
 - **Next step:** one 1,500 W sample, filmed on a real house at night, before any stock.
 - **Season:** sells early November to about December 15. The product, pictures and page must be ready by the start of November.
 - Never use film characters (Grinch, Elf and the like): trademarked.
+
+## The snow-making snowman (Alex's idea, 2026-10-14): the hero Christmas product
+- A 7 ft glossy hard-shell snowman (red scarf, black top hat, glowing eyes) that IS the snow machine: snow bursts up out of his hat and streams from his mittened hands.
+- Alex: "This motherfucker literally makes snow. I'm bringing back the magic of Christmas." Positioning: the magic of Christmas, made real at your house. Name still to choose.
+- Full 8-panel buy-box gallery queued on the Magic Wand (job "Snow-making snowman - full gallery - one chat"), in the Scream gallery style. Specs on the panels (7 ft, snow reaches 15 ft, timer, remote, plug-in) are placeholders until a supplier is chosen.
