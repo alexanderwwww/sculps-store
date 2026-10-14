@@ -473,6 +473,16 @@ async function say(title, body, urgent = false) {
 }
 
 const CAPTURED = new Map();
+/**
+ * The job's own reference pictures, by their bytes.
+ *
+ * ChatGPT re-renders a pasted reference as a fresh, full-size image, and it
+ * slipped past every selector: prompt one of a ChatGPT job "saved" the hero
+ * photo it had just been handed and moved on before anything was drawn.
+ * Bytes cannot be fooled by the DOM, so a reference is recognised by them.
+ */
+const REF_HASHES = new Set();
+const sha1 = (b) => createHash("sha1").update(b).digest("hex");
 const CAPTURE_MAX = 240;
 /** …and at most this many bytes of them. */
 const CAPTURE_BYTES = 400 * 1024 * 1024;
@@ -2166,6 +2176,12 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
           .map((el) => el.currentSrc || el.src),
       { sels: site.results ?? site.images, mine: site.mine ?? [], min: MIN_PIXELS },
     ).catch(() => []);
+    // A reference is not an answer. Known by its bytes, it is put with what
+    // was there before, so it is never waited on and never saved.
+    for (const u of urls) {
+      const hit = CAPTURED.get(u);
+      if (hit && REF_HASHES.has(sha1(hit))) already.add(u);
+    }
     const fresh = urls.filter((u) => !seen.has(u) && !already.has(u));
     fresh.forEach((u) => seen.add(u));
     /**
@@ -2193,8 +2209,12 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       // there for the full wait means the next forty shots are four minutes
       // further away each. Two minutes, then move on and say so.
       quiet += 2;
-      if (quiet >= 120) {
-        log(`  \x1b[33mno picture after two minutes — moving on\x1b[0m`);
+      // ChatGPT takes two to four minutes to draw, and two minutes of nothing
+      // was moving on while it was still drawing: prompts were sent on top of
+      // a picture that had not arrived. The whole wait is given, and while the
+      // site says it is still working it is never given up on.
+      if (quiet >= (jobWait || opt.wait) && !busy) {
+        log(`  \x1b[33mno picture after ${Math.round(quiet / 60)} minutes — moving on\x1b[0m`);
         break;
       }
       // Every six seconds on the panel, every thirty to the status board: the
@@ -2366,6 +2386,10 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       : null;
     if (!kind) {
       log(`  \x1b[31m!! what came back is not an image (${buf.length} bytes) — not saving it\x1b[0m`);
+      continue;
+    }
+    if (REF_HASHES.has(sha1(buf))) {
+      log(`  \x1b[33mthat is the reference picture, not a new one — not saving it\x1b[0m`);
       continue;
     }
 
@@ -2820,6 +2844,8 @@ while (true) {
   const inCard = await wand.fileCount();
   const refs = inCard ? [] : picked.length ? picked : await fetchRefs(job.refs, join(dir, "reference"));
   if (inCard) log(`  ${inCard} picture${inCard === 1 ? "" : "s"} from the card`);
+  REF_HASHES.clear();
+  for (const f of refs) { try { REF_HASHES.add(sha1(readFileSync(f))); } catch { /* unreadable ref */ } }
 
   /*
    * A job that asked for references and got none would draw the wrong thing
