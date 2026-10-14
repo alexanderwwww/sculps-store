@@ -40,3 +40,6 @@ pictures every retry because it saw none). Test: `test/count.mjs`. Do not restyl
 - Use `parts` ONLY when there are genuinely several products that must not share a chat, and say so to Alex first.
 - Several reference pictures per image (a style reference plus an "old version" per panel): attach them ALL once, label them IMAGE 1..N in the brief, and have each prompt name which one it redoes. Do not give each prompt its own refs.
 - Before sending `wand_queue_set`, check the shape: `parts` present on a one-product job = wrong.
+
+## RULE (Alex, 2026-10-14, furious again): ALL products in ONE chat. Never `parts`, not even for several products.
+I queued 8 Christmas concepts as 8 parts. Alex: "all must be on the same thing on the same chat." Every job is FLAT: one `prompts` list, `newChat: true` once, house rules in the first prompt, then "Image N: ..." one per prompt. Then gather every picture with wand_shots and show them all to him together.
