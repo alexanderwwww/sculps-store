@@ -25,11 +25,16 @@ export function reaperBrand(page: LoadedProductPage): CbBrand {
       "30 days to send it back",
       "Tracking link on every order",
     ],
-    marquee: [
-      "Up in a minute",
-      "Lit from the inside",
-      "Back in the garage by November",
-      "The house the street talks about",
-    ],
+    // Halloween lines on a Christmas shop read wrong ("back in the garage by
+    // November" on a snowman), so a store that wears this skin for another
+    // season gets its own.
+    marquee: page.store.slug === "snowman"
+      ? ["Plug in, press snow", "Snow from his hands", "Glows all night", "The house the street talks about"]
+      : [
+          "Up in a minute",
+          "Lit from the inside",
+          "Back in the garage by November",
+          "The house the street talks about",
+        ],
   };
 }

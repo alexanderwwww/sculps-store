@@ -4512,7 +4512,7 @@ html, body { margin: 0; }
   letter-spacing: -.028em !important; color: #0B0B0B !important; margin: 2px 0 4px !important; text-wrap: balance;
 }
 .cb-buy__side > .cb-h1::before {
-  content: "BLACK REAPER"; display: block; margin-bottom: 7px;
+  content: var(--cb-eyebrow, "BLACK REAPER"); display: block; margin-bottom: 7px;
   font-size: 12px; font-weight: 800; letter-spacing: .2em; color: #F9A01B;
 }
 .cb-buy__side > .cb-price { display: flex !important; align-items: center !important; flex-wrap: wrap; gap: 6px 12px !important; margin: 8px 0 12px !important; }

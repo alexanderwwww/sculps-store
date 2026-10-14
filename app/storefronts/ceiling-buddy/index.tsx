@@ -202,7 +202,9 @@ export function CeilingBuddyStorefront({
         href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap"
       />
 
-      <div className="cb">
+      {/* The eyebrow over the title is the shop's own name, not Black Reaper's
+          on every store that wears its skin (Mr. Snowman read "BLACK REAPER"). */}
+      <div className="cb" style={{ "--cb-eyebrow": JSON.stringify(page.store.name.toUpperCase()) } as React.CSSProperties}>
         <Header page={page} storeParam={storeParam} offer={offer} brand={brand} />
         <main id="MainContent" role="main">
           {sections.map((s) => (
