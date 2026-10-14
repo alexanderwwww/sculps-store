@@ -41,9 +41,10 @@ const chat = createServer((req, res) => {
   res.writeHead(200, { "content-type": "text/html" });
   res.end(`<!doctype html><html><head><title>fake chat</title></head><body>
     <button data-testid="create-new-chat-button">New chat</button>
+    <form id="composer"><div id="thumbs"></div>
     <div id="prompt-textarea" contenteditable="true"></div>
     <input type="file" id="picker" multiple>
-    <button data-testid="send-button">Send</button>
+    <button type="button" data-testid="send-button">Send</button></form>
     <div id="thread"></div>
     <script>
       let n = 0;
@@ -53,14 +54,14 @@ const chat = createServer((req, res) => {
           const img = document.createElement('img');
           img.src = URL.createObjectURL(f);
           img.className = 'attached'; window.__att = img.src;
-          document.getElementById('thread').appendChild(img);
+          document.getElementById('thumbs').appendChild(img);
         }
       });
       document.querySelector('[data-testid=send-button]').onclick = () => {
         const box = document.getElementById('prompt-textarea');
         if (!box.textContent.trim()) return;
         box.textContent = '';
-        if (window.__att) { const r = document.createElement('img'); r.alt='Generated image'; r.src = window.__att; document.getElementById('thread').appendChild(r); window.__att = null; }
+        document.getElementById('thumbs').innerHTML=''; if (window.__att) { const r = document.createElement('img'); r.alt='Generated image'; r.src = window.__att; document.getElementById('thread').appendChild(r); window.__att = null; }
         const stop = document.createElement('button'); stop.dataset.testid='stop-button'; stop.textContent='Stop';
         document.body.appendChild(stop);
         // ChatGPT: nothing for a long time, then the picture.
