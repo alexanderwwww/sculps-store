@@ -202,9 +202,9 @@ export function CeilingBuddyStorefront({
         href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap"
       />
 
-      {/* The eyebrow over the title is the shop's own name, not Black Reaper's
-          on every store that wears its skin (Mr. Snowman read "BLACK REAPER"). */}
-      <div className="cb" style={{ "--cb-eyebrow": JSON.stringify(page.store.name.toUpperCase()) } as React.CSSProperties}>
+      {/* Mr. Snowman wears Black Reaper's skin; its own differences hang off
+          this attribute so Black Reaper's markup stays exactly as it is. */}
+      <div className="cb" data-store={page.store.slug === "snowman" ? "snowman" : undefined}>
         <Header page={page} storeParam={storeParam} offer={offer} brand={brand} />
         <main id="MainContent" role="main">
           {sections.map((s) => (
@@ -767,7 +767,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                     {flag ? <span className={`cb-tier__flag cb-tier__flag--${flag[0]}`}>{flag[1]}</span> : null}
                     {/* The real count on this bundle, in its corner. Hidden
                         unless a store's theme shows it. */}
-                    {x.available > 0 ? <span className="cb-tier__left">{x.available} left</span> : null}
+                    {x.available > 0 && page.store.slug === "snowman" ? <span className="cb-tier__left">{x.available} left</span> : null}
                     {x.label.startsWith("1+1") ? (
                       <span className="cb-tier__deal" aria-hidden="true">
                         <span className="cb-tier__badge cb-tier__badge--lav">50% off</span>

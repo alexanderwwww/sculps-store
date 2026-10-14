@@ -4512,7 +4512,7 @@ html, body { margin: 0; }
   letter-spacing: -.028em !important; color: #0B0B0B !important; margin: 2px 0 4px !important; text-wrap: balance;
 }
 .cb-buy__side > .cb-h1::before {
-  content: var(--cb-eyebrow, "BLACK REAPER"); display: block; margin-bottom: 7px;
+  content: "BLACK REAPER"; display: block; margin-bottom: 7px;
   font-size: 12px; font-weight: 800; letter-spacing: .2em; color: #F9A01B;
 }
 .cb-buy__side > .cb-price { display: flex !important; align-items: center !important; flex-wrap: wrap; gap: 6px 12px !important; margin: 8px 0 12px !important; }
@@ -5120,17 +5120,16 @@ html, body { margin: 0; }
 /* The 1+1 flag on the deal bundle is black. Only the 50% off badge stays beside it. */
 .cb-tier__flag--best { background: #111 !important; color: #fff !important; }
 
-/* Stock lives on each bundle now (Alex, 2026-10-13): a small badge in the
-   bundle's top-right corner, and the line under the buy box reads plain
-   "In stock" instead of "Only N left". */
-.cb-tier { position: relative; }
-.cb-tier__left {
+/* Mr. Snowman only (it wears this skin). Black Reaper's output is untouched:
+   none of this matches without data-store="snowman" on .cb. */
+.cb[data-store="snowman"] .cb-buy__side > .cb-h1::before { content: "MR. SNOWMAN"; }
+.cb[data-store="snowman"] .cb-tier { position: relative; }
+.cb[data-store="snowman"] .cb-tier__left {
   display: inline-flex !important; position: absolute; right: 12px; top: -10px; z-index: 3;
   align-items: center; height: 20px; padding: 0 8px; border-radius: 999px;
   background: #C8102E; color: #fff; font-size: 11px; font-weight: 800; line-height: 1; white-space: nowrap;
 }
-.cb-stock .cb-stock__low { display: none !important; }
-.cb-stock:has(.cb-stock__low) .cb-stock__plain { display: inline !important; color: #0B6B3A; }
-.cb-stock:has(.cb-stock__low) i { background: #16A34A; box-shadow: 0 0 0 4px rgba(22,163,74,.15); }
-/* The 1+1 flag also sits top-right; it steps left so the two never overlap. */
-.cb-tier:has(.cb-tier__left) .cb-tier__flag--best { right: 78px !important; }
+.cb[data-store="snowman"] .cb-stock .cb-stock__low { display: none !important; }
+.cb[data-store="snowman"] .cb-stock:has(.cb-stock__low) .cb-stock__plain { display: inline !important; color: #0B6B3A; }
+.cb[data-store="snowman"] .cb-stock:has(.cb-stock__low) i { background: #16A34A; box-shadow: 0 0 0 4px rgba(22,163,74,.15); }
+.cb[data-store="snowman"] .cb-tier:has(.cb-tier__left) .cb-tier__flag--best { right: 78px !important; }
