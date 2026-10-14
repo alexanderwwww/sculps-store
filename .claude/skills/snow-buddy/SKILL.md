@@ -35,3 +35,4 @@ Settled with Alex on 2026-10-12.
 - The box uses Black Reaper's colours and font, a big picture of the snowman on the front, the Mr. Snowman logo and "MAKES SNOW". It never carries the Black Reaper logo.
 - The v5 pictures are on R2 as /media/mrsnowman-v5-NN.webp. Picture 05 was rejected because its text said "blower".
 - Alex, 2026-10-14: Mr. Snowman pictures are made on ChatGPT in the Black Reaper bright panel style. That means a pale grey or real street background, the product huge, heavy black condensed caps, red headline blocks, red-circle icons and black caption bars. Write the style out in words; never attach a Black Reaper image. Wand job "Mr Snowman v7 - ChatGPT - Black Reaper bright style - one chat" has 10 panels. Keep the Gemini v5 pictures already on the page.
+- 2026-10-14: the buy box gallery is mrsnowman-v8-01..08.webp (ChatGPT, Alex's panel style), which Alex liked. Way back: the v5 set (mrsnowman-v5-*).
