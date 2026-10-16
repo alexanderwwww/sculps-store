@@ -91,8 +91,6 @@ export function ProductExpress(props: Props) {
         mode: "payment",
         amount: Math.max(50, latest.current.amountCents),
         currency: currency.toLowerCase(),
-        // Match the PaymentIntent created by the shared Stripe provider.
-        setupFutureUsage: "off_session",
         appearance: { variables: { borderRadius: "999px" } },
         // Must match the server's intents (payments.server.ts sets off_session), or Stripe refuses
         // the confirmation with: "provided setup_future_usage (off_session) does not match the expected (null)".
