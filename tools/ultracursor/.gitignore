@@ -1,0 +1,5 @@
+# A symlink to the repo's node_modules, so src/ runs here exactly as on his Mac.
+node_modules
+# Zips and scratch made by pack.sh and its test.
+*.zip
+.pack-*

@@ -1,0 +1,9 @@
+{
+  "name": "ultracursor",
+  "private": true,
+  "type": "module",
+  "description": "ultracursor's runner: drives Alex's own Chrome over the DevTools port, reads, and reports to Claude.",
+  "dependencies": {
+    "playwright-core": "1.63.0"
+  }
+}

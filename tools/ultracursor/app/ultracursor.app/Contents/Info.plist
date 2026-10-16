@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key>                  <string>ultracursor</string>
+  <key>CFBundleDisplayName</key>           <string>ultracursor</string>
+  <!-- Chrome keeps the sign-ins in its own profile, not under this id, but the
+       Mac keys the Dock and permissions to it: never change it. -->
+  <key>CFBundleIdentifier</key>            <string>com.blackreaper.ultracursor</string>
+  <!-- Both stamped by pack.sh from the BUILD file. -->
+  <key>CFBundleVersion</key>               <string>1</string>
+  <key>CFBundleShortVersionString</key>    <string>1</string>
+  <key>CFBundleInfoDictionaryVersion</key> <string>6.0</string>
+  <key>CFBundlePackageType</key>           <string>APPL</string>
+  <key>CFBundleExecutable</key>            <string>ultracursor</string>
+  <key>CFBundleIconFile</key>              <string>AppIcon</string>
+  <key>LSMinimumSystemVersion</key>        <string>11.0</string>
+  <!-- It draws nothing of its own; the work happens in Chrome and a Terminal
+       window. -->
+  <key>LSBackgroundOnly</key>              <false/>
+  <key>NSHighResolutionCapable</key>       <true/>
+</dict>
+</plist>

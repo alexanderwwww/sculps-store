@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+# The Dock icon.
+#
+# A .app cannot show output, and this one has plenty worth reading: which
+# hunt arrived, which site it is on, what it found. So it opens a Terminal
+# window on the launcher inside the bundle and gets out of the way.
+
+HERE="$(cd "$(dirname "$0")/../Resources" && pwd)"
+open -a Terminal "$HERE/run.command"
