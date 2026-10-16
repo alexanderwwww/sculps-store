@@ -617,6 +617,8 @@ Alex: "I never said Reaper 20." The one coupon is **OCTOBER 31, $31 off**, code 
 ## Links in customer emails (Alex, 2026-10-13)
 Only ever link the clean store address (https://blackreaper.us). Never /products/... — those are the old funnel without the payment bar. Applies to every store.
 
-## Research Engine pitch page for Mark (2026-10-16)
-A static concept page (dark liquid glass, blue light, live cursor tours, TikTok/Instagram/Google section second) lives in R2, served by the media route with no deploy:
-`https://kerberos.gardenbuddystore.workers.dev/media/engine-research-v2.html`. The media route caches for a year, so every change is uploaded under a NEW key (`npx wrangler r2 object put gardenbuddy-media/<new-key>.html --content-type="text/html; charset=utf-8" --remote`) and the new link is sent. Do not redeploy the Worker for this: Codex's live release is not on this branch.
+## ultra — the product research app pitch page for Mark (2026-10-16)
+Name: **ultra** (Alex: "call it ultra because it's going to be made with ultra code"; he also said "ultracursor", so the link name is ultracursor). Logo: a dark liquid-glass cursor arrow with a white rim. Look: black liquid glass with a starfield; NO blue, NO purple (both rejected). Real TikTok/Instagram/Google logos on glass tabs, live section second, right after the hero.
+Source: the scratchpad page published as the claude.ai artifact https://claude.ai/artifact/QzVEfdwf7jPFEypweCzKxA (neutral link; Alex shares it from the page's Share menu).
+Never send Mark a kerberos.gardenbuddystore.workers.dev link: Alex does not want "gardenbuddy" visible. A clean ultracursor.pages.dev needs Cloudflare Pages permission on the API token (the current token is refused with code 10000), or a bought domain.
+Do not redeploy the Worker for this: Codex's live release is not on this branch.
