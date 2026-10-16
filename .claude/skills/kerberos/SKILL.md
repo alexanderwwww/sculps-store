@@ -616,3 +616,7 @@ Alex: "I never said Reaper 20." The one coupon is **OCTOBER 31, $31 off**, code 
 
 ## Links in customer emails (Alex, 2026-10-13)
 Only ever link the clean store address (https://blackreaper.us). Never /products/... — those are the old funnel without the payment bar. Applies to every store.
+
+## Research Engine pitch page for Mark (2026-10-16)
+A static concept page (dark liquid glass, blue light, live cursor tours, TikTok/Instagram/Google section second) lives in R2, served by the media route with no deploy:
+`https://kerberos.gardenbuddystore.workers.dev/media/engine-research-v2.html`. The media route caches for a year, so every change is uploaded under a NEW key (`npx wrangler r2 object put gardenbuddy-media/<new-key>.html --content-type="text/html; charset=utf-8" --remote`) and the new link is sent. Do not redeploy the Worker for this: Codex's live release is not on this branch.
