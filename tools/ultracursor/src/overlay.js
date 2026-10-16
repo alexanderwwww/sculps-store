@@ -32,7 +32,7 @@
  */
 (() => {
   "use strict";
-  const V = 4;
+  const V = 5;
 
   let isTop = false;
   try { isTop = window.top === window; } catch (e) { isTop = false; }
@@ -88,6 +88,7 @@
     hlEl: null, hlRect: null, hlScroll: { x: 0, y: 0 }, ringOn: false,
     attaches: 0, recent: [], topLayer: false, mountedOnce: false,
     href: "", lastRipple: 0, pillRect: null, dodging: false, destroyed: false,
+    noTop: false, above: [], lastPointer: -1e9,
   };
 
   /* ------------------------------------------------------------------ host */
@@ -158,8 +159,8 @@
     ...BASE, position: "absolute", left: "20px", top: "25px", display: "block",
     padding: "3px 8px 3.5px", "border-radius": "999px", "white-space": "nowrap",
     font: `600 10.5px/1.25 ${FONT}`, "letter-spacing": ".01em", color: "#0d0d0d",
-    background: "linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(246,246,246,.92) 55%, rgba(232,232,232,.9) 100%)",
-    "backdrop-filter": "blur(14px)", "-webkit-backdrop-filter": "blur(14px)",
+    background: "linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(247,247,247,.95) 55%, rgba(234,234,234,.94) 100%)",
+    "backdrop-filter": "blur(14px) saturate(0)", "-webkit-backdrop-filter": "blur(14px) saturate(0)",
     border: "0.5px solid rgba(0,0,0,.14)",
     "box-shadow": "inset 0 1px 0 #ffffff, inset 0 -1px 0 rgba(0,0,0,.06), 0 1px 1.5px rgba(0,0,0,.22), 0 6px 16px -6px rgba(0,0,0,.42)",
     transition: "left .18s ease, top .18s ease",
@@ -234,8 +235,10 @@
     background:
       "radial-gradient(120% 160% at 10% -40%, rgba(255,255,255,.22) 0%, rgba(255,255,255,.07) 34%, rgba(255,255,255,0) 60%)," +
       "linear-gradient(180deg, rgba(255,255,255,.07) 0%, rgba(255,255,255,0) 46%, rgba(0,0,0,.30) 100%)," +
-      "rgba(11,11,11,.80)",
-    "backdrop-filter": "blur(22px) brightness(.82)", "-webkit-backdrop-filter": "blur(22px) brightness(.82)",
+      "rgba(11,11,11,.84)",
+    // saturate(0): what shows through the glass keeps its light and shape but
+    // loses its colour, so a green or blue page never tints the pill.
+    "backdrop-filter": "blur(22px) saturate(0) brightness(.8)", "-webkit-backdrop-filter": "blur(22px) saturate(0) brightness(.8)",
     border: "0.5px solid rgba(255,255,255,.24)",
     "box-shadow":
       "inset 0 1px 0 rgba(255,255,255,.34), inset 1px 0 0 rgba(255,255,255,.08), inset 0 -1px 0 rgba(0,0,0,.55)," +
@@ -251,7 +254,7 @@
     background: "linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.9), rgba(255,255,255,0))",
   });
   const col = div({ ...BASE, display: "flex", "flex-direction": "column", "justify-content": "center", gap: "2px", "min-width": "0", flex: "1 1 auto", position: "relative" });
-  const line1 = div({ ...BASE, display: "flex", "align-items": "center", gap: "6px", "white-space": "nowrap" });
+  const line1 = div({ ...BASE, display: "flex", "align-items": "center", gap: "4px", "white-space": "nowrap" });
   const brand = span({
     ...BASE, font: `600 10.5px/1.2 ${FONT}`, "letter-spacing": ".03em",
     background: "linear-gradient(180deg, #ffffff 0%, #e2e2e2 55%, #a8a8a8 100%)",
@@ -260,7 +263,7 @@
   const buildEl = span({ ...BASE, font: `500 10.5px/1.2 ${FONT}`, "letter-spacing": ".02em", color: "rgba(255,255,255,.5)" }, "");
   const dot = span({
     ...BASE, display: "inline-block", width: "5px", height: "5px", "border-radius": "50%", background: "#ffffff",
-    "box-shadow": "0 0 6px 1px rgba(255,255,255,.7)", "margin-left": "2px", "flex": "0 0 auto",
+    "box-shadow": "0 0 6px 1px rgba(255,255,255,.7)", "margin-left": "4px", "flex": "0 0 auto",
   });
   const statusEl = div({
     ...BASE, font: `500 13px/1.3 ${FONT}`, "letter-spacing": ".005em", color: "#f4f4f4",
@@ -456,13 +459,57 @@
 
   /* ----------------------------------------------------------------- mount */
 
+  // The top layer keeps the overlay above the page's own modal <dialog>s and
+  // popovers, which no z-index can beat. One page rule could make that visible:
+  // a global ::backdrop style would paint our backdrop over the whole page. If
+  // that happens, leave the top layer for this document and stay a plain
+  // fixed element at the highest z-index.
+  const isOpen = () => { try { return host.matches(":popover-open"); } catch (e) { return false; } };
+  const backdropPainted = () => {
+    try {
+      const b = getComputedStyle(host, "::backdrop");
+      const bg = String(b.backgroundColor || "").replace(/\s+/g, "");
+      const clear = bg === "" || bg === "transparent" || /^rgba\(\d+,\d+,\d+,0\)$/.test(bg);
+      const bf = String(b.backdropFilter || b.webkitBackdropFilter || "none");
+      const bi = String(b.backgroundImage || "none");
+      return !clear || (bf !== "none" && bf !== "") || (bi !== "none" && bi !== "");
+    } catch (e) { return false; }
+  };
   const showTop = () => {
     S.topLayer = false;
-    if (typeof host.showPopover !== "function") return;
+    if (S.noTop || typeof host.showPopover !== "function") return;
     try {
-      if (!host.matches(":popover-open")) host.showPopover();
-      S.topLayer = host.matches(":popover-open");
+      if (!isOpen()) host.showPopover();
+      S.topLayer = isOpen();
+      if (S.topLayer && backdropPainted()) {
+        S.noTop = true;
+        host.hidePopover();
+        S.topLayer = false;
+      }
     } catch (e) { S.topLayer = false; }
+  };
+
+  // Anything the page puts in the top layer after us (a modal <dialog>, a
+  // popover, a fullscreen element) sits above us. Step back on top of it.
+  const others = () => {
+    let list = [];
+    try { list = Array.from(document.querySelectorAll(":modal, :popover-open")); }
+    catch (e) { try { list = Array.from(document.querySelectorAll("dialog[open]")); } catch (e2) { list = []; } }
+    try { if (document.fullscreenElement) list.push(document.fullscreenElement); } catch (e) {}
+    return list.filter((el) => el !== host);
+  };
+  const raise = () => {
+    if (!S.topLayer || !host.isConnected) return;
+    if (backdropPainted()) { // a page rule that arrived after we were shown
+      S.noTop = true; S.topLayer = false;
+      try { host.hidePopover(); } catch (e) {}
+      return;
+    }
+    const now = others();
+    const fresh = now.some((el) => S.above.indexOf(el) < 0);
+    S.above = now;
+    if (!fresh) return;
+    try { host.hidePopover(); host.showPopover(); S.topLayer = isOpen(); } catch (e) {}
   };
 
   const unmount = () => {
@@ -479,7 +526,9 @@
       try { root.appendChild(host); } catch (e) { return false; }
       S.attaches++;
       S.pillRect = null;
+      S.above = [];
       observe();
+      listen();
       if (!S.mountedOnce) {
         S.mountedOnce = true;
         try { pill.animate([{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }], { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" }); } catch (e) {}
@@ -487,6 +536,7 @@
       startPulse();
     }
     showTop();
+    raise();
     place();
     if (S.ringOn) placeRing(false);
     return true;
@@ -528,30 +578,51 @@
     if (location.href !== S.href) { S.href = location.href; S.pillRect = null; }
     if (blockedUrl()) { unmount(); return; }
     if (!host.isConnected) mount();
-    else if (S.topLayer === false && typeof host.showPopover === "function") showTop();
-    else if (S.topLayer && !host.matches(":popover-open")) showTop();
+    else if (!S.noTop && typeof host.showPopover === "function" && !isOpen()) showTop();
+    else raise();
     if (S.ringOn) placeRing(false);
   };
 
   /* ---------------------------------------------------------------- events */
 
+  // Every listener is (re)added on each attach: document.open() erases the
+  // listeners of the window and the document, and addEventListener ignores a
+  // listener that is already there, so re-adding is free.
   const L = [];
-  const on = (target, type, fn) => {
-    const opts = { capture: true, passive: true };
-    try { target.addEventListener(type, fn, opts); L.push([target, type, fn, opts]); } catch (e) {}
+  const OPTS = { capture: true, passive: true };
+  const on = (target, type, fn) => { L.push([target, type, fn]); };
+  const listen = () => { for (const [t, type, fn] of L) { try { t.addEventListener(type, fn, OPTS); } catch (e) {} } };
+  // pointermove carries the exact (fractional) position; the mousemove that
+  // follows it carries the same point rounded, so it is only used when no
+  // pointer event came first.
+  const fromPointer = (e) => {
+    if (!e || e.isTrusted === false) return;
+    S.lastPointer = performance.now();
+    setPos(e.clientX, e.clientY);
   };
-  const fromEvent = (e) => { if (e && e.isTrusted !== false) setPos(e.clientX, e.clientY); };
-  on(window, "pointermove", fromEvent);
-  on(window, "mousemove", fromEvent);
-  const press = (e) => { if (!e || e.isTrusted === false) return; setPos(e.clientX, e.clientY); ripple(e.clientX, e.clientY); };
+  const fromMouse = (e) => {
+    if (!e || e.isTrusted === false || performance.now() - S.lastPointer < 100) return;
+    setPos(e.clientX, e.clientY);
+  };
+  on(window, "pointermove", fromPointer);
+  on(window, "mousemove", fromMouse);
+  const press = (e) => {
+    if (!e || e.isTrusted === false) return;
+    if (e.type === "pointerdown") S.lastPointer = performance.now();
+    else if (performance.now() - S.lastPointer < 100) return;
+    setPos(e.clientX, e.clientY);
+    ripple(e.clientX, e.clientY);
+  };
   on(window, "pointerdown", press);
   on(window, "mousedown", press);
   on(window, "scroll", ringSoon);
   on(window, "resize", () => { S.pillRect = null; place(); ringSoon(); });
   on(window, "popstate", () => setTimeout(tick, 0));
   on(window, "hashchange", () => setTimeout(tick, 0));
-  const onReady = () => mount();
-  on(document, "DOMContentLoaded", onReady);
+  on(window, "toggle", () => setTimeout(raise, 0));
+  on(window, "fullscreenchange", () => setTimeout(raise, 0));
+  on(document, "DOMContentLoaded", () => mount());
+  listen();
   const timer = setInterval(tick, 500);
 
   /* ------------------------------------------------------------------- api */
@@ -580,7 +651,7 @@
       try { pillOpacity = live ? parseFloat(getComputedStyle(pill).opacity) : 0; } catch (e) {}
       return {
         v: V, build: S.build, status: statusEl.textContent, buildText: buildEl.textContent,
-        mounted: live, blocked: blockedUrl(), topLayer: live && S.topLayer,
+        mounted: live, blocked: blockedUrl(), topLayer: live && S.topLayer, noTop: S.noTop,
         x: S.x, y: S.y, seen: S.seen,
         tip: a ? { x: a.x + TIP.x, y: a.y + TIP.y } : null,
         cursor: a, cursorOpacity: live ? parseFloat(getComputedStyle(cursor).opacity) : 0,
@@ -595,7 +666,7 @@
       S.destroyed = true;
       clearInterval(timer);
       try { if (mo) mo.disconnect(); } catch (e) {}
-      for (const [t, type, fn, opts] of L) { try { t.removeEventListener(type, fn, opts); } catch (e) {} }
+      for (const [t, type, fn] of L) { try { t.removeEventListener(type, fn, OPTS); } catch (e) {} }
       unmount();
       if (window.__uc === api) { try { delete window.__uc; } catch (e) { window.__uc = undefined; } }
     },

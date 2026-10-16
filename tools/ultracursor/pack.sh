@@ -129,11 +129,11 @@ cp -p "$PLIST" "$B/Contents/Info.plist"
 cp -p "$LAUNCHER" "$B/Contents/MacOS/ultracursor"
 cp -p "$RUNCMD" "$RES/run.command"
 chmod 755 "$B/Contents/MacOS/ultracursor" "$RES/run.command"
-# src/** goes in whole: sites/ and skills/ included, node_modules never.
-( cd "$SRC" && tar --exclude=node_modules --exclude=.DS_Store -cf - . ) | ( cd "$RES" && tar -xf - )
 for n in run.command AppIcon.icns; do
   [ ! -e "$SRC/$n" ] || fail "src/$n would collide with the bundle's own $n"
 done
+# src/** goes in whole: sites/ and skills/ included, node_modules never.
+( cd "$SRC" && tar --exclude=node_modules --exclude=.DS_Store -cf - . ) | ( cd "$RES" && tar -xf - )
 
 # The icon, rebuilt from his artwork every time with plug's make-icon.mjs.
 # make-icon needs Pillow; find a python3 that has it and put it first on PATH

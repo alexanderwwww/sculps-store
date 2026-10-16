@@ -1,5 +1,5 @@
-# A symlink to the repo's node_modules, so src/ runs here exactly as on his Mac.
+# Optional symlink to the repo's node_modules. Not needed for src/ here (Node
+# finds the repo root's node_modules by walking up), and never shipped.
 node_modules
-# Zips and scratch made by pack.sh and its test.
+# Zips made by pack.sh when pointed inside this folder.
 *.zip
-.pack-*
