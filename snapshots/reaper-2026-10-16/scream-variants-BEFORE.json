@@ -1,0 +1,50 @@
+[
+  {
+    "id": "90ab80bb-8c49-4498-83cb-dbfd369923fc",
+    "product_id": "660f66ca-1511-4f92-bf1e-df23aaab7691",
+    "label": "The 16 ft Scream",
+    "sublabel": "A real 16-foot ghost. The one the whole street sees.",
+    "price_cents": 36999,
+    "compare_at_cents": null,
+    "sku": "BR-SCREAM-1",
+    "position": 1,
+    "is_default": true,
+    "available": 15,
+    "committed": 0,
+    "incoming": 0,
+    "low_stock_threshold": 5,
+    "image_url": "/media/scr-hero-q.webp"
+  },
+  {
+    "id": "31355a90-0751-47e3-8f8b-db332a22350d",
+    "product_id": "660f66ca-1511-4f92-bf1e-df23aaab7691",
+    "label": "The 10 ft Scream",
+    "sublabel": "A 10-foot ghost for the porch or a smaller yard.",
+    "price_cents": 29999,
+    "compare_at_cents": null,
+    "sku": "BR-SCREAM-10",
+    "position": 0,
+    "is_default": false,
+    "available": 9,
+    "committed": 0,
+    "incoming": 0,
+    "low_stock_threshold": 5,
+    "image_url": "/media/scr-hero-q.webp"
+  },
+  {
+    "id": "9217beb4-ff3a-40e2-b62b-ca77bf3e2c86",
+    "product_id": "660f66ca-1511-4f92-bf1e-df23aaab7691",
+    "label": "1+1 · 16 ft Scream",
+    "sublabel": "The second one is half off",
+    "price_cents": 55498,
+    "compare_at_cents": 73998,
+    "sku": "BR-SCREAM-2X",
+    "position": 3,
+    "is_default": false,
+    "available": 8,
+    "committed": 0,
+    "incoming": 0,
+    "low_stock_threshold": 5,
+    "image_url": "/media/scr-hero-q.webp"
+  }
+]
