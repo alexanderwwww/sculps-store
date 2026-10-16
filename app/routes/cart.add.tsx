@@ -58,7 +58,7 @@ async function add(
   let back = new URL("/cart", url.origin);
   try {
     const from = new URL(referer, url.origin);
-    if (from.origin === url.origin && !/^\/(cart|checkout|thanks)/.test(from.pathname)) {
+    if (store.slug !== "mysterious-archive" && from.origin === url.origin && !/^\/(cart|checkout|thanks)/.test(from.pathname)) {
       back = new URL(from.pathname + from.search, url.origin);
       back.searchParams.set("cart", "1");
     }

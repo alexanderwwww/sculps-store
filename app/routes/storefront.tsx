@@ -117,6 +117,8 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     throw data("No store is configured for this domain yet.", { status: 404 });
   }
 
+  if (store.slug === "mysterious-archive") return new Response(null, {status:302, headers:{Location:"/archive" + url.search}});
+
   // Two admin-only views of the storefront:
   //   ?preview=<pageId>  the theme editor's iframe, hidden sections included
   //   ?theme=<themeId>   a draft theme, for the Online Store thumbnails

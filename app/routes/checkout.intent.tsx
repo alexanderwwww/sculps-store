@@ -18,8 +18,8 @@ import { resolveStore } from "~/lib/store.server";
 import { priceCart, readCartToken, cartIntentState, setCartPaymentIntentId, closeCartForPaidIntent } from "~/lib/cart.server";
 import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
 
-/** Intent states that still belong to a payment that has not happened. */
-const PAYABLE = new Set(["requires_payment_method", "requires_confirmation", "requires_action", "processing"]);
+/** States that can still accept confirmation on the same intent. */
+const PAYABLE = new Set(["requires_payment_method", "requires_confirmation", "requires_action"]);
 
 export async function action({ context, request }: ActionFunctionArgs) {
   const url = new URL(request.url);
@@ -74,9 +74,12 @@ export async function action({ context, request }: ActionFunctionArgs) {
         // happening. It is never reused or written over — and a cart still
         // holding one is a cart whose order went through, so it is closed.
         if (PAYABLE.has(found.status)) intent = found;
-        else await closeCartForPaidIntent(context.db, store.id, token, found.id);
+        else if (found.status !== "canceled") {
+          if (found.status === "succeeded") await closeCartForPaidIntent(context.db, store.id, token, found.id);
+          return Response.json({ clientSecret: null, error: "Check your existing order before starting another payment." }, { status: 409 });
+        }
       } catch {
-        intent = null;
+        return Response.json({ clientSecret: null, error: "Payment status could not be verified. Please try again shortly." }, { status: 503 });
       }
     }
 

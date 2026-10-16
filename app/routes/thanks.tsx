@@ -86,6 +86,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             lon: loaded.order.lon,
             amountCents: loaded.order.totalCents,
             orderId: loaded.order.id,
+          }).catch(() => {
+            console.error("Paid order visitor event failed", loaded.order.id);
           });
           await afterPaymentConfirmed(context.db, context.cloudflare.env, loaded.order.id, request);
         }

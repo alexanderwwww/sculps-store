@@ -61,6 +61,7 @@ export function ProductExpress(props: Props) {
   const rowRef = useRef<HTMLDivElement | null>(null);
   const elementsRef = useRef<any>(null);
   const stripeRef = useRef<any>(null);
+  const confirmingRef = useRef(false);
   const latest = useRef({ variantId, amountCents, label });
   latest.current = { variantId, amountCents, label };
   /**
@@ -90,6 +91,8 @@ export function ProductExpress(props: Props) {
         mode: "payment",
         amount: Math.max(50, latest.current.amountCents),
         currency: currency.toLowerCase(),
+        // Match the PaymentIntent created by the shared Stripe provider.
+        setupFutureUsage: "off_session",
         appearance: { variables: { borderRadius: "999px" } },
         // Must match the server's intents (payments.server.ts sets off_session), or Stripe refuses
         // the confirmation with: "provided setup_future_usage (off_session) does not match the expected (null)".
@@ -144,6 +147,8 @@ export function ProductExpress(props: Props) {
       });
 
       express.on("confirm", async (event: any) => {
+        if (confirmingRef.current) return;
+        confirmingRef.current = true;
         setError(null);
         try {
           const submitted = await elements.submit();
@@ -207,6 +212,7 @@ export function ProductExpress(props: Props) {
           });
           if (result?.error) throw new Error(result.error.message ?? "The payment did not go through.");
         } catch (failure) {
+          confirmingRef.current = false;
           const message = failure instanceof Error ? failure.message : "The payment did not go through.";
           setError(message);
           try {

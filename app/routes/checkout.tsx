@@ -1,3 +1,4 @@
+import archiveCheckoutHref from "~/storefronts/mysterious-archive/checkout.css?url";
 /**
  * Checkout, on our own domain.
  *
@@ -892,18 +893,7 @@ async function payAction({
     };
   }
 
-  /**
-   * The payment this order will be charged against.
-   *
-   * The page normally made one when it loaded, and that is the one used. But
-   * a wallet sheet is already open and authorised by the time we get here:
-   * telling it "this checkout has expired, reload the page" is a payment
-   * thrown away over something the customer cannot see and did not cause. So
-   * anything wrong with the stored intent — missing, unreadable, already
-   * spent, or belonging to an order that is finished — is answered by making
-   * a fresh one and carrying on. Nothing is ever charged twice: a spent
-   * intent is left alone and a new one takes its place.
-   */
+  // A known payment can be replaced only after Stripe confirms cancellation.
   const RETRYABLE = new Set(["pending", "failed"]);
   const startFresh = async (why: string) => {
     const made = await provider.createIntent({
@@ -928,8 +918,11 @@ async function payAction({
     try {
       const found = await provider.readIntent(intentId);
       if (PAYABLE_INTENT_STATUSES.has(found.status)) intent = found;
+      else if (found.status !== "canceled") {
+        return { error: "Check your existing order before starting another payment." };
+      }
     } catch {
-      intent = null;
+      return { error: "Payment status could not be verified. Please try again shortly." };
     }
   }
   // An order already sitting against this intent is a retry of the same
@@ -937,8 +930,7 @@ async function payAction({
   // that is finished (paid, refunded) means this intent is spent.
   let existing = intent ? await orderByPaymentRef(context.db, intent.id) : null;
   if (existing && (existing.storeId !== store.id || !RETRYABLE.has(existing.paymentStatus))) {
-    intent = null;
-    existing = null;
+    return { error: "Check your existing order before starting another payment." };
   }
   if (!intent) {
     try {
@@ -1067,7 +1059,7 @@ async function payAction({
     // Same intent, same order. The details and the money are refreshed, and
     // the lines are rewritten so the row can never describe a cart that has
     // since changed underneath it.
-    await context.db
+    const refreshed = await context.db
       .update(ordersTable)
       .set({
         customerName: name,
@@ -1085,7 +1077,11 @@ async function payAction({
         paymentStatus: "pending",
         updatedAt: new Date(),
       })
-      .where(eq(ordersTable.id, existing.id));
+      .where(and(eq(ordersTable.id, existing.id), inArray(ordersTable.paymentStatus, ["pending", "failed"])))
+      .returning({ id: ordersTable.id });
+    if (!refreshed.length) {
+      return { error: "Check your existing order before starting another payment." };
+    }
     await context.db.delete(orderItemsTable).where(eq(orderItemsTable.orderId, existing.id));
     if (lines.length) {
       await context.db
@@ -1348,11 +1344,12 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       );
     }
     return (
-      <div className="gk">
+      <div className={store.slug === "mysterious-archive" ? "gk ma-checkout" : "gk"}>
+      {store.slug === "mysterious-archive" ? <link rel="stylesheet" href={archiveCheckoutHref} precedence="high" /> : null}
         <KneelerFonts />
         <header className="gk-header">
           <Link className="gk-logo" to={home} style={{ textDecoration: "none" }}>
-            {store.name}
+            {store.slug === "mysterious-archive" ? <img src="/archive-logo-script.png" alt="Mysterious Archive" style={{width:260,maxWidth:"70vw",height:"auto"}}/> : store.name}
           </Link>
         </header>
         <div className="gk-shell">
@@ -1369,7 +1366,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
   }
 
   const summary = (
-    <Summary cart={cart} photo={photo} shipEstimate={store.shipEstimate} cn={cn} money={money} locked={false} />
+    <Summary archive={store.slug === "mysterious-archive"} cart={cart} photo={photo} shipEstimate={store.shipEstimate} cn={cn} money={money} locked={false} />
   );
 
   const left = (
@@ -1429,12 +1426,13 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
   /* No theme of its own yet. The shared one, laid out the same way: the form
      beside a summary that stays put, and a header that is the logo only. */
   return (
-    <div className="gk">
+    <div className={store.slug === "mysterious-archive" ? "gk ma-checkout" : "gk"}>
+      {store.slug === "mysterious-archive" ? <link rel="stylesheet" href={archiveCheckoutHref} precedence="high" /> : null}
       <KneelerFonts />
       {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       <header className="gk-header">
         <Link className="gk-logo" to={home} style={{ textDecoration: "none" }}>
-          {store.name}
+          {store.slug === "mysterious-archive" ? <img src="/archive-logo-script.png" alt="Mysterious Archive" style={{width:260,maxWidth:"70vw",height:"auto"}}/> : store.name}
         </Link>
       </header>
 
@@ -2162,6 +2160,7 @@ function DeliveryFields({
 }
 
 function Summary({
+  archive = false,
   cart,
   photo,
   shipEstimate,
@@ -2169,6 +2168,7 @@ function Summary({
   money,
   locked,
 }: {
+  archive?: boolean;
   cart: Awaited<ReturnType<typeof loader>>["cart"];
   photo: { src: string; alt: string } | null;
   shipEstimate: string | null;
@@ -2220,7 +2220,7 @@ function Summary({
             ) : null}
             <span className={buddy ? "gb-co__line-body" : undefined} style={buddy ? undefined : { flex: 1 }}>
               <strong className={buddy ? "gb-co__line-name" : undefined} style={buddy ? undefined : { display: "block" }}>
-                {line.label}
+                {archive ? line.productTitle : line.label}
               </strong>
               <span className={buddy ? "gb-co__line-sub" : "gk-quiet"}>
                 {line.sublabel ? `${line.sublabel} · ` : ""}
@@ -3516,6 +3516,7 @@ function OnePage({
     [report],
   );
   const [working, setWorking] = useState(false);
+  const paymentConfirmingRef = useRef(false);
   /** the server's figure when it differs from the one the page loaded with */
   const [serverTotal, setServerTotal] = useState<number | null>(null);
   const [repriced, setRepriced] = useState(false);
@@ -3915,6 +3916,8 @@ function OnePage({
           });
 
           express.on("confirm", async (event: any) => {
+            if (paymentConfirmingRef.current) return;
+            paymentConfirmingRef.current = true;
             setPayError(null);
             setWorking(true);
             report("wallet-step", `confirm from ${event?.expressPaymentType ?? "wallet"}`);
@@ -3929,7 +3932,10 @@ function OnePage({
                 /* the sheet is already gone */
               }
             }
-            if (!done) setWorking(false);
+            if (!done) {
+              paymentConfirmingRef.current = false;
+              setWorking(false);
+            }
           });
 
           // A single rate, so a change of it is accepted as it is. Without a
@@ -4130,9 +4136,8 @@ function OnePage({
   const mountRequestButton = async (stripe: any, elements: any) => {
     try {
       const request = stripe.paymentRequest({
-        // The country of the Stripe account, not of the buyer — Stripe's own
-        // definition of this field. The account is Greek.
-        country: "GR",
+        // Black Reaper uses the US AIGIS account. Preserve other stores' configuration.
+        country: store.slug === "reaper" ? "US" : "GR",
         currency: (cart.currency ?? "usd").toLowerCase(),
         total: { label: store.name, amount: Math.max(50, cart.totalCents) },
         requestPayerName: true,
@@ -4157,61 +4162,88 @@ function OnePage({
       }
 
       request.on("paymentmethod", async (event: any) => {
-        setPayError(null);
-        setWorking(true);
-        const body = detailsFromForm();
-        body.set("source", "wallet");
-        // The wallet knows the buyer even when the form is empty. The action
-        // reads "name", never first/last, so that is what is written.
-        if (event.payerEmail) body.set("email", String(event.payerEmail).trim());
-        if (event.payerName) body.set("name", String(event.payerName).trim());
-        if (event.payerPhone) body.set("phone", String(event.payerPhone).trim());
-        const ship = event.shippingAddress ?? null;
-        const billing = event.paymentMethod?.billing_details?.address ?? null;
-        const line1 = ship ? (ship.addressLine ?? [])[0] : billing?.line1;
-        const line2 = ship ? (ship.addressLine ?? [])[1] : billing?.line2;
-        const city = ship ? ship.city : billing?.city;
-        const region = ship ? ship.region : billing?.state;
-        const postal = ship ? ship.postalCode : billing?.postal_code;
-        const country = ship ? ship.country : billing?.country;
-        if (line1) body.set("address1", String(line1).trim());
-        if (line2) body.set("address2", String(line2).trim());
-        if (city) body.set("city", String(city).trim());
-        if (region) body.set("region", String(region).trim());
-        if (postal) body.set("postalCode", String(postal).trim());
-        if (country) body.set("country", String(country).trim().toUpperCase());
+        if (paymentConfirmingRef.current) return;
+        paymentConfirmingRef.current = true;
+        let done = false;
+        let sheetCompleted = false;
+        const complete = (status: "success" | "fail") => {
+          if (sheetCompleted) return;
+          sheetCompleted = true;
+          event.complete(status);
+        };
+        try {
+          setPayError(null);
+          setWorking(true);
+          const body = detailsFromForm();
+          body.set("source", "wallet");
+          // The wallet knows the buyer even when the form is empty. The action
+          // reads "name", never first/last, so that is what is written.
+          if (event.payerEmail) body.set("email", String(event.payerEmail).trim());
+          if (event.payerName) body.set("name", String(event.payerName).trim());
+          if (event.payerPhone) body.set("phone", String(event.payerPhone).trim());
+          const ship = event.shippingAddress ?? null;
+          const billing = event.paymentMethod?.billing_details?.address ?? null;
+          const line1 = ship ? (ship.addressLine ?? [])[0] : billing?.line1;
+          const line2 = ship ? (ship.addressLine ?? [])[1] : billing?.line2;
+          const city = ship ? ship.city : billing?.city;
+          const region = ship ? ship.region : billing?.state;
+          const postal = ship ? ship.postalCode : billing?.postal_code;
+          const country = ship ? ship.country : billing?.country;
+          if (line1) body.set("address1", String(line1).trim());
+          if (line2) body.set("address2", String(line2).trim());
+          if (city) body.set("city", String(city).trim());
+          if (region) body.set("region", String(region).trim());
+          if (postal) body.set("postalCode", String(postal).trim());
+          if (country) body.set("country", String(country).trim().toUpperCase());
 
-        const answer = await postDetails(body);
-        if (!answer || !("ok" in answer)) {
-          event.complete("fail");
-          setWorking(false);
-          if (answer && "error" in answer && answer.error) setPayError(answer.error);
-          return;
-        }
-
-        const first = await stripe.confirmCardPayment(
-          answer.clientSecret,
-          { payment_method: event.paymentMethod.id },
-          { handleActions: false },
-        );
-        if (first.error) {
-          event.complete("fail");
-          setWorking(false);
-          setPayError(first.error.message ?? "The payment did not go through.");
-          return;
-        }
-        event.complete("success");
-
-        // 3-D Secure, if the bank asks for it.
-        if (first.paymentIntent?.status === "requires_action") {
-          const second = await stripe.confirmCardPayment(answer.clientSecret);
-          if (second.error) {
+          const answer = await postDetails(body);
+          if (!answer || !("ok" in answer)) {
+            complete("fail");
             setWorking(false);
-            setPayError(second.error.message ?? "The payment was not completed.");
+            if (answer && "error" in answer && answer.error) setPayError(answer.error);
             return;
           }
+
+          setServerTotal(answer.totalCents);
+          if (answer.repriced) {
+            setRepriced(true);
+            complete("fail");
+            return;
+          }
+
+          const first = await stripe.confirmCardPayment(
+            answer.clientSecret,
+            { payment_method: event.paymentMethod.id },
+            { handleActions: false },
+          );
+          if (first.error) {
+            complete("fail");
+            setWorking(false);
+            setPayError(first.error.message ?? "The payment did not go through.");
+            return;
+          }
+          complete("success");
+
+          // 3-D Secure, if the bank asks for it.
+          if (first.paymentIntent?.status === "requires_action") {
+            const second = await stripe.confirmCardPayment(answer.clientSecret);
+            if (second.error) {
+              setWorking(false);
+              setPayError(second.error.message ?? "The payment was not completed.");
+              return;
+            }
+          }
+          window.location.href = answer.returnTo;
+          done = true;
+        } catch {
+          setPayError("Payment confirmation could not be verified. Check your order status before trying again.");
+          try { complete("fail"); } catch { /* The wallet sheet may already be closed. */ }
+        } finally {
+          if (!done) {
+            paymentConfirmingRef.current = false;
+            setWorking(false);
+          }
         }
-        window.location.href = answer.returnTo;
       });
 
       const button = elements.create("paymentRequestButton", {
@@ -4339,7 +4371,7 @@ function OnePage({
   const pay = async () => {
     // The button is disabled while a payment is in flight; this is the second
     // lock, so a stray Enter key or a double tap can never confirm twice.
-    if (working) return;
+    if (working || paymentConfirmingRef.current) return;
     setSubmitted(true);
     if (Object.keys(clientErrors).length > 0) {
       // Nothing is confirmed until the details are good enough to ship to.
@@ -4349,9 +4381,19 @@ function OnePage({
     if (!stripeRef.current || !elementsRef.current) return;
     setPayError(null);
     setRepriced(false);
+    paymentConfirmingRef.current = true;
     setWorking(true);
-    const done = await confirmAfterOrder(detailsFromForm());
-    if (!done) setWorking(false);
+    let done = false;
+    try {
+      done = await confirmAfterOrder(detailsFromForm());
+    } catch {
+      setPayError("Payment confirmation could not be verified. Check your order status before trying again.");
+    } finally {
+      if (!done) {
+        paymentConfirmingRef.current = false;
+        setWorking(false);
+      }
+    }
   };
 
   /**
@@ -4367,7 +4409,11 @@ function OnePage({
     if (want === "klarna" || want === "affirm") setExpressPick(want);
   }, []);
   useEffect(() => {
-    const unstick = () => setBnplBusy(null);
+    const unstick = () => {
+      paymentConfirmingRef.current = false;
+      setWorking(false);
+      setBnplBusy(null);
+    };
     window.addEventListener("pageshow", unstick);
     return () => window.removeEventListener("pageshow", unstick);
   }, []);
@@ -4377,14 +4423,16 @@ function OnePage({
     }
   }, []);
   const payInstallments = async (method: "klarna" | "affirm") => {
-    if (working || bnplBusy) return;
+    if (working || bnplBusy || paymentConfirmingRef.current) return;
     setSubmitted(true);
     if (Object.keys(clientErrors).length > 0) {
       formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
       return;
     }
     setPayError(null);
+    paymentConfirmingRef.current = true;
     setBnplBusy(method);
+    let navigating = false;
     try {
       const body = detailsFromForm();
       body.set("method", method);
@@ -4396,9 +4444,12 @@ function OnePage({
         return;
       }
       window.location.href = payload.url;
+      navigating = true;
     } catch {
       setPayError("That could not be reached. Nothing has been charged — try again or pay by card.");
       setBnplBusy(null);
+    } finally {
+      if (!navigating) paymentConfirmingRef.current = false;
     }
   };
 

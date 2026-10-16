@@ -1571,10 +1571,14 @@ export async function markOrderPaid(db: DB, orderId: string, note: string): Prom
     .where(and(eq(orders.id, orderId), sql`${orders.paymentStatus} in ('pending','failed')`))
     .returning({ storeId: orders.storeId, email: orders.email });
   if (!paid) return false;
-  await recordOrderEvent(db, orderId, "payment:confirmed", note);
+  await recordOrderEvent(db, orderId, "payment:confirmed", note).catch(() => {
+    console.error("Paid order timeline update failed", orderId);
+  });
   // Lifetime spend only counts money actually taken, so it is recounted here
   // as well as at order time.
-  await recomputeCustomerTotals(db, paid.storeId, paid.email);
+  await recomputeCustomerTotals(db, paid.storeId, paid.email).catch(() => {
+    console.error("Paid order customer totals update failed", orderId);
+  });
   return true;
 }
 

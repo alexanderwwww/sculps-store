@@ -14,7 +14,7 @@
  */
 import type { Route } from "./+types/checkout.bnpl";
 import { redirect } from "react-router";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { resolveStore } from "~/lib/store.server";
 import { readCartToken, priceCart, markCartConverted } from "~/lib/cart.server";
 import { bnplFor, createBnplIntent, confirmBnplIntent, readBnplIntent, BNPL_METHODS, type BnplMethod } from "~/lib/bnpl.server";
@@ -145,6 +145,9 @@ export async function action({ context, request }: Route.ActionArgs) {
       returnUrl: `${url.origin}/checkout/bnpl?order=${order.id}`,
       orderId: order.id,
     });
+    if (confirmed.status === "succeeded" || confirmed.status === "processing") {
+      return json({ url: `/checkout/bnpl?order=${encodeURIComponent(order.id)}&payment_intent=${encodeURIComponent(intentId)}` });
+    }
     if (!confirmed.redirectUrl) {
       return json({ error: `${method === "klarna" ? "Klarna" : "Affirm"} did not give a way to continue (${confirmed.status}).` }, 502);
     }
@@ -161,8 +164,9 @@ export async function action({ context, request }: Route.ActionArgs) {
     });
     return json({ url: confirmed.redirectUrl });
   } catch (error) {
-    await context.db.update(ordersTable).set({ paymentStatus: "failed", updatedAt: new Date() }).where(eq(ordersTable.id, order.id));
-    return json({ error: error instanceof Error ? error.message : "The payment could not be started." }, 502);
+    // A transport error can follow a successful confirmation. Keep the order
+    // pending for the return page, webhook and scheduled reconciliation.
+    return json({ url: `/thanks?order=${encodeURIComponent(order.id)}` });
   }
 }
 
@@ -217,9 +221,11 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   if (intent.status === "processing") throw redirect(`/thanks?order=${order.id}`);
 
   // Declined, cancelled or closed before finishing: nothing was charged.
-  await context.db
+  const failed = await context.db
     .update(ordersTable)
     .set({ paymentStatus: "failed", updatedAt: new Date() })
-    .where(eq(ordersTable.id, order.id));
+    .where(and(eq(ordersTable.id, order.id), eq(ordersTable.paymentStatus, "pending")))
+    .returning({ id: ordersTable.id });
+  if (!failed.length) throw redirect(`/thanks?order=${order.id}`);
   throw redirect("/checkout?installments=declined");
 }

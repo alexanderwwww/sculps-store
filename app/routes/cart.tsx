@@ -1,3 +1,4 @@
+import archiveCheckoutHref from "~/storefronts/mysterious-archive/checkout.css?url";
 /**
  * The cart.
  *
@@ -228,11 +229,12 @@ export default function Cart({ loaderData, actionData }: Route.ComponentProps) {
   const storeParam = `?store=${store.slug}`;
 
   return (
-    <div className="gk">
+    <div className={store.slug === "mysterious-archive" ? "gk ma-checkout" : "gk"}>
+      {store.slug === "mysterious-archive" ? <link rel="stylesheet" href={archiveCheckoutHref} precedence="high" /> : null}
       {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       <header className="gk-header">
         <Link className="gk-logo" to={`/${storeParam}`} style={{ textDecoration: "none" }}>
-          {store.name}
+          {store.slug === "mysterious-archive" ? <img src="/archive-logo-script.png" alt="Mysterious Archive" style={{width:260,maxWidth:"70vw",height:"auto"}}/> : store.name}
         </Link>
       </header>
 
