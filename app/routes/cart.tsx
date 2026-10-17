@@ -237,6 +237,7 @@ export default function Cart({ loaderData, actionData }: Route.ComponentProps) {
           {store.slug === "mysterious-archive" ? <img src="/archive-logo-script.png" alt="Mysterious Archive" style={{width:260,maxWidth:"70vw",height:"auto"}}/> : store.name}
         </Link>
       </header>
+      {store.slug === "mysterious-archive" ? <p style={{textAlign:"center",fontSize:13,color:"#444",margin:"10px 16px 0"}}>Every order includes a printed physical Mysterious Archive certificate of authenticity.</p> : null}
 
       <div className="gk-shell">
         <h1 style={{ marginTop: 0 }}>Your cart</h1>

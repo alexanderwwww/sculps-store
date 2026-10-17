@@ -1352,6 +1352,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
             {store.slug === "mysterious-archive" ? <img src="/archive-logo-script.png" alt="Mysterious Archive" style={{width:260,maxWidth:"70vw",height:"auto"}}/> : store.name}
           </Link>
         </header>
+      {store.slug === "mysterious-archive" ? <p style={{textAlign:"center",fontSize:13,color:"#444",margin:"10px 16px 0"}}>Every order includes a printed physical Mysterious Archive certificate of authenticity.</p> : null}
         <div className="gk-shell">
           <div className="gk-panel" style={{ textAlign: "center" }}>
             <p style={{ fontSize: 20, marginTop: 0 }}>Your cart is empty.</p>
@@ -1435,6 +1436,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
           {store.slug === "mysterious-archive" ? <img src="/archive-logo-script.png" alt="Mysterious Archive" style={{width:260,maxWidth:"70vw",height:"auto"}}/> : store.name}
         </Link>
       </header>
+      {store.slug === "mysterious-archive" ? <p style={{textAlign:"center",fontSize:13,color:"#444",margin:"10px 16px 0"}}>Every order includes a printed physical Mysterious Archive certificate of authenticity.</p> : null}
 
       <div className="gk-shell">
         <div
