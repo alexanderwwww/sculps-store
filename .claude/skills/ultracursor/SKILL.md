@@ -24,3 +24,11 @@ description: ultracursor — Alex's personal product-research Mac app (the Resea
 7. Brand: name, logo, colours via Magic Wand.
 8. Store built on Kerberos (15 sections); Shopify only if he asks.
 9. Commanded in plain words or by Claude; runs while he sleeps; phone ping when the report is ready.
+
+## Build 1 — shipped 2026-10-17
+- Download: https://blackreaper.us/media/ultracursor-1-cfda3e00ca93c939.zip (also /media/ on kerberos.gardenbuddystore.workers.dev). R2 key `ultracursor-1-cfda3e00ca93c939.zip`.
+- Source: `tools/ultracursor/src` (ultra, cloud, ui, overlay, parse, signals, q4, report, sites/{adlibrary,tiktok,instagram,trends,stores,common}). Pack: `tools/ultracursor/pack.sh <out.zip>` runs every test first.
+- Proven here (235 checks): unit 51, overlay 73, pack/run.command 77, end-to-end 34 against fixture sites + stub control plane (sweep, signals, trends, stores, login wall, pause/run/stop, no re-run after restart, self-update refuse/accept + exit 97).
+- NOT proven: selectors against the real Facebook/TikTok/Instagram/Trends pages. Every reader returns `how` + `diag` (title, url, text sample) — read the first live report's diag and fix from that, never guess.
+- Mac setup: Node 20+ and Google Chrome; unzip, move ultracursor.app to Applications, right-click → Open the first time (unsigned); sign into TikTok, Instagram, Facebook once in the Chrome window it opens (port 9333, profile ~/.ultracursor-chrome).
+- Hunt: POST /research/<KEY>/hunt `{looking, terms[], depth}`; report at /research/<KEY>/report?json=1.

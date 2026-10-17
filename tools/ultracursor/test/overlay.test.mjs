@@ -220,6 +220,9 @@ async function startChromium(dir, securePort) {
   const map = ["accounts.google.com", "appleid.apple.com", "www.facebook.com"].map((h) => `MAP ${h} 127.0.0.1:${securePort}`).join(",");
   const proc = spawn(CHROME, [
     `--host-resolver-rules=${map}`, "--ignore-certificate-errors",
+    // A proxy in the environment (cloud containers) would send these hosts to
+    // the real sites and bypass the resolver map: always go direct.
+    "--no-proxy-server",
     "--headless=new", "--no-sandbox", "--remote-debugging-port=0", `--user-data-dir=${dir}`,
     "--window-size=1280,800", "--force-device-scale-factor=2", "--hide-scrollbars",
     "--no-first-run", "--no-default-browser-check", "--disable-background-networking",
