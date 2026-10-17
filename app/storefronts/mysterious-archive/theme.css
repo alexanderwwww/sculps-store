@@ -12,3 +12,8 @@ body:has(.ma){margin:0}
 .ma-trust{list-style:none;padding:0;margin:18px 0 0;border-top:1px solid #ebebeb}
 .ma-trust li{padding:12px 0;border-bottom:1px solid #ebebeb;font-size:13px;line-height:1.5;color:#444}
 .ma-trust strong{color:#1e1e1e;display:block}
+.ma-cert-period{font-size:12px;color:#666;margin:8px 0}
+.ma-auth-card a{display:block;margin-top:6px}
+.ma-cert-gallery{margin-top:56px;padding-top:32px;border-top:1px solid #ebebeb}
+.ma-cert-gallery h2{font-size:22px;font-weight:600;margin:0 0 8px}
+.ma-cert-gallery .ma-card-photo img{object-fit:contain;background:#fff}
