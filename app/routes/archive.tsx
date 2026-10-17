@@ -14,7 +14,7 @@ export async function loader({request,context,params}:Route.LoaderArgs){
  const certificates=params.handle==='certificates';
  const selected=params.handle&&!certificates?rows.find(r=>r.product.handle===params.handle):null;
  if(params.handle&&!certificates&&!selected) throw new Response('Not found',{status:404});
- let certs:any={};try{const o=await (context.cloudflare.env as any).MEDIA?.get('ma-certificates.json');if(o)certs=(await o.json() as any)?.items??{};}catch{}
+ let certs:any={};try{const o=await (context.cloudflare.env as any).MEDIA?.get('ma-certificates.json');if(o)certs=(await o.json() as any)?.items??{};const m=await (context.cloudflare.env as any).MEDIA?.get('ma-certificates-e6c6a09be8e5d35db26c.json');if(m){for(const c of ((await m.json() as any)?.certificates??[])){if(c?.handle&&c.material)certs[c.handle]={...(certs[c.handle]??{}),material:c.material};}}}catch{}
  return {store,rows,selected,certificates,certs,query:url.searchParams.has('store')?'?store=mysterious-archive':''};
 }
 export default function Archive({loaderData:{store,rows,selected,certificates,certs,query}}:Route.ComponentProps){
