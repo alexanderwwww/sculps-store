@@ -5,7 +5,7 @@ import { products, variants } from '~/db/schema';
 import { resolveStore } from '~/lib/store.server';
 import type { Route } from './+types/archive';
 import css from '~/storefronts/mysterious-archive/theme.css?url';
-export const links = () => [{rel:'stylesheet',href:css}];
+export const links = () => [{rel:'stylesheet',href:css},{rel:'icon',type:'image/png',href:'/archive-icon.png'},{rel:'apple-touch-icon',href:'/archive-icon.png'}];
 export const meta = () => [{title:'Mysterious Archive — Chrome Hearts & Collectible Objects'}];
 export async function loader({request,context,params}:Route.LoaderArgs){
  const url=new URL(request.url), store=await resolveStore(context.db,context.hostname,url);
