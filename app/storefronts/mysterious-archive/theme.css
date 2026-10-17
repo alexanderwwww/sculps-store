@@ -17,3 +17,7 @@ body:has(.ma){margin:0}
 .ma-cert-gallery{margin-top:56px;padding-top:32px;border-top:1px solid #ebebeb}
 .ma-cert-gallery h2{font-size:22px;font-weight:600;margin:0 0 8px}
 .ma-cert-gallery .ma-card-photo img{object-fit:contain;background:#fff}
+.ma-piece-cert{max-width:1240px;margin:56px auto 0;padding:32px 24px 0;border-top:1px solid #ebebeb;text-align:center}
+.ma-piece-cert h2{font-size:22px;font-weight:600;margin:0 0 8px}
+.ma-piece-cert p{font-size:13px;color:#555;margin:6px 0 18px}
+.ma-piece-cert img{display:block;width:100%;max-width:480px;height:auto;margin:0 auto;border:1px solid #ebebeb;object-fit:contain}
