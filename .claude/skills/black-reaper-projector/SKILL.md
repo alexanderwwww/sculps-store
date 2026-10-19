@@ -92,17 +92,21 @@ Alex chose this product: "I take it."
 - **For every Black Reaper image:** cute cartoon ghosts and pumpkins are banned. The scenes must be ones the unit's slides actually include (confirm the slide list with the supplier) so the page never sells a picture the box can't make.
 
 ## The premium look Alex wants: competitor-ad scenes + the Black Reaper panel style
-The Black Reaper reference images live on blackreaper.us/media:
-- `scr-ad-6-box.jpg`: callouts, "In the box", box render
-- `br-m1-hero.webp`: night scene, coloured spec-chip row, "IT COLLECTS THEM ALL NIGHT"
-- `scr-b-street.webp`, `scr-b-scale.webp`, `scr-b-does.webp`
+**BANNED (Alex, furious): `br-m1-hero.webp`, the coloured orange/green/purple chip boxes. Never use that look again.**
 
-What those images do:
-- a big white-on-red headline bar
-- thin callout lines with bold small caps
-- a coloured spec-chip row
-- a real house at dusk or night
-- a clean light-grey studio panel for spec shots
+The approved Scream images, all on blackreaper.us/media:
+- `scr-ad-6-box.jpg`: callouts + "In the box" on white
+- `scr-b-street.webp`: red bar "IT STANDS OVER THE HOUSE"
+- `scr-b-scale.webp`: a grown adult beside it for scale
+- `scr-b-does.webp`: "EVERYTHING IT DOES" with an outlined icon list
+- `scr-c-daynight.webp`: DAY/NIGHT split
+- `scr-b-steps.webp`: "UP IN NINETY SECONDS", 3 numbered photo steps
+- `scr-b-weather.webp`: a thin white icon strip along the bottom
+- `scr-s7-detail.webp`: **the blue one**, a cinematic close-up on deep blue night
+- `scr-band.webp`: the dark iPhone iMessage at 12:00
+- `scr-b-feel.webp`: "THE WHOLE STREET SLOWS DOWN FOR IT"
+
+The style: the **red** light glowing from the product, a white-on-red condensed headline bar, black outline icons and thin callouts on white, real suburban houses.
 
 Every Ghost Projector image = this panel system wrapped around the scary night scenes from the Tecc ads. It should look premium enough to sell at $99.99 against their cheap site.
 
