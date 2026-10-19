@@ -20,7 +20,9 @@ import {
   recordOrderEvent,
 } from "~/lib/admin.server";
 import { money } from "~/lib/money";
-import { sendShippingNotice, sendRefundNotice, emailReady, trackingUrl } from "~/lib/email.server";
+import { sendShippingNotice, sendRefundNotice, emailReady, trackingUrl, orderReference } from "~/lib/email.server";
+import { COMEBACK_STORES } from "~/lib/cart.server";
+import { handlesFor } from "~/lib/aftercare.server";
 import { resendConfirmation } from "~/lib/fulfilment.server";
 import { orders } from "~/db/schema";
 import { eq, and, sql } from "drizzle-orm";
@@ -183,6 +185,16 @@ export async function action({ context, request, params }: Route.ActionArgs) {
           orderNumber: loaded.order.number,
           tracking,
           carrier: carrier || null,
+          // Black Reaper's branded shipping email, once Alex has switched its flows on.
+          reaper:
+            COMEBACK_STORES.has(loaded.store.slug) && loaded.store.emailFlowsOn
+              ? {
+                  handle: (await handlesFor(context.db, orderId))[0]?.handle ?? null,
+                  first: (loaded.order.customerName || "").split(" ")[0] || null,
+                  reference: orderReference(loaded.store.name, loaded.order.number),
+                  currency: loaded.store.currency,
+                }
+              : null,
         });
       } else {
         await recordOrderEvent(

@@ -14,11 +14,14 @@
  * One email per cart, ever. The row is stamped before the send, so a retry of
  * the same run can never send twice.
  */
-import { and, eq, isNotNull, isNull, lt, sql, asc } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, lt, notInArray, sql, asc } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { carts, stores, products, variants, discounts } from "~/db/schema";
 import { isSuppressed, unsubscribeUrl } from "./suppression.server";
-import { sendAbandonEmail, sendComebackEmail, emailReady, type EmailLine } from "./email.server";
+import { sendAbandonEmail, sendComebackEmail, sendEmail, emailReady, type EmailLine } from "./email.server";
+import { COMEBACK_CENTS, COMEBACK_STORES, ensureComebackDiscount, isComebackCode, priceCart } from "./cart.server";
+import { reaperCartEmail, reaperCheckoutEmail, reaperComebackEmail, type FlowLine } from "./emails/reaper-flows";
+import { formatMoney } from "./money";
 import { reaperProduct } from "./emails/reaper-products";
 import { publicOffer } from "./discounts.server";
 
@@ -63,6 +66,9 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
     return summary;
   }
 
+  // Black Reaper runs its own flow (below), and only once Alex has switched it on.
+  await runReaperRecovery(db, env, now, summary);
+
   const rows = await db
     .select({
       cart: carts,
@@ -72,6 +78,7 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
     .innerJoin(stores, eq(stores.id, carts.storeId))
     .where(
       and(
+        notInArray(stores.slug, [...COMEBACK_STORES]),
         eq(carts.status, "open"),
         isNotNull(carts.email),
         isNull(carts.recoveryEmailedAt),
@@ -276,4 +283,169 @@ async function describeLines(db: DB, items: CartLine[]): Promise<EmailLine[]> {
   }
 
   return lines;
+}
+
+
+/* ===================================================================== *
+ * Black Reaper's recovery flow (Alex, 2026-10-19).
+ *
+ *   #1  ~1h after a cart with an email was left: the cart email, or the
+ *       checkout email when it reached payment. No code.
+ *   #2  ~24h after #1, if the cart is still open: welcome back, $20 off, on a
+ *       code minted for this cart alone and applied by the link.
+ *
+ * Off until the store's email_flows_on is true: nothing is sent and nothing is
+ * stamped, so a cart left while it is off is still picked up once it is on.
+ * Each step is claimed on the row before the send, so a run that repeats
+ * cannot send twice.
+ * ===================================================================== */
+async function runReaperRecovery(db: DB, env: Env, now: Date, summary: RecoverySummary): Promise<void> {
+  const live = await db
+    .select()
+    .from(stores)
+    .where(and(inArray(stores.slug, [...COMEBACK_STORES]), eq(stores.emailFlowsOn, true)));
+  for (const store of live) {
+    const site = `https://${store.domain}`;
+    const postalAddress =
+      [store.legalName ?? store.name, store.address1, store.city, [store.region, store.postalCode].filter(Boolean).join(" "), store.country]
+        .filter(Boolean)
+        .join(", ") || null;
+
+    // #1
+    const first = await db
+      .select()
+      .from(carts)
+      .where(
+        and(
+          eq(carts.storeId, store.id),
+          eq(carts.status, "open"),
+          isNotNull(carts.email),
+          isNull(carts.recoveryEmailedAt),
+          lt(carts.updatedAt, new Date(now.getTime() - HOUR)),
+          sql`${carts.updatedAt} > ${new Date(now.getTime() - 72 * HOUR)}`,
+          sql`jsonb_array_length(${carts.items}) > 0`,
+        ),
+      )
+      .limit(50);
+    for (const cart of first) {
+      summary.considered += 1;
+      const kind: "cart" | "checkout" = cart.paymentIntentId ? "checkout" : "cart";
+      if (await isSuppressed(db, cart.email as string)) {
+        await db.update(carts).set({ recoveryEmailedAt: now, recoveryStage: "suppressed" }).where(eq(carts.id, cart.id));
+        continue;
+      }
+      const claimed = await db
+        .update(carts)
+        .set({ recoveryEmailedAt: now, recoveryStage: kind })
+        .where(and(eq(carts.id, cart.id), isNull(carts.recoveryEmailedAt)))
+        .returning({ id: carts.id });
+      if (!claimed.length) continue;
+      const view = await reaperCartView(db, store, cart.token);
+      if (!view) continue;
+      const input = {
+        domain: store.domain,
+        handle: view.handle,
+        money: formatMoney,
+        currency: store.currency,
+        lines: view.lines,
+        totalCents: view.totalCents,
+        recoverUrl: `${site}/cart?recover=${encodeURIComponent(cart.token)}`,
+        unsubscribeUrl: await unsubscribeUrl(env, site, cart.email as string),
+        postalAddress,
+      };
+      const mail = kind === "checkout" ? reaperCheckoutEmail(input) : reaperCartEmail(input);
+      await deliver(env, store, cart.email as string, mail, summary);
+    }
+
+    // #2, the comeback
+    const second = await db
+      .select()
+      .from(carts)
+      .where(
+        and(
+          eq(carts.storeId, store.id),
+          eq(carts.status, "open"),
+          isNotNull(carts.email),
+          inArray(carts.recoveryStage, ["cart", "checkout"]),
+          lt(carts.recoveryEmailedAt, new Date(now.getTime() - 24 * HOUR)),
+          sql`${carts.recoveryEmailedAt} > ${new Date(now.getTime() - 72 * HOUR)}`,
+          sql`jsonb_array_length(${carts.items}) > 0`,
+        ),
+      )
+      .limit(50);
+    for (const cart of second) {
+      summary.considered += 1;
+      const claimed = await db
+        .update(carts)
+        .set({ recoveryStage: "comeback" })
+        .where(and(eq(carts.id, cart.id), inArray(carts.recoveryStage, ["cart", "checkout"])))
+        .returning({ id: carts.id });
+      if (!claimed.length) continue;
+      // Never stacks: a cart already carrying another code gets no comeback email.
+      if (cart.discountCode && !isComebackCode(cart.discountCode)) continue;
+      if (await isSuppressed(db, cart.email as string)) continue;
+      const view = await reaperCartView(db, store, cart.token);
+      if (!view) continue;
+      const code = await ensureComebackDiscount(db, store.id, cart.id);
+      const mail = reaperComebackEmail({
+        domain: store.domain,
+        handle: view.handle,
+        money: formatMoney,
+        currency: store.currency,
+        lines: view.lines,
+        totalCents: view.subtotalCents,
+        recoverUrl: `${site}/cart?recover=${encodeURIComponent(cart.token)}&code=${encodeURIComponent(code)}`,
+        unsubscribeUrl: await unsubscribeUrl(env, site, cart.email as string),
+        postalAddress,
+        code,
+        offCents: COMEBACK_CENTS,
+      });
+      await deliver(env, store, cart.email as string, mail, summary);
+    }
+  }
+}
+
+async function deliver(
+  env: Env,
+  store: typeof stores.$inferSelect,
+  to: string,
+  mail: { subject: string; html: string; text: string },
+  summary: RecoverySummary,
+) {
+  const result = await sendEmail(env, {
+    from: `${store.name} <${store.emailFrom || "orders@resend.dev"}>`,
+    to,
+    replyTo: store.contactEmail,
+    subject: mail.subject,
+    html: mail.html,
+    text: mail.text,
+  });
+  if (result.ok) summary.sent += 1;
+  else {
+    summary.failed += 1;
+    summary.reasons.push(`${store.slug} · ${to} · ${result.reason}`);
+  }
+}
+
+/**
+ * The cart as the customer would see it, priced by the same priceCart the
+ * checkout uses, without granting anything (the system is reading, not her).
+ */
+export async function reaperCartView(db: DB, store: typeof stores.$inferSelect, token: string) {
+  const priced = await priceCart(db, store, token, null, { comeback: false });
+  if (!priced.lines.length) return null;
+  const [first] = await db
+    .select({ handle: products.handle })
+    .from(variants)
+    .innerJoin(products, eq(products.id, variants.productId))
+    .where(eq(variants.id, priced.lines[0].variantId))
+    .limit(1);
+  const lines: FlowLine[] = priced.lines.map((l) => ({
+    label: l.label.toLowerCase().includes(l.productTitle.toLowerCase().replace(/^the /, "")) || l.label.toLowerCase().includes("scream")
+      ? l.label
+      : `${l.productTitle} \u2014 ${l.label}`,
+    quantity: l.quantity,
+    lineTotalCents: l.lineTotalCents,
+  }));
+  return { handle: first?.handle ?? null, lines, subtotalCents: priced.subtotalCents, totalCents: priced.totalCents };
 }

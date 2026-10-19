@@ -137,3 +137,27 @@ Also make two "CLAIM 50% OFF" banners, one per product, for the top of each page
 - Deployed 5a36fbc5-2dd4-4b2b-a921-354cf1dbad43; rollback `npx wrangler rollback bed43468-f70c-4717-9aee-488a617efaca`.
 - 2026-10-19: the claim no longer adds anything to the cart. After the price drop it closes on the bundle picker and the customer chooses 1, 2 or 3 (Alex). Deployed as 7b140c5c.
 - 2026-10-19: all $31 removed. OCTOBER31 and the minted OCT31xxxx codes are inactive, and the checkout claim card is off for the Reaper skin. The only offer is 50% off the second one. Deployed as d465b16a. Checked: no $31 on home, the projector page, or any of the 5 checkouts.
+
+## 2026-10-19 — Comeback $20 and the email flows
+
+- **REAPER20 was live again.** Turning OCTOBER31 off made `publicOffer` fall back to the old REAPER20 row, and the top bar showed it. It is now `active=false` in the DB. Black Reaper has no public code.
+- **Comeback rule** (Alex: "when people come back and they have stuff in their cart, they get $20 off"). This lives in `app/lib/cart.server.ts`, in `grantComeback`.
+  - Who gets it: an open cart with items that was left. "Left" means a recovery email went out for it, or nothing in it changed for an hour.
+  - When: it is applied when the cart is next priced (drawer, checkout, payment intent) or before the next add-to-cart.
+  - The code: `COMEBACK20-<first 8 chars of the cart id>`, fixed $20 off the order, single use, once per customer. The cart and checkout show it as "Welcome back — $20 off".
+  - It never stacks. It is only granted to a cart that has no code on it, it is granted once, and if the customer removes it, it stays off.
+  - It only works on its own cart. `priceCart` and both apply forms refuse a COMEBACK20 code on any other cart.
+  - It is $20 and nothing else. Never invent another number.
+  - Only on the `reaper` store, set by `COMEBACK_STORES`.
+- **Email flows** (`app/lib/emails/reaper-flows.ts`, in the receipt's look). All of them sit behind `stores.email_flows_on`, which is **OFF for reaper** until Alex says send.
+  - Cart left, email known, no payment yet: "<product> is still in your cart", about 1h after.
+  - Checkout left at payment: "<first>, one tap left", about 1h after.
+  - The comeback: "Welcome back: $20 off <product>", about 24h after the first email. The link applies the code.
+  - Order confirmation: the existing `reaper-receipt.ts`. It is already live and not gated; only the projector facts and picture in it were corrected.
+  - Shipped with tracking: "<product> is on its way", sent when tracking is added in the admin.
+  - Setup guide: "Tonight, the street stops at your house", 6 days after it ships.
+  - Review ask: "Did the street stop?", 4 days after the setup guide.
+- **Switching the emails on** is a DB flag, so Alex never needs a terminal. When he says send, the agent runs `update stores set email_flows_on=true where slug='reaper'`. While the flag is off, carts are not stamped, so carts from the last 72h are still picked up once it is on.
+- Previews: render with the scratch `preview.ts` and screenshot at 420px. Never send a customer email without Alex's OK.
+- **To fix:** the projector's DB `description` still describes the old window version ("ghosts across your front window"). The page's buy box is right. That site copy was left alone for Alex to approve.
+- Deployed 83b62bca. Rollback: `npx wrangler rollback d465b16a-5670-4a44-98e4-b5063b10affa`.

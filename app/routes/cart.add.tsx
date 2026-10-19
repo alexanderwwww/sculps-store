@@ -20,6 +20,7 @@ import {
   saveCart,
   setCartDiscount,
   cartDiscountCode,
+  grantComebackFor,
 } from "~/lib/cart.server";
 import { isReaperSkin } from "~/lib/skin";
 import { publicOffer } from "~/lib/discounts.server";
@@ -117,6 +118,9 @@ async function add(
    * Nothing in the shop links to either with a GET — the drawers and the buy
    * box post. Ignoring them on GET costs nothing and closes both.
    */
+  // A customer back at a cart she left gets the comeback before this add
+  // touches the cart (the add moves updatedAt, which is how "left" is read).
+  await grantComebackFor(context.db, store, token);
   const trusted = request.method.toUpperCase() === "POST";
   const replace = trusted && url.searchParams.get("replace") === "1";
   const lines = replace ? [] : await currentLines(context.db, store.id, token);

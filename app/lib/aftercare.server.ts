@@ -16,7 +16,11 @@
 import { and, eq, isNotNull, lt, sql } from "drizzle-orm";
 import type { makeDb } from "../db/client";
 import { orders, orderItems, orderEvents, stores, variants, products } from "../db/schema";
-import { emailReady, sendDeliveredSetupEmail, sendReviewRequestEmail } from "./email.server";
+import { emailReady, sendDeliveredSetupEmail, sendEmail, sendReviewRequestEmail } from "./email.server";
+import { recordOrderEvent } from "./admin.server";
+import { COMEBACK_STORES } from "./cart.server";
+import { reaperDeliveredEmail, reaperReviewEmail } from "./emails/reaper-flows";
+import { formatMoney } from "./money";
 
 type DB = ReturnType<typeof makeDb>;
 type Env = Parameters<typeof emailReady>[0];
@@ -44,7 +48,7 @@ async function alreadySent(db: DB, orderId: string, type: string): Promise<boole
 }
 
 /** The product handles behind an order's lines, in line order. */
-async function handlesFor(db: DB, orderId: string) {
+export async function handlesFor(db: DB, orderId: string) {
   return db
     .select({
       handle: products.handle,
@@ -92,6 +96,58 @@ export async function runAftercare(db: DB, env: Env, now = new Date()): Promise<
       orderNumber: order.number,
     };
     const shippedAgo = now.getTime() - (order.fulfilledAt as Date).getTime();
+
+    // Black Reaper: its own templates, and only once Alex has switched them on.
+    if (COMEBACK_STORES.has(store.slug)) {
+      if (!store.emailFlowsOn) continue;
+      try {
+        const lines = await handlesFor(db, order.id);
+        if (!lines.length) continue;
+        const base = {
+          domain: store.domain,
+          first: (order.customerName || "").split(" ")[0] || null,
+          handle: lines[0].handle,
+          money: formatMoney,
+          currency: store.currency,
+        };
+        let type: string | null = null;
+        let mail: { subject: string; html: string; text: string } | null = null;
+        if (!(await alreadySent(db, order.id, "email:delivered"))) {
+          type = "email:delivered";
+          mail = reaperDeliveredEmail(base);
+        } else if (
+          shippedAgo > (DELIVERED_AFTER_DAYS + REVIEW_AFTER_DAYS) * DAY &&
+          !(await alreadySent(db, order.id, "email:review")) &&
+          !(await alreadySent(db, order.id, "email:skipped"))
+        ) {
+          type = "email:review";
+          mail = reaperReviewEmail(base);
+        }
+        if (!type || !mail) continue;
+        const result = await sendEmail(env, {
+          from: `${store.name} <${store.emailFrom || "orders@resend.dev"}>`,
+          to: order.email as string,
+          replyTo: store.contactEmail,
+          subject: mail.subject,
+          html: mail.html,
+          text: mail.text,
+        });
+        await recordOrderEvent(
+          db,
+          order.id,
+          result.ok ? type : "email:failed",
+          result.ok ? `${mail.subject} \u2014 sent to ${order.email}` : `${mail.subject} could NOT be sent to ${order.email} · ${result.reason}`,
+          result.ok ? { id: result.id } : { reason: result.reason },
+        );
+        if (!result.ok) summary.failed += 1;
+        else if (type === "email:delivered") summary.delivered += 1;
+        else summary.reviews += 1;
+      } catch (error) {
+        summary.failed += 1;
+        summary.reasons.push(`#${order.number}: ${String((error as Error)?.message ?? error).slice(0, 120)}`);
+      }
+      continue;
+    }
 
     try {
       if (!(await alreadySent(db, order.id, "email:delivered"))) {

@@ -350,7 +350,7 @@ export function CartDrawerProvider({
             {lines.length ? (
               cart?.discount ? (
                 <div className="cb-code cb-code--on">
-                  <span className="cb-code__tag">{cart.discount.code}</span>
+                  <span className="cb-code__tag">{cart.discount.code.startsWith("COMEBACK20-") ? cart.discount.label : cart.discount.code}</span>
                   <span className="cb-code__amt">−{money(cart.discount.amountCents, currency)}</span>
                   <button type="button" className="cb-code__x" onClick={dropCode} disabled={codeBusy}>Remove</button>
                 </div>
@@ -387,7 +387,7 @@ export function CartDrawerProvider({
                 the button is the number that will be charged. */}
             {cart?.discount && cart.discount.amountCents > 0 ? (
               <div className="cb-drawer__sum cb-drawer__sum--disc">
-                <span>Discount · {cart.discount.code}</span>
+                <span>{cart.discount.code.startsWith("COMEBACK20-") ? cart.discount.label : `Discount · ${cart.discount.code}`}</span>
                 <span>−{money(cart.discount.amountCents, currency)}</span>
               </div>
             ) : null}

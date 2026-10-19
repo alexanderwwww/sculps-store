@@ -6,13 +6,128 @@
  * the business can see, and so the price is re-read at checkout from the
  * variant rather than trusted from the browser.
  */
-import { eq, and } from "drizzle-orm";
+import { eq, and, like, sql } from "drizzle-orm";
 import type { DB } from "~/db/client";
-import { carts, variants, products, stores } from "~/db/schema";
+import { carts, variants, products, stores, discounts, discountRedemptions } from "~/db/schema";
 import { taxRateFor } from "./admin.server";
-import { applyDiscount, checkDiscount, discountLabel, findDiscount } from "./discounts.server";
+import { applyDiscount, checkDiscount, discountLabel, findDiscount, normaliseCode } from "./discounts.server";
 
 const CART_COOKIE = "kerberos_cart";
+
+/* ------------------------------------------------------------- comeback */
+
+/**
+ * The comeback: a customer who left a cart and comes back to it gets $20 off
+ * that order (Alex, 2026-10-19: "when people come back and they have stuff in
+ * their cart, they should get the comeback 20 dollars off").
+ *
+ * - The code is minted for one cart: COMEBACK20-<first 8 of the cart id>.
+ *   priceCart honours a COMEBACK20 code only on the cart it was minted for, so
+ *   a fresh cart, or anybody typing somebody else's, gets nothing.
+ * - "Came back" means the cart was left: it has lines, it is open, and either
+ *   a recovery email went out for it or nothing in it changed for an hour.
+ * - It never stacks: a cart carries one code, and the grant only happens on a
+ *   cart with no code on it. It is granted once; removing it keeps it off.
+ * - $20 fixed against the goods, so applyDiscount can never take the total
+ *   below zero. Single use, once per customer, recorded at payment like any
+ *   other code.
+ */
+export const COMEBACK_PREFIX = "COMEBACK20-";
+export const COMEBACK_CENTS = 2000;
+export const COMEBACK_LABEL = "Welcome back \u2014 $20 off";
+/** Stores that run the comeback. Black Reaper only, as asked. */
+export const COMEBACK_STORES = new Set(["reaper"]);
+const LEFT_AFTER_MS = 3_600_000;
+
+export function comebackCodeFor(cartId: string): string {
+  return COMEBACK_PREFIX + cartId.replace(/-/g, "").slice(0, 8).toUpperCase();
+}
+
+export function isComebackCode(code: string | null | undefined): boolean {
+  return Boolean(code && code.trim().toUpperCase().startsWith(COMEBACK_PREFIX));
+}
+
+/** The discount row behind a cart's comeback code, made once. */
+export async function ensureComebackDiscount(db: DB, storeId: string, cartId: string): Promise<string> {
+  const code = comebackCodeFor(cartId);
+  await db
+    .insert(discounts)
+    .values({
+      storeId,
+      code,
+      kind: "fixed",
+      value: COMEBACK_CENTS,
+      appliesTo: "order",
+      usageLimit: 1,
+      oncePerCustomer: true,
+      active: true,
+    })
+    .onConflictDoNothing();
+  return code;
+}
+
+type CartRow = typeof carts.$inferSelect;
+
+/**
+ * Puts the comeback on a cart that was left and is being looked at again.
+ * Returns the row as it now stands. Does not touch updatedAt, so the recovery
+ * timings are not moved by it.
+ */
+async function grantComeback(db: DB, store: { id: string; slug: string }, row: CartRow, now = new Date()): Promise<CartRow> {
+  if (!COMEBACK_STORES.has(store.slug)) return row;
+  if (row.status !== "open" || row.discountCode) return row;
+  if (!Array.isArray(row.items) || !(row.items as unknown[]).length) return row;
+  const left = row.recoveryEmailedAt != null || now.getTime() - new Date(row.updatedAt).getTime() > LEFT_AFTER_MS;
+  if (!left) return row;
+
+  const code = comebackCodeFor(row.id);
+  const [already] = await db
+    .select({ id: discounts.id })
+    .from(discounts)
+    .where(and(eq(discounts.storeId, store.id), eq(discounts.code, code)))
+    .limit(1);
+  // Granted once already (and maybe taken off by the customer): leave it.
+  if (already) return row;
+
+  // Once per customer, across carts.
+  if (row.email) {
+    const [used] = await db
+      .select({ id: discountRedemptions.id })
+      .from(discountRedemptions)
+      .innerJoin(discounts, eq(discounts.id, discountRedemptions.discountId))
+      .where(
+        and(
+          eq(discounts.storeId, store.id),
+          like(discounts.code, `${COMEBACK_PREFIX}%`),
+          eq(discountRedemptions.email, row.email.trim().toLowerCase()),
+        ),
+      )
+      .limit(1);
+    if (used) return row;
+  }
+
+  await ensureComebackDiscount(db, store.id, row.id);
+  const [updated] = await db
+    .update(carts)
+    .set({ discountCode: code })
+    .where(and(eq(carts.id, row.id), sql`${carts.discountCode} is null`))
+    .returning();
+  return updated ?? row;
+}
+
+/** Why a typed comeback code cannot go on this cart, or null when it can (or is not one). */
+export async function comebackRefusal(db: DB, storeId: string, token: string | null, code: string): Promise<string | null> {
+  if (!isComebackCode(code)) return null;
+  const row = await loadCartRow(db, storeId, token);
+  return row && normaliseCode(code) === comebackCodeFor(row.id) ? null : "That code is not valid";
+}
+
+/** For callers that only hold the token (the add-to-cart route). */
+export async function grantComebackFor(db: DB, store: { id: string; slug: string }, token: string | null): Promise<void> {
+  if (!COMEBACK_STORES.has(store.slug)) return;
+  const row = await loadCartRow(db, store.id, token);
+  if (row) await grantComeback(db, store, row);
+}
 
 export interface CartLine {
   variantId: string;
@@ -165,6 +280,9 @@ async function loadCartRow(db: DB, storeId: string, token: string | null) {
         paymentIntentId: null,
         paymentIntentAmount: null,
         paymentIntentSecret: null,
+        // A new cart: the old one's recovery emails are not this one's.
+        recoveryEmailedAt: null,
+        recoveryStage: null,
         updatedAt: new Date(),
       })
       .where(eq(carts.id, row.id))
@@ -186,8 +304,11 @@ export async function priceCart(
   token: string | null,
   /** the shipping state, once checkout knows it — picks a manual state rate */
   region: string | null = null,
+  /** false when the system, not the customer, is reading the cart (recovery emails) */
+  options: { comeback?: boolean } = {},
 ): Promise<PricedCart> {
-  const row = await loadCartRow(db, store.id, token);
+  const loaded = await loadCartRow(db, store.id, token);
+  const row = loaded && options.comeback !== false ? await grantComeback(db, store, loaded) : loaded;
   const stored = (row?.items ?? []) as CartLine[];
 
   const resolved: { line: CartLine; variant: typeof variants.$inferSelect; product: typeof products.$inferSelect }[] = [];
@@ -255,7 +376,10 @@ export async function priceCart(
   let discountOrderCents = 0;
   let discountShippingCents = 0;
 
-  if (row?.discountCode && lines.length) {
+  if (row?.discountCode && lines.length && isComebackCode(row.discountCode) && normaliseCode(row.discountCode) !== comebackCodeFor(row.id)) {
+    // A comeback code belongs to the cart it was minted for, and no other.
+    discountReason = "That code is not valid";
+  } else if (row?.discountCode && lines.length) {
     const found = await findDiscount(db, store.id, row.discountCode);
     const check = checkDiscount(found, {
       subtotalCents,
@@ -268,7 +392,7 @@ export async function priceCart(
       discountShippingCents = amounts.shippingCents;
       discount = {
         code: check.discount.code,
-        label: discountLabel(check.discount, store.currency),
+        label: isComebackCode(check.discount.code) ? COMEBACK_LABEL : discountLabel(check.discount, store.currency),
         amountCents: amounts.totalCents,
       };
     } else {

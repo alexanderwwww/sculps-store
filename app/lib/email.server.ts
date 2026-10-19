@@ -15,6 +15,7 @@ import { recordOrderEvent } from "./admin.server";
 import { formatMoney } from "./money";
 import { reaperProduct, reaperHandles, type ReaperProductGuide } from "./emails/reaper-products";
 import { reaperReceiptHtml } from "./emails/reaper-receipt";
+import { reaperShippedEmail } from "./emails/reaper-flows";
 
 export interface EmailLine {
   label: string;
@@ -149,6 +150,9 @@ async function send(
     return { ok: false, reason: error instanceof Error ? error.message : "Unknown error." };
   }
 }
+
+/** The raw sender, for templates built elsewhere (emails/reaper-flows.ts). */
+export const sendEmail = send;
 
 /** Every customer-typed string goes through this before it touches HTML. */
 export function esc(value: unknown): string {
@@ -677,11 +681,36 @@ export async function sendShippingNotice(
     orderNumber: number;
     tracking: string;
     carrier: string | null;
+    /** Black Reaper with its flows switched on: the branded version (emails/reaper-flows.ts). */
+    reaper?: { handle: string | null; first: string | null; reference: string; currency: string } | null;
   },
 ): Promise<boolean> {
   const from = input.fromAddress || "orders@resend.dev";
   const carrier = input.carrier ? ` with ${input.carrier}` : "";
   const link = trackingUrl(input.carrier, input.tracking);
+
+  if (input.reaper && input.domain) {
+    const mail = reaperShippedEmail({
+      domain: input.domain,
+      first: input.reaper.first,
+      handle: input.reaper.handle,
+      money: formatMoney,
+      currency: input.reaper.currency,
+      reference: input.reaper.reference,
+      tracking: input.tracking,
+      carrier: input.carrier,
+      trackUrl: link,
+    });
+    const sent = await send(env, { from: `${input.storeName} <${from}>`, to: input.to, replyTo: input.replyTo, subject: mail.subject, html: mail.html, text: mail.text });
+    await recordOrderEvent(
+      db,
+      orderId,
+      sent.ok ? "email:shipping" : "email:failed",
+      sent.ok ? `Shipping confirmation sent to ${input.to}` : `Shipping confirmation could NOT be sent to ${input.to} · ${sent.reason}`,
+      sent.ok ? { id: sent.id } : { reason: sent.reason },
+    );
+    return sent.ok;
+  }
 
   const text = [
     `Good news ${input.customerName} — order #${input.orderNumber} is on its way.`,

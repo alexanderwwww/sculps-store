@@ -17,13 +17,13 @@ const esc = (v: unknown) => String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&
 /** The picture each product leads with: email-sized JPGs on the shop's own /media. */
 const HERO: Record<string, string> = {
   "the-scream": "em-scr-hero.jpg",
-  "haunted-projector": "em-hp-ip-s02.jpg",
+  "haunted-projector": "gp-gem-01-01.jpg",
   "black-reaper": "em-s1-reaper.jpg",
   "crawling-zombie": "em-s1-zombie.jpg",
   "halloween-movie-theater": "em-s1-theater.jpg",
   "giant-skeleton-12ft": "em-s1-skeleton.jpg",
 };
-const SHIP_TITLE: Record<string, string> = { "the-scream": "Up in ninety seconds", "haunted-projector": "Setting it up" };
+const SHIP_TITLE: Record<string, string> = { "the-scream": "Up in ninety seconds", "haunted-projector": "Up in a minute" };
 
 export interface ReaperReceiptInput {
   domain: string;

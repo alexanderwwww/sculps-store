@@ -18,6 +18,7 @@ import {
   newCartToken,
   cartCookie,
   cartRowByToken,
+  comebackRefusal,
 } from "~/lib/cart.server";
 import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.server";
 import { eq } from "drizzle-orm";
@@ -192,6 +193,13 @@ export async function action({ request, context }: Route.ActionArgs) {
       return Response.json({ ok: false, discountError: "Please type a discount code." });
     }
 
+    const refused = await comebackRefusal(context.db, store.id, token, code);
+    if (refused) {
+      return Response.json(
+        { ok: false, discountError: refused },
+        setCookie ? { headers: { "Set-Cookie": setCookie } } : undefined,
+      );
+    }
     const cart = await priceCart(context.db, store, token);
     const found = await findDiscount(context.db, store.id, code);
     const check = checkDiscount(found, {

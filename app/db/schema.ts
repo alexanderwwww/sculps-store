@@ -80,6 +80,13 @@ export const stores = pgTable("stores", {
   checkoutCompanyMode: text("checkout_company_mode").notNull().default("hidden"),
   checkoutConsent: boolean("checkout_consent").notNull().default(true),
   checkoutCaptureAbandoned: boolean("checkout_capture_abandoned").notNull().default(true),
+  /**
+   * The automated customer emails for this store's own flows (recovery,
+   * comeback, shipped, setup, review) in their branded form. Black Reaper's
+   * stay off until Alex has read the previews and said send; every other
+   * store keeps what it had.
+   */
+  emailFlowsOn: boolean("email_flows_on").notNull().default(true),
   checkoutTip: boolean("checkout_tip").notNull().default(false),
   /**
    * Package protection, priced by the store and never by the browser.

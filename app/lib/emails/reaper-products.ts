@@ -10,8 +10,9 @@
  *
  * Two things this file will never say: a percentage (the shop only ever
  * talks in dollars) and a power source a product does not have. The Reaper
- * and the Zombie run on batteries; the Scream, the Theater and the Projector
- * plug in.
+ * and the Zombie run on batteries; the Scream, the Theater and the Ghost
+ * Projector plug in. The Crawling Zombie, the Black Reaper and the Theater are
+ * drafts on the store (2026-10-19); their entries stay for old orders.
  */
 
 export type ReaperProductHandle =
@@ -196,42 +197,41 @@ export const REAPER_PRODUCTS: Record<ReaperProductHandle, ReaperProductGuide> = 
   },
 
   "haunted-projector": {
-    name: "The Haunted Projector",
-    image: "/media/em-s1-projector.jpg",
+    name: "The Ghost Projector",
+    image: "/media/gp-gem-01-01.jpg",
     setupSteps: [
-      "Stick the window film on the inside of a front window and smooth it flat.",
-      "Stand the projector on the windowsill inside, lens pointed at the glass.",
-      "Plug it in. A 16 ft outdoor extension cord is in the box if the socket is far.",
-      "Pick one of the twelve loops on the remote, or let them cycle on their own.",
-      "Set the timer: four or six hours, then it switches itself off.",
+      "Push the ground stake into the lawn, or screw the wall mount to a porch post, a fence or a shelf.",
+      "Set the projector on it and point both heads at the garage door or the front of the house.",
+      "Plug the power adapter into a socket.",
+      "Pick the scene and the colour with the remote. That is the whole setup, about a minute.",
     ],
     setupTips: [
-      "Step outside once it is dark. From the street the ghosts walk across the pane.",
-      "It can also go out on the lawn: the adjustable stake mount angles it up a wall, and from about sixteen feet back the picture is thirteen feet wide.",
-      "Outdoors, the housing is weather-sealed but the plug end has to stay dry. Use an outdoor socket cover.",
+      "The further back it stands, the bigger the picture. Across the lawn it fills a garage door or the whole house front.",
+      "The darker the wall, the stronger it looks. Switch the porch light off and watch it come alive.",
+      "It works inside too: the living room wall, the hallway, up the stairs.",
     ],
     inBox: [
-      "The projector, with twelve loops built in",
-      "Ground stake mount, adjustable angle",
-      "Window film, for the indoor-glass effect",
-      "16 ft outdoor extension cord",
-      "Remote — loop and timer",
+      "The projector \u2014 pattern lens and crystal colour lens",
+      "Ground stake, to angle it at the house",
+      "Wall mount, for a porch post, fence or shelf",
+      "Power adapter",
+      "Remote \u2014 scenes and colour from the sofa",
     ],
     faq: [
       {
-        q: "Does it make any noise?",
-        a: "None at all. It is a projector, not a speaker.",
+        q: "What does it put on the house?",
+        a: "Moving Halloween scenes from the pattern lens, with moving colour from the crystal lens on top. Garage door, house front, a wall or a hallway.",
       },
       {
-        q: "Does it turn itself off?",
-        a: "Yes. The timer on the remote runs it for four or six hours and then it stops until the next night.",
+        q: "How big does it get?",
+        a: "The further back it stands, the bigger it gets. From across the lawn it fills a garage door or the front of the house.",
       },
       {
-        q: "What does it actually show?",
-        a: "Twelve loops: ghosts drifting past, a skeleton, bats, a witch, moving shadows. They cycle, or you fix one.",
+        q: "Will it work with the Scream in the yard?",
+        a: "That is the good version. The Scream on the lawn, the house behind it glowing.",
       },
     ],
-    reviewAsk: "Are there ghosts in your window yet? Tell us how The Haunted Projector looks from the street.",
+    reviewAsk: "Has the street stopped at your house yet? Tell us how The Ghost Projector looks on the wall.",
   },
 };
 

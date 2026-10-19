@@ -44,6 +44,7 @@ import {
   currentLines,
   addLine,
   saveCart,
+  comebackRefusal,
 } from "~/lib/cart.server";
 import { checkDiscount, findDiscount, normaliseCode, publicOffer } from "~/lib/discounts.server";
 import { scratchPlayFor, SCRATCH_PRIZES, claimExtraFor } from "~/lib/scratch.server";
@@ -673,6 +674,10 @@ export async function action({ request, context }: Route.ActionArgs) {
     const code = normaliseCode(String(form.get("code") || ""));
     if (!code) {
       return Response.json({ discountError: "Please type a discount code." }, headers ? { headers } : undefined);
+    }
+    const refused = await comebackRefusal(context.db, store.id, cartToken, code);
+    if (refused) {
+      return Response.json({ discountError: refused }, headers ? { headers } : undefined);
     }
     const found = await findDiscount(context.db, store.id, code);
     const check = checkDiscount(found, {
