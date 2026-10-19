@@ -95,6 +95,7 @@ export async function runTask({ page, task, deps }) {
     if (shown >= 6 || !/^image\//.test(f.mime || "")) continue;
     let img = null;
     try { img = await downscale(page, await readFile(f.path), f.mime); } catch { img = null; }
+    if (!img) { content.push({ type: "text", text: `Photo ${f.name} could not be shown to you (format not readable); do not describe it.` }); continue; }
     if (img) {
       content.push({ type: "text", text: `Photo ${shown + 1}: ${f.name}` });
       content.push({ type: "image", source: { type: "base64", media_type: img.mime, data: img.b64 } });
@@ -150,6 +151,8 @@ export async function runTask({ page, task, deps }) {
   const note = (o) => { noted = { ...noted, ...o }; };
   const runTool = async (tu, step) => {
     noted = {};
+    // Alex closed the tab: carry on in the last open one.
+    try { if (page.isClosed()) { const open = page.context().pages().filter((p) => !p.isClosed()); if (!open.length) return { stop: true, reason: "the tab was closed" }; page = open[open.length - 1]; deps.setPage && deps.setPage(page); } } catch { return { stop: true, reason: "the tab was closed" }; }
     const name = tu.name, input = tu.input || {};
     const bad = validate(name, input);
     if (bad) return { text: format({ ok: false, error: bad }), error: true };
@@ -219,9 +222,11 @@ export async function runTask({ page, task, deps }) {
         note({ target: targetText, ok: false, error: `refused: ${secret}` });
         return { text: format({ ok: false, error: `ultracursor never types into ${secret}. If a sign-in is needed, it pauses for Alex by itself; otherwise finish with needs_alex.` }), error: true };
       }
-      if (input.enter && enterIsFinal({ ...target, ...(info || {}) })) kind = typed.some((t) => t.price) ? "price" : "submit";
+      // A line break in a one-line field submits its form, Shift or not: that is a submit too.
+      const breaks = /\n/.test(String(input.text)) && info && !info.multiline;
+      if ((input.enter || breaks) && enterIsFinal({ ...target, ...(info || {}) })) kind = typed.some((t) => t.price) ? "price" : "submit";
     } else if (name === "press") {
-      if (String(input.key) === "Enter") {
+      if (["Enter", "Space"].includes(String(input.key))) {
         let focus = null;
         try {
           focus = await page.evaluate(() => {
@@ -349,6 +354,7 @@ export async function runTask({ page, task, deps }) {
         how: noted.how || null, final: noted.final || null, url: noted.url || (() => { try { return page.url(); } catch { return null; } })(),
         outcome: out.finish ? `finish ${out.finish.status}` : out.stop ? "stop" : undefined,
       });
+      if (out.finish && uses.length > 1) { results.push({ type: "tool_result", tool_use_id: tu.id, content: "not run: call finish alone, after you have seen the results of your actions", is_error: true }); continue; }
       if (out.finish) { finish = out.finish; results.push({ type: "tool_result", tool_use_id: tu.id, content: "ok: true" }); continue; }
       if (out.stop) { stop = out; results.push({ type: "tool_result", tool_use_id: tu.id, content: "not run: stopped", is_error: true }); continue; }
       errorsInRow = out.error ? errorsInRow + 1 : 0;

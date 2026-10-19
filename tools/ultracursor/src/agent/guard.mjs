@@ -101,7 +101,8 @@ export async function detectWall(page, profile) {
     info = await page.evaluate(() => {
       const vis = (el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 2 && r.height > 2 && s.visibility !== "hidden" && s.display !== "none"; };
       const pw = Array.from(document.querySelectorAll('input[type="password"]')).some(vis);
-      const frames = Array.from(document.querySelectorAll("iframe")).map((f) => f.src || "").filter(Boolean);
+      // Only a captcha you can see blocks: invisible reCAPTCHA/hCaptcha frames sit on many normal pages.
+      const frames = Array.from(document.querySelectorAll("iframe")).filter((f) => { const r = f.getBoundingClientRect(); return vis(f) && r.width >= 100 && r.height >= 60 && !/size=invisible/.test(f.src || ""); }).map((f) => f.src || "").filter(Boolean);
       const text = (document.body ? document.body.innerText || "" : "").slice(0, 4000);
       return { pw, frames, text };
     });

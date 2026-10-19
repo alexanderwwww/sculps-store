@@ -59,7 +59,16 @@ export function createHost({ build, getState, onMessage, log = () => {} }) {
   }
 
   async function attach(page) {
-    try { if (page && !page.isClosed()) await page.evaluate(source); }
+    // A page that loaded before us could have planted a setter for the config
+    // global to catch the token: then it gets no panel. A page that already has
+    // this run's panel (from the init script) is left alone.
+    const late = `(() => {
+      try { const p = window.__ucPanel; if (p && p.hid === ${JSON.stringify(hid)}) return "has"; } catch (e) {}
+      for (let o = window; o; o = Object.getPrototypeOf(o)) { if (Object.getOwnPropertyDescriptor(o, "__ucPanelConfig")) return "trapped"; }
+      ${source}
+      return "ok";
+    })()`;
+    try { if (page && !page.isClosed()) await page.evaluate(late); }
     catch { /* a page mid-navigation gets the panel from the init script */ }
   }
 

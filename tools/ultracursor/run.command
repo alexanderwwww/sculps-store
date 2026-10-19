@@ -21,7 +21,7 @@ WORK="$HOME/Library/Application Support/ultracursor/runtime"
 # they are never set: port 9333 (Magic Wand has 9222) and his real Chrome.
 PORT="${ULTRA_TEST_PORT:-9333}"
 PROFILE="$HOME/.ultracursor-chrome"
-START_URL="https://www.tiktok.com/"
+START_URL="https://www.depop.com/"
 
 say() { printf "\n\033[1m%s\033[0m\n" "$1"; }
 title() { printf "\033]0;%s\007" "ultracursor · build $1"; }
