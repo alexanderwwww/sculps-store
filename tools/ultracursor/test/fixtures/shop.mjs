@@ -123,7 +123,7 @@ a{color:inherit}
 .skip{position:absolute;left:-9999px}.skip:focus{left:8px;top:8px;background:#fff;padding:8px;z-index:90}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .promo{background:#141414;color:#eee;font-size:13px;text-align:center;padding:7px 0}.promo a{color:#fff}
-.top{border-bottom:1px solid #ececec;background:rgba(255,255,255,.96);position:sticky;top:0;z-index:20}
+.top{border-bottom:1px solid #ececec;background:#fff;position:sticky;top:0;z-index:20}
 .bar{display:flex;align-items:center;gap:24px;height:64px}
 .logo{font-weight:800;font-size:22px;letter-spacing:-.03em;text-decoration:none;display:flex;align-items:center;gap:8px}
 .logo .mark{width:22px;height:22px;border-radius:7px;background:conic-gradient(from 200deg,#ff5a36,#ffb03a,#ff5a36)}
@@ -442,7 +442,7 @@ ${notice ? `<div class="ok" role="status">${notice}</div>` : ""}
     <div class="row">${actions}</div>
     <dl class="facts"><dt>Category</dt><dd>${esc(l.category || "—")}</dd><dt>Condition</dt><dd>${esc(l.condition || "—")}</dd><dt>Size</dt><dd>${esc(l.size || "—")}</dd><dt>Brand</dt><dd>${esc(l.brand || "—")}</dd></dl>
     <h2>Description</h2><p class="desc">${esc(l.description)}</p>
-    <p class="muted">Listed ${ago(l.createdAt)} ago by @${esc(l.seller)}</p>
+    <p class="muted">Listed ${ago(l.createdAt) === "now" ? "just now" : `${ago(l.createdAt)} ago`} by @${esc(l.seller)}</p>
   </div>
 </div>` });
 }
@@ -720,7 +720,8 @@ export function startShop({ port = 0 } = {}) {
         photos.push({ name: f.name, size: b.length, type: f.type || "", sha256: sha(b) });
         blobs.push({ type: f.type, b });
       }
-      const str = (k, max) => String(fd.get(k) ?? "").trim().slice(0, max);
+      // multipart/form-data turns every line break into CRLF; store them as typed.
+      const str = (k, max) => String(fd.get(k) ?? "").replace(/\r\n?/g, "\n").trim().slice(0, max);
       const description = str("description", 1000), category = str("category", 40), condition = str("condition", 40);
       const size = str("size", 40), brand = str("brand", 60), shipping = str("shipping", 10) === "self" ? "self" : "label";
       const rawPrice = str("price", 20);
@@ -766,7 +767,7 @@ export function startShop({ port = 0 } = {}) {
         const f = new URLSearchParams((await readBody(req)).toString("utf8"));
         const rawPrice = (f.get("price") || "").trim();
         const price = parsePrice(rawPrice);
-        const description = f.has("description") ? String(f.get("description")).replace(/\r\n/g, "\n").trim().slice(0, 1000) : l.description;
+        const description = f.has("description") ? String(f.get("description")).replace(/\r\n?/g, "\n").trim().slice(0, 1000) : l.description;
         if (price == null) return send(res, 200, editPage(ctx, l, rawPrice ? "Enter a price above $0" : "Price is required", rawPrice, description));
         if (!description) return send(res, 200, editPage(ctx, l, "Add a description", rawPrice, description));
         const now = Date.now();
@@ -808,7 +809,7 @@ export function startShop({ port = 0 } = {}) {
         let text = "";
         if (api) { try { text = String(JSON.parse(raw || "{}").text ?? ""); } catch { return json(res, 400, { error: "Send JSON {text}." }); } }
         else text = new URLSearchParams(raw).get("text") || "";
-        text = text.replace(/\r\n/g, "\n").trim().slice(0, 2000);
+        text = text.replace(/\r\n?/g, "\n").trim().slice(0, 2000);
         if (!text) return api ? json(res, 400, { error: "Write a message first." }) : redirect(res, `/messages/${t.id}/`, 303);
         const msg = { from: "me", text, at: Date.now() };
         t.messages.push(msg);

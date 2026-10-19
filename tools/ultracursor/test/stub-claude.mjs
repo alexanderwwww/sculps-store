@@ -252,7 +252,9 @@ export function startStubClaude({ scripts = [] } = {}) {
     // One task = one first user message.
     const key = crypto.createHash("sha1").update(JSON.stringify(msgs[0])).digest("hex");
     let task = tasks.get(key);
-    if (!task) {
+    // A request with only the first message always starts a task, even one seen
+    // before: the same task run twice (after a reset) is two runs, not one.
+    if (!task || msgs.length === 1) {
       const first = textOf(msgs[0].content);
       const script = list.find((s) => s && s.match instanceof RegExp && s.match.test(first)) || null;
       task = { key, script, tools: JSON.stringify(body.tools), system: JSON.stringify(body.system), prev: null, total: 0 };

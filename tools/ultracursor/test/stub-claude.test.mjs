@@ -169,10 +169,14 @@ await step("2b. a dropped thinking block is caught", async () => {
   messages.push({ role: "assistant", content: r1.content.filter((b) => b.type !== "thinking") }, results(r1, () => "ok: true\ndid: looked"));
   const v = await newViolations(() => client.beta.messages.create(params(messages)));
   check("assistant turn without its thinking block -> violation", v.some((s) => /previous response's content unchanged/.test(s)), v);
-  const changedSig = [firstMessage("look around again", ['- button "Add photos" [ref=e8]'])];
-  stub.setScripts([...SCRIPTS, { name: "looks3", match: /^Task: look around again/m, steps: SCRIPTS[1].steps }]);
-  check("setScripts swaps the list (the task keeps the script it started with)", true);
-  void changedSig;
+  // A changed signature is an edit too (the API binds thinking to its signature).
+  const m2 = [firstMessage("look around again, signed", ['- button "Add photos" [ref=e8]'])];
+  const s1 = await client.beta.messages.create(params(m2));
+  const forged = structuredClone(s1.content);
+  forged[0].signature = "edited";
+  m2.push({ role: "assistant", content: forged }, results(s1, () => "ok: true\ndid: looked"));
+  const v2 = await newViolations(() => client.beta.messages.create(params(m2)));
+  check("assistant turn with an edited signature -> violation", v2.some((s) => /previous response's content unchanged/.test(s)), v2);
 });
 
 await step("2c. an edited first message is caught", async () => {
@@ -263,6 +267,16 @@ await step("2j. ran out of steps; no script; streaming is refused without retrie
     check("no script -> finish {blocked}", r.content[1].name === "finish" && r.content[1].input.status === "blocked", r.content[1]);
   });
   check("…and a violation quotes the task", v2.some((s) => /no script matches the first user message "Task: nothing scripted/.test(s)), v2);
+  // The same task started again from scratch (e.g. after a reset) is a fresh run.
+  const again = [firstMessage("list the jacket", ['- button "Add photos" [ref=e8]', '- textbox "Price" [ref=e16]', '- button "Post listing" [ref=e30]'])];
+  const v3 = await newViolations(async () => {
+    const r = await client.beta.messages.create(params(again));
+    check("the same task run again starts at step 1", r.content[1].name === "click" && r.content[1].input.ref === "e8", r.content[1]);
+    again.push({ role: "assistant", content: r.content }, results(r, () => `ok: true\ndid: clicked Add photos\n${page("http://shop/sell/", ['- textbox "Price" [ref=e21]'])}`));
+    const r2 = await client.beta.messages.create(params(again));
+    check("…and carries on at step 2", r2.content[1].name === "type" && r2.content[1].input.ref === "e21", r2.content[1]);
+  });
+  check("…with no violations", v3.length === 0, v3);
   const before = stub.requests.length;
   let err = null;
   try { await client.beta.messages.create(params([firstMessage("look around", [])], { stream: true })); } catch (e) { err = e; }
