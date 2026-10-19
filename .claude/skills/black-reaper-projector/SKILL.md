@@ -59,3 +59,15 @@ Alex chose this product: "I take it."
 - Checked: add → cart → checkout returned 200 on both products.
 - OCTOBER31 now needs a $130 minimum subtotal, so it never applies to projector-only carts (the 3-pack is $129.99). Alex: "$31 off does not apply" to the projector.
 - Magic Wand: Alex wants one picture at a time, not the whole set queued at once.
+
+## The real product (Alex, 2026-10-19)
+- Supplier photo: `design/reaper/ghost-projector-supplier.jpg`. Cost $10.
+- It is a black outdoor dual-head projector on a ground/wall mount:
+  - a 6-slot pattern wheel on the left
+  - a crystal "magic ball" colour lens on the right
+- It projects moving pattern slides and coloured light. It is NOT a video projector. Never promise films, "12 movies", zombie swarm video or a window screen.
+- Prices:
+  - 1 for $99.99
+  - 2 for $129.99 (compare-at $199.98, the default)
+  - 3 for $199.89 (compare-at $299.97)
+- OCTOBER31 needs a $200 minimum, so no projector cart gets it.
