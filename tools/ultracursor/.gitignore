@@ -3,3 +3,4 @@
 node_modules
 # Zips made by pack.sh when pointed inside this folder.
 *.zip
+runtime/trader/
