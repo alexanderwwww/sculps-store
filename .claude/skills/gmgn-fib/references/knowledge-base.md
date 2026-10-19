@@ -59,3 +59,22 @@ Horizon   B_n = B0 · φ^(green days − red days)        (because 1.618 × 0.61
 ## 6. Status
 - Core trader (runs in training mode until a live wallet is connected): built in tools/ultracursor/src/trader/ (3 positions, 0.618 exposure cap).
 - Fee engine, narrative plugin, protection layers and learning loop: specified here; built after the core passes its tests.
+
+## 7. Fibonacci at every scale (Alex, 2026-10-19: "Fibonacci on every micro thing … the atom, the cell, the leaf, the planet")
+The same ratios govern every layer, from one candle to the whole portfolio. No number in the trader is arbitrary: each one is a Fibonacci number (1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144) or a φ ratio.
+
+| Layer | Fibonacci rule |
+|---|---|
+| Timeframes | Read 1, 3, 5, 13 and 21-minute candles. A setup must agree on at least 3 of them (confluence). |
+| Swing | The 0.618 entry is measured on the last impulse. Wave structure is checked on the timeframe above. |
+| Entry ladder | Split one entry into parts: 38.2% at 0.5, 38.2% at 0.618, 23.6% at 0.705. |
+| Exits | Sell 38.2% at T1, 38.2% at 1.272, and trail the last 23.6% toward 1.618 → 2.618. |
+| Stop | Under 0.786; tightened to break-even after T1. |
+| Time | Check the position at 3, 5, 8, 13 and 21 minutes. No progress by 21 minutes means exit. |
+| Positions | Max 3 open (scaling 1 → 2 → 3 by win streak). |
+| Size | Ladder 14.6% → 23.6% → 38.2% of the wallet, moved by φ on each win or loss. |
+| Exposure | Σ open ≤ 61.8%. 38.2% always stays safe. |
+| Scans | New coins ranked in 3 / 5 / 8 tiers: watch / ready / fire. |
+| Learning | Win rate p measured over the last 13, 21 and 34 trades. Rules change only when all three agree. |
+| Day | Target +61.8%, stop −38.2%. |
+| Portfolio milestones | B0 → B0·φ → B0·φ² … ($10 → $16.18 → $26.18 → $42.36 → $68.54 → $110.90). At each milestone, 23.6% of the gain is locked away and never traded. |
