@@ -34,3 +34,16 @@ Alex chose this product: "I take it."
   - a fast cut to the product
   - an offer ("bundle and save")
 - Alex edits the video himself. Never run a competitor's video unedited.
+
+## Ghost Projector page: fixes for the next session (Alex agreed to do these in a new session)
+1. Buy box images, square, in the master buy-box order (kerberos skill):
+   - house at night with the zombie swarm on the window
+   - the kit: projector, window screen, remote
+   - Temu-style spec panel
+   - Santa scene ("not just Halloween")
+   - Make them with Magic Wand from supplier photos, never the competitor's.
+2. Copy: what it is in one line (projector + window screen + 12 Halloween & Christmas scenes, plug in and play), the box contents and setup in 3 steps. No made-up "A.I." claims and no fake reviews or purchase counters.
+3. Price ladder against the competitor ($69.95 / $134.95 / $199.95): 1 for $59.99, 2 for $109.99, 3 for $149.99. OCTOBER31 is $31 off. Check the price against the real supplier cost first.
+4. Supplier: mini projector + 120" holographic window mesh screen, US warehouse, so it delivers before Oct 31. Fill in cost_cents and supplier_url.
+5. Our own scene videos (zombie swarm, phantoms, skeletons, the Scream, Santa) made with Kling/XUGC through ugc-master-prompter. Alex OKs the price before any render.
+6. After every change: load /products/haunted-projector live, then run add-to-cart and checkout render checks (AGENTS rule 20). No live charges.
