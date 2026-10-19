@@ -29,3 +29,7 @@ Tools: mcp__ultracursor__ultra_status, ultra_act, ultra_result (load them with T
 - After a refused Post, the edit page has shown worldwide shipping turned on at $0 and Vintage/Antique tags we never set. Always re-check before posting again.
 - 2026-10-19: a $16,000 22K chain was refused twice. Right after, Depop returned 403 Forbidden ("Sorry, not authorized") on every page. Stop on any 403, end the session with `done`, and do not retry for at least an hour. Fast repeated Post/Update clicks after an error may be what triggers the block.
 - One item at a time. Wait about 2 s between posts. Never hammer Post.
+
+## Settled (Alex, 2026-10-19)
+- Alex talks to Depop buyers himself. Never offer or build automatic buyer replies.
+- He has only a few items. Don't pitch bulk overnight listing.
