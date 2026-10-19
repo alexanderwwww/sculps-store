@@ -5,7 +5,7 @@
  * advertising a code the projector cannot use. This one sells the bundle the
  * visitor is already looking at: pressing claim picks that bundle, and the
  * price drops in front of them -- full price, struck through, counted down to
- * the real price, a stamp, a burst -- then it goes in the cart.
+ * the real price, a stamp, a burst -- then it closes on the bundle picker so they choose 1, 2 or 3 themselves.
  *
  * Every number on it is read from the variant: compare-at is the "before",
  * price is the "after", the difference is the saving. Nothing is invented,
@@ -106,9 +106,11 @@ export function ClaimFiftyPopup({
         setShown(to);
         setStage("won");
         try { navigator.vibrate?.(40); } catch { /* fine */ }
+        // Alex, 2026-10-19: never put a bundle in the cart for them. The
+        // offer is claimed; they choose 1, 2 or 3 themselves.
         window.setTimeout(() => {
           setOpen(false);
-          onAdd(bundle.id);
+          document.getElementById("buy")?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 2100);
       }
     };
