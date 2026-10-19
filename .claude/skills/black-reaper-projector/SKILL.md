@@ -57,5 +57,5 @@ Alex chose this product: "I take it."
 - Both buy buttons read "Claim 50% off". The claim is true because the second unit is half off or more.
 - Compare-at always equals the single price × quantity. Never use a made-up "was" price (AGENTS rule 19).
 - Checked: add → cart → checkout returned 200 on both products.
-- Open item: the OCTOBER31 $31 discount still applies to the projector. Waiting on the supplier cost.
+- OCTOBER31 now needs a $130 minimum subtotal, so it never applies to projector-only carts (the 3-pack is $129.99). Alex: "$31 off does not apply" to the projector.
 - Magic Wand: Alex wants one picture at a time, not the whole set queued at once.
