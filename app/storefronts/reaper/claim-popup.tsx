@@ -130,6 +130,7 @@ export function ClaimFiftyPopup({
         <div className="c50__in">
           <span className="c50__kick">{productName} · {bundle.label}</span>
           <b className="c50__h">CLAIM <em>50% OFF</em></b>
+          <span className="c50__kick">ON YOUR SECOND ONE</span>
 
           <div className="c50__price" aria-live="polite">
             <span className="c50__was">
@@ -142,7 +143,7 @@ export function ClaimFiftyPopup({
           {stage === "won" ? (
             <div className="c50__stamp" role="status">
               <b>YOU SAVED {usd(saved)}</b>
-              <span>50% OFF CLAIMED</span>
+              <span>2ND ONE 50% OFF · CLAIMED</span>
             </div>
           ) : (
             <button className="c50__go" onClick={claim} disabled={stage !== "ask"}>
