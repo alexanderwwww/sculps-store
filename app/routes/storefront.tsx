@@ -259,7 +259,13 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   // storefront only ever prints it; the cart re-reads the row and prices it,
   // so a code shown here can never be a code the checkout honours by mistake.
   // The one public code (see publicOffer): the bar only prints it, the cart re-reads and prices it.
-  const offer = await publicOffer(context.db, store.id);
+  const standing = await publicOffer(context.db, store.id);
+  // A page never shouts a code its own product can't use: if the biggest
+  // bundle on this page is under the code's minimum order, the bar stays quiet
+  // here (Alex, 2026-10-19: OCTOBER31 is not for the Ghost Projector).
+  const topPrice = page ? Math.max(0, ...page.variants.map((v) => v.priceCents)) : Infinity;
+  const offer =
+    standing && standing.minimumSubtotalCents != null && topPrice < standing.minimumSubtotalCents ? null : standing;
 
   /**
    * How many real people have been on this store in the last thirty days.

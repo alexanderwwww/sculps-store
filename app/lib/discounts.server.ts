@@ -288,9 +288,9 @@ export async function redemptionTotals(
 export async function publicOffer(
   db: DB,
   storeId: string,
-): Promise<{ code: string; kind: string; value: number } | null> {
+): Promise<{ code: string; kind: string; value: number; minimumSubtotalCents: number | null } | null> {
   const [row] = await db
-    .select({ code: discounts.code, kind: discounts.kind, value: discounts.value })
+    .select({ code: discounts.code, kind: discounts.kind, value: discounts.value, minimumSubtotalCents: discounts.minimumSubtotalCents })
     .from(discounts)
     .where(
       and(

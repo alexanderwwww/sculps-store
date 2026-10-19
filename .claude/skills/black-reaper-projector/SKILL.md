@@ -111,3 +111,19 @@ The style: the **red** light glowing from the product, a white-on-red condensed 
 Every Ghost Projector image = this panel system wrapped around the scary night scenes from the Tecc ads. It should look premium enough to sell at $99.99 against their cheap site.
 
 Also make two "CLAIM 50% OFF" banners, one per product, for the top of each page and the ad landing.
+
+## Page built (2026-10-19)
+- The 16 Gemini images are in R2 as `gp-gem-NN-01.jpg`, with `-w640.webp` and `-t200.webp` copies. The page needs those size copies, or the UGC wall gets 404s. #15 (the kids, with cartoon pumpkins) is unused.
+- What the page now uses:
+  - Gallery (`products.images`): images 1, 2, 4, 5, 6, 7, 11, 3.
+  - Bundles: "1 / 2 / 3 projectors".
+  - FAQ rewritten for the real product.
+  - UGC wall: images 10, 17, 9, 8, 16, 12.
+  - Box list: projector, stake, wall mount, adapter, remote.
+- Hidden: the old hologram grid and "rest of the yard".
+- Store share image changed from the banned br-m1-hero to scr-b-street.
+- Code: `publicOffer` now returns `minimumSubtotalCents`. The storefront hides the coupon bar on a page whose biggest bundle is under the code's minimum. Deployed as version bed43468; checked add → cart → checkout on all 5 bundles.
+- Still to do:
+  - Images 18-27 (iMessage, review photos, 50% banners), when Gemini or ChatGPT have limits again.
+  - Confirm with the supplier: weatherproof rating, remote, and the actual slide scenes.
+  - The hidden reviews section still holds reviews of the old hologram projector.
