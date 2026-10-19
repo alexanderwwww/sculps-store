@@ -90,3 +90,20 @@ Alex chose this product: "I take it."
   - a "Halloween Projector" label in red/blue.
 - **Mood:** night, saturated red and electric blue, phone-camera realism.
 - **For every Black Reaper image:** cute cartoon ghosts and pumpkins are banned. The scenes must be ones the unit's slides actually include (confirm the slide list with the supplier) so the page never sells a picture the box can't make.
+
+## The premium look Alex wants: competitor-ad scenes + the Black Reaper panel style
+The Black Reaper reference images live on blackreaper.us/media:
+- `scr-ad-6-box.jpg`: callouts, "In the box", box render
+- `br-m1-hero.webp`: night scene, coloured spec-chip row, "IT COLLECTS THEM ALL NIGHT"
+- `scr-b-street.webp`, `scr-b-scale.webp`, `scr-b-does.webp`
+
+What those images do:
+- a big white-on-red headline bar
+- thin callout lines with bold small caps
+- a coloured spec-chip row
+- a real house at dusk or night
+- a clean light-grey studio panel for spec shots
+
+Every Ghost Projector image = this panel system wrapped around the scary night scenes from the Tecc ads. It should look premium enough to sell at $99.99 against their cheap site.
+
+Also make two "CLAIM 50% OFF" banners, one per product, for the top of each page and the ad landing.
