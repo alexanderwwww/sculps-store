@@ -174,6 +174,8 @@ export async function describe(loc) {
         isFile: tag === "input" && type === "file",
         isSelect: tag === "select",
         inDialog: !!el.closest('[role="dialog"],[role="alertdialog"],dialog'),
+        // A cookie / consent banner: its Accept or Save is about cookies, not a sale.
+        inConsent: !!el.closest('[aria-label*="cookie" i],[aria-label*="consent" i],[id*="cookie" i],[id*="consent" i],[class*="cookie" i],[class*="consent" i]'),
       };
     }, undefined, { timeout: 5000 });
   } catch {

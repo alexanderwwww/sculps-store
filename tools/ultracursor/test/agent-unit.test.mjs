@@ -42,6 +42,9 @@ const kinds = [
   ["Edit listing", null], ["Remove photo", null], ["Done", null], ["Apply filters", null],
 ];
 for (const [name, want] of kinds) eq(`click "${name}" -> ${want}`, clickKind({ name, role: "button" }, "none", P), want);
+eq("a cookie banner's Accept is not final", clickKind({ name: "Accept", inConsent: true }, "none", P), null);
+eq("an offer's Accept still is", clickKind({ name: "Accept", inConsent: false }, "none", P), "offer");
+eq("a cookie banner never hides a declared final", clickKind({ name: "Accept", inConsent: true }, "buy", P), null);
 eq("declared final on an ordinary name counts", clickKind({ name: "Next" }, "publish", P), "publish");
 eq("unknown declared kind becomes other", clickKind({ name: "Next" }, "weird", P), "other");
 eq("Enter in a search box is not final", enterIsFinal({ role: "searchbox", name: "Search" }), false);

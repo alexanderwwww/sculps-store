@@ -34,8 +34,6 @@ import * as tiktok from "./sites/tiktok.mjs";
 import * as instagram from "./sites/instagram.mjs";
 import * as trends from "./sites/trends.mjs";
 import * as stores from "./sites/stores.mjs";
-import { createDesk } from "./agent/desk.mjs";
-import { createHost } from "./agent/host.mjs";
 
 const WORK = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -67,15 +65,29 @@ const saved = loadState();
 
 /* ------------------------------------------------------------------ the agent desk */
 
-const desk = createDesk({
-  work: WORK,
-  build: BUILD,
-  cloudLog: (l) => log(l),
-  ui: { attach: uiReal.attach, say: uiReal.say, hover: uiReal.hover, scroll: uiReal.scroll },
-  pacingScale: FAST ? 0.05 : 1,
-  baseURL: process.env.ULTRA_ANTHROPIC_BASE_URL || undefined,
-  createHost,
-});
+// Loaded on its own: if the agent cannot load (Claude's SDK missing after a
+// broken install), research keeps working and the status says why.
+let desk;
+try {
+  const [{ createDesk }, { createHost }] = await Promise.all([import("./agent/desk.mjs"), import("./agent/host.mjs")]);
+  desk = createDesk({
+    work: WORK,
+    build: BUILD,
+    cloudLog: (l) => log(l),
+    ui: { attach: uiReal.attach, say: uiReal.say, hover: uiReal.hover, scroll: uiReal.scroll },
+    pacingScale: FAST ? 0.05 : 1,
+    baseURL: process.env.ULTRA_ANTHROPIC_BASE_URL || undefined,
+    createHost,
+  });
+} catch (e) {
+  const why = String(e && e.message || e).split("\n")[0].slice(0, 200);
+  log(`the agent could not start (${why}); research still works. Open ultracursor again to reinstall.`);
+  const off = { mode: "off", status: `agent unavailable: ${why}`, task: null, step: null, usd: null, card: null, hasKey: false };
+  desk = {
+    install: async () => {}, control: () => {}, state: () => off, hasWork: () => false,
+    enqueue: () => log("a task arrived but the agent is unavailable"), runNext: async () => null, onFinished: () => {},
+  };
+}
 let agentRun = null;
 desk.onFinished(async (r) => {
   log(`task ${r.status}: ${String(r.summary || "").slice(0, 200)} (${r.steps} steps, $${(r.usd || 0).toFixed(2)})`);

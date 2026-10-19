@@ -30,8 +30,12 @@ const KINDS = [
 ];
 
 /** null when the click is not final; else its kind. */
+const CONSENT = /^(accept|accept all|accept cookies|allow|allow all|allow cookies|agree|i agree|ok|okay|got it|reject|reject all|decline|decline all|close|save|save preferences|save settings|confirm choices|only necessary|necessary only)$/;
+
 export function clickKind(target, declared, profile) {
   const name = norm(target && target.name);
+  // The buttons of a cookie / consent banner answer the banner, nothing else.
+  if (target && target.inConsent && CONSENT.test(name)) return null;
   const extra = (profile && Array.isArray(profile.finalWords) ? profile.finalWords : []).map(norm).filter(Boolean);
   for (const w of extra) if (name === w || name.startsWith(w + " ")) return "other";
   for (const [kind, re] of KINDS) if (re.test(name)) return kind;

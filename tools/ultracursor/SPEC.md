@@ -203,7 +203,7 @@ price table; the task stops at `maxUsdPerTask`.
 
 ## Panel (panel.js + host.mjs)
 Injected like the overlay (context init script + evaluate on open pages), its own host element, CLOSED shadow
-root, `aria-hidden="true"` on the host (so it never appears in the agent's snapshot), nothing drawn on blocked
+root (that is what keeps it out of the agent's ai snapshot: aria-hidden alone does NOT, proven in test), nothing drawn on blocked
 URLs (same rule as the overlay: accounts.google.com, appleid.apple.com, any URL containing /login). Bottom-right,
 black liquid glass like the pill, white text, NO blue / purple / green. Only the panel's own controls take the
 mouse (`pointer-events:auto` on them, none elsewhere); keyboard events typed into it never reach the page.

@@ -137,6 +137,8 @@ let sampling = true;
 console.log("== start");
 startRunner();
 const firstStatus = await until(() => stub.statuses.find((s) => s.chrome && s.chrome.connected), 20000);
+// This runtime has only playwright-core (no Claude SDK): research must still run.
+check("research runs even when the agent cannot load (no Claude SDK here)", Boolean(await until(() => stub.logs.find((l) => /the agent could not start/.test(l)), 15000)), stub.logs.slice(0, 5));
 check("status posted with build 1 and Chrome connected", firstStatus && firstStatus.build === "1" && firstStatus.app === "ultracursor", firstStatus || runnerOut.slice(-800));
 
 /* ------------------------------------------------------------------ 2. a full hunt */

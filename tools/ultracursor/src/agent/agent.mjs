@@ -145,7 +145,11 @@ export async function runTask({ page, task, deps }) {
   };
 
   /* ---------------------------------------------------------- one tool call */
+  // What happened, for the one action-log line every tool call gets (the loop writes it).
+  let noted = {};
+  const note = (o) => { noted = { ...noted, ...o }; };
   const runTool = async (tu, step) => {
+    noted = {};
     const name = tu.name, input = tu.input || {};
     const bad = validate(name, input);
     if (bad) return { text: format({ ok: false, error: bad }), error: true };
@@ -199,6 +203,7 @@ export async function runTask({ page, task, deps }) {
       target = {
         role: (known && known.role) || (info && (info.role || info.tag)) || "",
         name: (known && known.name) || (info && (info.label || info.text)) || "",
+        inConsent: !!(info && info.inConsent),
       };
       targetText = `${target.role || "element"} "${clip(target.name, 80)}"`;
     }
@@ -211,7 +216,7 @@ export async function runTask({ page, task, deps }) {
     } else if (name === "type") {
       const secret = secretField({ ...(info || {}), name: target && target.name });
       if (secret) {
-        log({ kind: "action", step, tool: name, target: targetText, ok: false, error: `refused: ${secret}` });
+        note({ target: targetText, ok: false, error: `refused: ${secret}` });
         return { text: format({ ok: false, error: `ultracursor never types into ${secret}. If a sign-in is needed, it pauses for Alex by itself; otherwise finish with needs_alex.` }), error: true };
       }
       if (input.enter && enterIsFinal({ ...target, ...(info || {}) })) kind = typed.some((t) => t.price) ? "price" : "submit";
@@ -243,11 +248,14 @@ export async function runTask({ page, task, deps }) {
         log({ kind: "limit", text: lim });
         return { stop: true, reason: lim, limit: true };
       }
-      const choice = await approve(kind, input.why, name === "click" ? `Button: ${targetText}` : targetText, step);
-      if (choice === "stop") return { stop: true };
+      const what = name === "click"
+        ? `${target.role ? target.role[0].toUpperCase() + target.role.slice(1) : "Button"}: "${clip(target.name, 80)}"`
+        : targetText;
+      const choice = await approve(kind, input.why, what, step);
+      if (choice === "stop") { note({ target: targetText, ok: false, error: "stopped by Alex at the approval", final: kind }); return { stop: true }; }
       if (choice !== "approve") {
         typed = typed.filter((t) => !t.price);
-        log({ kind: "action", step, tool: name, target: targetText, ok: false, error: "skipped by Alex" });
+        note({ target: targetText, ok: false, error: "skipped by Alex", final: kind });
         const v = await view(false);
         return { text: format({ ok: false, error: "Alex skipped this action (not approved). Do not try it another way." }, v) };
       }
@@ -285,7 +293,7 @@ export async function runTask({ page, task, deps }) {
       notes.push(`now on a different site; its profile:\n${render(profile)}`);
     }
     const v = await view(false);
-    log({ kind: "action", step, tool: name, target: targetText || null, input: { ...input, why: undefined }, ok: !!r.ok, error: r.error || null, how: r.how || null, url: v.url, final: kind || null });
+    note({ target: targetText || null, ok: !!r.ok, error: r.error || null, how: r.how || null, url: v.url, final: kind || null });
     return { text: format({ ...r, notes: notes.concat(r.notes || []) }, v), error: !r.ok };
   };
 
@@ -330,6 +338,17 @@ export async function runTask({ page, task, deps }) {
       steps++;
       if (finish || stop) { results.push({ type: "tool_result", tool_use_id: tu.id, content: "not run: the task ended", is_error: true }); continue; }
       const out = await runTool(tu, steps);
+      // Every tool call, reads and finishes included, gets exactly one line.
+      const input = { ...(tu.input || {}) };
+      delete input.why;
+      log({
+        kind: "action", step: steps, tool: tu.name, why: tu.input && tu.input.why ? String(tu.input.why).slice(0, 160) : undefined, input,
+        target: noted.target || null,
+        ok: noted.ok !== undefined ? noted.ok : !(out.error || out.stop),
+        error: noted.error || (out.stop ? (out.reason || "stopped") : null),
+        how: noted.how || null, final: noted.final || null, url: noted.url || (() => { try { return page.url(); } catch { return null; } })(),
+        outcome: out.finish ? `finish ${out.finish.status}` : out.stop ? "stop" : undefined,
+      });
       if (out.finish) { finish = out.finish; results.push({ type: "tool_result", tool_use_id: tu.id, content: "ok: true" }); continue; }
       if (out.stop) { stop = out; results.push({ type: "tool_result", tool_use_id: tu.id, content: "not run: stopped", is_error: true }); continue; }
       errorsInRow = out.error ? errorsInRow + 1 : 0;
