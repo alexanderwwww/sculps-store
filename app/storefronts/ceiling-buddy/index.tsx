@@ -19,6 +19,7 @@ import { SPEC_PENDING } from "~/lib/sections";
 import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
 import { PayPalExpress } from "../garden-buddy/paypal-express";
 import { EmailPopup } from "./popup";
+import { ClaimFiftyPopup, claimBundleFor } from "../reaper/claim-popup";
 import { PhoneChat } from "../shared/phone-chat";
 import { KlarnaMark, AffirmMark, PayLaterLine, quarter } from "../shared/paylater";
 import { ProductExpress } from "../garden-buddy/product-express";
@@ -149,6 +150,23 @@ function usePicked(fallback: string) {
   return { id: ctx?.id || fallback, set: ctx?.set ?? (() => {}) };
 }
 
+/** The claim pop-up, inside the providers so a claim can pick the bundle and add it. */
+function ReaperClaim({ page }: { page: LoadedProductPage }) {
+  const picked = usePicked("");
+  const drawer = useCartDrawer();
+  const bundle = claimBundleFor(page.variants);
+  if (!bundle) return null;
+  return (
+    <ClaimFiftyPopup
+      bundle={bundle}
+      photo={(page.product.images ?? []).find((i) => i.url && i.kind !== "graphic")?.url ?? null}
+      productName={page.product.title}
+      onPick={(id) => picked.set(id)}
+      onAdd={(id) => drawer?.add(id)}
+    />
+  );
+}
+
 export function CeilingBuddyStorefront({
   page,
   storeParam = "",
@@ -225,8 +243,12 @@ export function CeilingBuddyStorefront({
         </main>
         <Footer page={page} storeParam={storeParam} />
         <StickyBuy page={page} storeParam={storeParam} bnpl={bnpl} squareMethods={squareMethods} />
-        {/* Last, so it can never be what somebody reaches before the price. */}
-        <EmailPopup
+        {/* Last, so it can never be what somebody reaches before the price.
+            Black Reaper sells the bundle instead of asking for an email
+            (Alex, 2026-10-19): CLAIM 50% OFF, never a $31 box. */}
+        {page.store.slug === "reaper" && claimBundleFor(page.variants) ? (
+          <ReaperClaim page={page} />
+        ) : <EmailPopup
           storeParam={storeParam}
           offer={offer}
           /* The first real photograph of this product, never a listing
@@ -236,7 +258,7 @@ export function CeilingBuddyStorefront({
           photo={(page.product.images ?? []).find((i) => i.url && i.kind !== "graphic")?.url ?? null}
           logo={page.store.logoUrl ?? null}
           productName={page.product.title}
-        />
+        />}
       </div>
     </CartDrawerProvider>
     </PickedCtx.Provider>

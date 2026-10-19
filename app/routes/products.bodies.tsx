@@ -9,9 +9,10 @@
  * history and redirect to the root.
  */
 import type { Route } from "./+types/products.bodies";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { resolveStore, loadProductPage } from "~/lib/store.server";
-import { metaConfig, discounts } from "~/db/schema";
+import { metaConfig } from "~/db/schema";
+import { publicOffer } from "~/lib/discounts.server";
 import { providerForStore } from "~/lib/payments.server";
 import { paypalFor } from "~/lib/paypal.server";
 import { squareFor, advertisedMethods } from "~/lib/square.server";
@@ -156,11 +157,15 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   // The code the announcement rail is shouting about. It was only loaded on
   // the home route, so every product page — which is where people actually
   // land — ran the rail without it.
-  const [offer] = await context.db
-    .select({ code: discounts.code, kind: discounts.kind, value: discounts.value })
-    .from(discounts)
-    .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true)))
-    .limit(1);
+  // It took the first active row of ANY kind, which on Black Reaper was a
+  // single-use OCT31xxxx code minted for one checkout claim -- so every
+  // visitor, on every product, was shown somebody else's $31 code (found
+  // live 2026-10-19). Now it is the same public code the home route shows,
+  // and it stays quiet on a page whose biggest bundle is under its minimum.
+  const standing = await publicOffer(context.db, store.id);
+  const topPrice = Math.max(0, ...page.variants.map((v) => v.priceCents));
+  const offer =
+    standing && standing.minimumSubtotalCents != null && topPrice < standing.minimumSubtotalCents ? null : standing;
 
   const [meta] = await context.db
     .select({ pixelId: metaConfig.pixelId })

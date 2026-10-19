@@ -141,6 +141,8 @@ export async function claimExtraFor(
   subtotalCents: number,
   /** The code on the cart right now. */
   currentCode: string | null = null,
+  /** The public code's floor; the minted code carries it too, so it cannot come off a smaller cart later. */
+  minimumSubtotalCents: number | null = null,
 ): Promise<ClaimPlay> {
   const [existing] = await db
     .select({ amountCents: scratchPlays.amountCents, code: scratchPlays.code })
@@ -176,6 +178,7 @@ export async function claimExtraFor(
       usageLimit: 1,
       oncePerCustomer: true,
       active: true,
+      minimumSubtotalCents,
     })
     .returning({ id: discounts.id });
 

@@ -127,3 +127,11 @@ Also make two "CLAIM 50% OFF" banners, one per product, for the top of each page
   - Images 18-27 (iMessage, review photos, 50% banners), when Gemini or ChatGPT have limits again.
   - Confirm with the supplier: weatherproof rating, remote, and the actual slide scenes.
   - The hidden reviews section still holds reviews of the old hologram projector.
+
+## 2026-10-19 — CLAIM 50% OFF pop-up; no $31 on the projector
+
+- **What showed the $31:** `app/routes/products.bodies.tsx` (the product route) loaded the bar's code with "first active discount, any kind", which returned the single-use claim code `OCT31AX8LHN` — every visitor on every product page saw it, in the top bar, the buy-box coupon pill and the `$31 off` email pop-up (`ceiling-buddy/popup.tsx`). Now it uses `publicOffer` + the same minimum rule as the home route, so the projector page shows no code and the Scream shows `OCTOBER31`.
+- **Pop-up:** on store `reaper` the email pop-up is replaced by `app/storefronts/reaper/claim-popup.tsx` (styles `.c50*` in `reaper/theme.css`). Claim picks the page's default discounted bundle (projector → 2 projectors, Scream → 1+1), strikes compare-at, counts down to price, stamps "YOU SAVED $x — 50% OFF CLAIMED", bursts, then adds it to the cart. All numbers come from the variant. Once a month per browser (`br_claim50`); `?claim=1` opens it at once for checking.
+- **Minted $31 codes:** `claimExtraFor` gives minted OCT31xxxx codes the public code's minimum ($200); the checkout refuses to mint under it and hides the OCTOBER 31 card on carts under it. `OCT31AX8LHN` was given the $200 minimum in the DB.
+- Real percentages, for the record: 2-pack is 35% off compare-at, Scream 1+1 is 25% (the second Scream is half price). "50% OFF" is the offer wording on the buttons.
+- Deployed 5a36fbc5-2dd4-4b2b-a921-354cf1dbad43; rollback `npx wrangler rollback bed43468-f70c-4717-9aee-488a617efaca`.

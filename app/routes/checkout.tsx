@@ -45,7 +45,7 @@ import {
   addLine,
   saveCart,
 } from "~/lib/cart.server";
-import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.server";
+import { checkDiscount, findDiscount, normaliseCode, publicOffer } from "~/lib/discounts.server";
 import { scratchPlayFor, SCRATCH_PRIZES, claimExtraFor } from "~/lib/scratch.server";
 import { CLAIM_EXTRA_CENTS } from "~/lib/claim";
 import mapCssHref from "maplibre-gl/dist/maplibre-gl.css?url";
@@ -607,6 +607,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // They live in one place on the server; this is a copy, never a second
     // set of numbers.
     scratchOdds: SCRATCH_PRIZES.map((prize) => ({ percent: prize.percent, weight: prize.weight })),
+    // The $31 claim carries the public code's minimum (OCTOBER31: $200), so a
+    // cart under it -- every projector-only cart -- is never offered it.
+    claimMinCents: isReaperSkin(store.slug) ? ((await publicOffer(context.db, store.id))?.minimumSubtotalCents ?? null) : null,
     store: {
       name: store.name,
       slug: store.slug,
@@ -701,6 +704,11 @@ export async function action({ request, context }: Route.ActionArgs) {
       cartToken = newCartToken();
       setCookie = cartCookie(cartToken, url);
     }
+    // Same floor as the public code: no $31 comes off a cart under it.
+    const minimumSubtotalCents = (await publicOffer(context.db, store.id))?.minimumSubtotalCents ?? null;
+    if (minimumSubtotalCents != null && cart.subtotalCents < minimumSubtotalCents) {
+      return Response.json({ discountError: `This offer is for orders over $${Math.round(minimumSubtotalCents / 100)}` });
+    }
     const current = cart.discount ? await findDiscount(context.db, store.id, cart.discount.code) : null;
     const play = await claimExtraFor(
       context.db,
@@ -709,6 +717,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       current ? { kind: current.kind, value: current.value } : null,
       cart.subtotalCents,
       cart.discount?.code ?? null,
+      minimumSubtotalCents,
     );
     await setCartDiscount(context.db, store.id, cartToken, play.code);
     return Response.json(
@@ -1391,6 +1400,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       summary={summary}
       under={buddy ? <Upsell items={loaderData.upsells} photo={photo} money={money} /> : null}
       scratchOdds={loaderData.scratchOdds}
+      claimMinCents={loaderData.claimMinCents}
       chrome={
         buddy
           ? {
@@ -3411,6 +3421,7 @@ function OnePage({
   summary,
   under,
   scratchOdds,
+  claimMinCents = null,
   chrome,
 }: {
   cn: CN;
@@ -3439,6 +3450,7 @@ function OnePage({
   under: React.ReactNode;
   /** the published scratch-card odds, straight from the server's table */
   scratchOdds: { percent: number; weight: number }[];
+  claimMinCents?: number | null;
   /** the header and footer of the white half, when this skin lays out the page */
   chrome: { header: React.ReactNode; footer: React.ReactNode } | null;
 }) {
@@ -5335,7 +5347,9 @@ function OnePage({
   const scratch = isReaperSkin(store.slug) ? (
     // Off: the marketing panel found one discount beats three. REAPER20 stays.
     // Every Reaper order: an extra $5 off, one tap, right under the wallets.
-    <ClaimCard money={money} applied={cart.discount?.code ?? null} />
+    claimMinCents != null && cart.subtotalCents < claimMinCents ? null : (
+      <ClaimCard money={money} applied={cart.discount?.code ?? null} />
+    )
   ) : (
     <ScratchCard
       odds={scratchOdds}

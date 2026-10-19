@@ -5133,3 +5133,46 @@ html, body { margin: 0; }
 .cb[data-store="snowman"] .cb-stock:has(.cb-stock__low) .cb-stock__plain { display: inline !important; color: #0B6B3A; }
 .cb[data-store="snowman"] .cb-stock:has(.cb-stock__low) i { background: #16A34A; box-shadow: 0 0 0 4px rgba(22,163,74,.15); }
 .cb[data-store="snowman"] .cb-tier:has(.cb-tier__left) .cb-tier__flag--best { right: 78px !important; }
+
+/* ------------------------------------------------ CLAIM 50% OFF (2026-10-19)
+ * Temu's price-drop mechanics in Black Reaper's colours: black, bone white,
+ * blood red. No orange. Mobile first; the card is 420px at most. */
+.c50__veil { position: fixed; inset: 0; z-index: 90; background: rgba(4,4,6,.72); backdrop-filter: blur(3px); animation: pp-veil .2s ease-out; }
+.c50 {
+  position: fixed; z-index: 91; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(400px, calc(100vw - 28px)); max-height: calc(100dvh - 28px); overflow: hidden;
+  border-radius: 20px; background: #0B0B0C; color: #F7F2E7; border: 1px solid rgba(200,16,46,.55);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 40px 100px -30px rgba(200,16,46,.55);
+  animation: pp-in .24s cubic-bezier(.2,.8,.3,1); font-family: Archivo, Inter, system-ui, sans-serif;
+}
+.c50__x { position: absolute; top: 8px; right: 10px; z-index: 2; width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }
+.c50__shot { display: block; height: 150px; background: #000; }
+.c50__shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.c50__in { padding: 18px 20px 18px; text-align: center; display: grid; gap: 10px; }
+.c50__kick { font: 600 12px/1.2 Inter, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(247,242,231,.65); }
+.c50__h { font-weight: 800; font-size: 34px; line-height: 1; letter-spacing: -.01em; }
+.c50__h em { font-style: normal; color: #C8102E; }
+.c50__price { display: flex; align-items: baseline; justify-content: center; gap: 12px; min-height: 52px; }
+.c50__was { position: relative; font-weight: 700; font-size: 20px; color: rgba(247,242,231,.55); transition: font-size .3s, color .3s; }
+.c50__strike { position: absolute; left: -4px; top: 52%; height: 3px; width: 0; background: #C8102E; border-radius: 2px; transform: rotate(-8deg); transition: width .35s cubic-bezier(.6,0,.2,1); }
+.c50__now { font-weight: 800; font-size: 44px; font-variant-numeric: tabular-nums; color: #fff; }
+.c50.is-ask .c50__was { display: none; }
+.c50.is-drop .c50__strike, .c50.is-won .c50__strike { width: calc(100% + 8px); }
+.c50.is-drop .c50__now { color: #ff3b55; }
+.c50.is-won .c50__now { color: #fff; animation: c50-pop .45s cubic-bezier(.2,1.6,.4,1); }
+.c50__go { border: 0; border-radius: 999px; padding: 17px 18px; background: #C8102E; color: #fff; font: 800 18px/1 Archivo, sans-serif; letter-spacing: .04em; cursor: pointer; box-shadow: 0 10px 30px -10px rgba(200,16,46,.9); animation: c50-pulse 1.6s ease-in-out infinite; }
+.c50__go:disabled { animation: none; opacity: .85; }
+.c50__no { border: 0; background: none; color: rgba(247,242,231,.5); font: 500 13px Inter, sans-serif; text-decoration: underline; cursor: pointer; padding: 4px; }
+.c50__note { font: 600 13px Inter, sans-serif; color: rgba(247,242,231,.75); }
+.c50__stamp { justify-self: center; display: grid; gap: 2px; padding: 10px 18px; border: 3px solid #C8102E; border-radius: 10px; color: #fff; background: rgba(200,16,46,.16); transform: rotate(-4deg); animation: c50-stamp .5s cubic-bezier(.2,1.4,.4,1) both; }
+.c50__stamp b { font-weight: 800; font-size: 22px; letter-spacing: .02em; }
+.c50__stamp span { font-weight: 800; font-size: 13px; letter-spacing: .14em; color: #ff3b55; }
+.c50__burst { position: absolute; left: 50%; top: 62%; width: 0; height: 0; pointer-events: none; }
+.c50__burst i { position: absolute; width: 8px; height: 12px; border-radius: 2px; background: #C8102E; transform: rotate(var(--a)) translateY(0); animation: c50-bit .9s cubic-bezier(.1,.7,.3,1) forwards; }
+.c50__burst i:nth-child(3n) { background: #fff; }
+.c50__burst i:nth-child(4n) { background: #1a1a1d; border: 1px solid #fff; }
+@keyframes c50-bit { to { transform: rotate(var(--a)) translateY(calc(var(--d) * -1)) rotate(200deg); opacity: 0; } }
+@keyframes c50-stamp { from { transform: rotate(-4deg) scale(2.2); opacity: 0; } to { transform: rotate(-4deg) scale(1); opacity: 1; } }
+@keyframes c50-pop { 0% { transform: scale(1); } 50% { transform: scale(1.18); } 100% { transform: scale(1); } }
+@keyframes c50-pulse { 50% { transform: scale(1.03); } }
+@media (prefers-reduced-motion: reduce) { .c50, .c50__go, .c50__stamp, .c50__burst i, .c50.is-won .c50__now { animation: none; } }
