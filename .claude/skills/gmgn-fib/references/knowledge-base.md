@@ -59,6 +59,8 @@ Horizon   B_n = B0 · φ^(green days − red days)        (because 1.618 × 0.61
 ## 6. Status
 - Core trader (runs in training mode until a live wallet is connected): built in tools/ultracursor/src/trader/ (3 positions, 0.618 exposure cap).
 - Fee engine, narrative plugin, protection layers and learning loop: specified here; built after the core passes its tests.
+- 2026-10-19 (supersedes the line above): brain v2 built and tested. It includes Fibonacci at every scale, the daily ladder and recovery, the strict brain, the senses (GMGN, GMGN social, X), the fee engine, memory and gut, three concurrent lanes, the panel orb and the sound. Still to do: the rug radar on open positions, the 3-loss pause, the 38.2% drawdown kill switch and the live execution layer. Live orders go through `execute.mjs`, which refuses with "live wallet not connected".
+- Found by building it (2026-10-19): with $10, the §8 floor ("no trade may risk below the last checkpoint − 0.382u") usually ends the trading day after its first win. u is about $0.30, so a trade may risk about $0.11. The worst case of the ladder's first part is about −25%, so the most it allows is about $0.45. That is below the 14.6% size floor ($1.46), so the trade is skipped. The rule is kept exactly as written; Alex decides whether the floor should also allow trades below 14.6%.
 
 ## 7. Fibonacci at every scale (Alex, 2026-10-19: "Fibonacci on every micro thing … the atom, the cell, the leaf, the planet")
 The same ratios govern every layer, from one candle to the whole portfolio. No number in the trader is arbitrary: each one is a Fibonacci number (1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144) or a φ ratio.
@@ -152,3 +154,26 @@ Additions by Claude (2026-10-19): the 1%-of-pool size cap (on thin coins our own
 - **X:** read through Alex's own signed-in Chrome in ultracursor, plus GMGN's social data. No paid X API ("delete this API thing").
 - **Autonomy:** the trader decides on its own, in milliseconds. Claude builds it, reads its memory and improves it, and is never in the loop of a single trade. "You are him": its rules are Claude's judgement, written down.
 - **Training = "Sniper XYZ":** fake money on real GMGN coins, only when Alex says. The first session ran on 2026-10-19 for 60 min on the v1 engine.
+
+## 10. Memory and the tools map (Alex, 2026-10-19)
+- **Where:** `tools/ultracursor/runtime/trader/memory/` (gitignored; used only by the trader). It survives restarts and every Sniper XYZ night. It is mirrored to R2 bucket `gardenbuddy-media` as `trader-memory-latest.json` plus `trader-memory-YYYY-MM-DD.json` (`npx wrangler r2 object put … --remote` from the repo root, using `.dev.vars`). The upload runs at the end of every session and with `sniper.mjs --sync`. An empty memory folder is filled from R2's latest copy when the trader starts.
+- **What it holds:**
+  - `journal.jsonl`: every decision, taken or skipped, with its features, the 8 signals and the reason. A new line is written when a coin's decision changes.
+  - `trades.jsonl`: every closed trade, with its features, the tools whose signals were present, the costs and the outcome.
+  - `days.jsonl`: one line per day: date, trades, p, P&L, u, rung reached, recoveries, best and worst setup.
+  - `lessons.jsonl`: rule adjustments, with date and evidence.
+  - `brain.json`: stats (p over 13/21/34, by hour, by theme), the gut-feel model and tool usefulness.
+  - `tools-map.json`: every tool's endpoint, what it returns, live latency and reliability.
+- **Gut feel:** a Beta(1,1) win rate per feature bucket (age, liquidity, top10, smart buyers, N, confluence, hour, theme, cost; every edge is a Fibonacci number or ratio). Each bucket is weighted n/(n+13), and they are combined into a 0–100 score that starts at 50. It is updated after every closed trade. It can only lower conviction: with 13 or more trades of evidence, a score under the line turns a FIRE into a NO. It also orders candidates. It never opens the gate and never touches size.
+- **Lessons:** a rule moves only when p13, p21 and p34 all agree: all under break-even tightens the gut line one step on 38.2 → 50 → 61.8, and all over 38.2% loosens it one step.
+- **Tools usefulness:** each tool's win rate when its signal was present. After 34 trades under break-even the tool is dropped. A narrative source whose tools are all dropped counts as missing, which is a NO, never a pass.
+- **The tools map**, from gmgn.ai's own network calls, 2026-10-19, read-only (`src/trader/tools-map.mjs`):
+  - Used: trending_multichain, multi_token_full_info, top_buyers, token_mcap_candles (1m, resampled to 3/5/13/21m), SOL token_candles (regime), vas token_holder_stat, vas token_trades, token_fee_info, recommend_slippage, community messages, token_preview, callout/global (public calls, about 1 hour), gas_price_list, major_coin_prices, the X tweet embed (cdn.syndication.twimg.com), x.com search through ultracursor's signed-in Chrome, and the Jupiter quote.
+  - Mapped, not used yet: new_pairs, wallets rank 1d/7d, callout snapshot, twitch_kol, dex_trades_polling, token_holders, similar_coin, smartmoney wallet.
+  - `/vas/` paths need the web app's own query string (device_id, tab_id, app_ver, worker…). Without it they answer a 429.
+  - The `tag=` filter on token_trades is ignored by GMGN. Smart money is read from each trade's `maker_tags`.
+
+## 11. The trader orb and the "got paid" sound (Alex, 2026-10-19)
+- **Orb:** shown only while the trader runs (the heartbeat file `.trader-on` is less than 15 s old). ultracursor is also used for Depop and research, so with the trader off nothing is drawn. It is a small black-glass orb at the bottom centre of the screen. Its radius is 7 + 4.236·ln(1 + KB) px, clamped to 7–29. The memory's KB on disk is shown inside the orb and in its title. A click mutes or unmutes the sound; the mute is kept on disk as `memory/.mute`.
+- **Sound:** plays on every profitable exit fill (a take-profit, or a winning trail or close). Losses are silent. It is synthesized with WebAudio, with no sample: two bell notes a golden ratio apart (880 Hz, then 880 × 1.618 Hz), with quiet shimmer partials at f·φ² and f·φ³, about 0.6 s, at a modest volume. It has no noise burst and no coin rattle, so it never sounds like Shopify's sale sound. It plays only in trader mode, never when muted, and only on a visible tab. Several fills in one poll chime once.
+

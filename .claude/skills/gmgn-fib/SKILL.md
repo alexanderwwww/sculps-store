@@ -37,17 +37,42 @@ Never hold or ask for a seed phrase or private key. The default is live trading 
   - 8 green / 2 red: $179
   - 10 green / 0 red: $1,230
 
-## Training mode engine (built 2026-10-19 as the "paper trader", `tools/ultracursor/src/trader/`)
-PAPER ONLY: no wallet, no key, no signing, no order anywhere. GMGN is read through a read-only path allowlist (`gmgn.mjs`).
-- Run: `cd tools/ultracursor && node src/trader/paper.mjs` (Ctrl-C to stop) or `--minutes 30`. `--status` prints trades, wins, p, balance from the saved ledger. `--fresh` restarts at $10 (old ledger kept). `--record file.jsonl` saves every GMGN response for replay.
-- Ledger: `tools/ultracursor/runtime/trader/ledger.jsonl` (every gate result, arm, entry, partial exit, close with reason) and `state.json` (resumes on restart). Gitignored.
-- Tests: `node test/trader.test.mjs` (math, book, 3-open + 61.8% cap, day stops, gate on recorded GMGN data, replay of recorded GMGN candles through the real scan loop). pack.sh runs it.
-- Data, proven from this container on 2026-10-19: gmgn.ai has NO documented public API, and its JSON endpoints answer curl with a Cloudflare 403. A headless Chromium that loads gmgn.ai passes, and the endpoints are called from inside that page (40-170 ms each):
-  - `POST /rrs/api/v1/trending_multichain` (the trenches list, ~110 Solana tokens, abbreviated keys: a, s, ct/ot, lq, t10, smt, kol)
-  - `POST /mrwapi/v1/multi_token_full_info` (security: renounced_mint, renounced_freeze_account, burn_status, lock_summary; top_10_holder_rate, creator_hold_rate, liquidity, trade_stat smart/renowned wallets, rug_ratio)
-  - `GET /api/v1/tokens/top_buyers/sol/<mint>` (first 70 buyers with status: used for "dev has not sold")
-  - `GET /api/v1/token_mcap_candles/sol/<mint>?pool_type=tpool&resolution=1m|5m&limit=N` (MARKET-CAP candles; fib ratios are the same as on price)
-  - Bursts get a Cloudflare 429 "Just a moment". Calls are paced 250 ms apart and a 429 reloads the page and retries once. Recorded samples: `tools/ultracursor/test/fixtures/gmgn/`.
-- Filters real vs approximate: age, liquidity >= $30k, LP burned/locked, top10 < 25%, dev < 5%, mint and freeze renounced, 15m volume rising (last 15 one-minute candles vs the 15 before) are real. "Dev has not sold" is real only when the creator is among the first 70 buyers; otherwise it is unknown and FAILS. Honeypot: GMGN returns null on Solana, so the gate uses can_not_sell and GMGN's alert flag (approx). Smart/KOL: GMGN gives lifetime counts, not "last hour"; on a token under 6 h that is close but not exact (approx). Missing data always fails.
-- Fills are conservative: limit at 0.618, stop checked before take-profit inside a candle, the fill candle can stop out but not take profit, the stop moves to entry after TP1, 3% cost on entry and 3% on every exit. The stop is 1% under 0.786 (about -13% on a 2x impulse). A swing needs a high at least 1.5x the low with 2 candles after it.
-- First live run (5 min, 22:20 UTC 19 Oct): 98 cycles, ~1.3 s each, 0 errors, 0 trades. Of ~108 trending tokens 4 passed the prefilter and all failed the gate (dev sold, falling volume). p is not known until enough trades are logged.
+## Training mode engine (brain v2, 2026-10-19, `tools/ultracursor/src/trader/`)
+TRAINING ONLY: fake money, real GMGN coins. There is no wallet, no key, no signing and no order anywhere. The only door to a live order is `execute.mjs`, and it throws "live wallet not connected". The live layer will act later through ultracursor in Alex's own Chrome.
+- **Run:**
+  - `cd tools/ultracursor && node src/trader/sniper.mjs --train` runs Sniper XYZ until Ctrl-C; add `--minutes 10` for a timed run.
+  - `--status` shows the ledger, memory size and p13/21/34. `--fresh` restarts at $10; memory is kept. `--sync` uploads memory to R2. `--record f.jsonl` saves every GMGN response.
+  - Old names still work: `--paper` / `--training`, and `src/trader/paper.mjs`.
+  - Without `--train` the trader refuses: the live wallet is not connected.
+- **Files:**
+  - `fib.mjs`: levels, swing, φ sizing, resample, confluence, ladder levels, payoff W/Λ, slots, tiers, p-windows, regime.
+  - `book.mjs`: the entry ladder, exits, trail, checkpoints, slots, cap, day ladder floor, milestones, real costs.
+  - `ladder.mjs`: u, rungs, recovery, milestones.
+  - `brain.mjs`: the strict decide().
+  - `narrative.mjs`, `x.mjs`: the narrative and X senses.
+  - `fees.mjs`: the fee engine.
+  - `memory.mjs`, `tools-map.mjs`: memory and the tools map.
+  - `lanes.mjs`, `scan.mjs`: three concurrent lanes (scan 3 s, narrative 5 s, positions 2 s).
+  - `gmgn.mjs`: the read-only reader; `/vas/` paths reuse the page's own query string.
+  - `gate.mjs`: the security gate.
+- **The strict brain:** FIRE needs all 8 signals: prefilter, security gate, swing, confluence ≥3/5 (1/3/5/13/21m), ≥2 smart/KOL buyers in the last hour, narrative N ≥ 61.8 with GMGN and X agreeing (each ≥ 38.2), SOL regime, and a priced route with W ≥ 3|Λ| after real costs. Missing data is a NO, and there is no override. The gut and recovery can only add a NO. Every decision is journaled in memory with its reason.
+- **Book (KB §7–8):**
+  - Entry ladder: 38.2% at 0.5, 38.2% at 0.618, 23.6% at 0.705.
+  - Exits: 38.2% at T1, then the stop goes to break-even. 38.2% at 1.272, then the stop goes to T1. When 1.618 trades, the stop goes to 1.272. Out at 2.618.
+  - Checkpoints at 3/5/8/13 min; 21-minute time stop.
+  - Slots 1→2→3 by win streak. Size ladder 14.6/23.6/38.2% moved by φ; it goes ÷φ after a loss and never up (a test proves no martingale over 300 trades). Σ open ≤ 61.8%.
+  - Day ladder: u, rungs 1/2/3/5/8/13u, floor at checkpoint − 0.382u. Recovery goal φ·L. Tomorrow's target = today × φ.
+  - Milestones B0·φ^k lock 23.6% of each gain.
+- **Real costs (2026-10-19):**
+  - Jupiter's keyless quote API (lite-api.jup.ag/swap/v1/quote) is reachable from here. Its rate limit answers 429 even at 1.1 s, so calls are spaced 1.5 s with backoff.
+  - Cost per side = max(Jupiter buy→sell round trip / 2, the pool's fee_ratio) + token tax + network. Network = the median gas_native paid by the coin's last 50 trades, × SOL price.
+  - Measured: Pump AMM pool fee 1.1–1.15% and Raydium V4 0.25%. One token had a 1% buy and 1% sell tax. Network was 0.000014–0.000064 SOL per trade ($0.0015–0.0067); GMGN's own "auto" priority suggestion is 0.000244 SOL. At $2.36 the round trip came to 2.4–6.8%.
+  - GMGN's own swap fee is not exposed by any read endpoint, so the GMGN route is logged but never chosen.
+  - Jupiter's priceImpactPct is not used (it barely moved between $2.36 and $100). Impact is the round-trip loss that fees do not explain; above 2.36% the trade is skipped.
+  - The W ≥ 3|Λ| rule allows at most about 4.4% round trip on a clean 2x swing.
+- **X:** the paid API is not used (api.x.com answers 401 without a paid key). The coin's own tweet is read through the public embed (cdn.syndication.twimg.com/tweet-result: likes, replies, blue, time; no search). Live X search runs in Alex's signed-in Chrome through ultracursor (`x.mjs search`). Its parser is not verified against live X yet: x.com shows a login wall here. nitter.net search returns no results.
+- **Memory, tools map, orb and sound:** KB §10–11. The memory lives in `runtime/trader/memory/` and is mirrored to R2.
+- **Tests:**
+  - `node test/trader.test.mjs` (200): every rule above, a replay of recorded GMGN candles through the three real lanes, and memory across a real process restart.
+  - `TMPDIR=/tmp node test/orb.test.mjs` (13): the orb only in trader mode, the KB matching disk, the orb growing, the chime only on profitable exits, and mute.
+  - Fixtures are in `test/fixtures/gmgn|x|jupiter/`. pack.sh runs them all.
