@@ -1,9 +1,9 @@
 ---
 name: gmgn-fib
-description: Alex's GMGN memecoin plan — Fibonacci entries/exits and golden-ratio position sizing on a separate $10 wallet. Paper first. Use when he says GMGN, memecoin, trade, fib, golden ratio, grow the $10.
+description: Alex's GMGN memecoin plan — Fibonacci entries/exits and golden-ratio position sizing on a separate wallet. Elegant sniping; fake-money training only when Alex asks. Use when he says GMGN, memecoin, trade, fib, golden ratio, grow the $10.
 ---
 # GMGN Fibonacci plan (Alex, 2026-10-19)
-Never hold or ask for a seed phrase or private key. Run paper trades first (ultracursor logs the trades it would make). Go live only with a separate Phantom wallet holding the $10, and only when the paper win rate is at least 40% after costs.
+Never hold or ask for a seed phrase or private key. The default is live trading from a separate Phantom wallet. Fake-money training ("Sniper XYZ") runs only when Alex asks, usually overnight while he sleeps: real GMGN coins, fake money, all night, feeding the learning loop. Never propose paper trading unprompted (Alex, 2026-10-19). The knowledge base lives in references/knowledge-base.md.
 
 ## Filters (all must pass)
 - Token age: 15 minutes to 6 hours.
@@ -37,7 +37,7 @@ Never hold or ask for a seed phrase or private key. Run paper trades first (ultr
   - 8 green / 2 red: $179
   - 10 green / 0 red: $1,230
 
-## Paper trader (built 2026-10-19, `tools/ultracursor/src/trader/`)
+## Training mode engine (built 2026-10-19 as the "paper trader", `tools/ultracursor/src/trader/`)
 PAPER ONLY: no wallet, no key, no signing, no order anywhere. GMGN is read through a read-only path allowlist (`gmgn.mjs`).
 - Run: `cd tools/ultracursor && node src/trader/paper.mjs` (Ctrl-C to stop) or `--minutes 30`. `--status` prints trades, wins, p, balance from the saved ledger. `--fresh` restarts at $10 (old ledger kept). `--record file.jsonl` saves every GMGN response for replay.
 - Ledger: `tools/ultracursor/runtime/trader/ledger.jsonl` (every gate result, arm, entry, partial exit, close with reason) and `state.json` (resumes on restart). Gitignored.

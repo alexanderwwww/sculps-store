@@ -5,8 +5,8 @@ Every rule here was set by Alex or derived from his rules. Add to this file when
 
 ## 0. Principles
 1. φ = 1.618 is the guide. Every threshold is a Fibonacci number or ratio: 0.146, 0.236, 0.382, 0.5, 0.618, 0.786, 1.272, 1.618.
-2. No sniping and no racing bots. We buy patience: 0.618 pullbacks on coins that survived their first minutes.
-3. Paper first. Go live only when the measured p beats p* with a margin.
+2. We ARE snipers, elegant ones (Alex, 2026-10-19: "low-key it is sniping … we are elegant"). We don't race the bots to block 0. We snipe the 0.618 pullback on coins that survived their first minutes, with every rule checked first.
+3. The default is live trading. Fake-money training happens ONLY when Alex says so (his name for the overnight training session: "Sniper XYZ"). It runs on real GMGN coins with fake money, trades all night, and feeds the learning loop. Never suggest paper trading on our own initiative.
 4. Never hold or ask for a seed phrase or private key. Live trading uses a separate wallet holding only what Alex puts in it.
 5. Speed comes from data, not clicks. Read feeds directly, run analyses in parallel, and use the browser only to act.
 
@@ -57,5 +57,5 @@ Horizon   B_n = B0 · φ^(green days − red days)        (because 1.618 × 0.61
 - Report to Alex: p, EV per trade, fees paid vs saved, green and red days, and the wallet against B0·φ^(g−r).
 
 ## 6. Status
-- Core paper trader: being built in tools/ultracursor/src/trader/ (3 positions, 0.618 exposure cap).
+- Core trader (runs in training mode until a live wallet is connected): built in tools/ultracursor/src/trader/ (3 positions, 0.618 exposure cap).
 - Fee engine, narrative plugin, protection layers and learning loop: specified here; built after the core passes its tests.
