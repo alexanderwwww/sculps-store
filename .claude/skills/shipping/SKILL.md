@@ -272,3 +272,10 @@ The Wand worked. His new ChatGPT account changed the page; the fault was the app
 attachments only as `blob:` images. I spent builds 72-76 on glass, icon, sign-in guards and lag instead of reading the page first. Rules: evidence first
 (the probe in live.mjs prints what the page really has), one fix per build, keep the last good build published (71 is the last one that worked on his old
 account), confirm in `wand_status` that the build number changed, then say done. A runner busy in a retry loop only updates after a stop + `update` order.
+
+## Wrangler deploys the WRONG worker from a subfolder (19 Oct 2026, cost: Kerberos replaced for 22 s)
+`npx wrangler deploy` run in `tools/ultracursor/link/` (which has its own wrangler.toml) deployed **kerberos**: the repo's
+`.wrangler/deploy/config.json` (left by the React Router build) redirects every wrangler run under the repo to Kerberos.
+Rolled back at once with `npx wrangler rollback <previous version id>` from the repo root; /healthz, blackreaper.us, cart and
+checkout checked. Rule: any worker other than Kerberos is deployed ONLY with `--config <its own wrangler.toml>`, after a
+`--dry-run --outdir /tmp/x` whose bundle is read to confirm it is that worker, and the output must say `Uploaded <that name>`.

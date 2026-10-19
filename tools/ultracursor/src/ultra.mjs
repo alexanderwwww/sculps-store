@@ -89,6 +89,14 @@ try {
   };
 }
 let agentRun = null;
+
+// The link: Claude in the chat commands the agent (no API key), like Magic Wand.
+let link = null;
+try {
+  const { createLink, DEFAULT_LINK } = await import("./agent/link.mjs");
+  link = createLink({ base: process.env.ULTRA_LINK || DEFAULT_LINK, log: (l) => log(l), inbox: path.join(WORK, "inbox") });
+} catch (e) { log(`the link to Claude could not start: ${String(e && e.message || e).slice(0, 160)}`); }
+let lastBeat = 0, lastTake = 0;
 desk.onFinished(async (r) => {
   log(`task ${r.status}: ${String(r.summary || "").slice(0, 200)} (${r.steps} steps, $${(r.usd || 0).toFixed(2)})`);
   // A task Claude posted gets its answer where Claude reads reports.
@@ -420,6 +428,23 @@ async function main() {
           await sweep(hunt);
         }
         lastStatus = 0;
+      }
+    }
+    // The link: a heartbeat Claude can see, and Claude's commands.
+    if (link && now - lastBeat > 5000) {
+      lastBeat = now;
+      const a = desk.state();
+      let url = "", title = "";
+      try { const ctx = browser && browser.contexts()[0]; const p = ctx && ctx.pages().slice(-1)[0]; if (p) { url = p.url(); title = await p.title(); } } catch { /* fine */ }
+      link.heartbeat({ build: BUILD, chrome: S.chrome.connected, url, title, mode: a.mode, status: a.status, card: a.card ? { kind: a.card.kind, title: a.card.title, lines: a.card.lines } : null }).catch(() => {});
+    }
+    if (link && !running && !agentRun && !desk.hasWork() && now - lastTake > 1000) {
+      lastTake = now;
+      const cmd = await link.take();
+      if (cmd && cmd.id) {
+        const task = { id: `link${Date.now().toString(36)}`, text: "Claude is driving through the link (commands from the chat)", files: [], source: "link" };
+        task.brain = link.brain(cmd, task);
+        desk.enqueue(task);
       }
     }
     // One agent task at a time, never during a sweep. It runs beside this

@@ -181,13 +181,14 @@ export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale =
     S.current = task; S.stopped = false; S.paused = false; S.status = "Starting"; S.step = null; S.usd = null;
     let result;
     try {
-      if (!cfg.anthropicApiKey) throw new Error("Paste your Claude API key first.");
+      if (!task.brain && !cfg.anthropicApiKey) throw new Error("Paste your Claude API key first.");
       let page = await pickPage(context, task);
       S.page = page;
       try { await page.bringToFront(); } catch { /* fine */ }
       if (ui && ui.attach) await ui.attach(context, page, build);
       await host.attach(page);
-      const brain = createBrain({ apiKey: cfg.anthropicApiKey, model: cfg.model, effort: cfg.effort, baseURL });
+      // Claude in the chat (the link) or Claude through Alex's API key.
+      const brain = task.brain || createBrain({ apiKey: cfg.anthropicApiKey, model: cfg.model, effort: cfg.effort, baseURL });
       result = await runTask({
         page,
         task,
@@ -221,6 +222,7 @@ export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale =
       result = { status: "error", summary: String(e && e.message || e).slice(0, 200), steps: 0, usd: 0 };
       log({ task: task.id, kind: "error", text: result.summary });
     }
+    if (task.brain && task.brain.close) { try { await task.brain.close(result.summary); } catch { /* the link is down */ } }
     S.current = null; S.status = ""; S.step = null; S.usd = null;
     // The photos were for this task only.
     if (task.files && task.files.length) {

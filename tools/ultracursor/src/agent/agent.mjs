@@ -154,6 +154,8 @@ export async function runTask({ page, task, deps }) {
     // Alex closed the tab: carry on in the last open one.
     try { if (page.isClosed()) { const open = page.context().pages().filter((p) => !p.isClosed()); if (!open.length) return { stop: true, reason: "the tab was closed" }; page = open[open.length - 1]; deps.setPage && deps.setPage(page); } } catch { return { stop: true, reason: "the tab was closed" }; }
     const name = tu.name, input = tu.input || {};
+    // Files can arrive mid-task (Claude passing photo links through the link).
+    for (const f of task.files || []) if (!files.has(f.name)) files.set(f.name, f);
     const bad = validate(name, input);
     if (bad) return { text: format({ ok: false, error: bad }), error: true };
     if (name === "finish") return { finish: { status: input.status, summary: String(input.summary || "").trim() } };
