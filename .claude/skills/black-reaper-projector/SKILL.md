@@ -71,3 +71,22 @@ Alex chose this product: "I take it."
   - 2 for $129.99 (compare-at $199.98, the default)
   - 3 for $199.89 (compare-at $299.97)
 - OCTOBER31 needs a $200 minimum, so no projector cart gets it.
+
+## The ad and image style, from watching the 3 Tecc Marts ads frame by frame (Alex: "no cute ghost pumpkin bullshit")
+- **The 38 s ad shows the exact unit Alex sources:** the black dual-head projector with red and green lenses on its mount.
+- **Projections:** huge, glowing and scary, filling a whole wall:
+  - a blue-fire flaming skull across the garage door
+  - a red hooded skeleton reaper with a scythe wrapping the whole house in red fire
+  - a fire-outlined reaper across barn doors
+  - a red neon skull on a dining-room wall
+  - a blue ghost bride filling a hallway
+  - blue ghost skulls up a staircase
+  - a big glowing jack-o'-lantern over a sofa
+- **Reaction shots:** neighbours on the sidewalk filming with phones, lit red. A couple open-mouthed with a phone torch. Two kids in costume, shocked. A woman filming from the porch with the street behind her.
+- **Product shots:** hands lifting it out of a cardboard box, it on a table next to a remote and slide discs, a hand mounting it on a porch post.
+- **Captions:** big bold yellow/white boxes:
+  - "WHY BUY A DOZEN DECORATIONS WHEN ONE PROJECTION DOES THIS?"
+  - "YOUR HOUSE CAN LOOK LIKE THIS IN SECONDS"
+  - a "Halloween Projector" label in red/blue.
+- **Mood:** night, saturated red and electric blue, phone-camera realism.
+- **For every Black Reaper image:** cute cartoon ghosts and pumpkins are banned. The scenes must be ones the unit's slides actually include (confirm the slide list with the supplier) so the page never sells a picture the box can't make.
