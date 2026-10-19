@@ -96,3 +96,44 @@ The same ratios govern every layer, from one candle to the whole portfolio. No n
   - Compare quotes and routes, and use the network's current minimum priority fee.
   - Skip any trade where the costs break the payoff equation.
   - Measure every fee actually paid. Never assume a fee.
+
+## 10. The Master Equation v2 (everything together, 2026-10-19)
+```
+φ = 1.618…                      every constant below is a φ-power or a Fibonacci number
+
+SENSES      N_i  = narrative score from source i ∈ {X, GMGN trending, GMGN tracker, …}   (0–100)
+            N    = min(N_a, N_b) over the two strongest independent sources   (both must agree)
+            I    = instinct score from memory (per-feature Bayesian win rates)  (0–100)
+
+GATE        G = Π 1[rule_j]  (age, liquidity+lock, top10, dev, authorities, volume, smart money,
+                              N ≥ 61.8, regime ok, confluence on ≥3 of {1,3,5,13,21}m, data complete)
+            fire ⇔ G = 1 ∧ tier = "fire"   (watch → ready → fire)
+
+LEVELS      D = S_H − S_L ;  entries at S_H − {0.5, 0.618, 0.705}·D weighted {.382, .382, .236}
+            stop = S_H − 0.786·D (→ break-even after T1)
+            exits: .382 at S_H, .382 at S_L+1.272D, .236 trailed to S_L+{1.618, 2.618}D
+            time checks at {3,5,8,13,21} min, out at 21 if no progress
+
+COSTS       c = min over routes (fee + priority_min + slippage), measured live
+            require  W(c) ≥ 3·|Λ(c)|   else skip
+
+EDGE        W = Σ w_k·(T_k/Ē − 1) − c      Λ = (stop/Ē − 1) − c
+            EV = p·W + (1−p)·Λ ;   p* = |Λ|/(W+|Λ|)
+            conviction κ = clamp(I/61.8, 0.618, 1)          (instinct trims, never inflates)
+
+SIZE        f = clamp(0.236·φ^(wins) ·φ^(−losses), 0.146, 0.382) · κ
+            f ≤ 0.01·L_pool/B          (never more than 1% of the pool: no self-made slippage)
+            Σ open f ≤ 0.618 ;  open ≤ {1,2,3} by win streak ;  fee reserve never traded
+
+DAY         u = first realised profit ;  rungs R_n = F_n·u  (1,2,3,5,8,13) banked as checkpoints
+            floor = last checkpoint − 0.382u ;  stop day at +61.8% or −38.2%
+            loss L ⇒ recovery goal φ·L by selection/targets ;  size after loss ÷φ (never ×)
+            target_{d+1} = result_d · φ
+
+PORTFOLIO   milestones B0·φ^k ;  lock 0.236·gain at each ;  drawdown 0.382 from peak ⇒ 24h halt
+            B_n ≈ B0 · φ^(green − red)
+
+MEMORY      after each trade: update I, p_13/21/34, tool usefulness ; nightly: lessons only when
+            13 ∧ 21 ∧ 34 agree ; daily diary ; synced to cloud
+```
+Additions by Claude (2026-10-19): the 1%-of-pool size cap (on thin coins our own buy would otherwise create the slippage), a fee reserve that is never traded, conviction κ from instinct which can only trim size, and a "data complete" rule inside the gate.
