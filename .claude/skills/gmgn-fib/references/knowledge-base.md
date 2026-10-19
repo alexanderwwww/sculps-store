@@ -137,3 +137,18 @@ MEMORY      after each trade: update I, p_13/21/34, tool usefulness ; nightly: l
             13 ∧ 21 ∧ 34 agree ; daily diary ; synced to cloud
 ```
 Additions by Claude (2026-10-19): the 1%-of-pool size cap (on thin coins our own buy would otherwise create the slippage), a fee reserve that is never traded, conviction κ from instinct which can only trim size, and a "data complete" rule inside the gate.
+
+## 11. The trader app: decided 2026-10-19
+- **Memory:** used only by the trader, never by other ultracursor work. Saved on the app (runtime/trader/memory) and mirrored to the cloud (R2), loaded on every start. It holds:
+  - the journal of every trade and skip
+  - win rates p over 13/21/34 trades, and by hour and narrative
+  - the instinct / gut-feel weights, trained after every trade and reviewed every night
+  - lessons, applied only when 13, 21 and 34 agree
+  - a daily diary
+  - the GMGN tools map: every GMGN tool, and how useful each one has been
+- **Orb:** a small glowing orb at the bottom of the screen that grows with the memory size and shows the KB inside. Visible in trader mode only. Ultracursor is also used for other things, which never show it.
+- **Trader mode speed:** the cursor snaps straight to targets with no human pacing. Analysis happens before the cursor moves.
+- **Parallel lanes:** the GMGN scan, the X narrative reading and position management run at the same time, and none blocks another.
+- **X:** read through Alex's own signed-in Chrome in ultracursor, plus GMGN's social data. No paid X API ("delete this API thing").
+- **Autonomy:** the trader decides on its own, in milliseconds. Claude builds it, reads its memory and improves it, and is never in the loop of a single trade. "You are him": its rules are Claude's judgement, written down.
+- **Training = "Sniper XYZ":** fake money on real GMGN coins, only when Alex says. The first session ran on 2026-10-19 for 60 min on the v1 engine.
