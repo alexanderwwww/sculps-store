@@ -122,6 +122,9 @@
   const ACTIVE = acc(ShadowRoot.prototype, "activeElement", "get");
   const IS_CONNECTED = acc(Node.prototype, "isConnected", "get");
   const SVG_EL = SVGElement;
+  const AUDIO = own(window, "AudioContext") !== MISSING ? own(window, "AudioContext") : own(window, "webkitAudioContext");
+  const LN = Math.log;
+  const VISIBLE = acc(Document.prototype, "visibilityState", "get");
 
   // The binding and the Playwright objects its calls pass through.
   const BIND_NAME = "__playwright__binding__", CTRL_NAME = "__playwright__binding__controller__";
@@ -346,6 +349,58 @@
   });
   put(layer, stack);
 
+  /* ------------------------------------------------------- the trader orb */
+
+  // Trader mode only (node sends state.trader while the trader runs, null
+  // otherwise). A small glass orb at the bottom centre whose size grows with
+  // the trader's memory on disk: radius = 7 + 4.236 ln(1 + KB), clamped 7..29 px.
+  // The KB sits inside once the orb is big enough, and always in its title.
+  // A click mutes / unmutes the "got paid" chime.
+  const orb = el("div", {
+    ...BASE, position: "fixed", left: "50%", bottom: "18px", display: "none", "pointer-events": "auto", cursor: "pointer",
+    "border-radius": "50%", "align-items": "center", "justify-content": "center", transform: "translateX(-50%)",
+    background: "radial-gradient(circle at 34% 28%, rgba(255,255,255,.95) 0%, rgba(255,255,255,.42) 18%, rgba(255,255,255,.10) 46%, rgba(255,255,255,.04) 70%), rgba(11,11,11,.72)",
+    border: "0.5px solid rgba(255,255,255,.34)",
+    "box-shadow": "0 0 14px 2px rgba(255,255,255,.30), 0 0 34px 6px rgba(255,255,255,.10), inset 0 1px 0 rgba(255,255,255,.5), inset 0 -2px 6px rgba(0,0,0,.55)",
+    "backdrop-filter": "blur(10px) saturate(0)", "-webkit-backdrop-filter": "blur(10px) saturate(0)",
+    transition: "width .6s cubic-bezier(.2,.8,.2,1), height .6s cubic-bezier(.2,.8,.2,1), opacity .3s ease",
+  });
+  const orbKb = el("span", { ...BASE, font: `650 9px/1 ${FONT}`, color: "rgba(255,255,255,.92)", "letter-spacing": ".01em", "text-shadow": "0 1px 2px rgba(0,0,0,.6)" });
+  put(orb, orbKb);
+  put(layer, orb);
+  const orbRadius = (kb) => Math.max(7, Math.min(29, 7 + 4.236 * LN(1 + Math.max(0, Number(kb) || 0))));
+
+  // "Got paid": two bright bell notes a golden ratio apart (f, then f x 1.618)
+  // with a soft shimmer, ~0.6 s, synthesized here (no sample). Not a cash
+  // register: no noise burst, no coin rattle, so it never sounds like Shopify.
+  let audio = null;
+  const chime = () => {
+    S.chimes++;
+    try {
+      if (!AUDIO) return;
+      if (!audio) audio = new AUDIO();
+      if (audio.state === "suspended") audio.resume();
+      const t = audio.currentTime + 0.01, f = 880, PHI_ = 1.618;
+      const out = audio.createGain();
+      out.gain.value = 0.16;                                 // modest
+      out.connect(audio.destination);
+      const bell = (freq, at, len, peak) => {
+        for (const [mult, g] of [[1, 1], [2.0, 0.18], [PHI_ * PHI_, 0.08]]) {
+          const o = audio.createOscillator(), e = audio.createGain();
+          o.type = "sine"; o.frequency.value = freq * mult;
+          e.gain.setValueAtTime(0, at);
+          e.gain.linearRampToValueAtTime(peak * g, at + 0.006);
+          e.gain.exponentialRampToValueAtTime(0.0001, at + len);
+          o.connect(e); e.connect(out); o.start(at); o.stop(at + len + 0.02);
+        }
+      };
+      bell(f, t, 0.42, 0.9);
+      bell(f * PHI_, t + 0.12, 0.48, 0.8);
+      // shimmer tail: quiet high partials at f x phi^2 and f x phi^3, detuned, fading out by 0.6 s
+      for (const [freq, at] of [[f * PHI_ * PHI_, t + 0.16], [f * PHI_ * PHI_ * PHI_ * 0.997, t + 0.2], [f * PHI_ * PHI_ * 1.004, t + 0.24]]) bell(freq, at, 0.36, 0.12);
+    } catch (e) { /* no audio on this page: the count still says it was due */ }
+  };
+
   const field = (password) => {
     const wrap = el("div", { ...BASE, position: "relative", flex: "1 1 auto", "min-width": "0", height: "32px", display: "flex", "align-items": "center" });
     const input = el("input", {
@@ -478,6 +533,7 @@
     note: "", noteKind: "", noteAt: 0,
     href: "", destroyed: false, attaches: 0, recent: [], mountedOnce: false,
     topLayer: false, noTop: false, above: [], drop: false, vis: {}, txt: {},
+    paidSeen: null, chimes: 0, orbR: 0, orbKb: 0, muted: false,
   };
 
   const vis = (name, e, show, disp) => {
@@ -544,6 +600,7 @@
     const add = (k, e) => { if (S.vis[k] === undefined || S.vis[k] !== "none") { const r = rect(e); if (r) out[k] = r; } };
     add("panel", stack);
     add("bar", bar);
+    if (S.vis.orb === "flex") { const r = rect(orb); if (r) out.orb = { ...r, kb: S.orbKb, r: S.orbR, muted: S.muted, chimes: S.chimes }; }
     if (S.mode === "needkey") { add("keyInput", key.input); add("keySave", keySave); }
     if (S.mode === "idle") { add("input", task.input); add("attach", attachBtn); add("send", sendBtn); if (S.vis.chips === "flex") add("chips", chips); }
     if (S.vis.pause === "inline-flex") add("pause", pauseBtn);
@@ -593,6 +650,21 @@
     const st = S.state && typeof S.state === "object" ? S.state : null;
     const show = Boolean(st) && S.everOk && !S.rejected && !blockedUrl() && connected(host);
     vis("stack", stack, show, "flex");
+    const tr = show && st.trader && typeof st.trader === "object" && st.trader.on === true ? st.trader : null;
+    vis("orb", orb, Boolean(tr), "flex");
+    if (tr) {
+      const kb = Math.max(0, Math.round(Number(tr.kb) || 0));
+      const r = orbRadius(kb);
+      S.orbR = r; S.orbKb = kb; S.muted = tr.muted === true;
+      css(orb, { width: `${(2 * r).toFixed(1)}px`, height: `${(2 * r).toFixed(1)}px`, opacity: S.muted ? "0.62" : "1" });
+      say("orbKb", orbKb, r >= 12 ? `${kb}` : "");
+      attr(orb, "title", `trader memory ${kb} KB${S.muted ? " · muted (click to unmute)" : " · click to mute"}`);
+      const paid = Math.max(0, Number(tr.paid) || 0);
+      let visible = true;
+      try { visible = call(VISIBLE, document) === "visible"; } catch (e) { visible = true; }
+      if (S.paidSeen === null) S.paidSeen = paid;            // first sight: no chime for old wins
+      else if (paid > S.paidSeen) { S.paidSeen = paid; if (!S.muted && visible) chime(); }
+    } else S.paidSeen = null;
     if (!show) return;
 
     let mode = S.tampered ? "off" : S.fails >= OFFLINE_AFTER ? "offline" : String(st.mode || "");
@@ -733,6 +805,8 @@
   on(pauseBtn, "click", (e) => control("pause", e, pauseBtn));
   on(resumeBtn, "click", (e) => control("resume", e, resumeBtn));
   on(stopBtn, "click", (e) => control("stop", e, stopBtn));
+  // the orb: a real click toggles the chime's mute (kept by node in the trader's memory folder)
+  on(orb, "click", (e) => { if (!pointer(e)) return; send({ type: "traderMute", muted: !S.muted }, 8000).then(() => {}); });
 
   const saveKey = () => {
     if (S.sending) return;

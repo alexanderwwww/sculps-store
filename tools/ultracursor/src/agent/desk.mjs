@@ -19,6 +19,7 @@ import { loadProfiles } from "./profiles.mjs";
 import { createLimits } from "./limits.mjs";
 import { createActionLog } from "./log.mjs";
 import { configPath, loadConfig, saveKey } from "./config.mjs";
+import { traderOrb, setTraderMute } from "../trader/memory.mjs";
 
 const MAX_FILE = 25 * 1024 * 1024;
 const id = () => crypto.randomBytes(6).toString("hex");
@@ -63,6 +64,8 @@ export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale =
       usd: S.current && S.usd ? S.usd : null,
       task: S.current ? { id: S.current.id, text: S.current.text } : null,
       card: S.card ? { id: S.card.id, kind: S.card.kind, title: S.card.title, lines: S.card.lines, choices: S.card.choices } : null,
+      // trader mode only: the memory orb and the "got paid" chime (null when the trader is off)
+      trader: traderOrb(),
     };
   }
 
@@ -81,6 +84,7 @@ export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale =
 
   async function onMessage(msg, page) {
     switch (msg && msg.type) {
+      case "traderMute": return setTraderMute(msg.muted === true);
       case "setKey": {
         const err = saveKey(cfgFile, msg.key);
         if (err) return { ok: false, error: err };
