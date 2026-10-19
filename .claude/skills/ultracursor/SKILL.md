@@ -59,3 +59,7 @@ into the core." First real use: Depop ("take images and upload"), because ChatGP
 - Depop test plan: 1) "Open my Depop shop and tell me how many listings are live" (read-only). 2) "Draft a reply to my newest
   unread Depop message" (Send card → Skip or Approve). 3) "Change the price of <item> to $X" (card shows old → new).
   4) Attach photos + "List this: <item>, size, condition, price, category" (Post card → check → Approve).
+
+## Depop listing rules (Alex, 2026-10-19)
+- Never "Save as a draft". When a field is missing, ask for it; when he answers, post.
+- The 22K roll chain at $16,000 got "There was a problem listing your product" twice. Right after that, the form had worldwide shipping turned on at $0 and the tags Source=Vintage and Age=Antique, none of which we set. Then Depop returned 403 Forbidden. Find out what set those fields before driving Depop again. Re-read every field before pressing Post.
