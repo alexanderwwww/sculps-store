@@ -78,3 +78,21 @@ The same ratios govern every layer, from one candle to the whole portfolio. No n
 | Learning | Win rate p measured over the last 13, 21 and 34 trades. Rules change only when all three agree. |
 | Day | Target +61.8%, stop −38.2%. |
 | Portfolio milestones | B0 → B0·φ → B0·φ² … ($10 → $16.18 → $26.18 → $42.36 → $68.54 → $110.90). At each milestone, 23.6% of the gain is locked away and never traded. |
+
+## 8. Daily Fibonacci growth and Fibonacci recovery (Alex, 2026-10-19)
+- **Unit u** = the first realised profit of the day, whether it takes 15 minutes or 1 hour.
+- **Intraday ladder:** the rest of the day aims for Fibonacci multiples of u, cumulatively 1u, 2u, 3u, 5u, 8u, 13u. Each rung reached is banked as a checkpoint. A trade may not take the day's P&L below the last banked checkpoint minus 0.382u.
+- **Day over day:** tomorrow's target is today's result × φ. A bad day resets the target to that day's level, not to zero.
+- **Recovery (every lost cent is recovered):**
+  - After a loss of L, the next goal is to recover φ·L (the loss plus 61.8%) before the ladder resumes.
+  - Recovery comes from trade selection and targets, NEVER from bigger size. After a loss, size still goes ÷φ.
+  - Size goes back up only after a win.
+  - Doubling size after losses (martingale) is banned. It is the one mechanism that empties small wallets.
+- **Strict brain:** every decision passes the gate. Any missing data counts as a NO. No discretionary overrides.
+
+## 9. Senses
+- **Narratives:** analyse at least 2 narratives in parallel: X/Twitter, GMGN trending, and GMGN's tracker (KOL and smart-wallet activity).
+- **Fees:** lowest possible on every entry and exit.
+  - Compare quotes and routes, and use the network's current minimum priority fee.
+  - Skip any trade where the costs break the payoff equation.
+  - Measure every fee actually paid. Never assume a fee.
