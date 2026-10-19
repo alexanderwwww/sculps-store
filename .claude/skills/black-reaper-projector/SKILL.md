@@ -47,3 +47,15 @@ Alex chose this product: "I take it."
 4. Supplier: mini projector + 120" holographic window mesh screen, US warehouse, so it delivers before Oct 31. Fill in cost_cents and supplier_url.
 5. Our own scene videos (zombie swarm, phantoms, skeletons, the Scream, Santa) made with Kling/XUGC through ugc-master-prompter. Alex OKs the price before any render.
 6. After every change: load /products/haunted-projector live, then run add-to-cart and checkout render checks (AGENTS rule 20). No live charges.
+
+## Live offer (2026-10-19, set in the DB with no deploy)
+- Projector prices:
+  - 1 for $69.99
+  - 2 for $99.99 (compare-at $139.98, the default)
+  - 3 for $129.99 (compare-at $209.97)
+- The Scream: 1+1 at $449.99 (compare-at $599.98) is the default.
+- Both buy buttons read "Claim 50% off". The claim is true because the second unit is half off or more.
+- Compare-at always equals the single price × quantity. Never use a made-up "was" price (AGENTS rule 19).
+- Checked: add → cart → checkout returned 200 on both products.
+- Open item: the OCTOBER31 $31 discount still applies to the projector. Waiting on the supplier cost.
+- Magic Wand: Alex wants one picture at a time, not the whole set queued at once.
