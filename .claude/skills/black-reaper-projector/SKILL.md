@@ -136,3 +136,4 @@ Also make two "CLAIM 50% OFF" banners, one per product, for the top of each page
 - Real percentages, for the record: 2-pack is 35% off compare-at, Scream 1+1 is 25% (the second Scream is half price). "50% OFF" is the offer wording on the buttons.
 - Deployed 5a36fbc5-2dd4-4b2b-a921-354cf1dbad43; rollback `npx wrangler rollback bed43468-f70c-4717-9aee-488a617efaca`.
 - 2026-10-19: the claim no longer adds anything to the cart. After the price drop it closes on the bundle picker and the customer chooses 1, 2 or 3 (Alex). Deployed as 7b140c5c.
+- 2026-10-19: all $31 removed. OCTOBER31 and the minted OCT31xxxx codes are inactive, and the checkout claim card is off for the Reaper skin. The only offer is 50% off the second one. Deployed as d465b16a. Checked: no $31 on home, the projector page, or any of the 5 checkouts.

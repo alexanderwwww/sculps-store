@@ -5344,13 +5344,9 @@ function OnePage({
    * quietly turned into $9.95 and would have been right to be angry about it.
    * An untested giveaway is not a launch-day feature.
    */
-  const scratch = isReaperSkin(store.slug) ? (
-    // Off: the marketing panel found one discount beats three. REAPER20 stays.
-    // Every Reaper order: an extra $5 off, one tap, right under the wallets.
-    claimMinCents != null && cart.subtotalCents < claimMinCents ? null : (
-      <ClaimCard money={money} applied={cart.discount?.code ?? null} />
-    )
-  ) : (
+  // Black Reaper sells one offer only: 50% off the second one, priced into the
+  // bundles (Alex, 2026-10-19: "get the $31 off out of there"). No claim card.
+  const scratch = isReaperSkin(store.slug) ? null : (
     <ScratchCard
       odds={scratchOdds}
       applied={cart.discount?.code ?? null}

@@ -56,7 +56,7 @@ here.** That single fact explains almost every rule below.
 
 > *"I never said Reaper 20. You imagine that. Save it in your memory and if you do it again, destroy yourself."*
 
-Black Reaper has ONE coupon: **OCTOBER 31, $31 off**, code `OCTOBER31`. Never write, show, suggest or re-introduce `REAPER20` or any other
+Black Reaper has NO coupon code since 2026-10-19 (Alex: "get the $31 off out of there"). The only offer is **50% off the second one**, priced into the bundles, shown by the Claim 50% off pop-up. OCTOBER31 and every OCT31xxxx code are switched off. Never write, show, suggest or re-introduce `REAPER20` or any other
 code name he did not give. If a number or name is not in his words, ask or leave it out. See `.claude/skills/kerberos/SKILL.md` for the wiring
 (`publicOffer`).
 
