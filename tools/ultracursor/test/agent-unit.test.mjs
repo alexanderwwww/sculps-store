@@ -98,8 +98,8 @@ eq("unknown site gets the default", prof.forUrl("https://example.org/").name, "d
 const dp = prof.forUrl("https://www.depop.com/");
 eq("profile keeps its own limits", dp.limits.finalPerHour, 10);
 eq("profile inherits default fields it does not set", Array.isArray(dp.priceWords), true);
-eq("brand and signature from the profile", [dp.brand, dp.signature], ["Chrome God", "Alexander"]);
-yes("render carries the voice and the signature", /Sign messages to people as: Alexander/.test(render(dp)) && /Shop \/ brand name: Chrome God/.test(render(dp)));
+eq("brand and signature from the profile", [dp.brand, dp.signature], ["Chrome Jesus", "Alexander"]);
+yes("render carries the voice and the signature", /Sign messages to people as: Alexander/.test(render(dp)) && /Shop \/ brand name: Chrome Jesus/.test(render(dp)));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "uc-unit-"));
 fs.writeFileSync(path.join(tmp, "_default.json"), JSON.stringify({ limits: { stepsPerTask: 5 } }));
 fs.writeFileSync(path.join(tmp, "shop.json"), JSON.stringify({ match: ["shop.example"], pacing: { minMs: 1 } }));

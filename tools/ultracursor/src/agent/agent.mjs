@@ -258,7 +258,11 @@ export async function runTask({ page, task, deps }) {
       const what = name === "click"
         ? `${target.role ? target.role[0].toUpperCase() + target.role.slice(1) : "Button"}: "${clip(target.name, 80)}"`
         : targetText;
-      const choice = await approve(kind, input.why, what, step);
+      // Kinds Alex lets through on this site (profile autoApprove). Buying and
+      // deleting can never be listed: money and things that cannot be undone wait for him.
+      const auto = (profile.autoApprove || []).includes(kind) && !["buy", "delete"].includes(kind);
+      const choice = auto ? "approve" : await approve(kind, input.why, what, step);
+      if (auto) log({ kind: "approval", step, title: KIND_TITLE[kind] || kind, target: what, choice: "approve (auto, profile)" });
       if (choice === "stop") { note({ target: targetText, ok: false, error: "stopped by Alex at the approval", final: kind }); return { stop: true }; }
       if (choice !== "approve") {
         typed = typed.filter((t) => !t.price);
