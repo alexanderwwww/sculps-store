@@ -18,3 +18,19 @@ Alex chose this product: "I take it."
 - It has to ship from a US warehouse to arrive before Oct 31. After Nov 1, sell it as the Christmas projector.
 - AliExpress search terms that find the factory version: "halloween projector outdoor dual lens", "halloween window projector hologram". The exact factory model is not identified yet.
 - Any paid video render goes through ugc-master-prompter and needs Alex's OK on the price first.
+
+## Store decisions (Alex, 2026-10-19)
+- blackreaper.us sells only 2 products: **The 16 ft Scream** and **The Ghost Projector** (handle `haunted-projector`; the title was renamed in the DB).
+- The Crawling Zombie and The Black Reaper were set to draft. The Halloween Movie Theater stays hidden ("fuck the movie theater").
+- Main menu: "16 ft Scream", "Ghost Projector", Reviews, FAQ, Shop all. The menu lives in the `menu_links` table, so no deploy is needed.
+- Checked live: home and shop-all show Ghost Projector, and zombie/black-reaper return 404.
+
+## The ad style for every store (Alex: "this is the style of ads I want for every store and every product")
+- The reference videos are the three Tecc Marts ads, downloaded to the session scratchpad `ads/` (19 s, 22 s, 38 s).
+- What they all do:
+  - vertical phone video at night
+  - the product's effect huge on a real house
+  - a short hook caption
+  - a fast cut to the product
+  - an offer ("bundle and save")
+- Alex edits the video himself. Never run a competitor's video unedited.
