@@ -275,10 +275,22 @@ async function runCommandCases(sh, packedRunCommand, build) {
   // what they were asked instead of reaching the network or the desktop.
   fs.mkdirSync(BIN, { recursive: true });
   fs.symlinkSync(process.execPath, path.join(BIN, "node"));
+  // The fake npm installs every dependency package.json lists, at the listed
+  // version (playwright-core at UC_NPM_VERSION when set), except the ones named
+  // in UC_NPM_SKIP: an install that silently leaves one out.
   write(path.join(BIN, "npm"), `#!/bin/bash
 printf '%s|%s\\n' "$PWD" "$*" >> "$UC_LOG/npm.log"
-mkdir -p node_modules/playwright-core
-printf '{"name":"playwright-core","version":"%s"}\\n' "\${UC_NPM_VERSION:-1.63.0}" > node_modules/playwright-core/package.json
+node -e '
+const fs = require("fs"), path = require("path");
+const deps = require(path.resolve("package.json")).dependencies || {};
+const skip = (process.env.UC_NPM_SKIP || "").split(",").filter(Boolean);
+for (const [n, v] of Object.entries(deps)) {
+  if (skip.includes(n)) continue;
+  const d = path.join("node_modules", n);
+  fs.mkdirSync(d, { recursive: true });
+  const ver = n === "playwright-core" && process.env.UC_NPM_VERSION ? process.env.UC_NPM_VERSION : v;
+  fs.writeFileSync(path.join(d, "package.json"), JSON.stringify({ name: n, version: ver }) + "\\n");
+}'
 `, 0o755);
   write(path.join(BIN, "open"), '#!/bin/bash\nprintf "%s\\n" "$*" >> "$UC_LOG/open.log"\n', 0o755);
   write(path.join(LOG, "cdp.cjs"), FAKE_CDP);
@@ -375,6 +387,22 @@ exec node "$UC_LOG/cdp.cjs" "$port" "$UC_LOG/chrome.pid"
   r = launch("0", { UC_NPM_VERSION: "1.64.0" });
   check(say("and not again on the launch after"), r.code === 0 && lines("npm.log").length === 2, lines("npm.log").join("\n"));
   write(pj, FAKE_SRC["package.json"]);
+
+  // 4b. Build 2 adds Claude's SDK beside Playwright: a bundle that lists a new
+  // library installs again, once; an install that ends without one says so.
+  write(pj, JSON.stringify({ type: "module", dependencies: { "playwright-core": "1.63.0", "@anthropic-ai/sdk": "0.125.0" } }));
+  const npmBefore = lines("npm.log").length;
+  r = launch("0");
+  check(say("package.json lists a new library: installed again"), r.code === 0 && lines("npm.log").length === npmBefore + 1
+    && exists(path.join(WORK, "node_modules", "@anthropic-ai", "sdk", "package.json")), lines("npm.log").join("\n"));
+  r = launch("0");
+  check(say("and not again on the launch after"), r.code === 0 && lines("npm.log").length === npmBefore + 1, lines("npm.log").join("\n"));
+  fs.rmSync(path.join(WORK, "node_modules", "@anthropic-ai"), { recursive: true, force: true });
+  r = launch("0", { UC_NPM_SKIP: "@anthropic-ai/sdk" });
+  check(say("an install that leaves a library out stops and names it"), r.code !== 0 && r.runs.length === 0
+    && r.out.includes("Setup finished without: @anthropic-ai/sdk."), tail(r.out, 5));
+  write(pj, FAKE_SRC["package.json"]);
+  fs.rmSync(path.join(WORK, "node_modules", "@anthropic-ai"), { recursive: true, force: true });
 
   // 5-7. One at a time. A stand-in for another window's run.command: a bash
   // whose command line names run.command (the loop keeps bash from exec'ing).

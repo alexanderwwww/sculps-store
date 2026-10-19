@@ -51,6 +51,13 @@ PWCORE="$REPO/node_modules/playwright-core"
 REQUIRED="ultra.mjs cloud.mjs ui.mjs overlay.js signals.mjs q4.mjs report.mjs
 sites/adlibrary.mjs sites/tiktok.mjs sites/instagram.mjs sites/trends.mjs sites/stores.mjs
 skills/q4.md package.json"
+# Build 2 (SPEC "Build 2"): the agent. Checked only when the bundle has one,
+# so a build-1-shaped src (pack.test.mjs's made-up one) still packs.
+if [ -d "$SRC/agent" ]; then
+  REQUIRED="$REQUIRED panel.js agent/agent.mjs agent/brain.mjs agent/tools.mjs agent/guard.mjs
+agent/snapshot.mjs agent/desk.mjs agent/host.mjs agent/profiles.mjs agent/limits.mjs agent/log.mjs
+agent/config.mjs profiles/_default.json"
+fi
 
 for f in "$RUNCMD" "$PLIST" "$LAUNCHER" "$HERE/BUILD" "$ICON_SRC" "$MAKE_ICON"; do
   [ -f "$f" ] || fail "missing $f"
@@ -59,6 +66,19 @@ for f in $REQUIRED; do
   [ -f "$SRC/$f" ] || fail "src/$f is missing (SPEC.md lists it)"
 done
 [ -d "$PWCORE" ] || fail "no playwright-core in $REPO/node_modules: cannot prove the bundle loads"
+# Every dependency package.json names must be here too, at that exact version,
+# or the load check below proves nothing about what his Mac will install.
+node - "$SRC/package.json" "$REPO/node_modules" <<'JS' || fail "a dependency is missing here or at another version"
+const fs = require("fs"), path = require("path");
+const deps = JSON.parse(fs.readFileSync(process.argv[2], "utf8")).dependencies || {};
+let bad = 0;
+for (const [n, v] of Object.entries(deps)) {
+  let have = null;
+  try { have = JSON.parse(fs.readFileSync(path.join(process.argv[3], n, "package.json"), "utf8")).version; } catch {}
+  if (have !== v) { console.log(`${n}: package.json wants ${v}, ${have ? `here is ${have}` : "not installed here"}`); bad = 1; }
+}
+process.exit(bad);
+JS
 
 BUILD="$(tr -d '[:space:]' < "$HERE/BUILD")"
 case "$BUILD" in ''|*[!0-9]*) fail "BUILD must be a whole number, found '$BUILD'" ;; esac
@@ -259,10 +279,14 @@ JS
 ok "every import resolves inside the bundle or package.json"
 
 # And load them for real, from the space path, with ONLY what package.json
-# installs on his Mac (playwright-core). ultra.mjs is the entry and would start
+# installs on his Mac (its dependencies). ultra.mjs is the entry and would start
 # the runner, so it is parsed above but not loaded here.
 mkdir -p "$R/node_modules"
-ln -s "$PWCORE" "$R/node_modules/playwright-core"
+while IFS= read -r dep; do
+  [ -n "$dep" ] || continue
+  mkdir -p "$(dirname "$R/node_modules/$dep")"
+  ln -s "$REPO/node_modules/$dep" "$R/node_modules/$dep"
+done < <(node -p 'Object.keys(require(process.argv[1]).dependencies || {}).join("\n")' "$R/package.json")
 node - "$R" <<'JS' || fail "a module did not load from the packed bundle"
 const fs = require("fs"), path = require("path"), { pathToFileURL } = require("url");
 const root = process.argv[2];

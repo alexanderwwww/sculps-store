@@ -185,27 +185,30 @@ done
 
 # ---------------------------------------------------------------- packages
 #
-# Only the Playwright library: once, and again only if package.json asks for a
-# different version than the one installed. Never a browser download: it
-# drives his own Chrome. (playwright-core has no install scripts.)
-WANT="$("$NODE" -p 'require("./package.json").dependencies["playwright-core"]' 2>/dev/null)"
-HAVE="$("$NODE" -p 'require("./node_modules/playwright-core/package.json").version' 2>/dev/null)"
-NEED=0
-if [ -z "$HAVE" ]; then
-  NEED=1
-else
-  case "$WANT" in
-    ''|*[!0-9.]*) ;;
-    *) [ "$WANT" = "$HAVE" ] || NEED=1 ;;
-  esac
-fi
-if [ "$NEED" = "1" ]; then
+# Every library package.json lists (Playwright; from build 2 also Claude's
+# official SDK for the agent): installed once, and again only when package.json
+# asks for one that is not there or for another version. Never a browser
+# download: it drives his own Chrome. (None of them has install scripts.)
+DEPS_JS='
+const deps = require("./package.json").dependencies || {};
+const out = [];
+for (const [name, want] of Object.entries(deps)) {
+  let have = null;
+  try { have = require("./node_modules/" + name + "/package.json").version; } catch (e) { have = null; }
+  if (!have || (/^[0-9.]+$/.test(String(want)) && want !== have)) out.push(name);
+}
+// "deps:" first, so a node that could not run this at all reads as "install".
+process.stdout.write("deps:" + out.join(" "));
+'
+NEED="$("$NODE" -e "$DEPS_JS" 2>/dev/null)"
+if [ "$NEED" != "deps:" ] || [ ! -d "$WORK/node_modules" ]; then
   say "Setting up. A minute or two, once only."
   npm install --omit=dev --no-audit --no-fund || die \
 "Setup couldn't download what it needs.
 Check the internet connection, then open ultracursor again."
-  [ -f "$WORK/node_modules/playwright-core/package.json" ] || die \
-"Setup finished without the Playwright library.
+  MISSING="$("$NODE" -e "$DEPS_JS" 2>/dev/null)"
+  [ "$MISSING" = "deps:" ] || die \
+"Setup finished without: ${MISSING#deps:}.
 Check the internet connection, then open ultracursor again."
 fi
 

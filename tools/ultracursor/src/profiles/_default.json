@@ -1,0 +1,15 @@
+{
+  "name": "default",
+  "about": "A site without its own profile. Work carefully and read before acting.",
+  "voice": [
+    "Short, confident and warm. No apologies. Nothing behind the scenes."
+  ],
+  "notes": [
+    "Nothing site-specific is known here: read the page, do not assume where things are."
+  ],
+  "finalWords": [],
+  "priceWords": [],
+  "login": { "urlPatterns": [] },
+  "limits": { "stepsPerTask": 80, "tasksPerHour": 20, "finalPerHour": 15, "finalPerDay": 60 },
+  "pacing": { "minMs": 900, "maxMs": 2600, "typeMinMs": 40, "typeMaxMs": 120 }
+}

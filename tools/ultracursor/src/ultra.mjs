@@ -11,6 +11,11 @@
  * Instagram (posts, comments) -> Google Trends; then once: competitor stores.
  * Then POST /report. Read-only on every site.
  *
+ * Build 2 adds the agent beside the sweep (src/agent/, SPEC "Build 2"): Alex
+ * types a task into the panel on any page (or Claude posts a hunt whose
+ * `looking` starts with "task:"), and the desk runs it, one at a time, never
+ * at the same time as a sweep, with every final action approved on a card.
+ *
  * It drives his real Chrome over the DevTools port (9333), never a bundled
  * browser. Nothing here crashes on a network or page failure: it says what is
  * wrong in the status and keeps going.
@@ -29,6 +34,8 @@ import * as tiktok from "./sites/tiktok.mjs";
 import * as instagram from "./sites/instagram.mjs";
 import * as trends from "./sites/trends.mjs";
 import * as stores from "./sites/stores.mjs";
+import { createDesk } from "./agent/desk.mjs";
+import { createHost } from "./agent/host.mjs";
 
 const WORK = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -57,6 +64,58 @@ function saveState(s) {
   catch (e) { log(`could not save state.json: ${e.message}`); }
 }
 const saved = loadState();
+
+/* ------------------------------------------------------------------ the agent desk */
+
+const desk = createDesk({
+  work: WORK,
+  build: BUILD,
+  cloudLog: (l) => log(l),
+  ui: { attach: uiReal.attach, say: uiReal.say, hover: uiReal.hover, scroll: uiReal.scroll },
+  pacingScale: FAST ? 0.05 : 1,
+  baseURL: process.env.ULTRA_ANTHROPIC_BASE_URL || undefined,
+  createHost,
+});
+let agentRun = null;
+desk.onFinished(async (r) => {
+  log(`task ${r.status}: ${String(r.summary || "").slice(0, 200)} (${r.steps} steps, $${(r.usd || 0).toFixed(2)})`);
+  // A task Claude posted gets its answer where Claude reads reports.
+  if (r.task.huntId) {
+    await cloud.report(r.task.huntId, {
+      app: "ultracursor", kind: "task", build: BUILD, huntId: r.task.huntId, looking: `task: ${r.task.text}`,
+      status: r.status, summary: r.summary, steps: r.steps, usd: Math.round((r.usd || 0) * 100) / 100, at: Date.now(),
+    });
+  }
+});
+
+/** Photos for a task Claude posted: image URLs in the hunt's terms, fetched once. */
+async function fetchTaskFiles(id, urls) {
+  const out = [];
+  const dir = path.join(WORK, "inbox", `cloud-${String(id).replace(/[^a-z0-9_-]/gi, "").slice(0, 40)}`);
+  for (const u of urls.slice(0, 12)) {
+    try {
+      const url = new URL(u);
+      if (!/^https?:$/.test(url.protocol)) continue;
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 30000);
+      const r = await fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+      const mime = String(r.headers.get("content-type") || "").split(";")[0].trim();
+      if (!r.ok || !/^image\//.test(mime)) { log(`task photo skipped (${r.status} ${mime || "?"}): ${u.slice(0, 120)}`); continue; }
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (!buf.length || buf.length > 25 * 1024 * 1024) continue;
+      fs.mkdirSync(dir, { recursive: true });
+      let name = (decodeURIComponent(url.pathname.split("/").pop() || "") || `photo-${out.length + 1}`).replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 80);
+      if (!/\.[a-z0-9]{2,5}$/i.test(name)) name += mime === "image/png" ? ".png" : mime === "image/webp" ? ".webp" : ".jpg";
+      while (out.some((f) => f.name === name)) name = `1-${name}`;
+      const file = path.join(dir, name);
+      fs.writeFileSync(file, buf);
+      out.push({ name, path: file, mime, size: buf.length });
+    } catch (e) {
+      log(`task photo could not be fetched: ${u.slice(0, 120)} (${String(e && e.message || e).slice(0, 80)})`);
+    }
+  }
+  return out;
+}
 
 const S = {
   state: "idle",
@@ -87,6 +146,7 @@ async function postStatus() {
     await cloud.status({
       app: "ultracursor", build: BUILD, state: S.state, phase: S.phase, step: S.step,
       hunt: S.hunt, progress: S.progress, chrome: S.chrome, signin: S.signin, counts: S.counts,
+      agent: (() => { const a = desk.state(); return { mode: a.mode, status: a.status, task: a.task, step: a.step, usd: a.usd, card: a.card ? { kind: a.card.kind, title: a.card.title } : null, hasKey: a.hasKey }; })(),
       lastError: S.lastError || cloud.lastError || null, at: Date.now(),
     });
   } finally { posting = false; }
@@ -107,6 +167,13 @@ async function chrome() {
     browser.on("disconnected", () => { S.chrome.connected = false; browser = null; });
     S.chrome.connected = true;
     log(`connected to Chrome on port ${PORT}`);
+    // The cursor, the pill and the task panel on every page of this Chrome.
+    const ctx = browser.contexts()[0];
+    if (ctx) {
+      await desk.install(ctx);
+      for (const p of ctx.pages()) await uiReal.attach(ctx, p, BUILD);
+      ctx.on("page", (p) => { uiReal.attach(ctx, p, BUILD).catch(() => {}); });
+    }
   } catch (e) {
     if (S.chrome.connected !== false || !S.lastError) log(`Chrome is not answering on port ${PORT} — open ultracursor from the Dock to start it`);
     S.chrome.connected = false;
@@ -123,9 +190,10 @@ async function pollOrder() {
   const cmd = o && o.cmd;
   if (!cmd) return;
   log(`order: ${cmd}`);
-  if (cmd === "pause") { paused = true; status({ state: "paused" }); }
-  else if (cmd === "run") { paused = false; stopped = false; status({ state: S.hunt && running ? "sweeping" : "idle" }); }
-  else if (cmd === "stop") { stopped = true; stopSweep = true; paused = false; status({ state: "stopped" }); }
+  // The same three words reach the agent desk: one pause button for everything.
+  if (cmd === "pause") { paused = true; desk.control("pause"); status({ state: "paused" }); }
+  else if (cmd === "run") { paused = false; stopped = false; desk.control("resume"); status({ state: S.hunt && running ? "sweeping" : "idle" }); }
+  else if (cmd === "stop") { stopped = true; stopSweep = true; paused = false; desk.control("stop"); status({ state: "stopped" }); }
   else if (cmd === "update") { updateNow = true; }
 }
 
@@ -317,20 +385,40 @@ async function main() {
   lastRuntime = Date.now();
   while (!quitting) {
     const now = Date.now();
-    if (updateNow || now - lastRuntime > 60000) { updateNow = false; lastRuntime = now; await checkRuntime(); }
+    // Never restart for an update in the middle of a task: it waits until the task ends.
+    if (!agentRun && (updateNow || now - lastRuntime > 60000)) { updateNow = false; lastRuntime = now; await checkRuntime(); }
     if (now - lastStatus > 5000) {
       lastStatus = now;
       if (!running) await chrome();
       await postStatus();
     }
-    if (!running && !stopped && now - lastHunt > 5000) {
+    if (!running && !agentRun && !stopped && now - lastHunt > 5000) {
       lastHunt = now;
       const hunt = await cloud.get("hunt");
       if (hunt && hunt.id && hunt.id !== saved.lastHuntId) {
         saved.lastHuntId = hunt.id;
         saveState(saved);
-        await sweep(hunt);
+        if (/^\s*task\s*:/i.test(String(hunt.looking || ""))) {
+          const text = String(hunt.looking).replace(/^\s*task\s*:\s*/i, "").trim();
+          const urls = (Array.isArray(hunt.terms) ? hunt.terms : []).filter((t) => /^https?:\/\//i.test(String(t)));
+          const files = await fetchTaskFiles(hunt.id, urls);
+          log(`task from Claude (hunt ${hunt.id}): ${text.slice(0, 160)}${files.length ? ` with ${files.length} photo(s)` : ""}`);
+          desk.enqueue({ id: hunt.id, huntId: hunt.id, text, files, source: "cloud" });
+        } else {
+          await sweep(hunt);
+        }
         lastStatus = 0;
+      }
+    }
+    // One agent task at a time, never during a sweep. It runs beside this
+    // loop so status, orders and the panel keep answering while it works.
+    if (!running && !agentRun && desk.hasWork()) {
+      const b = await chrome();
+      const ctx = b && b.contexts()[0];
+      if (ctx) {
+        agentRun = desk.runNext(ctx)
+          .catch((e) => log(`task crashed: ${String(e && e.stack || e).slice(0, 300)}`))
+          .finally(() => { agentRun = null; lastStatus = 0; });
       }
     }
     await sleep(500);
