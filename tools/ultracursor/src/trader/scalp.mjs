@@ -457,15 +457,19 @@ export class Scalp {
       bestCombos: Object.entries(this.combos).filter(([, C]) => C.n >= 5).sort((a, b) => b[1].pnl / b[1].n - a[1].pnl / a[1].n).slice(0, 3).map(([k, C]) => `${k} ${C.w}/${C.n} ${(C.pnl / C.n).toFixed(3)}`),
       fees: +this.feesPaid.toFixed(5), mistakes: Object.fromEntries(Object.entries(this.mistakes).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => [k, { n: v.n, avg: +(v.ret / v.n).toFixed(3) }])), costSkips: this.costSkips, costWhy: this.costWhy || [], lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
   }
-  toJSON() { return { v: 2, plan: PLAN, start: this.start, stake: this.stake, cash: this.cash, learn: this.learn, mistakes: this.mistakes, combos: this.combos, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
+  toJSON() { return { v: 2, plan: PLAN, start: this.start, stake: this.stake, baseStake: this.baseStake, cash: this.cash, learn: this.learn, mistakes: this.mistakes, combos: this.combos, proof: this.proof, proofPrev: this.proofPrev, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
   static from(j, opts) {
     const s = new Scalp(opts);
-    // a different start or stake (Alex changed the plan) starts a fresh ledger
-    const same = j && j.v === 2 && j.plan === PLAN && j.start === s.start && j.stake === s.stake;
+    // a different start or stake (Alex changed the plan) starts a fresh ledger.
+    // build 41: the stake compared is the one the ledger was made with (baseStake), not one
+    // set later from symbiot.json; a ledger from before build 41 has only `stake`
+    const base = j && typeof j === "object" && "baseStake" in j ? j.baseStake : j && j.stake;
+    const same = j && j.v === 2 && j.plan === PLAN && j.start === s.start && base === s.baseStake;
     if (same) { s.cash = j.cash; for (const p of j.open || []) s.open.set(p.addr, p); s.trades = j.trades || []; for (const t of s.trades) if (t.addr) s.done.add(t.addr); for (const a of s.open.keys()) s.done.add(a); }
     if (same && j.learn) s.learn = j.learn;
     if (same && j.mistakes) s.mistakes = j.mistakes;
     if (same && j.combos) s.combos = j.combos;
+    if (same && j.proof && typeof j.proof === "object") { s.proof = j.proof; s.proofPrev = j.proofPrev && typeof j.proofPrev === "object" ? j.proofPrev : null; }
     return s;
   }
 }
