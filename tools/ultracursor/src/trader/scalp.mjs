@@ -31,7 +31,7 @@ const PLAN = "symbiot29";
  *   filter / explore  symbiot skips a whole combination (age+pool+hour+source) that keeps
  *              losing, but still lets `explore` of them through so a lesson can be unlearned
  */
-export const DEFAULTS = { readChart: false, stake: 1.618, tp: 0.40, sl: -0.15, trailFrom: 0.25, holdMs: 120_000, maxOpen: 55, perScan: 55, maxRt: 0.30, minLq: 3_000, minAgeSec: 60, learnAfter: 13, learnWinRate: 0.236, shadowMs: 120_000, filter: true, explore: 0.125 };
+export const DEFAULTS = { readChart: false, stake: 1.618, tp: 0.40, sl: -0.15, trailFrom: 0.25, holdMs: 120_000, maxOpen: 55, perScan: 55, maxRt: 0.30, minLq: 3_000, minAgeSec: 60, learnAfter: 13, learnWinRate: 0.236, shadowMs: 120_000, filter: true, explore: 0.125, maxTrades: 5000 };
 const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, CAP = 0.618, COST = 0.01; // older ledgers only
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
 
@@ -158,6 +158,8 @@ export class Scalp {
   async scanLane(nowMs) {
     const nowSec = Math.floor(nowMs / 1000);
     if (this.open.size >= this.cfg.maxOpen) return { bought: 0 };
+    // build 39 (Alex: "stop only at 5000 trades"): no new buys once this many trades are done
+    if (this.trades.length + this.open.size >= this.cfg.maxTrades) return { bought: 0, done: true };
     // build 19: more charts: the 1m and 5m trending lists together
     const [r1, r5] = await Promise.all([this.src.trending("1m", 200).catch(() => []), this.src.trending("5m", 200).catch(() => [])]);
     const seen = new Set(), rows = [];
@@ -171,6 +173,7 @@ export class Scalp {
     for (const { r, cs } of cands) {
       const fib = this.cfg.readChart ? fibSetup(cs) : null, ign = this.cfg.readChart && !fib ? ignition(cs) : null;
       if (this.open.size >= this.cfg.maxOpen) continue;
+      if (this.trades.length + this.open.size >= this.cfg.maxTrades) break;
       if (this.cfg.readChart && !fib && !ign) continue;
       if (!Array.isArray(cs) || !cs.length) continue;
       // build 35: symbiot files every trade by what is known without a chart (age, pool,

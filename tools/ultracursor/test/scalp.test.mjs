@@ -163,5 +163,11 @@ ok("symbiot files each trade by age, pool, hour and source", [...nb.open.values(
   await C2.scanLane(now0);
   ok("one losing trait alone never blocks symbiot", C2.open.size === 3);
 }
+{
+  const D = new Scalp({ src: { ...src, candles: async () => [{ t: 1, o: 1, h: 1, l: 1, c: 1, v: 1 }] }, start: 0, stake: 1.618, quote });
+  D.configure({ maxTrades: 2 });
+  await D.scanLane(now0);
+  ok("stops buying at maxTrades (5000 on the Mac)", D.open.size === 2, D.summary());
+}
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
