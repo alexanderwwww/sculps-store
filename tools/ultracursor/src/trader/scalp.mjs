@@ -15,6 +15,7 @@
  */
 
 import { quoteCosts } from "./fees.mjs";
+import { exitReason, rulesKey, rulesOf, track, realNet, TIERS } from "./exits.mjs";
 
 const PLAN = "symbiot29";
 /**
@@ -30,8 +31,14 @@ const PLAN = "symbiot29";
  *   learnAfter / learnWinRate  a setup is blocked after N trades under this win rate
  *   filter / explore  symbiot skips a whole combination (age+pool+hour+source) that keeps
  *              losing, but still lets `explore` of them through so a lesson can be unlearned
+ *   crashMs / crashMove  build 41 (Alex: "abort numbers keep"): out when down 8% in the first 20 s
+ *   deadMs / deadMove    build 41: out when never 2% up and never 2% down after 30 s (exits.mjs)
+ *   tagEntry   build 41: read 34 candles instead of 2 (same one call) so every trade is tagged
+ *              e:fib / e:ign / e:any, and a Fibonacci entry can be proven before real money
  */
-export const DEFAULTS = { readChart: false, stake: 1.618, tp: 0.40, sl: -0.15, trailFrom: 0.25, holdMs: 120_000, maxOpen: 55, perScan: 55, maxRt: 0.30, minLq: 3_000, minAgeSec: 60, learnAfter: 13, learnWinRate: 0.236, shadowMs: 120_000, filter: true, explore: 0.125, maxTrades: 5000 };
+export const DEFAULTS = { readChart: false, stake: 1.618, tp: 0.40, sl: -0.15, trailFrom: 0.25, holdMs: 120_000, maxOpen: 55, perScan: 55, maxRt: 0.30, minLq: 3_000, minAgeSec: 60, learnAfter: 13, learnWinRate: 0.236, shadowMs: 120_000, filter: true, explore: 0.125, maxTrades: 5000, crashMs: 20_000, crashMove: -0.08, deadMs: 30_000, deadMove: 0.02, tagEntry: true };
+/** Build 41, the ghost proof: outcomes kept per combination and real target (a rolling window). */
+const PROOF_WINDOW = 55;
 const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, CAP = 0.618, COST = 0.01; // older ledgers only
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
 
@@ -125,9 +132,16 @@ export function liteShape(row, nowMs) {
 }
 
 export class Scalp {
-  constructor({ src, log = () => {}, start = 10, stake = null, quote = null }) {
+  constructor({ src, log = () => {}, start = 10, stake = null, quote = null, onPick = null, realStakeUsd = 5.73 }) {
     this.src = src; this.log = log; this.stake = stake;
+    // build 41: the stake the ledger was made with. A stake set from symbiot.json changes
+    // this.stake, and comparing that on restart wiped combos, learn and mistakes.
+    this.baseStake = stake;
     this.cfg = { ...DEFAULTS, ...(stake ? { stake } : {}) };
+    // build 41: the real side listens to every pick (onPick) and sets the stake its proof is
+    // scored at (step 1: 38.2% of $15). Neither is a setting: symbiot.json cannot reach them.
+    this.onPick = onPick; this.realStakeUsd = realStakeUsd;
+    this.proof = {}; this.proofPrev = null;
     this.quote = quote || ((a) => this.#measure(a)); this.costSkips = 0; this.feesPaid = 0;
     this.learn = {}; this.skips = 0; this.measured = []; this.done = new Set(); this.shadow = new Map(); this.mistakes = {}; this.combos = {}; this.rand = Math.random;
     this.start = start; this.cash = start; this.open = new Map(); this.trades = []; this.cool = new Map();
@@ -157,9 +171,13 @@ export class Scalp {
 
   async scanLane(nowMs) {
     const nowSec = Math.floor(nowMs / 1000);
-    if (this.open.size >= this.cfg.maxOpen) return { bought: 0 };
+    // build 41: when the real side listens, a full sim still scans (it only stops buying), so
+    // real is never starved of signals. Without a listener the GMGN calls are saved, as before.
+    const full = () => this.open.size >= this.cfg.maxOpen || this.trades.length + this.open.size >= this.cfg.maxTrades;
+    const listen = typeof this.onPick === "function";
+    if (!listen && this.open.size >= this.cfg.maxOpen) return { bought: 0 };
     // build 39 (Alex: "stop only at 5000 trades"): no new buys once this many trades are done
-    if (this.trades.length + this.open.size >= this.cfg.maxTrades) return { bought: 0, done: true };
+    if (!listen && this.trades.length + this.open.size >= this.cfg.maxTrades) return { bought: 0, done: true };
     // build 19: more charts: the 1m and 5m trending lists together
     const [r1, r5] = await Promise.all([this.src.trending("1m", 200).catch(() => []), this.src.trending("5m", 200).catch(() => [])]);
     const seen = new Set(), rows = [];
@@ -167,22 +185,29 @@ export class Scalp {
     const feed = typeof this.src.feed === "function" ? this.src.feed() : [];
     for (const r of [...feed, ...(r1 || []), ...(r5 || [])]) if (r && r.a && !seen.has(r.a)) { seen.add(r.a); rows.push(r); }
     const picks = rows.filter((r) => r && r.a && !this.open.has(r.a) && !(this.cool.get(r.a) > nowMs) && !this.done.has(r.a) && rugOk(r, nowSec, this.cfg)).slice(0, this.cfg.perScan);
-    // readChart off: two candles, only for the live price; on: 34 to read the setup
-    const cands = await Promise.all(picks.map(async (r) => ({ r, cs: await this.src.candles(r.a, "1m", this.cfg.readChart ? 34 : 2).catch(() => null) })));
+    // readChart off: two candles, only for the live price; on: 34 to read the setup.
+    // build 41: tagEntry also asks for 34, in the same one call, to tag the entry
+    const read = this.cfg.readChart || this.cfg.tagEntry;
+    const cands = await Promise.all(picks.map(async (r) => ({ r, cs: await this.src.candles(r.a, "1m", read ? 34 : 2).catch(() => null) })));
     let bought = 0;
     for (const { r, cs } of cands) {
-      const fib = this.cfg.readChart ? fibSetup(cs) : null, ign = this.cfg.readChart && !fib ? ignition(cs) : null;
-      if (this.open.size >= this.cfg.maxOpen) continue;
-      if (this.trades.length + this.open.size >= this.cfg.maxTrades) break;
-      if (this.cfg.readChart && !fib && !ign) continue;
+      const fib = read ? fibSetup(cs) : null, ign = read && !fib ? ignition(cs) : null;
       if (!Array.isArray(cs) || !cs.length) continue;
       // build 35: symbiot files every trade by what is known without a chart (age, pool,
-      // hour, where the coin came from); with a chart, the chart shape as before
-      const shape = cs.length >= 12 ? shapeOf(cs, r, nowMs) : liteShape(r, nowMs);
+      // hour, where the coin came from); with a chart, the chart shape as before.
+      // build 41: a tagged entry keeps the chart-free key, so symbiot's combos stay comparable
+      const shape = this.cfg.readChart && cs.length >= 12 ? shapeOf(cs, r, nowMs) : liteShape(r, nowMs);
       shape.push(fib ? "e:fib" : ign ? "e:ign" : "e:any");
       // symbiot farms: its lessons are recorded, never used to refuse a coin (that blocked
       // all 7,417 coins on Alex's Mac). Only the chart side (readChart) acts on them.
       const combo = shape.join("|");
+      // build 41: every pick goes to the real side before any filter or cost check, even when
+      // the sim is full. A real-side error never stops the sim.
+      if (listen) {
+        try { const x = this.onPick({ row: r, cs, shape: [...shape], combo, fib, nowMs }); if (x && typeof x.catch === "function") x.catch(() => {}); } catch { /* the sim goes on */ }
+      }
+      if (full()) continue;
+      if (this.cfg.readChart && !fib && !ign) continue;
       let bad = this.cfg.readChart ? this.badPart(shape) : null;
       // build 38 (Alex: "learn to filter, losing is ok, but try to make money"): symbiot
       // filters on the whole combination only, never one trait (one trait blocked everything)
@@ -226,7 +251,7 @@ export class Scalp {
       bought++;
       if (!q0) this.#settleFee(r, n, nowMs);
     }
-    return { bought };
+    return this.trades.length + this.open.size >= this.cfg.maxTrades ? { bought, done: true } : { bought };
   }
 
   /**
@@ -243,6 +268,9 @@ export class Scalp {
    */
   async #shadows(nowMs) {
     for (const [a, sh] of [...this.shadow]) {
+      // build 41: shadows now run after the open loop; a coin closed this very tick was just
+      // read, so it waits for the next tick (the same number of GMGN calls as before)
+      if (sh.exitAt >= nowMs) continue;
       const cs = await this.src.candles(a, "1m", 2).catch(() => null);
       const px = Array.isArray(cs) && cs.length ? cs[cs.length - 1].c : null;
       if (px) { sh.after.max = Math.max(sh.after.max, px); sh.after.min = Math.min(sh.after.min, px); }
@@ -264,12 +292,13 @@ export class Scalp {
   }
 
   async positionLane(nowMs) {
-    await this.#shadows(nowMs);
-    for (const p of [...this.open.values()]) {
+    // build 41: youngest first, so the coins whose crash or dead window is still open get the
+    // early GMGN reads (all calls share one queue, 250 ms apart)
+    for (const p of [...this.open.values()].sort((a, b) => b.at - a.at)) {
       const cs = await this.src.candles(p.addr, "1m", 2).catch(() => null);
       if (Array.isArray(cs) && cs.length) p.last = cs[cs.length - 1].c;
       const move = p.last / p.entry - 1;
-      p.peakAll = Math.max(p.peakAll || 0, move);
+      track(p, move);
       // build 20 (Alex: "fast 10% up, 20% up, with 1.6 SOL"): half off at +10% and the
       // stop moves to break-even, the rest off at +20%. Entry stays the Fibonacci pocket.
       if (p.target && !p.half && move >= 0.10) {
@@ -278,12 +307,14 @@ export class Scalp {
         p.units -= u; p.banked = got; p.half = true; p.stop = Math.max(p.stop, p.entry * (1 + 2 * side));
         this.log({ type: "exit", lane: "fast", symbol: p.symbol, addr: p.addr, part: "half at +10%", got: +got.toFixed(4) });
       }
-      if (p.hunt) p.peak = Math.max(p.peak || 0, move);
+      // build 41: the hunt exit is exits.mjs, the one the real trader uses (abort rules included)
+      if (p.hunt) this.#ghost(p, move, nowMs);
       const why = p.hunt
-        ? (move >= this.cfg.tp ? `+${Math.round(this.cfg.tp * 100)}%` : move <= this.cfg.sl ? `stop ${Math.round(this.cfg.sl * 100)}%` : p.peak >= this.cfg.trailFrom && move <= p.peak / 2 ? `gave back half of +${Math.round(p.peak * 100)}%` : nowMs - p.at >= this.cfg.holdMs ? `${Math.round(this.cfg.holdMs / 1000)} s` : null)
+        ? exitReason(p, move, nowMs - p.at, this.cfg)
         : p.target
         ? (move >= 0.20 ? "+20%" : p.last <= p.stop ? (p.half ? "rest at break-even" : "stop: under the pocket") : nowMs - p.at >= 13 * 60_000 ? "13 min time stop" : null)
         : (move >= TP ? "take profit +13%" : move <= SL ? "stop -8%" : nowMs - p.at >= HOLD_MS ? "3 min time stop" : null);
+      if (why && p.hunt) this.#fileGhost(p, move, why, nowMs);
       if (!why) continue;
       const side = p.side ?? COST;
       const got = p.units * p.last * (1 - side);
@@ -292,7 +323,7 @@ export class Scalp {
       this.open.delete(p.addr);
       this.cool.set(p.addr, nowMs + 5 * 60_000);
       const pnl = got + (p.banked || 0) - p.cost;
-      const t = { symbol: p.symbol, addr: p.addr, pnl, ret: pnl / p.cost, won: pnl > 0, why, held: nowMs - p.at };
+      const t = { symbol: p.symbol, addr: p.addr, pnl, ret: pnl / p.cost, won: pnl > 0, why, held: nowMs - p.at, ...(p.hunt ? { rules: rulesKey(this.cfg) } : {}) };
       this.trades.push(t);
       if (p.combo) { const C = (this.combos[p.combo] = this.combos[p.combo] || { n: 0, w: 0, pnl: 0 }); C.n++; if (t.won) C.w++; C.pnl += t.pnl; }
       this.shadow.set(p.addr, { trade: t, exit: p.last, exitAt: nowMs, entry: p.entry, peak: p.peakAll || 0, shape: p.shape, after: { max: p.last, min: p.last } });
@@ -303,6 +334,71 @@ export class Scalp {
       }
       this.log({ type: "close", lane: "fast", symbol: p.symbol, addr: p.addr, pnl: +pnl.toFixed(4), ret: +t.ret.toFixed(4), why, balance: +this.equity().toFixed(4) });
     }
+    // build 41: the post-mortem reads come after every exit, so they never delay one
+    await this.#shadows(nowMs);
+  }
+
+  /**
+   * Build 41, the ghost proof: what real money is gated on, at zero extra GMGN calls. On every
+   * tick of a hunt position, each real target T gets the first exit exitReason() gives with
+   * tp = T, stored once in p.ghost[T]. p.ghost.rk is the exit rules it was scored under; if
+   * they change while a target is still open, the position is never filed (rules never mix).
+   */
+  #ghost(p, move, nowMs) {
+    const rk = rulesKey(this.cfg);
+    const g = (p.ghost = p.ghost || { rk });
+    if (g.rk !== rk && TIERS.some((T) => !g[T])) g.rk = null;
+    if (!g.rk) return;
+    for (const T of TIERS) {
+      if (g[T]) continue;
+      const why = exitReason(p, move, nowMs - p.at, { ...this.cfg, tp: T });
+      if (why) g[T] = { move: +move.toFixed(4), why, at: nowMs };
+    }
+  }
+
+  /**
+   * At the sim's close, every target's outcome goes into its rules bucket. A target still open
+   * takes the sim's own close (every exit but take-profit is shared, and tp 0.40 > 0.34). If the
+   * sim's own take-profit sits below a target (tp lowered in symbiot.json), that target's
+   * outcome is unknown and is not filed: a guess never counts as proof.
+   */
+  #fileGhost(p, move, why, nowMs) {
+    const g = p.ghost;
+    if (!g || !g.rk || g.filed || !p.combo) return;
+    const B = this.#bucket(g.rk);
+    if (!B) return;
+    const K = (B.keys[p.combo] = B.keys[p.combo] || {});
+    const side = p.side ?? COST;
+    for (const T of TIERS) {
+      if (!g[T]) {
+        if (move >= this.cfg.tp && this.cfg.tp < T) continue;
+        g[T] = { move: +move.toFixed(4), why, at: nowMs };
+      }
+      const net = realNet(g[T].move, side, this.realStakeUsd);
+      const S = (K[T] = K[T] || { n: 0, w: 0, net: 0, last: 0, rt: 0, o: [] });
+      S.o.push(+net.toFixed(4));
+      if (S.o.length > PROOF_WINDOW) S.o.shift();
+      S.n = S.o.length; S.w = S.o.filter((x) => x > 0).length; S.net = +S.o.reduce((a, x) => a + x, 0).toFixed(4); S.last = nowMs;
+      S.rt = +(S.rt + (2 * side - S.rt) / S.n).toFixed(5);       // about the window's round-trip fee, network apart
+    }
+    g.filed = true;
+  }
+
+  /**
+   * The proof bucket for one set of exit rules: proof[rulesKey] = {rules, keys: {combo: {T:
+   * {n, w, net (USD, window sum), last, rt, o (the last 55 nets)}}}}. A rules change opens a new
+   * bucket and keeps the old one as proofPrev; changing back brings the old one back.
+   */
+  #bucket(rk) {
+    // an outcome scored entirely under the rules before a change goes where those are kept,
+    // and never moves the buckets (or it would swap them back and forth)
+    if (rk !== rulesKey(this.cfg)) return this.proof[rk] || (this.proofPrev && this.proofPrev[rk]) || null;
+    if (!this.proof[rk]) {
+      const cur = this.proof, keep = Object.values(cur).some((B) => Object.keys(B.keys).length);   // an empty bucket is not worth keeping
+      if (this.proofPrev && this.proofPrev[rk]) { this.proof = this.proofPrev; this.proofPrev = keep ? cur : null; }
+      else { if (keep) this.proofPrev = cur; this.proof = { [rk]: { rules: rulesOf(this.cfg), keys: {} } }; }
+    }
+    return this.proof[rk];
   }
 
   /** The first part of a setup's shape that has proven it loses, or null. */
