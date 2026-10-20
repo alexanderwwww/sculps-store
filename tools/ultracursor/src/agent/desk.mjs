@@ -53,7 +53,7 @@ export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale =
     let mode = "idle";
     if (S.card) mode = "card";
     else if (S.current) mode = S.paused ? "paused" : "running";
-    else if (!hasKey()) mode = "needkey";
+    // build 6: no key prompt; tasks come from Claude through the link
     else if (S.queue.length) mode = "queued";
     return {
       build: String(build),
