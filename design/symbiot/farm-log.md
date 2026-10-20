@@ -9,3 +9,4 @@ Fake money, 1.618 SOL a trade. One row per check-in.
 | 2026-10-20 11:08 | 35 | 167 | 38 | 129 | 10.414 | −18.637 | −8.224 | 3.628 | 17 | trading again after the fix; win rate 23%. 3% fee cap skips most pump.fun pools (4–8% round trip measured). |
 | 2026-10-20 10:56 | 35 | 202 | 43 | 159 | 12.781 | −25.514 | −12.732 | 6.789 | 11 | win rate 21%; losses are about 2× wins in SOL. App restarting into build 36 (post-mortems). |
 | 2026-10-20 11:29 | 39 | — | — | — | — | — | — | — | — | OFFLINE: app last seen 11:24 starting build 39 with "Chrome is not open"; no status since. |
+| 2026-10-20 11:58 | 39 | — | — | — | — | — | — | — | — | 1-hour report: no data. App offline since ~11:25 (last status: "Chrome is not open"). Last real numbers: 202 trades, 21% wins, net −12.73 at 10:56. |
