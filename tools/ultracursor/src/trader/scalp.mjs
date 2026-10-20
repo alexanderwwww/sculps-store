@@ -28,7 +28,9 @@ export function rugOk(row, nowSec) {
   const created = num(row.ct) || num(row.ot);
   const age = created ? nowSec - created : null;
   if (age === null || age < 8 * 60) return false;
-  if (!(num(row.lq) >= 13_000)) return false;
+  // build 23: pools under $89K let a 1.618 SOL buy move the price by itself (3-5% round
+  // trips measured live on 2026-10-20); only deep pools are charted.
+  if (!(num(row.lq) >= 89_000)) return false;
   if (num(row.t10) !== null && !(num(row.t10) < 0.3)) return false;
   return true;
 }

@@ -10,8 +10,8 @@ const rising = (base) => {
 };
 const flat = (base) => Array.from({ length: 30 }, (_, i) => ({ t: i, o: base, h: base, l: base, c: base, v: 100 }));
 const prices = { A: 1, B: 1, C: 1, D: 1 };
-const rows = ["A", "B", "C", "D"].map((a) => ({ a, s: a + "COIN", ct: sec - 3600, lq: 50_000, t10: 0.1 }));
-rows.push({ a: "RUG", s: "RUG", ct: sec - 60, lq: 50_000, t10: 0.1 });
+const rows = ["A", "B", "C", "D"].map((a) => ({ a, s: a + "COIN", ct: sec - 3600, lq: 120_000, t10: 0.1 }));
+rows.push({ a: "RUG", s: "RUG", ct: sec - 60, lq: 120_000, t10: 0.1 });
 const src = {
   trending: async () => rows,
   candles: async (a, r, limit) => (limit <= 2 ? [{ t: 1, o: 1, h: 1, l: 1, c: prices[a], v: 1 }] : a === "D" ? flat(1) : rising(1)),
@@ -21,7 +21,7 @@ const s = new Scalp({ src, log: (e) => log.push(e), quote: async () => ({ ok: tr
 ok("fib: a pullback into the golden pocket after a 30% run -> buy; flat -> no", fibSetup(rising(1)) && fibSetup(rising(1)).retr >= 0.5 && fibSetup(rising(1)).retr <= 0.705 && !fibSetup(flat(1)), fibSetup(rising(1)));
 const broke = rising(1); broke[20] = { ...broke[20], l: 1.0 };
 ok("fib: a pullback that broke 0.786 is not bought", !fibSetup(broke));
-ok("rug check refuses a 1-minute-old coin", !rugOk(rows[4], sec) && rugOk(rows[0], sec));
+ok("rug check refuses a 1-minute-old coin and a shallow pool", !rugOk(rows[4], sec) && rugOk(rows[0], sec) && !rugOk({ ...rows[0], lq: 50_000 }, sec));
 await s.scanLane(now0);
 ok("buys every rising coin (max 5 open), never the flat coin or the rug", s.open.size === 3 && !s.open.has("D") && !s.open.has("RUG"), [...s.open.keys()]);
 ok("never more than 61.8% of equity in play", s.inPlay() <= 10 * 0.618 + 1e-9, s.inPlay());

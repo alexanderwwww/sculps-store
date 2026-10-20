@@ -90,6 +90,7 @@ into the core." First real use: Depop ("take images and upload"), because ChatGP
 - 8: the trader's GMGN tab no longer blocks images/fonts. Alex watches that tab, and it looked broken.
 - 9: status `trader.blocks` counts failed rules. Evidence: the Fib sniper fired 0 trades because every coin failed gate + narrative + costs + smartNow together.
 - 19: wider Fibonacci (8% run, pocket 0.382-0.786, stop under 0.886), 1m+5m trending, 34 charts; slow sniper lanes parked (0 trades, starved GMGN).
+- 22-23: status shows fee-skip reasons; live data showed 3-5.4% round trips at 1.618 SOL on thin pools (price impact), so only pools >= $89K liquidity are charted.
 - 21: liquid-glass orb (Alex): clear glass, 1px rim, specular top-left, three drifting lights inside (cyan, blue, violet), radius 18+2.618 ln(1+KB) clamped 18..36. Looked at over dark and white before shipping.
 - 20: exits (Alex): half at +10% and stop to break-even, rest at +20%. Fresh ledger (PLAN fib20).
 - 18: fresh ledger + lessons for the Fibonacci plan (PLAN "fib17"); older ledgers not carried over.
