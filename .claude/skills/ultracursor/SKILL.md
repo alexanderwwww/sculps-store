@@ -92,6 +92,7 @@ into the core." First real use: Depop ("take images and upload"), because ChatGP
 - 19: wider Fibonacci (8% run, pocket 0.382-0.786, stop under 0.886), 1m+5m trending, 34 charts; slow sniper lanes parked (0 trades, starved GMGN).
 - 26: hunt accepts quotes over the 2.36% impact cap at measured cost.
 - 28: buys instantly; the real fee is measured right after and written into the ledger (first buy waits for one measurement); "scanning" text removed.
+- 30: Jupiter quotes time out after 4 s (a silent Jupiter hung the first buy: 0 trades on the Mac); fallback fee = GMGN pool fee + tax + network.
 - 29: symbiot: every coin from trending + GMGN Trenches (new, almost bonded, migrated; read from the pages own HTTP/websocket traffic, gmgn.mjs coinsIn/feed) traded once at 1.618 SOL; infinite balance (start 0, cash never blocks); no loss budget; money line shows + total, - total, net. Ledger symbiot29.
 - 27: ULTRA (Alex): fake balance 52,000 SOL, loss budget 1,000 SOL (halts new buys), every launch bought once at 1.618 SOL (e:any when no setup) to collect lessons, 89 charts a scan, 34 open, fee cap 30%. Fresh ledger (ultra27).
 - 25: HUNT mode (Alex: "lose now to learn, find the 40% in 20 seconds"): launches from 60 s, pools >= 3K, no top-10 rule, fees up to 15% (real cost charged); entry = Fibonacci pocket OR ignition candle (+4% on 2.618x volume); exits +40%, -15%, give back half of a +25% run, 2 min max; up to 8 open; learning blocks a shape only after 13 trades under 23.6% wins. Fresh ledger (hunt25).

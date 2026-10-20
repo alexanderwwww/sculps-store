@@ -34,9 +34,11 @@ export async function jupQuote(inputMint, outputMint, amount, { fetchImpl = fetc
   if (slot > Date.now()) await new Promise((ok) => setTimeout(ok, slot - Date.now()));
   const url = `${JUP()}?inputMint=${inputMint}&outputMint=${outputMint}&amount=${Math.floor(amount)}&slippageBps=${slippageBps}`;
   const t0 = Date.now();
-  let r = await fetchImpl(url);
+  // build 30: a Jupiter call never hangs the trader (it did on Alex's Mac: 0 trades)
+  const to = () => (typeof AbortSignal !== "undefined" && AbortSignal.timeout ? { signal: AbortSignal.timeout(4000) } : {});
+  let r = await fetchImpl(url, to());
   // Jupiter's keyless API answers 429 "[API Gateway] Too many requests" even at 1.1 s spacing (2026-10-19): back off 1.5 / 3 / 6 s
-  for (let i = 0, wait = 1500; r.status === 429 && i < 3; i++, wait *= 2) { await new Promise((ok) => setTimeout(ok, wait)); nextSlot = Date.now() + JUP_GAP(); r = await fetchImpl(url); }
+  for (let i = 0, wait = 1500; r.status === 429 && i < 3; i++, wait *= 2) { await new Promise((ok) => setTimeout(ok, wait)); nextSlot = Date.now() + JUP_GAP(); r = await fetchImpl(url, to()); }
   const j = await r.json().catch(() => null);
   if (r.status !== 200 || !j || !j.outAmount) throw new Error(`jupiter ${r.status} ${JSON.stringify(j)?.slice(0, 120)}`);
   return { ms: Date.now() - t0, inAmount: Number(j.inAmount), outAmount: Number(j.outAmount), impact: Number(j.priceImpactPct) || 0, route: (j.routePlan || []).map((p) => p.swapInfo?.label).filter(Boolean) };

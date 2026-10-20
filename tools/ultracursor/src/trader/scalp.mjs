@@ -129,7 +129,16 @@ export class Scalp {
       this.mkt = { at: now, solUsd: Number(prices.find((p) => p.symbol === "SOL")?.price) || null, gas };
     }
     const [feeInfo, trades] = await Promise.all([this.src.feeInfo(mint).catch(() => null), this.src.trades(mint, 50).catch(() => [])]);
-    return quoteCosts({ mint, notionalUsd: notional * (this.mkt.solUsd || 0), gm: { feeInfo, trades, gas: this.mkt.gas, solUsd: this.mkt.solUsd }, tip: "lowest" });
+    const notionalUsd = notional * (this.mkt.solUsd || 0);
+    const q = await quoteCosts({ mint, notionalUsd, gm: { feeInfo, trades, gas: this.mkt.gas, solUsd: this.mkt.solUsd }, tip: "lowest" });
+    if (q.ok || q.costSide > 0) return q;
+    // build 30: Jupiter did not answer. GMGN's own numbers for this coin still give the pool
+    // fee, the taxes and the network cost: a real (if partial: no price impact) fee.
+    if (q.poolFee !== null && q.poolFee !== undefined && notionalUsd > 0) {
+      const side = Number(q.poolFee) + ((q.buyTax || 0) + (q.sellTax || 0)) / 2 + (q.netUsdSide || 0) / notionalUsd;
+      return { ok: true, partial: true, costSide: side, costRt: 2 * side, why: "pool fee + tax + network (Jupiter silent)" };
+    }
+    return q;
   }
   inPlay() { let n = 0; for (const p of this.open.values()) n += p.cost; return n; }
 
