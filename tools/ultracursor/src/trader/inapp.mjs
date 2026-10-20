@@ -12,6 +12,7 @@
  * TRAINING ONLY: nothing here can place an order. While it is on, the agent
  * refuses GMGN's own buy/sell controls (guard.mjs gmgnTradeClick).
  */
+import { Scalp } from "./scalp.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { Book } from "./book.mjs";
@@ -70,7 +71,7 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     const memory = new Memory({ dir: memDir });
     const recent = [];  // build 7: the last few buys/sells, shown on screen beside the orb
     const board = () => {
-      try { fs.writeFileSync(path.join(memDir, ".trader-board"), JSON.stringify({ at: Date.now(), sum: book.summary(), recent })); } catch { /* disk */ }
+      try { fs.writeFileSync(path.join(memDir, ".trader-board"), JSON.stringify({ at: Date.now(), sum: fast.summary(), recent })); } catch { /* disk */ }
     };
     const write = (ev) => {
       if (ev.type === "entry" || ev.type === "close" || ev.type === "exit") {
@@ -88,14 +89,19 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     memory.heartbeat({ open: 0, armed: 0, paid: book.paid });
     const gm = new Gmgn({ onCall: (c) => memory.onCall(c) });
     await gm.attach(browser);
+    const FAST = path.join(dir, "fast.json");
+    let fj = null; try { fj = JSON.parse(fs.readFileSync(FAST, "utf8")); } catch { fj = null; }
+    const fast = Scalp.from(fj, { src: gm, log: write });
     const sniper = new Sniper({ src: gm, book, memory, log: write });
     const lanes = new Lanes({ log: write });
     lanes
+      .add("fast", 3000, (t) => fast.scanLane(t))
+      .add("fastPositions", 2000, async (t) => { await fast.positionLane(t); fs.writeFileSync(FAST, JSON.stringify(fast.toJSON())); board(); })
       .add("scan", 3000, async (t) => { const r = await sniper.scanLane(t); run && (run.lastScan = r); return r; })
       .add("narrative", 5000, (t) => sniper.narrativeLane(t))
       .add("positions", 2000, async (t) => { await sniper.positionLane(t); fs.writeFileSync(STATE, JSON.stringify(book.toJSON())); board(); });
     const done = lanes.run().catch((e) => { lastError = String(e.message || e); });
-    run = { lanes, gm, memory, book, done, sniper };
+    run = { lanes, gm, memory, book, done, sniper, fast };
     board();
     log(`trader started in the app (training, fake money): GMGN in a background tab, memory ${Math.round(memory.bytes() / 1024)} KB`);
   }
@@ -132,6 +138,6 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
   return {
     want, set, tick, stop,
     running: () => !!run,
-    state: () => ({ want: want(), running: !!run, starting, lastError, gmgnCalls: run ? run.gm.calls : 0, gmgnErrors: run ? run.gm.errors : 0, book: run ? run.book.summary() : null, lastScan: run ? run.lastScan || null : null, blocks: run && run.sniper ? Object.entries(run.sniper.why || {}).sort((a, b) => b[1] - a[1]).slice(0, 8) : null }),
+    state: () => ({ want: want(), running: !!run, starting, lastError, gmgnCalls: run ? run.gm.calls : 0, gmgnErrors: run ? run.gm.errors : 0, book: run ? run.book.summary() : null, fast: run ? run.fast.summary() : null, lastScan: run ? run.lastScan || null : null, blocks: run && run.sniper ? Object.entries(run.sniper.why || {}).sort((a, b) => b[1] - a[1]).slice(0, 8) : null }),
   };
 }
