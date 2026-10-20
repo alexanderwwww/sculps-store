@@ -83,3 +83,12 @@ into the core." First real use: Depop ("take images and upload"), because ChatGP
   246 GMGN calls / 0 errors in 75 s, orb heartbeat written. Headless UA got Cloudflare 403; a normal Chrome UA passes.
 - Not proven: his real Mac Chrome; panel pill clicked by a real mouse (orb/panel tests pass, pill seen in test/shots/panel-orb.png).
 - Next: GMGN server-side trending filters (read the filter fields the UI sends, pass our gate thresholds, record in tools map).
+
+## Builds 6–10 (2026-10-20)
+- 6: no Claude API key bar (Alex: "fuck this api key"); tasks come through the link. Zip: https://blackreaper.us/media/ultracursor-6-b83639fb46568fe3.zip
+- 7: ticker above the orb (balance · trades · W/L · open · last buy/sell); status carries `trader.book`.
+- 8: the trader's GMGN tab no longer blocks images/fonts. Alex watches that tab, and it looked broken.
+- 9: status `trader.blocks` counts failed rules. Evidence: the Fib sniper fired 0 trades because every coin failed gate + narrative + costs + smartNow together.
+- 10: fast lane `src/trader/scalp.mjs`. Momentum on 1m (3 rising closes, above the 8-avg, volume up), TP +13%, SL −8%, 3-min time stop, 23.6% size, max 3 open, ≤61.8%, 1% cost a side, 5-min cooldown. Fake money; it feeds the ticker. Test: `test/scalp.test.mjs`.
+- Runner tests set `ULTRA_TRADER_FLAG` to a dead URL so the live switch never leaks into them.
+- Real-money buying is NOT built (execute.mjs is a stub). Alex asked for real trades on 2026-10-20; each real buy would need his click.
