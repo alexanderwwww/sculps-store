@@ -135,6 +135,8 @@ export class Scalp {
       const q = await this.quote({ mint: r.a, notional: n }).catch((e) => ({ ok: false, why: String(e.message || e).slice(0, 80) }));
       if (!q || !q.ok || !(q.costRt <= MAX_RT)) {
         this.costSkips++;
+        (this.costWhy = this.costWhy || []).push(q && q.ok ? `${r.s}: rt ${(q.costRt * 100).toFixed(2)}%` : `${r.s}: ${q?.why || "no quote"}`);
+        if (this.costWhy.length > 6) this.costWhy.shift();
         this.log({ type: "cost-skip", lane: "fast", symbol: r.s, why: q && q.ok ? `round trip ${(q.costRt * 100).toFixed(3)}% over 0.618%` : q?.why || "no quote" });
         this.cool.set(r.a, nowMs + 60_000);
         continue;
@@ -198,7 +200,7 @@ export class Scalp {
 
   summary() {
     const n = this.trades.length, wins = this.trades.filter((t) => t.won).length;
-    return { trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, fees: +this.feesPaid.toFixed(5), costSkips: this.costSkips, lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
+    return { trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, fees: +this.feesPaid.toFixed(5), costSkips: this.costSkips, costWhy: this.costWhy || [], lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
   }
   toJSON() { return { v: 2, plan: PLAN, start: this.start, stake: this.stake, cash: this.cash, learn: this.learn, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
   static from(j, opts) {
