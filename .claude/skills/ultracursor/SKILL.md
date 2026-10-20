@@ -89,6 +89,8 @@ into the core." First real use: Depop ("take images and upload"), because ChatGP
 - 7: ticker above the orb (balance · trades · W/L · open · last buy/sell); status carries `trader.book`.
 - 8: the trader's GMGN tab no longer blocks images/fonts. Alex watches that tab, and it looked broken.
 - 9: status `trader.blocks` counts failed rules. Evidence: the Fib sniper fired 0 trades because every coin failed gate + narrative + costs + smartNow together.
+- 19: wider Fibonacci (8% run, pocket 0.382-0.786, stop under 0.886), 1m+5m trending, 34 charts; slow sniper lanes parked (0 trades, starved GMGN).
+- 20: exits (Alex): half at +10% and stop to break-even, rest at +20%. Fresh ledger (PLAN fib20).
 - 18: fresh ledger + lessons for the Fibonacci plan (PLAN "fib17"); older ledgers not carried over.
 - 17: chart-only Fibonacci (Alex: "trade the chart, not the coin"): every scanned coin, 34 1m candles, swing low then high (>=13% move), buy in the golden pocket 0.5-0.705 on a green candle if 0.786 held; stop under 0.786, target the swing high, 13-min time stop. No hype, narrative or smart money.
 - 16: more risk (Alex): 21 coins scanned, 2 green 1m candles enough, round trip up to 1.618%, 5 open.

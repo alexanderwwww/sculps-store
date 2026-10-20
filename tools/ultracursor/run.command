@@ -15,7 +15,7 @@
 set -u
 
 BUNDLE="$(cd "$(dirname "$0")" && pwd)"
-BUILD="18"
+BUILD="20"
 WORK="$HOME/Library/Application Support/ultracursor/runtime"
 # The two ULTRA_TEST_ values exist for test/pack.test.mjs only. On his Mac
 # they are never set: port 9333 (Magic Wand has 9222) and his real Chrome.

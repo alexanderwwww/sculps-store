@@ -97,10 +97,9 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     const lanes = new Lanes({ log: write });
     lanes
       .add("fast", 3000, (t) => fast.scanLane(t))
-      .add("fastPositions", 2000, async (t) => { await fast.positionLane(t); fs.writeFileSync(FAST, JSON.stringify(fast.toJSON())); board(); })
-      .add("scan", 3000, async (t) => { const r = await sniper.scanLane(t); run && (run.lastScan = r); return r; })
-      .add("narrative", 5000, (t) => sniper.narrativeLane(t))
-      .add("positions", 2000, async (t) => { await sniper.positionLane(t); fs.writeFileSync(STATE, JSON.stringify(book.toJSON())); board(); });
+      .add("fastPositions", 2000, async (t) => { await fast.positionLane(t); fs.writeFileSync(FAST, JSON.stringify(fast.toJSON())); board(); });
+    // build 19: the slow Fibonacci sniper is parked (0 trades in thousands of scans, and its
+      // 10-30 s scans starved the fast lane of GMGN calls). Its code stays for later.
     const done = lanes.run().catch((e) => { lastError = String(e.message || e); });
     run = { lanes, gm, memory, book, done, sniper, fast };
     board();

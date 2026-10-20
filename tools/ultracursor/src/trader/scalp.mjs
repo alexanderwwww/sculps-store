@@ -20,7 +20,7 @@ import { quoteCosts } from "./fees.mjs";
 const MAX_RT = 0.01618;
 // Build 18 (Alex: "we need new data"): the Fibonacci lane keeps its own clean
 // ledger and lessons; a ledger from an earlier plan is not carried over.
-const PLAN = "fib17";
+const PLAN = "fib20";
 const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, MAX_OPEN = 5, CAP = 0.618, COST = 0.01;
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
 
@@ -83,12 +83,12 @@ export function fibSetup(cs) {
   let loI = 0;
   for (let i = 1; i < hiI; i++) if (w[i].l < w[loI].l) loI = i;
   const hi = w[hiI].h, lo = w[loI].l, D = hi - lo;
-  if (!(lo > 0) || hi / lo - 1 < 0.13) return null;
+  if (!(lo > 0) || hi / lo - 1 < 0.08) return null;           // build 19: an 8% run is enough
   const last = w[w.length - 1];
   const retr = (hi - last.c) / D;
-  const floor = hi - 0.786 * D;
+  const floor = hi - 0.886 * D;                              // build 19: deep pocket allowed, stop under 0.886
   const held = w.slice(hiI + 1).every((k) => k.l >= floor);
-  if (!(retr >= 0.5 && retr <= 0.705) || !(last.c > last.o) || !held) return null;
+  if (!(retr >= 0.382 && retr <= 0.786) || !(last.c > last.o) || !held) return null; // build 19: 0.382 to 0.786
   return { hi, lo, retr: +retr.toFixed(3), stop: floor * 0.995, target: hi * 0.995, move: +(hi / lo - 1).toFixed(3) };
 }
 
@@ -116,8 +116,11 @@ export class Scalp {
   async scanLane(nowMs) {
     const nowSec = Math.floor(nowMs / 1000);
     if (this.open.size >= MAX_OPEN) return { bought: 0 };
-    const rows = (await this.src.trending("5m", 200)) || [];
-    const picks = rows.filter((r) => r && r.a && !this.open.has(r.a) && !(this.cool.get(r.a) > nowMs) && rugOk(r, nowSec)).slice(0, 21);
+    // build 19: more charts: the 1m and 5m trending lists together
+    const [r1, r5] = await Promise.all([this.src.trending("1m", 200).catch(() => []), this.src.trending("5m", 200).catch(() => [])]);
+    const seen = new Set(), rows = [];
+    for (const r of [...(r1 || []), ...(r5 || [])]) if (r && r.a && !seen.has(r.a)) { seen.add(r.a); rows.push(r); }
+    const picks = rows.filter((r) => r && r.a && !this.open.has(r.a) && !(this.cool.get(r.a) > nowMs) && rugOk(r, nowSec)).slice(0, 34);
     const cands = await Promise.all(picks.map(async (r) => ({ r, cs: await this.src.candles(r.a, "1m", 34).catch(() => null) })));
     let bought = 0;
     for (const { r, cs } of cands) {
@@ -152,8 +155,16 @@ export class Scalp {
       const cs = await this.src.candles(p.addr, "1m", 2).catch(() => null);
       if (Array.isArray(cs) && cs.length) p.last = cs[cs.length - 1].c;
       const move = p.last / p.entry - 1;
+      // build 20 (Alex: "fast 10% up, 20% up, with 1.6 SOL"): half off at +10% and the
+      // stop moves to break-even, the rest off at +20%. Entry stays the Fibonacci pocket.
+      if (p.target && !p.half && move >= 0.10) {
+        const side = p.side ?? COST, u = p.units / 2, got = u * p.last * (1 - side);
+        this.feesPaid += u * p.last * side; this.cash += got;
+        p.units -= u; p.banked = got; p.half = true; p.stop = Math.max(p.stop, p.entry * (1 + 2 * side));
+        this.log({ type: "exit", lane: "fast", symbol: p.symbol, addr: p.addr, part: "half at +10%", got: +got.toFixed(4) });
+      }
       const why = p.target
-        ? (p.last >= p.target ? "target: back at the swing high" : p.last <= p.stop ? "stop: broke 0.786" : nowMs - p.at >= 13 * 60_000 ? "13 min time stop" : null)
+        ? (move >= 0.20 ? "+20%" : p.last <= p.stop ? (p.half ? "rest at break-even" : "stop: under the pocket") : nowMs - p.at >= 13 * 60_000 ? "13 min time stop" : null)
         : (move >= TP ? "take profit +13%" : move <= SL ? "stop -8%" : nowMs - p.at >= HOLD_MS ? "3 min time stop" : null);
       if (!why) continue;
       const side = p.side ?? COST;
@@ -162,7 +173,7 @@ export class Scalp {
       this.cash += got;
       this.open.delete(p.addr);
       this.cool.set(p.addr, nowMs + 5 * 60_000);
-      const pnl = got - p.cost;
+      const pnl = got + (p.banked || 0) - p.cost;
       const t = { symbol: p.symbol, addr: p.addr, pnl, ret: pnl / p.cost, won: pnl > 0, why, held: nowMs - p.at };
       this.trades.push(t);
       for (const k of p.shape || []) {
