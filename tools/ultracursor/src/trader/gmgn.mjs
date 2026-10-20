@@ -88,7 +88,8 @@ export class Gmgn {
       s.detach().catch(() => {});
     } catch { page = await ctx.newPage(); }
     this.page = page;
-    await page.route("**/*", (r) => (["image", "font", "media"].includes(r.request().resourceType()) ? r.abort() : r.continue()));
+    // build 8: no image/font block here. Alex looks at this tab, and blocked
+    // logos and icon fonts made GMGN look broken.
     page.on("request", (r) => { if (!this.q && /gmgn\.ai\/(api|mrwapi|rrs|vas)\//.test(r.url())) this.q = webQuery(r.url()); });
     await this.#home();
   }
