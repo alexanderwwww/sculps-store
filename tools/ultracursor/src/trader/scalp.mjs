@@ -150,7 +150,9 @@ export class Scalp {
       const eq = this.equity();
       const n = Math.min(this.stake || eq * SIZE, this.cash, eq * CAP - this.inPlay());
       if (!(n > 0.05)) break;
-      const q = await this.quote({ mint: r.a, notional: n }).catch((e) => ({ ok: false, why: String(e.message || e).slice(0, 80) }));
+      let q = await this.quote({ mint: r.a, notional: n }).catch((e) => ({ ok: false, why: String(e.message || e).slice(0, 80) }));
+      // hunt: the 2.36% price-impact cap is the careful lanes' rule; here the measured cost is taken as it is
+      if (q && !q.ok && q.costSide > 0) q = { ...q, ok: true, costRt: 2 * q.costSide };
       if (!q || !q.ok || !(q.costRt <= MAX_RT)) {
         this.costSkips++;
         (this.costWhy = this.costWhy || []).push(q && q.ok ? `${r.s}: rt ${(q.costRt * 100).toFixed(2)}%` : `${r.s}: ${q?.why || "no quote"}`);

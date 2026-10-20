@@ -60,6 +60,10 @@ await f.scanLane(now0);
 ok("10% round trip taken (fake money, learn), 20% skipped", f.open.has("F") && !f.open.has("I") && f.summary().costSkips === 1, f.summary());
 ok("the ledger charges the measured fee", Math.abs(f.summary().fees - 1.618 * 0.05) < 1e-4, f.summary());
 
+const imp = new Scalp({ src, start: 50, stake: 1.618, quote: async () => ({ ok: false, why: "price impact 3.06% over the 2.36% cap", costSide: 0.03 }) });
+await imp.scanLane(now0);
+ok("hunt takes a coin the careful lanes refuse for price impact, at its measured cost", imp.open.size === 2 && [...imp.open.values()].every((p) => p.side === 0.03), imp.summary());
+
 // learning: allowed to lose 12 times; 13 losses under 23.6% wins -> that shape is blocked
 const L = new Scalp({ src, start: 50, stake: 1.618, quote });
 const shape = [...shapeOf(fibChart(), rows[0], now0), "e:fib"];
