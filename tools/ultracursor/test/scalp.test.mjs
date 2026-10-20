@@ -119,5 +119,30 @@ for (const k of ["age1", "lq1", "h0", "src:trending", "e:any"]) nb.learn[k] = { 
 await nb.scanLane(now0);
 ok("symbiot keeps buying even with losing lessons on record (it farms)", nb.open.size === 3 && nb.skips === 0, nb.summary());
 ok("symbiot files each trade by age, pool, hour and source", [...nb.open.values()].every((p) => p.shape.some((k) => k.startsWith("age")) && p.shape.some((k) => k.startsWith("src:"))), [...nb.open.values()].map((p) => p.shape));
+// build 36: the post-mortem of every trade
+{
+  const px = {};
+  const msrc = { trending: async () => [], candles: async (a) => [{ t: 1, o: 1, h: 1, l: 1, c: px[a], v: 1 }] };
+  const M = new Scalp({ src: msrc, start: 0, stake: 1.618, quote });
+  M.configure({ shadowMs: 200_000 });
+  const put = (a, entry) => M.open.set(a, { addr: a, symbol: a, cost: 1.618, side: 0.01, units: 1.618 * 0.99 / entry, entry, last: entry, at: now0, shape: ["x"], hunt: true, peak: 0 });
+  put("ST", 1); put("SR", 1); put("TT", 1); put("FE", 1); put("GB", 1); put("WN", 1);
+  px.ST = 0.84; px.SR = 0.84; px.TT = 1.0; px.FE = 1.005; px.GB = 1.2; px.WN = 1.2;
+  await M.positionLane(now0 + 1000);                       // ST, SR stopped; GB, WN peak at +20%
+  px.GB = 1.09; px.WN = 1.15;
+  await M.positionLane(now0 + 2000);                       // GB, WN give back half
+  px.GB = 0.95;
+  await M.positionLane(now0 + 121_000);                    // TT, FE time out; GB already closed
+  px.ST = 1.3; px.SR = 0.7; px.TT = 1.3; px.FE = 1.0; px.GB = 0.9; px.WN = 1.1;
+  await M.positionLane(now0 + 130_000);
+  await M.positionLane(now0 + 400_000);                    // shadows done
+  const tag = (a) => M.trades.find((t) => t.symbol === a)?.mistake;
+  ok("stopped, then the coin pumped: stop-then-pump", tag("ST") === "stop-then-pump", M.trades);
+  ok("stopped, and it kept falling: cut-right", tag("SR") === "cut-right");
+  ok("timed out, then ran 30%: sold-too-early", tag("TT") === "sold-too-early");
+  ok("price barely moved, lost to the fee: fee-ate-it", tag("FE") === "fee-ate-it", M.trades.find((t) => t.symbol === "FE"));
+  ok("a win that did not run away after: good", tag("WN") === "good", M.trades.find((t) => t.symbol === "WN"));
+  ok("summary counts each pattern with its average", M.summary().mistakes["stop-then-pump"].n === 1 && typeof M.summary().mistakes.good.avg === "number", M.summary().mistakes);
+}
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

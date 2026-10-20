@@ -29,7 +29,7 @@ const PLAN = "symbiot29";
  *   minLq      smallest pool (USD) when known      minAgeSec  youngest coin when known
  *   learnAfter / learnWinRate  a setup is blocked after N trades under this win rate
  */
-export const DEFAULTS = { readChart: false, stake: 1.618, tp: 0.40, sl: -0.15, trailFrom: 0.25, holdMs: 120_000, maxOpen: 55, perScan: 55, maxRt: 0.30, minLq: 3_000, minAgeSec: 60, learnAfter: 13, learnWinRate: 0.236 };
+export const DEFAULTS = { readChart: false, stake: 1.618, tp: 0.40, sl: -0.15, trailFrom: 0.25, holdMs: 120_000, maxOpen: 55, perScan: 55, maxRt: 0.30, minLq: 3_000, minAgeSec: 60, learnAfter: 13, learnWinRate: 0.236, shadowMs: 120_000 };
 const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, CAP = 0.618, COST = 0.01; // older ledgers only
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
 
@@ -127,7 +127,7 @@ export class Scalp {
     this.src = src; this.log = log; this.stake = stake;
     this.cfg = { ...DEFAULTS, ...(stake ? { stake } : {}) };
     this.quote = quote || ((a) => this.#measure(a)); this.costSkips = 0; this.feesPaid = 0;
-    this.learn = {}; this.skips = 0; this.measured = []; this.done = new Set();
+    this.learn = {}; this.skips = 0; this.measured = []; this.done = new Set(); this.shadow = new Map(); this.mistakes = {};
     this.start = start; this.cash = start; this.open = new Map(); this.trades = []; this.cool = new Map();
   }
   equity() { let e = this.cash; for (const p of this.open.values()) e += p.units * p.last * (1 - (p.side ?? COST)); return e; }
@@ -217,11 +217,47 @@ export class Scalp {
     return { bought };
   }
 
+  /**
+   * Build 36, the post-mortem (Alex: "for every trade, pattern recognition of your mistake").
+   * After a trade closes, its coin is watched for `shadowMs` more. Then the trade gets one tag:
+   *   sold-too-early   exited on time/give-back/target and the coin ran 20%+ past the exit
+   *   stop-then-pump   stopped out and the coin then went 20%+ above the entry
+   *   bought-the-top   never went 3% up, lost
+   *   gave-back        was 15%+ up, closed at a loss
+   *   fee-ate-it       price moved under 2% either way, lost only to the fee
+   *   cut-right        stopped, and the coin kept falling after
+   *   good             a win that was not left on the table
+   * The counts live in summary().mistakes, with each tag's average result.
+   */
+  async #shadows(nowMs) {
+    for (const [a, sh] of [...this.shadow]) {
+      const cs = await this.src.candles(a, "1m", 2).catch(() => null);
+      const px = Array.isArray(cs) && cs.length ? cs[cs.length - 1].c : null;
+      if (px) { sh.after.max = Math.max(sh.after.max, px); sh.after.min = Math.min(sh.after.min, px); }
+      if (nowMs - sh.exitAt < this.cfg.shadowMs) continue;
+      this.shadow.delete(a);
+      const t = sh.trade, runAfter = sh.after.max / sh.exit - 1, aboveEntry = sh.after.max / sh.entry - 1, fellAfter = sh.after.min / sh.exit - 1;
+      const tag = /stop/.test(t.why) && aboveEntry >= 0.2 ? "stop-then-pump"
+        : /stop/.test(t.why) && fellAfter <= -0.05 ? "cut-right"
+        : !/stop/.test(t.why) && runAfter >= 0.2 ? "sold-too-early"
+        : !t.won && sh.peak >= 0.15 ? "gave-back"
+        : !t.won && sh.peak < 0.03 && Math.abs(sh.exit / sh.entry - 1) >= 0.02 ? "bought-the-top"
+        : !t.won && Math.abs(sh.exit / sh.entry - 1) < 0.02 ? "fee-ate-it"
+        : t.won ? "good" : "bought-the-top";
+      t.mistake = tag; t.runAfter = +runAfter.toFixed(3); t.peak = +sh.peak.toFixed(3);
+      const M = (this.mistakes[tag] = this.mistakes[tag] || { n: 0, ret: 0 });
+      M.n++; M.ret += t.ret;
+      this.log({ type: "post-mortem", lane: "fast", symbol: t.symbol, tag, peak: t.peak, runAfter: t.runAfter, why: t.why, ret: +t.ret.toFixed(4), shape: sh.shape });
+    }
+  }
+
   async positionLane(nowMs) {
+    await this.#shadows(nowMs);
     for (const p of [...this.open.values()]) {
       const cs = await this.src.candles(p.addr, "1m", 2).catch(() => null);
       if (Array.isArray(cs) && cs.length) p.last = cs[cs.length - 1].c;
       const move = p.last / p.entry - 1;
+      p.peakAll = Math.max(p.peakAll || 0, move);
       // build 20 (Alex: "fast 10% up, 20% up, with 1.6 SOL"): half off at +10% and the
       // stop moves to break-even, the rest off at +20%. Entry stays the Fibonacci pocket.
       if (p.target && !p.half && move >= 0.10) {
@@ -246,6 +282,7 @@ export class Scalp {
       const pnl = got + (p.banked || 0) - p.cost;
       const t = { symbol: p.symbol, addr: p.addr, pnl, ret: pnl / p.cost, won: pnl > 0, why, held: nowMs - p.at };
       this.trades.push(t);
+      this.shadow.set(p.addr, { trade: t, exit: p.last, exitAt: nowMs, entry: p.entry, peak: p.peakAll || 0, shape: p.shape, after: { max: p.last, min: p.last } });
       for (const k of p.shape || []) {
         const L = (this.learn[k] = this.learn[k] || { n: 0, w: 0, pnl: 0, until: 0 });
         L.n++; if (t.won) L.w++; L.pnl += t.ret;
@@ -303,15 +340,16 @@ export class Scalp {
   summary() {
     const n = this.trades.length, wins = this.trades.filter((t) => t.won).length;
     const plus = this.trades.reduce((s, t) => s + (t.pnl > 0 ? t.pnl : 0), 0), minus = this.trades.reduce((s, t) => s + (t.pnl < 0 ? t.pnl : 0), 0);
-    return { plus: +plus.toFixed(4), minus: +minus.toFixed(4), net: +(plus + minus).toFixed(4), trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, fees: +this.feesPaid.toFixed(5), costSkips: this.costSkips, costWhy: this.costWhy || [], lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
+    return { plus: +plus.toFixed(4), minus: +minus.toFixed(4), net: +(plus + minus).toFixed(4), trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, fees: +this.feesPaid.toFixed(5), mistakes: Object.fromEntries(Object.entries(this.mistakes).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => [k, { n: v.n, avg: +(v.ret / v.n).toFixed(3) }])), costSkips: this.costSkips, costWhy: this.costWhy || [], lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
   }
-  toJSON() { return { v: 2, plan: PLAN, start: this.start, stake: this.stake, cash: this.cash, learn: this.learn, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
+  toJSON() { return { v: 2, plan: PLAN, start: this.start, stake: this.stake, cash: this.cash, learn: this.learn, mistakes: this.mistakes, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
   static from(j, opts) {
     const s = new Scalp(opts);
     // a different start or stake (Alex changed the plan) starts a fresh ledger
     const same = j && j.v === 2 && j.plan === PLAN && j.start === s.start && j.stake === s.stake;
     if (same) { s.cash = j.cash; for (const p of j.open || []) s.open.set(p.addr, p); s.trades = j.trades || []; for (const t of s.trades) if (t.addr) s.done.add(t.addr); for (const a of s.open.keys()) s.done.add(a); }
     if (same && j.learn) s.learn = j.learn;
+    if (same && j.mistakes) s.mistakes = j.mistakes;
     return s;
   }
 }
