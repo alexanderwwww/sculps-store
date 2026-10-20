@@ -713,11 +713,11 @@
       const m = bd.sum, money = (v) => (bd.unit === "SOL" ? `${(Number(v) || 0).toFixed(3)} SOL` : `$${(Number(v) || 0).toFixed(2)}`);
       const sol = (v) => `${(Number(v) || 0).toFixed(3)}`;
       say("tapeTop", tapeTop, m.plus !== undefined
-        ? `+${sol(m.plus)}  −${sol(Math.abs(m.minus))}  =  ${m.net >= 0 ? "+" : "−"}${sol(Math.abs(m.net))} SOL · ${m.trades} trades · ${m.open} open`
+        ? `+${sol(m.plus)}  −${sol(Math.abs(m.minus))}  =  ${m.net >= 0 ? "+" : "−"}${sol(Math.abs(m.net))} SOL · live ${(m.live || 0) >= 0 ? "+" : "−"}${sol(Math.abs(m.live || 0))} · ${m.trades} trades · ${m.open} open`
         : `${money(m.balance)} · ${m.trades} trades · ${m.wins}W ${m.losses}L · ${m.open} open`);
       const l = Array.isArray(bd.recent) && bd.recent.length ? bd.recent[bd.recent.length - 1] : null;
       const sym = l && l.symbol ? `$${l.symbol}` : "";
-      say("tapeLast", tapeLast, !l ? "" : l.type === "entry" ? `bought ${sym}` : `sold ${sym}${l.pnl !== null ? ` ${l.pnl >= 0 ? "+" : "−"}${money(Math.abs(l.pnl))}` : ""}`);
+      say("tapeLast", tapeLast, !l ? "" : l.type === "post-mortem" ? `lesson · $${l.symbol}: ${String(l.tag || "").replace(/-/g, " ")}` : l.type === "entry" ? `bought ${sym}` : `sold ${sym}${l.pnl !== null ? ` ${l.pnl >= 0 ? "+" : "−"}${money(Math.abs(l.pnl))}` : ""}`);
     }
     if (tr) {
       const kb = Math.max(0, Math.round(Number(tr.kb) || 0));

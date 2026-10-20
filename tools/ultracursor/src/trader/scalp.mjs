@@ -340,7 +340,11 @@ export class Scalp {
   summary() {
     const n = this.trades.length, wins = this.trades.filter((t) => t.won).length;
     const plus = this.trades.reduce((s, t) => s + (t.pnl > 0 ? t.pnl : 0), 0), minus = this.trades.reduce((s, t) => s + (t.pnl < 0 ? t.pnl : 0), 0);
-    return { plus: +plus.toFixed(4), minus: +minus.toFixed(4), net: +(plus + minus).toFixed(4), trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, fees: +this.feesPaid.toFixed(5), mistakes: Object.fromEntries(Object.entries(this.mistakes).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => [k, { n: v.n, avg: +(v.ret / v.n).toFixed(3) }])), costSkips: this.costSkips, costWhy: this.costWhy || [], lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
+    // build 37: the open trades marked at their last price, so the money line moves every second
+    let live = 0;
+    for (const p of this.open.values()) live += p.units * p.last * (1 - (p.side ?? COST)) - p.cost + (p.banked || 0);
+    const last = [...this.trades].reverse().find((t) => t.mistake);
+    return { live: +live.toFixed(4), lastLesson: last ? `${last.symbol}: ${last.mistake}` : null, plus: +plus.toFixed(4), minus: +minus.toFixed(4), net: +(plus + minus).toFixed(4), trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, fees: +this.feesPaid.toFixed(5), mistakes: Object.fromEntries(Object.entries(this.mistakes).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => [k, { n: v.n, avg: +(v.ret / v.n).toFixed(3) }])), costSkips: this.costSkips, costWhy: this.costWhy || [], lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
   }
   toJSON() { return { v: 2, plan: PLAN, start: this.start, stake: this.stake, cash: this.cash, learn: this.learn, mistakes: this.mistakes, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
   static from(j, opts) {

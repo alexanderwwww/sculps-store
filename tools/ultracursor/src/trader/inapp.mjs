@@ -74,8 +74,8 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
       try { fs.writeFileSync(path.join(memDir, ".trader-board"), JSON.stringify({ at: Date.now(), sum: fast.summary(), unit: "SOL", recent })); } catch { /* disk */ }
     };
     const write = (ev) => {
-      if (ev.type === "entry" || ev.type === "close" || ev.type === "exit") {
-        recent.push({ t: Date.now(), type: ev.type, symbol: ev.symbol || null, pnl: typeof ev.pnl === "number" ? ev.pnl : null, ret: typeof ev.ret === "number" ? ev.ret : null });
+      if (ev.type === "entry" || ev.type === "close" || ev.type === "exit" || ev.type === "post-mortem") {
+        recent.push({ t: Date.now(), type: ev.type, tag: ev.tag || null, symbol: ev.symbol || null, pnl: typeof ev.pnl === "number" ? ev.pnl : null, ret: typeof ev.ret === "number" ? ev.ret : null });
         if (recent.length > 5) recent.shift();
       }
       try { fs.appendFileSync(LEDGER, JSON.stringify({ at: new Date().toISOString(), ...ev }) + "\n"); } catch { /* disk */ }
@@ -97,6 +97,7 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     const lanes = new Lanes({ log: write });
     lanes
       .add("fast", 3000, (t) => fast.scanLane(t))
+      .add("board", 1000, async () => { board(); memory.heartbeat({ open: fast.open.size, armed: 0, paid: fast.summary().wins }); })
       .add("fastPositions", 2000, async (t) => { await fast.positionLane(t); fs.writeFileSync(FAST, JSON.stringify(fast.toJSON())); board();
         // build 24: the orb and the money line live on this heartbeat (it came from the parked sniper,
         // so they vanished 15 s after start); paid = the fast lane's wins, for the chime
