@@ -16,31 +16,28 @@
 
 import { quoteCosts } from "./fees.mjs";
 
-// Build 16 (Alex: "take some risk"): wider net, round trip up to 1.618%, 5 open.
-const MAX_RT = 0.30;   // build 24: fake money, trade and learn; the real measured cost is still charged
-// Build 18 (Alex: "we need new data"): the Fibonacci lane keeps its own clean
-// ledger and lessons; a ledger from an earlier plan is not carried over.
 const PLAN = "symbiot29";
-// Build 29, symbiot (Alex: "trade every coin you see, once, infinite balance"): every coin
-// from trending and from GMGN's Trenches columns (new, almost bonded, migrated) is bought
-// once at 1.618 SOL, setup or not (tagged e:any), and becomes a lesson. No loss budget.
-// Build 25, the hunt (Alex: "I want you to lose now, not to win... find that one trade of 40%
-// in 20 seconds"). Fake money, so it explores: brand-new launches from 60 s old, any pool
-// that can fill (3K), fees up to 15% (always charged at the real measured cost). Entry is
-// the chart: a Fibonacci pocket OR an ignition candle. Exit: +40% take, -15% stop, give back
-// half of a +25% run and it is out, 2 minutes max. Learning only blocks a shape after 13
-// trades under 23.6% wins: it is allowed to lose in order to learn.
-const HUNT = { tp: 0.40, sl: -0.15, trailFrom: 0.25, holdMs: 120_000 };
-const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, MAX_OPEN = 55, CAP = 0.618, COST = 0.01;
+/**
+ * Symbiot's settings (build 32, Alex: "don't hardcode stuff, flexible"). These are only the
+ * starting values: every one can be changed live from R2 `symbiot.json` (inapp.mjs reads it
+ * every 30 s) without a new build.
+ *   readChart  false = buy every coin it sees (the symbiot experiment); true = only on a
+ *              Fibonacci pocket or an ignition candle
+ *   stake      SOL per trade        tp / sl / trailFrom / holdMs   the exits
+ *   maxOpen    trades open at once  perScan   coins looked at per scan
+ *   maxRt      highest round-trip fee accepted (the real measured fee is always charged)
+ *   minLq      smallest pool (USD) when known      minAgeSec  youngest coin when known
+ *   learnAfter / learnWinRate  a setup is blocked after N trades under this win rate
+ */
+export const DEFAULTS = { readChart: false, stake: 1.618, tp: 0.40, sl: -0.15, trailFrom: 0.25, holdMs: 120_000, maxOpen: 55, perScan: 55, maxRt: 0.30, minLq: 3_000, minAgeSec: 60, learnAfter: 13, learnWinRate: 0.236 };
+const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, CAP = 0.618, COST = 0.01; // older ledgers only
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
 
-export function rugOk(row, nowSec) {
+export function rugOk(row, nowSec, cfg = DEFAULTS) {
   const created = num(row.ct) || num(row.ot);
   const age = created ? nowSec - created : null;
-  if (age !== null && age < 60) return false;                  // build 29: unknown age is traded too            // build 24: new launches from 3 minutes old
-  // build 23: pools under $89K let a 1.618 SOL buy move the price by itself (3-5% round
-  // trips measured live on 2026-10-20); only deep pools are charted.
-  if (num(row.lq) !== null && !(num(row.lq) >= 3_000)) return false;                // build 24: back to 13K, Alex: "trade the new ones, it's fake money, learn"
+  if (age !== null && age < cfg.minAgeSec) return false;   // unknown age is traded too
+  if (num(row.lq) !== null && !(num(row.lq) >= cfg.minLq)) return false;
   return true;
 }
 
@@ -115,6 +112,7 @@ export function fibSetup(cs) {
 export class Scalp {
   constructor({ src, log = () => {}, start = 10, stake = null, quote = null }) {
     this.src = src; this.log = log; this.stake = stake;
+    this.cfg = { ...DEFAULTS, ...(stake ? { stake } : {}) };
     this.quote = quote || ((a) => this.#measure(a)); this.costSkips = 0; this.feesPaid = 0;
     this.learn = {}; this.skips = 0; this.measured = []; this.done = new Set();
     this.start = start; this.cash = start; this.open = new Map(); this.trades = []; this.cool = new Map();
@@ -144,19 +142,21 @@ export class Scalp {
 
   async scanLane(nowMs) {
     const nowSec = Math.floor(nowMs / 1000);
-    if (this.open.size >= MAX_OPEN) return { bought: 0 };
+    if (this.open.size >= this.cfg.maxOpen) return { bought: 0 };
     // build 19: more charts: the 1m and 5m trending lists together
     const [r1, r5] = await Promise.all([this.src.trending("1m", 200).catch(() => []), this.src.trending("5m", 200).catch(() => [])]);
     const seen = new Set(), rows = [];
     // build 29: plus every coin GMGN's own Trenches columns showed (new, almost bonded, migrated)
     const feed = typeof this.src.feed === "function" ? this.src.feed() : [];
     for (const r of [...feed, ...(r1 || []), ...(r5 || [])]) if (r && r.a && !seen.has(r.a)) { seen.add(r.a); rows.push(r); }
-    const picks = rows.filter((r) => r && r.a && !this.open.has(r.a) && !(this.cool.get(r.a) > nowMs) && !this.done.has(r.a) && rugOk(r, nowSec)).slice(0, 55);
-    const cands = await Promise.all(picks.map(async (r) => ({ r, cs: await this.src.candles(r.a, "1m", 34).catch(() => null) })));
+    const picks = rows.filter((r) => r && r.a && !this.open.has(r.a) && !(this.cool.get(r.a) > nowMs) && !this.done.has(r.a) && rugOk(r, nowSec, this.cfg)).slice(0, this.cfg.perScan);
+    // readChart off: two candles, only for the live price; on: 34 to read the setup
+    const cands = await Promise.all(picks.map(async (r) => ({ r, cs: await this.src.candles(r.a, "1m", this.cfg.readChart ? 34 : 2).catch(() => null) })));
     let bought = 0;
     for (const { r, cs } of cands) {
-      const fib = fibSetup(cs), ign = fib ? null : ignition(cs);
-      if (this.open.size >= MAX_OPEN) continue;
+      const fib = this.cfg.readChart ? fibSetup(cs) : null, ign = this.cfg.readChart && !fib ? ignition(cs) : null;
+      if (this.open.size >= this.cfg.maxOpen) continue;
+      if (this.cfg.readChart && !fib && !ign) continue;
       if (!Array.isArray(cs) || !cs.length) continue;
       const shape = cs.length >= 12 ? shapeOf(cs, r, nowMs) : [`young`];
       shape.push(fib ? "e:fib" : ign ? "e:ign" : "e:any");
@@ -164,7 +164,7 @@ export class Scalp {
       if (bad) { this.skips++; this.log({ type: "learned-skip", lane: "fast", symbol: r.s, shape: bad }); continue; }
       const eq = this.equity();
       // build 29 (Alex: "infinite balance"): the stake is always 1.618 SOL, cash never blocks a trade
-      const n = this.stake || Math.min(eq * SIZE, this.cash, eq * CAP - this.inPlay());
+      const n = this.cfg.stake || Math.min(eq * SIZE, this.cash, eq * CAP - this.inPlay());
       if (!(n > 0.05)) break;
       // build 28 (Alex: "don't think about any coin, just do it"): buy at once. The fee is
       // measured right after (live Jupiter quote) and the ledger is corrected to it; until the
@@ -175,7 +175,7 @@ export class Scalp {
         q0 = await Promise.race([this.quote({ mint: r.a, notional: n }), new Promise((_, no) => setTimeout(() => no(new Error("fee check over 15 s")), 15_000))])
           .catch((e) => ({ ok: false, why: String(e.message || e).slice(0, 80) }));
         if (q0 && !q0.ok && q0.costSide > 0) q0 = { ...q0, ok: true, costRt: 2 * q0.costSide };
-        if (!q0 || !q0.ok || !(q0.costRt <= MAX_RT)) { this.costSkip(r, q0, nowMs); continue; }
+        if (!q0 || !q0.ok || !(q0.costRt <= this.cfg.maxRt)) { this.costSkip(r, q0, nowMs); continue; }
         this.measured.push(q0.costSide);
       }
       const side = q0 ? q0.costSide : known;
@@ -206,7 +206,7 @@ export class Scalp {
       }
       if (p.hunt) p.peak = Math.max(p.peak || 0, move);
       const why = p.hunt
-        ? (move >= HUNT.tp ? "+40%" : move <= HUNT.sl ? "stop -15%" : p.peak >= HUNT.trailFrom && move <= p.peak / 2 ? `gave back half of +${Math.round(p.peak * 100)}%` : nowMs - p.at >= HUNT.holdMs ? "2 min" : null)
+        ? (move >= this.cfg.tp ? `+${Math.round(this.cfg.tp * 100)}%` : move <= this.cfg.sl ? `stop ${Math.round(this.cfg.sl * 100)}%` : p.peak >= this.cfg.trailFrom && move <= p.peak / 2 ? `gave back half of +${Math.round(p.peak * 100)}%` : nowMs - p.at >= this.cfg.holdMs ? `${Math.round(this.cfg.holdMs / 1000)} s` : null)
         : p.target
         ? (move >= 0.20 ? "+20%" : p.last <= p.stop ? (p.half ? "rest at break-even" : "stop: under the pocket") : nowMs - p.at >= 13 * 60_000 ? "13 min time stop" : null)
         : (move >= TP ? "take profit +13%" : move <= SL ? "stop -8%" : nowMs - p.at >= HOLD_MS ? "3 min time stop" : null);
@@ -223,7 +223,7 @@ export class Scalp {
       for (const k of p.shape || []) {
         const L = (this.learn[k] = this.learn[k] || { n: 0, w: 0, pnl: 0, until: 0 });
         L.n++; if (t.won) L.w++; L.pnl += t.ret;
-        if (L.n >= 13 && L.w / L.n < 0.236) { L.until = this.trades.length + 21; this.log({ type: "lesson", lane: "fast", shape: k, n: L.n, wins: L.w, avg: +(L.pnl / L.n).toFixed(4) }); }
+        if (L.n >= this.cfg.learnAfter && L.w / L.n < this.cfg.learnWinRate) { L.until = this.trades.length + 21; this.log({ type: "lesson", lane: "fast", shape: k, n: L.n, wins: L.w, avg: +(L.pnl / L.n).toFixed(4) }); }
       }
       this.log({ type: "close", lane: "fast", symbol: p.symbol, addr: p.addr, pnl: +pnl.toFixed(4), ret: +t.ret.toFixed(4), why, balance: +this.equity().toFixed(4) });
     }
@@ -233,7 +233,7 @@ export class Scalp {
   badPart(shape) {
     for (const k of shape) {
       const L = this.learn[k];
-      if (!L || L.n < 13) continue;
+      if (!L || L.n < this.cfg.learnAfter) continue;
       if (L.until > this.trades.length) return k;
       if (L.until && L.until <= this.trades.length) { L.n = 0; L.w = 0; L.pnl = 0; L.until = 0; } // second look
     }
@@ -264,6 +264,14 @@ export class Scalp {
       p.side = q.costSide; p.feeSettled = true;
       p.shape.push(`rt${q.costRt < 0.01618 ? 0 : q.costRt < 0.03 ? 1 : q.costRt < 0.1 ? 2 : 3}`);
     }).catch(() => {});
+  }
+
+  /** Live settings from R2 symbiot.json: only known keys, only numbers/booleans. */
+  configure(over) {
+    if (!over || typeof over !== "object") return this.cfg;
+    for (const [k, v] of Object.entries(over)) if (k in DEFAULTS && typeof v === typeof DEFAULTS[k] && (typeof v !== "number" || Number.isFinite(v))) this.cfg[k] = v;
+    this.stake = this.cfg.stake;
+    return this.cfg;
   }
 
   summary() {
