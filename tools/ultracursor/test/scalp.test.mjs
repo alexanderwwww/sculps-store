@@ -32,5 +32,9 @@ ok("a coin just sold waits 5 minutes before it is bought again", s.open.size ===
 const back = Scalp.from(JSON.parse(JSON.stringify(s.toJSON())), { src });
 ok("state survives a restart", back.summary().trades === 3 && Math.abs(back.cash - s.cash) < 1e-9);
 ok("every buy and sell is journaled", log.filter((e) => e.type === "entry").length === 3 && log.filter((e) => e.type === "close").length === 3);
+const st = new Scalp({ src, start: 50, stake: 1.618 });
+await st.scanLane(now0);
+ok("50 SOL balance, 1.618 SOL every trade", st.open.size === 3 && [...st.open.values()].every((p) => Math.abs(p.cost - 1.618) < 1e-9) && Math.abs(st.cash - (50 - 3 * 1.618)) < 1e-9, st.cash);
+ok("a ledger from another plan is not reused", Scalp.from(s.toJSON(), { src, start: 50, stake: 1.618 }).cash === 50);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

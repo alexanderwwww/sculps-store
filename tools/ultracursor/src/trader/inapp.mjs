@@ -71,7 +71,7 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     const memory = new Memory({ dir: memDir });
     const recent = [];  // build 7: the last few buys/sells, shown on screen beside the orb
     const board = () => {
-      try { fs.writeFileSync(path.join(memDir, ".trader-board"), JSON.stringify({ at: Date.now(), sum: fast.summary(), recent })); } catch { /* disk */ }
+      try { fs.writeFileSync(path.join(memDir, ".trader-board"), JSON.stringify({ at: Date.now(), sum: fast.summary(), unit: "SOL", recent })); } catch { /* disk */ }
     };
     const write = (ev) => {
       if (ev.type === "entry" || ev.type === "close" || ev.type === "exit") {
@@ -91,7 +91,8 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     await gm.attach(browser);
     const FAST = path.join(dir, "fast.json");
     let fj = null; try { fj = JSON.parse(fs.readFileSync(FAST, "utf8")); } catch { fj = null; }
-    const fast = Scalp.from(fj, { src: gm, log: write });
+    // Alex 2026-10-20: a 50 SOL fake balance, 1.618 SOL every trade
+    const fast = Scalp.from(fj, { src: gm, log: write, start: 50, stake: 1.618 });
     const sniper = new Sniper({ src: gm, book, memory, log: write });
     const lanes = new Lanes({ log: write });
     lanes

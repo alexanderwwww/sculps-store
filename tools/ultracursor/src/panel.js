@@ -692,7 +692,7 @@
     const bd = tr && tr.board && tr.board.sum ? tr.board : null;
     vis("tape", tape, Boolean(bd), "flex");
     if (bd) {
-      const m = bd.sum, money = (v) => `$${(Number(v) || 0).toFixed(2)}`;
+      const m = bd.sum, money = (v) => (bd.unit === "SOL" ? `${(Number(v) || 0).toFixed(3)} SOL` : `$${(Number(v) || 0).toFixed(2)}`);
       say("tapeTop", tapeTop, `${money(m.balance)} · ${m.trades} trades · ${m.wins}W ${m.losses}L · ${m.open} open`);
       const l = Array.isArray(bd.recent) && bd.recent.length ? bd.recent[bd.recent.length - 1] : null;
       const sym = l && l.symbol ? `$${l.symbol}` : "";

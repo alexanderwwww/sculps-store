@@ -6,7 +6,8 @@
  *            average, last volume above the 10 before it -> buy.
  *   manage   every 2 s: price from the 1m candle; take profit +13%, cut -8%,
  *            sell whatever is still open after 3 minutes.
- *   size     23.6% of equity per trade, at most 3 open, 61.8% of equity in play.
+ *   size     a fixed stake per trade when given (Alex: 1.618 SOL of a 50 SOL
+ *            balance), else 23.6% of equity; at most 3 open, 61.8% of equity in play.
  *   costs    1% a side (fees + slippage), charged on every buy and sell.
  */
 
@@ -32,9 +33,9 @@ export function momentum(cs) {
 }
 
 export class Scalp {
-  constructor({ src, log = () => {}, start = 10 }) {
-    this.src = src; this.log = log;
-    this.cash = start; this.open = new Map(); this.trades = []; this.cool = new Map();
+  constructor({ src, log = () => {}, start = 10, stake = null }) {
+    this.src = src; this.log = log; this.stake = stake;
+    this.start = start; this.cash = start; this.open = new Map(); this.trades = []; this.cool = new Map();
   }
   equity() { let e = this.cash; for (const p of this.open.values()) e += p.units * p.last * (1 - COST); return e; }
   inPlay() { let n = 0; for (const p of this.open.values()) n += p.cost; return n; }
@@ -49,7 +50,7 @@ export class Scalp {
     for (const { r, cs } of cands) {
       if (this.open.size >= MAX_OPEN || !momentum(cs)) continue;
       const eq = this.equity();
-      const n = Math.min(eq * SIZE, this.cash, eq * CAP - this.inPlay());
+      const n = Math.min(this.stake || eq * SIZE, this.cash, eq * CAP - this.inPlay());
       if (!(n > 0.05)) break;
       const price = cs[cs.length - 1].c;
       this.cash -= n;
@@ -82,10 +83,11 @@ export class Scalp {
     const n = this.trades.length, wins = this.trades.filter((t) => t.won).length;
     return { trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size };
   }
-  toJSON() { return { v: 1, cash: this.cash, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
+  toJSON() { return { v: 2, start: this.start, stake: this.stake, cash: this.cash, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
   static from(j, opts) {
     const s = new Scalp(opts);
-    if (j && j.v === 1) { s.cash = j.cash; for (const p of j.open || []) s.open.set(p.addr, p); s.trades = j.trades || []; }
+    // a different start or stake (Alex changed the plan) starts a fresh ledger
+    if (j && j.v === 2 && j.start === s.start && j.stake === s.stake) { s.cash = j.cash; for (const p of j.open || []) s.open.set(p.addr, p); s.trades = j.trades || []; }
     return s;
   }
 }
