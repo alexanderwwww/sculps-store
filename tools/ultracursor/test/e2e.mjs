@@ -81,6 +81,7 @@ await until(async () => { try { return (await fetch(`http://127.0.0.1:${CDP}/jso
 const ENV = {
   ...process.env,
   ULTRA_BUILD: "1",
+  ULTRA_TRADER_FLAG: "http://127.0.0.1:9/no-flag.json",
   ULTRA_CLOUD: `http://127.0.0.1:${stubPort}/research/${KEY}`,
   ULTRA_CDP_PORT: String(CDP),
   ULTRA_FAST: "1",

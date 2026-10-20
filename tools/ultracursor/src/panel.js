@@ -368,6 +368,19 @@
   const orbKb = el("span", { ...BASE, font: `650 9px/1 ${FONT}`, color: "rgba(255,255,255,.92)", "letter-spacing": ".01em", "text-shadow": "0 1px 2px rgba(0,0,0,.6)" });
   put(orb, orbKb);
   put(layer, orb);
+  // Build 7: the trades, live, just above the orb: balance, count, wins/losses, open,
+  // then the latest buy or sell. Text only, no mouse.
+  const tape = el("div", {
+    ...BASE, position: "fixed", left: "50%", bottom: "80px", display: "none", "pointer-events": "none", transform: "translateX(-50%)",
+    "flex-direction": "column", "align-items": "center", gap: "3px", padding: "7px 12px", "border-radius": "14px",
+    background: "rgba(11,11,11,.72)", border: "0.5px solid rgba(255,255,255,.28)",
+    "backdrop-filter": "blur(10px)", "-webkit-backdrop-filter": "blur(10px)",
+    font: `600 11px/1.25 ${FONT}`, color: "rgba(255,255,255,.95)", "white-space": "nowrap", "text-shadow": "0 1px 2px rgba(0,0,0,.6)",
+  });
+  const tapeTop = el("span", { ...BASE });
+  const tapeLast = el("span", { ...BASE, "font-weight": "500", opacity: ".85" });
+  put(tape, tapeTop); put(tape, tapeLast);
+  put(layer, tape);
   const orbRadius = (kb) => Math.max(7, Math.min(29, 7 + 4.236 * LN(1 + Math.max(0, Number(kb) || 0))));
 
   // Build 5: the trader pill. Off: a small "trader" pill just above the bar.
@@ -676,6 +689,15 @@
     }
     const tr = show && st.trader && typeof st.trader === "object" && st.trader.on === true ? st.trader : null;
     vis("orb", orb, Boolean(tr), "flex");
+    const bd = tr && tr.board && tr.board.sum ? tr.board : null;
+    vis("tape", tape, Boolean(bd), "flex");
+    if (bd) {
+      const m = bd.sum, money = (v) => `$${(Number(v) || 0).toFixed(2)}`;
+      say("tapeTop", tapeTop, `${money(m.balance)} · ${m.trades} trades · ${m.wins}W ${m.losses}L · ${m.open} open`);
+      const l = Array.isArray(bd.recent) && bd.recent.length ? bd.recent[bd.recent.length - 1] : null;
+      const sym = l && l.symbol ? `$${l.symbol}` : "";
+      say("tapeLast", tapeLast, !l ? "scanning GMGN…" : l.type === "entry" ? `bought ${sym}` : `sold ${sym}${l.pnl !== null ? ` ${l.pnl >= 0 ? "+" : "−"}${money(Math.abs(l.pnl))}` : ""}`);
+    }
     if (tr) {
       const kb = Math.max(0, Math.round(Number(tr.kb) || 0));
       const r = orbRadius(kb);

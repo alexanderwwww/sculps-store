@@ -86,7 +86,7 @@ const chrome = spawn("/opt/pw-browsers/chromium", ["--headless=new", "--no-sandb
 await until(async () => { try { return (await fetch(`http://127.0.0.1:${CDP}/json/version`)).ok; } catch { return false; } }, 20000);
 const PANEL_FILE = path.join(tmp, "panel.json");
 let out = "";
-const runner = spawn(process.execPath, ["ultra.mjs"], { cwd: WORK, stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, ULTRA_BUILD: "3", ULTRA_CDP_PORT: String(CDP), ULTRA_FAST: "1", ULTRA_CLOUD: `http://127.0.0.1:${cloud.address().port}/research/K`, ULTRA_LINK: LINK, ULTRA_CONFIG: path.join(tmp, "config.json"), ULTRA_TEST_PANEL_FILE: PANEL_FILE } });
+const runner = spawn(process.execPath, ["ultra.mjs"], { cwd: WORK, stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, ULTRA_BUILD: "3", ULTRA_CDP_PORT: String(CDP), ULTRA_FAST: "1", ULTRA_CLOUD: `http://127.0.0.1:${cloud.address().port}/research/K`, ULTRA_LINK: LINK, ULTRA_CONFIG: path.join(tmp, "config.json"), ULTRA_TEST_PANEL_FILE: PANEL_FILE, ULTRA_TRADER_FLAG: "http://127.0.0.1:9/no-flag.json", ULTRA_TRADER_DIR: path.join(tmp, "trader") } });
 runner.stdout.on("data", (d) => { out += d; }); runner.stderr.on("data", (d) => { out += d; });
 function done(code) { try { runner.kill("SIGKILL"); chrome.kill("SIGKILL"); } catch {} try { wsrv.close(); psrv.close(); cloud.close(); shop.close(); } catch {} clearTimeout(KILL); process.exit(code); }
 

@@ -68,7 +68,15 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     const memDir = memoryDir(dir);
     await seedMemory(memDir);
     const memory = new Memory({ dir: memDir });
+    const recent = [];  // build 7: the last few buys/sells, shown on screen beside the orb
+    const board = () => {
+      try { fs.writeFileSync(path.join(memDir, ".trader-board"), JSON.stringify({ at: Date.now(), sum: book.summary(), recent })); } catch { /* disk */ }
+    };
     const write = (ev) => {
+      if (ev.type === "entry" || ev.type === "close" || ev.type === "exit") {
+        recent.push({ t: Date.now(), type: ev.type, symbol: ev.symbol || null, pnl: typeof ev.pnl === "number" ? ev.pnl : null, ret: typeof ev.ret === "number" ? ev.ret : null });
+        if (recent.length > 5) recent.shift();
+      }
       try { fs.appendFileSync(LEDGER, JSON.stringify({ at: new Date().toISOString(), ...ev }) + "\n"); } catch { /* disk */ }
       if (ev.type === "day-summary") memory.daySummary(ev, book.trades.filter((t) => new Date(t.closeT).toISOString().slice(0, 10) === ev.date));
     };
@@ -85,9 +93,10 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     lanes
       .add("scan", 3000, (t) => sniper.scanLane(t))
       .add("narrative", 5000, (t) => sniper.narrativeLane(t))
-      .add("positions", 2000, async (t) => { await sniper.positionLane(t); fs.writeFileSync(STATE, JSON.stringify(book.toJSON())); });
+      .add("positions", 2000, async (t) => { await sniper.positionLane(t); fs.writeFileSync(STATE, JSON.stringify(book.toJSON())); board(); });
     const done = lanes.run().catch((e) => { lastError = String(e.message || e); });
     run = { lanes, gm, memory, book, done };
+    board();
     log(`trader started in the app (training, fake money): GMGN in a background tab, memory ${Math.round(memory.bytes() / 1024)} KB`);
   }
 
@@ -123,6 +132,6 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
   return {
     want, set, tick, stop,
     running: () => !!run,
-    state: () => ({ want: want(), running: !!run, starting, lastError, gmgnCalls: run ? run.gm.calls : 0, gmgnErrors: run ? run.gm.errors : 0 }),
+    state: () => ({ want: want(), running: !!run, starting, lastError, gmgnCalls: run ? run.gm.calls : 0, gmgnErrors: run ? run.gm.errors : 0, book: run ? run.book.summary() : null }),
   };
 }

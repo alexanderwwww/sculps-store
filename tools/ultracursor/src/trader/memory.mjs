@@ -223,7 +223,9 @@ export function traderOrb(dir = memoryDir(), now = Date.now()) {
   let bytes = 0;
   for (const f of FILES) { try { bytes += fs.statSync(path.join(dir, f)).size; } catch { /* not yet */ } }
   // paid: profitable exit fills so far (the panel chimes when it rises); muted: the orb's toggle
-  return { on: true, bytes, kb: Math.round(bytes / 1024), paid: Number(hb.paid) || 0, muted: fs.existsSync(path.join(dir, ".mute")) };
+  let board = null;
+  try { board = JSON.parse(fs.readFileSync(path.join(dir, ".trader-board"), "utf8")); } catch { board = null; }
+  return { on: true, bytes, kb: Math.round(bytes / 1024), paid: Number(hb.paid) || 0, muted: fs.existsSync(path.join(dir, ".mute")), board };
 }
 /** The orb's mute toggle (panel message "traderMute"). */
 export function setTraderMute(muted, dir = memoryDir()) {
