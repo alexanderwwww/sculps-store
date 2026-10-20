@@ -46,10 +46,13 @@ export async function jupQuote(inputMint, outputMint, amount, { fetchImpl = fetc
  * Cost of one round trip of `notionalUsd` into `mint`.
  * gm: {feeInfo, trades, gas, solUsd}. Returns per-side cost (fraction) of the chosen route.
  */
-export async function quoteCosts({ mint, notionalUsd, gm, fetchImpl = fetch, onCall = () => {} }) {
+// Lowest tip that still lands (build 14, Alex: "lowest fee, lowest tip"): the 10th percentile
+// of what the last 50 trades on this coin actually paid, instead of the median.
+const low = (a) => { const s = a.filter((x) => x > 0).sort((x, y) => x - y); return s.length ? s[Math.floor(s.length * 0.1)] : null; };
+export async function quoteCosts({ mint, notionalUsd, gm, fetchImpl = fetch, onCall = () => {}, tip = "median" }) {
   const solUsd = Number(gm.solUsd);
   if (!(solUsd > 0)) return { ok: false, why: "SOL price missing" };
-  const netSol = median((gm.trades || []).map((t) => Number(t.gas_native)));
+  const netSol = (tip === "lowest" ? low : median)((gm.trades || []).map((t) => Number(t.gas_native)));
   if (netSol === null) return { ok: false, why: "network cost missing (no recent trades with gas_native)" };
   const netUsdSide = netSol * solUsd;
   const sec = gm.feeInfo?.security || {};

@@ -77,7 +77,7 @@ export class Scalp {
       this.mkt = { at: now, solUsd: Number(prices.find((p) => p.symbol === "SOL")?.price) || null, gas };
     }
     const [feeInfo, trades] = await Promise.all([this.src.feeInfo(mint).catch(() => null), this.src.trades(mint, 50).catch(() => [])]);
-    return quoteCosts({ mint, notionalUsd: notional * (this.mkt.solUsd || 0), gm: { feeInfo, trades, gas: this.mkt.gas, solUsd: this.mkt.solUsd } });
+    return quoteCosts({ mint, notionalUsd: notional * (this.mkt.solUsd || 0), gm: { feeInfo, trades, gas: this.mkt.gas, solUsd: this.mkt.solUsd }, tip: "lowest" });
   }
   inPlay() { let n = 0; for (const p of this.open.values()) n += p.cost; return n; }
 
