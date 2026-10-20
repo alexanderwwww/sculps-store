@@ -60,6 +60,28 @@ export function webQuery(url) {
   } catch { return null; }
 }
 
+/**
+ * Build 29 (Alex: "every new coin, all the migrated, all the almost bonded: trade them all"):
+ * whatever GMGN's own pages receive (the Trenches columns over HTTP and websocket) is read
+ * as it arrives, and every coin in it is kept as a row {a, s, lq, ct}. No endpoint is
+ * guessed: any object with a Solana mint address is taken, and the usual field names for
+ * symbol, liquidity and creation time are read when present.
+ */
+const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const firstNum = (o, keys) => { for (const k of keys) { const v = Number(o[k]); if (Number.isFinite(v) && v > 0) return v; } return null; };
+export function coinsIn(json, out = [], depth = 0) {
+  if (!json || typeof json !== "object" || depth > 8) return out;
+  if (Array.isArray(json)) { for (const x of json) coinsIn(x, out, depth + 1); return out; }
+  const a = [json.address, json.token_address, json.mint, json.base_address].find((x) => typeof x === "string" && MINT_RE.test(x) && !x.startsWith("So1111"));
+  if (a) {
+    let ct = firstNum(json, ["created_timestamp", "open_timestamp", "creation_timestamp", "pool_creation_timestamp", "launch_time", "ct", "ot"]);
+    if (ct && ct > 1e12) ct = Math.floor(ct / 1000);
+    out.push({ a, s: String(json.symbol || json.token_symbol || json.name || a.slice(0, 4)), lq: firstNum(json, ["liquidity", "lq", "usd_liquidity", "initial_liquidity"]), ct });
+  }
+  for (const v of Object.values(json)) if (v && typeof v === "object") coinsIn(v, out, depth + 1);
+  return out;
+}
+
 export class Gmgn {
   constructor({ executablePath = process.env.ULTRA_CHROMIUM || "/opt/pw-browsers/chromium", log = () => {}, onCall = () => {} } = {}) {
     this.executablePath = executablePath;
@@ -88,6 +110,17 @@ export class Gmgn {
       s.detach().catch(() => {});
     } catch { page = await ctx.newPage(); }
     this.page = page;
+    // build 29: every coin GMGN shows in any tab of this Chrome (HTTP and websocket)
+    this.feedRows = new Map();
+    const take = (j) => { for (const r of coinsIn(j)) { const o = this.feedRows.get(r.a); this.feedRows.set(r.a, { ...(o || {}), ...Object.fromEntries(Object.entries(r).filter(([, v]) => v !== null)), seen: o?.seen || Date.now() }); } };
+    const watch = (pg) => {
+      pg.on("response", async (res) => {
+        try { if (!/gmgn\.ai\//.test(res.url()) || !/json/.test(res.headers()["content-type"] || "")) return; take(await res.json()); } catch { /* not json */ }
+      });
+      pg.on("websocket", (ws) => ws.on("framereceived", (f) => { try { const t = typeof f.payload === "string" ? f.payload : ""; if (t.length > 2 && (t[0] === "{" || t[0] === "[")) take(JSON.parse(t)); } catch { /* not json */ } }));
+    };
+    for (const pg of ctx.pages()) watch(pg);
+    ctx.on("page", watch);
     // build 8: no image/font block here. Alex looks at this tab, and blocked
     // logos and icon fonts made GMGN look broken.
     page.on("request", (r) => { if (!this.q && /gmgn\.ai\/(api|mrwapi|rrs|vas)\//.test(r.url())) this.q = webQuery(r.url()); });
@@ -159,6 +192,12 @@ export class Gmgn {
   }
 
   // ---- the tools ----------------------------------------------------------
+  /** Coins GMGN's own pages showed in the last `ms` (build 29). */
+  feed(ms = 15 * 60_000) {
+    const now = Date.now(), out = [];
+    for (const [a, r] of this.feedRows || []) { if (now - r.seen > ms) this.feedRows.delete(a); else out.push(r); }
+    return out;
+  }
   async trending(interval = "1h", limit = 500) {
     const d = await this.call("/rrs/api/v1/trending_multichain", { meta: {}, params: [{ chain: "sol", interval, filter: { filters: ["frozen"], limit, launchpad_platform: LAUNCHPADS } }] });
     return d?.[0]?.tokens || [];

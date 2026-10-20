@@ -92,7 +92,7 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     const FAST = path.join(dir, "fast.json");
     let fj = null; try { fj = JSON.parse(fs.readFileSync(FAST, "utf8")); } catch { fj = null; }
     // Alex 2026-10-20: a 50 SOL fake balance, 1.618 SOL every trade
-    const fast = Scalp.from(fj, { src: gm, log: write, start: 52000, stake: 1.618 });
+    const fast = Scalp.from(fj, { src: gm, log: write, start: 0, stake: 1.618 }); // build 29: infinite balance, the money line shows + and - totals
     const sniper = new Sniper({ src: gm, book, memory, log: write });
     const lanes = new Lanes({ log: write });
     lanes

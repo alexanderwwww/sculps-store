@@ -54,15 +54,21 @@ await t.positionLane(now0 + 120_001);
 ok("nothing happened for 2 minutes: out", t.trades.some((x) => x.symbol === "I" && x.why === "2 min"), t.trades);
 ok("a coin just sold waits before it is bought again", (await t.scanLane(now0 + 121_000), !t.open.has("F") && !t.open.has("I")));
 
-// fees: over 15% is skipped, under is taken at the measured cost
+// fees (build 28): the first buy waits for a measured fee; after that every coin is bought at
+// once and its own real fee, measured right after, is written into the ledger.
 const f = new Scalp({ src, start: 50, stake: 1.618, quote: async ({ mint }) => (mint === "F" ? { ok: true, costSide: 0.05, costRt: 0.10 } : { ok: true, costSide: 0.2, costRt: 0.4 }) });
 await f.scanLane(now0);
-ok("10% round trip taken (fake money, learn), 40% skipped", f.open.has("F") && !f.open.has("I") && f.summary().costSkips === 2, f.summary());
-ok("the ledger charges the measured fee", Math.abs(f.summary().fees - 1.618 * 0.05) < 1e-4, f.summary());
+await new Promise((r) => setTimeout(r, 20));
+ok("all three bought without waiting on each one", f.open.size === 3, f.summary());
+ok("each position carries its own measured fee (F 5%, the others 20%)", f.open.get("F").side === 0.05 && f.open.get("I").side === 0.2 && f.open.get("Z").side === 0.2, [...f.open.values()].map((p) => p.side));
+ok("the ledger's fees are the measured ones", Math.abs(f.summary().fees - 1.618 * (0.05 + 0.2 + 0.2)) < 1e-3, f.summary());
+const g = new Scalp({ src, start: 50, stake: 1.618, quote: async () => ({ ok: false, why: "no priced route" }) });
+await g.scanLane(now0);
+ok("no fee can be measured at all: nothing is bought on a guess", g.open.size === 0);
 
 const imp = new Scalp({ src, start: 50, stake: 1.618, quote: async () => ({ ok: false, why: "price impact 3.06% over the 2.36% cap", costSide: 0.03 }) });
-await imp.scanLane(now0);
-ok("hunt takes a coin the careful lanes refuse for price impact, at its measured cost", imp.open.size === 3 && [...imp.open.values()].every((p) => p.side === 0.03), imp.summary());
+await imp.scanLane(now0); await new Promise((r) => setTimeout(r, 20));
+ok("high price impact is still traded, at its measured cost", imp.open.size === 3 && [...imp.open.values()].every((p) => p.side === 0.03), imp.summary());
 
 // learning: allowed to lose 12 times; 13 losses under 23.6% wins -> that shape is blocked
 const L = new Scalp({ src, start: 50, stake: 1.618, quote });
@@ -81,9 +87,18 @@ const back = Scalp.from(JSON.parse(JSON.stringify(s.toJSON())), { src, start: 50
 ok("state survives a restart", back.summary().trades === 2 && Math.abs(back.cash - s.cash) < 1e-9);
 ok("a ledger from an earlier plan starts fresh", Scalp.from({ v: 2, plan: "fib24", start: 50, stake: 1.618, cash: 40, trades: [{}] }, { src, start: 50, stake: 1.618 }).summary().trades === 0);
 
-const B = new Scalp({ src, start: 52000, stake: 1.618, quote });
-B.cash = 52000 - 1001;
-await B.scanLane(now0);
-ok("down 1,000 SOL: no new trades (Alex's loss budget)", B.open.size === 0);
+// build 29: the Trenches feed, once per coin, infinite balance, + and - totals
+const feedRow = { a: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU", s: "NEW", lq: 4200, ct: sec - 90 };
+const src2 = { ...src, feed: () => [feedRow], candles: async (a, r, limit) => (limit <= 2 ? [{ t: 1, o: 1, h: 1, l: 1, c: prices[a] ?? 1, v: 1 }] : flat()) };
+const S2 = new Scalp({ src: src2, start: 0, stake: 1.618, quote });
+await S2.scanLane(now0);
+ok("a coin from the Trenches feed is traded", S2.open.has(feedRow.a));
+ok("cash at zero never blocks a trade (infinite balance)", S2.open.size === 4 && S2.cash < 0, S2.summary());
+prices[feedRow.a] = 1.5; prices.F = 1.0; prices.I = 1.0; prices.Z = 0.8;
+await S2.positionLane(now0 + 1000);
+await S2.scanLane(now0 + 999_999);
+ok("each coin is traded once, never again", S2.open.size === 0 || ![...S2.open.keys()].some((a) => a === feedRow.a), [...S2.open.keys()]);
+const sm = S2.summary();
+ok("the money line has + total, - total and net", sm.plus > 0 && sm.minus < 0 && Math.abs(sm.net - (sm.plus + sm.minus)) < 1e-3, sm);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

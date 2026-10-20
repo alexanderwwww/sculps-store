@@ -20,12 +20,10 @@ import { quoteCosts } from "./fees.mjs";
 const MAX_RT = 0.30;   // build 24: fake money, trade and learn; the real measured cost is still charged
 // Build 18 (Alex: "we need new data"): the Fibonacci lane keeps its own clean
 // ledger and lessons; a ledger from an earlier plan is not carried over.
-const PLAN = "ultra27";
-// Build 27, ULTRA (Alex: "52,000 balance, 1,000 SOL you are allowed to lose, trade every new
-// creation, 10,000 lessons"): every launch that passes the bare minimum is bought once at
-// 1.618 SOL, setup or not (tagged e:any), so each one becomes a lesson. Trading stops for the
-// day if the balance falls 1,000 SOL under where it started.
-const LOSS_BUDGET = 1000;
+const PLAN = "symbiot29";
+// Build 29, symbiot (Alex: "trade every coin you see, once, infinite balance"): every coin
+// from trending and from GMGN's Trenches columns (new, almost bonded, migrated) is bought
+// once at 1.618 SOL, setup or not (tagged e:any), and becomes a lesson. No loss budget.
 // Build 25, the hunt (Alex: "I want you to lose now, not to win... find that one trade of 40%
 // in 20 seconds"). Fake money, so it explores: brand-new launches from 60 s old, any pool
 // that can fill (3K), fees up to 15% (always charged at the real measured cost). Entry is
@@ -33,16 +31,16 @@ const LOSS_BUDGET = 1000;
 // half of a +25% run and it is out, 2 minutes max. Learning only blocks a shape after 13
 // trades under 23.6% wins: it is allowed to lose in order to learn.
 const HUNT = { tp: 0.40, sl: -0.15, trailFrom: 0.25, holdMs: 120_000 };
-const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, MAX_OPEN = 34, CAP = 0.618, COST = 0.01;
+const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, MAX_OPEN = 55, CAP = 0.618, COST = 0.01;
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
 
 export function rugOk(row, nowSec) {
   const created = num(row.ct) || num(row.ot);
   const age = created ? nowSec - created : null;
-  if (age === null || age < 60) return false;            // build 24: new launches from 3 minutes old
+  if (age !== null && age < 60) return false;                  // build 29: unknown age is traded too            // build 24: new launches from 3 minutes old
   // build 23: pools under $89K let a 1.618 SOL buy move the price by itself (3-5% round
   // trips measured live on 2026-10-20); only deep pools are charted.
-  if (!(num(row.lq) >= 3_000)) return false;                // build 24: back to 13K, Alex: "trade the new ones, it's fake money, learn"
+  if (num(row.lq) !== null && !(num(row.lq) >= 3_000)) return false;                // build 24: back to 13K, Alex: "trade the new ones, it's fake money, learn"
   return true;
 }
 
@@ -118,7 +116,7 @@ export class Scalp {
   constructor({ src, log = () => {}, start = 10, stake = null, quote = null }) {
     this.src = src; this.log = log; this.stake = stake;
     this.quote = quote || ((a) => this.#measure(a)); this.costSkips = 0; this.feesPaid = 0;
-    this.learn = {}; this.skips = 0;
+    this.learn = {}; this.skips = 0; this.measured = []; this.done = new Set();
     this.start = start; this.cash = start; this.open = new Map(); this.trades = []; this.cool = new Map();
   }
   equity() { let e = this.cash; for (const p of this.open.values()) e += p.units * p.last * (1 - (p.side ?? COST)); return e; }
@@ -141,41 +139,44 @@ export class Scalp {
     // build 19: more charts: the 1m and 5m trending lists together
     const [r1, r5] = await Promise.all([this.src.trending("1m", 200).catch(() => []), this.src.trending("5m", 200).catch(() => [])]);
     const seen = new Set(), rows = [];
-    for (const r of [...(r1 || []), ...(r5 || [])]) if (r && r.a && !seen.has(r.a)) { seen.add(r.a); rows.push(r); }
-    const picks = rows.filter((r) => r && r.a && !this.open.has(r.a) && !(this.cool.get(r.a) > nowMs) && rugOk(r, nowSec)).slice(0, 89);
+    // build 29: plus every coin GMGN's own Trenches columns showed (new, almost bonded, migrated)
+    const feed = typeof this.src.feed === "function" ? this.src.feed() : [];
+    for (const r of [...feed, ...(r1 || []), ...(r5 || [])]) if (r && r.a && !seen.has(r.a)) { seen.add(r.a); rows.push(r); }
+    const picks = rows.filter((r) => r && r.a && !this.open.has(r.a) && !(this.cool.get(r.a) > nowMs) && !this.done.has(r.a) && rugOk(r, nowSec)).slice(0, 55);
     const cands = await Promise.all(picks.map(async (r) => ({ r, cs: await this.src.candles(r.a, "1m", 34).catch(() => null) })));
     let bought = 0;
     for (const { r, cs } of cands) {
       const fib = fibSetup(cs), ign = fib ? null : ignition(cs);
       if (this.open.size >= MAX_OPEN) continue;
-      if (this.start - this.equity() >= LOSS_BUDGET) { this.log({ type: "halt", lane: "fast", why: `down ${LOSS_BUDGET} SOL: the budget Alex set` }); break; }
       if (!Array.isArray(cs) || !cs.length) continue;
       const shape = cs.length >= 12 ? shapeOf(cs, r, nowMs) : [`young`];
       shape.push(fib ? "e:fib" : ign ? "e:ign" : "e:any");
       const bad = this.badPart(shape);
       if (bad) { this.skips++; this.log({ type: "learned-skip", lane: "fast", symbol: r.s, shape: bad }); continue; }
       const eq = this.equity();
-      const n = Math.min(this.stake || eq * SIZE, this.cash, eq * CAP - this.inPlay());
+      // build 29 (Alex: "infinite balance"): the stake is always 1.618 SOL, cash never blocks a trade
+      const n = this.stake || Math.min(eq * SIZE, this.cash, eq * CAP - this.inPlay());
       if (!(n > 0.05)) break;
-      let q = await this.quote({ mint: r.a, notional: n }).catch((e) => ({ ok: false, why: String(e.message || e).slice(0, 80) }));
-      // hunt: the 2.36% price-impact cap is the careful lanes' rule; here the measured cost is taken as it is
-      if (q && !q.ok && q.costSide > 0) q = { ...q, ok: true, costRt: 2 * q.costSide };
-      if (!q || !q.ok || !(q.costRt <= MAX_RT)) {
-        this.costSkips++;
-        (this.costWhy = this.costWhy || []).push(q && q.ok ? `${r.s}: rt ${(q.costRt * 100).toFixed(2)}%` : `${r.s}: ${q?.why || "no quote"}`);
-        if (this.costWhy.length > 6) this.costWhy.shift();
-        this.log({ type: "cost-skip", lane: "fast", symbol: r.s, why: q && q.ok ? `round trip ${(q.costRt * 100).toFixed(3)}% over 0.618%` : q?.why || "no quote" });
-        this.cool.set(r.a, nowMs + 60_000);
-        continue;
+      // build 28 (Alex: "don't think about any coin, just do it"): buy at once. The fee is
+      // measured right after (live Jupiter quote) and the ledger is corrected to it; until the
+      // first measurement lands, the median of the fees measured so far stands in.
+      const known = this.feeMedian();
+      let q0 = null;
+      if (known === null) {
+        q0 = await this.quote({ mint: r.a, notional: n }).catch((e) => ({ ok: false, why: String(e.message || e).slice(0, 80) }));
+        if (q0 && !q0.ok && q0.costSide > 0) q0 = { ...q0, ok: true, costRt: 2 * q0.costSide };
+        if (!q0 || !q0.ok || !(q0.costRt <= MAX_RT)) { this.costSkip(r, q0, nowMs); continue; }
+        this.measured.push(q0.costSide);
       }
-      const side = q.costSide;
-      shape.push(`rt${q.costRt < 0.01618 ? 0 : q.costRt < 0.03 ? 1 : 2}`); // learning knows what the fee was
+      const side = q0 ? q0.costSide : known;
       const price = cs[cs.length - 1].c;
       this.cash -= n;
+      this.done.add(r.a);                                           // each coin is traded once
       this.feesPaid += n * side;
       this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, side, units: (n * (1 - side)) / price, entry: price, last: price, at: nowMs, shape, hunt: true, peak: 0, why: fib ? `fib ${fib.retr}` : ign ? `ignition +${Math.round(ign.body * 100)}% x${ign.vx} vol` : "new launch (learn)" });
       this.log({ type: "entry", lane: "fast", addr: r.a, symbol: r.s, spent: +n.toFixed(4), price, why: fib ? `golden pocket ${fib.retr} of a ${Math.round(fib.move * 100)}% move` : ign ? `ignition candle +${Math.round(ign.body * 100)}% on ${ign.vx}x volume` : "new launch, bought to learn" });
       bought++;
+      if (!q0) this.#settleFee(r, n, nowMs);
     }
     return { bought };
   }
@@ -229,16 +230,43 @@ export class Scalp {
     return null;
   }
 
+  feeMedian() {
+    const m = (this.measured || []).slice(-21).sort((a, b) => a - b);
+    return m.length ? m[m.length >> 1] : null;
+  }
+  costSkip(r, q, nowMs) {
+    this.costSkips++;
+    (this.costWhy = this.costWhy || []).push(q && q.ok ? `${r.s}: rt ${(q.costRt * 100).toFixed(2)}%` : `${r.s}: ${q?.why || "no quote"}`);
+    if (this.costWhy.length > 6) this.costWhy.shift();
+    this.cool.set(r.a, nowMs + 60_000);
+  }
+  /** After a buy: measure its real fee and correct the ledger (fire and forget). */
+  #settleFee(r, n, nowMs) {
+    this.quote({ mint: r.a, notional: n }).then((q) => {
+      if (q && !q.ok && q.costSide > 0) q = { ...q, ok: true, costRt: 2 * q.costSide };
+      if (!q || !q.ok) return;
+      this.measured.push(q.costSide);
+      const p = this.open.get(r.a);
+      if (!p || p.feeSettled) return;
+      const d = q.costSide - p.side;
+      p.units = (p.cost * (1 - q.costSide)) / p.entry;
+      this.feesPaid += p.cost * d;
+      p.side = q.costSide; p.feeSettled = true;
+      p.shape.push(`rt${q.costRt < 0.01618 ? 0 : q.costRt < 0.03 ? 1 : q.costRt < 0.1 ? 2 : 3}`);
+    }).catch(() => {});
+  }
+
   summary() {
     const n = this.trades.length, wins = this.trades.filter((t) => t.won).length;
-    return { trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, fees: +this.feesPaid.toFixed(5), costSkips: this.costSkips, costWhy: this.costWhy || [], lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
+    const plus = this.trades.reduce((s, t) => s + (t.pnl > 0 ? t.pnl : 0), 0), minus = this.trades.reduce((s, t) => s + (t.pnl < 0 ? t.pnl : 0), 0);
+    return { plus: +plus.toFixed(4), minus: +minus.toFixed(4), net: +(plus + minus).toFixed(4), trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, fees: +this.feesPaid.toFixed(5), costSkips: this.costSkips, costWhy: this.costWhy || [], lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
   }
   toJSON() { return { v: 2, plan: PLAN, start: this.start, stake: this.stake, cash: this.cash, learn: this.learn, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
   static from(j, opts) {
     const s = new Scalp(opts);
     // a different start or stake (Alex changed the plan) starts a fresh ledger
     const same = j && j.v === 2 && j.plan === PLAN && j.start === s.start && j.stake === s.stake;
-    if (same) { s.cash = j.cash; for (const p of j.open || []) s.open.set(p.addr, p); s.trades = j.trades || []; }
+    if (same) { s.cash = j.cash; for (const p of j.open || []) s.open.set(p.addr, p); s.trades = j.trades || []; for (const t of s.trades) if (t.addr) s.done.add(t.addr); for (const a of s.open.keys()) s.done.add(a); }
     if (same && j.learn) s.learn = j.learn;
     return s;
   }
