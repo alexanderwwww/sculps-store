@@ -60,5 +60,6 @@ src.candles = async (a, r, limit) => (limit <= 2 ? [{ t: 1, o: 1, h: 1, l: 1, c:
 await cheap.scanLane(now0 + 999_000);
 ok("only the coin with a cheap measured round trip is bought", cheap.open.size === 1 && cheap.open.has("A") && cheap.summary().costSkips === 3, cheap.summary());
 ok("the ledger charges the measured fee, not a guess", Math.abs(cheap.summary().fees - 1.618 * 0.001) < 1e-5, cheap.summary());
+ok("a ledger from before the Fibonacci plan starts fresh (new data)", Scalp.from({ v: 2, start: 50, stake: 1.618, cash: 49.25, trades: [{}], learn: { x: { n: 9, w: 0, pnl: -1, until: 99 } } }, { src, start: 50, stake: 1.618 }).summary().trades === 0);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

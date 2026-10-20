@@ -18,6 +18,9 @@ import { quoteCosts } from "./fees.mjs";
 
 // Build 16 (Alex: "take some risk"): wider net, round trip up to 1.618%, 5 open.
 const MAX_RT = 0.01618;
+// Build 18 (Alex: "we need new data"): the Fibonacci lane keeps its own clean
+// ledger and lessons; a ledger from an earlier plan is not carried over.
+const PLAN = "fib17";
 const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, MAX_OPEN = 5, CAP = 0.618, COST = 0.01;
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
 
@@ -186,12 +189,13 @@ export class Scalp {
     const n = this.trades.length, wins = this.trades.filter((t) => t.won).length;
     return { trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, fees: +this.feesPaid.toFixed(5), costSkips: this.costSkips, lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
   }
-  toJSON() { return { v: 2, start: this.start, stake: this.stake, cash: this.cash, learn: this.learn, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
+  toJSON() { return { v: 2, plan: PLAN, start: this.start, stake: this.stake, cash: this.cash, learn: this.learn, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
   static from(j, opts) {
     const s = new Scalp(opts);
     // a different start or stake (Alex changed the plan) starts a fresh ledger
-    if (j && j.v === 2 && j.start === s.start && j.stake === s.stake) { s.cash = j.cash; for (const p of j.open || []) s.open.set(p.addr, p); s.trades = j.trades || []; }
-    if (j && j.learn) s.learn = j.learn; // lessons survive even a new plan
+    const same = j && j.v === 2 && j.plan === PLAN && j.start === s.start && j.stake === s.stake;
+    if (same) { s.cash = j.cash; for (const p of j.open || []) s.open.set(p.addr, p); s.trades = j.trades || []; }
+    if (same && j.learn) s.learn = j.learn;
     return s;
   }
 }
