@@ -32,9 +32,9 @@ const log = [];
 const quote = async () => ({ ok: true, costSide: 0.02, costRt: 0.04 });
 const s = new Scalp({ src, log: (e) => log.push(e), start: 50, stake: 1.618, quote });
 await s.scanLane(now0);
-ok("buys the Fibonacci coin and the ignition coin, not the flat one", s.open.has("F") && s.open.has("I") && !s.open.has("Z") && s.open.size === 2, [...s.open.keys()]);
-ok("1.618 SOL each, real fee charged on the way in", [...s.open.values()].every((p) => p.cost === 1.618 && p.side === 0.02) && Math.abs(s.cash - (50 - 2 * 1.618)) < 1e-9);
-ok("each entry says why, from the chart", log.filter((e) => e.type === "entry").every((e) => /golden pocket|ignition candle/.test(e.why)), log);
+ok("ULTRA: buys every launch, the flat one too (to learn)", s.open.has("F") && s.open.has("I") && s.open.has("Z") && s.open.size === 3, [...s.open.keys()]);
+ok("1.618 SOL each, real fee charged on the way in", [...s.open.values()].every((p) => p.cost === 1.618 && p.side === 0.02) && Math.abs(s.cash - (50 - 3 * 1.618)) < 1e-9);
+ok("each entry says why, from the chart", log.filter((e) => e.type === "entry").every((e) => /golden pocket|ignition candle|bought to learn/.test(e.why)) && log.some((e) => /golden pocket/.test(e.why || "")) && log.some((e) => /ignition/.test(e.why || "")), log);
 
 // F rips +45% -> taken at +40%; I runs +30% then falls back to +14% -> gave back half
 prices.F = 1.12 * 1.45; prices.I = 1.06 * 1.30;
@@ -55,14 +55,14 @@ ok("nothing happened for 2 minutes: out", t.trades.some((x) => x.symbol === "I" 
 ok("a coin just sold waits before it is bought again", (await t.scanLane(now0 + 121_000), !t.open.has("F") && !t.open.has("I")));
 
 // fees: over 15% is skipped, under is taken at the measured cost
-const f = new Scalp({ src, start: 50, stake: 1.618, quote: async ({ mint }) => (mint === "F" ? { ok: true, costSide: 0.05, costRt: 0.10 } : { ok: true, costSide: 0.1, costRt: 0.2 }) });
+const f = new Scalp({ src, start: 50, stake: 1.618, quote: async ({ mint }) => (mint === "F" ? { ok: true, costSide: 0.05, costRt: 0.10 } : { ok: true, costSide: 0.2, costRt: 0.4 }) });
 await f.scanLane(now0);
-ok("10% round trip taken (fake money, learn), 20% skipped", f.open.has("F") && !f.open.has("I") && f.summary().costSkips === 1, f.summary());
+ok("10% round trip taken (fake money, learn), 40% skipped", f.open.has("F") && !f.open.has("I") && f.summary().costSkips === 2, f.summary());
 ok("the ledger charges the measured fee", Math.abs(f.summary().fees - 1.618 * 0.05) < 1e-4, f.summary());
 
 const imp = new Scalp({ src, start: 50, stake: 1.618, quote: async () => ({ ok: false, why: "price impact 3.06% over the 2.36% cap", costSide: 0.03 }) });
 await imp.scanLane(now0);
-ok("hunt takes a coin the careful lanes refuse for price impact, at its measured cost", imp.open.size === 2 && [...imp.open.values()].every((p) => p.side === 0.03), imp.summary());
+ok("hunt takes a coin the careful lanes refuse for price impact, at its measured cost", imp.open.size === 3 && [...imp.open.values()].every((p) => p.side === 0.03), imp.summary());
 
 // learning: allowed to lose 12 times; 13 losses under 23.6% wins -> that shape is blocked
 const L = new Scalp({ src, start: 50, stake: 1.618, quote });
@@ -81,5 +81,9 @@ const back = Scalp.from(JSON.parse(JSON.stringify(s.toJSON())), { src, start: 50
 ok("state survives a restart", back.summary().trades === 2 && Math.abs(back.cash - s.cash) < 1e-9);
 ok("a ledger from an earlier plan starts fresh", Scalp.from({ v: 2, plan: "fib24", start: 50, stake: 1.618, cash: 40, trades: [{}] }, { src, start: 50, stake: 1.618 }).summary().trades === 0);
 
+const B = new Scalp({ src, start: 52000, stake: 1.618, quote });
+B.cash = 52000 - 1001;
+await B.scanLane(now0);
+ok("down 1,000 SOL: no new trades (Alex's loss budget)", B.open.size === 0);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

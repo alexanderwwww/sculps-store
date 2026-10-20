@@ -90,6 +90,8 @@ into the core." First real use: Depop ("take images and upload"), because ChatGP
 - 8: the trader's GMGN tab no longer blocks images/fonts. Alex watches that tab, and it looked broken.
 - 9: status `trader.blocks` counts failed rules. Evidence: the Fib sniper fired 0 trades because every coin failed gate + narrative + costs + smartNow together.
 - 19: wider Fibonacci (8% run, pocket 0.382-0.786, stop under 0.886), 1m+5m trending, 34 charts; slow sniper lanes parked (0 trades, starved GMGN).
+- 26: hunt accepts quotes over the 2.36% impact cap at measured cost.
+- 27: ULTRA (Alex): fake balance 52,000 SOL, loss budget 1,000 SOL (halts new buys), every launch bought once at 1.618 SOL (e:any when no setup) to collect lessons, 89 charts a scan, 34 open, fee cap 30%. Fresh ledger (ultra27).
 - 25: HUNT mode (Alex: "lose now to learn, find the 40% in 20 seconds"): launches from 60 s, pools >= 3K, no top-10 rule, fees up to 15% (real cost charged); entry = Fibonacci pocket OR ignition candle (+4% on 2.618x volume); exits +40%, -15%, give back half of a +25% run, 2 min max; up to 8 open; learning blocks a shape only after 13 trades under 23.6% wins. Fresh ledger (hunt25).
 - 24: orb + money line kept alive by a fast-lane heartbeat (the parked sniper owned it; they vanished after 15 s). Alex: trade new launches, fake money, learn: age >= 3 min, lq >= 13K, round trip up to 6.18% (real cost charged), fee bucket in the learning shape. Fresh ledger (fib24).
 - 22-23: status shows fee-skip reasons; live data showed 3-5.4% round trips at 1.618 SOL on thin pools (price impact), so only pools >= $89K liquidity are charted.

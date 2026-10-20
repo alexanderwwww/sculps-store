@@ -8,8 +8,8 @@
        Mac keys the Dock and permissions to it: never change it. -->
   <key>CFBundleIdentifier</key>            <string>com.blackreaper.ultracursor</string>
   <!-- Both stamped by pack.sh from the BUILD file. -->
-  <key>CFBundleVersion</key>               <string>26</string>
-  <key>CFBundleShortVersionString</key>    <string>26</string>
+  <key>CFBundleVersion</key>               <string>27</string>
+  <key>CFBundleShortVersionString</key>    <string>27</string>
   <key>CFBundleInfoDictionaryVersion</key> <string>6.0</string>
   <key>CFBundlePackageType</key>           <string>APPL</string>
   <key>CFBundleExecutable</key>            <string>ultracursor</string>

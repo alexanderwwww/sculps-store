@@ -17,10 +17,15 @@
 import { quoteCosts } from "./fees.mjs";
 
 // Build 16 (Alex: "take some risk"): wider net, round trip up to 1.618%, 5 open.
-const MAX_RT = 0.15;   // build 24: fake money, trade and learn; the real measured cost is still charged
+const MAX_RT = 0.30;   // build 24: fake money, trade and learn; the real measured cost is still charged
 // Build 18 (Alex: "we need new data"): the Fibonacci lane keeps its own clean
 // ledger and lessons; a ledger from an earlier plan is not carried over.
-const PLAN = "hunt25";
+const PLAN = "ultra27";
+// Build 27, ULTRA (Alex: "52,000 balance, 1,000 SOL you are allowed to lose, trade every new
+// creation, 10,000 lessons"): every launch that passes the bare minimum is bought once at
+// 1.618 SOL, setup or not (tagged e:any), so each one becomes a lesson. Trading stops for the
+// day if the balance falls 1,000 SOL under where it started.
+const LOSS_BUDGET = 1000;
 // Build 25, the hunt (Alex: "I want you to lose now, not to win... find that one trade of 40%
 // in 20 seconds"). Fake money, so it explores: brand-new launches from 60 s old, any pool
 // that can fill (3K), fees up to 15% (always charged at the real measured cost). Entry is
@@ -28,7 +33,7 @@ const PLAN = "hunt25";
 // half of a +25% run and it is out, 2 minutes max. Learning only blocks a shape after 13
 // trades under 23.6% wins: it is allowed to lose in order to learn.
 const HUNT = { tp: 0.40, sl: -0.15, trailFrom: 0.25, holdMs: 120_000 };
-const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, MAX_OPEN = 8, CAP = 0.618, COST = 0.01;
+const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, MAX_OPEN = 34, CAP = 0.618, COST = 0.01;
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
 
 export function rugOk(row, nowSec) {
@@ -137,14 +142,16 @@ export class Scalp {
     const [r1, r5] = await Promise.all([this.src.trending("1m", 200).catch(() => []), this.src.trending("5m", 200).catch(() => [])]);
     const seen = new Set(), rows = [];
     for (const r of [...(r1 || []), ...(r5 || [])]) if (r && r.a && !seen.has(r.a)) { seen.add(r.a); rows.push(r); }
-    const picks = rows.filter((r) => r && r.a && !this.open.has(r.a) && !(this.cool.get(r.a) > nowMs) && rugOk(r, nowSec)).slice(0, 34);
+    const picks = rows.filter((r) => r && r.a && !this.open.has(r.a) && !(this.cool.get(r.a) > nowMs) && rugOk(r, nowSec)).slice(0, 89);
     const cands = await Promise.all(picks.map(async (r) => ({ r, cs: await this.src.candles(r.a, "1m", 34).catch(() => null) })));
     let bought = 0;
     for (const { r, cs } of cands) {
       const fib = fibSetup(cs), ign = fib ? null : ignition(cs);
-      if (this.open.size >= MAX_OPEN || (!fib && !ign)) continue;
+      if (this.open.size >= MAX_OPEN) continue;
+      if (this.start - this.equity() >= LOSS_BUDGET) { this.log({ type: "halt", lane: "fast", why: `down ${LOSS_BUDGET} SOL: the budget Alex set` }); break; }
+      if (!Array.isArray(cs) || !cs.length) continue;
       const shape = cs.length >= 12 ? shapeOf(cs, r, nowMs) : [`young`];
-      shape.push(fib ? "e:fib" : "e:ign");
+      shape.push(fib ? "e:fib" : ign ? "e:ign" : "e:any");
       const bad = this.badPart(shape);
       if (bad) { this.skips++; this.log({ type: "learned-skip", lane: "fast", symbol: r.s, shape: bad }); continue; }
       const eq = this.equity();
@@ -166,8 +173,8 @@ export class Scalp {
       const price = cs[cs.length - 1].c;
       this.cash -= n;
       this.feesPaid += n * side;
-      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, side, units: (n * (1 - side)) / price, entry: price, last: price, at: nowMs, shape, hunt: true, peak: 0, why: fib ? `fib ${fib.retr}` : `ignition +${Math.round(ign.body * 100)}% x${ign.vx} vol` });
-      this.log({ type: "entry", lane: "fast", addr: r.a, symbol: r.s, spent: +n.toFixed(4), price, why: fib ? `golden pocket ${fib.retr} of a ${Math.round(fib.move * 100)}% move` : `ignition candle +${Math.round(ign.body * 100)}% on ${ign.vx}x volume` });
+      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, side, units: (n * (1 - side)) / price, entry: price, last: price, at: nowMs, shape, hunt: true, peak: 0, why: fib ? `fib ${fib.retr}` : ign ? `ignition +${Math.round(ign.body * 100)}% x${ign.vx} vol` : "new launch (learn)" });
+      this.log({ type: "entry", lane: "fast", addr: r.a, symbol: r.s, spent: +n.toFixed(4), price, why: fib ? `golden pocket ${fib.retr} of a ${Math.round(fib.move * 100)}% move` : ign ? `ignition candle +${Math.round(ign.body * 100)}% on ${ign.vx}x volume` : "new launch, bought to learn" });
       bought++;
     }
     return { bought };
