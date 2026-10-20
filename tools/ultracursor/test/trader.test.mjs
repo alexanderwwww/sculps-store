@@ -397,9 +397,11 @@ const TW = JSON.parse(fs.readFileSync(path.join(HERE, "fixtures", "x", "tweet-re
   ok("X search adds mentions / authors / big accounts", xScore({ found: parsed, now }).parts.mentions1h > 0 && xScore({ found: parsed, now }).parts.bigAccounts > 0);
   const n1 = narrative({ gmgn: { score: 70 }, x: { score: 66 } });
   ok("two sources agree and N >= 61.8: ok", n1.ok && Math.abs(n1.N - (0.618 * 70 + 0.382 * 66)) < 0.1, n1);
-  ok("one source missing: NO", !narrative({ gmgn: { score: 90 }, x: { score: null } }).ok);
+  // Lesson 1: one source alone is enough when it reaches 61.8; both missing is NO.
+  ok("one source missing: the other alone decides at 61.8", narrative({ gmgn: { score: 90 }, x: { score: null } }).ok && !narrative({ gmgn: { score: 50 }, x: { score: null } }).ok);
+  ok("both sources missing: NO", !narrative({ gmgn: { score: null }, x: { score: null } }).ok);
   ok("sources disagree (X under 38.2): NO even with high N", !narrative({ gmgn: { score: 100 }, x: { score: 30 } }).ok);
-  ok("a dropped source counts as missing", !narrative({ gmgn: { score: 90 }, x: { score: 90 }, dropped: ["x"] }).ok);
+  ok("a dropped source counts as missing (the other then decides alone)", narrative({ gmgn: { score: 90 }, x: { score: 90 }, dropped: ["x"] }).why === "single source");
   ok("themes tagged", themeOf("dogwifhat", "WIF") === "animals" && themeOf("AI agent") === "ai" && themeOf("zzz") === "other");
   ok("theme heat from the trending board", Object.values(themeHeat(TF.trending)).reduce((s, x) => s + x, 0) > 0.99);
 }

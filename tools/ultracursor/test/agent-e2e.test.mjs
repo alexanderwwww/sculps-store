@@ -196,6 +196,7 @@ const ENV = {
   ULTRA_CDP_PORT: String(CDP),
   ULTRA_FAST: "1",
   ULTRA_CONFIG: CONFIG,
+  ULTRA_TRADER_FLAG: "http://127.0.0.1:9/no-flag.json", // never the live switch
   ULTRA_ANTHROPIC_BASE_URL: claude.url,
   ULTRA_TEST_PANEL_FILE: PANEL_FILE,
 };
@@ -300,15 +301,13 @@ startRunner();
 await page.goto(`${S}/`);
 
 console.log("== key");
-const needKey = await until(() => { const s = stateNow(); return s && s.mode === "needkey" ? s : null; }, 30000);
-check("first launch: the panel asks for the Claude API key", Boolean(needKey), runnerOut.slice(-800));
-await typeInPanel("keyInput", "sk-ant-api03-e2e-test-key-0123456789");
-await press("keySave");
-const idle = await until(() => { const s = stateNow(); return s && s.mode === "idle" ? s : null; }, 10000);
+const idle = await until(() => { const s = stateNow(); return s && s.mode === "idle" ? s : null; }, 30000);
+check("build 6: first launch never asks for a Claude API key; the bar is the task field", Boolean(idle), runnerOut.slice(-800));
+// The bar's own tasks still run on a key from config.json (link tasks bring their own brain).
+fs.mkdirSync(path.dirname(CONFIG), { recursive: true });
 let cfg = {};
 try { cfg = JSON.parse(fs.readFileSync(CONFIG, "utf8")); } catch {}
-check("the key typed into the panel is saved in config.json (mode 600) and the bar turns into the task field",
-  Boolean(idle) && cfg.anthropicApiKey === "sk-ant-api03-e2e-test-key-0123456789" && (fs.statSync(CONFIG).mode & 0o777) === 0o600, { cfg, idle });
+fs.writeFileSync(CONFIG, JSON.stringify({ ...cfg, anthropicApiKey: "sk-ant-api03-e2e-test-key-0123456789" }), { mode: 0o600 });
 
 console.log("== A: a listing from photos");
 await giveTask("List the black tee: Chrome Hearts cross tee, black, worn twice, size M, Used - Excellent, Tops, $240", Object.keys(PHOTOS).map((n) => path.join(photoDir, n)));
