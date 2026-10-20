@@ -119,8 +119,9 @@ export class Gmgn {
       });
       pg.on("websocket", (ws) => ws.on("framereceived", (f) => { try { const t = typeof f.payload === "string" ? f.payload : ""; if (t.length > 2 && (t[0] === "{" || t[0] === "[")) take(JSON.parse(t)); } catch { /* not json */ } }));
     };
-    for (const pg of ctx.pages()) watch(pg);
-    ctx.on("page", watch);
+    // build 33: never on the trader's own tab (its reads started failing once this was added)
+    for (const pg of ctx.pages()) if (pg !== page) watch(pg);
+    ctx.on("page", (pg) => { if (pg !== page) watch(pg); });
     // build 8: no image/font block here. Alex looks at this tab, and blocked
     // logos and icon fonts made GMGN look broken.
     page.on("request", (r) => { if (!this.q && /gmgn\.ai\/(api|mrwapi|rrs|vas)\//.test(r.url())) this.q = webQuery(r.url()); });
@@ -159,6 +160,7 @@ export class Gmgn {
       return d;
     } catch (e) {
       this.onCall({ tool, ms: Date.now() - t0, ok: false, error: String(e.message).slice(0, 120) });
+      this.lastErr = String(e.message).slice(0, 160);
       throw e;
     }
   }

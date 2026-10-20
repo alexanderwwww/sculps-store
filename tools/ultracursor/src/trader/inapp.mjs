@@ -149,6 +149,6 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
   return {
     want, set, tick, stop,
     running: () => !!run,
-    state: () => ({ want: want(), running: !!run, starting, lastError, gmgnCalls: run ? run.gm.calls : 0, gmgnErrors: run ? run.gm.errors : 0, book: run ? run.book.summary() : null, fast: run ? { ...run.fast.summary(), cfg: run.fast.cfg } : null, lastScan: run ? run.lastScan || null : null, blocks: run && run.sniper ? Object.entries(run.sniper.why || {}).sort((a, b) => b[1] - a[1]).slice(0, 8) : null }),
+    state: () => ({ want: want(), running: !!run, starting, lastError, gmgnCalls: run ? run.gm.calls : 0, gmgnErrors: run ? run.gm.errors : 0, gmgnLastError: run ? run.gm.lastErr || null : null, book: run ? run.book.summary() : null, fast: run ? { ...run.fast.summary(), cfg: run.fast.cfg } : null, lastScan: run ? run.lastScan || null : null, blocks: run && run.sniper ? Object.entries(run.sniper.why || {}).sort((a, b) => b[1] - a[1]).slice(0, 8) : null }),
   };
 }
