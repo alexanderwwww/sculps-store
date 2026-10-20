@@ -71,6 +71,28 @@ export class Gmgn {
     this.q = null;
   }
 
+  /**
+   * In the app (build 5): a background tab of Alex's own Chrome, reached over
+   * the DevTools port the app already uses (connectOverCDP). No new browser,
+   * no user-agent change, and the image/font block is on this tab only.
+   */
+  async attach(browser) {
+    const ctx = browser.contexts()[0];
+    if (!ctx) throw new Error("gmgn: Chrome has no window open");
+    this.attached = true;
+    let page = null;
+    try {
+      const s = await browser.newBrowserCDPSession();
+      const [p] = await Promise.all([ctx.waitForEvent("page", { timeout: 10_000 }), s.send("Target.createTarget", { url: "about:blank", background: true })]);
+      page = p;
+      s.detach().catch(() => {});
+    } catch { page = await ctx.newPage(); }
+    this.page = page;
+    await page.route("**/*", (r) => (["image", "font", "media"].includes(r.request().resourceType()) ? r.abort() : r.continue()));
+    page.on("request", (r) => { if (!this.q && /gmgn\.ai\/(api|mrwapi|rrs|vas)\//.test(r.url())) this.q = webQuery(r.url()); });
+    await this.#home();
+  }
+
   async open() {
     const proxy = process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY } : undefined;
     this.browser = await chromium.launch({ executablePath: this.executablePath, headless: true, args: ["--no-sandbox"], proxy });
@@ -86,7 +108,7 @@ export class Gmgn {
     for (let i = 0; i < 20 && !this.q; i++) await this.page.waitForTimeout(500);
     await this.page.waitForTimeout(2500);
   }
-  async close() { await this.browser?.close().catch(() => {}); }
+  async close() { if (this.attached) { await this.page?.close().catch(() => {}); return; } await this.browser?.close().catch(() => {}); }
 
   /**
    * Cloudflare answers bursts with 429 "Just a moment...". Then: reload

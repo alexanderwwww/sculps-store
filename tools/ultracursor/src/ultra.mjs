@@ -46,6 +46,9 @@ function readBuild() {
   try { return fs.readFileSync(path.join(WORK, "build.txt"), "utf8").trim() || "0"; } catch { return "0"; }
 }
 const BUILD = readBuild();
+// Trader data lives beside WORK, never inside it: run.command replaces WORK's
+// folders from the bundle, and the memory must survive that.
+if (!process.env.ULTRA_TRADER_DIR) process.env.ULTRA_TRADER_DIR = path.join(WORK, "..", "trader");
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const cloud = createCloud(process.env.ULTRA_CLOUD || undefined);
@@ -67,6 +70,11 @@ const saved = loadState();
 
 // Loaded on its own: if the agent cannot load (Claude's SDK missing after a
 // broken install), research keeps working and the status says why.
+let trader = null;   // trader mode (build 5), created once chrome() exists below
+const traderCtl = {
+  want: () => (trader ? trader.want() : false),
+  set: (on) => (trader ? trader.set(on, "panel") : { ok: false, error: "the trader is not available" }),
+};
 let desk;
 try {
   const [{ createDesk }, { createHost }] = await Promise.all([import("./agent/desk.mjs"), import("./agent/host.mjs")]);
@@ -74,8 +82,9 @@ try {
     work: WORK,
     build: BUILD,
     cloudLog: (l) => log(l),
-    ui: { attach: uiReal.attach, say: uiReal.say, hover: uiReal.hover, scroll: uiReal.scroll },
+    ui: { attach: uiReal.attach, say: uiReal.say, hover: uiReal.hover, scroll: uiReal.scroll, setSpeed: uiReal.setSpeed },
     pacingScale: FAST ? 0.05 : 1,
+    trader: traderCtl,
     baseURL: process.env.ULTRA_ANTHROPIC_BASE_URL || undefined,
     createHost,
   });
@@ -166,6 +175,7 @@ async function postStatus() {
     await cloud.status({
       app: "ultracursor", build: BUILD, state: S.state, phase: S.phase, step: S.step,
       hunt: S.hunt, progress: S.progress, chrome: S.chrome, signin: S.signin, counts: S.counts,
+      trader: trader ? trader.state() : null,
       agent: (() => { const a = desk.state(); return { mode: a.mode, status: a.status, task: a.task, step: a.step, usd: a.usd, card: a.card ? { kind: a.card.kind, title: a.card.title } : null, hasKey: a.hasKey }; })(),
       lastError: S.lastError || cloud.lastError || null, at: Date.now(),
     });
@@ -202,6 +212,11 @@ async function chrome() {
   }
   return browser;
 }
+
+try {
+  const { createTraderMode } = await import("./trader/inapp.mjs");
+  trader = createTraderMode({ dir: process.env.ULTRA_TRADER_DIR, getBrowser: chrome, log: (l) => log(l) });
+} catch (e) { log(`trader mode could not load: ${String(e && e.message || e).slice(0, 160)}`); }
 
 /* ------------------------------------------------------------------ orders */
 
@@ -430,13 +445,15 @@ async function main() {
         lastStatus = 0;
       }
     }
+    // Trader mode: follow the panel pill / cloud flag (never blocks this loop).
+    if (trader) trader.tick(now).catch((e) => log(`trader: ${String(e && e.message || e).slice(0, 160)}`));
     // The link: a heartbeat Claude can see, and Claude's commands.
     if (link && now - lastBeat > 5000) {
       lastBeat = now;
       const a = desk.state();
       let url = "", title = "";
       try { const ctx = browser && browser.contexts()[0]; const p = ctx && ctx.pages().slice(-1)[0]; if (p) { url = p.url(); title = await p.title(); } } catch { /* fine */ }
-      link.heartbeat({ build: BUILD, chrome: S.chrome.connected, url, title, mode: a.mode, status: a.status, card: a.card ? { kind: a.card.kind, title: a.card.title, lines: a.card.lines } : null }).catch(() => {});
+      link.heartbeat({ build: BUILD, chrome: S.chrome.connected, url, title, mode: a.mode, status: a.status, trader: trader ? trader.state() : null, card: a.card ? { kind: a.card.kind, title: a.card.title, lines: a.card.lines } : null }).catch(() => {});
     }
     if (link && !running && !agentRun && !desk.hasWork() && now - lastTake > 1000) {
       lastTake = now;
@@ -466,6 +483,7 @@ async function quit(code = 0) {
   if (quitting) return;
   quitting = true;
   stopSweep = true;
+  try { if (trader) await trader.stop(); } catch { /* ignore */ }
   try { S.state = "stopped"; await postStatus(); await cloud.flush(); } catch { /* ignore */ }
   process.exit(code);
 }

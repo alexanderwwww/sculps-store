@@ -77,6 +77,21 @@ export function secretField(info) {
   return null;
 }
 
+/**
+ * Build 5: while the trader trains (fake money), GMGN's own trading controls
+ * are never clicked: Buy / Sell / Swap, quick-buy amounts (0.1, 0.5 SOL ...),
+ * sell percentages (25%, 50%, 100%), Max. Training trades live in the fake
+ * ledger, not on the page.
+ */
+const GMGN_TRADE = /\b(buy|sell|swap|quick ?buy|instant ?buy|snipe|max)\b|^\$?\d+(\.\d+)?\s*(sol|%|usd|usdc)?$|^\d+(\.\d+)?%/;
+export function gmgnTradeClick(url, target) {
+  let host = "";
+  try { host = new URL(url).hostname.toLowerCase(); } catch { return false; }
+  if (!/(^|\.)gmgn\.ai$/.test(host)) return false;
+  const raw = String(target && target.name || "").toLowerCase().replace(/\s+/g, " ").trim();
+  return GMGN_TRADE.test(norm(raw)) || GMGN_TRADE.test(raw) || /\d%/.test(raw);
+}
+
 export function priceField(name, profile) {
   const n = norm(name);
   if (/\b(price|amount|cost)\b|\$/.test(n)) return true;

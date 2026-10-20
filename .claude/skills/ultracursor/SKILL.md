@@ -63,3 +63,23 @@ into the core." First real use: Depop ("take images and upload"), because ChatGP
 ## Depop listing rules (Alex, 2026-10-19)
 - Never "Save as a draft". When a field is missing, ask for it; when he answers, post.
 - The 22K roll chain at $16,000 got "There was a problem listing your product" twice. Right after that, the form had worldwide shipping turned on at $0 and the tags Source=Vintage and Age=Antique, none of which we set. Then Depop returned 403 Forbidden. Find out what set those fields before driving Depop again. Re-read every field before pressing Post.
+
+## Build 5 — trader mode inside the app (shipped 2026-10-20, self-update)
+- Shipped through the self-update: R2 `rs-runtime.json` (served at /research/<KEY>/runtime) -> build "5", 25 files at
+  https://blackreaper.us/media/uc5-<path with / as -> (ultra, ui, panel, agent/{agent,desk,guard,host}, profiles/depop.json, trader/*.mjs).
+  Build 4 was uc4-*. The Mac picks it up within 60 s of the app running, node --checks, exits 97, restarts as build 5.
+- **Switch trader mode on:** Alex clicks the small "trader" pill above the idle bar (bottom-right); "stop trader" beside the orb turns it off.
+  Claude: put `{"on":true,"at":<Date.now()>}` to R2 `gardenbuddy-media/uc-trader.json` (`npx wrangler r2 object put ... --remote`;
+  `{"on":false,...}` to stop). The app reads it every 15 s with a ?t= cache-buster; the newest `at` (pill or flag) wins.
+  The pill's word is kept in `~/Library/Application Support/ultracursor/trader/mode.json`.
+- When on: `src/trader/inapp.mjs` runs Sniper XYZ (training, fake money, $10 ledger, memory) in the app process; GMGN is read from a
+  background tab of his own Chrome via the app's connectOverCDP (port 9333), Gmgn.attach(). Data lives in
+  `.../ultracursor/trader/` (outside WORK so run.command never wipes it); empty memory is seeded from the public
+  trader-memory-latest.json. Status/heartbeat carry `trader: {want, running, gmgnCalls, gmgnErrors, lastError}`.
+- The orb (bottom centre, grows with memory KB, click = mute) shows while it runs; the bar folds away in trader mode unless a card or task needs it.
+- Speed ×6.47 in trader mode (agent pacing and the cursor glide); a profile with `"humanPace": true` (depop.json) keeps human pace.
+- Guard: while trader mode is on, clicks on gmgn.ai Buy/Sell/Swap/Max, quick amounts (0.1, 0.5 SOL, $5) and % buttons are refused (`gmgnTradeClick`).
+- Proven here: headless Chromium on --remote-debugging-port as his Chrome; app started, flag on -> trader started, gmgn tab in background,
+  246 GMGN calls / 0 errors in 75 s, orb heartbeat written. Headless UA got Cloudflare 403; a normal Chrome UA passes.
+- Not proven: his real Mac Chrome; panel pill clicked by a real mouse (orb/panel tests pass, pill seen in test/shots/panel-orb.png).
+- Next: GMGN server-side trending filters (read the filter fields the UI sends, pass our gate thresholds, record in tools map).

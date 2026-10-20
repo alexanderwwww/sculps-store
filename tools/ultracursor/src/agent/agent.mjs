@@ -32,7 +32,7 @@
 import { readFile } from "node:fs/promises";
 import { TOOLS, ACTIONS, validate, resolve, describe, act, readText, screenshot, downscale, format } from "./tools.mjs";
 import { observe, findLines, pageBlock } from "./snapshot.mjs";
-import { clickKind, enterIsFinal, navigateKind, secretField, priceField, detectWall } from "./guard.mjs";
+import { clickKind, enterIsFinal, navigateKind, secretField, priceField, detectWall, gmgnTradeClick } from "./guard.mjs";
 import { SYSTEM, costOf, explainError } from "./brain.mjs";
 import { render } from "./profiles.mjs";
 
@@ -193,7 +193,10 @@ export async function runTask({ page, task, deps }) {
 
     // Human pace between actions.
     const pc = profile.pacing || {};
-    const k = deps.pacingScale ?? 1;   // 1 on his Mac; the tests run the same code faster
+    // Trader mode: x6.47 faster (deps.speed); a profile with humanPace keeps its pace.
+    const fast = deps.speed ? Number(deps.speed(profile)) || 1 : 1;
+    if (deps.ui && deps.ui.setSpeed) deps.ui.setSpeed(fast);
+    const k = (deps.pacingScale ?? 1) / fast;   // pacingScale 1 on his Mac; the tests run the same code faster
     await sleep(rand(pc.minMs ?? 900, pc.maxMs ?? 2600) * k);
     if (deps.control.stopped()) return { stop: true };
 
@@ -213,6 +216,11 @@ export async function runTask({ page, task, deps }) {
       targetText = `${target.role || "element"} "${clip(target.name, 80)}"`;
     }
     if (name === "click") {
+      if (deps.trading && deps.trading() && gmgnTradeClick(page.url(), target)) {
+        note({ target: targetText, ok: false, error: "refused: GMGN trade control in training mode" });
+        log({ task: task.id, kind: "refused", text: `GMGN trade control ${targetText} (trader training)` });
+        return { text: format({ ok: false, error: `refused: ${targetText} is one of GMGN's real buy/sell controls. The trader is in training mode (fake money): trades are kept in its own ledger and nothing is ever clicked on GMGN's trade box.` }), error: true };
+      }
       kind = clickKind(target, input.final, profile);
       // The confirm button of a dialog right after an approved delete/publish of the same kind is the same decision.
       if (kind && lastApproved && lastApproved.kind === kind && step - lastApproved.step <= 2 && info && info.inDialog) kind = null;

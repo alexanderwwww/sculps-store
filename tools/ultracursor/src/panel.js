@@ -370,6 +370,17 @@
   put(layer, orb);
   const orbRadius = (kb) => Math.max(7, Math.min(29, 7 + 4.236 * LN(1 + Math.max(0, Number(kb) || 0))));
 
+  // Build 5: the trader pill. Off: a small "trader" pill just above the bar.
+  // On: "stop trader" beside the orb, and the bar folds away (it covered
+  // Phantom's Paper switch) unless a card or a running task needs it. Only the
+  // pill and the orb take the mouse; everything else on the page stays clickable.
+  const pill = button("trader", false, {
+    position: "fixed", bottom: "70px", right: "16px", display: "none", height: "24px", padding: "0 11px",
+    "border-radius": "12px", font: `600 11px/1 ${FONT}`, color: "#ffffff", background: "rgba(11,11,11,.82)",
+    border: "0.5px solid rgba(255,255,255,.34)", "box-shadow": "0 2px 10px rgba(0,0,0,.35)",
+  });
+  put(layer, pill);
+
   // "Got paid": two bright bell notes a golden ratio apart (f, then f x 1.618)
   // with a soft shimmer, ~0.6 s, synthesized here (no sample). Not a cash
   // register: no noise burst, no coin rattle, so it never sounds like Shopify.
@@ -533,7 +544,7 @@
     note: "", noteKind: "", noteAt: 0,
     href: "", destroyed: false, attaches: 0, recent: [], mountedOnce: false,
     topLayer: false, noTop: false, above: [], drop: false, vis: {}, txt: {},
-    paidSeen: null, chimes: 0, orbR: 0, orbKb: 0, muted: false,
+    paidSeen: null, chimes: 0, orbR: 0, orbKb: 0, muted: false, traderMode: false,
   };
 
   const vis = (name, e, show, disp) => {
@@ -596,8 +607,10 @@
   // clicks off the panel with them, and tests click the controls by them.
   const measure = () => {
     const out = {};
-    if (!connected(host) || S.vis.stack !== "flex") return out;
+    if (!connected(host)) return out;
     const add = (k, e) => { if (S.vis[k] === undefined || S.vis[k] !== "none") { const r = rect(e); if (r) out[k] = r; } };
+    if (S.vis.pill === "inline-flex") { const r = rect(pill); if (r) out.pill = { ...r, on: S.traderMode === true }; }
+    if (S.vis.stack !== "flex") { if (S.vis.orb === "flex") { const r = rect(orb); if (r) out.orb = { ...r, kb: S.orbKb, r: S.orbR, muted: S.muted, chimes: S.chimes }; } return out; }
     add("panel", stack);
     add("bar", bar);
     if (S.vis.orb === "flex") { const r = rect(orb); if (r) out.orb = { ...r, kb: S.orbKb, r: S.orbR, muted: S.muted, chimes: S.chimes }; }
@@ -649,7 +662,18 @@
     if (S.destroyed) return;
     const st = S.state && typeof S.state === "object" ? S.state : null;
     const show = Boolean(st) && S.everOk && !S.rejected && !blockedUrl() && connected(host);
-    vis("stack", stack, show, "flex");
+    const tm = show && st.traderMode === true;
+    S.traderMode = tm;
+    const raw = String((st && st.mode) || "");
+    const fold = tm && (raw === "idle" || raw === "needkey");
+    vis("stack", stack, show && !fold, "flex");
+    // off: only above an idle bar with nothing stacked on it, so it never sits on a card or a note
+    vis("pill", pill, show && (tm || (raw === "idle" && S.vis.note !== "block" && S.vis.chips !== "flex")), "inline-flex");
+    if (show) {
+      say("pill", pill, tm ? "stop trader" : "trader");
+      css(pill, tm ? { right: "auto", left: "calc(50% + 40px)", bottom: "22px" } : { left: "auto", right: "16px", bottom: "70px" });
+      attr(pill, "title", tm ? "Trader mode is on (training, fake money). Click to stop it." : "Start trader mode (training, fake money)");
+    }
     const tr = show && st.trader && typeof st.trader === "object" && st.trader.on === true ? st.trader : null;
     vis("orb", orb, Boolean(tr), "flex");
     if (tr) {
@@ -807,6 +831,8 @@
   on(stopBtn, "click", (e) => control("stop", e, stopBtn));
   // the orb: a real click toggles the chime's mute (kept by node in the trader's memory folder)
   on(orb, "click", (e) => { if (!pointer(e)) return; send({ type: "traderMute", muted: !S.muted }, 8000).then(() => {}); });
+  // the trader pill: a real click switches trader mode (node keeps it in the trader's mode.json)
+  on(pill, "click", (e) => { if (!pointer(e)) return; try { call(BLUR, pill); } catch (x) {} send({ type: "traderMode", on: !S.traderMode }, 8000).then((r) => { if (!(r && r.ok === true)) showNote(errText(r, "ultracursor did not take that. Try again."), "error"); }); });
 
   const saveKey = () => {
     if (S.sending) return;

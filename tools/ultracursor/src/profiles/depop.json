@@ -1,5 +1,6 @@
 {
   "name": "depop",
+  "humanPace": true,
   "match": [
     "depop.com"
   ],

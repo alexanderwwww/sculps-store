@@ -21,7 +21,7 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 
 const PANEL = fs.readFileSync(new URL("../panel.js", import.meta.url), "utf8");
-const TYPES = new Set(["file", "task", "control", "decide", "setKey", "traderMute"]);
+const TYPES = new Set(["file", "task", "control", "decide", "setKey", "traderMute", "traderMode"]);
 
 export function createHost({ build, getState, onMessage, log = () => {} }) {
   const token = crypto.randomBytes(24).toString("hex");

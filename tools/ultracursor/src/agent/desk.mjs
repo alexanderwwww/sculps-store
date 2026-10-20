@@ -30,7 +30,7 @@ const RESULT_TITLE = {
   limit: "Limit reached", error: "Problem",
 };
 
-export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale = 1, baseURL, createHost }) {
+export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale = 1, baseURL, createHost, trader = null }) {
   const cfgFile = configPath(work);
   const inbox = path.join(work, "inbox");
   const log = createActionLog(path.join(work, "logs"), cloudLog);
@@ -66,6 +66,8 @@ export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale =
       card: S.card ? { id: S.card.id, kind: S.card.kind, title: S.card.title, lines: S.card.lines, choices: S.card.choices } : null,
       // trader mode only: the memory orb and the "got paid" chime (null when the trader is off)
       trader: traderOrb(),
+      // build 5: trader mode wanted (the panel pill shows on/off; the bar folds away so it covers nothing)
+      traderMode: !!(trader && trader.want()),
     };
   }
 
@@ -85,6 +87,7 @@ export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale =
   async function onMessage(msg, page) {
     switch (msg && msg.type) {
       case "traderMute": return setTraderMute(msg.muted === true);
+      case "traderMode": return trader ? trader.set(msg.on === true) : { ok: false, error: "the trader is not available" };
       case "setKey": {
         const err = saveKey(cfgFile, msg.key);
         if (err) return { ok: false, error: err };
@@ -204,6 +207,9 @@ export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale =
           limits,
           maxUsd: cfg.maxUsdPerTask,
           pacingScale,
+          // trader mode: x6.47, except on a site whose profile keeps humanPace; GMGN's trade box is off limits while it trains
+          speed: (profile) => (trader && trader.want() && !(profile && profile.humanPace) ? 6.47 : 1),
+          trading: () => !!(trader && trader.want()),
           ask: (card) => showCard(card),
           onWall: (w) => showCard({
             kind: "wall",
@@ -226,6 +232,7 @@ export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale =
       result = { status: "error", summary: String(e && e.message || e).slice(0, 200), steps: 0, usd: 0 };
       log({ task: task.id, kind: "error", text: result.summary });
     }
+    if (ui && ui.setSpeed) ui.setSpeed(1);   // research sweeps keep the human hand
     if (task.brain && task.brain.close) { try { await task.brain.close(result.summary); } catch { /* the link is down */ } }
     S.current = null; S.status = ""; S.step = null; S.usd = null;
     // The photos were for this task only.

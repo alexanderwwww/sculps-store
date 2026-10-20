@@ -202,7 +202,7 @@ async function glide(page, x, y, onNear) {
   const bow = (Math.random() < 0.5 ? -1 : 1) * dist * rand(0.05, 0.14);
   const k = rand(0.35, 0.6);
   const cx = from.x + dx * k + nx * bow, cy = from.y + dy * k + ny * bow;
-  const total = clamp(240 + dist * 0.5, 280, 950) * rand(0.85, 1.15);
+  const total = clamp(240 + dist * 0.5, 280, 950) * rand(0.85, 1.15) / SPEED;
   const near = Math.round(steps * 0.7);
   for (let i = 1; i <= steps; i++) {
     const t = ease(i / steps), u = 1 - t;
@@ -317,10 +317,14 @@ export async function scroll(page, px, over) {
   }
 }
 
+// Trader mode (build 5): the hand moves SPEED times faster (1 = human pace).
+let SPEED = 1;
+export function setSpeed(f) { SPEED = Number(f) > 0 ? Number(f) : 1; return SPEED; }
+
 /** A human pause, by default 0.6-2.5 s. */
 export function pause(minMs = 600, maxMs = 2500) {
   const a = Number(minMs) || 0, b = Number(maxMs);
-  return sleep(rand(a, isFinite(b) && b > a ? b : a));
+  return sleep(rand(a, isFinite(b) && b > a ? b : a) / SPEED);
 }
 
-export default { attach, say, hover, click, scroll, pause, highlight, state };
+export default { attach, say, hover, click, scroll, pause, highlight, state, setSpeed };
