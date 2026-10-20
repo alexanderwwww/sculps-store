@@ -394,7 +394,7 @@ export class Scalp {
     // and never moves the buckets (or it would swap them back and forth)
     if (rk !== rulesKey(this.cfg)) return this.proof[rk] || (this.proofPrev && this.proofPrev[rk]) || null;
     if (!this.proof[rk]) {
-      const cur = this.proof, keep = Object.values(cur).some((B) => Object.keys(B.keys).length);   // an empty bucket is not worth keeping
+      const cur = this.proof, keep = Object.values(cur).some((B) => B && B.keys && Object.keys(B.keys).length);   // an empty bucket is not worth keeping
       if (this.proofPrev && this.proofPrev[rk]) { this.proof = this.proofPrev; this.proofPrev = keep ? cur : null; }
       else { if (keep) this.proofPrev = cur; this.proof = { [rk]: { rules: rulesOf(this.cfg), keys: {} } }; }
     }

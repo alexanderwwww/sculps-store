@@ -2,6 +2,8 @@
 // (Fibonacci pocket or ignition candle), +40% / -15% / give-back / 2-minute exits,
 // real fees charged, learning that is allowed to lose first.
 import { Scalp, fibSetup, ignition, rugOk, shapeOf, liteShape } from "../src/trader/scalp.mjs";
+import { DEFAULTS } from "../src/trader/scalp.mjs";
+import { rulesKey, realNet, TIERS } from "../src/trader/exits.mjs";
 let pass = 0, fail = 0;
 const ok = (n, c, x) => { if (c) { pass++; console.log("  ok  " + n); } else { fail++; console.log("FAIL  " + n, x ?? ""); } };
 const now0 = 1_800_000_000_000, sec = Math.floor(now0 / 1000);
@@ -168,6 +170,209 @@ ok("symbiot files each trade by age, pool, hour and source", [...nb.open.values(
   D.configure({ maxTrades: 2 });
   await D.scanLane(now0);
   ok("stops buying at maxTrades (5000 on the Mac)", D.open.size === 2, D.summary());
+}
+
+// ---- build 41: the abort rule, the entry tag, the ledger fix and the ghost proof ----
+const pxSrc = (px, calls = null) => ({ trending: async () => [], candles: async (a, r, limit) => { if (calls) calls.push(a); return [{ t: 1, o: 1, h: 1, l: 1, c: px[a], v: 1 }]; } });
+const hunt = (a, extra = {}) => ({ addr: a, symbol: a, cost: 1.618, side: 0.01, units: 1.618 * 0.99, entry: 1, last: 1, at: now0, shape: ["s1", "s2"], combo: "k", hunt: true, peak: 0, ...extra });
+{
+  const px = { A: 0.9, B: 1.0 }, lg = [];
+  const X = new Scalp({ src: pxSrc(px), log: (e) => lg.push(e), start: 0, stake: 1.618, quote });
+  X.open.set("A", hunt("A")); X.open.set("B", hunt("B"));
+  await X.positionLane(now0 + 5000);                       // A: -10% in 5 s
+  await X.positionLane(now0 + 31_000);                     // B: flat 30 s
+  const cl = lg.filter((e) => e.type === "close"), tA = X.trades.find((t) => t.symbol === "A"), tB = X.trades.find((t) => t.symbol === "B");
+  ok("abort: down 10% in 5 s closes as 'stop: crash -10% in 5 s'", tA && tA.why === "stop: crash -10% in 5 s" && !tA.won, X.trades);
+  ok("abort: flat for 30 s closes as 'dead: flat 30 s'", tB && tB.why === "dead: flat 30 s" && !tB.won, X.trades);
+  ok("abort closes count in combos like any close", X.combos.k && X.combos.k.n === 2 && X.combos.k.w === 0, X.combos);
+  ok("abort closes are shadowed for the post-mortem and cooled", X.shadow.has("A") && X.shadow.has("B") && X.cool.get("A") > now0 + 5000 && X.cool.get("B") > now0 + 31_000);
+  ok("abort closes feed learn, per part of the shape", X.learn.s1.n === 2 && X.learn.s2.n === 2, X.learn);
+  ok("abort closes log 'close' with why and balance", cl.length === 2 && cl.every((e) => e.why && typeof e.balance === "number" && e.lane === "fast"), cl);
+  ok("held is the age the exit was seen at; the trade carries its exit rules", tA.held === 5000 && tB.held === 31_000 && X.trades.every((t) => t.rules === rulesKey(X.cfg)), X.trades);
+}
+{
+  const px = { CP: 0.9, CF: 0.9, DP: 1.0, DF: 1.005 };
+  const M = new Scalp({ src: pxSrc(px), start: 0, stake: 1.618, quote });
+  M.configure({ shadowMs: 200_000 });
+  for (const a of Object.keys(px)) M.open.set(a, hunt(a));
+  await M.positionLane(now0 + 5000);                       // CP, CF crash
+  await M.positionLane(now0 + 31_000);                     // DP, DF dead
+  px.CP = 1.25; px.CF = 0.8; px.DP = 1.25;
+  await M.positionLane(now0 + 40_000);
+  await M.positionLane(now0 + 400_000);                    // shadows done
+  const tag = (a) => M.trades.find((t) => t.symbol === a)?.mistake;
+  ok("post-mortem: crash, then the coin pumped -> stop-then-pump", tag("CP") === "stop-then-pump", M.trades);
+  ok("post-mortem: crash, and it kept falling -> cut-right", tag("CF") === "cut-right");
+  ok("post-mortem: dead, then +20% -> sold-too-early", tag("DP") === "sold-too-early");
+  ok("post-mortem: dead and flat -> fee-ate-it", tag("DF") === "fee-ate-it", M.trades.find((t) => t.symbol === "DF"));
+}
+{
+  const calls = [], px = { OLD: 1, MID: 1, NEW: 0.84, SH: 1 };
+  const O = new Scalp({ src: pxSrc(px, calls), start: 0, stake: 1.618, quote });
+  O.open.set("MID", hunt("MID", { at: now0 + 1000 })); O.open.set("OLD", hunt("OLD")); O.open.set("NEW", hunt("NEW", { at: now0 + 2000 }));
+  O.shadow.set("SH", { trade: { symbol: "SH", why: "+40%", won: true, ret: 0.3 }, exit: 1, exitAt: now0 - 1000, entry: 1, peak: 0, shape: [], after: { max: 1, min: 1 } });
+  await O.positionLane(now0 + 3000);
+  ok("repricing is youngest first, and the post-mortem reads come after every exit", calls.join() === "NEW,MID,OLD,SH", calls);
+  ok("a coin closed this tick is not read again this tick (same GMGN calls as build 40)", calls.length === 4 && O.shadow.has("NEW") && !O.open.has("NEW"), calls);
+}
+{
+  const Cf = new Scalp({ src, start: 0, stake: 1.618, quote });
+  ok("abort defaults: down 8% in 20 s, flat 2% after 30 s, entries tagged", DEFAULTS.crashMs === 20_000 && DEFAULTS.crashMove === -0.08 && DEFAULTS.deadMs === 30_000 && DEFAULTS.deadMove === 0.02 && DEFAULTS.tagEntry === true, DEFAULTS);
+  Cf.configure({ crashMs: 13_000, crashMove: -0.05, deadMs: 21_000, deadMove: 0.03 });
+  ok("symbiot.json can tune crashMs, crashMove, deadMs and deadMove live", Cf.cfg.crashMs === 13_000 && Cf.cfg.crashMove === -0.05 && Cf.cfg.deadMs === 21_000 && Cf.cfg.deadMove === 0.03, Cf.cfg);
+  Cf.configure({ crashMs: "0", crashMove: "x", deadMs: null, deadMove: NaN, tagEntry: "no" });
+  ok("strings, null and NaN are refused", Cf.cfg.crashMs === 13_000 && Cf.cfg.crashMove === -0.05 && Cf.cfg.deadMs === 21_000 && Cf.cfg.deadMove === 0.03 && Cf.cfg.tagEntry === true, Cf.cfg);
+  const px = { A: 0.9, B: 1.0 };
+  const Off = new Scalp({ src: pxSrc(px), start: 0, stake: 1.618, quote });
+  Off.configure({ crashMs: 0, deadMs: 0 });
+  Off.open.set("A", hunt("A")); Off.open.set("B", hunt("B"));
+  await Off.positionLane(now0 + 5000); await Off.positionLane(now0 + 31_000);
+  ok("0 switches the abort rules off from R2: no crash, no dead close", Off.open.size === 2 && Off.trades.length === 0, Off.trades);
+}
+{
+  const old = { v: 2, plan: "symbiot29", start: 0, stake: 1.618, cash: -1.618, learn: { s1: { n: 1, w: 1, pnl: 0.3, until: 0 } }, mistakes: { good: { n: 1, ret: 0.3 } }, combos: { k: { n: 1, w: 1, pnl: 0.5 } },
+    open: [{ addr: "OLD1", symbol: "OLD1", cost: 1.618, side: 0.01, units: 1.6, entry: 1, last: 1, at: now0, shape: ["s1"], combo: "k", hunt: true, peak: 0, peakAll: 0 }],
+    trades: [{ symbol: "T1", addr: "T1", pnl: 0.5, ret: 0.3, won: true, why: "+40%", held: 9000 }] };
+  const px = { OLD1: 1.5 };
+  const O2 = Scalp.from(JSON.parse(JSON.stringify(old)), { src: pxSrc(px), start: 0, stake: 1.618, quote });
+  ok("PLAN is still symbiot29: build 41 wipes no ledger", O2.toJSON().plan === "symbiot29");
+  ok("a build-40 fast.json loads: open, trades, combos, learn, mistakes", O2.open.has("OLD1") && O2.trades.length === 1 && O2.combos.k.n === 1 && O2.learn.s1.n === 1 && O2.mistakes.good.n === 1 && O2.done.has("T1"), O2.summary());
+  await O2.positionLane(now0 + 1000);
+  ok("its open position closes under the new exits and is scored in the proof", O2.combos.k.n === 2 && O2.proof[rulesKey(O2.cfg)].keys.k[0.21].n === 1, O2.proof);
+}
+{
+  const px = { P: 1.45 };
+  const W = new Scalp({ src: pxSrc(px), start: 0, stake: 1.618, quote });
+  W.open.set("P", hunt("P"));
+  await W.positionLane(now0 + 1000);
+  W.learn.s9 = { n: 3, w: 1, pnl: 0.1, until: 0 }; W.mistakes.good = { n: 2, ret: 0.4 };
+  W.configure({ stake: 3 });
+  const j = JSON.parse(JSON.stringify(W.toJSON()));
+  ok("toJSON keeps the stake the ledger was made with next to the live one", j.stake === 3 && j.baseStake === 1.618, j);
+  const W2 = Scalp.from(j, { src, start: 0, stake: 1.618 });
+  ok("a stake set in symbiot.json never wipes combos, learn, mistakes or proof on restart", W2.combos.k.n === 1 && W2.learn.s9.n === 3 && W2.mistakes.good.n === 2 && W2.proof[rulesKey(W2.cfg)].keys.k[0.13].n === 1 && W2.trades.length === 1, W2.summary());
+  ok("a different start or build stake still starts fresh", Scalp.from(j, { src, start: 50, stake: 1.618 }).trades.length === 0 && Object.keys(Scalp.from(j, { src, start: 0, stake: 2 }).combos).length === 0 && Object.keys(Scalp.from(j, { src, start: 0, stake: 2 }).proof).length === 0);
+  const pre = { ...j }; delete pre.baseStake; pre.stake = 1.618;
+  ok("a ledger from before build 41 (no baseStake) still loads on its stake", Scalp.from(pre, { src, start: 0, stake: 1.618 }).combos.k.n === 1);
+}
+{
+  const calls = [];
+  const tsrc = { trending: async () => rows, candles: async (a, r, limit) => { calls.push(limit); return limit <= 2 ? [{ t: 1, o: 1, h: 1, l: 1, c: 1, v: 1 }] : charts[a] || flat(); } };
+  const T1 = new Scalp({ src: tsrc, start: 0, stake: 1.618, quote });
+  await T1.scanLane(now0);
+  const key = (i, e) => liteShape(rows[i], now0).concat(e).join("|");
+  ok("tagEntry: one candles call per coin, asking for 34 instead of 2", calls.length === 3 && calls.every((l) => l === 34), calls);
+  ok("tagEntry: the Fibonacci chart is filed e:fib, the ignition e:ign, the flat one e:any", T1.open.get("F")?.combo === key(0, "e:fib") && T1.open.get("I")?.combo === key(1, "e:ign") && T1.open.get("Z")?.combo === key(2, "e:any"), [...T1.open.values()].map((p) => p.combo));
+  ok("tagEntry keeps symbiot's chart-free key (liteShape), never the chart shape", T1.open.get("F").shape.slice(0, 4).join() === liteShape(rows[0], now0).join(), T1.open.get("F").shape);
+  ok("tagEntry: the entry is the live close, the last candle", T1.open.get("F").entry === 1.12 && T1.open.get("Z").entry === 1);
+  calls.length = 0;
+  const T0 = new Scalp({ src: tsrc, start: 0, stake: 1.618, quote });
+  T0.configure({ tagEntry: false });
+  await T0.scanLane(now0);
+  ok("tagEntry off: two candles and e:any, exactly build 40", calls.length === 3 && calls.every((l) => l === 2) && [...T0.open.values()].every((p) => p.combo.endsWith("|e:any")), calls);
+}
+{
+  const psrc = { trending: async () => rows, candles: async (a, r, limit) => (limit <= 2 ? [{ t: 1, o: 1, h: 1, l: 1, c: 1, v: 1 }] : charts[a] || flat()) };
+  const got = [];
+  const P = new Scalp({ src: psrc, start: 0, stake: 1.618, quote, onPick: (x) => got.push(x) });
+  P.configure({ maxOpen: 1 });
+  P.open.set("FULL", hunt("FULL"));
+  await P.scanLane(now0);
+  ok("onPick: a full sim still scans when real listens, and buys nothing", got.length === 3 && P.open.size === 1, got.length);
+  const F = got.find((x) => x.row.a === "F");
+  ok("onPick carries the row, the 34 candles, shape, combo, fib and the time", F && F.cs.length === fibChart().length && F.fib && F.fib.retr > 0 && F.nowMs === now0 && Array.isArray(F.shape), F);
+  ok("onPick's combo is exactly the key symbiot files the coin under", F.combo === liteShape(rows[0], now0).concat("e:fib").join("|") && F.shape.join("|") === F.combo);
+  got.length = 0;
+  const P2 = new Scalp({ src: psrc, start: 0, stake: 1.618, quote, onPick: (x) => got.push(x) });
+  P2.configure({ maxTrades: 1 }); P2.trades.push({ symbol: "x" });
+  const r2 = await P2.scanLane(now0);
+  ok("onPick: past maxTrades the scan still feeds real, buys nothing, says done", got.length === 3 && P2.open.size === 0 && r2.done === true, r2);
+  got.length = 0;
+  const P3 = new Scalp({ src: { ...psrc, candles: async () => [{ t: 1, o: 1, h: 1, l: 1, c: 1, v: 1 }] }, start: 0, stake: 1.618, quote, onPick: (x) => got.push(x) });
+  P3.combos[liteShape(rows[0], now0).concat("e:any").join("|")] = { n: 20, w: 1, pnl: -10 }; P3.rand = () => 0.9;
+  await P3.scanLane(now0);
+  ok("onPick fires before the filter: a filtered combination still reaches real", got.length === 3 && P3.open.size === 0 && P3.skips === 3, P3.summary());
+  let n = 0;
+  const Q = new Scalp({ src: psrc, start: 0, stake: 1.618, quote });
+  Q.configure({ maxOpen: 1 }); Q.open.set("FULL", hunt("FULL"));
+  const qsrc = Q.src; Q.src = { trending: async (...a) => { n++; return qsrc.trending(...a); }, candles: async (...a) => { n++; return qsrc.candles(...a); } };
+  await Q.scanLane(now0);
+  ok("no listener: a full sim makes no GMGN call, as before", n === 0);
+  const E1 = new Scalp({ src: psrc, start: 0, stake: 1.618, quote, onPick: () => { throw new Error("real broke"); } });
+  const E2 = new Scalp({ src: psrc, start: 0, stake: 1.618, quote, onPick: async () => { throw new Error("real broke later"); } });
+  await E1.scanLane(now0); await E2.scanLane(now0); await new Promise((r) => setTimeout(r, 20));
+  ok("a real-side error (thrown or rejected) never stops the sim", E1.open.size === 3 && E2.open.size === 3);
+}
+// the ghost proof: what each real target would have done, scored at the real stake
+{
+  const px = { W: 1.45, S: 0.84, R: 1.25 };
+  const G = new Scalp({ src: pxSrc(px), start: 0, stake: 1.618, quote });
+  ok("the proof is scored at step 1's real stake by default (38.2% of $15)", G.realStakeUsd === 5.73);
+  const W = hunt("W", { combo: "kw", side: 0.0125 }), S = hunt("S", { combo: "ks", side: 0.0125 }), R = hunt("R", { combo: "kr", side: 0.0125 });
+  for (const p of [W, S, R]) G.open.set(p.addr, p);
+  await G.positionLane(now0 + 1000);                       // W +45%, S -16%, R peaks at +25%
+  px.R = 1.12;
+  await G.positionLane(now0 + 2000);                       // R back to +12%
+  const rk0 = rulesKey(G.cfg), B = G.proof[rk0];
+  ok("ghost: +45% at once is a win at all three targets", TIERS.every((T) => W.ghost[T].why === `+${Math.round(T * 100)}%` && B.keys.kw[T].n === 1 && B.keys.kw[T].w === 1 && B.keys.kw[T].net === +realNet(0.45, 0.0125, 5.73).toFixed(4)), B.keys.kw);
+  ok("ghost: -16% is a stop loss at all three targets", TIERS.every((T) => S.ghost[T].why === "stop -15%" && B.keys.ks[T].n === 1 && B.keys.ks[T].w === 0 && B.keys.ks[T].net < 0), B.keys.ks);
+  ok("ghost: +25% back to +12% takes +13% and +21%, gives back at +34%", R.ghost[0.13].why === "+13%" && R.ghost[0.21].why === "+21%" && R.ghost[0.34].why === "gave back half of +25%" && B.keys.kr[0.13].net === +realNet(0.25, 0.0125, 5.73).toFixed(4) && B.keys.kr[0.34].net === +realNet(0.12, 0.0125, 5.73).toFixed(4), R.ghost);
+  const closeAt = (p) => { const t = G.trades.find((x) => x.symbol === p.symbol); return now0 + t.held; };
+  ok("every target resolves at or before the sim's own close", [W, S, R].every((p) => TIERS.every((T) => p.ghost[T].at <= closeAt(p))) && R.ghost[0.13].at < closeAt(R), [W, S, R].map((p) => p.ghost));
+  ok("the bucket carries its exit rules (the real gate checks sl -0.15)", B.rules.sl === -0.15 && B.rules.crashMs === 20_000 && B.rules.deadMove === 0.02 && B.rules.holdMs === 120_000, B.rules);
+  const calls = [];
+  const G9 = new Scalp({ src: pxSrc({ a: 1, b: 1 }, calls), start: 0, stake: 1.618, quote });
+  G9.open.set("a", hunt("a")); G9.open.set("b", hunt("b"));
+  await G9.positionLane(now0 + 1000);
+  ok("the ghost proof costs zero extra GMGN calls", calls.length === 2 && G9.open.get("a").ghost, calls);
+
+  // rules change: a new bucket, the old one kept as proofPrev; a coin open across it is never filed
+  const MX = hunt("MX", { combo: "kmx", at: now0 + 2500 }); px.MX = 1.0;
+  G.open.set("MX", MX);
+  await G.positionLane(now0 + 3000);                       // MX scored under rk0, nothing resolved
+  G.configure({ crashMs: 13_000 });
+  const rk1 = rulesKey(G.cfg);
+  const N = hunt("N", { combo: "kn", at: now0 + 3500 }); px.N = 1.45; px.MX = 1.45;
+  G.open.set("N", N);
+  await G.positionLane(now0 + 4000);
+  ok("a rules change opens a new bucket and keeps the old one as proofPrev", rk1 !== rk0 && G.proof[rk1]?.keys.kn?.[0.13].n === 1 && !G.proof[rk0] && G.proofPrev?.[rk0]?.keys.kw[0.13].n === 1, { proof: Object.keys(G.proof), prev: G.proofPrev && Object.keys(G.proofPrev) });
+  ok("the new bucket carries the new rules", G.proof[rk1].rules.crashMs === 13_000);
+  ok("a coin open across the change is never filed (rules never mix)", G.trades.some((t) => t.symbol === "MX") && ![G.proof, G.proofPrev].some((P) => Object.values(P).some((b) => b.keys.kmx)), MX.ghost);
+  const back = Scalp.from(JSON.parse(JSON.stringify(G.toJSON())), { src: pxSrc(px), start: 0, stake: 1.618, quote });
+  ok("proof and proofPrev survive toJSON/from", JSON.stringify(back.proof) === JSON.stringify(G.proof) && JSON.stringify(back.proofPrev) === JSON.stringify(G.proofPrev) && back.proofPrev[rk0].keys.kr[0.34].n === 1);
+  G.configure({ crashMs: 20_000 });
+  const N2 = hunt("N2", { combo: "kn2", at: now0 + 4500 }); px.N2 = 1.45;
+  G.open.set("N2", N2);
+  await G.positionLane(now0 + 5000);
+  ok("changing the rules back brings the old bucket back", G.proof[rk0]?.keys.kn2 && G.proof[rk0].keys.kw[0.13].n === 1 && G.proofPrev?.[rk1]?.keys.kn, { proof: Object.keys(G.proof), prev: G.proofPrev && Object.keys(G.proofPrev) });
+}
+{
+  // a half-scored ghost on an open position survives a restart and is filed once
+  const px = { Q: 1.25 };
+  const H = new Scalp({ src: pxSrc(px), start: 0, stake: 1.618, quote });
+  H.open.set("Q", hunt("Q", { combo: "kq" }));
+  await H.positionLane(now0 + 1000);
+  const H2 = Scalp.from(JSON.parse(JSON.stringify(H.toJSON())), { src: pxSrc(px), start: 0, stake: 1.618, quote });
+  px.Q = 1.12;
+  await H2.positionLane(now0 + 2000);
+  const K = H2.proof[rulesKey(H2.cfg)].keys.kq;
+  ok("a ghost half-scored before a restart is finished and filed once after it", K[0.13].n === 1 && K[0.13].o[0] === +realNet(0.25, 0.01, 5.73).toFixed(4) && K[0.34].n === 1 && K[0.34].o[0] === +realNet(0.12, 0.01, 5.73).toFixed(4), K);
+  // tp lowered under a target: that target's outcome is unknown and never counted
+  const L3 = new Scalp({ src: pxSrc({ U: 1.25 }), start: 0, stake: 1.618, quote });
+  L3.configure({ tp: 0.2 });
+  L3.open.set("U", hunt("U", { combo: "ku" }));
+  await L3.positionLane(now0 + 1000);
+  const KU = L3.proof[rulesKey(L3.cfg)].keys.ku;
+  ok("with tp lowered under a target, that target is not scored (a guess is never proof)", L3.trades[0]?.why === "+20%" && KU[0.13].n === 1 && KU[0.21].n === 1 && !KU[0.34], KU);
+  // the real side sets the stake; the window keeps the last 55
+  const px2 = {};
+  const Z = new Scalp({ src: pxSrc(px2), start: 0, stake: 1.618, quote });
+  Z.realStakeUsd = 7.09;
+  for (let i = 0; i < 60; i++) { px2["z" + i] = 0.84; Z.open.set("z" + i, hunt("z" + i, { combo: "kz" })); }
+  await Z.positionLane(now0 + 1000);
+  const KZ = Z.proof[rulesKey(Z.cfg)].keys.kz[0.21];
+  ok("each key keeps a rolling window of its last 55 outcomes", KZ.n === 55 && KZ.o.length === 55 && KZ.w === 0 && Math.abs(KZ.net - 55 * realNet(-0.16, 0.01, 7.09)) < 0.01 && KZ.last === now0 + 1000, KZ);
+  ok("net is scored at the stake the real side set, and rt is the round-trip fee it assumed", KZ.o[0] === +realNet(-0.16, 0.01, 7.09).toFixed(4) && KZ.rt === 0.02, KZ);
 }
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

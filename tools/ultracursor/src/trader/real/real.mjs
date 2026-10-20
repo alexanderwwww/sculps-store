@@ -1,0 +1,756 @@
+/**
+ * The real-money trader (build 41, Alex 2026-10-20: "$15 to $2,000, every step").
+ *
+ * Symbiot (scalp.mjs) farms every new coin on fake money and proves, per setup and per target,
+ * what would have won after fees (the ghost proof). This trades REAL money on GMGN's own trade
+ * panel in Alex's Chrome, one position at a time, only where that proof holds:
+ *
+ *   signal  every pick symbiot sees (onPick), before its own filters, even when the sim is full
+ *   gate    a-g below, in this order; each failure is a real-skip with its letter
+ *   card    every BUY needs Alex: a card on its own slot, 45 s, [Buy] [Skip]. Only his press
+ *           mints the one-shot token the door wants. Nothing on the link can decide it.
+ *   buy     one click on GMGN's Buy, through execute.mjs's door, never re-clicked
+ *   exits   automatic, no card (sells only reduce risk): the exact exits.mjs exit the sim
+ *           proved, plus blind / rug radar / manual. A sell that leaves tokens is clicked again
+ *           (a sell can never spend more than is held), 5 tries, then HALT and an alert card
+ *   steps   steps.mjs: 38.2% stakes, 21/13/34/21/13 targets, a lost step repeats smaller
+ *
+ * Safety: PROBE is the default and the mode after every restart until a fresh R2 real.json is
+ * read. LIVE needs real.json mode 'live' + a probe report from this build that Claude wrote the
+ * selectors from + those selectors verified on the live page + the page's wallet = real.json's
+ * + SOL read under 10 s ago. Every state change is a compare-and-set written to real.jsonl
+ * (fsynced) BEFORE its side effect; a restart reconciles against the chain and never re-clicks a
+ * buy. R2 can switch probe/live, raise the proof floors, set the baseline and supply selectors;
+ * it can never raise the stake, change the stop or the targets, approve a buy or skip a card.
+ */
+import crypto from "node:crypto";
+import { fibSetup, liteShape } from "../scalp.mjs";
+import { exitReason, track, rulesOf, rulesKey } from "../exits.mjs";
+import { createDoor } from "../execute.mjs";
+import * as P from "./steps.mjs";
+import { proven, floors, assumedRt } from "./proof.mjs";
+import { RealStore } from "./realstore.mjs";
+import { Wallet, addrMatch, isAddr, short } from "./wallet.mjs";
+import { GmgnPanel, tokenUrlOf, SEL_KEYS, MAX_SLIP, DEFAULT_TOKEN_URL } from "./exec/gmgn-panel.mjs";
+
+export const CARD_MS = 45_000, CONFIRM_MS = 90_000, SELL_CHECK_MS = 20_000, SELL_TRIES = 5;
+export const BLIND_MS = 30_000, RUG_MS = 13_000, RUG_DROP = 0.382, REQUOTE_UP = 0.03;
+export const RESERVE_SOL = 0.01, SOL_READ_MS = 5_000, SOL_FRESH_MS = 10_000, PRICE_MS = 30_000, VERIFY_EVERY_MS = 5_000;
+export const PROBE_EVERY_MS = 30 * 60_000, RECENT_MS = 24 * 60 * 60_000, MIN_LQ = 8_000, MAX_TAX = 0.05;
+
+const TERMINAL = new Set(["SKIPPED", "EXPIRED", "STALE", "CONFIRMED", "NOT_LANDED"]);
+const num = (x) => (x === null || x === undefined || x === "" ? null : Number.isFinite(Number(x)) ? Number(x) : null);
+const r2 = P.round2;
+const pc = (x) => Math.round(x * 100);
+const id = () => crypto.randomBytes(6).toString("hex");
+
+// ------------------------------------------------------------------ R2 real.json, read as DATA
+const R2_KEYS = new Set(["mode", "startUsd", "minTrades", "minWin", "wallet", "tokenUrl", "selectorsFrom", "selectors", "probeNow"]);
+const SEL_FIELDS = new Set(["role", "name", "exact", "nth"]);
+const ROLES = new Set(["button", "tab", "textbox", "searchbox", "spinbutton", "combobox", "checkbox", "radio", "switch", "slider", "link", "menuitem", "menuitemradio", "option", "status", "heading"]);
+
+/**
+ * real.json -> {mode, startUsd, minTrades, minWin, wallet, tokenUrl, selectorsFrom, selectors,
+ * probeNow} or {mode: 'probe', error}. Anything unknown or malformed is PROBE, with the reason.
+ */
+export function parseRealJson(j) {
+  const bad = (error) => ({ mode: "probe", error: `real.json: ${error}` });
+  if (!j || typeof j !== "object" || Array.isArray(j)) return bad("not an object");
+  if (j.error) return bad(String(j.error).slice(0, 120));
+  for (const k of Object.keys(j)) if (!R2_KEYS.has(k)) return bad(`unknown key "${k}"`);
+  if (j.mode !== "probe" && j.mode !== "live") return bad("mode must be 'probe' or 'live'");
+  const out = { mode: j.mode };
+  if (j.startUsd !== undefined) { if (!(typeof j.startUsd === "number" && j.startUsd > 0 && j.startUsd < 1e6)) return bad("startUsd"); out.startUsd = j.startUsd; }
+  if (j.minTrades !== undefined) { if (!(typeof j.minTrades === "number" && j.minTrades >= 0)) return bad("minTrades"); out.minTrades = j.minTrades; }
+  if (j.minWin !== undefined) { if (!(typeof j.minWin === "number" && j.minWin >= 0 && j.minWin <= 1)) return bad("minWin"); out.minWin = j.minWin; }
+  Object.assign(out, floors(out));                     // 21 and 0.55 are floors R2 can only raise
+  if (j.wallet !== undefined) { if (!isAddr(j.wallet)) return bad("wallet is not a Solana address"); out.wallet = j.wallet; }
+  if (j.tokenUrl !== undefined) { try { tokenUrlOf(j.tokenUrl, "So11111111111111111111111111111111111111112"); } catch (e) { return bad(e.message); } out.tokenUrl = j.tokenUrl; }
+  if (j.selectorsFrom !== undefined) { if (typeof j.selectorsFrom !== "string" || !/^[0-9a-f]{8,64}$/.test(j.selectorsFrom)) return bad("selectorsFrom"); out.selectorsFrom = j.selectorsFrom; }
+  if (j.probeNow !== undefined) { if (!["string", "number"].includes(typeof j.probeNow)) return bad("probeNow"); out.probeNow = j.probeNow; }
+  if (j.selectors !== undefined) {
+    if (!j.selectors || typeof j.selectors !== "object" || Array.isArray(j.selectors)) return bad("selectors");
+    const sel = {};
+    for (const [k, s] of Object.entries(j.selectors)) {
+      if (!SEL_KEYS.includes(k)) return bad(`unknown selector "${k}"`);
+      if (!s || typeof s !== "object" || Array.isArray(s)) return bad(`selector ${k}`);
+      for (const f of Object.keys(s)) if (!SEL_FIELDS.has(f)) return bad(`selector ${k}: unknown field "${f}"`);
+      if (!ROLES.has(s.role)) return bad(`selector ${k}: role "${s.role}"`);
+      if (typeof s.name !== "string" || !s.name || s.name.length > 80) return bad(`selector ${k}: name`);
+      if (s.exact !== true) return bad(`selector ${k}: exact must be true`);
+      if (s.nth !== undefined && !(Number.isInteger(s.nth) && s.nth >= 0 && s.nth <= 20)) return bad(`selector ${k}: nth`);
+      sel[k] = { role: s.role, name: s.name, exact: true, ...(s.nth !== undefined ? { nth: s.nth } : {}) };
+    }
+    out.selectors = sel;
+  }
+  return out;
+}
+
+function freshState(build, startUsd = 15) {
+  return {
+    v: 1, plan: "steps76", build, seq: 0, wallet: null, startUsd, deposits: 0,
+    ...P.newLedger(startUsd),
+    intent: null, position: null, steps: [], recent: {},
+    ledgerSol: null, balanceSol: null, solUsd: null,
+    counters: { signals: 0, gated: 0, cards: 0, skipped: 0, expired: 0, stale: 0, notLanded: 0, sellRetries: 0 },
+  };
+}
+const LEDGER_KEYS = ["step", "lastStake", "afterLoss", "lossStreak", "peakUsd", "paused", "halted", "done", "trades", "wins", "losses"];
+
+export class Real {
+  constructor({ dir, build = null, sim = null, src, browser = null, panel = null, walletFor = (address) => new Wallet({ address }), cards = null, log = () => {}, now = Date.now, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), store = null }) {
+    this.dir = dir; this.build = build; this.sim = sim; this.src = src;
+    this.panel = panel || (browser ? new GmgnPanel({ browser, build, dir }) : null);
+    this.walletFor = walletFor; this.cards = cards; this.logFn = log; this.now = now; this.sleep = sleep;
+    this.store = store || new RealStore(dir);
+    this.st = freshState(build);
+    this.cfg = null;                                   // R2 real.json, parsed; null until read (PROBE)
+    this.mode = "probe"; this.why = "real.json not read yet";
+    this.verify = { ok: false, at: 0, why: "not verified yet" };
+    this.probes = [];                                  // the last probe reports, newest first
+    this.picks = new Map(); this.seen = new Map(); this.wouldSeen = new Map();
+    this.would = { n: 0, last: null };
+    this.flow = null; this.probing = null; this.manual = false; this.dead = false;
+    this.wallet = null; this.solAt = 0; this.priceAt = 0; this.ticks = 0;
+    this.door = createDoor({ panel: this.panel, now: this.now, ctx: () => ({ mode: this.mode, verify: this.verify }) });
+  }
+
+  log(ev) { try { this.logFn({ at: this.now(), ...ev }); } catch { /* the ledger is best effort */ } }
+
+  // ---------------------------------------------------------------- persistence (WAL first)
+  #save() { if (!this.noSave && !this.dead) { try { this.store.save(this.st); } catch (e) { this.log({ type: "real-error", why: `snapshot: ${e.message}` }); } } }
+
+  /** One WAL line (fsynced) BEFORE the change is applied or acted on. */
+  #commit(type, set = {}, extra = {}) {
+    if (this.dead) throw new Error("real trader stopped");
+    const seq = (this.st.seq || 0) + 1;
+    const line = { seq, at: this.now(), type, set, ...extra };
+    try { this.store.append(line); } catch (e) { this.dead = true; throw e; }
+    this.st.seq = seq;
+    Object.assign(this.st, set);
+    if (extra.row) this.st.steps.push(extra.row);
+    this.#save();
+    const it = set.intent || extra.done, pos = set.position || extra.closed;
+    this.log({ type, seq, state: it ? it.state : pos ? pos.state : undefined, mint: (it || pos || {}).mint, symbol: (it || pos || {}).symbol, why: (it || pos || {}).why || extra.why });
+  }
+
+  /** Compare-and-set on the intent. A finished intent can never move again (HALT). */
+  #to(type, from, to, patch = {}, set = {}) {
+    const it = this.st.intent;
+    if (!it) { this.#halt(`intent moved after it finished (${from.join("/")} -> ${to})`); throw new Error("intent already finished"); }
+    if (!from.includes(it.state)) throw new Error(`intent is ${it.state}, not ${from.join("/")}`);
+    const next = { ...it, ...patch, state: to, at: this.now() };
+    if (TERMINAL.has(to)) this.#commit(type, { intent: null, ...set }, { done: next });
+    else this.#commit(type, { intent: next, ...set });
+    return next;
+  }
+  #pos(type, from, to, patch = {}) {
+    const p = this.st.position;
+    if (!p || !from.includes(p.state)) throw new Error(`position is ${p ? p.state : "missing"}, not ${from.join("/")}`);
+    const next = { ...p, ...patch, state: to };
+    this.#commit(type, { position: next });
+    return next;
+  }
+  #halt(why, until = null) {
+    if (this.st.halted && !this.st.halted.until && !until) return;
+    try { this.#commit("real-halt", { halted: { why, at: this.now(), until } }); } catch { this.st.halted = { why, at: this.now(), until }; }
+  }
+  #ledger() { const L = {}; for (const k of LEDGER_KEYS) L[k] = this.st[k]; return L; }
+
+  // ---------------------------------------------------------------- start: lock, load, reconcile
+  async start() {
+    if (this.started) return this.started;
+    this.started = (async () => {
+      if (!this.store.lock()) { this.disabled = "another ultracursor holds real.lock: this one runs the sim only"; this.log({ type: "real-halt", why: this.disabled }); return { ok: false, why: this.disabled }; }
+      const r = this.store.load();
+      if (r.error) {
+        // never written over: the file is evidence. Nothing trades until Alex/Claude look.
+        this.noSave = true; this.st.halted = { why: r.error, at: this.now(), until: null };
+        this.log({ type: "real-halt", why: r.error });
+        return { ok: false, why: r.error };
+      }
+      if (r.state) this.st = { ...freshState(this.build), ...r.state, counters: { ...freshState().counters, ...(r.state.counters || {}) } };
+      // the crash window: a WAL line written, the snapshot not yet
+      for (const l of this.store.lines()) {
+        if (!(l.seq > (this.st.seq || 0))) continue;
+        Object.assign(this.st, l.set || {});
+        if (l.row) this.st.steps.push(l.row);
+        this.st.seq = l.seq;
+      }
+      this.st.build = this.build;
+      const pr = this.store.load(this.store.probeFile);
+      if (pr.state) this.probes = (pr.state.history || []).filter((h) => h && h.hash);
+      if (this.st.wallet) this.wallet = this.walletFor(this.st.wallet);
+      if (this.cfgRaw !== undefined) this.setConfig(this.cfgRaw);       // read before the snapshot loaded
+      this.#save();
+      await this.#reconcile();
+      return { ok: true };
+    })();
+    return this.started;
+  }
+
+  async #reconcile() {
+    const it = this.st.intent;
+    if (it) {
+      if (it.state === "PROPOSED") { this.st.counters.skipped++; this.#to("real-skip", ["PROPOSED"], "SKIPPED", { why: "restart: a card never survives one" }); }
+      else if (it.state === "APPROVED") { this.st.counters.skipped++; this.#to("real-skip", ["APPROVED"], "SKIPPED", { why: "restart before the click" }); }
+      else if (it.state === "CLICKING" || it.state === "SENT") {
+        // the click may or may not have happened: the chain says. Never clicked again.
+        const a = await this.#tokens(it.mint);
+        await this.sleep(5_000);
+        const b = await this.#tokens(it.mint);
+        const before = BigInt(it.tokensBefore || "0");
+        const landed = [a, b].find((x) => x && BigInt(x.raw) > before);
+        if (landed) await this.#landed(landed);
+        else {
+          const sigs = this.wallet ? await this.wallet.recentSigs(10).catch(() => []) : [];
+          const pending = sigs.some((s) => !s.err && (!s.at || s.at >= (it.clickedAt || 0) - 15_000));
+          if (pending && this.now() - (it.clickedAt || 0) < CONFIRM_MS) this.flow = this.#run(() => this.#confirm());
+          else { this.st.counters.notLanded++; this.#to("real-fill", ["CLICKING", "SENT"], "NOT_LANDED", { why: "restart: no tokens on the chain" }, { recent: { ...this.st.recent, [it.mint]: this.now() } }); }
+        }
+      }
+    }
+    const p = this.st.position;
+    if (p && (p.state === "OPEN" || p.state === "SELLING")) {
+      p.lastPxAt = this.now(); p.resumed = p.state === "SELLING";      // a sell in flight is tried again at once
+      this.log({ type: "real-resume", mint: p.mint, symbol: p.symbol, state: p.state });
+    }
+    await this.#drift("start");
+  }
+
+  // ---------------------------------------------------------------- inputs: R2, picks, pill
+  /** R2 real.json, every 30 s (inapp.mjs). A fetch error arrives as {error}. */
+  setConfig(raw) {
+    this.cfgRaw = raw;
+    const c = parseRealJson(raw);
+    this.cfg = c; this.cfgAt = this.now();
+    if (c.error) { this.log({ type: "real-config", why: c.error }); return c; }
+    if (c.startUsd && !this.st.position) this.st.startUsd = c.startUsd;
+    if (c.wallet && c.wallet !== this.st.wallet) {
+      if (this.st.position || this.st.intent) this.log({ type: "real-config", why: "wallet change ignored while a trade is open" });
+      else { this.st.wallet = c.wallet; this.wallet = this.walletFor(c.wallet); this.st.ledgerSol = null; this.solAt = 0; }
+    }
+    if (c.probeNow !== undefined && c.probeNow !== this.st.lastProbeNow) { this.st.lastProbeNow = c.probeNow; this.probeDue = true; }
+    return c;
+  }
+
+  /** scalp.mjs calls this for every rugOk pick (before its own filters). Never blocks the sim. */
+  onPick(pick) {
+    if (!pick || !pick.row || !pick.row.a) return;
+    this.lastPickMint = pick.row.a;
+    this.picks.delete(pick.row.a);
+    this.picks.set(pick.row.a, { ...pick, seenAt: this.now() });
+    while (this.picks.size > 144) this.picks.delete(this.picks.keys().next().value);
+  }
+
+  /** Alex's trusted REAL-stop pill: sell the open position now. */
+  stopManual() { this.manual = true; return { ok: true, open: !!this.st.position }; }
+
+  /** An open position or a buy in flight keeps the real lane (and the heartbeat) running. */
+  mustRun() { return !!(this.st.position || this.st.intent || this.flow); }
+
+  /** Waits for a background flow (card, buy, confirm) and the probe. Tests and shutdown. */
+  async settle() { for (let i = 0; i < 50 && (this.flow || this.probing); i++) await Promise.all([this.flow, this.probing].filter(Boolean)); }
+
+  #run(fn) {
+    const f = (async () => { try { await fn(); } catch (e) { if (!this.dead) this.log({ type: "real-error", why: String(e.message || e).slice(0, 200) }); } })();
+    const done = f.finally(() => { if (this.flow === done) this.flow = null; });
+    return done;
+  }
+
+  // ---------------------------------------------------------------- the lane, every 1 s
+  async tick(nowMs = this.now()) {
+    await this.start();
+    if (this.disabled || this.dead) return;
+    this.ticks++;
+    const step = async (name, fn) => { try { await fn(); } catch (e) { if (!this.dead) this.log({ type: "real-error", step: name, why: String(e.message || e).slice(0, 200) }); } };
+    await step("wallet", () => this.#readWallet(nowMs));
+    await step("limits", async () => { const b = this.#balUsd(); if (b !== null) Object.assign(this.st, P.resume(this.#ledger(), b, nowMs)); });
+    if (this.sim) this.sim.realStakeUsd = this.#stake() || this.sim.realStakeUsd;  // the proof is scored at the real stake
+    await step("probe", async () => this.#maybeProbe(nowMs));
+    if (!this.flow) await step("verify", () => this.#liveCheck(nowMs));
+    this.#modeEval(nowMs);
+    if (this.st.position) await step("exit", () => this.#manage(nowMs));
+    else if (!this.flow && !this.st.intent) await step("select", () => this.#select(nowMs));
+    this.at = nowMs;
+    this.#save();
+  }
+
+  async #readWallet(nowMs) {
+    if (!this.wallet) return;
+    if (nowMs - this.solAt >= SOL_READ_MS) {
+      try {
+        const sol = await this.wallet.solBalance();
+        this.st.balanceSol = sol; this.solAt = this.now(); this.solErr = null;
+        if (this.st.ledgerSol === null || this.st.ledgerSol === undefined) this.st.ledgerSol = sol;
+      } catch (e) { this.solErr = String(e.message || e).slice(0, 120); }
+    }
+    if (nowMs - this.priceAt >= PRICE_MS && nowMs - (this.priceTriedAt || 0) >= SOL_READ_MS) {
+      this.priceTriedAt = nowMs;
+      const ps = await this.src.prices(["SOL"], { priority: true }).catch(() => null);
+      const px = num((ps || []).find((p) => p && p.symbol === "SOL")?.price);
+      if (px > 0) { this.st.solUsd = px; this.priceAt = nowMs; }
+    }
+  }
+  #balUsd() { return this.st.balanceSol !== null && this.st.solUsd ? this.st.balanceSol * this.st.solUsd : null; }
+  #stake() { const b = this.#balUsd(); return b === null ? null : P.stakeFor(this.#ledger(), b); }
+  async #tokens(mint) { return this.wallet ? this.wallet.tokenBalance(mint).catch(() => null) : null; }
+
+  // ---------------------------------------------------------------- probe and mode
+  #tokenUrl(mint) { return tokenUrlOf(this.cfg && !this.cfg.error && this.cfg.tokenUrl ? this.cfg.tokenUrl : DEFAULT_TOKEN_URL, mint); }
+
+  async #maybeProbe(nowMs) {
+    if (this.probing || !this.panel) return;
+    const last = this.probes[0];
+    const due = this.probeDue || !this.probeTriedAt || (last ? nowMs - last.at >= PROBE_EVERY_MS : nowMs - this.probeTriedAt >= 60_000);
+    if (!due) return;
+    let mint = this.lastPickMint;
+    if (!mint) { const t = await this.src.trending("1m", 5).catch(() => []); mint = (t || []).find((r) => r && isAddr(r.a))?.a; }
+    if (!mint) return;
+    this.probeDue = false; this.probeTriedAt = nowMs;
+    const url = this.#tokenUrl(mint);
+    this.probing = (async () => {
+      try {
+        const rep = await this.panel.probe(url);
+        rep.mint = mint;
+        this.#gotProbe(rep);
+      } catch (e) { this.log({ type: "real-probe", ok: false, why: String(e.message || e).slice(0, 160) }); }
+    })().finally(() => { this.probing = null; });
+  }
+
+  #gotProbe(rep) {
+    const box = (rep.controls || []).filter((c) => c.inTradeBox);
+    const rec = { hash: rep.hash, build: rep.build, ok: !!rep.ok, at: rep.at ?? this.now(), url: rep.url, mint: rep.mint, walletKind: rep.walletKind, walletAddr: rep.walletAddr, why: rep.why, controls: (rep.controls || []).map((c) => ({ role: c.role, name: c.name, inTradeBox: !!c.inTradeBox })) };
+    this.probes = [rec, ...this.probes.filter((p) => p.hash !== rec.hash)].slice(0, 8);
+    this.probeRep = rep;
+    try { this.store.save({ v: 1, ...rep, history: this.probes }, this.store.probeFile); } catch { /* the report is also in the log */ }
+    this.log({ type: "real-probe", ok: rec.ok, hash: rec.hash, controls: box.length, walletKind: rec.walletKind, walletAddr: rec.walletAddr, inputs: rep.inputs ?? null, why: rec.why });
+  }
+
+  /** The probe report Claude wrote the selectors from: this build, ok. */
+  #record() {
+    const c = this.cfg;
+    if (!c || !c.selectorsFrom) return null;
+    return this.probes.find((p) => p.hash === c.selectorsFrom && p.build === this.build && p.ok) || null;
+  }
+
+  async #liveCheck(nowMs) {
+    const c = this.cfg;
+    if (!this.panel || !c || c.error || c.mode !== "live" || !c.selectors) return;
+    const rec = this.#record();
+    if (!rec || nowMs - this.verify.at < VERIFY_EVERY_MS) return;
+    if (!this.panel.url()) await this.panel.open(this.#tokenUrl(rec.mint || this.lastPickMint));
+    this.verify = await this.panel.verify(c.selectors, rec);
+  }
+
+  #modeEval(nowMs) {
+    const c = this.cfg;
+    const set = (mode, why) => { if (mode !== this.mode) this.log({ type: "real-mode", mode, why }); this.mode = mode; this.why = why; };
+    if (!c) return set("probe", "real.json not read yet");
+    if (c.error) return set("probe", c.error);
+    if (c.mode !== "live") return set("probe", "real.json says probe");
+    if (!this.panel) return set("probe", "no Chrome for the trade panel");
+    const latest = this.probes[0];
+    if (!latest) return set("probe", "no probe report yet");
+    const rec = this.probes.find((p) => p.hash === c.selectorsFrom);
+    if (!rec) return set("probe", "real.json selectorsFrom matches no probe report");
+    if (rec.build !== this.build) return set("probe", `the probe report is from build ${rec.build}`);
+    if (!rec.ok) return set("probe", `the probe report is not ok: ${rec.why}`);
+    if (!c.selectors) return set("probe", "real.json has no selectors");
+    if (!this.verify.ok) return set("probe", `verify: ${this.verify.why}`);
+    if (!c.wallet || !addrMatch(this.verify.walletLabel || "", c.wallet)) return set("probe", "the wallet on the page is not real.json's wallet");
+    if (!this.wallet || this.wallet.address !== c.wallet) return set("probe", "wallet not read yet");
+    if (!(nowMs - this.solAt < SOL_FRESH_MS)) return set("probe", `SOL balance not read in 10 s${this.solErr ? `: ${this.solErr}` : ""}`);
+    return set("live", "live");
+  }
+
+  // ---------------------------------------------------------------- selection: a to g
+  async #select(nowMs) {
+    let n = 0;
+    for (const [mint, pick] of [...this.picks]) {
+      if (this.st.intent || this.flow || n >= 8) break;
+      this.picks.delete(mint);
+      if (nowMs - pick.seenAt > 60_000) continue;                        // a stale signal is no signal
+      if (this.seen.has(mint) && nowMs - this.seen.get(mint) < 60_000) continue;
+      this.seen.set(mint, nowMs);
+      if (this.seen.size > 2000) this.seen.delete(this.seen.keys().next().value);
+      n++;
+      await this.consider(pick, nowMs);
+    }
+  }
+
+  #skip(letter, pick, why) {
+    this.log({ type: "real-skip", letter, mint: pick.row.a, symbol: pick.row.s, why });
+    return { ok: false, letter, why };
+  }
+
+  /** One signal through a-g. LIVE: a card. PROBE: 'would buy', nothing else. */
+  async consider(pick, nowMs = this.now()) {
+    const live = this.mode === "live", st = this.st, mint = pick.row.a;
+    st.counters.signals++;
+    this.log({ type: "real-signal", mint, symbol: pick.row.s, mode: this.mode });
+    // a
+    if (st.intent || st.position || this.flow) return this.#skip("a", pick, "a trade is already open");
+    if (st.halted) return this.#skip("a", pick, `halted: ${st.halted.why}`);
+    if (st.done) return this.#skip("a", pick, "done: $2,000 reached");
+    if (st.paused && nowMs < st.paused.until) return this.#skip("a", pick, `paused: ${st.paused.why}`);
+    if (!this.wallet || !(nowMs - this.solAt < SOL_FRESH_MS) || !st.solUsd) return this.#skip("a", pick, "wallet not read in the last 10 s");
+    // b: always a Fibonacci entry (the same fibSetup symbiot uses), on 34 candles
+    const cs = Array.isArray(pick.cs) ? pick.cs.slice(-34) : null;
+    const fib = fibSetup(cs);
+    if (!fib) return this.#skip("b", pick, "no Fibonacci pocket on 34 candles");
+    // c: exactly the key symbiot files this coin under
+    const combo = [...liteShape(pick.row, pick.nowMs ?? nowMs), "e:fib"].join("|");
+    // d
+    const T = P.targetFor(st.step.no), bal = this.#balUsd(), stake = P.stakeFor(this.#ledger(), bal);
+    try { P.assertNoMartingale(st.lastStake, stake, st.afterLoss); } catch (e) { this.#halt(e.message); return this.#skip("d", pick, e.message); }
+    const sim = this.sim || { proof: {}, cfg: {} };
+    const f = floors(this.cfg && !this.cfg.error ? this.cfg : {});
+    const bucket = sim.proof && sim.cfg ? sim.proof[rulesKey(sim.cfg)] || null : null;
+    const stat = bucket && bucket.keys && bucket.keys[combo] ? bucket.keys[combo][T] : null;
+    const cRt = assumedRt(stat, stake);
+    const pr = proven(sim.proof, combo, T, { ...sim.cfg, ...f, cRt, stakeUsd: stake }, nowMs);
+    if (!pr.ok) { st.counters.gated++; return this.#skip("d", pick, pr.why); }
+    // e: not traded by real in 24 h; security from one priority read
+    if (st.recent[mint] && nowMs - st.recent[mint] < RECENT_MS) return this.#skip("e", pick, "traded by real in the last 24 h");
+    const fi = await this.src.feeInfo(mint, { priority: true }).catch(() => null);
+    const sec = fi && fi.security;
+    if (!sec) return this.#skip("e", pick, "no security read");
+    if (sec.renounced_mint !== true) return this.#skip("e", pick, "mint authority not renounced");
+    if (sec.renounced_freeze_account !== true) return this.#skip("e", pick, "freeze authority not renounced");
+    if (sec.can_not_sell === true || num(sec.can_not_sell) === 1) return this.#skip("e", pick, "can not sell");
+    const buyTax = num(sec.buy_tax) || 0, sellTax = num(sec.sell_tax) || 0;
+    if (buyTax + sellTax > MAX_TAX + 1e-12) return this.#skip("e", pick, `tax ${pc(buyTax + sellTax)}%`);
+    const pool = ((fi && fi.pool_fee_info_list) || []).slice().sort((a, b) => (num(b.liquidity) || 0) - (num(a.liquidity) || 0))[0] || null;
+    const lq = num(pick.row.lq);
+    if (!(lq >= MIN_LQ)) return this.#skip("e", pick, lq === null ? "pool size unknown" : `pool $${Math.round(lq)} under $8k`);
+    // f: the measured round trip is no dearer than the one the proof assumed
+    const poolFee = pool ? num(pool.fee_ratio) : null;
+    if (poolFee === null) return this.#skip("f", pick, "pool fee unknown");
+    const rt = 2 * poolFee + buyTax + sellTax + P.PLAN_NET_USD / stake;
+    if (rt > cRt + 1e-9) return this.#skip("f", pick, `round trip ${(rt * 100).toFixed(1)}% over the proof's ${(cRt * 100).toFixed(1)}%`);
+    // g
+    const solUsd = st.solUsd, stakeSol = Math.floor((stake / solUsd) * 1e4 + 1e-6) / 1e4;
+    if (!(stake <= P.MAX_STAKE_USD)) return this.#skip("g", pick, "stake over the cap");
+    if (!(stakeSol > 0) || stakeSol + RESERVE_SOL > st.balanceSol + 1e-12) return this.#skip("g", pick, `${stakeSol} SOL + 0.01 reserve is more than the wallet's ${st.balanceSol} SOL`);
+    const signalPx = cs[cs.length - 1].c;
+    const base = { mint, symbol: pick.row.s, combo, target: T, stakeUsd: stake, stakeSol, solUsd, signalPx, fib, rt, proof: { n: pr.n, w: pr.w, need: pr.need }, bal };
+    if (!live) {
+      if (!(this.wouldSeen.get(mint) > nowMs - RECENT_MS)) { this.wouldSeen.set(mint, nowMs); this.would.n++; }
+      this.would.last = { symbol: pick.row.s, mint, step: st.step.no, target: T, stakeUsd: stake, at: nowMs };
+      this.log({ type: "real-signal", would: true, why: `would buy $${pick.row.s} at step ${st.step.no} (+${pc(T)}%), $${stake.toFixed(2)}`, mint, symbol: pick.row.s });
+      return { ok: true, would: true, ...base };
+    }
+    // LIVE: the card. PROPOSED is on disk before Alex sees it.
+    const intent = {
+      id: id(), kind: "buy", mint, symbol: pick.row.s, step: { no: st.step.no, attempt: st.step.attempt }, stakeUsd: stake, stakeSol, solUsd, signalPx,
+      card: { id: id(), shownAt: nowMs, expiresAt: nowMs + CARD_MS }, approvedAt: null, clickedAt: null, state: "PROPOSED", why: pr.why, at: nowMs,
+      combo, target: T, rules: { ...rulesOf(bucket.rules || sim.cfg), sl: P.SL }, balIn: bal, rt, entryLq: lq, entryPoolLq: pool ? num(pool.liquidity) : null,
+      ageMin: this.#ageMin(pick.row, nowMs), fib: { retr: fib.retr, move: fib.move }, proof: { n: pr.n, w: pr.w, need: pr.need },
+    };
+    st.counters.cards++;
+    this.#commit("real-card", { intent });
+    const card = this.cardFor(intent);
+    this.flow = this.#run(() => this.#cardFlow(intent, card));
+    return { ok: true, card, ...base };
+  }
+
+  #ageMin(row, nowMs) { const c = num(row.ct) || num(row.ot); return c ? Math.max(0, Math.round((nowMs / 1000 - c) / 60)) : null; }
+
+  /** The 7 lines Alex reads before he spends. */
+  cardFor(it) {
+    const pool = it.entryLq >= 1000 ? `$${Math.round(it.entryLq / 1000)}k` : `$${Math.round(it.entryLq || 0)}`;
+    return {
+      id: it.card.id, kind: "real-buy", intentId: it.id, expiresAt: it.card.expiresAt,
+      title: `REAL buy · step ${it.step.no} of ${P.STEPS}`,
+      lines: [
+        `$${it.symbol} · ${short(it.mint)} · ${it.ageMin === null ? "age unknown" : `${it.ageMin} min old`} · pool ${pool}`,
+        `Spend ${it.stakeSol.toFixed(4)} SOL ($${it.stakeUsd.toFixed(2)}), ${((it.stakeUsd / it.balIn) * 100).toFixed(1)}% of $${it.balIn.toFixed(2)}`,
+        `Sell at +${pc(it.target)}% · stop −15% · auto exits on`,
+        `Sim proof: ${it.proof.w} of ${it.proof.n} won after fees (needs ${pc(it.proof.need)}%)`,
+        `Golden pocket ${it.fib.retr.toFixed(2)} of a +${pc(it.fib.move)}% move · fees ${(it.rt * 100).toFixed(1)}% round trip`,
+        `Closes in ${Math.round(CARD_MS / 1000)} s`,
+      ],
+      choices: [{ id: "buy", label: `Buy ${it.stakeSol.toFixed(4)} SOL` }, { id: "skip", label: "Skip" }],
+    };
+  }
+
+  async #cardFlow(intent, card) {
+    let res = "expired";
+    if (this.cards && typeof this.cards.showTradeCard === "function") {
+      // the token is minted only inside desk.decide, on Alex's trusted press of Buy
+      try { res = await this.cards.showTradeCard(card, { ttlMs: CARD_MS, mint: () => this.door.mint(intent.id) }); } catch { res = "expired"; }
+    }
+    const choice = typeof res === "string" ? res : res && res.choice;
+    await this.decide(intent.id, choice, res && typeof res === "object" ? res.token : null);
+  }
+
+  /**
+   * Alex's answer to a card. A second answer, a late one or one for another card does nothing:
+   * the check and the PROPOSED -> APPROVED write happen with no await between them.
+   */
+  async decide(intentId, choice, token = null) {
+    const it = this.st.intent, now = this.now();
+    if (!it || it.id !== intentId || it.state !== "PROPOSED") { this.log({ type: "real-skip", letter: "card", why: `answer ignored: the card is ${it && it.id === intentId ? it.state : "gone"}` }); return { ok: false }; }
+    if (choice === "skip") { this.st.counters.skipped++; this.#to("real-skip", ["PROPOSED"], "SKIPPED", { why: "Alex skipped" }); return { ok: true, state: "SKIPPED" }; }
+    if (choice !== "buy" || now > it.card.expiresAt) { this.st.counters.expired++; this.#to("real-skip", ["PROPOSED"], "EXPIRED", { why: choice === "buy" ? "pressed after 45 s" : `card ${choice || "expired"}` }); return { ok: true, state: "EXPIRED" }; }
+    if (this.mode !== "live") { this.st.counters.skipped++; this.#to("real-skip", ["PROPOSED"], "SKIPPED", { why: `not LIVE any more: ${this.why}` }); return { ok: true, state: "SKIPPED" }; }
+    const ap = this.#to("real-approve", ["PROPOSED"], "APPROVED", { approvedAt: now });
+    await this.#buy(ap, token);
+    return { ok: true };
+  }
+
+  #stale(why) { this.st.counters.stale++; this.#to("real-skip", ["APPROVED"], "STALE", { why }, { recent: { ...this.st.recent, [this.st.intent.mint]: this.now() } }); }
+
+  async #buy(it, token) {
+    const mint = it.mint;
+    // the price again: more than 3% above the card, or the pocket gone, and nothing is clicked
+    const cs = await this.src.candles(mint, "1m", 34, { priority: true }).catch(() => null);
+    const px = Array.isArray(cs) && cs.length ? cs[cs.length - 1].c : null;
+    if (!(px > 0)) return this.#stale("no price on the requote");
+    if (px > it.signalPx * (1 + REQUOTE_UP)) return this.#stale(`price up ${((px / it.signalPx - 1) * 100).toFixed(1)}% since the card`);
+    if (!fibSetup(cs.slice(-34))) return this.#stale("the Fibonacci pocket is gone");
+    const before = await this.#tokens(mint);
+    if (!before) return this.#stale("wallet token read failed");
+    const c = this.cfg, rec = this.#record(), url = this.#tokenUrl(mint);
+    try { await this.panel.open(url); this.verify = await this.panel.verify(c.selectors, rec); }
+    catch (e) { this.verify = { ok: false, at: this.now(), why: String(e.message || e).slice(0, 120) }; }
+    this.#modeEval(this.now());
+    if (!this.verify.ok || this.mode !== "live") return this.#stale(`not LIVE at the click: ${this.why}`);
+    let r;
+    const sel = c.selectors;
+    const selRecord = { controls: SEL_KEYS.filter((k) => sel[k]).map((k) => ({ role: sel[k].role, name: sel[k].name })) };
+    try {
+      r = await this.door.execute("buy", it, token, {
+        url, sel, wallet: c.wallet, maxSlip: MAX_SLIP,
+        beforeClick: () => { this.#to("real-click", ["APPROVED"], "CLICKING", { clickedAt: this.now(), tokensBefore: before.raw, sel, selRecord }); },
+      });
+    } catch (e) {
+      if (this.dead) throw e;
+      if (this.st.intent && this.st.intent.state === "APPROVED") return this.#stale(String(e.message || e).slice(0, 160));
+      r = { ok: true, clicked: "unknown", error: String(e.message || e) };
+    }
+    if (!r || !r.ok) { if (this.st.intent && this.st.intent.state === "APPROVED") return this.#stale(r && r.stale || "the panel refused"); }
+    if (!this.st.intent || this.st.intent.state !== "CLICKING") return;
+    this.#to("real-sent", ["CLICKING"], "SENT", { why: r.clicked === true ? "clicked once" : `click unclear: ${r.error || ""}`.slice(0, 120) });
+    await this.#confirm();
+  }
+
+  /** Up to 90 s from the click: tokens on the chain -> OPEN; none -> NOT_LANDED. No re-click. */
+  async #confirm() {
+    const it = this.st.intent;
+    if (!it) return;
+    const before = BigInt(it.tokensBefore || "0");
+    for (;;) {
+      const tb = await this.#tokens(it.mint);
+      if (tb && BigInt(tb.raw) > before) return this.#landed(tb);
+      if (this.now() - (it.clickedAt || it.at) >= CONFIRM_MS) break;
+      await this.sleep(2_000);
+    }
+    this.st.counters.notLanded++;
+    this.#to("real-fill", ["CLICKING", "SENT"], "NOT_LANDED", { why: "no tokens after 90 s" }, { recent: { ...this.st.recent, [it.mint]: this.now() } });
+  }
+
+  async #fills(mint, sinceMs, sign) {
+    const sigs = this.wallet ? await this.wallet.recentSigs(20).catch(() => []) : [];
+    const out = [];
+    for (const s of sigs) {
+      if (s.err || (s.at && s.at < sinceMs - 15_000)) continue;
+      const f = await this.wallet.txFill(s.sig, mint).catch(() => null);
+      if (f && f.ok && Math.sign(f.tokenDelta || 0) === sign) out.push(f);
+    }
+    return out;
+  }
+
+  async #landed(tb) {
+    const it = this.st.intent, now = this.now();
+    const fills = await this.#fills(it.mint, it.clickedAt || it.at, +1);
+    const f = fills[0] || null;
+    const solIn = f ? -f.solDelta : it.stakeSol;
+    const tokens = f ? f.tokenDelta : tb.ui;
+    const cs = await this.src.candles(it.mint, "1m", 2, { priority: true }).catch(() => null);
+    const entryMcap = Array.isArray(cs) && cs.length && cs[cs.length - 1].c > 0 ? cs[cs.length - 1].c : it.signalPx;
+    const pos = {
+      id: id(), mint: it.mint, symbol: it.symbol, combo: it.combo, target: it.target, rules: it.rules, step: { ...it.step },
+      buy: { intentId: it.id, sig: f ? f.sig : null, solIn, tokens, feesSol: f ? f.feeSol : null, at: it.clickedAt || now, usd: solIn * it.solUsd, estimated: !f },
+      entryMcap, last: entryMcap, move: 0, peak: 0, peakAll: 0, lowAll: 0, pnlUsd: 0, state: "OPEN", sell: null, why: f ? null : "entry estimated",
+      stakeUsd: it.stakeUsd, balIn: it.balIn, solUsd: it.solUsd, entryPoolLq: it.entryPoolLq, lastPxAt: now, rugAt: now,
+      sel: it.sel, selRecord: it.selRecord, sellVerified: true,
+    };
+    this.#to("real-fill", ["CLICKING", "SENT"], "CONFIRMED", { why: f ? `filled: ${solIn.toFixed(4)} SOL for ${tokens}` : "tokens arrived; entry estimated" }, {
+      position: pos, ledgerSol: (this.st.ledgerSol ?? this.st.balanceSol ?? 0) - solIn, recent: { ...this.st.recent, [it.mint]: now },
+    });
+  }
+
+  // ---------------------------------------------------------------- exits, every tick
+  async #manage(nowMs) {
+    const p = this.st.position;
+    if (p.state === "SELLING") return this.#sellCheck(nowMs);
+    if (p.state !== "OPEN") return;
+    let move = null;
+    const cs = await this.src.candles(p.mint, "1m", 2, { priority: true }).catch(() => null);
+    const px = Array.isArray(cs) && cs.length ? num(cs[cs.length - 1].c) : null;
+    if (px > 0) {
+      p.last = px; p.lastPxAt = nowMs; move = px / p.entryMcap - 1;
+      track(p, move);
+      p.move = +move.toFixed(6); p.pnlUsd = r2(p.buy.usd * move);
+    }
+    let why = null;
+    if (this.manual) why = "manual";
+    if (!why && nowMs - (p.rugAt || 0) >= RUG_MS) {
+      p.rugAt = nowMs;
+      const fi = await this.src.feeInfo(p.mint, { priority: true }).catch(() => null);
+      const sec = fi && fi.security;
+      const pool = ((fi && fi.pool_fee_info_list) || []).slice().sort((a, b) => (num(b.liquidity) || 0) - (num(a.liquidity) || 0))[0];
+      const lq = pool ? num(pool.liquidity) : null;
+      if (sec && (sec.can_not_sell === true || num(sec.can_not_sell) === 1)) why = "stop: rug radar";
+      else if (p.entryPoolLq > 0 && lq !== null && lq <= p.entryPoolLq * (1 - RUG_DROP)) why = "stop: rug radar";
+    }
+    if (!why && move !== null) why = exitReason(p, move, nowMs - p.buy.at, { ...p.rules, tp: p.target });
+    if (!why && nowMs - (p.lastPxAt || p.buy.at) > BLIND_MS) why = "stop: blind";
+    if (!why) return;
+    this.manual = false;
+    const solBefore = this.wallet ? await this.wallet.solBalance().catch(() => this.st.balanceSol) : this.st.balanceSol;
+    this.#pos("real-exit", ["OPEN"], "SELLING", { why, exitMove: p.move, resumed: false, sell: { tries: 0, at: nowMs, lastTry: 0, solBefore } });
+    await this.#sellTry(nowMs);
+  }
+
+  #dust(tb, p) { return !tb || BigInt(tb.raw) === 0n || tb.ui <= (p.buy.tokens || 0) * 0.001; }
+
+  async #sellTry(nowMs) {
+    const p = this.st.position;
+    const tb = await this.#tokens(p.mint);
+    if (tb && this.#dust(tb, p)) return this.#close(nowMs);
+    if (p.sell.tries >= SELL_TRIES) return this.#stuck();
+    const url = this.#tokenUrl(p.mint), sel = p.sel || (this.cfg && this.cfg.selectors);
+    const pending = this.#pos("real-exit", ["SELLING"], "SELLING", { sell: { ...p.sell, tries: p.sell.tries + 1, lastTry: nowMs } });
+    if (p.sell.tries > 0) this.st.counters.sellRetries++;
+    try { await this.panel.open(url); this.verify = await this.panel.verify(sel, p.selRecord || this.#record(), ["sellTab", "amount", "walletLabel"]); }
+    catch (e) { this.verify = { ok: false, at: this.now(), why: String(e.message || e).slice(0, 120) }; }
+    if (!this.verify.ok) { this.log({ type: "real-exit", mint: p.mint, symbol: p.symbol, why: `sell not clicked: ${this.verify.why}` }); return; }
+    try {
+      const r = await this.door.execute("sell", pending, null, {
+        url, sel, wallet: this.st.wallet, expectTokens: tb ? tb.ui : p.buy.tokens,
+        beforeClick: () => { this.#pos("real-sell-click", ["SELLING"], "SELLING", { sell: { ...this.st.position.sell, clickedAt: this.now() } }); },
+      });
+      if (!r || !r.ok) this.log({ type: "real-exit", mint: p.mint, symbol: p.symbol, why: `sell not clicked: ${r && r.stale || "refused"}` });
+    } catch (e) { if (this.dead) throw e; this.log({ type: "real-exit", mint: p.mint, symbol: p.symbol, why: `sell refused: ${String(e.message || e).slice(0, 120)}` }); }
+  }
+
+  async #sellCheck(nowMs) {
+    const p = this.st.position;
+    if (p.resumed || p.sell.tries === 0) { p.resumed = false; return this.#sellTry(nowMs); }   // after a restart: at once
+    if (nowMs - p.sell.lastTry < SELL_CHECK_MS) return;
+    const tb = await this.#tokens(p.mint);
+    if (tb && this.#dust(tb, p)) return this.#close(nowMs);
+    if (!tb) return;
+    const sigs = this.wallet ? await this.wallet.recentSigs(5).catch(() => []) : [];
+    const pending = sigs.some((s) => !s.err && s.status !== "finalized" && (!s.at || s.at >= p.sell.lastTry - 5_000));
+    if (pending && nowMs - p.sell.lastTry < 2 * SELL_CHECK_MS) return;
+    if (this.st.halted) return;                                       // stuck: Alex sells by hand; the close is still seen
+    if (p.sell.tries >= SELL_TRIES) return this.#stuck();
+    await this.#sellTry(nowMs);
+  }
+
+  #stuck() {
+    const p = this.st.position;
+    if (this.st.halted && /sell/.test(this.st.halted.why)) return;
+    this.#halt(`the sell of $${p.symbol} did not go through after ${SELL_TRIES} tries`);
+    const card = { kind: "real-alert", title: `Sell $${p.symbol} on GMGN now`, lines: [`${short(p.mint)} · ${p.why}`, `${SELL_TRIES} sell clicks left tokens in the wallet.`, "Open the coin on GMGN and sell 100%."], choices: [{ id: "ok", label: "OK" }] };
+    this.alert = card;
+    try { const x = this.cards && (this.cards.alert ? this.cards.alert(card) : this.cards.showTradeCard(card, { ttlMs: 10 * 60_000 })); if (x && x.catch) x.catch(() => {}); } catch { /* the heartbeat carries it too */ }
+  }
+
+  async #close(nowMs) {
+    const p = this.st.position;
+    const solAfter = this.wallet ? await this.wallet.solBalance().catch(() => null) : null;
+    const fills = await this.#fills(p.mint, p.sell.at, -1);
+    const solOut = fills.length ? fills.reduce((s, f) => s + f.solDelta, 0) : solAfter !== null ? solAfter - p.sell.solBefore : 0;
+    const feesSol = fills.reduce((s, f) => s + (f.feeSol || 0), 0);
+    const solUsd = this.st.solUsd || p.solUsd;
+    const bal = solAfter !== null ? solAfter : (this.st.balanceSol ?? 0) + solOut;
+    const move = Number.isFinite(p.exitMove) ? p.exitMove : p.move || 0;
+    const solIn = p.buy.solIn, netSol = solOut - solIn;
+    const row = {
+      no: p.step.no, attempt: p.step.attempt, balIn: r2(p.balIn), stake: r2(p.stakeUsd), target: p.target,
+      feesPlan: r2(P.feesPlan(p.stakeUsd, move)), feesMeasured: r2((solIn * (1 + move) - solOut) * solUsd),
+      out: r2(solOut * solUsd), profit: r2(netSol * solUsd), balAfter: r2(bal * solUsd), why: p.why, mint: p.mint, symbol: p.symbol,
+      feesSol: { buy: p.buy.feesSol, sell: feesSol || null }, seq: (this.st.seq || 0) + 1,
+    };
+    const prevBal = p.balIn;
+    const L = P.onClose(this.#ledger(), { net: netSol, stake: p.stakeUsd, balUsd: bal * solUsd, nowMs });
+    const closed = { ...p, state: "CLOSED", sell: { ...p.sell, solOut, feesSol, at2: nowMs } };
+    this.#commit("real-close", { position: null, ...L, balanceSol: bal, ledgerSol: (this.st.ledgerSol ?? 0) + solOut }, { closed, row, why: p.why });
+    this.solAt = this.now();
+    this.log({ type: "real-step", no: row.no, attempt: row.attempt, profit: row.profit, balAfter: row.balAfter, next: L.step });
+    for (const g of P.GOALS) if (prevBal < g && bal * solUsd >= g) this.log({ type: "real-goal", goal: g, balance: row.balAfter });
+    if (L.halted) this.log({ type: "real-halt", why: L.halted.why, until: L.halted.until });
+    if (L.paused) this.log({ type: "real-halt", pause: true, why: L.paused.why, until: L.paused.until });
+    await this.#drift("close");
+  }
+
+  /** Ledger SOL against the wallet: a rise with no fill is a deposit; unknown coins are listed, never sold. */
+  async #drift(when) {
+    if (!this.wallet) return;
+    const sol = await this.wallet.solBalance().catch(() => null);
+    if (sol === null) return;
+    this.st.balanceSol = sol; this.solAt = this.now();
+    if (this.st.ledgerSol === null || this.st.ledgerSol === undefined) { this.st.ledgerSol = sol; return; }
+    const gapSol = sol - this.st.ledgerSol, usd = gapSol * (this.st.solUsd || 0);
+    if (Math.abs(usd) > 0.05) {
+      if (usd > 0) this.st.deposits = r2((this.st.deposits || 0) + usd);
+      this.log({ type: "real-drift", when, gapSol: +gapSol.toFixed(9), usd: r2(usd), counted: usd > 0 ? "deposit" : "unexplained loss (rent, fees or a withdrawal)" });
+    }
+    this.st.ledgerSol = sol;
+    const held = typeof this.wallet.tokens === "function" ? await this.wallet.tokens().catch(() => []) : [];
+    const unknown = held.filter((t) => t.mint !== (this.st.position && this.st.position.mint));
+    if (unknown.length) this.log({ type: "real-drift", when, unknown: unknown.map((t) => ({ mint: t.mint, ui: t.ui })), note: "listed, never sold" });
+    this.#save();
+  }
+
+  // ---------------------------------------------------------------- what the panel and Claude read
+  state(nowMs = this.now()) {
+    const st = this.st;
+    if (st.halted) return "HALTED";
+    if (st.done) return "DONE";
+    if (st.position) return st.position.state === "SELLING" ? "SELLING" : "OPEN";
+    if (st.intent) return st.intent.state === "PROPOSED" ? "CARD" : st.intent.state === "SENT" ? "CONFIRMING" : "BUYING";
+    if (st.paused && nowMs < st.paused.until) return "PAUSED";
+    return "IDLE";
+  }
+
+  /** bd.real, written every second into .trader-board (inapp.mjs). */
+  board(nowMs = this.now()) {
+    const st = this.st, bal = this.#balUsd(), L = this.#ledger();
+    const p = st.position, it = st.intent;
+    const openValue = p ? p.buy.usd * (1 + (p.move || 0)) : 0;
+    const balanceUsd = bal === null ? null : r2(bal);
+    const latest = this.probes[0] || null;
+    const state = this.state(nowMs);
+    const halt = st.halted ? { why: st.halted.why, until: st.halted.until } : st.paused && nowMs < st.paused.until ? { why: st.paused.why, until: st.paused.until } : null;
+    let why = this.why;
+    if (state === "SELLING" && this.panel && this.panel.walletKind === "phantom") why = "confirm the sell in Phantom";
+    else if (halt) why = halt.why;
+    return {
+      connected: !!this.wallet && nowMs - this.solAt < 30_000, mode: this.mode, state,
+      step: st.step.no, of: P.STEPS, attempt: st.step.attempt, target: P.targetFor(st.step.no),
+      stakeUsd: bal === null ? null : P.stakeFor(L, bal), balanceUsd, balanceSol: st.balanceSol, startUsd: st.startUsd, goalUsd: P.GOAL_USD,
+      progress: bal === null ? 0 : +P.progress(bal, st.startUsd).toFixed(4), nextGoal: bal === null ? P.GOALS[0] : P.nextGoal(bal),
+      stepGoal: bal === null ? null : r2(P.stepGoal(L, bal)),
+      pnlUsd: bal === null ? null : r2(bal + openValue - st.startUsd - (st.deposits || 0)),
+      trades: st.trades, wins: st.wins, losses: st.losses,
+      open: p ? [{ symbol: p.symbol, mint: p.mint, move: +(p.move || 0).toFixed(4), pnlUsd: r2(p.pnlUsd || 0), target: p.target, stop: P.SL, ageS: Math.max(0, Math.round((nowMs - p.buy.at) / 1000)), state: p.state }] : [],
+      probe: latest ? { at: latest.at, ok: latest.ok, controls: latest.controls.filter((c) => c.inTradeBox).length, walletKind: latest.walletKind, walletAddr: latest.walletAddr, why: latest.why } : null,
+      would: this.would.n ? { n: this.would.n, last: this.would.last } : null,
+      card: it && it.state === "PROPOSED" ? { kind: "real-buy", expiresAt: it.card.expiresAt } : this.alert && st.halted ? { kind: "real-alert", expiresAt: null } : null,
+      halt, why, at: nowMs,
+    };
+  }
+
+  /** trader.state().real: the board plus what Claude needs to read a probe through ultra_status. */
+  status(nowMs = this.now()) {
+    return { ...this.board(nowMs), disabled: this.disabled || null, cfg: this.cfg ? { mode: this.cfg.mode, error: this.cfg.error || null, selectorsFrom: this.cfg.selectorsFrom || null } : null, verify: this.verify, probeReport: this.probeRep || null, counters: this.st.counters, steps: this.st.steps.slice(-5) };
+  }
+
+  async stop() { await this.settle().catch(() => {}); this.store.unlock(); }
+}
