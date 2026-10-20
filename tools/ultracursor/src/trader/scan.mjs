@@ -99,6 +99,9 @@ export class Sniper {
       }
       const d = decide(feat, { memory: this.memory, inRecovery: this.book.ladder.inRecovery() });
       tiers[d.tier]++;
+      // build 9: what blocks a trade, counted, so it can be read from the status
+      this.why = this.why || {};
+      for (const f of d.failed || []) this.why[f] = (this.why[f] || 0) + 1;
       live.add(a);
       this.cands.set(a, { row, symbol: row.s, tier: d.tier, at: nowMs, gatePass: !!g?.pass });
       const id = this.#journal(a, row.s, d, `${d.decision}:${d.failed.join(",")}`);

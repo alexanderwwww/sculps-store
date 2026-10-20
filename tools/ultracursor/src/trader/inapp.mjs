@@ -91,11 +91,11 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     const sniper = new Sniper({ src: gm, book, memory, log: write });
     const lanes = new Lanes({ log: write });
     lanes
-      .add("scan", 3000, (t) => sniper.scanLane(t))
+      .add("scan", 3000, async (t) => { const r = await sniper.scanLane(t); run && (run.lastScan = r); return r; })
       .add("narrative", 5000, (t) => sniper.narrativeLane(t))
       .add("positions", 2000, async (t) => { await sniper.positionLane(t); fs.writeFileSync(STATE, JSON.stringify(book.toJSON())); board(); });
     const done = lanes.run().catch((e) => { lastError = String(e.message || e); });
-    run = { lanes, gm, memory, book, done };
+    run = { lanes, gm, memory, book, done, sniper };
     board();
     log(`trader started in the app (training, fake money): GMGN in a background tab, memory ${Math.round(memory.bytes() / 1024)} KB`);
   }
@@ -132,6 +132,6 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
   return {
     want, set, tick, stop,
     running: () => !!run,
-    state: () => ({ want: want(), running: !!run, starting, lastError, gmgnCalls: run ? run.gm.calls : 0, gmgnErrors: run ? run.gm.errors : 0, book: run ? run.book.summary() : null }),
+    state: () => ({ want: want(), running: !!run, starting, lastError, gmgnCalls: run ? run.gm.calls : 0, gmgnErrors: run ? run.gm.errors : 0, book: run ? run.book.summary() : null, lastScan: run ? run.lastScan || null : null, blocks: run && run.sniper ? Object.entries(run.sniper.why || {}).sort((a, b) => b[1] - a[1]).slice(0, 8) : null }),
   };
 }
