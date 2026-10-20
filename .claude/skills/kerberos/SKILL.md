@@ -622,3 +622,6 @@ Name: **ultra** (Alex: "call it ultra because it's going to be made with ultra c
 Source: the scratchpad page published as the claude.ai artifact https://claude.ai/artifact/QzVEfdwf7jPFEypweCzKxA (neutral link; Alex shares it from the page's Share menu).
 Never send Mark a kerberos.gardenbuddystore.workers.dev link: Alex does not want "gardenbuddy" visible. A clean ultracursor.pages.dev needs Cloudflare Pages permission on the API token (the current token is refused with code 10000), or a bought domain.
 Do not redeploy the Worker for this: Codex's live release is not on this branch.
+
+## 2026-10-20 outage: Neon quota
+blackreaper.us and the admin returned Cloudflare 1101 (the worker threw). The cause was Neon answering HTTP 402 "exceeded the quota" on the free plan. The code was not the problem. Alex upgraded at https://console.neon.tech/app/billing and the site came back with no redeploy (healthz `{"ok":true,"db":"up"}`). If 1101 appears again, first test the DB directly with `neon(process.env.DATABASE_URL)` before touching code.
