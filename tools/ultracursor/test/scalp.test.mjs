@@ -113,5 +113,11 @@ const lo = new Scalp({ src: fsrc, start: 0, stake: 1.618, quote: async () => ({ 
 lo.configure({ maxRt: 0.01 });
 await lo.scanLane(now0);
 ok("lowest fees: only the coin whose pool fee fits (0.25% a side) is bought", lo.open.size === 1 && lo.open.has("F") && lo.summary().costSkips === 2, lo.summary());
+// build 35: symbiot never refuses a coin because of a lesson
+const nb = new Scalp({ src: { ...src, candles: async () => [{ t: 1, o: 1, h: 1, l: 1, c: 1, v: 1 }] }, start: 0, stake: 1.618, quote });
+for (const k of ["age1", "lq1", "h0", "src:trending", "e:any"]) nb.learn[k] = { n: 50, w: 0, pnl: -5, until: 999 };
+await nb.scanLane(now0);
+ok("symbiot keeps buying even with losing lessons on record (it farms)", nb.open.size === 3 && nb.skips === 0, nb.summary());
+ok("symbiot files each trade by age, pool, hour and source", [...nb.open.values()].every((p) => p.shape.some((k) => k.startsWith("age")) && p.shape.some((k) => k.startsWith("src:"))), [...nb.open.values()].map((p) => p.shape));
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

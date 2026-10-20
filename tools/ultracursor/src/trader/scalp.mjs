@@ -109,6 +109,19 @@ export function fibSetup(cs) {
   return { hi, lo, retr: +retr.toFixed(3), stop: floor * 0.995, target: hi * 0.995, move: +(hi / lo - 1).toFixed(3) };
 }
 
+/** What symbiot knows about a coin without reading its chart. */
+export function liteShape(row, nowMs) {
+  const b = (x, cuts) => { const i = cuts.findIndex((c) => x < c); return i === -1 ? cuts.length : i; };
+  const created = num(row.ct) || num(row.ot);
+  const ageMin = created ? (nowMs / 1000 - created) / 60 : null;
+  return [
+    ageMin === null ? "age?" : `age${b(ageMin, [3, 13, 55, 233])}`,
+    num(row.lq) === null ? "lq?" : `lq${b(num(row.lq), [8_000, 21_000, 55_000, 144_000])}`,
+    `h${Math.floor(new Date(nowMs).getUTCHours() / 6)}`,
+    row.seen ? "src:trenches" : "src:trending",
+  ];
+}
+
 export class Scalp {
   constructor({ src, log = () => {}, start = 10, stake = null, quote = null }) {
     this.src = src; this.log = log; this.stake = stake;
@@ -158,9 +171,13 @@ export class Scalp {
       if (this.open.size >= this.cfg.maxOpen) continue;
       if (this.cfg.readChart && !fib && !ign) continue;
       if (!Array.isArray(cs) || !cs.length) continue;
-      const shape = cs.length >= 12 ? shapeOf(cs, r, nowMs) : [`young`];
+      // build 35: symbiot files every trade by what is known without a chart (age, pool,
+      // hour, where the coin came from); with a chart, the chart shape as before
+      const shape = cs.length >= 12 ? shapeOf(cs, r, nowMs) : liteShape(r, nowMs);
       shape.push(fib ? "e:fib" : ign ? "e:ign" : "e:any");
-      const bad = this.badPart(shape);
+      // symbiot farms: its lessons are recorded, never used to refuse a coin (that blocked
+      // all 7,417 coins on Alex's Mac). Only the chart side (readChart) acts on them.
+      const bad = this.cfg.readChart ? this.badPart(shape) : null;
       if (bad) { this.skips++; this.log({ type: "learned-skip", lane: "fast", symbol: r.s, shape: bad }); continue; }
       const eq = this.equity();
       // build 29 (Alex: "infinite balance"): the stake is always 1.618 SOL, cash never blocks a trade
