@@ -119,3 +119,4 @@ The trader inside ultracursor is called **symbiot**. It's part of Alex's ecosyst
 - Build 34: checks the coin's pool fee + tax (GMGN token_fee_info) before buying; skips when over cfg.maxRt. Live settings now: maxRt 0.03, maxOpen 89, perScan 89.
 - Build 33 zip: https://blackreaper.us/media/ultracursor-33-46a01c7f9aa91072.zip
 - Build 32 (shipped): symbiot buys every coin with no chart (readChart false), price from 2 candles; every symbiot number lives in `DEFAULTS` in scalp.mjs and can be overridden live from R2 `symbiot.json` (no hardcoding; Alex: "flexible").
+- **Super farming** (Alex, 2026-10-20): symbiot running nonstop to gather knowledge. While it runs, Claude takes a status snapshot about every 30 minutes and appends it to `design/symbiot/farm-log.md` (trades, W/L, plus/minus/net, fees, open, settings, notes on what it shows).
