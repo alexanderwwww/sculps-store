@@ -17,7 +17,7 @@ const s = new Scalp({ src, log: (e) => log.push(e), quote: async () => ({ ok: tr
 ok("momentum: rising closes + volume -> yes; flat -> no", momentum(rising(1)) && !momentum(flat(1)));
 ok("rug check refuses a 1-minute-old coin", !rugOk(rows[4], sec) && rugOk(rows[0], sec));
 await s.scanLane(now0);
-ok("buys up to 3 at once, never the flat coin or the rug", s.open.size === 3 && !s.open.has("D") && !s.open.has("RUG"), [...s.open.keys()]);
+ok("buys every rising coin (max 5 open), never the flat coin or the rug", s.open.size === 3 && !s.open.has("D") && !s.open.has("RUG"), [...s.open.keys()]);
 ok("never more than 61.8% of equity in play", s.inPlay() <= 10 * 0.618 + 1e-9, s.inPlay());
 // A pumps +15%, B dumps -10%, C goes nowhere
 prices.A = rising(1)[29].c * 1.15; prices.B = rising(1)[29].c * 0.9; prices.C = rising(1)[29].c;

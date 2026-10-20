@@ -16,8 +16,9 @@
 
 import { quoteCosts } from "./fees.mjs";
 
-const MAX_RT = 0.00618;
-const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, MAX_OPEN = 3, CAP = 0.618, COST = 0.01;
+// Build 16 (Alex: "take some risk"): wider net, round trip up to 1.618%, 5 open.
+const MAX_RT = 0.01618;
+const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, MAX_OPEN = 5, CAP = 0.618, COST = 0.01;
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
 
 export function rugOk(row, nowSec) {
@@ -32,7 +33,8 @@ export function rugOk(row, nowSec) {
 export function momentum(cs) {
   if (!Array.isArray(cs) || cs.length < 12) return false;
   const last = cs.slice(-3), prev = cs.slice(-11, -1);
-  const rising = last[0].c < last[1].c && last[1].c < last[2].c;
+  // two green candles in a row, above the 8-candle average, volume above normal
+  const rising = last[1].c < last[2].c && last[0].c <= last[1].c * 1.0001;
   const avg = cs.slice(-8).reduce((s, k) => s + k.c, 0) / 8;
   const vAvg = prev.reduce((s, k) => s + k.v, 0) / prev.length;
   return rising && last[2].c > avg && last[2].v > vAvg;
@@ -85,7 +87,7 @@ export class Scalp {
     const nowSec = Math.floor(nowMs / 1000);
     if (this.open.size >= MAX_OPEN) return { bought: 0 };
     const rows = (await this.src.trending("5m", 200)) || [];
-    const picks = rows.filter((r) => r && r.a && !this.open.has(r.a) && !(this.cool.get(r.a) > nowMs) && rugOk(r, nowSec)).slice(0, 8);
+    const picks = rows.filter((r) => r && r.a && !this.open.has(r.a) && !(this.cool.get(r.a) > nowMs) && rugOk(r, nowSec)).slice(0, 21);
     const cands = await Promise.all(picks.map(async (r) => ({ r, cs: await this.src.candles(r.a, "1m", 30).catch(() => null) })));
     let bought = 0;
     for (const { r, cs } of cands) {
