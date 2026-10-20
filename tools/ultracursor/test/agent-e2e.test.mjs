@@ -197,6 +197,7 @@ const ENV = {
   ULTRA_FAST: "1",
   ULTRA_CONFIG: CONFIG,
   ULTRA_TRADER_FLAG: "http://127.0.0.1:9/no-flag.json", // never the live switch
+  ULTRA_LINK: "http://127.0.0.1:9/no-link", // never the live link
   ULTRA_ANTHROPIC_BASE_URL: claude.url,
   ULTRA_TEST_PANEL_FILE: PANEL_FILE,
 };
