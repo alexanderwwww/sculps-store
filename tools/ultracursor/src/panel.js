@@ -356,35 +356,38 @@
   // the trader's memory on disk: radius = 7 + 4.236 ln(1 + KB), clamped 7..29 px.
   // The KB sits inside once the orb is big enough, and always in its title.
   // A click mutes / unmutes the "got paid" chime.
-  // Build 21 (Alex: "a liquid glass orb with stuff inside"): clear glass, a thin
-  // bright rim, a specular highlight, and inside it three soft lights that drift
-  // round each other (ice, cyan, violet) — the trader thinking. 18..36 px radius.
+  // Build 40 (Alex: "a better orb, Sony PlayStation 2 aesthetic"): the PS2 boot screen in a
+  // sphere. Deep navy-black glass, a cold blue rim and bloom, and inside it small glowing
+  // translucent cubes that drift upward through a blue fog and fade, like the towers of
+  // light in the PS2 intro. 18..36 px radius, grows with the trader's memory.
   const orb = el("div", {
     ...BASE, position: "fixed", left: "50%", bottom: "16px", display: "none", "pointer-events": "auto", cursor: "pointer",
     "border-radius": "50%", "align-items": "center", "justify-content": "center", transform: "translateX(-50%)", overflow: "hidden",
-    background: "rgba(255,255,255,.05)",
-    border: "1px solid rgba(255,255,255,.42)",
-    "box-shadow": "0 10px 28px rgba(0,0,0,.28), 0 0 22px rgba(160,200,255,.18), inset 0 1.5px 1px rgba(255,255,255,.65), inset 0 -8px 14px rgba(0,0,0,.30), inset 0 0 18px rgba(255,255,255,.10)",
-    "backdrop-filter": "blur(6px) saturate(170%)", "-webkit-backdrop-filter": "blur(6px) saturate(170%)",
+    background: "radial-gradient(circle at 50% 70%, rgba(30,70,200,.55) 0%, rgba(8,18,70,.85) 45%, rgba(2,4,18,.95) 80%)",
+    border: "1px solid rgba(130,175,255,.55)",
+    "box-shadow": "0 10px 28px rgba(0,0,0,.35), 0 0 26px rgba(60,120,255,.45), 0 0 60px rgba(40,90,255,.18), inset 0 1.5px 1px rgba(200,225,255,.55), inset 0 -10px 18px rgba(0,0,0,.55)",
     transition: "width .6s cubic-bezier(.2,.8,.2,1), height .6s cubic-bezier(.2,.8,.2,1), opacity .3s ease",
   });
-  const swirl = el("div", { ...BASE, position: "absolute", left: "0", top: "0", width: "100%", height: "100%", "pointer-events": "none" });
-  const blob = (bg, x, y, d) => el("div", { ...BASE, position: "absolute", left: `${x}%`, top: `${y}%`, width: `${d}%`, height: `${d}%`, "border-radius": "50%", background: bg, filter: "blur(4px)", opacity: ".95", "pointer-events": "none" });
-  const blobs = [
-    blob("radial-gradient(circle, rgba(120,230,255,.95), rgba(120,230,255,0) 70%)", 18, 30, 56),
-    blob("radial-gradient(circle, rgba(40,140,255,.95), rgba(40,140,255,0) 70%)", 40, 12, 52),
-    blob("radial-gradient(circle, rgba(160,90,255,.95), rgba(160,90,255,0) 70%)", 30, 46, 54),
-  ];
-  for (const b of blobs) put(swirl, b);
-  put(orb, swirl);
-  const shine = el("div", { ...BASE, position: "absolute", left: "16%", top: "8%", width: "52%", height: "30%", "border-radius": "50%", background: "radial-gradient(ellipse at 50% 40%, rgba(255,255,255,.85), rgba(255,255,255,0) 72%)", "pointer-events": "none" });
+  const fog = el("div", { ...BASE, position: "absolute", left: "-20%", top: "40%", width: "140%", height: "70%", "border-radius": "50%", background: "radial-gradient(ellipse at 50% 50%, rgba(90,150,255,.45), rgba(90,150,255,0) 70%)", filter: "blur(4px)", "pointer-events": "none" });
+  put(orb, fog);
+  const cube = (x, size) => el("div", { ...BASE, position: "absolute", left: `${x}%`, top: "100%", width: `${size}%`, height: `${size}%`, transform: "rotate(45deg)", "border-radius": "2px",
+    background: "linear-gradient(135deg, rgba(235,245,255,.95), rgba(120,170,255,.55) 60%, rgba(60,110,255,.25))",
+    "box-shadow": "0 0 6px rgba(150,195,255,.9), 0 0 14px rgba(80,140,255,.6)", "pointer-events": "none", opacity: "0" });
+  const cubes = [cube(22, 13), cube(46, 10), cube(64, 15), cube(34, 9), cube(56, 11)];
+  for (const c of cubes) put(orb, c);
+  const shine = el("div", { ...BASE, position: "absolute", left: "20%", top: "7%", width: "46%", height: "24%", "border-radius": "50%", background: "radial-gradient(ellipse at 50% 40%, rgba(220,235,255,.7), rgba(220,235,255,0) 72%)", "pointer-events": "none" });
   put(orb, shine);
-  const orbKb = el("span", { ...BASE, position: "relative", font: `700 10px/1 ${FONT}`, color: "rgba(255,255,255,.96)", "letter-spacing": ".01em", "text-shadow": "0 1px 3px rgba(0,0,0,.55)" });
+  const orbKb = el("span", { ...BASE, position: "relative", font: `700 10px/1 ${FONT}`, color: "rgba(225,238,255,.98)", "letter-spacing": ".04em", "text-shadow": "0 0 6px rgba(90,150,255,.9), 0 1px 2px rgba(0,0,0,.7)" });
   put(orb, orbKb);
   put(layer, orb);
   try {
-    swirl.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }], { duration: 9000, iterations: Infinity });
-    blobs.forEach((b, i) => b.animate([{ transform: "translate(0,0) scale(1)" }, { transform: `translate(${[8, -10, 6][i]}%, ${[-6, 8, 10][i]}%) scale(${[1.15, .9, 1.1][i]})` }, { transform: "translate(0,0) scale(1)" }], { duration: [4200, 5600, 6800][i], iterations: Infinity, easing: "ease-in-out" }));
+    fog.animate([{ opacity: 0.7, transform: "scale(1)" }, { opacity: 1, transform: "scale(1.08)" }, { opacity: 0.7, transform: "scale(1)" }], { duration: 5200, iterations: Infinity, easing: "ease-in-out" });
+    cubes.forEach((c, i) => c.animate([
+      { top: "100%", opacity: 0, transform: "rotate(45deg) scale(.7)" },
+      { opacity: 1, offset: 0.25 },
+      { opacity: 0.9, offset: 0.7 },
+      { top: "-20%", opacity: 0, transform: "rotate(225deg) scale(1.1)" },
+    ], { duration: [4800, 6200, 5400, 7000, 5800][i], delay: [0, 1300, 2600, 700, 3500][i], iterations: Infinity, easing: "cubic-bezier(.35,.1,.45,1)" }));
   } catch (e) {}
   // Build 7: the trades, live, just above the orb: balance, count, wins/losses, open,
   // then the latest buy or sell. Text only, no mouse.
@@ -395,9 +398,12 @@
     "backdrop-filter": "blur(10px)", "-webkit-backdrop-filter": "blur(10px)",
     font: `600 11px/1.25 ${FONT}`, color: "rgba(255,255,255,.95)", "white-space": "nowrap", "text-shadow": "0 1px 2px rgba(0,0,0,.6)",
   });
+  // Build 40: two money lines. SIM = symbiot's fake money, REAL = the real wallet (shown
+  // "not connected" until the real-money trader exists), then the latest lesson.
   const tapeTop = el("span", { ...BASE });
+  const tapeReal = el("span", { ...BASE, color: "rgba(150,195,255,.98)" });
   const tapeLast = el("span", { ...BASE, "font-weight": "500", opacity: ".85" });
-  put(tape, tapeTop); put(tape, tapeLast);
+  put(tape, tapeTop); put(tape, tapeReal); put(tape, tapeLast);
   put(layer, tape);
   const orbRadius = (kb) => Math.max(18, Math.min(36, 18 + 2.618 * LN(1 + Math.max(0, Number(kb) || 0))));
 
@@ -712,8 +718,10 @@
     if (bd) {
       const m = bd.sum, money = (v) => (bd.unit === "SOL" ? `${(Number(v) || 0).toFixed(3)} SOL` : `$${(Number(v) || 0).toFixed(2)}`);
       const sol = (v) => `${(Number(v) || 0).toFixed(3)}`;
+      const rl = bd.real || null;
+      say("tapeReal", tapeReal, rl && rl.connected ? `REAL  ${rl.balance ?? "?"} ${rl.unit || "SOL"} · ${rl.trades || 0} trades · ${rl.pnl >= 0 ? "+" : "−"}${sol(Math.abs(rl.pnl || 0))}` : "REAL  not connected");
       say("tapeTop", tapeTop, m.plus !== undefined
-        ? `+${sol(m.plus)}  −${sol(Math.abs(m.minus))}  =  ${m.net >= 0 ? "+" : "−"}${sol(Math.abs(m.net))} SOL · live ${(m.live || 0) >= 0 ? "+" : "−"}${sol(Math.abs(m.live || 0))} · ${m.trades} trades · ${m.open} open`
+        ? `SIM  +${sol(m.plus)}  −${sol(Math.abs(m.minus))}  =  ${m.net >= 0 ? "+" : "−"}${sol(Math.abs(m.net))} SOL · live ${(m.live || 0) >= 0 ? "+" : "−"}${sol(Math.abs(m.live || 0))} · ${m.trades} trades · ${m.open} open`
         : `${money(m.balance)} · ${m.trades} trades · ${m.wins}W ${m.losses}L · ${m.open} open`);
       const l = Array.isArray(bd.recent) && bd.recent.length ? bd.recent[bd.recent.length - 1] : null;
       const sym = l && l.symbol ? `$${l.symbol}` : "";
