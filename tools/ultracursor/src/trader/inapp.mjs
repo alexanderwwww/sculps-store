@@ -128,6 +128,14 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     ticking = true;
     try {
       if (now - lastFlag > 15000) { lastFlag = now; await readFlag(); }
+      // build 32: symbiot's settings, live from R2 symbiot.json (no build needed to change them)
+      if (run && run.fast && now - (run.cfgAt || 0) > 30000) {
+        run.cfgAt = now;
+        try {
+          const r = await fetchFn(`${process.env.ULTRA_SYMBIOT_CFG || "https://blackreaper.us/media/symbiot.json"}?t=${now}`, { cache: "no-store" });
+          if (r.ok) { const before = JSON.stringify(run.fast.cfg); run.fast.configure(await r.json()); if (JSON.stringify(run.fast.cfg) !== before) log(`symbiot settings: ${JSON.stringify(run.fast.cfg)}`); }
+        } catch { /* keep the last settings */ }
+      }
       const on = want();
       if (on && !run && now - failedAt > 30000) {
         starting = true;
@@ -141,6 +149,6 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
   return {
     want, set, tick, stop,
     running: () => !!run,
-    state: () => ({ want: want(), running: !!run, starting, lastError, gmgnCalls: run ? run.gm.calls : 0, gmgnErrors: run ? run.gm.errors : 0, book: run ? run.book.summary() : null, fast: run ? run.fast.summary() : null, lastScan: run ? run.lastScan || null : null, blocks: run && run.sniper ? Object.entries(run.sniper.why || {}).sort((a, b) => b[1] - a[1]).slice(0, 8) : null }),
+    state: () => ({ want: want(), running: !!run, starting, lastError, gmgnCalls: run ? run.gm.calls : 0, gmgnErrors: run ? run.gm.errors : 0, book: run ? run.book.summary() : null, fast: run ? { ...run.fast.summary(), cfg: run.fast.cfg } : null, lastScan: run ? run.lastScan || null : null, blocks: run && run.sniper ? Object.entries(run.sniper.why || {}).sort((a, b) => b[1] - a[1]).slice(0, 8) : null }),
   };
 }

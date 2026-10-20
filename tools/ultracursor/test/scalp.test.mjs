@@ -31,9 +31,10 @@ const src = {
 const log = [];
 const quote = async () => ({ ok: true, costSide: 0.02, costRt: 0.04 });
 const s = new Scalp({ src, log: (e) => log.push(e), start: 50, stake: 1.618, quote });
+s.configure({ readChart: true }); // the chart-reading side (the trader); symbiot is tested below
 await s.scanLane(now0);
-ok("ULTRA: buys every launch, the flat one too (to learn)", s.open.has("F") && s.open.has("I") && s.open.has("Z") && s.open.size === 3, [...s.open.keys()]);
-ok("1.618 SOL each, real fee charged on the way in", [...s.open.values()].every((p) => p.cost === 1.618 && p.side === 0.02) && Math.abs(s.cash - (50 - 3 * 1.618)) < 1e-9);
+ok("chart side: buys the Fibonacci and the ignition coin, not the flat one", s.open.has("F") && s.open.has("I") && !s.open.has("Z") && s.open.size === 2, [...s.open.keys()]);
+ok("1.618 SOL each, real fee charged on the way in", [...s.open.values()].every((p) => p.cost === 1.618 && p.side === 0.02) && Math.abs(s.cash - (50 - 2 * 1.618)) < 1e-9);
 ok("each entry says why, from the chart", log.filter((e) => e.type === "entry").every((e) => /golden pocket|ignition candle|bought to learn/.test(e.why)) && log.some((e) => /golden pocket/.test(e.why || "")) && log.some((e) => /ignition/.test(e.why || "")), log);
 
 // F rips +45% -> taken at +40%; I runs +30% then falls back to +14% -> gave back half
@@ -46,12 +47,13 @@ ok("a +30% run given back to +14%: out, still a win", s.trades.length === 2 && /
 
 // stop and time
 const t = new Scalp({ src, start: 50, stake: 1.618, quote });
+t.configure({ readChart: true });
 await t.scanLane(now0);
 prices.F = 1.12 * 0.84; prices.I = 1.06;
 await t.positionLane(now0 + 5_000);
 ok("-16%: stopped at -15%", t.trades.some((x) => x.symbol === "F" && x.why === "stop -15%" && !x.won), t.trades);
 await t.positionLane(now0 + 120_001);
-ok("nothing happened for 2 minutes: out", t.trades.some((x) => x.symbol === "I" && x.why === "2 min"), t.trades);
+ok("nothing happened for 2 minutes: out", t.trades.some((x) => x.symbol === "I" && x.why === "120 s"), t.trades);
 ok("a coin just sold waits before it is bought again", (await t.scanLane(now0 + 121_000), !t.open.has("F") && !t.open.has("I")));
 
 // fees (build 28): the first buy waits for a measured fee; after that every coin is bought at
@@ -100,5 +102,11 @@ await S2.scanLane(now0 + 999_999);
 ok("each coin is traded once, never again", S2.open.size === 0 || ![...S2.open.keys()].some((a) => a === feedRow.a), [...S2.open.keys()]);
 const sm = S2.summary();
 ok("the money line has + total, - total and net", sm.plus > 0 && sm.minus < 0 && Math.abs(sm.net - (sm.plus + sm.minus)) < 1e-3, sm);
+// build 32: symbiot (readChart off) buys every coin at its live price, settings change live
+const sy = new Scalp({ src: { ...src, candles: async (a, r, limit) => [{ t: 1, o: 1, h: 1, l: 1, c: 2, v: 1 }] }, start: 0, stake: 1.618, quote });
+await sy.scanLane(now0);
+ok("symbiot buys every coin without reading a chart, at the live price", sy.open.size === 3 && [...sy.open.values()].every((p) => p.entry === 2), [...sy.open.values()].map((p) => p.entry));
+sy.configure({ stake: 3, tp: 0.5, maxOpen: 4, bogus: 1, sl: "x" });
+ok("settings change live: known keys only, right types only", sy.cfg.stake === 3 && sy.cfg.tp === 0.5 && sy.cfg.maxOpen === 4 && !("bogus" in sy.cfg) && sy.cfg.sl === -0.15, sy.cfg);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
