@@ -108,3 +108,6 @@ into the core." First real use: Depop ("take images and upload"), because ChatGP
 - 10: fast lane `src/trader/scalp.mjs`. Momentum on 1m (3 rising closes, above the 8-avg, volume up), TP +13%, SL −8%, 3-min time stop, 23.6% size, max 3 open, ≤61.8%, 1% cost a side, 5-min cooldown. Fake money; it feeds the ticker. Test: `test/scalp.test.mjs`.
 - Runner tests set `ULTRA_TRADER_FLAG` to a dead URL so the live switch never leaks into them.
 - Real-money buying is NOT built (execute.mjs is a stub). Alex asked for real trades on 2026-10-20; each real buy would need his click.
+
+## Symbiot (Alex, 2026-10-20)
+The trader inside ultracursor is called **symbiot**. It's part of Alex's ecosystem. It trades everything it sees on fake money (build 27, ULTRA: 52,000 SOL, 1,000 SOL loss budget) to detect every kind of move and collect lessons. Rules for where real money goes in come later, decided by Alex from symbiot's data. Until then: no real money, and no seed phrase or keys ever held.
