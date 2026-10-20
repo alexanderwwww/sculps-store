@@ -169,6 +169,15 @@ export class Scalp {
       // build 28 (Alex: "don't think about any coin, just do it"): buy at once. The fee is
       // measured right after (live Jupiter quote) and the ledger is corrected to it; until the
       // first measurement lands, the median of the fees measured so far stands in.
+      // build 34 (Alex: "lowest fees possible"): one quick GMGN read of the coin's own pool fee
+      // and tax before buying; a coin whose fixed fees alone pass maxRt is skipped.
+      if (typeof this.src.feeInfo === "function") {
+        const fi = await this.src.feeInfo(r.a).catch(() => null);
+        const pool = (fi?.pool_fee_info_list || []).slice().sort((a, b) => (b.liquidity || 0) - (a.liquidity || 0))[0];
+        const sec = fi?.security || {};
+        const fixedRt = pool ? 2 * Number(pool.fee_ratio || 0) + Number(sec.buy_tax || 0) + Number(sec.sell_tax || 0) : null;
+        if (fixedRt !== null && fixedRt > this.cfg.maxRt) { this.costSkip(r, { ok: true, costRt: fixedRt }, nowMs); continue; }
+      }
       const known = this.feeMedian();
       let q0 = null;
       if (known === null) {
