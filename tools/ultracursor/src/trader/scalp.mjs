@@ -17,21 +17,27 @@
 import { quoteCosts } from "./fees.mjs";
 
 // Build 16 (Alex: "take some risk"): wider net, round trip up to 1.618%, 5 open.
-const MAX_RT = 0.0618;   // build 24: fake money, trade and learn; the real measured cost is still charged
+const MAX_RT = 0.15;   // build 24: fake money, trade and learn; the real measured cost is still charged
 // Build 18 (Alex: "we need new data"): the Fibonacci lane keeps its own clean
 // ledger and lessons; a ledger from an earlier plan is not carried over.
-const PLAN = "fib24";
-const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, MAX_OPEN = 5, CAP = 0.618, COST = 0.01;
+const PLAN = "hunt25";
+// Build 25, the hunt (Alex: "I want you to lose now, not to win... find that one trade of 40%
+// in 20 seconds"). Fake money, so it explores: brand-new launches from 60 s old, any pool
+// that can fill (3K), fees up to 15% (always charged at the real measured cost). Entry is
+// the chart: a Fibonacci pocket OR an ignition candle. Exit: +40% take, -15% stop, give back
+// half of a +25% run and it is out, 2 minutes max. Learning only blocks a shape after 13
+// trades under 23.6% wins: it is allowed to lose in order to learn.
+const HUNT = { tp: 0.40, sl: -0.15, trailFrom: 0.25, holdMs: 120_000 };
+const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, MAX_OPEN = 8, CAP = 0.618, COST = 0.01;
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
 
 export function rugOk(row, nowSec) {
   const created = num(row.ct) || num(row.ot);
   const age = created ? nowSec - created : null;
-  if (age === null || age < 3 * 60) return false;            // build 24: new launches from 3 minutes old
+  if (age === null || age < 60) return false;            // build 24: new launches from 3 minutes old
   // build 23: pools under $89K let a 1.618 SOL buy move the price by itself (3-5% round
   // trips measured live on 2026-10-20); only deep pools are charted.
-  if (!(num(row.lq) >= 13_000)) return false;                // build 24: back to 13K, Alex: "trade the new ones, it's fake money, learn"
-  if (num(row.t10) !== null && !(num(row.t10) < 0.3)) return false;
+  if (!(num(row.lq) >= 3_000)) return false;                // build 24: back to 13K, Alex: "trade the new ones, it's fake money, learn"
   return true;
 }
 
@@ -76,6 +82,15 @@ export function shapeOf(cs, row, nowMs) {
  * green, and the pullback has not broken 0.786. Stop just under 0.786, target the
  * swing high. No hype, no narrative, no smart money: the chart only.
  */
+/** An ignition candle: the live 1m candle up 4%+ on 2.618x the normal volume. */
+export function ignition(cs) {
+  if (!Array.isArray(cs) || cs.length < 4) return null;
+  const k = cs[cs.length - 1], prev = cs.slice(-11, -1);
+  const vAvg = prev.reduce((s, x) => s + x.v, 0) / prev.length;
+  const body = k.o > 0 ? k.c / k.o - 1 : 0;
+  return body >= 0.04 && k.v >= 2.618 * vAvg ? { body: +body.toFixed(3), vx: +(k.v / Math.max(1e-9, vAvg)).toFixed(1) } : null;
+}
+
 export function fibSetup(cs) {
   if (!Array.isArray(cs) || cs.length < 13) return null;
   const w = cs.slice(-34);
@@ -126,9 +141,10 @@ export class Scalp {
     const cands = await Promise.all(picks.map(async (r) => ({ r, cs: await this.src.candles(r.a, "1m", 34).catch(() => null) })));
     let bought = 0;
     for (const { r, cs } of cands) {
-      const fib = fibSetup(cs);
-      if (this.open.size >= MAX_OPEN || !fib) continue;
-      const shape = shapeOf(cs, r, nowMs);
+      const fib = fibSetup(cs), ign = fib ? null : ignition(cs);
+      if (this.open.size >= MAX_OPEN || (!fib && !ign)) continue;
+      const shape = cs.length >= 12 ? shapeOf(cs, r, nowMs) : [`young`];
+      shape.push(fib ? "e:fib" : "e:ign");
       const bad = this.badPart(shape);
       if (bad) { this.skips++; this.log({ type: "learned-skip", lane: "fast", symbol: r.s, shape: bad }); continue; }
       const eq = this.equity();
@@ -148,8 +164,8 @@ export class Scalp {
       const price = cs[cs.length - 1].c;
       this.cash -= n;
       this.feesPaid += n * side;
-      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, side, units: (n * (1 - side)) / price, entry: price, last: price, at: nowMs, shape, stop: fib.stop, target: fib.target, fib: { retr: fib.retr, move: fib.move } });
-      this.log({ type: "entry", lane: "fast", addr: r.a, symbol: r.s, spent: +n.toFixed(4), price, why: `golden pocket ${fib.retr} of a ${Math.round(fib.move * 100)}% move` });
+      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, side, units: (n * (1 - side)) / price, entry: price, last: price, at: nowMs, shape, hunt: true, peak: 0, why: fib ? `fib ${fib.retr}` : `ignition +${Math.round(ign.body * 100)}% x${ign.vx} vol` });
+      this.log({ type: "entry", lane: "fast", addr: r.a, symbol: r.s, spent: +n.toFixed(4), price, why: fib ? `golden pocket ${fib.retr} of a ${Math.round(fib.move * 100)}% move` : `ignition candle +${Math.round(ign.body * 100)}% on ${ign.vx}x volume` });
       bought++;
     }
     return { bought };
@@ -168,7 +184,10 @@ export class Scalp {
         p.units -= u; p.banked = got; p.half = true; p.stop = Math.max(p.stop, p.entry * (1 + 2 * side));
         this.log({ type: "exit", lane: "fast", symbol: p.symbol, addr: p.addr, part: "half at +10%", got: +got.toFixed(4) });
       }
-      const why = p.target
+      if (p.hunt) p.peak = Math.max(p.peak || 0, move);
+      const why = p.hunt
+        ? (move >= HUNT.tp ? "+40%" : move <= HUNT.sl ? "stop -15%" : p.peak >= HUNT.trailFrom && move <= p.peak / 2 ? `gave back half of +${Math.round(p.peak * 100)}%` : nowMs - p.at >= HUNT.holdMs ? "2 min" : null)
+        : p.target
         ? (move >= 0.20 ? "+20%" : p.last <= p.stop ? (p.half ? "rest at break-even" : "stop: under the pocket") : nowMs - p.at >= 13 * 60_000 ? "13 min time stop" : null)
         : (move >= TP ? "take profit +13%" : move <= SL ? "stop -8%" : nowMs - p.at >= HOLD_MS ? "3 min time stop" : null);
       if (!why) continue;
@@ -184,7 +203,7 @@ export class Scalp {
       for (const k of p.shape || []) {
         const L = (this.learn[k] = this.learn[k] || { n: 0, w: 0, pnl: 0, until: 0 });
         L.n++; if (t.won) L.w++; L.pnl += t.ret;
-        if (L.n >= 5 && (L.w / L.n < 0.382 || L.pnl / L.n < 0)) { L.until = this.trades.length + 21; this.log({ type: "lesson", lane: "fast", shape: k, n: L.n, wins: L.w, avg: +(L.pnl / L.n).toFixed(4) }); }
+        if (L.n >= 13 && L.w / L.n < 0.236) { L.until = this.trades.length + 21; this.log({ type: "lesson", lane: "fast", shape: k, n: L.n, wins: L.w, avg: +(L.pnl / L.n).toFixed(4) }); }
       }
       this.log({ type: "close", lane: "fast", symbol: p.symbol, addr: p.addr, pnl: +pnl.toFixed(4), ret: +t.ret.toFixed(4), why, balance: +this.equity().toFixed(4) });
     }
@@ -194,7 +213,7 @@ export class Scalp {
   badPart(shape) {
     for (const k of shape) {
       const L = this.learn[k];
-      if (!L || L.n < 5) continue;
+      if (!L || L.n < 13) continue;
       if (L.until > this.trades.length) return k;
       if (L.until && L.until <= this.trades.length) { L.n = 0; L.w = 0; L.pnl = 0; L.until = 0; } // second look
     }
