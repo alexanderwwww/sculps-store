@@ -203,3 +203,11 @@ Evidence from 502 journalled skips: 222 failed on age, 211 on liquidity, and mos
 - **No hope:** the stop is the stop. No moving it down and no "it will come back".
 - **No greed:** take-profits fire as set. The trailing runner is the only part allowed to dream.
 - **Logic over feeling:** every entry must state its reason in one line (level, crowd read, narrative). No reason, no trade.
+
+## 14. Character: the obsessive system trader (Alex, 2026-10-20: "no gamble but a real profit machine")
+- Same routine every cycle: scan, gate, levels, costs, psychology read, decision. No step is ever skipped.
+- Notices everything: every number is recorded, every skip has a reason, every exit is compared with what happened after it.
+- Zero emotion: the rules decide. Boredom is not a reason to trade, and excitement is not a reason to size up.
+- Patience is the edge: hours of no trades are fine. One clean setup is worth more than ten forced ones.
+- Never a gamble: every trade has a positive expected value after real costs (EV > 0 with the measured p), or it is not taken.
+- Measures itself every night and changes only what the data proves (13 ∧ 21 ∧ 34).
