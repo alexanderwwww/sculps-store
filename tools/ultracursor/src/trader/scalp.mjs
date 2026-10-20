@@ -50,6 +50,7 @@ export function momentum(cs) {
  */
 export function shapeOf(cs, row, nowMs) {
   const last = cs.slice(-3), prev = cs.slice(-11, -1);
+  const fs = fibSetup(cs);
   const rise = last[2].c / last[0].c - 1;
   const vr = last[2].v / Math.max(1e-9, prev.reduce((s, k) => s + k.v, 0) / prev.length);
   const created = num(row.ct) || num(row.ot);
@@ -58,8 +59,34 @@ export function shapeOf(cs, row, nowMs) {
   return [
     `rise${b(rise, [0.02, 0.05, 0.13])}`, `vol${b(vr, [1.618, 2.618, 4.236])}`,
     `lq${b(num(row.lq) || 0, [21_000, 55_000, 144_000])}`, `age${b(ageMin, [21, 55, 144])}`,
-    `h${Math.floor(new Date(nowMs).getUTCHours() / 6)}`,
+    `fib${fs ? (fs.retr < 0.618 ? "a" : "b") : "-"}`, `h${Math.floor(new Date(nowMs).getUTCHours() / 6)}`,
   ];
+}
+
+/**
+ * Build 17 (Alex: "we don't trade the coin, we trade the chart, trade the Fibonacci"):
+ * every scanned coin's 1m chart is read. Over the last 34 candles: the swing low,
+ * then the swing high after it, a move of at least 13%. Buy when price has pulled
+ * back into the golden pocket (0.5 to 0.705 of the move) and the last candle closed
+ * green, and the pullback has not broken 0.786. Stop just under 0.786, target the
+ * swing high. No hype, no narrative, no smart money: the chart only.
+ */
+export function fibSetup(cs) {
+  if (!Array.isArray(cs) || cs.length < 13) return null;
+  const w = cs.slice(-34);
+  let hiI = 0;
+  for (let i = 1; i < w.length; i++) if (w[i].h > w[hiI].h) hiI = i;
+  if (hiI < 2 || hiI > w.length - 2) return null;          // the high must have a pullback after it
+  let loI = 0;
+  for (let i = 1; i < hiI; i++) if (w[i].l < w[loI].l) loI = i;
+  const hi = w[hiI].h, lo = w[loI].l, D = hi - lo;
+  if (!(lo > 0) || hi / lo - 1 < 0.13) return null;
+  const last = w[w.length - 1];
+  const retr = (hi - last.c) / D;
+  const floor = hi - 0.786 * D;
+  const held = w.slice(hiI + 1).every((k) => k.l >= floor);
+  if (!(retr >= 0.5 && retr <= 0.705) || !(last.c > last.o) || !held) return null;
+  return { hi, lo, retr: +retr.toFixed(3), stop: floor * 0.995, target: hi * 0.995, move: +(hi / lo - 1).toFixed(3) };
 }
 
 export class Scalp {
@@ -88,10 +115,11 @@ export class Scalp {
     if (this.open.size >= MAX_OPEN) return { bought: 0 };
     const rows = (await this.src.trending("5m", 200)) || [];
     const picks = rows.filter((r) => r && r.a && !this.open.has(r.a) && !(this.cool.get(r.a) > nowMs) && rugOk(r, nowSec)).slice(0, 21);
-    const cands = await Promise.all(picks.map(async (r) => ({ r, cs: await this.src.candles(r.a, "1m", 30).catch(() => null) })));
+    const cands = await Promise.all(picks.map(async (r) => ({ r, cs: await this.src.candles(r.a, "1m", 34).catch(() => null) })));
     let bought = 0;
     for (const { r, cs } of cands) {
-      if (this.open.size >= MAX_OPEN || !momentum(cs)) continue;
+      const fib = fibSetup(cs);
+      if (this.open.size >= MAX_OPEN || !fib) continue;
       const shape = shapeOf(cs, r, nowMs);
       const bad = this.badPart(shape);
       if (bad) { this.skips++; this.log({ type: "learned-skip", lane: "fast", symbol: r.s, shape: bad }); continue; }
@@ -109,8 +137,8 @@ export class Scalp {
       const price = cs[cs.length - 1].c;
       this.cash -= n;
       this.feesPaid += n * side;
-      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, side, units: (n * (1 - side)) / price, entry: price, last: price, at: nowMs, shape });
-      this.log({ type: "entry", lane: "fast", addr: r.a, symbol: r.s, spent: +n.toFixed(4), price });
+      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, side, units: (n * (1 - side)) / price, entry: price, last: price, at: nowMs, shape, stop: fib.stop, target: fib.target, fib: { retr: fib.retr, move: fib.move } });
+      this.log({ type: "entry", lane: "fast", addr: r.a, symbol: r.s, spent: +n.toFixed(4), price, why: `golden pocket ${fib.retr} of a ${Math.round(fib.move * 100)}% move` });
       bought++;
     }
     return { bought };
@@ -121,7 +149,9 @@ export class Scalp {
       const cs = await this.src.candles(p.addr, "1m", 2).catch(() => null);
       if (Array.isArray(cs) && cs.length) p.last = cs[cs.length - 1].c;
       const move = p.last / p.entry - 1;
-      const why = move >= TP ? "take profit +13%" : move <= SL ? "stop -8%" : nowMs - p.at >= HOLD_MS ? "3 min time stop" : null;
+      const why = p.target
+        ? (p.last >= p.target ? "target: back at the swing high" : p.last <= p.stop ? "stop: broke 0.786" : nowMs - p.at >= 13 * 60_000 ? "13 min time stop" : null)
+        : (move >= TP ? "take profit +13%" : move <= SL ? "stop -8%" : nowMs - p.at >= HOLD_MS ? "3 min time stop" : null);
       if (!why) continue;
       const side = p.side ?? COST;
       const got = p.units * p.last * (1 - side);
