@@ -126,7 +126,7 @@ export class Scalp {
     const now = Date.now();
     if (!this.mkt || now - this.mkt.at > 60_000) {
       const [prices, gas] = await Promise.all([this.src.prices(["SOL"]).catch(() => []), this.src.gas().catch(() => null)]);
-      this.mkt = { at: now, solUsd: Number(prices.find((p) => p.symbol === "SOL")?.price) || null, gas };
+      this.mkt = { at: now, solUsd: Number((prices || []).find((p) => p.symbol === "SOL")?.price) || this.mkt?.solUsd || null, gas };
     }
     const [feeInfo, trades] = await Promise.all([this.src.feeInfo(mint).catch(() => null), this.src.trades(mint, 50).catch(() => [])]);
     const notionalUsd = notional * (this.mkt.solUsd || 0);
@@ -172,7 +172,8 @@ export class Scalp {
       const known = this.feeMedian();
       let q0 = null;
       if (known === null) {
-        q0 = await this.quote({ mint: r.a, notional: n }).catch((e) => ({ ok: false, why: String(e.message || e).slice(0, 80) }));
+        q0 = await Promise.race([this.quote({ mint: r.a, notional: n }), new Promise((_, no) => setTimeout(() => no(new Error("fee check over 15 s")), 15_000))])
+          .catch((e) => ({ ok: false, why: String(e.message || e).slice(0, 80) }));
         if (q0 && !q0.ok && q0.costSide > 0) q0 = { ...q0, ok: true, costRt: 2 * q0.costSide };
         if (!q0 || !q0.ok || !(q0.costRt <= MAX_RT)) { this.costSkip(r, q0, nowMs); continue; }
         this.measured.push(q0.costSide);

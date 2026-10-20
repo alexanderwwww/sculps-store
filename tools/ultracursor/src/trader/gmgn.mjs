@@ -177,11 +177,17 @@ export class Gmgn {
     if (!allowed(path)) throw new Error(`gmgn: path not on the read-only allowlist: ${path}`);
     this.calls++;
     const q = this.q || FALLBACK_Q;
-    const r = await this.page.evaluate(async ({ path, body, q }) => {
-      const url = path + (path.includes("?") ? "&" : "?") + q;
-      const res = await fetch(url, body ? { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) } : {});
-      return { status: res.status, text: await res.text() };
-    }, { path, body, q });
+    // build 31: no GMGN read can hang the trader (one did on Alex's Mac and nothing traded):
+    // 8 s inside the page, 10 s around it.
+    const r = await Promise.race([
+      this.page.evaluate(async ({ path, body, q }) => {
+        const url = path + (path.includes("?") ? "&" : "?") + q;
+        const signal = AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined;
+        const res = await fetch(url, body ? { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal } : { signal });
+        return { status: res.status, text: await res.text() };
+      }, { path, body, q }),
+      new Promise((_, no) => setTimeout(() => no(new Error(`gmgn ${path.split("?")[0]} -> timeout 10 s`)), 10_000)),
+    ]).catch((e) => { this.errors++; throw e; });
     let j = null;
     try { j = JSON.parse(r.text); } catch {}
     if (r.status !== 200 || !j || j.code !== 0) {
