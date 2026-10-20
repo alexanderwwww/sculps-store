@@ -356,22 +356,40 @@
   // the trader's memory on disk: radius = 7 + 4.236 ln(1 + KB), clamped 7..29 px.
   // The KB sits inside once the orb is big enough, and always in its title.
   // A click mutes / unmutes the "got paid" chime.
+  // Build 21 (Alex: "a liquid glass orb with stuff inside"): clear glass, a thin
+  // bright rim, a specular highlight, and inside it three soft lights that drift
+  // round each other (ice, cyan, violet) — the trader thinking. 18..36 px radius.
   const orb = el("div", {
-    ...BASE, position: "fixed", left: "50%", bottom: "18px", display: "none", "pointer-events": "auto", cursor: "pointer",
-    "border-radius": "50%", "align-items": "center", "justify-content": "center", transform: "translateX(-50%)",
-    background: "radial-gradient(circle at 34% 28%, rgba(255,255,255,.95) 0%, rgba(255,255,255,.42) 18%, rgba(255,255,255,.10) 46%, rgba(255,255,255,.04) 70%), rgba(11,11,11,.72)",
-    border: "0.5px solid rgba(255,255,255,.34)",
-    "box-shadow": "0 0 14px 2px rgba(255,255,255,.30), 0 0 34px 6px rgba(255,255,255,.10), inset 0 1px 0 rgba(255,255,255,.5), inset 0 -2px 6px rgba(0,0,0,.55)",
-    "backdrop-filter": "blur(10px) saturate(0)", "-webkit-backdrop-filter": "blur(10px) saturate(0)",
+    ...BASE, position: "fixed", left: "50%", bottom: "16px", display: "none", "pointer-events": "auto", cursor: "pointer",
+    "border-radius": "50%", "align-items": "center", "justify-content": "center", transform: "translateX(-50%)", overflow: "hidden",
+    background: "rgba(255,255,255,.05)",
+    border: "1px solid rgba(255,255,255,.42)",
+    "box-shadow": "0 10px 28px rgba(0,0,0,.28), 0 0 22px rgba(160,200,255,.18), inset 0 1.5px 1px rgba(255,255,255,.65), inset 0 -8px 14px rgba(0,0,0,.30), inset 0 0 18px rgba(255,255,255,.10)",
+    "backdrop-filter": "blur(6px) saturate(170%)", "-webkit-backdrop-filter": "blur(6px) saturate(170%)",
     transition: "width .6s cubic-bezier(.2,.8,.2,1), height .6s cubic-bezier(.2,.8,.2,1), opacity .3s ease",
   });
-  const orbKb = el("span", { ...BASE, font: `650 9px/1 ${FONT}`, color: "rgba(255,255,255,.92)", "letter-spacing": ".01em", "text-shadow": "0 1px 2px rgba(0,0,0,.6)" });
+  const swirl = el("div", { ...BASE, position: "absolute", left: "0", top: "0", width: "100%", height: "100%", "pointer-events": "none" });
+  const blob = (bg, x, y, d) => el("div", { ...BASE, position: "absolute", left: `${x}%`, top: `${y}%`, width: `${d}%`, height: `${d}%`, "border-radius": "50%", background: bg, filter: "blur(4px)", opacity: ".95", "pointer-events": "none" });
+  const blobs = [
+    blob("radial-gradient(circle, rgba(120,230,255,.95), rgba(120,230,255,0) 70%)", 18, 30, 56),
+    blob("radial-gradient(circle, rgba(40,140,255,.95), rgba(40,140,255,0) 70%)", 40, 12, 52),
+    blob("radial-gradient(circle, rgba(160,90,255,.95), rgba(160,90,255,0) 70%)", 30, 46, 54),
+  ];
+  for (const b of blobs) put(swirl, b);
+  put(orb, swirl);
+  const shine = el("div", { ...BASE, position: "absolute", left: "16%", top: "8%", width: "52%", height: "30%", "border-radius": "50%", background: "radial-gradient(ellipse at 50% 40%, rgba(255,255,255,.85), rgba(255,255,255,0) 72%)", "pointer-events": "none" });
+  put(orb, shine);
+  const orbKb = el("span", { ...BASE, position: "relative", font: `700 10px/1 ${FONT}`, color: "rgba(255,255,255,.96)", "letter-spacing": ".01em", "text-shadow": "0 1px 3px rgba(0,0,0,.55)" });
   put(orb, orbKb);
   put(layer, orb);
+  try {
+    swirl.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }], { duration: 9000, iterations: Infinity });
+    blobs.forEach((b, i) => b.animate([{ transform: "translate(0,0) scale(1)" }, { transform: `translate(${[8, -10, 6][i]}%, ${[-6, 8, 10][i]}%) scale(${[1.15, .9, 1.1][i]})` }, { transform: "translate(0,0) scale(1)" }], { duration: [4200, 5600, 6800][i], iterations: Infinity, easing: "ease-in-out" }));
+  } catch (e) {}
   // Build 7: the trades, live, just above the orb: balance, count, wins/losses, open,
   // then the latest buy or sell. Text only, no mouse.
   const tape = el("div", {
-    ...BASE, position: "fixed", left: "50%", bottom: "80px", display: "none", "pointer-events": "none", transform: "translateX(-50%)",
+    ...BASE, position: "fixed", left: "50%", bottom: "96px", display: "none", "pointer-events": "none", transform: "translateX(-50%)",
     "flex-direction": "column", "align-items": "center", gap: "3px", padding: "7px 12px", "border-radius": "14px",
     background: "rgba(11,11,11,.72)", border: "0.5px solid rgba(255,255,255,.28)",
     "backdrop-filter": "blur(10px)", "-webkit-backdrop-filter": "blur(10px)",
@@ -381,7 +399,7 @@
   const tapeLast = el("span", { ...BASE, "font-weight": "500", opacity: ".85" });
   put(tape, tapeTop); put(tape, tapeLast);
   put(layer, tape);
-  const orbRadius = (kb) => Math.max(7, Math.min(29, 7 + 4.236 * LN(1 + Math.max(0, Number(kb) || 0))));
+  const orbRadius = (kb) => Math.max(18, Math.min(36, 18 + 2.618 * LN(1 + Math.max(0, Number(kb) || 0))));
 
   // Build 5: the trader pill. Off: a small "trader" pill just above the bar.
   // On: "stop trader" beside the orb, and the bar folds away (it covered
@@ -703,7 +721,7 @@
       const r = orbRadius(kb);
       S.orbR = r; S.orbKb = kb; S.muted = tr.muted === true;
       css(orb, { width: `${(2 * r).toFixed(1)}px`, height: `${(2 * r).toFixed(1)}px`, opacity: S.muted ? "0.62" : "1" });
-      say("orbKb", orbKb, r >= 12 ? `${kb}` : "");
+      say("orbKb", orbKb, `${kb}`);
       attr(orb, "title", `trader memory ${kb} KB${S.muted ? " · muted (click to unmute)" : " · click to mute"}`);
       const paid = Math.max(0, Number(tr.paid) || 0);
       let visible = true;

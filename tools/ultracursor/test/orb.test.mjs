@@ -66,11 +66,11 @@ const o1 = await until(() => lay().orb, 5000);
 const want1 = traderOrb(memDir);
 check("trader on: the orb appears", Boolean(o1), lay());
 check("the orb's KB = the memory's bytes on disk", o1 && o1.kb === want1.kb && want1.kb === Math.round(want1.bytes / 1024), { o1, want1 });
-const rOf = (kb) => Math.max(7, Math.min(29, 7 + 4.236 * Math.log(1 + kb)));
+const rOf = (kb) => Math.max(18, Math.min(36, 18 + 2.618 * Math.log(1 + kb))); // build 21: the liquid-glass orb, 18..36 px
 check("the orb's radius follows log(KB)", o1 && Math.abs(o1.r - rOf(o1.kb)) < 1e-6 && Math.abs(o1.w - 2 * o1.r) < 1.5, o1);
 const cx = o1 ? o1.x + o1.w / 2 : 0;
 const vp = await page.evaluate(() => ({ w: innerWidth, h: innerHeight }));
-check("at the bottom centre of the screen", o1 && Math.abs(cx - vp.w / 2) < 2 && Math.abs(vp.h - (o1.y + o1.h) - 18) < 2, { o1, vp });
+check("at the bottom centre of the screen", o1 && Math.abs(cx - vp.w / 2) < 2 && Math.abs(vp.h - (o1.y + o1.h) - 16) < 2, { o1, vp });
 
 // memory grows -> the orb grows
 for (let i = 0; i < 300; i++) mem.journal({ addr: `T${i}`, decision: "NO", reason: "x".repeat(600), features: { pad: "y".repeat(200) } });
