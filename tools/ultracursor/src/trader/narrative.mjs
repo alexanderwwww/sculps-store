@@ -72,6 +72,8 @@ export function themeHeat(rows) {
 export function narrative({ gmgn, x, dropped = [] }) {
   const A = dropped.includes("gmgn") ? null : gmgn?.score ?? null;
   const B = dropped.includes("x") ? null : x?.score ?? null;
+  // Lesson 1 (2026-10-20): one source is enough while the other is unreachable; both present must still agree.
+  if ((A === null) !== (B === null)) { const N = A ?? B; return { N, A, B, agree: true, ok: N >= 61.8, why: N >= 61.8 ? "single source" : `single source ${N}` }; }
   if (A === null || B === null) return { N: null, A, B, agree: false, ok: false, why: `missing source: ${A === null ? "GMGN" : ""}${A === null && B === null ? " and " : ""}${B === null ? "X" : ""}` };
   const N = +(0.618 * Math.max(A, B) + 0.382 * Math.min(A, B)).toFixed(1);
   const agree = Math.min(A, B) >= V2.sourceAgree;

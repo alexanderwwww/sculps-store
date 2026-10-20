@@ -177,3 +177,12 @@ Additions by Claude (2026-10-19): the 1%-of-pool size cap (on thin coins our own
 - **Orb:** shown only while the trader runs (the heartbeat file `.trader-on` is less than 15 s old). ultracursor is also used for Depop and research, so with the trader off nothing is drawn. It is a small black-glass orb at the bottom centre of the screen. Its radius is 7 + 4.236·ln(1 + KB) px, clamped to 7–29. The memory's KB on disk is shown inside the orb and in its title. A click mutes or unmutes the sound; the mute is kept on disk as `memory/.mute`.
 - **Sound:** plays on every profitable exit fill (a take-profit, or a winning trail or close). Losses are silent. It is synthesized with WebAudio, with no sample: two bell notes a golden ratio apart (880 Hz, then 880 × 1.618 Hz), with quiet shimmer partials at f·φ² and f·φ³, about 0.6 s, at a modest volume. It has no noise burst and no coin rattle, so it never sounds like Shopify's sale sound. It plays only in trader mode, never when muted, and only on a visible tab. Several fills in one poll chime once.
 
+
+## 12. Lesson 1, learned from the market (2026-10-20, first 60-min Sniper XYZ: 1,192 scans, 0 trades)
+Evidence from 502 journalled skips: 222 failed on age, 211 on liquidity, and most of the rest on "dev sold: unknown", missing X, or confluence 0–1/5. The gate was too strict to ever trade. New rules, each moved one Fibonacci step:
+- Age: 8 minutes to 6 hours (was 15m).
+- Liquidity: at least $13k (was $30k).
+- "Dev has not sold" fails only when we KNOW the dev sold. Unknown no longer fails.
+- Narrative: one source with N ≥ 61.8 is enough while the other is unreachable. Two sources that disagree still block.
+- Confluence: 2 of 5 timeframes (was 3).
+- Unchanged hard safety: no mint, no freeze, LP burned or locked, top 10 < 25%, dev < 5%, data complete.

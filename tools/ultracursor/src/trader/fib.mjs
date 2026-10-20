@@ -122,7 +122,7 @@ export const V2 = {
   trail: [1.618, 2.618],
   checkpointsMin: [3, 5, 8, 13, 21],
   timeframes: [1, 3, 5, 13, 21],     // minutes
-  confluenceMin: 3,                   // of the 5 timeframes
+  confluenceMin: 2,                   // of the 5 timeframes
   tiers: { watch: 3, ready: 5, fire: 8 },
   pWindows: [13, 21, 34],
   sizeLadder: [0.146, 0.236, 0.382],

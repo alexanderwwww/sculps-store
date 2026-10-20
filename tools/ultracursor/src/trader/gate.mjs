@@ -13,8 +13,8 @@ const num = (x) => (x === null || x === undefined || x === "" ? null : Number(x)
 export function prefilter(row, nowSec) {
   const created = num(row.ct) || num(row.ot);
   const age = created ? nowSec - created : null;
-  if (age === null || age < 15 * 60 || age > 6 * 3600) return { ok: false, why: "age" };
-  if (!(num(row.lq) >= 30_000)) return { ok: false, why: "liquidity" };
+  if (age === null || age < 8 * 60 || age > 6 * 3600) return { ok: false, why: "age" };
+  if (!(num(row.lq) >= 13_000)) return { ok: false, why: "liquidity" };
   if (!(num(row.t10) < 0.25)) return { ok: false, why: "top10" };
   if ((num(row.smt) || 0) + (num(row.kol) || 0) < 2) return { ok: false, why: "smart" };
   return { ok: true };
@@ -47,10 +47,10 @@ export function gate({ full, topBuyers, candles, nowSec }) {
   const add = (name, ok, value, kind = "real") => checks.push({ name, ok: !!ok, value, kind });
 
   const age = nowSec - (num(full.creation_timestamp) || num(full.open_timestamp) || nowSec);
-  add("age 15m-6h", age >= 900 && age <= 21600, `${Math.round(age / 60)} min`);
+  add("age 8m-6h", age >= 480 && age <= 21600, `${Math.round(age / 60)} min`);
 
   const liq = num(full.liquidity);
-  add("liquidity >= $30k", liq >= 30_000, liq === null ? "missing" : `$${Math.round(liq)}`);
+  add("liquidity >= $13k", liq >= 13_000, liq === null ? "missing" : `$${Math.round(liq)}`);
   const burned = sec.burn_status === "burn" || sec.lock_summary?.is_locked === true;
   add("LP burned or locked", burned, `burn_status=${sec.burn_status ?? "?"} locked=${sec.lock_summary?.is_locked ?? "?"}`);
 
@@ -60,7 +60,7 @@ export function gate({ full, topBuyers, candles, nowSec }) {
   const dev = num(full.creator_hold_rate);
   add("dev holds < 5%", dev !== null && dev < 0.05, dev === null ? "missing" : `${(dev * 100).toFixed(2)}%`);
   const sold = devSold(topBuyers, full.creator_address);
-  add("dev has not sold", sold === false, sold === null ? "creator not among first 70 buyers: unknown" : sold ? "sold" : "holding");
+  add("dev has not sold", sold !== true, sold === null ? "creator not among first 70 buyers: unknown" : sold ? "sold" : "holding");
 
   add("mint renounced", sec.renounced_mint === true, String(sec.renounced_mint));
   add("freeze renounced", sec.renounced_freeze_account === true, String(sec.renounced_freeze_account));
