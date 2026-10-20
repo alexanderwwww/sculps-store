@@ -8,9 +8,15 @@
  *            sell whatever is still open after 3 minutes.
  *   size     a fixed stake per trade when given (Alex: 1.618 SOL of a 50 SOL
  *            balance), else 23.6% of equity; at most 3 open, 61.8% of equity in play.
- *   costs    1% a side (fees + slippage), charged on every buy and sell.
+ *   costs    measured live per coin before each buy (build 13, Alex: "make the
+ *            fees nothing"): Jupiter round trip + pool fee + tax + network, from
+ *            fees.mjs. Only coins whose round trip is under 0.618% are traded,
+ *            and the ledger charges exactly the measured cost.
  */
 
+import { quoteCosts } from "./fees.mjs";
+
+const MAX_RT = 0.00618;
 const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, MAX_OPEN = 3, CAP = 0.618, COST = 0.01;
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
 
@@ -55,12 +61,24 @@ export function shapeOf(cs, row, nowMs) {
 }
 
 export class Scalp {
-  constructor({ src, log = () => {}, start = 10, stake = null }) {
+  constructor({ src, log = () => {}, start = 10, stake = null, quote = null }) {
     this.src = src; this.log = log; this.stake = stake;
+    this.quote = quote || ((a) => this.#measure(a)); this.costSkips = 0; this.feesPaid = 0;
     this.learn = {}; this.skips = 0;
     this.start = start; this.cash = start; this.open = new Map(); this.trades = []; this.cool = new Map();
   }
-  equity() { let e = this.cash; for (const p of this.open.values()) e += p.units * p.last * (1 - COST); return e; }
+  equity() { let e = this.cash; for (const p of this.open.values()) e += p.units * p.last * (1 - (p.side ?? COST)); return e; }
+
+  /** The real cost of this trade on this coin, measured now (fees.mjs). */
+  async #measure({ mint, notional }) {
+    const now = Date.now();
+    if (!this.mkt || now - this.mkt.at > 60_000) {
+      const [prices, gas] = await Promise.all([this.src.prices(["SOL"]).catch(() => []), this.src.gas().catch(() => null)]);
+      this.mkt = { at: now, solUsd: Number(prices.find((p) => p.symbol === "SOL")?.price) || null, gas };
+    }
+    const [feeInfo, trades] = await Promise.all([this.src.feeInfo(mint).catch(() => null), this.src.trades(mint, 50).catch(() => [])]);
+    return quoteCosts({ mint, notionalUsd: notional * (this.mkt.solUsd || 0), gm: { feeInfo, trades, gas: this.mkt.gas, solUsd: this.mkt.solUsd } });
+  }
   inPlay() { let n = 0; for (const p of this.open.values()) n += p.cost; return n; }
 
   async scanLane(nowMs) {
@@ -78,9 +96,18 @@ export class Scalp {
       const eq = this.equity();
       const n = Math.min(this.stake || eq * SIZE, this.cash, eq * CAP - this.inPlay());
       if (!(n > 0.05)) break;
+      const q = await this.quote({ mint: r.a, notional: n }).catch((e) => ({ ok: false, why: String(e.message || e).slice(0, 80) }));
+      if (!q || !q.ok || !(q.costRt <= MAX_RT)) {
+        this.costSkips++;
+        this.log({ type: "cost-skip", lane: "fast", symbol: r.s, why: q && q.ok ? `round trip ${(q.costRt * 100).toFixed(3)}% over 0.618%` : q?.why || "no quote" });
+        this.cool.set(r.a, nowMs + 60_000);
+        continue;
+      }
+      const side = q.costSide;
       const price = cs[cs.length - 1].c;
       this.cash -= n;
-      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, units: (n * (1 - COST)) / price, entry: price, last: price, at: nowMs, shape });
+      this.feesPaid += n * side;
+      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, side, units: (n * (1 - side)) / price, entry: price, last: price, at: nowMs, shape });
       this.log({ type: "entry", lane: "fast", addr: r.a, symbol: r.s, spent: +n.toFixed(4), price });
       bought++;
     }
@@ -94,7 +121,9 @@ export class Scalp {
       const move = p.last / p.entry - 1;
       const why = move >= TP ? "take profit +13%" : move <= SL ? "stop -8%" : nowMs - p.at >= HOLD_MS ? "3 min time stop" : null;
       if (!why) continue;
-      const got = p.units * p.last * (1 - COST);
+      const side = p.side ?? COST;
+      const got = p.units * p.last * (1 - side);
+      this.feesPaid += p.units * p.last * side;
       this.cash += got;
       this.open.delete(p.addr);
       this.cool.set(p.addr, nowMs + 5 * 60_000);
@@ -123,7 +152,7 @@ export class Scalp {
 
   summary() {
     const n = this.trades.length, wins = this.trades.filter((t) => t.won).length;
-    return { trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
+    return { trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, fees: +this.feesPaid.toFixed(5), costSkips: this.costSkips, lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
   }
   toJSON() { return { v: 2, start: this.start, stake: this.stake, cash: this.cash, learn: this.learn, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
   static from(j, opts) {

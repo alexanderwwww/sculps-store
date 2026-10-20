@@ -13,7 +13,7 @@ const src = {
   candles: async (a, r, limit) => (limit <= 2 ? [{ t: 1, o: 1, h: 1, l: 1, c: prices[a], v: 1 }] : a === "D" ? flat(1) : rising(1)),
 };
 const log = [];
-const s = new Scalp({ src, log: (e) => log.push(e) });
+const s = new Scalp({ src, log: (e) => log.push(e), quote: async () => ({ ok: true, costSide: 0.01, costRt: 0.006 }) });
 ok("momentum: rising closes + volume -> yes; flat -> no", momentum(rising(1)) && !momentum(flat(1)));
 ok("rug check refuses a 1-minute-old coin", !rugOk(rows[4], sec) && rugOk(rows[0], sec));
 await s.scanLane(now0);
@@ -32,12 +32,12 @@ ok("a coin just sold waits 5 minutes before it is bought again", s.open.size ===
 const back = Scalp.from(JSON.parse(JSON.stringify(s.toJSON())), { src });
 ok("state survives a restart", back.summary().trades === 3 && Math.abs(back.cash - s.cash) < 1e-9);
 ok("every buy and sell is journaled", log.filter((e) => e.type === "entry").length === 3 && log.filter((e) => e.type === "close").length === 3);
-const st = new Scalp({ src, start: 50, stake: 1.618 });
+const st = new Scalp({ src, start: 50, stake: 1.618, quote: async () => ({ ok: true, costSide: 0.01, costRt: 0.006 }) });
 await st.scanLane(now0);
 ok("50 SOL balance, 1.618 SOL every trade", st.open.size === 3 && [...st.open.values()].every((p) => Math.abs(p.cost - 1.618) < 1e-9) && Math.abs(st.cash - (50 - 3 * 1.618)) < 1e-9, st.cash);
 ok("a ledger from another plan is not reused", Scalp.from(s.toJSON(), { src, start: 50, stake: 1.618 }).cash === 50);
 // learning: five losers of the same shape, then that shape is refused
-const L = new Scalp({ src, start: 50, stake: 1.618 });
+const L = new Scalp({ src, start: 50, stake: 1.618, quote: async () => ({ ok: true, costSide: 0.01, costRt: 0.006 }) });
 const shape = shapeOf(rising(1), rows[0], now0);
 for (let i = 0; i < 5; i++) { prices["X" + i] = 0.85;
   L.open.set("X" + i, { addr: "X" + i, symbol: "X", cost: 1.618, units: 1.618, entry: 1, last: 0.85, at: now0, shape });
@@ -49,5 +49,10 @@ await L.scanLane(now0 + 2000);
 ok("the lesson stops the same setup being bought again", L.open.size === 0 && L.skips > 0, L.summary());
 ok("lessons survive a restart", Scalp.from(JSON.parse(JSON.stringify(L.toJSON())), { src, start: 50, stake: 1.618 }).badPart(shape) !== null);
 ok("stake never changes after losses (no emotion)", L.stake === 1.618);
+const cheap = new Scalp({ src, start: 50, stake: 1.618, quote: async ({ mint }) => (mint === "A" ? { ok: true, costSide: 0.001, costRt: 0.002 } : { ok: true, costSide: 0.01, costRt: 0.02 }) });
+src.candles = async (a, r, limit) => (limit <= 2 ? [{ t: 1, o: 1, h: 1, l: 1, c: 1, v: 1 }] : a === "D" ? flat(1) : rising(1));
+await cheap.scanLane(now0 + 999_000);
+ok("only the coin with a cheap measured round trip is bought", cheap.open.size === 1 && cheap.open.has("A") && cheap.summary().costSkips === 3, cheap.summary());
+ok("the ledger charges the measured fee, not a guess", Math.abs(cheap.summary().fees - 1.618 * 0.001) < 1e-5, cheap.summary());
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
