@@ -403,7 +403,12 @@
   const tapeTop = el("span", { ...BASE });
   const tapeReal = el("span", { ...BASE, color: "rgba(150,195,255,.98)" });
   const tapeLast = el("span", { ...BASE, "font-weight": "500", opacity: ".85" });
-  put(tape, tapeTop); put(tape, tapeReal); put(tape, tapeLast);
+  // build 41: progress to $2,000 and the open real positions, all in green (Alex)
+  const realBar = el("div", { ...BASE, width: "220px", height: "4px", "border-radius": "2px", background: "rgba(255,255,255,.14)", overflow: "hidden", display: "none" });
+  const realFill = el("div", { ...BASE, height: "100%", width: "0%", background: "linear-gradient(90deg, #1fdc6e, #7dffb0)", "box-shadow": "0 0 6px rgba(60,230,130,.8)" });
+  put(realBar, realFill);
+  const realPos = el("div", { ...BASE, display: "none", "flex-direction": "column", "align-items": "center", gap: "2px", color: "#3dfa8a", "font-weight": "650" });
+  put(tape, tapeTop); put(tape, tapeReal); put(tape, realBar); put(tape, realPos); put(tape, tapeLast);
   put(layer, tape);
   const orbRadius = (kb) => Math.max(18, Math.min(36, 18 + 2.618 * LN(1 + Math.max(0, Number(kb) || 0))));
 
@@ -719,7 +724,17 @@
       const m = bd.sum, money = (v) => (bd.unit === "SOL" ? `${(Number(v) || 0).toFixed(3)} SOL` : `$${(Number(v) || 0).toFixed(2)}`);
       const sol = (v) => `${(Number(v) || 0).toFixed(3)}`;
       const rl = bd.real || null;
-      say("tapeReal", tapeReal, rl && rl.connected ? `REAL  ${rl.balance ?? "?"} ${rl.unit || "SOL"} · ${rl.trades || 0} trades · ${rl.pnl >= 0 ? "+" : "−"}${sol(Math.abs(rl.pnl || 0))}` : "REAL  not connected");
+      const usd = (v) => (v === null || v === undefined ? "?" : `$${Number(v).toFixed(2)}`);
+      const sgn = (v) => (Number(v) >= 0 ? "+" : "−");
+      say("tapeReal", tapeReal, !rl ? "REAL  not connected"
+        : `REAL · ${String(rl.mode || "probe").toUpperCase()} · step ${rl.step} of ${rl.of} · ${usd(rl.balanceUsd)} → next ${usd(rl.nextGoal)}${rl.pnlUsd !== null && rl.pnlUsd !== undefined ? ` · P&L ${sgn(rl.pnlUsd)}${usd(Math.abs(rl.pnlUsd))}` : ""}${rl.state && rl.state !== "IDLE" && rl.state !== "OPEN" ? ` · ${rl.state.toLowerCase()}` : ""}`);
+      css(tapeReal, { color: rl && rl.pnlUsd !== null && rl.pnlUsd !== undefined ? "#3dfa8a" : "rgba(150,195,255,.98)" });
+      vis("realBar", realBar, Boolean(rl), "block");
+      if (rl) css(realFill, { width: `${Math.max(0, Math.min(100, (Number(rl.progress) || 0) * 100)).toFixed(1)}%` });
+      const ops = rl && Array.isArray(rl.open) ? rl.open : [];
+      vis("realPos", realPos, ops.length > 0, "flex");
+      const posText = ops.map((o) => `● $${o.symbol}  ${sgn(o.move)}${(Math.abs(o.move) * 100).toFixed(1)}%  ${sgn(o.pnlUsd)}${usd(Math.abs(o.pnlUsd))}  → +${Math.round((o.target || 0) * 100)}%`).join("\n");
+      if (realPos.__t !== posText) { realPos.__t = posText; while (realPos.firstChild) realPos.removeChild(realPos.firstChild); for (const line of posText ? posText.split("\n") : []) { const sp = el("span", { ...BASE, color: "#3dfa8a", "font-weight": "650", "text-shadow": "0 0 6px rgba(40,220,120,.45), 0 1px 2px rgba(0,0,0,.6)" }); sp.textContent = line; put(realPos, sp); } }
       say("tapeTop", tapeTop, m.plus !== undefined
         ? `SIM  +${sol(m.plus)}  −${sol(Math.abs(m.minus))}  =  ${m.net >= 0 ? "+" : "−"}${sol(Math.abs(m.net))} SOL · live ${(m.live || 0) >= 0 ? "+" : "−"}${sol(Math.abs(m.live || 0))} · ${m.trades} trades · ${m.open} open`
         : `${money(m.balance)} · ${m.trades} trades · ${m.wins}W ${m.losses}L · ${m.open} open`);

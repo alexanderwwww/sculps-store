@@ -223,7 +223,7 @@ async function chrome() {
 
 try {
   const { createTraderMode } = await import("./trader/inapp.mjs");
-  trader = createTraderMode({ dir: process.env.ULTRA_TRADER_DIR, getBrowser: chrome, log: (l) => log(l) });
+  trader = createTraderMode({ dir: process.env.ULTRA_TRADER_DIR, getBrowser: chrome, log: (l) => log(l), cards: { showTradeCard: (c, o) => (desk && desk.showTradeCard ? desk.showTradeCard(c, o) : Promise.resolve("expired")) } });
 } catch (e) { log(`trader mode could not load: ${String(e && e.message || e).slice(0, 160)}`); }
 
 /* ------------------------------------------------------------------ orders */

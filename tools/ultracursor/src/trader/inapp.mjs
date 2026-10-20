@@ -12,6 +12,7 @@
  * TRAINING ONLY: nothing here can place an order. While it is on, the agent
  * refuses GMGN's own buy/sell controls (guard.mjs gmgnTradeClick).
  */
+import { Real } from "./real/real.mjs";
 import { Scalp } from "./scalp.mjs";
 import fs from "node:fs";
 import path from "node:path";
@@ -25,7 +26,7 @@ export const FLAG_URL = "https://blackreaper.us/media/uc-trader.json";
 export const SNAPSHOT_URL = "https://blackreaper.us/media/trader-memory-latest.json";
 export const SPEED = 6.47; // Alex: "4 x golden ratio"
 
-export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fetch, flagUrl = process.env.ULTRA_TRADER_FLAG || FLAG_URL }) {
+export function createTraderMode({ dir, getBrowser, cards = null, log = () => {}, fetchFn = fetch, flagUrl = process.env.ULTRA_TRADER_FLAG || FLAG_URL }) {
   fs.mkdirSync(dir, { recursive: true });
   const MODE = path.join(dir, "mode.json"), LEDGER = path.join(dir, "ledger.jsonl"), STATE = path.join(dir, "state.json");
   let local = { on: false, at: 0 };
@@ -71,7 +72,7 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     const memory = new Memory({ dir: memDir });
     const recent = [];  // build 7: the last few buys/sells, shown on screen beside the orb
     const board = () => {
-      try { fs.writeFileSync(path.join(memDir, ".trader-board"), JSON.stringify({ at: Date.now(), sum: fast.summary(), unit: "SOL", recent })); } catch { /* disk */ }
+      try { fs.writeFileSync(path.join(memDir, ".trader-board"), JSON.stringify({ at: Date.now(), sum: fast.summary(), unit: "SOL", recent, real: (() => { try { return real.board(); } catch { return null; } })() })); } catch { /* disk */ }
     };
     const write = (ev) => {
       if (ev.type === "entry" || ev.type === "close" || ev.type === "exit" || ev.type === "post-mortem") {
@@ -92,11 +93,16 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     const FAST = path.join(dir, "fast.json");
     let fj = null; try { fj = JSON.parse(fs.readFileSync(FAST, "utf8")); } catch { fj = null; }
     // Alex 2026-10-20: a 50 SOL fake balance, 1.618 SOL every trade
-    const fast = Scalp.from(fj, { src: gm, log: write, start: 0, stake: 1.618 }); // build 29: infinite balance, the money line shows + and - totals
+    // build 41: the real-money trader (src/trader/real). PROBE until R2 real.json says LIVE; every
+    // buy needs Alex's card. It hears every symbiot pick through onPick.
+    const real = new Real({ dir: path.join(dir, "real"), build: process.env.ULTRA_BUILD || null, src: gm, browser, cards, log: write });
+    await real.start().catch((e) => write({ type: "real-error", why: String(e.message || e).slice(0, 200) }));
+    const fast = Scalp.from(fj, { src: gm, log: write, start: 0, stake: 1.618, onPick: (p) => real.onPick(p) }); // build 29: infinite balance, the money line shows + and - totals
     const sniper = new Sniper({ src: gm, book, memory, log: write });
     const lanes = new Lanes({ log: write });
     lanes
       .add("fast", 3000, (t) => fast.scanLane(t))
+      .add("real", 1000, (t) => real.tick(t))
       .add("board", 1000, async () => { board(); memory.heartbeat({ open: fast.open.size, armed: 0, paid: fast.summary().wins }); })
       .add("fastPositions", 2000, async (t) => { await fast.positionLane(t); fs.writeFileSync(FAST, JSON.stringify(fast.toJSON())); board();
         // build 24: the orb and the money line live on this heartbeat (it came from the parked sniper,
@@ -105,7 +111,8 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     // build 19: the slow Fibonacci sniper is parked (0 trades in thousands of scans, and its
       // 10-30 s scans starved the fast lane of GMGN calls). Its code stays for later.
     const done = lanes.run().catch((e) => { lastError = String(e.message || e); });
-    run = { lanes, gm, memory, book, done, sniper, fast };
+    real.sim = fast;
+    run = { lanes, gm, memory, book, done, sniper, fast, real };
     board();
     log(`trader started in the app (training, fake money): GMGN in a background tab, memory ${Math.round(memory.bytes() / 1024)} KB`);
   }
@@ -115,6 +122,7 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     const r = run; run = null;
     r.lanes.stop();
     await r.done;
+    if (r.real) await r.real.stop().catch(() => {});
     try { fs.writeFileSync(STATE, JSON.stringify(r.book.toJSON())); } catch { /* disk */ }
     r.memory.save();
     r.memory.off();
@@ -136,6 +144,13 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
           const r = await fetchFn(`${process.env.ULTRA_SYMBIOT_CFG || "https://blackreaper.us/media/symbiot.json"}?t=${now}`, { cache: "no-store" });
           if (r.ok) { const before = JSON.stringify(run.fast.cfg); run.fast.configure(await r.json()); if (JSON.stringify(run.fast.cfg) !== before) log(`symbiot settings: ${JSON.stringify(run.fast.cfg)}`); }
         } catch { /* keep the last settings */ }
+        // build 41: the real trader's settings (mode, wallet, selectors), same 30 s rhythm
+        if (run.real) {
+          try {
+            const r2 = await fetchFn(`${process.env.ULTRA_REAL_CFG || "https://blackreaper.us/media/real.json"}?t=${now}`, { cache: "no-store" });
+            if (r2.ok) run.real.setConfig(await r2.json());
+          } catch { /* stays as it was; PROBE until a fresh read */ }
+        }
       }
       const on = want();
       if (on && !run && now - failedAt > 30000) {
@@ -150,6 +165,6 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
   return {
     want, set, tick, stop,
     running: () => !!run,
-    state: () => ({ want: want(), running: !!run, starting, lastError, gmgnCalls: run ? run.gm.calls : 0, gmgnErrors: run ? run.gm.errors : 0, gmgnLastError: run ? run.gm.lastErr || null : null, book: run ? run.book.summary() : null, fast: run ? { ...run.fast.summary(), cfg: run.fast.cfg } : null, lastScan: run ? run.lastScan || null : null, blocks: run && run.sniper ? Object.entries(run.sniper.why || {}).sort((a, b) => b[1] - a[1]).slice(0, 8) : null }),
+    state: () => ({ want: want(), running: !!run, starting, lastError, gmgnCalls: run ? run.gm.calls : 0, gmgnErrors: run ? run.gm.errors : 0, gmgnLastError: run ? run.gm.lastErr || null : null, book: run ? run.book.summary() : null, fast: run ? { ...run.fast.summary(), cfg: run.fast.cfg } : null, real: run && run.real ? (() => { try { return run.real.status(); } catch (e) { return { error: String(e.message || e) }; } })() : null, lastScan: run ? run.lastScan || null : null, blocks: run && run.sniper ? Object.entries(run.sniper.why || {}).sort((a, b) => b[1] - a[1]).slice(0, 8) : null }),
   };
 }

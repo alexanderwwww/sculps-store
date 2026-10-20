@@ -82,6 +82,13 @@ export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale =
       };
     });
   }
+  /** build 41: the real trader's buy card. Resolves "buy" with a token minted only on Alex's press. */
+  function showTradeCard(card, { ttlMs = 45_000, mint = () => null } = {}) {
+    let timer = null;
+    const waiting = showCard({ kind: card.kind, title: card.title, lines: card.lines, choices: card.choices });
+    const expire = new Promise((resolve) => { timer = setTimeout(() => { clearCard(); resolve("expired"); }, ttlMs); });
+    return Promise.race([waiting, expire]).then((choice) => { clearTimeout(timer); return choice === "buy" ? { choice: "buy", token: mint() } : choice; });
+  }
   const clearCard = () => { if (S.cardWaiter) S.cardWaiter("cleared"); S.card = null; S.cardWaiter = null; };
 
   async function onMessage(msg, page) {
@@ -257,6 +264,7 @@ export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale =
     busy: () => !!S.current,
     runNext,
     control: (cmd) => onMessage({ type: "control", cmd }),
+    showTradeCard,
     state,
     onFinished: (fn) => listeners.push(fn),
     finished,

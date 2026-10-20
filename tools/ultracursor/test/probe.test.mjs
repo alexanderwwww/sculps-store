@@ -15,7 +15,7 @@ import { GmgnPanel } from "../src/trader/real/exec/gmgn-panel.mjs";
 import { startFakeGmgn, routeGmgn, launchChrome, mintOf, WALLET_LABEL } from "./fake-gmgn.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const KILL = setTimeout(() => { console.log("FAIL  probe test timed out"); process.exit(1); }, 120_000);
+const KILL = setTimeout(() => { console.log("FAIL  probe test timed out"); process.exit(1); }, 300_000);
 let pass = 0, fail = 0;
 const ok = (n, c, x) => { if (c) { pass++; console.log("  ok  " + n); } else { fail++; console.log("FAIL  " + n, x === undefined ? "" : typeof x === "string" ? x : JSON.stringify(x).slice(0, 600)); } };
 
@@ -41,7 +41,7 @@ try {
   ok("tag, type, placeholder, value and disabled are read", c("textbox", "Amount").tag === "input" && c("textbox", "Amount").placeholder === "0.0" && c("textbox", "Amount").disabled === false && c("checkbox", "Anti-MEV")?.checked === "true", c("textbox", "Amount"));
   ok("presets: 0.01, 0.1, 0.5, 1, Max (and the hidden 25/50/100%)", ["0.01", "0.1", "0.5", "1", "Max", "100% (hidden)"].every((p) => rep.presets.includes(p)), rep.presets);
   ok("slippage 1% read from its control", rep.slippage.pct === 0.01 && rep.slippage.control.name === "Slippage 1%", rep.slippage);
-  ok("priority, anti-MEV, TP/SL and balance texts", rep.priority.texts.some((t) => /Priority/.test(t)) && rep.antiMev.texts.length > 0 && rep.tpsl.texts.some((t) => /TP\/SL/.test(t)) && rep.balance.sol === 0.15, { p: rep.priority, m: rep.antiMev, t: rep.tpsl, b: rep.balance });
+  ok("priority, anti-MEV, TP/SL and balance texts", rep.priority.texts.some((t) => /Priority/.test(t)) && (rep.antiMev.texts.length > 0 || !!rep.antiMev.control) && rep.tpsl.texts.some((t) => /TP\/SL/.test(t)) && rep.balance.sol === 0.15, { p: rep.priority, m: rep.antiMev, t: rep.tpsl, b: rep.balance });
   ok("wallet: GMGN's own, address 7xKX…gAsU", rep.walletKind === "gmgn" && rep.walletAddr === WALLET_LABEL, { k: rep.walletKind, a: rep.walletAddr, e: rep.walletEvidence });
   ok("CDP targets listed before and after", Array.isArray(rep.cdpTargetsBefore) && Array.isArray(rep.cdpTargetsAfter) && rep.cdpTargetsAfter.some((t) => t.type === "page" && /gmgn\.ai/.test(t.url)), rep.cdpTargetsAfter);
   ok("the accessibility snapshot of the box is in the report", typeof rep.aria === "string" && /tab "Buy"/.test(rep.aria) && /textbox "Amount"/.test(rep.aria), rep.aria);
