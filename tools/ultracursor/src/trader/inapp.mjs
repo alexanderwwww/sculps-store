@@ -97,7 +97,10 @@ export function createTraderMode({ dir, getBrowser, log = () => {}, fetchFn = fe
     const lanes = new Lanes({ log: write });
     lanes
       .add("fast", 3000, (t) => fast.scanLane(t))
-      .add("fastPositions", 2000, async (t) => { await fast.positionLane(t); fs.writeFileSync(FAST, JSON.stringify(fast.toJSON())); board(); });
+      .add("fastPositions", 2000, async (t) => { await fast.positionLane(t); fs.writeFileSync(FAST, JSON.stringify(fast.toJSON())); board();
+        // build 24: the orb and the money line live on this heartbeat (it came from the parked sniper,
+        // so they vanished 15 s after start); paid = the fast lane's wins, for the chime
+        memory.heartbeat({ open: fast.open.size, armed: 0, paid: fast.summary().wins }); });
     // build 19: the slow Fibonacci sniper is parked (0 trades in thousands of scans, and its
       // 10-30 s scans starved the fast lane of GMGN calls). Its code stays for later.
     const done = lanes.run().catch((e) => { lastError = String(e.message || e); });

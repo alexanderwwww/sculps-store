@@ -17,20 +17,20 @@
 import { quoteCosts } from "./fees.mjs";
 
 // Build 16 (Alex: "take some risk"): wider net, round trip up to 1.618%, 5 open.
-const MAX_RT = 0.01618;
+const MAX_RT = 0.0618;   // build 24: fake money, trade and learn; the real measured cost is still charged
 // Build 18 (Alex: "we need new data"): the Fibonacci lane keeps its own clean
 // ledger and lessons; a ledger from an earlier plan is not carried over.
-const PLAN = "fib20";
+const PLAN = "fib24";
 const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, MAX_OPEN = 5, CAP = 0.618, COST = 0.01;
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
 
 export function rugOk(row, nowSec) {
   const created = num(row.ct) || num(row.ot);
   const age = created ? nowSec - created : null;
-  if (age === null || age < 8 * 60) return false;
+  if (age === null || age < 3 * 60) return false;            // build 24: new launches from 3 minutes old
   // build 23: pools under $89K let a 1.618 SOL buy move the price by itself (3-5% round
   // trips measured live on 2026-10-20); only deep pools are charted.
-  if (!(num(row.lq) >= 89_000)) return false;
+  if (!(num(row.lq) >= 13_000)) return false;                // build 24: back to 13K, Alex: "trade the new ones, it's fake money, learn"
   if (num(row.t10) !== null && !(num(row.t10) < 0.3)) return false;
   return true;
 }
@@ -144,6 +144,7 @@ export class Scalp {
         continue;
       }
       const side = q.costSide;
+      shape.push(`rt${q.costRt < 0.01618 ? 0 : q.costRt < 0.03 ? 1 : 2}`); // learning knows what the fee was
       const price = cs[cs.length - 1].c;
       this.cash -= n;
       this.feesPaid += n * side;

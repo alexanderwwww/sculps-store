@@ -21,7 +21,7 @@ const s = new Scalp({ src, log: (e) => log.push(e), quote: async () => ({ ok: tr
 ok("fib: a pullback into the golden pocket after a 30% run -> buy; flat -> no", fibSetup(rising(1)) && fibSetup(rising(1)).retr >= 0.5 && fibSetup(rising(1)).retr <= 0.705 && !fibSetup(flat(1)), fibSetup(rising(1)));
 const broke = rising(1); broke[20] = { ...broke[20], l: 1.0 };
 ok("fib: a pullback that broke 0.786 is not bought", !fibSetup(broke));
-ok("rug check refuses a 1-minute-old coin and a shallow pool", !rugOk(rows[4], sec) && rugOk(rows[0], sec) && !rugOk({ ...rows[0], lq: 50_000 }, sec));
+ok("rug check refuses a 1-minute-old coin and a shallow pool", !rugOk(rows[4], sec) && rugOk(rows[0], sec) && !rugOk({ ...rows[0], lq: 5_000 }, sec));
 await s.scanLane(now0);
 ok("buys every rising coin (max 5 open), never the flat coin or the rug", s.open.size === 3 && !s.open.has("D") && !s.open.has("RUG"), [...s.open.keys()]);
 ok("never more than 61.8% of equity in play", s.inPlay() <= 10 * 0.618 + 1e-9, s.inPlay());
@@ -55,7 +55,7 @@ await L.scanLane(now0 + 2000);
 ok("the lesson stops the same setup being bought again", L.open.size === 0 && L.skips > 0, L.summary());
 ok("lessons survive a restart", Scalp.from(JSON.parse(JSON.stringify(L.toJSON())), { src, start: 50, stake: 1.618 }).badPart(shape) !== null);
 ok("stake never changes after losses (no emotion)", L.stake === 1.618);
-const cheap = new Scalp({ src, start: 50, stake: 1.618, quote: async ({ mint }) => (mint === "A" ? { ok: true, costSide: 0.001, costRt: 0.002 } : { ok: true, costSide: 0.01, costRt: 0.02 }) });
+const cheap = new Scalp({ src, start: 50, stake: 1.618, quote: async ({ mint }) => (mint === "A" ? { ok: true, costSide: 0.001, costRt: 0.002 } : { ok: true, costSide: 0.01, costRt: 0.07 }) });
 src.candles = async (a, r, limit) => (limit <= 2 ? [{ t: 1, o: 1, h: 1, l: 1, c: 1, v: 1 }] : a === "D" ? flat(1) : rising(1));
 await cheap.scanLane(now0 + 999_000);
 ok("only the coin with a cheap measured round trip is bought", cheap.open.size === 1 && cheap.open.has("A") && cheap.summary().costSkips === 3, cheap.summary());
