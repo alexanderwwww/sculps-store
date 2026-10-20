@@ -186,3 +186,20 @@ Evidence from 502 journalled skips: 222 failed on age, 211 on liquidity, and mos
 - Narrative: one source with N ≥ 61.8 is enough while the other is unreachable. Two sources that disagree still block.
 - Confluence: 2 of 5 timeframes (was 3).
 - Unchanged hard safety: no mint, no freeze, LP burned or locked, top 10 < 25%, dev < 5%, data complete.
+
+## 13. Logic and psychology (Alex, 2026-10-20: "you have to count the logic and psychology")
+### Reading the crowd (market psychology as signals)
+- **Euphoria:** price at ATH, buys far above sells, many new small wallets, "to the moon" callouts. Never enter; it is where the crowd buys the top. Arm a 0.618 limit instead.
+- **Fear and capitulation:** a sharp red candle on the largest volume of the swing, then sells drying up. This is where the elegant entry lives, AFTER the capitulation candle, never during it.
+- **Doubt:** a sideways chop at 0.5–0.618 with falling volume and holders still rising ("another correction, all good"). This is the setup. Strong hands are absorbing.
+- **Panic exits by whales:** top holders selling while price holds means distribution. Skip, or exit.
+- **Narrative heat:** callouts, KOL posts and X mentions accelerating means attention is arriving. Once they are slowing, attention is leaving and the exit window is open.
+- Every psychology read is logged with its outcome. The instinct learns which reads were right.
+
+### Our own psychology (the trader must not have human weaknesses)
+- **No FOMO:** never chase a green candle. If the entry level is missed, the trade is missed.
+- **No revenge:** after a loss, size goes ÷φ and the next trade must clear a higher conviction bar (I ≥ 61.8 + 13). Never trade bigger to win it back.
+- **Tilt guard:** 3 losses in a row means a 13-minute cooldown, and the gate tightens one φ step until the next win.
+- **No hope:** the stop is the stop. No moving it down and no "it will come back".
+- **No greed:** take-profits fire as set. The trailing runner is the only part allowed to dream.
+- **Logic over feeling:** every entry must state its reason in one line (level, crowd read, narrative). No reason, no trade.
