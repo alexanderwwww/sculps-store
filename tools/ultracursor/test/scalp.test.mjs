@@ -1,5 +1,5 @@
 // The fast lane, driven with a fake GMGN: buys on momentum, sells at +13%, -8% and 3 minutes.
-import { Scalp, momentum, rugOk } from "../src/trader/scalp.mjs";
+import { Scalp, momentum, rugOk, shapeOf } from "../src/trader/scalp.mjs";
 let pass = 0, fail = 0;
 const ok = (n, c, x) => { if (c) { pass++; console.log("  ok  " + n); } else { fail++; console.log("FAIL  " + n, x ?? ""); } };
 const now0 = 1_800_000_000_000, sec = Math.floor(now0 / 1000);
@@ -36,5 +36,18 @@ const st = new Scalp({ src, start: 50, stake: 1.618 });
 await st.scanLane(now0);
 ok("50 SOL balance, 1.618 SOL every trade", st.open.size === 3 && [...st.open.values()].every((p) => Math.abs(p.cost - 1.618) < 1e-9) && Math.abs(st.cash - (50 - 3 * 1.618)) < 1e-9, st.cash);
 ok("a ledger from another plan is not reused", Scalp.from(s.toJSON(), { src, start: 50, stake: 1.618 }).cash === 50);
+// learning: five losers of the same shape, then that shape is refused
+const L = new Scalp({ src, start: 50, stake: 1.618 });
+const shape = shapeOf(rising(1), rows[0], now0);
+for (let i = 0; i < 5; i++) { prices["X" + i] = 0.85;
+  L.open.set("X" + i, { addr: "X" + i, symbol: "X", cost: 1.618, units: 1.618, entry: 1, last: 0.85, at: now0, shape });
+}
+await L.positionLane(now0 + 1000);
+ok("five losses of one shape become a lesson", L.summary().lessons >= 1 && L.badPart(shape) !== null, L.learn);
+src.candles = async (a, r, limit) => (limit <= 2 ? [{ t: 1, o: 1, h: 1, l: 1, c: 1, v: 1 }] : a === "D" ? flat(1) : rising(1));
+await L.scanLane(now0 + 2000);
+ok("the lesson stops the same setup being bought again", L.open.size === 0 && L.skips > 0, L.summary());
+ok("lessons survive a restart", Scalp.from(JSON.parse(JSON.stringify(L.toJSON())), { src, start: 50, stake: 1.618 }).badPart(shape) !== null);
+ok("stake never changes after losses (no emotion)", L.stake === 1.618);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -32,9 +32,32 @@ export function momentum(cs) {
   return rising && last[2].c > avg && last[2].v > vAvg;
 }
 
+/**
+ * Learning (build 12): every closed trade is filed under the shape of its setup:
+ * how hard it was rising, how much volume came in, how deep the pool was, how old
+ * the coin was, and the hour. Once a shape has 5+ trades and wins under 38.2% or
+ * loses money on average, the lane stops buying it. Bad shapes earn a second look
+ * after 21 more trades elsewhere. No feelings: no revenge trade, no size-up after
+ * a loss, the stake never changes.
+ */
+export function shapeOf(cs, row, nowMs) {
+  const last = cs.slice(-3), prev = cs.slice(-11, -1);
+  const rise = last[2].c / last[0].c - 1;
+  const vr = last[2].v / Math.max(1e-9, prev.reduce((s, k) => s + k.v, 0) / prev.length);
+  const created = num(row.ct) || num(row.ot);
+  const ageMin = created ? (nowMs / 1000 - created) / 60 : 0;
+  const b = (x, cuts) => cuts.findIndex((c) => x < c) === -1 ? cuts.length : cuts.findIndex((c) => x < c);
+  return [
+    `rise${b(rise, [0.02, 0.05, 0.13])}`, `vol${b(vr, [1.618, 2.618, 4.236])}`,
+    `lq${b(num(row.lq) || 0, [21_000, 55_000, 144_000])}`, `age${b(ageMin, [21, 55, 144])}`,
+    `h${Math.floor(new Date(nowMs).getUTCHours() / 6)}`,
+  ];
+}
+
 export class Scalp {
   constructor({ src, log = () => {}, start = 10, stake = null }) {
     this.src = src; this.log = log; this.stake = stake;
+    this.learn = {}; this.skips = 0;
     this.start = start; this.cash = start; this.open = new Map(); this.trades = []; this.cool = new Map();
   }
   equity() { let e = this.cash; for (const p of this.open.values()) e += p.units * p.last * (1 - COST); return e; }
@@ -49,12 +72,15 @@ export class Scalp {
     let bought = 0;
     for (const { r, cs } of cands) {
       if (this.open.size >= MAX_OPEN || !momentum(cs)) continue;
+      const shape = shapeOf(cs, r, nowMs);
+      const bad = this.badPart(shape);
+      if (bad) { this.skips++; this.log({ type: "learned-skip", lane: "fast", symbol: r.s, shape: bad }); continue; }
       const eq = this.equity();
       const n = Math.min(this.stake || eq * SIZE, this.cash, eq * CAP - this.inPlay());
       if (!(n > 0.05)) break;
       const price = cs[cs.length - 1].c;
       this.cash -= n;
-      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, units: (n * (1 - COST)) / price, entry: price, last: price, at: nowMs });
+      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, units: (n * (1 - COST)) / price, entry: price, last: price, at: nowMs, shape });
       this.log({ type: "entry", lane: "fast", addr: r.a, symbol: r.s, spent: +n.toFixed(4), price });
       bought++;
     }
@@ -75,19 +101,36 @@ export class Scalp {
       const pnl = got - p.cost;
       const t = { symbol: p.symbol, addr: p.addr, pnl, ret: pnl / p.cost, won: pnl > 0, why, held: nowMs - p.at };
       this.trades.push(t);
+      for (const k of p.shape || []) {
+        const L = (this.learn[k] = this.learn[k] || { n: 0, w: 0, pnl: 0, until: 0 });
+        L.n++; if (t.won) L.w++; L.pnl += t.ret;
+        if (L.n >= 5 && (L.w / L.n < 0.382 || L.pnl / L.n < 0)) { L.until = this.trades.length + 21; this.log({ type: "lesson", lane: "fast", shape: k, n: L.n, wins: L.w, avg: +(L.pnl / L.n).toFixed(4) }); }
+      }
       this.log({ type: "close", lane: "fast", symbol: p.symbol, addr: p.addr, pnl: +pnl.toFixed(4), ret: +t.ret.toFixed(4), why, balance: +this.equity().toFixed(4) });
     }
   }
 
+  /** The first part of a setup's shape that has proven it loses, or null. */
+  badPart(shape) {
+    for (const k of shape) {
+      const L = this.learn[k];
+      if (!L || L.n < 5) continue;
+      if (L.until > this.trades.length) return k;
+      if (L.until && L.until <= this.trades.length) { L.n = 0; L.w = 0; L.pnl = 0; L.until = 0; } // second look
+    }
+    return null;
+  }
+
   summary() {
     const n = this.trades.length, wins = this.trades.filter((t) => t.won).length;
-    return { trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size };
+    return { trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
   }
-  toJSON() { return { v: 2, start: this.start, stake: this.stake, cash: this.cash, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
+  toJSON() { return { v: 2, start: this.start, stake: this.stake, cash: this.cash, learn: this.learn, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
   static from(j, opts) {
     const s = new Scalp(opts);
     // a different start or stake (Alex changed the plan) starts a fresh ledger
     if (j && j.v === 2 && j.start === s.start && j.stake === s.stake) { s.cash = j.cash; for (const p of j.open || []) s.open.set(p.addr, p); s.trades = j.trades || []; }
+    if (j && j.learn) s.learn = j.learn; // lessons survive even a new plan
     return s;
   }
 }

@@ -89,6 +89,7 @@ into the core." First real use: Depop ("take images and upload"), because ChatGP
 - 7: ticker above the orb (balance · trades · W/L · open · last buy/sell); status carries `trader.book`.
 - 8: the trader's GMGN tab no longer blocks images/fonts. Alex watches that tab, and it looked broken.
 - 9: status `trader.blocks` counts failed rules. Evidence: the Fib sniper fired 0 trades because every coin failed gate + narrative + costs + smartNow together.
+- 12: fast lane learns: each trade filed by setup shape (rise, volume, liquidity, age, hour); a shape with 5+ trades under 38.2% wins or negative average is refused for 21 trades, then re-tested. Stake never changes (no emotion). Lessons persist.
 - 11: fast lane runs a 50 SOL fake balance, 1.618 SOL every trade (Alex). Ticker in SOL.
 - 10: fast lane `src/trader/scalp.mjs`. Momentum on 1m (3 rising closes, above the 8-avg, volume up), TP +13%, SL −8%, 3-min time stop, 23.6% size, max 3 open, ≤61.8%, 1% cost a side, 5-min cooldown. Fake money; it feeds the ticker. Test: `test/scalp.test.mjs`.
 - Runner tests set `ULTRA_TRADER_FLAG` to a dead URL so the live switch never leaks into them.
