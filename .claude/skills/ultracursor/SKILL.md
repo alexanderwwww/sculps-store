@@ -89,6 +89,7 @@ into the core." First real use: Depop ("take images and upload"), because ChatGP
 - 7: ticker above the orb (balance · trades · W/L · open · last buy/sell); status carries `trader.book`.
 - 8: the trader's GMGN tab no longer blocks images/fonts. Alex watches that tab, and it looked broken.
 - 9: status `trader.blocks` counts failed rules. Evidence: the Fib sniper fired 0 trades because every coin failed gate + narrative + costs + smartNow together.
+- 15: launch opens GMGN, never Depop (run.command START_URL + first https tab redirected at first connect). Zip: https://blackreaper.us/media/ultracursor-15-1c3d468b0e5906a1.zip
 - 14: lowest tip: network cost = 10th percentile of what the last 50 trades on the coin paid (fees.mjs tip:"lowest"), not the median.
 - 13: fast lane measures the real fee per coin before buying (fees.mjs: Jupiter round trip + pool fee + tax + network) and only trades coins under 0.618% round trip; ledger charges the measured cost. Network fee alone is ~0.000005 SOL; pool fee and price impact cannot be zero.
 - 12: fast lane learns: each trade filed by setup shape (rise, volume, liquidity, age, hour); a shape with 5+ trades under 38.2% wins or negative average is refused for 21 trades, then re-tested. Stake never changes (no emotion). Lessons persist.

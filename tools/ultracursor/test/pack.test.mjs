@@ -331,9 +331,9 @@ exec node "$UC_LOG/cdp.cjs" "$port" "$UC_LOG/chrome.pid"
   check(say("first launch: npm install --omit=dev, once, in WORK (under Application Support)"),
     npm.length === 1 && npm[0] === `${WORK}|install --omit=dev --no-audit --no-fund`, npm.join("\n"));
   const args = lines("chrome.args");
-  check(say("first launch: Chrome opened on Depop with port, its own profile, no first-run screens"),
+  check(say("first launch: Chrome opened on GMGN with port, its own profile, no first-run screens"),
     JSON.stringify(args) === JSON.stringify([`--remote-debugging-port=${PORT}`, `--user-data-dir=${HOME}/.ultracursor-chrome`,
-      "--no-first-run", "--no-default-browser-check", "https://www.depop.com/"]), args.join(" "));
+      "--no-first-run", "--no-default-browser-check", "https://gmgn.ai/?chain=sol"]), args.join(" "));
   check(say(`first launch: runner ran in WORK as build ${build}, then as build ${build + 1} after exit 97`),
     r.runs.length === 2 && r.runs[0].build === String(build) && r.runs[1].build === String(build + 1)
       && r.runs.every((x) => x.cwd === WORK), JSON.stringify(r.runs.map((x) => [x.build, x.cwd])));
@@ -436,7 +436,7 @@ exec node "$UC_LOG/cdp.cjs" "$port" "$UC_LOG/chrome.pid"
   check(say("another window running but its Chrome was closed: this one takes over and reopens Chrome"),
     r.code === 0 && r.runs.length === 1 && !alive(o.pid) && lines("chrome.args")[0] === `--remote-debugging-port=${PORT}`
       && r.out.includes("Chrome was closed. Restarting ultracursor in this window."), tail(r.out, 6));
-  check(say("Chrome found under ~/Applications, through the spaces in its path"), lines("chrome.args").includes("https://www.depop.com/"));
+  check(say("Chrome found under ~/Applications, through the spaces in its path"), lines("chrome.args").includes("https://gmgn.ai/?chain=sol"));
 
   // 8. A Node older than 20 first on PATH (playwright-core 1.63 refuses to
   // run on 18) is passed over for a newer one further down the search: here

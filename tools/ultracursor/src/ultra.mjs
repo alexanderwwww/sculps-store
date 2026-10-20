@@ -201,6 +201,14 @@ async function chrome() {
     const ctx = browser.contexts()[0];
     if (ctx) {
       await desk.install(ctx);
+      // Build 15 (Alex, angry): at launch the window opens on GMGN, not the last
+      // shop. Only at the first connect, so a shop task later still works.
+      if (!S.openedHome) {
+        S.openedHome = true;
+        const host = (p) => { try { return new URL(p.url()).hostname; } catch { return ""; } };
+        const first = ctx.pages()[0];
+        if (first && /^https:/.test(first.url()) && !/(^|\.)gmgn\.ai$/.test(host(first))) await first.goto("https://gmgn.ai/?chain=sol", { waitUntil: "domcontentloaded", timeout: 30000 }).catch(() => {});
+      }
       for (const p of ctx.pages()) await uiReal.attach(ctx, p, BUILD);
       ctx.on("page", (p) => { uiReal.attach(ctx, p, BUILD).catch(() => {}); });
     }

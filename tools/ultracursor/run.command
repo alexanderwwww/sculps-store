@@ -15,13 +15,13 @@
 set -u
 
 BUNDLE="$(cd "$(dirname "$0")" && pwd)"
-BUILD="14"
+BUILD="15"
 WORK="$HOME/Library/Application Support/ultracursor/runtime"
 # The two ULTRA_TEST_ values exist for test/pack.test.mjs only. On his Mac
 # they are never set: port 9333 (Magic Wand has 9222) and his real Chrome.
 PORT="${ULTRA_TEST_PORT:-9333}"
 PROFILE="$HOME/.ultracursor-chrome"
-START_URL="https://www.depop.com/"
+START_URL="https://gmgn.ai/?chain=sol"
 
 say() { printf "\n\033[1m%s\033[0m\n" "$1"; }
 title() { printf "\033]0;%s\007" "ultracursor · build $1"; }
