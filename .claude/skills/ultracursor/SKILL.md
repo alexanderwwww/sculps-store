@@ -116,6 +116,7 @@ into the core." First real use: Depop ("take images and upload"), because ChatGP
 ## Symbiot (Alex, 2026-10-20)
 The trader inside ultracursor is called **symbiot**. It's part of Alex's ecosystem. It trades everything it sees on fake money (build 27, ULTRA: 52,000 SOL, 1,000 SOL loss budget) to detect every kind of move and collect lessons. Rules for where real money goes in come later, decided by Alex from symbiot's data. Until then: no real money, and no seed phrase or keys ever held.
 - The two sides (Alex, 2026-10-20): on one side **symbiot** trades everything it sees, reads no chart, and its only job is data. On the other side is **the human-style trader**, which picks its trades with judgement and the lessons symbiot found. Real money only ever goes through the trader side, under rules Alex sets from symbiot's data.
+- Build 38: symbiot filters whole combinations (age|pool|hour|source|entry) after 13 trades under 23.6% wins, lets 12.5% through to re-test (cfg filter/explore); never blocks on one trait. Status: fast.filtered, fast.bestCombos.
 - Build 37: money line refreshes every second with live P&L of open trades; second line shows the latest lesson (post-mortem tag).
 - Build 36: post-mortem on every trade: coin watched 2 min after exit, tagged sold-too-early / stop-then-pump / bought-the-top / gave-back / fee-ate-it / cut-right / good; counts + avg in status fast.mistakes.
 - Build 35: symbiot (readChart false) never blocks on lessons (they had blocked everything); lite shapes age/lq/hour/source.

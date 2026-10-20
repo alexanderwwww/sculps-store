@@ -28,8 +28,10 @@ const PLAN = "symbiot29";
  *   maxRt      highest round-trip fee accepted (the real measured fee is always charged)
  *   minLq      smallest pool (USD) when known      minAgeSec  youngest coin when known
  *   learnAfter / learnWinRate  a setup is blocked after N trades under this win rate
+ *   filter / explore  symbiot skips a whole combination (age+pool+hour+source) that keeps
+ *              losing, but still lets `explore` of them through so a lesson can be unlearned
  */
-export const DEFAULTS = { readChart: false, stake: 1.618, tp: 0.40, sl: -0.15, trailFrom: 0.25, holdMs: 120_000, maxOpen: 55, perScan: 55, maxRt: 0.30, minLq: 3_000, minAgeSec: 60, learnAfter: 13, learnWinRate: 0.236, shadowMs: 120_000 };
+export const DEFAULTS = { readChart: false, stake: 1.618, tp: 0.40, sl: -0.15, trailFrom: 0.25, holdMs: 120_000, maxOpen: 55, perScan: 55, maxRt: 0.30, minLq: 3_000, minAgeSec: 60, learnAfter: 13, learnWinRate: 0.236, shadowMs: 120_000, filter: true, explore: 0.125 };
 const TP = 0.13, SL = -0.08, HOLD_MS = 3 * 60_000, SIZE = 0.236, CAP = 0.618, COST = 0.01; // older ledgers only
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : null);
 
@@ -127,7 +129,7 @@ export class Scalp {
     this.src = src; this.log = log; this.stake = stake;
     this.cfg = { ...DEFAULTS, ...(stake ? { stake } : {}) };
     this.quote = quote || ((a) => this.#measure(a)); this.costSkips = 0; this.feesPaid = 0;
-    this.learn = {}; this.skips = 0; this.measured = []; this.done = new Set(); this.shadow = new Map(); this.mistakes = {};
+    this.learn = {}; this.skips = 0; this.measured = []; this.done = new Set(); this.shadow = new Map(); this.mistakes = {}; this.combos = {}; this.rand = Math.random;
     this.start = start; this.cash = start; this.open = new Map(); this.trades = []; this.cool = new Map();
   }
   equity() { let e = this.cash; for (const p of this.open.values()) e += p.units * p.last * (1 - (p.side ?? COST)); return e; }
@@ -177,7 +179,14 @@ export class Scalp {
       shape.push(fib ? "e:fib" : ign ? "e:ign" : "e:any");
       // symbiot farms: its lessons are recorded, never used to refuse a coin (that blocked
       // all 7,417 coins on Alex's Mac). Only the chart side (readChart) acts on them.
-      const bad = this.cfg.readChart ? this.badPart(shape) : null;
+      const combo = shape.join("|");
+      let bad = this.cfg.readChart ? this.badPart(shape) : null;
+      // build 38 (Alex: "learn to filter, losing is ok, but try to make money"): symbiot
+      // filters on the whole combination only, never one trait (one trait blocked everything)
+      if (!bad && !this.cfg.readChart && this.cfg.filter) {
+        const C = this.combos[combo];
+        if (C && C.n >= this.cfg.learnAfter && C.w / C.n < this.cfg.learnWinRate && this.rand() >= this.cfg.explore) bad = combo;
+      }
       if (bad) { this.skips++; this.log({ type: "learned-skip", lane: "fast", symbol: r.s, shape: bad }); continue; }
       const eq = this.equity();
       // build 29 (Alex: "infinite balance"): the stake is always 1.618 SOL, cash never blocks a trade
@@ -209,7 +218,7 @@ export class Scalp {
       this.cash -= n;
       this.done.add(r.a);                                           // each coin is traded once
       this.feesPaid += n * side;
-      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, side, units: (n * (1 - side)) / price, entry: price, last: price, at: nowMs, shape, hunt: true, peak: 0, why: fib ? `fib ${fib.retr}` : ign ? `ignition +${Math.round(ign.body * 100)}% x${ign.vx} vol` : "new launch (learn)" });
+      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, side, units: (n * (1 - side)) / price, entry: price, last: price, at: nowMs, shape, combo, hunt: true, peak: 0, why: fib ? `fib ${fib.retr}` : ign ? `ignition +${Math.round(ign.body * 100)}% x${ign.vx} vol` : "new launch (learn)" });
       this.log({ type: "entry", lane: "fast", addr: r.a, symbol: r.s, spent: +n.toFixed(4), price, why: fib ? `golden pocket ${fib.retr} of a ${Math.round(fib.move * 100)}% move` : ign ? `ignition candle +${Math.round(ign.body * 100)}% on ${ign.vx}x volume` : "new launch, bought to learn" });
       bought++;
       if (!q0) this.#settleFee(r, n, nowMs);
@@ -282,6 +291,7 @@ export class Scalp {
       const pnl = got + (p.banked || 0) - p.cost;
       const t = { symbol: p.symbol, addr: p.addr, pnl, ret: pnl / p.cost, won: pnl > 0, why, held: nowMs - p.at };
       this.trades.push(t);
+      if (p.combo) { const C = (this.combos[p.combo] = this.combos[p.combo] || { n: 0, w: 0, pnl: 0 }); C.n++; if (t.won) C.w++; C.pnl += t.pnl; }
       this.shadow.set(p.addr, { trade: t, exit: p.last, exitAt: nowMs, entry: p.entry, peak: p.peakAll || 0, shape: p.shape, after: { max: p.last, min: p.last } });
       for (const k of p.shape || []) {
         const L = (this.learn[k] = this.learn[k] || { n: 0, w: 0, pnl: 0, until: 0 });
@@ -344,9 +354,11 @@ export class Scalp {
     let live = 0;
     for (const p of this.open.values()) live += p.units * p.last * (1 - (p.side ?? COST)) - p.cost + (p.banked || 0);
     const last = [...this.trades].reverse().find((t) => t.mistake);
-    return { live: +live.toFixed(4), lastLesson: last ? `${last.symbol}: ${last.mistake}` : null, plus: +plus.toFixed(4), minus: +minus.toFixed(4), net: +(plus + minus).toFixed(4), trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, fees: +this.feesPaid.toFixed(5), mistakes: Object.fromEntries(Object.entries(this.mistakes).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => [k, { n: v.n, avg: +(v.ret / v.n).toFixed(3) }])), costSkips: this.costSkips, costWhy: this.costWhy || [], lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
+    return { live: +live.toFixed(4), lastLesson: last ? `${last.symbol}: ${last.mistake}` : null, plus: +plus.toFixed(4), minus: +minus.toFixed(4), net: +(plus + minus).toFixed(4), trades: n, wins, losses: n - wins, balance: +this.equity().toFixed(4), open: this.open.size, filtered: Object.values(this.combos).filter((C) => C.n >= this.cfg.learnAfter && C.w / C.n < this.cfg.learnWinRate).length,
+      bestCombos: Object.entries(this.combos).filter(([, C]) => C.n >= 5).sort((a, b) => b[1].pnl / b[1].n - a[1].pnl / a[1].n).slice(0, 3).map(([k, C]) => `${k} ${C.w}/${C.n} ${(C.pnl / C.n).toFixed(3)}`),
+      fees: +this.feesPaid.toFixed(5), mistakes: Object.fromEntries(Object.entries(this.mistakes).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => [k, { n: v.n, avg: +(v.ret / v.n).toFixed(3) }])), costSkips: this.costSkips, costWhy: this.costWhy || [], lessons: Object.values(this.learn).filter((L) => L.until > this.trades.length).length, skips: this.skips };
   }
-  toJSON() { return { v: 2, plan: PLAN, start: this.start, stake: this.stake, cash: this.cash, learn: this.learn, mistakes: this.mistakes, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
+  toJSON() { return { v: 2, plan: PLAN, start: this.start, stake: this.stake, cash: this.cash, learn: this.learn, mistakes: this.mistakes, combos: this.combos, open: [...this.open.values()], trades: this.trades.slice(-500) }; }
   static from(j, opts) {
     const s = new Scalp(opts);
     // a different start or stake (Alex changed the plan) starts a fresh ledger
@@ -354,6 +366,7 @@ export class Scalp {
     if (same) { s.cash = j.cash; for (const p of j.open || []) s.open.set(p.addr, p); s.trades = j.trades || []; for (const t of s.trades) if (t.addr) s.done.add(t.addr); for (const a of s.open.keys()) s.done.add(a); }
     if (same && j.learn) s.learn = j.learn;
     if (same && j.mistakes) s.mistakes = j.mistakes;
+    if (same && j.combos) s.combos = j.combos;
     return s;
   }
 }

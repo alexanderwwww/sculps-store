@@ -1,7 +1,7 @@
 // The fast lane in hunt mode (build 25), driven with a fake GMGN: chart entries
 // (Fibonacci pocket or ignition candle), +40% / -15% / give-back / 2-minute exits,
 // real fees charged, learning that is allowed to lose first.
-import { Scalp, fibSetup, ignition, rugOk, shapeOf } from "../src/trader/scalp.mjs";
+import { Scalp, fibSetup, ignition, rugOk, shapeOf, liteShape } from "../src/trader/scalp.mjs";
 let pass = 0, fail = 0;
 const ok = (n, c, x) => { if (c) { pass++; console.log("  ok  " + n); } else { fail++; console.log("FAIL  " + n, x ?? ""); } };
 const now0 = 1_800_000_000_000, sec = Math.floor(now0 / 1000);
@@ -143,6 +143,25 @@ ok("symbiot files each trade by age, pool, hour and source", [...nb.open.values(
   ok("price barely moved, lost to the fee: fee-ate-it", tag("FE") === "fee-ate-it", M.trades.find((t) => t.symbol === "FE"));
   ok("a win that did not run away after: good", tag("WN") === "good", M.trades.find((t) => t.symbol === "WN"));
   ok("summary counts each pattern with its average", M.summary().mistakes["stop-then-pump"].n === 1 && typeof M.summary().mistakes.good.avg === "number", M.summary().mistakes);
+}
+// build 38: symbiot filters losing combinations, keeps exploring, never blocks on one trait
+{
+  const fsrc2 = { ...src, candles: async () => [{ t: 1, o: 1, h: 1, l: 1, c: 1, v: 1 }] };
+  const A = new Scalp({ src: fsrc2, start: 0, stake: 1.618, quote });
+  const combo = liteShape(rows[0], now0).concat("e:any").join("|");
+  A.combos[combo] = { n: 20, w: 1, pnl: -10 };
+  A.rand = () => 0.9;                                   // not an exploring roll
+  await A.scanLane(now0);
+  ok("a combination that lost 19 of 20 is filtered", A.open.size === 0 && A.skips === 3 && A.summary().filtered === 1, A.summary());
+  const B2 = new Scalp({ src: fsrc2, start: 0, stake: 1.618, quote });
+  B2.combos[combo] = { n: 20, w: 1, pnl: -10 };
+  B2.rand = () => 0.05;                                 // an exploring roll (under 12.5%)
+  await B2.scanLane(now0);
+  ok("1 in 8 still goes through, to re-test the lesson", B2.open.size === 3);
+  const C2 = new Scalp({ src: fsrc2, start: 0, stake: 1.618, quote });
+  C2.learn["h1"] = { n: 99, w: 0, pnl: -50, until: 9999 }; C2.rand = () => 0.9;
+  await C2.scanLane(now0);
+  ok("one losing trait alone never blocks symbiot", C2.open.size === 3);
 }
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
