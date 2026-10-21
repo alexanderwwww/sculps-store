@@ -132,7 +132,7 @@ export function liteShape(row, nowMs) {
 }
 
 export class Scalp {
-  constructor({ src, log = () => {}, start = 10, stake = null, quote = null, onPick = null, realStakeUsd = 5.73 }) {
+  constructor({ src, log = () => {}, start = 10, stake = null, quote = null, onPick = null, onMove = null, realStakeUsd = 5.73 }) {
     this.src = src; this.log = log; this.stake = stake;
     // build 41: the stake the ledger was made with. A stake set from symbiot.json changes
     // this.stake, and comparing that on restart wiped combos, learn and mistakes.
@@ -141,6 +141,9 @@ export class Scalp {
     // build 41: the real side listens to every pick (onPick) and sets the stake its proof is
     // scored at (step 1: 38.2% of $15). Neither is a setting: symbiot.json cannot reach them.
     this.onPick = onPick; this.realStakeUsd = realStakeUsd;
+    // build 48: the real trader is symbiot's symbiote: every reprice of a fake position is shown
+    // to it (onMove), and a sim position that runs is what real money follows
+    this.onMove = onMove;
     this.proof = {}; this.proofPrev = null;
     this.quote = quote || ((a) => this.#measure(a)); this.costSkips = 0; this.feesPaid = 0;
     this.learn = {}; this.skips = 0; this.measured = []; this.done = new Set(); this.shadow = new Map(); this.mistakes = {}; this.combos = {}; this.rand = Math.random;
@@ -246,7 +249,7 @@ export class Scalp {
       this.cash -= n;
       this.done.add(r.a);                                           // each coin is traded once
       this.feesPaid += n * side;
-      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, side, units: (n * (1 - side)) / price, entry: price, last: price, at: nowMs, shape, combo, hunt: true, peak: 0, why: fib ? `fib ${fib.retr}` : ign ? `ignition +${Math.round(ign.body * 100)}% x${ign.vx} vol` : "new launch (learn)" });
+      this.open.set(r.a, { addr: r.a, symbol: r.s, cost: n, side, units: (n * (1 - side)) / price, entry: price, last: price, at: nowMs, shape, combo, lq: r.lq ?? null, ct: r.ct ?? null, hunt: true, peak: 0, why: fib ? `fib ${fib.retr}` : ign ? `ignition +${Math.round(ign.body * 100)}% x${ign.vx} vol` : "new launch (learn)" });
       this.log({ type: "entry", lane: "fast", addr: r.a, symbol: r.s, spent: +n.toFixed(4), price, why: fib ? `golden pocket ${fib.retr} of a ${Math.round(fib.move * 100)}% move` : ign ? `ignition candle +${Math.round(ign.body * 100)}% on ${ign.vx}x volume` : "new launch, bought to learn" });
       bought++;
       if (!q0) this.#settleFee(r, n, nowMs);
@@ -299,6 +302,9 @@ export class Scalp {
       if (Array.isArray(cs) && cs.length) p.last = cs[cs.length - 1].c;
       const move = p.last / p.entry - 1;
       track(p, move);
+      if (typeof this.onMove === "function" && Array.isArray(cs) && cs.length) {
+        try { const x = this.onMove({ row: { a: p.addr, s: p.symbol, lq: p.lq ?? null, ct: p.ct ?? null }, cs, sim: { entry: p.entry, last: p.last, move, peak: p.peakAll || 0, at: p.at }, nowMs }); if (x && typeof x.catch === "function") x.catch(() => {}); } catch { /* the sim goes on */ }
+      }
       // build 20 (Alex: "fast 10% up, 20% up, with 1.6 SOL"): half off at +10% and the
       // stop moves to break-even, the rest off at +20%. Entry stays the Fibonacci pocket.
       if (p.target && !p.half && move >= 0.10) {
