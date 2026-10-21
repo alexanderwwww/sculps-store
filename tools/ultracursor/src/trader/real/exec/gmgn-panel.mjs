@@ -53,9 +53,12 @@ export async function backgroundPage(browser) {
     const s = await browser.newBrowserCDPSession();
     const [p] = await Promise.all([ctx.waitForEvent("page", { timeout: 10_000 }), s.send("Target.createTarget", { url: "about:blank", background: true })]);
     s.detach().catch(() => {});
-    return p;
-  } catch { return ctx.newPage(); }
+    return wide(p);
+  } catch { return wide(await ctx.newPage()); }
 }
+// build 43: the first probe on Alex's Mac found no trade box. The background tab was about
+// 1,100 px wide, and GMGN hides its buy panel on narrow windows. Every trade tab is desktop-sized.
+async function wide(p) { try { await p.setViewportSize({ width: 1600, height: 1000 }); } catch { /* keeps its own size */ } return p; }
 
 export class GmgnPanel {
   constructor({ browser = null, newPage = null, build = null, dir = null, log = () => {}, now = Date.now, waitMs = 20_000 } = {}) {
