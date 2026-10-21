@@ -311,7 +311,8 @@ export class Real {
     const url = this.#tokenUrl(mint);
     this.probing = (async () => {
       try {
-        const rep = await this.panel.probe(url);
+        // build 44: a probe can never hang the real lane (it did once on Alex's Mac)
+        const rep = await Promise.race([this.panel.probe(url), new Promise((_, no) => setTimeout(() => no(new Error("probe took over 90 s")), 90_000))]);
         rep.mint = mint;
         this.#gotProbe(rep);
       } catch (e) { this.log({ type: "real-probe", ok: false, why: String(e.message || e).slice(0, 160) }); }

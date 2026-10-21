@@ -58,7 +58,8 @@ export async function backgroundPage(browser) {
 }
 // build 43: the first probe on Alex's Mac found no trade box. The background tab was about
 // 1,100 px wide, and GMGN hides its buy panel on narrow windows. Every trade tab is desktop-sized.
-async function wide(p) { try { await p.setViewportSize({ width: 1600, height: 1000 }); } catch { /* keeps its own size */ } return p; }
+// build 44: never wait on it more than 3 s (a hung resize on a background tab froze the probe)
+async function wide(p) { try { await Promise.race([p.setViewportSize({ width: 1600, height: 1000 }), new Promise((_, no) => setTimeout(() => no(new Error("resize timeout")), 3000))]); } catch { /* keeps its own size */ } return p; }
 
 export class GmgnPanel {
   constructor({ browser = null, newPage = null, build = null, dir = null, log = () => {}, now = Date.now, waitMs = 20_000 } = {}) {
