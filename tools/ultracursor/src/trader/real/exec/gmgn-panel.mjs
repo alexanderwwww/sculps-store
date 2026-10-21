@@ -259,7 +259,7 @@ export class GmgnPanel {
    * so real.mjs can check it against the chain (GMGN's wallet shows no address).
    * preset null = the sell only (a position is being sold).
    */
-  async instantVerify(preset, record) {
+  async instantVerify(preset, record, { chipWaitMs = 0 } = {}) {
     const at = this.now();
     try {
       const ins = record && record.instant;
@@ -268,6 +268,7 @@ export class GmgnPanel {
       if (!(ins.sellPcts || []).includes("100%")) return { ok: false, at, why: "the probe report shows no Sell 100%" };
       const chipSol = (w) => (w.chips && w.chips.length === 1 ? Number(w.chips[0].text) : null);
       let w = await this.#instant(null, 0);
+      for (const t0 = Date.now(); !w.many && !(w.chips && w.chips.length) && Date.now() - t0 < chipWaitMs;) { await w.page.waitForTimeout(250); w = await this.#instant(null, 0); }
       if (w.many) return { ok: false, at, why: `${w.many} Instant-trade windows on the page` };
       if (w.closed) {
         const t = await this.#toggle(w.page);

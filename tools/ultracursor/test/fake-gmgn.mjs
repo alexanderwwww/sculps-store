@@ -204,12 +204,12 @@ export async function startFakeGmgn({ chain = null, variant = "normal", pxOf = (
     const send = (code, type, text) => { res.writeHead(code, { "content-type": type, "cache-control": "no-store" }); res.end(text); };
     if (req.method === "GET" && /^\/sol\/token\/[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(u.pathname)) {
       const mint = u.pathname.split("/").pop();
-      if (v === "instant" || v === "instantClosed") return send(200, "text/html", instantPage(v, mint, srv.chain ? (await srv.chain.solBalance()).toFixed(3) : "0.133"));
+      if (v === "instant" || v === "instantClosed") return send(200, "text/html", instantPage(v, mint, srv.chip || (srv.chain ? (await srv.chain.solBalance()).toFixed(3) : "0.133")));
       return send(200, "text/html", page(v, mint));
     }
     if (req.method === "GET" && /^\/box\//.test(u.pathname)) return send(200, "text/html", boxPage(v, u.pathname.split("/").pop()));
     if (req.method === "POST" && u.pathname === "/__ev") { srv.events.push(await body(req)); return send(200, "application/json", "{}"); }
-    if (req.method === "POST" && u.pathname === "/__sol") return send(200, "application/json", JSON.stringify({ sol: srv.chain ? (await srv.chain.solBalance()).toFixed(3) : "0.133" }));
+    if (req.method === "POST" && u.pathname === "/__sol") return send(200, "application/json", JSON.stringify({ sol: srv.chip || (srv.chain ? (await srv.chain.solBalance()).toFixed(3) : "0.133") }));
     if (req.method === "POST" && u.pathname === "/__bal") { const j = await body(req); const t = srv.chain ? await srv.chain.tokenBalance(j.mint) : { ui: 0 }; return send(200, "application/json", JSON.stringify({ ui: t.ui })); }
     if (req.method === "POST" && u.pathname === "/__buy") { const j = await body(req); srv.buys.push(j); if (srv.chain) srv.chain.buy(j.mint, Number(j.amount), srv.pxOf(j.mint)); return send(200, "application/json", "{}"); }
     if (req.method === "POST" && u.pathname === "/__sell") { const j = await body(req); srv.sells.push(j); if (srv.chain) srv.chain.sell(j.mint, Number(j.amount), srv.pxOf(j.mint)); return send(200, "application/json", "{}"); }

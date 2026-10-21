@@ -388,9 +388,8 @@ export class Real {
       if (!this.verify.ok) return set("probe", `verify: ${this.verify.why}`);
       if (!this.wallet || !c.wallet || this.wallet.address !== c.wallet) return set("probe", "wallet not read yet");
       if (!(nowMs - this.solAt < SOL_FRESH_MS)) return set("probe", `SOL balance not read in 10 s${this.solErr ? `: ${this.solErr}` : ""}`);
-      const chip = this.verify.chipSol;
-      if (!(chip >= 0)) return set("probe", "instant: no SOL balance chip in GMGN's header");
-      if (Math.abs(chip - this.st.balanceSol) > chipTol(this.st.balanceSol)) return set("probe", `instant: GMGN shows ${chip} SOL, real.json's wallet holds ${this.st.balanceSol} SOL`);
+      // the header chip = the chain is checked at the click, on the freshly loaded coin page (#buy):
+      // a background tab's header can lag, and a lagging chip must not hold LIVE off forever
       return set("live", "live");
     }
     if (!c.selectors) return set("probe", "real.json has no selectors");
@@ -564,13 +563,17 @@ export class Real {
     if (instant && (c.exec !== "instant" || c.buyPreset !== it.preset)) return this.#stale("real.json's exec or buyPreset changed since the card");
     if (!instant && c.exec === "instant") return this.#stale("real.json's exec changed since the card");
     try {
-      if (instant) { await this.panel.openInstant(url); this.verify = await this.panel.instantVerify(it.preset, rec); }
+      if (instant) { await this.panel.openInstant(url); this.verify = await this.panel.instantVerify(it.preset, rec, { chipWaitMs: 5_000 }); }
       else { await this.panel.open(url); this.verify = await this.panel.verify(c.selectors, rec); }
     } catch (e) { this.verify = { ok: false, at: this.now(), why: String(e.message || e).slice(0, 120) }; }
     this.#modeEval(this.now());
     if (!this.verify.ok || this.mode !== "live") return this.#stale(`not LIVE at the click: ${this.why}`);
     let r;
     if (instant) {
+      // GMGN's built-in wallet shows no address: its header SOL must be the chain's SOL of real.json's wallet
+      const chip = this.verify.chipSol;
+      if (!(chip >= 0)) return this.#stale("no SOL balance chip in GMGN's header");
+      if (Math.abs(chip - this.st.balanceSol) > chipTol(this.st.balanceSol)) return this.#stale(`GMGN's header shows ${chip} SOL, real.json's wallet holds ${this.st.balanceSol} SOL: another wallet?`);
       try {
         r = await this.door.execute("buy", it, token, {
           exec: "instant", url, preset: it.preset, wallet: c.wallet,
