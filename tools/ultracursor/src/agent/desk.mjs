@@ -214,8 +214,8 @@ export function createDesk({ work, build, cloudLog = () => {}, ui, pacingScale =
           limits,
           maxUsd: cfg.maxUsdPerTask,
           pacingScale,
-          // trader mode: x6.47, except on a site whose profile keeps humanPace; GMGN's trade box is off limits while it trains
-          speed: (profile) => (trader && trader.want() && !(profile && profile.humanPace) ? 6.47 : 1),
+          // trader mode: x6.47 x 6 (build 51, Alex: "X6 speed to cursor"), except on a site whose profile keeps humanPace; GMGN's trade box is off limits while it trains
+          speed: (profile) => (trader && trader.want() && !(profile && profile.humanPace) ? 6.47 * 6 : 1),
           trading: () => !!(trader && trader.want()),
           ask: (card) => showCard(card),
           onWall: (w) => showCard({

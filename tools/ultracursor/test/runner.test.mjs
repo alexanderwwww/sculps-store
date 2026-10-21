@@ -83,7 +83,7 @@ const ev = (move, { base = 150_000, green = true, row = {} } = {}) => { const cs
   ok("autoBuy with buyPreset 0.1 (over the 0.01618 cap) is PROBE", /at most/.test(parseRealJson({ ...base, buyPreset: "0.1", autoBuy: true }).error || ""));
   ok("autoBuy with buyPreset 0.01 (under the cap) parses", !parseRealJson({ ...base, buyPreset: "0.01", autoBuy: true }).error);
   ok("keepMints with a bad address is PROBE", !!parseRealJson({ ...base, keepMints: ["nope"] }).error);
-  ok("autoMaxDay 50 is cut to 10; 3 stays 3", parseRealJson({ ...base, autoMaxDay: 50 }).autoMaxDay === AUTO_MAX_DAY && parseRealJson({ ...base, autoMaxDay: 3 }).autoMaxDay === 3);
+  ok("autoMaxDay 5000 is cut to 1000; 3 stays 3", parseRealJson({ ...base, autoMaxDay: 5000 }).autoMaxDay === AUTO_MAX_DAY && parseRealJson({ ...base, autoMaxDay: 3 }).autoMaxDay === 3);
   ok("Kimchi is in the local keep list", KEEP_MINTS.includes(KIMCHI));
 }
 
@@ -123,7 +123,7 @@ const ev = (move, { base = 150_000, green = true, row = {} } = {}) => { const cs
   const t5 = door.mintAuto(sub());
   const r5 = await door.execute("buy", sub(), t5, { exec: "instant" });
   ok("door: auto token + every cap: the buy goes to the panel once", r5 && r5.clicked === true);
-  ok("caps: 0.01618 SOL and 10 a day", AUTO_MAX_SOL === 0.01618 && AUTO_MAX_DAY === 10);
+  ok("caps: 0.01618 SOL and at most 1000 a day (build 51)", AUTO_MAX_SOL === 0.01618 && AUTO_MAX_DAY === 1000);
 }
 
 // ---------------------------------------------------------------- 4. the loop, in Chrome
@@ -191,7 +191,7 @@ try {
   await tick();
   const hash = real.probeRep && real.probeRep.hash;
   ok("probe from build 48 ran, zero clicks", real.probeRep && real.probeRep.ok && real.probeRep.build === BUILD && nClicks() === 0, real.probeRep && real.probeRep.why);
-  const CFG = { mode: "live", wallet: WALLET, selectorsFrom: hash, exec: "instant", buyPreset: "0.01618", keepMints: [mintOf("alex-keeps")] };
+  const CFG = { mode: "live", wallet: WALLET, selectorsFrom: hash, exec: "instant", buyPreset: "0.01618", keepMints: [mintOf("alex-keeps")], autoMaxDay: 10 };
 
   // ------------------------------------------------ autoBuy false: a runner still needs the card
   real.setConfig({ ...CFG });
@@ -246,7 +246,9 @@ try {
   await tick(21_000);
   ok("closed", !real.st.position);
 
-  // ------------------------------------------------ non-runner with autoBuy true: proof + card
+  // ------------------------------------------------ non-runner: proof + card (build 51: with autoBuy on a fresh pick is a snipe,
+  // tested in snipe.test.mjs; here autoBuy is off for the proof and card path)
+  real.setConfig({ ...CFG });
   T += 60_000; await tick(6000);
   const before = nClicks(), shownBefore = shown.length;
   real.onPick(fibPick("fib-unproven"));
@@ -265,7 +267,9 @@ try {
   await tick();
   ok("Kimchi and a real.json keepMints coin: never bought, no card, zero clicks", shown.length === kc && nClicks() === before && !real.st.position);
 
-  // ------------------------------------------------ the 11th auto-buy is refused
+  // ------------------------------------------------ the 11th auto-buy is refused (build 51: autoMaxDay 10 here)
+  real.setConfig({ ...CFG, autoBuy: true, autoMaxDay: 10 });
+  await tick(6000);
   real.st.auto.n = 10;
   real.onMove(runnerPick("r-eleventh"));
   await tick();

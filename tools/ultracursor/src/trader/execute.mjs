@@ -28,7 +28,7 @@ export const TOKEN_MS = 20_000, VERIFY_MS = 5_000;
  *   AUTO_DD       no auto-buy once the SOL balance is this far under the day's starting SOL
  *   KEEP_MINTS    coins Alex holds himself: never bought or sold by the trader (R2 keepMints adds more)
  */
-export const AUTO_MAX_SOL = 0.01618, AUTO_MAX_DAY = 10, AUTO_DD = 0.30;
+export const AUTO_MAX_SOL = 0.01618, AUTO_MAX_DAY = 1000, AUTO_DD = 0.30;   // build 51: up to 1000 a day (real.json autoMaxDay, default 300)
 export const KEEP_MINTS = Object.freeze(["CSocnzcRpgSCr1naKcNTieWZUxb6rABe45j844m7pump"]);   // Kimchi
 
 export async function execute(order) {

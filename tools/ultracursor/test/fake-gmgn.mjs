@@ -149,11 +149,11 @@ const SCRIPT = `<script>
 // clickable DIVs (no button role), one click on a preset buys at once, one click on a % sells at
 // once. Decoys that must never be clicked: a "0.01618" outside the window (a quick-buy strip) and
 // a DryFlip-like panel with Buy / 0.01618 / Sell / 100% of its own.
-function instantWindow(v, sym = "PEPE") {
+function instantWindow(v, sym = "PEPE", wsol = "0.133") {
   const pre = (cls, t, i) => `<div class="${cls}" id="${cls}${i}" style="cursor:pointer;padding:2px 6px;border:1px solid #444">${t}</div>`;
   const row = (xs) => `<div style="display:flex;gap:4px">${xs}</div>`;
   return `<div id="iw" style="position:fixed;right:20px;top:200px;width:300px;padding:6px;background:#111;color:#eee;${v === "instantClosed" ? "display:none" : ""}">
-  <div style="display:flex;gap:6px"><span>1</span><span>0</span><div>Buy</div><div style="cursor:pointer">P1</div><div style="cursor:pointer">P2</div><div style="cursor:pointer">P3</div></div>
+  <div style="display:flex;gap:6px"><span>1</span><span>0</span><div>Buy</div><div style="cursor:pointer">P1</div><div style="cursor:pointer">P2</div><div style="cursor:pointer">P3</div><span id="wsol">${wsol}</span></div>
   ${row(["0.01618", "0.1", "0.5", "1"].map((t, i) => pre("ip", t, i)).join(""))}
   <div style="display:flex;gap:6px"><div style="cursor:pointer">Auto</div><span>0.00001</span><span>&lt;0.01</span><span>Red.</span><span>Adv.</span></div>
   <div style="display:flex;gap:6px"><div>Sell %</div><div style="cursor:pointer">P1</div><div style="cursor:pointer">P2</div><div style="cursor:pointer">P3</div></div>
@@ -170,19 +170,19 @@ const INSTANT_SCRIPT = `<script>
   for (const t of ["click", "input", "keydown", "change", "pointerdown"]) document.addEventListener(t, (e) => ev(t, e.target, e.isTrusted), true);
   const post = (path, body) => { const x = new XMLHttpRequest(); x.open("POST", path, false); x.send(JSON.stringify(body)); return JSON.parse(x.responseText || "{}"); };
   const $ = (id) => document.getElementById(id);
-  setInterval(() => { try { $("chipsol").textContent = post("/__sol", {}).sol; } catch (e) {} }, 250);
+  setInterval(() => { try { $("chipsol").textContent = post("/__sol", {}).sol; $("wsol").textContent = post("/__wsol", {}).sol; } catch (e) {} }, 250);
   $("itoggle").onclick = () => { $("iw").style.display = $("iw").style.display === "none" ? "" : "none"; };
   for (const b of document.querySelectorAll(".ip, #decoy, .dp")) b.onclick = () => post("/__buy", { mint, amount: b.textContent.trim(), via: b.id });
   for (const b of document.querySelectorAll(".isp")) b.onclick = () => { const r = post("/__bal", { mint }); post("/__sell", { mint, amount: String(r.ui * parseFloat(b.textContent) / 100), via: b.id }); };
 })();
 </script>`;
-function instantPage(v, mint, sol) {
+function instantPage(v, mint, sol, wsol = sol) {
   const header = `<header style="display:flex;gap:12px;align-items:center;height:48px"><a href="/">GMGN</a><span>MC $48K</span>
     <div id="chip" style="display:flex;gap:4px;align-items:center"><img alt="SOL" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Ccircle cx='7' cy='7' r='7'/%3E%3C/svg%3E" width="14" height="14"><span id="chipsol">${sol}</span></div>
     <button id="itoggle"> Instant trade</button></header>`;
   const decoys = `<div id="quick" style="display:flex;gap:6px"><span>Quick buy</span><div id="decoy" style="cursor:pointer">0.01618</div></div>
   <div id="dryflip" style="width:260px;border:1px dashed #888;padding:4px"><b>DryFlip</b><div>Buy</div><div class="dp" id="dp0" style="cursor:pointer">0.01618</div><div>Sell</div><div class="dp" id="dp1" style="cursor:pointer">100%</div></div>`;
-  return `<!doctype html><html><head><meta charset="utf-8"><title>$PEPE | GMGN fake</title></head><body style="margin:0">${header}<main><div id="chart" style="height:120px">chart</div>${decoys}</main>${instantWindow(v)}${INSTANT_SCRIPT}</body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>$PEPE | GMGN fake</title></head><body style="margin:0">${header}<main><div id="chart" style="height:120px">chart</div>${decoys}</main>${instantWindow(v, "PEPE", wsol)}${INSTANT_SCRIPT}</body></html>`;
 }
 
 function page(v, mint) {
@@ -204,12 +204,14 @@ export async function startFakeGmgn({ chain = null, variant = "normal", pxOf = (
     const send = (code, type, text) => { res.writeHead(code, { "content-type": type, "cache-control": "no-store" }); res.end(text); };
     if (req.method === "GET" && /^\/sol\/token\/[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(u.pathname)) {
       const mint = u.pathname.split("/").pop();
-      if (v === "instant" || v === "instantClosed") return send(200, "text/html", instantPage(v, mint, srv.chip || (srv.chain ? (await srv.chain.solBalance()).toFixed(3) : "0.133")));
+      const wsol = srv.chain ? (await srv.chain.solBalance()).toFixed(5) : "0.13300";
+      if (v === "instant" || v === "instantClosed") return send(200, "text/html", instantPage(v, mint, srv.chip || (srv.chain ? (await srv.chain.solBalance()).toFixed(3) : "0.133"), wsol));
       return send(200, "text/html", page(v, mint));
     }
     if (req.method === "GET" && /^\/box\//.test(u.pathname)) return send(200, "text/html", boxPage(v, u.pathname.split("/").pop()));
     if (req.method === "POST" && u.pathname === "/__ev") { srv.events.push(await body(req)); return send(200, "application/json", "{}"); }
     if (req.method === "POST" && u.pathname === "/__sol") return send(200, "application/json", JSON.stringify({ sol: srv.chip || (srv.chain ? (await srv.chain.solBalance()).toFixed(3) : "0.133") }));
+    if (req.method === "POST" && u.pathname === "/__wsol") return send(200, "application/json", JSON.stringify({ sol: srv.chain ? (await srv.chain.solBalance()).toFixed(5) : "0.13300" }));
     if (req.method === "POST" && u.pathname === "/__bal") { const j = await body(req); const t = srv.chain ? await srv.chain.tokenBalance(j.mint) : { ui: 0 }; return send(200, "application/json", JSON.stringify({ ui: t.ui })); }
     if (req.method === "POST" && u.pathname === "/__buy") { const j = await body(req); srv.buys.push(j); if (srv.chain) srv.chain.buy(j.mint, Number(j.amount), srv.pxOf(j.mint)); return send(200, "application/json", "{}"); }
     if (req.method === "POST" && u.pathname === "/__sell") { const j = await body(req); srv.sells.push(j); if (srv.chain) srv.chain.sell(j.mint, Number(j.amount), srv.pxOf(j.mint)); return send(200, "application/json", "{}"); }

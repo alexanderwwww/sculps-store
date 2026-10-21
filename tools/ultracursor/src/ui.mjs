@@ -178,7 +178,7 @@ export async function highlight(page, target) {
 const ease = (t) => t * t * t * (10 + t * (-15 + 6 * t));
 
 /** The human path from wherever the mouse is to (x, y). */
-async function glide(page, x, y, onNear) {
+async function glide(page, x, y, onNear, speed = SPEED) {
   const vp = await viewport(page);
   const tx = clamp(x, 1, vp.w - 2), ty = clamp(y, 1, vp.h - 2);
   let from = POS.get(page);
@@ -202,7 +202,7 @@ async function glide(page, x, y, onNear) {
   const bow = (Math.random() < 0.5 ? -1 : 1) * dist * rand(0.05, 0.14);
   const k = rand(0.35, 0.6);
   const cx = from.x + dx * k + nx * bow, cy = from.y + dy * k + ny * bow;
-  const total = clamp(240 + dist * 0.5, 280, 950) * rand(0.85, 1.15) / SPEED;
+  const total = clamp(240 + dist * 0.5, 280, 950) * rand(0.85, 1.15) / speed;
   const near = Math.round(steps * 0.7);
   for (let i = 1; i <= steps; i++) {
     const t = ease(i / steps), u = 1 - t;
@@ -247,7 +247,7 @@ async function intoView(page, target) {
  * Move the real mouse to the target along a human path and ring it.
  * Returns the point the mouse landed on, or null when there was nothing to hover.
  */
-export async function hover(page, target) {
+export async function hover(page, target, { speed = SPEED } = {}) {
   if (!alive(page) || !target) return null;
   target = one(target);
   try {
@@ -266,7 +266,7 @@ export async function hover(page, target) {
       y = y1 > y0 ? y0 + (y1 - y0) * fy : b.y + b.height / 2;
     }
     const ring = isPoint(target) && !isRect(target) ? null : () => highlight(page, target);
-    return await glide(page, x, y, ring);
+    return await glide(page, x, y, ring, speed);
   } catch {
     return null;
   }
