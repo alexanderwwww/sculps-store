@@ -102,7 +102,8 @@ export class FakeChain {
   async solBalance() { this.calls.solBalance++; this.#settle(); return this.lamports / 1e9; }
   async tokenBalance(mint) { this.calls.tokenBalance++; this.#settle(); const raw = this.tok.get(mint) || 0n; return { raw: raw.toString(), ui: Number(raw) / 1e6, decimals: 6 }; }
   async recentSigs(limit = 10) { this.calls.recentSigs++; this.#settle(); return this.sigs.slice(0, limit); }
-  async txFill(sig) { this.calls.txFill++; return this.txs.get(sig) || null; }
+  // like the real Wallet.txFill(sig, mint): another coin's transaction moves this coin by 0
+  async txFill(sig, mint = null) { this.calls.txFill++; const t = this.txs.get(sig) || null; return t && mint && t.mint !== mint ? { ...t, tokenDelta: 0 } : t; }
   async tokens() { this.#settle(); return [...this.tok].filter(([, r]) => r > 0n).map(([mint, r]) => ({ mint, raw: r.toString(), ui: Number(r) / 1e6, decimals: 6 })); }
 }
 
@@ -144,6 +145,46 @@ const SCRIPT = `<script>
 })();
 </script>`;
 
+// build 45: GMGN's "Instant trade" window as the build 44 probe read it on Alex's Mac: one div,
+// clickable DIVs (no button role), one click on a preset buys at once, one click on a % sells at
+// once. Decoys that must never be clicked: a "0.01618" outside the window (a quick-buy strip) and
+// a DryFlip-like panel with Buy / 0.01618 / Sell / 100% of its own.
+function instantWindow(v, sym = "PEPE") {
+  const pre = (cls, t, i) => `<div class="${cls}" id="${cls}${i}" style="cursor:pointer;padding:2px 6px;border:1px solid #444">${t}</div>`;
+  const row = (xs) => `<div style="display:flex;gap:4px">${xs}</div>`;
+  return `<div id="iw" style="position:fixed;right:20px;top:200px;width:300px;padding:6px;background:#111;color:#eee;${v === "instantClosed" ? "display:none" : ""}">
+  <div style="display:flex;gap:6px"><span>1</span><span>0</span><div>Buy</div><div style="cursor:pointer">P1</div><div style="cursor:pointer">P2</div><div style="cursor:pointer">P3</div></div>
+  ${row(["0.01618", "0.1", "0.5", "1"].map((t, i) => pre("ip", t, i)).join(""))}
+  <div style="display:flex;gap:6px"><div style="cursor:pointer">Auto</div><span>0.00001</span><span>&lt;0.01</span><span>Red.</span><span>Adv.</span></div>
+  <div style="display:flex;gap:6px"><div>Sell %</div><div style="cursor:pointer">P1</div><div style="cursor:pointer">P2</div><div style="cursor:pointer">P3</div></div>
+  <div style="display:flex;gap:6px"><span>0</span><span>${sym}</span><span>0</span></div>
+  ${row(["10%", "25%", "50%", "100%"].map((t, i) => pre("isp", t, i)).join(""))}
+  <div style="display:flex;gap:6px"><span>Bal</span><span>Bought</span><span>Sold</span><span>PnL</span></div>
+  <div style="cursor:pointer">Sell All</div>
+</div>`;
+}
+const INSTANT_SCRIPT = `<script>
+(() => {
+  const mint = location.pathname.split("/").pop();
+  const ev = (type, el, trusted) => { try { const x = new XMLHttpRequest(); x.open("POST", "/__ev", false); x.send(JSON.stringify({ type, id: el && el.id || null, name: (el && el.textContent || "").trim().slice(0, 40), trusted, mint })); } catch (e) {} };
+  for (const t of ["click", "input", "keydown", "change", "pointerdown"]) document.addEventListener(t, (e) => ev(t, e.target, e.isTrusted), true);
+  const post = (path, body) => { const x = new XMLHttpRequest(); x.open("POST", path, false); x.send(JSON.stringify(body)); return JSON.parse(x.responseText || "{}"); };
+  const $ = (id) => document.getElementById(id);
+  setInterval(() => { try { $("chipsol").textContent = post("/__sol", {}).sol; } catch (e) {} }, 250);
+  $("itoggle").onclick = () => { $("iw").style.display = $("iw").style.display === "none" ? "" : "none"; };
+  for (const b of document.querySelectorAll(".ip, #decoy, .dp")) b.onclick = () => post("/__buy", { mint, amount: b.textContent.trim(), via: b.id });
+  for (const b of document.querySelectorAll(".isp")) b.onclick = () => { const r = post("/__bal", { mint }); post("/__sell", { mint, amount: String(r.ui * parseFloat(b.textContent) / 100), via: b.id }); };
+})();
+</script>`;
+function instantPage(v, mint, sol) {
+  const header = `<header style="display:flex;gap:12px;align-items:center;height:48px"><a href="/">GMGN</a><span>MC $48K</span>
+    <div id="chip" style="display:flex;gap:4px;align-items:center"><img alt="SOL" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Ccircle cx='7' cy='7' r='7'/%3E%3C/svg%3E" width="14" height="14"><span id="chipsol">${sol}</span></div>
+    <button id="itoggle"> Instant trade</button></header>`;
+  const decoys = `<div id="quick" style="display:flex;gap:6px"><span>Quick buy</span><div id="decoy" style="cursor:pointer">0.01618</div></div>
+  <div id="dryflip" style="width:260px;border:1px dashed #888;padding:4px"><b>DryFlip</b><div>Buy</div><div class="dp" id="dp0" style="cursor:pointer">0.01618</div><div>Sell</div><div class="dp" id="dp1" style="cursor:pointer">100%</div></div>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>$PEPE | GMGN fake</title></head><body style="margin:0">${header}<main><div id="chart" style="height:120px">chart</div>${decoys}</main>${instantWindow(v)}${INSTANT_SCRIPT}</body></html>`;
+}
+
 function page(v, mint) {
   const header = `<header style="display:flex;gap:12px;align-items:center"><a href="/">GMGN</a><span>MC $48K</span><button id="wal" aria-label="${WALLET_LABEL}">${WALLET_LABEL}</button>${v === "phantom" ? "<span>Phantom</span>" : ""}</header>`;
   const main = v === "iframe" ? `<iframe id="tf" src="/box/${mint}" style="width:360px;height:320px;border:0"></iframe>` : tradeBox(v);
@@ -161,9 +202,14 @@ export async function startFakeGmgn({ chain = null, variant = "normal", pxOf = (
     const u = new URL(req.url, "http://x");
     const v = u.searchParams.get("v") || srv.variant;
     const send = (code, type, text) => { res.writeHead(code, { "content-type": type, "cache-control": "no-store" }); res.end(text); };
-    if (req.method === "GET" && /^\/sol\/token\/[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(u.pathname)) return send(200, "text/html", page(v, u.pathname.split("/").pop()));
+    if (req.method === "GET" && /^\/sol\/token\/[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(u.pathname)) {
+      const mint = u.pathname.split("/").pop();
+      if (v === "instant" || v === "instantClosed") return send(200, "text/html", instantPage(v, mint, srv.chain ? (await srv.chain.solBalance()).toFixed(3) : "0.133"));
+      return send(200, "text/html", page(v, mint));
+    }
     if (req.method === "GET" && /^\/box\//.test(u.pathname)) return send(200, "text/html", boxPage(v, u.pathname.split("/").pop()));
     if (req.method === "POST" && u.pathname === "/__ev") { srv.events.push(await body(req)); return send(200, "application/json", "{}"); }
+    if (req.method === "POST" && u.pathname === "/__sol") return send(200, "application/json", JSON.stringify({ sol: srv.chain ? (await srv.chain.solBalance()).toFixed(3) : "0.133" }));
     if (req.method === "POST" && u.pathname === "/__bal") { const j = await body(req); const t = srv.chain ? await srv.chain.tokenBalance(j.mint) : { ui: 0 }; return send(200, "application/json", JSON.stringify({ ui: t.ui })); }
     if (req.method === "POST" && u.pathname === "/__buy") { const j = await body(req); srv.buys.push(j); if (srv.chain) srv.chain.buy(j.mint, Number(j.amount), srv.pxOf(j.mint)); return send(200, "application/json", "{}"); }
     if (req.method === "POST" && u.pathname === "/__sell") { const j = await body(req); srv.sells.push(j); if (srv.chain) srv.chain.sell(j.mint, Number(j.amount), srv.pxOf(j.mint)); return send(200, "application/json", "{}"); }

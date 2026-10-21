@@ -45,13 +45,19 @@ const pc = (x) => Math.round(x * 100);
 const id = () => crypto.randomBytes(6).toString("hex");
 
 // ------------------------------------------------------------------ R2 real.json, read as DATA
-const R2_KEYS = new Set(["mode", "startUsd", "minTrades", "minWin", "wallet", "tokenUrl", "selectorsFrom", "selectors", "probeNow"]);
+const R2_KEYS = new Set(["mode", "startUsd", "minTrades", "minWin", "wallet", "tokenUrl", "selectorsFrom", "selectors", "probeNow", "exec", "buyPreset"]);
+export const PRESET_RE = /^\d+(\.\d+)?$/;
+/** build 45: within this much of the chain's SOL, the header chip is the real wallet (GMGN shows no address). */
+export const chipTol = (sol) => Math.max(0.0015, 0.02 * (sol || 0));
 const SEL_FIELDS = new Set(["role", "name", "exact", "nth"]);
 const ROLES = new Set(["button", "tab", "textbox", "searchbox", "spinbutton", "combobox", "checkbox", "radio", "switch", "slider", "link", "menuitem", "menuitemradio", "option", "status", "heading"]);
 
 /**
  * real.json -> {mode, startUsd, minTrades, minWin, wallet, tokenUrl, selectorsFrom, selectors,
- * probeNow} or {mode: 'probe', error}. Anything unknown or malformed is PROBE, with the reason.
+ * probeNow, exec, buyPreset} or {mode: 'probe', error}. Anything unknown or malformed is PROBE,
+ * with the reason. build 45: exec 'panel' (default: the trade box and its selectors) or 'instant'
+ * (GMGN's Instant-trade window: one click on the buy preset whose exact text is buyPreset, and
+ * Sell 100%). buyPreset is a plain number as text ("0.01618") and is required for 'instant'.
  */
 export function parseRealJson(j) {
   const bad = (error) => ({ mode: "probe", error: `real.json: ${error}` });
@@ -67,6 +73,10 @@ export function parseRealJson(j) {
   if (j.wallet !== undefined) { if (!isAddr(j.wallet)) return bad("wallet is not a Solana address"); out.wallet = j.wallet; }
   if (j.tokenUrl !== undefined) { try { tokenUrlOf(j.tokenUrl, "So11111111111111111111111111111111111111112"); } catch (e) { return bad(e.message); } out.tokenUrl = j.tokenUrl; }
   if (j.selectorsFrom !== undefined) { if (typeof j.selectorsFrom !== "string" || !/^[0-9a-f]{8,64}$/.test(j.selectorsFrom)) return bad("selectorsFrom"); out.selectorsFrom = j.selectorsFrom; }
+  if (j.exec !== undefined && j.exec !== "panel" && j.exec !== "instant") return bad("exec must be 'panel' or 'instant'");
+  out.exec = j.exec || "panel";
+  if (j.buyPreset !== undefined) { if (typeof j.buyPreset !== "string" || j.buyPreset.length > 12 || !PRESET_RE.test(j.buyPreset) || !(Number(j.buyPreset) > 0)) return bad("buyPreset must be a number as text, like \"0.01618\""); out.buyPreset = j.buyPreset; }
+  if (out.exec === "instant" && !out.buyPreset) return bad("exec 'instant' needs buyPreset");
   if (j.probeNow !== undefined) { if (!["string", "number"].includes(typeof j.probeNow)) return bad("probeNow"); out.probeNow = j.probeNow; }
   if (j.selectors !== undefined) {
     if (!j.selectors || typeof j.selectors !== "object" || Array.isArray(j.selectors)) return bad("selectors");
@@ -321,7 +331,9 @@ export class Real {
 
   #gotProbe(rep) {
     const box = (rep.controls || []).filter((c) => c.inTradeBox);
-    const rec = { hash: rep.hash, build: rep.build, ok: !!rep.ok, at: rep.at ?? this.now(), url: rep.url, mint: rep.mint, walletKind: rep.walletKind, walletAddr: rep.walletAddr, why: rep.why, controls: (rep.controls || []).map((c) => ({ role: c.role, name: c.name, inTradeBox: !!c.inTradeBox })) };
+    const rec = { hash: rep.hash, build: rep.build, ok: !!rep.ok, at: rep.at ?? this.now(), url: rep.url, mint: rep.mint, walletKind: rep.walletKind, walletAddr: rep.walletAddr, why: rep.why,
+      instant: rep.instant && rep.instant.open ? { open: true, buyPresets: rep.instant.buyPresets || [], sellPcts: rep.instant.sellPcts || [], toggle: !!rep.instant.toggle } : { open: false, toggle: !!(rep.instant && rep.instant.toggle) },
+      controls: (rep.controls || []).map((c) => ({ role: c.role, name: c.name, inTradeBox: !!c.inTradeBox })) };
     this.probes = [rec, ...this.probes.filter((p) => p.hash !== rec.hash)].slice(0, 8);
     this.probeRep = rep;
     try { this.store.save({ v: 1, ...rep, history: this.probes }, this.store.probeFile); } catch { /* the report is also in the log */ }
@@ -335,9 +347,19 @@ export class Real {
     return this.probes.find((p) => p.hash === c.selectorsFrom && p.build === this.build && p.ok) || null;
   }
 
+  #instant() { return !!(this.cfg && !this.cfg.error && this.cfg.exec === "instant"); }
+
   async #liveCheck(nowMs) {
     const c = this.cfg;
-    if (!this.panel || !c || c.error || c.mode !== "live" || !c.selectors) return;
+    if (!this.panel || !c || c.error || c.mode !== "live") return;
+    if (this.#instant()) {
+      const rec = this.#record();
+      if (!rec || nowMs - this.verify.at < VERIFY_EVERY_MS) return;
+      if (!this.panel.url()) await this.panel.openInstant(this.#tokenUrl(rec.mint || this.lastPickMint));
+      this.verify = await this.panel.instantVerify(c.buyPreset, rec);
+      return;
+    }
+    if (!c.selectors) return;
     const rec = this.#record();
     if (!rec || nowMs - this.verify.at < VERIFY_EVERY_MS) return;
     if (!this.panel.url()) await this.panel.open(this.#tokenUrl(rec.mint || this.lastPickMint));
@@ -357,6 +379,20 @@ export class Real {
     if (!rec) return set("probe", "real.json selectorsFrom matches no probe report");
     if (rec.build !== this.build) return set("probe", `the probe report is from build ${rec.build}`);
     if (!rec.ok) return set("probe", `the probe report is not ok: ${rec.why}`);
+    if (c.exec === "instant") {
+      // build 45: GMGN's Instant-trade window and GMGN's own wallet, both seen by this build's probe
+      if (rec.walletKind !== "gmgn") return set("probe", `instant: the probe's wallet is ${rec.walletKind}, not GMGN's own`);
+      if (!rec.instant || !rec.instant.open) return set("probe", "instant: the probe report shows no Instant-trade window");
+      if (!rec.instant.buyPresets.includes(c.buyPreset)) return set("probe", `instant: buy preset ${c.buyPreset} is not in the probe report`);
+      if (!rec.instant.sellPcts.includes("100%")) return set("probe", "instant: the probe report shows no Sell 100%");
+      if (!this.verify.ok) return set("probe", `verify: ${this.verify.why}`);
+      if (!this.wallet || !c.wallet || this.wallet.address !== c.wallet) return set("probe", "wallet not read yet");
+      if (!(nowMs - this.solAt < SOL_FRESH_MS)) return set("probe", `SOL balance not read in 10 s${this.solErr ? `: ${this.solErr}` : ""}`);
+      const chip = this.verify.chipSol;
+      if (!(chip >= 0)) return set("probe", "instant: no SOL balance chip in GMGN's header");
+      if (Math.abs(chip - this.st.balanceSol) > chipTol(this.st.balanceSol)) return set("probe", `instant: GMGN shows ${chip} SOL, real.json's wallet holds ${this.st.balanceSol} SOL`);
+      return set("live", "live");
+    }
     if (!c.selectors) return set("probe", "real.json has no selectors");
     if (!this.verify.ok) return set("probe", `verify: ${this.verify.why}`);
     if (!c.wallet || !addrMatch(this.verify.walletLabel || "", c.wallet)) return set("probe", "the wallet on the page is not real.json's wallet");
@@ -403,7 +439,16 @@ export class Real {
     // c: exactly the key symbiot files this coin under
     const combo = [...liteShape(pick.row, pick.nowMs ?? nowMs), "e:fib"].join("|");
     // d
-    const T = P.targetFor(st.step.no), bal = this.#balUsd(), stake = P.stakeFor(this.#ledger(), bal);
+    const T = P.targetFor(st.step.no), bal = this.#balUsd(), planStake = P.stakeFor(this.#ledger(), bal);
+    let stake = planStake, preset = null;
+    if (this.#instant()) {
+      // build 45: Instant trade buys exactly the preset. Never more than the plan's stake.
+      preset = this.cfg.buyPreset;
+      const presetUsd = Number(preset) * st.solUsd;
+      if (presetUsd > planStake + 1e-9) return this.#skip("g", pick, `preset ${preset} SOL ($${presetUsd.toFixed(2)}) is more than the step's $${planStake.toFixed(2)} stake`);
+      if (Number(preset) + RESERVE_SOL > st.balanceSol + 1e-12) return this.#skip("g", pick, `preset ${preset} SOL + 0.01 reserve is more than the wallet's ${st.balanceSol} SOL`);
+      stake = presetUsd;
+    }
     try { P.assertNoMartingale(st.lastStake, stake, st.afterLoss); } catch (e) { this.#halt(e.message); return this.#skip("d", pick, e.message); }
     const sim = this.sim || { proof: {}, cfg: {} };
     const f = floors(this.cfg && !this.cfg.error ? this.cfg : {});
@@ -431,7 +476,7 @@ export class Real {
     const rt = 2 * poolFee + buyTax + sellTax + P.PLAN_NET_USD / stake;
     if (rt > cRt + 1e-9) return this.#skip("f", pick, `round trip ${(rt * 100).toFixed(1)}% over the proof's ${(cRt * 100).toFixed(1)}%`);
     // g
-    const solUsd = st.solUsd, stakeSol = Math.floor((stake / solUsd) * 1e4 + 1e-6) / 1e4;
+    const solUsd = st.solUsd, stakeSol = preset !== null ? Number(preset) : Math.floor((stake / solUsd) * 1e4 + 1e-6) / 1e4;
     if (!(stake <= P.MAX_STAKE_USD)) return this.#skip("g", pick, "stake over the cap");
     if (!(stakeSol > 0) || stakeSol + RESERVE_SOL > st.balanceSol + 1e-12) return this.#skip("g", pick, `${stakeSol} SOL + 0.01 reserve is more than the wallet's ${st.balanceSol} SOL`);
     const signalPx = cs[cs.length - 1].c;
@@ -444,7 +489,7 @@ export class Real {
     }
     // LIVE: the card. PROPOSED is on disk before Alex sees it.
     const intent = {
-      id: id(), kind: "buy", mint, symbol: pick.row.s, step: { no: st.step.no, attempt: st.step.attempt }, stakeUsd: stake, stakeSol, solUsd, signalPx,
+      id: id(), kind: "buy", exec: preset !== null ? "instant" : "panel", preset, mint, symbol: pick.row.s, step: { no: st.step.no, attempt: st.step.attempt }, stakeUsd: stake, stakeSol, solUsd, signalPx,
       card: { id: id(), shownAt: nowMs, expiresAt: nowMs + CARD_MS }, approvedAt: null, clickedAt: null, state: "PROPOSED", why: pr.why, at: nowMs,
       combo, target: T, rules: { ...rulesOf(bucket.rules || sim.cfg), sl: P.SL }, balIn: bal, rt, entryLq: lq, entryPoolLq: pool ? num(pool.liquidity) : null,
       ageMin: this.#ageMin(pick.row, nowMs), fib: { retr: fib.retr, move: fib.move }, proof: { n: pr.n, w: pr.w, need: pr.need },
@@ -460,19 +505,20 @@ export class Real {
 
   /** The 7 lines Alex reads before he spends. */
   cardFor(it) {
+    const sol = it.preset || it.stakeSol.toFixed(4);
     const pool = it.entryLq >= 1000 ? `$${Math.round(it.entryLq / 1000)}k` : `$${Math.round(it.entryLq || 0)}`;
     return {
       id: it.card.id, kind: "real-buy", intentId: it.id, expiresAt: it.card.expiresAt,
       title: `REAL buy · step ${it.step.no} of ${P.STEPS}`,
       lines: [
         `$${it.symbol} · ${short(it.mint)} · ${it.ageMin === null ? "age unknown" : `${it.ageMin} min old`} · pool ${pool}`,
-        `Spend ${it.stakeSol.toFixed(4)} SOL ($${it.stakeUsd.toFixed(2)}), ${((it.stakeUsd / it.balIn) * 100).toFixed(1)}% of $${it.balIn.toFixed(2)}`,
+        `Spend ${sol} SOL ($${it.stakeUsd.toFixed(2)}), ${((it.stakeUsd / it.balIn) * 100).toFixed(1)}% of $${it.balIn.toFixed(2)}`,
         `Sell at +${pc(it.target)}% · stop −15% · auto exits on`,
         `Sim proof: ${it.proof.w} of ${it.proof.n} won after fees (needs ${pc(it.proof.need)}%)`,
         `Golden pocket ${it.fib.retr.toFixed(2)} of a +${pc(it.fib.move)}% move · fees ${(it.rt * 100).toFixed(1)}% round trip`,
         `Closes in ${Math.round(CARD_MS / 1000)} s`,
       ],
-      choices: [{ id: "buy", label: `Buy ${it.stakeSol.toFixed(4)} SOL` }, { id: "skip", label: "Skip" }],
+      choices: [{ id: "buy", label: `Buy ${sol} SOL` }, { id: "skip", label: "Skip" }],
     };
   }
 
@@ -514,11 +560,32 @@ export class Real {
     const before = await this.#tokens(mint);
     if (!before) return this.#stale("wallet token read failed");
     const c = this.cfg, rec = this.#record(), url = this.#tokenUrl(mint);
-    try { await this.panel.open(url); this.verify = await this.panel.verify(c.selectors, rec); }
-    catch (e) { this.verify = { ok: false, at: this.now(), why: String(e.message || e).slice(0, 120) }; }
+    const instant = it.exec === "instant";
+    if (instant && (c.exec !== "instant" || c.buyPreset !== it.preset)) return this.#stale("real.json's exec or buyPreset changed since the card");
+    if (!instant && c.exec === "instant") return this.#stale("real.json's exec changed since the card");
+    try {
+      if (instant) { await this.panel.openInstant(url); this.verify = await this.panel.instantVerify(it.preset, rec); }
+      else { await this.panel.open(url); this.verify = await this.panel.verify(c.selectors, rec); }
+    } catch (e) { this.verify = { ok: false, at: this.now(), why: String(e.message || e).slice(0, 120) }; }
     this.#modeEval(this.now());
     if (!this.verify.ok || this.mode !== "live") return this.#stale(`not LIVE at the click: ${this.why}`);
     let r;
+    if (instant) {
+      try {
+        r = await this.door.execute("buy", it, token, {
+          exec: "instant", url, preset: it.preset, wallet: c.wallet,
+          beforeClick: () => { this.#to("real-click", ["APPROVED"], "CLICKING", { clickedAt: this.now(), tokensBefore: before.raw, sel: null, selRecord: null, instantRecord: { instant: rec.instant, hash: rec.hash } }); },
+        });
+      } catch (e) {
+        if (this.dead) throw e;
+        if (this.st.intent && this.st.intent.state === "APPROVED") return this.#stale(String(e.message || e).slice(0, 160));
+        r = { ok: true, clicked: "unknown", error: String(e.message || e) };
+      }
+      if (!r || !r.ok) { if (this.st.intent && this.st.intent.state === "APPROVED") return this.#stale(r && r.stale || "the panel refused"); }
+      if (!this.st.intent || this.st.intent.state !== "CLICKING") return;
+      this.#to("real-sent", ["CLICKING"], "SENT", { why: r.clicked === true ? "clicked once" : `click unclear: ${r.error || ""}`.slice(0, 120) });
+      return this.#confirm();
+    }
     const sel = c.selectors;
     const selRecord = { controls: SEL_KEYS.filter((k) => sel[k]).map((k) => ({ role: sel[k].role, name: sel[k].name })) };
     try {
@@ -576,7 +643,7 @@ export class Real {
       buy: { intentId: it.id, sig: f ? f.sig : null, solIn, tokens, feesSol: f ? f.feeSol : null, at: it.clickedAt || now, usd: solIn * it.solUsd, estimated: !f },
       entryMcap, last: entryMcap, move: 0, peak: 0, peakAll: 0, lowAll: 0, pnlUsd: 0, state: "OPEN", sell: null, why: f ? null : "entry estimated",
       stakeUsd: it.stakeUsd, balIn: it.balIn, solUsd: it.solUsd, entryPoolLq: it.entryPoolLq, lastPxAt: now, rugAt: now,
-      sel: it.sel, selRecord: it.selRecord, sellVerified: true,
+      sel: it.sel, selRecord: it.selRecord, sellVerified: true, exec: it.exec || "panel", preset: it.preset || null, instantRecord: it.instantRecord || null,
     };
     this.#to("real-fill", ["CLICKING", "SENT"], "CONFIRMED", { why: f ? `filled: ${solIn.toFixed(4)} SOL for ${tokens}` : "tokens arrived; entry estimated" }, {
       position: pos, ledgerSol: (this.st.ledgerSol ?? this.st.balanceSol ?? 0) - solIn, recent: { ...this.st.recent, [it.mint]: now },
@@ -626,12 +693,16 @@ export class Real {
     const url = this.#tokenUrl(p.mint), sel = p.sel || (this.cfg && this.cfg.selectors);
     const pending = this.#pos("real-exit", ["SELLING"], "SELLING", { sell: { ...p.sell, tries: p.sell.tries + 1, lastTry: nowMs } });
     if (p.sell.tries > 0) this.st.counters.sellRetries++;
-    try { await this.panel.open(url); this.verify = await this.panel.verify(sel, p.selRecord || this.#record(), ["sellTab", "amount", "walletLabel"]); }
-    catch (e) { this.verify = { ok: false, at: this.now(), why: String(e.message || e).slice(0, 120) }; }
+    const instant = p.exec === "instant";
+    try {
+      // build 45: a position bought through Instant trade is sold through it (the probe that bought it)
+      if (instant) { await this.panel.openInstant(url); this.verify = await this.panel.instantVerify(null, p.instantRecord || this.#record()); }
+      else { await this.panel.open(url); this.verify = await this.panel.verify(sel, p.selRecord || this.#record(), ["sellTab", "amount", "walletLabel"]); }
+    } catch (e) { this.verify = { ok: false, at: this.now(), why: String(e.message || e).slice(0, 120) }; }
     if (!this.verify.ok) { this.log({ type: "real-exit", mint: p.mint, symbol: p.symbol, why: `sell not clicked: ${this.verify.why}` }); return; }
     try {
       const r = await this.door.execute("sell", pending, null, {
-        url, sel, wallet: this.st.wallet, expectTokens: tb ? tb.ui : p.buy.tokens,
+        ...(instant ? { exec: "instant" } : {}), url, sel, wallet: this.st.wallet, expectTokens: tb ? tb.ui : p.buy.tokens,
         beforeClick: () => { this.#pos("real-sell-click", ["SELLING"], "SELLING", { sell: { ...this.st.position.sell, clickedAt: this.now() } }); },
       });
       if (!r || !r.ok) this.log({ type: "real-exit", mint: p.mint, symbol: p.symbol, why: `sell not clicked: ${r && r.stale || "refused"}` });
@@ -750,7 +821,7 @@ export class Real {
 
   /** trader.state().real: the board plus what Claude needs to read a probe through ultra_status. */
   status(nowMs = this.now()) {
-    return { ...this.board(nowMs), disabled: this.disabled || null, cfg: this.cfg ? { mode: this.cfg.mode, error: this.cfg.error || null, selectorsFrom: this.cfg.selectorsFrom || null } : null, verify: this.verify, probeReport: this.probeRep || null, counters: this.st.counters, steps: this.st.steps.slice(-5) };
+    return { ...this.board(nowMs), disabled: this.disabled || null, cfg: this.cfg ? { mode: this.cfg.mode, error: this.cfg.error || null, selectorsFrom: this.cfg.selectorsFrom || null, exec: this.cfg.exec || null, buyPreset: this.cfg.buyPreset || null } : null, verify: this.verify, probeReport: this.probeRep || null, counters: this.st.counters, steps: this.st.steps.slice(-5) };
   }
 
   async stop() { await this.settle().catch(() => {}); this.store.unlock(); }

@@ -12,7 +12,7 @@
  *   - a buy carries Alex's one-shot token for this intent: minted only when he presses Buy on
  *     the card (desk.decide calls mint), 20 s, in memory only, spent on first use
  *   - the stake is within the caps (MAX_STAKE_USD, steps.mjs; never from R2)
- *   - verify(selectors) passed in the last 5 s
+ *   - verify(selectors) passed in the last 5 s (build 45: or the Instant-trade verify, exec 'instant')
  *
  * The old one-argument execute(order) (sniper.mjs, book.mjs) still refuses: no wallet there.
  */
@@ -51,13 +51,13 @@ export function createDoor({ panel, now = Date.now, ctx }) {
       if (!(subject.stakeUsd > 0) || subject.stakeUsd > MAX_STAKE_USD + 1e-9) refuse(`stake $${subject.stakeUsd} is over the $${MAX_STAKE_USD} cap`);
       if (!(subject.stakeSol > 0) || !(subject.solUsd > 0) || subject.stakeSol * subject.solUsd > MAX_STAKE_USD * 1.01) refuse("stake in SOL is over the cap");
       if (!fresh) refuse("selectors not verified in the last 5 s");
-      return panel.buy(subject, how);
+      return how && how.exec === "instant" ? panel.instantBuy(subject, how) : panel.buy(subject, how);
     }
     if (kind === "sell") {
       if (!subject || subject.state !== "SELLING") refuse(`position is ${subject ? subject.state : "missing"}, not SELLING`);
       if (c.mode !== "live" && !subject.sellVerified) refuse("not LIVE and the sell controls were not verified at buy time");
       if (!fresh) refuse("selectors not verified in the last 5 s");
-      return panel.sell(subject, how);
+      return how && how.exec === "instant" ? panel.instantSell(subject, how) : panel.sell(subject, how);
     }
     return refuse(`unknown kind ${kind}`);
   }

@@ -16,7 +16,7 @@
  * Sell: Sell tab -> sell-all (the 100% control) -> the amount read back = the wallet's tokens
  *       -> WAL -> Sell, once per try.
  */
-import { pageScan, inputRecorder, gmgnTradeProbe, walletProbe, probeHash, judge } from "../probe.mjs";
+import { pageScan, instantScan, inputRecorder, gmgnTradeProbe, walletProbe, probeHash, judge } from "../probe.mjs";
 import { addrMatch, isAddr } from "../wallet.mjs";
 import path from "node:path";
 
@@ -209,6 +209,135 @@ export class GmgnPanel {
     return { ok: true, clicked: true };
   }
 
+  // ---------------------------------------------------------------- build 45: GMGN Instant trade
+  //
+  // One click on a buy preset inside the Instant-trade window buys that much SOL at once (GMGN's
+  // built-in wallet, no popup); one click on the window's Sell 100% sells it all. So:
+  //   - a preset is found ONLY inside the window instantScan finds (the window is tagged and the
+  //     locator is scoped to it); 0 or 2+ matches = no click
+  //   - the preset's exact text is real.json buyPreset; no other preset, Max or % is ever clicked
+  //   - the only other click is the " Instant trade" toggle, when the window is closed (it opens
+  //     the window, it trades nothing), then the window is found again
+  //   - a buy is clicked at most once per call; real.mjs never calls it twice for one intent
+
+  /** The window on the tab now, in any frame, tagged; target {section, text} tagged when unique. */
+  async #instant(target = null, wait = 0) {
+    const p = await this.#tab();
+    const t0 = Date.now();
+    for (;;) {
+      let open = [], toggle = null, chips = [];
+      for (const f of p.frames()) {
+        let s = null;
+        try { s = await f.evaluate(instantScan, { mark: true, target }); } catch { s = null; }
+        if (!s) continue;
+        if (s.toggle && !toggle) toggle = s.toggle;
+        chips.push(...(s.chips || []));
+        if (s.open) open.push({ frame: f, s });
+      }
+      if (open.length === 1) return { page: p, frame: open[0].frame, s: open[0].s, win: open[0].frame.locator('[data-uc-instant="1"]').first(), toggle, chips };
+      if (open.length > 1) return { page: p, many: open.length, toggle, chips };
+      if (Date.now() - t0 >= wait) return { page: p, closed: true, toggle, chips, why: (open[0] && open[0].s.why) || null };
+      await p.waitForTimeout(400);
+    }
+  }
+
+  /** The tab on this coin's page, the window or its toggle showing. One navigation at most. */
+  async openInstant(url) {
+    const p = await this.#tab();
+    if (p.url() !== url) await p.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
+    const t0 = Date.now();
+    for (;;) {
+      const w = await this.#instant(null, 0);
+      if (!w.closed || w.toggle || Date.now() - t0 >= this.waitMs) return w;
+      await p.waitForTimeout(400);
+    }
+  }
+
+  /**
+   * Read only (no click): the window is open with exactly one `preset` in its buy row and one 100%
+   * in its sell row, or it is closed and its toggle is there. The header chip's SOL is returned
+   * so real.mjs can check it against the chain (GMGN's wallet shows no address).
+   * preset null = the sell only (a position is being sold).
+   */
+  async instantVerify(preset, record) {
+    const at = this.now();
+    try {
+      const ins = record && record.instant;
+      if (!ins || !ins.open) return { ok: false, at, why: "the probe report shows no Instant-trade window" };
+      if (preset !== null && !(ins.buyPresets || []).includes(preset)) return { ok: false, at, why: `buy preset ${preset} is not in the probe report (${(ins.buyPresets || []).join(", ")})` };
+      if (!(ins.sellPcts || []).includes("100%")) return { ok: false, at, why: "the probe report shows no Sell 100%" };
+      const chipSol = (w) => (w.chips && w.chips.length === 1 ? Number(w.chips[0].text) : null);
+      let w = await this.#instant(null, 0);
+      if (w.many) return { ok: false, at, why: `${w.many} Instant-trade windows on the page` };
+      if (w.closed) {
+        const t = await this.#toggle(w.page);
+        if (t.why) return { ok: false, at, why: `Instant-trade window closed and ${t.why}` };
+        return { ok: true, at, why: "ok (window closed, its toggle is there)", closed: true, chipSol: chipSol(w) };
+      }
+      if (preset !== null) {
+        w = await this.#instant({ section: "buy", text: preset }, 0);
+        if (w.closed || w.many || w.s.targetCount !== 1) return { ok: false, at, why: `buy preset ${preset}: ${w.s ? w.s.targetCount : 0} clickable matches in the window` };
+      }
+      w = await this.#instant({ section: "sell", text: "100%" }, 0);
+      if (w.closed || w.many || w.s.targetCount !== 1) return { ok: false, at, why: `Sell 100%: ${w.s ? w.s.targetCount : 0} clickable matches in the window` };
+      return { ok: true, at, why: "ok", closed: false, chipSol: chipSol(w) };
+    } catch (e) {
+      return { ok: false, at, why: `verify failed: ${String(e.message || e).slice(0, 120)}` };
+    }
+  }
+
+  async #toggle(page) {
+    const loc = page.getByRole("button", { name: "Instant trade", exact: true });
+    const n = await loc.count();
+    if (n !== 1) return { why: `${n} " Instant trade" toggles` };
+    if (!(await loc.isVisible())) return { why: "the Instant trade toggle is not visible" };
+    return { loc };
+  }
+
+  /** The window open (the toggle clicked once if it was closed), then the one target in it. */
+  async #instantTarget(url, target) {
+    let w = await this.openInstant(url);
+    if (w.many) return { why: `${w.many} Instant-trade windows on the page` };
+    if (w.closed) {
+      const t = await this.#toggle(w.page);
+      if (t.why) return { why: `Instant-trade window closed and ${t.why}` };
+      await this.#click(t.loc, "instantToggle", "Instant trade");      // opens the window; trades nothing
+      w = await this.#instant(null, 5_000);
+      if (w.closed || w.many) return { why: "the Instant-trade window did not open" };
+    }
+    w = await this.#instant(target, 0);
+    if (w.closed || w.many) return { why: "the Instant-trade window went away" };
+    if (w.s.targetCount !== 1) return { why: `${target.section} ${target.text}: ${w.s.targetCount} clickable matches in the window` };
+    const loc = w.win.locator('[data-uc-target="1"]');
+    if ((await loc.count()) !== 1) return { why: `${target.text}: not found inside the window` };
+    if (!(await loc.isVisible())) return { why: `${target.text}: not visible` };
+    return { loc };
+  }
+
+  /** ctx: {url, preset, beforeClick}. -> {ok: true, clicked} or {ok: false, stale} with no buy click. */
+  async instantBuy(intent, ctx) {
+    const preset = ctx.preset;
+    if (typeof preset !== "string" || !/^\d+(\.\d+)?$/.test(preset)) return { ok: false, stale: "no buy preset" };
+    if (Math.abs(Number(preset) - Number(intent.stakeSol)) > 1e-12) return { ok: false, stale: `preset ${preset} is not the intent's ${intent.stakeSol} SOL` };
+    const t = await this.#instantTarget(ctx.url, { section: "buy", text: preset });
+    if (t.why) return { ok: false, stale: t.why };
+    await ctx.beforeClick();                         // WAL CLICKING, fsynced, before the click
+    try { await this.#click(t.loc, "instantBuy", preset); }
+    catch (e) { return { ok: true, clicked: "unknown", error: String(e.message || e).slice(0, 120) }; } // never re-clicked
+    return { ok: true, clicked: true };
+  }
+
+  /** ctx: {url, beforeClick}. One Sell 100% click per call. */
+  async instantSell(pos, ctx) {
+    void pos;
+    const t = await this.#instantTarget(ctx.url, { section: "sell", text: "100%" });
+    if (t.why) return { ok: false, stale: t.why };
+    await ctx.beforeClick();
+    try { await this.#click(t.loc, "instantSell", "100%"); }
+    catch (e) { return { ok: true, clicked: "unknown", error: String(e.message || e).slice(0, 120) }; }
+    return { ok: true, clicked: true };
+  }
+
   async #targets() {
     if (!this.browser) return null;
     try {
@@ -235,7 +364,7 @@ export class GmgnPanel {
       const t0 = Date.now();
       for (;;) {
         rep = await gmgnTradeProbe(p);
-        if (rep.tradeBox || Date.now() - t0 >= this.waitMs) break;
+        if (rep.tradeBox || (rep.instant && rep.instant.open) || Date.now() - t0 >= this.waitMs) break;
         await p.waitForTimeout(1000);
       }
       const after = await this.#targets();
@@ -244,7 +373,7 @@ export class GmgnPanel {
       for (const f of p.frames()) inputs += await f.evaluate(() => (window.__ucTrusted || []).length).catch(() => 0);
       let screenshot = null;
       if (this.dir) { screenshot = path.join(this.dir, "probe.png"); await p.screenshot({ path: screenshot }).catch(() => { screenshot = null; }); }
-      const out = { build: this.build, at, ...rep, walletKind: w.walletKind, walletAddr: w.walletAddr, walletEvidence: w.evidence, cdpTargetsBefore: before, cdpTargetsAfter: after, screenshot, inputs };
+      const out = { build: this.build, at, ...rep, walletKind: w.walletKind, walletAddr: w.walletAddr, chipSol: w.chipSol, walletEvidence: w.evidence, cdpTargetsBefore: before, cdpTargetsAfter: after, screenshot, inputs };
       const j = judge(out);
       out.ok = j.ok; out.why = j.why; out.hash = probeHash(out);
       this.walletKind = out.walletKind;

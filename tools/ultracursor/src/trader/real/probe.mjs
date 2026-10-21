@@ -116,6 +116,93 @@ export function pageScan(arg) {
   };
 }
 
+/**
+ * build 45: GMGN's "Instant trade" floating window, read in the page (or one frame). Seen on
+ * Alex's Mac (build 44 probe): one div whose text reads "1 0 Buy P1 P2 P3 0.01618 0.1 0.5 1 Auto
+ * 0.00001 <0.01 Red. Adv. Sell % P1 P2 P3 0 <TOKEN> 0 10% 25% 50% 100% ... Bal Bought Sold PnL
+ * Sell All". Its presets are clickable DIVs (no button role), and one click on one buys or sells
+ * at once, so the window is found by its own words, never by a preset's text alone:
+ *   window   the smallest visible element holding the texts Buy, Sell All, Bought, Sold, PnL and
+ *            a 100%; two such elements that do not contain each other = ambiguous (not found)
+ *   buy row  numbers (^\d+(\.\d+)?$) after the window's "Buy" and before its "Sell ..." header,
+ *            that the page draws as clickable (cursor: pointer on it or a parent in the window)
+ *   sell row percentages (^\d+%$) after the "Sell ..." header
+ *   toggle   an element whose text or aria-label is "Instant trade" (trimmed)
+ *   chips    the header's balance: a number in the top 90 px next to an icon that names SOL
+ * `mark` (the executor's own tab only) tags the window and, when exactly one matches, the target
+ * {section: 'buy'|'sell', text} so a locator can reach it. The probe passes mark = false.
+ */
+export function instantScan(arg) {
+  const mark = !!(arg && arg.mark), target = arg && arg.target;
+  const clean = (s) => String(s || "").replace(/\s+/g, " ").trim();
+  const vis = (el) => {
+    const r = el.getBoundingClientRect(), s = getComputedStyle(el);
+    return r.width > 0 && r.height > 0 && s.visibility !== "hidden" && s.display !== "none" && Number(s.opacity) !== 0;
+  };
+  const rectOf = (el) => { const r = el.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) }; };
+  const pathOf = (el) => {
+    const parts = [];
+    for (let e = el; e && e.nodeType === 1 && e !== document.body; e = e.parentElement) {
+      const tag = e.tagName.toLowerCase(), sib = [...(e.parentElement?.children || [])].filter((x) => x.tagName === e.tagName);
+      parts.unshift(sib.length > 1 ? `${tag}:nth-of-type(${sib.indexOf(e) + 1})` : tag);
+    }
+    return ["body", ...parts].join(" > ");
+  };
+  for (const a of ["data-uc-instant", "data-uc-target"]) for (const e of document.querySelectorAll(`[${a}]`)) e.removeAttribute(a);
+  // a text owner: a visible element with its own (direct) text; its text is its innerText
+  const owners = [];
+  for (const el of document.querySelectorAll("body *")) {
+    if (["SCRIPT", "STYLE", "NOSCRIPT"].includes(el.tagName)) continue;
+    if (![...el.childNodes].some((n) => n.nodeType === 3 && n.nodeValue.trim())) continue;
+    if (!vis(el)) continue;
+    const t = clean(el.innerText || el.textContent);
+    if (t && t.length <= 40) owners.push({ el, t });
+  }
+  const ancestors = (el) => { const s = new Set(); for (let a = el.parentElement; a && a !== document.body && a !== document.documentElement; a = a.parentElement) s.add(a); return s; };
+  const NEED = [(t) => t === "Buy", (t) => t === "Sell All", (t) => t === "Bought", (t) => t === "Sold", (t) => t === "PnL", (t) => t === "100%"];
+  let cands = null;
+  for (const want of NEED) {
+    const s = new Set();
+    for (const o of owners) if (want(o.t)) for (const a of ancestors(o.el)) s.add(a);
+    cands = cands === null ? s : new Set([...cands].filter((x) => s.has(x)));
+  }
+  const minimal = [...(cands || [])].filter((c) => vis(c) && ![...cands].some((d) => d !== c && c.contains(d)));
+  const toggles = [...document.querySelectorAll("body *")].filter((el) => vis(el) && (clean(el.getAttribute("aria-label")) === "Instant trade" || (clean(el.innerText) === "Instant trade" && ![...el.children].some((c) => clean(c.innerText) === "Instant trade"))));
+  const toggle = toggles.length ? { count: toggles.length, tag: toggles[0].tagName.toLowerCase(), role: toggles[0].getAttribute("role") || (toggles[0].tagName === "BUTTON" ? "button" : null), text: toggles[0].textContent.slice(0, 40), rect: rectOf(toggles[0]) } : null;
+  // the header's balance chip (GMGN's built-in wallet): a number high on the page beside a SOL icon
+  const solIcon = (el) => !!el && [...el.querySelectorAll("img, svg, i, span, use")].some((x) => /\bsol\b|solana/i.test(`${x.getAttribute("alt") || ""} ${x.getAttribute("src") || ""} ${x.getAttribute("class") || ""} ${x.getAttribute("aria-label") || ""} ${x.getAttribute("href") || ""} ${x.getAttribute("xlink:href") || ""}`));
+  const chips = owners.filter((o) => /^\d+(\.\d+)?$/.test(o.t) && o.el.getBoundingClientRect().top < 90 && (solIcon(o.el.parentElement) || solIcon(o.el.parentElement?.parentElement)))
+    .slice(0, 4).map((o) => ({ text: o.t, rect: rectOf(o.el) }));
+  const base = { candidates: minimal.length, toggle, chips };
+  if (minimal.length !== 1) return { ...base, open: false, why: minimal.length ? `${minimal.length} elements look like the Instant-trade window` : "no Instant-trade window on the page" };
+  const win = minimal[0];
+  const inWin = owners.filter((o) => win.contains(o.el));
+  const before = (a, b) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+  const buyH = inWin.find((o) => o.t === "Buy");
+  const sellH = inWin.find((o) => /^Sell\b/.test(o.t) && o.t !== "Sell All" && buyH && before(buyH.el, o.el));
+  const pointer = (el) => { for (let e = el, i = 0; e && i < 4 && win.contains(e); e = e.parentElement, i++) if (getComputedStyle(e).cursor === "pointer") return true; return false; };
+  const buyRow = inWin.filter((o) => buyH && sellH && before(buyH.el, o.el) && before(o.el, sellH.el) && /^\d+(\.\d+)?$/.test(o.t));
+  const sellRow = inWin.filter((o) => sellH && before(sellH.el, o.el) && /^\d+%$/.test(o.t));
+  const buyPresets = buyRow.filter((o) => pointer(o.el)).map((o) => o.t);
+  const sellPcts = sellRow.filter((o) => pointer(o.el)).map((o) => o.t);
+  let targetCount = null;
+  if (mark) {
+    win.setAttribute("data-uc-instant", "1");
+    if (target && typeof target.text === "string") {
+      const row = target.section === "sell" ? sellRow : buyRow;
+      const hits = row.filter((o) => o.t === target.text && pointer(o.el));
+      targetCount = hits.length;
+      if (hits.length === 1) hits[0].el.setAttribute("data-uc-target", "1");
+    }
+  }
+  return {
+    ...base, open: true, rect: rectOf(win), path: pathOf(win), tag: win.tagName.toLowerCase(), text: clean(win.innerText).slice(0, 400),
+    buyHeader: !!buyH, sellHeader: sellH ? sellH.t : null,
+    buyPresets, sellPcts, notClickable: [...buyRow, ...sellRow].filter((o) => !pointer(o.el)).map((o) => o.t).slice(0, 12),
+    targetCount,
+  };
+}
+
 /** Installed before the page loads: every TRUSTED input on the probe's page is counted. */
 export function inputRecorder() {
   window.__ucTrusted = [];
@@ -133,7 +220,8 @@ const shape = (s) => String(s || "").replace(/\d+(?:[.,]\d+)*/g, "#");
 /** The probe's fingerprint: the trade box's roles and names (numbers masked) and the wallet kind. */
 export function probeHash(rep) {
   const box = (rep.controls || []).filter((c) => c.inTradeBox && !c.hidden).map((c) => `${c.role}|${shape(c.name)}`);
-  const body = JSON.stringify({ box: [...new Set(box)].sort(), presets: (rep.presets || []).map(shape).sort(), wallet: rep.walletKind || "unknown" });
+  const ins = rep.instant && rep.instant.open ? { buy: (rep.instant.buyPresets || []).map(shape), sell: rep.instant.sellPcts || [], sellHeader: rep.instant.sellHeader || null } : null;
+  const body = JSON.stringify({ box: [...new Set(box)].sort(), presets: (rep.presets || []).map(shape).sort(), wallet: rep.walletKind || "unknown", ...(ins ? { instant: ins } : {}) });
   return crypto.createHash("sha256").update(body).digest("hex").slice(0, 16);
 }
 
@@ -145,7 +233,9 @@ export async function gmgnTradeProbe(page) {
     const f = frames[i];
     let s = null;
     try { s = await f.evaluate(pageScan, { mark: false }); } catch (e) { s = { error: String(e.message || e).slice(0, 120) }; }
-    scans.push({ i, f, s });
+    let ins = null;
+    try { ins = await f.evaluate(instantScan, { mark: false }); } catch (e) { ins = { open: false, why: `scan failed: ${String(e.message || e).slice(0, 100)}` }; }
+    scans.push({ i, f, s, ins });
   }
   const hit = scans.find((x) => x.s && x.s.box) || null;
   const main = scans[0] && scans[0].s && !scans[0].s.error ? scans[0].s : {};
@@ -158,6 +248,13 @@ export async function gmgnTradeProbe(page) {
   const box = controls.filter((c) => c.inTradeBox);
   const presets = box.filter((c) => c.role === "button" && PRESET.test(c.name)).map((c) => (c.hidden ? `${c.name} (hidden)` : c.name));
   const slipCtl = box.find((c) => /slippage/i.test(c.name));
+  // build 45: the Instant-trade window, from the frame that has exactly one (else the main frame's answer)
+  const iw = scans.filter((x) => x.ins && x.ins.open);
+  const mainIns = (scans[0] && scans[0].ins) || { open: false, why: "not scanned" };
+  const instant = iw.length === 1 ? { frame: iw[0].i, ...iw[0].ins }
+    : { ...mainIns, open: false, frame: null, ...(iw.length > 1 ? { why: `${iw.length} frames show an Instant-trade window` } : {}) };
+  instant.toggle = scans.map((x) => x.ins && x.ins.toggle).find(Boolean) || null;
+  instant.chips = scans.flatMap((x) => (x.ins && x.ins.chips) || []);
   return {
     url: page.url(),
     frames: scans.map((x) => ({ index: x.i, url: x.f.url().slice(0, 160), name: x.f.name() || null, box: !!(x.s && x.s.box), error: x.s && x.s.error || null })),
@@ -170,7 +267,8 @@ export async function gmgnTradeProbe(page) {
     tpsl: { texts: s.tpsl || [] },
     balance: { texts: s.balance || [], sol: num((s.balance || []).find((t) => /sol/i.test(t))) },
     aria,
-    scan: scans.map((x) => (x.s ? { addrs: x.s.addrs || [], phantom: x.s.phantom || [], connect: x.s.connect || [] } : null)),
+    instant,
+    scan: scans.map((x) => (x.s ? { addrs: x.s.addrs || [], phantom: x.s.phantom || [], connect: x.s.connect || [], chips: (x.ins && x.ins.chips) || [] } : null)),
   };
 }
 
@@ -185,17 +283,20 @@ export async function walletProbe(page, rep = null, cdpTargets = null) {
   const addrs = [...new Set((r.scan || []).flatMap((x) => (x ? x.addrs : [])))];
   const phantomText = [...new Set((r.scan || []).flatMap((x) => (x ? x.phantom : [])))];
   const connect = [...new Set((r.scan || []).flatMap((x) => (x ? x.connect : [])))];
-  const ext = (cdpTargets || []).filter((t) => /^chrome-extension:\/\//.test(t.url || "") && /phantom/i.test(`${t.title} ${t.url}`));
-  const evidence = [...addrs.map((a) => `address shown: ${a}`), ...phantomText.map((t) => `page says: ${t}`), ...ext.map((t) => `extension target: ${t.title}`), ...connect.map((t) => `page says: ${t}`)];
-  const walletKind = phantomText.length || ext.length ? "phantom" : addrs.length ? "gmgn" : "unknown";
-  return { walletKind, walletAddr: addrs[0] || null, evidence: evidence.slice(0, 12) };
+  const ext = (cdpTargets || []).filter((t) => /phantom/i.test(`${t.title} ${t.url}`) && /^chrome-extension:\/\//.test(t.url || ""));
+  // build 45: GMGN's built-in wallet shows no address, only its SOL balance in the header
+  const chips = [...new Set((r.scan || []).flatMap((x) => (x && x.chips ? x.chips.map((c) => c.text) : [])))];
+  const evidence = [...addrs.map((a) => `address shown: ${a}`), ...chips.map((c) => `header balance chip: ${c} SOL`), ...phantomText.map((t) => `page says: ${t}`), ...ext.map((t) => `extension target: ${t.title}`), ...connect.map((t) => `page says: ${t}`)];
+  const walletKind = phantomText.length || ext.length ? "phantom" : addrs.length || chips.length ? "gmgn" : "unknown";
+  return { walletKind, walletAddr: addrs[0] || null, chipSol: chips.length === 1 ? Number(chips[0]) : null, evidence: evidence.slice(0, 12) };
 }
 
 /** The report's verdict: ok only with a trade box holding an amount input, a known wallet and zero inputs. */
 export function judge(rep) {
   const why = [];
   const box = (rep.controls || []).filter((c) => c.inTradeBox);
-  if (!rep.tradeBox) why.push("no trade box found (amount input + Buy control)");
+  const ins = rep.instant && rep.instant.open && (rep.instant.buyPresets || []).length && (rep.instant.sellPcts || []).includes("100%");
+  if (!rep.tradeBox && !ins) why.push("no trade box found (amount input + Buy control) and no Instant-trade window (buy presets + Sell 100%)");
   if (rep.tradeBox && !box.some((c) => ["textbox", "spinbutton"].includes(c.role))) why.push("no amount input in the trade box");
   if (rep.inputs) why.push(`${rep.inputs} trusted input(s) recorded on the probe page`);
   if (rep.walletKind === "unknown") why.push("wallet kind unknown");
