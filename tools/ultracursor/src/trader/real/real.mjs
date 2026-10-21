@@ -26,7 +26,9 @@
 import crypto from "node:crypto";
 import { fibSetup, liteShape } from "../scalp.mjs";
 import { exitReason, track, rulesOf, rulesKey } from "../exits.mjs";
-import { createDoor } from "../execute.mjs";
+import { createDoor, AUTO_MAX_SOL, AUTO_MAX_DAY, AUTO_DD, KEEP_MINTS } from "../execute.mjs";
+import { runnerSignal } from "./runner.mjs";
+import { DEFAULTS as SIM_DEFAULTS } from "../scalp.mjs";
 import * as P from "./steps.mjs";
 import { proven, floors, assumedRt } from "./proof.mjs";
 import { RealStore } from "./realstore.mjs";
@@ -45,7 +47,12 @@ const pc = (x) => Math.round(x * 100);
 const id = () => crypto.randomBytes(6).toString("hex");
 
 // ------------------------------------------------------------------ R2 real.json, read as DATA
-const R2_KEYS = new Set(["mode", "startUsd", "minTrades", "minWin", "wallet", "tokenUrl", "selectorsFrom", "selectors", "probeNow", "exec", "buyPreset"]);
+const R2_KEYS = new Set(["mode", "startUsd", "minTrades", "minWin", "wallet", "tokenUrl", "selectorsFrom", "selectors", "probeNow", "exec", "buyPreset", "autoBuy", "keepMints", "runnerMinMc", "runnerMove5m", "autoMaxDay"]);
+/** build 48: auto positions exit like symbiot's hunt: take profit +40%, give back half of a +25% peak. */
+export const AUTO_TP = 0.40, AUTO_TRAIL = 0.25;
+/** build 48: a runner has no proof bucket: its round trip may cost at most this much. */
+export const RUNNER_MAX_RT = 0.05;
+export const utcDay = (ms) => new Date(ms).toISOString().slice(0, 10);
 export const PRESET_RE = /^\d+(\.\d+)?$/;
 /** build 45: within this much of the chain's SOL, the header chip is the real wallet (GMGN shows no address). */
 export const chipTol = (sol) => Math.max(0.0015, 0.02 * (sol || 0));
@@ -77,6 +84,15 @@ export function parseRealJson(j) {
   out.exec = j.exec || "panel";
   if (j.buyPreset !== undefined) { if (typeof j.buyPreset !== "string" || j.buyPreset.length > 12 || !PRESET_RE.test(j.buyPreset) || !(Number(j.buyPreset) > 0)) return bad("buyPreset must be a number as text, like \"0.01618\""); out.buyPreset = j.buyPreset; }
   if (out.exec === "instant" && !out.buyPreset) return bad("exec 'instant' needs buyPreset");
+  // build 48: autoBuy and its caps. R2 can only lower autoMaxDay and raise the runner floors.
+  if (j.autoBuy !== undefined) { if (typeof j.autoBuy !== "boolean") return bad("autoBuy must be true or false"); out.autoBuy = j.autoBuy; }
+  out.autoBuy = out.autoBuy === true;
+  if (j.keepMints !== undefined) { if (!Array.isArray(j.keepMints) || j.keepMints.length > 100 || !j.keepMints.every(isAddr)) return bad("keepMints must be a list of Solana mints"); out.keepMints = [...j.keepMints]; }
+  if (j.runnerMinMc !== undefined) { if (!(typeof j.runnerMinMc === "number" && j.runnerMinMc > 0)) return bad("runnerMinMc"); out.runnerMinMc = j.runnerMinMc; }
+  if (j.runnerMove5m !== undefined) { if (!(typeof j.runnerMove5m === "number" && j.runnerMove5m > 0 && j.runnerMove5m < 100)) return bad("runnerMove5m"); out.runnerMove5m = j.runnerMove5m; }
+  if (j.autoMaxDay !== undefined) { if (!(Number.isInteger(j.autoMaxDay) && j.autoMaxDay >= 0)) return bad("autoMaxDay"); out.autoMaxDay = Math.min(AUTO_MAX_DAY, j.autoMaxDay); }
+  if (out.autoBuy && out.exec !== "instant") return bad("autoBuy needs exec 'instant'");
+  if (out.autoBuy && !(Number(out.buyPreset) > 0 && Number(out.buyPreset) <= AUTO_MAX_SOL + 1e-12)) return bad(`autoBuy needs buyPreset at most "${AUTO_MAX_SOL}"`);
   if (j.probeNow !== undefined) { if (!["string", "number"].includes(typeof j.probeNow)) return bad("probeNow"); out.probeNow = j.probeNow; }
   if (j.selectors !== undefined) {
     if (!j.selectors || typeof j.selectors !== "object" || Array.isArray(j.selectors)) return bad("selectors");
@@ -100,7 +116,7 @@ function freshState(build, startUsd = 15) {
   return {
     v: 1, plan: "steps76", build, seq: 0, wallet: null, startUsd, deposits: 0,
     ...P.newLedger(startUsd),
-    intent: null, position: null, steps: [], recent: {},
+    intent: null, position: null, steps: [], recent: {}, auto: null,
     ledgerSol: null, balanceSol: null, solUsd: null,
     counters: { signals: 0, gated: 0, cards: 0, skipped: 0, expired: 0, stale: 0, notLanded: 0, sellRetries: 0 },
   };
@@ -122,7 +138,7 @@ export class Real {
     this.would = { n: 0, last: null };
     this.flow = null; this.probing = null; this.manual = false; this.dead = false;
     this.wallet = null; this.solAt = 0; this.priceAt = 0; this.ticks = 0;
-    this.door = createDoor({ panel: this.panel, now: this.now, ctx: () => ({ mode: this.mode, verify: this.verify }) });
+    this.door = createDoor({ panel: this.panel, now: this.now, ctx: () => ({ mode: this.mode, verify: this.verify, auto: this.#autoCtx(), keep: this.#keep() }) });
   }
 
   log(ev) { try { this.logFn({ at: this.now(), ...ev }); } catch { /* the ledger is best effort */ } }
@@ -293,6 +309,9 @@ export class Real {
         const sol = await this.wallet.solBalance();
         this.st.balanceSol = sol; this.solAt = this.now(); this.solErr = null;
         if (this.st.ledgerSol === null || this.st.ledgerSol === undefined) this.st.ledgerSol = sol;
+        // build 48: the day's starting SOL (UTC) and the auto-buy count restart at midnight UTC
+        const day = utcDay(nowMs);
+        if (!this.st.auto || this.st.auto.day !== day) this.st.auto = { day, n: 0, startSol: sol };
       } catch (e) { this.solErr = String(e.message || e).slice(0, 120); }
     }
     if (nowMs - this.priceAt >= PRICE_MS && nowMs - (this.priceTriedAt || 0) >= SOL_READ_MS) {
