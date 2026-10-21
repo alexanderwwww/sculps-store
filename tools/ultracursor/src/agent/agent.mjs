@@ -216,7 +216,10 @@ export async function runTask({ page, task, deps }) {
       targetText = `${target.role || "element"} "${clip(target.name, 80)}"`;
     }
     if (name === "click") {
-      if (deps.trading && deps.trading() && gmgnTradeClick(page.url(), target)) {
+      // build 46 (Alex: "symbiot trades fake and real at the same time"): while it trains, a GMGN
+      // trade control is still refused unless the click is a final buy/sell, which waits for
+      // Alex's Approve card. Fake and real money run side by side.
+      if (deps.trading && deps.trading() && gmgnTradeClick(page.url(), target) && !["buy", "other"].includes(input.final)) {
         note({ target: targetText, ok: false, error: "refused: GMGN trade control in training mode" });
         log({ task: task.id, kind: "refused", text: `GMGN trade control ${targetText} (trader training)` });
         return { text: format({ ok: false, error: `refused: ${targetText} is one of GMGN's real buy/sell controls. The trader is in training mode (fake money): trades are kept in its own ledger and nothing is ever clicked on GMGN's trade box.` }), error: true };
