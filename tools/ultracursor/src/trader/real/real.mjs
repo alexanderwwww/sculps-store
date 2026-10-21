@@ -815,7 +815,7 @@ export class Real {
       pnlUsd: bal === null ? null : r2(bal + openValue - st.startUsd - (st.deposits || 0)),
       trades: st.trades, wins: st.wins, losses: st.losses,
       open: p ? [{ symbol: p.symbol, mint: p.mint, move: +(p.move || 0).toFixed(4), pnlUsd: r2(p.pnlUsd || 0), target: p.target, stop: P.SL, ageS: Math.max(0, Math.round((nowMs - p.buy.at) / 1000)), state: p.state }] : [],
-      probe: latest ? { at: latest.at, ok: latest.ok, controls: latest.controls.filter((c) => c.inTradeBox).length, walletKind: latest.walletKind, walletAddr: latest.walletAddr, why: latest.why } : null,
+      probe: latest ? { hash: latest.hash, build: latest.build, at: latest.at, ok: latest.ok, controls: latest.controls.filter((c) => c.inTradeBox).length, walletKind: latest.walletKind, walletAddr: latest.walletAddr, why: latest.why } : null,
       would: this.would.n ? { n: this.would.n, last: this.would.last } : null,
       card: it && it.state === "PROPOSED" ? { kind: "real-buy", expiresAt: it.card.expiresAt } : this.alert && st.halted ? { kind: "real-alert", expiresAt: null } : null,
       halt, why, at: nowMs,
