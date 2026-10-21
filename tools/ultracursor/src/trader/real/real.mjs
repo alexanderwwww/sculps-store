@@ -368,6 +368,28 @@ export class Real {
 
   #instant() { return !!(this.cfg && !this.cfg.error && this.cfg.exec === "instant"); }
 
+  // ---------------------------------------------------------------- build 48: auto-buy caps
+  /** Coins Alex holds himself: the local list plus real.json keepMints. Never bought or sold. */
+  #keep() { return new Set([...KEEP_MINTS, ...(this.cfg && !this.cfg.error && this.cfg.keepMints ? this.cfg.keepMints : [])]); }
+  #autoMax() { const c = this.cfg; return Math.min(AUTO_MAX_DAY, c && !c.error && Number.isInteger(c.autoMaxDay) ? c.autoMaxDay : AUTO_MAX_DAY); }
+  #autoToday() { const a = this.st.auto; return a && a.day === utcDay(this.now()) ? a : null; }
+  /** SOL more than 30% under the day's starting SOL: no auto-buy. Unknown counts as down. */
+  #ddOk() { const a = this.#autoToday(), b = this.st.balanceSol; return !!(a && a.startSol > 0 && Number.isFinite(b) && b > a.startSol * (1 - AUTO_DD) + 1e-12); }
+  #autoCtx() {
+    const c = this.cfg, a = this.#autoToday();
+    return { on: !!(c && !c.error && c.mode === "live" && c.autoBuy === true), used: a ? a.n : 0, max: this.#autoMax(), ddOk: this.#ddOk() };
+  }
+  /** Why a runner may not be bought without a card right now, or null. */
+  #autoWhyNot(stakeSol, preset) {
+    const a = this.#autoCtx();
+    if (!a.on) return "autoBuy is off";
+    if (!this.#instant() || preset === null) return "auto-buy needs exec instant";
+    if (!(stakeSol > 0) || stakeSol > AUTO_MAX_SOL + 1e-12) return `stake ${stakeSol} SOL over the ${AUTO_MAX_SOL} SOL auto cap`;
+    if (a.used >= a.max) return `${a.used} of ${a.max} auto-buys used today`;
+    if (!a.ddOk) return "SOL is 30% under the day's start";
+    return null;
+  }
+
   async #liveCheck(nowMs) {
     const c = this.cfg;
     if (!this.panel || !c || c.error || c.mode !== "live") return;
@@ -450,14 +472,17 @@ export class Real {
     if (st.done) return this.#skip("a", pick, "done: $2,000 reached");
     if (st.paused && nowMs < st.paused.until) return this.#skip("a", pick, `paused: ${st.paused.why}`);
     if (!this.wallet || !(nowMs - this.solAt < SOL_FRESH_MS) || !st.solUsd) return this.#skip("a", pick, "wallet not read in the last 10 s");
-    // b: always a Fibonacci entry (the same fibSetup symbiot uses), on 34 candles
+    if (this.#keep().has(mint)) return this.#skip("a", pick, "a coin Alex keeps (keepMints): never bought");
+    // build 48: a runner (a coin moving like Kimchi) needs no Fibonacci pocket and no sim proof
     const cs = Array.isArray(pick.cs) ? pick.cs.slice(-34) : null;
+    const run = runnerSignal(pick, this.cfg);
+    // b: otherwise always a Fibonacci entry (the same fibSetup symbiot uses), on 34 candles
     const fib = fibSetup(cs);
-    if (!fib) return this.#skip("b", pick, "no Fibonacci pocket on 34 candles");
+    if (!fib && !run.ok) return this.#skip("b", pick, `no Fibonacci pocket on 34 candles, not a runner (${run.why})`);
     // c: exactly the key symbiot files this coin under
-    const combo = [...liteShape(pick.row, pick.nowMs ?? nowMs), "e:fib"].join("|");
+    const combo = [...liteShape(pick.row, pick.nowMs ?? nowMs), fib ? "e:fib" : "e:run"].join("|");
     // d
-    const T = P.targetFor(st.step.no), bal = this.#balUsd(), planStake = P.stakeFor(this.#ledger(), bal);
+    const T = run.ok ? AUTO_TP : P.targetFor(st.step.no), bal = this.#balUsd(), planStake = P.stakeFor(this.#ledger(), bal);
     let stake = planStake, preset = null;
     if (this.#instant()) {
       // build 45: Instant trade buys exactly the preset. Never more than the plan's stake.
@@ -472,8 +497,8 @@ export class Real {
     const f = floors(this.cfg && !this.cfg.error ? this.cfg : {});
     const bucket = sim.proof && sim.cfg ? sim.proof[rulesKey(sim.cfg)] || null : null;
     const stat = bucket && bucket.keys && bucket.keys[combo] ? bucket.keys[combo][T] : null;
-    const cRt = assumedRt(stat, stake);
-    const pr = proven(sim.proof, combo, T, { ...sim.cfg, ...f, cRt, stakeUsd: stake }, nowMs);
+    const cRt = run.ok ? Math.max(assumedRt(null, stake), RUNNER_MAX_RT) : assumedRt(stat, stake);
+    const pr = run.ok ? { ok: true, n: 0, w: 0, need: 0, why: run.why } : proven(sim.proof, combo, T, { ...sim.cfg, ...f, cRt, stakeUsd: stake }, nowMs);
     if (!pr.ok) { st.counters.gated++; return this.#skip("d", pick, pr.why); }
     // e: not traded by real in 24 h; security from one priority read
     if (st.recent[mint] && nowMs - st.recent[mint] < RECENT_MS) return this.#skip("e", pick, "traded by real in the last 24 h");
@@ -498,25 +523,63 @@ export class Real {
     if (!(stake <= P.MAX_STAKE_USD)) return this.#skip("g", pick, "stake over the cap");
     if (!(stakeSol > 0) || stakeSol + RESERVE_SOL > st.balanceSol + 1e-12) return this.#skip("g", pick, `${stakeSol} SOL + 0.01 reserve is more than the wallet's ${st.balanceSol} SOL`);
     const signalPx = cs[cs.length - 1].c;
-    const base = { mint, symbol: pick.row.s, combo, target: T, stakeUsd: stake, stakeSol, solUsd, signalPx, fib, rt, proof: { n: pr.n, w: pr.w, need: pr.need }, bal };
+    const runner = run.ok ? { why: run.why, mc: run.mc, move5: +run.move5.toFixed(4), volX: +run.volX.toFixed(2) } : null;
+    const autoNot = runner ? this.#autoWhyNot(stakeSol, preset) : "not a runner";
+    const auto = runner !== null && autoNot === null;
+    const base = { mint, symbol: pick.row.s, combo, target: T, stakeUsd: stake, stakeSol, solUsd, signalPx, fib, rt, proof: { n: pr.n, w: pr.w, need: pr.need }, bal, runner, auto };
     if (!live) {
       if (!(this.wouldSeen.get(mint) > nowMs - RECENT_MS)) { this.wouldSeen.set(mint, nowMs); this.would.n++; }
       this.would.last = { symbol: pick.row.s, mint, step: st.step.no, target: T, stakeUsd: stake, at: nowMs };
-      this.log({ type: "real-signal", would: true, why: `would buy $${pick.row.s} at step ${st.step.no} (+${pc(T)}%), $${stake.toFixed(2)}`, mint, symbol: pick.row.s });
+      this.log({ type: "real-signal", would: true, why: `would ${runner ? "auto-" : ""}buy $${pick.row.s} at step ${st.step.no} (+${pc(T)}%), $${stake.toFixed(2)}${runner ? ` · ${runner.why}` : ""}`, mint, symbol: pick.row.s });
       return { ok: true, would: true, ...base };
     }
     // LIVE: the card. PROPOSED is on disk before Alex sees it.
     const intent = {
       id: id(), kind: "buy", exec: preset !== null ? "instant" : "panel", preset, mint, symbol: pick.row.s, step: { no: st.step.no, attempt: st.step.attempt }, stakeUsd: stake, stakeSol, solUsd, signalPx,
       card: { id: id(), shownAt: nowMs, expiresAt: nowMs + CARD_MS }, approvedAt: null, clickedAt: null, state: "PROPOSED", why: pr.why, at: nowMs,
-      combo, target: T, rules: { ...rulesOf(bucket.rules || sim.cfg), sl: P.SL }, balIn: bal, rt, entryLq: lq, entryPoolLq: pool ? num(pool.liquidity) : null,
-      ageMin: this.#ageMin(pick.row, nowMs), fib: { retr: fib.retr, move: fib.move }, proof: { n: pr.n, w: pr.w, need: pr.need },
+      combo, target: T, rules: runner ? this.#autoRules() : { ...rulesOf((bucket && bucket.rules) || sim.cfg), sl: P.SL }, balIn: bal, rt, entryLq: lq, entryPoolLq: pool ? num(pool.liquidity) : null,
+      ageMin: this.#ageMin(pick.row, nowMs), fib: fib ? { retr: fib.retr, move: fib.move } : null, proof: { n: pr.n, w: pr.w, need: pr.need },
+      runner, auto,
     };
+    if (runner && !auto) this.log({ type: "real-signal", mint, symbol: pick.row.s, why: `runner, card needed: ${autoNot}` });
+    if (auto) {
+      // build 48: the auto-buy is counted (WAL first) before anything is clicked; a failed one still counts
+      const a = this.#autoToday() || { day: utcDay(nowMs), n: 0, startSol: st.balanceSol };
+      st.counters.autoBuys = (st.counters.autoBuys || 0) + 1;
+      this.#commit("real-card", { intent, auto: { ...a, n: a.n + 1 } }, { why: "auto-buy: runner" });
+      const card = this.cardFor(intent);
+      this.flow = this.#run(() => this.#autoFlow(intent, card));
+      return { ok: true, card, ...base };
+    }
     st.counters.cards++;
     this.#commit("real-card", { intent });
     const card = this.cardFor(intent);
     this.flow = this.#run(() => this.#cardFlow(intent, card));
     return { ok: true, card, ...base };
+  }
+
+  /** build 48: symbiot's hunt exits for a runner: its own exit settings, stop -15%, take profit +40% (the target), give back half of a +25% peak. */
+  #autoRules() {
+    const c = this.sim && this.sim.cfg && Number.isFinite(this.sim.cfg.holdMs) ? this.sim.cfg : SIM_DEFAULTS;
+    return { ...rulesOf(c), sl: P.SL, trailFrom: AUTO_TRAIL };
+  }
+
+  /**
+   * build 48: an auto-buy. The card is information only (nothing on it can stop or start the
+   * buy); the token comes from the door's one auto path, which re-checks every cap.
+   */
+  async #autoFlow(intent, card) {
+    try {
+      const x = this.cards && (this.cards.alert ? this.cards.alert(card) : this.cards.showTradeCard ? this.cards.showTradeCard(card, { ttlMs: CARD_MS, mint: () => null }) : null);
+      if (x && x.catch) x.catch(() => {});
+    } catch { /* the board carries it too */ }
+    const it = this.st.intent;
+    if (!it || it.id !== intent.id || it.state !== "PROPOSED") return;
+    if (this.mode !== "live") { this.st.counters.skipped++; this.#to("real-skip", ["PROPOSED"], "SKIPPED", { why: `auto: not LIVE any more: ${this.why}` }); return; }
+    const ap = this.#to("real-approve", ["PROPOSED"], "APPROVED", { approvedAt: this.now(), why: "auto-buy: runner" });
+    let token;
+    try { token = this.door.mintAuto(ap); } catch (e) { return this.#stale(String(e.message || e).slice(0, 160)); }
+    await this.#buy(ap, token);
   }
 
   #ageMin(row, nowMs) { const c = num(row.ct) || num(row.ot); return c ? Math.max(0, Math.round((nowMs / 1000 - c) / 60)) : null; }
@@ -525,12 +588,26 @@ export class Real {
   cardFor(it) {
     const sol = it.preset || it.stakeSol.toFixed(4);
     const pool = it.entryLq >= 1000 ? `$${Math.round(it.entryLq / 1000)}k` : `$${Math.round(it.entryLq || 0)}`;
+    const head = [
+      `$${it.symbol} · ${short(it.mint)} · ${it.ageMin === null ? "age unknown" : `${it.ageMin} min old`} · pool ${pool}`,
+      `Spend ${sol} SOL ($${it.stakeUsd.toFixed(2)}), ${((it.stakeUsd / it.balIn) * 100).toFixed(1)}% of $${it.balIn.toFixed(2)}`,
+    ];
+    if (it.runner) {
+      // build 48: a runner. Auto: information only, the buy is already going through.
+      const a = this.#autoToday();
+      const lines = [...head,
+        `Sell at +${pc(it.target)}% · out if it gives back half of a +${pc(AUTO_TRAIL)}% peak · stop −15%`,
+        `Runner: mc $${Math.round(it.runner.mc / 1000)}k · +${pc(it.runner.move5)}% in 5 min · volume ${it.runner.volX}x`,
+        `Fees ${(it.rt * 100).toFixed(1)}% round trip · no sim proof needed for a runner`,
+      ];
+      if (it.auto) return { id: it.card.id, kind: "real-auto", intentId: it.id, expiresAt: it.card.expiresAt, title: "REAL auto-buy · runner", lines: [...lines, `Auto-buy ${a ? a.n : 1} of ${this.#autoMax()} today`], choices: [{ id: "ok", label: "OK" }] };
+      return { id: it.card.id, kind: "real-buy", intentId: it.id, expiresAt: it.card.expiresAt, title: "REAL buy · runner", lines: [...lines, `Closes in ${Math.round(CARD_MS / 1000)} s`], choices: [{ id: "buy", label: `Buy ${sol} SOL` }, { id: "skip", label: "Skip" }] };
+    }
     return {
       id: it.card.id, kind: "real-buy", intentId: it.id, expiresAt: it.card.expiresAt,
       title: `REAL buy · step ${it.step.no} of ${P.STEPS}`,
       lines: [
-        `$${it.symbol} · ${short(it.mint)} · ${it.ageMin === null ? "age unknown" : `${it.ageMin} min old`} · pool ${pool}`,
-        `Spend ${sol} SOL ($${it.stakeUsd.toFixed(2)}), ${((it.stakeUsd / it.balIn) * 100).toFixed(1)}% of $${it.balIn.toFixed(2)}`,
+        ...head,
         `Sell at +${pc(it.target)}% · stop −15% · auto exits on`,
         `Sim proof: ${it.proof.w} of ${it.proof.n} won after fees (needs ${pc(it.proof.need)}%)`,
         `Golden pocket ${it.fib.retr.toFixed(2)} of a +${pc(it.fib.move)}% move · fees ${(it.rt * 100).toFixed(1)}% round trip`,
@@ -574,7 +651,9 @@ export class Real {
     const px = Array.isArray(cs) && cs.length ? cs[cs.length - 1].c : null;
     if (!(px > 0)) return this.#stale("no price on the requote");
     if (px > it.signalPx * (1 + REQUOTE_UP)) return this.#stale(`price up ${((px / it.signalPx - 1) * 100).toFixed(1)}% since the card`);
-    if (!fibSetup(cs.slice(-34))) return this.#stale("the Fibonacci pocket is gone");
+    if (it.runner) { const rs = runnerSignal({ row: {}, cs }, this.cfg); if (!rs.ok) return this.#stale(`not a runner any more: ${rs.why}`); }
+    else if (!fibSetup(cs.slice(-34))) return this.#stale("the Fibonacci pocket is gone");
+    if (this.#keep().has(mint)) return this.#stale("a coin Alex keeps");
     const before = await this.#tokens(mint);
     if (!before) return this.#stale("wallet token read failed");
     const c = this.cfg, rec = this.#record(), url = this.#tokenUrl(mint);
@@ -666,6 +745,7 @@ export class Real {
       entryMcap, last: entryMcap, move: 0, peak: 0, peakAll: 0, lowAll: 0, pnlUsd: 0, state: "OPEN", sell: null, why: f ? null : "entry estimated",
       stakeUsd: it.stakeUsd, balIn: it.balIn, solUsd: it.solUsd, entryPoolLq: it.entryPoolLq, lastPxAt: now, rugAt: now,
       sel: it.sel, selRecord: it.selRecord, sellVerified: true, exec: it.exec || "panel", preset: it.preset || null, instantRecord: it.instantRecord || null,
+      runner: it.runner || null, auto: !!it.auto,
     };
     this.#to("real-fill", ["CLICKING", "SENT"], "CONFIRMED", { why: f ? `filled: ${solIn.toFixed(4)} SOL for ${tokens}` : "tokens arrived; entry estimated" }, {
       position: pos, ledgerSol: (this.st.ledgerSol ?? this.st.balanceSol ?? 0) - solIn, recent: { ...this.st.recent, [it.mint]: now },
@@ -833,17 +913,18 @@ export class Real {
       stepGoal: bal === null ? null : r2(P.stepGoal(L, bal)),
       pnlUsd: bal === null ? null : r2(bal + openValue - st.startUsd - (st.deposits || 0)),
       trades: st.trades, wins: st.wins, losses: st.losses,
-      open: p ? [{ symbol: p.symbol, mint: p.mint, move: +(p.move || 0).toFixed(4), pnlUsd: r2(p.pnlUsd || 0), target: p.target, stop: P.SL, ageS: Math.max(0, Math.round((nowMs - p.buy.at) / 1000)), state: p.state }] : [],
+      open: p ? [{ symbol: p.symbol, mint: p.mint, move: +(p.move || 0).toFixed(4), pnlUsd: r2(p.pnlUsd || 0), target: p.target, stop: P.SL, ageS: Math.max(0, Math.round((nowMs - p.buy.at) / 1000)), state: p.state, auto: !!p.auto, runner: p.runner ? p.runner.why : null }] : [],
+      auto: (() => { const a = this.#autoCtx(), d = this.#autoToday(); return { on: a.on, today: a.used, max: a.max, label: `${a.used} / ${a.max}`, startSol: d ? d.startSol : null, floorSol: d && d.startSol ? +(d.startSol * (1 - AUTO_DD)).toFixed(6) : null, ddOk: a.ddOk }; })(),
       probe: latest ? { hash: latest.hash, build: latest.build, at: latest.at, ok: latest.ok, controls: latest.controls.filter((c) => c.inTradeBox).length, walletKind: latest.walletKind, walletAddr: latest.walletAddr, why: latest.why } : null,
       would: this.would.n ? { n: this.would.n, last: this.would.last } : null,
-      card: it && it.state === "PROPOSED" ? { kind: "real-buy", expiresAt: it.card.expiresAt } : this.alert && st.halted ? { kind: "real-alert", expiresAt: null } : null,
+      card: it && it.state === "PROPOSED" ? { kind: it.auto ? "real-auto" : "real-buy", expiresAt: it.card.expiresAt, runner: it.runner ? it.runner.why : null } : this.alert && st.halted ? { kind: "real-alert", expiresAt: null } : null,
       halt, why, at: nowMs,
     };
   }
 
   /** trader.state().real: the board plus what Claude needs to read a probe through ultra_status. */
   status(nowMs = this.now()) {
-    return { ...this.board(nowMs), disabled: this.disabled || null, cfg: this.cfg ? { mode: this.cfg.mode, error: this.cfg.error || null, selectorsFrom: this.cfg.selectorsFrom || null, exec: this.cfg.exec || null, buyPreset: this.cfg.buyPreset || null } : null, verify: this.verify, probeReport: this.probeRep || null, counters: this.st.counters, steps: this.st.steps.slice(-5) };
+    return { ...this.board(nowMs), disabled: this.disabled || null, cfg: this.cfg ? { mode: this.cfg.mode, error: this.cfg.error || null, selectorsFrom: this.cfg.selectorsFrom || null, exec: this.cfg.exec || null, buyPreset: this.cfg.buyPreset || null, autoBuy: this.cfg.autoBuy === true, keepMints: [...this.#keep()] } : null, verify: this.verify, probeReport: this.probeRep || null, counters: this.st.counters, steps: this.st.steps.slice(-5) };
   }
 
   async stop() { await this.settle().catch(() => {}); this.store.unlock(); }
