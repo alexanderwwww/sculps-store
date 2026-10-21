@@ -390,7 +390,12 @@ export class GmgnPanel {
       const t0 = Date.now();
       for (;;) {
         rep = await gmgnTradeProbe(p);
-        if (rep.tradeBox || (rep.instant && rep.instant.open) || Date.now() - t0 >= this.waitMs) break;
+        // build 50: GMGN's whole body counts as a trade box, so on GMGN wait for the Instant-trade
+        // window AND a loaded (non-zero) header SOL chip; anything else keeps the old rule.
+        const it = rep.instant;
+        const chipUp = it && (it.chips || []).some((c) => parseFloat(c.text) > 0);
+        const done = it && it.toggle ? (it.open && chipUp) : (rep.tradeBox || (it && it.open));
+        if (done || Date.now() - t0 >= this.waitMs) break;
         // build 49: GMGN closes the Instant-trade window after a page load and the probe saw a
         // closed window (and a 0 SOL chip still loading) on Alex's Mac. Once, after 3 s, open it
         // the way GMGN's own toggle does. Not a trade; no trusted input is recorded.
