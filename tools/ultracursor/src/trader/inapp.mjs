@@ -13,6 +13,7 @@
  * refuses GMGN's own buy/sell controls (guard.mjs gmgnTradeClick).
  */
 import { Real } from "./real/real.mjs";
+import { GmgnPanel } from "./real/exec/gmgn-panel.mjs";
 import { Scalp } from "./scalp.mjs";
 import fs from "node:fs";
 import path from "node:path";
@@ -95,7 +96,9 @@ export function createTraderMode({ dir, getBrowser, cards = null, log = () => {}
     // Alex 2026-10-20: a 50 SOL fake balance, 1.618 SOL every trade
     // build 41: the real-money trader (src/trader/real). PROBE until R2 real.json says LIVE; every
     // buy needs Alex's card. It hears every symbiot pick through onPick.
-    const real = new Real({ dir: path.join(dir, "real"), build: process.env.ULTRA_BUILD || null, src: gm, browser, cards, log: write });
+    // build 48: real trades run on Alex's visible GMGN tab (never gmgn.mjs's read tab), no tab of their own
+    const realPanel = new GmgnPanel({ browser, build: process.env.ULTRA_BUILD || null, dir: path.join(dir, "real"), visible: true, exclude: () => [gm.page] });
+    const real = new Real({ dir: path.join(dir, "real"), build: process.env.ULTRA_BUILD || null, src: gm, browser, panel: realPanel, cards, log: write });
     await real.start().catch((e) => write({ type: "real-error", why: String(e.message || e).slice(0, 200) }));
     const fast = Scalp.from(fj, { src: gm, log: write, start: 0, stake: 1.618, onPick: (p) => real.onPick(p), onMove: (e) => real.onMove(e) }); // build 29: infinite balance, the money line shows + and - totals
     const sniper = new Sniper({ src: gm, book, memory, log: write });

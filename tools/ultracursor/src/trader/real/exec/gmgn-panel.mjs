@@ -61,9 +61,30 @@ export async function backgroundPage(browser) {
 // build 44: never wait on it more than 3 s (a hung resize on a background tab froze the probe)
 async function wide(p) { try { await Promise.race([p.setViewportSize({ width: 1600, height: 1000 }), new Promise((_, no) => setTimeout(() => no(new Error("resize timeout")), 3000))]); } catch { /* keeps its own size */ } return p; }
 
+/**
+ * build 48 (Alex: "trade on the one GMGN tab I watch, no extra tabs, the app lags"): the visible
+ * tab. The first open page on gmgn.ai that is not one of `exclude` (gmgn.mjs's background read
+ * tab), the one whose document is visible first. No GMGN tab: the first page that is not
+ * excluded. Never a new tab: none at all is an error, and the trader waits.
+ */
+export async function visiblePage(browser, exclude = []) {
+  const ctx = browser && browser.contexts()[0];
+  if (!ctx) throw new Error("Chrome has no window open");
+  const skip = new Set(exclude.filter(Boolean));
+  const host = (p) => { try { return new URL(p.url()).hostname; } catch { return ""; } };
+  const pages = ctx.pages().filter((p) => !p.isClosed() && !skip.has(p));
+  const gm = pages.filter((p) => /(^|\.)gmgn\.ai$/.test(host(p)));
+  for (const p of gm) { const v = await p.evaluate(() => document.visibilityState).catch(() => null); if (v === "visible") return p; }
+  if (gm.length) return gm[0];
+  if (pages.length) return pages[0];
+  throw new Error("no Chrome tab to trade on");
+}
+
 export class GmgnPanel {
-  constructor({ browser = null, newPage = null, build = null, dir = null, log = () => {}, now = Date.now, waitMs = 20_000 } = {}) {
-    this.browser = browser; this.newPage = newPage || (() => backgroundPage(browser));
+  constructor({ browser = null, newPage = null, build = null, dir = null, log = () => {}, now = Date.now, waitMs = 20_000, visible = false, exclude = () => [] } = {}) {
+    // build 48: visible = trade (and probe) on Alex's own visible GMGN tab, never a tab of our own
+    this.visible = visible;
+    this.browser = browser; this.newPage = newPage || (visible ? () => visiblePage(browser, exclude()) : () => backgroundPage(browser));
     this.build = build; this.dir = dir; this.log = log; this.now = now; this.waitMs = waitMs;
     this.page = null; this.walletKind = "unknown";
     this.clicks = [];                       // every click this module made: {at, what, name}
@@ -73,6 +94,8 @@ export class GmgnPanel {
     if (!this.page || this.page.isClosed()) this.page = await this.newPage();
     return this.page;
   }
+  /** build 48: the shared tab shows the trade: in front, so Alex sees the cursor on it. */
+  async #front(p) { if (this.visible) { try { await Promise.race([p.bringToFront(), new Promise((r) => setTimeout(r, 2000))]); } catch { /* still trades */ } } }
 
   /** The trade box on the tab now (tagged so locators stay inside it), waiting up to `wait` ms. */
   async #box(wait = 0) {
@@ -244,6 +267,7 @@ export class GmgnPanel {
   /** The tab on this coin's page, the window or its toggle showing. One navigation at most. */
   async openInstant(url) {
     const p = await this.#tab();
+    await this.#front(p);
     if (p.url() !== url) await p.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
     const t0 = Date.now();
     for (;;) {
@@ -357,9 +381,10 @@ export class GmgnPanel {
   async probe(url) {
     const at = this.now();
     const before = await this.#targets();
-    const p = await this.newPage();
+    // build 48: visible mode reads the shared tab (no tab of its own, never closed)
+    const p = this.visible ? await this.#tab() : await this.newPage();
     try {
-      await p.addInitScript(inputRecorder);
+      if (!this.visible || !this.recorded || this.recorded !== p) { await p.addInitScript(inputRecorder); if (this.visible) this.recorded = p; }
       await p.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
       let rep = null;
       const t0 = Date.now();
@@ -382,9 +407,9 @@ export class GmgnPanel {
     } catch (e) {
       return { build: this.build, at, url, ok: false, why: `probe failed: ${String(e.message || e).slice(0, 160)}`, controls: [], hash: null, walletKind: "unknown", walletAddr: null, inputs: null };
     } finally {
-      await p.close().catch(() => {});
+      if (!this.visible) await p.close().catch(() => {});
     }
   }
 
-  async close() { await this.page?.close().catch(() => {}); this.page = null; }
+  async close() { if (!this.visible) await this.page?.close().catch(() => {}); this.page = null; }
 }

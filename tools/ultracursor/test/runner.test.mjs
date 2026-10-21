@@ -6,10 +6,10 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { Real, parseRealJson, AUTO_TP } from "../src/trader/real/real.mjs";
-import { runnerSignal, mcOf, RUNNER } from "../src/trader/real/runner.mjs";
+import { followSignal, mcOf, FOLLOW } from "../src/trader/real/runner.mjs";
 import { createDoor, AUTO_MAX_SOL, AUTO_MAX_DAY, KEEP_MINTS } from "../src/trader/execute.mjs";
 import { GmgnPanel } from "../src/trader/real/exec/gmgn-panel.mjs";
-import { liteShape } from "../src/trader/scalp.mjs";
+import { liteShape, Scalp } from "../src/trader/scalp.mjs";
 import { rulesKey } from "../src/trader/exits.mjs";
 import { startFakeGmgn, routeGmgn, launchChrome, mintOf, FakeChain, WALLET } from "./fake-gmgn.mjs";
 
@@ -47,21 +47,29 @@ function fibCandles() {
   return cs;
 }
 
-// ---------------------------------------------------------------- 1. the signal, pure
+// ---------------------------------------------------------------- 1. the follow signal, pure
+const ev = (move, { base = 150_000, green = true, row = {} } = {}) => { const cs = runCandles({ base, move: 0.05, green }); return { row: { a: "x", s: "KIM", ...row }, cs, sim: { entry: 100, last: 100 * (1 + move), move }, nowMs: 0 }; };
 {
-  const yes = runnerSignal({ row: { a: "x" }, cs: runCandles() });
-  ok("runner: 100k mc, +40% in 5 candles, green, 5x volume -> runner", yes.ok && yes.mcFrom === "candles" && Math.abs(yes.move5 - 0.4) < 1e-9 && yes.volX >= 2, yes);
-  ok("runner: exactly +30% and exactly 2x volume pass", runnerSignal({ row: {}, cs: runCandles({ move: 0.30, volX: 2.2 }) }).ok);
-  ok("runner: +29% is not a runner", !runnerSignal({ row: {}, cs: runCandles({ move: 0.29 }) }).ok);
-  ok("runner: 1.9x volume (vs the 10 before) is not a runner", !runnerSignal({ row: {}, cs: runCandles({ volX: 1.5 }) }).ok);
-  ok("runner: a red last candle is not a runner", !runnerSignal({ row: {}, cs: runCandles({ green: false }) }).ok, runnerSignal({ row: {}, cs: runCandles({ green: false }) }));
-  ok("runner: 99k market cap is not a runner", !runnerSignal({ row: {}, cs: runCandles({ base: 70_000 }) }).ok);
-  ok("runner: row.mc wins over the candles (row says 50k: no)", !runnerSignal({ row: { mc: 50_000 }, cs: runCandles({ base: 200_000 }) }).ok && mcOf({ market_cap: "250000" }, []).mc === 250000);
-  ok("runner: row.usd_market_cap 150k with price candles (not mcap) still counts", runnerSignal({ row: { usd_market_cap: 150_000 }, cs: runCandles({ base: 0.0001 }) }).ok);
-  ok("runner: 10 candles is too few", !runnerSignal({ row: {}, cs: runCandles().slice(-10) }).ok);
-  ok("runner: R2 can raise the floors, never lower them", !runnerSignal({ row: {}, cs: runCandles({ move: 0.40 }) }, { runnerMove5m: 0.5 }).ok && runnerSignal({ row: {}, cs: runCandles({ move: 0.31 }) }, { runnerMove5m: 0.1, runnerMinMc: 10 }).ok && !runnerSignal({ row: {}, cs: runCandles({ move: 0.25 }) }, { runnerMove5m: 0.1 }).ok);
-  ok("runner: the fib test coin (mc $125) is not a runner", !runnerSignal({ row: {}, cs: fibCandles() }).ok);
-  ok("defaults: 100k, +30%, 2x", RUNNER.minMc === 100_000 && RUNNER.move5m === 0.30 && RUNNER.volX === 2);
+  const yes = followSignal(ev(0.35));
+  ok("follow: sim +35%, mc $157k, last candle green -> follow", yes.ok && yes.mcFrom === "candles" && /^REAL follows symbiot · KIM \+35% in sim/.test(yes.why), yes);
+  ok("follow: exactly +30% follows, +29% does not", followSignal(ev(0.30)).ok && !followSignal(ev(0.29)).ok);
+  ok("follow: a red last candle (not rising) does not", !followSignal(ev(0.5, { green: false })).ok);
+  ok("follow: mc $95k does not", !followSignal(ev(0.5, { base: 90_000 })).ok, followSignal(ev(0.5, { base: 90_000 })));
+  ok("follow: row.mc wins over the candles", !followSignal(ev(0.5, { row: { mc: 50_000 } })).ok && followSignal(ev(0.5, { base: 0.0001, row: { usd_market_cap: 200_000 } })).ok && mcOf({ market_cap: "250000" }, []).mc === 250000);
+  ok("follow: no sim position, no candles: no", !followSignal({ row: { a: "x" }, cs: runCandles() }).ok && !followSignal({ ...ev(0.5), cs: [] }).ok);
+  ok("follow: R2 can raise the floors, never lower them", !followSignal(ev(0.4), { runnerMove: 0.5 }).ok && !followSignal(ev(0.25), { runnerMove: 0.1 }).ok && !followSignal(ev(0.5, { base: 90_000 }), { runnerMinMc: 10 }).ok);
+  ok("defaults: 100k, +30%", FOLLOW.minMc === 100_000 && FOLLOW.minMove === 0.30);
+}
+
+// ---------------------------------------------------------------- 1b. symbiot shows every reprice (scalp.mjs onMove)
+{
+  const seen = [];
+  const s = new Scalp({ src: { candles: async () => runCandles({ base: 140_000, move: 0.05 }).slice(-2) }, onMove: (e) => seen.push(e) });
+  s.open.set("M1", { addr: "M1", symbol: "SIMRUN", cost: 1, side: 0.01, units: 1, entry: 100_000, last: 100_000, at: Date.now(), shape: [], combo: "x", lq: 50_000, ct: 1, hunt: true, peak: 0 });
+  await s.positionLane(Date.now());
+  const e = seen[0];
+  ok("scalp positionLane calls onMove with the sim's entry, last and move", seen.length === 1 && e.row.a === "M1" && e.row.s === "SIMRUN" && e.row.lq === 50_000 && Math.abs(e.sim.move - 0.47) < 0.01 && e.cs.length === 2, e && { row: e.row, sim: e.sim });
+  ok("and that sim position at +47%, mc $147k, green: REAL follows it", followSignal(e).ok, followSignal(e));
 }
 
 // ---------------------------------------------------------------- 2. real.json

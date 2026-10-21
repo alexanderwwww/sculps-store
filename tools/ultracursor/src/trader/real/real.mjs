@@ -27,7 +27,7 @@ import crypto from "node:crypto";
 import { fibSetup, liteShape } from "../scalp.mjs";
 import { exitReason, track, rulesOf, rulesKey } from "../exits.mjs";
 import { createDoor, AUTO_MAX_SOL, AUTO_MAX_DAY, AUTO_DD, KEEP_MINTS } from "../execute.mjs";
-import { runnerSignal } from "./runner.mjs";
+import { followSignal, stillRunning } from "./runner.mjs";
 import { DEFAULTS as SIM_DEFAULTS } from "../scalp.mjs";
 import * as P from "./steps.mjs";
 import { proven, floors, assumedRt } from "./proof.mjs";
@@ -47,7 +47,7 @@ const pc = (x) => Math.round(x * 100);
 const id = () => crypto.randomBytes(6).toString("hex");
 
 // ------------------------------------------------------------------ R2 real.json, read as DATA
-const R2_KEYS = new Set(["mode", "startUsd", "minTrades", "minWin", "wallet", "tokenUrl", "selectorsFrom", "selectors", "probeNow", "exec", "buyPreset", "autoBuy", "keepMints", "runnerMinMc", "runnerMove5m", "autoMaxDay"]);
+const R2_KEYS = new Set(["mode", "startUsd", "minTrades", "minWin", "wallet", "tokenUrl", "selectorsFrom", "selectors", "probeNow", "exec", "buyPreset", "autoBuy", "keepMints", "runnerMinMc", "runnerMove", "autoMaxDay"]);
 /** build 48: auto positions exit like symbiot's hunt: take profit +40%, give back half of a +25% peak. */
 export const AUTO_TP = 0.40, AUTO_TRAIL = 0.25;
 /** build 48: a runner has no proof bucket: its round trip may cost at most this much. */
@@ -89,7 +89,7 @@ export function parseRealJson(j) {
   out.autoBuy = out.autoBuy === true;
   if (j.keepMints !== undefined) { if (!Array.isArray(j.keepMints) || j.keepMints.length > 100 || !j.keepMints.every(isAddr)) return bad("keepMints must be a list of Solana mints"); out.keepMints = [...j.keepMints]; }
   if (j.runnerMinMc !== undefined) { if (!(typeof j.runnerMinMc === "number" && j.runnerMinMc > 0)) return bad("runnerMinMc"); out.runnerMinMc = j.runnerMinMc; }
-  if (j.runnerMove5m !== undefined) { if (!(typeof j.runnerMove5m === "number" && j.runnerMove5m > 0 && j.runnerMove5m < 100)) return bad("runnerMove5m"); out.runnerMove5m = j.runnerMove5m; }
+  if (j.runnerMove !== undefined) { if (!(typeof j.runnerMove === "number" && j.runnerMove > 0 && j.runnerMove < 100)) return bad("runnerMove"); out.runnerMove = j.runnerMove; }
   if (j.autoMaxDay !== undefined) { if (!(Number.isInteger(j.autoMaxDay) && j.autoMaxDay >= 0)) return bad("autoMaxDay"); out.autoMaxDay = Math.min(AUTO_MAX_DAY, j.autoMaxDay); }
   if (out.autoBuy && out.exec !== "instant") return bad("autoBuy needs exec 'instant'");
   if (out.autoBuy && !(Number(out.buyPreset) > 0 && Number(out.buyPreset) <= AUTO_MAX_SOL + 1e-12)) return bad(`autoBuy needs buyPreset at most "${AUTO_MAX_SOL}"`);
@@ -269,6 +269,20 @@ export class Real {
     while (this.picks.size > 144) this.picks.delete(this.picks.keys().next().value);
   }
 
+  /**
+   * build 48: REAL is symbiot's symbiote. scalp.mjs shows every reprice of its fake positions
+   * here; a sim position that runs (followSignal) goes to the front of the queue as a follow pick.
+   * No scanning of its own: these are symbiot's own coins.
+   */
+  onMove(ev) {
+    if (!ev || !ev.row || !ev.row.a) return;
+    const f = followSignal(ev, this.cfg);
+    if (!f.ok) return;
+    this.lastFollow = { symbol: ev.row.s, mint: ev.row.a, move: +f.move.toFixed(4), mc: f.mc, why: f.why, at: this.now() };
+    this.picks.delete(ev.row.a);
+    this.picks = new Map([[ev.row.a, { row: ev.row, cs: ev.cs, nowMs: ev.nowMs, follow: f, seenAt: this.now() }], ...this.picks]);
+  }
+
   /** Alex's trusted REAL-stop pill: sell the open position now. */
   stopManual() { this.manual = true; return { ok: true, open: !!this.st.position }; }
 
@@ -294,10 +308,11 @@ export class Real {
     await step("limits", async () => { const b = this.#balUsd(); if (b !== null) Object.assign(this.st, P.resume(this.#ledger(), b, nowMs)); });
     if (this.sim) this.sim.realStakeUsd = this.#stake() || this.sim.realStakeUsd;  // the proof is scored at the real stake
     await step("probe", async () => this.#maybeProbe(nowMs));
-    if (!this.flow) await step("verify", () => this.#liveCheck(nowMs));
+    const shared = !!(this.panel && this.panel.visible && this.probing);   // build 48: one tab, one job at a time
+    if (!this.flow && !shared) await step("verify", () => this.#liveCheck(nowMs));
     this.#modeEval(nowMs);
-    if (this.st.position) await step("exit", () => this.#manage(nowMs));
-    else if (!this.flow && !this.st.intent) await step("select", () => this.#select(nowMs));
+    if (this.st.position) { if (!shared) await step("exit", () => this.#manage(nowMs)); }
+    else if (!this.flow && !this.st.intent && !shared) await step("select", () => this.#select(nowMs));
     this.at = nowMs;
     this.#save();
   }
@@ -330,6 +345,8 @@ export class Real {
 
   async #maybeProbe(nowMs) {
     if (this.probing || !this.panel) return;
+    // build 48: on the shared visible tab the probe never runs under a trade
+    if (this.panel.visible && (this.flow || this.st.intent || this.st.position)) return;
     const last = this.probes[0];
     const due = this.probeDue || !this.probeTriedAt || (last ? nowMs - last.at >= PROBE_EVERY_MS : nowMs - this.probeTriedAt >= 60_000);
     if (!due) return;
@@ -448,8 +465,9 @@ export class Real {
       if (this.st.intent || this.flow || n >= 8) break;
       this.picks.delete(mint);
       if (nowMs - pick.seenAt > 60_000) continue;                        // a stale signal is no signal
-      if (this.seen.has(mint) && nowMs - this.seen.get(mint) < 60_000) continue;
-      this.seen.set(mint, nowMs);
+      const sk = pick.follow ? `f:${mint}` : mint;
+      if (this.seen.has(sk) && nowMs - this.seen.get(sk) < 60_000) continue;
+      this.seen.set(sk, nowMs);
       if (this.seen.size > 2000) this.seen.delete(this.seen.keys().next().value);
       n++;
       await this.consider(pick, nowMs);
@@ -473,9 +491,9 @@ export class Real {
     if (st.paused && nowMs < st.paused.until) return this.#skip("a", pick, `paused: ${st.paused.why}`);
     if (!this.wallet || !(nowMs - this.solAt < SOL_FRESH_MS) || !st.solUsd) return this.#skip("a", pick, "wallet not read in the last 10 s");
     if (this.#keep().has(mint)) return this.#skip("a", pick, "a coin Alex keeps (keepMints): never bought");
-    // build 48: a runner (a coin moving like Kimchi) needs no Fibonacci pocket and no sim proof
+    // build 48: a sim position that runs (REAL follows symbiot) needs no Fibonacci pocket and no proof
     const cs = Array.isArray(pick.cs) ? pick.cs.slice(-34) : null;
-    const run = runnerSignal(pick, this.cfg);
+    const run = pick.follow && pick.follow.ok ? pick.follow : { ok: false, why: "symbiot's position is not running" };
     // b: otherwise always a Fibonacci entry (the same fibSetup symbiot uses), on 34 candles
     const fib = fibSetup(cs);
     if (!fib && !run.ok) return this.#skip("b", pick, `no Fibonacci pocket on 34 candles, not a runner (${run.why})`);
@@ -523,7 +541,7 @@ export class Real {
     if (!(stake <= P.MAX_STAKE_USD)) return this.#skip("g", pick, "stake over the cap");
     if (!(stakeSol > 0) || stakeSol + RESERVE_SOL > st.balanceSol + 1e-12) return this.#skip("g", pick, `${stakeSol} SOL + 0.01 reserve is more than the wallet's ${st.balanceSol} SOL`);
     const signalPx = cs[cs.length - 1].c;
-    const runner = run.ok ? { why: run.why, mc: run.mc, move5: +run.move5.toFixed(4), volX: +run.volX.toFixed(2) } : null;
+    const runner = run.ok ? { why: run.why, mc: run.mc, move: +run.move.toFixed(4) } : null;
     const autoNot = runner ? this.#autoWhyNot(stakeSol, preset) : "not a runner";
     const auto = runner !== null && autoNot === null;
     const base = { mint, symbol: pick.row.s, combo, target: T, stakeUsd: stake, stakeSol, solUsd, signalPx, fib, rt, proof: { n: pr.n, w: pr.w, need: pr.need }, bal, runner, auto };
@@ -597,11 +615,11 @@ export class Real {
       const a = this.#autoToday();
       const lines = [...head,
         `Sell at +${pc(it.target)}% · out if it gives back half of a +${pc(AUTO_TRAIL)}% peak · stop −15%`,
-        `Runner: mc $${Math.round(it.runner.mc / 1000)}k · +${pc(it.runner.move5)}% in 5 min · volume ${it.runner.volX}x`,
-        `Fees ${(it.rt * 100).toFixed(1)}% round trip · no sim proof needed for a runner`,
+        it.runner.why,
+        `Fees ${(it.rt * 100).toFixed(1)}% round trip · following symbiot's own position, no proof needed`,
       ];
-      if (it.auto) return { id: it.card.id, kind: "real-auto", intentId: it.id, expiresAt: it.card.expiresAt, title: "REAL auto-buy · runner", lines: [...lines, `Auto-buy ${a ? a.n : 1} of ${this.#autoMax()} today`], choices: [{ id: "ok", label: "OK" }] };
-      return { id: it.card.id, kind: "real-buy", intentId: it.id, expiresAt: it.card.expiresAt, title: "REAL buy · runner", lines: [...lines, `Closes in ${Math.round(CARD_MS / 1000)} s`], choices: [{ id: "buy", label: `Buy ${sol} SOL` }, { id: "skip", label: "Skip" }] };
+      if (it.auto) return { id: it.card.id, kind: "real-auto", intentId: it.id, expiresAt: it.card.expiresAt, title: `REAL auto-buy · follows symbiot · $${it.symbol} +${pc(it.runner.move)}% in sim`, lines: [...lines, `Auto-buy ${a ? a.n : 1} of ${this.#autoMax()} today`], choices: [{ id: "ok", label: "OK" }] };
+      return { id: it.card.id, kind: "real-buy", intentId: it.id, expiresAt: it.card.expiresAt, title: `REAL buy · follows symbiot · $${it.symbol} +${pc(it.runner.move)}% in sim`, lines: [...lines, `Closes in ${Math.round(CARD_MS / 1000)} s`], choices: [{ id: "buy", label: `Buy ${sol} SOL` }, { id: "skip", label: "Skip" }] };
     }
     return {
       id: it.card.id, kind: "real-buy", intentId: it.id, expiresAt: it.card.expiresAt,
@@ -651,7 +669,7 @@ export class Real {
     const px = Array.isArray(cs) && cs.length ? cs[cs.length - 1].c : null;
     if (!(px > 0)) return this.#stale("no price on the requote");
     if (px > it.signalPx * (1 + REQUOTE_UP)) return this.#stale(`price up ${((px / it.signalPx - 1) * 100).toFixed(1)}% since the card`);
-    if (it.runner) { const rs = runnerSignal({ row: {}, cs }, this.cfg); if (!rs.ok) return this.#stale(`not a runner any more: ${rs.why}`); }
+    if (it.runner) { const rs = stillRunning(cs, this.cfg); if (!rs.ok) return this.#stale(`not running any more: ${rs.why}`); }
     else if (!fibSetup(cs.slice(-34))) return this.#stale("the Fibonacci pocket is gone");
     if (this.#keep().has(mint)) return this.#stale("a coin Alex keeps");
     const before = await this.#tokens(mint);
@@ -918,6 +936,7 @@ export class Real {
       probe: latest ? { hash: latest.hash, build: latest.build, at: latest.at, ok: latest.ok, controls: latest.controls.filter((c) => c.inTradeBox).length, walletKind: latest.walletKind, walletAddr: latest.walletAddr, why: latest.why } : null,
       would: this.would.n ? { n: this.would.n, last: this.would.last } : null,
       card: it && it.state === "PROPOSED" ? { kind: it.auto ? "real-auto" : "real-buy", expiresAt: it.card.expiresAt, runner: it.runner ? it.runner.why : null } : this.alert && st.halted ? { kind: "real-alert", expiresAt: null } : null,
+      follow: p && p.runner ? p.runner.why : it && it.runner ? it.runner.why : this.lastFollow && nowMs - this.lastFollow.at < 120_000 ? this.lastFollow.why : null,
       halt, why, at: nowMs,
     };
   }
