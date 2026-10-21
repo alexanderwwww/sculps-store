@@ -100,7 +100,7 @@ const newReal = () => {
   return r;
 };
 const tick = async (r, adv = 1000) => { T += adv; await r.tick(); await r.settle(); };
-const clicks = (re) => srv.clicks((e) => re.test(e.id || ""));
+const clicks = (re) => srv.clicks((e) => e.trusted && re.test(e.id || ""));
 const BUY = /^ip\d$/, DECOY = /^(decoy|dp\d)$/, SELL = /^isp\d$/, TOGGLE = /^itoggle$/;
 
 try {
@@ -123,23 +123,23 @@ try {
   // a closed window: the probe says so and is not ok (no clicks to open it)
   srv.variant = "instantClosed";
   const pclosed = await real.panel.probe(`https://gmgn.ai/sol/token/${mintOf("closed-probe")}`);
-  ok("probe: a closed window is reported closed with its toggle, not ok, zero clicks", pclosed.instant.open === false && !!pclosed.instant.toggle && pclosed.ok === false && srv.events.length === 0, { i: pclosed.instant, ok: pclosed.ok, why: pclosed.why, ev: srv.events });
+  ok("probe: a closed window is reopened by one untrusted toggle, then ok, zero real clicks", pclosed.instant.open === true && pclosed.ok === true && srv.events.every((e) => !e.trusted && e.id === "itoggle"), { i: pclosed.instant, ok: pclosed.ok, why: pclosed.why, ev: srv.events });
   srv.variant = "instant";
 
   // ---------------------------------------------------------------- 2. live is off by default
   real.onPick(pickOf("would-1"));
   await tick(real);
-  ok("no real.json: PROBE, no wallet, no card, zero clicks", real.mode === "probe" && !real.wallet && shown.length === 0 && srv.events.length === 0, { mode: real.mode, why: real.why, would: real.would });
+  ok("no real.json: PROBE, no wallet, no card, zero clicks", real.mode === "probe" && !real.wallet && shown.length === 0 && srv.events.filter((e) => e.trusted).length === 0, { mode: real.mode, why: real.why, would: real.would });
   real.setConfig({ mode: "probe", wallet: WALLET, selectorsFrom: hash, exec: "instant", buyPreset: "0.01618" });
   real.onPick(pickOf("would-2"));
   await tick(real); await tick(real);
-  ok("real.json mode probe: still PROBE, 'would buy' only, zero clicks", real.mode === "probe" && real.would.n === 1 && shown.length === 0 && srv.events.length === 0, { why: real.why, would: real.would });
+  ok("real.json mode probe: still PROBE, 'would buy' only, zero clicks", real.mode === "probe" && real.would.n === 1 && shown.length === 0 && srv.events.filter((e) => e.trusted).length === 0, { why: real.why, would: real.would });
 
   // ---------------------------------------------------------------- 3. live
   real.setConfig({ mode: "live", wallet: WALLET, selectorsFrom: hash, exec: "instant", buyPreset: "0.01618" });
   await tick(real); await tick(real, 6000);
   ok("LIVE with instant: probe from build 45, window + preset + gmgn wallet + chip = chain SOL", real.mode === "live", { why: real.why, verify: real.verify });
-  ok("going LIVE clicked nothing", srv.events.filter((e) => e.type === "click").length === 0, srv.events);
+  ok("going LIVE clicked nothing", srv.events.filter((e) => e.type === "click" && e.trusted).length === 0, srv.events);
 
   // a preset bigger than the step's stake: skipped, zero clicks
   real.setConfig({ mode: "live", wallet: WALLET, selectorsFrom: hash, exec: "instant", buyPreset: "1" });
@@ -235,7 +235,7 @@ try {
 
   // ---------------------------------------------------------------- totals
   ok("in the whole run: 3 buy clicks, 3 sell clicks, 1 toggle, 0 decoys, every click trusted",
-    clicks(BUY).length === 3 && clicks(SELL).length === 3 && clicks(TOGGLE).length === 1 && clicks(DECOY).length === 0 && srv.clicks().every((e) => e.trusted), srv.events.filter((e) => e.type === "click"));
+    clicks(BUY).length === 3 && clicks(SELL).length === 3 && clicks(TOGGLE).length === 1 && clicks(DECOY).length === 0 && srv.clicks().filter((e) => !e.trusted).every((e) => e.id === "itoggle"), srv.events.filter((e) => e.type === "click"));
   const wal = fs.readFileSync(path.join(dir, "real.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l));
   ok("every buy click has a real-click WAL line before it (3)", wal.filter((l) => l.type === "real-click").length === 3, wal.map((l) => l.type));
   await real.stop();

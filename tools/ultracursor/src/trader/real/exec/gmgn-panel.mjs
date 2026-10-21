@@ -391,8 +391,16 @@ export class GmgnPanel {
       for (;;) {
         rep = await gmgnTradeProbe(p);
         if (rep.tradeBox || (rep.instant && rep.instant.open) || Date.now() - t0 >= this.waitMs) break;
+        // build 49: GMGN closes the Instant-trade window after a page load and the probe saw a
+        // closed window (and a 0 SOL chip still loading) on Alex's Mac. Once, after 3 s, open it
+        // the way GMGN's own toggle does. Not a trade; no trusted input is recorded.
+        if (!this.reopened && Date.now() - t0 > 3000 && rep.instant && !rep.instant.open && rep.instant.toggle && rep.instant.toggle.count === 1) {
+          this.reopened = true;
+          await p.evaluate(() => { const el = [...document.querySelectorAll("button,span,div")].find((e) => e.textContent.trim() === "Instant trade" && e.offsetParent); if (el) (el.closest("button") || el).click(); }).catch(() => {});
+        }
         await p.waitForTimeout(1000);
       }
+      this.reopened = false;
       const after = await this.#targets();
       const w = await walletProbe(p, rep, after);
       let inputs = 0;
