@@ -143,7 +143,8 @@ const sim = { cfg: { ...RULES }, proof: { [rulesKey(RULES)]: { rules: { ...RULES
 function runnerPick(seed, mint = mintOf(seed)) {
   const cs = runCandles();
   CS.set(mint, cs);
-  return { row: { a: mint, s: "KIMLIKE", lq: 60000, ct: Math.floor(T / 1000) - 3600 }, cs: cs.map((x) => ({ ...x })), nowMs: T };
+  // symbiot's fake position: bought at $100k, now $140k (+40%) and rising (scalp.mjs onMove)
+  return { row: { a: mint, s: "KIMLIKE", lq: 60000, ct: Math.floor(T / 1000) - 3600 }, cs: cs.map((x) => ({ ...x })).slice(-2), sim: { entry: 100_000, last: 140_000, move: 0.4, peak: 0.4, at: T - 60_000 }, nowMs: T };
 }
 function fibPick(seed, proven = false) {
   const mint = mintOf(seed);
@@ -171,7 +172,15 @@ const cards = {
     return answer;
   },
 };
-const panel = new GmgnPanel({ browser: chrome.browser, build: BUILD, dir, waitMs: 4000, now });
+// build 48: Alex's one visible GMGN tab, plus gmgn.mjs's background read tab (never used for trades)
+await routeGmgn(chrome.ctx, srv);
+const readTab = await chrome.ctx.newPage();
+await readTab.goto(`https://gmgn.ai/sol/token/${mintOf("read-tab")}`).catch(() => {});
+const alexTab = chrome.ctx.pages().find((p) => p !== readTab);
+await alexTab.goto("https://gmgn.ai/sol/token/" + mintOf("alex-home")).catch(() => {});
+await alexTab.bringToFront();
+const pagesAtStart = chrome.ctx.pages().length;
+const panel = new GmgnPanel({ browser: chrome.browser, build: BUILD, dir, waitMs: 4000, now, visible: true, exclude: () => [readTab] });
 const real = new Real({ dir, build: BUILD, sim, src, panel, walletFor: () => chain, cards, now, sleep });
 const tick = async (adv = 1000) => { T += adv; await real.tick(); await real.settle(); };
 const clicks = (re) => srv.clicks((e) => re.test(e.id || ""));
@@ -179,7 +188,6 @@ const BUY = /^ip\d$/, SELL = /^isp\d$/, DECOY = /^(decoy|dp\d)$/;
 const nClicks = () => srv.clicks().length;
 
 try {
-  await routeGmgn(chrome.ctx, srv);
   await tick();
   const hash = real.probeRep && real.probeRep.hash;
   ok("probe from build 48 ran, zero clicks", real.probeRep && real.probeRep.ok && real.probeRep.build === BUILD && nClicks() === 0, real.probeRep && real.probeRep.why);
@@ -190,9 +198,9 @@ try {
   await tick(); await tick(6000);
   ok("LIVE (autoBuy off)", real.mode === "live", real.why);
   answer = "skip";
-  real.onPick(runnerPick("r-card"));
+  real.onMove(runnerPick("r-card"));
   await tick();
-  ok("autoBuy false + runner: a card (REAL buy · runner), skipped, zero clicks", shown.length === 1 && shown[0].kind === "real-buy" && /runner/.test(shown[0].title) && shown[0].lines.some((l) => /^Runner: mc \$140k · \+40% in 5 min/.test(l)) && nClicks() === 0 && !real.st.position, shown[0]);
+  ok("autoBuy false + runner: a card (REAL buy · runner), skipped, zero clicks", shown.length === 1 && shown[0].kind === "real-buy" && shown[0].title === "REAL buy · follows symbiot · $KIMLIKE +40% in sim" && shown[0].lines.some((l) => /^REAL follows symbiot · KIMLIKE \+40% in sim · mc \$140k/.test(l)) && nClicks() === 0 && !real.st.position, shown[0]);
   ok("autoBuy false: no auto-buy counted", (real.st.auto && real.st.auto.n) === 0, real.st.auto);
 
   // ------------------------------------------------ autoBuy true + runner: one click, no press
@@ -200,21 +208,21 @@ try {
   await tick(6000);
   const solBefore = chain.lamports;
   const pa = runnerPick("r-auto-1");
-  real.onPick(pa);
+  real.onMove(pa);
   await tick();
   const autoCard = shown[shown.length - 1];
   ok("autoBuy true + runner: exactly one buy click on the in-window 0.01618, no card press", clicks(BUY).length === 1 && clicks(BUY)[0].name === "0.01618" && presses === 0 && clicks(DECOY).length === 0 && nClicks() === 1, { ev: srv.events, presses });
-  ok("an informational card was shown: 'REAL auto-buy · runner', OK only", autoCard.kind === "real-auto" && autoCard.title === "REAL auto-buy · runner" && autoCard.choices.length === 1 && autoCard.choices[0].id === "ok" && autoCard.lines.some((l) => /Auto-buy 1 of 10 today/.test(l)), autoCard);
+  ok("an informational card was shown: 'REAL auto-buy · runner', OK only", autoCard.kind === "real-auto" && autoCard.title === "REAL auto-buy · follows symbiot · $KIMLIKE +40% in sim" && autoCard.choices.length === 1 && autoCard.choices[0].id === "ok" && autoCard.lines.some((l) => /Auto-buy 1 of 10 today/.test(l)), autoCard);
   ok("stake: exactly 0.01618 SOL left the wallet", srv.buys.length === 1 && srv.buys[0].amount === "0.01618" && Math.abs((solBefore - chain.lamports) / 1e9 - 0.01618) < 1e-9, srv.buys);
   ok("position OPEN, auto, target +40%, trail from +25%", real.st.position && real.st.position.auto === true && real.st.position.target === AUTO_TP && real.st.position.rules.trailFrom === 0.25 && real.st.position.rules.sl === -0.15, real.st.position);
   const b = real.board();
-  ok("board: auto 1 / 10, runner reason on the open position", b.auto.label === "1 / 10" && b.auto.on === true && /^runner: mc \$140k/.test(b.open[0].runner), { auto: b.auto, open: b.open });
+  ok("board: auto 1 / 10, runner reason on the open position", b.auto.label === "1 / 10" && b.auto.on === true && /^REAL follows symbiot · KIMLIKE \+40% in sim/.test(b.open[0].runner) && /^REAL follows symbiot/.test(b.follow), { auto: b.auto, open: b.open });
   ok("status: cfg shows autoBuy and the keep list with Kimchi", real.status().cfg.autoBuy === true && real.status().cfg.keepMints.includes(KIMCHI));
   const wal = fs.readFileSync(path.join(dir, "real.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l));
   ok("WAL: the auto count is written before the click", (() => { const i = wal.findIndex((l) => l.type === "real-card" && l.set.auto && l.set.auto.n === 1), j = wal.findIndex((l) => l.type === "real-click"); return i >= 0 && j > i; })(), wal.map((l) => l.type));
 
   // one position at a time: another runner while this one is open
-  real.onPick(runnerPick("r-while-open"));
+  real.onMove(runnerPick("r-while-open"));
   await tick();
   ok("one open real position at a time: a second runner is not bought", clicks(BUY).length === 1, srv.buys.length);
 
@@ -228,7 +236,7 @@ try {
   // ------------------------------------------------ exits: the trailing give-back
   T += 60_000; await tick(6000);
   const pt = runnerPick("r-auto-trail");
-  real.onPick(pt);
+  real.onMove(pt);
   await tick();
   ok("second auto-buy: one more buy click, still no press", clicks(BUY).length === 2 && presses === 0 && real.st.position && real.st.position.mint === pt.row.a, srv.buys.length);
   mul.set(pt.row.a, 1.30); await tick();
@@ -251,23 +259,23 @@ try {
 
   // ------------------------------------------------ keepMints: never bought
   const kc = shown.length;
-  real.onPick(runnerPick("kimchi", KIMCHI));
+  real.onMove(runnerPick("kimchi", KIMCHI));
   await tick();
-  real.onPick(runnerPick("alex-keeps"));
+  real.onMove(runnerPick("alex-keeps"));
   await tick();
   ok("Kimchi and a real.json keepMints coin: never bought, no card, zero clicks", shown.length === kc && nClicks() === before && !real.st.position);
 
   // ------------------------------------------------ the 11th auto-buy is refused
   real.st.auto.n = 10;
-  real.onPick(runnerPick("r-eleventh"));
+  real.onMove(runnerPick("r-eleventh"));
   await tick();
-  ok("11th auto-buy: not bought (falls back to Alex's card, skipped), zero clicks", nClicks() === before && shown.at(-1).kind === "real-buy" && /runner/.test(shown.at(-1).title) && real.st.auto.n === 10, { n: real.st.auto.n, last: shown.at(-1) && shown.at(-1).kind });
+  ok("11th auto-buy: not bought (falls back to Alex's card, skipped), zero clicks", nClicks() === before && shown.at(-1).kind === "real-buy" && /follows symbiot/.test(shown.at(-1).title) && real.st.auto.n === 10, { n: real.st.auto.n, last: shown.at(-1) && shown.at(-1).kind });
   ok("board: auto 10 / 10", real.board().auto.label === "10 / 10");
   real.st.auto.n = 2;
 
   // ------------------------------------------------ 30% daily drawdown
   real.st.auto.startSol = (chain.lamports / 1e9) / 0.69;
-  real.onPick(runnerPick("r-drawdown"));
+  real.onMove(runnerPick("r-drawdown"));
   await tick();
   ok("SOL 31% under the day's start: no auto-buy, zero clicks", nClicks() === before && shown.at(-1).kind === "real-buy" && real.board().auto.ddOk === false, real.board().auto);
 
@@ -276,7 +284,7 @@ try {
   await tick(6000);
   ok("new UTC day: count 0, start = today's SOL", real.st.auto.day === "2026-10-22" && real.st.auto.n === 0 && Math.abs(real.st.auto.startSol - chain.lamports / 1e9) < 1e-9 && real.board().auto.ddOk === true, real.st.auto);
   const pd = runnerPick("r-day2");
-  real.onPick(pd);
+  real.onMove(pd);
   await tick();
   ok("day 2: the runner is auto-bought again (one more click, still no press)", clicks(BUY).length === 3 && presses === 0 && real.st.position && real.st.position.mint === pd.row.a, srv.buys.length);
   ok("stake never above the preset: every buy was 0.01618", srv.buys.every((x) => x.amount === "0.01618"));
@@ -287,6 +295,7 @@ try {
   real.setConfig({ ...CFG, autoBuy: true, buyPreset: "0.1" });
   await tick(6000);
   ok("autoBuy with buyPreset 0.1: real.json refused, PROBE", real.mode === "probe" && /at most/.test(real.why), real.why);
+  ok("visible tab: every trade and the probe ran on Alex's tab, no extra tab ever opened, read tab untouched", panel.page === alexTab && chrome.ctx.pages().length === pagesAtStart && readTab.url().includes(mintOf("read-tab")), { pages: chrome.ctx.pages().length, pagesAtStart, same: panel.page === alexTab });
   ok("totals: 3 buys, 3 sells, 0 decoys, 0 presses", clicks(BUY).length === 3 && clicks(SELL).length === 3 && clicks(DECOY).length === 0 && presses === 0);
   await real.stop();
 } finally {
