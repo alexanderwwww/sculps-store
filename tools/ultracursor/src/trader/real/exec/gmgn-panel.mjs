@@ -26,9 +26,9 @@ export const SEL_KEYS = Object.freeze(["buyTab", "sellTab", "amount", "buyButton
 // after its tab is pressed, inside the buy or the sell. All eight must be in the probe report.
 export const COMMON = Object.freeze(["buyTab", "sellTab", "amount", "slippage", "walletLabel"]);
 export const MAX_SLIP = 0.0236;
-/** build 51: the probe waits at most this long for the Instant-trade window and the SOL chip. */
+/** build 52: the probe waits at most this long for the Instant-trade window and the SOL chip. */
 export const PROBE_WAIT_MS = 12_000;
-/** build 51 (Alex: "X6 speed to cursor"): trade clicks glide 6 x the 6.47 trader pace. */
+/** build 52 (Alex: "X6 speed to cursor"): trade clicks glide 6 x the 6.47 trader pace. */
 export const TRADE_SPEED = 6.47 * 6;
 export const DEFAULT_TOKEN_URL = "https://gmgn.ai/sol/token/{mint}";
 
@@ -86,7 +86,7 @@ export async function visiblePage(browser, exclude = []) {
 
 export class GmgnPanel {
   constructor({ browser = null, newPage = null, build = null, dir = null, log = () => {}, now = Date.now, waitMs = 20_000, visible = false, exclude = () => [], ui = null } = {}) {
-    this.ui = ui;                           // build 51: ui.mjs hover, so Alex sees the hand on every trade click
+    this.ui = ui;                           // build 52: ui.mjs hover, so Alex sees the hand on every trade click
     // build 48: visible = trade (and probe) on Alex's own visible GMGN tab, never a tab of our own
     this.visible = visible;
     this.browser = browser; this.newPage = newPage || (visible ? () => visiblePage(browser, exclude()) : () => backgroundPage(browser));
@@ -173,7 +173,7 @@ export class GmgnPanel {
 
   async #click(loc, what, name) {
     this.clicks.push({ at: this.now(), what, name });
-    // build 51: on Alex's tab the hand glides there first (TRADE_SPEED); Playwright's own click
+    // build 52: on Alex's tab the hand glides there first (TRADE_SPEED); Playwright's own click
     // then lands on the element itself, so a glide can never press a neighbouring preset
     if (this.visible && this.ui && this.ui.hover) { try { await Promise.race([this.ui.hover(loc.page(), loc, { speed: TRADE_SPEED }), new Promise((r) => setTimeout(r, 1500))]); } catch { /* the click still lands */ } }
     await loc.click({ timeout: 5_000, noWaitAfter: true });
@@ -298,7 +298,7 @@ export class GmgnPanel {
       if (!ins || !ins.open) return { ok: false, at, why: "the probe report shows no Instant-trade window" };
       if (preset !== null && !(ins.buyPresets || []).includes(preset)) return { ok: false, at, why: `buy preset ${preset} is not in the probe report (${(ins.buyPresets || []).join(", ")})` };
       if (!(ins.sellPcts || []).includes("100%")) return { ok: false, at, why: "the probe report shows no Sell 100%" };
-      // build 51: the header chip, or (0 or missing) the SOL on the window's Buy line
+      // build 52: the header chip, or (0 or missing) the SOL on the window's Buy line
       const chipSol = (w) => { const h = w.chips && w.chips.length === 1 ? Number(w.chips[0].text) : null; return h > 0 ? h : w.s && w.s.winSol > 0 ? w.s.winSol : h; };
       let w = await this.#instant(null, 0);
       for (const t0 = Date.now(); !w.many && !(w.chips && w.chips.length) && Date.now() - t0 < chipWaitMs;) { await w.page.waitForTimeout(250); w = await this.#instant(null, 0); }
@@ -395,7 +395,7 @@ export class GmgnPanel {
     try {
       if (!this.visible || !this.recorded || this.recorded !== p) { await p.addInitScript(inputRecorder); if (this.visible) this.recorded = p; }
       await p.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
-      // build 51: the wait is the cheap Instant-trade scan only (the full probe on a heavy GMGN
+      // build 52: the wait is the cheap Instant-trade scan only (the full probe on a heavy GMGN
       // page ran past real.mjs's 90 s limit on Alex's Mac, so build 50 never recorded a report).
       // GMGN closes the window after every page load: once, after 2 s, it is opened the way its
       // own toggle does (an untrusted DOM click, not a trade). At most PROBE_WAIT_MS, then ONE

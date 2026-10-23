@@ -48,9 +48,9 @@ const id = () => crypto.randomBytes(6).toString("hex");
 
 // ------------------------------------------------------------------ R2 real.json, read as DATA
 const R2_KEYS = new Set(["mode", "startUsd", "minTrades", "minWin", "wallet", "tokenUrl", "selectorsFrom", "selectors", "probeNow", "exec", "buyPreset", "autoBuy", "keepMints", "runnerMinMc", "runnerMove", "autoMaxDay", "maxOpen", "perMin"]);
-/** build 51: open positions at once (R2 maxOpen, 1-20) and auto entries per minute (R2 perMin), by default. */
+/** build 52: open positions at once (R2 maxOpen, 1-20) and auto entries per minute (R2 perMin), by default. */
 export const MAX_OPEN_DEFAULT = 2, MAX_OPEN_CAP = 20, PER_MIN_DEFAULT = 2, AUTO_DAY_DEFAULT = 300;
-/** build 51: a new-creation snipe may cost at most this much more than its signal at the click. */
+/** build 52: a new-creation snipe may cost at most this much more than its signal at the click. */
 export const SNIPE_REQUOTE_UP = 0.10;
 /** build 48: auto positions exit like symbiot's hunt: take profit +40%, give back half of a +25% peak. */
 export const AUTO_TP = 0.40, AUTO_TRAIL = 0.25;
@@ -88,7 +88,7 @@ export function parseRealJson(j) {
   out.exec = j.exec || "panel";
   if (j.buyPreset !== undefined) { if (typeof j.buyPreset !== "string" || j.buyPreset.length > 12 || !PRESET_RE.test(j.buyPreset) || !(Number(j.buyPreset) > 0)) return bad("buyPreset must be a number as text, like \"0.01618\""); out.buyPreset = j.buyPreset; }
   if (out.exec === "instant" && !out.buyPreset) return bad("exec 'instant' needs buyPreset");
-  // build 51: selectorsFrom "auto" (the default for instant) = the newest usable probe of this build
+  // build 52: selectorsFrom "auto" (the default for instant) = the newest usable probe of this build
   if (out.exec === "instant" && out.selectorsFrom === undefined) out.selectorsFrom = "auto";
   if (j.maxOpen !== undefined) { if (!(Number.isInteger(j.maxOpen) && j.maxOpen >= 1 && j.maxOpen <= MAX_OPEN_CAP)) return bad(`maxOpen must be 1-${MAX_OPEN_CAP}`); out.maxOpen = j.maxOpen; }
   if (j.perMin !== undefined) { if (!(typeof j.perMin === "number" && j.perMin > 0 && j.perMin <= 12)) return bad("perMin must be above 0, at most 12"); out.perMin = j.perMin; }
@@ -146,8 +146,8 @@ export class Real {
     this.picks = new Map(); this.seen = new Map(); this.wouldSeen = new Map();
     this.would = { n: 0, last: null };
     this.flow = null; this.probing = null; this.manual = false; this.dead = false;
-    this.curId = null;                                 // build 51: the position #manage is working on
-    this.tabQ = Promise.resolve();                     // build 51: one job at a time on the one tab
+    this.curId = null;                                 // build 52: the position #manage is working on
+    this.tabQ = Promise.resolve();                     // build 52: one job at a time on the one tab
     this.wallet = null; this.solAt = 0; this.priceAt = 0; this.ticks = 0;
     this.door = createDoor({ panel: this.panel, now: this.now, ctx: () => ({ mode: this.mode, verify: this.verify, auto: this.#autoCtx(), keep: this.#keep() }) });
   }
@@ -163,7 +163,7 @@ export class Real {
     const seq = (this.st.seq || 0) + 1;
     const posLog = "position" in set ? set.position || extra.closed : null;
     if ("position" in set) {
-      // build 51: several positions. A position write upserts by id; null removes the one closed.
+      // build 52: several positions. A position write upserts by id; null removes the one closed.
       const v = set.position, rest = { ...set };
       delete rest.position;
       let arr = [...(this.st.positions || [])];
@@ -191,11 +191,11 @@ export class Real {
     else this.#commit(type, { intent: next, ...set });
     return next;
   }
-  /** build 51: the position #manage is on (this.curId). */
-  /** build 51: st.position (read only, not saved) = the newest open position, for readers of the one-position shape. */
+  /** build 52: the position #manage is on (this.curId). */
+  /** build 52: st.position (read only, not saved) = the newest open position, for readers of the one-position shape. */
   #legacy() { Object.defineProperty(this.st, "position", { get: () => { const a = this.st.positions || []; return a[a.length - 1] || null; }, set: (v) => { if (v && !(this.st.positions || []).some((x) => x.id === v.id)) (this.st.positions = this.st.positions || []).push(v); }, enumerable: false, configurable: true }); }
   #cur() { return (this.st.positions || []).find((x) => x.id === this.curId) || null; }
-  /** build 51: panel work (probe, verify, buy, sell) runs one job at a time on Alex's one tab. */
+  /** build 52: panel work (probe, verify, buy, sell) runs one job at a time on Alex's one tab. */
   #tab(fn) { const run = this.tabQ.then(fn, fn); this.tabQ = run.catch(() => {}); return run; }
   #pos(type, from, to, patch = {}) {
     const p = this.#cur();
@@ -231,7 +231,7 @@ export class Real {
         this.st.seq = l.seq;
       }
       this.st.build = this.build;
-      // build 51: one position (build 50 and before) becomes the list of positions
+      // build 52: one position (build 50 and before) becomes the list of positions
       if (!Array.isArray(this.st.positions)) this.st.positions = [];
       if (this.st.position) { if (!this.st.positions.some((x) => x.id === this.st.position.id)) this.st.positions.push(this.st.position); }
       delete this.st.position;
@@ -345,10 +345,10 @@ export class Real {
     await step("limits", async () => { const b = this.#balUsd(); if (b !== null) Object.assign(this.st, P.resume(this.#ledger(), b, nowMs)); });
     if (this.sim) this.sim.realStakeUsd = this.#stake() || this.sim.realStakeUsd;  // the proof is scored at the real stake
     await step("probe", async () => this.#maybeProbe(nowMs));
-    // build 51: the tab lock (#tab) keeps the probe, verify, buys and sells one at a time
+    // build 52: the tab lock (#tab) keeps the probe, verify, buys and sells one at a time
     if (!this.flow && !this.probing) await step("verify", () => this.#tab(() => this.#liveCheck(nowMs)));
     this.#modeEval(nowMs);
-    // build 51: every open position gets its own exits, then a new entry if there is room
+    // build 52: every open position gets its own exits, then a new entry if there is room
     const manual = this.manual;
     for (const p of [...this.st.positions]) { this.curId = p.id; await step("exit", () => this.#manage(nowMs)); }
     this.curId = null;
@@ -377,9 +377,9 @@ export class Real {
       if (px > 0) { this.st.solUsd = px; this.priceAt = nowMs; }
     }
   }
-  /** build 51: open positions at cost x their move, in SOL. */
+  /** build 52: open positions at cost x their move, in SOL. */
   #openSol() { return (this.st.positions || []).reduce((a, p) => a + (p.buy && p.buy.solIn > 0 ? p.buy.solIn * (1 + (p.move || 0)) : 0), 0); }
-  /** build 51: the equity (free SOL + open positions), so open positions never read as a drawdown. */
+  /** build 52: the equity (free SOL + open positions), so open positions never read as a drawdown. */
   #balUsd() { return this.st.balanceSol !== null && this.st.solUsd ? (this.st.balanceSol + this.#openSol()) * this.st.solUsd : null; }
   #stake() { const b = this.#balUsd(); return b === null ? null : P.stakeFor(this.#ledger(), b); }
   async #tokens(mint) { return this.wallet ? this.wallet.tokenBalance(mint).catch(() => null) : null; }
@@ -389,7 +389,7 @@ export class Real {
 
   async #maybeProbe(nowMs) {
     if (this.probing || !this.panel) return;
-    // build 51: a probe of THIS build decides; none usable -> again, at most once a minute
+    // build 52: a probe of THIS build decides; none usable -> again, at most once a minute
     const mine = this.#usable();
     const tried = this.probeTriedAt || 0;
     const due = this.probeDue || (mine ? nowMs - mine.at >= PROBE_EVERY_MS : !tried || nowMs - tried >= 60_000);
@@ -408,7 +408,7 @@ export class Real {
         if (!rep.hash) rep.hash = `f${Date.now().toString(16)}`;
         this.#gotProbe(rep);
       } catch (e) {
-        // build 51: a probe that fails or runs out of time is still on the board, with its why
+        // build 52: a probe that fails or runs out of time is still on the board, with its why
         this.#gotProbe({ hash: `f${Date.now().toString(16)}`, build: this.build, ok: false, at: this.now(), url, mint, walletKind: "unknown", walletAddr: null, why: String(e.message || e).slice(0, 160), controls: [] });
       }
     })().finally(() => { this.probing = null; });
@@ -433,7 +433,7 @@ export class Real {
     return this.probes.find((p) => p.hash === c.selectorsFrom && p.build === this.build && p.ok) || null;
   }
 
-  /** build 51: the newest probe of this build that can trade Instant (ok, GMGN wallet, window open with the preset and Sell 100%). */
+  /** build 52: the newest probe of this build that can trade Instant (ok, GMGN wallet, window open with the preset and Sell 100%). */
   #usable() {
     const c = this.cfg, preset = c && !c.error ? c.buyPreset : null;
     return this.probes.find((p) => p.build === this.build && p.ok && p.walletKind === "gmgn" && p.instant && p.instant.open
@@ -448,7 +448,7 @@ export class Real {
   #autoMax() { const c = this.cfg; return Math.min(AUTO_MAX_DAY, c && !c.error && Number.isInteger(c.autoMaxDay) ? c.autoMaxDay : AUTO_DAY_DEFAULT); }
   #maxOpen() { const c = this.cfg; return c && !c.error && Number.isInteger(c.maxOpen) ? c.maxOpen : MAX_OPEN_DEFAULT; }
   #perMin() { const c = this.cfg; return c && !c.error && c.perMin > 0 ? c.perMin : PER_MIN_DEFAULT; }
-  /** build 51: room for one more position: under maxOpen and one more preset (plus the reserve) in the free SOL. */
+  /** build 52: room for one more position: under maxOpen and one more preset (plus the reserve) in the free SOL. */
   #room(withSol = true) {
     const stake = Number((this.cfg && !this.cfg.error && this.cfg.buyPreset) || AUTO_MAX_SOL);
     if (this.st.positions.length >= this.#maxOpen()) return `${this.st.positions.length} of ${this.#maxOpen()} positions open`;
@@ -527,7 +527,7 @@ export class Real {
 
   // ---------------------------------------------------------------- selection: a to g
   async #select(nowMs) {
-    // build 51: several positions, perMin entries a minute, never two buys at once on the one tab
+    // build 52: several positions, perMin entries a minute, never two buys at once on the one tab
     if (this.mode === "live" && (this.#room() || nowMs - (this.st.lastBuyAt || 0) < 60_000 / this.#perMin())) return;
     let n = 0;
     for (const [mint, pick] of [...this.picks]) {
@@ -567,7 +567,7 @@ export class Real {
     const cs = Array.isArray(pick.cs) ? pick.cs.slice(-34) : null;
     if (!cs || !cs.length) return this.#skip("b", pick, "no candles");
     let run = pick.follow && pick.follow.ok ? pick.follow : { ok: false, why: "symbiot's position is not running" };
-    // build 51 (Alex: "watch all of the new creations"): with autoBuy on, a fresh symbiot pick is a
+    // build 52 (Alex: "watch all of the new creations"): with autoBuy on, a fresh symbiot pick is a
     // snipe: no Fibonacci pocket and no proof, the same security, pool, fee and cap gates as a runner
     if (!run.ok && !pick.follow && this.cfg && !this.cfg.error && this.cfg.autoBuy === true) run = { ok: true, snipe: true, why: "new creation: symbiot's snipe", mc: num(pick.row.mc), move: 0 };
     // b: otherwise always a Fibonacci entry (the same fibSetup symbiot uses), on 34 candles
@@ -586,7 +586,7 @@ export class Real {
       if (Number(preset) + RESERVE_SOL > st.balanceSol + 1e-12) return this.#skip("g", pick, `preset ${preset} SOL + 0.01 reserve is more than the wallet's ${st.balanceSol} SOL`);
       stake = presetUsd;
     }
-    // build 51: an auto entry spends the one fixed preset, so it can never grow after a loss
+    // build 52: an auto entry spends the one fixed preset, so it can never grow after a loss
     if (!run.ok) { try { P.assertNoMartingale(st.lastStake, stake, st.afterLoss); } catch (e) { this.#halt(e.message); return this.#skip("d", pick, e.message); } }
     const sim = this.sim || { proof: {}, cfg: {} };
     const f = floors(this.cfg && !this.cfg.error ? this.cfg : {});
@@ -747,7 +747,7 @@ export class Real {
     if (!(px > 0)) return this.#stale("no price on the requote");
     const up = it.runner && it.runner.snipe ? SNIPE_REQUOTE_UP : REQUOTE_UP;
     if (px > it.signalPx * (1 + up)) return this.#stale(`price up ${((px / it.signalPx - 1) * 100).toFixed(1)}% since the card`);
-    if (it.runner && it.runner.snipe) { /* build 51: a snipe needs no pocket and no run */ }
+    if (it.runner && it.runner.snipe) { /* build 52: a snipe needs no pocket and no run */ }
     else if (it.runner) { const rs = stillRunning(cs, this.cfg); if (!rs.ok) return this.#stale(`not running any more: ${rs.why}`); }
     else if (!fibSetup(cs.slice(-34))) return this.#stale("the Fibonacci pocket is gone");
     if (this.#keep().has(mint)) return this.#stale("a coin Alex keeps");
@@ -755,8 +755,8 @@ export class Real {
     if (!before) return this.#stale("wallet token read failed");
     const c = this.cfg, rec = this.#record(), url = this.#tokenUrl(mint);
     const instant = it.exec === "instant";
-    // build 51 (Alex: "trade with the cursor from Instant ... only"): no other buy path
-    if (!instant) return this.#stale("build 51 trades only through GMGN's Instant-trade window");
+    // build 52 (Alex: "trade with the cursor from Instant ... only"): no other buy path
+    if (!instant) return this.#stale("build 52 trades only through GMGN's Instant-trade window");
     if (instant && (c.exec !== "instant" || c.buyPreset !== it.preset)) return this.#stale("real.json's exec or buyPreset changed since the card");
     if (!instant && c.exec === "instant") return this.#stale("real.json's exec changed since the card");
     try {
@@ -784,7 +784,7 @@ export class Real {
       if (!r || !r.ok) { if (this.st.intent && this.st.intent.state === "APPROVED") return this.#stale(r && r.stale || "the panel refused"); }
       if (!this.st.intent || this.st.intent.state !== "CLICKING") return;
       this.#to("real-sent", ["CLICKING"], "SENT", { why: r.clicked === true ? "clicked once" : `click unclear: ${r.error || ""}`.slice(0, 120) });
-      return;                                          // build 51: confirmed outside the tab lock
+      return;                                          // build 52: confirmed outside the tab lock
     }
     const sel = c.selectors;
     const selRecord = { controls: SEL_KEYS.filter((k) => sel[k]).map((k) => ({ role: sel[k].role, name: sel[k].name })) };
@@ -803,7 +803,7 @@ export class Real {
     this.#to("real-sent", ["CLICKING"], "SENT", { why: r.clicked === true ? "clicked once" : `click unclear: ${r.error || ""}`.slice(0, 120) });
   }
 
-  /** build 51: the buy's tab work under the lock, then the chain confirm (no tab) outside it. */
+  /** build 52: the buy's tab work under the lock, then the chain confirm (no tab) outside it. */
   async #buyThenConfirm(ap, token) {
     await this.#tab(() => this.#buy(ap, token));
     const it = this.st.intent;
@@ -949,7 +949,7 @@ export class Real {
     const feesSol = fills.reduce((s, f) => s + (f.feeSol || 0), 0);
     const solUsd = this.st.solUsd || p.solUsd;
     const free = solAfter !== null ? solAfter : (this.st.balanceSol ?? 0) + solOut;
-    // build 51: the other open positions are still money: the step ledger reads the equity
+    // build 52: the other open positions are still money: the step ledger reads the equity
     const others = (this.st.positions || []).filter((x) => x.id !== p.id).reduce((a, x) => a + (x.buy && x.buy.solIn > 0 ? x.buy.solIn * (1 + (x.move || 0)) : 0), 0);
     const bal = free + others;
     const move = Number.isFinite(p.exitMove) ? p.exitMove : p.move || 0;
@@ -962,7 +962,7 @@ export class Real {
     };
     const prevBal = p.balIn;
     const L = P.onClose(this.#ledger(), { net: netSol, stake: p.stakeUsd, balUsd: bal * solUsd, nowMs });
-    // build 51: auto entries stop on the -30% day floor, not on three losses in a row
+    // build 52: auto entries stop on the -30% day floor, not on three losses in a row
     if (p.auto && L.paused) L.paused = null;
     const closed = { ...p, state: "CLOSED", sell: { ...p.sell, solOut, feesSol, at2: nowMs } };
     this.#commit("real-close", { position: null, ...L, balanceSol: free, ledgerSol: (this.st.ledgerSol ?? 0) + solOut }, { closed, row, why: p.why });

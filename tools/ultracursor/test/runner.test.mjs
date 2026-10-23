@@ -123,7 +123,7 @@ const ev = (move, { base = 150_000, green = true, row = {} } = {}) => { const cs
   const t5 = door.mintAuto(sub());
   const r5 = await door.execute("buy", sub(), t5, { exec: "instant" });
   ok("door: auto token + every cap: the buy goes to the panel once", r5 && r5.clicked === true);
-  ok("caps: 0.01618 SOL and at most 1000 a day (build 51)", AUTO_MAX_SOL === 0.01618 && AUTO_MAX_DAY === 1000);
+  ok("caps: 0.01618 SOL and at most 1000 a day (build 52)", AUTO_MAX_SOL === 0.01618 && AUTO_MAX_DAY === 1000);
 }
 
 // ---------------------------------------------------------------- 4. the loop, in Chrome
@@ -246,7 +246,7 @@ try {
   await tick(21_000);
   ok("closed", !real.st.position);
 
-  // ------------------------------------------------ non-runner: proof + card (build 51: with autoBuy on a fresh pick is a snipe,
+  // ------------------------------------------------ non-runner: proof + card (build 52: with autoBuy on a fresh pick is a snipe,
   // tested in snipe.test.mjs; here autoBuy is off for the proof and card path)
   real.setConfig({ ...CFG });
   T += 60_000; await tick(6000);
@@ -267,7 +267,7 @@ try {
   await tick();
   ok("Kimchi and a real.json keepMints coin: never bought, no card, zero clicks", shown.length === kc && nClicks() === before && !real.st.position);
 
-  // ------------------------------------------------ the 11th auto-buy is refused (build 51: autoMaxDay 10 here)
+  // ------------------------------------------------ the 11th auto-buy is refused (build 52: autoMaxDay 10 here)
   real.setConfig({ ...CFG, autoBuy: true, autoMaxDay: 10 });
   await tick(6000);
   real.st.auto.n = 10;

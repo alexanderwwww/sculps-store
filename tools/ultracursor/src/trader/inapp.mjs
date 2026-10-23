@@ -15,6 +15,7 @@
 import { Real } from "./real/real.mjs";
 import { GmgnPanel } from "./real/exec/gmgn-panel.mjs";
 import { hover as uiHover } from "../ui.mjs";
+import { OneTab } from "./onetab.mjs";
 import { Scalp } from "./scalp.mjs";
 import fs from "node:fs";
 import path from "node:path";
@@ -26,7 +27,7 @@ import { Memory, memoryDir } from "./memory.mjs";
 
 export const FLAG_URL = "https://blackreaper.us/media/uc-trader.json";
 export const SNAPSHOT_URL = "https://blackreaper.us/media/trader-memory-latest.json";
-export const SPEED = 6.47 * 6; // Alex: "4 x golden ratio"; build 51: "X6 speed to cursor"
+export const SPEED = 6.47 * 6; // Alex: "4 x golden ratio"; build 52: "X6 speed to cursor"
 
 export function createTraderMode({ dir, getBrowser, cards = null, log = () => {}, fetchFn = fetch, flagUrl = process.env.ULTRA_TRADER_FLAG || FLAG_URL }) {
   fs.mkdirSync(dir, { recursive: true });
@@ -91,14 +92,18 @@ export function createTraderMode({ dir, getBrowser, cards = null, log = () => {}
     if (!state) write({ type: "start", balance: 10, note: "Sniper XYZ training in the app: fake money, real GMGN coins" });
     memory.heartbeat({ open: 0, armed: 0, paid: book.paid });
     const gm = new Gmgn({ onCall: (c) => memory.onCall(c) });
-    await gm.attach(browser);
+    // build 52 (Alex: "close all the tabs and leave only one open. Don't open more."): one tab for
+    // the reads, the probe and every trade; every other gmgn.ai tab is closed now and every 5 s
+    const tabs = new OneTab(browser, { log: write });
+    await tabs.enforce().catch((e) => write({ type: "tabs", why: String(e.message || e).slice(0, 160) }));
+    await gm.attach(browser, { tab: () => tabs.get() });
     const FAST = path.join(dir, "fast.json");
     let fj = null; try { fj = JSON.parse(fs.readFileSync(FAST, "utf8")); } catch { fj = null; }
     // Alex 2026-10-20: a 50 SOL fake balance, 1.618 SOL every trade
     // build 41: the real-money trader (src/trader/real). PROBE until R2 real.json says LIVE; every
     // buy needs Alex's card. It hears every symbiot pick through onPick.
     // build 48: real trades run on Alex's visible GMGN tab (never gmgn.mjs's read tab), no tab of their own
-    const realPanel = new GmgnPanel({ browser, build: process.env.ULTRA_BUILD || null, dir: path.join(dir, "real"), visible: true, exclude: () => [gm.page], ui: { hover: uiHover } });
+    const realPanel = new GmgnPanel({ browser, build: process.env.ULTRA_BUILD || null, dir: path.join(dir, "real"), visible: true, newPage: () => tabs.get(), ui: { hover: uiHover } });
     const real = new Real({ dir: path.join(dir, "real"), build: process.env.ULTRA_BUILD || null, src: gm, browser, panel: realPanel, cards, log: write });
     await real.start().catch((e) => write({ type: "real-error", why: String(e.message || e).slice(0, 200) }));
     const fast = Scalp.from(fj, { src: gm, log: write, start: 0, stake: 1.618, onPick: (p) => real.onPick(p), onMove: (e) => real.onMove(e) }); // build 29: infinite balance, the money line shows + and - totals
@@ -107,6 +112,7 @@ export function createTraderMode({ dir, getBrowser, cards = null, log = () => {}
     lanes
       .add("fast", 3000, (t) => fast.scanLane(t))
       .add("real", 1000, (t) => real.tick(t))
+      .add("tabs", 5000, async () => { await tabs.enforce(); })
       .add("board", 1000, async () => { board(); memory.heartbeat({ open: fast.open.size, armed: 0, paid: fast.summary().wins }); })
       .add("fastPositions", 2000, async (t) => { await fast.positionLane(t); fs.writeFileSync(FAST, JSON.stringify(fast.toJSON())); board();
         // build 24: the orb and the money line live on this heartbeat (it came from the parked sniper,

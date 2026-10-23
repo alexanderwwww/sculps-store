@@ -184,7 +184,7 @@ export function instantScan(arg) {
   const buyRow = inWin.filter((o) => buyH && sellH && before(buyH.el, o.el) && before(o.el, sellH.el) && /^\d+(\.\d+)?$/.test(o.t));
   const sellRow = inWin.filter((o) => sellH && before(sellH.el, o.el) && /^\d+%$/.test(o.t));
   const buyPresets = buyRow.filter((o) => pointer(o.el)).map((o) => o.t);
-  // build 51: the wallet's SOL GMGN prints on the Buy header line (Alex's screenshot: "0.13028"),
+  // build 52: the wallet's SOL GMGN prints on the Buy header line (Alex's screenshot: "0.13028"),
   // a number on the Buy header's line that is not a clickable preset
   const bt = buyH ? buyH.el.getBoundingClientRect() : null;
   const winSolO = bt ? inWin.find((o) => /^\d+\.\d+$/.test(o.t) && !pointer(o.el) && Math.abs(o.el.getBoundingClientRect().top - bt.top) < 12) : null;
@@ -291,7 +291,7 @@ export async function walletProbe(page, rep = null, cdpTargets = null) {
   const ext = (cdpTargets || []).filter((t) => /phantom/i.test(`${t.title} ${t.url}`) && /^chrome-extension:\/\//.test(t.url || ""));
   // build 45: GMGN's built-in wallet shows no address, only its SOL balance in the header
   let chips = [...new Set((r.scan || []).flatMap((x) => (x && x.chips ? x.chips.map((c) => c.text) : [])))];
-  // build 51: a 0 (still loading) header chip gives way to the SOL the Instant-trade window shows
+  // build 52: a 0 (still loading) header chip gives way to the SOL the Instant-trade window shows
   const win = r.instant && r.instant.open && r.instant.winSol > 0 ? String(r.instant.winSol) : null;
   if (win && !chips.some((c) => Number(c) > 0)) chips = [win];
   const evidence = [...addrs.map((a) => `address shown: ${a}`), ...chips.map((c) => `header balance chip: ${c} SOL`), ...phantomText.map((t) => `page says: ${t}`), ...ext.map((t) => `extension target: ${t.title}`), ...connect.map((t) => `page says: ${t}`)];

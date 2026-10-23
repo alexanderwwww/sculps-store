@@ -98,12 +98,15 @@ export class Gmgn {
    * the DevTools port the app already uses (connectOverCDP). No new browser,
    * no user-agent change, and the image/font block is on this tab only.
    */
-  async attach(browser) {
+  async attach(browser, { tab = null } = {}) {
     const ctx = browser.contexts()[0];
     if (!ctx) throw new Error("gmgn: Chrome has no window open");
     this.attached = true;
     let page = null;
-    try {
+    // build 52 (Alex: "leave only one open. Don't open more."): with `tab` (onetab.mjs) the reads
+    // run in that one tab of Alex's Chrome and no page is ever opened here
+    if (tab) { this.tab = tab; page = await tab(); }
+    else try {
       const s = await browser.newBrowserCDPSession();
       const [p] = await Promise.all([ctx.waitForEvent("page", { timeout: 10_000 }), s.send("Target.createTarget", { url: "about:blank", background: true })]);
       page = p;
@@ -120,12 +123,23 @@ export class Gmgn {
       pg.on("websocket", (ws) => ws.on("framereceived", (f) => { try { const t = typeof f.payload === "string" ? f.payload : ""; if (t.length > 2 && (t[0] === "{" || t[0] === "[")) take(JSON.parse(t)); } catch { /* not json */ } }));
     };
     // build 33: never on the trader's own tab (its reads started failing once this was added)
-    for (const pg of ctx.pages()) if (pg !== page) watch(pg);
+    // build 52: in one-tab mode that tab is every page there is, so it is watched too
+    for (const pg of ctx.pages()) if (pg !== page || this.tab) watch(pg);
     ctx.on("page", (pg) => { if (pg !== page) watch(pg); });
     // build 8: no image/font block here. Alex looks at this tab, and blocked
     // logos and icon fonts made GMGN look broken.
     page.on("request", (r) => { if (!this.q && /gmgn\.ai\/(api|mrwapi|rrs|vas)\//.test(r.url())) this.q = webQuery(r.url()); });
-    await this.#home();
+    if (this.tab) { this.qPage = page; await this.#tabHome(); } else await this.#home();
+  }
+
+  /** build 52: the one tab, on gmgn.ai (navigated there only if it is somewhere else), its web query read. */
+  async #tabHome() {
+    const page = await this.tab();
+    if (this.qPage !== page) { this.qPage = page; page.on("request", (r) => { if (!this.q && /gmgn\.ai\/(api|mrwapi|rrs|vas)\//.test(r.url())) this.q = webQuery(r.url()); }); }
+    let h = ""; try { h = new URL(page.url()).hostname; } catch { h = ""; }
+    if (!/(^|\.)gmgn\.ai$/.test(h)) await page.goto("https://gmgn.ai/?chain=sol", { timeout: 60_000, waitUntil: "domcontentloaded" });
+    for (let i = 0; i < 20 && !this.q; i++) await page.waitForTimeout(500);
+    return page;
   }
 
   async open() {
@@ -143,7 +157,7 @@ export class Gmgn {
     for (let i = 0; i < 20 && !this.q; i++) await this.page.waitForTimeout(500);
     await this.page.waitForTimeout(2500);
   }
-  async close() { if (this.attached) { await this.page?.close().catch(() => {}); return; } await this.browser?.close().catch(() => {}); }
+  async close() { if (this.tab) return; if (this.attached) { await this.page?.close().catch(() => {}); return; } await this.browser?.close().catch(() => {}); }
 
   /**
    * Cloudflare answers bursts with 429 "Just a moment...". Then: reload
@@ -169,6 +183,8 @@ export class Gmgn {
       if (!/-> (429|403) /.test(e.message)) throw e;
       this.challenged = (this.challenged || 0) + 1;
       this.q = null;
+      // build 52: the one tab is never sent home in the middle of a trade; a wait, then once more
+      if (this.tab) { await new Promise((r) => setTimeout(r, 2500)); await this.#tabHome().catch(() => {}); return this.#call(path, body); }
       await this.#home().catch(() => {});
       await this.page.waitForTimeout(2500);
       return this.#call(path, body);
@@ -181,15 +197,28 @@ export class Gmgn {
     const q = this.q || FALLBACK_Q;
     // build 31: no GMGN read can hang the trader (one did on Alex's Mac and nothing traded):
     // 8 s inside the page, 10 s around it.
+    const read = (page) => page.evaluate(async ({ path, body, q }) => {
+      const url = path + (path.includes("?") ? "&" : "?") + q;
+      const signal = AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined;
+      const res = await fetch(url, body ? { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal } : { signal });
+      return { status: res.status, text: await res.text() };
+    }, { path, body, q });
+    // build 52: in the one tab a read can meet a navigation (a buy or a sell opening its coin):
+    // it waits for the new page and reads once more
+    const once = async () => {
+      if (!this.tab) return read(this.page);
+      const page = await this.tab();
+      try { return await read(page); } catch (e) {
+        if (!/context was destroyed|navigat|Target closed|detached/i.test(String(e.message || e))) throw e;
+        await page.waitForLoadState("domcontentloaded", { timeout: 8000 }).catch(() => {});
+        return read(page);
+      }
+    };
+    let timer;
     const r = await Promise.race([
-      this.page.evaluate(async ({ path, body, q }) => {
-        const url = path + (path.includes("?") ? "&" : "?") + q;
-        const signal = AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined;
-        const res = await fetch(url, body ? { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal } : { signal });
-        return { status: res.status, text: await res.text() };
-      }, { path, body, q }),
-      new Promise((_, no) => setTimeout(() => no(new Error(`gmgn ${path.split("?")[0]} -> timeout 10 s`)), 10_000)),
-    ]).catch((e) => { this.errors++; throw e; });
+      once(),
+      new Promise((_, no) => { timer = setTimeout(() => no(new Error(`gmgn ${path.split("?")[0]} -> timeout ${this.tab ? 20 : 10} s`)), this.tab ? 20_000 : 10_000); }),
+    ]).finally(() => clearTimeout(timer)).catch((e) => { this.errors++; throw e; });
     let j = null;
     try { j = JSON.parse(r.text); } catch {}
     if (r.status !== 200 || !j || j.code !== 0) {
