@@ -1399,7 +1399,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       square={square}
       squareMethods={squareMethods}
       squareApp={squareApp}
-      appearance={buddy ? BUDDY_APPEARANCE : KNEELER_APPEARANCE}
+      appearance={buddy ? BUDDY_APPEARANCE : store.slug === "mysterious-archive" ? ARCHIVE_APPEARANCE : KNEELER_APPEARANCE}
       trust={buddy ? <TrustRow /> : null}
       shell={buddy}
       summary={summary}
@@ -1653,6 +1653,23 @@ const BUDDY_APPEARANCE = {
 };
 
 const KNEELER_APPEARANCE = { theme: "night", variables: { colorPrimary: "#b6f03c", fontSizeBase: "16px" } };
+
+/* Mysterious Archive: the white Vestiaire-style page gets a white payment form with
+   black accents. KNEELER (night + lime) is the Black Reaper look and drew a dark box here. */
+const ARCHIVE_APPEARANCE = {
+  theme: "stripe",
+  variables: {
+    colorPrimary: "#171717",
+    colorText: "#171717",
+    colorTextSecondary: "#666666",
+    colorTextPlaceholder: "#8a8a8a",
+    colorDanger: "#b3261e",
+    colorBackground: "#ffffff",
+    fontSizeBase: "16px",
+    borderRadius: "4px",
+    spacingUnit: "4px",
+  },
+};
 
 /* ----------------------------------------------------------------- pieces */
 
