@@ -29,3 +29,11 @@ Role handoff (Alex, October 17): Claude takes over website design/implementation
 - Live on the `kerberos` worker (wrangler deploys 2026-10-24, latest e6dced08 at 13:28 UTC): offers by email sign-in, Customer messages in Shop Admin, private 12-hour accepted-offer checkout links, new bag with photo/reference/size/condition, one-unit-per-piece safeguards. None of this is in this repo.
 - RULE: do NOT `wrangler deploy` from this repo/branch. It would erase all of the above. Edit and deploy only from that Mac folder (a Claude Code or Codex session opened in it): `npx react-router typegen && npx tsc --noEmit && npm run build`, then `npx wrangler deploy` with the credentials loaded from `.dev.vars`. No test purchase, ever.
 - Still to do there: Vestiaire-style sticky buy card (big Add to bag + Make an offer), account Messages tab with the purchase button and 12 h timer, white Stripe payment form (`ARCHIVE_APPEARANCE`, commit 5895d2a here), logo as the browser-tab icon (public/archive-icon.png is a squashed wordmark: use a cropped M), Affirm/Apple Pay via Stripe Dashboard, own verified email sender for mysteriousarchive.com.
+
+## 2026-10-24 Alex's requirements for the buy box, offers and accounts (his words, settled)
+- Product page buy box = Vestiaire Collective: a STICKY card with three big buttons: **Buy now**, **Add to bag**, **Make an offer**. Large, same width, always in reach (sticky bar on mobile).
+- Make an offer requires an account. Sign up / sign in with **email, Google, Apple or phone**. Every account lands in the customer list in Shop Admin.
+- Submitting an offer opens the **Messages** tab in the customer's account with the offer as the first message (like Vestiaire). Alex answers PERSONALLY in Shop Admin → Customer messages: accept, reject, or write anything. No AI replies, ever.
+- Accepted offer = private checkout link at the agreed price, 12 hours, only that buyer and that item, with a purchase button in their Messages tab and the countdown.
+- One unit per piece (museum pieces). No test purchases or test charges.
+- Apple sign-in needs his Apple Developer account (Services ID + key); phone sign-in needs an SMS provider; Google needs a Google Cloud OAuth client. Ship email code sign-in first (works with what exists), add the others when he provides those accounts.
