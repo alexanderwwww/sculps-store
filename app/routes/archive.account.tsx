@@ -265,12 +265,12 @@ function Thread({ thread, currency, query }: { thread: NonNullable<Extract<Route
       {thread.status === "accepted" && !thread.purchased && thread.available < 1 && <p className="ma-acct-note">This piece has been sold</p>}
       {thread.status === "countered" && thread.counterCents ? (
         <div className="ma-acct-buy">
-          <p><strong>Counter offer: {money(thread.counterCents, currency)}</strong></p>
+          <p style={{ margin: "0 0 10px", textAlign: "center" }}><strong>Counter offer: {money(thread.counterCents, currency)}</strong></p>
           <button className="ma-acct-primary" onClick={() => answerCounter(true)} disabled={busy}>Accept {money(thread.counterCents, currency)}</button>
-          <button className="ma-acct-link" type="button" onClick={() => answerCounter(false)} disabled={busy}>Decline counter offer</button>
+          <button className="ma-acct-link" style={{ display: "block", margin: "10px auto 0" }} type="button" onClick={() => answerCounter(false)} disabled={busy}>Decline counter offer</button>
         </div>
       ) : null}
-      {(thread.status === "pending" || thread.status === "countered") && (
+      {thread.status === "pending" && (
         <button className="ma-acct-link" type="button" onClick={withdraw} disabled={busy}>Withdraw offer</button>
       )}
 
