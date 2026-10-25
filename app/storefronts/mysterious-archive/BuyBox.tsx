@@ -6,6 +6,7 @@
  * takes the offer. A sticky bar keeps Buy now and Make an offer in reach on
  * phones.
  */
+import { KlarnaMark } from "~/storefronts/shared/paylater";
 import { useEffect, useRef, useState } from "react";
 import { Form, Link } from "react-router";
 
@@ -151,7 +152,11 @@ export default function BuyBox({ item, query, viewerEmail, certImage, certPdf }:
         )}
       </div>
 
-      <p className="ma-bb-pay">Pay in installments with Klarna, or with Cash App Pay, at checkout.</p>
+      <div className="ma-bb-pay">
+        <span>Pay in installments</span>
+        <KlarnaMark height="20px" />
+        <span className="ma-bb-cash" aria-label="Cash App Pay"><i aria-hidden="true">$</i>Cash App Pay</span>
+      </div>
 
       <div className="ma-bb-actions">
         <Form method="post" action={action(true)}>

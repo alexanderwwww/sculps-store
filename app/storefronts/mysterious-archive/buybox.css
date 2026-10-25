@@ -67,4 +67,6 @@
  .ma-gallery .ma-thumbs button{width:72px;height:90px}
 }
 
-.ma-bb-pay{margin:0 0 12px;font:12px/1.5 Arial,Helvetica,sans-serif;letter-spacing:.04em;color:#8a8a86;text-align:center}
+.ma-bb-pay{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:0 0 14px;font:12px/1 Arial,Helvetica,sans-serif;letter-spacing:.06em;color:#8a8a86}
+.ma-bb-cash{display:inline-flex;align-items:center;gap:6px;height:20px;padding:0 8px 0 3px;border-radius:5px;background:#00d64f;color:#fff;font-weight:700;letter-spacing:0;font-size:11px}
+.ma-bb-cash i{display:grid;place-items:center;width:15px;height:15px;border-radius:4px;background:#fff;color:#00d64f;font-style:normal;font-weight:900;font-size:11px}
