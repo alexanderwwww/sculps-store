@@ -2,6 +2,7 @@
  * The admin layout. Everything under /admin passes through here, which means
  * the sign-in check happens in exactly one place.
  */
+import { unreadForOwner } from "~/lib/ma-offers.server";
 import { Outlet, useLocation } from "react-router";
 import { eq, and, sql, gte, inArray } from "drizzle-orm";
 import type { Route } from "./+types/admin";
@@ -45,7 +46,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const { store, all } = await resolveAdminStore(context.db, url);
 
   // Sidebar counts. Cheap aggregate queries, not full table reads.
-  let counts = { newOrders: 0, products: 0, reviews: 0 };
+  let counts = { newOrders: 0, products: 0, reviews: 0, messages: 0 };
   if (store) {
     const [[newOrders], [productCount], [reviewCount]] = await Promise.all([
       context.db
@@ -72,6 +73,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       newOrders: newOrders?.n ?? 0,
       products: productCount?.n ?? 0,
       reviews: reviewCount?.n ?? 0,
+      messages: await unreadForOwner(context.db, store.id).catch(() => 0),
     };
   }
 

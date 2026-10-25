@@ -11,6 +11,7 @@ import type { DB } from "~/db/client";
 import { carts, variants, products, stores, discounts, discountRedemptions } from "~/db/schema";
 import { taxRateFor } from "./admin.server";
 import { applyDiscount, checkDiscount, discountLabel, findDiscount, normaliseCode } from "./discounts.server";
+import { offerRefusal } from "./ma-offers.server";
 
 const CART_COOKIE = "kerberos_cart";
 
@@ -326,7 +327,8 @@ export async function priceCart(
 
   const lines: PricedLine[] = [];
   for (const { line, variant, product } of resolved) {
-    const quantity = Math.min(20, Math.floor(line.quantity));
+    // Mysterious Archive sells museum pieces: one of each, whatever the cart says.
+    const quantity = Math.min(store.slug === "mysterious-archive" ? 1 : 20, Math.floor(line.quantity));
     // A bundle price holds only while something from another product is in
     // the cart with it. Remove the board and the socks are socks again.
     const bundled =
@@ -344,7 +346,7 @@ export async function priceCart(
       unitPriceCents,
       lineTotalCents: unitPriceCents * quantity,
       compareAtCents: bundled ? variant.priceCents : (variant.compareAtCents ?? null),
-      imageUrl: variant.imageUrl ?? null,
+      imageUrl: variant.imageUrl ?? (store.slug === "mysterious-archive" ? (product.images?.[0]?.url ?? null) : null),
     });
   }
 
@@ -379,6 +381,8 @@ export async function priceCart(
   if (row?.discountCode && lines.length && isComebackCode(row.discountCode) && normaliseCode(row.discountCode) !== comebackCodeFor(row.id)) {
     // A comeback code belongs to the cart it was minted for, and no other.
     discountReason = "That code is not valid";
+  } else if (row?.discountCode && lines.length && normaliseCode(row.discountCode).startsWith("OFFER-") && (discountReason = await offerRefusal(db, store.id, row.discountCode, lines))) {
+    // An accepted-offer code is only worth anything on the one piece it was made for.
   } else if (row?.discountCode && lines.length) {
     const found = await findDiscount(db, store.id, row.discountCode);
     const check = checkDiscount(found, {

@@ -260,7 +260,25 @@ export default function Cart({ loaderData, actionData }: Route.ComponentProps) {
         ) : (
           <>
             <div className="gk-panel">
-              {cart.lines.map((line) => (
+              {cart.lines.map((line) => store.slug === "mysterious-archive" ? (
+                <div className="gk-line ma-bag-line" key={line.variantId} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+                  {line.imageUrl ? <img src={line.imageUrl} alt={line.productTitle} style={{ width: 120, height: 150, objectFit: "contain", background: "#f5f6f8", borderRadius: 4, flex: "none" }} /> : null}
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span className="gk-quiet" style={{ display: "block", fontSize: 12, letterSpacing: ".08em" }}>CHROME HEARTS</span>
+                    <strong style={{ display: "block", fontSize: 18, lineHeight: 1.35, margin: "4px 0 8px" }}>{line.productTitle.replace(/^Chrome Hearts\s*/, "")}</strong>
+                    <span className="gk-quiet" style={{ display: "block", fontSize: 13 }}>Reference MA-{line.variantId.slice(0, 6).toUpperCase()}</span>
+                    {line.label ? <span className="gk-quiet" style={{ display: "block", fontSize: 13 }}>Condition: {line.label}</span> : null}
+                    {line.sublabel ? <span className="gk-quiet" style={{ display: "block", fontSize: 13 }}>{line.sublabel}</span> : null}
+                    <span className="gk-quiet" style={{ display: "block", fontSize: 13, marginTop: 6 }}>Authenticated · printed certificate included · one piece</span>
+                    <Form method="post" style={{ marginTop: 12 }}>
+                      <input type="hidden" name="variantId" value={line.variantId} />
+                      <input type="hidden" name="quantity" value="0" />
+                      <button type="submit" style={{ background: "none", border: 0, padding: 0, textDecoration: "underline", cursor: "pointer", fontSize: 13, color: "inherit" }}>Remove</button>
+                    </Form>
+                  </span>
+                  <span style={{ textAlign: "right", fontSize: 18, fontWeight: 700 }}>{formatMoney(line.lineTotalCents, cart.currency)}</span>
+                </div>
+              ) : (
                 <div className="gk-line" key={line.variantId}>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <strong style={{ display: "block", fontSize: 20 }}>{line.label}</strong>

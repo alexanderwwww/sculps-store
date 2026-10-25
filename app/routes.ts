@@ -4,6 +4,8 @@ export default [
   // Storefront. Which store answers is decided by the hostname the visitor
   // arrived on, not by the path.
   index("routes/storefront.tsx"),
+  route("archive/api/:op", "routes/archive.api.tsx"),
+  route("archive/account", "routes/archive.account.tsx"),
   route("archive/:handle?", "routes/archive.tsx"),
   route("healthz", "routes/healthz.ts"),
   // Apple Pay will not show until Stripe can fetch this from the live domain.
@@ -91,6 +93,7 @@ export default [
       route("products/:id", "routes/admin.products.$id.tsx"),
       route("inventory", "routes/admin.inventory.tsx"),
       route("customers", "routes/admin.customers.tsx"),
+      route("archive-messages", "routes/admin.archive-messages.tsx"),
       route("reviews", "routes/admin.reviews.tsx"),
       route("marketing", "routes/admin.marketing.tsx"),
       route("discounts", "routes/admin.discounts.tsx"),

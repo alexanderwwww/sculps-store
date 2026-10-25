@@ -42,6 +42,7 @@ export interface ShellCounts {
   newOrders: number;
   products: number;
   reviews: number;
+  messages?: number;
 }
 
 interface NavItem {
@@ -209,6 +210,16 @@ export function AdminShell({
       icon: (
         <svg width="18" height="18" viewBox="0 0 20 20" {...iconStroke} strokeLinecap="round">
           <path d="M10 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM4 17c0-3 2.7-4.6 6-4.6S16 14 16 17" />
+        </svg>
+      ),
+    },
+    {
+      to: withStore("/admin/archive-messages"),
+      label: "Customer messages",
+      count: counts.messages || undefined,
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 20 20" {...iconStroke} strokeLinecap="round">
+          <path d="M3.5 5.5A1.5 1.5 0 0 1 5 4h10a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 15 14H9l-3.5 3v-3H5a1.5 1.5 0 0 1-1.5-1.5z" />
         </svg>
       ),
     },

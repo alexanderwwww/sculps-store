@@ -1653,3 +1653,73 @@ export const emailSuppressions = pgTable("email_suppressions", {
   email: text("email").primaryKey(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/* ------------------------------------------------- Mysterious Archive accounts, offers, messages */
+
+/** One-time sign-in codes sent by email. Only a hash is stored. */
+export const maLoginCodes = pgTable(
+  "ma_login_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id").notNull(),
+    email: text("email").notNull(),
+    codeHash: text("code_hash").notNull(),
+    attempts: integer("attempts").notNull().default(0),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("ma_login_codes_email_idx").on(t.storeId, t.email, t.createdAt)],
+);
+
+export const maSessions = pgTable("ma_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id").notNull(),
+  email: text("email").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** One offer = one conversation, like a Vestiaire offer thread. */
+export const maOffers = pgTable(
+  "ma_offers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id").notNull(),
+    productId: uuid("product_id").notNull(),
+    variantId: uuid("variant_id").notNull(),
+    email: text("email").notNull(),
+    name: text("name"),
+    listCents: integer("list_cents").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    /** pending | accepted | rejected | withdrawn */
+    status: text("status").notNull().default("pending"),
+    discountCode: text("discount_code"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    ownerUnread: boolean("owner_unread").notNull().default(true),
+    customerUnread: boolean("customer_unread").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("ma_offers_store_status_idx").on(t.storeId, t.status, t.updatedAt),
+    index("ma_offers_email_idx").on(t.storeId, t.email),
+  ],
+);
+
+export const maMessages = pgTable(
+  "ma_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    offerId: uuid("offer_id")
+      .notNull()
+      .references(() => maOffers.id, { onDelete: "cascade" }),
+    /** customer | owner | system */
+    sender: text("sender").notNull(),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("ma_messages_offer_idx").on(t.offerId, t.createdAt)],
+);
