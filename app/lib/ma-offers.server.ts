@@ -19,6 +19,7 @@ import {
   maOwnerAttempts,
   maOwnerCodes,
   maOwnerSessions,
+  paymentProviders,
   maMessages,
   maOffers,
   maSessions,
@@ -27,6 +28,7 @@ import {
 } from "~/db/schema";
 import { sendEmail, esc } from "./email.server";
 import { OFFER_HOURS, dollars } from "./ma-shared";
+import { decryptSecret } from "./crypto.server";
 export { OFFER_HOURS, dollars };
 import { cartCookie, cartTokenForStore, readCartToken, saveCart, setCartDiscount, type CartLine } from "./cart.server";
 
@@ -693,4 +695,59 @@ export async function sendTestMail(env: Env, to: string): Promise<{ ok: boolean;
     html: shell("<p>This message was sent from <strong>mysterious@mysteriousarchive.com</strong> by your website.</p><p>If you can read it, customer email works.</p>"),
   });
   return r.ok ? { ok: true, from: FROM } : { ok: false, reason: r.reason, from: FROM };
+}
+
+/**
+ * Owner-only, read-only: asks Stripe about this store's connected account and returns a summary
+ * (never a key). Used to prove, without any charge, that the account can take payments.
+ */
+export async function stripeReadiness(db: DB, env: Env, storeId: string): Promise<Record<string, unknown>> {
+  const [row] = await db.select().from(paymentProviders).where(and(eq(paymentProviders.storeId, storeId), eq(paymentProviders.provider, "stripe"))).limit(1);
+  if (!row) return { ok: false, reason: "No Stripe provider on this store." };
+  const key = await decryptSecret(env, row.secretKeyEnc);
+  if (!key) return { ok: false, reason: "The Stripe secret key could not be read." };
+  const get = async (path: string) => {
+    try {
+      const res = await fetch(`https://api.stripe.com/v1${path}`, { headers: { Authorization: `Bearer ${key}` } });
+      const body = (await res.json()) as any;
+      return res.ok ? { ok: true as const, body } : { ok: false as const, status: res.status, error: body?.error?.message ?? "error" };
+    } catch (e) {
+      return { ok: false as const, status: 0, error: String(e).slice(0, 120) };
+    }
+  };
+  const [account, pmc, domains, hooks] = await Promise.all([get("/account"), get("/payment_method_configurations?limit=10"), get("/apple_pay/domains?limit=20"), get("/webhook_endpoints?limit=20")]);
+  const out: Record<string, unknown> = {
+    keyMode: key.startsWith("sk_live") || key.startsWith("rk_live") ? "live" : key.startsWith("sk_test") || key.startsWith("rk_test") ? "test" : "unknown",
+    keyType: key.startsWith("rk_") ? "restricted" : "secret",
+    publishableKeyMode: (row.publishableKey ?? "").startsWith("pk_live") ? "live" : (row.publishableKey ?? "").startsWith("pk_test") ? "test" : "unknown",
+    isPrimary: row.isPrimary,
+    connectedAt: row.connectedAt,
+  };
+  if (account.ok) {
+    const a = account.body;
+    Object.assign(out, {
+      account: {
+        id: a.id, country: a.country, defaultCurrency: a.default_currency, type: a.type,
+        chargesEnabled: a.charges_enabled, payoutsEnabled: a.payouts_enabled, detailsSubmitted: a.details_submitted,
+        businessName: a.business_profile?.name ?? null, businessUrl: a.business_profile?.url ?? null, mcc: a.business_profile?.mcc ?? null,
+        supportEmail: a.business_profile?.support_email ?? null, statementDescriptor: a.settings?.payments?.statement_descriptor ?? null,
+        bankAccounts: Array.isArray(a.external_accounts?.data) ? a.external_accounts.data.length : "not shown to this key",
+        payoutSchedule: a.settings?.payouts?.schedule ?? null,
+        currentlyDue: a.requirements?.currently_due ?? [], pastDue: a.requirements?.past_due ?? [], disabledReason: a.requirements?.disabled_reason ?? null,
+        pendingVerification: a.requirements?.pending_verification ?? [],
+        capabilities: a.capabilities ?? null,
+      },
+    });
+  } else out.accountError = account;
+  out.paymentMethods = pmc.ok
+    ? (pmc.body.data ?? []).map((c: any) => ({
+        name: c.name, isDefault: c.is_default, active: c.active,
+        methods: Object.fromEntries(Object.entries(c).filter(([, v]: [string, any]) => v && typeof v === "object" && v.display_preference).map(([k, v]: [string, any]) => [k, `${v.display_preference.value}${v.available === false ? " (not available)" : ""}`])),
+      }))
+    : pmc;
+  out.applePayDomains = domains.ok ? (domains.body.data ?? []).map((d: any) => d.domain_name) : domains;
+  out.webhooks = hooks.ok
+    ? (hooks.body.data ?? []).map((h: any) => ({ url: h.url, status: h.status, events: (h.enabled_events ?? []).slice(0, 12) }))
+    : hooks;
+  return { ok: true, ...out };
 }

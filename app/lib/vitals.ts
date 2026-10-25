@@ -61,9 +61,9 @@ export function p75(values: number[]): number | null {
  * Nothing here identifies anyone: the visit cookie the server already set is
  * the whole of it.
  */
-export function presenceScript(): string {
+export function presenceScript(everyMs = 20000): string {
   return `(function(){
-var EVERY=20000,last=0,timer=0,scrollMax=0,visibleSince=Date.now(),active=0;
+var EVERY=${Math.max(3000, Math.floor(everyMs))},last=0,timer=0,scrollMax=0,visibleSince=Date.now(),active=0;
 /* On the built-in workers.dev address the store is chosen by ?store=, so the
    beat has to say which shop it is beating for. Without it the visit is
    recorded against whichever store answers a bare request, which is also the

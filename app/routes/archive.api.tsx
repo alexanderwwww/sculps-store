@@ -15,6 +15,7 @@ import {
   counterOffer,
   rejectOffer,
   sendTestMail,
+  stripeReadiness,
   endOwner,
   ownerCookie,
   ownerSignIn,
@@ -85,6 +86,10 @@ export async function action({ request, context, params }: Route.ActionArgs) {
       case "owner-signout":
         await endOwner(context.db, store.id, request);
         return json({ ok: true }, { cookies: [clearOwnerCookie(url)] });
+      case "owner-stripecheck": {
+        const res = await stripeReadiness(context.db, env, store.id);
+        return json(res, { status: 200 });
+      }
       case "owner-mailtest": {
         const res = await sendTestMail(env, "getsculps@gmail.com");
         return json(res, { status: res.ok ? 200 : 500 });
