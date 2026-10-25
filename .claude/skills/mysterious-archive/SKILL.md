@@ -57,3 +57,7 @@ Role handoff (Alex, October 17): Claude takes over website design/implementation
 - Header: the "Bag ↗" arrow (an emoji on phones) is gone; a bag icon replaces it.
 - Phone sign-in: NOT built. Needs Twilio Verify (account SID, auth token, Verify service SID as Worker secrets). Email code sign-in works for any address.
 - Tested locally against the real database (22 owner-inbox checks) and on the live site (owner sign-in, inbox, conversation). Locally the API needs `?store=mysterious-archive` because there is no hostname.
+
+## 2026-10-25 home-screen app for the owner inbox (live version 6cbc5c30-c52b-4c9c-8ea5-e38086531c1b)
+- The owner Inbox can be added to the iPhone home screen / dock as an app: black tile with the white script logo (`public/archive-app-{180,192,512}.png`), name "MA Inbox", opens full screen at `/archive/owner` (then straight to the Inbox). Manifest `public/archive-owner.webmanifest`, declared by `archive.owner.tsx` and by `archive.account.tsx` only when the owner session is live; customers get a different icon and no app. Inside the app the owner signs in once with the owner code (iOS keeps a separate cookie jar for home-screen apps), then stays in for 30 days.
+- Not built: push notifications to the phone (email alerts to getsculps@gmail.com exist). The site already has web-push plumbing (VAPID, push_subscriptions) if Alex wants it.

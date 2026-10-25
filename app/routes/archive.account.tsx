@@ -11,9 +11,22 @@ import css from "~/storefronts/mysterious-archive/theme.css?url";
 export const links = () => [
   { rel: "stylesheet", href: css },
   { rel: "icon", type: "image/png", href: "/archive-icon.png" },
-  { rel: "apple-touch-icon", href: "/archive-icon.png" },
 ];
-export const meta = () => [{ title: "Messages — Mysterious Archive" }];
+/** The owner's Inbox can be added to the iPhone home screen as an app with the logo icon. */
+export const meta = ({ data }: { data?: { owner?: boolean } }) => [
+  { title: data?.owner ? "Inbox — Mysterious Archive" : "Messages — Mysterious Archive" },
+  ...(data?.owner
+    ? [
+        { tagName: "link", rel: "manifest", href: "/archive-owner.webmanifest" },
+        { tagName: "link", rel: "apple-touch-icon", href: "/archive-app-180.png" },
+        { name: "apple-mobile-web-app-capable", content: "yes" },
+        { name: "mobile-web-app-capable", content: "yes" },
+        { name: "apple-mobile-web-app-title", content: "MA Inbox" },
+        { name: "apple-mobile-web-app-status-bar-style", content: "black" },
+        { name: "theme-color", content: "#000000" },
+      ]
+    : [{ tagName: "link", rel: "apple-touch-icon", href: "/archive-icon-180.png" }]),
+];
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
@@ -101,6 +114,23 @@ const STATUS: Record<string, string> = {
   withdrawn: "Withdrawn",
   chat: "Chat",
 };
+
+function AppTip() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const standalone = (navigator as unknown as { standalone?: boolean }).standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+    let dismissed = false;
+    try { dismissed = localStorage.getItem("ma-app-tip") === "1"; } catch { /* private mode */ }
+    setShow(!standalone && !dismissed);
+  }, []);
+  if (!show) return null;
+  return (
+    <p className="ma-acct-tip">
+      Get the app icon: on iPhone tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.
+      <button type="button" className="ma-acct-link" onClick={() => { try { localStorage.setItem("ma-app-tip", "1"); } catch { /* ignore */ } setShow(false); }}>Got it</button>
+    </p>
+  );
+}
 
 function left(ms: number): string {
   const mins = Math.max(0, Math.floor(ms / 60000));
@@ -385,6 +415,7 @@ export default function Account({ loaderData }: Route.ComponentProps) {
             <h1>{data.owner ? "Inbox" : "Messages"}</h1>
             <p>{data.owner ? "Owner" : data.email} · <button className="ma-acct-link" type="button" onClick={signOut} disabled={leaving}>Sign out</button></p>
           </div>
+          {data.owner && <AppTip />}
           {data.list.length === 0 ? (
             <div className="ma-acct-empty">
               <p>{data.owner ? "No conversations yet. New offers and messages land here." : "No messages yet. Make an offer or start a chat from any piece."}</p>

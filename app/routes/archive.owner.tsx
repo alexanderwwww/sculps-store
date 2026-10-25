@@ -13,7 +13,17 @@ export const links = () => [
   { rel: "stylesheet", href: css },
   { rel: "icon", type: "image/png", href: "/archive-icon.png" },
 ];
-export const meta = () => [{ title: "Owner — Mysterious Archive" }, { name: "robots", content: "noindex,nofollow" }];
+export const meta = () => [
+  { title: "Owner — Mysterious Archive" },
+  { name: "robots", content: "noindex,nofollow" },
+  { tagName: "link", rel: "manifest", href: "/archive-owner.webmanifest" },
+  { tagName: "link", rel: "apple-touch-icon", href: "/archive-app-180.png" },
+  { name: "apple-mobile-web-app-capable", content: "yes" },
+  { name: "mobile-web-app-capable", content: "yes" },
+  { name: "apple-mobile-web-app-title", content: "MA Inbox" },
+  { name: "apple-mobile-web-app-status-bar-style", content: "black" },
+  { name: "theme-color", content: "#000000" },
+];
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
