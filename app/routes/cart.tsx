@@ -355,9 +355,9 @@ export default function Cart({ loaderData, actionData }: Route.ComponentProps) {
                   placeholder="Discount code"
                   aria-label="Discount code"
                   defaultValue=""
-                  style={{ flex: 1 }}
+                  style={{ flex: "1 1 auto", minWidth: 0, width: "100%" }}
                 />
-                <button type="submit" className="gk-cta" style={{ padding: "0 18px", height: 48, lineHeight: "48px" }}>
+                <button type="submit" className="gk-cta" style={{ padding: "0 18px", height: 48, lineHeight: "48px", flex: "none", width: "auto" }}>
                   Apply
                 </button>
               </Form>
