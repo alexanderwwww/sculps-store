@@ -48,3 +48,26 @@ create table if not exists ma_messages (
 );
 create index if not exists ma_messages_offer_idx on ma_messages (offer_id, created_at);
 alter table ma_offers add column if not exists counter_cents integer;
+create table if not exists ma_owner_codes (
+  id uuid primary key default gen_random_uuid(),
+  store_id uuid not null,
+  code_hash text not null,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+create table if not exists ma_owner_sessions (
+  id uuid primary key default gen_random_uuid(),
+  store_id uuid not null,
+  token_hash text not null unique,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+create table if not exists ma_owner_attempts (
+  id uuid primary key default gen_random_uuid(),
+  store_id uuid not null,
+  ip text not null,
+  ok boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists ma_owner_attempts_idx on ma_owner_attempts (store_id, created_at);
+alter table ma_offers add column if not exists customer_typing_at timestamptz;

@@ -9,7 +9,15 @@ import {
   acceptCounter,
   addMessage,
   declineCounter,
+  clearOwnerCookie,
   clearSessionCookie,
+  acceptOffer,
+  counterOffer,
+  rejectOffer,
+  endOwner,
+  ownerCookie,
+  ownerSignIn,
+  readOwner,
   createOffer,
   endSession,
   normEmail,
@@ -18,6 +26,7 @@ import {
   requestCode,
   sameOrigin,
   sessionCookie,
+  setTyping,
   startChat,
   verifyCode,
   withdrawOffer,
@@ -63,6 +72,40 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     }
   }
 
+  if (params.op === "owner-signin") {
+    const res = await ownerSignIn(context.db, env, store, text("code"), request);
+    if (!res.ok) return json(res, { status: 401 });
+    return json({ ok: true }, { cookies: [ownerCookie(res.token, url)] });
+  }
+  if (params.op.startsWith("owner-")) {
+    if (!(await readOwner(context.db, store.id, request))) return json({ ok: false, reason: "Owner sign-in needed.", signIn: true }, { status: 401 });
+    const offerId = text("offerId");
+    switch (params.op) {
+      case "owner-signout":
+        await endOwner(context.db, store.id, request);
+        return json({ ok: true }, { cookies: [clearOwnerCookie(url)] });
+      case "owner-reply": {
+        const res = await addMessage(context.db, env, store, offerId, "owner", text("body"), origin);
+        return json(res, { status: res.ok ? 200 : 400 });
+      }
+      case "owner-accept": {
+        const res = await acceptOffer(context.db, env, store, offerId, null, origin);
+        return json(res, { status: res.ok ? 200 : 400 });
+      }
+      case "owner-counter": {
+        const cents = Math.round(Number(text("amount").replace(/[$,\s]/g, "")) * 100);
+        const res = await counterOffer(context.db, env, store, offerId, cents, origin);
+        return json(res, { status: res.ok ? 200 : 400 });
+      }
+      case "owner-reject": {
+        const res = await rejectOffer(context.db, env, store, offerId, origin);
+        return json(res, { status: res.ok ? 200 : 400 });
+      }
+      default:
+        return json({ ok: false, reason: "Unknown request." }, { status: 404 });
+    }
+  }
+
   const session = await readSession(context.db, store.id, request);
   if (!session) return json({ ok: false, reason: "Sign in first.", signIn: true }, { status: 401 });
 
@@ -91,6 +134,10 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     case "counter-decline": {
       const ok = await declineCounter(context.db, env, store, text("offerId"), session.email, origin);
       return json({ ok }, { status: ok ? 200 : 400 });
+    }
+    case "typing": {
+      await setTyping(context.db, store, text("offerId"), session.email);
+      return json({ ok: true });
     }
     case "withdraw": {
       const ok = await withdrawOffer(context.db, store, text("offerId"), session.email);

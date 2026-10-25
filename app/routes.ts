@@ -6,6 +6,7 @@ export default [
   index("routes/storefront.tsx"),
   route("archive/api/:op", "routes/archive.api.tsx"),
   route("archive/account", "routes/archive.account.tsx"),
+  route("archive/owner", "routes/archive.owner.tsx"),
   route("archive/:handle?", "routes/archive.tsx"),
   route("healthz", "routes/healthz.ts"),
   // Apple Pay will not show until Stripe can fetch this from the live domain.

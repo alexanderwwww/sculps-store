@@ -1695,6 +1695,8 @@ export const maOffers = pgTable(
     amountCents: integer("amount_cents").notNull(),
     /** the seller's counter-offer, while status is countered */
     counterCents: integer("counter_cents"),
+    /** set while the customer is typing; only the owner ever sees it */
+    customerTypingAt: timestamp("customer_typing_at", { withTimezone: true }),
     /** pending | countered | accepted | rejected | withdrawn | chat */
     status: text("status").notNull().default("pending"),
     discountCode: text("discount_code"),
@@ -1724,4 +1726,31 @@ export const maMessages = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("ma_messages_offer_idx").on(t.offerId, t.createdAt)],
+);
+
+/** Mysterious Archive owner inbox: a private owner code, its sessions, and sign-in attempts (for lockout). */
+export const maOwnerCodes = pgTable("ma_owner_codes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id").notNull(),
+  codeHash: text("code_hash").notNull(),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export const maOwnerSessions = pgTable("ma_owner_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export const maOwnerAttempts = pgTable(
+  "ma_owner_attempts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id").notNull(),
+    ip: text("ip").notNull(),
+    ok: boolean("ok").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("ma_owner_attempts_idx").on(t.storeId, t.createdAt)],
 );

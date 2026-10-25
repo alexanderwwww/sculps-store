@@ -16,6 +16,9 @@ import {
   customers,
   discounts,
   maLoginCodes,
+  maOwnerAttempts,
+  maOwnerCodes,
+  maOwnerSessions,
   maMessages,
   maOffers,
   maSessions,
@@ -473,6 +476,94 @@ export async function declineCounter(db: DB, env: Env, store: Store, offerId: st
     await notify(env, store.contactEmail || OWNER_EMAIL, `Counter declined by ${email}`, `${email} declined your counter.\n${origin}/admin/archive-messages?store=${store.slug}&offer=${offerId}`, shell(`<p><strong>${esc(email)}</strong> declined your counter offer.</p>`));
   }
   return done.length > 0;
+}
+
+/** The customer is typing. Only the owner's view ever reads this; the customer never sees the owner typing. */
+export async function setTyping(db: DB, store: Store, offerId: string, email: string): Promise<void> {
+  await db
+    .update(maOffers)
+    .set({ customerTypingAt: new Date() })
+    .where(and(eq(maOffers.id, offerId), eq(maOffers.storeId, store.id), eq(maOffers.email, email)));
+}
+
+/* ------------------------------------------------------------------ owner inbox */
+
+export const OWNER_COOKIE = "ma_owner";
+const OWNER_DAYS = 30;
+const OWNER_WINDOW_MS = 15 * 60_000;
+
+export function ownerCookie(token: string, url: URL): string {
+  const secure = url.protocol === "https:" ? "; Secure" : "";
+  return `${OWNER_COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${OWNER_DAYS * 86400}${secure}`;
+}
+export function clearOwnerCookie(url: URL): string {
+  const secure = url.protocol === "https:" ? "; Secure" : "";
+  return `${OWNER_COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${secure}`;
+}
+
+export function normOwnerCode(raw: string): string {
+  return raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+export async function ownerCodeHash(storeId: string, code: string): Promise<string> {
+  return sha256Hex(`owner:${storeId}:${normOwnerCode(code)}`);
+}
+
+/** True when the request carries a live owner session for this store. */
+export async function readOwner(db: DB, storeId: string, request: Request): Promise<boolean> {
+  const token = readCookie(request, OWNER_COOKIE);
+  if (!token || token.length < 20) return false;
+  const [row] = await db
+    .select({ id: maOwnerSessions.id })
+    .from(maOwnerSessions)
+    .where(and(eq(maOwnerSessions.storeId, storeId), eq(maOwnerSessions.tokenHash, await sha256Hex(token)), gt(maOwnerSessions.expiresAt, new Date())))
+    .limit(1);
+  return Boolean(row);
+}
+
+export async function endOwner(db: DB, storeId: string, request: Request): Promise<void> {
+  const token = readCookie(request, OWNER_COOKIE);
+  if (!token) return;
+  await db.delete(maOwnerSessions).where(and(eq(maOwnerSessions.storeId, storeId), eq(maOwnerSessions.tokenHash, await sha256Hex(token))));
+}
+
+/**
+ * The owner signs in with one long private code. Wrong tries are counted per
+ * address and across the whole store, and the page locks for 15 minutes. Every
+ * success emails an alert, so a stranger getting in would be seen at once.
+ */
+export async function ownerSignIn(db: DB, env: Env, store: Store, code: string, request: Request): Promise<{ ok: true; token: string } | { ok: false; reason: string }> {
+  const ip = (request.headers.get("cf-connecting-ip") ?? "unknown").slice(0, 64);
+  const since = new Date(Date.now() - OWNER_WINDOW_MS);
+  const failed = await db
+    .select({ ip: maOwnerAttempts.ip })
+    .from(maOwnerAttempts)
+    .where(and(eq(maOwnerAttempts.storeId, store.id), eq(maOwnerAttempts.ok, false), gt(maOwnerAttempts.createdAt, since)));
+  if (failed.filter((f) => f.ip === ip).length >= 5 || failed.length >= 15) {
+    return { ok: false, reason: "Too many tries. Wait 15 minutes." };
+  }
+  const wanted = normOwnerCode(code);
+  const rows = await db.select({ hash: maOwnerCodes.codeHash }).from(maOwnerCodes).where(and(eq(maOwnerCodes.storeId, store.id), eq(maOwnerCodes.active, true)));
+  const given = wanted.length >= 16 ? await ownerCodeHash(store.id, wanted) : "";
+  let match = false;
+  for (const r of rows) if (given && safeEqual(r.hash, given)) match = true;
+  await db.insert(maOwnerAttempts).values({ storeId: store.id, ip, ok: match });
+  if (!match) return { ok: false, reason: "That code is not right." };
+  const token = randomHex(32);
+  await db.insert(maOwnerSessions).values({
+    storeId: store.id,
+    tokenHash: await sha256Hex(token),
+    expiresAt: new Date(Date.now() + OWNER_DAYS * 86400_000),
+  });
+  const ua = (request.headers.get("user-agent") ?? "").slice(0, 160);
+  await notify(
+    env,
+    store.contactEmail || OWNER_EMAIL,
+    "Owner sign-in to your Mysterious Archive inbox",
+    `Someone signed in to the owner inbox.\nIP: ${ip}\nDevice: ${ua}\nIf this was not you, tell Claude to change the owner code.`,
+    shell(`<p><strong>Owner sign-in</strong> to your Mysterious Archive inbox.</p><p style="font-size:13px;color:#555">IP ${esc(ip)}<br>${esc(ua)}</p><p>If this was not you, tell Claude to change the owner code.</p>`),
+  );
+  return { ok: true, token };
 }
 
 /* ------------------------------------------------------------------ reading */

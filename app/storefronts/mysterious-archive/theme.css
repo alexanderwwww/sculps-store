@@ -85,3 +85,16 @@ body:has(.ma){margin:0}
   .ma-acct-thread{padding:14px 0}
   .ma-acct-msg{max-width:88%}
 }
+/* header bag icon (no arrow emoji), owner inbox controls, typing dots */
+.ma-hl-bag{display:inline-flex;align-items:center;gap:6px}
+.ma-hl-bag svg{display:block}
+.ma-acct-owner{display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-top:1px solid #ebebeb;background:#fafaf8}
+.ma-acct-counter{display:flex;align-items:center;gap:8px}
+.ma-acct-counter span{font-weight:600}
+.ma-acct-counter input{flex:1;min-width:0;border:1px solid #cfcfcf;border-radius:4px;padding:12px;font:16px Arial,Helvetica,sans-serif}
+.ma-acct-outline{border:1.5px solid #0b5fd1;background:#fff;color:#171717;border-radius:4px;padding:12px 16px;font:600 15px Arial,Helvetica,sans-serif;cursor:pointer;white-space:nowrap}
+.ma-acct-outline:disabled{opacity:.45;cursor:not-allowed}
+.ma-acct-typing p{display:inline-flex;gap:5px;padding:4px 2px}
+.ma-acct-typing i{width:7px;height:7px;border-radius:50%;background:#9a9a9a;animation:ma-typing 1.2s infinite ease-in-out}
+.ma-acct-typing i:nth-child(2){animation-delay:.18s}.ma-acct-typing i:nth-child(3){animation-delay:.36s}
+@keyframes ma-typing{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
