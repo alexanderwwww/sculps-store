@@ -13,6 +13,20 @@
 import type { DB } from "~/db/client";
 import { recordOrderEvent } from "./admin.server";
 import { formatMoney } from "./money";
+import {
+  ARCHIVE_REPLY,
+  archiveAbandon,
+  archivePreview,
+  archiveOrderConfirmation,
+  archiveRefund,
+  archiveShippingNotice,
+  isArchiveDomain,
+  loadOrderPieces,
+  loadPieces,
+  pieceReference,
+  type ArchivePiece,
+  type Mail,
+} from "./emails/archive";
 import { reaperProduct, reaperHandles, type ReaperProductGuide } from "./emails/reaper-products";
 import { reaperReceiptHtml } from "./emails/reaper-receipt";
 import { reaperShippedEmail } from "./emails/reaper-flows";
@@ -23,6 +37,10 @@ export interface EmailLine {
   lineTotalCents: number;
   /** The picture on the variant that was bought, so the line shows that. */
   imageUrl?: string | null;
+  /** Product title and variant, kept apart for stores whose template shows both (Mysterious Archive). */
+  title?: string | null;
+  variantId?: string | null;
+  variantLabel?: string | null;
 }
 
 /**
@@ -521,6 +539,33 @@ function lineRows(lines: EmailLine[], currency: string): string {
  * Never claims a delivery date. A dropshipped order has no reliable date at
  * this point, and inventing one is how a chargeback starts.
  */
+/** Mysterious Archive: send one rendered message and write the same timeline entry the other stores get. */
+async function sendArchiveMail(
+  db: DB,
+  env: Env,
+  orderId: string,
+  mail: Mail,
+  to: { address: string; from: string; storeName: string; replyTo: string | null },
+  event: { ok: string; label: string },
+): Promise<boolean> {
+  const result = await send(env, {
+    from: `${to.storeName} <${to.from}>`,
+    to: to.address,
+    replyTo: to.replyTo || ARCHIVE_REPLY,
+    subject: mail.subject,
+    html: mail.html,
+    text: mail.text,
+  });
+  await recordOrderEvent(
+    db,
+    orderId,
+    result.ok ? event.ok : "email:failed",
+    result.ok ? `${event.label} sent to ${to.address}` : `${event.label} could NOT be sent to ${to.address} \u00b7 ${result.reason}`,
+    result.ok ? { id: result.id } : { reason: result.reason },
+  );
+  return result.ok;
+}
+
 export async function sendOrderConfirmation(
   db: DB,
   env: Env,
@@ -529,6 +574,28 @@ export async function sendOrderConfirmation(
 ): Promise<boolean> {
   const from = input.fromAddress || "orders@resend.dev";
   const subject = `${input.storeName} — order #${input.orderNumber} confirmed`;
+
+  if (isArchiveDomain(input.domain)) {
+    const pieces = await loadPieces(
+      db,
+      input.lines.map((l) => ({ variantId: l.variantId, title: l.title, label: l.variantLabel ?? l.label, quantity: l.quantity, totalCents: l.lineTotalCents })),
+    );
+    const mail = archiveOrderConfirmation({
+      first: (input.customerName || "").split(" ")[0] || "there",
+      reference: input.reference ?? orderReference(input.storeName, input.orderNumber),
+      currency: input.currency,
+      pieces,
+      subtotalCents: input.subtotalCents,
+      discountLabel: input.discountCode ? (String(input.discountCode).toUpperCase().startsWith("OFFER-") ? "Your accepted offer" : "Discount") : null,
+      discountCents: input.discountCents ?? 0,
+      shippingCents: input.shippingCents,
+      taxCents: input.taxCents,
+      totalCents: input.totalCents,
+      shipName: input.shipName ?? input.customerName,
+      shipLines: input.shipLines ?? [],
+    });
+    return sendArchiveMail(db, env, orderId, mail, { address: input.to, from, storeName: input.storeName, replyTo: input.replyTo }, { ok: "email:confirmation", label: "Order confirmation" });
+  }
 
   const text = [
     `Thanks ${input.customerName}.`,
@@ -718,6 +785,18 @@ export async function sendShippingNotice(
   const carrier = input.carrier ? ` with ${input.carrier}` : "";
   const link = trackingUrl(input.carrier, input.tracking);
 
+  if (isArchiveDomain(input.domain)) {
+    const mail = archiveShippingNotice({
+      first: (input.customerName || "").split(" ")[0] || "there",
+      reference: orderReference(input.storeName, input.orderNumber),
+      carrier: input.carrier,
+      tracking: input.tracking,
+      trackUrl: link,
+      pieces: await loadOrderPieces(db, orderId),
+    });
+    return sendArchiveMail(db, env, orderId, mail, { address: input.to, from, storeName: input.storeName, replyTo: input.replyTo }, { ok: "email:shipping", label: "Shipping confirmation" });
+  }
+
   if (input.reaper && input.domain) {
     const mail = reaperShippedEmail({
       domain: input.domain,
@@ -882,6 +961,16 @@ export async function sendRefundNotice(
     full: boolean;
   },
 ): Promise<boolean> {
+  if (isArchiveDomain(input.domain)) {
+    const mail = archiveRefund({
+      first: (input.customerName || "").split(" ")[0] || "there",
+      reference: orderReference(input.storeName, input.orderNumber),
+      amountCents: input.amountCents,
+      currency: input.currency,
+      full: input.full,
+    });
+    return sendArchiveMail(db, env, orderId, mail, { address: input.to, from: input.fromAddress || "orders@resend.dev", storeName: input.storeName, replyTo: input.replyTo }, { ok: "email:refund", label: "Refund email" });
+  }
   const amount = formatMoney(input.amountCents, input.currency);
   const text = [
     `Hi ${input.customerName},`,
@@ -1111,13 +1200,34 @@ export async function sendAbandonEmail(
     .filter(Boolean)
     .join("\n");
 
+  // Mysterious Archive has its own message; the unsubscribe headers below stay exactly the same.
+  let archiveMail: Mail | null = null;
+  if (isArchiveDomain(input.domain)) {
+    const pieces: ArchivePiece[] = input.lines.map((l) => ({
+      title: l.title ?? l.label,
+      condition: l.variantLabel ?? null,
+      reference: pieceReference(l.variantId),
+      imageUrl: l.imageUrl ?? null,
+      quantity: l.quantity,
+      totalCents: l.lineTotalCents,
+    }));
+    archiveMail = archiveAbandon({
+      kind,
+      first: input.customerName ? input.customerName.split(" ")[0] : null,
+      pieces,
+      recoverUrl: input.recoverUrl,
+      unsubscribeUrl: input.unsubscribeUrl,
+      postalAddress: input.postalAddress,
+    });
+  }
+
   return send(env, {
     from: `${input.storeName} <${from}>`,
     to: input.to,
-    replyTo: input.replyTo,
-    subject,
-    html: abandonedBody({ ...input, kind }),
-    text: input.unsubscribeUrl ? `${text}\n\nUnsubscribe: ${input.unsubscribeUrl}${input.postalAddress ? `\n${input.postalAddress}` : ""}` : text,
+    replyTo: input.replyTo || (archiveMail ? ARCHIVE_REPLY : input.replyTo),
+    subject: archiveMail ? archiveMail.subject : subject,
+    html: archiveMail ? archiveMail.html : abandonedBody({ ...input, kind }),
+    text: archiveMail ? (input.unsubscribeUrl ? `${archiveMail.text}\n\nUnsubscribe: ${input.unsubscribeUrl}${input.postalAddress ? `\n${input.postalAddress}` : ""}` : archiveMail.text) : input.unsubscribeUrl ? `${text}\n\nUnsubscribe: ${input.unsubscribeUrl}${input.postalAddress ? `\n${input.postalAddress}` : ""}` : text,
     headers: input.unsubscribeUrl
       ? { "List-Unsubscribe": `<${input.unsubscribeUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
       : undefined,
@@ -1559,6 +1669,10 @@ export function previewEmail(
   kind: string,
   input: { storeName: string; currency: string } & BrandFields,
 ): string {
+  if (isArchiveDomain(input.domain)) {
+    const archive = archivePreview(kind);
+    if (archive) return archive.html;
+  }
   const brand = brandOf(input);
   const accent = input.accentColor || "#E8B33C";
   const ink = input.brandColor || "#16223A";

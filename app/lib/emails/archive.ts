@@ -350,8 +350,65 @@ ${authBox()}`;
     `Mysterious Archive, New York. Reply to this email: ${ARCHIVE_REPLY}`,
   ].join("\n");
   return {
-    subject: d.kind === "checkout" ? `${d.first ? `${d.first}, ` : ""}your piece is waiting` : `${d.first ? `${d.first}, ` : ""}your piece is in your bag`,
+    subject: d.first
+      ? d.kind === "checkout" ? `${d.first}, your piece is waiting` : `${d.first}, your piece is in your bag`
+      : d.kind === "checkout" ? "Your piece is waiting" : "Your piece is in your bag",
     html: frame({ preheader: "One of each piece. Yours is waiting.", body, marketing: { unsubscribeUrl: d.unsubscribeUrl, postalAddress: d.postalAddress } }),
     text,
   };
+}
+
+/* ------------------------------------------------------------------ preview */
+
+const SAMPLE_PIECE: ArchivePiece = {
+  title: "Chrome Hearts Rolling Stones Tongue Trucker Hat",
+  condition: "One size · Pre-owned",
+  reference: "MA-EDC98A",
+  imageUrl: `${SITE}/media/ma-t-tongue-trucker-3d1ffc29.webp`,
+  quantity: 1,
+  totalCents: 285000,
+};
+
+/** Sample data for Shop Admin's email preview and for the preview harness. */
+export function archivePreview(kind: string): Mail | null {
+  switch (kind) {
+    case "confirmation":
+      return archiveOrderConfirmation({
+        first: "Alex",
+        reference: "MA734021",
+        currency: "USD",
+        pieces: [SAMPLE_PIECE],
+        subtotalCents: 285000,
+        discountLabel: null,
+        discountCents: 0,
+        shippingCents: 0,
+        taxCents: 0,
+        totalCents: 285000,
+        shipName: "Alex Example",
+        shipLines: ["59 Example Street, Apt 4", "New York, NY 10001"],
+      });
+    case "shipping":
+      return archiveShippingNotice({
+        first: "Alex",
+        reference: "MA734021",
+        carrier: "UPS",
+        tracking: "1Z999AA10123456784",
+        trackUrl: "https://www.ups.com/track?tracknum=1Z999AA10123456784",
+        pieces: [SAMPLE_PIECE],
+      });
+    case "refund":
+      return archiveRefund({ first: "Alex", reference: "MA734021", amountCents: 285000, currency: "USD", full: true });
+    case "abandoned_cart":
+    case "abandoned_checkout":
+      return archiveAbandon({
+        kind: kind === "abandoned_cart" ? "cart" : "checkout",
+        first: null,
+        pieces: [SAMPLE_PIECE],
+        recoverUrl: `${SITE}/cart?recover=sample`,
+        unsubscribeUrl: `${SITE}/unsubscribe?t=sample`,
+        postalAddress: "Mysterious Archive, New York, NY",
+      });
+    default:
+      return null;
+  }
 }

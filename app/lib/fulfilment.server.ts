@@ -82,6 +82,9 @@ async function confirmationInput(
       label: item.label,
       quantity: item.quantity,
       lineTotalCents: item.unitPriceCents * item.quantity,
+      title: item.title,
+      variantId: item.variantId,
+      variantLabel: item.label,
     })),
     subtotalCents: order.subtotalCents,
     taxCents: order.taxCents,
@@ -122,7 +125,7 @@ export async function resendConfirmation(db: DB, env: Env, orderId: string): Pro
   const sentBefore = events.some((e) => e.type === "email:confirmation");
   const standingGift = await publicOffer(db, loaded.store.id);
   const giftRow = standingGift && standingGift.kind === "fixed" ? standingGift : null;
-  const gift = giftRow && Number(giftRow.value) > 0 ? { code: giftRow.code, offCents: Number(giftRow.value) } : null;
+  const gift = loaded.store.slug !== "mysterious-archive" && giftRow && Number(giftRow.value) > 0 ? { code: giftRow.code, offCents: Number(giftRow.value) } : null;
   const ok = await sendOrderConfirmation(db, env, orderId, await confirmationInput(db, loaded, gift, { late: !sentBefore }));
   return ok ? { ok: true } : { ok: false, reason: "The email service refused it. The timeline says why." };
 }
@@ -171,7 +174,10 @@ export async function afterPaymentConfirmed(
   // The $30 personal store credit (Alex, 2026-10-07): every paid order mints
   // a one-use code with the customer's first name, sent in the receipt and
   // shown on the thank-you page.
-  const credit = await mintStoreCredit(db, store.id, orderId, order.customerName, order.totalCents);
+  // Mysterious Archive makes no offers of its own: no standing code, no $30 credit.
+  const archiveStore = store.slug === "mysterious-archive";
+  const credit = archiveStore ? null : await mintStoreCredit(db, store.id, orderId, order.customerName, order.totalCents);
+  if (archiveStore) gift = null;
   if (credit) gift = credit;
 
   // 1. The sound on his phone.
@@ -211,11 +217,13 @@ export async function afterPaymentConfirmed(
 
   // 2. Tell him. Without this, nothing announces a sale unless he is looking.
   if (!(await alreadyDone(db, orderId, "email:merchant"))) {
-    if (!store.contactEmail) {
+    // Mysterious Archive has no contact email on file; its sales alert goes to the owner's own inbox.
+    const alertTo = store.contactEmail || (store.slug === "mysterious-archive" ? "getsculps@gmail.com" : null);
+    if (!alertTo) {
       await recordOrderEvent(db, orderId, "email:skipped", "You were not emailed about this order: the store has no contact email in Settings → General.");
     } else if (emailReady(env)) {
       await sendMerchantNewOrder(db, env, orderId, {
-        to: store.contactEmail,
+        to: alertTo,
         storeName: store.name,
         orderNumber: order.number,
         customerName: order.customerName,

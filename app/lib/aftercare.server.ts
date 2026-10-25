@@ -97,6 +97,9 @@ export async function runAftercare(db: DB, env: Env, now = new Date()): Promise<
     };
     const shippedAgo = now.getTime() - (order.fulfilledAt as Date).getTime();
 
+    // Mysterious Archive has no set-up guide and no review pages: nothing is sent here.
+    if (store.slug === "mysterious-archive") continue;
+
     // Black Reaper: its own templates, and only once Alex has switched them on.
     if (COMEBACK_STORES.has(store.slug)) {
       if (!store.emailFlowsOn) continue;

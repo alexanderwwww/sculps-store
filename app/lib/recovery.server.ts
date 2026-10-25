@@ -98,7 +98,8 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
     summary.considered += 1;
 
     const kind: "cart" | "checkout" = cart.paymentIntentId ? "checkout" : "cart";
-    const lines = await describeLines(db, cart.items as CartLine[]);
+    const archive = store.slug === "mysterious-archive";
+    const lines = await describeLines(db, cart.items as CartLine[], archive);
     if (!lines.length) continue;
 
     const total = lines.reduce((sum, line) => sum + line.lineTotalCents, 0);
@@ -120,7 +121,7 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
     // email too, and so the code in the email is one that actually works.
     const standing = await publicOffer(db, store.id);
     const liveRow = standing && standing.kind === "fixed" ? standing : null;
-    const live = liveRow && Number(liveRow.value) > 0
+    const live = !archive && liveRow && Number(liveRow.value) > 0
       ? { code: liveRow.code, offCents: Number(liveRow.value) }
       : null;
 
@@ -142,7 +143,8 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
      */
     const COMEBACK_CENTS = 5000;
     let comeback: string | null = null;
-    if (kind === "checkout") {
+    // Mysterious Archive makes no offers of its own: its reminder carries no minted code.
+    if (kind === "checkout" && !archive) {
       const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
       const bytes = crypto.getRandomValues(new Uint8Array(6));
       comeback = "BACK" + Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
@@ -260,7 +262,7 @@ function firstImage(items: CartLine[]): string | null {
  * title the product is read back out of the database rather than the email
  * saying "item".
  */
-async function describeLines(db: DB, items: CartLine[]): Promise<EmailLine[]> {
+async function describeLines(db: DB, items: CartLine[], archive = false): Promise<EmailLine[]> {
   const lines: EmailLine[] = [];
 
   for (const item of items) {
@@ -270,12 +272,28 @@ async function describeLines(db: DB, items: CartLine[]): Promise<EmailLine[]> {
 
     if (!label && item.variantId) {
       const [row] = await db
-        .select({ product: products.title, variant: variants.label, image: variants.imageUrl })
+        .select({ product: products.title, variant: variants.label, image: variants.imageUrl, images: products.images, price: variants.priceCents })
         .from(variants)
         .innerJoin(products, eq(products.id, variants.productId))
         .where(eq(variants.id, item.variantId))
         .limit(1);
-      if (row) label = [row.product, row.variant].filter(Boolean).join(" — ");
+      if (row) {
+        label = [row.product, row.variant].filter(Boolean).join(" — ");
+        if (archive) {
+          const first = row.images?.[0];
+          const photo = first?.thumb ?? first?.url ?? null;
+          lines.push({
+            label,
+            quantity,
+            lineTotalCents: (unit || row.price) * quantity,
+            title: row.product,
+            variantId: item.variantId,
+            variantLabel: row.variant,
+            imageUrl: photo ? (photo.startsWith("http") ? photo : `https://mysteriousarchive.com${photo}`) : null,
+          });
+          continue;
+        }
+      }
     }
 
     if (!label) continue;
