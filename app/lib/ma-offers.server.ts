@@ -37,7 +37,8 @@ const SESSION_DAYS = 30;
 const CODE_MINUTES = 10;
 const MIN_OFFER_FRACTION = 0.5;
 const OWNER_EMAIL = "getsculps@gmail.com";
-const FROM = "Mysterious Archive <orders@blackreaper.us>";
+const FROM = "Mysterious Archive <mysterious@mysteriousarchive.com>";
+const REPLY_TO = "mysterious@mysteriousarchive.com";
 
 export type OfferRow = typeof maOffers.$inferSelect;
 type Store = { id: string; slug: string; name: string; currency: string; contactEmail?: string | null };
@@ -151,7 +152,7 @@ export async function startSession(db: DB, store: Store, email: string): Promise
 
 async function notify(env: Env, to: string, subject: string, text: string, html: string): Promise<void> {
   try {
-    await sendEmail(env, { from: FROM, to, subject, html, text });
+    await sendEmail(env, { from: FROM, replyTo: REPLY_TO, to, subject, html, text });
   } catch {
     /* an email is never worth failing the action that caused it */
   }
@@ -177,6 +178,7 @@ export async function requestCode(db: DB, env: Env, store: Store, email: string)
   });
   const sent = await sendEmail(env, {
     from: FROM,
+    replyTo: REPLY_TO,
     to: email,
     subject: `${code} is your Mysterious Archive code`,
     text: `Your Mysterious Archive sign-in code is ${code}. It works for ${CODE_MINUTES} minutes.`,
@@ -675,4 +677,17 @@ export async function offerRefusal(db: DB, storeId: string, code: string, lines:
   if (!offer.expiresAt || offer.expiresAt <= new Date()) return "This offer has expired";
   if (lines.length !== 1 || lines[0].variantId !== offer.variantId || lines[0].quantity !== 1) return "This offer is for one specific piece only";
   return null;
+}
+
+/** Owner-only: sends one plain test email from the store address to the owner and says exactly what happened. */
+export async function sendTestMail(env: Env, to: string): Promise<{ ok: boolean; reason?: string; from: string }> {
+  const r = await sendEmail(env, {
+    from: FROM,
+    replyTo: REPLY_TO,
+    to,
+    subject: "Mysterious Archive: sender check",
+    text: "This message was sent from mysterious@mysteriousarchive.com by your website. If you can read it, customer email works.",
+    html: shell("<p>This message was sent from <strong>mysterious@mysteriousarchive.com</strong> by your website.</p><p>If you can read it, customer email works.</p>"),
+  });
+  return r.ok ? { ok: true, from: FROM } : { ok: false, reason: r.reason, from: FROM };
 }

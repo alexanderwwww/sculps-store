@@ -32,6 +32,8 @@
   "r2_buckets": [
     { "binding": "MEDIA", "bucket_name": "gardenbuddy-media" }
   ],
+  // Cloudflare Email Service: Mysterious Archive customer mail leaves from its own domain.
+  "send_email": [{ "name": "EMAIL", "remote": true }],
   "vars": {
     // Public half of the web-push key pair; the private half is a secret.
     "VAPID_PUBLIC_KEY": "BCf8j0s_6L5JucJbLihh3D5Lu-BTXUBd6a8xHlbkNY1K_kCwUdlvgrYmt-O4rdILlFevGyo4svz7sUfWGYM69E0",

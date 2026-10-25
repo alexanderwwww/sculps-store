@@ -112,13 +112,42 @@ export function orderReference(storeLabel: string, orderNumber: number): string 
 }
 
 export function emailReady(env: Env): boolean {
-  return Boolean(env.RESEND_API_KEY);
+  return Boolean(env.RESEND_API_KEY) || Boolean((env as unknown as { EMAIL?: unknown }).EMAIL);
+}
+
+/** Domains whose mail goes out through Cloudflare Email Service (the `EMAIL` binding) instead of Resend. */
+const CLOUDFLARE_SENDING_DOMAINS = ["mysteriousarchive.com"];
+
+function parseFrom(from: string): { email: string; name?: string } {
+  const m = /^\s*(?:"?([^"<]*?)"?\s*)?<([^>]+)>\s*$/.exec(from);
+  return m ? { email: m[2].trim(), ...(m[1]?.trim() ? { name: m[1].trim() } : {}) } : { email: from.trim() };
 }
 
 async function send(
   env: Env,
   message: { from: string; to: string; replyTo?: string | null; subject: string; html: string; text: string; headers?: Record<string, string> },
 ): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
+  // Mysterious Archive mail leaves from its own domain through Cloudflare Email Service.
+  const sender = parseFrom(message.from);
+  const binding = (env as unknown as { EMAIL?: { send(m: unknown): Promise<{ messageId?: string }> } }).EMAIL;
+  if (binding && CLOUDFLARE_SENDING_DOMAINS.includes(sender.email.split("@")[1]?.toLowerCase() ?? "")) {
+    try {
+      const sent = await binding.send({
+        from: sender,
+        to: message.to,
+        subject: message.subject,
+        html: message.html,
+        text: message.text,
+        ...(message.replyTo ? { replyTo: message.replyTo } : {}),
+        ...(message.headers && Object.keys(message.headers).length ? { headers: message.headers } : {}),
+      });
+      return { ok: true, id: sent?.messageId ?? "" };
+    } catch (error) {
+      const e = error as { code?: string; message?: string };
+      return { ok: false, reason: `${e.code ?? "email"}: ${e.message ?? "send failed"}` };
+    }
+  }
+
   if (!env.RESEND_API_KEY) {
     return { ok: false, reason: "No Resend API key is set on the Worker." };
   }
