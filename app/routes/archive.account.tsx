@@ -4,7 +4,7 @@ import { inArray } from "drizzle-orm";
 import { products } from "~/db/schema";
 import { resolveStore } from "~/lib/store.server";
 import { MA_SLUG, getThread, listThreads, markRead, readOwner, readSession } from "~/lib/ma-offers.server";
-import { OFFER_HOURS } from "~/lib/ma-shared";
+import { OFFER_HOURS, REPLY_TIME } from "~/lib/ma-shared";
 import type { Route } from "./+types/archive.account";
 import css from "~/storefronts/mysterious-archive/theme.css?url";
 
@@ -302,6 +302,12 @@ function Thread({ thread, currency, query, owner }: { thread: NonNullable<Extrac
         </div>
       </div>
 
+      {!owner && (thread.status === "pending" || thread.status === "chat") && (
+        <p className="ma-acct-wait">
+          {thread.status === "pending" ? "Offer sent. Waiting for an answer from Mysterious Archive." : "Write to Mysterious Archive here. Your messages stay in this chat."}
+          {REPLY_TIME ? ` ${REPLY_TIME}` : ""}
+        </p>
+      )}
       <div className="ma-acct-msgs">
         {thread.messages.map((m) => (
           <div key={m.id} className={`ma-acct-msg is-${owner ? (m.sender === "owner" ? "customer" : m.sender === "customer" ? "owner" : m.sender) : m.sender}`}>
