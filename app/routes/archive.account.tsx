@@ -3,7 +3,7 @@ import { Link, useRevalidator } from "react-router";
 import { inArray } from "drizzle-orm";
 import { products } from "~/db/schema";
 import { resolveStore } from "~/lib/store.server";
-import { MA_SLUG, getThread, listThreads, markRead, readOwner, readSession } from "~/lib/ma-offers.server";
+import { MA_SLUG, getThread, listThreads, markRead, readOwner, readSession, unreadCount } from "~/lib/ma-offers.server";
 import { OFFER_HOURS, REPLY_TIME } from "~/lib/ma-shared";
 import type { Route } from "./+types/archive.account";
 import css from "~/storefronts/mysterious-archive/theme.css?url";
@@ -43,13 +43,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const imgs = ids.length
     ? await context.db.select({ id: products.id, images: products.images }).from(products).where(inArray(products.id, ids))
     : [];
-  const photo = new Map(imgs.map((p) => [p.id, p.images?.[0]?.url ?? null]));
+  const photo = new Map(imgs.map((p) => [p.id, p.images?.[0]?.thumb ?? p.images?.[0]?.url ?? null]));
   const openId = url.searchParams.get("offer");
   const thread = openId ? await getThread(context.db, store, openId, scope) : null;
   if (thread) await markRead(context.db, thread.offer.id, owner ? "owner" : "customer");
 
+  const unread = await unreadCount(context.db, store.id, owner ? { owner: true } : { email: session!.email });
   return {
     signedIn: true as const,
+    unread,
     owner,
     email: owner ? "Owner" : session!.email,
     query,
@@ -409,7 +411,7 @@ export default function Account({ loaderData }: Route.ComponentProps) {
         <Link className="ma-logo" to={"/archive" + query}><img src="/archive-logo-script.png" alt="Mysterious Archive" /></Link>
         <div className="ma-header-links">
           <Link to={"/archive/certificates" + query}>Certificates</Link>
-          <Link to={"/archive/account" + query}>Messages</Link>
+          <Link className="ma-hl-msg" to={"/archive/account" + query}>Messages{data.signedIn && data.unread > 0 && <b className="ma-badge" aria-label={data.unread + " unread"}>{data.unread}</b>}</Link>
           <Link className="ma-hl-bag" to={"/cart" + query}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Bag</span></Link>
         </div>
       </header>

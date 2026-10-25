@@ -350,7 +350,7 @@ export async function createOffer(
     .insert(maOffers)
     .values({ storeId: store.id, productId: item.productId, variantId, email, listCents: item.priceCents, amountCents })
     .returning({ id: maOffers.id });
-  await db.insert(maMessages).values({ offerId: row.id, sender: "system", body: `Offer of ${dollars(amountCents, store.currency)} sent.` });
+  await db.insert(maMessages).values({ offerId: row.id, sender: "customer", body: `I’d like to offer ${dollars(amountCents, store.currency)}.` });
   if (note.trim()) await addMessage(db, env, store, row.id, "customer", note, origin);
   else {
     const title = item.title.replace(/^Chrome Hearts\s*/, "");
@@ -624,7 +624,7 @@ export async function getThread(db: DB, store: Store, offerId: string, scope: { 
     offer: row.offer,
     title: row.title,
     handle: row.handle,
-    image: img?.url ?? null,
+    image: (img as any)?.thumb ?? img?.url ?? null,
     available: row.available,
     purchased,
     messages: messages.map((m) => ({ id: m.id, sender: m.sender, body: m.body, createdAt: m.createdAt.toISOString() })),
@@ -750,4 +750,14 @@ export async function stripeReadiness(db: DB, env: Env, storeId: string): Promis
     ? (hooks.body.data ?? []).map((h: any) => ({ url: h.url, status: h.status, events: (h.enabled_events ?? []).slice(0, 12) }))
     : hooks;
   return { ok: true, ...out };
+}
+
+
+/** Conversations with something new for this viewer: the number on the Messages link. */
+export async function unreadCount(db: DB, storeId: string, who: { owner: true } | { email: string }): Promise<number> {
+  const rows = await db
+    .select({ id: maOffers.id })
+    .from(maOffers)
+    .where(and(eq(maOffers.storeId, storeId), "owner" in who ? eq(maOffers.ownerUnread, true) : and(eq(maOffers.email, who.email), eq(maOffers.customerUnread, true))));
+  return rows.length;
 }
