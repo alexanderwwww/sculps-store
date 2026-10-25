@@ -1571,6 +1571,18 @@ export async function markOrderPaid(db: DB, orderId: string, note: string): Prom
     .where(and(eq(orders.id, orderId), sql`${orders.paymentStatus} in ('pending','failed')`))
     .returning({ storeId: orders.storeId, email: orders.email });
   if (!paid) return false;
+  // Mysterious Archive sells one of each piece. The moment an order is paid its pieces come off the
+  // shelf, so the same piece can never be bought twice. (Runs once: only the claimant gets here.)
+  await db
+    .execute(
+      sql`update variants v set available = greatest(v.available - oi.quantity, 0)
+          from order_items oi, orders o, stores s
+          where oi.order_id = ${orderId} and o.id = oi.order_id and s.id = o.store_id
+            and s.slug = 'mysterious-archive' and v.id = oi.variant_id`,
+    )
+    .catch(() => {
+      console.error("Archive stock update failed", orderId);
+    });
   await recordOrderEvent(db, orderId, "payment:confirmed", note).catch(() => {
     console.error("Paid order timeline update failed", orderId);
   });

@@ -3767,8 +3767,12 @@ function OnePage({
        * the number field still exists on load and iOS can still offer to
        * scan a card without anyone tapping first.
        */
+      // Mysterious Archive: every way to pay is its own row with its logo (Card, Klarna, Cash App Pay),
+      // instead of tabs that hide Klarna behind a chevron on a phone. Same Payment Element, same
+      // confirmation; only the layout and the order differ.
+      const archiveLook = store.slug === "mysterious-archive";
       const payment = elements.create("payment", {
-        layout: { type: "tabs" },
+        layout: archiveLook ? { type: "accordion", defaultCollapsed: false, radios: true, spacedAccordionItems: true } : { type: "tabs" },
         /* The terms line under the card is written with the Stripe ACCOUNT's
            name, and two of these stores share one account. Say this store's. */
         business: { name: store.name },
@@ -3781,7 +3785,7 @@ function OnePage({
          * still has its own button in the express row at the top, so nobody
          * who wants it loses it.
          */
-        paymentMethodOrder: ["card"],
+        paymentMethodOrder: archiveLook ? ["card", "klarna", "cashapp"] : ["card"],
         /*
          * Country and ZIP are not asked for twice. The delivery address is
          * already on this page and is handed to Stripe at confirmation, so
@@ -3872,6 +3876,10 @@ function OnePage({
                   applePay: typeof (window as any).ApplePaySession !== "undefined" ? "always" : "never",
                   googlePay: "never",
                   link: "auto",
+                  // Klarna is the one pay-over-time method the express row can carry (Stripe's
+                  // Express Checkout Element has no Cash App Pay or Affirm); it shows wherever
+                  // Stripe finds it eligible for the browser, amount and country.
+                  ...(store.slug === "mysterious-archive" ? { klarna: "auto" } : {}),
                 },
                 emailRequired: true,
                 // Only when the shop requires it. Making the wallet sheet
