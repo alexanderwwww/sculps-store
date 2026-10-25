@@ -158,8 +158,11 @@ async function notify(env: Env, to: string, subject: string, text: string, html:
   }
 }
 
+const BTN = "display:inline-block;background:#000000;color:#ffffff;padding:15px 30px;border-radius:4px;text-decoration:none;font-weight:600;font-size:15px";
+
+/** The Mysterious Archive mail frame: white page, script logo, hairlines, quiet footer. */
 function shell(body: string): string {
-  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;padding:28px;color:#171717">${body}<p style="margin-top:28px;font-size:12px;color:#777">Mysterious Archive</p></div>`;
+  return `<div style="background:#ffffff;margin:0;padding:0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff"><tr><td align="center" style="padding:32px 16px"><table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;font-family:Arial,Helvetica,sans-serif;color:#171717;font-size:15px;line-height:1.55"><tr><td align="center" style="padding-bottom:24px;border-bottom:1px solid #ebebeb"><img src="https://mysteriousarchive.com/archive-logo-script.png" alt="Mysterious Archive" width="240" style="display:block;border:0;width:240px;max-width:70%;height:auto"></td></tr><tr><td style="padding:30px 4px 26px">${body}</td></tr><tr><td align="center" style="border-top:1px solid #ebebeb;padding-top:20px;font-size:12px;line-height:1.7;color:#777777">Mysterious Archive &middot; New York<br>Reply to this email: <a href="mailto:${REPLY_TO}" style="color:#777777">${REPLY_TO}</a></td></tr></table></td></tr></table></div>`;
 }
 
 export async function requestCode(db: DB, env: Env, store: Store, email: string): Promise<{ ok: boolean; reason?: string }> {
@@ -291,7 +294,7 @@ export async function addMessage(
       offer.email,
       `Mysterious Archive replied about ${title}`,
       `${body}\n\nOpen your messages: ${origin}/archive/account?offer=${offer.id}`,
-      shell(`<p style="white-space:pre-wrap">${esc(body)}</p><p><a href="${origin}/archive/account?offer=${offer.id}" style="display:inline-block;background:#171717;color:#fff;padding:12px 20px;text-decoration:none">Open your messages</a></p>`),
+      shell(`<p style="font-size:12px;letter-spacing:.14em;color:#777777;margin:0 0 6px">CHROME HEARTS</p><p style="font-size:22px;line-height:1.3;margin:0 0 14px;font-weight:600">${esc(title)}</p><p style="margin:0 0 22px;padding:16px 18px;background:#f6f6f4;border-radius:6px;white-space:pre-wrap">${esc(body)}</p><p style="margin:0"><a href="${origin}/archive/account?offer=${offer.id}" style="${BTN}">Open your messages</a></p>`),
     );
   }
   return { ok: true };
@@ -405,7 +408,7 @@ export async function acceptOffer(db: DB, env: Env, store: Store, offerId: strin
     offer.email,
     `Your offer was accepted · ${title}`,
     `Mysterious Archive accepted ${dollars(price, store.currency)} for ${title}. Buy it within ${OFFER_HOURS} hours:\n${origin}/archive/account?offer=${offerId}`,
-    shell(`<p style="font-size:16px"><strong>Accepted.</strong> ${esc(title)} is yours at <strong>${dollars(price, store.currency)}</strong>.</p><p>Buy it within ${OFFER_HOURS} hours.</p><p><a href="${origin}/archive/account?offer=${offerId}" style="display:inline-block;background:#171717;color:#fff;padding:12px 20px;text-decoration:none">Buy now</a></p>`),
+    shell(`<p style="font-size:12px;letter-spacing:.14em;color:#777777;margin:0 0 6px">YOUR OFFER</p><p style="font-size:22px;line-height:1.3;margin:0 0 14px;font-weight:600">Accepted.</p><p style="margin:0 0 6px"><strong>${esc(title)}</strong></p><p style="margin:0 0 22px;font-size:28px;font-weight:600">${dollars(price, store.currency)}</p><p style="margin:0 0 22px">Your price is held for you for ${OFFER_HOURS} hours. Every order includes a printed Mysterious Archive certificate of authenticity.</p><p style="margin:0"><a href="${origin}/archive/account?offer=${offerId}" style="${BTN}">Buy now at ${dollars(price, store.currency)}</a></p>`),
   );
   return { ok: true };
 }
@@ -421,9 +424,9 @@ export async function rejectOffer(db: DB, env: Env, store: Store, offerId: strin
   await notify(
     env,
     offer.email,
-    `Update on your offer · ${title}`,
-    `Mysterious Archive could not accept your offer on ${title}. Open your messages: ${origin}/archive/account?offer=${offerId}`,
-    shell(`<p>Mysterious Archive could not accept your offer on <strong>${esc(title)}</strong>.</p><p><a href="${origin}/archive/account?offer=${offerId}">Open your messages</a></p>`),
+    `Your offer · ${title}`,
+    `Thank you for your offer on ${title}. This piece stays at its listed price for now. You can write to us any time: ${origin}/archive/account?offer=${offerId}`,
+    shell(`<p style="font-size:12px;letter-spacing:.14em;color:#777777;margin:0 0 6px">YOUR OFFER</p><p style="font-size:22px;line-height:1.3;margin:0 0 14px;font-weight:600">Thank you.</p><p style="margin:0 0 22px">Thank you for your offer on <strong>${esc(title)}</strong>. This piece stays at its listed price for now, and you can write to us any time.</p><p style="margin:0"><a href="${origin}/archive/account?offer=${offerId}" style="${BTN}">Open your messages</a></p>`),
   );
   return { ok: true };
 }
@@ -444,7 +447,7 @@ export async function counterOffer(db: DB, env: Env, store: Store, offerId: stri
     offer.email,
     `Counter offer · ${title}`,
     `Mysterious Archive countered with ${dollars(counterCents, store.currency)} for ${title}. Accept or decline: ${origin}/archive/account?offer=${offerId}`,
-    shell(`<p style="font-size:16px"><strong>Counter offer: ${dollars(counterCents, store.currency)}</strong> for ${esc(title)}.</p><p><a href="${origin}/archive/account?offer=${offerId}" style="display:inline-block;background:#171717;color:#fff;padding:12px 20px;text-decoration:none">Accept or decline</a></p>`),
+    shell(`<p style="font-size:12px;letter-spacing:.14em;color:#777777;margin:0 0 6px">YOUR OFFER</p><p style="font-size:22px;line-height:1.3;margin:0 0 14px;font-weight:600">A counter offer, just for you.</p><p style="margin:0 0 6px"><strong>${esc(title)}</strong></p><p style="margin:0 0 22px;font-size:28px;font-weight:600">${dollars(counterCents, store.currency)}</p><p style="margin:0"><a href="${origin}/archive/account?offer=${offerId}" style="${BTN}">View counter offer</a></p>`),
   );
   return { ok: true };
 }
