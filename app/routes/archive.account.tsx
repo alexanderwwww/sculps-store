@@ -126,7 +126,7 @@ function AppTip() {
   if (!show) return null;
   return (
     <p className="ma-acct-tip">
-      Get the app icon: on iPhone tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.
+      <span>Get the app icon: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong> (Safari) or <strong>Install</strong> (Chrome).</span>
       <button type="button" className="ma-acct-link" onClick={() => { try { localStorage.setItem("ma-app-tip", "1"); } catch { /* ignore */ } setShow(false); }}>Got it</button>
     </p>
   );
