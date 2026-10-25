@@ -53,6 +53,8 @@ export interface PaymentProvider {
     email?: string | null;
     orderReference: string;
     metadata?: Record<string, string>;
+    /** false = do not keep the card for later. Klarna and Affirm are hidden by Stripe on an intent that saves the card. Default true. */
+    saveCard?: boolean;
   }): Promise<PaymentIntent>;
   /**
    * Moves an existing intent to a new amount — and, once checkout knows them,
@@ -210,6 +212,7 @@ class StripeProvider implements PaymentProvider {
     email?: string | null;
     orderReference: string;
     metadata?: Record<string, string>;
+    saveCard?: boolean;
   }): Promise<PaymentIntent> {
     const body: Record<string, string> = {
       amount: String(input.amountCents),
@@ -230,7 +233,7 @@ class StripeProvider implements PaymentProvider {
        * The customer is created up front because off-session reuse needs one
        * — a saved method with nothing to attach it to cannot be charged.
        */
-      setup_future_usage: "off_session",
+      ...(input.saveCard === false ? {} : { setup_future_usage: "off_session" }),
     };
     if (!body.customer) {
       const customer = await this.call("customers", input.email ? { email: input.email } : {});

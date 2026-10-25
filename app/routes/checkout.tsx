@@ -915,6 +915,8 @@ async function payAction({
       currency: cart.currency,
       orderReference: `${store.name} order`,
       metadata: { storeId: store.id },
+      // Mysterious Archive sells one-off pieces with no add-on offer, and Stripe hides Klarna on an intent that saves the card.
+      saveCard: store.slug !== "mysterious-archive",
     });
     if (token) {
       await setCartPaymentIntentId(context.db, store.id, token, made.id, {
