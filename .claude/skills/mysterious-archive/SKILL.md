@@ -70,3 +70,6 @@ Role handoff (Alex, October 17): Claude takes over website design/implementation
 - NEW PRODUCTS: run `node scripts/ma-thumbs.mjs` after listing (needs DATABASE_URL, Cloudflare vars, ImageMagick); products without a thumb still show their normal photo.
 - Product page gallery thumbnails: 88x110 vertical strip on desktop, a horizontal strip of 72x90 on phones (were 52x65 and 40x50).
 - Accepted offers last 6 hours (OFFER_HOURS in app/lib/ma-shared.ts).
+
+## 2026-10-25 photo ad
+- First photo ad: every in-stock piece (36, no clothing or bags) on one white picture with the script logo and one quiet line "CHROME HEARTS · AUTHENTICATED · MYSTERIOUSARCHIVE.COM". 4:5, 2160x2700, `design/mysterious-archive/ads/all-pieces-4x5.jpg`. Made by `node scripts/ma-ad.mjs` (reads the live catalogue, uses the cropped thumbnails, rerun when stock changes). No prices, codes or delivery words in the picture (customer copy rule). Ad copy for Meta still to write when Alex says so.
