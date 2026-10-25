@@ -151,6 +151,8 @@ export default function BuyBox({ item, query, viewerEmail, certImage, certPdf }:
         )}
       </div>
 
+      <p className="ma-bb-pay">Pay in installments with Klarna, or with Cash App Pay, at checkout.</p>
+
       <div className="ma-bb-actions">
         <Form method="post" action={action(true)}>
           <input type="hidden" name="variantId" value={item.variantId} />

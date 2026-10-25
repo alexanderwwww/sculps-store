@@ -410,7 +410,7 @@ export async function acceptOffer(db: DB, env: Env, store: Store, offerId: strin
     offer.email,
     `Your offer was accepted · ${title}`,
     `Mysterious Archive accepted ${dollars(price, store.currency)} for ${title}. Buy it within ${OFFER_HOURS} hours:\n${origin}/archive/account?offer=${offerId}`,
-    shell(`<p style="font-size:12px;letter-spacing:.14em;color:#777777;margin:0 0 6px">YOUR OFFER</p><p style="font-size:22px;line-height:1.3;margin:0 0 14px;font-weight:600">Accepted.</p><p style="margin:0 0 6px"><strong>${esc(title)}</strong></p><p style="margin:0 0 22px;font-size:28px;font-weight:600">${dollars(price, store.currency)}</p><p style="margin:0 0 22px">Your price is held for you for ${OFFER_HOURS} hours. Every order includes a printed Mysterious Archive certificate of authenticity.</p><p style="margin:0"><a href="${origin}/archive/account?offer=${offerId}" style="${BTN}">Buy now at ${dollars(price, store.currency)}</a></p>`),
+    shell(`<p style="font-size:12px;letter-spacing:.14em;color:#777777;margin:0 0 6px">YOUR OFFER</p><p style="font-size:22px;line-height:1.3;margin:0 0 14px;font-weight:600">Accepted.</p><p style="margin:0 0 6px"><strong>${esc(title)}</strong></p><p style="margin:0 0 22px;font-size:28px;font-weight:600">${dollars(price, store.currency)}</p><p style="margin:0 0 22px">Your price is held for you for ${OFFER_HOURS} hours. Every order includes a printed Mysterious Archive certificate of authenticity.</p><p style="margin:0 0 22px;color:#777777;font-size:13px">Pay in installments with Klarna, or with Cash App Pay, at checkout.</p><p style="margin:0"><a href="${origin}/archive/account?offer=${offerId}" style="${BTN}">Buy now at ${dollars(price, store.currency)}</a></p>`),
   );
   return { ok: true };
 }

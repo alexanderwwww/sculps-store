@@ -66,3 +66,5 @@
  .ma-gallery .ma-thumbs{grid-column:1;grid-row:3;flex-direction:row;overflow-x:auto;overflow-y:hidden;max-height:none;padding-bottom:4px}
  .ma-gallery .ma-thumbs button{width:72px;height:90px}
 }
+
+.ma-bb-pay{margin:0 0 12px;font:12px/1.5 Arial,Helvetica,sans-serif;letter-spacing:.04em;color:#8a8a86;text-align:center}

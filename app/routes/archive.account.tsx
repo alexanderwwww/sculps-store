@@ -336,6 +336,7 @@ function Thread({ thread, currency, query, owner }: { thread: NonNullable<Extrac
         <div className="ma-acct-buy">
           <button className="ma-acct-primary" onClick={buy} disabled={busy}>Buy now at {money(thread.amountCents, currency)}</button>
           <p>Expires in {left(expires - now)} · valid for {OFFER_HOURS} hours, this piece only</p>
+          <p>Pay in installments with Klarna, or with Cash App Pay, at checkout.</p>
         </div>
       )}
       {!owner && expired && !thread.purchased && <p className="ma-acct-note">This offer has expired. Message us to reopen it.</p>}
