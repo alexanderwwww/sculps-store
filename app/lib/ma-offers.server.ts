@@ -544,7 +544,7 @@ export async function ownerSignIn(db: DB, env: Env, store: Store, code: string, 
   }
   const wanted = normOwnerCode(code);
   const rows = await db.select({ hash: maOwnerCodes.codeHash }).from(maOwnerCodes).where(and(eq(maOwnerCodes.storeId, store.id), eq(maOwnerCodes.active, true)));
-  const given = wanted.length >= 16 ? await ownerCodeHash(store.id, wanted) : "";
+  const given = wanted.length >= 10 ? await ownerCodeHash(store.id, wanted) : "";
   let match = false;
   for (const r of rows) if (given && safeEqual(r.hash, given)) match = true;
   await db.insert(maOwnerAttempts).values({ storeId: store.id, ip, ok: match });
