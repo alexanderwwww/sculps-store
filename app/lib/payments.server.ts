@@ -105,7 +105,7 @@ export interface PaymentProvider {
    * button is missing rather than broken when this has never been called.
    * Optional: only the card processors have anything to register.
    */
-  registerApplePayDomain?(domain: string): Promise<{ ok: true; domains: string[] } | { ok: false; reason: string }>;
+  registerApplePayDomain?(domain: string): Promise<{ ok: true; domains: string[]; methods?: Record<string, string> } | { ok: false; reason: string }>;
   /** Every domain this account may show Apple Pay on. Null when it cannot be read. */
   applePayDomains?(): Promise<string[] | null>;
 }
@@ -357,7 +357,7 @@ class StripeProvider implements PaymentProvider {
    */
   async registerApplePayDomain(
     domain: string,
-  ): Promise<{ ok: true; domains: string[] } | { ok: false; reason: string }> {
+  ): Promise<{ ok: true; domains: string[]; methods?: Record<string, string> } | { ok: false; reason: string }> {
     try {
       try {
         await this.call("apple_pay/domains", { domain_name: domain });
@@ -370,7 +370,28 @@ class StripeProvider implements PaymentProvider {
       const domains: string[] = Array.isArray(list?.data)
         ? list.data.map((d: { domain_name?: string }) => d.domain_name ?? "").filter(Boolean)
         : [];
-      return { ok: true, domains };
+      // Klarna, Google Pay, Link and PayPal buttons need the same claim through the newer
+      // payment method domains API. Best effort: a failure here never undoes the Apple Pay result.
+      let methods: Record<string, string> | undefined;
+      try {
+        try {
+          await this.call("payment_method_domains", { domain_name: domain });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "";
+          if (!/already|exists/i.test(message)) throw error;
+        }
+        const found = await this.call(`payment_method_domains?domain_name=${encodeURIComponent(domain)}`);
+        const row = found?.data?.[0];
+        if (row) {
+          methods = {};
+          for (const key of ["apple_pay", "google_pay", "klarna", "link", "paypal"]) {
+            if (row[key]?.status) methods[key] = String(row[key].status);
+          }
+        }
+      } catch {
+        methods = undefined;
+      }
+      return { ok: true, domains, ...(methods ? { methods } : {}) };
     } catch (error) {
       return { ok: false, reason: error instanceof Error ? error.message : "Stripe refused the request." };
     }

@@ -222,7 +222,8 @@ export async function action({ context, request }: Route.ActionArgs) {
       if (!domain) return { error: "This store has no domain yet, so there is nothing to register." };
       const result = await provider.registerApplePayDomain(domain);
       if (!result.ok) return { error: `Stripe refused the domain: ${result.reason}` };
-      return { ok: `Apple Pay is on for ${domain}. Stripe now lists ${result.domains.join(", ") || domain}.` };
+      const status = result.methods ? ` Wallets and Klarna on this domain: ${Object.entries(result.methods).map(([k, v]) => `${k.replace("_", " ")} ${v}`).join(", ")}.` : "";
+      return { ok: `Apple Pay is on for ${domain}. Stripe now lists ${result.domains.join(", ") || domain}.${status}` };
     } catch (error) {
       return { error: error instanceof PaymentsNotConfigured ? error.message : "Stripe could not be reached." };
     }
