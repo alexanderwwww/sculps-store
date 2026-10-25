@@ -6,7 +6,7 @@
  * the email), makes an offer on one piece, and Alex answers personally in Shop
  * Admin: accept, reject or write anything. No automatic replies.
  *
- * An accepted offer becomes a one-use, 12-hour fixed discount that is bound to
+ * An accepted offer becomes a one-use, 6-hour fixed discount that is bound to
  * that one piece (see offerRefusal, called from priceCart) and is only ever
  * handed to the signed-in buyer whose email made the offer.
  */
@@ -368,7 +368,7 @@ export async function withdrawOffer(db: DB, store: Store, offerId: string, email
   return done.length > 0;
 }
 
-/** Alex accepts, optionally at a different price. 12 hours, one use, that piece only. */
+/** Alex accepts, optionally at a different price. 6 hours, one use, that piece only. */
 export async function acceptOffer(db: DB, env: Env, store: Store, offerId: string, amountCents: number | null, origin: string): Promise<{ ok: boolean; reason?: string }> {
   const [offer] = await db.select().from(maOffers).where(and(eq(maOffers.id, offerId), eq(maOffers.storeId, store.id))).limit(1);
   if (!offer || offer.status === "chat") return { ok: false, reason: "Offer not found." };
@@ -447,7 +447,7 @@ export async function counterOffer(db: DB, env: Env, store: Store, offerId: stri
   return { ok: true };
 }
 
-/** The buyer takes the seller's counter: it becomes an accepted offer with the 12-hour buy window. */
+/** The buyer takes the seller's counter: it becomes an accepted offer with the 6-hour buy window. */
 export async function acceptCounter(db: DB, env: Env, store: Store, offerId: string, email: string, origin: string): Promise<{ ok: boolean; reason?: string }> {
   const [offer] = await db.select().from(maOffers).where(and(eq(maOffers.id, offerId), eq(maOffers.storeId, store.id), eq(maOffers.email, email))).limit(1);
   if (!offer || offer.status !== "countered" || !offer.counterCents) return { ok: false, reason: "There is no counter offer to accept." };

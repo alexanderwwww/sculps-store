@@ -225,7 +225,7 @@ export default function BuyBox({ item, query, viewerEmail, certImage, certPdf }:
                     <label>Your offer (USD)
                       <span className="ma-dlg-money"><b>$</b><input inputMode="numeric" placeholder={String(Math.round(minOffer / 100))} value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))} required autoFocus /></span>
                     </label>
-                    <p className="ma-dlg-small">Offers start at {money(minOffer, item.currency)}. If we accept, you have 12 hours to buy it at your price.</p>
+                    <p className="ma-dlg-small">Offers start at {money(minOffer, item.currency)}. If we accept, you have 6 hours to buy it at your price.</p>
                     <label>Message (optional)
                       <textarea rows={3} maxLength={1500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Say something about your offer" />
                     </label>

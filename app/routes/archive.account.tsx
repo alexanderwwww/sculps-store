@@ -322,7 +322,7 @@ function Thread({ thread, currency, query, owner }: { thread: NonNullable<Extrac
       {owner ? (
         (thread.status === "pending" || thread.status === "countered" || expired) ? (
           <div className="ma-acct-owner">
-            <button className="ma-acct-primary" onClick={() => ownerAct("owner-accept")} disabled={busy}>{expired ? "Reopen for 12 hours" : `Accept ${money(thread.amountCents, currency)}`}</button>
+            <button className="ma-acct-primary" onClick={() => ownerAct("owner-accept")} disabled={busy}>{expired ? `Reopen for ${OFFER_HOURS} hours` : `Accept ${money(thread.amountCents, currency)}`}</button>
             <div className="ma-acct-counter">
               <span>$</span>
               <input inputMode="decimal" placeholder={String(Math.round(thread.listCents / 100))} value={counter} onChange={(e) => setCounter(e.target.value.replace(/[^\d.]/g, ""))} aria-label="Counter offer in dollars" />
