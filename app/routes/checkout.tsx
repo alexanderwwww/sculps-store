@@ -3732,7 +3732,8 @@ function OnePage({
          * Elements was never told, so every card payment failed at the last
          * step.
          */
-        setupFutureUsage: "off_session",
+        // Mysterious Archive does not keep cards, so its intent has no setup_future_usage; this must match it.
+        ...(store.slug === "mysterious-archive" ? {} : { setupFutureUsage: "off_session" }),
       });
       stripeRef.current = stripe;
       elementsRef.current = elements;
