@@ -12,6 +12,7 @@ import { card, Empty } from "~/admin/ui";
 import {
   acceptOffer,
   addMessage,
+  counterOffer,
   getThread,
   listThreads,
   markRead,
@@ -23,7 +24,7 @@ export function meta() {
   return [{ title: "Customer messages — Shop Admin" }];
 }
 
-type Status = "pending" | "accepted" | "rejected" | "withdrawn" | "chat";
+type Status = "pending" | "countered" | "accepted" | "rejected" | "withdrawn" | "chat";
 
 export async function loader({ context, request }: Route.LoaderArgs) {
   await requireUser(context.db, request);
@@ -46,6 +47,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       title: t.title.replace(/^Chrome Hearts\s*/, ""),
       status: t.status as Status,
       amountCents: t.amountCents,
+      counterCents: t.counterCents,
       listCents: t.listCents,
       unread: t.ownerUnread && t.id !== thread?.offer.id,
       last: t.last,
@@ -61,6 +63,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
           image: thread.image,
           status: thread.offer.status as Status,
           amountCents: thread.offer.amountCents,
+          counterCents: thread.offer.counterCents,
           listCents: thread.offer.listCents,
           expiresAt: thread.offer.expiresAt ? thread.offer.expiresAt.toISOString() : null,
           purchased: thread.purchased,
@@ -101,6 +104,13 @@ export async function action({ context, request }: Route.ActionArgs) {
       ? { ok: true, message: `${OFFER_HOURS}-hour buy link sent to ${thread.offer.email}.` }
       : { ok: false, message: res.reason ?? "Could not accept." };
   }
+  if (intent === "counter") {
+    const raw = String(form.get("counter") ?? "").replace(/[$,\s]/g, "");
+    const value = Number(raw);
+    if (!raw || !Number.isFinite(value) || value <= 0) return { ok: false, message: "Enter your counter price in dollars." };
+    const res = await counterOffer(context.db, env, s, offerId, Math.round(value * 100), origin);
+    return res.ok ? { ok: true, message: `Counter offer sent to ${thread.offer.email}.` } : { ok: false, message: res.reason ?? "Could not send the counter." };
+  }
   if (intent === "reject") {
     const res = await rejectOffer(context.db, env, s, offerId, origin);
     return res.ok ? { ok: true, message: "Offer declined." } : { ok: false, message: res.reason ?? "Could not decline." };
@@ -123,6 +133,7 @@ function when(iso: string): string {
 
 const CHIP: Record<string, { label: string; bg: string; fg: string }> = {
   pending: { label: "Needs answer", bg: "#fff4d6", fg: "#7a5200" },
+  countered: { label: "Counter sent", bg: "#e6eefb", fg: "#1d4a99" },
   accepted: { label: "Accepted", bg: "#dff5e3", fg: "#17612b" },
   rejected: { label: "Declined", bg: "#f3dcdc", fg: "#8a1f1f" },
   withdrawn: { label: "Withdrawn", bg: "#ececec", fg: "#555" },
@@ -284,19 +295,13 @@ export default function ArchiveMessages({ loaderData, actionData }: Route.Compon
                 )}
               </div>
 
-              {thread.status === "pending" || expired(thread.status, thread.expiresAt) ? (
+              {thread.status === "pending" || thread.status === "countered" || expired(thread.status, thread.expiresAt) ? (
                 <Form method="post" style={{ display: "flex", gap: 10, padding: "12px 16px", borderTop: "1px solid var(--border)", alignItems: "center", flexWrap: "wrap" }}>
                   <input type="hidden" name="offerId" value={thread.id} />
-                  <label style={{ fontSize: 13 }}>
-                    Accept at $
-                    <input
-                      name="amount"
-                      inputMode="decimal"
-                      defaultValue={String(thread.amountCents / 100)}
-                      aria-label="Price in dollars"
-                      style={{ width: 110, marginLeft: 4, padding: "7px 9px", border: "1px solid var(--border)", borderRadius: 8, font: "inherit" }}
-                    />
-                  </label>
+                  <input type="hidden" name="amount" value={String(thread.amountCents / 100)} />
+                  {thread.status === "countered" && thread.counterCents ? (
+                    <span style={{ fontSize: 13, width: "100%" }}>Your counter of <strong>{dollars(thread.counterCents, cur)}</strong> is waiting for the buyer.</span>
+                  ) : null}
                   <button
                     type="submit"
                     name="intent"
@@ -304,7 +309,26 @@ export default function ArchiveMessages({ loaderData, actionData }: Route.Compon
                     disabled={busy}
                     style={{ padding: "9px 16px", borderRadius: 8, border: 0, background: "#17612b", color: "#fff", fontWeight: 600, cursor: "pointer" }}
                   >
-                    Accept
+                    Accept {dollars(thread.amountCents, cur)}
+                  </button>
+                  <label style={{ fontSize: 13 }}>
+                    Counter $
+                    <input
+                      name="counter"
+                      inputMode="decimal"
+                      placeholder={String(Math.round(thread.listCents / 100))}
+                      aria-label="Counter offer in dollars"
+                      style={{ width: 100, marginLeft: 4, padding: "7px 9px", border: "1px solid var(--border)", borderRadius: 8, font: "inherit" }}
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="counter"
+                    disabled={busy}
+                    style={{ padding: "9px 16px", borderRadius: 8, border: "1px solid #1d4a99", background: "transparent", color: "#1d4a99", fontWeight: 600, cursor: "pointer" }}
+                  >
+                    Counter offer
                   </button>
                   <button
                     type="submit"
@@ -318,8 +342,8 @@ export default function ArchiveMessages({ loaderData, actionData }: Route.Compon
                   >
                     Decline
                   </button>
-                  <span style={{ fontSize: 12, color: "var(--muted, #777)" }}>
-                    Accepting emails the buyer a {OFFER_HOURS}-hour link at this price. A different price is a counter offer.
+                  <span style={{ fontSize: 12, color: "var(--muted, #777)", width: "100%" }}>
+                    Accept emails the buyer a {OFFER_HOURS}-hour link at their price. Counter sends your price and they accept or decline it.
                   </span>
                 </Form>
               ) : null}

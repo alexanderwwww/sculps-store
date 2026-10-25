@@ -44,6 +44,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       title: r.title.replace(/^Chrome Hearts\s*/, ""),
       status: r.status,
       amountCents: r.amountCents,
+      counterCents: r.counterCents,
       unread: r.customerUnread && r.id !== thread?.offer.id,
       last: r.last,
       image: photo.get(r.productId) ?? null,
@@ -57,6 +58,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
           status: thread.offer.status,
           listCents: thread.offer.listCents,
           amountCents: thread.offer.amountCents,
+          counterCents: thread.offer.counterCents,
           expiresAt: thread.offer.expiresAt ? new Date(thread.offer.expiresAt).toISOString() : null,
           available: thread.available,
           purchased: thread.purchased,
@@ -87,6 +89,7 @@ const money = (cents: number, currency: string) =>
 
 const STATUS: Record<string, string> = {
   pending: "Pending",
+  countered: "Counter offer",
   accepted: "Accepted",
   rejected: "Declined",
   withdrawn: "Withdrawn",
@@ -208,6 +211,15 @@ function Thread({ thread, currency, query }: { thread: NonNullable<Extract<Route
     setBusy(false);
     setError(r.reason || "Could not open checkout.");
   };
+  const answerCounter = async (accept: boolean) => {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    const r = await post(accept ? "counter-accept" : "counter-decline", { offerId: thread.id });
+    setBusy(false);
+    if (r.ok) void revalidator.revalidate();
+    else setError(r.reason || "Could not send your answer.");
+  };
   const withdraw = async () => {
     if (busy) return;
     setBusy(true);
@@ -251,7 +263,14 @@ function Thread({ thread, currency, query }: { thread: NonNullable<Extract<Route
       {expired && !thread.purchased && <p className="ma-acct-note">This offer has expired. Message us to reopen it.</p>}
       {thread.status === "accepted" && thread.purchased && <p className="ma-acct-note">Purchased</p>}
       {thread.status === "accepted" && !thread.purchased && thread.available < 1 && <p className="ma-acct-note">This piece has been sold</p>}
-      {thread.status === "pending" && (
+      {thread.status === "countered" && thread.counterCents ? (
+        <div className="ma-acct-buy">
+          <p><strong>Counter offer: {money(thread.counterCents, currency)}</strong></p>
+          <button className="ma-acct-primary" onClick={() => answerCounter(true)} disabled={busy}>Accept {money(thread.counterCents, currency)}</button>
+          <button className="ma-acct-link" type="button" onClick={() => answerCounter(false)} disabled={busy}>Decline counter offer</button>
+        </div>
+      ) : null}
+      {(thread.status === "pending" || thread.status === "countered") && (
         <button className="ma-acct-link" type="button" onClick={withdraw} disabled={busy}>Withdraw offer</button>
       )}
 

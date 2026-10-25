@@ -1693,7 +1693,9 @@ export const maOffers = pgTable(
     name: text("name"),
     listCents: integer("list_cents").notNull(),
     amountCents: integer("amount_cents").notNull(),
-    /** pending | accepted | rejected | withdrawn */
+    /** the seller's counter-offer, while status is countered */
+    counterCents: integer("counter_cents"),
+    /** pending | countered | accepted | rejected | withdrawn | chat */
     status: text("status").notNull().default("pending"),
     discountCode: text("discount_code"),
     expiresAt: timestamp("expires_at", { withTimezone: true }),

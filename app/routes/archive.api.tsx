@@ -6,7 +6,9 @@ import type { Route } from "./+types/archive.api";
 import { resolveStore } from "~/lib/store.server";
 import {
   MA_SLUG,
+  acceptCounter,
   addMessage,
+  declineCounter,
   clearSessionCookie,
   createOffer,
   endSession,
@@ -81,6 +83,14 @@ export async function action({ request, context, params }: Route.ActionArgs) {
       if (!thread) return json({ ok: false, reason: "Conversation not found." }, { status: 404 });
       const res = await addMessage(context.db, env, store, thread.offer.id, "customer", text("body"), origin);
       return json(res, { status: res.ok ? 200 : 400 });
+    }
+    case "counter-accept": {
+      const res = await acceptCounter(context.db, env, store, text("offerId"), session.email, origin);
+      return json(res, { status: res.ok ? 200 : 400 });
+    }
+    case "counter-decline": {
+      const ok = await declineCounter(context.db, env, store, text("offerId"), session.email, origin);
+      return json({ ok }, { status: ok ? 200 : 400 });
     }
     case "withdraw": {
       const ok = await withdrawOffer(context.db, store, text("offerId"), session.email);

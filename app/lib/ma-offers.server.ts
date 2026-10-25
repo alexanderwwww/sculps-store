@@ -333,8 +333,8 @@ export async function createOffer(
   const open = await db
     .select({ id: maOffers.id, status: maOffers.status, expiresAt: maOffers.expiresAt })
     .from(maOffers)
-    .where(and(eq(maOffers.storeId, store.id), eq(maOffers.email, email), eq(maOffers.variantId, variantId), inArray(maOffers.status, ["pending", "accepted"])));
-  const live = open.find((o) => o.status === "pending" || (o.expiresAt && o.expiresAt > new Date()));
+    .where(and(eq(maOffers.storeId, store.id), eq(maOffers.email, email), eq(maOffers.variantId, variantId), inArray(maOffers.status, ["pending", "countered", "accepted"])));
+  const live = open.find((o) => o.status === "pending" || o.status === "countered" || (o.expiresAt && o.expiresAt > new Date()));
   if (live) return { ok: false, reason: "You already have an offer on this piece. Open it in your messages.", offerId: live.id };
   const [row] = await db
     .insert(maOffers)
@@ -359,7 +359,7 @@ export async function withdrawOffer(db: DB, store: Store, offerId: string, email
   const done = await db
     .update(maOffers)
     .set({ status: "withdrawn", updatedAt: new Date(), ownerUnread: true })
-    .where(and(eq(maOffers.id, offerId), eq(maOffers.storeId, store.id), eq(maOffers.email, email), eq(maOffers.status, "pending")))
+    .where(and(eq(maOffers.id, offerId), eq(maOffers.storeId, store.id), eq(maOffers.email, email), inArray(maOffers.status, ["pending", "countered"])))
     .returning({ id: maOffers.id });
   if (done.length) await db.insert(maMessages).values({ offerId, sender: "system", body: "Offer withdrawn." });
   return done.length > 0;
@@ -421,6 +421,58 @@ export async function rejectOffer(db: DB, env: Env, store: Store, offerId: strin
     shell(`<p>Mysterious Archive could not accept your offer on <strong>${esc(title)}</strong>.</p><p><a href="${origin}/archive/account?offer=${offerId}">Open your messages</a></p>`),
   );
   return { ok: true };
+}
+
+/** Alex proposes a different price. The buyer then accepts or declines it, like Vestiaire's counter offer. */
+export async function counterOffer(db: DB, env: Env, store: Store, offerId: string, counterCents: number, origin: string): Promise<{ ok: boolean; reason?: string }> {
+  const [offer] = await db.select().from(maOffers).where(and(eq(maOffers.id, offerId), eq(maOffers.storeId, store.id))).limit(1);
+  if (!offer || offer.status === "chat") return { ok: false, reason: "Offer not found." };
+  if (offer.status !== "pending" && offer.status !== "countered") return { ok: false, reason: "This offer is already settled." };
+  const item = await sellable(db, store, offer.variantId);
+  if (!item) return { ok: false, reason: "This piece is no longer available." };
+  if (!Number.isInteger(counterCents) || counterCents <= 0 || counterCents >= item.priceCents) return { ok: false, reason: "A counter offer must be below the list price." };
+  await db.update(maOffers).set({ status: "countered", counterCents, customerUnread: true, updatedAt: new Date() }).where(eq(maOffers.id, offerId));
+  await db.insert(maMessages).values({ offerId, sender: "system", body: `Counter offer: ${dollars(counterCents, store.currency)}.` });
+  const title = item.title.replace(/^Chrome Hearts\s*/, "");
+  await notify(
+    env,
+    offer.email,
+    `Counter offer · ${title}`,
+    `Mysterious Archive countered with ${dollars(counterCents, store.currency)} for ${title}. Accept or decline: ${origin}/archive/account?offer=${offerId}`,
+    shell(`<p style="font-size:16px"><strong>Counter offer: ${dollars(counterCents, store.currency)}</strong> for ${esc(title)}.</p><p><a href="${origin}/archive/account?offer=${offerId}" style="display:inline-block;background:#171717;color:#fff;padding:12px 20px;text-decoration:none">Accept or decline</a></p>`),
+  );
+  return { ok: true };
+}
+
+/** The buyer takes the seller's counter: it becomes an accepted offer with the 12-hour buy window. */
+export async function acceptCounter(db: DB, env: Env, store: Store, offerId: string, email: string, origin: string): Promise<{ ok: boolean; reason?: string }> {
+  const [offer] = await db.select().from(maOffers).where(and(eq(maOffers.id, offerId), eq(maOffers.storeId, store.id), eq(maOffers.email, email))).limit(1);
+  if (!offer || offer.status !== "countered" || !offer.counterCents) return { ok: false, reason: "There is no counter offer to accept." };
+  const res = await acceptOffer(db, env, store, offerId, offer.counterCents, origin);
+  if (res.ok) {
+    await db.update(maOffers).set({ ownerUnread: true }).where(eq(maOffers.id, offerId));
+    await notify(
+      env,
+      store.contactEmail || OWNER_EMAIL,
+      `Counter accepted by ${offer.email}`,
+      `${offer.email} accepted your counter of ${dollars(offer.counterCents, store.currency)}.\n${origin}/admin/archive-messages?store=${store.slug}&offer=${offerId}`,
+      shell(`<p><strong>${esc(offer.email)}</strong> accepted your counter of <strong>${dollars(offer.counterCents, store.currency)}</strong>. They have ${OFFER_HOURS} hours to buy.</p>`),
+    );
+  }
+  return res;
+}
+
+export async function declineCounter(db: DB, env: Env, store: Store, offerId: string, email: string, origin: string): Promise<boolean> {
+  const done = await db
+    .update(maOffers)
+    .set({ status: "rejected", ownerUnread: true, updatedAt: new Date() })
+    .where(and(eq(maOffers.id, offerId), eq(maOffers.storeId, store.id), eq(maOffers.email, email), eq(maOffers.status, "countered")))
+    .returning({ id: maOffers.id });
+  if (done.length) {
+    await db.insert(maMessages).values({ offerId, sender: "system", body: "Counter offer declined." });
+    await notify(env, store.contactEmail || OWNER_EMAIL, `Counter declined by ${email}`, `${email} declined your counter.\n${origin}/admin/archive-messages?store=${store.slug}&offer=${offerId}`, shell(`<p><strong>${esc(email)}</strong> declined your counter offer.</p>`));
+  }
+  return done.length > 0;
 }
 
 /* ------------------------------------------------------------------ reading */

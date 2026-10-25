@@ -47,3 +47,4 @@ create table if not exists ma_messages (
   created_at timestamptz not null default now()
 );
 create index if not exists ma_messages_offer_idx on ma_messages (offer_id, created_at);
+alter table ma_offers add column if not exists counter_cents integer;
