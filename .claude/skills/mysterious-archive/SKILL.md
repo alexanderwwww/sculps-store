@@ -64,3 +64,9 @@ Role handoff (Alex, October 17): Claude takes over website design/implementation
 
 ## 2026-10-25 owner code changed at Alex's request
 - Alex chose his own owner code (a phrase he typed in chat; deliberately not written here). The random code given earlier is retired. The site matches the code ignoring case, spaces, dashes and symbols, minimum 10 characters. It is shorter and more guessable than the random one: lockout (5 tries per IP, 15 per store, 15 minutes) and the email alert on every owner sign-in are the protection. Recommend a longer code when he next changes it. Live version bb9a5531-c1e9-485c-8d96-ccab3234d941.
+
+## 2026-10-25 thumbnails (live version dbe2df3e-b5c8-47ae-85f9-9ec8358ff9d2)
+- Catalogue cards were showing the pieces small inside big white margins. `scripts/ma-thumbs.mjs` cuts the empty white away from each cover photo, fits it into a 4:5 white tile (88% fill), saves webp to R2 (`ma-t-<handle>-<hash>.webp`, served at /media/) and stores the URL in products.images[0].thumb. The product page gallery keeps the original photos. Cards use `thumb` and fall back to the full photo.
+- NEW PRODUCTS: run `node scripts/ma-thumbs.mjs` after listing (needs DATABASE_URL, Cloudflare vars, ImageMagick); products without a thumb still show their normal photo.
+- Product page gallery thumbnails: 88x110 vertical strip on desktop, a horizontal strip of 72x90 on phones (were 52x65 and 40x50).
+- Accepted offers last 6 hours (OFFER_HOURS in app/lib/ma-shared.ts).

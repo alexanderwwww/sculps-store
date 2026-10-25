@@ -241,7 +241,7 @@ export const products = pgTable(
      * of the product can skip it.
      */
     images: jsonb("images")
-      .$type<{ url: string; alt: string; kind?: "photo" | "graphic" }[]>()
+      .$type<{ url: string; alt: string; kind?: "photo" | "graphic"; thumb?: string }[]>()
       .notNull()
       .default([]),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
