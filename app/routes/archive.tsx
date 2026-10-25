@@ -26,11 +26,11 @@ export async function loader({request,context,params}:Route.LoaderArgs){
  const visible=rows.filter(r=>!isBag(r.product.title)&&!isClothing(r.product.title));
  const selected=params.handle&&!certificates?visible.find(r=>r.product.handle===params.handle):null;
  if(params.handle&&!certificates&&!selected) throw new Response('Not found',{status:404});
- let certs:any={};try{const o=await (context.cloudflare.env as any).MEDIA?.get('ma-certificates.json');if(o)certs=(await o.json() as any)?.items??{};const m=await (context.cloudflare.env as any).MEDIA?.get('ma-certificates-7259c9b78713c268cb84.json');if(m){for(const c of ((await m.json() as any)?.certificates??[])){if(c?.handle)certs[c.handle]={...(certs[c.handle]??{}),...(c.material?{material:c.material}:{}),...(c.condition?{condition:c.condition}:{})};}}}catch{}
-let viewerEmail:string|null=null;try{viewerEmail=(await readSession(context.db,store.id,request))?.email??null;}catch{}
+ const readCerts=async()=>{const certs:any={};try{const env=context.cloudflare.env as any;const [o,m]=await Promise.all([env.MEDIA?.get('ma-certificates.json'),env.MEDIA?.get('ma-certificates-7259c9b78713c268cb84.json')]);if(o)Object.assign(certs,(await o.json() as any)?.items??{});if(m){for(const c of ((await m.json() as any)?.certificates??[])){if(c?.handle)certs[c.handle]={...(certs[c.handle]??{}),...(c.material?{material:c.material}:{}),...(c.condition?{condition:c.condition}:{})};}}}catch{}return certs;};
+ const [certs,sess,ownerHere]=await Promise.all([readCerts(),readSession(context.db,store.id,request).catch(()=>null),readOwner(context.db,store.id,request).catch(()=>false)]);
+let viewerEmail:string|null=sess?.email??null;
  let unread=0;
  // Live View: record this visit (not the owner's own browsing), keep the visitor cookie, and ship the heartbeat.
- const ownerHere=await readOwner(context.db,store.id,request).catch(()=>false);
  try{unread=ownerHere?await unreadCount(context.db,store.id,{owner:true}):viewerEmail?await unreadCount(context.db,store.id,{email:viewerEmail}):0;}catch{}
  const tracked=shouldTrack(request,url)&&!ownerHere;
  const sessionId=tracked?(readVisitorSession(request)??newVisitorSession()):null;
