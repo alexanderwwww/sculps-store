@@ -10,16 +10,20 @@ import BuyBox from '~/storefronts/mysterious-archive/BuyBox';
 import { readSession } from '~/lib/ma-offers.server';
 export const links = () => [{rel:'stylesheet',href:css},{rel:'stylesheet',href:buyCss},{rel:'icon',type:'image/png',href:'/archive-icon.png'},{rel:'apple-touch-icon',href:'/archive-icon-180.png'}];
 export const meta = () => [{title:'Mysterious Archive — Chrome Hearts & Collectible Objects'}];
+// Clothing and bags stay in Shop Admin but are not part of the archive storefront (Alex's rule).
+const isBag=(t:string)=>/\bbag|tote|pouch|backpack|clutch|duffle|duffel|crossbody/i.test(t);
+const isClothing=(t:string)=>!isBag(t)&&!/beanie|\bhat\b|\bcap\b|trucker/i.test(t)&&/hoodie|sweatshirt|henley|t-shirt|\btee\b|shirt|knit|sweater|cardigan|blazer|jacket|coat|dress|skirt|trouser|pants|jeans|shorts/i.test(t);
 export async function loader({request,context,params}:Route.LoaderArgs){
  const url=new URL(request.url), store=await resolveStore(context.db,context.hostname,url);
  if(store?.slug!=='mysterious-archive') throw new Response('Not found',{status:404});
  const rows=await context.db.select({product:products,variant:variants}).from(products).innerJoin(variants,eq(products.id,variants.productId)).where(and(eq(products.storeId,store.id),eq(products.status,'active'),eq(variants.isDefault,true))).orderBy(asc(products.title));
  const certificates=params.handle==='certificates';
- const selected=params.handle&&!certificates?rows.find(r=>r.product.handle===params.handle):null;
+ const visible=rows.filter(r=>!isBag(r.product.title)&&!isClothing(r.product.title));
+ const selected=params.handle&&!certificates?visible.find(r=>r.product.handle===params.handle):null;
  if(params.handle&&!certificates&&!selected) throw new Response('Not found',{status:404});
  let certs:any={};try{const o=await (context.cloudflare.env as any).MEDIA?.get('ma-certificates.json');if(o)certs=(await o.json() as any)?.items??{};const m=await (context.cloudflare.env as any).MEDIA?.get('ma-certificates-7259c9b78713c268cb84.json');if(m){for(const c of ((await m.json() as any)?.certificates??[])){if(c?.handle)certs[c.handle]={...(certs[c.handle]??{}),...(c.material?{material:c.material}:{}),...(c.condition?{condition:c.condition}:{})};}}}catch{}
 let viewerEmail:string|null=null;try{viewerEmail=(await readSession(context.db,store.id,request))?.email??null;}catch{}
- return {store,rows,selected,certificates,certs,viewerEmail,query:url.searchParams.has('store')?'?store=mysterious-archive':''};
+ return {store,rows:visible,selected,certificates,certs,viewerEmail,query:url.searchParams.has('store')?'?store=mysterious-archive':''};
 }
 export default function Archive({loaderData:{store,rows,selected,certificates,certs,viewerEmail,query}}:Route.ComponentProps){
  const [params]=useSearchParams();
