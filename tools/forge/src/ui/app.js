@@ -70,14 +70,12 @@
     const sm = S.summary;
     const ended = sm.missionEnded;
     $("app").innerHTML = `
+      ${goalBar()}
       <div class="top">
-        <img src="/icon.png" alt="">
         <div class="t"><h1>Spartan Forge: Batman</h1>
           <div class="sub">${sm.started ? `Day ${sm.days.elapsed} of ${sm.days.total} · ${ended ? "mission complete" : `${sm.days.remaining} day${sm.days.remaining === 1 ? "" : "s"} left including today`} · ends ${fmt(sm.endDate)}` : `Mission ends ${fmt(sm.endDate)} · ready for your first weight`}</div></div>
         <span class="pill">${ended ? "<b>Mission complete</b>" : "<b>Active</b>"}</span>
-        <button class="btn-ghost" data-view="today">Today</button>
-        <button class="btn-ghost" data-view="history">History</button>
-        <button class="btn-ghost" data-view="settings">Settings</button>
+        ${["today", "history", "settings"].map((v) => `<button class="btn-ghost${view === v ? " on" : ""}" data-view="${v}">${v[0].toUpperCase() + v.slice(1)}</button>`).join("")}
       </div>
       ${banners()}
       <div id="view"></div>`;
@@ -85,6 +83,19 @@
     if (view === "today") renderToday();
     else if (view === "history") renderHistory();
     else renderSettings();
+  }
+
+  // The bar that is always on screen: how close the weight is to the goal.
+  function goalBar() {
+    const sm = S.summary;
+    const g = sm.goals.primary;
+    if (!sm.started) {
+      return `<div class="goalbar"><div class="gb-top"><b>${kg(g.goalKg)} kg goal</b><span>starts with your first weight</span></div><div class="gb-track"><i style="width:0%"></i></div><div class="gb-sub"><span>Log your exact weight when you wake up</span><span>until ${esc(fmt(sm.endDate, { day: "numeric", month: "short", year: "numeric" }))}</span></div></div>`;
+    }
+    const pctv = g.percent === null ? (g.reached ? 100 : 0) : g.percent;
+    return `<div class="goalbar"><div class="gb-top"><b>${kg(sm.latestKg)} kg <span style="font-weight:500">now</span></b><span>${g.reached ? "Goal " + kg(g.goalKg) + " kg reached" : kg(g.remainingKg) + " kg to " + kg(g.goalKg) + " kg"}</span></div>
+      <div class="gb-track"><i style="width:${pctv}%"></i></div>
+      <div class="gb-sub"><span>${pctv.toFixed(1)}% of the way from ${kg(sm.startKg)} kg</span><span>${sm.missionEnded ? "mission ended" : sm.days.remaining + " day" + (sm.days.remaining === 1 ? "" : "s") + " left"}</span></div></div>`;
   }
 
   function banners() {
@@ -296,15 +307,17 @@
     const sm = S.summary;
     const g = $("glance");
     if (!sm.started) { g.innerHTML = ""; return; }
-    const pg = sm.goals.primary;
     const f = sm.forecast;
     const t = sm.trend7;
     const goalDate = f && f.available && f.goalDate ? fmtShort(f.goalDate.date) : null;
+    const pd = sm.previousDay;
+    const ti = S.intake[S.today];
+    const kc = ti ? (ti.zero ? "0" : int(ti.kcal)) : "–";
+    const kcNote = ti ? (ti.zero ? "zero intake" : ti.status === "partial" ? "so far" : "day total") : "not logged";
     g.innerHTML = `<div class="card glance"><div class="gl-main"><div><div class="k">Latest</div><div class="gl-v">${kg(sm.latestKg)}<small>kg</small></div></div>
-      <div><div class="k">${pg.reached ? "Primary goal" : "To " + kg(pg.goalKg)}</div><div class="gl-v">${pg.reached ? "Reached" : kg(pg.remainingKg) + "<small>kg</small>"}</div></div>
-      <div><div class="k">Days left</div><div class="gl-v">${sm.missionEnded ? "0" : sm.days.remaining}</div></div></div>
-      <div class="bar"><i style="width:${pg.percent ?? 0}%"></i></div>
-      <div class="gl-sub"><span>${pg.percent === null ? "" : pct(pg.percent) + " done"}</span><span>${t && t.available ? sgn(t.weeklyChangeKg) + " kg/wk" : "trend: needs more days"}</span><span>${goalDate ? "goal ≈ " + esc(goalDate) : ""}</span></div></div>`;
+      <div><div class="k">Vs yesterday</div><div class="gl-v ${pd ? dirClass(pd.changeKg) : ""}">${pd ? sgn(pd.changeKg) : "–"}<small>${pd ? "kg" : ""}</small></div></div>
+      <div><div class="k">Calories today</div><div class="gl-v">${kc}<small>${ti ? "kcal" : ""}</small></div></div></div>
+      <div class="gl-sub" style="margin-top:10px"><span>${t && t.available ? sgn(t.weeklyChangeKg) + " kg per week" : "trend: needs more days"}</span><span>${kcNote}</span><span>${goalDate ? "goal ≈ " + esc(goalDate) : ""}</span></div></div>`;
   }
 
   /* ------------------------------------------------------- right column */
@@ -339,7 +352,7 @@
           <div class="dim">${sm.missionEnded ? "The mission ended " + esc(fmt(sm.endDate)) : sm.days.remaining + " day" + (sm.days.remaining === 1 ? "" : "s") + " left including today · ends " + esc(fmt(sm.endDate))}</div></div>
       </div>
       <div class="card"><h2>Weight over the mission</h2>${chart()}
-        <div class="legend"><span><i class="dot"></i>Measured weight</span><span><i style="border-color:var(--gold2);border-top-style:dashed"></i>Projection (not a measurement)</span><span><i style="border-color:var(--gold);border-top-style:dotted"></i>Primary goal</span><span><i style="border-color:var(--silver);border-top-style:dotted"></i>Secondary goal</span></div></div>
+        <div class="legend"><span><i class="dot"></i>Measured weight</span><span><i style="border-color:#6a6a66;border-top-style:dashed"></i>Projection (not a measurement)</span><span><i style="border-color:#0d0d0e;border-top-style:dotted"></i>Primary goal</span><span><i style="border-color:#9c9c96;border-top-style:dotted"></i>Secondary goal</span></div></div>
       ${forecastCard()}
       <div class="two">${trendCard()}${secondaryCard(g2)}</div>
       ${caloriesCard()}
@@ -392,7 +405,7 @@
       const from = diff(sm.startDate, end) > 59 ? addDays(end, -59) : sm.startDate;
       for (let d = from; d <= end; d = addDays(d, 1)) {
         const r = S.intake[d];
-        const cls = !r ? "background:rgba(255,255,255,.06)" : r.zero ? "background:var(--warn)" : r.status === "complete" ? "background:var(--gold)" : "background:transparent;box-shadow:inset 0 0 0 1.5px var(--silver)";
+        const cls = !r ? "background:#e9e9e5" : r.zero ? "background:var(--warn)" : r.status === "complete" ? "background:#0d0d0e" : "background:transparent;box-shadow:inset 0 0 0 1.5px #0d0d0e";
         const label = !r ? "not logged" : r.zero ? "zero intake" : r.status === "complete" ? int(r.kcal) + " kcal (day total)" : int(r.kcal) + " kcal (partial)";
         strip += `<i title="${esc(fmt(d))}: ${esc(label)}" style="display:inline-block;width:11px;height:22px;border-radius:4px;margin:0 3px 3px 0;${cls}"></i>`;
       }
@@ -406,7 +419,7 @@
       </div>
       <div class="chips"><span class="chip"><b>${c.completeDays}</b> complete</span><span class="chip"><b>${c.partialDays}</b> partial</span><span class="chip"><b>${c.zeroDays}</b> zero intake</span><span class="chip"><b>${c.unloggedDays}</b> not logged</span></div>
       <div style="margin-top:14px">${strip}</div>
-      <p class="hint">Gold: final day total · outline: partial · amber: zero intake · grey: not logged. ${esc(c.note)}</p></div>`;
+      <p class="hint">Black: final day total · outline: partial · amber: zero intake · grey: not logged. ${esc(c.note)}</p></div>`;
   }
 
   function energyCard() {
@@ -447,22 +460,22 @@
     const Y = (y) => T + (1 - (y - lo) / (hi - lo)) * (H - T - B);
     const step = (hi - lo) > 30 ? 10 : (hi - lo) > 12 ? 5 : 2;
     let grid = "";
-    for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) grid += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="rgba(255,255,255,.07)"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" fill="#8b8678" font-size="11">${v}</text>`;
+    for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) grid += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="rgba(0,0,0,.07)"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" fill="#9c9c96" font-size="11">${v}</text>`;
     const months = [];
     for (let d = x0; d <= x1; d = addDays(d, 1)) if (d.endsWith("-01") || d === x0) months.push(d);
-    let xl = months.map((d) => `<text x="${X(diff(x0, d))}" y="${H - 10}" fill="#8b8678" font-size="11">${esc(fmtShort(d))}</text>`).join("");
-    xl += `<text x="${W - R}" y="${H - 10}" text-anchor="end" fill="#8b8678" font-size="11">${esc(fmtShort(x1))}</text>`;
+    let xl = months.map((d) => `<text x="${X(diff(x0, d))}" y="${H - 10}" fill="#9c9c96" font-size="11">${esc(fmtShort(d))}</text>`).join("");
+    xl += `<text x="${W - R}" y="${H - 10}" text-anchor="end" fill="#9c9c96" font-size="11">${esc(fmtShort(x1))}</text>`;
     const goalLine = (v, c, label) => `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="${c}" stroke-dasharray="2 5" stroke-width="1.5"/><text x="${W - R - 4}" y="${Y(v) - 6}" text-anchor="end" fill="${c}" font-size="11">${label} ${v} kg</text>`;
-    const line = pts.length > 1 ? `<polyline fill="none" stroke="#e6b84a" stroke-width="2.4" stroke-linejoin="round" points="${pts.map((p) => `${X(p.x)},${Y(p.y)}`).join(" ")}"/>` : "";
-    const dots = pts.map((p) => `<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="${pts.length > 60 ? 2.5 : 4}" fill="#e6b84a" stroke="#1a1305" stroke-width="1"><title>${esc(fmt(p.d))}: ${p.y.toFixed(2)} kg</title></circle>`).join("");
+    const line = pts.length > 1 ? `<polyline fill="none" stroke="#0d0d0e" stroke-width="2.4" stroke-linejoin="round" points="${pts.map((p) => `${X(p.x)},${Y(p.y)}`).join(" ")}"/>` : "";
+    const dots = pts.map((p) => `<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="${pts.length > 60 ? 2.5 : 4}" fill="#0d0d0e" stroke="#fff" stroke-width="1.5"><title>${esc(fmt(p.d))}: ${p.y.toFixed(2)} kg</title></circle>`).join("");
     let proj = "";
     if (f.projectedAtEnd && pts.length) {
       const last = pts[pts.length - 1];
       const ex = X(span);
-      proj = `<polygon points="${X(last.x)},${Y(last.y)} ${ex},${Y(f.projectedAtEnd.rangeKg[0])} ${ex},${Y(f.projectedAtEnd.rangeKg[1])}" fill="rgba(247,220,140,.13)"/>
-        <line x1="${X(last.x)}" y1="${Y(last.y)}" x2="${ex}" y2="${Y(f.projectedAtEnd.kg)}" stroke="#f7dc8c" stroke-width="2" stroke-dasharray="7 6"/>`;
+      proj = `<polygon points="${X(last.x)},${Y(last.y)} ${ex},${Y(f.projectedAtEnd.rangeKg[0])} ${ex},${Y(f.projectedAtEnd.rangeKg[1])}" fill="rgba(13,13,14,.07)"/>
+        <line x1="${X(last.x)}" y1="${Y(last.y)}" x2="${ex}" y2="${Y(f.projectedAtEnd.kg)}" stroke="#6a6a66" stroke-width="2" stroke-dasharray="7 6"/>`;
     }
-    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight over the mission with goals and projection">${grid}${xl}${goalLine(goals[0], "#e6b84a", "Goal")}${goalLine(goals[1], "#c9ccd4", "Secondary")}${proj}${line}${dots}</svg>`;
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight over the mission with goals and projection">${grid}${xl}${goalLine(goals[0], "#0d0d0e", "Goal")}${goalLine(goals[1], "#9c9c96", "Secondary")}${proj}${line}${dots}</svg>`;
   }
 
   /* ------------------------------------------------------------ history */

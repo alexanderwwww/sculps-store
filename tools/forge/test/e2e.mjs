@@ -140,8 +140,13 @@ try {
     await small.waitForSelector("#glance .glance");
     const glance = await small.textContent("#glance");
     assert.match(glance, /Latest/);
-    assert.match(glance, /Days left/);
+    assert.match(glance, /Calories today/);
     assert.ok(await small.locator("#save").isVisible());
+    // the goal bar is always on screen, even after scrolling
+    await small.evaluate(() => window.scrollTo(0, 400));
+    const bar = await small.locator(".goalbar").boundingBox();
+    assert.ok(bar && bar.y >= -1 && bar.y < 5, "the goal bar must stay at the top: " + JSON.stringify(bar));
+    assert.match(await small.textContent(".goalbar"), /to 96\.00 kg/);
     assert.ok(await small.locator("details.more-card").count());
     await small.close();
   });
