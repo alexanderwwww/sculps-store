@@ -11,6 +11,6 @@ See `.claude/skills/spartan-forge/SKILL.md` for the decisions. This file is the 
 | Local server, reminders | `src/server.mjs` |
 | The page | `src/ui/` |
 | Dock launcher | `app/SPARTAN FORGE BATMAN.app/Contents/MacOS/forge` |
-| Icon | `design/make-icon.mjs` (writes svg, pngs, AppIcon.icns) |
+| Icon | `design/build-icon.mjs` (from `design/source/eagle-glass-gold.webp`; writes pngs, AppIcon.icns) |
 
 Checks: `node --test test/*.test.mjs` (unit + server), `node test/e2e.mjs` (page in a browser), `test/launcher-check.mjs` (the packed launcher). `pack.sh` runs all three and only then writes the zip.

@@ -15,7 +15,7 @@ Alex's name for it, given by him (the "no ancient Greek names" rule is about nam
 - Daily routine: weight (decimals), calories, optional activity/sleep/stress, Save, see results at once.
 - Fasting / zero intake is a **logging shortcut** with a confirmation and an undo. Missing intake is unknown, never zero. No fasting timers, streaks, encouragement or calorie targets.
 - Forecasts only with enough data, always with a range, and a clear reason when unavailable. A goal date after 25 Dec does not extend the mission.
-- Dock icon: realistic gold eagle of Zeus, no lightning, no text, readable at Dock sizes. He must SEE it before it is final. The current one is a hand-drawn vector proposal (`design/make-icon.mjs`); a photoreal one needs an image model and his OK on the price first.
+- Dock icon (final, approved by him 2026-10-26): ChatGPT made it in the ultracursor glass family: a gold liquid-glass eagle head in profile on a gold glass square. His words: "the app must be gold", and the vector eagle Claude drew was "funny". Source `design/source/eagle-glass-gold.webp`; `design/build-icon.mjs` cuts the black field, sets it at 820/1024 and writes the PNGs and AppIcon.icns. Do not redraw it in code.
 - 2026-10-26: "maybe it should be a widget, fast, efficient and nice": the window opens small (440x820), glance first (latest, to goal, days left), form right under it, everything else behind one expander. Wide windows show the full dashboard.
 
 ## Where it lives
