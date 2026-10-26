@@ -86,7 +86,7 @@
     c.style.height = window.innerHeight + "px";
     const g = c.getContext("2d");
     g.scale(devicePixelRatio, devicePixelRatio);
-    const colors = ["#18c27f", "#6ee7c0", "#7cc4ff", "#ffc9a8", "#c9b8ff", "#0c0e0f", "#ffffff"];
+    const colors = ["#2ee59d", "#7dffc9", "#7cc4ff", "#ffb15c", "#c9b8ff", "#ffffff", "#ffffff"];
     const n = big ? 170 : 80;
     const ps = Array.from({ length: n }, () => {
       const a = Math.random() * Math.PI * 2, v = (big ? 5 : 3) + Math.random() * (big ? 11 : 7);
@@ -113,6 +113,9 @@
   // What is new after a save: a new low, a new whole-kg or percent milestone.
   function celebration(before, after) {
     if (!before || !after) return null;
+    const had = new Set((before.achievements || []).filter((a) => a.unlocked).map((a) => a.id));
+    const earned = (after.achievements || []).filter((a) => a.unlocked && !had.has(a.id));
+    if (earned.length) return { big: true, text: `Achievement unlocked: ${earned[0].title}${earned.length > 1 ? ` (+${earned.length - 1} more)` : ""}` };
     const b = new Set(before.analytics.milestones.map((m) => m.label));
     const fresh = after.analytics.milestones.filter((m) => !b.has(m.label));
     const low = after.analytics.lows && after.analytics.lows.newLowToday && !(before.analytics.lows && before.analytics.lows.newLowToday && before.analytics.lows.lowestKg === after.analytics.lows.lowestKg);
@@ -140,7 +143,7 @@
       <div class="top">
         <div class="t"><h1>kcal</h1>
           <div class="sub">${sm.started ? `Day ${sm.days.elapsed} of ${sm.days.total} · ${ended ? "mission complete" : `${sm.days.remaining} day${sm.days.remaining === 1 ? "" : "s"} left including today`} · until ${esc(fmt(sm.endDate, { day: "numeric", month: "short", year: "numeric" }))}` : `Starts with your first weight · until ${esc(fmt(sm.endDate, { day: "numeric", month: "short", year: "numeric" }))}`}</div></div>
-        <div class="nav">${[["today", "Today"], ["insights", "Insights"], ["history", "History"], ["settings", "Settings"]].map(([v, l]) => `<button class="${view === v ? "on" : ""}" data-view="${v}">${l}</button>`).join("")}</div>
+        <div class="nav">${[["today", "Today"], ["insights", "Insights"], ["awards", "Awards"], ["history", "History"], ["settings", "Settings"]].map(([v, l]) => `<button class="${view === v ? "on" : ""}" data-view="${v}">${l}</button>`).join("")}</div>
       </div>
       ${banners()}
       <div id="view"></div>`;
@@ -148,6 +151,7 @@
     animateBar();
     if (view === "today") renderToday();
     else if (view === "insights") renderInsights();
+    else if (view === "awards") renderAwards();
     else if (view === "history") renderHistory();
     else renderSettings();
     runFx();
@@ -213,6 +217,7 @@
     renderRead();
     renderForms();
     renderRight();
+    wireCharts();
   }
 
   function renderRead() {
@@ -397,11 +402,13 @@
     const day0 = sel; // the day this action is for, even if the screen moves on while it waits
     const btn = $("finish");
     const origin = btn ? centerOf(btn) : [innerWidth / 2, innerHeight / 2];
+    const before = S;
     const r = await api("intake/finish", "POST", { date: day0 });
     if (!r.ok) { toast(r.error); return; }
+    const cel = celebration(before, r.state);
     S = r.state;
     formStatus = { kind: "ok", text: `${fmt(day0)} is finished at ${int(S.intake[day0].kcal)} kcal.` };
-    fx = { confetti: origin, big: false };
+    fx = { confetti: origin, big: Boolean(cel && cel.big), celebrate: cel };
     render();
     const previous = r.previous;
     if (previous) toast("Day finished.", "Undo", async () => { const u = await api("intake/restore", "POST", { date: day0, record: previous }); if (u.ok) { S = u.state; formStatus = null; render(); } else toast(u.error); });
@@ -476,8 +483,8 @@
     right.innerHTML = (narrow ? `<details class="card more-card"><summary>Full progress, chart and forecast</summary><div class="col" style="margin-top:16px">` : "") + `
       <div class="card"><div class="stats">
         <div class="stat"><div class="k">Starting weight</div><div class="v">${kg(sm.startKg)}<small>kg</small></div><div class="n">${esc(fmt(sm.startDate, { day: "numeric", month: "short", year: "numeric" }))}</div></div>
-        <div class="stat"><div class="k">Latest weight</div><div class="v">${kg(sm.latestKg)}<small>kg</small></div><div class="n">${esc(fmt(sm.latestDate, { day: "numeric", month: "short" }))}</div></div>
-        <div class="stat"><div class="k">Total change</div><div class="v ${dirClass(sm.totalChangeKg)}">${sgn(sm.totalChangeKg)}<small>kg</small></div><div class="n">since the first weight</div></div>
+        <div class="stat"><div class="k">Latest weight</div><div class="v">${kg(sm.latestKg)}<small>kg</small></div><div class="n">${esc(fmt(sm.latestDate, { day: "numeric", month: "short" }))}</div>${spark(Object.keys(S.weights).sort().slice(-14).map((d) => S.weights[d].kg), "#2ee59d")}</div>
+        <div class="stat"><div class="k">Total change</div><div class="v ${dirClass(sm.totalChangeKg)}">${sgn(sm.totalChangeKg)}<small>kg</small></div><div class="n">since the first weight</div>${spark(Object.keys(S.weights).sort().slice(-14).map((d) => S.weights[d].kg - sm.startKg), "#f4f4f2")}</div>
         <div class="stat"><div class="k">Vs previous day</div><div class="v ${prev ? dirClass(prev.changeKg) : ""}">${prev ? sgn(prev.changeKg) : "–"}<small>${prev ? "kg" : ""}</small></div><div class="n">${prev ? `${kg(prev.kg)} on ${esc(fmtShort(prev.date))}` : "needs weights on two consecutive days"}</div></div>
       </div></div>
       <div class="two">
@@ -490,8 +497,8 @@
           <div class="bar silver"><i style="width:${Math.min(100, (sm.days.elapsed / sm.days.total) * 100)}%"></i></div>
           <div class="dim">${sm.missionEnded ? "The mission ended " + esc(fmt(sm.endDate)) : sm.days.remaining + " day" + (sm.days.remaining === 1 ? "" : "s") + " left including today · ends " + esc(fmt(sm.endDate))}</div></div>
       </div>
-      <div class="card"><h2>Weight over the mission</h2>${chart()}
-        <div class="legend"><span><i class="dot"></i>Measured weight</span><span><i style="border-color:#5f6866;border-top-style:dashed"></i>Projection (not a measurement)</span><span><i style="border-color:#18c27f;border-top-style:dotted"></i>Primary goal</span><span><i style="border-color:#93a09c;border-top-style:dotted"></i>Secondary goal</span></div></div>
+      ${weightCard()}
+      ${calCard()}
       ${forecastCard()}
       <div class="two">${trendCard()}${secondaryCard(g2)}</div>` + (narrow ? `</div></details>` : "");
   }
@@ -529,41 +536,246 @@
     return `<div class="card"><h2>Forecast</h2>${body}</div>`;
   }
 
-  /* -------------------------------------------------------------- chart */
-  function chart() {
+  /* ------------------------------------------------------- Shopify-style charts */
+  const chartState = { weight: "mission", cal: "30" };
+  const TABS = [["7", "7D"], ["14", "14D"], ["30", "30D"], ["mission", "Mission"]];
+  const eachDay = (a, b) => { const o = []; for (let d = a; diff(d, b) >= 0; d = addDays(d, 1)) o.push(d); return o; };
+  function windowFor(range) {
     const sm = S.summary;
-    const W = 760, H = 320, L = 52, R = 18, T = 16, B = 34;
-    const x0 = sm.startDate, x1 = sm.endDate;
-    const span = Math.max(1, diff(x0, x1));
-    const pts = Object.keys(S.weights).sort().map((d) => ({ d, x: diff(x0, d), y: S.weights[d].kg }));
+    const asOf = sm.missionEnded ? sm.endDate : S.today;
+    if (range === "mission") return { from: sm.startDate, to: sm.endDate, asOf, mission: true };
+    let from = addDays(asOf, -(Number(range) - 1));
+    if (diff(sm.startDate, from) < 0) from = sm.startDate;
+    return { from, to: asOf, asOf, mission: false };
+  }
+  // A smooth line through the points (Catmull-Rom turned into Bezier curves).
+  function smooth(pts) {
+    if (pts.length < 2) return "";
+    let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+      const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+      const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+      d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+    }
+    return d;
+  }
+  function tabsHtml(which) {
+    return `<div class="tabs" data-tabs="${which}">${TABS.map(([v, l]) => `<button data-r="${v}" class="${chartState[which] === v ? "on" : ""}">${l}</button>`).join("")}</div>`;
+  }
+  function weightCard() {
+    const sm = S.summary;
+    const win = windowFor(chartState.weight);
+    const all = Object.keys(S.weights).sort();
+    const pts = all.filter((d) => d >= win.from && d <= win.asOf).map((d) => ({ d, x: diff(win.from, d), y: S.weights[d].kg }));
+    const movavg = pts.map((p) => {
+      const vals = all.filter((d) => diff(d, p.d) >= 0 && diff(d, p.d) <= 6).map((d) => S.weights[d].kg);
+      return { d: p.d, x: p.x, y: vals.reduce((a, b) => a + b, 0) / vals.length };
+    });
+    const delta = pts.length >= 2 ? pts[pts.length - 1].y - pts[0].y : null;
+    const latest = pts.length ? pts[pts.length - 1].y : sm.latestKg;
     const f = sm.forecast;
-    const goals = [sm.goals.primary.goalKg, sm.goals.secondary.goalKg];
-    const ys = pts.map((p) => p.y).concat(goals);
-    if (f.projectedAtEnd) ys.push(f.projectedAtEnd.rangeKg[0], f.projectedAtEnd.rangeKg[1]);
+    const W = 760, H = 290, L = 46, R = 14, T = 14, B = 28;
+    const span = Math.max(1, diff(win.from, win.to));
+    const ys = pts.map((p) => p.y);
+    if (win.mission) { ys.push(sm.goals.primary.goalKg); if (f.projectedAtEnd) ys.push(f.projectedAtEnd.rangeKg[0], f.projectedAtEnd.rangeKg[1]); ys.push(sm.goals.secondary.goalKg); }
     let lo = Math.min(...ys), hi = Math.max(...ys);
-    const pad = Math.max(1, (hi - lo) * 0.08);
+    const pad = Math.max(0.6, (hi - lo) * 0.1);
     lo -= pad; hi += pad;
     const X = (x) => L + (x / span) * (W - L - R);
     const Y = (y) => T + (1 - (y - lo) / (hi - lo)) * (H - T - B);
-    const step = (hi - lo) > 30 ? 10 : (hi - lo) > 12 ? 5 : 2;
+    const step = (hi - lo) > 30 ? 10 : (hi - lo) > 12 ? 5 : (hi - lo) > 5 ? 2 : (hi - lo) > 2.4 ? 1 : 0.5;
     let grid = "";
-    for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) grid += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="rgba(12,14,15,.07)"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" fill="#93a09c" font-size="11">${v}</text>`;
-    const months = [];
-    for (let d = x0; d <= x1; d = addDays(d, 1)) if (d.endsWith("-01") || d === x0) months.push(d);
-    let xl = months.map((d) => `<text x="${X(diff(x0, d))}" y="${H - 10}" fill="#93a09c" font-size="11">${esc(fmtShort(d))}</text>`).join("");
-    xl += `<text x="${W - R}" y="${H - 10}" text-anchor="end" fill="#93a09c" font-size="11">${esc(fmtShort(x1))}</text>`;
-    const goalLine = (v, c, label) => `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="${c}" stroke-dasharray="2 5" stroke-width="1.6"/><text x="${W - R - 4}" y="${Y(v) - 6}" text-anchor="end" fill="${c}" font-size="11" font-weight="700">${label} ${v} kg</text>`;
-    const area = pts.length > 1 ? `<defs><linearGradient id="wa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#18c27f" stop-opacity=".28"/><stop offset="1" stop-color="#18c27f" stop-opacity="0"/></linearGradient></defs><polygon fill="url(#wa)" points="${X(pts[0].x)},${H - B} ${pts.map((p) => `${X(p.x)},${Y(p.y)}`).join(" ")} ${X(pts[pts.length - 1].x)},${H - B}"/>` : "";
-    const line = pts.length > 1 ? `<polyline fill="none" stroke="#0c0e0f" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" points="${pts.map((p) => `${X(p.x)},${Y(p.y)}`).join(" ")}"/>` : "";
-    const dots = pts.map((p) => `<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="${pts.length > 60 ? 2.5 : 4.5}" fill="#0c0e0f" stroke="#fff" stroke-width="2"><title>${esc(fmt(p.d))}: ${p.y.toFixed(2)} kg</title></circle>`).join("");
+    for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) grid += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="rgba(255,255,255,.07)"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" fill="#63636b" font-size="11">${Number.isInteger(v) ? v : v.toFixed(1)}</text>`;
+    const tickEvery = span > 40 ? 14 : span > 14 ? 7 : span > 7 ? 2 : 1;
+    let xl = "";
+    for (let i = 0; i <= span; i += tickEvery) xl += `<text x="${X(i)}" y="${H - 8}" text-anchor="${i === 0 ? "start" : "middle"}" fill="#63636b" font-size="11">${esc(fmtShort(addDays(win.from, i)))}</text>`;
+    const goalLine = (v, c, label) => `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="${c}" stroke-dasharray="2 5" stroke-width="1.5" opacity=".9"/><text x="${W - R - 4}" y="${Y(v) - 6}" text-anchor="end" fill="${c}" font-size="11" font-weight="700">${label} ${v} kg</text>`;
+    const xy = pts.map((p) => [X(p.x), Y(p.y)]);
+    const area = xy.length > 1 ? `<path class="fadein" d="${smooth(xy)} L${xy[xy.length - 1][0]},${H - B} L${xy[0][0]},${H - B} Z" fill="url(#wgrad)"/>` : "";
+    const line = xy.length > 1 ? `<path class="draw" d="${smooth(xy)}" fill="none" stroke="#2ee59d" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>` : "";
+    const maxy = movavg.map((p) => [X(p.x), Y(p.y)]);
+    const avgLine = maxy.length > 2 ? `<path class="draw" d="${smooth(maxy)}" fill="none" stroke="#f4f4f2" stroke-opacity=".75" stroke-width="1.6" stroke-dasharray="1 0"/>` : "";
+    const dots = pts.length <= 45 ? xy.map((q, i) => `<circle class="fadein" cx="${q[0]}" cy="${q[1]}" r="${pts.length > 20 ? 2.6 : 4}" fill="#050506" stroke="#2ee59d" stroke-width="2"/>`).join("") : "";
     let proj = "";
-    if (f.projectedAtEnd && pts.length) {
+    if (win.mission && f.projectedAtEnd && pts.length) {
       const last = pts[pts.length - 1];
       const ex = X(span);
-      proj = `<polygon points="${X(last.x)},${Y(last.y)} ${ex},${Y(f.projectedAtEnd.rangeKg[0])} ${ex},${Y(f.projectedAtEnd.rangeKg[1])}" fill="rgba(12,14,15,.07)"/>
-        <line x1="${X(last.x)}" y1="${Y(last.y)}" x2="${ex}" y2="${Y(f.projectedAtEnd.kg)}" stroke="#5f6866" stroke-width="2" stroke-dasharray="7 6"/>`;
+      proj = `<polygon class="fadein" points="${X(last.x)},${Y(last.y)} ${ex},${Y(f.projectedAtEnd.rangeKg[0])} ${ex},${Y(f.projectedAtEnd.rangeKg[1])}" fill="rgba(255,255,255,.07)"/><line class="fadein" x1="${X(last.x)}" y1="${Y(last.y)}" x2="${ex}" y2="${Y(f.projectedAtEnd.kg)}" stroke="#9a9aa1" stroke-width="2" stroke-dasharray="7 6"/>`;
     }
-    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight over the mission with goals and projection">${grid}${xl}${goalLine(goals[0], "#18c27f", "Goal")}${goalLine(goals[1], "#93a09c", "Secondary")}${area}${proj}${line}${dots}</svg>`;
+    const goals = win.mission ? goalLine(sm.goals.primary.goalKg, "#2ee59d", "Goal") + goalLine(sm.goals.secondary.goalKg, "#7a7a82", "Secondary") : "";
+    const dCls = delta === null ? "" : delta < 0 ? "good" : delta > 0 ? "bad" : "";
+    const label = TABS.find((t) => t[0] === chartState.weight)[1];
+    const empty = !pts.length ? `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" fill="#63636b" font-size="14">No weights logged in this range</text>` : "";
+    return `<div class="card" id="card-weight"><div class="chead"><div><div class="m">Weight</div><div class="val">${latest === null ? "–" : kg(latest)}<small>kg</small>${delta === null ? "" : `<span class="delta ${dCls}">${delta < 0 ? "▼" : delta > 0 ? "▲" : "–"} ${Math.abs(delta).toFixed(2)} kg · ${label}</span>`}</div></div>${tabsHtml("weight")}</div>
+      <div class="chartwrap" id="cw-weight"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight chart"><defs><linearGradient id="wgrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2ee59d" stop-opacity=".30"/><stop offset="1" stop-color="#2ee59d" stop-opacity="0"/></linearGradient></defs>${grid}${xl}${goals}${area}${proj}${avgLine}${line}${dots}${empty}<line id="vl-weight" y1="${T}" y2="${H - B}" stroke="#fff" stroke-opacity=".35" stroke-dasharray="3 4" style="display:none"/><circle id="hl-weight" r="6" fill="#2ee59d" stroke="#050506" stroke-width="3" style="display:none"/></svg><div class="tip" id="tip-weight"></div></div>
+      <div class="legend"><span><i class="dot"></i>Weight</span><span><i style="border-color:#f4f4f2;opacity:.75"></i>7-day average</span>${win.mission ? `<span><i style="border-color:#9a9aa1;border-top-style:dashed"></i>Projection (not a measurement)</span><span><i style="border-color:#2ee59d;border-top-style:dotted"></i>Goal</span>` : ""}</div></div>`;
+  }
+  function weightTipData(win) {
+    const all = Object.keys(S.weights).sort();
+    return all.filter((d) => d >= win.from && d <= win.asOf).map((d) => {
+      const i = all.indexOf(d);
+      const prev = i > 0 && diff(all[i - 1], d) === 1 ? S.weights[all[i - 1]].kg : null;
+      const vals = all.filter((x) => diff(x, d) >= 0 && diff(x, d) <= 6).map((x) => S.weights[x].kg);
+      const intake = S.intake[d];
+      return { d, x: diff(win.from, d), y: S.weights[d].kg, prev, avg: vals.reduce((a, b) => a + b, 0) / vals.length, intake };
+    });
+  }
+
+  function calCard() {
+    const sm = S.summary;
+    const win = windowFor(chartState.cal);
+    const days = eachDay(win.from, win.asOf);
+    const burn = Object.fromEntries(S.analytics.burn.map((b) => [b.date, b.estimatedBurn]));
+    const recs = days.map((d) => ({ d, r: S.intake[d] || null, burn: burn[d] ?? null }));
+    const comp = recs.filter((x) => x.r && x.r.status === "complete" && !x.r.zero);
+    const avg = comp.length ? comp.reduce((a, x) => a + x.r.kcal, 0) / comp.length : null;
+    // The window before this one, same length, for the comparison pill.
+    const n = days.length;
+    const prevDays = chartState.cal === "mission" ? [] : eachDay(addDays(win.from, -n), addDays(win.from, -1)).filter((d) => diff(sm.startDate, d) >= 0);
+    const prevComp = prevDays.filter((d) => S.intake[d] && S.intake[d].status === "complete" && !S.intake[d].zero);
+    const prevAvg = prevComp.length ? prevComp.reduce((a, d) => a + S.intake[d].kcal, 0) / prevComp.length : null;
+    const dl = avg !== null && prevAvg !== null ? avg - prevAvg : null;
+    const W = 760, H = 250, L = 46, R = 14, T = 14, B = 28;
+    const maxv = Math.max(500, ...recs.map((x) => Math.max(x.r ? x.r.kcal : 0, x.burn || 0)));
+    const top = Math.ceil((maxv * 1.1) / 500) * 500;
+    const Y = (v) => T + (1 - v / top) * (H - T - B);
+    const bw = (W - L - R) / Math.max(1, recs.length);
+    const X = (i) => L + i * bw;
+    let grid = "";
+    for (let v = 0; v <= top; v += top > 3000 ? 1000 : 500) grid += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="rgba(255,255,255,.07)"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" fill="#63636b" font-size="11">${v}</text>`;
+    const gap = Math.min(6, bw * 0.25);
+    const bars = recs.map((x, i) => {
+      if (!x.r) return `<rect x="${X(i) + gap / 2}" y="${H - B - 3}" width="${Math.max(2, bw - gap)}" height="3" rx="1.5" fill="#26262b"/>`;
+      if (x.r.zero) return `<rect class="barrect" x="${X(i) + gap / 2}" y="${H - B - 8}" width="${Math.max(2, bw - gap)}" height="8" rx="2" fill="#ffb15c" style="animation-delay:${Math.min(i * 12, 500)}ms"/>`;
+      const h = (x.r.kcal / top) * (H - T - B);
+      const open = x.r.status !== "complete";
+      return `<rect class="barrect" x="${X(i) + gap / 2}" y="${H - B - h}" width="${Math.max(2, bw - gap)}" height="${h}" rx="${Math.min(6, bw / 3)}" fill="${open ? "rgba(46,229,157,.28)" : "url(#cgrad)"}" ${open ? 'stroke="#2ee59d" stroke-dasharray="3 3"' : ""} style="animation-delay:${Math.min(i * 12, 500)}ms"/>`;
+    }).join("");
+    const burnPts = recs.filter((x) => x.burn).map((x) => [X(recs.indexOf(x)) + bw / 2, Y(x.burn)]);
+    const burnLine = burnPts.length > 1 ? `<path class="draw" d="${smooth(burnPts)}" fill="none" stroke="#7cc4ff" stroke-width="1.8" stroke-dasharray="1 0" opacity=".9"/>` : "";
+    const avgLine = avg !== null ? `<line class="fadein" x1="${L}" x2="${W - R}" y1="${Y(avg)}" y2="${Y(avg)}" stroke="#f4f4f2" stroke-opacity=".6" stroke-dasharray="5 5"/><text class="fadein" x="${W - R - 4}" y="${Y(avg) - 6}" text-anchor="end" fill="#f4f4f2" font-size="11" font-weight="700">avg ${int(avg)}</text>` : "";
+    const tickEvery = recs.length > 40 ? 14 : recs.length > 14 ? 7 : recs.length > 7 ? 2 : 1;
+    let xl = "";
+    for (let i = 0; i < recs.length; i += tickEvery) xl += `<text x="${X(i) + bw / 2}" y="${H - 8}" text-anchor="middle" fill="#63636b" font-size="11">${esc(fmtShort(recs[i].d))}</text>`;
+    const label = TABS.find((t) => t[0] === chartState.cal)[1];
+    return `<div class="card" id="card-cal"><div class="chead"><div><div class="m">Calories · average per finished day</div><div class="val">${avg === null ? "–" : int(avg)}<small>kcal</small>${dl === null ? "" : `<span class="delta">${dl > 0 ? "▲" : dl < 0 ? "▼" : "–"} ${int(Math.abs(dl))} vs the ${label} before</span>`}</div></div>${tabsHtml("cal")}</div>
+      <div class="chartwrap" id="cw-cal"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Calories chart"><defs><linearGradient id="cgrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7dffc9"/><stop offset="1" stop-color="#14b878"/></linearGradient></defs>${grid}${xl}${bars}${burnLine}${avgLine}<rect id="hl-cal" y="${T}" height="${H - T - B}" fill="#fff" fill-opacity=".06" style="display:none"/></svg><div class="tip" id="tip-cal"></div></div>
+      <div class="legend"><span><i class="dot"></i>Finished day</span><span><i style="border-color:#2ee59d;border-top-style:dashed"></i>Day still open</span><span><i style="border-color:#ffb15c"></i>Zero intake</span><span><i style="border-color:#7cc4ff"></i>Estimated burn (an estimate)</span></div></div>`;
+  }
+
+  function wireCharts() {
+    for (const which of ["weight", "cal"]) {
+      const card = $("card-" + which);
+      if (!card) continue;
+      card.querySelectorAll(".tabs button").forEach((b) => (b.onclick = () => { chartState[which] = b.dataset.r; redrawChart(which); }));
+      const svg = card.querySelector("svg.chart");
+      svg.querySelectorAll(".draw").forEach((el) => el.style.setProperty("--len", Math.ceil(el.getTotalLength ? el.getTotalLength() : 2000)));
+      const wrap = $("cw-" + which), tip = $("tip-" + which);
+      const vb = svg.viewBox.baseVal;
+      if (which === "weight") {
+        const win = windowFor(chartState.weight);
+        const data = weightTipData(win);
+        if (!data.length) continue;
+        const span = Math.max(1, diff(win.from, win.to));
+        const L = 46, R = 14;
+        const xOf = (x) => L + (x / span) * (vb.width - L - R);
+        svg.addEventListener("pointermove", (e) => {
+          const r = svg.getBoundingClientRect();
+          const px = ((e.clientX - r.left) / r.width) * vb.width;
+          let best = data[0];
+          for (const d of data) if (Math.abs(xOf(d.x) - px) < Math.abs(xOf(best.x) - px)) best = d;
+          const vl = $("vl-weight"), hl = $("hl-weight");
+          const cx = xOf(best.x);
+          const ys = data.map((d) => d.y), allY = [...ys];
+          vl.setAttribute("x1", cx); vl.setAttribute("x2", cx); vl.style.display = "";
+          // y position from the dot already drawn: recompute with the same scale
+          const circles = svg.querySelectorAll('circle[stroke="#2ee59d"]');
+          const idx = data.indexOf(best);
+          let cy = null;
+          if (circles[idx]) cy = Number(circles[idx].getAttribute("cy"));
+          if (cy === null) { cy = 150; }
+          hl.setAttribute("cx", cx); hl.setAttribute("cy", cy); hl.style.display = "";
+          const kc = best.intake ? (best.intake.zero ? "0 kcal (zero intake)" : int(best.intake.kcal) + " kcal" + (best.intake.status === "complete" ? "" : " so far")) : "calories not logged";
+          tip.innerHTML = `<em>${esc(fmt(best.d))}</em><b>${kg(best.y)} kg</b>${best.prev !== null ? `<em>${sgn(best.y - best.prev)} kg vs the day before</em><br>` : ""}<em>7-day average ${kg(best.avg)} kg</em><br><em>${esc(kc)}</em>`;
+          const wr = wrap.getBoundingClientRect();
+          tip.style.left = Math.min(Math.max(((cx / vb.width) * r.width), 80), r.width - 80) + "px";
+          tip.style.top = (cy / vb.height) * r.height - 12 + "px";
+          tip.classList.add("on");
+        });
+        svg.addEventListener("pointerleave", () => { tip.classList.remove("on"); $("vl-weight").style.display = "none"; $("hl-weight").style.display = "none"; });
+      } else {
+        const win = windowFor(chartState.cal);
+        const days = eachDay(win.from, win.asOf);
+        const burn = Object.fromEntries(S.analytics.burn.map((b) => [b.date, b.estimatedBurn]));
+        const L = 46, R = 14, bw = (vb.width - L - R) / Math.max(1, days.length);
+        svg.addEventListener("pointermove", (e) => {
+          const r = svg.getBoundingClientRect();
+          const px = ((e.clientX - r.left) / r.width) * vb.width;
+          const i = Math.max(0, Math.min(days.length - 1, Math.floor((px - L) / bw)));
+          const d = days[i], rec = S.intake[d];
+          const hl = $("hl-cal");
+          hl.setAttribute("x", L + i * bw); hl.setAttribute("width", bw); hl.style.display = "";
+          const total = rec ? (rec.zero ? "0 kcal" : int(rec.kcal) + " kcal") : "not logged";
+          const status = rec ? (rec.zero ? "zero intake" : rec.status === "complete" ? "day finished" : "day still open") : "";
+          const meals = rec && rec.meals ? rec.meals.map((m) => `${esc(m.label)} ${int(m.kcal)}`).join(" · ") : "";
+          tip.innerHTML = `<em>${esc(fmt(d))}</em><b>${esc(total)}</b><em>${esc(status)}</em>${meals ? `<br><em>${meals}</em>` : ""}${burn[d] ? `<br><em>estimated burn about ${int(burn[d])} kcal</em>` : ""}`;
+          tip.style.left = Math.min(Math.max(((L + (i + 0.5) * bw) / vb.width) * r.width, 90), r.width - 90) + "px";
+          tip.style.top = "30px";
+          tip.classList.add("on");
+        });
+        svg.addEventListener("pointerleave", () => { tip.classList.remove("on"); $("hl-cal").style.display = "none"; });
+      }
+    }
+  }
+  function redrawChart(which) {
+    const card = $("card-" + which);
+    if (!card) return;
+    const holder = document.createElement("div");
+    holder.innerHTML = which === "weight" ? weightCard() : calCard();
+    card.replaceWith(holder.firstElementChild);
+    wireCharts();
+  }
+  // A tiny line for a stat tile.
+  function spark(values, color) {
+    if (values.length < 2) return "";
+    const W = 120, H = 30;
+    const lo = Math.min(...values), hi = Math.max(...values), r = hi - lo || 1;
+    const pts = values.map((v, i) => [(i / (values.length - 1)) * W, H - 3 - ((v - lo) / r) * (H - 6)]);
+    return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path class="draw" d="${smooth(pts)}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
+  }
+
+  /* ------------------------------------------------------------- awards */
+  const GLYPH = {
+    flame: '<path d="M12 2c1 4-2 5-2 8 0 1.5 1 3 2.5 3S15 11.7 14.6 10c2 1.5 3.4 4 3.4 6.4A6 6 0 0 1 6 16.8C6 12 12 9 12 2z" fill="currentColor"/>',
+    down: '<path d="M12 4v13m0 0l-5.5-5.5M12 17l5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
+    target: '<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/>',
+    crown: '<path d="M4 18l-1.2-10 5 4L12 5l4.2 7 5-4L20 18z" fill="currentColor"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" fill="currentColor"/>',
+    sun: '<circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2.1 2.1M16.9 16.9L19 19M5 19l2.1-2.1M16.9 7.1L19 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+    calendar: '<rect x="4" y="5" width="16" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 10h16M9 3v4M15 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  };
+  function medal(a, i) {
+    const C = 2 * Math.PI * 34;
+    const ring = a.unlocked
+      ? `<circle cx="38" cy="38" r="34" fill="none" stroke="url(#mg${i})" stroke-width="4"/>`
+      : `<circle cx="38" cy="38" r="34" fill="none" stroke="#26262b" stroke-width="4"/><circle cx="38" cy="38" r="34" fill="none" stroke="#14b878" stroke-width="4" stroke-linecap="round" stroke-dasharray="${(C * a.progress).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 38 38)"/>`;
+    return `<svg class="medal" viewBox="0 0 76 76"><defs><linearGradient id="mg${i}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7dffc9"/><stop offset="1" stop-color="#14b878"/></linearGradient><radialGradient id="mb${i}" cx="50%" cy="30%" r="80%"><stop offset="0" stop-color="${a.unlocked ? "#1f3a30" : "#1a1a1d"}"/><stop offset="1" stop-color="#0b0b0c"/></radialGradient></defs>
+      <circle cx="38" cy="38" r="31" fill="url(#mb${i})"/>${ring}<g transform="translate(24 24) scale(1.17)" style="color:${a.unlocked ? "#7dffc9" : "#5a5a62"}">${GLYPH[a.icon] || GLYPH.star}</g></svg>`;
+  }
+  function renderAwards() {
+    const list = S.achievements;
+    const got = list.filter((a) => a.unlocked).sort((a, b) => (a.date < b.date ? 1 : -1));
+    const next = list.filter((a) => !a.unlocked).sort((a, b) => b.progress - a.progress);
+    const card = (a, i) => `<div class="award ${a.unlocked ? "on" : "off"}" style="animation-delay:${Math.min(i * 30, 400)}ms">${medal(a, i)}<b>${esc(a.title)}</b><p>${esc(a.desc)}</p>${a.unlocked ? `<div class="when">${esc(fmt(a.date, { day: "numeric", month: "short" }))}</div>` : `<div class="pbar"><i style="width:${Math.round(a.progress * 100)}%"></i></div><div class="when">${a.hint ? esc(a.hint) : Math.round(a.progress * 100) + "%"}</div>`}</div>`;
+    $("view").innerHTML = `<div class="col">
+      <div class="card"><h2>Awards</h2><div class="big-n" id="n-awards">${got.length}<small>of ${list.length} unlocked</small></div>
+        <div class="bar"><i style="width:${(got.length / list.length) * 100}%"></i></div>
+        <p class="hint">Awards are for what you did: mornings weighed, kilos down, days finished, goals met. Nothing is awarded for eating less or skipping food.</p></div>
+      ${got.length ? `<div class="card"><h2>Unlocked</h2><div class="awards">${got.map(card).join("")}</div></div>` : ""}
+      <div class="card"><h2>${got.length ? "Next up" : "Locked"}</h2><div class="awards">${next.map((a, i) => card(a, i + got.length)).join("")}</div></div>
+    </div>`;
   }
 
   /* ------------------------------------------------------------ insights */
@@ -619,7 +831,7 @@
       const from = diff(sm.startDate, end) > 59 ? addDays(end, -59) : sm.startDate;
       for (let d = from; d <= end; d = addDays(d, 1)) {
         const r = S.intake[d];
-        const cls = !r ? "background:rgba(12,14,15,.08)" : r.zero ? "background:var(--warn)" : r.status === "complete" ? "background:linear-gradient(180deg,#5bf0b8,#18c27f)" : "background:transparent;box-shadow:inset 0 0 0 1.5px #18c27f";
+        const cls = !r ? "background:#1f1f23" : r.zero ? "background:var(--warn)" : r.status === "complete" ? "background:linear-gradient(180deg,#7dffc9,#14b878)" : "background:transparent;box-shadow:inset 0 0 0 1.5px #2ee59d";
         const label = !r ? "not logged" : r.zero ? "zero intake" : r.status === "complete" ? int(r.kcal) + " kcal (day total)" : int(r.kcal) + " kcal (open)";
         strip += `<i title="${esc(fmt(d))}: ${esc(label)}" style="display:inline-block;width:11px;height:22px;border-radius:4px;margin:0 3px 3px 0;${cls}"></i>`;
       }

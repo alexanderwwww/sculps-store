@@ -10,7 +10,7 @@ import { randomBytes } from "node:crypto";
 import { execFile } from "node:child_process";
 import { homedir } from "node:os";
 import { Store } from "./lib/store.mjs";
-import { summarize, analytics, coach } from "./lib/calc.mjs";
+import { summarize, analytics, coach, achievements } from "./lib/calc.mjs";
 import { toCsv } from "./lib/csv.mjs";
 import { todayIn, clockIn, systemZone, isDate } from "./lib/time.mjs";
 
@@ -46,6 +46,7 @@ export function start({ dataDir, port = 47329, clock = () => new Date(), zone = 
       activity: s.activity,
       summary: summarize(s, today()),
       analytics: analytics(s, today()),
+      achievements: achievements(s, today()),
       coach: coach(summarize(s, today()), analytics(s, today())),
       notice: store.loadNotice,
       draft: store.readDraft(),

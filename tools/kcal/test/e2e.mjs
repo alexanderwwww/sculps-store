@@ -54,6 +54,9 @@ try {
     assert.match(await page.textContent("#read"), /Day 1 logged/);
     assert.match(await page.textContent(".goalbar"), /106\.75/);
     assert.match(await page.textContent(".goalbar"), /10\.75 kg to 96\.00 kg/);
+    await page.waitForFunction(() => document.querySelector("#toast") && !document.querySelector("#toast").hidden);
+    assert.match(await page.textContent("#toast"), /Achievement unlocked: Day 1/);
+    assert.ok(await page.locator("#fx").count());
   });
 
   await step("meals add up live, the day stays open, and Finish makes it the day's total", async () => {
@@ -161,6 +164,42 @@ try {
     const w = await page.locator("#gb-fill").evaluate((e) => parseFloat(e.style.width));
     const exp = srv.publicState().summary.goals.primary.percent;
     assert.ok(exp > 20 && Math.abs(w - exp) < 0.5, `bar ${w} vs ${exp}`);
+  });
+
+  await step("the charts: range tabs redraw, hovering shows the exact day, the line is drawn to its end", async () => {
+    await page.click('[data-view="today"]');
+    await page.waitForSelector("#card-weight");
+    await page.waitForTimeout(1600);
+    const dash = await page.locator("#card-weight path.draw").first().evaluate((e) => getComputedStyle(e).strokeDashoffset);
+    assert.equal(parseFloat(dash), 0);
+    await page.locator("#card-weight svg.chart").scrollIntoViewIfNeeded();
+    const box = await page.locator("#card-weight svg.chart").boundingBox();
+    await page.mouse.move(box.x + box.width * 0.45, box.y + box.height * 0.5);
+    await page.waitForSelector("#tip-weight.on");
+    assert.match(await page.textContent("#tip-weight"), /kg/);
+    assert.match(await page.textContent("#tip-weight"), /7-day average/);
+    await page.click('#card-weight .tabs button[data-r="7"]');
+    await page.waitForSelector('#card-weight .tabs button.on[data-r="7"]');
+    assert.match(await page.textContent("#card-weight .chead"), /7D/);
+    await page.locator("#card-cal svg.chart").scrollIntoViewIfNeeded();
+    const cbox = await page.locator("#card-cal svg.chart").boundingBox();
+    await page.mouse.move(cbox.x + cbox.width * 0.95, cbox.y + cbox.height * 0.5);
+    await page.waitForSelector("#tip-cal.on");
+    assert.match(await page.textContent("#tip-cal"), /Nov/);
+    await page.click('#card-cal .tabs button[data-r="14"]');
+    await page.waitForSelector('#card-cal .tabs button.on[data-r="14"]');
+    assert.ok((await page.locator("#card-cal rect.barrect").count()) >= 1);
+  });
+
+  await step("awards: Day 1 is unlocked with its date, locked ones show real progress", async () => {
+    await page.click('[data-view="awards"]');
+    await page.waitForSelector("#n-awards");
+    assert.match(await page.textContent("#n-awards"), /of \d+ unlocked/);
+    const text = await page.textContent("#view");
+    assert.match(text, /Day 1/);
+    assert.match(text, /Next up/);
+    assert.ok((await page.locator(".award.off .pbar").count()) >= 3);
+    assert.ok((await page.locator(".award.on").count()) >= 1);
   });
 
   await step("insights show the streak, weekly table, weekday bars and milestones from the real records", async () => {

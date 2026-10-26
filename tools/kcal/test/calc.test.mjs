@@ -347,3 +347,100 @@ test("coach: facts only, calm about a gain, no praise for eating less", () => {
   const all = JSON.stringify(c).toLowerCase();
   assert.ok(!/skip|starv|fast longer|burn off|cheat/.test(all));
 });
+
+/* ------------------------------------------------------------ achievements */
+import { achievements } from "../src/lib/calc.mjs";
+const ach = (st, today) => Object.fromEntries(achievements(st, today).map((a) => [a.id, a]));
+
+test("achievements before the first weight: all locked, none invented", () => {
+  const a = achievements(mk(), "2026-10-26");
+  assert.ok(a.length >= 12);
+  assert.ok(a.every((x) => !x.unlocked && x.date === null && x.progress === 0));
+});
+
+test("first weight unlocks Day 1 on its date; the rest wait", () => {
+  const st = mk();
+  w(st, "2026-10-27", 110);
+  const a = ach(st, "2026-10-27");
+  assert.equal(a["first-weight"].unlocked, true);
+  assert.equal(a["first-weight"].date, "2026-10-27");
+  assert.equal(a["streak-3"].unlocked, false);
+  assert.equal(a["kg-1"].unlocked, false);
+  assert.equal(a["goal"].unlocked, false);
+});
+
+test("streak medals unlock on the day the run reaches the length, and a broken run keeps what it earned", () => {
+  const st = mk();
+  for (let i = 0; i < 8; i++) w(st, addDays("2026-10-27", i), 110 - i * 0.1);
+  // a gap, then more
+  w(st, "2026-11-08", 108);
+  const a = ach(st, "2026-11-08");
+  assert.equal(a["streak-3"].date, "2026-10-29");
+  assert.equal(a["streak-7"].date, "2026-11-02");
+  assert.equal(a["streak-14"].unlocked, false);
+  assert.ok(a["streak-14"].progress > 0.5 && a["streak-14"].progress < 0.6); // best run 8 of 14
+});
+
+test("kilo and percent medals are dated by the first real weight that reached them, and use the lowest weight", () => {
+  const st = mk();
+  w(st, "2026-10-27", 110);
+  w(st, "2026-10-28", 108.9); // 1.1 down
+  w(st, "2026-10-29", 109.5); // bounced up: the medal stays
+  w(st, "2026-10-30", 104.9); // 5.1 down, 36% of 14 kg
+  const a = ach(st, "2026-10-30");
+  assert.equal(a["kg-1"].date, "2026-10-28");
+  assert.equal(a["kg-2"].date, "2026-10-30");
+  assert.equal(a["kg-5"].date, "2026-10-30");
+  assert.equal(a["kg-10"].unlocked, false);
+  assert.equal(a["pct-25"].date, "2026-10-30");
+  assert.equal(a["pct-50"].unlocked, false);
+  assert.ok(Math.abs(a["pct-50"].progress - 5.1 / 7) < 0.01);
+});
+
+test("goal medals unlock only on a real measurement at or below the goal", () => {
+  const st = mk();
+  w(st, "2026-10-27", 100);
+  w(st, "2026-10-28", 96.4);
+  assert.equal(ach(st, "2026-10-28")["goal"].unlocked, false);
+  w(st, "2026-10-29", 95.9);
+  const a = ach(st, "2026-10-29");
+  assert.equal(a["goal"].date, "2026-10-29");
+  assert.equal(a["goal2"].unlocked, false);
+});
+
+test("food medals come from finished days only; open days and zero-intake days earn nothing special", () => {
+  const st = mk();
+  w(st, "2026-10-27", 110);
+  eat(st, "2026-10-27", 1500, "partial");
+  assert.equal(ach(st, "2026-10-27")["complete-1"].unlocked, false);
+  eat(st, "2026-10-28", 0, "complete", true);
+  // a zero-intake day is recorded, but it never earns a food medal
+  const a = ach(st, "2026-10-28");
+  assert.equal(a["complete-1"].unlocked, false);
+  assert.equal(a["full-7"].progress, 0);
+});
+
+test("full days in a row need both the weight and a finished day, seven running", () => {
+  const st = mk();
+  for (let i = 0; i < 7; i++) { w(st, addDays("2026-10-27", i), 110); eat(st, addDays("2026-10-27", i), 2000); }
+  const a = ach(st, "2026-11-02");
+  assert.equal(a["full-7"].date, "2026-11-02");
+  assert.equal(a["complete-7"].date, "2026-11-02");
+  eat(st, "2026-11-03", 2000, "partial"); w(st, "2026-11-03", 110);
+  assert.equal(ach(st, "2026-11-03")["full-7"].unlocked, true); // earned stays earned
+});
+
+test("a lower week, new lows and halfway", () => {
+  const st = mk();
+  // Monday 2026-10-26 week avg 110, next week avg 109
+  w(st, "2026-10-26", 110); w(st, "2026-10-27", 110);
+  w(st, "2026-11-02", 109); w(st, "2026-11-03", 109);
+  const a = ach(st, "2026-11-04");
+  assert.equal(a["week-down"].unlocked, true);
+  assert.equal(a["half"].unlocked, false);
+  const st2 = mk();
+  w(st2, "2026-10-27", 110);
+  assert.equal(ach(st2, "2026-12-01")["half"].unlocked, true); // day 36 of 60 passes the middle
+  for (let i = 1; i <= 6; i++) w(st2, addDays("2026-10-27", i), 110 - i);
+  assert.equal(ach(st2, "2026-11-02")["lows-5"].unlocked, true);
+});

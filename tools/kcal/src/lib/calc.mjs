@@ -454,9 +454,9 @@ export function analytics(state, today) {
     }
   }
 
-  // Last 14 days: what was logged against the estimated expenditure (labelled an estimate on screen).
+  // Every day so far: what was logged against the estimated expenditure (labelled an estimate on screen).
   const startKg = first;
-  for (const day of eachDay(dayDiff(start, addDays(asOf, -13)) > 0 ? addDays(asOf, -13) : start, asOf)) {
+  for (const day of eachDay(start, asOf)) {
     const w = weightAtOrBefore(weights, day);
     const est = w ? expenditureFor(settings.profile, w.kg, startKg, activity[day]).total : null;
     const r = intake[day];
@@ -487,4 +487,104 @@ export function coach(summary, an) {
   if (an.streak && an.streak.current >= 2) lines.push(`${an.streak.current} mornings logged in a row.`);
   if (sm.goals.primary.reached) lines.push("Goal weight reached. That is a real measurement, not a forecast.");
   return { headline, lines: lines.slice(0, 3) };
+}
+
+
+/* =============================================================== achievements */
+
+/**
+ * Medals for what he did, not for how little he ate. Every one is a plain fact
+ * about the records: mornings weighed, kilos down, days finished, goals met.
+ * Nothing rewards zero-intake days, fast loss, or skipping food.
+ */
+export function achievements(state, today) {
+  const { weights, intake, settings } = state;
+  const end = settings.mission.endDate;
+  const asOf = dayDiff(today, end) < 0 ? end : today;
+  const goal = settings.mission.primaryGoalKg;
+  const goal2 = settings.mission.secondaryGoalKg;
+  const dates = Object.keys(weights).sort().filter((d) => d <= asOf);
+  const out = [];
+  const add = (a) => out.push({ ...a, unlocked: Boolean(a.date), date: a.date ?? null, progress: Math.max(0, Math.min(1, a.progress ?? 0)) });
+  if (!dates.length) {
+    const none = (id, icon, title, desc, group) => add({ id, icon, title, desc, group, date: null, progress: 0 });
+    none("first-weight", "sun", "Day 1", "Log your first morning weight.", "start");
+    for (const n of [3, 7, 14, 30]) none(`streak-${n}`, "flame", `${n} mornings in a row`, `Log your weight ${n} mornings in a row.`, "streak");
+    for (const n of [1, 2, 5, 10]) none(`kg-${n}`, "down", `${n} kg down`, `Reach ${n} kg below your first weight.`, "kg");
+    for (const n of [25, 50, 75]) none(`pct-${n}`, "target", `${n}% of the way`, `Cover ${n}% of the distance to ${goal} kg.`, "goal");
+    none("goal", "crown", `${goal} kg`, "Reach your goal weight.", "goal");
+    none("goal2", "crown", `${goal2} kg`, "Reach your secondary goal.", "goal");
+    none("complete-1", "check", "First finished day", "Finish a day's calories.", "food");
+    none("complete-7", "check", "7 finished days", "Finish 7 days of calories.", "food");
+    none("full-7", "flame", "7 full days in a row", "Weigh in and finish the day's calories, 7 days running.", "food");
+    none("week-down", "down", "A lower week", "A week whose average weight is below the week before.", "weeks");
+    none("lows-5", "star", "5 new lows", "Set 5 new lowest weights.", "weeks");
+    none("half", "calendar", "Halfway", "Reach the middle of the mission.", "start");
+    return out;
+  }
+  const start = dates[0];
+  const first = weights[start].kg;
+  const total = dayDiff(start, end) + 1;
+
+  add({ id: "first-weight", icon: "sun", title: "Day 1", desc: "Log your first morning weight.", group: "start", date: start, progress: 1 });
+
+  // Streaks of mornings with a weight.
+  const streakDate = {};
+  let run = 0, best = 0, cur = 0;
+  for (const d of eachDay(start, asOf)) {
+    run = weights[d] ? run + 1 : 0;
+    if (run > best) best = run;
+    for (const n of [3, 7, 14, 30]) if (run >= n && !streakDate[n]) streakDate[n] = d;
+  }
+  let dd = weights[asOf] ? asOf : addDays(asOf, -1);
+  while (weights[dd] && dayDiff(start, dd) >= 0) { cur++; dd = addDays(dd, -1); }
+  for (const n of [3, 7, 14, 30]) add({ id: `streak-${n}`, icon: "flame", title: `${n} mornings in a row`, desc: `Log your weight ${n} mornings in a row.`, group: "streak", date: streakDate[n] ?? null, progress: Math.max(best, cur) / n, hint: `${Math.min(Math.max(best, cur), n)} of ${n}` });
+
+  // Kilos below the first weight, and the share of the way to the goal.
+  let lowest = first;
+  const kgDate = {}, pctDate = {};
+  let goalDate = null, goal2Date = null, lowsCount = 0, lowsDate = null;
+  let curLow = first;
+  for (const d of dates) {
+    const k = weights[d].kg;
+    if (k < curLow) { curLow = k; lowsCount++; if (lowsCount === 5 && !lowsDate) lowsDate = d; }
+    for (const n of [1, 2, 5, 10]) if (first - k >= n && !kgDate[n]) kgDate[n] = d;
+    if (first > goal) for (const n of [25, 50, 75]) if (first - k >= ((first - goal) * n) / 100 && !pctDate[n]) pctDate[n] = d;
+    if (k <= goal && !goalDate) goalDate = d;
+    if (k <= goal2 && !goal2Date) goal2Date = d;
+    if (k < lowest) lowest = k;
+  }
+  for (const n of [1, 2, 5, 10]) add({ id: `kg-${n}`, icon: "down", title: `${n} kg down`, desc: `Reach ${n} kg below your first weight (${(first - n).toFixed(1)} kg).`, group: "kg", date: kgDate[n] ?? null, progress: (first - lowest) / n, hint: `${Math.max(0, first - lowest).toFixed(2)} of ${n} kg` });
+  for (const n of [25, 50, 75]) add({ id: `pct-${n}`, icon: "target", title: `${n}% of the way`, desc: `Cover ${n}% of the distance to ${goal} kg.`, group: "goal", date: pctDate[n] ?? null, progress: first > goal ? (first - lowest) / ((first - goal) * (n / 100)) : 0 });
+  add({ id: "goal", icon: "crown", title: `${goal} kg`, desc: "Reach your goal weight.", group: "goal", date: goalDate, progress: first > goal ? (first - lowest) / (first - goal) : 0 });
+  add({ id: "goal2", icon: "crown", title: `${goal2} kg`, desc: "Reach your secondary goal.", group: "goal", date: goal2Date, progress: first > goal2 ? (first - lowest) / (first - goal2) : 0 });
+
+  // Finished days of calories, and full days (weight and finished calories) in a row.
+  const done = Object.keys(intake).filter((d) => intake[d].status === "complete" && !intake[d].zero && d <= asOf).sort();
+  const doneDate = (n) => (done.length >= n ? done[n - 1] : null);
+  add({ id: "complete-1", icon: "check", title: "First finished day", desc: "Finish a day's calories.", group: "food", date: doneDate(1), progress: done.length / 1 });
+  add({ id: "complete-7", icon: "check", title: "7 finished days", desc: "Finish 7 days of calories.", group: "food", date: doneDate(7), progress: done.length / 7, hint: `${Math.min(done.length, 7)} of 7` });
+  let fr = 0, frBest = 0, frCur = 0, fullDate = null;
+  for (const d of eachDay(start, asOf)) {
+    const full = weights[d] && intake[d] && intake[d].status === "complete" && !intake[d].zero;
+    fr = full ? fr + 1 : 0;
+    if (fr > frBest) frBest = fr;
+    if (fr >= 7 && !fullDate) fullDate = d;
+  }
+  let d2 = asOf;
+  const isFull = (d) => weights[d] && intake[d] && intake[d].status === "complete" && !intake[d].zero;
+  if (!isFull(d2)) d2 = addDays(d2, -1);
+  while (dayDiff(start, d2) >= 0 && isFull(d2)) { frCur++; d2 = addDays(d2, -1); }
+  add({ id: "full-7", icon: "flame", title: "7 full days in a row", desc: "Weigh in and finish the day's calories, 7 days running.", group: "food", date: fullDate, progress: Math.max(frBest, frCur) / 7, hint: `${Math.min(Math.max(frBest, frCur), 7)} of 7` });
+
+  // A lower week: a Monday-to-Sunday average below the previous week's.
+  const an = analytics(state, today);
+  let weekDate = null;
+  for (let i = 1; i < an.weeks.length; i++) if (an.weeks[i].changeKg !== null && an.weeks[i].changeKg < 0 && !weekDate) weekDate = an.weeks[i].end < asOf ? an.weeks[i].end : asOf;
+  add({ id: "week-down", icon: "down", title: "A lower week", desc: "A week whose average weight is below the week before.", group: "weeks", date: weekDate, progress: weekDate ? 1 : 0 });
+  add({ id: "lows-5", icon: "star", title: "5 new lows", desc: "Set 5 new lowest weights.", group: "weeks", date: lowsDate, progress: lowsCount / 5, hint: `${Math.min(lowsCount, 5)} of 5` });
+  const elapsed = dayDiff(start, asOf) + 1;
+  const halfDays = Math.ceil(total / 2);
+  add({ id: "half", icon: "calendar", title: "Halfway", desc: `Reach day ${halfDays} of the mission.`, group: "start", date: elapsed >= halfDays ? addDays(start, halfDays - 1) : null, progress: elapsed / halfDays, hint: `day ${Math.min(elapsed, halfDays)} of ${halfDays}` });
+  return out;
 }

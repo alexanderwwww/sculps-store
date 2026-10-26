@@ -22,6 +22,10 @@ Personal app for his diet. He named it: "just call the app kcal" (lowercase, 202
 - Profile: age 29, 185 cm, resting 1,800 kcal, baseline 2,790. Estimates are labelled estimates and the working is shown in the app.
 - Intel Mac, ZIP with a working `.app`, same idea as ultracursor (needs Node 20+, Chrome optional), no Xcode, no Terminal window.
 
+## Final form (build 6, 2026-10-26: "analytics and moving Shopify charts, black and simple, achievements")
+- Shopify-admin-style charts on Today: Weight (smooth line, 7-day average, goals, projection, hover for the exact day with change/average/calories) and Calories (bars per day, average line, estimated burn line, hover with the meals), each with 7D / 14D / 30D / Mission tabs, a headline value and a change pill. Lines draw themselves in, bars grow; sparklines in the stat tiles.
+- Awards tab: medals for what he DID (mornings in a row, kg down, % of the way, goals, finished days, full days in a row, a lower week, new lows, halfway). Never for eating less: zero-intake days earn nothing. Unlocking one shows a toast and big confetti. Logic: `achievements()` in calc.mjs, tested.
+
 ## How the screen works
 - Sticky glass goal tube (kg now, kg to go, % of the way, days left). It animates from the old value to the new one on every save, with a count-up and a short confetti burst; milestones (each whole kg below the start, 10/25/50/75/100% of the way) and new lows get a toast, bigger confetti for milestones.
 - Today: "Today's read" (facts only, calm about a gain, from `coach()`), Morning weight card, Calories card (meals add up live: breakfast/lunch/dinner/snack/drink; the day stays "open" until Finish the day; a typed total is still possible), optional Activity card. Wide windows add the stats, chart, forecast.
