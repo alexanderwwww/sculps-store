@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<defs>
+  <radialGradient id="base" cx="50%" cy="36%" r="80%"><stop offset="0" stop-color="#1d2024"/><stop offset=".55" stop-color="#0b0c0e"/><stop offset="1" stop-color="#020203"/></radialGradient>
+  <radialGradient id="signal" cx="50%" cy="46%" r="42%"><stop offset="0" stop-color="#cfe0f2" stop-opacity=".30"/><stop offset=".55" stop-color="#7f9bb8" stop-opacity=".10"/><stop offset="1" stop-color="#7f9bb8" stop-opacity="0"/></radialGradient>
+  <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".55"/><stop offset=".4" stop-color="#ffffff" stop-opacity=".06"/><stop offset="1" stop-color="#9db4cc" stop-opacity=".30"/></linearGradient>
+  <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3f46"/><stop offset=".35" stop-color="#14161a"/><stop offset="1" stop-color="#050506"/></linearGradient>
+  <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f8fc"/><stop offset=".5" stop-color="#8e9aa8"/><stop offset="1" stop-color="#3b434d"/></linearGradient>
+  <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <filter id="blur24" x="-40%" y="-60%" width="180%" height="220%"><feGaussianBlur stdDeviation="24"/></filter>
+  <filter id="blur3" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3"/></filter>
+  <filter id="drop" x="-30%" y="-40%" width="160%" height="190%"><feDropShadow dx="0" dy="20" stdDeviation="18" flood-color="#000" flood-opacity=".8"/></filter>
+  <clipPath id="sq"><rect x="100" y="100" width="824" height="824" rx="186"/></clipPath>
+  <clipPath id="batclip"><path d="M512,452 L536,334 L560,432 C624,418 732,392 816,322 C794,392 774,426 760,472 C740,452 714,454 698,484 C692,520 702,552 680,584 C662,552 636,548 618,568 C614,600 622,626 602,658 C580,626 548,614 512,646 L512,646 C476,614 444,626 422,658 C402,626 410,600 406,568 C388,548 362,552 344,584 C322,552 332,520 326,484 C310,454 284,452 264,472 C250,426 230,392 208,322 C292,392 400,418 464,432 L488,334 L512,452 Z"/></clipPath>
+</defs>
+<rect x="100" y="100" width="824" height="824" rx="186" fill="url(#base)"/>
+<g clip-path="url(#sq)">
+  <rect x="100" y="100" width="824" height="824" fill="url(#signal)"/>
+  <ellipse cx="512" cy="140" rx="470" ry="180" fill="#fff" fill-opacity=".05"/>
+</g>
+<rect x="104" y="104" width="816" height="816" rx="182" fill="none" stroke="url(#rim)" stroke-width="3.5"/>
+<g transform="translate(-41,-18) scale(1.08)">
+  <g filter="url(#drop)">
+    <path d="M512,452 L536,334 L560,432 C624,418 732,392 816,322 C794,392 774,426 760,472 C740,452 714,454 698,484 C692,520 702,552 680,584 C662,552 636,548 618,568 C614,600 622,626 602,658 C580,626 548,614 512,646 L512,646 C476,614 444,626 422,658 C402,626 410,600 406,568 C388,548 362,552 344,584 C322,552 332,520 326,484 C310,454 284,452 264,472 C250,426 230,392 208,322 C292,392 400,418 464,432 L488,334 L512,452 Z" fill="#9db4cc" fill-opacity=".45" filter="url(#blur24)"/>
+    <path d="M512,452 L536,334 L560,432 C624,418 732,392 816,322 C794,392 774,426 760,472 C740,452 714,454 698,484 C692,520 702,552 680,584 C662,552 636,548 618,568 C614,600 622,626 602,658 C580,626 548,614 512,646 L512,646 C476,614 444,626 422,658 C402,626 410,600 406,568 C388,548 362,552 344,584 C322,552 332,520 326,484 C310,454 284,452 264,472 C250,426 230,392 208,322 C292,392 400,418 464,432 L488,334 L512,452 Z" fill="url(#body)" stroke="url(#edge)" stroke-width="6" stroke-linejoin="round"/>
+    <g clip-path="url(#batclip)">
+      <ellipse cx="512" cy="430" rx="300" ry="60" fill="url(#gloss)" fill-opacity=".8"/>
+    </g>
+    <path d="M512,452 L536,334 L560,432 C624,418 732,392 816,322 C794,392 774,426 760,472 C740,452 714,454 698,484 C692,520 702,552 680,584 C662,552 636,548 618,568 C614,600 622,626 602,658 C580,626 548,614 512,646 L512,646 C476,614 444,626 422,658 C402,626 410,600 406,568 C388,548 362,552 344,584 C322,552 332,520 326,484 C310,454 284,452 264,472 C250,426 230,392 208,322 C292,392 400,418 464,432 L488,334 L512,452 Z" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2" stroke-linejoin="round" transform="translate(0,3)"/>
+  </g>
+</g>
+</svg>

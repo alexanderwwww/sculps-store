@@ -1,0 +1,129 @@
+#!/bin/bash
+#
+# What the Dock icon runs. No Terminal window: it makes sure the program is
+# installed beside the data, starts the small local server if it is not already
+# running, and opens the window. Problems are shown as a normal Mac dialog.
+#
+# Written for the bash that ships with macOS (3.2): no bash 4 features. Every
+# path is quoted: "Application Support" has a space in it.
+
+set -u
+
+HERE="$(cd "$(dirname "$0")/../Resources" && pwd)"
+BUILD="$(tr -d '[:space:]' < "$HERE/BUILD" 2>/dev/null)"
+WORK="${KCAL_HOME:-$HOME/Library/Application Support/kcal}"
+RUNTIME="$WORK/runtime"
+DATA="$WORK/data"
+LOG="$WORK/kcal.log"
+BASE_PORT="${KCAL_BASE_PORT:-47329}"
+
+dialog() {
+  # $1 = message. Shown as a Mac alert; harmless where osascript is missing.
+  osascript -e "display dialog \"$(printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g')\" with title \"kcal\" buttons {\"OK\"} default button \"OK\" with icon caution" >/dev/null 2>&1
+}
+
+# Builds 1 to 3 were called SPARTAN FORGE and kept their records under SpartanForge.
+# Copy them across once (copy, never move: the old folder stays as it was).
+LEGACY="$HOME/Library/Application Support/SpartanForge"
+if [ -z "${KCAL_HOME:-}" ] && [ ! -f "$DATA/state.json" ] && [ -f "$LEGACY/data/state.json" ]; then
+  mkdir -p "$DATA" && cp -R "$LEGACY/data/." "$DATA/" 2>/dev/null
+fi
+
+mkdir -p "$WORK" "$DATA" || { dialog "Could not create $WORK"; exit 1; }
+
+# ---------------------------------------------------------------- Node
+# An app started from the Dock gets a bare PATH, so look where Node lives.
+node_major() { "$1" -p 'process.versions.node.split(".")[0]' 2>/dev/null; }
+NODE=""
+OLD=""
+try_node() {
+  [ -n "$NODE" ] && return 0
+  [ -n "${1:-}" ] && [ -x "$1" ] || return 1
+  M="$(node_major "$1")"
+  case "$M" in ''|*[!0-9]*) return 1 ;; esac
+  if [ "$M" -ge 20 ]; then NODE="$1"; else OLD="v$M"; fi
+}
+# KCAL_TEST_NO_NODE exists for the launcher check only: it pretends Node is not installed.
+if [ -z "${KCAL_TEST_NO_NODE:-}" ]; then
+try_node "$(command -v node 2>/dev/null)"
+for c in /usr/local/bin/node /opt/homebrew/bin/node /opt/local/bin/node; do try_node "$c"; done
+if [ -z "$NODE" ] && [ -d "$HOME/.nvm/versions/node" ]; then
+  while IFS= read -r c; do try_node "$c"; done < <(ls -d "$HOME/.nvm/versions/node"/*/bin/node 2>/dev/null | sort -rV 2>/dev/null)
+fi
+try_node "$HOME/.volta/bin/node"
+if [ -z "$NODE" ]; then
+  try_node "$("${SHELL:-/bin/zsh}" -lic 'command -v node' </dev/null 2>/dev/null | tail -1)"
+fi
+fi
+if [ -z "$NODE" ]; then
+  if [ -n "$OLD" ]; then dialog "The Node on this Mac is $OLD. kcal needs version 20 or newer. The download page will open: click the green LTS button, open the .pkg and click through it. Then open kcal again."
+  else dialog "kcal needs Node, which is not installed. The download page will open: click the green LTS button, open the .pkg and click through it. Then open kcal again."; fi
+  open "https://nodejs.org/en/download" >/dev/null 2>&1
+  exit 1
+fi
+
+# ------------------------------------------------- install the program
+# The program lives beside the data, never inside the app (a downloaded app
+# runs from a read-only copy). It is replaced whenever the build differs, in
+# EITHER direction: the app in front of you is the truth. The data folder is
+# never touched by this.
+if [ "$(cat "$RUNTIME/BUILD" 2>/dev/null)" != "$BUILD" ]; then
+  rm -rf "$RUNTIME.new"
+  mkdir -p "$RUNTIME.new" || { dialog "Could not prepare $RUNTIME"; exit 1; }
+  cp -R "$HERE/app/." "$RUNTIME.new/" || { dialog "Could not install the program files."; exit 1; }
+  printf '%s\n' "$BUILD" > "$RUNTIME.new/BUILD"
+  rm -rf "$RUNTIME"
+  mv "$RUNTIME.new" "$RUNTIME" || { dialog "Could not finish installing the program files."; exit 1; }
+fi
+
+# ---------------------------------------------------- find or start the server
+ours() { curl -s --max-time 1 "http://127.0.0.1:$1/healthz" 2>/dev/null | grep -Eq '"app":"(kcal|spartan-forge)"'; }
+current() { curl -s --max-time 1 "http://127.0.0.1:$1/healthz" 2>/dev/null | grep -q "\"build\":\"$BUILD\""; }
+free() { curl -s --max-time 1 -o /dev/null "http://127.0.0.1:$1/healthz" 2>/dev/null; [ $? -eq 7 ]; }
+
+start_on() {
+  ( cd "$RUNTIME" && KCAL_DATA="$DATA" KCAL_PORT="$1" KCAL_BUILD="$BUILD" nohup "$NODE" "$RUNTIME/server.mjs" >> "$LOG" 2>&1 & )
+  i=0
+  while [ "$i" -lt 40 ]; do
+    if ours "$1" && current "$1"; then return 0; fi
+    sleep 0.25
+    i=$((i + 1))
+  done
+  return 1
+}
+
+PORT=""
+P="$BASE_PORT"
+while [ "$P" -lt $((BASE_PORT + 10)) ]; do
+  if ours "$P"; then
+    if current "$P"; then PORT="$P"; break; fi
+    # An older build is still running: ask it to quit, then start this one.
+    curl -s --max-time 2 -X POST -H 'X-Kcal-Launcher: 1' "http://127.0.0.1:$P/shutdown" >/dev/null 2>&1
+    i=0
+    while [ "$i" -lt 20 ] && ! free "$P"; do sleep 0.25; i=$((i + 1)); done
+  fi
+  if free "$P"; then
+    if start_on "$P"; then PORT="$P"; break; fi
+    dialog "kcal could not start. Your records are safe. The details are in: $LOG"
+    exit 1
+  fi
+  P=$((P + 1))
+done
+[ -n "$PORT" ] || { dialog "No free port was found for kcal."; exit 1; }
+
+# -------------------------------------------------------------- the window
+URL="http://127.0.0.1:$PORT/"
+CHROME="${KCAL_CHROME:-}"
+if [ -z "$CHROME" ]; then
+  for c in "/Applications/Google Chrome.app" "$HOME/Applications/Google Chrome.app"; do
+    [ -d "$c" ] && { CHROME="$c"; break; }
+  done
+fi
+if [ -n "$CHROME" ] && [ -d "$CHROME" ]; then
+  # Its own small window, no tabs or address bar, remembered size and place.
+  open -na "$CHROME" --args --app="$URL" --user-data-dir="$WORK/window" --window-size=440,820 --no-first-run --no-default-browser-check >/dev/null 2>&1
+else
+  # No Chrome: the default browser, in a normal tab. It works the same.
+  open "$URL" >/dev/null 2>&1
+fi
+exit 0
