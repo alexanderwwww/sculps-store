@@ -20,7 +20,7 @@ import crypto from "node:crypto";
 import { MAX_STAKE_USD } from "./real/steps.mjs";
 
 export const LIVE_CONNECTED = false;   // the training engines' answer; the real trader has its own door
-export const TOKEN_MS = 20_000, VERIFY_MS = 5_000;
+export const TOKEN_MS = 45_000, VERIFY_MS = 5_000;
 /**
  * build 48, auto-buy caps. Hard-coded: R2 real.json can only lower them (autoMaxDay), never raise.
  *   AUTO_MAX_SOL  the one stake an auto-buy may spend: the instant buyPreset, never more

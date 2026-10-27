@@ -764,7 +764,7 @@ export class Real {
     if (instant && (c.exec !== "instant" || c.buyPreset !== it.preset)) return this.#stale("real.json's exec or buyPreset changed since the card");
     if (!instant && c.exec === "instant") return this.#stale("real.json's exec changed since the card");
     try {
-      if (instant) { await this.panel.openInstant(url); this.verify = await this.panel.instantVerify(it.preset, rec, { chipWaitMs: 12_000 }); }
+      if (instant) { await this.panel.openInstant(url); this.verify = await this.panel.instantVerify(it.preset, rec, { chipWaitMs: 12_000 }); if (this.verify.ok) this.verify.at = this.now(); }
       else { await this.panel.open(url); this.verify = await this.panel.verify(c.selectors, rec); }
     } catch (e) { this.verify = { ok: false, at: this.now(), why: String(e.message || e).slice(0, 120) }; }
     this.#modeEval(this.now());
