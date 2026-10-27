@@ -741,7 +741,7 @@ export class Real {
     return { ok: true };
   }
 
-  #stale(why) { this.st.counters.stale++; this.#to("real-skip", ["APPROVED"], "STALE", { why }, { recent: { ...this.st.recent, [this.st.intent.mint]: this.now() } }); }
+  #stale(why) { this.lastStale = { why, at: this.now() }; this.st.counters.stale++; this.#to("real-skip", ["APPROVED"], "STALE", { why }, { recent: { ...this.st.recent, [this.st.intent.mint]: this.now() } }); }
 
   async #buy(it, token) {
     const mint = it.mint;
@@ -1041,7 +1041,7 @@ export class Real {
 
   /** trader.state().real: the board plus what Claude needs to read a probe through ultra_status. */
   status(nowMs = this.now()) {
-    return { ...this.board(nowMs), disabled: this.disabled || null, cfg: this.cfg ? { mode: this.cfg.mode, error: this.cfg.error || null, selectorsFrom: this.cfg.selectorsFrom || null, exec: this.cfg.exec || null, buyPreset: this.cfg.buyPreset || null, autoBuy: this.cfg.autoBuy === true, keepMints: [...this.#keep()] } : null, verify: this.verify, probeReport: this.probeRep || null, counters: this.st.counters, steps: this.st.steps.slice(-5) };
+    return { ...this.board(nowMs), disabled: this.disabled || null, cfg: this.cfg ? { mode: this.cfg.mode, error: this.cfg.error || null, selectorsFrom: this.cfg.selectorsFrom || null, exec: this.cfg.exec || null, buyPreset: this.cfg.buyPreset || null, autoBuy: this.cfg.autoBuy === true, keepMints: [...this.#keep()] } : null, verify: this.verify, probeReport: this.probeRep || null, counters: this.st.counters, lastStale: this.lastStale || null, steps: this.st.steps.slice(-5) };
   }
 
   async stop() { await this.settle().catch(() => {}); this.store.unlock(); }
