@@ -231,17 +231,25 @@ export function probeHash(rep) {
 }
 
 /** Every frame of the page, read; the frame holding the trade box wins. */
+/** An answer, or `fallback` when the page does not give one in `ms`. A busy GMGN page can hold a page.evaluate for minutes. */
+const bound = (promise, ms, fallback) => { let t; return Promise.race([promise, new Promise((r) => { t = setTimeout(() => r(fallback), ms); })]).finally(() => clearTimeout(t)); };
+export const SCAN_MS = 5_000, FULL_SCAN_MS = 12_000;
+
 export async function gmgnTradeProbe(page) {
   const frames = page.frames();
-  const scans = [];
-  for (let i = 0; i < frames.length; i++) {
-    const f = frames[i];
-    let s = null;
-    try { s = await f.evaluate(pageScan, { mark: false }); } catch (e) { s = { error: String(e.message || e).slice(0, 120) }; }
+  // every frame at once: a page full of frames that never answer costs one wait, not one per frame
+  const scans = await Promise.all(frames.map(async (f, i) => {
+    // build 53: the cheap Instant-trade scan first, every page call bounded. When the Instant window
+    // is up with its buy presets and Sell 100%, the heavy whole-page scan is skipped: on GMGN's real
+    // page it ran past the 90 s limit (builds 50 and 52 never got a report on Alex's Mac).
     let ins = null;
-    try { ins = await f.evaluate(instantScan, { mark: false }); } catch (e) { ins = { open: false, why: `scan failed: ${String(e.message || e).slice(0, 100)}` }; }
-    scans.push({ i, f, s, ins });
-  }
+    try { ins = await bound(f.evaluate(instantScan, { mark: false }), SCAN_MS, { open: false, why: `scan timed out after ${SCAN_MS / 1000} s` }); } catch (e) { ins = { open: false, why: `scan failed: ${String(e.message || e).slice(0, 100)}` }; }
+    const quick = !!(ins && ins.open && (ins.buyPresets || []).length && (ins.sellPcts || []).includes("100%"));
+    let s = null;
+    if (quick) s = { skipped: "instant window up: full page scan not needed" };
+    else { try { s = await bound(f.evaluate(pageScan, { mark: false }), FULL_SCAN_MS, { error: `page scan timed out after ${FULL_SCAN_MS / 1000} s` }); } catch (e) { s = { error: String(e.message || e).slice(0, 120) }; } }
+    return { i, f, s, ins };
+  }));
   const hit = scans.find((x) => x.s && x.s.box) || null;
   const main = scans[0] && scans[0].s && !scans[0].s.error ? scans[0].s : {};
   const s = hit ? hit.s : main;

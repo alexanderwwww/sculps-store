@@ -430,9 +430,9 @@ export class GmgnPanel {
       const after = await this.#targets();
       const w = await walletProbe(p, rep, after);
       let inputs = 0;
-      for (const f of p.frames()) inputs += await f.evaluate(() => (window.__ucTrusted || []).length).catch(() => 0);
+      for (const f of p.frames()) inputs += await Promise.race([f.evaluate(() => (window.__ucTrusted || []).length).catch(() => 0), new Promise((r) => setTimeout(() => r(0), 2000))]);
       let screenshot = null;
-      if (this.dir) { screenshot = path.join(this.dir, "probe.png"); await p.screenshot({ path: screenshot }).catch(() => { screenshot = null; }); }
+      if (this.dir) { screenshot = path.join(this.dir, "probe.png"); await p.screenshot({ path: screenshot, timeout: 4000 }).catch(() => { screenshot = null; }); }
       const out = { build: this.build, at, ...rep, walletKind: w.walletKind, walletAddr: w.walletAddr, chipSol: w.chipSol, walletEvidence: w.evidence, cdpTargetsBefore: before, cdpTargetsAfter: after, screenshot, inputs };
       const j = judge(out);
       out.ok = j.ok; out.why = j.why; out.hash = probeHash(out);
