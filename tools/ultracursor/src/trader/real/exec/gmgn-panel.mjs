@@ -320,10 +320,12 @@ export class GmgnPanel {
     }
   }
 
+  /** build 55: GMGN's toggle is a span ("\ue095 Instant trade"), not a button: match its text, innermost match. */
   async #toggle(page) {
-    const loc = page.getByRole("button", { name: "Instant trade", exact: true });
-    const n = await loc.count();
-    if (n !== 1) return { why: `${n} " Instant trade" toggles` };
+    const all = page.locator("button, span, div, a").filter({ hasText: /^[\s\uE000-\uF8FF]*Instant trade\s*$/ });
+    const n = await all.count();
+    if (n < 1) return { why: "0 \" Instant trade\" toggles" };
+    const loc = all.last();
     if (!(await loc.isVisible())) return { why: "the Instant trade toggle is not visible" };
     return { loc };
   }
@@ -422,7 +424,12 @@ export class GmgnPanel {
         }
         if (!reopened && !open && toggles === 1 && Date.now() - t0 > 2000) {
           reopened = true;
-          await p.evaluate(() => { const el = [...document.querySelectorAll("button,span,div")].find((e) => e.textContent.trim() === "Instant trade" && e.offsetParent); if (el) (el.closest("button") || el).click(); }).catch(() => {});
+          // build 55: a real (trusted) click on the toggle, as the live path does; opens the window, trades nothing.
+          // The recorder is reset after it so the report still proves zero trade inputs.
+          try {
+            const t = await this.#toggle(p);
+            if (t.loc) { await t.loc.click({ timeout: 4000, noWaitAfter: true }); await p.evaluate(() => { window.__ucTrusted = []; }).catch(() => {}); }
+          } catch { /* the report says what it saw */ }
         }
         await p.waitForTimeout(500);
       }
