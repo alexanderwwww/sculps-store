@@ -256,18 +256,19 @@ export class GmgnPanel {
     const p = await this.#tab();
     const t0 = Date.now();
     for (;;) {
-      let open = [], toggle = null, chips = [];
+      let open = [], toggle = null, chips = [], lastWhy = null;
       for (const f of p.frames()) {
         let s = null;
         try { s = await f.evaluate(instantScan, { mark: true, target }); } catch { s = null; }
         if (!s) continue;
+        if (s.why && s.why !== "no Instant-trade window on the page") lastWhy = s.why;
         if (s.toggle && !toggle) toggle = s.toggle;
         chips.push(...(s.chips || []));
         if (s.open) open.push({ frame: f, s });
       }
       if (open.length === 1) return { page: p, frame: open[0].frame, s: open[0].s, win: open[0].frame.locator('[data-uc-instant="1"]').first(), toggle, chips };
       if (open.length > 1) return { page: p, many: open.length, toggle, chips };
-      if (Date.now() - t0 >= wait) return { page: p, closed: true, toggle, chips, why: (open[0] && open[0].s.why) || null };
+      if (Date.now() - t0 >= wait) return { page: p, closed: true, toggle, chips, why: (open[0] && open[0].s.why) || lastWhy };
       await p.waitForTimeout(400);
     }
   }
@@ -339,7 +340,10 @@ export class GmgnPanel {
       if (t.why) return { why: `Instant-trade window closed and ${t.why}` };
       await this.#click(t.loc, "instantToggle", "Instant trade");      // opens the window; trades nothing
       w = await this.#instant(null, 5_000);
-      if (w.closed || w.many) return { why: "the Instant-trade window did not open" };
+      if (w.closed || w.many) {
+        const n = await t.loc.count().catch(() => -1), bb = await t.loc.boundingBox().catch(() => null);
+        return { why: `the Instant-trade window did not open (${w.many ? w.many + " windows" : "scan: " + (w.why || "none")}; toggles ${n}; box ${bb ? [bb.x, bb.y, bb.width, bb.height].map(Math.round).join(",") : "none"}; chips ${(w.chips || []).length})` };
+      }
     }
     w = await this.#instant(target, 0);
     if (w.closed || w.many) return { why: "the Instant-trade window went away" };
