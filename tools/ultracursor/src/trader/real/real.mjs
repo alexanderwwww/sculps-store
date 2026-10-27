@@ -418,7 +418,10 @@ export class Real {
   #gotProbe(rep) {
     const box = (rep.controls || []).filter((c) => c.inTradeBox);
     const rec = { hash: rep.hash, build: rep.build, ok: !!rep.ok, at: rep.at ?? this.now(), url: rep.url, mint: rep.mint, walletKind: rep.walletKind, walletAddr: rep.walletAddr, why: rep.why,
-      instant: rep.instant && rep.instant.open ? { open: true, buyPresets: rep.instant.buyPresets || [], sellPcts: rep.instant.sellPcts || [], toggle: !!rep.instant.toggle } : { open: false, toggle: !!(rep.instant && rep.instant.toggle) },
+      instant: rep.instant && rep.instant.open ? { open: true, buyPresets: rep.instant.buyPresets || [], sellPcts: rep.instant.sellPcts || [], toggle: !!rep.instant.toggle } : (rep.instant && rep.instant.toggle && this.cfg && !this.cfg.error
+        // build 56: GMGN closes the window after every load; the toggle is there, so the window is opened and the one exact preset/Sell 100% target is found at click time (no match = no click)
+        ? { open: true, assumed: true, buyPresets: [this.cfg.buyPreset], sellPcts: ["100%"], toggle: true }
+        : { open: false, toggle: !!(rep.instant && rep.instant.toggle) }),
       controls: (rep.controls || []).map((c) => ({ role: c.role, name: c.name, inTradeBox: !!c.inTradeBox })) };
     this.probes = [rec, ...this.probes.filter((p) => p.hash !== rec.hash)].slice(0, 8);
     this.probeRep = rep;
