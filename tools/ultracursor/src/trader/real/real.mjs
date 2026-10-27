@@ -353,7 +353,8 @@ export class Real {
     for (const p of [...this.st.positions]) { this.curId = p.id; await step("exit", () => this.#manage(nowMs)); }
     this.curId = null;
     if (manual) this.manual = false;
-    if (!this.flow && !this.st.intent) await step("select", () => this.#select(nowMs));
+    // a manual stop sells everything and buys nothing in the same pass
+    if (!this.flow && !this.st.intent && !manual) await step("select", () => this.#select(nowMs));
     this.at = nowMs;
     this.#save();
   }
