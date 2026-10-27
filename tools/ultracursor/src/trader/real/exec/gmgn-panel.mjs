@@ -301,7 +301,7 @@ export class GmgnPanel {
       // build 52: the header chip, or (0 or missing) the SOL on the window's Buy line
       const chipSol = (w) => { const h = w.chips && w.chips.length === 1 ? Number(w.chips[0].text) : null; return h > 0 ? h : w.s && w.s.winSol > 0 ? w.s.winSol : h; };
       let w = await this.#instant(null, 0);
-      for (const t0 = Date.now(); !w.many && !(w.chips && w.chips.length) && Date.now() - t0 < chipWaitMs;) { await w.page.waitForTimeout(250); w = await this.#instant(null, 0); }
+      for (const t0 = Date.now(); !w.many && !(chipSol(w) > 0) && Date.now() - t0 < chipWaitMs;) { await w.page.waitForTimeout(250); w = await this.#instant(null, 0); }
       if (w.many) return { ok: false, at, why: `${w.many} Instant-trade windows on the page` };
       if (w.closed) {
         const t = await this.#toggle(w.page);
