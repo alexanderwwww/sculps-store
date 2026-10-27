@@ -32,7 +32,7 @@
 import { readFile } from "node:fs/promises";
 import { TOOLS, ACTIONS, validate, resolve, describe, act, readText, screenshot, downscale, format } from "./tools.mjs";
 import { observe, findLines, pageBlock } from "./snapshot.mjs";
-import { clickKind, enterIsFinal, navigateKind, secretField, priceField, detectWall, gmgnTradeClick } from "./guard.mjs";
+import { clickKind, enterIsFinal, navigateKind, secretField, priceField, detectWall, gmgnTradeClick, autoBuyOk } from "./guard.mjs";
 import { SYSTEM, costOf, explainError } from "./brain.mjs";
 import { render } from "./profiles.mjs";
 
@@ -272,8 +272,10 @@ export async function runTask({ page, task, deps }) {
       // Kinds Alex lets through on this site (profile autoApprove). Buying and
       // deleting can never be listed: money and things that cannot be undone wait for him.
       const auto = (profile.autoApprove || []).includes(kind) && !["buy", "delete"].includes(kind);
-      const choice = auto ? "approve" : await approve(kind, input.why, what, step);
-      if (auto) log({ kind: "approval", step, title: KIND_TITLE[kind] || kind, target: what, choice: "approve (auto, profile)" });
+      // Alex's standing rule (2026-10-27): small GMGN preset buys go through without a card (see autoBuyOk).
+      const autoBuy = kind === "buy" && name === "click" && autoBuyOk(page.url(), target, profile.autoBuy);
+      const choice = auto || autoBuy ? "approve" : await approve(kind, input.why, what, step);
+      if (auto || autoBuy) log({ kind: "approval", step, title: KIND_TITLE[kind] || kind, target: what, choice: autoBuy ? "approve (auto, Alex's standing rule for small GMGN buys)" : "approve (auto, profile)" });
       if (choice === "stop") { note({ target: targetText, ok: false, error: "stopped by Alex at the approval", final: kind }); return { stop: true }; }
       if (choice !== "approve") {
         typed = typed.filter((t) => !t.price);

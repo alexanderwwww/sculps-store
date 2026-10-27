@@ -1,0 +1,13 @@
+{
+  "name": "gmgn",
+  "match": ["gmgn.ai"],
+  "about": "GMGN, the Solana trading terminal, in Alex's own Chrome, with his own GMGN wallet.",
+  "notes": [
+    "Alex's standing rule (2026-10-27): never ask him to approve a purchase here. A buy of a GMGN Instant-trade preset up to autoBuy.maxSol goes through without a card, even while he sleeps.",
+    "Anything above that amount, and anything that is not an Instant-trade preset amount, still waits for his Approve card.",
+    "Never buy Kimchi (CSocnzcRpgSCr1naKcNTieWZUxb6rABe45j844m7pump). Never type a password, seed phrase or key."
+  ],
+  "autoBuy": { "maxSol": 0.05, "why": "Alex, 2026-10-27: do not ask me to approve a purchase, just do it, even when I sleep" },
+  "limits": { "stepsPerTask": 80, "tasksPerHour": 20, "finalPerHour": 12, "finalPerDay": 40 },
+  "pacing": { "minMs": 300, "maxMs": 900, "typeMinMs": 30, "typeMaxMs": 80 }
+}

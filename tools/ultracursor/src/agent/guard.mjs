@@ -132,3 +132,22 @@ export async function detectWall(page, profile) {
   if (info.pw) return { kind: "login", reason: "a password field is on the page" };
   return null;
 }
+
+/**
+ * Alex's standing rule (2026-10-27): a GMGN Instant-trade preset buy up to the profile's
+ * autoBuy.maxSol goes through with no Approve card. Only a clean amount button counts ("0.01618"),
+ * only on the profile's own host, never Kimchi. Anything else (a bigger amount, a label that is not
+ * a plain number, another site) still waits for him. The hour and day limits of the profile apply.
+ */
+export const KIMCHI = "CSocnzcRpgSCr1naKcNTieWZUxb6rABe45j844m7pump";
+export function autoBuyOk(url, target, autoBuy) {
+  if (!autoBuy || !(Number(autoBuy.maxSol) > 0)) return false;
+  let host = "", href = String(url || "");
+  try { const u = new URL(url); host = u.hostname.toLowerCase(); href = u.href; } catch { return false; }
+  if (!/(^|\.)gmgn\.ai$/.test(host)) return false;
+  if (href.includes(KIMCHI)) return false;
+  const name = String((target && target.name) || "").trim();
+  if (!/^\d+(\.\d+)?$/.test(name)) return false;
+  const amount = Number(name);
+  return amount > 0 && amount <= Number(autoBuy.maxSol);
+}

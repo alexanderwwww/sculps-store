@@ -10,7 +10,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { clickKind, enterIsFinal, navigateKind, secretField, priceField } from "../src/agent/guard.mjs";
+import { clickKind, enterIsFinal, navigateKind, secretField, priceField, autoBuyOk, KIMCHI } from "../src/agent/guard.mjs";
 import { compact, findLines, refsIn, parseLine } from "../src/agent/snapshot.mjs";
 import { loadProfiles, render } from "../src/agent/profiles.mjs";
 import { createLimits } from "../src/agent/limits.mjs";
@@ -165,6 +165,23 @@ eq("files must be names", validate("upload", { ref: "e1", files: [1], why: "x" }
 eq("unknown tool", validate("buy", {}), "there is no tool called buy");
 eq("result text shape", format({ ok: true, did: "clicked" }, { url: "u", title: "t", text: "- button \"A\" [ref=e1]" }), 'ok: true\ndid: clicked\nurl: u\ntitle: t\npage:\n- button "A" [ref=e1]');
 eq("error result text shape", format({ ok: false, error: "no", notes: ["n1"] }), "ok: false\nerror: no\nnote: n1");
+
+/* ------------------------------------------------------------------ Alex's standing rule: small GMGN buys, no card */
+{
+  const gm = loadProfiles(path.join(SRC, "profiles")).forUrl("https://gmgn.ai/sol/token/abc");
+  yes("the gmgn profile matches gmgn.ai and carries the auto-buy cap", gm.name === "gmgn" && gm.autoBuy && gm.autoBuy.maxSol === 0.05, gm.autoBuy);
+  const u = "https://gmgn.ai/sol/token/abc";
+  yes("an Instant-trade preset of 0.01618 SOL goes through with no card", autoBuyOk(u, { name: "0.01618" }, gm.autoBuy));
+  yes("exactly the cap goes through", autoBuyOk(u, { name: "0.05" }, gm.autoBuy));
+  yes("above the cap (0.1, 0.5, 1) still waits for Alex", !autoBuyOk(u, { name: "0.1" }, gm.autoBuy) && !autoBuyOk(u, { name: "0.5" }, gm.autoBuy) && !autoBuyOk(u, { name: "1" }, gm.autoBuy));
+  yes("a button that is not a plain amount ('Buy', 'Buy 0.01618', 'Max', '25%') still waits", ["Buy", "Buy 0.01618", "Max", "25%", "0.01618 SOL", ""].every((n) => !autoBuyOk(u, { name: n }, gm.autoBuy)));
+  yes("any other site still waits, even for a plain number", !autoBuyOk("https://shop.example/checkout", { name: "0.01618" }, gm.autoBuy) && !autoBuyOk("https://gmgn.ai.evil.example/x", { name: "0.01618" }, gm.autoBuy));
+  yes("Kimchi is never auto-bought", !autoBuyOk(`https://gmgn.ai/sol/token/${KIMCHI}`, { name: "0.01618" }, gm.autoBuy));
+  yes("no policy, no auto-buy (the default profile and Depop never get one)", !autoBuyOk(u, { name: "0.01618" }, undefined) && !autoBuyOk(u, { name: "0.01618" }, {}) && !loadProfiles(path.join(SRC, "profiles")).forUrl("https://www.depop.com/").autoBuy);
+  const agentSrc = fs.readFileSync(path.join(SRC, "agent", "agent.mjs"), "utf8");
+  yes("the only way past the card for a buy is autoBuyOk: profile autoApprove can still never list buy or delete", /!\["buy", "delete"\]\.includes\(kind\)/.test(agentSrc) && (agentSrc.match(/autoBuyOk\(/g) || []).length === 1);
+  yes("the gmgn profile's hour and day limits still apply to the final click", gm.limits.finalPerHour === 12 && gm.limits.finalPerDay === 40);
+}
 
 /* ------------------------------------------------------------------ site-blind core */
 const core = ["agent", "ultra.mjs", "panel.js", "ui.mjs", "overlay.js"];
