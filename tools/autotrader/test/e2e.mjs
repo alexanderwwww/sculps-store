@@ -51,7 +51,7 @@ try {
   await page.waitForSelector(".fdot", { timeout: 15000 });
   await page.waitForFunction(() => Number(document.querySelector(".fnode--scan b").textContent) >= 2, null, { timeout: 15000 });
   ok("new coins make dots travel through the flow and the counters move");
-  ch.W.lastKind = "sell"; state.series = moon; state.px.P1 = 1.95;
+  ch.W.lastKind = "sell"; state.series = moon; state.px.P1 = 2.6;
   await page.waitForFunction(() => /take profit/.test(document.body.textContent), null, { timeout: 12000 });
   assert.match(await text(), /exit/); ok("the exit shows up with its reason");
   for (const sel of ["header .chip", ".agent", ".curve", ".row"]) assert.ok(await page.$(sel), sel);

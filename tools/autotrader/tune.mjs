@@ -25,9 +25,9 @@ const fmt = (r) => `n=${String(r.n).padStart(4)} win=${(r.win * 100).toFixed(0).
 console.log("current defaults   train", fmt(run(train, DEFAULTS)), "| test", fmt(run(test, DEFAULTS)));
 console.log("random entries     train", fmt(run(train, DEFAULTS, true)), "| test", fmt(run(test, DEFAULTS, true)));
 const grid = [];
-for (const breakoutLookback of [6, 10, 15]) for (const volSpike of [2, 3, 5]) for (const minGreen of [0.34, 0.67, 1]) for (const tp of [0.25, 0.45, 0.9]) for (const sl of [-0.08, -0.15, -0.25]) for (const trailFrom of [0.12, 0.22]) for (const trail of [0.06, 0.1]) for (const maxHoldMin of [15, 30, 60])
-  grid.push({ ...DEFAULTS, breakoutLookback, volSpike, minGreen, tp, sl, trailFrom, trail, maxHoldMin });
-const scored = grid.map((c) => ({ c, tr: run(train, c) })).filter((x) => x.tr.n >= 25).sort((a, b) => b.tr.avg - a.tr.avg).slice(0, 12);
+for (const breakoutLookback of [5, 10, 20]) for (const volSpike of [1.5, 2, 3]) for (const minGreen of [0.34, 0.67]) for (const tp of [0.25, 0.45, 0.9]) for (const sl of [-0.1, -0.15, -0.25]) for (const maxHoldMin of [30, 60]) for (const minAgeMin of [4, 8]) for (const maxAgeMin of [90, 240]) for (const maxChase of [0.8, 3])
+  grid.push({ ...DEFAULTS, breakoutLookback, volSpike, minGreen, tp, sl, maxHoldMin, minAgeMin, maxAgeMin, maxChase });
+const scored = grid.map((c) => ({ c, tr: run(train, c) })).filter((x) => x.tr.n >= 20).sort((a, b) => b.tr.avg - a.tr.avg).slice(0, 12);
 console.log(`\ngrid ${grid.length}; top by TRAIN expectancy, then judged on TEST (pools never used to pick them):`);
-for (const { c, tr } of scored) { const te = run(test, c); console.log(`L${c.breakoutLookback} v${c.volSpike} g${c.minGreen} tp${c.tp} sl${c.sl} tf${c.trailFrom}/${c.trail} h${c.maxHoldMin}  train ${fmt(tr)} | test ${fmt(te)}`); }
+for (const { c, tr } of scored) { const te = run(test, c); console.log(`L${c.breakoutLookback} v${c.volSpike} g${c.minGreen} tp${c.tp} sl${c.sl} h${c.maxHoldMin} age${c.minAgeMin}-${c.maxAgeMin} chase${c.maxChase}  train ${fmt(tr)} | test ${fmt(te)}`); }
 fs.writeFileSync("data/tune-top.json", JSON.stringify(scored.map((x) => ({ c: x.c, train: x.tr, test: run(test, x.c) })), null, 1));

@@ -56,7 +56,7 @@ ok("buy goes through quote -> signed swap -> polled to confirmed", r.ok && r.ord
 const sw = log.find((l) => l.path === "/v1/trade/swap");
 ok("the server accepted our signature (real Ed25519 verify)", !!sw);
 ok("swap body has the documented fields", sw.body.chain === "sol" && sw.body.from_address === WALLET && sw.body.input_token === SOL_MINT && sw.body.output_token === MINT && sw.body.input_amount === String(Math.round(0.0132 * 1e9)) && sw.body.slippage === 20 && sw.body.is_anti_mev === true, sw.body);
-ok("a GMGN-side stop and target ride along as a safety net", sw.body.condition_orders.length === 2 && sw.body.condition_orders[0].order_type === "loss_stop" && sw.body.condition_orders[0].price_scale === "25" && sw.body.condition_orders[1].order_type === "profit_stop" && sw.body.condition_orders[1].price_scale === "70", sw.body.condition_orders);
+ok("a GMGN-side stop and target ride along as a safety net", sw.body.condition_orders.length === 2 && sw.body.condition_orders[0].order_type === "loss_stop" && sw.body.condition_orders[0].price_scale === "25" && sw.body.condition_orders[1].order_type === "profit_stop" && sw.body.condition_orders[1].price_scale === "115", sw.body.condition_orders);
 ok("auth query carries timestamp and client_id and the API key header", !!sw.q.timestamp && !!sw.q.client_id && sw.headers["x-apikey"] === "KEY");
 ok("stake is 12% of the wallet (0.0132 SOL) and never above the cap", Math.abs(r.sol - 0.0132) < 1e-9);
 ex = mk(); mode.polls = 1;
@@ -107,7 +107,7 @@ const live = gmgnExec({ client, wallet: WALLET, balanceSol: async () => 0.11, cf
 const eng = new Engine({ feed, exec: live, journal: new Journal(path.join(dir, "j.jsonl")), rug: async () => ({ pass: true, reason: "ok" }), now: () => now, startEq: 0.11 });
 await eng.tick();
 ok("live tick: a confirmed buy opens one position with the real stake and order id", eng.open.size === 1 && Math.abs([...eng.open.values()][0].stake - 0.0132) < 1e-9 && [...eng.open.values()][0].orderId, eng.status());
-series = [...up, c(33, 1.2, 1.5, 1.8, 1.2, 80)]; now += 2 * M;
+series = [...up, c(33, 1.2, 2.5, 2.6, 1.2, 80)]; now += 2 * M;
 await eng.tick();
 ok("take-profit closes with the REAL fill: 0.0154 SOL back on 0.0132 = +16.7%", eng.closed.length === 1 && Math.abs(eng.closed[0].ret - (0.0154 / 0.0132 - 1)) < 1e-6, eng.closed[0]);
 ok("the journal has intent, open, sell-intent, close in that order", (() => { const t = fs.readFileSync(path.join(dir, "j.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l).type); return t.filter((x) => !x.startsWith("shadow")).join() === "intent,open,sell-intent,close"; })());

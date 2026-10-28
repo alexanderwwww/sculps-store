@@ -20,7 +20,7 @@ const T0 = 1_800_000_000_000;
 let { e, state } = mk();
 await e.slow(); await e.fast();
 ok("a quiet chart and a quiet price: no position, and no noise in the skip log", e.open.size === 0 && !Object.keys(e.status().whyNot).some((x) => /no breakout/.test(x)), e.status().whyNot);
-{ const t = mk(); e = t.e; state = t.state; state.series = up; state.now = T0 + 33 * M; state.byPool.P1 = base; await e.slow(); state.px.P1 = 1.25; await e.fast(); }
+{ const t = mk(); e = t.e; state = t.state; state.now = T0 + 33 * M; state.byPool.P1 = base.map((c, i) => (i >= 28 ? { ...c, o: 1, c: 1.001, h: 1.001, l: 1 } : c)); await e.slow(); state.px.P1 = 1.25; await e.fast(); }
 ok("the live price breaking out opens a position on the very next fast tick, before the minute chart shows it", e.open.size === 1 && /breakout/.test([...e.open.values()][0].enter), e.status());
 
 // 2. exits come from live prices too
@@ -32,26 +32,26 @@ ok("the live price breaking out opens a position on the very next fast tick, bef
 }
 { const t = mk(); e = t.e; state = t.state; state.series = up; state.now = T0 + 33 * M; await e.slow(); await e.fast();
   const pos = [...e.open.values()][0];
-  state.px.P1 = pos.entryPx * 1.5; await e.fast();
-  ok("a live price 50% over entry takes profit with a positive result after costs", e.open.size === 0 && /take profit/.test(e.closed[0].why) && e.closed[0].ret > 0.3, e.closed[0]);
+  state.px.P1 = pos.entryPx * 2; await e.fast();
+  ok("a live price 100% over entry takes profit with a positive result after costs", e.open.size === 0 && /take profit/.test(e.closed[0].why) && e.closed[0].ret > 0.8, e.closed[0]);
 }
 { const t = mk(); e = t.e; state = t.state; state.series = up; state.now = T0 + 33 * M; await e.slow(); await e.fast();
   const pos = [...e.open.values()][0];
   state.px.P1 = pos.entryPx * 1.3; await e.fast();
-  ok("a 30% run is held (target is 45%), peak remembered", e.open.size === 1);
+  ok("a 30% run is held (target is 90%), peak remembered", e.open.size === 1);
   state.px.P1 = pos.entryPx * 1.3 * 0.88; await e.fast();
   ok("then a 12% pullback from the peak sells with the trailing stop", e.open.size === 0 && /trailing/.test(e.closed[0].why) && e.closed[0].ret > 0, e.closed[0]);
 }
 { const t = mk(); e = t.e; state = t.state; state.series = up; state.now = T0 + 33 * M; await e.slow(); await e.fast();
-  state.now += 31 * M; await e.fast();
+  state.now += 61 * M; await e.fast();
   ok("a position held past the time limit is closed even when the price goes nowhere", e.open.size === 0 && /time stop/.test(e.closed[0].why), e.closed[0]);
 }
 // 3. protections
 { const t = mk(); e = t.e; state = t.state; state.series = up; state.now = T0 + 33 * M; state.flow = { buys5: 6, sells5: 20 }; await e.slow(); await e.fast();
   ok("buyers outnumbered 3 to 1: no entry, and the reason is logged", e.open.size === 0 && Object.keys(e.status().whyNot).some((x) => /sellers ahead/.test(x)), e.status().whyNot);
 }
-{ const t = mk(); e = t.e; state = t.state; state.series = up; state.now = T0 + 33 * M; state.px.P1 = 2.4; await e.slow(); await e.fast();
-  ok("a coin already up 100%+ is not chased", e.open.size === 0 && Object.keys(e.status().whyNot).some((x) => /already up/.test(x)), e.status().whyNot);
+{ const t = mk(); e = t.e; state = t.state; state.series = up; state.now = T0 + 33 * M; state.px.P1 = 3.2; await e.slow(); await e.fast();
+  ok("a coin already up 150%+ is not chased", e.open.size === 0 && Object.keys(e.status().whyNot).some((x) => /already up/.test(x)), e.status().whyNot);
 }
 { const t = mk(); e = t.e; state = t.state; state.series = up; state.now = T0 + 33 * M; await e.slow();
   e.feed = { ...e.feed, quotes: async () => new Map() }; await e.fast();

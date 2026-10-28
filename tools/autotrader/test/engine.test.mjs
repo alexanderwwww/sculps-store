@@ -20,7 +20,7 @@ ok("too-young pool is refused", /age/.test(entrySignal(up, up.length - 1, DEFAUL
 const dump = [...up, mk(33, 1.2, 1.0, 1.2, 0.95, 80)];
 const x1 = managePosition(dump, up.length - 1, DEFAULTS);
 ok("stop loss fires and is a loss after costs", !x1.open && /stop/.test(x1.why) && x1.ret < 0, x1);
-const moon = [...up, mk(33, 1.2, 1.5, 1.8, 1.2, 80)];
+const moon = [...up, mk(33, 1.2, 2.5, 2.6, 1.2, 80)];
 const x2 = managePosition(moon, up.length - 1, DEFAULTS);
 ok("take profit fires and is a win after costs", !x2.open && /take profit/.test(x2.why) && x2.ret > 0, x2);
 ok("nothing fired yet = still open", managePosition(up, up.length - 1, DEFAULTS).open === true);
@@ -40,7 +40,7 @@ ok("one tick opens one position", e.open.size === 1 && e.status().open[0].name =
 ok("the signal's reason is recorded", /breakout/.test([...e.open.values()][0].enter));
 e = new Engine({ feed, exec, journal: new Journal(jf), rug, now: () => now });             // "crash" and restart
 ok("after a restart the position is still known (the ultracursor bug)", e.open.size === 1, e.status());
-series = [...up, mk(33, 1.2, 1.5, 1.8, 1.2, 80)];
+series = [...up, mk(33, 1.2, 2.5, 2.6, 1.2, 80)];
 now += 2 * M;
 await e.tick();
 ok("it closes on take profit with a positive pnl and calls the executor", e.open.size === 0 && e.closed.length === 1 && e.closed[0].pnl > 0 && sold === 1, e.status());
@@ -69,7 +69,7 @@ series = up; now = T0 + 33 * M;
 const eS = new Engine({ feed, exec, journal: new Journal(jfS), rug, now: () => now });
 await eS.tick();
 ok("a signal opens a shadow paper trade as well", eS.shadow.size === 1, eS.status().shadowOpen);
-series = [...up, mk(33, 1.2, 1.5, 1.8, 1.2, 80)]; now += 2 * M;
+series = [...up, mk(33, 1.2, 2.5, 2.6, 1.2, 80)]; now += 2 * M;
 await eS.tick();
 ok("the shadow trade closes with its own result and feeds the edge", eS.shadowClosed.length === 1 && eS.edge().avg > 0 && eS.edge().n === 1, eS.edge());
 const eR = new Engine({ feed, exec: { name: "live", buy: async () => ({ ok: true }), sell: async () => ({ ok: true }) }, journal: new Journal(path.join(dir, "jR.jsonl")), rug, now: () => now });

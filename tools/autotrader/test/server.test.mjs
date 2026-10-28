@@ -75,7 +75,7 @@ test("paper mode: a signal opens, the target closes it, and the state shows the 
   const s = await boot();
   assert.equal((await s.post("/api/go", { mode: "paper" })).ok, true);
   await s.until(async () => (await s.get("/api/state")).engine?.open.length === 1);
-  s.state.series = moon; s.state.px.P1 = 1.95;
+  s.state.series = moon; s.state.px.P1 = 2.6;
   const st = await s.until(async () => { const x = await s.get("/api/state"); return x.engine.trades === 1 ? x : null; });
   assert.match(st.engine.recentClosed[0].why, /take profit/);
   assert.ok(st.engine.equity > 100);
@@ -158,7 +158,7 @@ test("LIVE end to end: setup in the app -> real mode -> a signed swap reaches GM
   const sw = calls.find((c) => c.path === "/v1/trade/swap");
   assert.equal(sw.body.from_address, WALLET); assert.equal(sw.body.input_amount, "13200000"); assert.equal(sw.body.is_anti_mev, true);
   assert.equal(st.engine.open[0].stake, 0.0132);
-  s.state.series = moon; s.state.px.P1 = 1.95;
+  s.state.series = moon; s.state.px.P1 = 2.6;
   const done = await s.until(async () => { const x = await s.get("/api/state"); return x.engine.trades === 1 ? x : null; });
   assert.equal(done.engine.recentClosed[0].why.includes("take profit"), true);
   assert.ok(calls.filter((c) => c.path === "/v1/trade/swap").length >= 2, "the exit went out as a second signed swap");
@@ -193,7 +193,7 @@ test("OWN WALLET end to end: press start -> signed swap -> position -> target ->
   assert.equal(st.mode, "live"); assert.equal(st.engine.unit, "SOL");
   assert.equal(s.ch.W.sent.length, 1, "exactly one transaction went out for the buy");
   assert.equal(st.engine.open[0].stake, 0.0125);
-  s.state.series = moon; s.state.px.P1 = 1.95; s.ch.W.lastKind = "sell";
+  s.state.series = moon; s.state.px.P1 = 2.6; s.ch.W.lastKind = "sell";
   const done = await s.until(async () => { const x = await s.get("/api/state"); return x.engine.trades === 1 ? x : null; }, 12000);
   assert.match(done.engine.recentClosed[0].why, /take profit/);
   assert.ok(s.ch.W.sent.length >= 2, "the sale went out as a second transaction");

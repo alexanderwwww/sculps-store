@@ -71,7 +71,7 @@ const eT = mk(); eT.W.held = 0n;
 const eng = new Engine({ feed, exec: eT.ex, journal: new Journal(path.join(dir, "j.jsonl")), rug: async () => ({ pass: true, reason: "ok" }), now: () => state.now, startEq: 0.11 });
 await eng.tick();
 ok("engine + own wallet: a signal becomes a real-shaped buy and an open position with the order id", eng.open.size === 1 && [...eng.open.values()][0].orderId && eng.unit === "SOL", eng.status());
-state.series = moon; state.px.P1 = 1.95; state.now += 2 * M; eT.W.lastKind = "sell"; eT.W.zero = true;
+state.series = moon; state.px.P1 = 2.6; state.now += 2 * M; eT.W.lastKind = "sell"; eT.W.zero = true;
 await eng.tick();
 ok("the target closes it with the chain's own proceeds (0.014 SOL on 0.0125)", eng.closed.length === 1 && Math.abs(eng.closed[0].ret - (0.014 / eng.closed[0].stake - 1)) < 1e-9, eng.closed[0]);
 console.log(`\njupiter tests: ${pass} passed, ${fail} failed`);
