@@ -10,7 +10,7 @@ const WALLET = "4DuDEdhHAdLCDnoQnTp4ikFzTyCVFpSNQDdxwJRibw1D";
 async function boot(extra = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ultra-srv-"));
   const { feed, state } = fakeFeed();
-  const app = start({ dataDir: dir, port: 0, feed, quiet: true, tickMs: 80, rug: async () => ({ pass: true, reason: "ok" }), paperQuote: async () => ({ ok: true, impact: 0.01 }), balance: async () => 0.11, ipv4: async () => "203.0.113.7", ...extra });
+  const app = start({ dataDir: dir, port: 0, feed, now: () => state.now, quiet: true, tickMs: 80, rug: async () => ({ pass: true, reason: "ok" }), paperQuote: async () => ({ ok: true, impact: 0.01 }), balance: async () => 0.11, ipv4: async () => "203.0.113.7", ...extra });
   const port = await app.listening;
   const base = `http://127.0.0.1:${port}`;
   const get = async (p) => (await fetch(base + p)).json();
@@ -79,7 +79,7 @@ test("paper mode: a signal opens, the target closes it, and the state shows the 
   assert.match(st.engine.recentClosed[0].why, /take profit/);
   assert.ok(st.engine.equity > 100);
   assert.equal(st.engine.curve[0], 100);
-  assert.match(st.engine.recentSkips.map((x) => x.why).join(), /liquidity/);
+  assert.ok(st.engine.watching.thin >= 1, "the thin pool is counted as too thin");
   await s.app.close();
 });
 test("pause stops new buys, resume starts them again", async () => {
@@ -107,7 +107,7 @@ test("stop halts the engine, and a restart resumes what was running", async () =
   await s.post("/api/go", { mode: "paper" });
   await s.until(async () => (await s.get("/api/state")).engine?.open.length === 1);
   await s.app.close();
-  const again = start({ dataDir: s.dir, port: 0, feed: fakeFeed().feed, quiet: true, tickMs: 80, rug: async () => ({ pass: true, reason: "ok" }), paperQuote: async () => ({ ok: true, impact: 0.01 }) });
+  const again = start({ dataDir: s.dir, port: 0, feed: fakeFeed().feed, now: () => s.state.now, quiet: true, tickMs: 80, rug: async () => ({ pass: true, reason: "ok" }), paperQuote: async () => ({ ok: true, impact: 0.01 }) });
   const port = await again.listening;
   const st = await (async () => { const t = Date.now(); for (;;) { const x = await (await fetch(`http://127.0.0.1:${port}/api/state`)).json(); if (x.running && x.engine) return x; if (Date.now() - t > 6000) throw new Error("did not resume"); await new Promise((r) => setTimeout(r, 50)); } })();
   assert.equal(st.mode, "paper");

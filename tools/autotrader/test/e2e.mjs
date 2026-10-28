@@ -12,7 +12,7 @@ let pw; try { pw = require("playwright"); } catch { pw = require("playwright-cor
 const ok = (m) => console.log("  ok  " + m);
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ultra-e2e-"));
 const { feed, state } = fakeFeed();
-const app = start({ dataDir: dir, port: 0, feed, quiet: true, tickMs: 100, rug: async () => ({ pass: true, reason: "ok" }), paperQuote: async () => ({ ok: true, impact: 0.01 }), balance: async () => 0.093, ipv4: async () => "203.0.113.7" });
+const app = start({ dataDir: dir, port: 0, feed, now: () => state.now, quiet: true, tickMs: 100, rug: async () => ({ pass: true, reason: "ok" }), paperQuote: async () => ({ ok: true, impact: 0.01 }), balance: async () => 0.093, ipv4: async () => "203.0.113.7" });
 const port = await app.listening;
 const browser = await pw.chromium.launch({ executablePath: process.env.PW_CHROMIUM || "/opt/pw-browsers/chromium" });
 const page = await browser.newPage({ viewport: { width: 1180, height: 900 } });
