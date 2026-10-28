@@ -1,0 +1,51 @@
+{
+ "summary": {
+  "pools": 45,
+  "signals": 3,
+  "skippedByRug": 0,
+  "tradesTaken": 3,
+  "winRate": 1,
+  "avgWin": 0.319,
+  "avgLoss": 0,
+  "expectancyPerTrade": 0.3188,
+  "startEq": 100,
+  "endEq": 111.48,
+  "maxDrawdown": 0,
+  "costsAssumed": "1.5% slip + 1% fee each side"
+ },
+ "trades": [
+  {
+   "name": "Frongus / SOL",
+   "mint": "2BJDwUdMbnJhRRfhacFDjrDNhxUWdzE9H6LEND89pump",
+   "at": 1793128500000,
+   "until": 1793128680000,
+   "ret": 0.13980203951411843,
+   "enter": "breakout over 15m high, volume 3.4x, 67% green",
+   "exit": "trailing stop from +31%",
+   "pnl": 1.6776244741694213,
+   "sized": 12
+  },
+  {
+   "name": "JOB / SOL",
+   "mint": "9Pq7aLAbhDG2tTnS22cm6kuysZVcZpLFE368HWuypump",
+   "at": 1793133720000,
+   "until": 1793133780000,
+   "ret": 0.40825,
+   "enter": "breakout over 15m high, volume 8.8x, 67% green",
+   "exit": "take profit +45%",
+   "pnl": 4.899,
+   "sized": 12
+  },
+  {
+   "name": "INVERSE / SOL",
+   "mint": "2gLhk8p2KvUFeUXur2hiF4hxjdRM1vBcbgo9Q7DMZfiw",
+   "at": 1793139240000,
+   "until": 1793139420000,
+   "ret": 0.4082499999999998,
+   "enter": "breakout over 15m high, volume 3.5x, 100% green",
+   "exit": "take profit +45%",
+   "pnl": 4.898999999999997,
+   "sized": 12
+  }
+ ]
+}
