@@ -3,12 +3,12 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { GmgnClient, buildMessage, SOL_MINT } from "../lib/gmgn.mjs";
-import { gmgnExec, CAPS, KIMCHI } from "../lib/exec-gmgn.mjs";
-import { judgeGmgnSecurity } from "../lib/rug.mjs";
-import { Engine } from "../lib/engine.mjs";
-import { Journal } from "../lib/journal.mjs";
-import { DEFAULTS } from "../lib/strategy.mjs";
+import { GmgnClient, buildMessage, SOL_MINT } from "../src/lib/gmgn.mjs";
+import { gmgnExec, CAPS, KIMCHI } from "../src/lib/exec-gmgn.mjs";
+import { judgeGmgnSecurity } from "../src/lib/rug.mjs";
+import { Engine } from "../src/lib/engine.mjs";
+import { Journal } from "../src/lib/journal.mjs";
+import { DEFAULTS } from "../src/lib/strategy.mjs";
 let pass = 0, fail = 0;
 const ok = (n, c, d) => { if (c) { pass++; console.log("  ok  " + n); } else { fail++; console.log("FAIL  " + n, d ?? ""); } };
 
@@ -110,7 +110,7 @@ ok("live tick: a confirmed buy opens one position with the real stake and order 
 series = [...up, c(33, 1.2, 1.5, 1.8, 1.2, 80)]; now += 2 * M;
 await eng.tick();
 ok("take-profit closes with the REAL fill: 0.0154 SOL back on 0.0132 = +16.7%", eng.closed.length === 1 && Math.abs(eng.closed[0].ret - (0.0154 / 0.0132 - 1)) < 1e-6, eng.closed[0]);
-ok("the journal has intent, open, sell-intent, close in that order", (() => { const t = fs.readFileSync(path.join(dir, "j.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l).type); return t.join() === "intent,open,sell-intent,close"; })());
+ok("the journal has intent, open, sell-intent, close in that order", (() => { const t = fs.readFileSync(path.join(dir, "j.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l).type); return t.filter((x) => !x.startsWith("shadow")).join() === "intent,open,sell-intent,close"; })());
 // GMGN's own safety order sold first
 mode.sellErr = "insufficient token balance"; series = up; now += 20 * M;
 const eng2 = new Engine({ feed, exec: gmgnExec({ client, wallet: WALLET, balanceSol: async () => 0.11, cfg: DEFAULTS, caps: { ...CAPS, pollMs: 1 }, wait: async () => {} }), journal: new Journal(path.join(dir, "j2.jsonl")), rug: async () => ({ pass: true, reason: "ok" }), now: () => now, startEq: 0.11 });

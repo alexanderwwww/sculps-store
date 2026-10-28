@@ -7,16 +7,17 @@ export class Journal {
   write(ev) { fs.appendFileSync(this.file, JSON.stringify({ at: Date.now(), ...ev }) + "\n"); }
   /** -> { open: Map(id -> position), closed: [], intents: [] } */
   replay() {
-    const open = new Map(), closed = [], pending = new Map();
-    if (!fs.existsSync(this.file)) return { open, closed, pending };
+    const open = new Map(), closed = [], pending = new Map(), shadow = [];
+    if (!fs.existsSync(this.file)) return { open, closed, pending, shadow };
     for (const line of fs.readFileSync(this.file, "utf8").split("\n")) {
       if (!line.trim()) continue;
       let e; try { e = JSON.parse(line); } catch { continue; }
-      if (e.type === "intent") pending.set(e.id, e);
+      if (e.type === "shadow-close") shadow.push(e);
+      else if (e.type === "intent") pending.set(e.id, e);
       else if (e.type === "open") { pending.delete(e.id); open.set(e.id, e); }
       else if (e.type === "fail") pending.delete(e.id);
       else if (e.type === "close") { const o = open.get(e.id); open.delete(e.id); closed.push({ ...(o || {}), ...e }); }
     }
-    return { open, closed, pending };
+    return { open, closed, pending, shadow };
   }
 }

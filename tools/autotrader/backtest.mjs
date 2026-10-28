@@ -1,10 +1,10 @@
 // node backtest.mjs [--pages 3] [--noRug] [--cache data/pools.json]
 // Replays the strategy over real minute candles of real Solana pools. Every trade carries its reason.
 import fs from "node:fs";
-import { trendingPools, newPools, candles, } from "./lib/gecko.mjs";
-import { getJson } from "./lib/net.mjs";
-import { rugCheck } from "./lib/rug.mjs";
-import { DEFAULTS, entrySignal, managePosition } from "./lib/strategy.mjs";
+import { trendingPools, newPools, candles, } from "./src/lib/gecko.mjs";
+import { getJson } from "./src/lib/net.mjs";
+import { rugCheck } from "./src/lib/rug.mjs";
+import { DEFAULTS, entrySignal, managePosition } from "./src/lib/strategy.mjs";
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i < 0 ? d : (process.argv[i + 1]?.startsWith("--") || process.argv[i + 1] == null ? true : process.argv[i + 1]); };
 const pages = Number(arg("pages", 3)), useRug = !arg("noRug", false), cacheFile = arg("cache", "data/pools.json");

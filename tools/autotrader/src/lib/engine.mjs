@@ -10,10 +10,16 @@ export class Engine {
     this.pending = r.pending;                 // intents with no fill: reconciled below, never forgotten
     for (const e of this.pending.values()) this.journal.write({ type: "fail", id: e.id, why: "restart before fill" });
     this.pending.clear();
-    this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = [];
+    this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = [];
     this.ticks = 0; this.lastTickAt = null;
   }
   get equity() { return this.startEq + this.closed.reduce((s, c) => s + (c.pnl || 0), 0); }
+  /** The background paper book: every signal that passed the filters, taken or not, run through the same exit rules. */
+  edge(n = 20) {
+    const last = this.shadowClosed.slice(-n);
+    const avg = last.length ? last.reduce((a, x) => a + x.ret, 0) / last.length : null;
+    return { n: last.length, avg, wins: last.filter((x) => x.ret > 0).length, total: this.shadowClosed.length };
+  }
   get unit() { return this.exec.name === "live" ? "SOL" : "$"; }
   #skip(name, why) { const k = why.replace(/[\d.]+/g, "#"); this.skips.set(k, (this.skips.get(k) || 0) + 1); this.recent.push({ at: this.now(), name, why }); if (this.recent.length > 40) this.recent.shift(); }
   async tick() {
@@ -35,6 +41,15 @@ export class Engine {
     }
   }
   async #manage() {
+    for (const [pool, sp] of [...this.shadow]) {
+      let cs; try { cs = await this.feed.candles(pool, { limit: 100 }); } catch { continue; }
+      let i0 = cs.findIndex((c) => c.t >= sp.candleT); if (i0 < 0) i0 = 0;
+      const x = managePosition(cs, i0, this.cfg);
+      if (!x.open || this.now() - sp.at > this.cfg.maxHoldMin * 120000) {
+        const rec = { type: "shadow-close", name: sp.name, ret: x.open ? 0 : x.ret, why: x.open ? "stale" : x.why };
+        this.journal.write(rec); this.shadow.delete(pool); this.shadowClosed.push(rec);
+      }
+    }
     for (const p of [...this.open.values()]) {
       let cs; try { cs = await this.feed.candles(p.pool, { limit: 100 }); } catch (e) { this.#err(`candles ${p.name}`, e); continue; }
       let i0 = cs.findIndex((c) => c.t >= p.candleT);
@@ -80,6 +95,9 @@ export class Engine {
       if (!this.rugCache.has(m.mint)) this.rugCache.set(m.mint, await this.rug(m.mint));
       const r = this.rugCache.get(m.mint);
       if (!r.pass) { this.#skip(m.name, `rug check: ${r.reason}`); this.cool.set(m.pool, this.now() + 3600e3); continue; }
+      if (!this.shadow.has(m.pool)) { const sp = { name: m.name, candleT: cs[i].t, at: this.now() }; this.shadow.set(m.pool, sp); this.journal.write({ type: "shadow-open", pool: m.pool, ...sp }); }
+      const e = this.edge();
+      if (this.exec.name === "live" && e.n >= this.cfg.edgeMinN && e.avg < this.cfg.edgeFloor) { this.#skip(m.name, `shadow edge ${(e.avg * 100).toFixed(1)}% over last ${e.n}: waiting`); continue; }
       const id = `${m.mint.slice(0, 6)}-${this.now()}`;
       let stake = this.equity * this.cfg.stakeFrac;
       if (this.exec.sizeSol) { try { stake = (await this.exec.sizeSol()).sol; } catch (e) { this.#skip(m.name, `wallet balance: ${e.message.slice(0, 60)}`); continue; } }
@@ -104,7 +122,7 @@ export class Engine {
       open: [...this.open.values()].map((p) => ({ name: p.name, stake: +p.stake.toFixed(2), since: p.at, enter: p.enter })),
       trades: c.length, wins: wins.length, winRate: c.length ? +(wins.length / c.length).toFixed(3) : null,
       recentClosed: c.slice(-8).map((x) => ({ name: x.name, ret: +(x.ret * 100).toFixed(1), pnl: +(x.pnl || 0).toFixed(4), why: x.why, note: x.note || null, enter: x.enter })),
-      whyNot: Object.fromEntries([...this.skips].sort((a, b) => b[1] - a[1]).slice(0, 12)), recentSkips: this.recent.slice(-10), errors: this.errors.slice(-5),
+      whyNot: Object.fromEntries([...this.skips].sort((a, b) => b[1] - a[1]).slice(0, 12)), edge: this.edge(), shadowOpen: this.shadow.size, recentSkips: this.recent.slice(-10), errors: this.errors.slice(-5),
     };
   }
 }

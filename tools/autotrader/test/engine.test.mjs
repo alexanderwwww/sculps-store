@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { Engine } from "../lib/engine.mjs";
-import { Journal } from "../lib/journal.mjs";
-import { DEFAULTS, entrySignal, managePosition } from "../lib/strategy.mjs";
+import { Engine } from "../src/lib/engine.mjs";
+import { Journal } from "../src/lib/journal.mjs";
+import { DEFAULTS, entrySignal, managePosition } from "../src/lib/strategy.mjs";
 let pass = 0, fail = 0;
 const ok = (n, c, d) => { if (c) { pass++; console.log("  ok  " + n); } else { fail++; console.log("FAIL  " + n, d ?? ""); } };
 const T0 = 1_800_000_000_000, M = 60000;
@@ -63,5 +63,24 @@ ok("an intent with no fill is closed out as failed on restart", /restart before 
 const e5 = new Engine({ feed: { ...feed, newPools: async () => Array.from({ length: 6 }, (_, k) => ({ ...pool, pool: "P" + k, mint: "M" + k, name: "T" + k })) }, exec, journal: new Journal(path.join(dir, "j5.jsonl")), rug, now: () => now });
 await e5.tick();
 ok(`never more than ${DEFAULTS.maxOpen} open`, e5.open.size === DEFAULTS.maxOpen, e5.open.size);
+// shadow book: every passing signal is also tracked on paper, and a bad paper edge pauses LIVE buys only
+const jfS = path.join(dir, "jS.jsonl");
+series = up; now = T0 + 33 * M;
+const eS = new Engine({ feed, exec, journal: new Journal(jfS), rug, now: () => now });
+await eS.tick();
+ok("a signal opens a shadow paper trade as well", eS.shadow.size === 1, eS.status().shadowOpen);
+series = [...up, mk(33, 1.2, 1.5, 1.8, 1.2, 80)]; now += 2 * M;
+await eS.tick();
+ok("the shadow trade closes with its own result and feeds the edge", eS.shadowClosed.length === 1 && eS.edge().avg > 0 && eS.edge().n === 1, eS.edge());
+const eR = new Engine({ feed, exec: { name: "live", buy: async () => ({ ok: true }), sell: async () => ({ ok: true }) }, journal: new Journal(path.join(dir, "jR.jsonl")), rug, now: () => now });
+for (let k = 0; k < 14; k++) eR.shadowClosed.push({ ret: -0.08, name: "x" });
+series = up; await eR.tick();
+ok("live buys pause when the last paper signals lose, and say why", eR.open.size === 0 && Object.keys(eR.status().whyNot).some((k) => /shadow edge/.test(k)), eR.status().whyNot);
+const eP = new Engine({ feed, exec, journal: new Journal(path.join(dir, "jP.jsonl")), rug, now: () => now });
+for (let k = 0; k < 14; k++) eP.shadowClosed.push({ ret: -0.08, name: "x" });
+await eP.tick();
+ok("the same bad edge does not stop the paper bot itself (it is how it recovers)", eP.open.size === 1, eP.status().whyNot);
+const eRe = new Engine({ feed, exec, journal: new Journal(jfS), rug, now: () => now });
+ok("shadow results survive a restart", eRe.shadowClosed.length === 1, eRe.shadowClosed);
 console.log(`\nautotrader tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

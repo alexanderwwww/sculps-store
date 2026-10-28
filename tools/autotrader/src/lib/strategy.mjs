@@ -6,6 +6,7 @@ export const DEFAULTS = {
   sl: -0.15, tp: 0.45, trailFrom: 0.22, trail: 0.10, maxHoldMin: 30,
   slippage: 0.015, fee: 0.01,       // each side: 1.5% slip + 1% fee, so a round trip costs ~5%
   stakeFrac: 0.12, maxOpen: 3, cooldownMin: 10,
+  edgeMinN: 12, edgeFloor: -0.02,   // live buys pause when the last 20 paper signals average worse than -2% each
 };
 export function entrySignal(cs, i, cfg = DEFAULTS, meta = {}) {
   const ageMin = (cs[i].t - (meta.created ?? cs[0].t)) / 60000;
