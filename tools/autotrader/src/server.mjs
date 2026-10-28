@@ -1,6 +1,7 @@
 // Ultra. A small local server on this Mac: the engine runs in here, the screen is a page on 127.0.0.1, and the only
 // things that leave the machine are the market feeds and the signed orders to GMGN.
 import { createServer } from "node:http";
+import { spawn } from "node:child_process";
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +11,8 @@ import { Journal } from "./lib/journal.mjs";
 import { liveFeed } from "./lib/feed.mjs";
 import { paperExec } from "./lib/exec-paper.mjs";
 import { gmgnExec, CAPS } from "./lib/exec-gmgn.mjs";
+import { jupiterExec, CAPS as OWN_CAPS } from "./lib/exec-jupiter.mjs";
+import { Rpc, Jupiter, walletFromPem, buildTransferTx } from "./lib/solana.mjs";
 import { GmgnClient } from "./lib/gmgn.mjs";
 import { combinedRug, rugCheck } from "./lib/rug.mjs";
 import { Secrets } from "./lib/secrets.mjs";
@@ -19,7 +22,7 @@ import { DEFAULTS } from "./lib/strategy.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const APP = "ultra";
 
-export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, tickMs = 15000, quiet = false, balance = solBalance, ipv4 = publicIpv4, gmgnHost, rug: rugOverride = null, paperQuote = undefined, now = Date.now, idleMs = 0, onShutdown = () => {} } = {}) {
+export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, tickMs = 15000, quiet = false, balance = solBalance, ipv4 = publicIpv4, gmgnHost, rpc: rpcOverride = null, jupiter: jupiterOverride = null, rug: rugOverride = null, paperQuote = undefined, now = Date.now, idleMs = 0, onShutdown = () => {} } = {}) {
   mkdirSync(dataDir, { recursive: true });
   const secrets = new Secrets(dataDir);
   const cfgFile = join(dataDir, "config.json");
@@ -29,15 +32,25 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const log = (...a) => { if (!quiet) console.log(new Date().toISOString(), ...a); };
   let engine = null, mode = null, timer = null, ticking = false, lastError = null, stopped = false;
 
+  const rpcI = rpcOverride || new Rpc(), jupI = jupiterOverride || new Jupiter();
+  const rpc = () => rpcI, jup = () => jupI;
+  const ownWallet = () => walletFromPem(secrets.ensureWallet());
   const client = () => (secrets.apiKey && secrets.privateKeyPem ? new GmgnClient({ apiKey: secrets.apiKey, privateKeyPem: secrets.privateKeyPem, ...(gmgnHost ? { host: gmgnHost } : {}) }) : null);
 
   async function build_(m) {
-    if (m === "live") {
-      if (!secrets.ready()) throw new Error("Finish the setup first: API key, wallet address and the public key pasted into GMGN.");
+    if (m === "live" && readCfg().liveSource === "gmgn") {
+      if (!secrets.ready()) throw new Error("Finish the GMGN setup first: API key, wallet address and the public key pasted into GMGN.");
       const c = client(); const bal = await balance(secrets.wallet);
       const cfg = readCfg(); if (cfg.liveStartSol == null) writeCfg({ liveStartSol: bal });
       const exec = gmgnExec({ client: c, wallet: secrets.wallet, balanceSol: () => balance(secrets.wallet), cfg: DEFAULTS, startSol: readCfg().liveStartSol });
       return new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-live.jsonl")), rug: rugOverride || combinedRug(c), startEq: readCfg().liveStartSol, now });
+    }
+    if (m === "live") {
+      const w = ownWallet(); const bal = await rpc().solBalance(w.address);
+      if (bal < 0.02) throw new Error(`Ultra's wallet has ${bal.toFixed(4)} SOL. Send some SOL to ${w.address} first (at least 0.03).`);
+      if (readCfg().ownStartSol == null) writeCfg({ ownStartSol: bal });
+      const exec = jupiterExec({ wallet: w, rpc: rpc(), jupiter: jup(), cfg: DEFAULTS, startSol: readCfg().ownStartSol, now });
+      return new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-own.jsonl")), rug: rugOverride || rugCheck, startEq: readCfg().ownStartSol, now });
     }
     return new Engine({ feed, exec: paperExec({ cfg: DEFAULTS, ...(paperQuote ? { quote: paperQuote } : {}) }), journal: new Journal(join(dataDir, "journal-paper.jsonl")), rug: rugOverride || (client() ? combinedRug(client()) : rugCheck), startEq: 100, now });
   }
@@ -89,7 +102,8 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
         if (req.method === "POST" && req.headers["x-ultra-token"] !== token) return fail(res, 403, "Reload the window.");
         if (req.method === "GET" && url.pathname === "/api/state") {
           let sol = null; try { if (secrets.wallet) sol = await balance(secrets.wallet); } catch { /* shown as unknown */ }
-          return send(res, 200, { ok: true, build, running: !!engine, mode, setup: { ...secrets.masked(), ready: secrets.ready(), publicKey: secrets.publicKeyPem }, sol, caps: CAPS, cfg: { stakeFrac: DEFAULTS.stakeFrac, sl: DEFAULTS.sl, tp: DEFAULTS.tp, maxOpen: DEFAULTS.maxOpen }, engine: engine ? engine.status() : null, lastError, saved: readCfg() });
+          let own = null; try { const w = ownWallet(); own = { address: w.address, sol: await rpc().solBalance(w.address).catch(() => null) }; } catch { /* shown as unknown */ }
+          return send(res, 200, { ok: true, build, running: !!engine, mode, own, source: readCfg().liveSource || "own", setup: { ...secrets.masked(), ready: secrets.ready(), publicKey: secrets.publicKeyPem }, sol, caps: OWN_CAPS, cfg: { stakeFrac: DEFAULTS.stakeFrac, sl: DEFAULTS.sl, tp: DEFAULTS.tp, maxOpen: DEFAULTS.maxOpen }, engine: engine ? engine.status() : null, lastError, saved: readCfg() });
         }
         if (req.method === "GET" && url.pathname === "/api/ip") return send(res, 200, { ok: true, ip: await ipv4() });
         if (req.method === "POST") {
@@ -101,6 +115,19 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
           if (url.pathname === "/api/pause") { if (engine) engine.paused = !!body.paused; return send(res, 200, { ok: true, paused: engine?.paused ?? null }); }
           if (url.pathname === "/api/flatten") { if (!engine) return fail(res, 400, "Not running."); await engine.flatten(); return send(res, 200, { ok: true, open: engine.open.size }); }
           if (url.pathname === "/api/stop") { halt(); return send(res, 200, { ok: true }); }
+          if (url.pathname === "/api/source") { if (!["own", "gmgn"].includes(body.source)) return fail(res, 400, "source must be own or gmgn"); if (engine && mode === "live") return fail(res, 400, "Stop Ultra first."); writeCfg({ liveSource: body.source }); return send(res, 200, { ok: true }); }
+          if (url.pathname === "/api/backup") { if (body.confirm !== true) return fail(res, 400, "Confirm first."); const w = ownWallet(); return send(res, 200, { ok: true, address: w.address, secretKey: w.secretKeyBase58 }); }
+          if (url.pathname === "/api/rebase") { if (engine && engine.open.size) return fail(res, 400, "Close the open positions first."); const w = ownWallet(); const b = await rpc().solBalance(w.address); writeCfg({ ownStartSol: b }); if (engine && mode === "live") { halt(); await go("live"); } return send(res, 200, { ok: true, start: b }); }
+          if (url.pathname === "/api/withdraw") {
+            if (engine && engine.open.size) return fail(res, 400, "Close the open positions first (Sell everything).");
+            if (typeof body.to !== "string" || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(body.to.trim())) return fail(res, 400, "That does not look like a Solana address.");
+            const w = ownWallet(); const bal = await rpc().solBalance(w.address); const fee = 5000;
+            const lamports = body.all ? Math.floor(bal * 1e9) - fee : Math.round(Number(body.sol) * 1e9);
+            if (!(lamports > 0) || lamports + fee > Math.floor(bal * 1e9)) return fail(res, 400, "That is more than the wallet holds.");
+            const { blockhash } = await rpc().latestBlockhash(); const t = buildTransferTx({ wallet: w, to: body.to.trim(), lamports, blockhash });
+            try { await rpc().send(t.tx); } catch (e) { return fail(res, 502, `The network refused it: ${e.message.slice(0, 120)}`); }
+            return send(res, 200, { ok: true, signature: t.signature, sol: lamports / 1e9 });
+          }
         }
       }
       fail(res, 404, "Not found.");
@@ -109,7 +136,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const listening = new Promise((r) => server.listen(port, "127.0.0.1", () => r(server.address().port)));
   const close = () => new Promise((r) => { stopped = true; if (timer) clearTimeout(timer); server.close(() => r()); server.closeAllConnections?.(); });
   // Resume what was running when the app last closed. Live resumes only if the keys are still there.
-  listening.then(() => { const c = readCfg(); if (c.running && c.mode && !(c.mode === "live" && !secrets.ready())) go(c.mode).catch((e) => { lastError = e.message; }); });
+  listening.then(() => { const c = readCfg(); if (c.running && c.mode && !(c.mode === "live" && c.liveSource === "gmgn" && !secrets.ready())) go(c.mode).catch((e) => { lastError = e.message; }); });
   return { listening, close, token, get engine() { return engine; }, secrets, go, halt };
 }
 
@@ -117,4 +144,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const dataDir = process.env.ULTRA_DATA || join(process.env.HOME || ".", "Library", "Application Support", "Ultra", "data");
   const app = start({ dataDir, port: Number(process.env.ULTRA_PORT || 47401), build: process.env.ULTRA_BUILD || "dev", onShutdown: () => process.exit(0) });
   app.listening.then((p) => console.log(`ultra on http://127.0.0.1:${p}/`));
+  // A sleeping Mac cannot sell. While Ultra runs, keep the Mac awake (the screen may still sleep).
+  if (process.platform === "darwin") { try { spawn("caffeinate", ["-i", "-w", String(process.pid)], { stdio: "ignore", detached: true }).unref(); } catch { /* optional */ } }
 }

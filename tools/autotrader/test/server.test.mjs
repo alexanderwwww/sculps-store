@@ -63,8 +63,9 @@ test("setup: bad API keys and wallets are refused, good ones saved and masked", 
   assert.doesNotMatch(JSON.stringify(st), /gmgn_abcdef123456/);
   await s.app.close();
 });
-test("real trading refuses to start until the setup is complete", async () => {
+test("real trading with GMGN keys refuses to start until that setup is complete", async () => {
   const s = await boot();
+  await s.post("/api/source", { source: "gmgn" });
   const r = await s.post("/api/go", { mode: "live" });
   assert.equal(r.status, 400); assert.match(r.error, /setup/i);
   assert.equal((await s.post("/api/go", { mode: "nonsense" })).status, 400);
@@ -150,6 +151,7 @@ test("LIVE end to end: setup in the app -> real mode -> a signed swap reaches GM
   await s.post("/api/setup", { apiKey: "gmgn_abcdef123456", wallet: WALLET });
   const t = await s.post("/api/test");
   assert.ok(t.steps.every((x) => x.ok), JSON.stringify(t.steps));
+  assert.equal((await s.post("/api/source", { source: "gmgn" })).ok, true);
   assert.equal((await s.post("/api/go", { mode: "live" })).ok, true);
   const st = await s.until(async () => { const x = await s.get("/api/state"); return x.engine?.open.length === 1 ? x : null; });
   assert.equal(st.mode, "live"); assert.equal(st.engine.unit, "SOL");
@@ -161,4 +163,68 @@ test("LIVE end to end: setup in the app -> real mode -> a signed swap reaches GM
   assert.equal(done.engine.recentClosed[0].why.includes("take profit"), true);
   assert.ok(calls.filter((c) => c.path === "/v1/trade/swap").length >= 2, "the exit went out as a second signed swap");
   await s.app.close(); gmgn.close();
+});
+
+import { world } from "./fakechain.mjs";
+import { b58decode } from "../src/lib/solana.mjs";
+const ownBoot = async (o = {}) => { const ch = world(null, o); ch.W.zero = false; const s = await boot({ rpc: ch.rpc, jupiter: ch.jupiter, balance: async () => ch.W.sol }); return { ...s, ch }; };
+
+test("OWN WALLET: the app makes its wallet; the state shows the address and never a secret", async () => {
+  const s = await ownBoot();
+  const st = await s.get("/api/state");
+  assert.equal(b58decode(st.own.address).length, 32);
+  assert.equal(st.source, "own");
+  assert.doesNotMatch(JSON.stringify(st), /PRIVATE|secretKey/);
+  const again = await s.get("/api/state"); assert.equal(again.own.address, st.own.address);
+  assert.equal(fs.statSync(path.join(s.dir, "secrets.json")).mode & 0o777, 0o600);
+  await s.app.close();
+});
+test("OWN WALLET: starting with an empty wallet says exactly where to send SOL", async () => {
+  const s = await ownBoot(); s.ch.W.sol = 0;
+  const addr = (await s.get("/api/state")).own.address;
+  const r = await s.post("/api/go", { mode: "live" });
+  assert.equal(r.status, 400); assert.ok(r.error.includes(addr), r.error);
+  await s.app.close();
+});
+test("OWN WALLET end to end: press start -> signed swap -> position -> target -> sold from the chain's own numbers", async () => {
+  const s = await ownBoot();
+  assert.equal((await s.post("/api/go", { mode: "live" })).ok, true);
+  const st = await s.until(async () => { const x = await s.get("/api/state"); return x.engine?.open.length === 1 ? x : null; });
+  assert.equal(st.mode, "live"); assert.equal(st.engine.unit, "SOL");
+  assert.equal(s.ch.W.sent.length, 1, "exactly one transaction went out for the buy");
+  assert.equal(st.engine.open[0].stake, 0.0125);
+  s.state.series = moon; s.ch.W.lastKind = "sell";
+  const done = await s.until(async () => { const x = await s.get("/api/state"); return x.engine.trades === 1 ? x : null; }, 12000);
+  assert.match(done.engine.recentClosed[0].why, /take profit/);
+  assert.ok(s.ch.W.sent.length >= 2, "the sale went out as a second transaction");
+  await s.app.close();
+});
+test("OWN WALLET: backup needs confirmation and returns a 64-byte key that matches the address", async () => {
+  const s = await ownBoot();
+  const addr = (await s.get("/api/state")).own.address;
+  assert.equal((await s.post("/api/backup", {})).status, 400);
+  const b = await s.post("/api/backup", { confirm: true });
+  const raw = b58decode(b.secretKey); assert.equal(raw.length, 64); assert.equal(b58decode(addr).equals(raw.subarray(32)), true);
+  await s.app.close();
+});
+test("OWN WALLET: send everything back builds one transfer, refuses bad addresses and refuses while a position is open", async () => {
+  const s = await ownBoot();
+  assert.equal((await s.post("/api/withdraw", { to: "nope", all: true })).status, 400);
+  const to = "E7rhUgJE1iegQHrE3bA3Sm8CbStMenW1HhayhUETTQyf";
+  const r = await s.post("/api/withdraw", { to, all: true });
+  assert.equal(r.ok, true); assert.ok(r.sol > 0.109 && r.sol < 0.11, r.sol);
+  const tx = s.ch.W.sent[0];
+  assert.ok(tx.includes(b58decode(to)), "the destination is in the transaction");
+  assert.ok(tx.includes(Buffer.from([2, 0, 0, 0])), "it is a system-program transfer");
+  await s.post("/api/go", { mode: "live" });
+  await s.until(async () => (await s.get("/api/state")).engine?.open.length === 1);
+  assert.equal((await s.post("/api/withdraw", { to, all: true })).status, 400);
+  await s.app.close();
+});
+test("OWN WALLET: the same wallet comes back after a restart", async () => {
+  const s = await ownBoot(); const a1 = (await s.get("/api/state")).own.address; await s.app.close();
+  const again = start({ dataDir: s.dir, port: 0, feed: fakeFeed().feed, quiet: true, tickMs: 80, rpc: s.ch.rpc, jupiter: s.ch.jupiter, balance: async () => 0.11 });
+  const port = await again.listening;
+  assert.equal((await (await fetch(`http://127.0.0.1:${port}/api/state`)).json()).own.address, a1);
+  await again.close();
 });

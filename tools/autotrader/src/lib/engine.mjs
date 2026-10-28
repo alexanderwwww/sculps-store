@@ -75,9 +75,9 @@ export class Engine {
         this.journal.write({ type: "sell-intent", id: p.id, name: p.name, why });                 // on disk BEFORE the sell goes out
         const r = (await this.exec.sell?.(p)) ?? { ok: true };
         if (!r.ok) {
-          if (r.noBalance) note = "closed by GMGN's own stop/target order (result estimated from the chart)";
+          if (r.noBalance) note = this.exec.source === "own" ? "the token was no longer in the wallet (result estimated from the chart)" : "closed by GMGN's own stop/target order (result estimated from the chart)";
           else if (hold + 1 < 4) { this.sellTries.set(p.id, hold + 1); this.#err(`sell ${p.name}`, new Error(r.why)); continue; }   // try again next tick
-          else note = `sell failed 4 times (${r.why}): position left to GMGN's safety orders`;
+          else note = `sell failed 4 times (${r.why}): ${this.exec.safety || "position left to GMGN's safety orders"}`;
         } else if (r.outAmount != null && r.inAmount != null && p.stake > 0) {
           ret = Number(r.outAmount) / 1e9 / p.stake - 1;                                           // the real fill, not the model
         }

@@ -73,3 +73,7 @@ textarea { height: 92px; resize: none; }
 .err { color: var(--red); font-size: 12px; margin: 6px 0; }
 .empty { color: var(--faint); padding: 14px 0; font-size: 12px; }
 @media (max-width: 900px) { .pipe { grid-template-columns: repeat(2, 1fr); } .cols { grid-template-columns: 1fr; } }
+.addr { font: 600 13px var(--mono); word-break: break-all; padding: 12px 14px; border-radius: 12px; background: rgba(0,0,0,.4); border: 1px solid var(--line); margin-bottom: 10px; user-select: all; }
+.bal { color: var(--dim); font-size: 13px; align-self: center; }
+details.adv { padding-left: 20px; } details.adv summary { cursor: pointer; color: var(--dim); font-weight: 600; margin-bottom: 8px; } details.adv::before { display: none; }
+details.adv .steps { margin-top: 14px; }

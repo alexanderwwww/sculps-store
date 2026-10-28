@@ -1,7 +1,7 @@
 (() => {
   const TOKEN = document.body.dataset.token, BUILD = document.body.dataset.build;
   const app = document.getElementById("app");
-  let S = null, ip = null, view = "auto", testSteps = null, busy = false, msg = null;
+  let S = null, showGmgn = false, ip = null, view = "auto", testSteps = null, busy = false, msg = null;
 
   const el = (tag, props = {}, ...kids) => {
     const n = document.createElement(tag);
@@ -25,7 +25,7 @@
   const act = async (path, body = {}) => { busy = true; msg = null; render(); try { const r = await api(path, body); if (!r.ok) msg = r.error; return r; } finally { busy = false; await refresh(); } };
 
   /* ------------------------------------------------------------ setup */
-  function setupView() {
+  function gmgnSteps() {
     const st = S.setup, hasKey = st.hasKeypair, hasApi = !!st.apiKey, hasW = !!st.wallet;
     const pub = el("textarea", { readonly: true, onclick: (e) => e.target.select() }); pub.value = S.setup.publicKey || "";
     const api_ = el("input", { placeholder: st.apiKey ? `API key saved (${st.apiKey}) – paste a new one to replace` : "Paste your GMGN API key", autocomplete: "off", spellcheck: "false" });
@@ -43,7 +43,32 @@
         el("button", { class: "cy", text: "Run the test", onclick: async () => { testSteps = "running"; render(); const r = await api("/api/test", {}); testSteps = r.steps; render(); } }),
         testSteps === "running" ? el("p", { class: "note", text: "Testing…" }) : (testSteps || []).map((t) => el("div", { class: "check" }, el("b", { class: t.ok ? "ok" : "no", text: t.ok ? "✓" : "✗" }), el("div", {}, t.name, el("small", { text: t.why }))))),
       el("div", { class: "glass step" }, el("h3", { text: "Start" }), el("p", { text: "Paper runs the same engine with pretend money so you can watch it work. Real trades with your GMGN wallet inside the limits on the right of the dashboard." }),
-        el("div", { class: "actions" }, el("button", { class: "cy", text: "Watch it (paper)", onclick: () => act("/api/go", { mode: "paper" }) }), el("button", { class: "go", text: "Start real trading", disabled: !S.setup.ready, onclick: () => act("/api/go", { mode: "live" }) }))));
+        el("div", { class: "actions" }, el("button", { class: "cy", text: "Watch it (paper)", onclick: () => act("/api/go", { mode: "paper" }) }), el("button", { class: "go", text: "Start real trading", disabled: !S.setup.ready, onclick: async () => { await act("/api/source", { source: "gmgn" }); await act("/api/go", { mode: "live" }); } }))));
+  }
+
+  function setupView() {
+    const own = S.own || {}, bal = own.sol, funded = bal != null && bal >= 0.03;
+    const addr = own.address || "…";
+    const wd = el("input", { placeholder: "Send everything back to this address (your GMGN wallet)", autocomplete: "off", spellcheck: "false" });
+    const key = el("div");
+    const advanced = el("details", { class: "glass step adv", open: showGmgn || S.source === "gmgn" || undefined }, el("summary", { text: "Advanced: trade from my GMGN wallet instead (API keys)", onclick: () => { showGmgn = true; } }), showGmgn || S.source === "gmgn" ? gmgnSteps() : null);
+    return el("div", { class: "steps" },
+      el("div", { class: `glass step ${funded ? "done" : ""}` }, el("h3", { text: "Send SOL to Ultra" }),
+        el("p", { text: "Ultra made its own wallet on this Mac. Open your GMGN wallet, press Send, paste this address and send the SOL you want Ultra to trade, plus a little extra for fees. It arrives in about a minute." }),
+        el("div", { class: "addr", text: addr }),
+        el("div", { class: "actions" }, el("button", { class: "cy", text: "Copy address", onclick: (e) => copy(addr, e.target) }), el("span", { class: `bal ${funded ? "up" : ""}`, text: bal == null ? "checking balance…" : `${fmt(bal, 4)} SOL in Ultra's wallet${funded ? "  ✓" : bal > 0 ? "  (needs at least 0.03)" : ""}` })),
+        el("p", { class: "note", text: "Ultra trades 12% of the balance per trade, never more than 0.05 SOL. The key stays on this Mac." })),
+      el("div", { class: "glass step" }, el("h3", { text: "Press start" }),
+        el("p", { text: "That's all. It scans, checks every coin for rugs, buys, sells and logs the reason, with no approvals. You can watch it with pretend money first." }),
+        el("div", { class: "actions" }, el("button", { class: "go", text: "Start real trading", disabled: !funded || busy, onclick: async () => { await act("/api/source", { source: "own" }); await act("/api/go", { mode: "live" }); } }), el("button", { class: "cy", text: "Watch it first (paper)", onclick: () => act("/api/go", { mode: "paper" }) })),
+        msg ? el("p", { class: "err", text: msg }) : null),
+      el("div", { class: "glass step" }, el("h3", { text: "Your money" }),
+        el("p", { text: "It is always yours. Send it all back, or back up the wallet so you can open it in Phantom." }),
+        wd, el("div", { class: "actions" },
+          el("button", { text: "Send everything back", onclick: async () => { if (!wd.value.trim()) { msg = "Paste the address to send it to."; render(); return; } if (!confirm(`Send all of Ultra's SOL to ${wd.value.trim()}?`)) return; const r = await act("/api/withdraw", { to: wd.value, all: true }); if (r.ok) alert(`Sent ${r.sol} SOL.`); } }),
+          el("button", { text: "Back up this wallet", onclick: async () => { if (!confirm("This shows the secret key. Anyone who has it can take the money. Only copy it somewhere private.")) return; const r = await api("/api/backup", { confirm: true }); if (r.ok) { key.replaceChildren(el("p", { class: "note", text: "Secret key (import this into Phantom or Solflare):" }), el("textarea", { readonly: true, onclick: (e) => e.target.select() }, r.secretKey)); key.firstChild.nextSibling.value = r.secretKey; } } })),
+        key),
+      advanced);
   }
 
   /* ------------------------------------------------------------ dashboard */
@@ -114,7 +139,7 @@
     app.append(el("header", { class: "glass top" },
       el("div", { class: "orb" }, el("b")), el("div", { class: "brand" }, el("h1", { text: "Ultra" }), el("small", { text: `build ${BUILD}` })),
       el("span", { class: `chip ${chip[0]}`, text: chip[1] }), el("div", { class: "grow" }),
-      S.sol != null ? el("div", { class: "stat" }, el("b", { text: fmt(S.sol, 4) }), el("span", { text: "wallet SOL" })) : null,
+      (S.source === "own" ? S.own?.sol : S.sol) != null ? el("div", { class: "stat" }, el("b", { text: fmt(S.source === "own" ? S.own.sol : S.sol, 4) }), el("span", { text: "wallet SOL" })) : null,
       e ? el("div", { class: "stat" }, el("b", { class: pnl >= 0 ? "up" : "down", text: `${pnl >= 0 ? "+" : ""}${fmt(pnl, live ? 4 : 2)}` }), el("span", { text: `P&L ${live ? "SOL" : "$ paper"}` })) : null,
       e ? el("div", { class: "stat" }, el("b", { text: `${e.open.length}/${S.cfg.maxOpen}` }), el("span", { text: "open" })) : null,
       !S.running || view === "setup" ? null : el("button", { text: "Setup", onclick: () => { view = "setup"; render(); } })));
