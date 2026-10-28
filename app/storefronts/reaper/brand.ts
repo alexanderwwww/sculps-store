@@ -21,7 +21,7 @@ export function reaperBrand(page: LoadedProductPage): CbBrand {
     nav: links.length ? links : [["Shop", "/"], ["FAQ", "#faq"], ["Reviews", "#reviews"]],
     rail: [
       "Free US shipping on every order",
-      "Arrives 5-7 days after it ships",
+      page.store.slug === "snowman" ? "Arrives 5-7 days after it ships" : "Ships same day or next day",
       "30 days to send it back",
       "Tracking link on every order",
     ],

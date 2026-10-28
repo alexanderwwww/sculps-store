@@ -353,6 +353,35 @@ const BRAND: CbBrand = {
   marquee: ["Watch lying down", "Snacks included, sort of", "Your ceiling is free", "Works outside too"],
 };
 
+/** Black Reaper's Halloween sale strip (Alex, 2026-10-28): 50% off, days to Halloween, how fast it ships. */
+function HalloweenSale() {
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const t = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+  const d = new Date(now ?? Date.now());
+  const year = d.getFullYear();
+  const end = new Date(year, 9, 31, 23, 59, 59).getTime();           // the end of Halloween, on the visitor's clock
+  const left = end - d.getTime();
+  if (left <= 0) return null;
+  const midnight = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((new Date(year, 9, 31).getTime() - midnight) / 86400_000);
+  const head = days <= 0 ? "HALLOWEEN IS TONIGHT" : days === 1 ? "1 DAY TO HALLOWEEN" : `${days} DAYS TO HALLOWEEN`;
+  const p2 = (n: number) => String(n).padStart(2, "0");
+  const clock = now === null ? "" : `${p2(Math.floor(left / 3600_000) % 24)}:${p2(Math.floor(left / 60_000) % 60)}:${p2(Math.floor(left / 1000) % 60)}`;
+  return (
+    <div className="cb-sale" role="note">
+      <span className="cb-sale__off"><b>50% OFF</b> EVERYTHING</span>
+      <span className="cb-sale__dot" aria-hidden="true" />
+      <span className="cb-sale__days" suppressHydrationWarning>{head}{clock ? <> · <i>{clock}</i></> : null}</span>
+      <span className="cb-sale__dot" aria-hidden="true" />
+      <span className="cb-sale__ship">SHIPS SAME DAY OR NEXT DAY</span>
+    </div>
+  );
+}
+
 function Header({
   page,
   storeParam,
@@ -380,6 +409,7 @@ function Header({
   }, [menu]);
   return (
     <>
+      {isReaperSkin(page.store.slug) && page.store.slug !== "snowman" ? <HalloweenSale /> : null}
       <Announce offer={offer} currency={page.store.currency} brand={brand} payLaterCents={bnpl ? ((page.variants.find((x) => x.isDefault) ?? page.variants[0])?.priceCents ?? 0) : 0} />
       <header className="cb-header">
         <div className="cb-wrap cb-header__in">
@@ -704,7 +734,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                 <s className="cb-price__was">{formatMoney(chosen.compareAtCents, currency)}</s>
               ) : null}
               {off ? (
-                <span className="cb-price__off">{IcoTag} Save {dollarsOff(off)}</span>
+                <span className="cb-price__off">{IcoTag} {isReaperSkin(page.store.slug) && page.store.slug !== "snowman" ? `${savedPercent(chosen.priceCents, chosen.compareAtCents)}% OFF · ` : ""}Save {dollarsOff(off)}</span>
               ) : null}
               {/* Klarna and Affirm, right beside the number they divide. */}
               {bnpl ? <PayLaterLine className="cb-price__pl" amountCents={chosen.priceCents} currency={currency} /> : null}
@@ -973,7 +1003,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalC
                 ? <span className="cb-stock__low">{`Only ${chosen.available} left`}</span>
                 : <span className="cb-stock__std">In stock</span>}
               <span className="cb-stock__plain">In stock</span>
-              <span className="cb-stock__ship">{has(v, "shipLine") ? val(v, "shipLine") : "Arrives 5-7 days after it ships"}</span>
+              <span className="cb-stock__ship">{has(v, "shipLine") ? val(v, "shipLine") : isReaperSkin(page.store.slug) && page.store.slug !== "snowman" ? "Ships same day or next day" : "Arrives 5-7 days after it ships"}</span>
             </p>
           ) : null}
 
