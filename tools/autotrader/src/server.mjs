@@ -9,7 +9,6 @@ import { randomBytes } from "node:crypto";
 import { Engine } from "./lib/engine.mjs";
 import { Journal } from "./lib/journal.mjs";
 import { liveFeed } from "./lib/feed.mjs";
-import { paperExec } from "./lib/exec-paper.mjs";
 import { gmgnExec, CAPS } from "./lib/exec-gmgn.mjs";
 import { jupiterExec, CAPS as OWN_CAPS } from "./lib/exec-jupiter.mjs";
 import { webExec, WEB_CAPS } from "./lib/exec-browser.mjs";
@@ -24,8 +23,10 @@ import { DEFAULTS } from "./lib/strategy.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const APP = "ultra";
+/** Alex's GMGN wallet (he pasted it 2026-10-28). Ultra checks it against the SOL shown in GMGN before it clicks anything. */
+export const DEFAULT_WEB_WALLET = "4DuDEdhHAdLCDnoQnTp4ikFzTyCVFpSNQDdxwJRibw1D";
 
-export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, tickMs = 3000, quiet = false, balance = solBalance, ipv4 = publicIpv4, gmgnHost, chrome: chromeOverride = null, webWalletOf = null, rpc: rpcOverride = null, jupiter: jupiterOverride = null, rug: rugOverride = null, paperQuote = undefined, now = Date.now, idleMs = 0, onShutdown = () => {} } = {}) {
+export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, tickMs = 3000, quiet = false, balance = solBalance, ipv4 = publicIpv4, gmgnHost, chrome: chromeOverride = null, webWalletOf = null, rpc: rpcOverride = null, jupiter: jupiterOverride = null, rug: rugOverride = null, execOverride = null, now = Date.now, idleMs = 0, onShutdown = () => {} } = {}) {
   mkdirSync(dataDir, { recursive: true });
   const secrets = new Secrets(dataDir);
   const cfgFile = join(dataDir, "config.json");
@@ -41,14 +42,14 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const client = () => (secrets.apiKey && secrets.privateKeyPem ? new GmgnClient({ apiKey: secrets.apiKey, privateKeyPem: secrets.privateKeyPem, ...(gmgnHost ? { host: gmgnHost } : {}) }) : null);
 
   async function build_(m) {
+    if (execOverride) return new Engine({ feed, exec: execOverride, journal: new Journal(join(dataDir, "journal-test.jsonl")), rug: rugOverride || rugCheck, startEq: 100, now });
     if (m === "live" && (readCfg().liveSource || "web") === "web") {
       const { browser, opened } = await (chromeOverride ? chromeOverride() : connectChrome());
       const panel = new GmgnPanel({ browser, build: String(build), waitMs: 15000 });
       const w = await panel.openInstant("https://gmgn.ai/sol/token/So11111111111111111111111111111111111111112");
       const chip = Number(((w.chips || [])[0] || {}).text);
       if (!(chip >= 0) || !(w.chips || []).length) throw new Error(opened ? "Chrome just opened GMGN. Log in to GMGN in that window, then press Start again." : "GMGN is not logged in on that Chrome. Log in to GMGN in it, then press Start again.");
-      let wallet = secrets.webWallet; if (!wallet) { try { wallet = (await (await fetch("https://blackreaper.us/media/real.json", { signal: AbortSignal.timeout(8000) })).json()).wallet; } catch { /* asked for below */ } }
-      if (webWalletOf) wallet = await webWalletOf();
+      let wallet = webWalletOf ? await webWalletOf() : (secrets.webWallet || DEFAULT_WEB_WALLET);
       if (!wallet) throw new Error("Ultra could not work out which wallet GMGN is using. Paste its address under Advanced.");
       const sol = await rpc().solBalance(wallet);
       if (Math.abs(chip - sol) > Math.max(0.0015, 0.02 * sol)) throw new Error(`GMGN shows ${chip} SOL but the wallet Ultra has (${wallet.slice(0, 4)}…${wallet.slice(-4)}) holds ${sol.toFixed(4)} SOL. Paste the right address under Advanced.`);
@@ -71,7 +72,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
       const exec = jupiterExec({ wallet: w, rpc: rpc(), jupiter: jup(), cfg: DEFAULTS, startSol: readCfg().ownStartSol, now });
       return new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-own.jsonl")), rug: rugOverride || rugCheck, startEq: readCfg().ownStartSol, now });
     }
-    return new Engine({ feed, exec: paperExec({ cfg: DEFAULTS, ...(paperQuote ? { quote: paperQuote } : {}) }), journal: new Journal(join(dataDir, "journal-paper.jsonl")), rug: rugOverride || (client() ? combinedRug(client()) : rugCheck), startEq: 100, now });
+    throw new Error("Only real trading exists. Press Start real trading.");
   }
   async function go(m) {
     if (stopped) return;
@@ -140,7 +141,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
           if (url.pathname === "/api/keypair") return send(res, 200, { ok: true, publicKey: secrets.ensureKeypair() });
           if (url.pathname === "/api/setup") { try { secrets.set(body); } catch (e) { return fail(res, 400, e.message); } return send(res, 200, { ok: true, setup: secrets.masked() }); }
           if (url.pathname === "/api/test") return send(res, 200, { ok: true, steps: await checks() });
-          if (url.pathname === "/api/go") { if (!["live", "paper"].includes(body.mode)) return fail(res, 400, "mode must be live or paper"); try { await go(body.mode); } catch (e) { return fail(res, 400, e.message); } return send(res, 200, { ok: true, mode }); }
+          if (url.pathname === "/api/go") { if (body.mode !== "live") return fail(res, 400, "mode must be live"); try { await go(body.mode); } catch (e) { return fail(res, 400, e.message); } return send(res, 200, { ok: true, mode }); }
           if (url.pathname === "/api/pause") { if (engine) engine.paused = !!body.paused; return send(res, 200, { ok: true, paused: engine?.paused ?? null }); }
           if (url.pathname === "/api/flatten") { if (!engine) return fail(res, 400, "Not running."); await engine.flatten(); return send(res, 200, { ok: true, open: engine.open.size }); }
           if (url.pathname === "/api/stop") { halt(); return send(res, 200, { ok: true }); }
@@ -165,7 +166,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const listening = new Promise((r) => server.listen(port, "127.0.0.1", () => r(server.address().port)));
   const close = () => new Promise((r) => { stopped = true; if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); server.close(() => r()); server.closeAllConnections?.(); });
   // Resume what was running when the app last closed. Live resumes only if the keys are still there.
-  listening.then(() => { const c = readCfg(); if (c.running && c.mode && !(c.mode === "live" && c.liveSource === "gmgn" && !secrets.ready())) go(c.mode).catch((e) => { lastError = e.message; }); });
+  listening.then(() => { const c = readCfg(); if (c.running && c.mode === "live" && !(c.mode === "live" && c.liveSource === "gmgn" && !secrets.ready())) go(c.mode).catch((e) => { lastError = e.message; }); });
   return { listening, close, token, get engine() { return engine; }, secrets, go, halt };
 }
 

@@ -10,7 +10,8 @@ const WALLET = "4DuDEdhHAdLCDnoQnTp4ikFzTyCVFpSNQDdxwJRibw1D";
 async function boot(extra = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ultra-srv-"));
   const { feed, state } = fakeFeed();
-  const app = start({ dataDir: dir, port: 0, feed, now: () => state.now, quiet: true, tickMs: 80, rug: async () => ({ pass: true, reason: "ok" }), paperQuote: async () => ({ ok: true, impact: 0.01 }), balance: async () => 0.11, ipv4: async () => "203.0.113.7", ...extra });
+  const stub = { name: "live", source: "stub", buy: async () => ({ ok: true }), sell: async () => ({ ok: true }) };
+  const app = start({ dataDir: dir, port: 0, feed, now: () => state.now, quiet: true, tickMs: 80, execOverride: stub, rug: async () => ({ pass: true, reason: "ok" }), balance: async () => 0.11, ipv4: async () => "203.0.113.7", ...extra });
   const port = await app.listening;
   const base = `http://127.0.0.1:${port}`;
   const get = async (p) => (await fetch(base + p)).json();
@@ -35,8 +36,8 @@ test("a foreign Host header is refused", async () => {
 });
 test("POSTs need the page's token", async () => {
   const s = await boot();
-  assert.equal((await s.post("/api/go", { mode: "paper" }, null)).status, 403);
-  assert.equal((await s.post("/api/go", { mode: "paper" }, "wrong")).status, 403);
+  assert.equal((await s.post("/api/go", { mode: "live" }, null)).status, 403);
+  assert.equal((await s.post("/api/go", { mode: "live" }, "wrong")).status, 403);
   await s.app.close();
 });
 test("setup: the signing key is made here and only the PUBLIC half is ever returned", async () => {
@@ -64,16 +65,16 @@ test("setup: bad API keys and wallets are refused, good ones saved and masked", 
   await s.app.close();
 });
 test("real trading with GMGN keys refuses to start until that setup is complete", async () => {
-  const s = await boot();
+  const s = await boot({ execOverride: null });
   await s.post("/api/source", { source: "gmgn" });
   const r = await s.post("/api/go", { mode: "live" });
   assert.equal(r.status, 400); assert.match(r.error, /setup/i);
   assert.equal((await s.post("/api/go", { mode: "nonsense" })).status, 400);
   await s.app.close();
 });
-test("paper mode: a signal opens, the target closes it, and the state shows the trade with its reason", async () => {
+test("a signal opens, the target closes it, and the state shows the trade with its reason", async () => {
   const s = await boot();
-  assert.equal((await s.post("/api/go", { mode: "paper" })).ok, true);
+  assert.equal((await s.post("/api/go", { mode: "live" })).ok, true);
   await s.until(async () => (await s.get("/api/state")).engine?.open.length === 1);
   s.state.series = moon; s.state.px.P1 = 2.6;
   const st = await s.until(async () => { const x = await s.get("/api/state"); return x.engine.trades === 1 ? x : null; });
@@ -85,7 +86,7 @@ test("paper mode: a signal opens, the target closes it, and the state shows the 
 });
 test("pause stops new buys, resume starts them again", async () => {
   const s = await boot();
-  await s.post("/api/go", { mode: "paper" });
+  await s.post("/api/go", { mode: "live" });
   await s.post("/api/pause", { paused: true });
   assert.equal((await s.get("/api/state")).engine.paused, true);
   await s.post("/api/pause", { paused: false });
@@ -94,24 +95,24 @@ test("pause stops new buys, resume starts them again", async () => {
 });
 test("flatten sells every open position through the journal", async () => {
   const s = await boot();
-  await s.post("/api/go", { mode: "paper" });
+  await s.post("/api/go", { mode: "live" });
   await s.until(async () => (await s.get("/api/state")).engine?.open.length === 1);
   const r = await s.post("/api/flatten");
   assert.equal(r.open, 0);
   const st = await s.get("/api/state");
   assert.equal(st.engine.paused, true); assert.equal(st.engine.trades, 1);
-  assert.match(fs.readFileSync(path.join(s.dir, "journal-paper.jsonl"), "utf8"), /"why":"flatten"/);
+  assert.match(fs.readFileSync(path.join(s.dir, "journal-test.jsonl"), "utf8"), /"why":"flatten"/);
   await s.app.close();
 });
 test("stop halts the engine, and a restart resumes what was running", async () => {
   const s = await boot();
-  await s.post("/api/go", { mode: "paper" });
+  await s.post("/api/go", { mode: "live" });
   await s.until(async () => (await s.get("/api/state")).engine?.open.length === 1);
   await s.app.close();
-  const again = start({ dataDir: s.dir, port: 0, feed: fakeFeed().feed, now: () => s.state.now, quiet: true, tickMs: 80, rug: async () => ({ pass: true, reason: "ok" }), paperQuote: async () => ({ ok: true, impact: 0.01 }) });
+  const again = start({ dataDir: s.dir, port: 0, feed: fakeFeed().feed, now: () => s.state.now, quiet: true, tickMs: 80, execOverride: { name: "live", source: "stub", buy: async () => ({ ok: true }), sell: async () => ({ ok: true }) }, rug: async () => ({ pass: true, reason: "ok" }) });
   const port = await again.listening;
   const st = await (async () => { const t = Date.now(); for (;;) { const x = await (await fetch(`http://127.0.0.1:${port}/api/state`)).json(); if (x.running && x.engine) return x; if (Date.now() - t > 6000) throw new Error("did not resume"); await new Promise((r) => setTimeout(r, 50)); } })();
-  assert.equal(st.mode, "paper");
+  assert.equal(st.mode, "live");
   assert.equal(st.engine.open.length, 1, "the open position came back from the journal");
   await fetch(`http://127.0.0.1:${port}/api/stop`, { method: "POST", headers: { "x-ultra-token": again.token, "content-type": "application/json" }, body: "{}" });
   assert.equal((await (await fetch(`http://127.0.0.1:${port}/api/state`)).json()).running, false);
@@ -146,7 +147,7 @@ test("LIVE end to end: setup in the app -> real mode -> a signed swap reaches GM
     });
   });
   await new Promise((r) => gmgn.listen(0, "127.0.0.1", r));
-  const s = await boot({ gmgnHost: `http://127.0.0.1:${gmgn.address().port}` });
+  const s = await boot({ execOverride: null, gmgnHost: `http://127.0.0.1:${gmgn.address().port}` });
   const kp = await s.post("/api/keypair"); pub = crypto.createPublicKey(kp.publicKey);
   await s.post("/api/setup", { apiKey: "gmgn_abcdef123456", wallet: WALLET });
   const t = await s.post("/api/test");
@@ -167,7 +168,7 @@ test("LIVE end to end: setup in the app -> real mode -> a signed swap reaches GM
 
 import { world } from "./fakechain.mjs";
 import { b58decode } from "../src/lib/solana.mjs";
-const ownBoot = async (o = {}) => { const ch = world(null, o); ch.W.zero = false; const s = await boot({ rpc: ch.rpc, jupiter: ch.jupiter, balance: async () => ch.W.sol }); await s.post("/api/source", { source: "own" }); return { ...s, ch }; };
+const ownBoot = async (o = {}) => { const ch = world(null, o); ch.W.zero = false; const s = await boot({ execOverride: null, rpc: ch.rpc, jupiter: ch.jupiter, balance: async () => ch.W.sol }); await s.post("/api/source", { source: "own" }); return { ...s, ch }; };
 
 test("OWN WALLET: the app makes its wallet; the state shows the address and never a secret", async () => {
   const s = await ownBoot();
@@ -223,7 +224,7 @@ test("OWN WALLET: send everything back builds one transfer, refuses bad addresse
 });
 test("OWN WALLET: the same wallet comes back after a restart", async () => {
   const s = await ownBoot(); const a1 = (await s.get("/api/state")).own.address; await s.app.close();
-  const again = start({ dataDir: s.dir, port: 0, feed: fakeFeed().feed, quiet: true, tickMs: 80, rpc: s.ch.rpc, jupiter: s.ch.jupiter, balance: async () => 0.11 });
+  const again = start({ dataDir: s.dir, port: 0, feed: fakeFeed().feed, quiet: true, tickMs: 80, execOverride: null, rpc: s.ch.rpc, jupiter: s.ch.jupiter, balance: async () => 0.11 });
   const port = await again.listening;
   assert.equal((await (await fetch(`http://127.0.0.1:${port}/api/state`)).json()).own.address, a1);
   await again.close();

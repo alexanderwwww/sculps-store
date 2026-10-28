@@ -29,7 +29,7 @@ APP="$HERE/app/$NAME"
 PLIST="$APP/Contents/Info.plist"
 LAUNCHER="$APP/Contents/MacOS/ultra"
 SRC="$HERE/src"
-REQUIRED="server.mjs lib/exec-browser.mjs lib/chrome.mjs lib/web/gmgn-panel.mjs lib/web/probe.mjs lib/web/wallet.mjs lib/engine.mjs lib/strategy.mjs lib/rug.mjs lib/gmgn.mjs lib/exec-gmgn.mjs lib/exec-paper.mjs lib/exec-jupiter.mjs lib/solana.mjs lib/journal.mjs lib/secrets.mjs lib/rpc.mjs lib/gecko.mjs lib/net.mjs lib/feed.mjs ui/index.html ui/app.js ui/style.css ui/icon.png"
+REQUIRED="server.mjs lib/exec-browser.mjs lib/chrome.mjs lib/web/gmgn-panel.mjs lib/web/probe.mjs lib/web/wallet.mjs lib/engine.mjs lib/strategy.mjs lib/rug.mjs lib/gmgn.mjs lib/exec-gmgn.mjs lib/exec-jupiter.mjs lib/solana.mjs lib/journal.mjs lib/secrets.mjs lib/rpc.mjs lib/gecko.mjs lib/net.mjs lib/feed.mjs ui/index.html ui/app.js ui/style.css ui/icon.png"
 
 for f in "$PLIST" "$LAUNCHER" "$HERE/BUILD" "$HERE/design/AppIcon.icns"; do [ -f "$f" ] || fail "missing $f"; done
 for f in $REQUIRED; do [ -f "$SRC/$f" ] || fail "src/$f is missing"; done

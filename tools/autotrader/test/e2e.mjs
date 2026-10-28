@@ -19,7 +19,7 @@ const chain = new FakeChain({ sol: 0.1 });
 const gm = await startFakeGmgn({ chain, variant: "instant", pxOf: () => 4.8e-5 });
 await routeGmgn(chrome.ctx, gm);
 const rpc = { solBalance: async () => chain.solBalance(), tokenAccounts: async (_o, mint) => { const t = await chain.tokenBalance(mint); return t.raw === "0" ? [] : [{ raw: BigInt(t.raw), pubkey: "x", program: "y", decimals: 6 }]; } };
-const app = start({ dataDir: dir, port: 0, feed, now: () => state.now, quiet: true, tickMs: 100, rug: async () => ({ pass: true, reason: "ok" }), rpc, balance: async () => chain.solBalance(), ipv4: async () => "203.0.113.7", chrome: async () => ({ browser: chrome.browser, opened: false }), webWalletOf: async () => WALLET });
+const app = start({ dataDir: dir, port: 0, feed, now: () => state.now, quiet: true, tickMs: 100, execOverride: null, rug: async () => ({ pass: true, reason: "ok" }), rpc, balance: async () => chain.solBalance(), ipv4: async () => "203.0.113.7", chrome: async () => ({ browser: chrome.browser, opened: false }), webWalletOf: async () => WALLET });
 const port = await app.listening;
 const browser = await pw.chromium.launch({ executablePath: process.env.PW_CHROMIUM || "/opt/pw-browsers/chromium" });
 const page = await browser.newPage({ viewport: { width: 1180, height: 900 } });

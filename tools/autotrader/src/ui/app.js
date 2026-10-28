@@ -43,7 +43,7 @@
         el("button", { class: "cy", text: "Run the test", onclick: async () => { testSteps = "running"; render(); const r = await api("/api/test", {}); testSteps = r.steps; render(); } }),
         testSteps === "running" ? el("p", { class: "note", text: "Testing…" }) : (testSteps || []).map((t) => el("div", { class: "check" }, el("b", { class: t.ok ? "ok" : "no", text: t.ok ? "✓" : "✗" }), el("div", {}, t.name, el("small", { text: t.why }))))),
       el("div", { class: "glass step" }, el("h3", { text: "Start" }), el("p", { text: "Paper runs the same engine with pretend money so you can watch it work. Real trades with your GMGN wallet inside the limits on the right of the dashboard." }),
-        el("div", { class: "actions" }, el("button", { class: "cy", text: "Watch it (paper)", onclick: () => act("/api/go", { mode: "paper" }) }), el("button", { class: "go", text: "Start real trading", disabled: !S.setup.ready, onclick: async () => { await act("/api/source", { source: "gmgn" }); await act("/api/go", { mode: "live" }); } }))));
+        el("div", { class: "actions" }, el("button", { class: "go", text: "Start real trading", disabled: !S.setup.ready, onclick: async () => { await act("/api/source", { source: "gmgn" }); await act("/api/go", { mode: "live" }); } }))));
   }
 
   function ownCards() {
@@ -74,8 +74,7 @@
       el("div", { class: "glass step done" }, el("h3", { text: "Press start" }),
         el("p", { text: "Ultra trades from the GMGN wallet that is already logged in on your Chrome, the same way ultracursor does. Nothing to connect and no money to move. If GMGN is not open yet, Ultra opens it for you." }),
         el("div", { class: "actions" },
-          el("button", { class: "go", text: "Start real trading", disabled: busy, onclick: async () => { await act("/api/source", { source: "web" }); await act("/api/go", { mode: "live" }); } }),
-          el("button", { class: "cy", text: "Watch it first (paper)", onclick: () => act("/api/go", { mode: "paper" }) })),
+          el("button", { class: "go", text: "Start real trading", disabled: busy, onclick: async () => { await act("/api/source", { source: "web" }); await act("/api/go", { mode: "live" }); } })),
         busy ? el("p", { class: "note", text: "Connecting to GMGN…" }) : null,
         msg ? el("p", { class: "err", text: msg }) : null,
         el("p", { class: "note", text: `Each buy is the ${S.caps.preset || "0.01618"} SOL preset in GMGN's Instant trade, then it sells by itself. It never trades more than that per click.` })),
@@ -120,9 +119,9 @@
         ag("Scanner", "scan", e.watching ? e.watching.total : 0, e.watching ? `pools watched · ${e.watching.ready} worth a look, ${e.watching.young} too young, ${e.watching.thin} too thin` : "starting", hot),
         ag("Rug check", e.ticks ? "pass" : "–", rugN, "coins blocked before any order", false),
         ag("Sizer", "size", `${Math.round(S.cfg.stakeFrac * 100)}%`, `of the wallet, max ${S.caps.maxSolPerTrade} SOL a trade`, false),
-        ag("Executor", live ? "live" : "paper", e.open.length, live ? (S.source === "web" ? "clicks Instant trade in your GMGN" : S.source === "own" ? "Jupiter swaps from Ultra's wallet" : "GMGN signed orders") : "pretend fills, real route check", e.open.length > 0),
+        ag("Executor", "live", e.open.length, live ? (S.source === "web" ? "clicks Instant trade in your GMGN" : S.source === "own" ? "Jupiter swaps from Ultra's wallet" : "GMGN signed orders") : "pretend fills, real route check", e.open.length > 0),
         ag("Logger", "write", e.trades + skipsTotal, "every decision has a reason", false),
-        ag("Shadow", "paper", e.edge.n ? pct(e.edge.avg) : "…", e.edge.n ? `edge over last ${e.edge.n} paper signals${e.edge.avg < -0.02 && live ? " – buys waiting" : ""}` : "learning from every signal", false),
+        ag("Shadow", "filter", e.edge.n ? pct(e.edge.avg) : "…", e.edge.n ? `edge over last ${e.edge.n} signals${e.edge.avg < -0.02 && live ? " – buys waiting" : ""}` : "learning from every signal", false),
         ag("You", "asleep", "zzz", "reads the log in the morning", false)),
       cols: el("div", { class: "cols" },
         el("div", {},
@@ -135,8 +134,7 @@
               el("button", { text: e.paused ? "Resume buying" : "Pause buying", class: e.paused ? "go" : "", onclick: () => act("/api/pause", { paused: !e.paused }) }),
               el("button", { class: "danger", text: "Sell everything", disabled: !e.open.length, onclick: () => { if (confirm("Sell every open position now?")) act("/api/flatten"); } }),
               el("button", { text: "Stop", onclick: () => { if (confirm("Stop Ultra? Open positions stay protected by GMGN's own stop and target orders.")) act("/api/stop"); } })),
-            S.mode === "paper" ? el("div", { class: "actions", style: "margin-top:10px" }, el("button", { class: "go", text: "Switch to real trading", disabled: !S.setup.ready, onclick: () => { if (confirm(`Trade for real with your GMGN wallet? Max ${S.caps.maxSolPerTrade} SOL per trade.`)) act("/api/go", { mode: "live" }); } })) : null,
-            e.halted ? el("p", { class: "err", text: e.halted }) : null, msg ? el("p", { class: "err", text: msg }) : null),
+            e.halted ? el("p", { class: "err", text: e.halted }) : null, S.lastError ? el("p", { class: "err", text: S.lastError }) : null, msg ? el("p", { class: "err", text: msg }) : null),
           el("div", { class: "glass panel" }, el("h2", {}, "Limits"),
             ...[["Per trade", S.source === "web" ? `${S.caps.preset} SOL (your GMGN preset)` : `${S.caps.maxSolPerTrade} SOL max, 12% of wallet`], ["Buys", `${S.caps.perHour} an hour, ${S.caps.perDay} a day`], ["Halt", `${Math.round((1 - S.caps.floorFrac) * 100)}% below the starting balance`], ["Stop / target", `${S.cfg.sl * 100}% / +${S.cfg.tp * 100}%, trailing`], ["Open at once", String(S.cfg.maxOpen)], ["Never", "Kimchi"]].map(([a, b]) => el("div", { class: "row" }, el("span", { class: "why", text: a }), el("span", { class: "v", text: b })))),
           el("div", { class: "glass panel" }, el("h2", {}, "Why it did not trade"),
@@ -200,13 +198,13 @@
     top.replaceChildren(); app.replaceChildren();
     if (!S) { flow.show(false); top.append(el("div", { class: "boot", text: "ultra is not answering" })); return; }
     const e = S.engine, live = S.mode === "live";
-    const chip = !S.running ? ["off", "stopped"] : e?.halted ? ["halt", "halted"] : e?.paused ? ["paused", "buying paused"] : live ? ["live", "live"] : ["paper", "paper"];
+    const chip = !S.running ? ["off", "stopped"] : e?.halted ? ["halt", "halted"] : e?.paused ? ["paused", "buying paused"] : ["live", "live"];
     const pnl = e ? e.equity - e.startEq : 0;
     top.append(el("header", { class: "glass top" },
       el("div", { class: "orb" }, el("b")), el("div", { class: "brand" }, el("h1", { text: "Ultra" }), el("small", { text: `build ${BUILD}` })),
       el("span", { class: `chip ${chip[0]}`, text: chip[1] }), el("div", { class: "grow" }),
       (S.source === "own" ? S.own?.sol : S.sol) != null ? el("div", { class: "stat" }, el("b", { text: fmt(S.source === "own" ? S.own.sol : S.sol, 4) }), el("span", { text: "wallet SOL" })) : null,
-      e ? el("div", { class: "stat" }, el("b", { class: pnl >= 0 ? "up" : "down", text: `${pnl >= 0 ? "+" : ""}${fmt(pnl, live ? 4 : 2)}` }), el("span", { text: `P&L ${live ? "SOL" : "$ paper"}` })) : null,
+      e ? el("div", { class: "stat" }, el("b", { class: pnl >= 0 ? "up" : "down", text: `${pnl >= 0 ? "+" : ""}${fmt(pnl, live ? 4 : 2)}` }), el("span", { text: "P&L SOL" })) : null,
       e ? el("div", { class: "stat" }, el("b", { text: `${e.open.length}/${S.cfg.maxOpen}` }), el("span", { text: "open" })) : null,
       !S.running || view === "setup" ? null : el("button", { text: "Setup", onclick: () => { view = "setup"; render(); } })));
     if (S.running && e && view !== "setup") { const d = dashView(); top.append(d.pipe); flow.show(true); flow.feed(e.events); app.append(d.cols); }

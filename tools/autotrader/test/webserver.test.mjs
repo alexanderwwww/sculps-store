@@ -18,7 +18,7 @@ async function boot({ loggedIn = true, chipOff = 0 } = {}) {
   const { feed, state } = fakeFeed();
   // the coins the fake market offers need real-looking mints that the fake GMGN page serves
   for (const p of state.pools) p.mint = mintOf(p.name);
-  const app = start({ dataDir: dir, port: 0, feed, now: () => state.now, quiet: true, tickMs: 60, rug: async () => ({ pass: true, reason: "ok" }), rpc, balance: async () => chain.solBalance(), chrome: async () => ({ browser: chrome.browser, opened: false }), webWalletOf: async () => WALLET });
+  const app = start({ dataDir: dir, port: 0, feed, now: () => state.now, quiet: true, tickMs: 60, execOverride: null, rug: async () => ({ pass: true, reason: "ok" }), rpc, balance: async () => chain.solBalance(), chrome: async () => ({ browser: chrome.browser, opened: false }), webWalletOf: async () => WALLET });
   if (chipOff) gm.chip = String(chipOff);
   const port = await app.listening, base = `http://127.0.0.1:${port}`;
   const get = async (p) => (await fetch(base + p)).json();
