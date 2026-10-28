@@ -20,7 +20,9 @@ export class Secrets {
     }
     return this.d.publicKeyPem;
   }
-  set({ apiKey, wallet }) {
+  get webWallet() { return this.d.webWallet || null; }
+  set({ apiKey, wallet, webWallet }) {
+    if (webWallet != null) { const v = String(webWallet).trim(); if (v && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v)) throw new Error("That does not look like a Solana wallet address."); if (v) this.d.webWallet = v; }
     if (apiKey != null) { const v = String(apiKey).trim(); if (v && !/^[\w.\-]{8,200}$/.test(v)) throw new Error("That does not look like an API key."); if (v) this.d.apiKey = v; }
     if (wallet != null) { const v = String(wallet).trim(); if (v && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v)) throw new Error("That does not look like a Solana wallet address."); if (v) this.d.wallet = v; }
     this.#save();
@@ -32,5 +34,5 @@ export class Secrets {
   }
   get walletPem() { return this.d.walletPem || null; }
   ready() { return !!(this.apiKey && this.privateKeyPem && this.wallet); }
-  masked() { return { apiKey: this.apiKey ? `${this.apiKey.slice(0, 4)}…${this.apiKey.slice(-4)}` : null, wallet: this.wallet, hasKeypair: !!this.privateKeyPem }; }
+  masked() { return { apiKey: this.apiKey ? `${this.apiKey.slice(0, 4)}…${this.apiKey.slice(-4)}` : null, wallet: this.wallet, hasKeypair: !!this.privateKeyPem, webWallet: this.webWallet }; }
 }

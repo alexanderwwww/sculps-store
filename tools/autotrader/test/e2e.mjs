@@ -6,41 +6,36 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { start } from "../src/server.mjs";
 import { fakeFeed, moon, up, base } from "./fakefeed.mjs";
-import { world } from "./fakechain.mjs";
+import { startFakeGmgn, routeGmgn, launchChrome, mintOf, FakeChain, WALLET } from "./fixtures/fake-gmgn.mjs";
 
 const require = createRequire(path.join(path.dirname(new URL(import.meta.url).pathname), "..", "..", "..", "package.json"));
 let pw; try { pw = require("playwright"); } catch { pw = require("playwright-core"); }
 const ok = (m) => console.log("  ok  " + m);
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ultra-e2e-"));
 const { feed, state } = fakeFeed();
-const ch = world(null); ch.W.zero = false; ch.W.sol = 0;
-const app = start({ dataDir: dir, port: 0, feed, now: () => state.now, quiet: true, tickMs: 100, rug: async () => ({ pass: true, reason: "ok" }), paperQuote: async () => ({ ok: true, impact: 0.01 }), balance: async () => ch.W.sol, ipv4: async () => "203.0.113.7", rpc: ch.rpc, jupiter: ch.jupiter });
+for (const p of state.pools) p.mint = mintOf(p.name);
+const chrome = await launchChrome();
+const chain = new FakeChain({ sol: 0.1 });
+const gm = await startFakeGmgn({ chain, variant: "instant", pxOf: () => 4.8e-5 });
+await routeGmgn(chrome.ctx, gm);
+const rpc = { solBalance: async () => chain.solBalance(), tokenAccounts: async (_o, mint) => { const t = await chain.tokenBalance(mint); return t.raw === "0" ? [] : [{ raw: BigInt(t.raw), pubkey: "x", program: "y", decimals: 6 }]; } };
+const app = start({ dataDir: dir, port: 0, feed, now: () => state.now, quiet: true, tickMs: 100, rug: async () => ({ pass: true, reason: "ok" }), rpc, balance: async () => chain.solBalance(), ipv4: async () => "203.0.113.7", chrome: async () => ({ browser: chrome.browser, opened: false }), webWalletOf: async () => WALLET });
 const port = await app.listening;
 const browser = await pw.chromium.launch({ executablePath: process.env.PW_CHROMIUM || "/opt/pw-browsers/chromium" });
 const page = await browser.newPage({ viewport: { width: 1180, height: 900 } });
-const errors = []; page.on("pageerror", (e) => errors.push(String(e))); page.on("console", (m) => m.type() === "error" && !/400 \(Bad Request\)/.test(m.text()) && errors.push(m.text()));   // the one deliberate bad save above
+const errors = []; page.on("pageerror", (e) => errors.push(String(e))); page.on("console", (m) => m.type() === "error" && !/400 \(Bad Request\)/.test(m.text()) && errors.push(m.text()));
 const reachable = async (sel) => page.evaluate((s) => { const el = document.querySelector(s); if (!el) return false; const r = el.getBoundingClientRect(); const t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return !!t && (t === el || el.contains(t)); }, sel);
 const text = async () => (await page.textContent("body")).replace(/\s+/g, " ");
 try {
   await page.goto(`http://127.0.0.1:${port}/`);
   await page.waitForSelector(".steps");
-  assert.match(await text(), /Send SOL to Ultra/); ok("a fresh install opens on ONE thing to do: send SOL to Ultra's own wallet");
-  const addr = await page.textContent(".addr");
-  assert.match(addr, /^[1-9A-HJ-NP-Za-km-z]{32,44}$/); ok("Ultra's wallet address is on screen, ready to copy");
-  assert.equal(await page.getByRole("button", { name: "Start real trading" }).isDisabled(), true); ok("Start real trading is disabled until the wallet is funded");
-  assert.doesNotMatch(await text(), /PRIVATE|Make my signing key/); ok("no keys, no API, no whitelist on the main screen");
-  ch.W.sol = 0.11;
-  await page.waitForFunction(() => /0\.1100 SOL in Ultra/.test(document.body.textContent), null, { timeout: 8000 });
-  assert.equal(await page.getByRole("button", { name: "Start real trading" }).isDisabled(), false); ok("funding it is noticed on its own and Start unlocks");
-  await page.getByRole("button", { name: "Back up this wallet" }).scrollIntoViewIfNeeded();
-  page.once("dialog", (d) => d.accept());
-  await page.getByRole("button", { name: "Back up this wallet" }).click();
-  await page.waitForSelector("textarea");
-  assert.ok((await page.inputValue("textarea")).length > 60); ok("the backup button shows the secret key only after a confirmation");
-  for (const name of ["Copy address", "Start real trading", "Watch it first (paper)", "Send everything back"]) { const b = page.getByRole("button", { name, exact: true }); await b.first().scrollIntoViewIfNeeded(); const hit = await b.first().evaluate((el) => { const r = el.getBoundingClientRect(); const t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return t === el || el.contains(t); }); assert.ok(hit, `${name} is covered by something else`); }
-  ok("the buttons are reachable by the mouse");
-  await page.getByRole("button", { name: "Start real trading" }).scrollIntoViewIfNeeded();
-  await page.getByRole("button", { name: "Start real trading" }).click();
+  assert.match(await text(), /Press start/); ok("a fresh install opens on ONE card: Press start");
+  assert.equal(await page.getByRole("button", { name: "Start real trading", exact: true }).count(), 1); ok("there is one Start real trading button");
+  assert.doesNotMatch(await text(), /PRIVATE|signing key|API key|whitelist/i); ok("no keys, no API, no whitelist, no addresses to copy on the main screen");
+  const b = page.getByRole("button", { name: "Start real trading", exact: true });
+  const hit = await b.evaluate((el) => { const r = el.getBoundingClientRect(); const t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return t === el || el.contains(t); });
+  assert.ok(hit); ok("the button is reachable by the mouse");
+  await b.click();
   await page.waitForSelector(".pipe");
   assert.match(await text(), /Scanner/); assert.match(await text(), /Rug check/); assert.match(await text(), /Shadow/); assert.match(await page.textContent("header .chip"), /live/i); ok("one press: the live dashboard with the whole pipeline");
   await page.waitForFunction(() => /ALPHA/.test(document.body.textContent), null, { timeout: 12000 });
@@ -51,7 +46,7 @@ try {
   await page.waitForSelector(".fdot", { timeout: 15000 });
   await page.waitForFunction(() => Number(document.querySelector(".fnode--scan b").textContent) >= 2, null, { timeout: 15000 });
   ok("new coins make dots travel through the flow and the counters move");
-  ch.W.lastKind = "sell"; state.series = moon; state.px.P1 = 2.6;
+  state.series = moon; state.px.P1 = 2.6;
   await page.waitForFunction(() => /take profit/.test(document.body.textContent), null, { timeout: 12000 });
   assert.match(await text(), /exit/); ok("the exit shows up with its reason");
   for (const sel of ["header .chip", ".agent", ".curve", ".row"]) assert.ok(await page.$(sel), sel);
@@ -70,5 +65,5 @@ try {
   assert.deepEqual(errors, [], "no console errors"); ok("no errors in the browser console");
   fs.mkdirSync(path.join(path.dirname(new URL(import.meta.url).pathname), "shots"), { recursive: true });
   console.log("\nUI checks passed");
-} catch (e) { console.log("FAIL  " + (e.message || e)); console.log((await text().catch(() => "")).slice(0, 600)); await page.screenshot({ path: path.join(dir, "fail.png") }).catch(() => {}); console.log("screenshot", path.join(dir, "fail.png")); await browser.close(); await app.close(); process.exit(1); }
-await browser.close(); await app.close(); process.exit(0);
+} catch (e) { console.log("FAIL  " + (e.message || e)); console.log((await text().catch(() => "")).slice(0, 600)); await page.screenshot({ path: path.join(dir, "fail.png") }).catch(() => {}); console.log("screenshot", path.join(dir, "fail.png")); await browser.close(); await chrome.close(); await app.close(); process.exit(1); }
+await browser.close(); await chrome.close(); await gm.close(); await app.close(); process.exit(0);

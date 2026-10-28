@@ -12,6 +12,9 @@ import { liveFeed } from "./lib/feed.mjs";
 import { paperExec } from "./lib/exec-paper.mjs";
 import { gmgnExec, CAPS } from "./lib/exec-gmgn.mjs";
 import { jupiterExec, CAPS as OWN_CAPS } from "./lib/exec-jupiter.mjs";
+import { webExec, WEB_CAPS } from "./lib/exec-browser.mjs";
+import { GmgnPanel } from "./lib/web/gmgn-panel.mjs";
+import { connectChrome } from "./lib/chrome.mjs";
 import { Rpc, Jupiter, walletFromPem, buildTransferTx } from "./lib/solana.mjs";
 import { GmgnClient } from "./lib/gmgn.mjs";
 import { combinedRug, rugCheck } from "./lib/rug.mjs";
@@ -22,7 +25,7 @@ import { DEFAULTS } from "./lib/strategy.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const APP = "ultra";
 
-export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, tickMs = 3000, quiet = false, balance = solBalance, ipv4 = publicIpv4, gmgnHost, rpc: rpcOverride = null, jupiter: jupiterOverride = null, rug: rugOverride = null, paperQuote = undefined, now = Date.now, idleMs = 0, onShutdown = () => {} } = {}) {
+export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, tickMs = 3000, quiet = false, balance = solBalance, ipv4 = publicIpv4, gmgnHost, chrome: chromeOverride = null, webWalletOf = null, rpc: rpcOverride = null, jupiter: jupiterOverride = null, rug: rugOverride = null, paperQuote = undefined, now = Date.now, idleMs = 0, onShutdown = () => {} } = {}) {
   mkdirSync(dataDir, { recursive: true });
   const secrets = new Secrets(dataDir);
   const cfgFile = join(dataDir, "config.json");
@@ -30,7 +33,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const writeCfg = (patch) => writeFileSync(cfgFile, JSON.stringify({ ...readCfg(), ...patch }, null, 1));
   const token = randomBytes(16).toString("hex");
   const log = (...a) => { if (!quiet) console.log(new Date().toISOString(), ...a); };
-  let engine = null, mode = null, timer = null, timer2 = null, ticking = false, lastError = null, stopped = false;
+  let webAddr = null, engine = null, mode = null, timer = null, timer2 = null, ticking = false, lastError = null, stopped = false;
 
   const rpcI = rpcOverride || new Rpc(), jupI = jupiterOverride || new Jupiter();
   const rpc = () => rpcI, jup = () => jupI;
@@ -38,6 +41,22 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const client = () => (secrets.apiKey && secrets.privateKeyPem ? new GmgnClient({ apiKey: secrets.apiKey, privateKeyPem: secrets.privateKeyPem, ...(gmgnHost ? { host: gmgnHost } : {}) }) : null);
 
   async function build_(m) {
+    if (m === "live" && (readCfg().liveSource || "web") === "web") {
+      const { browser, opened } = await (chromeOverride ? chromeOverride() : connectChrome());
+      const panel = new GmgnPanel({ browser, build: String(build), waitMs: 15000 });
+      const w = await panel.openInstant("https://gmgn.ai/sol/token/So11111111111111111111111111111111111111112");
+      const chip = Number(((w.chips || [])[0] || {}).text);
+      if (!(chip >= 0) || !(w.chips || []).length) throw new Error(opened ? "Chrome just opened GMGN. Log in to GMGN in that window, then press Start again." : "GMGN is not logged in on that Chrome. Log in to GMGN in it, then press Start again.");
+      let wallet = secrets.webWallet; if (!wallet) { try { wallet = (await (await fetch("https://blackreaper.us/media/real.json", { signal: AbortSignal.timeout(8000) })).json()).wallet; } catch { /* asked for below */ } }
+      if (webWalletOf) wallet = await webWalletOf();
+      if (!wallet) throw new Error("Ultra could not work out which wallet GMGN is using. Paste its address under Advanced.");
+      const sol = await rpc().solBalance(wallet);
+      if (Math.abs(chip - sol) > Math.max(0.0015, 0.02 * sol)) throw new Error(`GMGN shows ${chip} SOL but the wallet Ultra has (${wallet.slice(0, 4)}…${wallet.slice(-4)}) holds ${sol.toFixed(4)} SOL. Paste the right address under Advanced.`);
+      const cfg = readCfg(); if (cfg.webStartSol == null) writeCfg({ webStartSol: sol });
+      webAddr = wallet;
+      const exec = webExec({ panel, rpc: rpc(), wallet, cfg: DEFAULTS, startSol: readCfg().webStartSol, now });
+      return new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-web.jsonl")), rug: rugOverride || rugCheck, startEq: readCfg().webStartSol, now });
+    }
     if (m === "live" && readCfg().liveSource === "gmgn") {
       if (!secrets.ready()) throw new Error("Finish the GMGN setup first: API key, wallet address and the public key pasted into GMGN.");
       const c = client(); const bal = await balance(secrets.wallet);
@@ -111,9 +130,9 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
       if (url.pathname.startsWith("/api/")) {
         if (req.method === "POST" && req.headers["x-ultra-token"] !== token) return fail(res, 403, "Reload the window.");
         if (req.method === "GET" && url.pathname === "/api/state") {
-          let sol = null; try { if (secrets.wallet) sol = await balance(secrets.wallet); } catch { /* shown as unknown */ }
+          let sol = null; try { const a = (readCfg().liveSource || "web") === "web" ? webAddr : secrets.wallet; if (a) sol = await balance(a); } catch { /* shown as unknown */ }
           let own = null; try { const w = ownWallet(); own = { address: w.address, sol: await rpc().solBalance(w.address).catch(() => null) }; } catch { /* shown as unknown */ }
-          return send(res, 200, { ok: true, build, running: !!engine, mode, own, source: readCfg().liveSource || "own", setup: { ...secrets.masked(), ready: secrets.ready(), publicKey: secrets.publicKeyPem }, sol, caps: OWN_CAPS, cfg: { stakeFrac: DEFAULTS.stakeFrac, sl: DEFAULTS.sl, tp: DEFAULTS.tp, maxOpen: DEFAULTS.maxOpen }, engine: engine ? engine.status() : null, lastError, saved: readCfg() });
+          return send(res, 200, { ok: true, build, running: !!engine, mode, own, source: readCfg().liveSource || "web", setup: { ...secrets.masked(), ready: secrets.ready(), publicKey: secrets.publicKeyPem }, sol, caps: (readCfg().liveSource || "web") === "web" ? WEB_CAPS : OWN_CAPS, cfg: { stakeFrac: DEFAULTS.stakeFrac, sl: DEFAULTS.sl, tp: DEFAULTS.tp, maxOpen: DEFAULTS.maxOpen }, engine: engine ? engine.status() : null, lastError, saved: readCfg() });
         }
         if (req.method === "GET" && url.pathname === "/api/ip") return send(res, 200, { ok: true, ip: await ipv4() });
         if (req.method === "POST") {
@@ -125,7 +144,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
           if (url.pathname === "/api/pause") { if (engine) engine.paused = !!body.paused; return send(res, 200, { ok: true, paused: engine?.paused ?? null }); }
           if (url.pathname === "/api/flatten") { if (!engine) return fail(res, 400, "Not running."); await engine.flatten(); return send(res, 200, { ok: true, open: engine.open.size }); }
           if (url.pathname === "/api/stop") { halt(); return send(res, 200, { ok: true }); }
-          if (url.pathname === "/api/source") { if (!["own", "gmgn"].includes(body.source)) return fail(res, 400, "source must be own or gmgn"); if (engine && mode === "live") return fail(res, 400, "Stop Ultra first."); writeCfg({ liveSource: body.source }); return send(res, 200, { ok: true }); }
+          if (url.pathname === "/api/source") { if (!["web", "own", "gmgn"].includes(body.source)) return fail(res, 400, "source must be web, own or gmgn"); if (engine && mode === "live") return fail(res, 400, "Stop Ultra first."); writeCfg({ liveSource: body.source }); return send(res, 200, { ok: true }); }
           if (url.pathname === "/api/backup") { if (body.confirm !== true) return fail(res, 400, "Confirm first."); const w = ownWallet(); return send(res, 200, { ok: true, address: w.address, secretKey: w.secretKeyBase58 }); }
           if (url.pathname === "/api/rebase") { if (engine && engine.open.size) return fail(res, 400, "Close the open positions first."); const w = ownWallet(); const b = await rpc().solBalance(w.address); writeCfg({ ownStartSol: b }); if (engine && mode === "live") { halt(); await go("live"); } return send(res, 200, { ok: true, start: b }); }
           if (url.pathname === "/api/withdraw") {

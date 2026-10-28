@@ -167,7 +167,7 @@ test("LIVE end to end: setup in the app -> real mode -> a signed swap reaches GM
 
 import { world } from "./fakechain.mjs";
 import { b58decode } from "../src/lib/solana.mjs";
-const ownBoot = async (o = {}) => { const ch = world(null, o); ch.W.zero = false; const s = await boot({ rpc: ch.rpc, jupiter: ch.jupiter, balance: async () => ch.W.sol }); return { ...s, ch }; };
+const ownBoot = async (o = {}) => { const ch = world(null, o); ch.W.zero = false; const s = await boot({ rpc: ch.rpc, jupiter: ch.jupiter, balance: async () => ch.W.sol }); await s.post("/api/source", { source: "own" }); return { ...s, ch }; };
 
 test("OWN WALLET: the app makes its wallet; the state shows the address and never a secret", async () => {
   const s = await ownBoot();

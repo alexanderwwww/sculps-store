@@ -29,7 +29,7 @@ APP="$HERE/app/$NAME"
 PLIST="$APP/Contents/Info.plist"
 LAUNCHER="$APP/Contents/MacOS/ultra"
 SRC="$HERE/src"
-REQUIRED="server.mjs lib/engine.mjs lib/strategy.mjs lib/rug.mjs lib/gmgn.mjs lib/exec-gmgn.mjs lib/exec-paper.mjs lib/exec-jupiter.mjs lib/solana.mjs lib/journal.mjs lib/secrets.mjs lib/rpc.mjs lib/gecko.mjs lib/net.mjs lib/feed.mjs ui/index.html ui/app.js ui/style.css ui/icon.png"
+REQUIRED="server.mjs lib/exec-browser.mjs lib/chrome.mjs lib/web/gmgn-panel.mjs lib/web/probe.mjs lib/web/wallet.mjs lib/engine.mjs lib/strategy.mjs lib/rug.mjs lib/gmgn.mjs lib/exec-gmgn.mjs lib/exec-paper.mjs lib/exec-jupiter.mjs lib/solana.mjs lib/journal.mjs lib/secrets.mjs lib/rpc.mjs lib/gecko.mjs lib/net.mjs lib/feed.mjs ui/index.html ui/app.js ui/style.css ui/icon.png"
 
 for f in "$PLIST" "$LAUNCHER" "$HERE/BUILD" "$HERE/design/AppIcon.icns"; do [ -f "$f" ] || fail "missing $f"; done
 for f in $REQUIRED; do [ -f "$SRC/$f" ] || fail "src/$f is missing"; done
@@ -72,6 +72,10 @@ cp -p "$PLIST" "$B/Contents/Info.plist"
 cp -p "$LAUNCHER" "$B/Contents/MacOS/ultra"
 chmod 755 "$B/Contents/MacOS/ultra"
 ( cd "$SRC" && tar --exclude=.DS_Store -cf - . ) | ( cd "$RES/app" && tar -xf - )
+PWCORE="$HERE/../../node_modules/playwright-core"
+[ -d "$PWCORE" ] || fail "no playwright-core in the repo's node_modules: cannot ship the Chrome driver"
+mkdir -p "$RES/app/node_modules" && cp -R "$PWCORE" "$RES/app/node_modules/playwright-core"
+( cd "$RES/app" && node -e 'require("playwright-core")' ) || fail "the bundled playwright-core does not load"
 cp -p "$HERE/design/AppIcon.icns" "$RES/AppIcon.icns"
 printf '%s\n' "$BUILD" > "$RES/BUILD"
 ok "bundle staged"
@@ -90,7 +94,7 @@ TOP="$(cd "$CHECK" && find . -mindepth 1 -maxdepth 1 | sed 's#^\./##')"
 C="$CHECK/$NAME/Contents"
 [ -x "$C/MacOS/ultra" ] || fail "the launcher is not executable inside the zip"
 bash -n "$C/MacOS/ultra" || fail "the packed launcher is not valid bash"
-for f in AppIcon.icns BUILD app/server.mjs app/ui/index.html app/ui/app.js app/ui/style.css app/ui/icon.png app/lib/engine.mjs app/lib/exec-gmgn.mjs app/lib/exec-jupiter.mjs app/lib/solana.mjs; do [ -s "$C/Resources/$f" ] || fail "Resources/$f missing from the zip"; done
+for f in AppIcon.icns BUILD app/server.mjs app/ui/index.html app/ui/app.js app/ui/style.css app/ui/icon.png app/lib/engine.mjs app/lib/exec-gmgn.mjs app/lib/exec-jupiter.mjs app/lib/solana.mjs app/lib/exec-browser.mjs app/lib/web/gmgn-panel.mjs app/node_modules/playwright-core/package.json; do [ -s "$C/Resources/$f" ] || fail "Resources/$f missing from the zip"; done
 [ "$(head -c 4 "$C/Resources/AppIcon.icns")" = "icns" ] || fail "AppIcon.icns is not an icns file"
 python3 - "$C/Info.plist" "$BUILD" <<'PY' || fail "Info.plist check failed"
 import plistlib, sys
