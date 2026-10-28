@@ -38,9 +38,9 @@ export function managePosition(cs, i0, cfg = DEFAULTS) {
     if ((c.t - cs[i0].t) / 60000 >= cfg.maxHoldMin) return exit(j, c.c, "time stop");
   }
   const j = cs.length - 1;
-  return exit(j, cs[j].c, "end of data");
+  return { ...exit(j, cs[j].c, "end of data"), open: true };      // no rule has fired yet
   function exit(j, px, why) {
     const out = px * (1 - cfg.slippage);
-    return { j, exitPx: out, entryPx: entry, ret: out / entry - 1 - 2 * cfg.fee, why };
+    return { j, exitPx: out, entryPx: entry, ret: out / entry - 1 - 2 * cfg.fee, why, peak };
   }
 }
