@@ -4,7 +4,7 @@ import { getJson } from "./net.mjs";
 export async function rugCheck(mint) {
   let s;
   try { s = await getJson(`https://api.rugcheck.xyz/v1/tokens/${mint}/report/summary`, { tries: 2 }); }
-  catch (e) { return { pass: false, reason: `rugcheck unreachable: ${e.message.slice(0, 60)}`, risks: [] }; }
+  catch (e) { return { pass: false, reason: `rugcheck unreachable (${e.message.replace(/^https?:\S+: /, "").slice(0, 40)})`, risks: [] }; }
   const risks = s.risks || [];
   const danger = risks.filter((r) => r.level === "danger");
   const names = risks.map((r) => r.name);

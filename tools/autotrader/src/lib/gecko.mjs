@@ -19,3 +19,8 @@ export async function candles(pool, { aggregate = 1, limit = 1000, before } = {}
   const j = await getJson(`${B}/pools/${pool}/ohlcv/minute?${q}`);
   return j.data.attributes.ohlcv_list.map(([t, o, h, l, c, v]) => ({ t: t * 1000, o, h, l, c, v })).sort((x, y) => x.t - y.t);
 }
+/** Fresh numbers for up to 30 pools in ONE call (liquidity, 5-minute flow). */
+export async function multi(addresses) {
+  if (!addresses.length) return [];
+  return (await getJson(`${B}/pools/multi/${addresses.join(",")}`)).data.map(shape);
+}

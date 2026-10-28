@@ -10,7 +10,7 @@ export class Engine {
     this.pending = r.pending;                 // intents with no fill: reconciled below, never forgotten
     for (const e of this.pending.values()) this.journal.write({ type: "fail", id: e.id, why: "restart before fill" });
     this.pending.clear();
-    this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = [];
+    this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.watch = new Map(); this.watching = { total: 0, young: 0, thin: 0, ready: 0 }; this.paused = false; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = [];
     this.ticks = 0; this.lastTickAt = null;
   }
   get equity() { return this.startEq + this.closed.reduce((s, c) => s + (c.pnl || 0), 0); }
@@ -21,7 +21,7 @@ export class Engine {
     return { n: last.length, avg, wins: last.filter((x) => x.ret > 0).length, total: this.shadowClosed.length };
   }
   get unit() { return this.exec.name === "live" ? "SOL" : "$"; }
-  #skip(name, why) { const k = why.replace(/[\d.]+/g, "#"); this.skips.set(k, (this.skips.get(k) || 0) + 1); this.recent.push({ at: this.now(), name, why }); if (this.recent.length > 40) this.recent.shift(); }
+  #skip(name, why) { const k = why.replace(/\d+(\.\d+)?/g, "#").slice(0, 90); this.skips.set(k, (this.skips.get(k) || 0) + 1); this.recent.push({ at: this.now(), name, why }); if (this.recent.length > 40) this.recent.shift(); }
   async tick() {
     this.ticks++; this.lastTickAt = this.now();
     try { await this.#reconcile(); } catch (e) { this.#err("reconcile", e); }
@@ -38,6 +38,19 @@ export class Engine {
       if (r.status === "failed") { this.journal.write({ type: "fail", id, why: r.why }); this.#skip(u.name, `order ${r.why}`); continue; }
       const pos = { ...u.pos, stake: r.inAmount ? Number(r.inAmount) / 1e9 : u.pos.stake, tokens: r.outAmount || null };
       this.journal.write(pos); this.open.set(id, pos);
+    }
+  }
+  /** Sell everything now, one position at a time, through the same journalled path as any exit. */
+  async flatten() {
+    this.paused = true;
+    for (const p of [...this.open.values()]) {
+      this.journal.write({ type: "sell-intent", id: p.id, name: p.name, why: "flatten (you pressed it)" });
+      const r = (await this.exec.sell?.(p)) ?? { ok: true };
+      if (!r.ok && !r.noBalance) { this.#err(`flatten ${p.name}`, new Error(r.why)); continue; }
+      let ret = 0; if (r.ok && r.outAmount != null && r.inAmount != null && p.stake > 0) ret = Number(r.outAmount) / 1e9 / p.stake - 1;
+      const pnl = p.stake * ret;
+      this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why: "flatten", note: r.noBalance ? "already sold by GMGN's own order" : null });
+      this.open.delete(p.id); this.closed.push({ ...p, type: "close", ret, pnl, why: "flatten" });
     }
   }
   async #manage() {
@@ -77,12 +90,26 @@ export class Engine {
     }
   }
   async #scan() {
+    if (this.paused) { this.#skip("-", "buying is paused"); return; }
     if (this.open.size >= this.cfg.maxOpen) { this.#skip("-", `max ${this.cfg.maxOpen} open`); return; }
-    const seen = new Map();
-    for (const f of [() => this.feed.newPools(1), () => this.feed.trendingPools(1)]) {
-      try { for (const x of await f()) seen.set(x.pool, x); } catch (e) { this.#err("pools", e); }
+    // discover: the newest pools, every tick. watch: remember them, because a coin only becomes tradable once it has a chart.
+    const t = this.now();
+    for (const f of [() => this.feed.newPools(1), () => this.feed.newPools(2), () => this.feed.trendingPools(1)]) {
+      try { for (const x of await f()) if (!this.watch.has(x.pool)) this.watch.set(x.pool, x); else Object.assign(this.watch.get(x.pool), x); } catch (e) { this.#err("pools", e); }
     }
-    const list = [...seen.values()].filter((m) => !this.cool.has(m.pool) || this.now() > this.cool.get(m.pool)).sort((a, b) => b.vol5 - a.vol5).slice(0, this.scanTop);
+    const ageMin = (m) => (t - m.created) / 60000;
+    for (const [k, m] of this.watch) if (ageMin(m) > this.cfg.maxAgeMin + 10) this.watch.delete(k);
+    if (this.watch.size > 400) for (const [k] of [...this.watch].sort((a, b) => a[1].created - b[1].created).slice(0, this.watch.size - 400)) this.watch.delete(k);
+    // refresh the ones old enough to qualify: liquidity and 5-minute flow, 30 pools a call
+    if (this.feed.multi) {
+      const due = [...this.watch.values()].filter((m) => ageMin(m) >= this.cfg.minAgeMin && !(this.cool.get(m.pool) > t)).sort((a, b) => b.vol5 - a.vol5).slice(0, 90);
+      for (let i = 0; i < due.length; i += 30) {
+        try { for (const x of await this.feed.multi(due.slice(i, i + 30).map((m) => m.pool))) Object.assign(this.watch.get(x.pool) || {}, x); } catch (e) { this.#err("refresh", e); break; }
+      }
+    }
+    const list = [...this.watch.values()].filter((m) => ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) >= this.cfg.minLiqUsd && !(this.cool.get(m.pool) > t)).sort((a, b) => b.vol5 - a.vol5).slice(0, this.scanTop);
+    const all = [...this.watch.values()];
+    this.watching = { total: all.length, young: all.filter((m) => ageMin(m) < this.cfg.minAgeMin).length, thin: all.filter((m) => ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) < this.cfg.minLiqUsd).length, ready: list.length };
     for (const m of list) {
       if (this.open.size >= this.cfg.maxOpen) break;
       if ([...this.open.values()].some((p) => p.pool === m.pool)) continue;
@@ -118,11 +145,11 @@ export class Engine {
   status() {
     const c = this.closed, wins = c.filter((x) => x.ret > 0);
     return {
-      mode: this.exec.name, unit: this.unit, halted: this.exec.state?.halted || null, ticks: this.ticks, lastTickAt: this.lastTickAt, equity: +this.equity.toFixed(2), startEq: this.startEq,
-      open: [...this.open.values()].map((p) => ({ name: p.name, stake: +p.stake.toFixed(2), since: p.at, enter: p.enter })),
+      mode: this.exec.name, paused: this.paused, unit: this.unit, halted: this.exec.state?.halted || null, ticks: this.ticks, lastTickAt: this.lastTickAt, equity: +this.equity.toFixed(4), curve: this.closed.reduce((a, x) => (a.push(+((a[a.length - 1] ?? this.startEq) + (x.pnl || 0)).toFixed(4)), a), [this.startEq]).slice(-60), startEq: this.startEq,
+      open: [...this.open.values()].map((p) => ({ id: p.id, name: p.name, stake: +p.stake.toFixed(4), since: p.at, enter: p.enter })),
       trades: c.length, wins: wins.length, winRate: c.length ? +(wins.length / c.length).toFixed(3) : null,
       recentClosed: c.slice(-8).map((x) => ({ name: x.name, ret: +(x.ret * 100).toFixed(1), pnl: +(x.pnl || 0).toFixed(4), why: x.why, note: x.note || null, enter: x.enter })),
-      whyNot: Object.fromEntries([...this.skips].sort((a, b) => b[1] - a[1]).slice(0, 12)), edge: this.edge(), shadowOpen: this.shadow.size, recentSkips: this.recent.slice(-10), errors: this.errors.slice(-5),
+      whyNot: Object.fromEntries([...this.skips].sort((a, b) => b[1] - a[1]).slice(0, 12)), watching: this.watching, edge: this.edge(), shadowOpen: this.shadow.size, recentSkips: this.recent.slice(-10), errors: this.errors.slice(-5),
     };
   }
 }

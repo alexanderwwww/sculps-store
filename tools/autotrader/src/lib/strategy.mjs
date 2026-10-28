@@ -1,7 +1,7 @@
 // The brain. Everything it knows at minute i is in candles[0..i]; nothing from the future.
 export const DEFAULTS = {
-  minAgeMin: 4, maxAgeMin: 90,      // never the first seconds (snipers own those), never old and stale
-  breakoutLookback: 15, volSpike: 3, minGreen: 0.6, // breakout above the last 15 highs, volume 3x, buyers dominate
+  minAgeMin: 8, maxAgeMin: 90,      // never the first seconds (snipers own those), never old and stale
+  breakoutLookback: 10, volSpike: 3, minGreen: 0.6, // breakout above the last 15 highs, volume 3x, buyers dominate
   minLiqUsd: 4000,
   sl: -0.15, tp: 0.45, trailFrom: 0.22, trail: 0.10, maxHoldMin: 30,
   slippage: 0.015, fee: 0.01,       // each side: 1.5% slip + 1% fee, so a round trip costs ~5%
