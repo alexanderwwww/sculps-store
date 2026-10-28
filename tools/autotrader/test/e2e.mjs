@@ -5,7 +5,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { start } from "../src/server.mjs";
-import { fakeFeed, moon } from "./fakefeed.mjs";
+import { fakeFeed, moon, up, base } from "./fakefeed.mjs";
 import { world } from "./fakechain.mjs";
 
 const require = createRequire(path.join(path.dirname(new URL(import.meta.url).pathname), "..", "..", "..", "package.json"));
@@ -45,6 +45,12 @@ try {
   assert.match(await text(), /Scanner/); assert.match(await text(), /Rug check/); assert.match(await text(), /Shadow/); assert.match(await page.textContent("header .chip"), /live/i); ok("one press: the live dashboard with the whole pipeline");
   await page.waitForFunction(() => /ALPHA/.test(document.body.textContent), null, { timeout: 12000 });
   ok("a signal shows up in the night log with its name");
+  assert.equal(await page.locator(".fnode").count(), 5); assert.equal(await page.locator("#flowhost").isVisible(), true); ok("the live flow is on screen: scanner, rug check, sizer, executor, logger");
+  state.byPool = { X1: base, X3: up };
+  state.pools = [...state.pools, { pool: "X1", name: "DULLCOIN", mint: "D".repeat(40) + "pump", created: 1_800_000_000_000, liqUsd: 9000, vol5: 99 }, { pool: "X3", name: "MOONBOY", mint: "M".repeat(40) + "pump", created: 1_800_000_000_000, liqUsd: 9000, vol5: 98 }];
+  await page.waitForSelector(".fdot", { timeout: 15000 });
+  await page.waitForFunction(() => Number(document.querySelector(".fnode--scan b").textContent) >= 2, null, { timeout: 15000 });
+  ok("new coins make dots travel through the flow and the counters move");
   ch.W.lastKind = "sell"; state.series = moon;
   await page.waitForFunction(() => /take profit/.test(document.body.textContent), null, { timeout: 12000 });
   assert.match(await text(), /exit/); ok("the exit shows up with its reason");

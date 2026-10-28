@@ -100,8 +100,8 @@
       ...(e.recentSkips || []).slice().reverse().filter((x) => x.name !== "-").map((s) => ({ k: "skip", nm: s.name, why: s.why, t: s.at })),
     ].slice(0, 26);
     const reasons = Object.entries(e.whyNot || {});
-    return el("div", {},
-      el("div", { class: "pipe" },
+    return {
+      pipe: el("div", { class: "pipe" },
         ag("Scanner", "scan", e.watching ? e.watching.total : 0, e.watching ? `pools watched · ${e.watching.ready} worth a look, ${e.watching.young} too young, ${e.watching.thin} too thin` : "starting", hot),
         ag("Rug check", e.ticks ? "pass" : "–", rugN, "coins blocked before any order", false),
         ag("Sizer", "size", `${Math.round(S.cfg.stakeFrac * 100)}%`, `of the wallet, max ${S.caps.maxSolPerTrade} SOL a trade`, false),
@@ -109,7 +109,7 @@
         ag("Logger", "write", e.trades + skipsTotal, "every decision has a reason", false),
         ag("Shadow", "paper", e.edge.n ? pct(e.edge.avg) : "…", e.edge.n ? `edge over last ${e.edge.n} paper signals${e.edge.avg < -0.02 && live ? " – buys waiting" : ""}` : "learning from every signal", false),
         ag("You", "asleep", "zzz", "reads the log in the morning", false)),
-      el("div", { class: "cols" },
+      cols: el("div", { class: "cols" },
         el("div", {},
           el("div", { class: "glass panel" }, el("h2", {}, "Equity", el("span", { class: pnl >= 0 ? "up" : "down", text: `${pnl >= 0 ? "+" : ""}${fmt(pnl, live ? 4 : 2)} ${unit}` })), curveSvg(e.curve)),
           el("div", { class: "glass panel" }, el("h2", {}, "Night log", el("span", { text: `${e.trades} closed · ${e.winRate == null ? "–" : Math.round(e.winRate * 100) + "% wins"}` })),
@@ -126,25 +126,76 @@
             ...[["Per trade", `${S.caps.maxSolPerTrade} SOL max, 12% of wallet`], ["Buys", `${S.caps.perHour} an hour, ${S.caps.perDay} a day`], ["Halt", `${Math.round((1 - S.caps.floorFrac) * 100)}% below the starting balance`], ["Stop / target", `${S.cfg.sl * 100}% / +${S.cfg.tp * 100}%, trailing`], ["Open at once", String(S.cfg.maxOpen)], ["Never", "Kimchi"]].map(([a, b]) => el("div", { class: "row" }, el("span", { class: "why", text: a }), el("span", { class: "v", text: b })))),
           el("div", { class: "glass panel" }, el("h2", {}, "Why it did not trade"),
             reasons.length ? reasons.map(([k, v]) => el("div", { class: "why-row" }, el("div", {}, el("span", { text: k }), el("b", { text: v })), el("div", { class: "bar" }, el("i", { style: `width:${Math.round((v / skipsTotal) * 100)}%` })))) : el("div", { class: "empty", text: "Nothing skipped yet." }),
-            (e.errors || []).length ? el("p", { class: "note", text: `Feed hiccups: ${e.errors[e.errors.length - 1].w}: ${e.errors[e.errors.length - 1].msg}` }) : null))));
+            (e.errors || []).length ? el("p", { class: "note", text: `Feed hiccups: ${e.errors[e.errors.length - 1].w}: ${e.errors[e.errors.length - 1].msg}` }) : null))) };
   }
+
+  /* ------------------------------------------------------------ the live flow: scanner -> rug check -> sizer -> executor -> logger */
+  const NODES = [["scan", "Scanner", 7], ["rug", "Rug check", 30], ["size", "Sizer", 53], ["exec", "Executor", 76], ["log", "Logger", 94]];
+  const flow = (() => {
+    const host = document.getElementById("flowhost");
+    const stage = el("div", { class: "flow" });
+    const line = el("div", { class: "flow__line" });
+    const nodes = {};
+    for (const [k, label, x] of NODES) {
+      const n = el("div", { class: `fnode fnode--${k}`, style: `left:${x}%` }, el("div", { class: "fnode__c" }, el("b", { text: "0" })), el("span", { text: label }));
+      nodes[k] = n; stage.append(n);
+    }
+    stage.prepend(line);
+    host.append(stage);
+    const count = { scan: 0, rug: 0, size: 0, exec: 0, log: 0 };
+    const bump = (k) => { count[k]++; const b = nodes[k].querySelector("b"); b.textContent = count[k]; nodes[k].classList.remove("pulse"); void nodes[k].offsetWidth; nodes[k].classList.add("pulse"); };
+    const flash = (k, cls) => { nodes[k].classList.remove(cls); void nodes[k].offsetWidth; nodes[k].classList.add(cls); };
+    const xOf = (k) => NODES.find((n) => n[0] === k)[2];
+    const dot = (cls, label, from, to, ms, lane) => new Promise((done) => {
+      const d = el("div", { class: `fdot ${cls}`, style: `left:${xOf(from)}%;top:${[35, 27, 43][lane]}px` }, el("i"), el("em", { text: label }));
+      stage.append(d);
+      const a = d.animate([{ left: `${xOf(from)}%`, opacity: 0.2 }, { opacity: 1, offset: 0.15 }, { left: `${xOf(to)}%`, opacity: 1 }], { duration: ms, easing: "cubic-bezier(.4,0,.2,1)", fill: "forwards" });
+      a.onfinish = () => done(d);
+    });
+    const fade = (d, dy = 0) => { d.animate([{ opacity: 1, transform: "translateY(0)" }, { opacity: 0, transform: `translateY(${dy}px)` }], { duration: 700, fill: "forwards" }).onfinish = () => d.remove(); };
+    let lane = 0, lastSeq = null;
+    const play = async (ev) => {
+      const l = (lane = (lane + 1) % 3);
+      const nm = ev.name.length > 9 ? ev.name.slice(0, 9) + "…" : ev.name;
+      bump("scan");
+      const d = await dot(ev.type === "block" ? "bad" : ev.type === "drop" ? "dim" : "ok", nm, "scan", "rug", 900, l);
+      if (ev.type === "drop") { fade(d, 14); return; }
+      if (ev.type === "block") { bump("rug"); flash("rug", "alarm"); d.querySelector("em").textContent = "BLOCKED"; d.animate([{ transform: "translateY(0)" }, { transform: "translateY(46px)", opacity: 0 }], { duration: 900, fill: "forwards" }).onfinish = () => d.remove(); return; }
+      flash("rug", "ok"); d.remove();
+      const d2 = await dot("ok", nm, "rug", "size", 700, l); bump("size"); d2.remove();
+      if (ev.type === "fail") { const d3 = await dot("bad", "no route", "size", "exec", 700, l); d3.querySelector("em").textContent = ev.why.slice(0, 18); fade(d3, 30); return; }
+      const d3 = await dot("buy", `BUY ${nm}`, "size", "exec", 800, l); bump("exec"); flash("exec", "ok"); d3.remove();
+    };
+    const playSell = async (ev) => { const up = ev.ret >= 0; const d = await dot(up ? "ok" : "bad", `${up ? "+" : ""}${(ev.ret * 100).toFixed(1)}%`, "exec", "log", 900, 1); bump("log"); flash("log", up ? "ok" : "alarm"); fade(d, up ? -20 : 20); };
+    return {
+      show(v) { host.hidden = !v; },
+      feed(events) {
+        if (!events) return;
+        if (lastSeq === null) { lastSeq = events.length ? events[events.length - 1].seq : 0; for (const k of ["scan", "rug", "size", "exec", "log"]) {} return; }
+        const fresh = events.filter((e) => e.seq > lastSeq).slice(-8);
+        if (events.length) lastSeq = events[events.length - 1].seq;
+        fresh.forEach((e, i) => setTimeout(() => (e.type === "sell" ? playSell(e) : play(e)), i * 450));
+      },
+    };
+  })();
 
   function render() {
     const keep = window.scrollY;
-    app.replaceChildren();
-    if (!S) { app.append(el("div", { class: "boot", text: "ultra is not answering" })); return; }
+    const top = document.getElementById("top");
+    top.replaceChildren(); app.replaceChildren();
+    if (!S) { flow.show(false); top.append(el("div", { class: "boot", text: "ultra is not answering" })); return; }
     const e = S.engine, live = S.mode === "live";
     const chip = !S.running ? ["off", "stopped"] : e?.halted ? ["halt", "halted"] : e?.paused ? ["paused", "buying paused"] : live ? ["live", "live"] : ["paper", "paper"];
     const pnl = e ? e.equity - e.startEq : 0;
-    app.append(el("header", { class: "glass top" },
+    top.append(el("header", { class: "glass top" },
       el("div", { class: "orb" }, el("b")), el("div", { class: "brand" }, el("h1", { text: "Ultra" }), el("small", { text: `build ${BUILD}` })),
       el("span", { class: `chip ${chip[0]}`, text: chip[1] }), el("div", { class: "grow" }),
       (S.source === "own" ? S.own?.sol : S.sol) != null ? el("div", { class: "stat" }, el("b", { text: fmt(S.source === "own" ? S.own.sol : S.sol, 4) }), el("span", { text: "wallet SOL" })) : null,
       e ? el("div", { class: "stat" }, el("b", { class: pnl >= 0 ? "up" : "down", text: `${pnl >= 0 ? "+" : ""}${fmt(pnl, live ? 4 : 2)}` }), el("span", { text: `P&L ${live ? "SOL" : "$ paper"}` })) : null,
       e ? el("div", { class: "stat" }, el("b", { text: `${e.open.length}/${S.cfg.maxOpen}` }), el("span", { text: "open" })) : null,
       !S.running || view === "setup" ? null : el("button", { text: "Setup", onclick: () => { view = "setup"; render(); } })));
-    if (S.running && e && view !== "setup") app.append(dashView());
-    else { if (view === "setup" && S.running) app.append(el("button", { text: "← Back to the dashboard", onclick: () => { view = "auto"; render(); } })); app.append(setupView()); }
+    if (S.running && e && view !== "setup") { const d = dashView(); top.append(d.pipe); flow.show(true); flow.feed(e.events); app.append(d.cols); }
+    else { flow.show(false); if (view === "setup" && S.running) app.append(el("button", { text: "← Back to the dashboard", onclick: () => { view = "auto"; render(); } })); app.append(setupView()); }
     window.scrollTo(0, keep);
   }
   refresh(); setInterval(() => { if (!busy && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") refresh(); }, 3000);

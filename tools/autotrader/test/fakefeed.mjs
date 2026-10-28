@@ -10,5 +10,6 @@ export function fakeFeed() {
     { pool: "P1", name: "ALPHA", mint: "A".repeat(40) + "pump", created: T0, liqUsd: 9000, vol5: 100 },
     { pool: "P2", name: "BETA", mint: "B".repeat(40) + "pump", created: T0 + 5 * M, liqUsd: 800, vol5: 50 },
   ];
-  return { state, feed: { newPools: async () => pools, trendingPools: async () => [], candles: async (p) => (p === "P2" ? base : state.series) } };
+  state.pools = pools; state.byPool = {};
+  return { state, feed: { newPools: async () => state.pools, trendingPools: async () => [], candles: async (p) => state.byPool[p] || (p === "P2" ? base : state.series) } };
 }

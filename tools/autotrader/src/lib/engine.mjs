@@ -10,7 +10,7 @@ export class Engine {
     this.pending = r.pending;                 // intents with no fill: reconciled below, never forgotten
     for (const e of this.pending.values()) this.journal.write({ type: "fail", id: e.id, why: "restart before fill" });
     this.pending.clear();
-    this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.watch = new Map(); this.watching = { total: 0, young: 0, thin: 0, ready: 0 }; this.paused = false; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = [];
+    this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.events = []; this.seq = 0; this.watch = new Map(); this.watching = { total: 0, young: 0, thin: 0, ready: 0 }; this.paused = false; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = [];
     this.ticks = 0; this.lastTickAt = null;
   }
   get equity() { return this.startEq + this.closed.reduce((s, c) => s + (c.pnl || 0), 0); }
@@ -28,6 +28,8 @@ export class Engine {
     try { await this.#manage(); } catch (e) { this.#err("manage", e); }
     try { await this.#scan(); } catch (e) { this.#err("scan", e); }
   }
+  /** What the screen animates: one event per decision. type: drop | block | buy | sell | fail */
+  #ev(type, name, why, extra = {}) { this.events.push({ seq: ++this.seq, at: this.now(), type, name, why, ...extra }); if (this.events.length > 60) this.events.shift(); }
   #err(w, e) { this.errors.push({ at: this.now(), w, msg: String(e.message || e).slice(0, 140) }); if (this.errors.length > 20) this.errors.shift(); }
   /** Orders GMGN had not confirmed when polling stopped: look again until they are confirmed or dead. Never forgotten. */
   async #reconcile() {
@@ -86,6 +88,7 @@ export class Engine {
         this.cool.set(p.pool, this.now() + this.cfg.cooldownMin * 60000);       // never re-enter the same coin straight after an exit
         this.open.delete(p.id); this.sellTries.delete(p.id);
         this.closed.push({ ...p, type: "close", ret, pnl, why, note });
+        this.#ev("sell", p.name, why, { ret });
       }
     }
   }
@@ -115,16 +118,16 @@ export class Engine {
       if ([...this.open.values()].some((p) => p.pool === m.pool)) continue;
       this.cool.set(m.pool, this.now() + 60000);
       let cs; try { cs = await this.feed.candles(m.pool, { limit: 100 }); } catch (e) { this.#err(`candles ${m.name}`, e); continue; }
-      if (cs.length < 20) { this.#skip(m.name, "too few candles"); continue; }
+      if (cs.length < 20) { this.#skip(m.name, "too few candles"); this.#ev("drop", m.name, "too few candles"); continue; }
       const i = cs.length - 1;
       const s = entrySignal(cs, i, this.cfg, m);
-      if (!s.ok) { this.#skip(m.name, s.why); continue; }
+      if (!s.ok) { this.#skip(m.name, s.why); this.#ev("drop", m.name, s.why); continue; }
       if (!this.rugCache.has(m.mint)) this.rugCache.set(m.mint, await this.rug(m.mint));
       const r = this.rugCache.get(m.mint);
-      if (!r.pass) { this.#skip(m.name, `rug check: ${r.reason}`); this.cool.set(m.pool, this.now() + 3600e3); continue; }
+      if (!r.pass) { this.#skip(m.name, `rug check: ${r.reason}`); this.#ev("block", m.name, r.reason); this.cool.set(m.pool, this.now() + 3600e3); continue; }
       if (!this.shadow.has(m.pool)) { const sp = { name: m.name, candleT: cs[i].t, at: this.now() }; this.shadow.set(m.pool, sp); this.journal.write({ type: "shadow-open", pool: m.pool, ...sp }); }
       const e = this.edge();
-      if (this.exec.name === "live" && e.n >= this.cfg.edgeMinN && e.avg < this.cfg.edgeFloor) { this.#skip(m.name, `shadow edge ${(e.avg * 100).toFixed(1)}% over last ${e.n}: waiting`); continue; }
+      if (this.exec.name === "live" && e.n >= this.cfg.edgeMinN && e.avg < this.cfg.edgeFloor) { this.#skip(m.name, `shadow edge ${(e.avg * 100).toFixed(1)}% over last ${e.n}: waiting`); this.#ev("drop", m.name, "shadow edge negative"); continue; }
       const id = `${m.mint.slice(0, 6)}-${this.now()}`;
       let stake = this.equity * this.cfg.stakeFrac;
       if (this.exec.sizeSol) { try { stake = (await this.exec.sizeSol()).sol; } catch (e) { this.#skip(m.name, `wallet balance: ${e.message.slice(0, 60)}`); continue; } }
@@ -135,11 +138,12 @@ export class Engine {
         this.journal.write({ type: "pending-order", id, orderId: f.orderId, name: m.name });
         this.unknown.set(id, { orderId: f.orderId, name: m.name, at: this.now(), pos: pos0 }); this.#skip(m.name, "order sent, confirmation pending"); continue;
       }
-      if (!f.ok) { this.journal.write({ type: "fail", id, why: f.why }); this.#skip(m.name, `executor: ${f.why}`); continue; }
+      if (!f.ok) { this.journal.write({ type: "fail", id, why: f.why }); this.#skip(m.name, `executor: ${f.why}`); this.#ev("fail", m.name, f.why); continue; }
       if (f.sol != null) stake = f.sol;
       const pos = { type: "open", id, name: m.name, mint: m.mint, pool: m.pool, stake, orderId: f.orderId || null, tokens: f.outAmount || null, entryPx: cs[i].c * (1 + this.cfg.slippage), candleT: cs[i].t, enter: s.why, rug: r.reason, at: this.now() };
       this.journal.write(pos);
       this.open.set(id, pos);
+      this.#ev("buy", m.name, s.why, { stake: pos.stake });
     }
   }
   status() {
@@ -149,7 +153,7 @@ export class Engine {
       open: [...this.open.values()].map((p) => ({ id: p.id, name: p.name, stake: +p.stake.toFixed(4), since: p.at, enter: p.enter })),
       trades: c.length, wins: wins.length, winRate: c.length ? +(wins.length / c.length).toFixed(3) : null,
       recentClosed: c.slice(-8).map((x) => ({ name: x.name, ret: +(x.ret * 100).toFixed(1), pnl: +(x.pnl || 0).toFixed(4), why: x.why, note: x.note || null, enter: x.enter })),
-      whyNot: Object.fromEntries([...this.skips].sort((a, b) => b[1] - a[1]).slice(0, 12)), watching: this.watching, edge: this.edge(), shadowOpen: this.shadow.size, recentSkips: this.recent.slice(-10), errors: this.errors.slice(-5),
+      whyNot: Object.fromEntries([...this.skips].sort((a, b) => b[1] - a[1]).slice(0, 12)), events: this.events.slice(-30), watching: this.watching, edge: this.edge(), shadowOpen: this.shadow.size, recentSkips: this.recent.slice(-10), errors: this.errors.slice(-5),
     };
   }
 }
