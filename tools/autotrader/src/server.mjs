@@ -22,7 +22,7 @@ import { DEFAULTS } from "./lib/strategy.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const APP = "ultra";
 
-export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, tickMs = 15000, quiet = false, balance = solBalance, ipv4 = publicIpv4, gmgnHost, rpc: rpcOverride = null, jupiter: jupiterOverride = null, rug: rugOverride = null, paperQuote = undefined, now = Date.now, idleMs = 0, onShutdown = () => {} } = {}) {
+export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, tickMs = 3000, quiet = false, balance = solBalance, ipv4 = publicIpv4, gmgnHost, rpc: rpcOverride = null, jupiter: jupiterOverride = null, rug: rugOverride = null, paperQuote = undefined, now = Date.now, idleMs = 0, onShutdown = () => {} } = {}) {
   mkdirSync(dataDir, { recursive: true });
   const secrets = new Secrets(dataDir);
   const cfgFile = join(dataDir, "config.json");
@@ -30,7 +30,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const writeCfg = (patch) => writeFileSync(cfgFile, JSON.stringify({ ...readCfg(), ...patch }, null, 1));
   const token = randomBytes(16).toString("hex");
   const log = (...a) => { if (!quiet) console.log(new Date().toISOString(), ...a); };
-  let engine = null, mode = null, timer = null, ticking = false, lastError = null, stopped = false;
+  let engine = null, mode = null, timer = null, timer2 = null, ticking = false, lastError = null, stopped = false;
 
   const rpcI = rpcOverride || new Rpc(), jupI = jupiterOverride || new Jupiter();
   const rpc = () => rpcI, jup = () => jupI;
@@ -56,17 +56,27 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   }
   async function go(m) {
     if (stopped) return;
-    if (timer) clearTimeout(timer);
+    if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2);
     engine = await build_(m); mode = m; lastError = null; writeCfg({ mode: m, running: true });
     log("engine started:", m, `(${engine.open.size} open, ${engine.closed.length} closed)`);
-    const loop = async () => {
-      if (stopped || !engine) return;
-      if (!ticking) { ticking = true; try { await engine.tick(); } catch (e) { lastError = String(e.message || e); } ticking = false; }
-      timer = setTimeout(loop, tickMs); timer.unref?.();
-    };
-    loop();
+    const eng = engine;
+    const stillMine = () => !stopped && engine === eng;
+    if (eng.fastMode) {
+      // two lanes: prices and decisions every few seconds, the slow chart feed on its own clock
+      let fastBusy = false, slowBusy = false;
+      const fastLoop = async () => { if (!stillMine()) return; if (!fastBusy) { fastBusy = true; try { await eng.fast(); } catch (e) { lastError = String(e.message || e); } fastBusy = false; } timer = setTimeout(fastLoop, tickMs); timer.unref?.(); };
+      const slowLoop = async () => { if (!stillMine()) return; if (!slowBusy) { slowBusy = true; try { await eng.slow(); } catch (e) { lastError = String(e.message || e); } slowBusy = false; } timer2 = setTimeout(slowLoop, 1500); timer2.unref?.(); };
+      slowLoop(); setTimeout(fastLoop, 400);
+    } else {
+      const loop = async () => {
+        if (!stillMine()) return;
+        if (!ticking) { ticking = true; try { await eng.tick(); } catch (e) { lastError = String(e.message || e); } ticking = false; }
+        timer = setTimeout(loop, tickMs); timer.unref?.();
+      };
+      loop();
+    }
   }
-  const halt = () => { if (timer) clearTimeout(timer); timer = null; engine = null; mode = null; writeCfg({ running: false }); };
+  const halt = () => { if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); timer = null; timer2 = null; engine = null; mode = null; writeCfg({ running: false }); };
 
   async function checks() {
     const steps = []; const add = (name, ok, why) => steps.push({ name, ok, why });
@@ -134,7 +144,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
     } catch (e) { log("request failed:", e); fail(res, 500, "Something went wrong."); }
   });
   const listening = new Promise((r) => server.listen(port, "127.0.0.1", () => r(server.address().port)));
-  const close = () => new Promise((r) => { stopped = true; if (timer) clearTimeout(timer); server.close(() => r()); server.closeAllConnections?.(); });
+  const close = () => new Promise((r) => { stopped = true; if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); server.close(() => r()); server.closeAllConnections?.(); });
   // Resume what was running when the app last closed. Live resumes only if the keys are still there.
   listening.then(() => { const c = readCfg(); if (c.running && c.mode && !(c.mode === "live" && c.liveSource === "gmgn" && !secrets.ready())) go(c.mode).catch((e) => { lastError = e.message; }); });
   return { listening, close, token, get engine() { return engine; }, secrets, go, halt };

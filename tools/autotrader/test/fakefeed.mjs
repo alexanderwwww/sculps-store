@@ -10,6 +10,7 @@ export function fakeFeed() {
     { pool: "P1", name: "ALPHA", mint: "A".repeat(40) + "pump", created: T0, liqUsd: 9000, vol5: 100 },
     { pool: "P2", name: "BETA", mint: "B".repeat(40) + "pump", created: T0 + 5 * M, liqUsd: 800, vol5: 50 },
   ];
-  state.pools = pools; state.byPool = {};
-  return { state, feed: { newPools: async () => state.pools, trendingPools: async () => [], candles: async (p) => state.byPool[p] || (p === "P2" ? base : state.series) } };
+  state.pools = pools; state.byPool = {}; state.px = {}; state.quotes = true; state.flow = { buys5: 30, sells5: 10 };
+  const quotes = async (ps) => { const m = new Map(); for (const p of ps) { const cs = state.byPool[p] || (p === "P2" ? base : state.series); m.set(p, { price: state.px[p] ?? cs[cs.length - 1].c, liqUsd: state.pools.find((x) => x.pool === p)?.liqUsd ?? 9000, ...state.flow, vol5: 400 }); } return m; };
+  return { state, feed: { get quotes() { return state.quotes ? quotes : undefined; }, newPools: async () => state.pools, trendingPools: async () => [], candles: async (p) => state.byPool[p] || (p === "P2" ? base : state.series) } };
 }

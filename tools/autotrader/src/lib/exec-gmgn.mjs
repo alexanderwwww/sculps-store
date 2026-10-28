@@ -2,7 +2,7 @@
 // goes through with no card. Above them, or on Kimchi, it never does.
 import { SOL_MINT } from "./gmgn.mjs";
 export const KIMCHI = "CSocnzcRpgSCr1naKcNTieWZUxb6rABe45j844m7pump";
-export const CAPS = { maxSolPerTrade: 0.05, perHour: 10, perDay: 40, floorFrac: 0.7, slippagePct: 20, priorityFeeSol: "0.0005", pollMs: 5000, pollTries: 8 };
+export const CAPS = { maxSolPerTrade: 0.05, perHour: 30, perDay: 200, floorFrac: 0.7, slippagePct: 20, priorityFeeSol: "0.0005", pollMs: 5000, pollTries: 8 };
 const LAMPORTS = 1e9;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
