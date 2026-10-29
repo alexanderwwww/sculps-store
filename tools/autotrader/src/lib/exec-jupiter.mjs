@@ -5,7 +5,7 @@ export const KIMCHI = "CSocnzcRpgSCr1naKcNTieWZUxb6rABe45j844m7pump";
 const BASE = { maxSolPerTrade: 0.05, perHour: 30, perDay: 200, floorFrac: 0.7 };
 export const SOL_MINT = "So11111111111111111111111111111111111111112";
 export const PLUG_CAPS_EXTRA = { fixedSol: 0.01618, perHour: 200, perDay: 2000, floorFrac: 0.05, reserveSol: 0.004 };
-export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.06, buySlippageBps: 2000, sellSlippageBps: 3500, maxFeeLamports: 150000, confirmMs: 45000, pollMs: 1500 };
+export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.06, buySlippageBps: 1200, sellSlippageBps: 3500, sellLadderBps: [800, 1500, 3500], maxFeeLamports: 150000, confirmMs: 45000, pollMs: 1500 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date.now, wait = sleep, startSol = null }) {
@@ -106,13 +106,19 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       try { accts = (await rpc.tokenAccounts(wallet.address, mint)).filter((a) => a.raw > 0n); } catch (e) { return { ok: false, why: `balance: ${e.message.slice(0, 100)}` }; }
       if (!accts.length) return { ok: false, why: "the token is not in the wallet", noBalance: true };
       const amount = accts.reduce((a, x) => a + x.raw, 0n).toString();
-      let q, s;
-      try {
-        q = await jupiter.quote({ input: mint, output: SOL_MINT, amount, slippageBps: caps.sellSlippageBps });
-        if (!q.outAmount) return { ok: false, why: "no route to sell" };
-        s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: caps.maxFeeLamports });
-      } catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}` }; }
-      const r = await exec.land(s.swapTransaction, { kind: "sell", mint });
+      // lesson 15 (VICECITY: seen at +103%, filled at +23%): a 35% slippage allowance lets a fast coin fill far below the price we
+      // saw. Sell tight first (8%), widen only when the tight sale does not land (15%, then 35% as the last resort).
+      let q, r;
+      for (const bps of caps.sellLadderBps || [caps.sellSlippageBps]) {
+        let s;
+        try {
+          q = await jupiter.quote({ input: mint, output: SOL_MINT, amount, slippageBps: bps });
+          if (!q.outAmount) return { ok: false, why: "no route to sell" };
+          s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: caps.maxFeeLamports });
+        } catch (e) { r = { ok: false, why: `route: ${e.message.slice(0, 120)}` }; continue; }
+        r = await exec.land(s.swapTransaction, { kind: "sell", mint });
+        if (r.ok || r.unknown) break;
+      }
       if (!r.ok) return { ...r, orderId: r.signature };
       // give the rent of the emptied token accounts back (about 0.002 SOL each) so the balance reflects real money
       let rent = 0;

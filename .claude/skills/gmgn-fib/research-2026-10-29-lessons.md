@@ -17,3 +17,4 @@ Check 08:25: wallet 0.0864 SOL (07:55 was 0.0885). Trades since: PODCAT +4.7 (tr
 13. (build 31) Golden take: at +25% (only when the target is higher than that) sell 38.2% of the tokens. Banks 0.4775 of the stake; the 61.8% left rides the trail. With the +1% win lock the worst case is ~+10% on the whole trade before fees.
 14. (build 31) Purpose: the first goal is 10 SOL, shown as a gold bar under Result.
 Wins so far after the lessons: FOMOKING +37.3, BTS +23.5, Cockroach +41.6, PODCAT +4.7, wifbot +2.2.
+15. (09:12, build 32) VICECITY peaked +103% and closed +23.2%: the sell allowed 35% slippage, so a fast coin filled far below what we saw. Sells now go 8% slippage first, 15% if that does not land, 35% only as the last resort. Buys 12% (was 20%).

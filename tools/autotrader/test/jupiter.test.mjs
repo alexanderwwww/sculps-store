@@ -33,7 +33,7 @@ const mk = (o = {}, caps = {}) => { const x = world(o); return { ...x, ex: jupit
 let t = mk(); let r = await t.ex.buy({ mint: MINT });
 ok("buy: quote -> swap -> signed -> sent -> confirmed, with the real amounts", r.ok && r.orderId && r.inAmount === String(Math.round((0.11 - 0.006) * 0.12 * 1e9 / 1e5) * 1e5) || (r.ok && Number(r.inAmount) > 0), r);
 ok("buy: stake is 12% of what is spendable (wallet minus the 0.006 SOL kept for fees)", Math.abs(r.sol - 0.0125) < 1e-9, r.sol);
-ok("buy: slippage 20% and the user key are what Jupiter was asked for", t.W.quotes[0].slippageBps === "2000" && t.W.lastSwap.userPublicKey === w.address && t.W.lastSwap.wrapAndUnwrapSol === true, t.W.lastSwap);
+ok("buy: slippage 12% and the user key are what Jupiter was asked for", t.W.quotes[0].slippageBps === "1200" && t.W.lastSwap.userPublicKey === w.address && t.W.lastSwap.wrapAndUnwrapSol === true, t.W.lastSwap);
 ok("buy: the priority fee is capped (0.00015 SOL)", t.W.lastSwap.prioritizationFeeLamports.priorityLevelWithMaxLamports.maxLamports === 150000);
 ok("buy: the transaction that was SENT carries our valid signature", (() => { const tx = t.W.sent[0]; return crypto.verify(null, tx.subarray(65), crypto.createPublicKey({ key: Buffer.concat([Buffer.from("302a300506032b6570032100", "hex"), w.publicKey]), format: "der", type: "spki" }), tx.subarray(1, 65)); })());
 ok("buy: the token amount is read from the wallet after the buy", r.outAmount === "5000000000", r.outAmount);
