@@ -46,7 +46,9 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
     if (readCfg().phantomStartSol == null) writeCfg({ phantomStartSol: bal });
     Object.assign(DEFAULTS, readCfg().tuned || {});
     const exec = jupiterExec({ wallet: w, rpc: rpc(), jupiter: jup(), cfg: DEFAULTS, caps, startSol: readCfg().phantomStartSol, now });
-    return new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-phantom.jsonl")), rug: rugOverride || rugCheck, startEq: readCfg().phantomStartSol, now });
+    const eng = new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-phantom.jsonl")), rug: rugOverride || rugCheck, startEq: readCfg().phantomStartSol, now });
+    eng.onLearn = (c) => writeCfg({ tuned: { ...(readCfg().tuned || {}), ...c } });
+    return eng;
   }
   async function go(m) {
     if (stopped) return;
@@ -133,7 +135,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const dataDir = process.env.ULTRA_DATA || join(process.env.HOME || ".", "Library", "Application Support", "Ultra", "data");
-  const app = start({ dataDir, port: Number(process.env.ULTRA_PORT || 47401), build: process.env.ULTRA_BUILD || "dev", link: true, autoStart: true, tickMs: 1500, onShutdown: () => process.exit(0) });
+  const app = start({ dataDir, port: Number(process.env.ULTRA_PORT || 47401), build: process.env.ULTRA_BUILD || "dev", link: true, autoStart: true, tickMs: 1000, onShutdown: () => process.exit(0) });
   app.listening.then((p) => console.log(`ultra on http://127.0.0.1:${p}/`));
   // live updates: every 2 minutes, a newer published build takes over this same port
   const build = process.env.ULTRA_BUILD || "dev";

@@ -67,7 +67,7 @@ export class Engine {
       if (!lv || this.now() - lv.at > 20000) continue;                       // no fresh price: the chart backstop in slow() covers it
       // lesson 6: decide on what a sale would REALLY return (Jupiter's sell quote, every ~4 s), not on a chart price.
       // FLOAT's -8% stop on the chart filled at -22%. The chart price stays as the fallback when no quote is fresh.
-      if (this.exec.valueSol && p.stake > 0 && (!p.vAt || this.now() - p.vAt > 4000)) { p.vAt = this.now(); try { const v = await this.exec.valueSol(p); if (v != null) { p.val = v; p.valAt = this.now(); } } catch { /* chart fallback */ } }
+      if (this.exec.valueSol && p.stake > 0 && (!p.vAt || this.now() - p.vAt > 2500)) { p.vAt = this.now(); try { const v = await this.exec.valueSol(p); if (v != null) { p.val = v; p.valAt = this.now(); } } catch { /* chart fallback */ } }
       const real = p.val != null && this.now() - p.valAt < 15000;
       const entry = real ? p.stake : p.entryPx, price = real ? p.val : lv.price;
       const pk = this.peaks.get(p.id); const peak = Math.max(pk && pk.real === real ? pk.v : entry, price); this.peaks.set(p.id, { v: peak, real });
@@ -198,6 +198,7 @@ export class Engine {
       // it teaches itself (golden ratio): losing streak -> demand more momentum before buying; winning -> relax back toward 2%
       const last = this.closed.slice(-5), avg = last.reduce((a, x) => a + (x.ret || 0), 0) / last.length;
       if (last.length >= 3) this.cfg.momMin = avg < 0 ? Math.min(0.08, (this.cfg.momMin ?? 0.02) * 1.618) : avg > 0.05 ? Math.max(0.02, (this.cfg.momMin ?? 0.02) / 1.618) : (this.cfg.momMin ?? 0.02);
+      if (last.length >= 3) this.onLearn?.({ momMin: this.cfg.momMin });   // what it taught itself survives restarts
       this.#ev("sell", p.name, why, { ret, pnl, stake: p.stake });
       return true;
     } finally { this.closing.delete(p.id); }
