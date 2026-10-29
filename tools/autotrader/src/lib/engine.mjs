@@ -139,7 +139,7 @@ export class Engine {
         const w = this.whale.get(m.pool), instinct = w && this.now() - w.at < 60000 && w.buy >= (this.cfg.whaleUsd ?? 1500) && w.buy >= 2 * w.sell;
         if (!instinct) {
           if (mom == null) { quiet("live: watching its price first"); continue; }
-          if (mom < (this.cfg.momMin ?? 0.02)) { quiet("live: not rising right now"); continue; }
+          if (mom < (this.cfg.momMin ?? 0.10)) { quiet("live: not rising right now"); continue; }
         } else if (mom != null && mom < 0) { quiet("instinct: whales in but price falling"); continue; }
         const t = Math.floor(this.now() / 60000) * 60000, c0 = { t, o: lv.price, h: lv.price, l: lv.price, c: lv.price, v: lv.vol5 / 5 };
         this.cool.set(m.pool, this.now() + 30000);
@@ -235,7 +235,7 @@ export class Engine {
       this.closed.push({ ...p, type: "close", ret, pnl, why, note, at: this.now() });
       // it teaches itself (golden ratio): losing streak -> demand more momentum before buying; winning -> relax back toward 2%
       const last = this.closed.slice(-5), avg = last.reduce((a, x) => a + (x.ret || 0), 0) / last.length;
-      if (last.length >= 3) this.cfg.momMin = avg < 0 ? Math.min(0.08, (this.cfg.momMin ?? 0.02) * 1.618) : avg > 0.05 ? Math.max(0.02, (this.cfg.momMin ?? 0.02) / 1.618) : (this.cfg.momMin ?? 0.02);
+      if (last.length >= 3) { const m0 = this.cfg.momMin ?? 0.10; this.cfg.momMin = Math.min(0.1618, Math.max(0.10, avg < 0 ? m0 * 1.618 : avg > 0.05 ? m0 / 1.618 : m0)); }   // lesson 31: every live entry rising >= 13.4% in 30 s won, every one <= 9.5% hit the stop; the tuner never goes under 10%
       if (last.length >= 3) this.onLearn?.({ momMin: this.cfg.momMin });   // what it taught itself survives restarts
       this.#ev("sell", p.name, why, { ret, pnl, stake: p.stake, est: p.est || null });
       return true;
