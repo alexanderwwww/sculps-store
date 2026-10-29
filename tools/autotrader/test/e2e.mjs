@@ -42,7 +42,7 @@ try {
   ok("a signal shows up in the night log with its name");
   assert.equal(await page.locator(".fnode").count(), 5); assert.equal(await page.locator("#flowhost").isVisible(), true); ok("the live flow is on screen: scanner, rug check, sizer, executor, logger");
   state.byPool = { X1: base, X3: up };
-  state.pools = [...state.pools, { pool: "X1", name: "DULLCOIN", mint: "D".repeat(40) + "pump", created: 1_800_000_000_000, liqUsd: 9000, vol5: 99 }, { pool: "X3", name: "MOONBOY", mint: "M".repeat(40) + "pump", created: 1_800_000_000_000, liqUsd: 9000, vol5: 98 }];
+  state.pools = [...state.pools, { pool: "X1", name: "DULLCOIN", mint: "D".repeat(40) + "pump", created: 1_800_000_000_000, liqUsd: 1500, vol5: 99 }, { pool: "X3", name: "MOONBOY", mint: "M".repeat(40) + "pump", created: 1_800_000_000_000, liqUsd: 9000, vol5: 98 }];
   await page.waitForSelector(".fdot", { timeout: 15000 });
   await page.waitForFunction(() => Number(document.querySelector(".fnode--scan b").textContent) >= 2, null, { timeout: 15000 });
   ok("new coins make dots travel through the flow and the counters move");
