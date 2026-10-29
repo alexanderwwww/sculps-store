@@ -28,3 +28,6 @@ Never fake a result. Never trade a non-SOL pool. Rug check stays. Below 0.05 SOL
 
 ## Coin science
 How to read one coin (score equation, liquidity/volatility stops, real costs, the 5 ranked changes): `coin-science.md` in this folder.
+
+## The living equation (build 52)
+Per band b: EV_b = p_b*W_b - (1-p_b)*L_b - fee_b, from real fills (decayed, half weight ~30 closes). Coin score = combined band EV. Buy if > 0; size 1x only if every band n>=13 and EV>0, else 0.618x; never above cap; never below 0.05 SOL wallet. Idle 97 s -> buy best candidate at 0.618x (still through every filter and the rug check). Exits re-fit every 5 closes by replay, one golden step, inside sl -8..-4%, half +3..+8%, take +6..+20%. Status: `/status` -> `engine.organism`.
