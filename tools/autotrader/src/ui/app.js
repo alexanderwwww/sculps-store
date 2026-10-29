@@ -149,6 +149,7 @@
           <div class="tm__run"><i></i><span class="tm__state">running</span> · <span class="tm__clock">00:00:00</span></div>
           <div class="tm__tape"><span></span></div>
           <small>every trade gets a reason</small>
+          <small class="tm__narr">narratives: reading the meta…</small>
           <div class="tm__go"></div>
         </div>
         <div class="tm__nums">
@@ -312,6 +313,8 @@
         const cn = e.counts || {};
         q(".tm__checked").textContent = `checked ${(cn.drop || 0) + (cn.block || 0) + (cn.buy || 0)}`;
         stat("scan", e.next && e.next.length ? `next ${e.next.slice(0, 2).map(tkn).join(" · ")} · ${e.watching?.total || 0} pools` : `${e.watching?.total || 0} pools watched`);
+        const nt = e.narrative?.top || [], arrow = { rising: "↑", dying: "↓", saturating: "→", steady: "·" };
+        q(".tm__narr").textContent = nt.length ? `hot narratives: ${nt.map((x) => `${x.label} ${arrow[x.trend] || ""} ${x.coins} coins${x.runners ? `, ${x.runners} runner${x.runners === 1 ? "" : "s"}` : ""}`).join(" · ")}` : "narratives: reading the meta…";
         stat("size", `${S.caps?.preset || "–"} SOL a buy · ${e.open.length}/${S.cfg.maxOpen} open`);
         stat("log", `line #${e.lines || 0} · ${e.trades} closes`);
         stat("eq", `${bal != null ? bal.toFixed(4) : "–"} SOL · ${e.trades} closes`);

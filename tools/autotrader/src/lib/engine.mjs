@@ -1,10 +1,11 @@
 import { DEFAULTS, entrySignal, managePosition } from "./strategy.mjs";
 import { rugCheck } from "./rug.mjs";
 import * as O from "./organism.mjs";
+import { why as narrWhy } from "./narrative.mjs";
 
 export class Engine {
-  constructor({ feed, exec, journal, cfg = DEFAULTS, rug = rugCheck, now = Date.now, startEq = 100, scanTop = 8, org = null, rng = Math.random }) {
-    Object.assign(this, { feed, exec, journal, cfg, rug, now, startEq, scanTop, rng });
+  constructor({ feed, exec, journal, cfg = DEFAULTS, rug = rugCheck, now = Date.now, startEq = 100, scanTop = 8, org = null, rng = Math.random, narr = null }) {
+    Object.assign(this, { feed, exec, journal, cfg, rug, now, startEq, scanTop, rng, narr });
     const r = journal.replay();
     this.open = r.open;                       // survives restarts
     this.closed = r.closed;
@@ -189,13 +190,18 @@ export class Engine {
       if (this.open.size >= this.cfg.maxOpen || this.paused) break;
       const g = this.#gate(m, true); if (!g) continue;
       const sc = O.score(this.org, g.sig, { sample: true, rng: this.rng });
+      // the narrative (build 53): a dying theme is skipped, a hot rising theme passes a looser entry (organism score not needed)
+      const nh = this.narr?.heat(m) || null, hot = nh?.trend === "rising" && !nh.late;
+      if (nh?.trend === "dying") { this.#skip(m.name, narrWhy(nh)); continue; }
       // fewer than 3 closes measured: nothing to choose on yet, so it explores (sizeMul is 0.618 until a band has 13 closes)
-      if (!(sc > 0) && O.measured(this.org)) { O.noteIdle(this.org, g.sig, sc, m, this.now()); continue; }
+      if (!(sc > 0) && O.measured(this.org) && !hot) { O.noteIdle(this.org, g.sig, sc, m, this.now()); continue; }
       this.cool.set(m.pool, this.now() + 30000);
-      await this.#consider(m, g.cs, g.s, { m: O.sizeMul(this.org, g.sig), sig: g.sig });
+      // size: rising -> full size (1.0, still capped by the executor), saturating / late copycat -> 0.618, else the organism's
+      const mul = hot ? 1 : nh && (nh.trend === "saturating" || nh.late) ? O.INV : O.sizeMul(this.org, g.sig);
+      await this.#consider(m, g.cs, nh ? { ...g.s, why: `${g.s.why} · ${narrWhy(nh)}` } : g.s, { m: mul, sig: g.sig, narr: nh });
     }
     if (this.paused || this.open.size >= this.cfg.maxOpen) return;
-    const pick = O.idlePick(this.org, this.now(), (m) => !!this.#gate(m, false));
+    const pick = O.idlePick(this.org, this.now(), (m) => !!this.#gate(m, false) && this.narr?.heat(m)?.trend !== "dying");
     if (pick) {
       const g = this.#gate(pick.cand, false);
       this.cool.set(pick.cand.pool, this.now() + 30000);
@@ -322,6 +328,7 @@ export class Engine {
     const all = [...this.watch.values()];
     this.watching = { total: all.length, young: all.filter((m) => ageMin(m) < this.cfg.minAgeMin).length, thin: all.filter((m) => ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) < this.cfg.minLiqUsd).length, ready: list.length };
     this.ready = list;
+    if (this.narr) { try { this.narr.pump(all); } catch (e) { this.#err("narrative", e); } }   // background only: never awaited
     return list.filter((m) => !(this.cool.get(m.pool) > t) && !(this.cool.get(m.mint) > t));   // lesson 18: 리핀 was bought again right after its -100% through another path
   }
   async #scan() {
@@ -338,7 +345,10 @@ export class Engine {
       // First live buy of a fresh start: skip the signal once, on a coin that is green right now, so the real click path is proven in minutes (Alex, 2026-10-29).
       if (!s.ok && this.exec.name === "live" && !this.proofDone && cs[cs.length - 1].c > cs[cs.length - 1].o) s = { ok: true, why: "first live buy: proves the click path" };
       if (!s.ok) { this.#skip(m.name, s.why); this.#ev("drop", m.name, s.why); continue; }
-      await this.#consider(m, cs, s);
+      const nh = this.narr?.heat(m) || null;
+      if (nh?.trend === "dying") { this.#skip(m.name, narrWhy(nh)); continue; }
+      if (nh) s = { ...s, why: `${s.why} · ${narrWhy(nh)}` };
+      await this.#consider(m, cs, s, nh ? { narr: nh } : {});
       if (this.open.size && s.why.startsWith("first live buy")) this.proofDone = true;
     }
   }
@@ -364,7 +374,7 @@ export class Engine {
     if (this.exec.sizeSol) { try { size = (await this.exec.sizeSol({ streak: 0, scale: 1 })).sol; stake = (await this.exec.sizeSol({ streak: 0, scale: mul })).sol; } catch (err) { this.#skip(m.name, `wallet balance: ${err.message.slice(0, 60)}`); return; } }
     if (!(stake <= size + 1e-9)) { this.#skip(m.name, "stake above size: refused"); return; }
     const sigN = o.sig ? Object.fromEntries(Object.entries(o.sig).map(([k, v]) => [k, typeof v === "number" ? +v.toFixed(4) : v])) : null;
-    const lv0 = { sig: sigN, m: mul, t0: this.now(), sl: this.cfg.sl, tp: this.cfg.tp, partAt: this.cfg.partAt, lockFrom: this.cfg.lockFrom };   // the exits it was bought under
+    const lv0 = { sig: sigN, m: mul, narr: o.narr ? { label: o.narr.label, trend: o.narr.trend } : null, t0: this.now(), sl: this.cfg.sl, tp: this.cfg.tp, partAt: this.cfg.partAt, lockFrom: this.cfg.lockFrom };   // the exits it was bought under
     this.journal.write({ type: "intent", id, name: m.name, mint: m.mint, enter: s.why });   // on disk BEFORE anything is done
     const f = await this.exec.buy({ mint: m.mint, pool: m.pool, usd: stake, scale: mul });
     if (!f.ok && f.unknown && f.orderId) {
@@ -385,6 +395,7 @@ export class Engine {
     return {
       mode: this.exec.name, paused: this.paused, unit: this.unit, halted: this.exec.state?.halted || null, ticks: this.ticks, lastTickAt: this.lastTickAt, equity: +this.equity.toFixed(4), curve: this.closed.reduce((a, x) => (a.push(+((a[a.length - 1] ?? this.startEq) + (x.pnl || 0)).toFixed(4)), a), [this.startEq]).slice(-60), startEq: this.startEq,
       open: [...this.open.values()].map((p) => { const h = this.hist.get(p.id) || [], px = h.length ? h[h.length - 1][1] : null, e0 = p.entryPx; return { id: p.id, name: p.name, mint: p.mint, entryPx: e0, stake: +p.stake.toFixed(5), since: p.at, enter: p.enter, ret: p.val != null && this.now() - p.valAt < 15000 && p.stake > 0 ? p.val / p.stake - 1 : px && e0 ? px / e0 - 1 : null, peak: (() => { const pk = this.peaks.get(p.id); return !pk ? null : pk.real ? pk.v / p.stake - 1 : e0 ? pk.v / e0 - 1 : null; })(), path: e0 ? h.map(([, v]) => +(v / e0 - 1).toFixed(4)) : [] }; }),
+      narrative: this.narr ? this.narr.summary() : null,
       organism: { ...O.summary(this.org), exits: { sl: this.cfg.sl, partAt: this.cfg.partAt, tp: this.cfg.tp, lockFrom: this.cfg.lockFrom } },
       exits: { sl: this.cfg.sl, tp: this.cfg.tp, trailFrom: this.cfg.trailFrom, trail: this.cfg.trail, maxHoldMin: this.cfg.maxHoldMin },
       trades: c.length, wins: wins.length, winRate: c.length ? +(wins.length / c.length).toFixed(3) : null,
