@@ -63,8 +63,12 @@ export class Engine {
     for (const p of [...this.open.values()]) {
       const lv = this.live.get(p.pool);
       if (!lv || this.now() - lv.at > 20000) continue;                       // no fresh price: the chart backstop in slow() covers it
-      const entry = p.entryPx, price = lv.price;
-      const peak = Math.max(this.peaks.get(p.id) ?? entry, price); this.peaks.set(p.id, peak);
+      // lesson 6: decide on what a sale would REALLY return (Jupiter's sell quote, every ~4 s), not on a chart price.
+      // FLOAT's -8% stop on the chart filled at -22%. The chart price stays as the fallback when no quote is fresh.
+      if (this.exec.valueSol && p.stake > 0 && (!p.vAt || this.now() - p.vAt > 4000)) { p.vAt = this.now(); try { const v = await this.exec.valueSol(p); if (v != null) { p.val = v; p.valAt = this.now(); } } catch { /* chart fallback */ } }
+      const real = p.val != null && this.now() - p.valAt < 15000;
+      const entry = real ? p.stake : p.entryPx, price = real ? p.val : lv.price;
+      const pk = this.peaks.get(p.id); const peak = Math.max(pk && pk.real === real ? pk.v : entry, price); this.peaks.set(p.id, { v: peak, real });
       let why = null;
       if (price <= entry * (1 + c.sl)) why = `stop ${c.sl * 100}%`;
       else if (peak >= entry * (1 + (c.lockFrom ?? 0.04)) && price <= entry * (1 + (c.lockAt ?? 0.01))) why = `locked: was up ${Math.round((peak / entry - 1) * 100)}%, out before it turns red`;   // lesson 4: a winner never becomes a loser
@@ -73,8 +77,8 @@ export class Engine {
       else if (this.now() - p.at >= c.maxHoldMin * 60000) why = "time stop";
       else if (c.staleMin && this.now() - p.at >= c.staleMin * 60000 && price / entry - 1 < (c.staleRet ?? 0.01)) why = `flat after ${c.staleMin}m: money back to work`;   // lesson 2: dead money out
       if (!why) continue;
-      const ret = (price * (1 - c.slippage)) / entry - 1 - 2 * c.fee;
-      await this.#close(p, { ret, why, exitPx: price });
+      const ret = real ? price / entry - 1 : (price * (1 - c.slippage)) / entry - 1 - 2 * c.fee;
+      await this.#close(p, { ret, why, exitPx: real ? lv.price : price });
     }
   }
   /** price change over the last `secs` seconds from the live quotes (null until there is that much history) */
@@ -268,7 +272,7 @@ export class Engine {
     const c = this.closed, wins = c.filter((x) => x.ret > 0);
     return {
       mode: this.exec.name, paused: this.paused, unit: this.unit, halted: this.exec.state?.halted || null, ticks: this.ticks, lastTickAt: this.lastTickAt, equity: +this.equity.toFixed(4), curve: this.closed.reduce((a, x) => (a.push(+((a[a.length - 1] ?? this.startEq) + (x.pnl || 0)).toFixed(4)), a), [this.startEq]).slice(-60), startEq: this.startEq,
-      open: [...this.open.values()].map((p) => { const h = this.hist.get(p.id) || [], px = h.length ? h[h.length - 1][1] : null, e0 = p.entryPx; return { id: p.id, name: p.name, mint: p.mint, entryPx: e0, stake: +p.stake.toFixed(5), since: p.at, enter: p.enter, ret: px && e0 ? px / e0 - 1 : null, peak: e0 && this.peaks.has(p.id) ? this.peaks.get(p.id) / e0 - 1 : null, path: e0 ? h.map(([, v]) => +(v / e0 - 1).toFixed(4)) : [] }; }),
+      open: [...this.open.values()].map((p) => { const h = this.hist.get(p.id) || [], px = h.length ? h[h.length - 1][1] : null, e0 = p.entryPx; return { id: p.id, name: p.name, mint: p.mint, entryPx: e0, stake: +p.stake.toFixed(5), since: p.at, enter: p.enter, ret: p.val != null && this.now() - p.valAt < 15000 && p.stake > 0 ? p.val / p.stake - 1 : px && e0 ? px / e0 - 1 : null, peak: (() => { const pk = this.peaks.get(p.id); return !pk ? null : pk.real ? pk.v / p.stake - 1 : e0 ? pk.v / e0 - 1 : null; })(), path: e0 ? h.map(([, v]) => +(v / e0 - 1).toFixed(4)) : [] }; }),
       exits: { sl: this.cfg.sl, tp: this.cfg.tp, trailFrom: this.cfg.trailFrom, trail: this.cfg.trail, maxHoldMin: this.cfg.maxHoldMin },
       trades: c.length, wins: wins.length, winRate: c.length ? +(wins.length / c.length).toFixed(3) : null,
       recentClosed: c.slice(-8).map((x) => ({ name: x.name, ret: +(x.ret * 100).toFixed(1), pnl: +(x.pnl || 0).toFixed(4), why: x.why, note: x.note || null, enter: x.enter })),

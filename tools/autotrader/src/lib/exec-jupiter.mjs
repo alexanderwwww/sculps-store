@@ -15,6 +15,12 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
     name: "live", state, caps, source: "phantom",
     safety: "the position is still in the wallet: press Sell everything",
     async balance() { return rpc.solBalance(wallet.address); },
+    /** what selling this position right now would really return, in SOL (Jupiter's own sell quote, slippage included) */
+    async valueSol(p) {
+      if (!p.tokens || !(Number(p.tokens) > 0)) return null;
+      const q = await jupiter.quote({ input: p.mint, output: SOL_MINT, amount: String(p.tokens), slippageBps: caps.sellSlippageBps });
+      return Number(q.outAmount) / 1e9;
+    },
     async sizeSol() {
       const bal = await exec.balance();
       if (state.startSol == null) state.startSol = bal;
