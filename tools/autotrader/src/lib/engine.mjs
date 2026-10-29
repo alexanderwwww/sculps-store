@@ -189,7 +189,8 @@ export class Engine {
       if (this.open.size >= this.cfg.maxOpen || this.paused) break;
       const g = this.#gate(m, true); if (!g) continue;
       const sc = O.score(this.org, g.sig, { sample: true, rng: this.rng });
-      if (!(sc > 0)) { O.noteIdle(this.org, g.sig, sc, m, this.now()); continue; }
+      // fewer than 3 closes measured: nothing to choose on yet, so it explores (sizeMul is 0.618 until a band has 13 closes)
+      if (!(sc > 0) && O.measured(this.org)) { O.noteIdle(this.org, g.sig, sc, m, this.now()); continue; }
       this.cool.set(m.pool, this.now() + 30000);
       await this.#consider(m, g.cs, g.s, { m: O.sizeMul(this.org, g.sig), sig: g.sig });
     }

@@ -5,7 +5,7 @@ export const KIMCHI = "CSocnzcRpgSCr1naKcNTieWZUxb6rABe45j844m7pump";
 const BASE = { maxSolPerTrade: 0.05, perHour: 30, perDay: 200, floorFrac: 0.7 };
 export const SOL_MINT = "So11111111111111111111111111111111111111112";
 export const PLUG_CAPS_EXTRA = { fixedSol: 0.02618,   // Alex 2026-10-29: the golden step between 0.01618 and the doubled 0.03236 (0.01618 x 1.618)
-  perHour: 200, perDay: 2000, floorFrac: 0.05, reserveSol: 0.004 };
+  perHour: 200, perDay: 2000, floorFrac: 0.05, reserveSol: 0.004, minBalSol: 0.05 };   // buys pause below 0.05 SOL in the wallet; sells never pause
 export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.06, buySlippageBps: 1200, sellSlippageBps: 3500, sellLadderBps: [800, 1500, 3500], maxFeeLamports: 150000, confirmMs: 45000, pollMs: 1500 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -26,6 +26,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       const bal = await exec.balance();
       if (state.startSol == null) state.startSol = bal;
       const spendable = Math.max(0, bal - caps.reserveSol);
+      if (caps.minBalSol != null && bal < caps.minBalSol) return { bal, sol: 0, why: `wallet ${bal.toFixed(4)} SOL is under ${caps.minBalSol}: buys paused` };
       if (caps.fixedSol) {
         // golden-ratio scale (Alex 2026-10-29): base 0.01618 SOL, x1.618 for each win in a row (at most 3 steps), back to base after any loss;
         // never more than a quarter of the wallet on one buy.
@@ -63,10 +64,10 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
     },
     async buy({ mint, scale = 1 }) {
       // scale: the organism's size multiplier, 0.618 or 1. Never above 1, so a buy is never bigger than the caps already allow.
-      const { bal, sol } = await exec.sizeSol({ scale: Math.min(1, Number(scale) > 0 ? Number(scale) : 1) });
+      const { bal, sol, why: sizeWhy } = await exec.sizeSol({ scale: Math.min(1, Number(scale) > 0 ? Number(scale) : 1) });
       const why = exec.gate(mint, bal);
       if (why) return { ok: false, why };
-      if (!(sol >= 0.005)) return { ok: false, why: `stake ${sol} SOL is too small to trade (wallet ${bal.toFixed(4)} SOL, ${caps.reserveSol} kept for fees)` };
+      if (!(sol >= 0.005)) return { ok: false, why: sizeWhy || `stake ${sol} SOL is too small to trade (wallet ${bal.toFixed(4)} SOL, ${caps.reserveSol} kept for fees)` };
       const lamports = Math.round(sol * 1e9);
       let q, s;
       try {

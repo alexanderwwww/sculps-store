@@ -7,9 +7,12 @@
 export const PHI = 1.618, INV = 0.618;
 export const LAMBDA = Math.pow(INV, 1 / 21);              // decay per close: half-life about 29.6 closes
 export const IDLE_MS = 97000;                             // 1.618 min
-export const IDLE_FRESH_MS = 30000;
-export const COLD = { W: 0.12, L: 0.085, fee: 0.004, gS: -0.015, gT: 0 };
-export const CLAMP = { sl: [-0.12, -0.04], partAt: [0.03, 0.08], tp: [0.06, 0.2] };
+export const IDLE_FRESH_MS = 97000;                      // the whole idle window: any candidate seen in it may be picked (it is re-gated live first)
+export const PART_FRAC = 0.382;                          // same default the engine sells at (engine.mjs partFrac ?? 0.382)
+export const SIZE_MIN_N = 13;                            // closes a band needs behind it before full size
+export const COLD = { W: 0.05, L: 0.06, fee: 0.004, gS: -0.04, gT: 0 };   // lesson 39: real W ~5%, L ~6% after the exit gap; stops filled 1.5-10 pts past the level
+export const CLAMP = { sl: [-0.08, -0.04],   // the stop may tighten, never widen past the live -8% (lesson 3: -8% filled at -19%)
+  partAt: [0.03, 0.08], tp: [0.06, 0.2] };
 const EDGES = { rise: [0.05, 0.1, 0.15, 0.25], ratio: [1.3, 2], vol5: [15000, 50000], liq: [50000, 100000] };
 export const DIMS = ["rise", "ratio", "vol5", "liq", "path"];
 const fin = (x) => typeof x === "number" && Number.isFinite(x);
@@ -42,7 +45,7 @@ export function update(org, rec, { weight = 1 } = {}) {
   if (!fin(ret)) return org;
   const stake = Number(rec.stake), fl = Number(rec.feeLamports);
   const f = fin(fl) && stake > 0 ? fl / (stake * 1e9) : COLD.fee;
-  const net = ret - f, win = net > 0, holdS = fin(rec.holdS) ? rec.holdS : 60;
+  const net = ret - f, win = net > 0, holdKnown = fin(rec.holdS), holdS = holdKnown ? rec.holdS : 60;
   decay(org.g, LAMBDA); for (const d of DIMS) for (const b of Object.values(org.b[d])) decay(b, LAMBDA);
   add(org.g, win, net, holdS, f, weight);
   const bk = sigBuckets(rec.sig);
@@ -52,7 +55,7 @@ export function update(org, rec, { weight = 1 } = {}) {
     const m = rec.exitKind === "stop" ? org.gS : org.gT, lk = bk.liq ?? "all";
     for (const k of new Set([lk, "all"])) m[k] = LAMBDA * (fin(m[k]) ? m[k] : rec.exitKind === "stop" ? COLD.gS : COLD.gT) + (1 - LAMBDA) * rec.gap;
   }
-  org.book.push({ sig: rec.sig || null, liqB: bk.liq ?? null, ret, f, holdS, peak: rec.peak ?? null, low: rec.low ?? null, tPeak: rec.tPeak ?? null, tLow: rec.tLow ?? null, restRet: rec.restRet ?? ret, exitKind: rec.exitKind || null });
+  org.book.push({ sig: rec.sig || null, liqB: bk.liq ?? null, ret, f, holdS: holdKnown ? holdS : null, peak: rec.peak ?? null, low: rec.low ?? null, tPeak: rec.tPeak ?? null, tLow: rec.tLow ?? null, restRet: rec.restRet ?? ret, exitKind: rec.exitKind || null });
   if (org.book.length > 89) org.book.splice(0, org.book.length - 89);
   org.closes++;
   return org;
@@ -82,8 +85,15 @@ export function score(org, sig, { sample = false, rng = Math.random } = {}) {
 }
 /** 1 when the band is positive on the posterior mean and there are >= 13 closes; else 0.618. Never above 1. */
 export function sizeMul(org, sig) {
-  try { const s = score(org, sig); return fin(s) && s > 0 && org.g.n >= 13 ? 1 : INV; } catch { return INV; }
+  try {
+    const bk = Object.entries(sigBuckets(sig)); if (!bk.length) return INV;
+    // every band this coin falls into must have its own 13 closes: an untested band never inherits full size from the global average
+    if (!bk.every(([d, k]) => (org.b[d]?.[k]?.n ?? 0) >= SIZE_MIN_N)) return INV;
+    const s = score(org, sig); return fin(s) && s > 0 ? 1 : INV;
+  } catch { return INV; }
 }
+/** true once there are 3+ closes to choose on (before that the engine explores at 0.618) */
+export function measured(org) { return !!(org?.g?.n >= 3); }
 /** a candidate that passed every hard filter but scored <= 0: remember the best one of this window */
 export function noteIdle(org, sig, s, cand, now) {
   const b = org.idle.best;
@@ -105,8 +115,10 @@ const clamp = (k, v) => Math.min(CLAMP[k][1], Math.max(CLAMP[k][0], v));
 export function replayRow(org, r, s) {
   const gS = fin(org.gS[r.liqB]) ? org.gS[r.liqB] : fin(org.gS.all) ? org.gS.all : COLD.gS;
   const gT = fin(org.gT[r.liqB]) ? org.gT[r.liqB] : fin(org.gT.all) ? org.gT.all : COLD.gT;
+  const pf = s.partFrac ?? PART_FRAC;
+  // the dip came first (or partAt was never reached): all of it at the stop. Peak first and past partAt: the part is
+  // banked below, and the rest is the real rest return (the +0.5% lock fires long before the stop on the way down).
   if (r.low <= s.sl && (r.peak < s.partAt || r.tLow < r.tPeak)) return s.sl + gS;
-  const pf = s.partFrac ?? 0.5;
   const part = r.peak >= s.partAt ? pf * (s.partAt + gT) : 0, restF = r.peak >= s.partAt ? 1 - pf : 1;
   return part + restF * (r.peak >= s.tp ? s.tp + gT : r.restRet);
 }
@@ -114,12 +126,12 @@ function objective(org, rows, s) {
   let sr = 0, sm = 0; for (const r of rows) { sr += replayRow(org, r, s) - r.f; sm += Math.max(0.1, r.holdS / 60); }
   return { perMin: sr / sm, perTrade: sr / rows.length };
 }
-/** every 8 closes once 13 rows carry tPeak/tLow: one golden step per setting at most, inside CLAMP. Returns the new exits or null. */
+/** every 5 closes once 8 rows carry tPeak/tLow: one golden step per setting at most, inside CLAMP. Returns the new exits or null. */
 export function refitExits(org, cfg) {
   const rows0 = org.book.filter((r) => [r.peak, r.low, r.tPeak, r.tLow, r.restRet, r.f, r.holdS].every(fin));
-  if (rows0.length < 13 || org.closes % 8 !== 0) return null;
+  if (rows0.length < 8 || org.closes % 5 !== 0) return null;
   const rows = rows0.slice(-34);
-  const cur = { sl: clamp("sl", cfg.sl), partAt: clamp("partAt", cfg.partAt ?? 0.05), tp: clamp("tp", cfg.tp), partFrac: cfg.partFrac ?? 0.5 };
+  const cur = { sl: clamp("sl", cfg.sl), partAt: clamp("partAt", cfg.partAt ?? 0.05), tp: clamp("tp", cfg.tp), partFrac: cfg.partFrac ?? PART_FRAC };
   const out = {}; let moved = false;
   for (const k of ["sl", "partAt", "tp"]) {
     const base = objective(org, rows, cur);
@@ -153,7 +165,7 @@ export function rebuild(closed = []) {
   for (const c of closed) {
     if (!fin(c?.ret)) continue;
     const sig = c.sig && typeof c.sig === "object" ? c.sig : parseEnter(c.enter || "");
-    update(org, { ...c, sig, holdS: c.holdS ?? (c.at && c.t0 ? (c.at - c.t0) / 1000 : 60) }, { weight: c.sig ? 1 : 0.5 });
+    update(org, { ...c, sig, holdS: c.holdS ?? (c.at && c.t0 ? (c.at - c.t0) / 1000 : null) }, { weight: c.sig ? 1 : 0.5 });
   }
   return org;
 }

@@ -80,7 +80,7 @@ test("NaN input falls back to the cold priors", () => {
   const org = O.newOrg(); O.update(org, { ret: NaN, sig: { rise: NaN } }); O.update(org, { ret: "x" });
   assert.equal(org.g.n, 0);
   const s = O.score(org, { rise: NaN, liq: undefined });
-  assert.ok(Number.isFinite(s)); assert.equal(+s.toFixed(6), +(0.5 * 0.12 - 0.5 * 0.085 - 0.004 * 1).toFixed(6));
+  assert.ok(Number.isFinite(s)); assert.equal(+s.toFixed(6), +(0.5 * O.COLD.W - 0.5 * O.COLD.L - O.COLD.fee).toFixed(6));
   const z = O.sane({ junk: 1 }); assert.equal(z.g.n, 0); assert.equal(O.sizeMul(z, {}), 0.618);
 });
 const row = (o) => ({ sig: {}, liqB: "1", ret: 0, f: 0.004, holdS: 60, peak: 0.02, low: -0.03, tPeak: 5000, tLow: 9000, restRet: 0, ...o });
@@ -92,16 +92,16 @@ test("a replay row with tLow < tPeak takes the stop", () => {
 test("refitExits moves at most one golden step and respects the clamps", () => {
   const org = O.newOrg();
   // every coin runs to +30%: a higher tp is better, so tp moves up one step (0.10 x 1.618 = 0.1618), not to the clamp
-  for (let i = 0; i < 16; i++) O.update(org, { ret: 0.07, sig: {}, peak: 0.3, low: -0.01, tPeak: 20000, tLow: 1000, restRet: 0.1, holdS: 60 });
+  for (let i = 0; i < 20; i++) O.update(org, { ret: 0.07, sig: {}, peak: 0.3, low: -0.01, tPeak: 20000, tLow: 1000, restRet: 0.1, holdS: 60 });
   const cfg = { sl: -0.08, partAt: 0.05, tp: 0.1, partFrac: 0.5 };
   const ex = O.refitExits(org, cfg);
   assert.ok(ex, "it moved"); assert.equal(ex.tp, 0.1618);
   for (const [k, [lo, hi]] of Object.entries(O.CLAMP)) assert.ok(ex[k] >= lo && ex[k] <= hi, k);
-  const ex2 = O.refitExits(org, { sl: -0.12, partAt: 0.08, tp: 0.2, partFrac: 0.5 });
+  const ex2 = O.refitExits(org, { sl: -0.08, partAt: 0.08, tp: 0.2, partFrac: 0.5 });
   if (ex2) for (const [k, [lo, hi]] of Object.entries(O.CLAMP)) assert.ok(ex2[k] >= lo && ex2[k] <= hi, k);
 });
 test("sl does not tighten when stops gap worse than -2%", () => {
-  const mk = (gS) => { const org = O.newOrg(); for (let i = 0; i < 16; i++) O.update(org, { ret: -0.02, sig: {}, peak: 0.0, low: -0.07, tPeak: 0, tLow: 3000, restRet: -0.07, holdS: 60 }); org.gS = { all: gS, "1": gS }; return org; };
+  const mk = (gS) => { const org = O.newOrg(); for (let i = 0; i < 20; i++) O.update(org, { ret: -0.02, sig: {}, peak: 0.0, low: -0.07, tPeak: 0, tLow: 3000, restRet: -0.07, holdS: 60 }); org.gS = { all: gS, "1": gS }; return org; };
   // rows dip to -7% then recover to -7% exit: a -4.9% stop beats riding them, so it would tighten...
   const ok = O.refitExits(mk(-0.01), { sl: -0.08, partAt: 0.05, tp: 0.1 });
   assert.ok(ok && ok.sl > -0.08, JSON.stringify(ok));
@@ -162,9 +162,9 @@ test("engine loop: 60 trades, winning band favoured, losing band shrinks, caps h
   // caps: no stake above the size, multiplier only 0.618 or 1
   for (const b of w.buys) assert.ok(b.sol <= SIZE + 1e-12 && (b.sol === SIZE || b.sol === +(SIZE * 0.618).toFixed(5)), JSON.stringify(b));
   // learning: the winning band (rise 5-10%, liq 50-100k, buyers 3x) scores above the losing one, and the late buys show it
-  const W = { path: "mom", rise: 0.07, liq: 60000, ratio: 3, vol5: 20000 }, L = { path: "mom", rise: 0.2, liq: 30000, ratio: 1.1, vol5: 8000 };
+  const W = { path: "mom", rise: 0.04, liq: 60000, ratio: 3, vol5: 20000 }, L = { path: "mom", rise: 0.2, liq: 30000, ratio: 1.1, vol5: 8000 };
   assert.ok(O.score(e.org, W) > 0 && O.score(e.org, L) < 0, `${O.score(e.org, W)} ${O.score(e.org, L)}`);
-  assert.equal(O.sizeMul(e.org, W), 1); assert.equal(O.sizeMul(e.org, L), 0.618);
+  assert.equal(O.sizeMul(e.org, W), 1, JSON.stringify(O.sigBuckets(W)) + JSON.stringify(Object.fromEntries(O.DIMS.map((d) => [d, Object.fromEntries(Object.entries(e.org.b[d]).map(([k, b]) => [k, +b.n.toFixed(1)]))])))); assert.equal(O.sizeMul(e.org, L), 0.618);
   const late = w.buys.slice(-20);
   assert.ok(late.filter((b) => b.kind === "W").length > late.filter((b) => b.kind === "L").length, JSON.stringify(late.map((b) => b.kind)));
   assert.ok(late.filter((b) => b.kind === "L").every((b) => b.sol < SIZE), "a losing band only ever gets 0.618");
@@ -203,4 +203,35 @@ test("engine loop: every band negative, it still trades (idle pick at 0.618)", a
   assert.ok(w.buys.every((b) => b.sol === +(SIZE * 0.618).toFixed(5)));
   for (let k = 1; k < w.buys.length; k++) assert.ok(w.buys[k].at - w.buys[k - 1].at <= 100000, `gap ${(w.buys[k].at - w.buys[k - 1].at) / 1000}s`);
   assert.ok(e.org.idleFires >= 1);
+});
+
+// ------------------------------------------------------------------ review fixes (build 53)
+test("full size needs 13 closes in EVERY band the coin falls into, not just 13 overall", () => {
+  const org = O.newOrg();
+  for (let i = 0; i < 20; i++) O.update(org, { ret: 0.1 });            // 20 winners, no signal
+  assert.ok(O.score(org, { rise: 0.3, liq: 30000 }) > 0);
+  assert.equal(O.sizeMul(org, { rise: 0.3, liq: 30000 }), 0.618, "untested band stays at 0.618");
+  for (let i = 0; i < 20; i++) O.update(org, { ret: 0.1, sig: { rise: 0.3 } });
+  assert.equal(O.sizeMul(org, { rise: 0.3, liq: 30000 }), 0.618, "liq band still untested");
+  assert.equal(O.sizeMul(org, { rise: 0.3 }), 1);
+});
+test("the stop never widens past -8%", () => {
+  assert.equal(O.CLAMP.sl[0], -0.08);
+  const org = O.newOrg();
+  for (let i = 0; i < 20; i++) O.update(org, { ret: 0.05, sig: {}, peak: 0.12, low: -0.1, tPeak: 9000, tLow: 1000, restRet: 0.1, holdS: 60 });
+  const ex = O.refitExits(org, { sl: -0.08, partAt: 0.05, tp: 0.1 });
+  assert.ok(!ex || ex.sl >= -0.08, JSON.stringify(ex));
+});
+test("replay banks the part when the peak passed partAt before the stop", () => {
+  const org = O.newOrg(); const s = { sl: -0.08, partAt: 0.05, tp: 0.5 };
+  const v = O.replayRow(org, row({ peak: 0.06, low: -0.1, tPeak: 1000, tLow: 9000, restRet: 0.005 }), s);
+  const want = O.PART_FRAC * (0.05 + O.COLD.gT) + (1 - O.PART_FRAC) * 0.005;
+  assert.ok(Math.abs(v - want) < 1e-9, `${v} vs ${want}`);
+});
+test("cold priors are lesson-39 real: starting EV is negative, not optimistic", () => {
+  assert.ok(O.score(O.newOrg(), {}) < 0);
+});
+test("old journal closes without t0 do not enter the book with a fake 60 s hold", () => {
+  const org = O.rebuild([{ ret: 0.02, enter: "rising 8% in 30s" }]);
+  assert.equal(org.book[0].holdS, null);
 });
