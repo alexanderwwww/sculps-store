@@ -402,10 +402,10 @@
     const idle = { open: [], trades: 0, wins: 0, events: [], counts: {}, curve: [], startEq: 0, equity: 0, recentClosed: [], lines: 0, watching: { total: 0 }, next: [] };
     const E = S.running && e ? e : idle;
     term.show(true);
-    term.update(S, E, S.running && e ? null : S.saved?.userStopped ? "stopped" : !S.setup?.imported && S.saved?.liveSource !== "web" ? "plug in your wallet" : S.lastError ? `connecting to GMGN · ${S.lastError}` : "connecting to GMGN…");
+    term.update(S, E, S.running && e ? null : S.saved?.userStopped ? "stopped" : !S.setup?.imported ? "plug in your wallet" : S.lastError ? `connecting to GMGN · ${S.lastError}` : "connecting to GMGN…");
     const go = document.querySelector(".tm__go"); go.replaceChildren();
     if (S.running && e) { toasts.feed(e.events); app.append(dashView().cols); }
-    else if (!S.setup?.imported && S.saved?.liveSource !== "web") {
+    else if (!S.setup?.imported) {
       // plug the wallet in once: the private key goes into this Mac's own secrets file and nowhere else
       const k = el("input", { type: "password", placeholder: "Paste your Phantom private key (Phantom: Settings → Manage accounts → your wallet → Show private key)", autocomplete: "off", spellcheck: "false" });
       go.append(el("div", { class: "plug" }, k, el("button", { class: "go", text: "Plug in my wallet and trade", disabled: busy, onclick: async () => { const r = await act("/api/wallet", { secret: k.value }); k.value = ""; if (r?.ok) msg = null; } })),

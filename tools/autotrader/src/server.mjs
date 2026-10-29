@@ -41,7 +41,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const rpc = () => rpcI, jup = () => jupI;
   const ownWallet = () => walletFromPem(secrets.ensureWallet());
   // the plugged-in wallet is the default the moment it exists: Ultra signs its own swaps, no Chrome, no GMGN login
-  const src = () => readCfg().liveSource || (secrets.imported ? "own" : "web");
+  const src = () => (secrets.imported ? "own" : readCfg().liveSource || "web");   // a plugged-in wallet always wins over any old saved setting
   const client = () => (secrets.apiKey && secrets.privateKeyPem ? new GmgnClient({ apiKey: secrets.apiKey, privateKeyPem: secrets.privateKeyPem, ...(gmgnHost ? { host: gmgnHost } : {}) }) : null);
 
   async function build_(m) {
@@ -173,7 +173,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const close = () => new Promise((r) => { stopped = true; linkI?.stop(); if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); server.close(() => r()); server.closeAllConnections?.(); });
   // Resume what was running when the app last closed. Live resumes only if the keys are still there.
   // The app trades on its own: on launch it starts, and if GMGN is not ready yet it tries again every 20 s. Only Stop ends that.
-  const autoGo = () => { if (stopped || engine || readCfg().userStopped || !(secrets.imported || readCfg().liveSource)) return;   // no wallet plugged in yet: wait for it, never open Chrome
+  const autoGo = () => { if (stopped || engine || readCfg().userStopped || !secrets.imported) return;   // no wallet plugged in yet: wait for it, never open Chrome
     go("live").catch((e) => { lastError = e.message; setTimeout(autoGo, 20000).unref?.(); }); };
   listening.then(() => { const c = readCfg(); if (autoStart) autoGo(); else if (c.running && c.mode === "live" && !(c.mode === "live" && c.liveSource === "gmgn" && !secrets.ready())) go(c.mode).catch((e) => { lastError = e.message; }); });
   return { listening, close, token, get engine() { return engine; }, secrets, go, halt };

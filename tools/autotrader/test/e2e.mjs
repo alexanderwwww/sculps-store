@@ -31,12 +31,15 @@ try {
   await page.goto(`http://127.0.0.1:${port}/`);
   await page.waitForSelector("#termhost:not([hidden]) .agent");
   assert.doesNotMatch(await text(), /Advanced|Press start/); ok("no setup menu: it opens straight on the terminal");
-  assert.equal(await page.getByRole("button", { name: "Start real trading", exact: true }).count(), 1); ok("there is one Start real trading button");
-  assert.doesNotMatch(await text(), /PRIVATE|signing key|API key|whitelist/i); ok("no keys, no API, no whitelist, no addresses to copy on the main screen");
-  const b = page.getByRole("button", { name: "Start real trading", exact: true });
+  assert.equal(await page.getByRole("button", { name: "Plug in my wallet and trade", exact: true }).count(), 1); ok("no wallet yet: the Phantom box is the one thing on screen, even with an old GMGN setting saved");
+  assert.match(await text(), /plug in your wallet/i); assert.doesNotMatch(await text(), /GMGN is not logged in|Log in to GMGN/); ok("it never asks for GMGN");
+  const b = page.getByRole("button", { name: "Plug in my wallet and trade", exact: true });
   const hit = await b.evaluate((el) => { const r = el.getBoundingClientRect(); const t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return t === el || el.contains(t); });
-  assert.ok(hit); ok("the button is reachable by the mouse");
-  await b.click();
+  assert.ok(hit); ok("the Phantom button is reachable by the mouse");
+  await page.fill(".plug input", "not a key"); await b.click();
+  await page.waitForFunction(() => /not a private key/i.test(document.body.textContent), null, { timeout: 8000 }); ok("a wrong paste says so, in Phantom's words");
+  // the rest drives the trading screen through the fake GMGN path (no real wallet in a test)
+  await fetch(`http://127.0.0.1:${port}/api/go`, { method: "POST", headers: { "content-type": "application/json", "x-ultra-token": app.token }, body: JSON.stringify({ mode: "live" }) });
   await page.waitForFunction(() => /live/i.test(document.querySelector("header .chip")?.textContent || ""), null, { timeout: 15000 });
   assert.match(await text(), /Scanner/); assert.match(await text(), /Rug check/); assert.match(await text(), /Executor/); assert.match(await page.textContent("header .chip"), /live/i); ok("one press: the live terminal with all seven agents");
   await page.waitForFunction(() => /ALPHA/.test(document.body.textContent), null, { timeout: 12000 });
