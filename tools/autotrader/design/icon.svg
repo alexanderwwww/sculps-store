@@ -1,22 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
 <defs>
-  <radialGradient id="base" cx="50%" cy="36%" r="80%"><stop offset="0" stop-color="#16222b"/><stop offset=".55" stop-color="#080b0f"/><stop offset="1" stop-color="#020304"/></radialGradient>
-  <radialGradient id="signal" cx="50%" cy="52%" r="44%"><stop offset="0" stop-color="#7ee7ff" stop-opacity=".42"/><stop offset=".55" stop-color="#3aa6c9" stop-opacity=".12"/><stop offset="1" stop-color="#3aa6c9" stop-opacity="0"/></radialGradient>
-  <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".55"/><stop offset=".4" stop-color="#ffffff" stop-opacity=".06"/><stop offset="1" stop-color="#7ee7ff" stop-opacity=".30"/></linearGradient>
-  <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9fbff"/><stop offset=".4" stop-color="#9fdcee"/><stop offset="1" stop-color="#3b7f93"/></linearGradient>
-  <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#bfeaf5"/><stop offset="1" stop-color="#5aa9bf"/></linearGradient>
-  <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
-  <filter id="blur24" x="-40%" y="-60%" width="180%" height="220%"><feGaussianBlur stdDeviation="26"/></filter>
-  <filter id="drop" x="-30%" y="-40%" width="160%" height="190%"><feDropShadow dx="0" dy="22" stdDeviation="20" flood-color="#000" flood-opacity=".75"/></filter>
+  <radialGradient id="base" cx="50%" cy="36%" r="80%"><stop offset="0" stop-color="#1a1d24"/><stop offset=".55" stop-color="#0a0b0f"/><stop offset="1" stop-color="#030304"/></radialGradient>
+  <radialGradient id="halo" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff" stop-opacity=".28"/><stop offset=".6" stop-color="#ffffff" stop-opacity=".05"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+  <radialGradient id="orb" cx="36%" cy="30%" r="78%"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#e9edf2"/><stop offset="1" stop-color="#a3acb9"/></radialGradient>
+  <radialGradient id="shade" cx="50%" cy="100%" r="70%"><stop offset="0" stop-color="#000" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".5"/><stop offset=".4" stop-color="#ffffff" stop-opacity=".06"/><stop offset="1" stop-color="#ffffff" stop-opacity=".18"/></linearGradient>
+  <filter id="drop" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="24" stdDeviation="22" flood-color="#000" flood-opacity=".8"/></filter>
   <clipPath id="sq"><rect x="100" y="100" width="824" height="824" rx="186"/></clipPath>
-  <clipPath id="arrowclip"><path d="M418,316 Q392,300 392,332 L392,692 Q392,724 418,708 L716,530 Q744,512 716,494 Z" stroke-linejoin="round"/></clipPath>
 </defs>
 <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#base)"/>
-<g clip-path="url(#sq)"><rect x="100" y="100" width="824" height="824" fill="url(#signal)"/><ellipse cx="512" cy="140" rx="470" ry="180" fill="#fff" fill-opacity=".05"/></g>
+<g clip-path="url(#sq)"><circle cx="512" cy="512" r="380" fill="url(#halo)"/><ellipse cx="512" cy="140" rx="470" ry="180" fill="#fff" fill-opacity=".05"/></g>
 <rect x="104" y="104" width="816" height="816" rx="182" fill="none" stroke="url(#rim)" stroke-width="3.5"/>
-<g transform="translate(0,0)" filter="url(#drop)">
-  <path d="M418,316 Q392,300 392,332 L392,692 Q392,724 418,708 L716,530 Q744,512 716,494 Z" fill="#7ee7ff" fill-opacity=".5" filter="url(#blur24)"/>
-  <path d="M418,316 Q392,300 392,332 L392,692 Q392,724 418,708 L716,530 Q744,512 716,494 Z" fill="url(#body)" stroke="url(#edge)" stroke-width="12" stroke-linejoin="round"/>
-  <g clip-path="url(#arrowclip)"><ellipse cx="500" cy="420" rx="260" ry="80" fill="url(#gloss)" fill-opacity=".8"/></g>
+<g filter="url(#drop)">
+  <circle cx="512" cy="512" r="270" fill="url(#orb)"/>
+  <circle cx="512" cy="512" r="270" fill="url(#shade)"/>
+  <rect x="432" y="430" width="50" height="150" rx="25" fill="#0b0c10"/>
+  <rect x="542" y="430" width="50" height="150" rx="25" fill="#0b0c10"/>
+  <ellipse cx="450" cy="352" rx="110" ry="46" fill="#fff" fill-opacity=".75" transform="rotate(-24 450 352)"/>
 </g>
 </svg>
