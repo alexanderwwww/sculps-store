@@ -329,7 +329,11 @@
         q(".rs__wl").innerHTML = `<b class="up">${e.wins} W</b> / <b class="down">${e.trades - e.wins} L</b>`;
         q(".rs__since").textContent = t0 ? `since ${hhmm(t0)}` : "";
         // his purpose: the first goal is 10 SOL (Alex)
-        { const have = (S.source === "own" ? S.own?.sol : S.sol) ?? 0, g = q(".rs__g"); g.style.width = `${Math.min(100, (have / 10) * 100).toFixed(2)}%`; q(".rs__gv").textContent = `${have.toFixed(3)} / 10 SOL`; }
+        // golden-spiral goals (Alex): each micro goal is the last one x 1.618, from 0.1 SOL up past 10 SOL
+        { const have = (S.source === "own" ? S.own?.sol : S.sol) ?? 0, ladder = []; for (let v = 0.1; v < 13; v *= 1.618) ladder.push(+v.toFixed(4));
+          const next = ladder.find((v) => v > have) ?? 10, prev = [...ladder].reverse().find((v) => v <= have) ?? 0, g = q(".rs__g");
+          g.style.width = `${Math.min(100, Math.max(0, ((have - prev) / (next - prev)) * 100)).toFixed(2)}%`;
+          q(".rs__gv").textContent = `${have.toFixed(4)} → ${next.toFixed(4)} SOL · step ${ladder.indexOf(next) + 1}/${ladder.length} to 10`; }
         chart(e); trade(e);
         // the decisions since the last look go through the pipeline, newest last
         const evs = e.events || [];
