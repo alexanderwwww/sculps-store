@@ -1,6 +1,6 @@
 // The brain. Everything it knows at minute i is in candles[0..i]; nothing from the future.
 export const DEFAULTS = {
-  minAgeMin: 1, maxAgeMin: 180,      // never the first seconds (snipers own those), never old and stale
+  minAgeMin: 1, maxAgeMin: 720,   // bonded runners trade for hours      // never the first seconds (snipers own those), never old and stale
   breakoutLookback: 3, volSpike: 0.8, minGreen: 0.34, nearHigh: 0.97, // breakout above the last 15 highs, volume 3x, buyers dominate
   minLiqUsd: 2500,
   sl: -0.12, tp: 0.35, trailFrom: 0.12, trail: 0.06, maxHoldMin: 30,   // book small wins often, cut losers fast

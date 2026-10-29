@@ -10,7 +10,8 @@ import { Engine } from "./lib/engine.mjs";
 import { Journal } from "./lib/journal.mjs";
 import { liveFeed } from "./lib/feed.mjs";
 import { jupiterExec, CAPS as JUP_CAPS, PLUG_CAPS_EXTRA } from "./lib/exec-jupiter.mjs";
-import { startLink } from "./lib/link.mjs";
+import { startLink, DEFAULT_LINK } from "./lib/link.mjs";
+import { checkRuntime, stageRuntime } from "./lib/ota.mjs";
 import { Rpc, Jupiter, walletFromPem, buildTransferTx } from "./lib/solana.mjs";
 import { rugCheck } from "./lib/rug.mjs";
 import { Secrets } from "./lib/secrets.mjs";
@@ -112,8 +113,9 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
       fail(res, 404, "Not found.");
     } catch (e) { log("request failed:", e); fail(res, 500, "Something went wrong."); }
   });
-  const listening = new Promise((r) => server.listen(port, "127.0.0.1", () => r(server.address().port)));
-  const linkI = link ? startLink({ getState: () => ({ build, running: !!engine, mode, lastError, engine: engine ? engine.status() : null }), getEngine: () => engine, onStart: () => go("live") }) : null;
+  // a live update hands the port over: the new server retries for a few seconds while the old one closes
+  const listening = new Promise((r, j) => { let n = 0; const tryListen = () => server.listen(port, "127.0.0.1", () => r(server.address().port)); server.on("error", (e) => { if (e.code === "EADDRINUSE" && n++ < 40) setTimeout(tryListen, 250); else j(e); }); tryListen(); });
+  const linkI = link ? startLink({ getState: () => ({ build, running: !!engine, mode, lastError, cfg: engine ? engine.cfg : null, applied: linkI?.applied || [], engine: engine ? engine.status() : null }), getEngine: () => engine, onStart: () => go("live") }) : null;
   const close = () => new Promise((r) => { stopped = true; linkI?.stop(); if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); server.close(() => r()); server.closeAllConnections?.(); });
   // The app trades on its own: once the Phantom wallet is plugged in it starts on launch, and retries every 20 s if the network
   // or the balance is not ready. Only Stop ends that. In tests (no autoStart) it resumes only what was running.
@@ -126,8 +128,25 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const dataDir = process.env.ULTRA_DATA || join(process.env.HOME || ".", "Library", "Application Support", "Ultra", "data");
-  const app = start({ dataDir, port: Number(process.env.ULTRA_PORT || 47401), build: process.env.ULTRA_BUILD || "dev", link: true, autoStart: true, onShutdown: () => process.exit(0) });
+  const app = start({ dataDir, port: Number(process.env.ULTRA_PORT || 47401), build: process.env.ULTRA_BUILD || "dev", link: true, autoStart: true, tickMs: 1500, onShutdown: () => process.exit(0) });
   app.listening.then((p) => console.log(`ultra on http://127.0.0.1:${p}/`));
+  // live updates: every 2 minutes, a newer published build takes over this same port
+  const build = process.env.ULTRA_BUILD || "dev";
+  let updating = false;
+  const ota = async () => {
+    if (updating || build === "dev" || process.env.ULTRA_LINK === "off") return;
+    const m = await checkRuntime({ url: `${process.env.ULTRA_LINK || DEFAULT_LINK}/runtime`, build });
+    if (!m) return;
+    updating = true;
+    try {
+      const dir = stageRuntime({ manifest: m, fromDir: dirname(fileURLToPath(import.meta.url)), dataDir });
+      console.log(`live update: build ${build} -> ${m.build}`);
+      await app.close();
+      spawn(process.execPath, [join(dir, "server.mjs")], { cwd: dir, env: { ...process.env, ULTRA_BUILD: String(m.build) }, stdio: "inherit", detached: true }).unref();
+      setTimeout(() => process.exit(0), 300);
+    } catch (e) { console.log("live update refused:", e.message); updating = false; }
+  };
+  setTimeout(ota, 5000).unref?.(); setInterval(ota, 120000).unref?.();
   // A sleeping Mac cannot sell. While Ultra runs, keep the Mac awake (the screen may still sleep).
   if (process.platform === "darwin") { try { spawn("caffeinate", ["-i", "-w", String(process.pid)], { stdio: "ignore", detached: true }).unref(); } catch { /* optional */ } }
 }

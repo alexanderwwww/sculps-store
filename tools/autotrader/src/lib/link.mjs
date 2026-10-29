@@ -1,7 +1,7 @@
 // The link: Ultra tells Claude what it is doing every 10 s and takes pause / resume / flatten / strategy-number orders back.
 // Nothing secret is sent (no keys, no wallet secrets). The orders cannot raise a money limit: the worker only lets strategy numbers through.
 export const DEFAULT_LINK = "https://kerberos.gardenbuddystore.workers.dev/ultra/YFu9uEm3fUwr928Yn70Qov73wVWbEZj";
-export const SAFE_KEYS = ["minAgeMin", "maxAgeMin", "breakoutLookback", "volSpike", "minGreen", "minLiqUsd", "sl", "tp", "trailFrom", "trail", "maxHoldMin", "cooldownMin", "maxChase", "minBuyShare", "edgeMinN", "edgeFloor"];
+export const SAFE_KEYS = ["nearHigh", "minAgeMin", "maxAgeMin", "breakoutLookback", "volSpike", "minGreen", "minLiqUsd", "sl", "tp", "trailFrom", "trail", "maxHoldMin", "cooldownMin", "maxChase", "minBuyShare", "edgeMinN", "edgeFloor"];
 
 export function startLink({ base = process.env.ULTRA_LINK || DEFAULT_LINK, getState, getEngine, onStart = null, fetchImpl = fetch, statusMs = 10000, orderMs = 4000 } = {}) {
   if (!base || base === "off") return { stop() {}, lastError: null };

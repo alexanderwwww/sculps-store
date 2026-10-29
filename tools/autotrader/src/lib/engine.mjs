@@ -81,13 +81,15 @@ export class Engine {
       if (this.open.size >= this.cfg.maxOpen || this.paused) break;
       if ([...this.open.values()].some((p) => p.pool === m.pool) || this.cool.get(m.pool) > this.now()) continue;
       const lv = this.live.get(m.pool), hit = this.cc.get(m.pool);
-      if (!lv || !hit || this.now() - lv.at > 15000 || hit.cs.length < 20) continue;
+      const quiet = (k) => this.skips.set(k, (this.skips.get(k) || 0) + 1);   // counted for the bridge, not logged one by one
+      if (!lv || this.now() - lv.at > 15000) { quiet("waiting: no live price yet"); continue; }
+      if (!hit || hit.cs.length < 6) { quiet("waiting: chart not loaded yet"); continue; }   // brand-new coins have only a few minutes of chart
       // the chart so far, plus the minute in progress built from the live price
       const cs = hit.cs.slice(), last = cs[cs.length - 1], minute = Math.floor(this.now() / 60000) * 60000;
       if (last.t >= minute) cs[cs.length - 1] = { ...last, c: lv.price, h: Math.max(last.h, lv.price), l: Math.min(last.l, lv.price), v: Math.max(last.v, lv.vol5 / 5) };
       else cs.push({ t: minute, o: last.c, h: Math.max(last.c, lv.price), l: Math.min(last.c, lv.price), c: lv.price, v: lv.vol5 / 5 });
       const sig = entrySignal(cs, cs.length - 1, this.cfg, { ...m, ...lv });
-      if (!sig.ok) { if (!/no breakout|volume/.test(sig.why)) this.#skip(m.name, sig.why); continue; }        // the thousand quiet checks a minute are not news
+      if (!sig.ok) { if (!/no breakout|volume/.test(sig.why)) this.#skip(m.name, sig.why); else quiet(sig.why.startsWith("volume") ? "volume too low" : "not near its high"); continue; }        // the thousand quiet checks a minute are not news
       this.cool.set(m.pool, this.now() + 30000);
       await this.#consider(m, cs, sig);
     }
@@ -170,8 +172,13 @@ export class Engine {
   /** Find new pools, remember them, keep their numbers fresh. Returns the ones worth a look. */
   async #discover() {
     const t = this.now();
-    for (const f of [() => this.feed.newPools(1), () => this.feed.newPools(2), () => this.feed.trendingPools(1)]) {
-      try { for (const x of await f()) if (!this.watch.has(x.pool)) this.watch.set(x.pool, x); else Object.assign(this.watch.get(x.pool), x); } catch (e) { this.#err("pools", e); }
+    // Alex 2026-10-29: hunt the volume. New creations every cycle, plus one more source in turn: pump.fun bonding curve
+    // (new + about to bond), bonded (PumpSwap), trending, deeper pages. The GeckoTerminal queue allows ~27 calls a minute.
+    const extra = [() => this.feed.pumpPools?.(1), () => this.feed.bondedPools?.(1), () => this.feed.trendingPools(1), () => this.feed.pumpPools?.(2), () => this.feed.newPools(2), () => this.feed.bondedPools?.(2)];
+    this.srcI = (this.srcI || 0) + 1;
+    const sources = this.watch.size ? [() => this.feed.newPools(1), extra[this.srcI % extra.length]] : [() => this.feed.newPools(1), () => this.feed.newPools(2), () => this.feed.trendingPools(1)];
+    for (const f of sources) {
+      try { for (const x of (await f()) || []) if (!this.watch.has(x.pool)) this.watch.set(x.pool, x); else Object.assign(this.watch.get(x.pool), x); } catch (e) { this.#err("pools", e); }
     }
     const ageMin = (m) => (t - m.created) / 60000;
     for (const [k, m] of this.watch) if (ageMin(m) > this.cfg.maxAgeMin + 10) this.watch.delete(k);
@@ -182,7 +189,7 @@ export class Engine {
         try { for (const x of await this.feed.multi(due.slice(i, i + 30).map((m) => m.pool))) Object.assign(this.watch.get(x.pool) || {}, x); } catch (e) { this.#err("refresh", e); break; }
       }
     }
-    const list = [...this.watch.values()].filter((m) => ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) >= this.cfg.minLiqUsd).sort((a, b) => b.vol5 - a.vol5).slice(0, this.fastMode ? 24 : this.scanTop);
+    const list = [...this.watch.values()].filter((m) => ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) >= this.cfg.minLiqUsd).sort((a, b) => b.vol5 - a.vol5).slice(0, this.fastMode ? 40 : this.scanTop);
     const all = [...this.watch.values()];
     this.watching = { total: all.length, young: all.filter((m) => ageMin(m) < this.cfg.minAgeMin).length, thin: all.filter((m) => ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) < this.cfg.minLiqUsd).length, ready: list.length };
     this.ready = list;
@@ -197,7 +204,7 @@ export class Engine {
       if ([...this.open.values()].some((p) => p.pool === m.pool)) continue;
       this.cool.set(m.pool, this.now() + 60000);
       let cs; try { cs = await this.feed.candles(m.pool, { limit: 100 }); } catch (e) { this.#err(`candles ${m.name}`, e); continue; }
-      if (cs.length < 20) { this.#skip(m.name, "too few candles"); this.#ev("drop", m.name, "too few candles"); continue; }
+      if (cs.length < 6) { this.#skip(m.name, "too few candles"); this.#ev("drop", m.name, "too few candles"); continue; }
       let s = entrySignal(cs, cs.length - 1, this.cfg, m);
       // First live buy of a fresh start: skip the signal once, on a coin that is green right now, so the real click path is proven in minutes (Alex, 2026-10-29).
       if (!s.ok && this.exec.name === "live" && !this.proofDone && cs[cs.length - 1].c > cs[cs.length - 1].o) s = { ok: true, why: "first live buy: proves the click path" };

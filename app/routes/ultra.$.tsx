@@ -6,6 +6,7 @@
  *   POST /ultra/<key>/order    Claude: {cmd:"pause"|"resume"|"flatten"} or {cmd:"set", cfg:{...safe keys}}
  *   GET  /ultra/<key>/order    Ultra asking; an order is read once and cleared
  *   POST /ultra/<key>/log      Ultra's buffered lines;  GET /ultra/<key>/log  reads them
+ *   GET  /ultra/<key>/runtime  the newest published program files (live updates); never writable through this route
  *
  * The key in the path is the whole of the authentication (same as /research). Nothing secret is ever sent: no keys, no
  * wallet secrets. Orders cannot raise any money limit; "set" only touches the strategy numbers listed below.
@@ -13,11 +14,11 @@
 import type { Route } from "./+types/ultra.$";
 
 const KEY = "YFu9uEm3fUwr928Yn70Qov73wVWbEZj";
-const FILES = { status: "ul-status.json", order: "ul-order.json", log: "ul-log.json" } as const;
+const FILES = { status: "ul-status.json", order: "ul-order.json", log: "ul-log.json", runtime: "ul-runtime.json" } as const;   // runtime: read-only here, written only with Cloudflare credentials (live updates)
 type Slot = keyof typeof FILES;
 type Env = { MEDIA: R2Bucket };
 const CMDS = ["start", "pause", "resume", "flatten", "set"];
-const SAFE = ["minAgeMin", "maxAgeMin", "breakoutLookback", "volSpike", "minGreen", "minLiqUsd", "sl", "tp", "trailFrom", "trail", "maxHoldMin", "cooldownMin", "maxChase", "minBuyShare", "edgeMinN", "edgeFloor"];
+const SAFE = ["nearHigh", "minAgeMin", "maxAgeMin", "breakoutLookback", "volSpike", "minGreen", "minLiqUsd", "sl", "tp", "trailFrom", "trail", "maxHoldMin", "cooldownMin", "maxChase", "minBuyShare", "edgeMinN", "edgeFloor"];
 
 const json = (v: unknown, status = 200) =>
   new Response(JSON.stringify(v), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*" } });
