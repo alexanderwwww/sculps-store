@@ -94,7 +94,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
           if (url.pathname === "/api/go") { if (body.mode !== "live") return fail(res, 400, "mode must be live"); writeCfg({ userStopped: false }); try { await go(body.mode); } catch (e) { return fail(res, 400, e.message); } return send(res, 200, { ok: true, mode }); }
           if (url.pathname === "/api/pause") { if (engine) engine.paused = !!body.paused; return send(res, 200, { ok: true, paused: engine?.paused ?? null }); }
           if (url.pathname === "/api/flatten") { if (!engine) return fail(res, 400, "Not running."); await engine.flatten(); return send(res, 200, { ok: true, open: engine.open.size }); }
-          if (url.pathname === "/api/wallet") { let address; try { address = secrets.importWallet(body.secret); } catch (e) { return fail(res, 400, e.message); } halt(); writeCfg({ phantomStartSol: null, userStopped: false }); try { await go("live"); } catch (e) { lastError = e.message; } return send(res, 200, { ok: true, address, running: !!engine }); }
+          if (url.pathname === "/api/wallet") { let address; try { address = secrets.importWallet(body.secret); } catch (e) { return fail(res, 400, e.message); } halt(); writeCfg({ phantomStartSol: null, userStopped: false }); try { await go("live"); } catch (e) { lastError = e.message; retry(); } return send(res, 200, { ok: true, address, running: !!engine }); }
           if (url.pathname === "/api/stop") { halt(); writeCfg({ userStopped: true }); return send(res, 200, { ok: true }); }
           if (url.pathname === "/api/rebase") { if (engine && engine.open.size) return fail(res, 400, "Close the open positions first."); const w = wallet(); const b = await rpc().solBalance(w.address); writeCfg({ phantomStartSol: b }); if (engine && mode === "live") { halt(); await go("live"); } return send(res, 200, { ok: true, start: b }); }
           if (url.pathname === "/api/withdraw") {
@@ -117,8 +117,10 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const close = () => new Promise((r) => { stopped = true; linkI?.stop(); if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); server.close(() => r()); server.closeAllConnections?.(); });
   // The app trades on its own: once the Phantom wallet is plugged in it starts on launch, and retries every 20 s if the network
   // or the balance is not ready. Only Stop ends that. In tests (no autoStart) it resumes only what was running.
-  const autoGo = () => { if (stopped || engine || readCfg().userStopped || !secrets.imported) return; go("live").catch((e) => { lastError = e.message; setTimeout(autoGo, 20000).unref?.(); }); };
-  listening.then(() => { if (autoStart) autoGo(); else if (readCfg().running && secrets.imported) go("live").catch((e) => { lastError = e.message; }); });
+  // In tests (execOverride, a stub executor and no wallet) a restart resumes what was running the same way.
+  function autoGo() { if (stopped || engine || readCfg().userStopped || !secrets.imported) return; go("live").catch((e) => { lastError = e.message; retry(); }); }
+  function retry() { if (autoStart && !stopped) setTimeout(autoGo, 20000).unref?.(); }
+  listening.then(() => { if (autoStart) autoGo(); else if (readCfg().running && (execOverride || secrets.imported)) go("live").catch((e) => { lastError = e.message; }); });
   return { listening, close, token, get engine() { return engine; }, secrets, go, halt };
 }
 

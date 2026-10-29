@@ -1,5 +1,5 @@
-// Keys live in one file beside the records, mode 600, and never leave this Mac. The signing key is generated HERE,
-// It holds one thing that matters: the Phantom wallet key Alex pastes once. Never shown, never sent.
+// Ultra's one secret, in one file beside the records, mode 600, and it never leaves this Mac:
+// the Phantom wallet key Alex pastes once. Never shown, never sent, never logged.
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -8,33 +8,8 @@ export class Secrets {
   constructor(dir) { this.file = path.join(dir, "secrets.json"); fs.mkdirSync(dir, { recursive: true }); this.d = this.#read(); }
   #read() { try { return JSON.parse(fs.readFileSync(this.file, "utf8")); } catch { return {}; } }
   #save() { fs.writeFileSync(this.file, JSON.stringify(this.d, null, 1), { mode: 0o600 }); try { fs.chmodSync(this.file, 0o600); } catch { /* fine */ } }
-  get apiKey() { return this.d.apiKey || null; }
-  get wallet() { return this.d.wallet || null; }
-  get privateKeyPem() { return this.d.privateKeyPem || null; }
-  get publicKeyPem() { return this.d.publicKeyPem || null; }
-  ensureKeypair() {
-    if (!this.d.privateKeyPem) {
-      const { privateKey, publicKey } = crypto.generateKeyPairSync("ed25519");
-      this.d.privateKeyPem = privateKey.export({ type: "pkcs8", format: "pem" });
-      this.d.publicKeyPem = publicKey.export({ type: "spki", format: "pem" });
-      this.#save();
-    }
-    return this.d.publicKeyPem;
-  }
-  get webWallet() { return this.d.webWallet || null; }
-  set({ apiKey, wallet, webWallet }) {
-    if (webWallet != null) { const v = String(webWallet).trim(); if (v && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v)) throw new Error("That does not look like a Solana wallet address."); if (v) this.d.webWallet = v; }
-    if (apiKey != null) { const v = String(apiKey).trim(); if (v && !/^[\w.\-]{8,200}$/.test(v)) throw new Error("That does not look like an API key."); if (v) this.d.apiKey = v; }
-    if (wallet != null) { const v = String(wallet).trim(); if (v && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v)) throw new Error("That does not look like a Solana wallet address."); if (v) this.d.wallet = v; }
-    this.#save();
-  }
-  /** Ultra's own trading wallet: made here, never shown except through the explicit backup button. */
-  ensureWallet() {
-    if (!this.d.walletPem) { this.d.walletPem = crypto.generateKeyPairSync("ed25519").privateKey.export({ type: "pkcs8", format: "pem" }); this.#save(); }
-    return this.d.walletPem;
-  }
-  get walletPem() { return this.d.walletPem || null; }
-  get imported() { return !!this.d.walletImported; }
+  get walletPem() { return this.d.walletImported ? this.d.walletPem || null : null; }
+  get imported() { return !!(this.d.walletImported && this.d.walletPem); }
   /** Alex's own wallet, plugged in once (Alex, 2026-10-29): the private key exported from Phantom, base58 (64 or 32 bytes) or a
    *  JSON byte array. Kept only in this file (mode 600) on his Mac; never sent anywhere. Any earlier key is kept, never lost. */
   importWallet(secret) {
@@ -52,6 +27,4 @@ export class Secrets {
     this.d.walletPem = priv.export({ type: "pkcs8", format: "pem" }); this.d.walletImported = true; this.#save();
     return b58encode(pub);
   }
-  ready() { return !!(this.apiKey && this.privateKeyPem && this.wallet); }
-  masked() { return { imported: this.imported, apiKey: this.apiKey ? `${this.apiKey.slice(0, 4)}…${this.apiKey.slice(-4)}` : null, wallet: this.wallet, hasKeypair: !!this.privateKeyPem, webWallet: this.webWallet }; }
 }

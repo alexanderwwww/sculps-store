@@ -1,7 +1,9 @@
 // Runs the PACKED Dock launcher the way the Mac would, with `open` and `osascript` replaced by recorders.
 //   node test/launcher-check.mjs "<path to Ultra.app>"
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, chmodSync, existsSync, cpSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, chmodSync, existsSync, cpSync, statSync } from "node:fs";
+import { pathToFileURL } from "node:url";
+import crypto from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
@@ -15,7 +17,7 @@ const calls = join(root, "calls.log");
 for (const [n, l] of [["open", "open"], ["osascript", "osascript"]]) { writeFileSync(join(stubs, n), `#!/bin/bash\nprintf '${l} %s\\n' "$*" >> "${calls}"\n`); chmodSync(join(stubs, n), 0o755); }
 const port = 48100 + Math.floor(Math.random() * 700);
 const chrome = join(root, "Google Chrome.app"); mkdirSync(chrome);
-const env = (extra = {}) => ({ ...process.env, PATH: `${stubs}:${process.env.PATH}`, ULTRA_HOME: work, ULTRA_BASE_PORT: String(port), NO_PROXY: "127.0.0.1,localhost", no_proxy: "127.0.0.1,localhost", HTTP_PROXY: "", http_proxy: "", ...extra });
+const env = (extra = {}) => ({ ...process.env, PATH: `${stubs}:${process.env.PATH}`, ULTRA_HOME: work, ULTRA_BASE_PORT: String(port), ULTRA_LINK: "off", NO_PROXY: "127.0.0.1,localhost", no_proxy: "127.0.0.1,localhost", HTTP_PROXY: "", http_proxy: "", ...extra });
 const launch = (bundle, extra) => spawnSync(join(bundle, "Contents", "MacOS", "ultra"), [], { env: env(extra), encoding: "utf8", timeout: 30000 });
 const log = () => (existsSync(calls) ? readFileSync(calls, "utf8") : "");
 const H = { connection: "close" };
@@ -34,11 +36,16 @@ try {
   assert.match(log(), new RegExp(`open -na ${chrome.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} --args --app=http://127.0.0.1:${port}/ `));
   ok("the window opens as its own Chrome app window at the right address");
 
-  // records and keys survive a newer build
-  const html = await (await fetch(`http://127.0.0.1:${port}/`, { headers: H })).text();
-  const token = /data-token="([0-9a-f]+)"/.exec(html)[1];
-  const kp = await (await fetch(`http://127.0.0.1:${port}/api/keypair`, { method: "POST", headers: { ...H, "x-ultra-token": token, "content-type": "application/json" }, body: "{}" })).json();
-  assert.match(kp.publicKey, /PUBLIC KEY/);
+  // the plugged-in Phantom key and the records survive a newer build. A freshly generated, empty key, written with the
+  // packed app's own code; Stop is saved too, so no server here ever tries to trade it or reach the network.
+  const data = join(work, "data");
+  const { Secrets } = await import(pathToFileURL(join(app, "Contents", "Resources", "app", "lib", "secrets.mjs")).href);
+  const jwk = crypto.generateKeyPairSync("ed25519").privateKey.export({ format: "jwk" });
+  const { b58encode } = await import(pathToFileURL(join(app, "Contents", "Resources", "app", "lib", "solana.mjs")).href);
+  const secret = b58encode(Buffer.concat([Buffer.from(jwk.d, "base64url"), Buffer.from(jwk.x, "base64url")]));
+  new Secrets(data).importWallet(secret);
+  writeFileSync(join(data, "config.json"), JSON.stringify({ userStopped: true }));
+  const secretsBefore = readFileSync(join(data, "secrets.json"), "utf8");
   r = launch(app, { ULTRA_CHROME: chrome });
   assert.equal(r.status, 0); assert.equal((await health(port)).app, "ultra");
   ok("opening it again reuses the running server");
@@ -49,11 +56,11 @@ try {
   assert.equal((await health(port)).build, String(Number(build) + 1));
   assert.equal(readFileSync(join(work, "runtime", "BUILD"), "utf8").trim(), String(Number(build) + 1));
   ok("a newer build replaces the old server and program");
-  const html2 = await (await fetch(`http://127.0.0.1:${port}/`, { headers: H })).text();
-  const token2 = /data-token="([0-9a-f]+)"/.exec(html2)[1];
-  const kp2 = await (await fetch(`http://127.0.0.1:${port}/api/keypair`, { method: "POST", headers: { ...H, "x-ultra-token": token2, "content-type": "application/json" }, body: "{}" })).json();
-  assert.equal(kp2.publicKey, kp.publicKey);
-  ok("the signing key made earlier is still there after the upgrade (the data folder is never touched)");
+  assert.equal(readFileSync(join(data, "secrets.json"), "utf8"), secretsBefore);
+  assert.equal(statSync(join(data, "secrets.json")).mode & 0o777, 0o600);
+  assert.equal(new Secrets(data).imported, true);
+  assert.ok(!/PRIVATE KEY/.test(readFileSync(join(work, "ultra.log"), "utf8")) && !readFileSync(join(work, "ultra.log"), "utf8").includes(secret), "no key in the log");
+  ok("the plugged-in Phantom wallet is still there after the upgrade (the data folder is never touched)");
   r = launch(app, { ULTRA_CHROME: chrome });
   assert.equal(r.status, 0); assert.equal((await health(port)).build, build);
   ok("an OLDER bundle also wins: the app in front of you is the truth (no stale-cache trap)");

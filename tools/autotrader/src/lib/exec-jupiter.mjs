@@ -1,5 +1,5 @@
-// Ultra trades from its OWN wallet, straight through Jupiter. No API keys, no whitelist, nothing to copy.
-// Same promises as the GMGN executor: caps, halt, never Kimchi; every send is journalled by the engine first.
+// Ultra trades Alex's Phantom wallet, plugged in once, straight through Jupiter: it signs its own swaps on this Mac.
+// The promises: 0.01618 SOL a buy, 200 buys an hour, halt when the wallet is ~95% gone, never Kimchi; every send is journalled by the engine first.
 import { signSwapTransaction, buildCloseAccountTx } from "./solana.mjs";
 export const KIMCHI = "CSocnzcRpgSCr1naKcNTieWZUxb6rABe45j844m7pump";
 const BASE = { maxSolPerTrade: 0.05, perHour: 30, perDay: 200, floorFrac: 0.7 };
@@ -12,7 +12,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
   const stamps = [], pending = new Map();                  // signature -> what we expect, for recheck()
   const state = { startSol, halted: null };
   const exec = {
-    name: "live", state, caps, source: "own",
+    name: "live", state, caps, source: "phantom",
     safety: "the position is still in the wallet: press Sell everything",
     async balance() { return rpc.solBalance(wallet.address); },
     async sizeSol() {

@@ -1,4 +1,4 @@
-// SOL balance of the wallet from the public chain, not from GMGN's page: the number the sizer and the halt rule trust.
+// SOL balance of the wallet from the public chain: the number the sizer and the halt rule trust.
 const ENDPOINTS = ["https://api.mainnet-beta.solana.com", "https://solana-rpc.publicnode.com", "https://rpc.ankr.com/solana"];
 export async function solBalance(wallet, { fetchImpl = fetch, endpoints = ENDPOINTS } = {}) {
   let last;

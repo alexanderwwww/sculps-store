@@ -10,7 +10,7 @@
 # The zip only appears at <out.zip> once every check has passed.
 #
 # Runs here (Linux). It cannot draw the window on a Mac; that part is only
-# proven on his machine. See SPEC.md.
+# proven on his machine.
 
 set -eu
 

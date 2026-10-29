@@ -95,7 +95,7 @@ export class Engine {
   /** What the screen animates: one event per decision. type: drop | block | buy | sell | fail */
   #ev(type, name, why, extra = {}) { if (this.counts[type] != null) this.counts[type]++; this.events.push({ seq: ++this.seq, at: this.now(), type, name, why, ...extra }); if (this.events.length > 60) this.events.shift(); }
   #err(w, e) { this.errors.push({ at: this.now(), w, msg: String(e.message || e).slice(0, 140) }); if (this.errors.length > 20) this.errors.shift(); }
-  /** Orders GMGN had not confirmed when polling stopped: look again until they are confirmed or dead. Never forgotten. */
+  /** Swaps the chain had not confirmed when polling stopped: look again until they are confirmed or dead. Never forgotten. */
   async #reconcile() {
     for (const [id, u] of [...this.unknown]) {
       const r = await this.exec.recheck(u.orderId);
@@ -115,7 +115,7 @@ export class Engine {
       if (!r.ok && !r.noBalance) { this.#err(`flatten ${p.name}`, new Error(r.why)); continue; }
       let ret = 0; if (r.ok && r.outAmount != null && r.inAmount != null && p.stake > 0) ret = Number(r.outAmount) / 1e9 / p.stake - 1;
       const pnl = p.stake * ret;
-      this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why: "flatten", note: r.noBalance ? "already sold by GMGN's own order" : null });
+      this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why: "flatten", note: r.noBalance ? "the token was no longer in the wallet" : null });
       this.open.delete(p.id); this.closed.push({ ...p, type: "close", ret, pnl, why: "flatten" });
     }
   }
@@ -152,9 +152,9 @@ export class Engine {
       this.journal.write({ type: "sell-intent", id: p.id, name: p.name, why });                 // on disk BEFORE the sell goes out
       const r = (await this.exec.sell?.(p)) ?? { ok: true };
       if (!r.ok) {
-        if (r.noBalance) note = this.exec.source === "own" ? "the token was no longer in the wallet (result estimated from the chart)" : "closed by GMGN's own stop/target order (result estimated from the chart)";
+        if (r.noBalance) note = "the token was no longer in the wallet (result estimated from the chart)";
         else if (hold + 1 < 4) { this.sellTries.set(p.id, hold + 1); this.#err(`sell ${p.name}`, new Error(r.why)); return false; }   // try again next tick
-        else note = `sell failed 4 times (${r.why}): ${this.exec.safety || "position left to GMGN's safety orders"}`;
+        else note = `sell failed 4 times (${r.why}): ${this.exec.safety || "the position is still in the wallet: press Sell everything"}`;
       } else if (r.outAmount != null && r.inAmount != null && p.stake > 0) {
         ret = Number(r.outAmount) / 1e9 / p.stake - 1;                                           // the real fill, not the model
       }
