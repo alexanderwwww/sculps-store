@@ -27,6 +27,7 @@ const errors = []; page.on("pageerror", (e) => errors.push(String(e))); page.on(
 const reachable = async (sel) => page.evaluate((s) => { const el = document.querySelector(s); if (!el) return false; const r = el.getBoundingClientRect(); const t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return !!t && (t === el || el.contains(t)); }, sel);
 const text = async () => (await page.textContent("body")).replace(/\s+/g, " ");
 try {
+  await fetch(`http://127.0.0.1:${port}/api/source`, { method: "POST", headers: { "content-type": "application/json", "x-ultra-token": app.token }, body: JSON.stringify({ source: "web" }) });   // this test drives the GMGN-browser path
   await page.goto(`http://127.0.0.1:${port}/`);
   await page.waitForSelector("#termhost:not([hidden]) .agent");
   assert.doesNotMatch(await text(), /Advanced|Press start/); ok("no setup menu: it opens straight on the terminal");

@@ -37,7 +37,7 @@ test("ONE BUTTON: Start finds GMGN logged in, the wallet matches the chain, a si
   const buys = s.gm.clicks((e) => e.trusted && /^ip\d$/.test(e.id || ""));
   assert.equal(buys.length, 1); assert.equal(buys[0].id, "ip0");
   assert.equal(s.gm.events.filter((e) => /^(decoy|dp\d)$/.test(e.id || "")).length, 0, "decoys untouched");
-  assert.equal(st.engine.open[0].stake, 0.0162);   // 0.01618 shown to 4 places
+  assert.equal(st.engine.open[0].stake, 0.01618);
   s.state.series = moon; s.state.px.P1 = 2.6;
   const done = await s.until(async () => { const x = await s.get("/api/state"); return x.engine.trades === 1 ? x : null; });
   assert.match(done.engine.recentClosed[0].why, /take profit/);

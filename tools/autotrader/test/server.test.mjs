@@ -229,3 +229,20 @@ test("OWN WALLET: the same wallet comes back after a restart", async () => {
   assert.equal((await (await fetch(`http://127.0.0.1:${port}/api/state`)).json()).own.address, a1);
   await again.close();
 });
+
+import cryptoP from "node:crypto";
+import { b58encode as b58e } from "../src/lib/solana.mjs";
+test("PHANTOM: paste the private key once -> it trades that wallet, 0.01618 SOL a buy, and the key never shows", async () => {
+  const ch = world(null, {}); ch.W.zero = false;
+  const s = await boot({ execOverride: null, rpc: ch.rpc, jupiter: ch.jupiter, balance: async () => ch.W.sol });
+  const k = cryptoP.generateKeyPairSync("ed25519"); const j = k.privateKey.export({ format: "jwk" });
+  const pub = Buffer.from(j.x, "base64url"), secret = b58e(Buffer.concat([Buffer.from(j.d, "base64url"), pub]));
+  assert.equal((await s.post("/api/wallet", { secret: "not a key" })).status, 400);
+  const r = await s.post("/api/wallet", { secret });
+  assert.equal(r.ok, true); assert.equal(r.address, b58e(pub));
+  const st = await s.until(async () => { const x = await s.get("/api/state"); return x.engine?.open.length === 1 ? x : null; });
+  assert.equal(st.source, "own"); assert.equal(st.own.address, b58e(pub)); assert.equal(st.setup.imported, true);
+  assert.equal(st.engine.open[0].stake, 0.01618);
+  assert.ok(!JSON.stringify(st).includes(secret), "the key never appears in the state");
+  await s.app.close();
+});

@@ -236,7 +236,7 @@ export class Engine {
     const c = this.closed, wins = c.filter((x) => x.ret > 0);
     return {
       mode: this.exec.name, paused: this.paused, unit: this.unit, halted: this.exec.state?.halted || null, ticks: this.ticks, lastTickAt: this.lastTickAt, equity: +this.equity.toFixed(4), curve: this.closed.reduce((a, x) => (a.push(+((a[a.length - 1] ?? this.startEq) + (x.pnl || 0)).toFixed(4)), a), [this.startEq]).slice(-60), startEq: this.startEq,
-      open: [...this.open.values()].map((p) => { const h = this.hist.get(p.id) || [], px = h.length ? h[h.length - 1][1] : null, e0 = p.entryPx; return { id: p.id, name: p.name, mint: p.mint, entryPx: e0, stake: +p.stake.toFixed(4), since: p.at, enter: p.enter, ret: px && e0 ? px / e0 - 1 : null, peak: e0 && this.peaks.has(p.id) ? this.peaks.get(p.id) / e0 - 1 : null, path: e0 ? h.map(([, v]) => +(v / e0 - 1).toFixed(4)) : [] }; }),
+      open: [...this.open.values()].map((p) => { const h = this.hist.get(p.id) || [], px = h.length ? h[h.length - 1][1] : null, e0 = p.entryPx; return { id: p.id, name: p.name, mint: p.mint, entryPx: e0, stake: +p.stake.toFixed(5), since: p.at, enter: p.enter, ret: px && e0 ? px / e0 - 1 : null, peak: e0 && this.peaks.has(p.id) ? this.peaks.get(p.id) / e0 - 1 : null, path: e0 ? h.map(([, v]) => +(v / e0 - 1).toFixed(4)) : [] }; }),
       exits: { sl: this.cfg.sl, tp: this.cfg.tp, trailFrom: this.cfg.trailFrom, trail: this.cfg.trail, maxHoldMin: this.cfg.maxHoldMin },
       trades: c.length, wins: wins.length, winRate: c.length ? +(wins.length / c.length).toFixed(3) : null,
       recentClosed: c.slice(-8).map((x) => ({ name: x.name, ret: +(x.ret * 100).toFixed(1), pnl: +(x.pnl || 0).toFixed(4), why: x.why, note: x.note || null, enter: x.enter })),

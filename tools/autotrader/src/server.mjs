@@ -10,7 +10,7 @@ import { Engine } from "./lib/engine.mjs";
 import { Journal } from "./lib/journal.mjs";
 import { liveFeed } from "./lib/feed.mjs";
 import { gmgnExec, CAPS } from "./lib/exec-gmgn.mjs";
-import { jupiterExec, CAPS as OWN_CAPS } from "./lib/exec-jupiter.mjs";
+import { jupiterExec, CAPS as OWN_CAPS, PLUG_CAPS_EXTRA } from "./lib/exec-jupiter.mjs";
 import { webExec, WEB_CAPS } from "./lib/exec-browser.mjs";
 import { GmgnPanel } from "./lib/web/gmgn-panel.mjs";
 import { connectChrome } from "./lib/chrome.mjs";
@@ -40,11 +40,13 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const rpcI = rpcOverride || new Rpc(), jupI = jupiterOverride || new Jupiter();
   const rpc = () => rpcI, jup = () => jupI;
   const ownWallet = () => walletFromPem(secrets.ensureWallet());
+  // the plugged-in wallet is the default the moment it exists: Ultra signs its own swaps, no Chrome, no GMGN login
+  const src = () => readCfg().liveSource || (secrets.imported ? "own" : "web");
   const client = () => (secrets.apiKey && secrets.privateKeyPem ? new GmgnClient({ apiKey: secrets.apiKey, privateKeyPem: secrets.privateKeyPem, ...(gmgnHost ? { host: gmgnHost } : {}) }) : null);
 
   async function build_(m) {
     if (execOverride) return new Engine({ feed, exec: execOverride, journal: new Journal(join(dataDir, "journal-test.jsonl")), rug: rugOverride || rugCheck, startEq: 100, now });
-    if (m === "live" && (readCfg().liveSource || "web") === "web") {
+    if (m === "live" && src() === "web") {
       const { browser, opened } = await (chromeOverride ? chromeOverride() : connectChrome());
       const panel = new GmgnPanel({ browser, build: String(build), waitMs: 15000 });
       const w = await panel.openInstant("https://gmgn.ai/sol/token/So11111111111111111111111111111111111111112");
@@ -69,9 +71,9 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
     }
     if (m === "live") {
       const w = ownWallet(); const bal = await rpc().solBalance(w.address);
-      if (bal < 0.02) throw new Error(`Ultra's wallet has ${bal.toFixed(4)} SOL. Send some SOL to ${w.address} first (at least 0.03).`);
+      if (bal < 0.0202) throw new Error(`The wallet has ${bal.toFixed(4)} SOL: one 0.01618 SOL buy plus fees needs 0.0202. Send SOL to ${w.address}.`);
       if (readCfg().ownStartSol == null) writeCfg({ ownStartSol: bal });
-      const exec = jupiterExec({ wallet: w, rpc: rpc(), jupiter: jup(), cfg: DEFAULTS, startSol: readCfg().ownStartSol, now });
+      const exec = jupiterExec({ wallet: w, rpc: rpc(), jupiter: jup(), cfg: DEFAULTS, caps: { ...OWN_CAPS, ...(secrets.imported ? PLUG_CAPS_EXTRA : {}) }, startSol: readCfg().ownStartSol, now });
       return new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-own.jsonl")), rug: rugOverride || rugCheck, startEq: readCfg().ownStartSol, now });
     }
     throw new Error("Only real trading exists. Press Start real trading.");
@@ -133,9 +135,9 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
       if (url.pathname.startsWith("/api/")) {
         if (req.method === "POST" && req.headers["x-ultra-token"] !== token) return fail(res, 403, "Reload the window.");
         if (req.method === "GET" && url.pathname === "/api/state") {
-          let sol = null; try { const a = (readCfg().liveSource || "web") === "web" ? webAddr : secrets.wallet; if (a) sol = await balance(a); } catch { /* shown as unknown */ }
+          let sol = null; try { const a = src() === "web" ? webAddr : secrets.wallet; if (a) sol = await balance(a); } catch { /* shown as unknown */ }
           let own = null; try { const w = ownWallet(); own = { address: w.address, sol: await rpc().solBalance(w.address).catch(() => null) }; } catch { /* shown as unknown */ }
-          return send(res, 200, { ok: true, build, running: !!engine, mode, own, source: readCfg().liveSource || "web", setup: { ...secrets.masked(), ready: secrets.ready(), publicKey: secrets.publicKeyPem }, sol, caps: (readCfg().liveSource || "web") === "web" ? WEB_CAPS : OWN_CAPS, cfg: { stakeFrac: DEFAULTS.stakeFrac, sl: DEFAULTS.sl, tp: DEFAULTS.tp, maxOpen: DEFAULTS.maxOpen }, engine: engine ? engine.status() : null, lastError, saved: readCfg() });
+          return send(res, 200, { ok: true, build, running: !!engine, mode, own, source: src(), setup: { ...secrets.masked(), ready: secrets.ready(), publicKey: secrets.publicKeyPem }, sol, caps: src() === "web" ? WEB_CAPS : secrets.imported ? { ...OWN_CAPS, ...PLUG_CAPS_EXTRA, preset: String(PLUG_CAPS_EXTRA.fixedSol) } : OWN_CAPS, cfg: { stakeFrac: DEFAULTS.stakeFrac, sl: DEFAULTS.sl, tp: DEFAULTS.tp, maxOpen: DEFAULTS.maxOpen }, engine: engine ? engine.status() : null, lastError, saved: readCfg() });
         }
         if (req.method === "GET" && url.pathname === "/api/ip") return send(res, 200, { ok: true, ip: await ipv4() });
         if (req.method === "POST") {
@@ -146,6 +148,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
           if (url.pathname === "/api/go") { if (body.mode !== "live") return fail(res, 400, "mode must be live"); writeCfg({ userStopped: false }); try { await go(body.mode); } catch (e) { return fail(res, 400, e.message); } return send(res, 200, { ok: true, mode }); }
           if (url.pathname === "/api/pause") { if (engine) engine.paused = !!body.paused; return send(res, 200, { ok: true, paused: engine?.paused ?? null }); }
           if (url.pathname === "/api/flatten") { if (!engine) return fail(res, 400, "Not running."); await engine.flatten(); return send(res, 200, { ok: true, open: engine.open.size }); }
+          if (url.pathname === "/api/wallet") { let address; try { address = secrets.importWallet(body.secret); } catch (e) { return fail(res, 400, e.message); } halt(); writeCfg({ liveSource: "own", ownStartSol: null, userStopped: false }); try { await go("live"); } catch (e) { lastError = e.message; } return send(res, 200, { ok: true, address, running: !!engine }); }
           if (url.pathname === "/api/stop") { halt(); writeCfg({ userStopped: true }); return send(res, 200, { ok: true }); }
           if (url.pathname === "/api/source") { if (!["web", "own", "gmgn"].includes(body.source)) return fail(res, 400, "source must be web, own or gmgn"); if (engine && mode === "live") return fail(res, 400, "Stop Ultra first."); writeCfg({ liveSource: body.source }); return send(res, 200, { ok: true }); }
           if (url.pathname === "/api/backup") { if (body.confirm !== true) return fail(res, 400, "Confirm first."); const w = ownWallet(); return send(res, 200, { ok: true, address: w.address, secretKey: w.secretKeyBase58 }); }
@@ -170,7 +173,8 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const close = () => new Promise((r) => { stopped = true; linkI?.stop(); if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); server.close(() => r()); server.closeAllConnections?.(); });
   // Resume what was running when the app last closed. Live resumes only if the keys are still there.
   // The app trades on its own: on launch it starts, and if GMGN is not ready yet it tries again every 20 s. Only Stop ends that.
-  const autoGo = () => { if (stopped || engine || readCfg().userStopped) return; go("live").catch((e) => { lastError = e.message; setTimeout(autoGo, 20000).unref?.(); }); };
+  const autoGo = () => { if (stopped || engine || readCfg().userStopped || !(secrets.imported || readCfg().liveSource)) return;   // no wallet plugged in yet: wait for it, never open Chrome
+    go("live").catch((e) => { lastError = e.message; setTimeout(autoGo, 20000).unref?.(); }); };
   listening.then(() => { const c = readCfg(); if (autoStart) autoGo(); else if (c.running && c.mode === "live" && !(c.mode === "live" && c.liveSource === "gmgn" && !secrets.ready())) go(c.mode).catch((e) => { lastError = e.message; }); });
   return { listening, close, token, get engine() { return engine; }, secrets, go, halt };
 }

@@ -351,8 +351,8 @@
         q(".tm__ver").textContent = `v${BUILD}-live`;
         const chip0 = override || (e.halted ? "halted" : e.paused ? "buying paused" : "running");
         q(".tm__state").textContent = chip0; host.classList.toggle("paused", chip0 !== "running");
-        const w = S.setup?.wallet || S.wallet || "";
-        q(".tm__tape span").textContent = `${w ? w.slice(0, 4) + "…" + w.slice(-4) + " · " : ""}GMGN Instant trade · ${S.caps?.preset || "–"} SOL a click · ${e.open.length}/${S.cfg.maxOpen} open · `.repeat(3);
+        const w = (S.source === "own" ? S.own?.address : S.setup?.webWallet) || "";
+        q(".tm__tape span").textContent = `${w ? w.slice(0, 4) + "…" + w.slice(-4) + " · " : ""}${S.source === "own" ? "your wallet, signed on this Mac" : "GMGN Instant trade"} · ${S.caps?.preset || "–"} SOL a click · ${e.open.length}/${S.cfg.maxOpen} open · `.repeat(3);
         const bal = S.source === "own" ? S.own?.sol : S.sol;
         if (bal != null) { tween(q(".tm__bal"), shownBal ?? bal, bal, (v) => v.toFixed(4)); shownBal = bal; }
         tween(q(".tm__trades"), Number(q(".tm__trades").textContent) || 0, e.trades, (v) => String(Math.round(v)));
@@ -402,10 +402,15 @@
     const idle = { open: [], trades: 0, wins: 0, events: [], counts: {}, curve: [], startEq: 0, equity: 0, recentClosed: [], lines: 0, watching: { total: 0 }, next: [] };
     const E = S.running && e ? e : idle;
     term.show(true);
-    term.update(S, E, S.running && e ? null : S.saved?.userStopped ? "stopped" : S.lastError ? `connecting to GMGN · ${S.lastError}` : "connecting to GMGN…");
+    term.update(S, E, S.running && e ? null : S.saved?.userStopped ? "stopped" : !S.setup?.imported && S.saved?.liveSource !== "web" ? "plug in your wallet" : S.lastError ? `connecting to GMGN · ${S.lastError}` : "connecting to GMGN…");
     const go = document.querySelector(".tm__go"); go.replaceChildren();
     if (S.running && e) { toasts.feed(e.events); app.append(dashView().cols); }
-    else go.append(el("button", { class: "go", text: "Start real trading", disabled: busy, onclick: () => act("/api/go", { mode: "live" }) }), msg ? el("p", { class: "err", text: msg }) : null);
+    else if (!S.setup?.imported && S.saved?.liveSource !== "web") {
+      // plug the wallet in once: the private key goes into this Mac's own secrets file and nowhere else
+      const k = el("input", { type: "password", placeholder: "Paste your Phantom private key (Phantom: Settings → Manage accounts → your wallet → Show private key)", autocomplete: "off", spellcheck: "false" });
+      go.append(el("div", { class: "plug" }, k, el("button", { class: "go", text: "Plug in my wallet and trade", disabled: busy, onclick: async () => { const r = await act("/api/wallet", { secret: k.value }); k.value = ""; if (r?.ok) msg = null; } })),
+        el("p", { class: "note", text: "Once. The key stays on this Mac, in Ultra's own file, and is never sent anywhere. Then Ultra trades your Phantom wallet by itself: no Chrome, no GMGN, 0.01618 SOL every buy." }), msg ? el("p", { class: "err", text: msg }) : null);
+    } else go.append(el("button", { class: "go", text: "Start real trading", disabled: busy, onclick: () => act("/api/go", { mode: "live" }) }), msg ? el("p", { class: "err", text: msg }) : null);
     window.scrollTo(0, keep);
   }
   const loop = () => { setTimeout(async () => { if (!busy && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") await refresh(); loop(); }, S && S.running ? 1500 : 3000); };

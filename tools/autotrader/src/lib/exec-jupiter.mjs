@@ -3,6 +3,7 @@
 import { signSwapTransaction, buildCloseAccountTx } from "./solana.mjs";
 import { KIMCHI, CAPS as BASE } from "./exec-gmgn.mjs";
 export const SOL_MINT = "So11111111111111111111111111111111111111112";
+export const PLUG_CAPS_EXTRA = { fixedSol: 0.01618, perHour: 200, perDay: 2000, floorFrac: 0.05, reserveSol: 0.004 };
 export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.06, buySlippageBps: 2000, sellSlippageBps: 3500, maxFeeLamports: 150000, confirmMs: 45000, pollMs: 1500 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -17,6 +18,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       const bal = await exec.balance();
       if (state.startSol == null) state.startSol = bal;
       const spendable = Math.max(0, bal - caps.reserveSol);
+      if (caps.fixedSol) return { bal, sol: spendable >= caps.fixedSol ? caps.fixedSol : 0 };   // the same 0.01618 SOL every buy (Alex)
       return { bal, sol: Math.min(caps.maxSolPerTrade, +(spendable * cfg.stakeFrac).toFixed(4)) };
     },
     gate(mint, bal) {
