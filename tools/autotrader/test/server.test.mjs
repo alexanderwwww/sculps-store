@@ -133,13 +133,11 @@ test("PHANTOM: paste the private key once -> it trades that wallet, 0.01618 SOL 
   }
   await s.app.close();
 });
-test("PHANTOM: an empty wallet says exactly where to send SOL, and nothing is sent", async () => {
+test("PHANTOM: an empty wallet still runs (open positions can be sold) and buys nothing", async () => {
   const s = await ownBoot({}, { sol: 0 });
-  assert.equal(s.plugged.running, false);
-  const st = await s.get("/api/state"); assert.match(st.lastError, new RegExp(s.key.address));
-  const r = await s.post("/api/go", { mode: "live" });
-  assert.equal(r.status, 400); assert.ok(r.error.includes(s.key.address), r.error);
-  assert.equal(s.ch.W.sent.length, 0);
+  await s.until(async () => (await s.get("/api/state")).running);
+  await new Promise((r) => setTimeout(r, 600));
+  assert.equal(s.ch.W.sent.length, 0, "no buy goes out with no SOL");
   await s.app.close();
 });
 test("PHANTOM end to end: plug in -> signed Jupiter swap -> position -> target -> sold from the chain's own numbers", async () => {

@@ -41,7 +41,8 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
     if (execOverride) return new Engine({ feed, exec: execOverride, journal: new Journal(join(dataDir, "journal-test.jsonl")), rug: rugOverride || rugCheck, startEq: 100, now });
     if (m !== "live") throw new Error("Only real trading exists.");
     const w = wallet(); const bal = await rpc().solBalance(w.address);
-    if (bal < 0.0202) throw new Error(`The wallet has ${bal.toFixed(4)} SOL: one 0.01618 SOL buy plus fees needs 0.0202. Send SOL to ${w.address}.`);
+    // never refuse to run on a low balance: the SOL may be inside open positions, and only a running engine can sell them. Buys simply wait.
+    if (bal < 0.0202) log(`wallet ${bal.toFixed(4)} SOL: running, buys wait until a sale brings SOL back`);
     if (readCfg().phantomStartSol == null) writeCfg({ phantomStartSol: bal });
     const exec = jupiterExec({ wallet: w, rpc: rpc(), jupiter: jup(), cfg: DEFAULTS, caps, startSol: readCfg().phantomStartSol, now });
     return new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-phantom.jsonl")), rug: rugOverride || rugCheck, startEq: readCfg().phantomStartSol, now });
