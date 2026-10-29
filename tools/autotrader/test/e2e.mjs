@@ -53,7 +53,7 @@ try {
   ok("a signal shows up in the log with its coin name");
   assert.equal(await page.locator(".agent").count(), 7); assert.equal(await page.locator("#termhost").isVisible(), true); assert.equal(await page.locator(".tm__node").count(), 2); ok("the terminal is on screen: seven agents, rug check and executor nodes, live flow");
   for (const t = Date.now(); !ch.W.sent.length && Date.now() - t < 10000;) await page.waitForTimeout(100);
-  assert.ok(ch.W.sent.length >= 1 && ch.W.quotes[0].amount === "32360000", "the buy went out as a signed 0.03236 SOL swap"); ok("the buy went out as a signed 0.03236 SOL Jupiter swap");
+  assert.ok(ch.W.sent.length >= 1 && ch.W.quotes[0].amount === "16180000", "the buy went out as a signed 0.01618 SOL swap"); ok("the buy went out as a signed 0.01618 SOL Jupiter swap");
   if (process.env.SHOTS) await page.screenshot({ path: path.join(process.env.SHOTS, "1.png"), fullPage: true });
   state.byPool = { X1: base, X3: up };
   state.pools = [...state.pools, { pool: "X1", name: "DULLCOIN", mint: "D".repeat(40) + "pump", created: 1_800_000_000_000, liqUsd: 1500, vol5: 99 }, { pool: "X3", name: "MOONBOY", mint: "M".repeat(40) + "pump", created: 1_800_000_000_000, liqUsd: 9000, vol5: 98 }];
