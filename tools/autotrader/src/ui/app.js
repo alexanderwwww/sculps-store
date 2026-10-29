@@ -189,7 +189,8 @@
           <div class="tm__result"><h4>Result · start vs now <span class="rs__since"></span></h4>
             <div class="rs__row"><span>start</span><div class="rs__bar"><i class="rs__s"></i></div><b class="rs__sv">–</b></div>
             <div class="rs__row"><span>now</span><div class="rs__bar"><i class="rs__n"></i></div><b class="rs__nv">–</b></div>
-            <small class="rs__wl"></small></div>
+            <small class="rs__wl"></small>
+            <div class="rs__goal"><span>goal</span><div class="rs__bar"><i class="rs__g"></i></div><b class="rs__gv">10 SOL</b></div></div>
           <div class="tm__log"><h4>Log <span>reading the log</span></h4><div class="lg__rows"></div></div>
         </section>
       </div>`;
@@ -327,6 +328,8 @@
         q(".rs__sv").textContent = s0.toFixed(4); tween(q(".rs__nv"), shownEq ?? n0, n0, (v) => v.toFixed(4)); shownEq = n0;
         q(".rs__wl").innerHTML = `<b class="up">${e.wins} W</b> / <b class="down">${e.trades - e.wins} L</b>`;
         q(".rs__since").textContent = t0 ? `since ${hhmm(t0)}` : "";
+        // his purpose: the first goal is 10 SOL (Alex)
+        { const have = (S.source === "own" ? S.own?.sol : S.sol) ?? 0, g = q(".rs__g"); g.style.width = `${Math.min(100, (have / 10) * 100).toFixed(2)}%`; q(".rs__gv").textContent = `${have.toFixed(3)} / 10 SOL`; }
         chart(e); trade(e);
         // the decisions since the last look go through the pipeline, newest last
         const evs = e.events || [];

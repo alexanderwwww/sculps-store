@@ -87,6 +87,20 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       if (st.state === "failed") return { status: "failed", why: `the chain rejected it: ${st.err}` };
       return { status: "pending" };
     },
+    /** sell a fraction of the position (Alex: take some out when it is up), keeping the token account open for the rest */
+    async sellPart({ mint, frac }) {
+      let accts;
+      try { accts = (await rpc.tokenAccounts(wallet.address, mint)).filter((a) => a.raw > 0n); } catch (e) { return { ok: false, why: `balance: ${e.message.slice(0, 100)}` }; }
+      const total = accts.reduce((a, x) => a + x.raw, 0n), amount = (total * BigInt(Math.round(frac * 1000))) / 1000n;
+      if (!(amount > 0n)) return { ok: false, why: "nothing to sell" };
+      let q, s;
+      try { q = await jupiter.quote({ input: mint, output: SOL_MINT, amount: amount.toString(), slippageBps: caps.sellSlippageBps }); if (!q.outAmount) return { ok: false, why: "no route to sell" }; s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: caps.maxFeeLamports }); }
+      catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}` }; }
+      const r = await exec.land(s.swapTransaction, { kind: "sell", mint });
+      if (!r.ok) return r;
+      let out = q.outAmount; const net = await rpc.netLamports(r.signature).catch(() => null); if (net != null) out = String(Math.max(0, net));
+      return { ok: true, sold: amount.toString(), left: (total - amount).toString(), outAmount: out, signature: r.signature };
+    },
     async sell({ mint }) {
       let accts;
       try { accts = (await rpc.tokenAccounts(wallet.address, mint)).filter((a) => a.raw > 0n); } catch (e) { return { ok: false, why: `balance: ${e.message.slice(0, 100)}` }; }

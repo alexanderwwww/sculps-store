@@ -84,6 +84,19 @@ export class Engine {
       const real = p.val != null && this.now() - p.valAt < 15000;
       const entry = real ? p.stake : p.entryPx, price = real ? p.val : lv.price;
       const pk = this.peaks.get(p.id); const peak = Math.max(pk && pk.real === real ? pk.v : entry, price); this.peaks.set(p.id, { v: peak, real });
+      // golden take (Alex): at +25% sell 38.2% (1 - 0.618). That banks 0.4775 of the stake; the 61.8% left rides the trail.
+      // Worst case after this (the win lock at +1%): 0.4775 + 0.618 x 1.01 = 1.10, so the trade ends at least about +10% before fees.
+      if (real && !p.partDone && this.exec.sellPart && c.tp > (c.partAt ?? 0.25) && price >= entry * (1 + (c.partAt ?? 0.25)) && price < entry * (1 + c.tp)) {
+        p.partDone = true;
+        const r = await this.exec.sellPart({ mint: p.mint, frac: c.partFrac ?? 0.382 }).catch((e) => ({ ok: false, why: e.message }));
+        if (r.ok) {
+          const got = Number(r.outAmount) / 1e9, f = c.partFrac ?? 0.382;
+          p.stake0 ??= p.stake; p.banked = (p.banked || 0) + got; p.stake = +(p.stake * (1 - f)).toFixed(6); p.tokens = r.left; p.val = null;
+          this.journal.write({ ...p, type: "open" });
+          this.#ev("sell", p.name, `golden take: sold 38.2% at +${Math.round((price / entry - 1) * 100)}%, banked ${got.toFixed(4)} SOL`, { ret: price / entry - 1, partial: true });
+          continue;
+        }
+      }
       let why = null;
       // lesson 10: one bad quote is noise (wifbot: stop -7% fired, the sale filled +2.2%). A stop needs two looks in a row below it, unless it is already far through.
       const under = price <= entry * (1 + c.sl); p.under = under ? (p.under || 0) + 1 : 0;
@@ -167,7 +180,7 @@ export class Engine {
       const r = (await this.exec.sell?.(p)) ?? { ok: true };
       if (!r.ok && !r.noBalance) { this.#err(`flatten ${p.name}`, new Error(r.why)); continue; }
       let ret = 0; if (r.ok && r.outAmount != null && r.inAmount != null && p.stake > 0) ret = Number(r.outAmount) / 1e9 / p.stake - 1;
-      const pnl = p.stake * ret;
+      const pnl = (p.stake0 ?? p.stake) * ret;
       this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why: "flatten", note: r.noBalance ? "the token was no longer in the wallet" : null });
       this.open.delete(p.id); this.closed.push({ ...p, type: "close", ret, pnl, why: "flatten" });
     }
@@ -209,7 +222,7 @@ export class Engine {
         else if (hold + 1 < 4) { this.sellTries.set(p.id, hold + 1); this.#err(`sell ${p.name}`, new Error(r.why)); return false; }   // try again next tick
         else note = `sell failed 4 times (${r.why}): ${this.exec.safety || "the position is still in the wallet: press Sell everything"}`;
       } else if (r.outAmount != null && r.inAmount != null && p.stake > 0) {
-        ret = Number(r.outAmount) / 1e9 / p.stake - 1;                                           // the real fill, not the model
+        ret = p.banked ? (Number(r.outAmount) / 1e9 + p.banked) / p.stake0 - 1 : Number(r.outAmount) / 1e9 / p.stake - 1;   // the real fill (plus anything banked on the way), not the model
       }
       const pnl = p.stake * ret;
       this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why, note, exitPx: x.exitPx });

@@ -252,3 +252,4 @@ header.top.slim { display: none; }
 .tm__orb.instinct b { background: #5b8cff; box-shadow: 0 0 10px #8fb0ff; }
 @keyframes instinct { 50% { transform: scale(1.1); filter: brightness(1.25); } }
 .logrow small:has(> span) { } .tl b:first-letter { }
+.rs__goal { display: grid; grid-template-columns: 50px 1fr auto; gap: 12px; align-items: center; margin-top: 12px; font-size: 12px; color: #f5d90a; text-transform: uppercase; } .rs__goal b { font: 800 14px var(--mono); color: #f5d90a; text-transform: none; } .rs__g { background: linear-gradient(90deg, #f5d90a, #ff9f43) !important; box-shadow: 0 0 16px rgba(245,217,10,.6); min-width: 3px; }
