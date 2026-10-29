@@ -141,6 +141,7 @@ export class Engine {
         if (!instinct) {
           if (mom == null) { quiet("live: watching its price first"); continue; }
           if (mom < (this.cfg.momMin ?? 0.10)) { quiet("live: not rising right now"); continue; }
+          if (mom > (this.cfg.momMax ?? 0.21)) { quiet("live: already ran too far"); continue; }   // lesson 34: over +21% in 30 s, 1 of 5 live entries won (MM, Hyper, XLIQUID, VI topped out); +10..21% won 2 of 2
         } else if (mom != null && mom < 0) { quiet("instinct: whales in but price falling"); continue; }
         const t = Math.floor(this.now() / 60000) * 60000, c0 = { t, o: lv.price, h: lv.price, l: lv.price, c: lv.price, v: lv.vol5 / 5 };
         this.cool.set(m.pool, this.now() + 30000);

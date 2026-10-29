@@ -18,7 +18,7 @@ const FILES = { status: "ul-status.json", order: "ul-order.json", log: "ul-log.j
 type Slot = keyof typeof FILES;
 type Env = { MEDIA: R2Bucket };
 const CMDS = ["start", "pause", "resume", "flatten", "set"];
-const SAFE = ["liveMinFlow", "strongVol5", "entryMinLiq", "partAt", "partFrac", "whaleUsd", "loserCoolMin", "liveMinLiq", "lockFrom", "lockAt", "liveMinVol5", "liveBuyRatio", "momSecs", "momMin", "staleMin", "staleRet", "nearHigh", "minAgeMin", "maxAgeMin", "breakoutLookback", "volSpike", "minGreen", "minLiqUsd", "sl", "tp", "trailFrom", "trail", "maxHoldMin", "cooldownMin", "maxChase", "minBuyShare", "edgeMinN", "edgeFloor"];
+const SAFE = ["liveMinFlow", "strongVol5", "entryMinLiq", "partAt", "partFrac", "whaleUsd", "loserCoolMin", "liveMinLiq", "lockFrom", "lockAt", "liveMinVol5", "liveBuyRatio", "momSecs", "momMin", "momMax", "staleMin", "staleRet", "nearHigh", "minAgeMin", "maxAgeMin", "breakoutLookback", "volSpike", "minGreen", "minLiqUsd", "sl", "tp", "trailFrom", "trail", "maxHoldMin", "cooldownMin", "maxChase", "minBuyShare", "edgeMinN", "edgeFloor"];
 
 const json = (v: unknown, status = 200) =>
   new Response(JSON.stringify(v), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*" } });

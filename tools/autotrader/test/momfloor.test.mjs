@@ -26,3 +26,29 @@ test("a losing run tightens momMin one golden step, capped at 16.18% (was 8%)", 
 test("a mixed run leaves it alone, but a saved 3.2% is lifted to the 10% floor", async () => {
   assert.equal(await closeOne({ momMin: 0.032, past: [0.12, 0.12], val: 0.009 }), 0.10);
 });
+
+// lesson 34: over +21% in 30 s the live path bought the top (MM +26.3%, Hyper +28.3%, XLIQUID +22.7%, VI +54.5% all lost). Cap it.
+async function liveTick(rise, cfg = {}) {
+  const now = 1_800_000_000_000;
+  const exec = { name: "paper", buy: async () => ({ ok: true }), sell: async () => ({ ok: true }) };
+  const feed = { quotes: async () => new Map([["P", { price: 1 + rise, liqUsd: 50000, buys5: 140, sells5: 105, vol5: 20000 }]]), newPools: async () => [], trendingPools: async () => [], candles: async () => [] };
+  const e = new Engine({ feed, exec, rug: async () => ({ pass: true, reason: "ok" }), journal: new Journal(path.join(fs.mkdtempSync(path.join(os.tmpdir(), "mx-")), "j.jsonl")), cfg: { ...DEFAULTS, momMin: 0.10, edgeMinN: 999, ...cfg }, now: () => now });
+  e.ready = [{ name: "T", mint: "M", pool: "P", liqUsd: 50000, vol5: 20000 }];
+  e.ph.set("P", [[now - 30000, 1]]);
+  await e.fast();
+  return { opened: e.open.size, why: e.status().whyNot };
+}
+test("a +26% tick is not bought: already ran too far", async () => {
+  const r = await liveTick(0.26);
+  assert.equal(r.opened, 0);
+  assert.ok(r.why["live: already ran too far"] >= 1, JSON.stringify(r.why));
+});
+test("a +15% tick (the band that won) still gets bought", async () => {
+  const r = await liveTick(0.15);
+  assert.equal(r.why["live: already ran too far"], undefined, JSON.stringify(r.why));
+  assert.equal(r.opened, 1, JSON.stringify(r.why));
+});
+test("the cap is tunable from the desk: momMax 0.30 lets +26% through", async () => {
+  const r = await liveTick(0.26, { momMax: 0.30 });
+  assert.equal(r.why["live: already ran too far"], undefined);
+});
