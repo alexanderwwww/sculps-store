@@ -92,6 +92,8 @@ export class Engine {
         if (r.ok) {
           const got = Number(r.outAmount) / 1e9, f = c.partFrac ?? 0.382;
           p.stake0 ??= p.stake; p.banked = (p.banked || 0) + got; p.stake = +(p.stake * (1 - f)).toFixed(6); p.tokens = r.left; p.val = null;
+          // lesson 20: the peak was the WHOLE position's value; after selling part it must shrink with it, or the rest looks +100% down and is dumped at once
+          { const pk = this.peaks.get(p.id); if (pk) this.peaks.set(p.id, { ...pk, v: pk.v * (1 - f) }); }
           this.journal.write({ ...p, type: "open" });
           this.#ev("sell", p.name, `golden take: sold 38.2% at +${Math.round((price / entry - 1) * 100)}%, banked ${got.toFixed(4)} SOL`, { ret: price / entry - 1, partial: true });
           continue;
