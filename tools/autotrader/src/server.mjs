@@ -44,6 +44,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
     // never refuse to run on a low balance: the SOL may be inside open positions, and only a running engine can sell them. Buys simply wait.
     if (bal < 0.0202) log(`wallet ${bal.toFixed(4)} SOL: running, buys wait until a sale brings SOL back`);
     if (readCfg().phantomStartSol == null) writeCfg({ phantomStartSol: bal });
+    Object.assign(DEFAULTS, readCfg().tuned || {});
     const exec = jupiterExec({ wallet: w, rpc: rpc(), jupiter: jup(), cfg: DEFAULTS, caps, startSol: readCfg().phantomStartSol, now });
     return new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-phantom.jsonl")), rug: rugOverride || rugCheck, startEq: readCfg().phantomStartSol, now });
   }
@@ -117,7 +118,9 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   });
   // a live update hands the port over: the new server retries for a few seconds while the old one closes
   const listening = new Promise((r, j) => { let n = 0; const tryListen = () => server.listen(port, "127.0.0.1", () => r(server.address().port)); server.on("error", (e) => { if (e.code === "EADDRINUSE" && n++ < 40) setTimeout(tryListen, 250); else j(e); }); tryListen(); });
-  const linkI = link ? startLink({ getState: () => ({ build, running: !!engine, mode, lastError, cfg: engine ? engine.cfg : null, applied: linkI?.applied || [], engine: engine ? engine.status() : null }), getEngine: () => engine, onStart: () => go("live") }) : null;
+  // strategy numbers Claude sets over the bridge survive restarts and live updates
+  const tuned = () => readCfg().tuned || {};
+  const linkI = link ? startLink({ getState: () => ({ build, running: !!engine, mode, lastError, cfg: engine ? engine.cfg : null, applied: linkI?.applied || [], engine: engine ? engine.status() : null }), getEngine: () => engine, onStart: () => go("live"), onSet: (cfg) => writeCfg({ tuned: { ...tuned(), ...cfg } }) }) : null;
   const close = () => new Promise((r) => { stopped = true; linkI?.stop(); if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); server.close(() => r()); server.closeAllConnections?.(); });
   // The app trades on its own: once the Phantom wallet is plugged in it starts on launch, and retries every 20 s if the network
   // or the balance is not ready. Only Stop ends that. In tests (no autoStart) it resumes only what was running.

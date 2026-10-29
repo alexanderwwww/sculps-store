@@ -13,7 +13,7 @@ export class Engine {
     this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.ready = []; this.cc = new Map(); this.live = new Map(); this.peaks = new Map(); this.closing = new Set(); this.events = []; this.seq = 0; this.watch = new Map(); this.watching = { total: 0, young: 0, thin: 0, ready: 0 }; this.paused = false; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = []; this.hist = new Map(); this.ph = new Map();
     this.ticks = 0; this.lastTickAt = null; this.startedAt = this.now(); this.counts = { drop: 0, block: 0, buy: 0, sell: 0, fail: 0 };
     // a restart (live update) must not forget which coins just lost: PODCAT was bought again right after a -12.5% loss
-    for (const c of this.closed) if (c.ret < 0 && c.pool && c.at && this.now() - c.at < (this.cfg.loserCoolMin ?? 60) * 60000) this.cool.set(c.pool, c.at + (this.cfg.loserCoolMin ?? 60) * 60000);
+    for (const c of this.closed) if (c.ret < 0 && c.at && this.now() - c.at < (this.cfg.loserCoolMin ?? 60) * 60000) { const until = c.at + (this.cfg.loserCoolMin ?? 60) * 60000; if (c.pool) this.cool.set(c.pool, until); if (c.mint) this.cool.set(c.mint, until); }
   }
   get equity() { return this.startEq + this.closed.reduce((s, c) => s + (c.pnl || 0), 0); }
   /** The background paper book: every signal that passed the filters, taken or not, run through the same exit rules. */
@@ -89,7 +89,7 @@ export class Engine {
     if (this.paused || this.open.size >= this.cfg.maxOpen) return;
     for (const m of this.ready) {
       if (this.open.size >= this.cfg.maxOpen || this.paused) break;
-      if ([...this.open.values()].some((p) => p.pool === m.pool) || this.cool.get(m.pool) > this.now()) continue;
+      if ([...this.open.values()].some((p) => p.pool === m.pool || p.mint === m.mint) || this.cool.get(m.pool) > this.now() || this.cool.get(m.mint) > this.now()) continue;
       const lv = this.live.get(m.pool), hit = this.cc.get(m.pool);
       const quiet = (k) => this.skips.set(k, (this.skips.get(k) || 0) + 1);   // counted for the bridge, not logged one by one
       if (!lv || this.now() - lv.at > 15000) { quiet("waiting: no live price yet"); continue; }
@@ -192,7 +192,7 @@ export class Engine {
       }
       const pnl = p.stake * ret;
       this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why, note, exitPx: x.exitPx });
-      this.cool.set(p.pool, this.now() + (ret < 0 ? (this.cfg.loserCoolMin ?? 60) : this.cfg.cooldownMin) * 60000);   // lesson 7: a coin that just lost gets an hour off (FLOAT x4)       // never re-enter the same coin straight after an exit
+      { const until = this.now() + (ret < 0 ? (this.cfg.loserCoolMin ?? 60) : this.cfg.cooldownMin) * 60000; this.cool.set(p.pool, until); if (p.mint) this.cool.set(p.mint, until); }   // by coin, not just by pool (PODCAT x3)   // lesson 7: a coin that just lost gets an hour off (FLOAT x4)       // never re-enter the same coin straight after an exit
       this.open.delete(p.id); this.sellTries.delete(p.id); this.peaks.delete(p.id); this.hist.delete(p.id);
       this.closed.push({ ...p, type: "close", ret, pnl, why, note, at: this.now() });
       // it teaches itself (golden ratio): losing streak -> demand more momentum before buying; winning -> relax back toward 2%

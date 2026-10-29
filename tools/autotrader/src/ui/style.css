@@ -241,3 +241,10 @@ header.top.slim { display: none; }
 .tm__go { margin-top: 12px; font-family: -apple-system, system-ui, sans-serif; } .tm__go button { font-size: 15px; padding: 12px 22px; }
 .plug { display: flex; gap: 10px; max-width: 640px; } .plug input { margin: 0; flex: 1; font-size: 13px; } .tm__go .note { max-width: 640px; }
 .tr__sell { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; font-family: -apple-system, system-ui, sans-serif; } .tr__sell button { padding: 8px 12px; font: 700 12px var(--mono); }
+
+/* the face feels it: empowered on a win, focused on a buy, a wince on a loss */
+.tm__orb.power { animation: power 1s ease-in-out 4; box-shadow: 0 0 0 3px rgba(74,222,128,.8), 0 0 70px 10px rgba(74,222,128,.6), inset 0 -8px 18px rgba(0,0,0,.25); }
+.tm__orb.power b { height: 14px; width: 14px; border-radius: 14px 14px 0 0; background: transparent; border: 5px solid #0b0c10; border-bottom: 0; animation: none; transform: translateY(-4px); }
+@keyframes power { 0%, 100% { transform: translateY(0) scale(1); } 40% { transform: translateY(-10px) scale(1.12) rotate(-4deg); } 70% { transform: translateY(0) scale(1.06) rotate(3deg); } }
+.tm__orb.hunt { box-shadow: 0 0 0 2px rgba(52,225,232,.8), 0 0 50px 4px rgba(52,225,232,.5), inset 0 -8px 18px rgba(0,0,0,.25); } .tm__orb.hunt b { height: 20px; transform: scaleX(1.2); }
+.tm__orb.hurt { animation: shake .5s; box-shadow: 0 0 0 2px rgba(255,77,109,.7), 0 0 40px rgba(255,77,109,.5); } .tm__orb.hurt b { height: 6px; border-radius: 3px; animation: none; }

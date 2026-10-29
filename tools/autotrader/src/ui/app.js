@@ -252,6 +252,7 @@
       if (ev.type === "sell") stat("exec", `EXIT ${tkn(ev.name)} · ${ev.why}`);
       await run(".w3", ev.type === "sell" ? (ev.ret >= 0 ? "#4ade80" : "#ff4d6d") : "#ff9f43", 600);
       light("log", 1200); tail(ev); logRow(ev);
+      if (ev.type === "sell" || ev.type === "buy") { const o = q(".tm__orb"), k = ev.type === "buy" ? "hunt" : ev.ret >= 0 ? "power" : "hurt"; o.classList.remove("power", "hurt", "hunt"); void o.offsetWidth; o.classList.add(k); clearTimeout(o._t); o._t = setTimeout(() => o.classList.remove(k), k === "power" ? 4000 : 1600); }   // the face feels it
       if (ev.type === "sell") { light("eq", 1500); const r = stage.getBoundingClientRect(); fx.burst(r.right - 90, r.top + r.height / 2, ev.ret >= 0); }
       if (ev.type === "buy") { const r = stage.getBoundingClientRect(); fx.burst(r.right - 90, r.top + r.height / 2, true); }
     };

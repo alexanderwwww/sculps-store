@@ -3,7 +3,7 @@
 export const DEFAULT_LINK = "https://kerberos.gardenbuddystore.workers.dev/ultra/YFu9uEm3fUwr928Yn70Qov73wVWbEZj";
 export const SAFE_KEYS = ["loserCoolMin", "liveMinLiq", "lockFrom", "lockAt", "liveMinVol5", "liveBuyRatio", "momSecs", "momMin", "staleMin", "staleRet", "nearHigh", "minAgeMin", "maxAgeMin", "breakoutLookback", "volSpike", "minGreen", "minLiqUsd", "sl", "tp", "trailFrom", "trail", "maxHoldMin", "cooldownMin", "maxChase", "minBuyShare", "edgeMinN", "edgeFloor"];
 
-export function startLink({ base = process.env.ULTRA_LINK || DEFAULT_LINK, getState, getEngine, onStart = null, fetchImpl = fetch, statusMs = 10000, orderMs = 4000 } = {}) {
+export function startLink({ base = process.env.ULTRA_LINK || DEFAULT_LINK, getState, getEngine, onStart = null, onSet = null, fetchImpl = fetch, statusMs = 10000, orderMs = 4000 } = {}) {
   if (!base || base === "off") return { stop() {}, lastError: null };
   const root = String(base).replace(/\/+$/, "");
   const self = { lastError: null, applied: [], stop() { clearInterval(a); clearInterval(b); } };
@@ -29,7 +29,7 @@ export function startLink({ base = process.env.ULTRA_LINK || DEFAULT_LINK, getSt
       if (o.cmd === "pause") eng.paused = true;
       else if (o.cmd === "resume") eng.paused = false;
       else if (o.cmd === "flatten") await eng.flatten();
-      else if (o.cmd === "set" && o.cfg) for (const [k, v] of Object.entries(o.cfg)) if (SAFE_KEYS.includes(k) && Number.isFinite(v)) eng.cfg[k] = v;
+      else if (o.cmd === "set" && o.cfg) { const ok = {}; for (const [k, v] of Object.entries(o.cfg)) if (SAFE_KEYS.includes(k) && Number.isFinite(v)) { eng.cfg[k] = v; ok[k] = v; } onSet?.(ok); }
       self.applied.push({ cmd: o.cmd, cfg: o.cfg, at: Date.now() }); self.applied = self.applied.slice(-10);
     } catch (e) { self.lastError = `order ${o.cmd}: ${e.message}`; }
   }, orderMs);
