@@ -52,7 +52,16 @@ test("a signal opens, the target closes it, and the state shows the trade with i
   assert.ok(st.engine.equity > 100);
   assert.equal(st.engine.curve[0], 100);
   assert.ok(st.engine.watching.thin >= 1, "the thin pool is counted as too thin");
+  // the organism learned from the close and saved it (survives a restart); size and caps are never written
+  const saved = JSON.parse(fs.readFileSync(path.join(s.dir, "config.json"), "utf8")).tuned;
+  assert.ok(saved.org && saved.org.g.n > 0 && saved.org.book.length === 1, JSON.stringify(saved).slice(0, 200));
+  assert.equal(saved.size, undefined); assert.equal(saved.caps, undefined); assert.equal(saved.org.idle, undefined);
+  assert.ok(st.engine.organism && st.engine.organism.g.n > 0);
   await s.app.close();
+  const again = start({ dataDir: s.dir, port: 0, feed: fakeFeed().feed, now: () => s.state.now, quiet: true, tickMs: 80, execOverride: { name: "live", source: "stub", buy: async () => ({ ok: true }), sell: async () => ({ ok: true }) }, rug: async () => ({ pass: true, reason: "ok" }) });
+  await again.listening; await s.until(async () => again.engine);
+  assert.equal(+again.engine.org.g.n.toFixed(6), +saved.org.g.n.toFixed(6), "the same organism after a restart");
+  await again.close();
 });
 test("pause stops new buys, resume starts them again", async () => {
   const s = await boot();
@@ -120,8 +129,9 @@ test("PHANTOM: paste the private key once -> it trades that wallet, 0.02618 SOL 
   assert.equal(s.plugged.running, true, "plugging in starts trading by itself");
   const st = await s.until(async () => { const x = await s.get("/api/state"); return x.engine?.open.length === 1 ? x : null; });
   assert.equal(st.source, "phantom"); assert.equal(st.own.address, s.key.address); assert.equal(st.setup.imported, true);
-  assert.equal(st.engine.open[0].stake, 0.02618); assert.equal(st.caps.fixedSol, 0.02618); assert.equal(st.caps.perHour, 200);
-  assert.equal(s.ch.W.quotes[0].amount, "26180000", "the Jupiter quote is for exactly 0.02618 SOL");
+  // build 52: a cold organism (fewer than 13 closes measured) buys at 0.618 of the 0.02618 size; it is never above it
+  assert.equal(st.engine.open[0].stake, 0.01618); assert.equal(st.caps.fixedSol, 0.02618); assert.equal(st.caps.perHour, 200);
+  assert.equal(s.ch.W.quotes[0].amount, "16180000", "the Jupiter quote is for exactly 0.618 x 0.02618 SOL");
   assert.equal(s.ch.W.lastSwap.userPublicKey, s.key.address, "the swap is for the plugged-in wallet");
   const text = JSON.stringify(st);
   assert.ok(!text.includes(s.key.secret), "the key never appears in the state"); assert.doesNotMatch(text, /PRIVATE KEY|walletPem/);
