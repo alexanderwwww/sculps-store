@@ -83,7 +83,15 @@ export class Engine {
       const lv = this.live.get(m.pool), hit = this.cc.get(m.pool);
       const quiet = (k) => this.skips.set(k, (this.skips.get(k) || 0) + 1);   // counted for the bridge, not logged one by one
       if (!lv || this.now() - lv.at > 15000) { quiet("waiting: no live price yet"); continue; }
-      if (!hit || hit.cs.length < 6) { quiet("waiting: chart not loaded yet"); continue; }   // brand-new coins have only a few minutes of chart
+      if (!hit || hit.cs.length < 6) {
+        // Alex 2026-10-29: never wait on a chart. Live volume + buyers ahead = buy, straight from the live price.
+        const flow = (lv.buys5 || 0) + (lv.sells5 || 0);
+        if (!((lv.vol5 || 0) >= 1500 && flow >= 10 && lv.buys5 > lv.sells5)) { quiet("live: volume or buyers too thin"); continue; }
+        const t = Math.floor(this.now() / 60000) * 60000, c0 = { t, o: lv.price, h: lv.price, l: lv.price, c: lv.price, v: lv.vol5 / 5 };
+        this.cool.set(m.pool, this.now() + 30000);
+        await this.#consider(m, Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), { ok: true, why: `live volume $${Math.round(lv.vol5)} in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` });
+        continue;
+      }
       // the chart so far, plus the minute in progress built from the live price
       const cs = hit.cs.slice(), last = cs[cs.length - 1], minute = Math.floor(this.now() / 60000) * 60000;
       if (last.t >= minute) cs[cs.length - 1] = { ...last, c: lv.price, h: Math.max(last.h, lv.price), l: Math.min(last.l, lv.price), v: Math.max(last.v, lv.vol5 / 5) };
