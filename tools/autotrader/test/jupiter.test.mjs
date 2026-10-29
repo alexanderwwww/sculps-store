@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { walletFromPem, signSwapTransaction, buildCloseAccountTx, b58encode, b58decode, Rpc, Jupiter } from "../src/lib/solana.mjs";
 import { jupiterExec, CAPS, SOL_MINT } from "../src/lib/exec-jupiter.mjs";
-import { KIMCHI } from "../src/lib/exec-gmgn.mjs";
+import { KIMCHI } from "../src/lib/exec-jupiter.mjs";
 import { Engine } from "../src/lib/engine.mjs";
 import { Journal } from "../src/lib/journal.mjs";
 import { DEFAULTS } from "../src/lib/strategy.mjs";

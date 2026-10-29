@@ -1,5 +1,5 @@
 // Keys live in one file beside the records, mode 600, and never leave this Mac. The signing key is generated HERE,
-// so the private half is never typed, pasted, sent or shown: only the public half is shown, to paste into GMGN.
+// It holds one thing that matters: the Phantom wallet key Alex pastes once. Never shown, never sent.
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -35,7 +35,7 @@ export class Secrets {
   }
   get walletPem() { return this.d.walletPem || null; }
   get imported() { return !!this.d.walletImported; }
-  /** Alex's own wallet, plugged in once (Alex, 2026-10-29): the private key exported from GMGN, base58 (64 or 32 bytes) or a
+  /** Alex's own wallet, plugged in once (Alex, 2026-10-29): the private key exported from Phantom, base58 (64 or 32 bytes) or a
    *  JSON byte array. Kept only in this file (mode 600) on his Mac; never sent anywhere. Any earlier key is kept, never lost. */
   importWallet(secret) {
     const t = String(secret || "").trim();

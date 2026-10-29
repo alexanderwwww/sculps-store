@@ -1,7 +1,8 @@
 // Ultra trades from its OWN wallet, straight through Jupiter. No API keys, no whitelist, nothing to copy.
 // Same promises as the GMGN executor: caps, halt, never Kimchi; every send is journalled by the engine first.
 import { signSwapTransaction, buildCloseAccountTx } from "./solana.mjs";
-import { KIMCHI, CAPS as BASE } from "./exec-gmgn.mjs";
+export const KIMCHI = "CSocnzcRpgSCr1naKcNTieWZUxb6rABe45j844m7pump";
+const BASE = { maxSolPerTrade: 0.05, perHour: 30, perDay: 200, floorFrac: 0.7 };
 export const SOL_MINT = "So11111111111111111111111111111111111111112";
 export const PLUG_CAPS_EXTRA = { fixedSol: 0.01618, perHour: 200, perDay: 2000, floorFrac: 0.05, reserveSol: 0.004 };
 export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.06, buySlippageBps: 2000, sellSlippageBps: 3500, maxFeeLamports: 150000, confirmMs: 45000, pollMs: 1500 };
