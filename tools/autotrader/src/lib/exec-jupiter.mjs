@@ -22,18 +22,19 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       const q = await jupiter.quote({ input: p.mint, output: SOL_MINT, amount: String(p.tokens), slippageBps: caps.sellSlippageBps });
       return Number(q.outAmount) / 1e9;
     },
-    async sizeSol({ streak = 0 } = {}) {
+    async sizeSol({ streak = 0, scale = 1 } = {}) {
       const bal = await exec.balance();
       if (state.startSol == null) state.startSol = bal;
       const spendable = Math.max(0, bal - caps.reserveSol);
       if (caps.fixedSol) {
         // golden-ratio scale (Alex 2026-10-29): base 0.01618 SOL, x1.618 for each win in a row (at most 3 steps), back to base after any loss;
         // never more than a quarter of the wallet on one buy.
-        if (spendable < caps.fixedSol) return { bal, sol: 0 };
+        const floor = +(caps.fixedSol * Math.min(1, scale)).toFixed(5);
+        if (spendable < floor) return { bal, sol: 0 };
         // Alex's heavier rocks: 0.5 SOL in the wallet -> base 0.1618; 1 SOL -> 0.1618 x 1.618 = 0.2618; below 0.5 -> 0.01618
         const base = bal >= 1 ? 0.2618 : bal >= 0.5 ? 0.1618 : caps.fixedSol;
         const step = Math.min(3, Math.max(0, streak)), want = base * Math.pow(1.618, step);
-        return { bal, sol: +Math.max(caps.fixedSol, Math.min(want, spendable * 0.35)).toFixed(5) };
+        return { bal, sol: +Math.max(floor, Math.min(want * scale, spendable * 0.35)).toFixed(5) };
       }
       return { bal, sol: Math.min(caps.maxSolPerTrade, +(spendable * cfg.stakeFrac).toFixed(4)) };
     },

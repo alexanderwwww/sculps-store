@@ -131,7 +131,7 @@ export class Engine {
       if (!hit || hit.cs.length < 6) {
         // Alex 2026-10-29: never wait on a chart. Live volume + buyers ahead = buy, straight from the live price.
         const flow = (lv.buys5 || 0) + (lv.sells5 || 0);
-        if (!((lv.vol5 || 0) >= (this.cfg.liveMinVol5 ?? 3000) && flow >= 15 && lv.buys5 >= lv.sells5 * (this.cfg.liveBuyRatio ?? 1.15))) { quiet("live: volume or buyers too thin"); continue; }
+        if (!((lv.vol5 || 0) >= (this.cfg.liveMinVol5 ?? 3000) && flow >= (this.cfg.liveMinFlow ?? 8) && lv.buys5 >= lv.sells5 * (this.cfg.liveBuyRatio ?? 1.15))) { quiet("live: volume or buyers too thin"); continue; }
         // lesson 1 (2026-10-29 live data): buying a coin that is not moving = sitting at the cost of entry. Buy only a coin already rising.
         const mom = this.#mom(m.pool, this.cfg.momSecs ?? 30);
         // lesson 3: thin pools rug and slip (KIMWIFHAT -80%, Trump stop -8% filled at -19%). Only pools deep enough to get out of.
@@ -305,7 +305,10 @@ export class Engine {
     const id = `${m.mint.slice(0, 6)}-${this.now()}`;
     let stake = this.equity * this.cfg.stakeFrac;
     let streak = 0; for (let k = this.closed.length - 1; k >= 0 && this.closed[k].ret > 0; k--) streak++;
-    if (this.exec.sizeSol) { try { stake = (await this.exec.sizeSol({ streak })).sol; } catch (err) { this.#skip(m.name, `wallet balance: ${err.message.slice(0, 60)}`); return; } }
+    // lesson 30 (Alex: "not sure -> smaller position"): a strong coin (big volume, buyers well ahead, or whales) gets the full size,
+    // a weaker one gets 0.618 of it. Trades all the time, risks less on the doubtful ones.
+    const lvc = this.live.get(m.pool) || {}, strong = /ULTRA INSTINCT/.test(s.why || "") || ((lvc.vol5 || 0) >= (this.cfg.strongVol5 ?? 15000) && (lvc.buys5 || 0) >= 1.2 * (lvc.sells5 || 0));
+    if (this.exec.sizeSol) { try { stake = (await this.exec.sizeSol({ streak, scale: strong ? 1 : 0.618 })).sol; } catch (err) { this.#skip(m.name, `wallet balance: ${err.message.slice(0, 60)}`); return; } }
     this.journal.write({ type: "intent", id, name: m.name, mint: m.mint, enter: s.why });   // on disk BEFORE anything is done
     const f = await this.exec.buy({ mint: m.mint, pool: m.pool, usd: stake });
     if (!f.ok && f.unknown && f.orderId) {
