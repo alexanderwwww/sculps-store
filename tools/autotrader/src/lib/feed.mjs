@@ -1,4 +1,4 @@
-import { newPools, trendingPools, dexPools, candles, multi } from "./gecko.mjs";
+import { newPools, trendingPools, dexPools, trades, candles, multi } from "./gecko.mjs";
 import { getJsonFast } from "./net.mjs";
 /** Live price, liquidity and 5-minute flow for many pools in one fast call (DexScreener, 30 pools each). */
 export async function quotes(pools) {
@@ -13,4 +13,4 @@ export async function quotes(pools) {
   }
   return out;
 }
-export const liveFeed = { newPools, trendingPools, pumpPools: (p = 1) => dexPools("pump-fun", p), bondedPools: (p = 1) => dexPools("pumpswap", p), candles, multi, quotes };
+export const liveFeed = { newPools, trendingPools, pumpPools: (p = 1) => dexPools("pump-fun", p), bondedPools: (p = 1) => dexPools("pumpswap", p), trades, candles, multi, quotes };

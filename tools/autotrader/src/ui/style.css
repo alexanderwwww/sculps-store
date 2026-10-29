@@ -248,3 +248,7 @@ header.top.slim { display: none; }
 @keyframes power { 0%, 100% { transform: translateY(0) scale(1); } 40% { transform: translateY(-10px) scale(1.12) rotate(-4deg); } 70% { transform: translateY(0) scale(1.06) rotate(3deg); } }
 .tm__orb.hunt { box-shadow: 0 0 0 2px rgba(52,225,232,.8), 0 0 50px 4px rgba(52,225,232,.5), inset 0 -8px 18px rgba(0,0,0,.25); } .tm__orb.hunt b { height: 20px; transform: scaleX(1.2); }
 .tm__orb.hurt { animation: shake .5s; box-shadow: 0 0 0 2px rgba(255,77,109,.7), 0 0 40px rgba(255,77,109,.5); } .tm__orb.hurt b { height: 6px; border-radius: 3px; animation: none; }
+.tm__orb.instinct { background: radial-gradient(circle at 35% 30%, #fff 0, #e8ecf4 40%, #b9c3d8 100%); box-shadow: 0 0 0 3px rgba(190,210,255,.9), 0 0 90px 18px rgba(160,190,255,.75), 0 0 160px 30px rgba(140,120,255,.35); animation: instinct 1.2s ease-in-out 3; }
+.tm__orb.instinct b { background: #5b8cff; box-shadow: 0 0 10px #8fb0ff; }
+@keyframes instinct { 50% { transform: scale(1.1); filter: brightness(1.25); } }
+.logrow small:has(> span) { } .tl b:first-letter { }

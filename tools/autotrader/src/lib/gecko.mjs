@@ -14,6 +14,8 @@ function shape(p) {
 export const newPools = async (page = 1) => (await getJson(`${B}/new_pools?page=${page}`)).data.map(shape);
 /** pump.fun by 24h volume: "pump-fun" = still on the bonding curve (new creations and about to bond), "pumpswap" = bonded. */
 export const dexPools = async (dex, page = 1) => (await getJson(`${B}/dexes/${dex}/pools?sort=h24_volume_usd_desc&page=${page}`)).data.map(shape);
+/** the pool's recent big trades (Ultra Instinct): [{kind:'buy'|'sell', usd, t, from}] newest first */
+export const trades = async (pool, minUsd = 300) => (await getJson(`${B}/pools/${pool}/trades?trade_volume_in_usd_greater_than=${minUsd}`)).data.map((x) => ({ kind: x.attributes.kind, usd: Number(x.attributes.volume_in_usd), t: Date.parse(x.attributes.block_timestamp), from: x.attributes.tx_from_address }));
 export const trendingPools = async (page = 1) => (await getJson(`${B}/trending_pools?page=${page}`)).data.map(shape);
 /** minute candles, oldest first: {t(ms), o, h, l, c, v}. `before` is a unix-second cursor for older pages. */
 export async function candles(pool, { aggregate = 1, limit = 1000, before } = {}) {

@@ -10,7 +10,7 @@ export class Engine {
     this.pending = r.pending;                 // intents with no fill: reconciled below, never forgotten
     for (const e of this.pending.values()) this.journal.write({ type: "fail", id: e.id, why: "restart before fill" });
     this.pending.clear();
-    this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.ready = []; this.cc = new Map(); this.live = new Map(); this.peaks = new Map(); this.closing = new Set(); this.events = []; this.seq = 0; this.watch = new Map(); this.watching = { total: 0, young: 0, thin: 0, ready: 0 }; this.paused = false; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = []; this.hist = new Map(); this.ph = new Map(); this.lastDrop = new Map();
+    this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.ready = []; this.cc = new Map(); this.live = new Map(); this.peaks = new Map(); this.closing = new Set(); this.events = []; this.seq = 0; this.watch = new Map(); this.watching = { total: 0, young: 0, thin: 0, ready: 0 }; this.paused = false; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = []; this.hist = new Map(); this.ph = new Map(); this.lastDrop = new Map(); this.whale = new Map(); this.whaleAt = new Map();
     this.ticks = 0; this.lastTickAt = null; this.startedAt = this.now(); this.counts = { drop: 0, block: 0, buy: 0, sell: 0, fail: 0 };
     // a restart (live update) must not forget which coins just lost: PODCAT was bought again right after a -12.5% loss
     for (const c of this.closed) if (c.ret < 0 && c.at && this.now() - c.at < (this.cfg.loserCoolMin ?? 60) * 60000) { const until = c.at + (this.cfg.loserCoolMin ?? 60) * 60000; if (c.pool) this.cool.set(c.pool, until); if (c.mint) this.cool.set(c.mint, until); }
@@ -47,6 +47,19 @@ export class Engine {
         try { this.cc.set(pool, { cs: await this.feed.candles(pool, { limit: 100 }), at: this.now() }); } catch (e) { this.#err(`candles ${pool.slice(0, 6)}`, e); }
       }
       for (const [k, v] of this.cc) if (this.now() - v.at > 600000) this.cc.delete(k);
+      // ULTRA INSTINCT: read the big trades (whales) on what we hold and on the busiest coins we are close to buying, 2 pools a cycle
+      if (this.feed.trades) {
+        const hot = [...[...this.open.values()].map((p) => p.pool), ...[...this.ready].sort((a, b) => (b.vol5 || 0) - (a.vol5 || 0)).map((m) => m.pool)].filter((p, i, a) => a.indexOf(p) === i && !(this.now() - (this.whaleAt.get(p) || 0) < 30000)).slice(0, 2);
+        for (const pool of hot) {
+          this.whaleAt.set(pool, this.now());
+          try {
+            const liq = this.live.get(pool)?.liqUsd || this.watch.get(pool)?.liqUsd || 0, big = Math.max(400, liq * 0.02), since = this.now() - 120000;
+            const tr = (await this.feed.trades(pool, 300)).filter((x) => x.t >= since && x.usd >= big);
+            const buy = tr.filter((x) => x.kind === "buy").reduce((a, x) => a + x.usd, 0), sell = tr.filter((x) => x.kind === "sell").reduce((a, x) => a + x.usd, 0);
+            this.whale.set(pool, { buy, sell, whales: new Set(tr.filter((x) => x.kind === "buy").map((x) => x.from)).size, at: this.now() });
+          } catch (e) { this.#err(`whales ${pool.slice(0, 6)}`, e); }
+        }
+      }
     } catch (e) { this.#err("slow", e); }
   }
   /** The fast lane (every few seconds): live prices for everything that matters -> exits first, then entries. */
@@ -76,6 +89,7 @@ export class Engine {
       const under = price <= entry * (1 + c.sl); p.under = under ? (p.under || 0) + 1 : 0;
       if (under && (p.under >= 2 || price <= entry * (1 + c.sl * 1.3))) why = `stop ${Math.round(c.sl * 100)}%`;
       else if (under) why = null;
+      else if ((() => { const w = this.whale.get(p.pool); return w && this.now() - w.at < 60000 && w.sell >= (this.cfg.whaleUsd ?? 1500) && w.sell >= 2 * w.buy; })()) why = "ULTRA INSTINCT: whales leaving";
       else if (peak >= entry * (1 + (c.lockFrom ?? 0.04)) && price <= entry * (1 + (c.lockAt ?? 0.01))) why = `locked: was up ${Math.round((peak / entry - 1) * 100)}%, out before it turns red`;   // lesson 4: a winner never becomes a loser
       else if (peak >= entry * (1 + c.trailFrom) && price <= peak * (1 - c.trail)) why = `trailing stop from +${Math.round((peak / entry - 1) * 100)}%`;
       else if (price >= entry * (1 + c.tp)) why = `take profit +${c.tp * 100}%`;
@@ -105,11 +119,14 @@ export class Engine {
         const mom = this.#mom(m.pool, this.cfg.momSecs ?? 30);
         // lesson 3: thin pools rug and slip (KIMWIFHAT -80%, Trump stop -8% filled at -19%). Only pools deep enough to get out of.
         if ((lv.liqUsd ?? 0) < (this.cfg.liveMinLiq ?? 15000)) { quiet("live: pool too thin to get out of"); continue; }
-        if (mom == null) { quiet("live: watching its price first"); continue; }
-        if (mom < (this.cfg.momMin ?? 0.02)) { quiet("live: not rising right now"); continue; }
+        const w = this.whale.get(m.pool), instinct = w && this.now() - w.at < 60000 && w.buy >= (this.cfg.whaleUsd ?? 1500) && w.buy >= 2 * w.sell;
+        if (!instinct) {
+          if (mom == null) { quiet("live: watching its price first"); continue; }
+          if (mom < (this.cfg.momMin ?? 0.02)) { quiet("live: not rising right now"); continue; }
+        } else if (mom != null && mom < 0) { quiet("instinct: whales in but price falling"); continue; }
         const t = Math.floor(this.now() / 60000) * 60000, c0 = { t, o: lv.price, h: lv.price, l: lv.price, c: lv.price, v: lv.vol5 / 5 };
         this.cool.set(m.pool, this.now() + 30000);
-        await this.#consider(m, Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), { ok: true, why: `rising ${(mom * 100).toFixed(1)}% in ${this.cfg.momSecs ?? 30}s, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` });
+        await this.#consider(m, Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), { ok: true, why: instinct ? `ULTRA INSTINCT: ${w.whales} whale${w.whales === 1 ? "" : "s"} bought $${Math.round(w.buy)} in 2 min (sold $${Math.round(w.sell)})` : `rising ${((mom || 0) * 100).toFixed(1)}% in ${this.cfg.momSecs ?? 30}s, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` });
         continue;
       }
       // the chart so far, plus the minute in progress built from the live price
