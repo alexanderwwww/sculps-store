@@ -67,6 +67,7 @@ export class Engine {
       const peak = Math.max(this.peaks.get(p.id) ?? entry, price); this.peaks.set(p.id, peak);
       let why = null;
       if (price <= entry * (1 + c.sl)) why = `stop ${c.sl * 100}%`;
+      else if (peak >= entry * (1 + (c.lockFrom ?? 0.04)) && price <= entry * (1 + (c.lockAt ?? 0.01))) why = `locked: was up ${Math.round((peak / entry - 1) * 100)}%, out before it turns red`;   // lesson 4: a winner never becomes a loser
       else if (peak >= entry * (1 + c.trailFrom) && price <= peak * (1 - c.trail)) why = `trailing stop from +${Math.round((peak / entry - 1) * 100)}%`;
       else if (price >= entry * (1 + c.tp)) why = `take profit +${c.tp * 100}%`;
       else if (this.now() - p.at >= c.maxHoldMin * 60000) why = "time stop";
@@ -92,6 +93,8 @@ export class Engine {
         if (!((lv.vol5 || 0) >= (this.cfg.liveMinVol5 ?? 3000) && flow >= 15 && lv.buys5 >= lv.sells5 * (this.cfg.liveBuyRatio ?? 1.15))) { quiet("live: volume or buyers too thin"); continue; }
         // lesson 1 (2026-10-29 live data): buying a coin that is not moving = sitting at the cost of entry. Buy only a coin already rising.
         const mom = this.#mom(m.pool, this.cfg.momSecs ?? 30);
+        // lesson 3: thin pools rug and slip (KIMWIFHAT -80%, Trump stop -8% filled at -19%). Only pools deep enough to get out of.
+        if ((lv.liqUsd ?? 0) < (this.cfg.liveMinLiq ?? 15000)) { quiet("live: pool too thin to get out of"); continue; }
         if (mom == null) { quiet("live: watching its price first"); continue; }
         if (mom < (this.cfg.momMin ?? 0.02)) { quiet("live: not rising right now"); continue; }
         const t = Math.floor(this.now() / 60000) * 60000, c0 = { t, o: lv.price, h: lv.price, l: lv.price, c: lv.price, v: lv.vol5 / 5 };
