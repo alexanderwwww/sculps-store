@@ -285,8 +285,13 @@ export class Engine {
   /** A signal exists. Rug check, shadow book, edge gate, size, buy, record. Everything past here is on disk first. */
   async #consider(m, cs, s) {
     const i = cs.length - 1;
-    if (!this.rugCache.has(m.mint)) this.rugCache.set(m.mint, await this.rug(m.mint));
+    // the rug check is re-run every 10 minutes (a coin that was clean an hour ago can be pulled now), and EVERY entry path must
+    // pass the liquidity floor, not only the live one (리핀 came in through the chart path and went to -100%)
+    const rc = this.rugCache.get(m.mint);
+    if (!rc || this.now() - (rc.at || 0) > 600000) this.rugCache.set(m.mint, { ...(await this.rug(m.mint)), at: this.now() });
     const r = this.rugCache.get(m.mint);
+    const liqNow = this.live.get(m.pool)?.liqUsd ?? m.liqUsd ?? 0;
+    if (liqNow < (this.cfg.entryMinLiq ?? 0)) { this.#skip(m.name, "pool too thin to get out of"); this.#ev("drop", m.name, "pool too thin to get out of"); return; }
     if (!r.pass) { this.#skip(m.name, `rug check: ${r.reason}`); this.#ev("block", m.name, r.reason); this.cool.set(m.pool, this.now() + 3600e3); return; }
     if (!this.shadow.has(m.pool)) { const sp = { name: m.name, candleT: cs[i].t, entryPx: cs[i].c * (1 + this.cfg.slippage), at: this.now() }; this.shadow.set(m.pool, sp); this.journal.write({ type: "shadow-open", pool: m.pool, ...sp }); }
     const e = this.edge();
