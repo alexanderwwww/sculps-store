@@ -17,8 +17,9 @@ export function startLink({ base = process.env.ULTRA_LINK || DEFAULT_LINK, getSt
   let logged = 0;   // every decision (buy, sell, filter, skip) also goes to the log, so Claude collects the full history to tune from
   const a = setInterval(() => { try {
     const st = getState(); call("POST", "status", { at: Date.now(), ...st });
-    const evs = (st.engine?.events || []).filter((x) => x.seq > logged);
-    if (evs.length) { logged = evs[evs.length - 1].seq; call("POST", "log", { lines: evs.slice(-50) }); }
+    const evs = (st.engine?.events || []).filter((x) => x.seq > logged && x.type !== "drop");   // trades and blocks only: thousands of filter passes were pushing the trade history out of the log
+    if ((st.engine?.events || []).length) logged = Math.max(logged, st.engine.events[st.engine.events.length - 1].seq);
+    if (evs.length) { call("POST", "log", { lines: evs.slice(-50) }); }
   } catch (e) { self.lastError = String(e.message || e); } }, statusMs);
   const b = setInterval(async () => {
     const o = await call("GET", "order"); const eng = getEngine();
