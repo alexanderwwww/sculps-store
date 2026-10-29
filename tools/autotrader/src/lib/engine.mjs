@@ -80,7 +80,7 @@ export class Engine {
       if (!lv || this.now() - lv.at > 20000) continue;                       // no fresh price: the chart backstop in slow() covers it
       // lesson 6: decide on what a sale would REALLY return (Jupiter's sell quote, every ~4 s), not on a chart price.
       // FLOAT's -8% stop on the chart filled at -22%. The chart price stays as the fallback when no quote is fresh.
-      if (this.exec.valueSol && p.stake > 0 && (!p.vAt || this.now() - p.vAt > 2500)) { p.vAt = this.now(); try { const v = await this.exec.valueSol(p); if (v != null) { p.val = v; p.valAt = this.now(); } } catch { /* chart fallback */ } }
+      if (this.exec.valueSol && p.stake > 0 && (!p.vAt || this.now() - p.vAt > Math.max(1000, 700 * this.open.size))) { p.vAt = this.now(); try { const v = await this.exec.valueSol(p); if (v != null) { p.val = v; p.valAt = this.now(); } } catch { /* chart fallback */ } }
       const real = p.val != null && this.now() - p.valAt < 15000;
       const entry = real ? p.stake : p.entryPx, price = real ? p.val : lv.price;
       const pk = this.peaks.get(p.id); const peak = Math.max(pk && pk.real === real ? pk.v : entry, price); this.peaks.set(p.id, { v: peak, real });
@@ -102,7 +102,8 @@ export class Engine {
       let why = null;
       // lesson 10: one bad quote is noise (wifbot: stop -7% fired, the sale filled +2.2%). A stop needs two looks in a row below it, unless it is already far through.
       const under = price <= entry * (1 + c.sl); p.under = under ? (p.under || 0) + 1 : 0;
-      if (under && (p.under >= 2 || price <= entry * (1 + c.sl * 1.3))) why = `stop ${Math.round(c.sl * 100)}%`;
+      // lesson 28 (team): waiting for a second look let 2 of 4 stops gap to -10..-12%. A REAL Jupiter quote under the stop sells at once; a chart price still needs two looks.
+      if (under && (real || p.under >= 2 || price <= entry * (1 + c.sl * 1.3))) why = `stop ${Math.round(c.sl * 100)}%`;
       else if (under) why = null;
       else if ((() => { const w = this.whale.get(p.pool); return w && this.now() - w.at < 60000 && w.sell >= (this.cfg.whaleUsd ?? 1500) && w.sell >= 2 * w.buy; })()) why = "ULTRA INSTINCT: whales leaving";
       else if (peak >= entry * (1 + (c.lockFrom ?? 0.04)) && price <= entry * (1 + (c.lockAt ?? 0.01))) why = `locked: was up ${Math.round((peak / entry - 1) * 100)}%, out before it turns red`;   // lesson 4: a winner never becomes a loser
