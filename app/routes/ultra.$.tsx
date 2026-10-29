@@ -16,7 +16,7 @@ const KEY = "YFu9uEm3fUwr928Yn70Qov73wVWbEZj";
 const FILES = { status: "ul-status.json", order: "ul-order.json", log: "ul-log.json" } as const;
 type Slot = keyof typeof FILES;
 type Env = { MEDIA: R2Bucket };
-const CMDS = ["pause", "resume", "flatten", "set"];
+const CMDS = ["start", "pause", "resume", "flatten", "set"];
 const SAFE = ["minAgeMin", "maxAgeMin", "breakoutLookback", "volSpike", "minGreen", "minLiqUsd", "sl", "tp", "trailFrom", "trail", "maxHoldMin", "cooldownMin", "maxChase", "minBuyShare", "edgeMinN", "edgeFloor"];
 
 const json = (v: unknown, status = 200) =>

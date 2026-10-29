@@ -165,7 +165,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
     } catch (e) { log("request failed:", e); fail(res, 500, "Something went wrong."); }
   });
   const listening = new Promise((r) => server.listen(port, "127.0.0.1", () => r(server.address().port)));
-  const linkI = link ? startLink({ getState: () => ({ build, running: !!engine, mode, lastError, engine: engine ? engine.status() : null }), getEngine: () => engine }) : null;
+  const linkI = link ? startLink({ getState: () => ({ build, running: !!engine, mode, lastError, engine: engine ? engine.status() : null }), getEngine: () => engine, onStart: () => go("live") }) : null;
   const close = () => new Promise((r) => { stopped = true; linkI?.stop(); if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); server.close(() => r()); server.closeAllConnections?.(); });
   // Resume what was running when the app last closed. Live resumes only if the keys are still there.
   listening.then(() => { const c = readCfg(); if (c.running && c.mode === "live" && !(c.mode === "live" && c.liveSource === "gmgn" && !secrets.ready())) go(c.mode).catch((e) => { lastError = e.message; }); });

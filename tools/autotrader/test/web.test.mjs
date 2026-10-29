@@ -48,8 +48,8 @@ const poor = new FakeChain({ sol: 0.01 }); const exPoor = webExec({ panel, rpc: 
 r = await exPoor.buy({ mint: MINT });
 ok("a wallet too small for the preset plus fees is refused with the numbers", !r.ok && /needs 0\.0202/.test(r.why) && srv.events.length === n0, r);
 let bal = 0.1; const dd = webExec({ panel, rpc: { solBalance: async () => bal, tokenAccounts: async () => [] }, wallet: WALLET, cfg: DEFAULTS, caps: WEB_CAPS });
-await dd.sizeSol(); bal = 0.06; r = await dd.buy({ mint: MINT });
-ok("30% down halts, and says so", !r.ok && /halted/.test(r.why), r);
+await dd.sizeSol(); bal = 0.004; r = await dd.buy({ mint: MINT });
+ok("a wallet nearly emptied (95% down) halts, and says so", !r.ok && /halted/.test(r.why), r);
 const hr = mk({}, { perHour: 1 }).ex; await hr.buy({ mint: mintOf("h1") }); r = await hr.buy({ mint: mintOf("h2") });
 ok("the hourly cap stops the next buy before a click", !r.ok && /last hour/.test(r.why), r);
 

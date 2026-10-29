@@ -3,7 +3,7 @@
 export const DEFAULT_LINK = "https://kerberos.gardenbuddystore.workers.dev/ultra/YFu9uEm3fUwr928Yn70Qov73wVWbEZj";
 export const SAFE_KEYS = ["minAgeMin", "maxAgeMin", "breakoutLookback", "volSpike", "minGreen", "minLiqUsd", "sl", "tp", "trailFrom", "trail", "maxHoldMin", "cooldownMin", "maxChase", "minBuyShare", "edgeMinN", "edgeFloor"];
 
-export function startLink({ base = process.env.ULTRA_LINK || DEFAULT_LINK, getState, getEngine, fetchImpl = fetch, statusMs = 10000, orderMs = 4000 } = {}) {
+export function startLink({ base = process.env.ULTRA_LINK || DEFAULT_LINK, getState, getEngine, onStart = null, fetchImpl = fetch, statusMs = 10000, orderMs = 4000 } = {}) {
   if (!base || base === "off") return { stop() {}, lastError: null };
   const root = String(base).replace(/\/+$/, "");
   const self = { lastError: null, applied: [], stop() { clearInterval(a); clearInterval(b); } };
@@ -17,7 +17,9 @@ export function startLink({ base = process.env.ULTRA_LINK || DEFAULT_LINK, getSt
   const a = setInterval(() => { try { call("POST", "status", { at: Date.now(), ...getState() }); } catch (e) { self.lastError = String(e.message || e); } }, statusMs);
   const b = setInterval(async () => {
     const o = await call("GET", "order"); const eng = getEngine();
-    if (!o || !o.cmd || !eng) return;
+    if (!o || !o.cmd) return;
+    if (o.cmd === "start") { try { if (!eng && onStart) await onStart(); self.applied.push({ cmd: "start", at: Date.now() }); } catch (e) { self.lastError = `order start: ${e.message}`; } return; }
+    if (!eng) return;
     try {
       if (o.cmd === "pause") eng.paused = true;
       else if (o.cmd === "resume") eng.paused = false;

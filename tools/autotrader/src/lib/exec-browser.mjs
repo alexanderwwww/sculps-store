@@ -2,7 +2,7 @@
 // GMGN's Instant-trade window to buy, one click on Sell 100% to sell. No keys, no API, no money moved. The wallet is read from the
 // chain to prove each click did what it should: a buy is only a buy once the tokens are in the wallet.
 import { KIMCHI, CAPS as BASE } from "./exec-gmgn.mjs";
-export const WEB_CAPS = { ...BASE, preset: "0.01618", reserveSol: 0.004, settleMs: 30000, pollMs: 1000, recheckGiveUpMs: 180000 };
+export const WEB_CAPS = { ...BASE, preset: "0.01618", perHour: 200, perDay: 2000, floorFrac: 0.05, reserveSol: 0.004, settleMs: 30000, pollMs: 1000, recheckGiveUpMs: 180000 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const URL_OF = (mint) => `https://gmgn.ai/sol/token/${mint}`;
 
