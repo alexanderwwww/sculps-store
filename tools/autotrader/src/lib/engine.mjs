@@ -110,6 +110,7 @@ export class Engine {
       else if (c.staleMin && this.now() - p.at >= c.staleMin * 60000 && price / entry - 1 < (c.staleRet ?? 0.01)) why = `flat after ${c.staleMin}m: money back to work`;   // lesson 2: dead money out
       if (!why) continue;
       const ret = real ? price / entry - 1 : (price * (1 - c.slippage)) / entry - 1 - 2 * c.fee;
+      p.est = { ret: +ret.toFixed(4), real, peak: +(peak / entry - 1).toFixed(4) };   // what it SAW when it decided, to compare with the fill
       await this.#close(p, { ret, why, exitPx: real ? lv.price : price });
     }
   }
@@ -225,7 +226,7 @@ export class Engine {
         ret = p.banked ? (Number(r.outAmount) / 1e9 + p.banked) / p.stake0 - 1 : Number(r.outAmount) / 1e9 / p.stake - 1;   // the real fill (plus anything banked on the way), not the model
       }
       const pnl = p.stake * ret;
-      this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why, note, exitPx: x.exitPx });
+      this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why, note, exitPx: x.exitPx, est: p.est || null });
       { const until = this.now() + (ret <= -0.5 ? 7 * 24 * 60 : ret < 0 ? (this.cfg.loserCoolMin ?? 60) : this.cfg.cooldownMin) * 60000;  /* a rug is banned for a week */ this.cool.set(p.pool, until); if (p.mint) this.cool.set(p.mint, until); }   // by coin, not just by pool (PODCAT x3)   // lesson 7: a coin that just lost gets an hour off (FLOAT x4)       // never re-enter the same coin straight after an exit
       this.open.delete(p.id); this.sellTries.delete(p.id); this.peaks.delete(p.id); this.hist.delete(p.id);
       this.closed.push({ ...p, type: "close", ret, pnl, why, note, at: this.now() });
@@ -233,7 +234,7 @@ export class Engine {
       const last = this.closed.slice(-5), avg = last.reduce((a, x) => a + (x.ret || 0), 0) / last.length;
       if (last.length >= 3) this.cfg.momMin = avg < 0 ? Math.min(0.08, (this.cfg.momMin ?? 0.02) * 1.618) : avg > 0.05 ? Math.max(0.02, (this.cfg.momMin ?? 0.02) / 1.618) : (this.cfg.momMin ?? 0.02);
       if (last.length >= 3) this.onLearn?.({ momMin: this.cfg.momMin });   // what it taught itself survives restarts
-      this.#ev("sell", p.name, why, { ret, pnl, stake: p.stake });
+      this.#ev("sell", p.name, why, { ret, pnl, stake: p.stake, est: p.est || null });
       return true;
     } finally { this.closing.delete(p.id); }
   }
