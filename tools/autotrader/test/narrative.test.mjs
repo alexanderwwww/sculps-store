@@ -38,7 +38,7 @@ test("seed theme rises: more new coins, more volume, a runner", () => {
 test("theme dies: volume 40%+ under its 6h peak", () => {
   const w = narr();
   for (let i = 0; i < 3; i++) w.n.observe({ mint: `d${i}`, name: `Doge ${i}`, vol1h: 50000 });
-  w.n.recompute(); w.at(30);
+  w.n.recompute(); w.at(60);
   for (let i = 0; i < 3; i++) w.n.observe({ mint: `d${i}`, vol1h: 10000 });
   w.n.recompute();
   assert.equal(w.n.heat({ mint: "d0" }).trend, "dying");
@@ -51,11 +51,79 @@ test("emergent word and shared link become themes the dictionary never had", () 
   assert.ok(w.n.themes.has("word:house"), [...w.n.themes.keys()].join(","));
   assert.ok(w.n.themes.has("link:@rockstargames"));
 });
+// ---- build 54: the live check of 2026-10-29, replayed with the real names it saw
+test("live 2026-10-29: whole words only (wormhole is not a worm, jeff is not a launchpad)", () => {
+  const w = narr();
+  w.n.observe({ mint: "j", name: "jeff", symbol: "jeff", vol1h: 5000, desc: "launch fees stake yield revenue" });
+  w.n.observe({ mint: "g", name: "WORLD 2D GAMES", symbol: "W2D", vol1h: 5000 });
+  w.n.observe({ mint: "r", name: "Raydium launches", symbol: "RL", vol1h: 5000 });
+  w.n.observe({ mint: "s", name: "Bearish Service", symbol: "BS", vol1h: 5000, desc: "selfish advice hyperbolic" });
+  w.n.recompute();
+  for (const m of ["j", "g", "r", "s"]) assert.equal(w.n.member.get(m), undefined, `${m}: ${w.n.member.get(m)}`);
+  w.n.observe({ mint: "d1", name: "Doge Agents" }); w.n.recompute();
+  assert.deepEqual(w.n.member.get("d1").sort(), ["seed:AI-agent", "seed:dog"]);
+});
+test("live 2026-10-29: tokenized stocks, wrapped and bridged assets are not narratives", () => {
+  const w = narr();
+  const rows = [["NVIDIA xStock", "NVDAx", ["xstocks", "stocks", "rwa"]], ["SP500 xStock", "SPYx", ["stocks"]], ["Alphabet xStock", "GOOGLx", []],
+    ["SpaceX - Backpack Securities", "SPCX", ["backpack", "stocks"]], ["SK Hynix - Backpack Securities", "SKHY", []], ["Coinbase Wrapped BTC", "cbBTC", []],
+    ["SPX6900 (Wormhole)", "SPX", ["meme"]], ["Orca", "ORCA", ["defi"]]];
+  rows.forEach(([name, symbol, tags], i) => w.n.observe({ mint: `x${i}`, name, symbol, tags, vol1h: 1e6, ch1h: 80 }));
+  w.n.recompute();
+  assert.equal(w.n.themes.size, 0, [...w.n.themes.keys()].join(","));
+  assert.deepEqual(w.n.top(3), []);
+});
+test("live 2026-10-29: today's runners get a theme, and copycats of the runner's word make it rise", () => {
+  const w = narr(); const L = "L" + "O".repeat(200) + "NG";
+  w.n.observe({ mint: "h", name: "Hashtag", symbol: "HASHTAG", vol1h: 50000, ch1h: 149 });
+  w.n.observe({ mint: "l", name: `${L} LYNX`, symbol: L, vol1h: 121000, ch1h: 340 });
+  w.n.recompute();
+  assert.ok(w.n.heat({ mint: "h" }), "Hashtag tagged"); assert.ok(w.n.heat({ mint: "l" }), "LOOONG tagged");
+  assert.equal(w.n.heat({ mint: "l" }).runners, 1);
+  w.n.observe({ mint: "l", vol1h: 121000 }); w.n.observe({ mint: "h", vol1h: 50000 });
+  w.at(60);
+  w.n.observe({ mint: "l", vol1h: 300000 });
+  for (let i = 1; i <= 3; i++) w.n.observe({ mint: `lc${i}`, name: `${L} ${["cat", "dog", "ape"][i - 1]}`, vol1h: 40000 });
+  w.n.recompute();
+  const h = w.n.heat({ mint: "lc1" });
+  assert.equal(h.trend, "rising", JSON.stringify(w.n.top(5))); assert.equal(h.strong, true);
+});
+test("live 2026-10-29: nameless profile coins get their name from DexScreener tokens/v1 and join themes", async () => {
+  let now = 1_800_000_000_000; const urls = [];
+  const fetchJson = async (u) => { urls.push(u);
+    if (u.includes("token-profiles")) return [1, 2, 3].map((i) => ({ chainId: "solana", tokenAddress: `p${i}`, description: "the best launch ever, stake and earn" }));
+    if (u.includes("tokens/v1/solana/")) return [1, 2, 3].map((i) => ({ baseToken: { address: `p${i}`, name: `Kitty Wave ${i}`, symbol: `KW${i}` }, liquidity: { usd: 1 }, volume: { h1: 9000 }, priceChange: { h1: 60 }, priceUsd: "0.001" }));
+    return []; };
+  const n = new Narrative({ now: () => now, fetchJson });
+  n.pump([]); await new Promise((r) => setTimeout(r, 20)); now += 31000; n.pump([]); await new Promise((r) => setTimeout(r, 20));
+  n.due.calc = 0; n.pump([]);
+  assert.ok(urls.some((u) => /tokens\/v1\/solana\/p1,p2,p3/.test(u)), urls.join(" "));
+  assert.equal(n.coins.get("p1").name, "Kitty Wave 1");
+  assert.equal(n.heat({ mint: "p1" }).label, "cat"); assert.equal(n.coins.get("p1").runner, true);
+  assert.ok(n.themes.has("word:wave"), [...n.themes.keys()].join(","));
+});
+test("an hour ago means about 60 min back, not 6 hours; per-coin volume on one base", () => {
+  const w = narr();
+  for (let k = 0; k <= 6 * 4; k++) { for (let i = 0; i < 3; i++) w.n.observe({ mint: `c${i}`, name: `Owl ${i}`, vol1h: k < 16 ? 10000 : k < 22 ? 100000 : 30000 }); w.n.recompute(); w.at(15); }
+  const th = w.n.themes.get("seed:animal");
+  assert.ok(th.volRatio > 0.2 && th.volRatio < 0.5, `volRatio ${th.volRatio}: vs 6h ago it would read 3x`);
+  assert.equal(th.trend, "dying", "the same three owls trade 70% less than an hour ago");
+});
+test("stale volume and source turnover never make a theme dying; a theme that stops matching fades", () => {
+  const w = narr();
+  for (let i = 0; i < 3; i++) w.n.observe({ mint: `f${i}`, name: `Frog ${i}`, vol1h: 80000 });
+  w.n.recompute(); w.at(30);
+  for (let i = 0; i < 3; i++) w.n.observe({ mint: `f${i}`, vol1h: 80000 });
+  w.n.recompute(); w.at(40);   // f0..f2 fell off Jupiter: no fresh volume. A new frog arrives.
+  w.n.observe({ mint: "f9", name: "Frog 9", vol1h: 5000 }); w.n.recompute();
+  assert.notEqual(w.n.heat({ mint: "f9" }).trend, "dying");
+  assert.equal(w.n.themes.get("seed:frog").vol, 5000, "stale 80k volumes are not counted");
+});
 test("pump never blocks: a source that hangs does not hold the caller", async () => {
   let now = 0; const n = new Narrative({ now: () => now, fetchJson: () => new Promise(() => {}) });
   const t0 = Date.now(); n.pump([]); assert.ok(Date.now() - t0 < 50);
   assert.ok(n.busy.has("jup")); n.pump([]);   // a second pass does not start a second fetch while the first hangs
-  assert.equal(n.busy.size, 3);
+  assert.equal(n.busy.size, 4);   // prof, cto, jup, names
 });
 
 // ------------------------------------------------------------------ the engine loop

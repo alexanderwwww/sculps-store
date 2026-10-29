@@ -191,7 +191,7 @@ export class Engine {
       const g = this.#gate(m, true); if (!g) continue;
       const sc = O.score(this.org, g.sig, { sample: true, rng: this.rng });
       // the narrative (build 53): a dying theme is skipped, a hot rising theme passes a looser entry (organism score not needed)
-      const nh = this.narr?.heat(m) || null, hot = nh?.trend === "rising" && !nh.late;
+      const nh = this.narr?.heat(m) || null, hot = nh?.trend === "rising" && nh.strong && !nh.late;
       if (nh?.trend === "dying") { this.#skip(m.name, narrWhy(nh)); continue; }
       // fewer than 3 closes measured: nothing to choose on yet, so it explores (sizeMul is 0.618 until a band has 13 closes)
       if (!(sc > 0) && O.measured(this.org) && !hot) { O.noteIdle(this.org, g.sig, sc, m, this.now()); continue; }
