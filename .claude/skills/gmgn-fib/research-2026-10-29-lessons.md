@@ -43,3 +43,8 @@ Check 09:48: wallet 0.0740 SOL (09:15: 0.0917). Self-taught momMin is at its 8% 
 36. (17:20, build 50) THE MATH: 13 live closes, 3 wins (23%), avg win +18.6%, avg loss -8.9% -> EV -2.5% per trade; break-even needs a 32% win rate. 8 of the last 10 losers never rose once after the buy (peak 0): it bought the top of the spike. Now the live path buys the PULLBACK: the coin ran >= momMin within the last 2 min, has come back 3-12% from that high, and the last tick is up (higher low). New desk keys: pullback (0 = old spike mode), pullMin, pullMax. Three tests drive it: still-spiking = no buy, 3-12% pullback that bounces = buy, >12% dump = no buy.
 37. (Alex: small profits all the time are fine) Bridge set: half off at +4%, everything at +8%, lock +0.8% once +2.5%.
 38. (Alex: 15 min no trades) The pullback rule plus volume floors stopped all buying for 20+ min. Bridge set: pullback 0 (spike mode back), momMin 1%, momMax 50%, live volume >= $500 / 3 trades in 5 min, buyers >= 0.8x sellers. First buy came within 4 min (HOUSEWORM). Exits stay small: half at +4%, all at +8%.
+
+## Lesson 39 — the scalp equation (18:30 UTC, wallet 0.0599 SOL)
+Last 19 live closes: 6 wins (+4..+20%), 13 losses. Stops set at -4%/-7% filled at -5..-12% (exit gap 1.5-5% on thin pools).
+EV per trade = p*W - (1-p)*L - 0.5% fees. With W=+5%, L=-6% real, break-even p = 55%. Entry signal is ~32% → scalping +5% loses on thin pools.
+$ per trade at 0.026 SOL (~$5): +4% ≈ $0.20, +20% ≈ $1. Fix applied: pools ≥ $40k liquidity so the stop fills near -4% (real L≈4.5% → break-even p≈50%).
