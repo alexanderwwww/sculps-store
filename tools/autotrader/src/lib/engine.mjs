@@ -253,7 +253,7 @@ export class Engine {
       this.closed.push({ ...p, type: "close", ret, pnl, why, note, at: this.now() });
       // it teaches itself (golden ratio): losing streak -> demand more momentum before buying; winning -> relax back toward 2%
       const last = this.closed.slice(-5), avg = last.reduce((a, x) => a + (x.ret || 0), 0) / last.length;
-      if (last.length >= 3) { const m0 = this.cfg.momMin ?? 0.10; this.cfg.momMin = Math.min(0.13, Math.max(0.10, avg < 0 ? m0 * 1.618 : avg > 0.05 ? m0 / 1.618 : m0)); }   // lesson 36: capped at 13% so CHLOE's +13.4% band stays open after losses that came from top-buys momMax now blocks. lesson 31: every live entry rising >= 13.4% in 30 s won, every one <= 9.5% hit the stop; the tuner never goes under 10%
+      if (last.length >= 3) { const m0 = this.cfg.momMin ?? 0.10; this.cfg.momMin = Math.min(0.13, Math.max(0.03, avg < 0 ? m0 * 1.618 : avg > 0.05 ? m0 / 1.618 : m0)); }   // lesson 36: capped at 13% so CHLOE's +13.4% band stays open after losses that came from top-buys momMax now blocks. lesson 31: every live entry rising >= 13.4% in 30 s won, every one <= 9.5% hit the stop; the tuner never goes under 10%
       if (last.length >= 3) this.onLearn?.({ momMin: this.cfg.momMin });   // what it taught itself survives restarts
       this.#ev("sell", p.name, why, { ret, pnl, stake: p.stake0 ?? p.stake, est: p.est || null });
       return true;
