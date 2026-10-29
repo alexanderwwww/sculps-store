@@ -9,3 +9,4 @@
 8. Size: 0.01618 SOL base, x1.618 per win in a row (max 3 steps, max 25% of wallet), back to base after any loss.
 First real wins after lessons 5-6: FOMOKING +37.3%, BTS +23.5%.
 Never refuse to run on a low balance: open positions must always be managed (the restart that refused cost KIMWIFHAT -80%).
+9. (07:55 UTC, bridge set, no build) Winners jump past +12% in one tick (FOMOKING filled +37%, BTS +23%), so a hard +12% target cuts them short. Now: target +30%, trailing stop 5% once up 6%, stop -7% (PODCAT's -8% stop filled at -12.5%). Wallet at that moment: 0.0885 SOL (start 0.1138).
