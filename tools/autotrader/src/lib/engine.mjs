@@ -134,18 +134,34 @@ export class Engine {
         const flow = (lv.buys5 || 0) + (lv.sells5 || 0);
         if (!((lv.vol5 || 0) >= (this.cfg.liveMinVol5 ?? 3000) && flow >= (this.cfg.liveMinFlow ?? 8) && lv.buys5 >= lv.sells5 * (this.cfg.liveBuyRatio ?? 1.15))) { quiet("live: volume or buyers too thin"); continue; }
         // lesson 1 (2026-10-29 live data): buying a coin that is not moving = sitting at the cost of entry. Buy only a coin already rising.
-        const mom = this.#mom(m.pool, this.cfg.momSecs ?? 30);
+        let mom = this.#mom(m.pool, this.cfg.momSecs ?? 30), s_pull = null;
         // lesson 3: thin pools rug and slip (KIMWIFHAT -80%, Trump stop -8% filled at -19%). Only pools deep enough to get out of.
         if ((lv.liqUsd ?? 0) < (this.cfg.liveMinLiq ?? 15000)) { quiet("live: pool too thin to get out of"); continue; }
         const w = this.whale.get(m.pool), instinct = w && this.now() - w.at < 60000 && w.buy >= (this.cfg.whaleUsd ?? 1500) && w.buy >= 2 * w.sell;
         if (!instinct) {
-          if (mom == null) { quiet("live: watching its price first"); continue; }
-          if (mom < (this.cfg.momMin ?? 0.10)) { quiet("live: not rising right now"); continue; }
-          if (mom > (this.cfg.momMax ?? 0.21)) { quiet("live: already ran too far"); continue; }   // lesson 34: over +21% in 30 s, 1 of 5 live entries won (MM, Hyper, XLIQUID, VI topped out); +10..21% won 2 of 2
+          // lesson 36 (the math): break-even needs a 32% win rate (avg win +18.6%, avg loss -8.9%); it won 23%, and 8 of the last 10
+          // losers never rose once after the buy (peak 0): it was buying the TOP of the spike. Buy the PULLBACK instead: the coin ran
+          // >= momMin inside the last 2 min, has come back 3-12% from that high, and the last tick is up again (a higher low).
+          if (this.cfg.pullback !== 0) {
+            const ph = (this.ph.get(m.pool) || []).filter(([t]) => this.now() - t <= 120000);
+            if (ph.length < 4) { quiet("live: watching its price first"); continue; }
+            let lo = Infinity, hi = 0, hiAt = -1; ph.forEach(([, v], i) => { if (v < lo && hiAt < 0) lo = v; if (v > hi) { hi = v; hiAt = i; } });
+            lo = Math.min(...ph.slice(0, hiAt + 1).map(([, v]) => v));
+            const run = hi / lo - 1, pull = 1 - lv.price / hi, prev = ph[ph.length - 2][1];
+            if (run < (this.cfg.momMin ?? 0.10)) { quiet("live: no run to pull back from"); continue; }
+            if (pull < (this.cfg.pullMin ?? 0.03)) { quiet("live: at the top, waiting for a pullback"); continue; }
+            if (pull > (this.cfg.pullMax ?? 0.12)) { quiet("live: pulled back too far (dumping)"); continue; }
+            if (!(lv.price > prev)) { quiet("live: still falling, waiting for the bounce"); continue; }
+            mom = run; s_pull = pull;
+          } else {
+            if (mom == null) { quiet("live: watching its price first"); continue; }
+            if (mom < (this.cfg.momMin ?? 0.10)) { quiet("live: not rising right now"); continue; }
+            if (mom > (this.cfg.momMax ?? 0.21)) { quiet("live: already ran too far"); continue; }   // lesson 34
+          }
         } else if (mom != null && mom < 0) { quiet("instinct: whales in but price falling"); continue; }
         const t = Math.floor(this.now() / 60000) * 60000, c0 = { t, o: lv.price, h: lv.price, l: lv.price, c: lv.price, v: lv.vol5 / 5 };
         this.cool.set(m.pool, this.now() + 30000);
-        await this.#consider(m, Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), { ok: true, why: instinct ? `ULTRA INSTINCT: ${w.whales} whale${w.whales === 1 ? "" : "s"} bought $${Math.round(w.buy)} in 2 min (sold $${Math.round(w.sell)})` : `rising ${((mom || 0) * 100).toFixed(1)}% in ${this.cfg.momSecs ?? 30}s, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` });
+        await this.#consider(m, Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), { ok: true, why: instinct ? `ULTRA INSTINCT: ${w.whales} whale${w.whales === 1 ? "" : "s"} bought $${Math.round(w.buy)} in 2 min (sold $${Math.round(w.sell)})` : s_pull != null ? `pullback buy: ran ${(mom * 100).toFixed(1)}% in 2 min, back ${(s_pull * 100).toFixed(1)}% and bouncing, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` : `rising ${((mom || 0) * 100).toFixed(1)}% in ${this.cfg.momSecs ?? 30}s, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` });
         continue;
       }
       // the chart so far, plus the minute in progress built from the live price
