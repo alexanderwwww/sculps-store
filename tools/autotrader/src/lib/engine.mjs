@@ -1,9 +1,10 @@
 import { DEFAULTS, entrySignal, managePosition } from "./strategy.mjs";
 import { rugCheck } from "./rug.mjs";
+import * as O from "./organism.mjs";
 
 export class Engine {
-  constructor({ feed, exec, journal, cfg = DEFAULTS, rug = rugCheck, now = Date.now, startEq = 100, scanTop = 8 }) {
-    Object.assign(this, { feed, exec, journal, cfg, rug, now, startEq, scanTop });
+  constructor({ feed, exec, journal, cfg = DEFAULTS, rug = rugCheck, now = Date.now, startEq = 100, scanTop = 8, org = null, rng = Math.random }) {
+    Object.assign(this, { feed, exec, journal, cfg, rug, now, startEq, scanTop, rng });
     const r = journal.replay();
     this.open = r.open;                       // survives restarts
     this.closed = r.closed;
@@ -13,6 +14,8 @@ export class Engine {
     this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.ready = []; this.cc = new Map(); this.live = new Map(); this.peaks = new Map(); this.closing = new Set(); this.events = []; this.seq = 0; this.watch = new Map(); this.watching = { total: 0, young: 0, thin: 0, ready: 0 }; this.paused = false; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = []; this.hist = new Map(); this.ph = new Map(); this.lastDrop = new Map(); this.whale = new Map(); this.whaleAt = new Map();
     this.ticks = 0; this.lastTickAt = null; this.startedAt = this.now(); this.counts = { drop: 0, block: 0, buy: 0, sell: 0, fail: 0 };
     // a restart (live update) must not forget which coins just lost: PODCAT was bought again right after a -12.5% loss
+    // the living organism: what it measured survives restarts (config.json), else it is rebuilt from the journal's closes
+    this.org = org ? O.sane(org) : O.rebuild(this.closed); this.org.idle.since = this.now();
     for (const c of this.closed) if (c.ret < 0 && c.at && this.now() - c.at < (c.ret <= -0.5 ? 7 * 1440 : (this.cfg.loserCoolMin ?? 60)) * 60000) { const until = c.at + (c.ret <= -0.5 ? 7 * 1440 : (this.cfg.loserCoolMin ?? 60)) * 60000; if (c.pool) this.cool.set(c.pool, until); if (c.mint) this.cool.set(c.mint, until); }
   }
   get equity() { return this.startEq + this.closed.reduce((s, c) => s + (c.pnl || 0), 0); }
@@ -84,11 +87,15 @@ export class Engine {
       const real = p.val != null && this.now() - p.valAt < 15000;
       const entry = real ? p.stake : p.entryPx, price = real ? p.val : lv.price;
       const pk = this.peaks.get(p.id); const peak = Math.max(pk && pk.real === real ? pk.v : entry, price); this.peaks.set(p.id, { v: peak, real });
-      p.low = Math.min(p.low ?? 0, price / entry - 1);   // the deepest dip it showed (a ratio, so the golden take does not move it): tells the next check whether winners dip before they run
+      const rNow = price / entry - 1, held = this.now() - p.at;
+      p.tPeak ??= 0; p.tLow ??= 0;
+      if (rNow < (p.low ?? 0)) p.tLow = held; if (rNow > (p.hi ?? 0)) p.tPeak = held;
+      p.low = Math.min(p.low ?? 0, rNow); p.hi = Math.max(p.hi ?? 0, rNow);   // the organism replays exits on these (deepest dip, best point, and which came first)
+      const sl = p.sl ?? c.sl, tp = p.tp ?? c.tp, partAt = p.partAt ?? c.partAt ?? 0.25, lockFrom = p.lockFrom ?? c.lockFrom ?? 0.04;   // the levels it was bought under   // the deepest dip it showed (a ratio, so the golden take does not move it): tells the next check whether winners dip before they run
       // golden take (Alex): at +25% sell 38.2% (1 - 0.618). That banks 0.4775 of the stake; the 61.8% left rides the trail.
       // Worst case after this (the win lock at +1%): 0.4775 + 0.618 x 1.01 = 1.10, so the trade ends at least about +10% before fees.
-      if (real && !p.partDone && this.exec.sellPart && c.tp > (c.partAt ?? 0.25) && price >= entry * (1 + (c.partAt ?? 0.25)) && price < entry * (1 + c.tp)) {
-        p.partDone = true;
+      if (real && !p.partDone && this.exec.sellPart && tp > partAt && price >= entry * (1 + partAt) && price < entry * (1 + tp)) {
+        p.partDone = true; p.tPartAt = held;
         const r = await this.exec.sellPart({ mint: p.mint, frac: c.partFrac ?? 0.382 }).catch((e) => ({ ok: false, why: e.message }));
         if (r.ok) {
           const got = Number(r.outAmount) / 1e9, f = c.partFrac ?? 0.382;
@@ -100,43 +107,43 @@ export class Engine {
           continue;
         }
       }
-      let why = null;
+      let why = null, kind = null, trig = null;
       // lesson 10: one bad quote is noise (wifbot: stop -7% fired, the sale filled +2.2%). A stop needs two looks in a row below it, unless it is already far through.
-      const under = price <= entry * (1 + c.sl); p.under = under ? (p.under || 0) + 1 : 0;
+      const under = price <= entry * (1 + sl); p.under = under ? (p.under || 0) + 1 : 0;
       // lesson 28 (team): waiting for a second look let 2 of 4 stops gap to -10..-12%. A REAL Jupiter quote under the stop sells at once; a chart price still needs two looks.
-      if (under && (real || p.under >= 2 || price <= entry * (1 + c.sl * 1.3))) why = `stop ${Math.round(c.sl * 100)}%`;
+      if (under && (real || p.under >= 2 || price <= entry * (1 + sl * 1.3))) { why = `stop ${Math.round(sl * 100)}%`; kind = "stop"; trig = sl; }
       else if (under) why = null;
-      else if ((() => { const w = this.whale.get(p.pool); return w && this.now() - w.at < 60000 && w.sell >= (this.cfg.whaleUsd ?? 1500) && w.sell >= 2 * w.buy; })()) why = "ULTRA INSTINCT: whales leaving";
-      else if (peak >= entry * (1 + (c.lockFrom ?? 0.04)) && price <= entry * (1 + (c.lockAt ?? 0.01))) why = `locked: was up ${Math.round((peak / entry - 1) * 100)}%, out before it turns red`;   // lesson 4: a winner never becomes a loser
-      else if (peak >= entry * (1 + c.trailFrom) && price <= peak * (1 - c.trail)) why = `trailing stop from +${Math.round((peak / entry - 1) * 100)}%`;
-      else if (price >= entry * (1 + c.tp)) why = `take profit +${c.tp * 100}%`;
-      else if (this.now() - p.at >= c.maxHoldMin * 60000) why = "time stop";
-      else if (c.staleMin && this.now() - p.at >= c.staleMin * 60000 && price / entry - 1 < (c.staleRet ?? 0.01)) why = `flat after ${c.staleMin}m: money back to work`;   // lesson 2: dead money out
+      else if ((() => { const w = this.whale.get(p.pool); return w && this.now() - w.at < 60000 && w.sell >= (this.cfg.whaleUsd ?? 1500) && w.sell >= 2 * w.buy; })()) { why = "ULTRA INSTINCT: whales leaving"; kind = "whale"; }
+      else if (peak >= entry * (1 + lockFrom) && price <= entry * (1 + (c.lockAt ?? 0.01))) { why = `locked: was up ${Math.round((peak / entry - 1) * 100)}%, out before it turns red`; kind = "lock"; trig = c.lockAt ?? 0.01; }   // lesson 4: a winner never becomes a loser
+      else if (peak >= entry * (1 + c.trailFrom) && price <= peak * (1 - c.trail)) { why = `trailing stop from +${Math.round((peak / entry - 1) * 100)}%`; kind = "trail"; trig = (peak * (1 - c.trail)) / entry - 1; }
+      else if (price >= entry * (1 + tp)) { why = `take profit +${+(tp * 100).toFixed(1)}%`; kind = "take"; trig = tp; }
+      else if (this.now() - p.at >= c.maxHoldMin * 60000) { why = "time stop"; kind = "time"; }
+      else if (c.staleMin && this.now() - p.at >= c.staleMin * 60000 && price / entry - 1 < (c.staleRet ?? 0.01)) { why = `flat after ${c.staleMin}m: money back to work`; kind = "stale"; }   // lesson 2: dead money out
       if (!why) continue;
       const ret = real ? price / entry - 1 : (price * (1 - c.slippage)) / entry - 1 - 2 * c.fee;
-      p.est = { ret: +ret.toFixed(4), real, peak: +(peak / entry - 1).toFixed(4), low: +p.low.toFixed(4) };   // what it SAW when it decided, to compare with the fill
+      p.est = { ret: +ret.toFixed(4), real, peak: +(peak / entry - 1).toFixed(4), low: +p.low.toFixed(4), kind, trig: +(trig ?? ret).toFixed(4) };   // what it SAW when it decided, to compare with the fill
       await this.#close(p, { ret, why, exitPx: real ? lv.price : price });
     }
   }
   /** price change over the last `secs` seconds from the live quotes (null until there is that much history) */
   #mom(pool, secs) { const ph = this.ph.get(pool) || []; if (ph.length < 2) return null; const now = ph[ph.length - 1]; const then = ph.find(([t]) => now[0] - t <= secs * 1000); if (!then || now[0] - then[0] < secs * 500) return null; return now[1] / then[1] - 1; }
-  async #fastEntries() {
-    if (this.paused || this.open.size >= this.cfg.maxOpen) return;
-    for (const m of this.ready) {
-      if (this.open.size >= this.cfg.maxOpen || this.paused) break;
-      if ([...this.open.values()].some((p) => p.pool === m.pool || p.mint === m.mint) || this.cool.get(m.pool) > this.now() || this.cool.get(m.mint) > this.now()) continue;
+  /** Every hard filter (unchanged since build 51: live price, volume/flow, the $25k pool floor, momMin..momMax, the chart
+   *  breakout, cooldowns). -> { cs, s, sig } when the coin may be bought right now, else null. loud=false: a silent re-check. */
+  #gate(m, loud = true) {
+    {
+      if ([...this.open.values()].some((p) => p.pool === m.pool || p.mint === m.mint) || this.cool.get(m.pool) > this.now() || this.cool.get(m.mint) > this.now()) return null;
       const lv = this.live.get(m.pool), hit = this.cc.get(m.pool);
       // every coin it looks at shows on the screen as it is filtered (Alex: constant movement), at most once per coin every 20 s
-      const quiet = (k) => { const t = this.lastDrop.get(m.pool) || 0; if (this.now() - t > 20000) { this.lastDrop.set(m.pool, this.now()); this.skips.set(k, (this.skips.get(k) || 0) + 1); this.#ev("drop", m.name, k.replace(/^live: /, "")); } };   // lesson 35: count a coin once per 20 s, not once per pass (30k "too thin" was ~25 checks a second)
-      if (!lv || this.now() - lv.at > 15000) { quiet("waiting: no live price yet"); continue; }
+      const quiet = (k) => { if (!loud) return;  const t = this.lastDrop.get(m.pool) || 0; if (this.now() - t > 20000) { this.lastDrop.set(m.pool, this.now()); this.skips.set(k, (this.skips.get(k) || 0) + 1); this.#ev("drop", m.name, k.replace(/^live: /, "")); } };   // lesson 35: count a coin once per 20 s, not once per pass (30k "too thin" was ~25 checks a second)
+      if (!lv || this.now() - lv.at > 15000) { quiet("waiting: no live price yet"); return null; }
       if (!hit || hit.cs.length < 6) {
         // Alex 2026-10-29: never wait on a chart. Live volume + buyers ahead = buy, straight from the live price.
         const flow = (lv.buys5 || 0) + (lv.sells5 || 0);
-        if (!((lv.vol5 || 0) >= (this.cfg.liveMinVol5 ?? 3000) && flow >= (this.cfg.liveMinFlow ?? 8) && lv.buys5 >= lv.sells5 * (this.cfg.liveBuyRatio ?? 1.15))) { quiet("live: volume or buyers too thin"); continue; }
+        if (!((lv.vol5 || 0) >= (this.cfg.liveMinVol5 ?? 3000) && flow >= (this.cfg.liveMinFlow ?? 8) && lv.buys5 >= lv.sells5 * (this.cfg.liveBuyRatio ?? 1.15))) { quiet("live: volume or buyers too thin"); return null; }
         // lesson 1 (2026-10-29 live data): buying a coin that is not moving = sitting at the cost of entry. Buy only a coin already rising.
         let mom = this.#mom(m.pool, this.cfg.momSecs ?? 30), s_pull = null;
         // lesson 3: thin pools rug and slip (KIMWIFHAT -80%, Trump stop -8% filled at -19%). Only pools deep enough to get out of.
-        if ((lv.liqUsd ?? 0) < (this.cfg.liveMinLiq ?? 15000)) { quiet("live: pool too thin to get out of"); continue; }
+        if ((lv.liqUsd ?? 0) < (this.cfg.liveMinLiq ?? 15000)) { quiet("live: pool too thin to get out of"); return null; }
         const w = this.whale.get(m.pool), instinct = w && this.now() - w.at < 60000 && w.buy >= (this.cfg.whaleUsd ?? 1500) && w.buy >= 2 * w.sell;
         if (!instinct) {
           // lesson 36 (the math): break-even needs a 32% win rate (avg win +18.6%, avg loss -8.9%); it won 23%, and 8 of the last 10
@@ -144,34 +151,54 @@ export class Engine {
           // >= momMin inside the last 2 min, has come back 3-12% from that high, and the last tick is up again (a higher low).
           if (this.cfg.pullback !== 0) {
             const ph = (this.ph.get(m.pool) || []).filter(([t]) => this.now() - t <= 120000);
-            if (ph.length < 4) { quiet("live: watching its price first"); continue; }
+            if (ph.length < 4) { quiet("live: watching its price first"); return null; }
             let lo = Infinity, hi = 0, hiAt = -1; ph.forEach(([, v], i) => { if (v < lo && hiAt < 0) lo = v; if (v > hi) { hi = v; hiAt = i; } });
             lo = Math.min(...ph.slice(0, hiAt + 1).map(([, v]) => v));
             const run = hi / lo - 1, pull = 1 - lv.price / hi, prev = ph[ph.length - 2][1];
-            if (run < (this.cfg.momMin ?? 0.10)) { quiet("live: no run to pull back from"); continue; }
-            if (pull < (this.cfg.pullMin ?? 0.03)) { quiet("live: at the top, waiting for a pullback"); continue; }
-            if (pull > (this.cfg.pullMax ?? 0.12)) { quiet("live: pulled back too far (dumping)"); continue; }
-            if (!(lv.price > prev)) { quiet("live: still falling, waiting for the bounce"); continue; }
+            if (run < (this.cfg.momMin ?? 0.10)) { quiet("live: no run to pull back from"); return null; }
+            if (pull < (this.cfg.pullMin ?? 0.03)) { quiet("live: at the top, waiting for a pullback"); return null; }
+            if (pull > (this.cfg.pullMax ?? 0.12)) { quiet("live: pulled back too far (dumping)"); return null; }
+            if (!(lv.price > prev)) { quiet("live: still falling, waiting for the bounce"); return null; }
             mom = run; s_pull = pull;
           } else {
-            if (mom == null) { quiet("live: watching its price first"); continue; }
-            if (mom < (this.cfg.momMin ?? 0.10)) { quiet("live: not rising right now"); continue; }
-            if (mom > (this.cfg.momMax ?? 0.21)) { quiet("live: already ran too far"); continue; }   // lesson 34
+            if (mom == null) { quiet("live: watching its price first"); return null; }
+            if (mom < (this.cfg.momMin ?? 0.10)) { quiet("live: not rising right now"); return null; }
+            if (mom > (this.cfg.momMax ?? 0.21)) { quiet("live: already ran too far"); return null; }   // lesson 34
           }
-        } else if (mom != null && mom < 0) { quiet("instinct: whales in but price falling"); continue; }
+        } else if (mom != null && mom < 0) { quiet("instinct: whales in but price falling"); return null; }
         const t = Math.floor(this.now() / 60000) * 60000, c0 = { t, o: lv.price, h: lv.price, l: lv.price, c: lv.price, v: lv.vol5 / 5 };
-        this.cool.set(m.pool, this.now() + 30000);
-        await this.#consider(m, Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), { ok: true, why: instinct ? `ULTRA INSTINCT: ${w.whales} whale${w.whales === 1 ? "" : "s"} bought $${Math.round(w.buy)} in 2 min (sold $${Math.round(w.sell)})` : s_pull != null ? `pullback buy: ran ${(mom * 100).toFixed(1)}% in 2 min, back ${(s_pull * 100).toFixed(1)}% and bouncing, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` : `rising ${((mom || 0) * 100).toFixed(1)}% in ${this.cfg.momSecs ?? 30}s, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` });
-        continue;
+        const sg = { path: instinct ? "whale" : "mom", rise: +(mom ?? 0), vol5: lv.vol5 || 0, buys: lv.buys5 || 0, sells: lv.sells5 || 0, ratio: (lv.buys5 || 0) / Math.max(1, lv.sells5 || 0), liq: lv.liqUsd ?? 0 };
+        return { cs: Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), sig: sg, s: { ok: true, why: instinct ? `ULTRA INSTINCT: ${w.whales} whale${w.whales === 1 ? "" : "s"} bought $${Math.round(w.buy)} in 2 min (sold $${Math.round(w.sell)})` : s_pull != null ? `pullback buy: ran ${(mom * 100).toFixed(1)}% in 2 min, back ${(s_pull * 100).toFixed(1)}% and bouncing, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` : `rising ${((mom || 0) * 100).toFixed(1)}% in ${this.cfg.momSecs ?? 30}s, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` } };
       }
       // the chart so far, plus the minute in progress built from the live price
       const cs = hit.cs.slice(), last = cs[cs.length - 1], minute = Math.floor(this.now() / 60000) * 60000;
       if (last.t >= minute) cs[cs.length - 1] = { ...last, c: lv.price, h: Math.max(last.h, lv.price), l: Math.min(last.l, lv.price), v: Math.max(last.v, lv.vol5 / 5) };
       else cs.push({ t: minute, o: last.c, h: Math.max(last.c, lv.price), l: Math.min(last.c, lv.price), c: lv.price, v: lv.vol5 / 5 });
       const sig = entrySignal(cs, cs.length - 1, this.cfg, { ...m, ...lv });
-      if (!sig.ok) { if (!/no breakout|volume/.test(sig.why)) this.#skip(m.name, sig.why); else quiet(sig.why.startsWith("volume") ? "volume too low" : "not near its high"); continue; }        // the thousand quiet checks a minute are not news
+      if (!sig.ok) { if (!/no breakout|volume/.test(sig.why)) { if (loud) this.#skip(m.name, sig.why); } else quiet(sig.why.startsWith("volume") ? "volume too low" : "not near its high"); return null; }        // the thousand quiet checks a minute are not news
+      const r3 = cs.length >= 4 && cs[cs.length - 4].c > 0 ? lv.price / cs[cs.length - 4].c - 1 : 0;   // the 3-minute breakout %
+      return { cs, s: sig, sig: { path: "breakout", rise: r3, vol5: lv.vol5 || 0, buys: lv.buys5 || 0, sells: lv.sells5 || 0, ratio: (lv.buys5 || 0) / Math.max(1, lv.sells5 || 0), liq: lv.liqUsd ?? 0 } };
+    }
+  }
+  /** Entries (build 52, the living organism): every hard filter first, then the organism scores the coin's band (a Thompson draw,
+   *  so thin bands still get tried). Positive -> buy at its size. Not positive -> remembered; after 97 s with no entry the
+   *  best-scored fresh coin that still passes every filter is bought at 0.618 size. It never stops trading. */
+  async #fastEntries() {
+    if (this.paused || this.open.size >= this.cfg.maxOpen) return;
+    for (const m of this.ready) {
+      if (this.open.size >= this.cfg.maxOpen || this.paused) break;
+      const g = this.#gate(m, true); if (!g) continue;
+      const sc = O.score(this.org, g.sig, { sample: true, rng: this.rng });
+      if (!(sc > 0)) { O.noteIdle(this.org, g.sig, sc, m, this.now()); continue; }
       this.cool.set(m.pool, this.now() + 30000);
-      await this.#consider(m, cs, sig);
+      await this.#consider(m, g.cs, g.s, { m: O.sizeMul(this.org, g.sig), sig: g.sig });
+    }
+    if (this.paused || this.open.size >= this.cfg.maxOpen) return;
+    const pick = O.idlePick(this.org, this.now(), (m) => !!this.#gate(m, false));
+    if (pick) {
+      const g = this.#gate(pick.cand, false);
+      this.cool.set(pick.cand.pool, this.now() + 30000);
+      await this.#consider(pick.cand, g.cs, { ...g.s, why: `${g.s.why} (idle pick: least-bad band, 0.618 size)` }, { m: O.INV, sig: g.sig });
     }
   }
   /** What the screen animates: one event per decision. type: drop | block | buy | sell | fail */
@@ -246,15 +273,23 @@ export class Engine {
       } else if (r.outAmount != null && r.inAmount != null && p.stake > 0) {
         ret = p.banked ? (Number(r.outAmount) / 1e9 + p.banked) / p.stake0 - 1 : Number(r.outAmount) / 1e9 / p.stake - 1;   // the real fill (plus anything banked on the way), not the model
       }
+      const est = p.est || {}, stake0 = p.stake0 ?? p.stake;
+      const restRet = r.ok && r.outAmount != null && p.stake > 0 ? Number(r.outAmount) / 1e9 / p.stake - 1 : est.ret ?? ret;   // the part still held at the exit, alone
+      const trig = typeof est.trig === "number" ? est.trig : null, holdS = +((this.now() - p.at) / 1000).toFixed(1);
+      // fee: the buy's network fee from the chain (the sale's fee is already inside its net lamports); unknown -> the cap
+      const learn = { sig: p.sig || null, holdS, stake: stake0, feeLamports: p.buyFee ?? this.exec.caps?.maxFeeLamports ?? null, trig, gap: trig != null ? +(restRet - trig).toFixed(4) : null, restRet: +restRet.toFixed(4), peak: p.hi ?? null, low: p.low ?? null, tPeak: p.tPeak ?? null, tLow: p.tLow ?? null, tPartAt: p.tPartAt ?? null, exitKind: est.kind || (why === "you pressed Sell" ? "manual" : "chart") };
       const pnl = (p.stake0 ?? p.stake) * ret;   // ret is on the whole stake (banked part included), so the P&L is too; p.stake is only what was left after the golden take
-      this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why, note, exitPx: x.exitPx, est: p.est || null });
+      this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why, note, exitPx: x.exitPx, est: p.est || null, ...learn });
       { const until = this.now() + (ret <= -0.5 ? 7 * 24 * 60 : ret < 0 ? (this.cfg.loserCoolMin ?? 60) : this.cfg.cooldownMin) * 60000;  /* a rug is banned for a week */ this.cool.set(p.pool, until); if (p.mint) this.cool.set(p.mint, until); }   // by coin, not just by pool (PODCAT x3)   // lesson 7: a coin that just lost gets an hour off (FLOAT x4)       // never re-enter the same coin straight after an exit
       this.open.delete(p.id); this.sellTries.delete(p.id); this.peaks.delete(p.id); this.hist.delete(p.id);
-      this.closed.push({ ...p, type: "close", ret, pnl, why, note, at: this.now() });
-      // it teaches itself (golden ratio): losing streak -> demand more momentum before buying; winning -> relax back toward 2%
-      const last = this.closed.slice(-5), avg = last.reduce((a, x) => a + (x.ret || 0), 0) / last.length;
-      if (last.length >= 3) { const m0 = this.cfg.momMin ?? 0.10; this.cfg.momMin = Math.min(0.13, Math.max(0.03, avg < 0 ? m0 * 1.618 : avg > 0.05 ? m0 / 1.618 : m0)); }   // lesson 36: capped at 13% so CHLOE's +13.4% band stays open after losses that came from top-buys momMax now blocks. lesson 31: every live entry rising >= 13.4% in 30 s won, every one <= 9.5% hit the stop; the tuner never goes under 10%
-      if (last.length >= 3) this.onLearn?.({ momMin: this.cfg.momMin });   // what it taught itself survives restarts
+      this.closed.push({ ...p, type: "close", ret, pnl, why, note, at: this.now(), ...learn });
+      // the living organism (build 52; replaces the momMin tuner): p, W, L and fees per band from this REAL fill, and every 8
+      // closes a golden-step re-fit of sl / partAt / tp inside their clamps. momMin stays where it is set (the floor is 3%).
+      try {
+        const ch = O.step(this.org, { ...learn, ret }, this.cfg);
+        if (ch.exits) for (const k of ["sl", "partAt", "tp"]) if (typeof ch.exits[k] === "number") this.cfg[k] = Math.min(O.CLAMP[k][1], Math.max(O.CLAMP[k][0], ch.exits[k]));
+        this.onLearn?.({ org: O.persistable(this.org), exits: ch.exits });
+      } catch (e) { this.#err("organism", e); }
       this.#ev("sell", p.name, why, { ret, pnl, stake: p.stake0 ?? p.stake, est: p.est || null });
       return true;
     } finally { this.closing.delete(p.id); }
@@ -307,7 +342,7 @@ export class Engine {
     }
   }
   /** A signal exists. Rug check, shadow book, edge gate, size, buy, record. Everything past here is on disk first. */
-  async #consider(m, cs, s) {
+  async #consider(m, cs, s, o = {}) {
     const i = cs.length - 1;
     // the rug check is re-run every 10 minutes (a coin that was clean an hour ago can be pulled now), and EVERY entry path must
     // pass the liquidity floor, not only the live one (리핀 came in through the chart path and went to -100%)
@@ -321,24 +356,27 @@ export class Engine {
     const e = this.edge();
     if (this.exec.name === "live" && e.n >= this.cfg.edgeMinN && e.avg < this.cfg.edgeFloor) { this.#skip(m.name, `shadow edge ${(e.avg * 100).toFixed(1)}% over last ${e.n}: waiting`); this.#ev("drop", m.name, "shadow edge negative"); return; }
     const id = `${m.mint.slice(0, 6)}-${this.now()}`;
-    let stake = this.equity * this.cfg.stakeFrac;
-    let streak = 0; for (let k = this.closed.length - 1; k >= 0 && this.closed[k].ret > 0; k--) streak++;
-    // lesson 30 (Alex: "not sure -> smaller position"): a strong coin (big volume, buyers well ahead, or whales) gets the full size,
-    // a weaker one gets 0.618 of it. Trades all the time, risks less on the doubtful ones.
-    const lvc = this.live.get(m.pool) || {}, strong = /ULTRA INSTINCT/.test(s.why || "") || ((lvc.vol5 || 0) >= (this.cfg.strongVol5 ?? 15000) && (lvc.buys5 || 0) >= 1.2 * (lvc.sells5 || 0));
-    if (this.exec.sizeSol) { try { stake = (await this.exec.sizeSol({ streak, scale: strong ? 1 : 0.618 })).sol; } catch (err) { this.#skip(m.name, `wallet balance: ${err.message.slice(0, 60)}`); return; } }
+    // the organism sizes it (lesson 30 grown up): a band with positive measured EV gets the full size, anything else 0.618 of it.
+    // size = what the executor's own caps already allow at full scale; the stake is never above it (hard invariant).
+    const mul = o.m === 1 ? 1 : O.INV;
+    let size = this.equity * this.cfg.stakeFrac, stake = size * mul;
+    if (this.exec.sizeSol) { try { size = (await this.exec.sizeSol({ streak: 0, scale: 1 })).sol; stake = (await this.exec.sizeSol({ streak: 0, scale: mul })).sol; } catch (err) { this.#skip(m.name, `wallet balance: ${err.message.slice(0, 60)}`); return; } }
+    if (!(stake <= size + 1e-9)) { this.#skip(m.name, "stake above size: refused"); return; }
+    const sigN = o.sig ? Object.fromEntries(Object.entries(o.sig).map(([k, v]) => [k, typeof v === "number" ? +v.toFixed(4) : v])) : null;
+    const lv0 = { sig: sigN, m: mul, t0: this.now(), sl: this.cfg.sl, tp: this.cfg.tp, partAt: this.cfg.partAt, lockFrom: this.cfg.lockFrom };   // the exits it was bought under
     this.journal.write({ type: "intent", id, name: m.name, mint: m.mint, enter: s.why });   // on disk BEFORE anything is done
-    const f = await this.exec.buy({ mint: m.mint, pool: m.pool, usd: stake });
+    const f = await this.exec.buy({ mint: m.mint, pool: m.pool, usd: stake, scale: mul });
     if (!f.ok && f.unknown && f.orderId) {
-      const pos0 = { type: "open", id, name: m.name, mint: m.mint, pool: m.pool, stake, orderId: f.orderId, tokens: null, entryPx: cs[i].c * (1 + this.cfg.slippage), candleT: cs[i].t, enter: s.why, rug: r.reason, at: this.now() };
+      const pos0 = { ...lv0, type: "open", id, name: m.name, mint: m.mint, pool: m.pool, stake, orderId: f.orderId, tokens: null, entryPx: cs[i].c * (1 + this.cfg.slippage), candleT: cs[i].t, enter: s.why, rug: r.reason, at: this.now() };
       this.journal.write({ type: "pending-order", id, orderId: f.orderId, name: m.name });
       this.unknown.set(id, { orderId: f.orderId, name: m.name, at: this.now(), pos: pos0 }); this.#skip(m.name, "order sent, confirmation pending"); return;
     }
     if (!f.ok) { this.journal.write({ type: "fail", id, why: f.why }); this.#skip(m.name, `executor: ${f.why}`); this.#ev("fail", m.name, f.why); return; }
-    if (f.sol != null) stake = f.sol;
-    const pos = { type: "open", id, name: m.name, mint: m.mint, pool: m.pool, stake, orderId: f.orderId || null, tokens: f.outAmount || null, entryPx: cs[i].c * (1 + this.cfg.slippage), candleT: cs[i].t, enter: s.why, rug: r.reason, at: this.now() };
+    if (f.sol != null) stake = Math.min(f.sol, size);
+    const pos = { ...lv0, buyFee: f.feeLamports ?? null, type: "open", id, name: m.name, mint: m.mint, pool: m.pool, stake, orderId: f.orderId || null, tokens: f.outAmount || null, entryPx: cs[i].c * (1 + this.cfg.slippage), candleT: cs[i].t, enter: s.why, rug: r.reason, at: this.now() };
     this.journal.write(pos);
     this.open.set(id, pos);
+    O.noteEntry(this.org, this.now());
     this.#ev("buy", m.name, s.why, { stake: pos.stake });
   }
   status() {
@@ -346,6 +384,7 @@ export class Engine {
     return {
       mode: this.exec.name, paused: this.paused, unit: this.unit, halted: this.exec.state?.halted || null, ticks: this.ticks, lastTickAt: this.lastTickAt, equity: +this.equity.toFixed(4), curve: this.closed.reduce((a, x) => (a.push(+((a[a.length - 1] ?? this.startEq) + (x.pnl || 0)).toFixed(4)), a), [this.startEq]).slice(-60), startEq: this.startEq,
       open: [...this.open.values()].map((p) => { const h = this.hist.get(p.id) || [], px = h.length ? h[h.length - 1][1] : null, e0 = p.entryPx; return { id: p.id, name: p.name, mint: p.mint, entryPx: e0, stake: +p.stake.toFixed(5), since: p.at, enter: p.enter, ret: p.val != null && this.now() - p.valAt < 15000 && p.stake > 0 ? p.val / p.stake - 1 : px && e0 ? px / e0 - 1 : null, peak: (() => { const pk = this.peaks.get(p.id); return !pk ? null : pk.real ? pk.v / p.stake - 1 : e0 ? pk.v / e0 - 1 : null; })(), path: e0 ? h.map(([, v]) => +(v / e0 - 1).toFixed(4)) : [] }; }),
+      organism: { ...O.summary(this.org), exits: { sl: this.cfg.sl, partAt: this.cfg.partAt, tp: this.cfg.tp, lockFrom: this.cfg.lockFrom } },
       exits: { sl: this.cfg.sl, tp: this.cfg.tp, trailFrom: this.cfg.trailFrom, trail: this.cfg.trail, maxHoldMin: this.cfg.maxHoldMin },
       trades: c.length, wins: wins.length, winRate: c.length ? +(wins.length / c.length).toFixed(3) : null,
       recentClosed: c.slice(-8).map((x) => ({ name: x.name, ret: +(x.ret * 100).toFixed(1), pnl: +(x.pnl || 0).toFixed(4), why: x.why, note: x.note || null, enter: x.enter })),

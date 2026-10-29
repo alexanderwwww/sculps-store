@@ -61,8 +61,9 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
         await wait(caps.pollMs);
       }
     },
-    async buy({ mint }) {
-      const { bal, sol } = await exec.sizeSol();
+    async buy({ mint, scale = 1 }) {
+      // scale: the organism's size multiplier, 0.618 or 1. Never above 1, so a buy is never bigger than the caps already allow.
+      const { bal, sol } = await exec.sizeSol({ scale: Math.min(1, Number(scale) > 0 ? Number(scale) : 1) });
       const why = exec.gate(mint, bal);
       if (why) return { ok: false, why };
       if (!(sol >= 0.005)) return { ok: false, why: `stake ${sol} SOL is too small to trade (wallet ${bal.toFixed(4)} SOL, ${caps.reserveSol} kept for fees)` };
@@ -79,7 +80,9 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       if (!r.ok) return { ...r, orderId: r.signature };
       let out = q.outAmount;
       try { const accts = await rpc.tokenAccounts(wallet.address, mint); const held = accts.reduce((a, x) => a + x.raw, 0n); if (held > 0n) out = held.toString(); } catch { /* the quote's number stands */ }
-      return { ok: true, orderId: r.signature, hash: r.signature, sol, inAmount: String(lamports), outAmount: out, quoteOut: q.outAmount };
+      // the organism's fee number: read from the confirmed transaction (a read, nothing sent); null -> the engine uses the cap
+      let feeLamports = null; if (rpc.netLamports && rpc.feeOf) { try { await rpc.netLamports(r.signature); feeLamports = rpc.feeOf(r.signature); } catch { /* unknown */ } }
+      return { ok: true, orderId: r.signature, hash: r.signature, sol, inAmount: String(lamports), outAmount: out, quoteOut: q.outAmount, feeLamports };
     },
     /** One look at a sent order. */
     async recheck(orderId) {
@@ -101,7 +104,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       const r = await exec.land(s.swapTransaction, { kind: "sell", mint });
       if (!r.ok) return r;
       let out = q.outAmount; const net = await rpc.netLamports(r.signature).catch(() => null); if (net != null) out = String(Math.max(0, net));
-      return { ok: true, sold: amount.toString(), left: (total - amount).toString(), outAmount: out, signature: r.signature };
+      return { ok: true, sold: amount.toString(), left: (total - amount).toString(), outAmount: out, signature: r.signature, feeLamports: rpc.feeOf?.(r.signature) ?? null };
     },
     async sell({ mint }) {
       let accts;
@@ -135,7 +138,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       let out = q.outAmount;                                   // the quote, if the chain cannot tell us
       const net = await rpc.netLamports(r.signature).catch(() => null);
       if (net != null) out = String(Math.max(0, net));
-      return { ok: true, orderId: r.signature, hash: r.signature, inAmount: amount, outAmount: out, closed: rent };
+      return { ok: true, orderId: r.signature, hash: r.signature, inAmount: amount, outAmount: out, closed: rent, feeLamports: rpc.feeOf?.(r.signature) ?? null };
     },
   };
   return exec;

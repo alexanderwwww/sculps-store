@@ -101,11 +101,13 @@ export class Rpc {
   async netLamports(signature) {
     for (let i = 0; i < 4; i++) {
       const t = await this.call("getTransaction", [signature, { encoding: "json", maxSupportedTransactionVersion: 0, commitment: "confirmed" }]).catch(() => null);
-      if (t?.meta && !t.meta.err) return t.meta.postBalances[0] - t.meta.preBalances[0];
+      if (t?.meta && !t.meta.err) { (this.fees ??= new Map()).set(signature, t.meta.fee ?? null); if (this.fees.size > 200) this.fees.delete(this.fees.keys().next().value); return t.meta.postBalances[0] - t.meta.preBalances[0]; }
       await this.wait(800);
     }
     return null;
   }
+  /** The network fee (lamports) of a transaction netLamports already read; null when unknown. Read-only. */
+  feeOf(signature) { return this.fees?.get(signature) ?? null; }
   /** Every account of this owner holding `mint`: [{pubkey, program, raw: BigInt, decimals}] */
   async tokenAccounts(owner, mint) {
     const r = await this.call("getTokenAccountsByOwner", [owner, { mint }, { encoding: "jsonParsed", commitment: "confirmed" }]);

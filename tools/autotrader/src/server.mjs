@@ -37,17 +37,23 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const wallet = () => { if (!secrets.imported) throw new Error("Plug in your Phantom wallet first."); return walletFromPem(secrets.walletPem); };
   const caps = { ...JUP_CAPS, ...PLUG_CAPS_EXTRA, preset: String(PLUG_CAPS_EXTRA.fixedSol) };
 
+  // what the organism learned: its tables, and only the clamped exit levels (sl / partAt / tp). Never size, never caps.
+  const onLearn = ({ org, exits } = {}) => { const t = readCfg().tuned || {}; const ex = {}; for (const k of ["sl", "partAt", "tp"]) if (exits && typeof exits[k] === "number") ex[k] = exits[k]; writeCfg({ tuned: { ...t, ...ex, ...(org ? { org } : {}) } }); };
   async function build_(m) {
-    if (execOverride) return new Engine({ feed, exec: execOverride, journal: new Journal(join(dataDir, "journal-test.jsonl")), rug: rugOverride || rugCheck, startEq: 100, now });
+    if (execOverride) { const e = new Engine({ feed, exec: execOverride, journal: new Journal(join(dataDir, "journal-test.jsonl")), rug: rugOverride || rugCheck, startEq: 100, now, org: readCfg().tuned?.org || null }); e.onLearn = (c) => onLearn(c); return e; }
     if (m !== "live") throw new Error("Only real trading exists.");
     const w = wallet(); const bal = await rpc().solBalance(w.address);
     // never refuse to run on a low balance: the SOL may be inside open positions, and only a running engine can sell them. Buys simply wait.
     if (bal < 0.0202) log(`wallet ${bal.toFixed(4)} SOL: running, buys wait until a sale brings SOL back`);
     if (readCfg().phantomStartSol == null) writeCfg({ phantomStartSol: bal });
-    Object.assign(DEFAULTS, readCfg().tuned || {});
+    const { org: savedOrg = null, ...tunedCfg } = readCfg().tuned || {};
+    Object.assign(DEFAULTS, tunedCfg);
+    // first boot of the organism (no saved org): the old tuner's momMin goes back to the 3% growth floor, once. The organism
+    // picks bands itself from here; a momMin the desk sets later is kept.
+    if (!savedOrg && !(DEFAULTS.momMin <= 0.03)) { DEFAULTS.momMin = 0.03; writeCfg({ tuned: { ...(readCfg().tuned || {}), momMin: 0.03 } }); }
     const exec = jupiterExec({ wallet: w, rpc: rpc(), jupiter: jup(), cfg: DEFAULTS, caps, startSol: readCfg().phantomStartSol, now });
-    const eng = new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-phantom.jsonl")), rug: rugOverride || rugCheck, startEq: readCfg().phantomStartSol, now });
-    eng.onLearn = (c) => writeCfg({ tuned: { ...(readCfg().tuned || {}), ...c } });
+    const eng = new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-phantom.jsonl")), rug: rugOverride || rugCheck, startEq: readCfg().phantomStartSol, now, org: savedOrg });
+    eng.onLearn = (c) => onLearn(c);
     return eng;
   }
   async function go(m) {
