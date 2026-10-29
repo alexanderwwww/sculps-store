@@ -253,7 +253,8 @@ export class Engine {
     if (this.exec.name === "live" && e.n >= this.cfg.edgeMinN && e.avg < this.cfg.edgeFloor) { this.#skip(m.name, `shadow edge ${(e.avg * 100).toFixed(1)}% over last ${e.n}: waiting`); this.#ev("drop", m.name, "shadow edge negative"); return; }
     const id = `${m.mint.slice(0, 6)}-${this.now()}`;
     let stake = this.equity * this.cfg.stakeFrac;
-    if (this.exec.sizeSol) { try { stake = (await this.exec.sizeSol()).sol; } catch (err) { this.#skip(m.name, `wallet balance: ${err.message.slice(0, 60)}`); return; } }
+    let streak = 0; for (let k = this.closed.length - 1; k >= 0 && this.closed[k].ret > 0; k--) streak++;
+    if (this.exec.sizeSol) { try { stake = (await this.exec.sizeSol({ streak })).sol; } catch (err) { this.#skip(m.name, `wallet balance: ${err.message.slice(0, 60)}`); return; } }
     this.journal.write({ type: "intent", id, name: m.name, mint: m.mint, enter: s.why });   // on disk BEFORE anything is done
     const f = await this.exec.buy({ mint: m.mint, pool: m.pool, usd: stake });
     if (!f.ok && f.unknown && f.orderId) {

@@ -21,11 +21,17 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       const q = await jupiter.quote({ input: p.mint, output: SOL_MINT, amount: String(p.tokens), slippageBps: caps.sellSlippageBps });
       return Number(q.outAmount) / 1e9;
     },
-    async sizeSol() {
+    async sizeSol({ streak = 0 } = {}) {
       const bal = await exec.balance();
       if (state.startSol == null) state.startSol = bal;
       const spendable = Math.max(0, bal - caps.reserveSol);
-      if (caps.fixedSol) return { bal, sol: spendable >= caps.fixedSol ? caps.fixedSol : 0 };   // the same 0.01618 SOL every buy (Alex)
+      if (caps.fixedSol) {
+        // golden-ratio scale (Alex 2026-10-29): base 0.01618 SOL, x1.618 for each win in a row (at most 3 steps), back to base after any loss;
+        // never more than a quarter of the wallet on one buy.
+        if (spendable < caps.fixedSol) return { bal, sol: 0 };
+        const step = Math.min(3, Math.max(0, streak)), want = caps.fixedSol * Math.pow(1.618, step);
+        return { bal, sol: +Math.max(caps.fixedSol, Math.min(want, spendable * 0.25)).toFixed(5) };
+      }
       return { bal, sol: Math.min(caps.maxSolPerTrade, +(spendable * cfg.stakeFrac).toFixed(4)) };
     },
     gate(mint, bal) {
