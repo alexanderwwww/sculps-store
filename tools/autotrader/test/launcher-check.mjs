@@ -62,8 +62,8 @@ try {
   assert.ok(!/PRIVATE KEY/.test(readFileSync(join(work, "ultra.log"), "utf8")) && !readFileSync(join(work, "ultra.log"), "utf8").includes(secret), "no key in the log");
   ok("the plugged-in Phantom wallet is still there after the upgrade (the data folder is never touched)");
   r = launch(app, { ULTRA_CHROME: chrome });
-  assert.equal(r.status, 0); assert.equal((await health(port)).build, build);
-  ok("an OLDER bundle also wins: the app in front of you is the truth (no stale-cache trap)");
+  assert.equal(r.status, 0); assert.equal((await health(port)).build, String(Number(build) + 1));
+  ok("reopening an older bundle never rolls back a newer running build (a live update stays)");
   await stop(port); await new Promise((x) => setTimeout(x, 400));
 
   // no Chrome: the default browser
