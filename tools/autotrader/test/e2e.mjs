@@ -28,15 +28,15 @@ const reachable = async (sel) => page.evaluate((s) => { const el = document.quer
 const text = async () => (await page.textContent("body")).replace(/\s+/g, " ");
 try {
   await page.goto(`http://127.0.0.1:${port}/`);
-  await page.waitForSelector(".steps");
-  assert.match(await text(), /Press start/); ok("a fresh install opens on ONE card: Press start");
+  await page.waitForSelector("#termhost:not([hidden]) .agent");
+  assert.doesNotMatch(await text(), /Advanced|Press start/); ok("no setup menu: it opens straight on the terminal");
   assert.equal(await page.getByRole("button", { name: "Start real trading", exact: true }).count(), 1); ok("there is one Start real trading button");
   assert.doesNotMatch(await text(), /PRIVATE|signing key|API key|whitelist/i); ok("no keys, no API, no whitelist, no addresses to copy on the main screen");
   const b = page.getByRole("button", { name: "Start real trading", exact: true });
   const hit = await b.evaluate((el) => { const r = el.getBoundingClientRect(); const t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return t === el || el.contains(t); });
   assert.ok(hit); ok("the button is reachable by the mouse");
   await b.click();
-  await page.waitForSelector("#termhost:not([hidden]) .agent");
+  await page.waitForFunction(() => /live/i.test(document.querySelector("header .chip")?.textContent || ""), null, { timeout: 15000 });
   assert.match(await text(), /Scanner/); assert.match(await text(), /Rug check/); assert.match(await text(), /Executor/); assert.match(await page.textContent("header .chip"), /live/i); ok("one press: the live terminal with all seven agents");
   await page.waitForFunction(() => /ALPHA/.test(document.body.textContent), null, { timeout: 12000 });
   ok("a signal shows up in the night log with its name");

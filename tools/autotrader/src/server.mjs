@@ -27,7 +27,7 @@ export const APP = "ultra";
 /** Alex's GMGN wallet (he pasted it 2026-10-28). Ultra checks it against the SOL shown in GMGN before it clicks anything. */
 export const DEFAULT_WEB_WALLET = "4DuDEdhHAdLCDnoQnTp4ikFzTyCVFpSNQDdxwJRibw1D";
 
-export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, tickMs = 3000, quiet = false, balance = solBalance, ipv4 = publicIpv4, gmgnHost, chrome: chromeOverride = null, webWalletOf = null, rpc: rpcOverride = null, jupiter: jupiterOverride = null, rug: rugOverride = null, execOverride = null, now = Date.now, idleMs = 0, link = false, onShutdown = () => {} } = {}) {
+export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, tickMs = 3000, quiet = false, balance = solBalance, ipv4 = publicIpv4, gmgnHost, chrome: chromeOverride = null, webWalletOf = null, rpc: rpcOverride = null, jupiter: jupiterOverride = null, rug: rugOverride = null, execOverride = null, now = Date.now, idleMs = 0, link = false, autoStart = false, onShutdown = () => {} } = {}) {
   mkdirSync(dataDir, { recursive: true });
   const secrets = new Secrets(dataDir);
   const cfgFile = join(dataDir, "config.json");
@@ -53,7 +53,8 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
       let wallet = webWalletOf ? await webWalletOf() : (secrets.webWallet || DEFAULT_WEB_WALLET);
       if (!wallet) throw new Error("Ultra could not work out which wallet GMGN is using. Paste its address under Advanced.");
       const sol = await rpc().solBalance(wallet);
-      if (Math.abs(chip - sol) > Math.max(0.0015, 0.02 * sol)) throw new Error(`GMGN shows ${chip} SOL but the wallet Ultra has (${wallet.slice(0, 4)}…${wallet.slice(-4)}) holds ${sol.toFixed(4)} SOL. Paste the right address under Advanced.`);
+      // Never blocks Start (Alex, 2026-10-29): GMGN's chip on the SOL page read 0 while his wallet held 0.1158. Every buy is still confirmed on the chain.
+      if (Math.abs(chip - sol) > Math.max(0.0015, 0.02 * sol)) log(`note: GMGN chip shows ${chip} SOL, the wallet holds ${sol.toFixed(4)} SOL; trading anyway`);
       const cfg = readCfg(); if (cfg.webStartSol == null) writeCfg({ webStartSol: sol });
       webAddr = wallet;
       const exec = webExec({ panel, rpc: rpc(), wallet, cfg: DEFAULTS, startSol: readCfg().webStartSol, now });
@@ -142,10 +143,10 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
           if (url.pathname === "/api/keypair") return send(res, 200, { ok: true, publicKey: secrets.ensureKeypair() });
           if (url.pathname === "/api/setup") { try { secrets.set(body); } catch (e) { return fail(res, 400, e.message); } return send(res, 200, { ok: true, setup: secrets.masked() }); }
           if (url.pathname === "/api/test") return send(res, 200, { ok: true, steps: await checks() });
-          if (url.pathname === "/api/go") { if (body.mode !== "live") return fail(res, 400, "mode must be live"); try { await go(body.mode); } catch (e) { return fail(res, 400, e.message); } return send(res, 200, { ok: true, mode }); }
+          if (url.pathname === "/api/go") { if (body.mode !== "live") return fail(res, 400, "mode must be live"); writeCfg({ userStopped: false }); try { await go(body.mode); } catch (e) { return fail(res, 400, e.message); } return send(res, 200, { ok: true, mode }); }
           if (url.pathname === "/api/pause") { if (engine) engine.paused = !!body.paused; return send(res, 200, { ok: true, paused: engine?.paused ?? null }); }
           if (url.pathname === "/api/flatten") { if (!engine) return fail(res, 400, "Not running."); await engine.flatten(); return send(res, 200, { ok: true, open: engine.open.size }); }
-          if (url.pathname === "/api/stop") { halt(); return send(res, 200, { ok: true }); }
+          if (url.pathname === "/api/stop") { halt(); writeCfg({ userStopped: true }); return send(res, 200, { ok: true }); }
           if (url.pathname === "/api/source") { if (!["web", "own", "gmgn"].includes(body.source)) return fail(res, 400, "source must be web, own or gmgn"); if (engine && mode === "live") return fail(res, 400, "Stop Ultra first."); writeCfg({ liveSource: body.source }); return send(res, 200, { ok: true }); }
           if (url.pathname === "/api/backup") { if (body.confirm !== true) return fail(res, 400, "Confirm first."); const w = ownWallet(); return send(res, 200, { ok: true, address: w.address, secretKey: w.secretKeyBase58 }); }
           if (url.pathname === "/api/rebase") { if (engine && engine.open.size) return fail(res, 400, "Close the open positions first."); const w = ownWallet(); const b = await rpc().solBalance(w.address); writeCfg({ ownStartSol: b }); if (engine && mode === "live") { halt(); await go("live"); } return send(res, 200, { ok: true, start: b }); }
@@ -168,13 +169,15 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const linkI = link ? startLink({ getState: () => ({ build, running: !!engine, mode, lastError, engine: engine ? engine.status() : null }), getEngine: () => engine, onStart: () => go("live") }) : null;
   const close = () => new Promise((r) => { stopped = true; linkI?.stop(); if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); server.close(() => r()); server.closeAllConnections?.(); });
   // Resume what was running when the app last closed. Live resumes only if the keys are still there.
-  listening.then(() => { const c = readCfg(); if (c.running && c.mode === "live" && !(c.mode === "live" && c.liveSource === "gmgn" && !secrets.ready())) go(c.mode).catch((e) => { lastError = e.message; }); });
+  // The app trades on its own: on launch it starts, and if GMGN is not ready yet it tries again every 20 s. Only Stop ends that.
+  const autoGo = () => { if (stopped || engine || readCfg().userStopped) return; go("live").catch((e) => { lastError = e.message; setTimeout(autoGo, 20000).unref?.(); }); };
+  listening.then(() => { const c = readCfg(); if (autoStart) autoGo(); else if (c.running && c.mode === "live" && !(c.mode === "live" && c.liveSource === "gmgn" && !secrets.ready())) go(c.mode).catch((e) => { lastError = e.message; }); });
   return { listening, close, token, get engine() { return engine; }, secrets, go, halt };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const dataDir = process.env.ULTRA_DATA || join(process.env.HOME || ".", "Library", "Application Support", "Ultra", "data");
-  const app = start({ dataDir, port: Number(process.env.ULTRA_PORT || 47401), build: process.env.ULTRA_BUILD || "dev", link: true, onShutdown: () => process.exit(0) });
+  const app = start({ dataDir, port: Number(process.env.ULTRA_PORT || 47401), build: process.env.ULTRA_BUILD || "dev", link: true, autoStart: true, onShutdown: () => process.exit(0) });
   app.listening.then((p) => console.log(`ultra on http://127.0.0.1:${p}/`));
   // A sleeping Mac cannot sell. While Ultra runs, keep the Mac awake (the screen may still sleep).
   if (process.platform === "darwin") { try { spawn("caffeinate", ["-i", "-w", String(process.pid)], { stdio: "ignore", detached: true }).unref(); } catch { /* optional */ } }

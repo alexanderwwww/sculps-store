@@ -52,11 +52,10 @@ test("ONE BUTTON: a GMGN that is not logged in says what to do, in plain words",
   assert.equal(r.status, 400); assert.match(r.error, /log in to GMGN/i);
   await s.close();
 });
-test("ONE BUTTON: a wallet that does not match what GMGN shows is refused before any click", async () => {
+test("ONE BUTTON: GMGN's chip disagreeing with the wallet never blocks Start (it read 0 on Alex's Mac)", async () => {
   const s = await boot({ chipOff: 0.5 });
   const r = await s.post("/api/go", { mode: "live" });
-  assert.equal(r.status, 400); assert.match(r.error, /shows 0\.5 SOL/);
-  assert.equal(s.gm.clicks((e) => e.trusted).length, 0);
+  assert.equal(r.ok, true);
   await s.close();
 });
 test("ONE BUTTON: Sell everything sells the open position with one Sell 100% click", async () => {

@@ -203,6 +203,7 @@
           <div class="tm__run"><i></i><span class="tm__state">running</span> · <span class="tm__clock">00:00:00</span></div>
           <div class="tm__tape"><span></span></div>
           <small>every trade gets a reason</small>
+          <div class="tm__go"></div>
         </div>
         <div class="tm__nums">
           <div><b class="tm__bal">–</b><span>balance SOL</span></div><div><b class="tm__trades">0</b><span>trades</span></div>
@@ -345,10 +346,10 @@
     }
     return {
       show(v) { host.hidden = !v; },
-      update(S, e) {
-        if (!t0) t0 = e.startedAt || Date.now();
+      update(S, e, override = null) {
+        if (!t0 && e.startedAt) t0 = e.startedAt;
         q(".tm__ver").textContent = `v${BUILD}-live`;
-        const chip0 = e.halted ? "halted" : e.paused ? "buying paused" : "running";
+        const chip0 = override || (e.halted ? "halted" : e.paused ? "buying paused" : "running");
         q(".tm__state").textContent = chip0; host.classList.toggle("paused", chip0 !== "running");
         const w = S.setup?.wallet || S.wallet || "";
         q(".tm__tape span").textContent = `${w ? w.slice(0, 4) + "…" + w.slice(-4) + " · " : ""}GMGN Instant trade · ${S.caps?.preset || "–"} SOL a click · ${e.open.length}/${S.cfg.maxOpen} open · `.repeat(3);
@@ -371,11 +372,11 @@
         t4.textContent = lc ? `${lc.pnl >= 0 ? "+" : ""}${lc.pnl.toFixed(4)}` : "–"; t4.className = `t4 ${lc ? (lc.pnl >= 0 ? "up" : "down") : ""}`;
         q(".tl__n").textContent = `${e.lines || 0} lines`;
         // result: start vs now
-        const s0 = e.startEq, n0 = e.equity, mx = Math.max(s0, n0) || 1;
+        const s0 = e.startEq || 0, n0 = e.equity || 0, mx = Math.max(s0, n0) || 1;
         q(".rs__s").style.width = `${(s0 / mx) * 100}%`; q(".rs__n").style.width = `${(n0 / mx) * 100}%`; q(".rs__n").classList.toggle("down", n0 < s0);
         q(".rs__sv").textContent = s0.toFixed(4); tween(q(".rs__nv"), shownEq ?? n0, n0, (v) => v.toFixed(4)); shownEq = n0;
         q(".rs__wl").innerHTML = `<b class="up">${e.wins} W</b> / <b class="down">${e.trades - e.wins} L</b>`;
-        q(".rs__since").textContent = `since ${hhmm(t0)}`;
+        q(".rs__since").textContent = t0 ? `since ${hhmm(t0)}` : "";
         chart(e); trade(e);
         // the decisions since the last look go through the pipeline, newest last
         const evs = e.events || [];
@@ -396,16 +397,15 @@
     const e = S.engine, live = S.mode === "live";
     const chip = !S.running ? ["off", "stopped"] : e?.halted ? ["halt", "halted"] : e?.paused ? ["paused", "buying paused"] : ["live", "live"];
     const pnl = e ? e.equity - e.startEq : 0;
-    const dash = S.running && e && view !== "setup";
-    top.append(el("header", { class: `glass top ${dash ? "slim" : ""}` },
-      el("div", { class: "orb" }, el("b")), el("div", { class: "brand" }, el("h1", { text: "Ultra" }), el("small", { text: `build ${BUILD}` })),
-      el("span", { class: `chip ${chip[0]}`, text: chip[1] }), el("div", { class: "grow" }),
-      (S.source === "own" ? S.own?.sol : S.sol) != null ? el("div", { class: "stat" }, el("b", { text: fmt(S.source === "own" ? S.own.sol : S.sol, 4) }), el("span", { text: "wallet SOL" })) : null,
-      e ? (() => { const b = el("b", { class: pnl >= 0 ? "up" : "down" }); tween(b, shownPnl ?? pnl, pnl, (v) => `${v >= 0 ? "+" : ""}${fmt(v, live ? 4 : 2)}`); if (shownPnl != null && pnl !== shownPnl) b.classList.add(pnl > shownPnl ? "flashup" : "flashdown"); shownPnl = pnl; return el("div", { class: "stat" }, b, el("span", { text: "P&L SOL" })); })() : null,
-      e ? el("div", { class: "stat" }, el("b", { text: `${e.open.length}/${S.cfg.maxOpen}` }), el("span", { text: "open" })) : null,
-      !S.running || view === "setup" ? null : el("button", { text: "Setup", onclick: () => { view = "setup"; render(); } })));
-    if (S.running && e && view !== "setup") { const d = dashView(); term.show(true); term.update(S, e); toasts.feed(e.events); app.append(d.cols); }
-    else { term.show(false); if (view === "setup" && S.running) app.append(el("button", { text: "← Back to the dashboard", onclick: () => { view = "auto"; render(); } })); app.append(setupView()); }
+    // One screen only: the terminal. No setup menu (Alex, 2026-10-29). Ultra starts itself; Start is only there after a Stop.
+    top.append(el("header", { class: "glass top slim" }, el("span", { class: `chip ${chip[0]}`, text: chip[1] })));
+    const idle = { open: [], trades: 0, wins: 0, events: [], counts: {}, curve: [], startEq: 0, equity: 0, recentClosed: [], lines: 0, watching: { total: 0 }, next: [] };
+    const E = S.running && e ? e : idle;
+    term.show(true);
+    term.update(S, E, S.running && e ? null : S.saved?.userStopped ? "stopped" : S.lastError ? `connecting to GMGN · ${S.lastError}` : "connecting to GMGN…");
+    const go = document.querySelector(".tm__go"); go.replaceChildren();
+    if (S.running && e) { toasts.feed(e.events); app.append(dashView().cols); }
+    else go.append(el("button", { class: "go", text: "Start real trading", disabled: busy, onclick: () => act("/api/go", { mode: "live" }) }), msg ? el("p", { class: "err", text: msg }) : null);
     window.scrollTo(0, keep);
   }
   const loop = () => { setTimeout(async () => { if (!busy && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") await refresh(); loop(); }, S && S.running ? 1500 : 3000); };
