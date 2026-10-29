@@ -71,7 +71,8 @@ fi
 
 # ---------------------------------------------------- find or start the server
 ours() { curl -s --max-time 1 "http://127.0.0.1:$1/healthz" 2>/dev/null | grep -Eq '"app":"ultra"'; }
-current() { curl -s --max-time 1 "http://127.0.0.1:$1/healthz" 2>/dev/null | grep -q "\"build\":\"$BUILD\""; }
+# a server that is this build OR NEWER (a live update) is current: reopening the app never rolls a live update back
+current() { b="$(curl -s --max-time 1 "http://127.0.0.1:$1/healthz" 2>/dev/null | sed -n 's/.*"build":"\([0-9]*\)".*/\1/p')"; [ -n "$b" ] && [ "$b" -ge "$BUILD" ]; }
 free() { curl -s --max-time 1 -o /dev/null "http://127.0.0.1:$1/healthz" 2>/dev/null; [ $? -eq 7 ]; }
 
 start_on() {

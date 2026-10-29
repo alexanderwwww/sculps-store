@@ -20,7 +20,7 @@
   const pct = (x) => (x == null ? "–" : `${x >= 0 ? "+" : ""}${(x * 100).toFixed(1)}%`);
   const ago = (t) => { const s = Math.max(0, Math.round((Date.now() - t) / 1000)); return s < 90 ? `${s}s` : s < 5400 ? `${Math.round(s / 60)}m` : `${Math.round(s / 3600)}h`; };
 
-  async function refresh() { try { S = await api("/api/state"); } catch { S = null; } render(); }
+  async function refresh() { try { S = await api("/api/state"); } catch { S = null; } if (S && S.build && String(S.build) !== String(BUILD)) { location.reload(); return; } render(); }   // a live update landed: show it
   const act = async (path, body = {}) => { busy = true; msg = null; render(); try { const r = await api(path, body); if (!r.ok) msg = r.error; return r; } finally { busy = false; await refresh(); } };
 
   /* ------------------------------------------------------------ dashboard */
@@ -89,7 +89,15 @@
   })();
   const toasts = (() => {
     const host = document.getElementById("toasts"); let lastSeq = null;
+    // the sound of money: a coin chime on every win, a soft tick on a buy (Web Audio, no files)
+    let ac = null;
+    const chime = (win) => { try { ac ||= new (window.AudioContext || window.webkitAudioContext)(); const t = ac.currentTime;
+      const notes = win ? [1318.5, 1975.5, 2637] : [880];
+      notes.forEach((f, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = "triangle"; o.frequency.value = f; g.gain.setValueAtTime(0, t + i * 0.09); g.gain.linearRampToValueAtTime(win ? 0.22 : 0.08, t + i * 0.09 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.09 + (win ? 0.9 : 0.25)); o.connect(g).connect(ac.destination); o.start(t + i * 0.09); o.stop(t + i * 0.09 + 1); });
+    } catch { /* no sound is never an error */ } };
+    addEventListener("pointerdown", () => { try { ac ||= new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch {} }, { once: true });
     const pop = (ev) => {
+      if (ev.type === "sell" && ev.ret >= 0) chime(true); else if (ev.type === "buy") chime(false);
       const sell = ev.type === "sell", good = sell ? ev.ret >= 0 : true;
       const t = el("div", { class: `toast ${sell ? (good ? "win" : "loss") : "buy"}` },
         el("span", { class: "toast__k", text: sell ? (good ? "WIN" : "CUT") : "BOUGHT" }),

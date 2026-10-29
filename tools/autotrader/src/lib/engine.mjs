@@ -12,6 +12,8 @@ export class Engine {
     this.pending.clear();
     this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.ready = []; this.cc = new Map(); this.live = new Map(); this.peaks = new Map(); this.closing = new Set(); this.events = []; this.seq = 0; this.watch = new Map(); this.watching = { total: 0, young: 0, thin: 0, ready: 0 }; this.paused = false; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = []; this.hist = new Map(); this.ph = new Map();
     this.ticks = 0; this.lastTickAt = null; this.startedAt = this.now(); this.counts = { drop: 0, block: 0, buy: 0, sell: 0, fail: 0 };
+    // a restart (live update) must not forget which coins just lost: PODCAT was bought again right after a -12.5% loss
+    for (const c of this.closed) if (c.ret < 0 && c.pool && c.at && this.now() - c.at < (this.cfg.loserCoolMin ?? 60) * 60000) this.cool.set(c.pool, c.at + (this.cfg.loserCoolMin ?? 60) * 60000);
   }
   get equity() { return this.startEq + this.closed.reduce((s, c) => s + (c.pnl || 0), 0); }
   /** The background paper book: every signal that passed the filters, taken or not, run through the same exit rules. */
@@ -192,7 +194,10 @@ export class Engine {
       this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why, note, exitPx: x.exitPx });
       this.cool.set(p.pool, this.now() + (ret < 0 ? (this.cfg.loserCoolMin ?? 60) : this.cfg.cooldownMin) * 60000);   // lesson 7: a coin that just lost gets an hour off (FLOAT x4)       // never re-enter the same coin straight after an exit
       this.open.delete(p.id); this.sellTries.delete(p.id); this.peaks.delete(p.id); this.hist.delete(p.id);
-      this.closed.push({ ...p, type: "close", ret, pnl, why, note });
+      this.closed.push({ ...p, type: "close", ret, pnl, why, note, at: this.now() });
+      // it teaches itself (golden ratio): losing streak -> demand more momentum before buying; winning -> relax back toward 2%
+      const last = this.closed.slice(-5), avg = last.reduce((a, x) => a + (x.ret || 0), 0) / last.length;
+      if (last.length >= 3) this.cfg.momMin = avg < 0 ? Math.min(0.08, (this.cfg.momMin ?? 0.02) * 1.618) : avg > 0.05 ? Math.max(0.02, (this.cfg.momMin ?? 0.02) / 1.618) : (this.cfg.momMin ?? 0.02);
       this.#ev("sell", p.name, why, { ret, pnl, stake: p.stake });
       return true;
     } finally { this.closing.delete(p.id); }
