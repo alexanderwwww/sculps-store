@@ -25,3 +25,6 @@ EV per trade = win% x avg win - loss% x avg loss. With +3.5% avg win and -4.5% a
 
 ## Never
 Never fake a result. Never trade a non-SOL pool. Rug check stays. Below 0.05 SOL: pause buying and tell Alex.
+
+## Coin science
+How to read one coin (score equation, liquidity/volatility stops, real costs, the 5 ranked changes): `coin-science.md` in this folder.
