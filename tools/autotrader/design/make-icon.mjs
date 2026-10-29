@@ -1,6 +1,7 @@
 // The Dock icon for Ultra, drawn in code so it can be redrawn at any size:
 //   node make-icon.mjs [outdir]      writes icon.svg, icon-<size>.png, AppIcon.icns
-// A near-black glass squircle, a cyan glow, and a glass cursor arrow with a bright rim. No text.
+// A near-black glass squircle, a cyan glow, and a glass START (play) triangle with a bright rim. No text.
+// Alex, 2026-10-29: "change the icon to start. New beginning."
 // Chromium rasterises the SVG; the .icns is written here
 // because iconutil does not exist off a Mac.
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -28,12 +29,12 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" wid
 <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#base)"/>
 <g clip-path="url(#sq)"><rect x="100" y="100" width="824" height="824" fill="url(#signal)"/><ellipse cx="512" cy="140" rx="470" ry="180" fill="#fff" fill-opacity=".05"/></g>
 <rect x="104" y="104" width="816" height="816" rx="182" fill="none" stroke="url(#rim)" stroke-width="3.5"/>
-<g transform="translate(-28,-4)" filter="url(#drop)">
+<g transform="translate(0,0)" filter="url(#drop)">
   <path d="ARROW" fill="#7ee7ff" fill-opacity=".5" filter="url(#blur24)"/>
-  <path d="ARROW" fill="url(#body)" stroke="url(#edge)" stroke-width="10" stroke-linejoin="round"/>
+  <path d="ARROW" fill="url(#body)" stroke="url(#edge)" stroke-width="12" stroke-linejoin="round"/>
   <g clip-path="url(#arrowclip)"><ellipse cx="500" cy="420" rx="260" ry="80" fill="url(#gloss)" fill-opacity=".8"/></g>
 </g>
-</svg>`.replaceAll("ARROW", "M382,300 L382,716 L490,612 L568,764 L650,724 L572,576 L722,570 Z");
+</svg>`.replaceAll("ARROW", "M418,316 Q392,300 392,332 L392,692 Q392,724 418,708 L716,530 Q744,512 716,494 Z");
 
 writeFileSync(join(out, "icon.svg"), svg);
 

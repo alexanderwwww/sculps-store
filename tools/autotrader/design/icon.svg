@@ -9,14 +9,14 @@
   <filter id="blur24" x="-40%" y="-60%" width="180%" height="220%"><feGaussianBlur stdDeviation="26"/></filter>
   <filter id="drop" x="-30%" y="-40%" width="160%" height="190%"><feDropShadow dx="0" dy="22" stdDeviation="20" flood-color="#000" flood-opacity=".75"/></filter>
   <clipPath id="sq"><rect x="100" y="100" width="824" height="824" rx="186"/></clipPath>
-  <clipPath id="arrowclip"><path d="M382,300 L382,716 L490,612 L568,764 L650,724 L572,576 L722,570 Z" stroke-linejoin="round"/></clipPath>
+  <clipPath id="arrowclip"><path d="M418,316 Q392,300 392,332 L392,692 Q392,724 418,708 L716,530 Q744,512 716,494 Z" stroke-linejoin="round"/></clipPath>
 </defs>
 <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#base)"/>
 <g clip-path="url(#sq)"><rect x="100" y="100" width="824" height="824" fill="url(#signal)"/><ellipse cx="512" cy="140" rx="470" ry="180" fill="#fff" fill-opacity=".05"/></g>
 <rect x="104" y="104" width="816" height="816" rx="182" fill="none" stroke="url(#rim)" stroke-width="3.5"/>
-<g transform="translate(-28,-4)" filter="url(#drop)">
-  <path d="M382,300 L382,716 L490,612 L568,764 L650,724 L572,576 L722,570 Z" fill="#7ee7ff" fill-opacity=".5" filter="url(#blur24)"/>
-  <path d="M382,300 L382,716 L490,612 L568,764 L650,724 L572,576 L722,570 Z" fill="url(#body)" stroke="url(#edge)" stroke-width="10" stroke-linejoin="round"/>
+<g transform="translate(0,0)" filter="url(#drop)">
+  <path d="M418,316 Q392,300 392,332 L392,692 Q392,724 418,708 L716,530 Q744,512 716,494 Z" fill="#7ee7ff" fill-opacity=".5" filter="url(#blur24)"/>
+  <path d="M418,316 Q392,300 392,332 L392,692 Q392,724 418,708 L716,530 Q744,512 716,494 Z" fill="url(#body)" stroke="url(#edge)" stroke-width="12" stroke-linejoin="round"/>
   <g clip-path="url(#arrowclip)"><ellipse cx="500" cy="420" rx="260" ry="80" fill="url(#gloss)" fill-opacity=".8"/></g>
 </g>
 </svg>
