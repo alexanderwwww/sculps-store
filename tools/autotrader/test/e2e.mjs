@@ -36,19 +36,22 @@ try {
   const hit = await b.evaluate((el) => { const r = el.getBoundingClientRect(); const t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return t === el || el.contains(t); });
   assert.ok(hit); ok("the button is reachable by the mouse");
   await b.click();
-  await page.waitForSelector(".pipe");
-  assert.match(await text(), /Scanner/); assert.match(await text(), /Rug check/); assert.match(await text(), /Shadow/); assert.match(await page.textContent("header .chip"), /live/i); ok("one press: the live dashboard with the whole pipeline");
+  await page.waitForSelector("#termhost:not([hidden]) .agent");
+  assert.match(await text(), /Scanner/); assert.match(await text(), /Rug check/); assert.match(await text(), /Executor/); assert.match(await page.textContent("header .chip"), /live/i); ok("one press: the live terminal with all seven agents");
   await page.waitForFunction(() => /ALPHA/.test(document.body.textContent), null, { timeout: 12000 });
   ok("a signal shows up in the night log with its name");
-  assert.equal(await page.locator(".fnode").count(), 5); assert.equal(await page.locator("#flowhost").isVisible(), true); ok("the live flow is on screen: scanner, rug check, sizer, executor, logger");
+  assert.equal(await page.locator(".agent").count(), 7); assert.equal(await page.locator("#termhost").isVisible(), true); assert.equal(await page.locator(".tm__node").count(), 2); ok("the terminal is on screen: seven agents, rug check and executor nodes, live flow");
+  if (process.env.SHOTS) await page.screenshot({ path: path.join(process.env.SHOTS, "1.png"), fullPage: true });
   state.byPool = { X1: base, X3: up };
   state.pools = [...state.pools, { pool: "X1", name: "DULLCOIN", mint: "D".repeat(40) + "pump", created: 1_800_000_000_000, liqUsd: 1500, vol5: 99 }, { pool: "X3", name: "MOONBOY", mint: "M".repeat(40) + "pump", created: 1_800_000_000_000, liqUsd: 9000, vol5: 98 }];
-  await page.waitForSelector(".fdot", { timeout: 15000 });
-  await page.waitForFunction(() => Number(document.querySelector(".fnode--scan b").textContent) >= 2, null, { timeout: 15000 });
-  ok("new coins make dots travel through the flow and the counters move");
+  await page.waitForSelector(".chip2", { timeout: 15000 });
+  await page.waitForFunction(() => document.querySelectorAll(".chip2").length >= 2, null, { timeout: 15000 });
+  if (process.env.SHOTS) { await page.waitForTimeout(700); await page.screenshot({ path: path.join(process.env.SHOTS, "2.png"), fullPage: true }); }
+  ok("new coins show up as chips and run through the flow");
   state.series = moon; state.px.P1 = 2.6;
   await page.waitForFunction(() => /take profit/.test(document.body.textContent), null, { timeout: 12000 });
-  assert.match(await text(), /exit/); ok("the exit shows up with its reason");
+  assert.match(await text(), /exit/i); ok("the exit shows up with its reason");
+  if (process.env.SHOTS) { await page.waitForTimeout(1200); await page.screenshot({ path: path.join(process.env.SHOTS, "3.png"), fullPage: true }); }
   for (const sel of ["header .chip", ".agent", ".curve", ".row"]) assert.ok(await page.$(sel), sel);
   const over = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
   assert.equal(over, false); ok("no sideways scroll at 1180 px");

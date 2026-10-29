@@ -14,7 +14,12 @@ export function startLink({ base = process.env.ULTRA_LINK || DEFAULT_LINK, getSt
       self.lastError = null; const t = await res.text(); return t ? JSON.parse(t) : null;
     } catch (e) { self.lastError = String(e.message || e); return undefined; }
   };
-  const a = setInterval(() => { try { call("POST", "status", { at: Date.now(), ...getState() }); } catch (e) { self.lastError = String(e.message || e); } }, statusMs);
+  let logged = 0;   // every decision (buy, sell, filter, skip) also goes to the log, so Claude collects the full history to tune from
+  const a = setInterval(() => { try {
+    const st = getState(); call("POST", "status", { at: Date.now(), ...st });
+    const evs = (st.engine?.events || []).filter((x) => x.seq > logged);
+    if (evs.length) { logged = evs[evs.length - 1].seq; call("POST", "log", { lines: evs.slice(-50) }); }
+  } catch (e) { self.lastError = String(e.message || e); } }, statusMs);
   const b = setInterval(async () => {
     const o = await call("GET", "order"); const eng = getEngine();
     if (!o || !o.cmd) return;
