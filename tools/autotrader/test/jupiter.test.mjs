@@ -77,12 +77,11 @@ ok("the target closes it with the chain's own proceeds (0.014 SOL on 0.0125)", e
 console.log(`\njupiter tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
 
-test("buys pause when the wallet is under minBalSol (0.05)", async () => {
+test("no pause line: a 0.0457 SOL wallet still buys (Alex 2026-10-29)", async () => {
   const { jupiterExec, PLUG_CAPS_EXTRA, CAPS } = await import("../src/lib/exec-jupiter.mjs");
-  assert.equal(PLUG_CAPS_EXTRA.minBalSol, 0.05);
+  assert.equal(PLUG_CAPS_EXTRA.minBalSol, null);
   const mk = (sol) => jupiterExec({ wallet: { address: "x" }, rpc: { solBalance: async () => sol }, jupiter: {}, cfg: {}, caps: { ...CAPS, ...PLUG_CAPS_EXTRA } });
-  assert.equal((await mk(0.0457).sizeSol()).sol, 0);
-  assert.equal((await mk(0.0457).sizeSol({ scale: 0.618 })).sol, 0);
-  const r = await mk(0.0457).buy({ mint: "m" }); assert.equal(r.ok, false); assert.match(r.why, /paused/);
+  assert.ok((await mk(0.0457).sizeSol()).sol > 0);
+  assert.ok((await mk(0.0457).sizeSol({ scale: 0.618 })).sol > 0);
   assert.ok((await mk(0.06).sizeSol()).sol > 0);
 });

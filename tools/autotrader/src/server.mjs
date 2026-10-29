@@ -45,7 +45,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
     if (m !== "live") throw new Error("Only real trading exists.");
     const w = wallet(); const bal = await rpc().solBalance(w.address);
     // never refuse to run on a low balance: the SOL may be inside open positions, and only a running engine can sell them. Buys simply wait.
-    if (bal < 0.05) log(`wallet ${bal.toFixed(4)} SOL: running, buys paused under 0.05 SOL until a sale brings SOL back`);
+    if (false) log(`wallet ${bal.toFixed(4)} SOL: running, buys paused under 0.05 SOL until a sale brings SOL back`);
     if (readCfg().phantomStartSol == null) writeCfg({ phantomStartSol: bal });
     const { org: savedOrg = null, ...tunedCfg } = readCfg().tuned || {};
     Object.assign(DEFAULTS, tunedCfg);
