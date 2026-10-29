@@ -84,6 +84,7 @@ export class Engine {
       const real = p.val != null && this.now() - p.valAt < 15000;
       const entry = real ? p.stake : p.entryPx, price = real ? p.val : lv.price;
       const pk = this.peaks.get(p.id); const peak = Math.max(pk && pk.real === real ? pk.v : entry, price); this.peaks.set(p.id, { v: peak, real });
+      p.low = Math.min(p.low ?? 0, price / entry - 1);   // the deepest dip it showed (a ratio, so the golden take does not move it): tells the next check whether winners dip before they run
       // golden take (Alex): at +25% sell 38.2% (1 - 0.618). That banks 0.4775 of the stake; the 61.8% left rides the trail.
       // Worst case after this (the win lock at +1%): 0.4775 + 0.618 x 1.01 = 1.10, so the trade ends at least about +10% before fees.
       if (real && !p.partDone && this.exec.sellPart && c.tp > (c.partAt ?? 0.25) && price >= entry * (1 + (c.partAt ?? 0.25)) && price < entry * (1 + c.tp)) {
@@ -95,7 +96,7 @@ export class Engine {
           // lesson 20: the peak was the WHOLE position's value; after selling part it must shrink with it, or the rest looks +100% down and is dumped at once
           { const pk = this.peaks.get(p.id); if (pk) this.peaks.set(p.id, { ...pk, v: pk.v * (1 - f) }); }
           this.journal.write({ ...p, type: "open" });
-          this.#ev("sell", p.name, `golden take: sold 38.2% at +${Math.round((price / entry - 1) * 100)}%, banked ${got.toFixed(4)} SOL`, { ret: price / entry - 1, partial: true });
+          this.#ev("sell", p.name, `golden take: sold ${Math.round((c.partFrac ?? 0.382) * 100)}% at +${Math.round((price / entry - 1) * 100)}%, banked ${got.toFixed(4)} SOL`, { ret: price / entry - 1, fill: +(got / (p.stake0 * f) - 1).toFixed(4), partial: true });   // ret = the quote it saw, fill = what the part really sold for
           continue;
         }
       }
@@ -113,7 +114,7 @@ export class Engine {
       else if (c.staleMin && this.now() - p.at >= c.staleMin * 60000 && price / entry - 1 < (c.staleRet ?? 0.01)) why = `flat after ${c.staleMin}m: money back to work`;   // lesson 2: dead money out
       if (!why) continue;
       const ret = real ? price / entry - 1 : (price * (1 - c.slippage)) / entry - 1 - 2 * c.fee;
-      p.est = { ret: +ret.toFixed(4), real, peak: +(peak / entry - 1).toFixed(4) };   // what it SAW when it decided, to compare with the fill
+      p.est = { ret: +ret.toFixed(4), real, peak: +(peak / entry - 1).toFixed(4), low: +p.low.toFixed(4) };   // what it SAW when it decided, to compare with the fill
       await this.#close(p, { ret, why, exitPx: real ? lv.price : price });
     }
   }
@@ -228,7 +229,7 @@ export class Engine {
       } else if (r.outAmount != null && r.inAmount != null && p.stake > 0) {
         ret = p.banked ? (Number(r.outAmount) / 1e9 + p.banked) / p.stake0 - 1 : Number(r.outAmount) / 1e9 / p.stake - 1;   // the real fill (plus anything banked on the way), not the model
       }
-      const pnl = p.stake * ret;
+      const pnl = (p.stake0 ?? p.stake) * ret;   // ret is on the whole stake (banked part included), so the P&L is too; p.stake is only what was left after the golden take
       this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why, note, exitPx: x.exitPx, est: p.est || null });
       { const until = this.now() + (ret <= -0.5 ? 7 * 24 * 60 : ret < 0 ? (this.cfg.loserCoolMin ?? 60) : this.cfg.cooldownMin) * 60000;  /* a rug is banned for a week */ this.cool.set(p.pool, until); if (p.mint) this.cool.set(p.mint, until); }   // by coin, not just by pool (PODCAT x3)   // lesson 7: a coin that just lost gets an hour off (FLOAT x4)       // never re-enter the same coin straight after an exit
       this.open.delete(p.id); this.sellTries.delete(p.id); this.peaks.delete(p.id); this.hist.delete(p.id);
@@ -237,7 +238,7 @@ export class Engine {
       const last = this.closed.slice(-5), avg = last.reduce((a, x) => a + (x.ret || 0), 0) / last.length;
       if (last.length >= 3) { const m0 = this.cfg.momMin ?? 0.10; this.cfg.momMin = Math.min(0.1618, Math.max(0.10, avg < 0 ? m0 * 1.618 : avg > 0.05 ? m0 / 1.618 : m0)); }   // lesson 31: every live entry rising >= 13.4% in 30 s won, every one <= 9.5% hit the stop; the tuner never goes under 10%
       if (last.length >= 3) this.onLearn?.({ momMin: this.cfg.momMin });   // what it taught itself survives restarts
-      this.#ev("sell", p.name, why, { ret, pnl, stake: p.stake, est: p.est || null });
+      this.#ev("sell", p.name, why, { ret, pnl, stake: p.stake0 ?? p.stake, est: p.est || null });
       return true;
     } finally { this.closing.delete(p.id); }
   }

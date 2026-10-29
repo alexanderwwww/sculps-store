@@ -29,3 +29,22 @@ test("after the golden take the rest is NOT dumped by a stale peak (lesson 20)",
   val = 0.0054; now += 3000; await e.fast();   // the rest is worth +8% of what is left: must be held
   assert.equal(sells.length, 0, "the rest must not be sold by a stale peak");
 });
+
+test("XLIQUID (2026-10-29): after a golden take the close P&L is on the WHOLE stake, and the deepest dip is recorded", async () => {
+  let val = 0.02618 * 1.054, now = 1_800_000_000_000;
+  const exec = { name: "live", source: "own", valueSol: async () => val, sellPart: async () => ({ ok: true, outAmount: "12600000", left: "500" }), sell: async () => ({ ok: true, outAmount: "12030000", inAmount: "500" }), buy: async () => ({ ok: false }) };
+  const feed = { quotes: async () => new Map([["P", { price: 1, liqUsd: 50000, buys5: 0, sells5: 0, vol5: 0 }]]), newPools: async () => [], trendingPools: async () => [], candles: async () => [] };
+  const e = new Engine({ feed, exec, journal: new Journal(path.join(fs.mkdtempSync(path.join(os.tmpdir(), "pt-")), "j.jsonl")), cfg: { ...DEFAULTS, tp: 0.15, partAt: 0.05, partFrac: 0.5, sl: -0.07, trailFrom: 0.06, trail: 0.05, lockFrom: 0.03, lockAt: 0.005, staleMin: 0, maxHoldMin: 60 }, now: () => now });
+  e.open.set("x", { id: "x", name: "XLIQUID", mint: "M", pool: "P", stake: 0.02618, tokens: "1000", entryPx: 1, at: now });
+  await e.fast();                                   // +5.4%: half taken
+  assert.equal(e.open.get("x").stake, 0.01309);
+  val = 0.01309 * (1 - 0.0771); now += 8000; await e.fast();   // the rest quoted -7.7%: stop
+  assert.equal(e.open.size, 0, "stopped out");
+  const c = e.closed.at(-1);
+  const ret = (0.01203 + 0.0126) / 0.02618 - 1;
+  assert.ok(Math.abs(c.ret - ret) < 1e-9, `ret ${c.ret}`);
+  assert.ok(Math.abs(c.pnl - 0.02618 * ret) < 1e-9, `pnl must be on the whole 0.02618 stake, got ${c.pnl}`);
+  assert.ok(Math.abs(e.equity - e.startEq - 0.02618 * ret) < 1e-9, "equity moves by the whole trade");
+  assert.equal(c.est.low, -0.0771, "the deepest dip it saw is on record");
+  assert.equal(c.est.peak, 0.054);
+});
