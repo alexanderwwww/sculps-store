@@ -10,7 +10,7 @@ export class Engine {
     this.pending = r.pending;                 // intents with no fill: reconciled below, never forgotten
     for (const e of this.pending.values()) this.journal.write({ type: "fail", id: e.id, why: "restart before fill" });
     this.pending.clear();
-    this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.ready = []; this.cc = new Map(); this.live = new Map(); this.peaks = new Map(); this.closing = new Set(); this.events = []; this.seq = 0; this.watch = new Map(); this.watching = { total: 0, young: 0, thin: 0, ready: 0 }; this.paused = false; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = []; this.hist = new Map(); this.ph = new Map();
+    this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.ready = []; this.cc = new Map(); this.live = new Map(); this.peaks = new Map(); this.closing = new Set(); this.events = []; this.seq = 0; this.watch = new Map(); this.watching = { total: 0, young: 0, thin: 0, ready: 0 }; this.paused = false; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = []; this.hist = new Map(); this.ph = new Map(); this.lastDrop = new Map();
     this.ticks = 0; this.lastTickAt = null; this.startedAt = this.now(); this.counts = { drop: 0, block: 0, buy: 0, sell: 0, fail: 0 };
     // a restart (live update) must not forget which coins just lost: PODCAT was bought again right after a -12.5% loss
     for (const c of this.closed) if (c.ret < 0 && c.at && this.now() - c.at < (this.cfg.loserCoolMin ?? 60) * 60000) { const until = c.at + (this.cfg.loserCoolMin ?? 60) * 60000; if (c.pool) this.cool.set(c.pool, until); if (c.mint) this.cool.set(c.mint, until); }
@@ -91,7 +91,8 @@ export class Engine {
       if (this.open.size >= this.cfg.maxOpen || this.paused) break;
       if ([...this.open.values()].some((p) => p.pool === m.pool || p.mint === m.mint) || this.cool.get(m.pool) > this.now() || this.cool.get(m.mint) > this.now()) continue;
       const lv = this.live.get(m.pool), hit = this.cc.get(m.pool);
-      const quiet = (k) => this.skips.set(k, (this.skips.get(k) || 0) + 1);   // counted for the bridge, not logged one by one
+      // every coin it looks at shows on the screen as it is filtered (Alex: constant movement), at most once per coin every 20 s
+      const quiet = (k) => { this.skips.set(k, (this.skips.get(k) || 0) + 1); const t = this.lastDrop.get(m.pool) || 0; if (this.now() - t > 20000) { this.lastDrop.set(m.pool, this.now()); this.#ev("drop", m.name, k.replace(/^live: /, "")); } };
       if (!lv || this.now() - lv.at > 15000) { quiet("waiting: no live price yet"); continue; }
       if (!hit || hit.cs.length < 6) {
         // Alex 2026-10-29: never wait on a chart. Live volume + buyers ahead = buy, straight from the live price.
@@ -119,7 +120,7 @@ export class Engine {
     }
   }
   /** What the screen animates: one event per decision. type: drop | block | buy | sell | fail */
-  #ev(type, name, why, extra = {}) { if (this.counts[type] != null) this.counts[type]++; this.events.push({ seq: ++this.seq, at: this.now(), type, name, why, ...extra }); if (this.events.length > 60) this.events.shift(); }
+  #ev(type, name, why, extra = {}) { if (this.counts[type] != null) this.counts[type]++; this.events.push({ seq: ++this.seq, at: this.now(), type, name, why, ...extra }); if (this.events.length > 120) this.events.shift(); }
   #err(w, e) { this.errors.push({ at: this.now(), w, msg: String(e.message || e).slice(0, 140) }); if (this.errors.length > 20) this.errors.shift(); }
   /** Swaps the chain had not confirmed when polling stopped: look again until they are confirmed or dead. Never forgotten. */
   async #reconcile() {
@@ -208,7 +209,7 @@ export class Engine {
     const t = this.now();
     // Alex 2026-10-29: hunt the volume. New creations every cycle, plus one more source in turn: pump.fun bonding curve
     // (new + about to bond), bonded (PumpSwap), trending, deeper pages. The GeckoTerminal queue allows ~27 calls a minute.
-    const extra = [() => this.feed.pumpPools?.(1), () => this.feed.bondedPools?.(1), () => this.feed.trendingPools(1), () => this.feed.pumpPools?.(2), () => this.feed.newPools(2), () => this.feed.bondedPools?.(2)];
+    const extra = [() => this.feed.pumpPools?.(1), () => this.feed.bondedPools?.(1), () => this.feed.newPools(2), () => this.feed.pumpPools?.(2), () => this.feed.trendingPools(1), () => this.feed.bondedPools?.(2), () => this.feed.newPools(3), () => this.feed.pumpPools?.(3), () => this.feed.bondedPools?.(3)];
     this.srcI = (this.srcI || 0) + 1;
     const sources = this.watch.size ? [() => this.feed.newPools(1), extra[this.srcI % extra.length]] : [() => this.feed.newPools(1), () => this.feed.newPools(2), () => this.feed.trendingPools(1)];
     for (const f of sources) {
@@ -283,7 +284,7 @@ export class Engine {
       exits: { sl: this.cfg.sl, tp: this.cfg.tp, trailFrom: this.cfg.trailFrom, trail: this.cfg.trail, maxHoldMin: this.cfg.maxHoldMin },
       trades: c.length, wins: wins.length, winRate: c.length ? +(wins.length / c.length).toFixed(3) : null,
       recentClosed: c.slice(-8).map((x) => ({ name: x.name, ret: +(x.ret * 100).toFixed(1), pnl: +(x.pnl || 0).toFixed(4), why: x.why, note: x.note || null, enter: x.enter })),
-      startedAt: this.startedAt, counts: this.counts, lines: this.seq, next: this.ready.slice(0, 4).map((m) => m.name), whyNot: Object.fromEntries([...this.skips].sort((a, b) => b[1] - a[1]).slice(0, 12)), events: this.events.slice(-30), watching: this.watching, edge: this.edge(), shadowOpen: this.shadow.size, recentSkips: this.recent.slice(-10), errors: this.errors.slice(-5),
+      startedAt: this.startedAt, counts: this.counts, lines: this.seq, next: this.ready.slice(0, 4).map((m) => m.name), whyNot: Object.fromEntries([...this.skips].sort((a, b) => b[1] - a[1]).slice(0, 12)), events: this.events.slice(-60), watching: this.watching, edge: this.edge(), shadowOpen: this.shadow.size, recentSkips: this.recent.slice(-10), errors: this.errors.slice(-5),
     };
   }
 }

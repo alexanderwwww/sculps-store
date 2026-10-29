@@ -239,11 +239,11 @@
     // play one decision through the whole pipeline
     const play = async (ev) => {
       const c = chip(ev); light("scan", 1200);
-      await run(".w1", "#f5d90a", 650);
-      light("rug", 1300); q(".nd--rug .nd__sub").textContent = `${ev.type === "block" ? "filtered" : "passed"} ${tkn(ev.name)}`;
+      await run(".w1", "#f5d90a", ev.type === "drop" ? 380 : 650);
+      light("rug", 1300); q(".nd--rug .nd__sub").textContent = `${ev.type === "block" || ev.type === "drop" ? "filtered" : "passed"} ${tkn(ev.name)}`;
       if (ev.type === "block") { node(".nd--rug", "bad"); stamp(); c.classList.add("dead"); stat("rug", `filtered ${tkn(ev.name)} · ${(ev.why || "").slice(0, 22)}`); tail(ev); logRow(ev); light("log"); return; }
+      if (ev.type === "drop") { node(".nd--rug", "bad"); c.classList.add("dead"); q(".nd--rug .nd__sub").textContent = `filtered ${tkn(ev.name)}`; stat("scan", `filtered ${tkn(ev.name)} · ${(ev.why || "").slice(0, 24)}`); return; }   // red filter on every coin it passes on
       node(".nd--rug", "ok"); stat("rug", `passed ${tkn(ev.name)}`);
-      if (ev.type === "drop") { c.classList.add("quiet"); stat("scan", `skipped ${tkn(ev.name)} · ${(ev.why || "").slice(0, 20)}`); return; }
       light("size", 1100);
       await run(".w2", ev.type === "fail" ? "#ff4d6d" : "#a78bfa", 900);
       light("exec", 1600); node(".nd--exec", ev.type === "fail" ? "bad" : "ok");
@@ -257,7 +257,7 @@
       if (ev.type === "buy") { const r = stage.getBoundingClientRect(); fx.burst(r.right - 90, r.top + r.height / 2, true); }
     };
     let lastSeq = null, queue = [], playing = false, shownBal = null, shownEq = null;
-    const pump = async () => { if (playing) return; playing = true; while (queue.length) { const ev = queue.shift(); try { await play(ev); } catch { /* the screen never stops the bot */ } await new Promise((r) => setTimeout(r, 250)); } playing = false; };
+    const pump = async () => { if (playing) return; playing = true; while (queue.length) { const ev = queue.shift(); try { await play(ev); } catch { /* the screen never stops the bot */ } await new Promise((r) => setTimeout(r, ev.type === "drop" ? 60 : 250)); } playing = false; };
     // idle: the scanner keeps sweeping so a quiet minute still looks alive
     setInterval(() => { if (!playing && !host.hidden) light("scan", 900); }, 2600);
     let t0 = null; setInterval(() => { if (t0) q(".tm__clock").textContent = clock(Date.now() - t0); }, 1000);
@@ -332,8 +332,8 @@
         const evs = e.events || [];
         if (lastSeq === null) { evs.filter((x) => x.type !== "drop").slice(-6).forEach((x) => { tail(x); logRow(x); }); lastSeq = evs.length ? evs[evs.length - 1].seq : 0; return; }
         const fresh = evs.filter((x) => x.seq > lastSeq); if (evs.length) lastSeq = evs[evs.length - 1].seq;
-        const important = fresh.filter((x) => x.type !== "drop"), quiet = fresh.filter((x) => x.type === "drop").slice(-2);
-        queue.push(...[...quiet, ...important].sort((a, b) => a.seq - b.seq)); if (queue.length > 8) queue = [...queue.filter((x) => x.type !== "drop")].slice(-8);
+        const important = fresh.filter((x) => x.type !== "drop"), quiet = fresh.filter((x) => x.type === "drop").slice(-8);
+        queue.push(...[...quiet, ...important].sort((a, b) => a.seq - b.seq)); if (queue.length > 14) queue = [...queue.filter((x) => x.type !== "drop"), ...queue.filter((x) => x.type === "drop").slice(-6)].sort((a, b) => a.seq - b.seq).slice(-14);
         pump();
       },
     };
