@@ -213,7 +213,8 @@ export class Engine {
         try { for (const x of await this.feed.multi(due.slice(i, i + 30).map((m) => m.pool))) Object.assign(this.watch.get(x.pool) || {}, x); } catch (e) { this.#err("refresh", e); break; }
       }
     }
-    const list = [...this.watch.values()].filter((m) => ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) >= this.cfg.minLiqUsd).sort((a, b) => b.vol5 - a.vol5).slice(0, this.fastMode ? 40 : this.scanTop);
+    // lesson 5: only pools priced in SOL. A '/ PUMP' or '/ USDC' pool's price is a different market from the SOL route Jupiter fills (HOYEAH: 'take profit +12%' filled at -19.7%).
+    const list = [...this.watch.values()].filter((m) => !/ \/ (?!SOL$)\S+$/.test(m.name || "") && ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) >= this.cfg.minLiqUsd).sort((a, b) => b.vol5 - a.vol5).slice(0, this.fastMode ? 40 : this.scanTop);
     const all = [...this.watch.values()];
     this.watching = { total: all.length, young: all.filter((m) => ageMin(m) < this.cfg.minAgeMin).length, thin: all.filter((m) => ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) < this.cfg.minLiqUsd).length, ready: list.length };
     this.ready = list;
