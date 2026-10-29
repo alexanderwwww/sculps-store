@@ -127,7 +127,7 @@ export class Engine {
       if ([...this.open.values()].some((p) => p.pool === m.pool || p.mint === m.mint) || this.cool.get(m.pool) > this.now() || this.cool.get(m.mint) > this.now()) continue;
       const lv = this.live.get(m.pool), hit = this.cc.get(m.pool);
       // every coin it looks at shows on the screen as it is filtered (Alex: constant movement), at most once per coin every 20 s
-      const quiet = (k) => { this.skips.set(k, (this.skips.get(k) || 0) + 1); const t = this.lastDrop.get(m.pool) || 0; if (this.now() - t > 20000) { this.lastDrop.set(m.pool, this.now()); this.#ev("drop", m.name, k.replace(/^live: /, "")); } };
+      const quiet = (k) => { const t = this.lastDrop.get(m.pool) || 0; if (this.now() - t > 20000) { this.lastDrop.set(m.pool, this.now()); this.skips.set(k, (this.skips.get(k) || 0) + 1); this.#ev("drop", m.name, k.replace(/^live: /, "")); } };   // lesson 35: count a coin once per 20 s, not once per pass (30k "too thin" was ~25 checks a second)
       if (!lv || this.now() - lv.at > 15000) { quiet("waiting: no live price yet"); continue; }
       if (!hit || hit.cs.length < 6) {
         // Alex 2026-10-29: never wait on a chart. Live volume + buyers ahead = buy, straight from the live price.
