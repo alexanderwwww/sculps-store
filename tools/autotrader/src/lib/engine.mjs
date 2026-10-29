@@ -72,7 +72,10 @@ export class Engine {
       const entry = real ? p.stake : p.entryPx, price = real ? p.val : lv.price;
       const pk = this.peaks.get(p.id); const peak = Math.max(pk && pk.real === real ? pk.v : entry, price); this.peaks.set(p.id, { v: peak, real });
       let why = null;
-      if (price <= entry * (1 + c.sl)) why = `stop ${c.sl * 100}%`;
+      // lesson 10: one bad quote is noise (wifbot: stop -7% fired, the sale filled +2.2%). A stop needs two looks in a row below it, unless it is already far through.
+      const under = price <= entry * (1 + c.sl); p.under = under ? (p.under || 0) + 1 : 0;
+      if (under && (p.under >= 2 || price <= entry * (1 + c.sl * 1.3))) why = `stop ${Math.round(c.sl * 100)}%`;
+      else if (under) why = null;
       else if (peak >= entry * (1 + (c.lockFrom ?? 0.04)) && price <= entry * (1 + (c.lockAt ?? 0.01))) why = `locked: was up ${Math.round((peak / entry - 1) * 100)}%, out before it turns red`;   // lesson 4: a winner never becomes a loser
       else if (peak >= entry * (1 + c.trailFrom) && price <= peak * (1 - c.trail)) why = `trailing stop from +${Math.round((peak / entry - 1) * 100)}%`;
       else if (price >= entry * (1 + c.tp)) why = `take profit +${c.tp * 100}%`;

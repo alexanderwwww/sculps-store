@@ -10,3 +10,6 @@
 First real wins after lessons 5-6: FOMOKING +37.3%, BTS +23.5%.
 Never refuse to run on a low balance: open positions must always be managed (the restart that refused cost KIMWIFHAT -80%).
 9. (07:55 UTC, bridge set, no build) Winners jump past +12% in one tick (FOMOKING filled +37%, BTS +23%), so a hard +12% target cuts them short. Now: target +30%, trailing stop 5% once up 6%, stop -7% (PODCAT's -8% stop filled at -12.5%). Wallet at that moment: 0.0885 SOL (start 0.1138).
+10. (08:30 UTC, build 29) One bad Jupiter quote is noise: wifbot's -7% stop fired and the sale filled +2.2%. A stop now needs two looks in a row below it, unless the price is already 1.3x past it.
+11. Size tiers (Alex): wallet >= 0.5 SOL -> base buy 0.1618; >= 1 SOL -> 0.2618 (0.1618 x 1.618); below -> 0.01618. Golden-ratio steps on win streaks on top, max 35% of the wallet per buy.
+Check 08:25: wallet 0.0864 SOL (07:55 was 0.0885). Trades since: PODCAT +4.7 (trailing), PODCAT 0 (locked), DEER -10.3, wifbot +2.2. Self-taught momMin rose to 3.2%.
