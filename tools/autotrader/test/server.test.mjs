@@ -115,13 +115,13 @@ test("PHANTOM: nothing trades before the wallet is plugged in, and a wrong paste
   assert.equal(ch.W.sent.length, 0, "nothing went to the chain");
   await s.app.close();
 });
-test("PHANTOM: paste the private key once -> it trades that wallet, 0.01618 SOL a buy, and the key is in secrets.json and nowhere else", async () => {
+test("PHANTOM: paste the private key once -> it trades that wallet, 0.03236 SOL a buy, and the key is in secrets.json and nowhere else", async () => {
   const s = await ownBoot();
   assert.equal(s.plugged.running, true, "plugging in starts trading by itself");
   const st = await s.until(async () => { const x = await s.get("/api/state"); return x.engine?.open.length === 1 ? x : null; });
   assert.equal(st.source, "phantom"); assert.equal(st.own.address, s.key.address); assert.equal(st.setup.imported, true);
-  assert.equal(st.engine.open[0].stake, 0.01618); assert.equal(st.caps.fixedSol, 0.01618); assert.equal(st.caps.perHour, 200);
-  assert.equal(s.ch.W.quotes[0].amount, "16180000", "the Jupiter quote is for exactly 0.01618 SOL");
+  assert.equal(st.engine.open[0].stake, 0.03236); assert.equal(st.caps.fixedSol, 0.03236); assert.equal(st.caps.perHour, 200);
+  assert.equal(s.ch.W.quotes[0].amount, "32360000", "the Jupiter quote is for exactly 0.03236 SOL");
   assert.equal(s.ch.W.lastSwap.userPublicKey, s.key.address, "the swap is for the plugged-in wallet");
   const text = JSON.stringify(st);
   assert.ok(!text.includes(s.key.secret), "the key never appears in the state"); assert.doesNotMatch(text, /PRIVATE KEY|walletPem/);
