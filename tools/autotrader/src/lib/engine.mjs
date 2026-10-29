@@ -248,6 +248,8 @@ export class Engine {
     const extra = [() => this.feed.pumpPools?.(1), () => this.feed.bondedPools?.(1), () => this.feed.newPools(2), () => this.feed.pumpPools?.(2), () => this.feed.trendingPools(1), () => this.feed.bondedPools?.(2), () => this.feed.newPools(3), () => this.feed.pumpPools?.(3), () => this.feed.bondedPools?.(3)];
     this.srcI = (this.srcI || 0) + 1;
     const sources = this.watch.size ? [() => this.feed.newPools(1), extra[this.srcI % extra.length]] : [() => this.feed.newPools(1), () => this.feed.newPools(2), () => this.feed.trendingPools(1)];
+    // more eyes: DexScreener's newest profiles and boosts every 10 s, outside the GeckoTerminal queue (Alex: scan more, trade more)
+    if (this.feed.dexNew && !(this.now() - (this.dexAt || 0) < 10000)) { this.dexAt = this.now(); sources.push(() => this.feed.dexNew()); }
     for (const f of sources) {
       try { for (const x of (await f()) || []) if (!this.watch.has(x.pool)) this.watch.set(x.pool, x); else Object.assign(this.watch.get(x.pool), x); } catch (e) { this.#err("pools", e); }
     }
