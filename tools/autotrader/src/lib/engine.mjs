@@ -199,7 +199,7 @@ export class Engine {
       if (cs.length < 20) { this.#skip(m.name, "too few candles"); this.#ev("drop", m.name, "too few candles"); continue; }
       let s = entrySignal(cs, cs.length - 1, this.cfg, m);
       // First live buy of a fresh start: skip the signal once, on a coin that is green right now, so the real click path is proven in minutes (Alex, 2026-10-29).
-      if (!s.ok && this.exec.name === "live" && !this.proofDone && this.open.size === 0 && !this.closed.length && cs[cs.length - 1].c > cs[cs.length - 1].o) s = { ok: true, why: "first live buy: proves the click path" };
+      if (!s.ok && this.exec.name === "live" && !this.proofDone && cs[cs.length - 1].c > cs[cs.length - 1].o) s = { ok: true, why: "first live buy: proves the click path" };
       if (!s.ok) { this.#skip(m.name, s.why); this.#ev("drop", m.name, s.why); continue; }
       await this.#consider(m, cs, s);
       if (this.open.size && s.why.startsWith("first live buy")) this.proofDone = true;

@@ -1,13 +1,13 @@
 // The brain. Everything it knows at minute i is in candles[0..i]; nothing from the future.
 export const DEFAULTS = {
-  minAgeMin: 4, maxAgeMin: 90,      // never the first seconds (snipers own those), never old and stale
-  breakoutLookback: 5, volSpike: 1.5, minGreen: 0.67, // breakout above the last 15 highs, volume 3x, buyers dominate
-  minLiqUsd: 4000,
-  sl: -0.15, tp: 0.9, trailFrom: 0.22, trail: 0.10, maxHoldMin: 60,
+  minAgeMin: 1, maxAgeMin: 180,      // never the first seconds (snipers own those), never old and stale
+  breakoutLookback: 3, volSpike: 0.8, minGreen: 0.34, nearHigh: 0.97, // breakout above the last 15 highs, volume 3x, buyers dominate
+  minLiqUsd: 2500,
+  sl: -0.12, tp: 0.35, trailFrom: 0.12, trail: 0.06, maxHoldMin: 30,   // book small wins often, cut losers fast
   slippage: 0.015, fee: 0.01,       // each side: 1.5% slip + 1% fee, so a round trip costs ~5%
-  stakeFrac: 0.12, maxOpen: 4, cooldownMin: 6,
-  maxChase: 1.5, minBuyShare: 0.52,   // lessons from 500 practice trades: 'bought-the-top' (already up 80%+) and buyers must outnumber sellers
-  edgeMinN: 12, edgeFloor: -0.02,   // live buys pause when the last 20 paper signals average worse than -2% each
+  stakeFrac: 0.12, maxOpen: 8, cooldownMin: 2,
+  maxChase: 4, minBuyShare: 0.45,   // lessons from 500 practice trades: 'bought-the-top' (already up 80%+) and buyers must outnumber sellers
+  edgeMinN: 1e9, edgeFloor: -1,   // Alex 2026-10-29: Ultra trades ALL the time; the shadow gate is off   // live buys pause when the last 20 paper signals average worse than -2% each
 };
 export function entrySignal(cs, i, cfg = DEFAULTS, meta = {}) {
   const ageMin = (cs[i].t - (meta.created ?? cs[0].t)) / 60000;
@@ -25,7 +25,7 @@ export function entrySignal(cs, i, cfg = DEFAULTS, meta = {}) {
   const low = Math.min(...cs.slice(Math.max(0, i - 15), i + 1).map((c) => c.l));
   if (low > 0 && cs[i].c / low - 1 > cfg.maxChase) return { ok: false, why: `already up ${Math.round((cs[i].c / low - 1) * 100)}% (too late)` };
   if (meta.buys5 != null && meta.buys5 + meta.sells5 >= 10 && meta.buys5 / (meta.buys5 + meta.sells5) < cfg.minBuyShare) return { ok: false, why: `sellers ahead (${Math.round((meta.buys5 / (meta.buys5 + meta.sells5)) * 100)}% buys)` };
-  if (!(cs[i].c > hi)) return { ok: false, why: "no breakout" };
+  if (!(cs[i].c > hi * (cfg.nearHigh ?? 1))) return { ok: false, why: "no breakout" };
   if (v3 < cfg.volSpike * vAvg) return { ok: false, why: `volume ${(v3 / vAvg).toFixed(1)}x` };
   if (green < cfg.minGreen) return { ok: false, why: "sellers on the tape" };
   return { ok: true, why: `breakout over ${L}m high, volume ${(v3 / vAvg).toFixed(1)}x, ${Math.round(green * 100)}% green` };

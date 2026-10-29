@@ -11,7 +11,7 @@ let k = 0;
 const mk = (over = {}) => {
   const { feed, state } = fakeFeed(); state.series = base;                       // a quiet chart, nothing yet
   const sells = []; const exec = { name: "paper", buy: async () => ({ ok: true }), sell: async (p) => { sells.push(p.name); return { ok: true }; } };
-  const e = new Engine({ feed, exec, journal: new Journal(path.join(dir, `j${k++}.jsonl`)), rug: async () => ({ pass: true, reason: "ok" }), now: () => state.now, ...over });
+  const e = new Engine({ feed, exec, journal: new Journal(path.join(dir, `j${k++}.jsonl`)), rug: async () => ({ pass: true, reason: "ok" }), now: () => state.now, cfg: { ...DEFAULTS, nearHigh: 1, volSpike: 1.5, minGreen: 0.67, minAgeMin: 4, maxChase: 1.5, minBuyShare: 0.52, tp: 0.9, sl: -0.15, trailFrom: 0.22, trail: 0.1, maxHoldMin: 60 }, ...over });
   return { e, state, sells };
 };
 const T0 = 1_800_000_000_000;

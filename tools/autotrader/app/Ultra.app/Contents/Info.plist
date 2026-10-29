@@ -6,8 +6,8 @@
   <key>CFBundleDisplayName</key>           <string>Ultra</string>
   <key>CFBundleIdentifier</key>            <string>com.alex.ultra</string>
   <!-- Both stamped by pack.sh from the BUILD file. -->
-  <key>CFBundleVersion</key>               <string>9</string>
-  <key>CFBundleShortVersionString</key>    <string>9</string>
+  <key>CFBundleVersion</key>               <string>10</string>
+  <key>CFBundleShortVersionString</key>    <string>10</string>
   <key>CFBundleInfoDictionaryVersion</key> <string>6.0</string>
   <key>CFBundlePackageType</key>           <string>APPL</string>
   <key>CFBundleExecutable</key>            <string>ultra</string>

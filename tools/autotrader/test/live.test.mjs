@@ -56,7 +56,7 @@ ok("buy goes through quote -> signed swap -> polled to confirmed", r.ok && r.ord
 const sw = log.find((l) => l.path === "/v1/trade/swap");
 ok("the server accepted our signature (real Ed25519 verify)", !!sw);
 ok("swap body has the documented fields", sw.body.chain === "sol" && sw.body.from_address === WALLET && sw.body.input_token === SOL_MINT && sw.body.output_token === MINT && sw.body.input_amount === String(Math.round(0.0132 * 1e9)) && sw.body.slippage === 20 && sw.body.is_anti_mev === true, sw.body);
-ok("a GMGN-side stop and target ride along as a safety net", sw.body.condition_orders.length === 2 && sw.body.condition_orders[0].order_type === "loss_stop" && sw.body.condition_orders[0].price_scale === "25" && sw.body.condition_orders[1].order_type === "profit_stop" && sw.body.condition_orders[1].price_scale === "115", sw.body.condition_orders);
+ok("a GMGN-side stop and target ride along as a safety net", sw.body.condition_orders.length === 2 && sw.body.condition_orders[0].order_type === "loss_stop" && sw.body.condition_orders[0].price_scale === String(Math.round(Math.abs(DEFAULTS.sl) * 100) + 10) && sw.body.condition_orders[1].order_type === "profit_stop" && sw.body.condition_orders[1].price_scale === String(Math.round(DEFAULTS.tp * 100) + 25), sw.body.condition_orders);
 ok("auth query carries timestamp and client_id and the API key header", !!sw.q.timestamp && !!sw.q.client_id && sw.headers["x-apikey"] === "KEY");
 ok("stake is 12% of the wallet (0.0132 SOL) and never above the cap", Math.abs(r.sol - 0.0132) < 1e-9);
 ex = mk(); mode.polls = 1;

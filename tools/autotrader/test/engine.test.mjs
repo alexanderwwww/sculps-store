@@ -14,9 +14,9 @@ const spike = [mk(30, 1, 1.05, 1.06, 1, 40), mk(31, 1.05, 1.12, 1.13, 1.05, 60),
 const up = [...base, ...spike];
 const meta = { created: T0, liqUsd: 9000 };
 ok("breakout with volume and green candles is a signal", entrySignal(up, up.length - 1, DEFAULTS, meta).ok, entrySignal(up, up.length - 1, DEFAULTS, meta));
-ok("flat market is not", !entrySignal(base, base.length - 1, DEFAULTS, meta).ok);
+ok("flat market is not (strict rules)", !entrySignal(base, base.length - 1, { ...DEFAULTS, nearHigh: 1, volSpike: 1.5, minGreen: 0.67, minAgeMin: 4, maxChase: 1.5, minBuyShare: 0.52 }, meta).ok);
 ok("thin liquidity is refused with its reason", /liquidity/.test(entrySignal(up, up.length - 1, DEFAULTS, { ...meta, liqUsd: 500 }).why));
-ok("too-young pool is refused", /age/.test(entrySignal(up, up.length - 1, DEFAULTS, { created: T0 + 31 * M, liqUsd: 9000 }).why));
+ok("too-young pool is refused", /age/.test(entrySignal(up, up.length - 1, { ...DEFAULTS, minAgeMin: 40 }, { created: T0 + 31 * M, liqUsd: 9000 }).why));
 const dump = [...up, mk(33, 1.2, 1.0, 1.2, 0.95, 80)];
 const x1 = managePosition(dump, up.length - 1, DEFAULTS);
 ok("stop loss fires and is a loss after costs", !x1.open && /stop/.test(x1.why) && x1.ret < 0, x1);
@@ -60,9 +60,9 @@ fs.writeFileSync(path.join(dir, "j4.jsonl"), JSON.stringify({ type: "intent", id
 const e4 = new Engine({ feed, exec, journal: new Journal(path.join(dir, "j4.jsonl")), rug, now: () => now });
 ok("an intent with no fill is closed out as failed on restart", /restart before fill/.test(fs.readFileSync(path.join(dir, "j4.jsonl"), "utf8")) && e4.open.size === 0);
 // maxOpen
-const e5 = new Engine({ feed: { ...feed, newPools: async () => Array.from({ length: 6 }, (_, k) => ({ ...pool, pool: "P" + k, mint: "M" + k, name: "T" + k })) }, exec, journal: new Journal(path.join(dir, "j5.jsonl")), rug, now: () => now });
+const e5 = new Engine({ feed: { ...feed, newPools: async () => Array.from({ length: 6 }, (_, k) => ({ ...pool, pool: "P" + k, mint: "M" + k, name: "T" + k })) }, exec, journal: new Journal(path.join(dir, "j5.jsonl")), cfg: { ...DEFAULTS, maxOpen: 4 }, rug, now: () => now });
 await e5.tick();
-ok(`never more than ${DEFAULTS.maxOpen} open`, e5.open.size === DEFAULTS.maxOpen, e5.open.size);
+ok("never more than maxOpen (4) open", e5.open.size === 4, e5.open.size);
 // shadow book: every passing signal is also tracked on paper, and a bad paper edge pauses LIVE buys only
 const jfS = path.join(dir, "jS.jsonl");
 series = up; now = T0 + 33 * M;
@@ -72,7 +72,7 @@ ok("a signal opens a shadow paper trade as well", eS.shadow.size === 1, eS.statu
 series = [...up, mk(33, 1.2, 2.5, 2.6, 1.2, 80)]; now += 2 * M;
 await eS.tick();
 ok("the shadow trade closes with its own result and feeds the edge", eS.shadowClosed.length === 1 && eS.edge().avg > 0 && eS.edge().n === 1, eS.edge());
-const eR = new Engine({ feed, exec: { name: "live", buy: async () => ({ ok: true }), sell: async () => ({ ok: true }) }, journal: new Journal(path.join(dir, "jR.jsonl")), rug, now: () => now });
+const eR = new Engine({ feed, exec: { name: "live", buy: async () => ({ ok: true }), sell: async () => ({ ok: true }) }, journal: new Journal(path.join(dir, "jR.jsonl")), cfg: { ...DEFAULTS, edgeMinN: 12, edgeFloor: -0.02 }, rug, now: () => now });
 for (let k = 0; k < 14; k++) eR.shadowClosed.push({ ret: -0.08, name: "x" });
 series = up; await eR.tick();
 ok("live buys pause when the last paper signals lose, and say why", eR.open.size === 0 && Object.keys(eR.status().whyNot).some((k) => /shadow edge/.test(k)), eR.status().whyNot);
