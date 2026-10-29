@@ -65,6 +65,7 @@ export default [
   route("organicx/*", "routes/organicx.$.tsx"),
   route("organic/*", "routes/organic.$.tsx"),
   route("research/*", "routes/research.$.tsx"),
+  route("ultra/*", "routes/ultra.$.tsx"),
   route("clone/*", "routes/clone.$.tsx"),
   route("flip/*", "routes/flip.$.tsx"),
   // Shop Admin on the phone. It uses the admin's own manifest, icons and

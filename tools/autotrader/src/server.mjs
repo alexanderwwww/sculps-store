@@ -14,6 +14,7 @@ import { jupiterExec, CAPS as OWN_CAPS } from "./lib/exec-jupiter.mjs";
 import { webExec, WEB_CAPS } from "./lib/exec-browser.mjs";
 import { GmgnPanel } from "./lib/web/gmgn-panel.mjs";
 import { connectChrome } from "./lib/chrome.mjs";
+import { startLink } from "./lib/link.mjs";
 import { Rpc, Jupiter, walletFromPem, buildTransferTx } from "./lib/solana.mjs";
 import { GmgnClient } from "./lib/gmgn.mjs";
 import { combinedRug, rugCheck } from "./lib/rug.mjs";
@@ -26,7 +27,7 @@ export const APP = "ultra";
 /** Alex's GMGN wallet (he pasted it 2026-10-28). Ultra checks it against the SOL shown in GMGN before it clicks anything. */
 export const DEFAULT_WEB_WALLET = "4DuDEdhHAdLCDnoQnTp4ikFzTyCVFpSNQDdxwJRibw1D";
 
-export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, tickMs = 3000, quiet = false, balance = solBalance, ipv4 = publicIpv4, gmgnHost, chrome: chromeOverride = null, webWalletOf = null, rpc: rpcOverride = null, jupiter: jupiterOverride = null, rug: rugOverride = null, execOverride = null, now = Date.now, idleMs = 0, onShutdown = () => {} } = {}) {
+export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, tickMs = 3000, quiet = false, balance = solBalance, ipv4 = publicIpv4, gmgnHost, chrome: chromeOverride = null, webWalletOf = null, rpc: rpcOverride = null, jupiter: jupiterOverride = null, rug: rugOverride = null, execOverride = null, now = Date.now, idleMs = 0, link = false, onShutdown = () => {} } = {}) {
   mkdirSync(dataDir, { recursive: true });
   const secrets = new Secrets(dataDir);
   const cfgFile = join(dataDir, "config.json");
@@ -164,7 +165,8 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
     } catch (e) { log("request failed:", e); fail(res, 500, "Something went wrong."); }
   });
   const listening = new Promise((r) => server.listen(port, "127.0.0.1", () => r(server.address().port)));
-  const close = () => new Promise((r) => { stopped = true; if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); server.close(() => r()); server.closeAllConnections?.(); });
+  const linkI = link ? startLink({ getState: () => ({ build, running: !!engine, mode, lastError, engine: engine ? engine.status() : null }), getEngine: () => engine }) : null;
+  const close = () => new Promise((r) => { stopped = true; linkI?.stop(); if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); server.close(() => r()); server.closeAllConnections?.(); });
   // Resume what was running when the app last closed. Live resumes only if the keys are still there.
   listening.then(() => { const c = readCfg(); if (c.running && c.mode === "live" && !(c.mode === "live" && c.liveSource === "gmgn" && !secrets.ready())) go(c.mode).catch((e) => { lastError = e.message; }); });
   return { listening, close, token, get engine() { return engine; }, secrets, go, halt };
@@ -172,7 +174,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const dataDir = process.env.ULTRA_DATA || join(process.env.HOME || ".", "Library", "Application Support", "Ultra", "data");
-  const app = start({ dataDir, port: Number(process.env.ULTRA_PORT || 47401), build: process.env.ULTRA_BUILD || "dev", onShutdown: () => process.exit(0) });
+  const app = start({ dataDir, port: Number(process.env.ULTRA_PORT || 47401), build: process.env.ULTRA_BUILD || "dev", link: true, onShutdown: () => process.exit(0) });
   app.listening.then((p) => console.log(`ultra on http://127.0.0.1:${p}/`));
   // A sleeping Mac cannot sell. While Ultra runs, keep the Mac awake (the screen may still sleep).
   if (process.platform === "darwin") { try { spawn("caffeinate", ["-i", "-w", String(process.pid)], { stdio: "ignore", detached: true }).unref(); } catch { /* optional */ } }
