@@ -175,7 +175,7 @@
             <div class="tm__trade"><h4>Trade · entry vs exit <em class="tr__st">waiting</em></h4>
               <div class="tr__name"><strong>–</strong><em>long</em><b class="tr__live"></b></div>
               <dl><dt>entry</dt><dd class="tr__entry">–</dd><dt>exit</dt><dd class="tr__exit">–</dd><dt>stop / target</dt><dd class="tr__band">–</dd><dt>size</dt><dd class="tr__size">–</dd></dl>
-              <p class="tr__why"><span>reason:</span> <i>–</i></p></div>
+              <p class="tr__why"><span>reason:</span> <i>–</i></p><div class="tr__sell"></div></div>
             <div class="tm__tail"><h4>$ tail -f night.log <span class="tl__n">0 lines</span></h4><div class="tl__body"></div><i class="tl__cur"></i></div>
           </div>
           <div class="tm__result"><h4>Result · start vs now <span class="rs__since"></span></h4>
@@ -273,7 +273,10 @@
         q(".tr__entry").textContent = o.entryPx ? Number(o.entryPx).toPrecision(5) : "–"; q(".tr__exit").textContent = "open"; q(".tr__exit").className = "tr__exit up";
         q(".tr__band").textContent = `${Math.round(ex.sl * 100)}% / +${Math.round(ex.tp * 100)}%, trailing`; q(".tr__size").textContent = `${o.stake} SOL`;
         q(".tr__why i").textContent = o.enter || "–";
+        // one Sell button per open position (Alex): money back out now
+        const box = q(".tr__sell"); box.replaceChildren(...e.open.map((x) => el("button", { class: "danger", text: `Sell ${tkn(x.name)} ${x.ret == null ? "" : (x.ret >= 0 ? "+" : "") + (x.ret * 100).toFixed(1) + "%"}`, onclick: () => act("/api/sell", { id: x.id }) })));
       } else if (c) {
+        q(".tr__sell").replaceChildren();
         st.textContent = "closed"; st.className = "tr__st";
         q(".tr__name strong").textContent = tkn(c.name);
         const lv = q(".tr__live"); lv.textContent = `${c.ret >= 0 ? "+" : ""}${c.ret.toFixed(1)}%`; lv.className = `tr__live ${c.ret >= 0 ? "up" : "down"}`;

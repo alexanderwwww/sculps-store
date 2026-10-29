@@ -10,7 +10,7 @@ export class Engine {
     this.pending = r.pending;                 // intents with no fill: reconciled below, never forgotten
     for (const e of this.pending.values()) this.journal.write({ type: "fail", id: e.id, why: "restart before fill" });
     this.pending.clear();
-    this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.ready = []; this.cc = new Map(); this.live = new Map(); this.peaks = new Map(); this.closing = new Set(); this.events = []; this.seq = 0; this.watch = new Map(); this.watching = { total: 0, young: 0, thin: 0, ready: 0 }; this.paused = false; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = []; this.hist = new Map();
+    this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.ready = []; this.cc = new Map(); this.live = new Map(); this.peaks = new Map(); this.closing = new Set(); this.events = []; this.seq = 0; this.watch = new Map(); this.watching = { total: 0, young: 0, thin: 0, ready: 0 }; this.paused = false; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = []; this.hist = new Map(); this.ph = new Map();
     this.ticks = 0; this.lastTickAt = null; this.startedAt = this.now(); this.counts = { drop: 0, block: 0, buy: 0, sell: 0, fail: 0 };
   }
   get equity() { return this.startEq + this.closed.reduce((s, c) => s + (c.pnl || 0), 0); }
@@ -53,7 +53,7 @@ export class Engine {
     const pools = [...new Set([...this.open.values()].map((p) => p.pool).concat(this.ready.map((m) => m.pool)))];
     let q = new Map();
     if (pools.length) { try { q = await this.feed.quotes(pools); } catch (e) { this.#err("quotes", e); } }
-    for (const [pool, x] of q) { this.live.set(pool, { ...x, at: this.now() }); const w = this.watch.get(pool); if (w) { if (x.liqUsd != null) w.liqUsd = x.liqUsd; w.buys5 = x.buys5; w.sells5 = x.sells5; w.vol5 = x.vol5; } }
+    for (const [pool, x] of q) { const ph = this.ph.get(pool) || []; ph.push([this.now(), x.price]); while (ph.length && this.now() - ph[0][0] > 120000) ph.shift(); this.ph.set(pool, ph); this.live.set(pool, { ...x, at: this.now() }); const w = this.watch.get(pool); if (w) { if (x.liqUsd != null) w.liqUsd = x.liqUsd; w.buys5 = x.buys5; w.sells5 = x.sells5; w.vol5 = x.vol5; } }
     for (const p of this.open.values()) { const lv = this.live.get(p.pool); if (!lv || this.now() - lv.at > 20000) continue; const h = this.hist.get(p.id) || []; h.push([this.now(), lv.price]); if (h.length > 150) h.shift(); this.hist.set(p.id, h); }   // what the trade cards draw
     try { await this.#fastExits(); } catch (e) { this.#err("exits", e); }
     try { await this.#fastEntries(); } catch (e) { this.#err("entries", e); }
@@ -70,11 +70,14 @@ export class Engine {
       else if (peak >= entry * (1 + c.trailFrom) && price <= peak * (1 - c.trail)) why = `trailing stop from +${Math.round((peak / entry - 1) * 100)}%`;
       else if (price >= entry * (1 + c.tp)) why = `take profit +${c.tp * 100}%`;
       else if (this.now() - p.at >= c.maxHoldMin * 60000) why = "time stop";
+      else if (c.staleMin && this.now() - p.at >= c.staleMin * 60000 && price / entry - 1 < (c.staleRet ?? 0.01)) why = `flat after ${c.staleMin}m: money back to work`;   // lesson 2: dead money out
       if (!why) continue;
       const ret = (price * (1 - c.slippage)) / entry - 1 - 2 * c.fee;
       await this.#close(p, { ret, why, exitPx: price });
     }
   }
+  /** price change over the last `secs` seconds from the live quotes (null until there is that much history) */
+  #mom(pool, secs) { const ph = this.ph.get(pool) || []; if (ph.length < 2) return null; const now = ph[ph.length - 1]; const then = ph.find(([t]) => now[0] - t <= secs * 1000); if (!then || now[0] - then[0] < secs * 500) return null; return now[1] / then[1] - 1; }
   async #fastEntries() {
     if (this.paused || this.open.size >= this.cfg.maxOpen) return;
     for (const m of this.ready) {
@@ -86,10 +89,14 @@ export class Engine {
       if (!hit || hit.cs.length < 6) {
         // Alex 2026-10-29: never wait on a chart. Live volume + buyers ahead = buy, straight from the live price.
         const flow = (lv.buys5 || 0) + (lv.sells5 || 0);
-        if (!((lv.vol5 || 0) >= 1500 && flow >= 10 && lv.buys5 > lv.sells5)) { quiet("live: volume or buyers too thin"); continue; }
+        if (!((lv.vol5 || 0) >= (this.cfg.liveMinVol5 ?? 3000) && flow >= 15 && lv.buys5 >= lv.sells5 * (this.cfg.liveBuyRatio ?? 1.15))) { quiet("live: volume or buyers too thin"); continue; }
+        // lesson 1 (2026-10-29 live data): buying a coin that is not moving = sitting at the cost of entry. Buy only a coin already rising.
+        const mom = this.#mom(m.pool, this.cfg.momSecs ?? 30);
+        if (mom == null) { quiet("live: watching its price first"); continue; }
+        if (mom < (this.cfg.momMin ?? 0.02)) { quiet("live: not rising right now"); continue; }
         const t = Math.floor(this.now() / 60000) * 60000, c0 = { t, o: lv.price, h: lv.price, l: lv.price, c: lv.price, v: lv.vol5 / 5 };
         this.cool.set(m.pool, this.now() + 30000);
-        await this.#consider(m, Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), { ok: true, why: `live volume $${Math.round(lv.vol5)} in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` });
+        await this.#consider(m, Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), { ok: true, why: `rising ${(mom * 100).toFixed(1)}% in ${this.cfg.momSecs ?? 30}s, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` });
         continue;
       }
       // the chart so far, plus the minute in progress built from the live price
@@ -117,6 +124,12 @@ export class Engine {
     }
   }
   /** Sell everything now, one position at a time, through the same journalled path as any exit. */
+  /** Alex's Sell button on one position: sold now through the same journalled path as any exit. */
+  async sellOne(id) {
+    const p = this.open.get(id); if (!p) return false;
+    const lv = this.live.get(p.pool), px = lv?.price ?? p.entryPx;
+    return this.#close(p, { ret: (px * (1 - this.cfg.slippage)) / p.entryPx - 1 - 2 * this.cfg.fee, why: "you pressed Sell", exitPx: px });
+  }
   async flatten() {
     this.paused = true;
     for (const p of [...this.open.values()]) {

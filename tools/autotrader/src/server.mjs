@@ -94,6 +94,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
           const body = await readBody(req);
           if (url.pathname === "/api/go") { if (body.mode !== "live") return fail(res, 400, "mode must be live"); writeCfg({ userStopped: false }); try { await go(body.mode); } catch (e) { return fail(res, 400, e.message); } return send(res, 200, { ok: true, mode }); }
           if (url.pathname === "/api/pause") { if (engine) engine.paused = !!body.paused; return send(res, 200, { ok: true, paused: engine?.paused ?? null }); }
+          if (url.pathname === "/api/sell") { if (!engine) return fail(res, 400, "Not running."); const done = await engine.sellOne(String(body.id || "")); return done ? send(res, 200, { ok: true }) : fail(res, 400, "That position is not open (or the sale did not go through yet)."); }
           if (url.pathname === "/api/flatten") { if (!engine) return fail(res, 400, "Not running."); await engine.flatten(); return send(res, 200, { ok: true, open: engine.open.size }); }
           if (url.pathname === "/api/wallet") { let address; try { address = secrets.importWallet(body.secret); } catch (e) { return fail(res, 400, e.message); } halt(); writeCfg({ phantomStartSol: null, userStopped: false }); try { await go("live"); } catch (e) { lastError = e.message; retry(); } return send(res, 200, { ok: true, address, running: !!engine }); }
           if (url.pathname === "/api/stop") { halt(); writeCfg({ userStopped: true }); return send(res, 200, { ok: true }); }

@@ -3,7 +3,7 @@ export const DEFAULTS = {
   minAgeMin: 1, maxAgeMin: 720,   // bonded runners trade for hours      // never the first seconds (snipers own those), never old and stale
   breakoutLookback: 3, volSpike: 0.8, minGreen: 0.34, nearHigh: 0.97, // breakout above the last 15 highs, volume 3x, buyers dominate
   minLiqUsd: 2500,
-  sl: -0.12, tp: 0.35, trailFrom: 0.12, trail: 0.06, maxHoldMin: 30,   // book small wins often, cut losers fast
+  sl: -0.08, tp: 0.12, trailFrom: 0.06, trail: 0.04, maxHoldMin: 8, staleMin: 3, staleRet: 0.01,   // scalp: small fast wins, losers and flat coins out quick   // book small wins often, cut losers fast
   slippage: 0.015, fee: 0.01,       // each side: 1.5% slip + 1% fee, so a round trip costs ~5%
   stakeFrac: 0.12, maxOpen: 8, cooldownMin: 2,
   maxChase: 4, minBuyShare: 0.45,   // lessons from 500 practice trades: 'bought-the-top' (already up 80%+) and buyers must outnumber sellers

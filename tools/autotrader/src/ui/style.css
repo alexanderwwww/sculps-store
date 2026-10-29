@@ -240,3 +240,4 @@ header.top.slim { display: none; }
 @media (max-width: 560px) { .tm__agents { grid-template-columns: 1fr; } .tm__chips, .tm__tiles { grid-template-columns: 1fr 1fr; } .tm__nums b { font-size: 28px; } .tm__node { width: 100px; } .tm__node i { width: 64px; height: 64px; } .tm__chart { left: 26%; right: 26%; } .logrow { grid-template-columns: 44px 1fr auto; } .logrow em { display: none; } .tm__id h1 { font-size: 26px; } }
 .tm__go { margin-top: 12px; font-family: -apple-system, system-ui, sans-serif; } .tm__go button { font-size: 15px; padding: 12px 22px; }
 .plug { display: flex; gap: 10px; max-width: 640px; } .plug input { margin: 0; flex: 1; font-size: 13px; } .tm__go .note { max-width: 640px; }
+.tr__sell { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; font-family: -apple-system, system-ui, sans-serif; } .tr__sell button { padding: 8px 12px; font: 700 12px var(--mono); }
