@@ -19,9 +19,14 @@ test("a winning run relaxes momMin, but never under 10% (was 2%)", async () => {
   assert.equal(await closeOne({ momMin: 0.032, past: [0.2, 0.15], val: 0.0125 }), 0.10);
   assert.equal(await closeOne({ momMin: 0.10, past: [0.2, 0.15], val: 0.0125 }), 0.10);
 });
-test("a losing run tightens momMin one golden step, capped at 16.18% (was 8%)", async () => {
-  assert.ok(Math.abs(await closeOne({ momMin: 0.10, past: [-0.1, -0.08], val: 0.009 }) - 0.1618) < 1e-9);
-  assert.equal(await closeOne({ momMin: 0.1618, past: [-0.1, -0.08], val: 0.009 }), 0.1618);
+test("a losing run tightens momMin, capped at 13% so the +13.4% band (CHLOE, won) stays open (lesson 36; was 16.18%)", async () => {
+  assert.equal(await closeOne({ momMin: 0.10, past: [-0.1, -0.08], val: 0.009 }), 0.13);
+  assert.equal(await closeOne({ momMin: 0.13, past: [-0.1, -0.08], val: 0.009 }), 0.13);
+  assert.equal(await closeOne({ momMin: 0.1618, past: [-0.1, -0.08], val: 0.009 }), 0.13);   // a saved 16.18% comes down on the next close
+});
+test("three top-buy losses (MM -10.1, Hyper -9.0, VI -7.9) never shut the band above 13%", async () => {
+  const m = await closeOne({ momMin: 0.10, past: [-0.101, -0.090], val: 0.00921 });
+  assert.ok(m <= 0.13 && m >= 0.10, String(m));
 });
 test("a mixed run leaves it alone, but a saved 3.2% is lifted to the 10% floor", async () => {
   assert.equal(await closeOne({ momMin: 0.032, past: [0.12, 0.12], val: 0.009 }), 0.10);
