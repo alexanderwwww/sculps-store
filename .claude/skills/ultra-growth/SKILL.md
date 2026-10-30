@@ -50,3 +50,6 @@ Code: `tools/autotrader/src/lib/whales.mjs`, tests `test/whales.test.mjs`. Free 
 - Exit: any copied wallet sells -> Ultra sells first. -2% stop still checked first; half at +5%, rest to +100% unchanged.
 - Score: copied PnL credited to the wallets; drop after 3 copies averaging < -2% or 2 straight losses totalling < -4%.
 - Lesson: the first live discovery run picked up a runner's own creator as "smart money" (he sold well by dumping). Discovery must always exclude creator + insiders. Lag and the funder check (oldest of the last 1000 signatures only) are not proven yet; read `engine.whales` in /status.
+
+## Build 64 (2026-10-30): cost edges
+Laddered priority fee (pay only what lands), token-account rent reclaimed after every full sell plus a stray sweep, and a Token-2022 trap stop ahead of rugcheck. Settings unchanged: 0.016 SOL, stop -2%, half at +5%, rest to +100%, no pause line. Details: `.claude/skills/gmgn-fib/research-2026-10-29-lessons.md`.

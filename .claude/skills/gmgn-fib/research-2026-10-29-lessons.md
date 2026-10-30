@@ -73,3 +73,9 @@ $ per trade at 0.026 SOL (~$5): +4% ≈ $0.20, +20% ≈ $1. Fix applied: pools �
 
 ## Lesson 45 — the fatal bug: every trade sold 2-6 s after buying (2026-10-30, on-chain proof)
 Wallet tx history 07:02-08:14: buy -0.0177, sell +0.0157 two to six seconds later, every time. The real Jupiter sell quote right after a buy is ~2.5% under the stake (fees + spread), so a -2% stop measured from the stake fired instantly. Fix (build 63): the stop is measured from the first real quote after the buy (p.base), shrunk with the half sell.
+
+## 2026-10-30 — Ultra 64: fees, rent, Token-2022 traps
+- Priority fee is laddered: buy medium/50000 cap; sell medium/30000 -> high/80000 -> veryHigh/150000, stepping up only when the cheaper send did not land. Paying the 150000 ceiling on every send was ~0.0003 SOL a round trip burned for nothing.
+- Every full sell closes the emptied token account (~0.002 SOL rent back), counted only once the chain confirms; failures go to state.rentLeak. sweepRent() closes stray zero-balance accounts on the first slow tick. On a ~0.03 SOL wallet each un-closed account is ~7% of the wallet.
+- mintTraps() reads the mint on-chain before rugcheck: freeze authority, transfer fee >0, permanent delegate, transfer hook, non-transferable, default-frozen, pausable -> no buy; RPC failure -> no buy. Field names checked live (PYUSD blocked, Fartcoin passes).
+- Watch live: medium-priority buy fill rate on fast coins; first real stray sweep; sell result reports ~10 s later while the close confirms.
