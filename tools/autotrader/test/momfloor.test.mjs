@@ -10,7 +10,7 @@ async function closeOne({ momMin, past, val }) {
   const feed = { quotes: async () => new Map([["P", { price: 1, liqUsd: 50000, buys5: 0, sells5: 0, vol5: 0 }]]), newPools: async () => [], trendingPools: async () => [], candles: async () => [] };
   const e = new Engine({ feed, exec, journal: new Journal(path.join(fs.mkdtempSync(path.join(os.tmpdir(), "mf-")), "j.jsonl")), cfg: { ...DEFAULTS, pullback: 0, fib: 0, momMin, sl: -0.07, tp: 0.15, staleMin: 0, maxHoldMin: 60 }, now: () => now });
   for (const r of past) e.closed.push({ type: "close", ret: r });
-  e.open.set("x", { id: "x", name: "T", mint: "M", pool: "P", stake: 0.01, tokens: "1000", entryPx: 1, at: now });
+  e.open.set("x", { id: "x", name: "T", mint: "M", pool: "P", stake: 0.01, base: 0.01, tokens: "1000", entryPx: 1, at: now });
   await e.fast();
   assert.equal(e.open.size, 0, "the position closed");
   return e.cfg.momMin;
