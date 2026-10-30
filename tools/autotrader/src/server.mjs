@@ -9,6 +9,7 @@ import { randomBytes } from "node:crypto";
 import { Engine } from "./lib/engine.mjs";
 import { Narrative } from "./lib/narrative.mjs";
 import { Intel } from "./lib/intel.mjs";
+import { Whales } from "./lib/whales.mjs";
 import { Journal } from "./lib/journal.mjs";
 import { liveFeed } from "./lib/feed.mjs";
 import { jupiterExec, CAPS as JUP_CAPS, PLUG_CAPS_EXTRA } from "./lib/exec-jupiter.mjs";
@@ -55,7 +56,10 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
     // picks bands itself from here; a momMin the desk sets later is kept.
     if (!savedOrg && !(DEFAULTS.momMin <= 0.03)) { DEFAULTS.momMin = 0.03; writeCfg({ tuned: { ...(readCfg().tuned || {}), momMin: 0.03 } }); }
     const exec = jupiterExec({ wallet: w, rpc: rpc(), jupiter: jup(), cfg: DEFAULTS, caps, startSol: readCfg().phantomStartSol, now });
-    const eng = new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-phantom.jsonl")), rug: rugOverride || rugCheck, startEq: readCfg().phantomStartSol, now, org: savedOrg, narr: feed === liveFeed ? new Narrative({ now }) : null, intel: feed === liveFeed ? new Intel({ smartWallets: readCfg().smartWallets || [] }) : null });
+    // whales: smart wallets found from public data, watched on the public RPC; intel reads the same live set
+    const whales = feed === liveFeed ? new Whales({ feed, saved: readCfg().whales || null, seed: readCfg().smartWallets || [], onSave: (w) => writeCfg({ whales: w }) }) : null;
+    const intel = feed === liveFeed ? new Intel({ smartWallets: [] }) : null; if (intel && whales) intel.smart = whales.set;
+    const eng = new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-phantom.jsonl")), rug: rugOverride || rugCheck, startEq: readCfg().phantomStartSol, now, org: savedOrg, narr: feed === liveFeed ? new Narrative({ now }) : null, intel, whales });
     eng.onLearn = (c) => onLearn(c);
     return eng;
   }

@@ -5,8 +5,8 @@ import { why as narrWhy } from "./narrative.mjs";
 import { exitsFor } from "./intel.mjs";
 
 export class Engine {
-  constructor({ feed, exec, journal, cfg = DEFAULTS, rug = rugCheck, now = Date.now, startEq = 100, scanTop = 8, org = null, rng = Math.random, narr = null, intel = null }) {
-    Object.assign(this, { feed, exec, journal, cfg, rug, now, startEq, scanTop, rng, narr, intel });
+  constructor({ feed, exec, journal, cfg = DEFAULTS, rug = rugCheck, now = Date.now, startEq = 100, scanTop = 8, org = null, rng = Math.random, narr = null, intel = null, whales = null }) {
+    Object.assign(this, { feed, exec, journal, cfg, rug, now, startEq, scanTop, rng, narr, intel, whales });
     const r = journal.replay();
     this.open = r.open;                       // survives restarts
     this.closed = r.closed;
@@ -54,6 +54,8 @@ export class Engine {
       for (const [k, v] of this.cc) if (this.now() - v.at > 600000) this.cc.delete(k);
       // intel: research the coins closest to a buy in the background (never awaited), so it is ready before the bounce
       if (this.intel) for (const m of this.ready.slice(0, 12)) { try { this.intel.want(m); } catch (e) { this.#err("intel", e); } }
+      // whales (Alex 2026-10-30): find and watch smart wallets in the background, never awaited
+      if (this.whales) { try { const runners = [...this.watch.values()].filter((m) => m.pool && (m.liqUsd ?? 0) >= 20000).sort((a, b) => (b.vol1h || b.vol5 || 0) - (a.vol1h || a.vol5 || 0)).slice(0, 5); this.whales.pump(runners)?.catch?.(() => {}); } catch (e) { this.#err("whales", e); } }
       // ULTRA INSTINCT: read the big trades (whales) on what we hold and on the busiest coins we are close to buying, 2 pools a cycle
       if (this.feed.trades) {
         const hot = [...[...this.open.values()].map((p) => p.pool), ...[...this.ready].sort((a, b) => (b.vol5 || 0) - (a.vol5 || 0)).map((m) => m.pool)].filter((p, i, a) => a.indexOf(p) === i && !(this.now() - (this.whaleAt.get(p) || 0) < 30000)).slice(0, 2);
@@ -72,7 +74,7 @@ export class Engine {
   /** The fast lane (every few seconds): live prices for everything that matters -> exits first, then entries. */
   async fast() {
     this.ticks++; this.lastTickAt = this.now();
-    const pools = [...new Set([...this.open.values()].map((p) => p.pool).concat(this.ready.map((m) => m.pool)))];
+    const pools = [...new Set([...this.open.values()].map((p) => p.pool).concat(this.ready.map((m) => m.pool), this.#followSignals().map((s) => s.pool)))];
     let q = new Map();
     if (pools.length) { try { q = await this.feed.quotes(pools); } catch (e) { this.#err("quotes", e); } }
     for (const [pool, x] of q) { const ph = this.ph.get(pool) || []; ph.push([this.now(), x.price]); while (ph.length && this.now() - ph[0][0] > 120000) ph.shift(); this.ph.set(pool, ph); this.live.set(pool, { ...x, at: this.now() }); const w = this.watch.get(pool); if (w) { if (x.liqUsd != null) w.liqUsd = x.liqUsd; w.buys5 = x.buys5; w.sells5 = x.sells5; w.vol5 = x.vol5; } }
@@ -90,6 +92,10 @@ export class Engine {
       if (this.exec.valueSol && p.stake > 0 && (!p.vAt || this.now() - p.vAt > Math.max(1000, 700 * this.open.size))) { p.vAt = this.now(); try { const v = await this.exec.valueSol(p); if (v != null) { p.val = v; p.valAt = this.now(); } } catch { /* chart fallback */ } }
       const real = p.val != null && this.now() - p.valAt < 15000;
       const entry = real ? p.stake : p.entryPx, price = real ? p.val : lv.price;
+      // lesson 45 (on-chain, 2026-10-30): the real sell quote right after a buy already sits ~2.5% under the stake (fees + spread),
+      // so a -2% stop measured from the stake sold every trade 2-6 s after buying. The stop is measured from the first real quote.
+      if (real && p.base == null) p.base = p.val;
+      const stopFrom = real ? (p.base ?? p.stake) : p.entryPx;
       const pk = this.peaks.get(p.id); const pr = Math.max(pk?.r ?? 0, price / entry - 1); this.peaks.set(p.id, { r: pr }); const peak = entry * (1 + pr);   // peak as a RATIO: survives quote<->chart switches and the half sell
       const rNow = price / entry - 1, held = this.now() - p.at;
       p.tPeak ??= 0; p.tLow ??= 0;
@@ -103,7 +109,7 @@ export class Engine {
         const r = await this.exec.sellPart({ mint: p.mint, frac: c.partFrac ?? 0.382 }).catch((e) => ({ ok: false, why: e.message }));
         if (r.ok) {
           const got = Number(r.outAmount) / 1e9, f = c.partFrac ?? 0.382;
-          p.stake0 ??= p.stake; p.banked = (p.banked || 0) + got; p.stake = +(p.stake * (1 - f)).toFixed(6); p.tokens = r.left; p.val = null;
+          p.stake0 ??= p.stake; p.banked = (p.banked || 0) + got; p.stake = +(p.stake * (1 - f)).toFixed(6); if (p.base != null) p.base *= 1 - f; p.tokens = r.left; p.val = null;
           // lesson 20: the peak was the WHOLE position's value; after selling part it must shrink with it, or the rest looks +100% down and is dumped at once
           /* peak is a ratio now: nothing to shrink */
           this.journal.write({ ...p, type: "open" });
@@ -113,11 +119,12 @@ export class Engine {
       }
       let why = null, kind = null, trig = null;
       // lesson 10: one bad quote is noise (wifbot: stop -7% fired, the sale filled +2.2%). A stop needs two looks in a row below it, unless it is already far through.
-      const under = price <= entry * (1 + (real ? sl * 0.8 : sl)); p.under   // lesson 44: crashes gap 6-20% past the stop between looks; a real quote fires at 80% of the stop so the fill lands near it
+      const under = price <= stopFrom * (1 + (real ? sl * 0.8 : sl)); p.under   // lesson 44: crashes gap 6-20% past the stop between looks; a real quote fires at 80% of the stop so the fill lands near it
       = under ? (p.under || 0) + 1 : 0;
       // lesson 28 (team): waiting for a second look let 2 of 4 stops gap to -10..-12%. A REAL Jupiter quote under the stop sells at once; a chart price still needs two looks.
       if (under && (real || p.under >= 2 || price <= entry * (1 + sl * 1.3))) { why = `stop ${Math.round(sl * 100)}%`; kind = "stop"; trig = sl; }
       else if (under) why = null;
+      else if (p.follow?.length && this.whales && (() => { try { const s = this.whales.sellers(p.mint, p.follow, p.at); if (s.length) { p.followSold = s.length; return true; } } catch (e) { this.#err("whales", e); } return false; })()) { why = `whales selling: ${p.followSold} of ${p.follow.length} followed wallet${p.follow.length === 1 ? "" : "s"} sold, out first`; kind = "follow"; }
       else if ((() => { const w = this.whale.get(p.pool); return w && this.now() - w.at < 60000 && w.sell >= (this.cfg.whaleUsd ?? 1500) && w.sell >= 2 * w.buy; })()) { why = "ULTRA INSTINCT: whales leaving"; kind = "whale"; }
       else if ((p.partDone || peak >= entry * (1 + lockFrom)) && price <= entry * (1 + (c.lockAt ?? 0.01))) { why = `locked: was up ${Math.round((peak / entry - 1) * 100)}%, out before it turns red`; kind = "lock"; trig = c.lockAt ?? 0.01; }   // lesson 4: a winner never becomes a loser
       else if (peak >= entry * (1 + c.trailFrom) && price <= peak * (1 - (p.trail ?? c.trail))) { why = `trailing stop from +${Math.round((peak / entry - 1) * 100)}%`; kind = "trail"; trig = (peak * (1 - (p.trail ?? c.trail))) / entry - 1; }
@@ -228,6 +235,7 @@ export class Engine {
    *  best-scored fresh coin that still passes every filter is bought at 0.618 size. It never stops trading. */
   async #fastEntries() {
     if (this.paused || this.open.size >= this.cfg.maxOpen) return;
+    try { await this.#follow(); } catch (e) { this.#err("follow", e); }
     for (const m of this.ready) {
       if (this.open.size >= this.cfg.maxOpen || this.paused) break;
       const g = this.#gate(m, true); if (!g) continue;
@@ -253,6 +261,26 @@ export class Engine {
       this.cool.set(pick.cand.pool, this.now() + 30000);
       const it = this.#intel(pick.cand);
       await this.#consider(pick.cand, g.cs, { ...g.s, why: `${g.s.why} (idle pick: least-bad band, 0.618 size)${it ? ` · ${this.#intelWhy(it)}` : ""}` }, { m: O.INV, sig: g.sig, intel: it });
+    }
+  }
+  #followSignals() { if (!this.whales) return []; try { return this.whales.signals() || []; } catch (e) { this.#err("whales", e); return []; } }
+  /** Whale follow: 2+ independent smart wallets bought the same coin inside 60 s. Same rug check, same size, same exits.
+   *  A Fibonacci bounce on the coin moves it to the front; it never blocks a strong confluence. */
+  async #follow() {
+    const sigs = this.#followSignals().map((s) => { const m = this.watch.get(s.pool) || { pool: s.pool, mint: s.mint, name: s.name || s.mint.slice(0, 6), created: this.now(), liqUsd: s.liqUsd }; const g = this.#gate(m, false); return { s, m, fib: g?.sig?.path === "fib" || (g && g.sig?.fibTp != null) }; }).sort((a, b) => (b.fib - a.fib) || (b.s.weight - a.s.weight));
+    for (const { s, m, fib } of sigs) {
+      if (this.paused || this.open.size >= this.cfg.maxOpen) return;
+      if (this.followed?.has(s.mint)) continue;
+      if ([...this.open.values()].some((p) => p.pool === s.pool || p.mint === s.mint) || [...this.closing].some((id) => this.open.get(id)?.mint === s.mint) || this.cool.get(s.pool) > this.now() || this.cool.get(s.mint) > this.now()) continue;
+      const lv = this.live.get(s.pool); if (!lv || this.now() - lv.at > 15000) continue;   // price comes on the next fast pass
+      if ((lv.liqUsd ?? 0) < (this.cfg.liveMinLiq ?? 15000)) { this.#skip(m.name, "follow: pool too thin to get out of"); this.cool.set(s.pool, this.now() + 60000); continue; }
+      (this.followed ??= new Map()).set(s.mint, this.now()); for (const [k, t] of this.followed) if (this.now() - t > 600000) this.followed.delete(k);
+      this.cool.set(s.pool, this.now() + 30000);
+      const t = Math.floor(this.now() / 60000) * 60000, c0 = { t, o: lv.price, h: lv.price, l: lv.price, c: lv.price, v: (lv.vol5 || 0) / 5 };
+      const sig = { path: "follow", rise: 0, vol5: lv.vol5 || 0, buys: lv.buys5 || 0, sells: lv.sells5 || 0, ratio: (lv.buys5 || 0) / Math.max(1, lv.sells5 || 0), liq: lv.liqUsd ?? 0, whales: s.wallets.length };
+      const it = this.#intel(m);
+      const why = `following ${s.wallets.length} smart wallets into ${(m.name || "").replace(/ \/ SOL$/, "")}${fib ? " · fib agrees" : ""}${it ? ` · ${this.#intelWhy(it)}` : ""}`;
+      await this.#consider({ ...m, pool: s.pool, mint: s.mint }, Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), { ok: true, why }, { m: O.sizeMul(this.org, sig), sig, intel: it, follow: s.wallets });
     }
   }
   /** The research on a coin right now (never awaited); null when there is no intel module or it threw. */
@@ -340,6 +368,7 @@ export class Engine {
       { const until = this.now() + (ret <= -0.5 ? 7 * 24 * 60 : ret < 0 ? (this.cfg.loserCoolMin ?? 60) : this.cfg.cooldownMin) * 60000;  /* a rug is banned for a week */ this.cool.set(p.pool, until); if (p.mint) this.cool.set(p.mint, until); }   // by coin, not just by pool (PODCAT x3)   // lesson 7: a coin that just lost gets an hour off (FLOAT x4)       // never re-enter the same coin straight after an exit
       this.open.delete(p.id); this.sellTries.delete(p.id); this.peaks.delete(p.id); this.hist.delete(p.id);
       this.closed.push({ ...p, type: "close", ret, pnl, why, note, at: this.now(), ...learn });
+      if (p.follow?.length && this.whales) { try { this.whales.credit(p.follow, ret); } catch (e) { this.#err("whales", e); } }
       // the living organism (build 52; replaces the momMin tuner): p, W, L and fees per band from this REAL fill, and every 8
       // closes a golden-step re-fit of sl / partAt / tp inside their clamps. momMin stays where it is set (the floor is 3%).
       try {
@@ -425,7 +454,7 @@ export class Engine {
     if (!(stake <= size + 1e-9)) { this.#skip(m.name, "stake above size: refused"); return; }
     const sigN = o.sig ? Object.fromEntries(Object.entries(o.sig).map(([k, v]) => [k, typeof v === "number" ? +v.toFixed(4) : v])) : null;
     const cx = o.intel ? exitsFor(o.intel.certainty, this.cfg) : {};   // high certainty: wider stop, wider trail, longer hold. Never a bigger size.
-    const lv0 = { sig: sigN, m: mul, narr: o.narr ? { label: o.narr.label, trend: o.narr.trend } : null, t0: this.now(), sl: cx.sl ?? this.cfg.sl, tp: this.cfg.tp, partAt: this.cfg.partAt, lockFrom: this.cfg.lockFrom, ...(cx.trail ? { trail: cx.trail } : {}), ...(cx.maxHoldMin ? { maxHoldMin: cx.maxHoldMin } : {}), certainty: o.intel ? o.intel.certainty : null, intel: o.intel ? (o.intel.reasons || []).slice(0, 8) : null };   // the exits it was bought under
+    const lv0 = { sig: sigN, m: mul, narr: o.narr ? { label: o.narr.label, trend: o.narr.trend } : null, t0: this.now(), sl: cx.sl ?? this.cfg.sl, tp: this.cfg.tp, partAt: this.cfg.partAt, lockFrom: this.cfg.lockFrom, ...(cx.trail ? { trail: cx.trail } : {}), ...(cx.maxHoldMin ? { maxHoldMin: cx.maxHoldMin } : {}), ...(o.follow ? { follow: o.follow } : {}), certainty: o.intel ? o.intel.certainty : null, intel: o.intel ? (o.intel.reasons || []).slice(0, 8) : null };   // the exits it was bought under
     this.journal.write({ type: "intent", id, name: m.name, mint: m.mint, enter: s.why });   // on disk BEFORE anything is done
     const f = await this.exec.buy({ mint: m.mint, pool: m.pool, usd: stake, scale: mul });
     if (!f.ok && f.unknown && f.orderId) {
@@ -447,6 +476,7 @@ export class Engine {
       mode: this.exec.name, paused: this.paused, unit: this.unit, halted: this.exec.state?.halted || null, ticks: this.ticks, lastTickAt: this.lastTickAt, equity: +this.equity.toFixed(4), curve: this.closed.reduce((a, x) => (a.push(+((a[a.length - 1] ?? this.startEq) + (x.pnl || 0)).toFixed(4)), a), [this.startEq]).slice(-60), startEq: this.startEq,
       open: [...this.open.values()].map((p) => { const h = this.hist.get(p.id) || [], px = h.length ? h[h.length - 1][1] : null, e0 = p.entryPx; return { id: p.id, name: p.name, mint: p.mint, certainty: p.certainty ?? null, intel: p.intel ?? null, sl: p.sl ?? null, trail: p.trail ?? null, entryPx: e0, stake: +p.stake.toFixed(5), since: p.at, enter: p.enter, ret: p.val != null && this.now() - p.valAt < 15000 && p.stake > 0 ? p.val / p.stake - 1 : px && e0 ? px / e0 - 1 : null, peak: (() => { const pk = this.peaks.get(p.id); return !pk ? null : +pk.r.toFixed(4); })(), path: e0 ? h.map(([, v]) => +(v / e0 - 1).toFixed(4)) : [] }; }),
       narrative: this.narr ? this.narr.summary() : null,
+      whales: this.whales ? (() => { try { return { ...this.whales.summary(), following: [...this.open.values()].filter((p) => p.follow?.length).map((p) => ({ name: p.name, wallets: p.follow.length })) }; } catch { return null; } })() : null,
       intel: this.intel ? this.ready.slice(0, 6).map((m) => { const c = this.intel.cache.get(m.mint); return c ? { name: m.name, certainty: c.certainty, reasons: c.reasons.slice(0, 5) } : null; }).filter(Boolean) : null,
       organism: { ...O.summary(this.org), exits: { sl: this.cfg.sl, partAt: this.cfg.partAt, tp: this.cfg.tp, lockFrom: this.cfg.lockFrom } },
       exits: { sl: this.cfg.sl, tp: this.cfg.tp, trailFrom: this.cfg.trailFrom, trail: this.cfg.trail, maxHoldMin: this.cfg.maxHoldMin },

@@ -70,3 +70,6 @@ $ per trade at 0.026 SOL (~$5): +4% ≈ $0.20, +20% ≈ $1. Fix applied: pools �
 - Research never blocks the engine: cache, 30 s fresh, 3 in flight, pending/failed = 0.5 medium.
 - Always exclude pool and bonding-curve accounts from top10, or every coin looks whale-held. Never count a pump_fun curve as locked LP. No RugCheck data caps certainty at 0.69.
 - Live on 62 within a minute: SAFU 0.69, Foxii 0.88, HYPERCHAN 0.95, reasons shown.
+
+## Lesson 45 — the fatal bug: every trade sold 2-6 s after buying (2026-10-30, on-chain proof)
+Wallet tx history 07:02-08:14: buy -0.0177, sell +0.0157 two to six seconds later, every time. The real Jupiter sell quote right after a buy is ~2.5% under the stake (fees + spread), so a -2% stop measured from the stake fired instantly. Fix (build 63): the stop is measured from the first real quote after the buy (p.base), shrunk with the half sell.

@@ -150,6 +150,7 @@
           <div class="tm__tape"><span></span></div>
           <small>every trade gets a reason</small>
           <small class="tm__narr">narratives: reading the meta…</small>
+          <small class="tm__whales">whales: finding smart wallets…</small>
           <div class="tm__go"></div>
         </div>
         <div class="tm__nums">
@@ -315,6 +316,7 @@
         stat("scan", e.next && e.next.length ? `next ${e.next.slice(0, 2).map(tkn).join(" · ")} · ${e.watching?.total || 0} pools` : `${e.watching?.total || 0} pools watched`);
         const nt = e.narrative?.top || [], arrow = { rising: "↑", dying: "↓", saturating: "→", steady: "·" };
         q(".tm__narr").textContent = nt.length ? `hot narratives: ${nt.map((x) => `${x.label} ${arrow[x.trend] || ""} ${x.coins} coins${x.runners ? `, ${x.runners} runner${x.runners === 1 ? "" : "s"}` : ""}`).join(" · ")}` : "narratives: reading the meta…";
+        { const wh = e.whales; q(".tm__whales").textContent = !wh ? "whales: off" : `whales: ${wh.count} smart wallets watched${wh.lagS != null ? `, seen ${wh.lagS}s after the chain` : ""}${wh.following?.length ? ` · following ${wh.following.map((f) => `${f.wallets} into ${tkn(f.name)}`).join(", ")}` : ""}${wh.wallets?.length ? ` · best ${wh.wallets.slice(0, 3).map((w) => `${w.short}${w.copies ? ` ${w.wins}/${w.copies}` : ""}`).join(", ")}` : ""}`; }
         stat("size", `${S.caps?.preset || "–"} SOL a buy · ${e.open.length}/${S.cfg.maxOpen} open`);
         stat("log", `line #${e.lines || 0} · ${e.trades} closes`);
         stat("eq", `${bal != null ? bal.toFixed(4) : "–"} SOL · ${e.trades} closes`);

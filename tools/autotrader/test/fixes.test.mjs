@@ -38,7 +38,7 @@ test("fib: a falling series with one up-tick is not bought", async () => {
   const r = rig(p); await r.step(p.length); assert.equal(r.buys.length, 0);
 });
 test("stop: a real quote at -1.7% closes the trade as a stop (fires at 80% of -2%)", async () => {
-  const r = rig(SWING, { val: (p) => p.stake * 0.983 }); await r.step(SWING.length);
+  let k = 0; const r = rig(SWING, { val: (p) => p.stake * (k++ === 0 ? 1 : 0.983) }); await r.step(SWING.length);
   assert.equal(r.buys.length, 1); await r.step(2);
   assert.equal(r.e.open.size, 0); assert.equal(r.e.closed[0].exitKind, "stop");
 });
@@ -51,4 +51,14 @@ test("half sell at +5% sells 50% once, the rest stays open", async () => {
   const parts = []; const r = rig(SWING, { val: (p) => p.stake * 1.06 }); r.e.exec.sellPart = async (o) => { parts.push(o.frac); return { ok: true, outAmount: "8500000", left: "500" }; };
   await r.step(SWING.length); await r.step(3);
   assert.deepEqual(parts, [0.5]); assert.equal(r.e.open.size, 1);
+});
+test("lesson 45: a fresh buy whose first real quote is -2.5% (round-trip cost) is NOT stopped out; a further -2% from there is", async () => {
+  let v = null; const r = rig(SWING, { val: () => v });
+  await r.step(SWING.length);
+  if (!r.buys.length) return;   // entry rules changed; the exit rule is what this guards
+  const pos = [...r.e.open.values()][0]; assert.ok(pos);
+  v = pos.stake * 0.975; await r.step(3);
+  assert.equal(r.e.open.size, 1, "not sold on the cost of entry");
+  v = pos.stake * 0.975 * 0.97; await r.step(3);
+  assert.equal(r.e.open.size, 0, "sold on a real -3% from the first quote");
 });
