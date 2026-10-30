@@ -63,3 +63,10 @@ $ per trade at 0.026 SOL (~$5): +4% ≈ $0.20, +20% ≈ $1. Fix applied: pools �
 - Math: round trip on 0.01618 SOL costs ~2.9% (~$0.09). At 0.03 SOL the best case is ~$0.06/min. $0.20/min needs ~0.3-0.5 SOL and a positive edge; $1/min needs ~2-3 SOL. A bigger wallet on a negative edge only loses faster.
 - Watch: a stop that fires within ~10 s of the buy means the entry spread alone is near -1.6%; 8% target + 12% swing means in practice only swings of ~17%+ at the 0.5 retrace pass, so it will trade less often.
 - Quote cadence kept at 1 s: the lite-api.jup.ag rate limit was not verified and a 429 retry blocks the whole fast tick.
+
+## 2026-10-30 — Instant intel (build 62)
+- Free sources that answer from here: RugCheck full report (top10/dev/insiders/LP/holders; ~1 in 10 times out at 1.5 s), public Solana RPC signatures (mainnet-beta + publicnode), DexScreener (socials, boosts, 5-min flow), FxTwitter (1 call/s, unreliable "not found" -> needs two in a row).
+- Not usable: pump.fun (403), launch-slot sniper/bundle scan (~33 s per coin on free RPC), X mention velocity (no free source).
+- Research never blocks the engine: cache, 30 s fresh, 3 in flight, pending/failed = 0.5 medium.
+- Always exclude pool and bonding-curve accounts from top10, or every coin looks whale-held. Never count a pump_fun curve as locked LP. No RugCheck data caps certainty at 0.69.
+- Live on 62 within a minute: SAFU 0.69, Foxii 0.88, HYPERCHAN 0.95, reasons shown.

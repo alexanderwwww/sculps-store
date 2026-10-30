@@ -34,3 +34,10 @@ Per band b: EV_b = p_b*W_b - (1-p_b)*L_b - fee_b, from real fills (decayed, half
 
 ## Narratives (build 53, live 2026-10-29)
 Ultra trades the meta like a human: `tools/autotrader/src/lib/narrative.mjs` groups coins into themes and the engine reads it in one hook. Dying theme = no entry. Strong rising theme (3+ coins, 1+ runner, coin not a copycat) = full size without the organism's score. Saturating theme or copycat = 0.618x. Caps and rug check unchanged. Shown in `/status` engine.narrative (top 3) and the app line "hot narratives". Only on the live feed. Next: exit on theme turning dying, tune thresholds on the live log. Lesson 43.
+
+## Instant intel (build 62, live 2026-10-30)
+Alex: "build extensive instant research on coins … this creates certainty and we can stay in longer, not only -2%". Code: `tools/autotrader/src/lib/intel.mjs`.
+- Per candidate, in the background: RugCheck (dev %, top10 % without pool accounts, insider clusters, holders, LP lock, dev's other coins, rugged), public RPC tx rate and failed-tx share, DexScreener socials/boosts/flow, FxTwitter followers. Optional `smartWallets` in config (empty by default).
+- Certainty 0..1 with reasons. < 0.4 skip. 0.4-0.7 normal -2%. >= 0.7 stop widens -2% -> -5% (at 0.9), trail 15%, hold x2. Size never changes. Rug check untouched.
+- Every buy line ends "certainty 0.xx: <top 3 positives + every negative>". Status shows `engine.intel` and certainty/sl/trail per open position.
+- Failure or timeout = 0.5, trading never waits.
