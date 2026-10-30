@@ -156,7 +156,7 @@ test("engine loop: rides the rising AI narrative at full size, never buys the dy
     quotes: async (ids) => new Map(ids.filter((id) => pools[id]).map((id) => [id, { price: price(id), liqUsd: 60000, buys5: 300, sells5: 100, vol5: 20000 }])),
     newPools: async () => Object.keys(pools).map(entry), trendingPools: async () => [], candles: async () => [],
   };
-  const cfg = { ...DEFAULTS, pullback: 0, momMin: 0.03, momMax: 0.9, liveMinVol5: 500, liveMinFlow: 3, liveBuyRatio: 0.8, liveMinLiq: 25000, entryMinLiq: 25000, minLiqUsd: 1000, minAgeMin: 0, maxAgeMin: 600, maxOpen: 8 };
+  const cfg = { ...DEFAULTS, pullback: 0, fib: 0, momMin: 0.03, momMax: 0.9, liveMinVol5: 500, liveMinFlow: 3, liveBuyRatio: 0.8, liveMinLiq: 25000, entryMinLiq: 25000, minLiqUsd: 1000, minAgeMin: 0, maxAgeMin: 600, maxOpen: 8 };
   const jf = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "narr-")), "j.jsonl");
   const e = new Engine({ feed, exec, cfg, journal: new Journal(jf), rug: async () => ({ pass: true, reason: "ok" }), now: () => now, narr: nar, rng: () => 0.5 });
   // phase A: an hour of history, nothing hot yet; the engine is not allowed to buy (paused) so the history is clean

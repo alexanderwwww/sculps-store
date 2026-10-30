@@ -143,7 +143,7 @@ export class Engine {
         const flow = (lv.buys5 || 0) + (lv.sells5 || 0);
         if (!((lv.vol5 || 0) >= (this.cfg.liveMinVol5 ?? 3000) && flow >= (this.cfg.liveMinFlow ?? 8) && lv.buys5 >= lv.sells5 * (this.cfg.liveBuyRatio ?? 1.15))) { quiet("live: volume or buyers too thin"); return null; }
         // lesson 1 (2026-10-29 live data): buying a coin that is not moving = sitting at the cost of entry. Buy only a coin already rising.
-        let mom = this.#mom(m.pool, this.cfg.momSecs ?? 30), s_pull = null;
+        let mom = this.#mom(m.pool, this.cfg.momSecs ?? 30), s_pull = null, fibTp = null;
         // lesson 3: thin pools rug and slip (KIMWIFHAT -80%, Trump stop -8% filled at -19%). Only pools deep enough to get out of.
         if ((lv.liqUsd ?? 0) < (this.cfg.liveMinLiq ?? 15000)) { quiet("live: pool too thin to get out of"); return null; }
         const w = this.whale.get(m.pool), instinct = w && this.now() - w.at < 60000 && w.buy >= (this.cfg.whaleUsd ?? 1500) && w.buy >= 2 * w.sell;
@@ -151,7 +151,20 @@ export class Engine {
           // lesson 36 (the math): break-even needs a 32% win rate (avg win +18.6%, avg loss -8.9%); it won 23%, and 8 of the last 10
           // losers never rose once after the buy (peak 0): it was buying the TOP of the spike. Buy the PULLBACK instead: the coin ran
           // >= momMin inside the last 2 min, has come back 3-12% from that high, and the last tick is up again (a higher low).
-          if (this.cfg.pullback !== 0) {
+          if (this.cfg.fib !== 0) {
+            // Alex 2026-10-30 "read the coin's fibonacci chart, that's the whole point": the last swing low->high in 2 min; buy when the price
+            // has retraced into the golden zone (0.382-0.618 of the swing) and the last tick is up; take profit back at the swing high.
+            const ph = (this.ph.get(m.pool) || []).filter(([t]) => this.now() - t <= 120000);
+            if (ph.length < 4) { quiet("live: watching its price first"); return null; }
+            let hi = 0, hiAt = 0; ph.forEach(([, v], i) => { if (v > hi) { hi = v; hiAt = i; } });
+            const lo = Math.min(...ph.slice(0, hiAt + 1).map(([, v]) => v)), run = hi / lo - 1, prev = ph[ph.length - 2][1];
+            const r = (hi - lv.price) / Math.max(1e-18, hi - lo);
+            if (run < (this.cfg.fibMinRun ?? 0.04)) { quiet("fib: no swing to read"); return null; }
+            if (r < 0.382) { quiet("fib: above 0.382, waiting for the golden zone"); return null; }
+            if (r > 0.618) { quiet("fib: broke 0.618, swing failed"); return null; }
+            if (!(lv.price > prev)) { quiet("fib: in the zone, waiting for the bounce"); return null; }
+            mom = run; s_pull = r; fibTp = hi / lv.price - 1;
+          } else if (this.cfg.pullback !== 0) {
             const ph = (this.ph.get(m.pool) || []).filter(([t]) => this.now() - t <= 120000);
             if (ph.length < 4) { quiet("live: watching its price first"); return null; }
             let lo = Infinity, hi = 0, hiAt = -1; ph.forEach(([, v], i) => { if (v < lo && hiAt < 0) lo = v; if (v > hi) { hi = v; hiAt = i; } });
@@ -169,8 +182,8 @@ export class Engine {
           }
         } else if (mom != null && mom < 0) { quiet("instinct: whales in but price falling"); return null; }
         const t = Math.floor(this.now() / 60000) * 60000, c0 = { t, o: lv.price, h: lv.price, l: lv.price, c: lv.price, v: lv.vol5 / 5 };
-        const sg = { path: instinct ? "whale" : "mom", rise: +(mom ?? 0), vol5: lv.vol5 || 0, buys: lv.buys5 || 0, sells: lv.sells5 || 0, ratio: (lv.buys5 || 0) / Math.max(1, lv.sells5 || 0), liq: lv.liqUsd ?? 0 };
-        return { cs: Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), sig: sg, s: { ok: true, why: instinct ? `ULTRA INSTINCT: ${w.whales} whale${w.whales === 1 ? "" : "s"} bought $${Math.round(w.buy)} in 2 min (sold $${Math.round(w.sell)})` : s_pull != null ? `pullback buy: ran ${(mom * 100).toFixed(1)}% in 2 min, back ${(s_pull * 100).toFixed(1)}% and bouncing, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` : `rising ${((mom || 0) * 100).toFixed(1)}% in ${this.cfg.momSecs ?? 30}s, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` } };
+        const sg = { fibTp: fibTp, path: instinct ? "whale" : "mom", rise: +(mom ?? 0), vol5: lv.vol5 || 0, buys: lv.buys5 || 0, sells: lv.sells5 || 0, ratio: (lv.buys5 || 0) / Math.max(1, lv.sells5 || 0), liq: lv.liqUsd ?? 0 };
+        return { cs: Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), sig: sg, s: { ok: true, why: instinct ? `ULTRA INSTINCT: ${w.whales} whale${w.whales === 1 ? "" : "s"} bought $${Math.round(w.buy)} in 2 min (sold $${Math.round(w.sell)})` : fibTp != null ? `fib buy: swing +${(mom * 100).toFixed(1)}%, at the ${s_pull.toFixed(3)} retrace and bouncing, target the high +${(fibTp * 100).toFixed(1)}%` : s_pull != null ? `pullback buy: ran ${(mom * 100).toFixed(1)}% in 2 min, back ${(s_pull * 100).toFixed(1)}% and bouncing, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` : `rising ${((mom || 0) * 100).toFixed(1)}% in ${this.cfg.momSecs ?? 30}s, $${Math.round(lv.vol5)} volume in 5m, ${lv.buys5} buys vs ${lv.sells5} sells` } };
       }
       // the chart so far, plus the minute in progress built from the live price
       const cs = hit.cs.slice(), last = cs[cs.length - 1], minute = Math.floor(this.now() / 60000) * 60000;
@@ -375,7 +388,7 @@ export class Engine {
     if (this.exec.sizeSol) { try { size = (await this.exec.sizeSol({ streak: 0, scale: 1 })).sol; stake = (await this.exec.sizeSol({ streak: 0, scale: mul })).sol; } catch (err) { this.#skip(m.name, `wallet balance: ${err.message.slice(0, 60)}`); return; } }
     if (!(stake <= size + 1e-9)) { this.#skip(m.name, "stake above size: refused"); return; }
     const sigN = o.sig ? Object.fromEntries(Object.entries(o.sig).map(([k, v]) => [k, typeof v === "number" ? +v.toFixed(4) : v])) : null;
-    const lv0 = { sig: sigN, m: mul, narr: o.narr ? { label: o.narr.label, trend: o.narr.trend } : null, t0: this.now(), sl: this.cfg.sl, tp: this.cfg.tp, partAt: this.cfg.partAt, lockFrom: this.cfg.lockFrom };   // the exits it was bought under
+    const lv0 = { sig: sigN, m: mul, narr: o.narr ? { label: o.narr.label, trend: o.narr.trend } : null, t0: this.now(), sl: this.cfg.sl, tp: o.sig?.fibTp > 0 ? Math.max(0.015, o.sig.fibTp) : this.cfg.tp, partAt: o.sig?.fibTp > 0 ? Math.max(0.015, o.sig.fibTp) : this.cfg.partAt, lockFrom: this.cfg.lockFrom };   // the exits it was bought under
     this.journal.write({ type: "intent", id, name: m.name, mint: m.mint, enter: s.why });   // on disk BEFORE anything is done
     const f = await this.exec.buy({ mint: m.mint, pool: m.pool, usd: stake, scale: mul });
     if (!f.ok && f.unknown && f.orderId) {

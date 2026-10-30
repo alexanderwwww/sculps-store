@@ -8,7 +8,7 @@ async function closeOne({ momMin, past, val }) {
   let now = 1_800_000_000_000;
   const exec = { name: "live", source: "own", valueSol: async () => val, sell: async () => ({ ok: true, outAmount: String(Math.round(val * 1e9)), inAmount: "1000" }), buy: async () => ({ ok: false }) };
   const feed = { quotes: async () => new Map([["P", { price: 1, liqUsd: 50000, buys5: 0, sells5: 0, vol5: 0 }]]), newPools: async () => [], trendingPools: async () => [], candles: async () => [] };
-  const e = new Engine({ feed, exec, journal: new Journal(path.join(fs.mkdtempSync(path.join(os.tmpdir(), "mf-")), "j.jsonl")), cfg: { ...DEFAULTS, pullback: 0, momMin, sl: -0.07, tp: 0.15, staleMin: 0, maxHoldMin: 60 }, now: () => now });
+  const e = new Engine({ feed, exec, journal: new Journal(path.join(fs.mkdtempSync(path.join(os.tmpdir(), "mf-")), "j.jsonl")), cfg: { ...DEFAULTS, pullback: 0, fib: 0, momMin, sl: -0.07, tp: 0.15, staleMin: 0, maxHoldMin: 60 }, now: () => now });
   for (const r of past) e.closed.push({ type: "close", ret: r });
   e.open.set("x", { id: "x", name: "T", mint: "M", pool: "P", stake: 0.01, tokens: "1000", entryPx: 1, at: now });
   await e.fast();
@@ -27,7 +27,7 @@ async function liveTick(rise, cfg = {}) {
   const now = 1_800_000_000_000;
   const exec = { name: "paper", buy: async () => ({ ok: true }), sell: async () => ({ ok: true }) };
   const feed = { quotes: async () => new Map([["P", { price: 1 + rise, liqUsd: 50000, buys5: 140, sells5: 105, vol5: 20000 }]]), newPools: async () => [], trendingPools: async () => [], candles: async () => [] };
-  const e = new Engine({ feed, exec, rug: async () => ({ pass: true, reason: "ok" }), journal: new Journal(path.join(fs.mkdtempSync(path.join(os.tmpdir(), "mx-")), "j.jsonl")), cfg: { ...DEFAULTS, pullback: 0, momMin: 0.10, edgeMinN: 999, ...cfg }, now: () => now });
+  const e = new Engine({ feed, exec, rug: async () => ({ pass: true, reason: "ok" }), journal: new Journal(path.join(fs.mkdtempSync(path.join(os.tmpdir(), "mx-")), "j.jsonl")), cfg: { ...DEFAULTS, pullback: 0, fib: 0, momMin: 0.10, edgeMinN: 999, ...cfg }, now: () => now });
   e.ready = [{ name: "T", mint: "M", pool: "P", liqUsd: 50000, vol5: 20000 }];
   e.ph.set("P", [[now - 30000, 1]]);
   await e.fast();

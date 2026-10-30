@@ -129,7 +129,7 @@ function world({ onlyLosers = false, journalFile } = {}) {
     quotes: async (ids) => new Map(ids.filter((id) => pools.has(id)).map((id) => { const k = pools.get(id).kind; return [id, { price: price(id), liqUsd: k === "W" ? 60000 : 30000, buys5: k === "W" ? 300 : 110, sells5: 100, vol5: k === "W" ? 20000 : 8000 }]; })),
     newPools: async () => [], trendingPools: async () => [], candles: async () => [],
   };
-  const cfg = { ...DEFAULTS, pullback: 0, momMin: 0.03, momMax: 0.5, liveMinVol5: 500, liveMinFlow: 3, liveBuyRatio: 0.8, liveMinLiq: 25000, entryMinLiq: 25000, sl: -0.08, tp: 0.1, partAt: 0.05, partFrac: 0.5, lockFrom: 0.03, lockAt: 0.005, staleMin: 2, maxHoldMin: 5, cooldownMin: 2, maxOpen: 8 };
+  const cfg = { ...DEFAULTS, pullback: 0, fib: 0, momMin: 0.03, momMax: 0.5, liveMinVol5: 500, liveMinFlow: 3, liveBuyRatio: 0.8, liveMinLiq: 25000, entryMinLiq: 25000, sl: -0.08, tp: 0.1, partAt: 0.05, partFrac: 0.5, lockFrom: 0.03, lockAt: 0.005, staleMin: 2, maxHoldMin: 5, cooldownMin: 2, maxOpen: 8 };
   const make = (org = null) => {
     const e = new Engine({ feed, exec, cfg, journal: new Journal(journalFile), rug: async () => ({ pass: true, reason: "ok" }), now: () => now, org, rng: seeded(3) });
     e.learned = []; e.onLearn = (c) => e.learned.push(JSON.parse(JSON.stringify(c)));
