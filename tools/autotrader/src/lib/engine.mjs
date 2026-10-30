@@ -87,7 +87,7 @@ export class Engine {
       if (this.exec.valueSol && p.stake > 0 && (!p.vAt || this.now() - p.vAt > Math.max(1000, 700 * this.open.size))) { p.vAt = this.now(); try { const v = await this.exec.valueSol(p); if (v != null) { p.val = v; p.valAt = this.now(); } } catch { /* chart fallback */ } }
       const real = p.val != null && this.now() - p.valAt < 15000;
       const entry = real ? p.stake : p.entryPx, price = real ? p.val : lv.price;
-      const pk = this.peaks.get(p.id); const peak = Math.max(pk && pk.real === real ? pk.v : entry, price); this.peaks.set(p.id, { v: peak, real });
+      const pk = this.peaks.get(p.id); const pr = Math.max(pk?.r ?? 0, price / entry - 1); this.peaks.set(p.id, { r: pr }); const peak = entry * (1 + pr);   // peak as a RATIO: survives quote<->chart switches and the half sell
       const rNow = price / entry - 1, held = this.now() - p.at;
       p.tPeak ??= 0; p.tLow ??= 0;
       if (rNow < (p.low ?? 0)) p.tLow = held; if (rNow > (p.hi ?? 0)) p.tPeak = held;
@@ -102,7 +102,7 @@ export class Engine {
           const got = Number(r.outAmount) / 1e9, f = c.partFrac ?? 0.382;
           p.stake0 ??= p.stake; p.banked = (p.banked || 0) + got; p.stake = +(p.stake * (1 - f)).toFixed(6); p.tokens = r.left; p.val = null;
           // lesson 20: the peak was the WHOLE position's value; after selling part it must shrink with it, or the rest looks +100% down and is dumped at once
-          { const pk = this.peaks.get(p.id); if (pk) this.peaks.set(p.id, { ...pk, v: pk.v * (1 - f) }); }
+          /* peak is a ratio now: nothing to shrink */
           this.journal.write({ ...p, type: "open" });
           this.#ev("sell", p.name, `golden take: sold ${Math.round((c.partFrac ?? 0.382) * 100)}% at +${Math.round((price / entry - 1) * 100)}%, banked ${got.toFixed(4)} SOL`, { ret: price / entry - 1, fill: +(got / (p.stake0 * f) - 1).toFixed(4), partial: true });   // ret = the quote it saw, fill = what the part really sold for
           continue;
@@ -116,7 +116,7 @@ export class Engine {
       if (under && (real || p.under >= 2 || price <= entry * (1 + sl * 1.3))) { why = `stop ${Math.round(sl * 100)}%`; kind = "stop"; trig = sl; }
       else if (under) why = null;
       else if ((() => { const w = this.whale.get(p.pool); return w && this.now() - w.at < 60000 && w.sell >= (this.cfg.whaleUsd ?? 1500) && w.sell >= 2 * w.buy; })()) { why = "ULTRA INSTINCT: whales leaving"; kind = "whale"; }
-      else if (peak >= entry * (1 + lockFrom) && price <= entry * (1 + (c.lockAt ?? 0.01))) { why = `locked: was up ${Math.round((peak / entry - 1) * 100)}%, out before it turns red`; kind = "lock"; trig = c.lockAt ?? 0.01; }   // lesson 4: a winner never becomes a loser
+      else if ((p.partDone || peak >= entry * (1 + lockFrom)) && price <= entry * (1 + (c.lockAt ?? 0.01))) { why = `locked: was up ${Math.round((peak / entry - 1) * 100)}%, out before it turns red`; kind = "lock"; trig = c.lockAt ?? 0.01; }   // lesson 4: a winner never becomes a loser
       else if (peak >= entry * (1 + c.trailFrom) && price <= peak * (1 - c.trail)) { why = `trailing stop from +${Math.round((peak / entry - 1) * 100)}%`; kind = "trail"; trig = (peak * (1 - c.trail)) / entry - 1; }
       else if (price >= entry * (1 + tp)) { why = `take profit +${+(tp * 100).toFixed(1)}%`; kind = "take"; trig = tp; }
       else if (this.now() - p.at >= c.maxHoldMin * 60000) { why = "time stop"; kind = "time"; }
