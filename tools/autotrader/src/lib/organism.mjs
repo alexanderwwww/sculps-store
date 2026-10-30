@@ -11,7 +11,7 @@ export const IDLE_FRESH_MS = 97000;                      // the whole idle windo
 export const PART_FRAC = 0.382;                          // same default the engine sells at (engine.mjs partFrac ?? 0.382)
 export const SIZE_MIN_N = 13;                            // closes a band needs behind it before full size
 export const COLD = { W: 0.05, L: 0.06, fee: 0.004, gS: -0.04, gT: 0 };   // lesson 39: real W ~5%, L ~6% after the exit gap; stops filled 1.5-10 pts past the level
-export const CLAMP = { sl: [-0.08, -0.04],   // the stop may tighten, never widen past the live -8% (lesson 3: -8% filled at -19%)
+export const CLAMP = { sl: [-0.02, -0.02],   // Alex 2026-10-30: "-2% and u are out"; was [-0.08, -0.04]   // the stop may tighten, never widen past the live -8% (lesson 3: -8% filled at -19%)
   partAt: [0.03, 0.08], tp: [0.06, 0.2] };
 const EDGES = { rise: [0.05, 0.1, 0.15, 0.25], ratio: [1.3, 2], vol5: [15000, 50000], liq: [50000, 100000] };
 export const DIMS = ["rise", "ratio", "vol5", "liq", "path"];

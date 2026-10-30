@@ -100,14 +100,8 @@ test("refitExits moves at most one golden step and respects the clamps", () => {
   const ex2 = O.refitExits(org, { sl: -0.08, partAt: 0.08, tp: 0.2, partFrac: 0.5 });
   if (ex2) for (const [k, [lo, hi]] of Object.entries(O.CLAMP)) assert.ok(ex2[k] >= lo && ex2[k] <= hi, k);
 });
-test("sl does not tighten when stops gap worse than -2%", () => {
-  const mk = (gS) => { const org = O.newOrg(); for (let i = 0; i < 20; i++) O.update(org, { ret: -0.02, sig: {}, peak: 0.0, low: -0.07, tPeak: 0, tLow: 3000, restRet: -0.07, holdS: 60 }); org.gS = { all: gS, "1": gS }; return org; };
-  // rows dip to -7% then recover to -7% exit: a -4.9% stop beats riding them, so it would tighten...
-  const ok = O.refitExits(mk(-0.01), { sl: -0.08, partAt: 0.05, tp: 0.1 });
-  assert.ok(ok && ok.sl > -0.08, JSON.stringify(ok));
-  // ...but not when the stops fill 3% under the level
-  const no = O.refitExits(mk(-0.03), { sl: -0.08, partAt: 0.05, tp: 0.1 });
-  assert.ok(!no || no.sl <= -0.08, JSON.stringify(no));
+test("stop is fixed at -2% (Alex 2026-10-30)", () => {
+  assert.deepEqual(O.CLAMP.sl, [-0.02, -0.02]);
 });
 
 // ------------------------------------------------------------------ the engine loop, fake feed and executor
@@ -214,13 +208,6 @@ test("full size needs 13 closes in EVERY band the coin falls into, not just 13 o
   for (let i = 0; i < 20; i++) O.update(org, { ret: 0.1, sig: { rise: 0.3 } });
   assert.equal(O.sizeMul(org, { rise: 0.3, liq: 30000 }), 0.618, "liq band still untested");
   assert.equal(O.sizeMul(org, { rise: 0.3 }), 1);
-});
-test("the stop never widens past -8%", () => {
-  assert.equal(O.CLAMP.sl[0], -0.08);
-  const org = O.newOrg();
-  for (let i = 0; i < 20; i++) O.update(org, { ret: 0.05, sig: {}, peak: 0.12, low: -0.1, tPeak: 9000, tLow: 1000, restRet: 0.1, holdS: 60 });
-  const ex = O.refitExits(org, { sl: -0.08, partAt: 0.05, tp: 0.1 });
-  assert.ok(!ex || ex.sl >= -0.08, JSON.stringify(ex));
 });
 test("replay banks the part when the peak passed partAt before the stop", () => {
   const org = O.newOrg(); const s = { sl: -0.08, partAt: 0.05, tp: 0.5 };
