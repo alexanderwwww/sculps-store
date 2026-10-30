@@ -56,3 +56,10 @@ $ per trade at 0.026 SOL (~$5): +4% ≈ $0.20, +20% ≈ $1. Fix applied: pools �
 
 ## Lesson 44 — 12 wins, still flat (2026-10-30 07:30 UTC)
 23 trades since 23:00: 12 wins avg +10.5% (+0.0204 SOL), 11 losses avg -8.6% (-0.0154 SOL); three gaps (SAFU -28, ZEROGUY -19, SWAN -14) ate ~6 wins; fees/rent ate the rest, so the wallet stayed ~0.035. Build 56: a real Jupiter quote fires the stop at 80% of sl (-6.4% for -8%) so the fill lands near -8%.
+
+## Build 60 (2026-10-30): stop the bleeding before chasing $/minute
+- Live at build 59: EV -2.26%/trade, win rate 0.37, real stop fills ~-4%, 64 of 65 buys were chases, 16 of 69 exits were an unordered "flat after 1 min" stale exit (avg -4.5%).
+- Fixes: a real Jupiter quote fires the -2% stop at -1.6% (was only for stops wider than -4%); stale exit off everywhere (default 0, forced 0 on boot, removed from the bridge's settable keys); fib-only entries (whale/momentum/breakout paths off while fib is on); swing >= 12%, target back to the high >= 8%, no dip past 0.786, >= 8 ticks, bounce = +0.5% off the low since the high with the low held 2 looks (+ rising 1-min close on the chart path), buy ratio 1.15; scan floor $10k liquidity in fast mode.
+- Math: round trip on 0.01618 SOL costs ~2.9% (~$0.09). At 0.03 SOL the best case is ~$0.06/min. $0.20/min needs ~0.3-0.5 SOL and a positive edge; $1/min needs ~2-3 SOL. A bigger wallet on a negative edge only loses faster.
+- Watch: a stop that fires within ~10 s of the buy means the entry spread alone is near -1.6%; 8% target + 12% swing means in practice only swings of ~17%+ at the 0.5 retrace pass, so it will trade less often.
+- Quote cadence kept at 1 s: the lite-api.jup.ag rate limit was not verified and a 429 retry blocks the whole fast tick.

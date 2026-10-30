@@ -84,7 +84,7 @@ export class Engine {
       if (!lv || this.now() - lv.at > 20000) continue;                       // no fresh price: the chart backstop in slow() covers it
       // lesson 6: decide on what a sale would REALLY return (Jupiter's sell quote, every ~4 s), not on a chart price.
       // FLOAT's -8% stop on the chart filled at -22%. The chart price stays as the fallback when no quote is fresh.
-      if (this.exec.valueSol && p.stake > 0 && (!p.vAt || this.now() - p.vAt > Math.max(400, 400 * this.open.size))) { p.vAt = this.now(); try { const v = await this.exec.valueSol(p); if (v != null) { p.val = v; p.valAt = this.now(); } } catch { /* chart fallback */ } }
+      if (this.exec.valueSol && p.stake > 0 && (!p.vAt || this.now() - p.vAt > Math.max(1000, 700 * this.open.size))) { p.vAt = this.now(); try { const v = await this.exec.valueSol(p); if (v != null) { p.val = v; p.valAt = this.now(); } } catch { /* chart fallback */ } }
       const real = p.val != null && this.now() - p.valAt < 15000;
       const entry = real ? p.stake : p.entryPx, price = real ? p.val : lv.price;
       const pk = this.peaks.get(p.id); const pr = Math.max(pk?.r ?? 0, price / entry - 1); this.peaks.set(p.id, { r: pr }); const peak = entry * (1 + pr);   // peak as a RATIO: survives quote<->chart switches and the half sell
