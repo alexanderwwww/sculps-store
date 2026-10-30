@@ -57,7 +57,7 @@ ok "every .mjs/.js parses"
 
 # ------------------------------------------------------------ 2. every test
 printf '\n== unit and server tests\n'
-( cd "$HERE" && node --test test/*.test.mjs ) > "$WORKDIR/unit.log" 2>&1 || { tail -60 "$WORKDIR/unit.log"; fail "unit tests failed: nothing packed"; }
+( cd "$HERE" && node --test --test-timeout=60000 test/*.test.mjs ) > "$WORKDIR/unit.log" 2>&1 || { tail -60 "$WORKDIR/unit.log"; fail "unit tests failed: nothing packed"; }
 grep -E '^# (tests|pass|fail)' "$WORKDIR/unit.log"
 printf '\n== the real page in a real browser\n'
 ( cd "$HERE" && TMPDIR="${ULTRA_TEST_TMPDIR:-/tmp}" node test/e2e.mjs ) || fail "e2e failed: nothing packed"

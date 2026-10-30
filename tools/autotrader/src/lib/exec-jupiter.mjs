@@ -1,5 +1,5 @@
 // Ultra trades Alex's Phantom wallet, plugged in once, straight through Jupiter: it signs its own swaps on this Mac.
-// The promises: 0.01618 SOL a buy, 200 buys an hour, halt when the wallet is ~95% gone, never Kimchi; every send is journalled by the engine first.
+// The promises: 0.01618 SOL a buy while the wallet is under 0.5 SOL (0.1618 from 0.5, 0.2618 from 1 SOL), 200 buys an hour, halt when the wallet is ~95% gone, never Kimchi; every send is journalled by the engine first.
 import { signSwapTransaction, buildCloseAccountTx } from "./solana.mjs";
 export const KIMCHI = "CSocnzcRpgSCr1naKcNTieWZUxb6rABe45j844m7pump";
 const BASE = { maxSolPerTrade: 0.05, perHour: 30, perDay: 200, floorFrac: 0.7 };
@@ -28,8 +28,8 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       const spendable = Math.max(0, bal - caps.reserveSol);
       if (caps.minBalSol != null && bal < caps.minBalSol) return { bal, sol: 0, why: `wallet ${bal.toFixed(4)} SOL is under ${caps.minBalSol}: buys paused` };
       if (caps.fixedSol) {
-        // golden-ratio scale (Alex 2026-10-29): base 0.01618 SOL, x1.618 for each win in a row (at most 3 steps), back to base after any loss;
-        // never more than a quarter of the wallet on one buy.
+        // under 0.5 SOL: a flat 0.01618 SOL (Alex). From 0.5 SOL: base 0.1618 (0.2618 from 1 SOL), x1.618 per win in a row (at most 3 steps),
+        // back to base after any loss; never more than 35% of what is spendable on one buy.
         const floor = +(caps.fixedSol * Math.min(1, scale)).toFixed(5);
         if (bal < 0.5) return { bal, sol: spendable >= 0.01618 ? 0.01618 : 0 };   // Alex 2026-10-29 midnight: "trade 0.016 all the time" under 0.5 SOL
         if (spendable < floor) return { bal, sol: 0 };
