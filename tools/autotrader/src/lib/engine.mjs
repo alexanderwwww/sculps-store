@@ -257,7 +257,7 @@ export class Engine {
   }
   /** The research on a coin right now (never awaited); null when there is no intel module or it threw. */
   #intel(m) { if (!this.intel) return null; try { return this.intel.peek(m); } catch (e) { this.#err("intel", e); return null; } }
-  #intelWhy(it) { return `certainty ${it.certainty.toFixed(2)}${it.reasons?.length ? `: ${it.reasons.slice(0, 5).join(", ")}` : ""}`; }
+  #intelWhy(it) { return `certainty ${it.certainty.toFixed(2)}${it.reasons?.length ? `: ${[...it.reasons.filter((r) => !r.startsWith("-")).slice(0, 3), ...it.reasons.filter((r) => r.startsWith("-"))].join(", ")}` : ""}`; }
   /** What the screen animates: one event per decision. type: drop | block | buy | sell | fail */
   #ev(type, name, why, extra = {}) { if (this.counts[type] != null) this.counts[type]++; this.events.push({ seq: ++this.seq, at: this.now(), type, name, why, ...extra }); if (this.events.length > 120) this.events.shift(); }
   #err(w, e) { this.errors.push({ at: this.now(), w, msg: String(e.message || e).slice(0, 140) }); if (this.errors.length > 20) this.errors.shift(); }

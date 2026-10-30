@@ -23,7 +23,8 @@ export function xHandle(url) {
 
 /** Pure: the facts -> { certainty, reasons, parts }. Missing facts count as neutral, never as bad. */
 export function score({ rc = null, dex = null, flow = null, x = null, smart = 0 } = {}) {
-  let s = 0; const reasons = [], bad = [];
+  // no RugCheck report = nothing known about dev, top10 or insiders: never high certainty
+  let s = 0, cap = rc ? 1 : 0.69; const reasons = [], bad = [];
   const add = (v, txt) => { s += v; (v >= 0 ? reasons : bad).push(txt); };
   if (rc) {
     const pools = new Set(Object.keys(rc.knownAccounts || {}));
@@ -33,11 +34,12 @@ export function score({ rc = null, dex = null, flow = null, x = null, smart = 0 
     const top10 = holders.slice(0, 10).reduce((a, h) => a + (h.pct || 0), 0);
     const dev = rc.creator ? holders.filter((h) => h.owner === rc.creator).reduce((a, h) => a + (h.pct || 0), 0) : 0;
     if (rc.rugged) add(-1, "RugCheck says rugged");
-    if (dev <= 0.5 && !(rc.creatorBalance > 0 && dev > 0)) add(0.08, "dev holds 0%"); else if (dev > 5) add(-0.15, `dev holds ${dev.toFixed(0)}%`);
+    // only claim "dev holds 0%" when the dev is known and RugCheck's own creatorBalance agrees
+    if (rc.creator && dev <= 0.5 && !(rc.creatorBalance > 0)) add(0.08, "dev holds 0%"); else if (dev > 5) add(-0.15, `dev holds ${dev.toFixed(0)}%`);
     if (holders.length) { if (top10 < 30) add(0.12, `top10 ${top10.toFixed(0)}%`); else if (top10 > 50) add(-0.15, `top10 ${top10.toFixed(0)}%`); }
     const ins = rc.graphInsidersDetected || 0, nets = (rc.insiderNetworks || []).length;
-    if (ins > 10) add(-0.15, `${ins} insider wallets${nets ? ` in ${nets} network${nets > 1 ? "s" : ""}` : ""}`); else if (ins === 0) add(0.05, "no insider clusters");
-    const lp = Math.max(0, ...(rc.markets || []).map((mk) => mk.lp?.lpLockedPct ?? 0));
+    if (ins > 10) { cap = 0.69; add(-0.15, `${ins} insider wallets${nets ? ` in ${nets} network${nets > 1 ? "s" : ""}` : ""}`); } else if (ins === 0) add(0.05, "no insider clusters");
+    const lp = Math.max(0, ...(rc.markets || []).filter((mk) => !/pump_?fun/i.test(mk.marketType || "")).map((mk) => mk.lp?.lpLockedPct ?? 0));
     if (lp >= 95) add(0.05, `LP ${Math.round(lp)}% locked`);
     if ((rc.totalHolders || 0) >= 500) add(0.06, `${rc.totalHolders} holders`); else if (rc.totalHolders && rc.totalHolders < 100) add(-0.12, `only ${rc.totalHolders} holders`);
     const ct = Array.isArray(rc.creatorTokens) ? rc.creatorTokens : [];
@@ -49,7 +51,7 @@ export function score({ rc = null, dex = null, flow = null, x = null, smart = 0 
     if (flow.last60 >= 100) add(0.06, `${flow.last60} txs in the last minute`); else if (flow.n && flow.last60 <= 2) add(-0.05, "chain quiet");
   }
   if (dex) {
-    if (dex.x) add(0.04, "X linked"); if (dex.tg) add(0.02, "Telegram"); if (dex.web) add(0.02, "website");
+    if (dex.x) { if (x && !x.dead && x.followers != null) add(0.04, "X linked"); else add(0.01, "X link (unchecked)"); } if (dex.tg) add(0.02, "Telegram"); if (dex.web) add(0.02, "website");
     if (!dex.x && !dex.tg && !dex.web) add(-0.06, "no socials");
     if (dex.boost > 0) add(0.04, `boosted ${dex.boost}`);
     if (dex.buys5 != null && dex.sells5 != null && dex.buys5 + dex.sells5 >= 20) { const r = dex.buys5 / Math.max(1, dex.sells5); if (r >= 1.3) add(0.05, `5m buys ${dex.buys5}/${dex.sells5}`); else if (r < 0.7) add(-0.06, `5m sellers ${dex.sells5}/${dex.buys5}`); }
@@ -61,7 +63,7 @@ export function score({ rc = null, dex = null, flow = null, x = null, smart = 0 
       if (x.followers >= 2000) add(0.06, `X ${x.followers} followers`); else if (x.followers < 150 && days != null && days < 30) add(-0.05, `X tiny and new (${x.followers} followers)`); else add(0.02, "X active");
     }
   }
-  const certainty = Math.max(0, Math.min(1, NEUTRAL + s));
+  const certainty = Math.max(0, Math.min(cap, NEUTRAL + s));
   return { certainty: +certainty.toFixed(2), reasons: [...reasons, ...bad.map((b) => `-${b}`)] };
 }
 

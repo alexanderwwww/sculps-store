@@ -26,7 +26,7 @@ test("intel: high certainty widens the stop to -5% and the trail to 15%, longer 
   assert.equal(r.buys[0].usd, base.buys[0].usd, "size never raised");
   const p = [...r.e.open.values()][0];
   assert.equal(p.sl, -0.05); assert.equal(p.trail, 0.15); assert.equal(p.maxHoldMin, 16);
-  assert.match(p.enter, /certainty 0\.90: dev holds 0%, top10 18%, 3 smart wallets in, X linked/);
+  assert.match(p.enter, /certainty 0\.90: dev holds 0%, top10 18%, 3 smart wallets in/);
   assert.equal(r.e.status().open[0].certainty, 0.9);
 });
 test("intel: a high-certainty position rides a dip that would stop a -2% one", async () => {
@@ -75,4 +75,16 @@ test("intel: scoring and exits", () => {
   assert.ok(exitsFor(0.75, { sl: -0.02 }).sl < -0.02 && exitsFor(0.75, { sl: -0.02 }).sl > -0.05);
   assert.deepEqual(xHandle("https://x.com/Abc_1/status/123"), { handle: "Abc_1", status: "123" });
   assert.equal(xHandle("https://x.com/i/communities/1"), null);
+});
+
+test("intel score: no RugCheck caps below high; unknown dev never claims 0%; pump.fun curve is not a locked LP; insider clusters cap", async () => {
+  const { score } = await import("../src/lib/intel.mjs");
+  const dex = { x: 1, tg: 1, web: 1, boost: 2, buys5: 40, sells5: 10 }, flow = { n: 200, last60: 150, failShare: 0 };
+  assert.ok(score({ dex, flow, smart: 3 }).certainty < 0.7, "no rugcheck -> below 0.7");
+  const noDev = score({ rc: { topHolders: [], markets: [{ marketType: "pump_fun", lp: { lpLockedPct: 100 } }] } });
+  assert.ok(!noDev.reasons.some((r) => /dev holds 0%|LP .*locked/.test(r)), noDev.reasons.join());
+  const amm = score({ rc: { creator: "D", creatorBalance: 0, topHolders: [], markets: [{ marketType: "raydium", lp: { lpLockedPct: 100 } }] } });
+  assert.ok(amm.reasons.includes("dev holds 0%") && amm.reasons.includes("LP 100% locked"));
+  const ins = score({ rc: { creator: "D", creatorBalance: 0, totalHolders: 900, graphInsidersDetected: 45, insiderNetworks: new Array(10).fill({}), topHolders: [{ owner: "a", pct: 2 }] }, dex, flow, smart: 3, x: { followers: 5000 } });
+  assert.ok(ins.certainty < 0.7 && ins.reasons.some((r) => /^-45 insider/.test(r)));
 });
