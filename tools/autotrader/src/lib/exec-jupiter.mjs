@@ -31,6 +31,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
         // golden-ratio scale (Alex 2026-10-29): base 0.01618 SOL, x1.618 for each win in a row (at most 3 steps), back to base after any loss;
         // never more than a quarter of the wallet on one buy.
         const floor = +(caps.fixedSol * Math.min(1, scale)).toFixed(5);
+        if (bal < 0.5) return { bal, sol: spendable >= 0.01618 ? 0.01618 : 0 };   // Alex 2026-10-29 midnight: "trade 0.016 all the time" under 0.5 SOL
         if (spendable < floor) return { bal, sol: 0 };
         // Alex's heavier rocks: 0.5 SOL in the wallet -> base 0.1618; 1 SOL -> 0.1618 x 1.618 = 0.2618; below 0.5 -> 0.01618
         const base = bal >= 1 ? 0.2618 : bal >= 0.5 ? 0.1618 : caps.fixedSol;
