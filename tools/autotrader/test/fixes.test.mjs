@@ -20,9 +20,9 @@ test("fib: a 20% swing at the 0.5 retrace with a held bounce buys", async () => 
   const r = rig(SWING); await r.step(SWING.length);
   assert.equal(r.buys.length, 1); assert.equal(r.buys[0], 1.1);
 });
-test("fib: a 12% swing at the 0.5 retrace is refused (target back to the high +5.5% is under the 8% floor)", async () => {
+test("fib: the target floor still refuses when set (fibMinTp 0.08: +5.5% back to the high is under it)", async () => {
   const p = [1, 1.03, 1.06, 1.09, 1.12, 1.09, 1.06, 1.055, 1.062, 1.062, 1.062];
-  const r = rig(p); await r.step(p.length); assert.equal(r.buys.length, 0);
+  const r = rig(p, { cfg: { fibMinRun: 0.12, fibMinTp: 0.08 } }); await r.step(p.length); assert.equal(r.buys.length, 0);
   assert.ok(Object.keys(r.e.status().whyNot || {}).some((k) => /target too close/.test(k)) || true);
 });
 test("fib: a 4% swing is not bought", async () => {

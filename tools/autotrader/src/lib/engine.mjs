@@ -159,13 +159,13 @@ export class Engine {
             let hi = 0, hiAt = 0; ph.forEach(([, v], i) => { if (v > hi) { hi = v; hiAt = i; } });
             const lo = Math.min(...ph.slice(0, hiAt + 1).map(([, v]) => v)), run = hi / lo - 1;
             const r = (hi - lv.price) / Math.max(1e-18, hi - lo), after = ph.slice(hiAt + 1).map(([, v]) => v);
-            if (run < (this.cfg.fibMinRun ?? 0.12)) { quiet("fib: no swing to read"); return null; }   // a 4% swing cannot pay a 2.9% round trip
-            if (r < 0.382) { quiet("fib: above 0.382, waiting for the golden zone"); return null; }
-            if (r > 0.618) { quiet("fib: broke 0.618, swing failed"); return null; }
+            if (run < (this.cfg.fibMinRun ?? 0.04)) { quiet("fib: no swing to read"); return null; }   // a 4% swing cannot pay a 2.9% round trip
+            if (r < (this.cfg.fibLo ?? 0.236)) { quiet("fib: above the zone, waiting for the pullback"); return null; }
+            if (r > (this.cfg.fibHi ?? 0.618)) { quiet("fib: broke 0.618, swing failed"); return null; }
             if (!after.length) { quiet("fib: in the zone, waiting for the bounce"); return null; }
             const minSince = Math.min(...after), minAt = after.lastIndexOf(minSince);
-            if ((hi - minSince) / Math.max(1e-18, hi - lo) > 0.786) { quiet("fib: dipped past 0.786, swing failed"); return null; }
-            if (hi / lv.price - 1 < (this.cfg.fibMinTp ?? 0.08)) { quiet("fib: target too close to pay the fees"); return null; }
+            if ((hi - minSince) / Math.max(1e-18, hi - lo) > (this.cfg.fibDeep ?? 0.786)) { quiet("fib: dipped past 0.786, swing failed"); return null; }
+            if (hi / lv.price - 1 < (this.cfg.fibMinTp ?? 0.02)) { quiet("fib: target too close to pay the fees"); return null; }
             // a real bounce: 0.5% off the low since the high, and the low held for 2 looks (one up-tick in a fall is not a bounce)
             if (!(lv.price > minSince * 1.005 && minAt <= after.length - 3)) { quiet("fib: in the zone, waiting for the bounce"); return null; }
             mom = run; s_pull = r; fibTp = hi / lv.price - 1;
@@ -201,12 +201,12 @@ export class Engine {
         const lo = Math.min(...w.slice(0, hiAt + 1).map((k) => k.l)), run = hi / lo - 1, r = (hi - lv.price) / Math.max(1e-18, hi - lo);
         const ph = (this.ph.get(m.pool) || []).filter(([t]) => t > w[hiAt].t), after = ph.map(([, v]) => v);
         const minSince = Math.min(...w.slice(hiAt + 1).map((k) => k.l), ...after, lv.price), minAt = after.lastIndexOf(minSince);
-        if (!(run >= (this.cfg.fibMinRun ?? 0.12))) { quiet("fib: no swing on the chart"); return null; }
-        if (r < 0.382) { quiet("fib: above 0.382, waiting for the golden zone"); return null; }
-        if (r > 0.618) { quiet("fib: broke 0.618, swing failed"); return null; }
-        if ((hi - minSince) / Math.max(1e-18, hi - lo) > 0.786) { quiet("fib: dipped past 0.786, swing failed"); return null; }
+        if (!(run >= (this.cfg.fibMinRun ?? 0.04))) { quiet("fib: no swing on the chart"); return null; }
+        if (r < (this.cfg.fibLo ?? 0.236)) { quiet("fib: above the zone, waiting for the pullback"); return null; }
+        if (r > (this.cfg.fibHi ?? 0.618)) { quiet("fib: broke 0.618, swing failed"); return null; }
+        if ((hi - minSince) / Math.max(1e-18, hi - lo) > (this.cfg.fibDeep ?? 0.786)) { quiet("fib: dipped past 0.786, swing failed"); return null; }
         const fibTp = hi / lv.price - 1;
-        if (fibTp < (this.cfg.fibMinTp ?? 0.08)) { quiet("fib: target too close to pay the fees"); return null; }
+        if (fibTp < (this.cfg.fibMinTp ?? 0.02)) { quiet("fib: target too close to pay the fees"); return null; }
         if (after.length < 8) { quiet("live: watching its price first"); return null; }
         if (!(lv.price > minSince * 1.005 && minAt <= after.length - 3 && cs.length >= 2 && cs[cs.length - 1].c > cs[cs.length - 2].c)) { quiet("fib: in the zone, waiting for the bounce"); return null; }
         if ((lv.liqUsd ?? 0) < (this.cfg.liveMinLiq ?? 15000)) { quiet("live: pool too thin to get out of"); return null; }
