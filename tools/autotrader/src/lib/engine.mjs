@@ -388,7 +388,7 @@ export class Engine {
     if (this.exec.sizeSol) { try { size = (await this.exec.sizeSol({ streak: 0, scale: 1 })).sol; stake = (await this.exec.sizeSol({ streak: 0, scale: mul })).sol; } catch (err) { this.#skip(m.name, `wallet balance: ${err.message.slice(0, 60)}`); return; } }
     if (!(stake <= size + 1e-9)) { this.#skip(m.name, "stake above size: refused"); return; }
     const sigN = o.sig ? Object.fromEntries(Object.entries(o.sig).map(([k, v]) => [k, typeof v === "number" ? +v.toFixed(4) : v])) : null;
-    const lv0 = { sig: sigN, m: mul, narr: o.narr ? { label: o.narr.label, trend: o.narr.trend } : null, t0: this.now(), sl: this.cfg.sl, tp: o.sig?.fibTp > 0 ? Math.max(0.015, o.sig.fibTp) : this.cfg.tp, partAt: o.sig?.fibTp > 0 ? Math.max(0.015, o.sig.fibTp) : this.cfg.partAt, lockFrom: this.cfg.lockFrom };   // the exits it was bought under
+    const lv0 = { sig: sigN, m: mul, narr: o.narr ? { label: o.narr.label, trend: o.narr.trend } : null, t0: this.now(), sl: this.cfg.sl, tp: this.cfg.tp, partAt: this.cfg.partAt, lockFrom: this.cfg.lockFrom };   // the exits it was bought under
     this.journal.write({ type: "intent", id, name: m.name, mint: m.mint, enter: s.why });   // on disk BEFORE anything is done
     const f = await this.exec.buy({ mint: m.mint, pool: m.pool, usd: stake, scale: mul });
     if (!f.ok && f.unknown && f.orderId) {

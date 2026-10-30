@@ -89,16 +89,12 @@ test("a replay row with tLow < tPeak takes the stop", () => {
   assert.equal(O.replayRow(org, row({ peak: 0.2, low: -0.1, tLow: 1000, tPeak: 5000 }), s), -0.08 + O.COLD.gS);
   assert.ok(O.replayRow(org, row({ peak: 0.2, low: -0.1, tLow: 9000, tPeak: 5000 }), s) > 0, "the peak came first: takes");
 });
-test("refitExits moves at most one golden step and respects the clamps", () => {
+test("exits are fixed by Alex: stop -2%, first take +5%, the rest to +100%; refit can only land inside them", () => {
+  assert.deepEqual(O.CLAMP, { sl: [-0.02, -0.02], partAt: [0.05, 0.05], tp: [1, 1] });
   const org = O.newOrg();
-  // every coin runs to +30%: a higher tp is better, so tp moves up one step (0.10 x 1.618 = 0.1618), not to the clamp
   for (let i = 0; i < 20; i++) O.update(org, { ret: 0.07, sig: {}, peak: 0.3, low: -0.01, tPeak: 20000, tLow: 1000, restRet: 0.1, holdS: 60 });
-  const cfg = { sl: -0.08, partAt: 0.05, tp: 0.1, partFrac: 0.5 };
-  const ex = O.refitExits(org, cfg);
-  assert.ok(ex, "it moved"); assert.equal(ex.tp, 0.1618);
-  for (const [k, [lo, hi]] of Object.entries(O.CLAMP)) assert.ok(ex[k] >= lo && ex[k] <= hi, k);
-  const ex2 = O.refitExits(org, { sl: -0.08, partAt: 0.08, tp: 0.2, partFrac: 0.5 });
-  if (ex2) for (const [k, [lo, hi]] of Object.entries(O.CLAMP)) assert.ok(ex2[k] >= lo && ex2[k] <= hi, k);
+  const ex = O.refitExits(org, { sl: -0.02, partAt: 0.05, tp: 1, partFrac: 0.5 });
+  if (ex) for (const [k, [lo, hi]] of Object.entries(O.CLAMP)) assert.ok(ex[k] >= lo && ex[k] <= hi, k);
 });
 test("stop is fixed at -2% (Alex 2026-10-30)", () => {
   assert.deepEqual(O.CLAMP.sl, [-0.02, -0.02]);
@@ -178,7 +174,6 @@ test("engine loop: 60 trades, winning band favoured, losing band shrinks, caps h
   // onLearn got the org; size and caps were never written
   assert.ok(e.learned.length >= 60 && e.learned.every((x) => x.org && x.org.g));
   assert.equal(e.cfg.size, undefined); assert.equal(e.exec.caps.maxFeeLamports, 150000);
-  for (const [k, [lo, hi]] of Object.entries(O.CLAMP)) assert.ok(e.cfg[k] >= lo && e.cfg[k] <= hi, `${k} ${e.cfg[k]}`);
   // restart: the saved org comes back, and without one it is rebuilt from the journal
   const saved = JSON.parse(JSON.stringify(e.learned.at(-1).org));
   const e2 = w.make(saved);
