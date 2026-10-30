@@ -258,9 +258,10 @@ header.top.slim { display: none; }
 .fib { margin-bottom: 16px; padding: 14px 16px; }
 .fib h2 { display: flex; justify-content: space-between; align-items: baseline; }
 .fib h2 small { font-size: 11px; color: var(--dim); font-weight: 400; letter-spacing: .04em; text-transform: none; }
-.fib__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.fib__grid { display: flex; flex-wrap: wrap; gap: 12px; }
+.fib__grid > * { flex: 1 1 300px; min-width: 0; }
 .fib__card { position: relative; border: 1px solid var(--line); border-radius: 12px; background: rgba(0,0,0,.25); padding: 8px; cursor: zoom-in; }
-.fib__card.big { grid-column: 1 / -1; cursor: zoom-out; }
+.fib__card.big { flex-basis: 100%; cursor: zoom-out; }
 .fib__card b { font: 700 12px var(--mono); }
 .fib__card .tag { float: right; font: 600 10px var(--mono); padding: 1px 6px; border-radius: 5px; background: var(--glass2); color: var(--cyan); }
 .fib__card .tag.open { color: var(--green); }

@@ -4,13 +4,19 @@ const here = path.dirname(new URL(import.meta.url).pathname), ui = path.join(her
 const require = createRequire(path.join(here, "..", "..", "..", "package.json"));
 let pw; try { pw = require("playwright"); } catch { pw = require("playwright-core"); }
 const now = 1_800_000_000_000, mk = (f, n = 30) => Array.from({ length: n }, (_, i) => { const o = f(i), c = f(i + 0.8); return { t: now - (n - i) * 60000, o, c, h: Math.max(o, c) * 1.012, l: Math.min(o, c) * 0.988 }; });
-function coin(name, f, open) {
-  const cs = mk(f); let hi = 0, hA = 0; cs.forEach((k, i) => { if (k.h > hi) { hi = k.h; hA = i; } });
-  const lo = Math.min(...cs.slice(0, hA + 1).map((k) => k.l)), at = (r) => hi - r * (hi - lo), price = cs[29].c, entry = open ? cs[26].c : null;
-  return { name, open, cs, ticks: Array.from({ length: 20 }, (_, i) => [now - (20 - i) * 6000, price * (1 + Math.sin(i) * 0.004)]), lo, hi, loT: cs[cs.slice(0, hA + 1).findIndex((k) => k.l === lo)].t, hiT: cs[hA].t,
-    levels: [0, 0.236, 0.382, 0.5, 0.618, 0.786, 0.886, 1].map((r) => ({ r, p: at(r) })), zone: { from: 0.236, to: 0.618, top: at(0.236), bottom: at(0.618) }, price, entry, stop: entry ? entry * 0.95 : null, takes: entry ? [entry * 1.05] : [] };
-}
-const charts = [coin("PEPE2 / SOL", (i) => 0.00012 * (i < 18 ? 1 + i * 0.03 : 1.54 - (i - 18) * 0.022), true), coin("MOONBOY / SOL", (i) => 0.0031 * (1 + Math.sin(i / 4) * 0.15 + i * 0.01), false), coin("DOGWIF / SOL", (i) => 0.42 * (i < 22 ? 1 + i * 0.012 : 1.26 - (i - 22) * 0.015), false)];
+// Real data: candles go into a real Engine and the picture draws engine.status().charts, the same swing the fib gate reads.
+const { Engine } = await import("../src/lib/engine.mjs"); const { Journal } = await import("../src/lib/journal.mjs"); const { DEFAULTS } = await import("../src/lib/strategy.mjs");
+const os = await import("node:os");
+const feed = { quotes: async () => new Map(), newPools: async () => [], trendingPools: async () => [], candles: async () => [] };
+const exec = { name: "live", source: "own", buy: async () => ({ ok: false }), sell: async () => ({ ok: true }), sizeSol: async () => ({ bal: 1, sol: 0.02 }) };
+const e = new Engine({ feed, exec, journal: new Journal(path.join(fs.mkdtempSync(path.join(os.tmpdir(), "fs-")), "j.jsonl")), rug: async () => ({ pass: true }), cfg: { ...DEFAULTS }, now: () => now });
+const coins = [["PEPE2 / SOL", (i) => 0.00012 * (i < 18 ? 1 + i * 0.03 : 1.54 - (i - 18) * 0.022), true], ["MOONBOY / SOL", (i) => 0.0031 * (1 + Math.sin(i / 4) * 0.15 + i * 0.01), false], ["DOGWIF / SOL", (i) => 0.42 * (i < 22 ? 1 + i * 0.012 : 1.26 - (i - 22) * 0.015), false]];
+coins.forEach(([name, f, open], k) => {
+  const pool = "pool" + k, cs = mk(f, 40), price = cs[39].c; e.cc.set(pool, { cs, at: now }); e.live.set(pool, { price });
+  e.ph.set(pool, Array.from({ length: 60 }, (_, i) => [now - (60 - i) * 3000, price * (1 + Math.sin(i) * 0.004)]));
+  if (open) e.open.set("x" + k, { id: "x" + k, pool, name, mint: "M" + k, entryPx: cs[36].c, stake: 0.02, at: now - 180000 }); else e.ready.push({ pool, name, mint: "M" + k });
+});
+const charts = e.status().charts; if (charts.length !== 3) throw new Error("engine gave " + charts.length + " charts");
 const browser = await pw.chromium.launch({ executablePath: process.env.PW_CHROMIUM || "/opt/pw-browsers/chromium" });
 const page = await browser.newPage({ viewport: { width: 1180, height: 820 } });
 await page.setContent(`<html><head><style>${fs.readFileSync(path.join(ui, "style.css"), "utf8")}</style></head><body><main><div id="app"></div></main><script>${fs.readFileSync(path.join(ui, "fib.js"), "utf8")}</script></body></html>`);

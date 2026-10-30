@@ -11,18 +11,20 @@
     const vals = [...cs.flatMap((k) => [k.h, k.l]), ...ticks.map((x) => x[1]), c.lo, c.hi, c.entry, c.stop, ...(c.takes || []), c.price].filter((v) => v != null && isFinite(v));
     if (!vals.length) return;
     let mn = Math.min(...vals), mx = Math.max(...vals); const pad = (mx - mn || mx * 0.01 || 1) * 0.06; mn -= pad; mx += pad;
-    const L = 4, R = 104, T = 6, B = 6, pw = W - L - R, phh = H - T - B;
+    const small = W < 420, FS = small ? 9 : 10; g.font = `${FS}px ui-monospace, Menlo, monospace`;
+    const R = 16 + Math.max(60, ...[...(c.levels || []).map((lv) => `${lv.r} ${fp(lv.p)}`), `now ${fp(c.price)}`].map((t) => g.measureText(t).width)), L = 4, T = 6, B = 6, pw = W - L - R, phh = H - T - B;
     const y = (v) => T + (1 - (v - mn) / (mx - mn)) * phh;
     const t0 = cs.length ? cs[0].t : ticks.length ? ticks[0][0] : 0, t1 = Math.max(cs.length ? cs[cs.length - 1].t + 60000 : 0, ticks.length ? ticks[ticks.length - 1][0] : 0, t0 + 60000);
     const x = (t) => L + ((t - t0) / (t1 - t0)) * pw;
-    g.font = "10px ui-monospace, Menlo, monospace"; g.textBaseline = "middle";
+    g.font = `${FS}px ui-monospace, Menlo, monospace`; g.textBaseline = "middle";
     // the buy zone, shaded
     if (c.zone && c.zone.top != null) { const a = y(c.zone.top), b = y(c.zone.bottom); g.fillStyle = "rgba(255,200,87,.12)"; g.fillRect(L, Math.min(a, b), pw, Math.abs(b - a)); }
-    // fib levels with ratio and price
+    // fib levels with ratio and price (labels are laid out last, so none hides another)
+    const right = [], left = [];
     for (const lv of c.levels || []) {
       if (lv.p == null) continue; const yy = Math.round(y(lv.p)) + 0.5, col = LV[lv.r] || "#9aa4b5";
       g.strokeStyle = col; g.globalAlpha = 0.55; g.setLineDash(lv.r === 0 || lv.r === 1 ? [] : [3, 3]); g.beginPath(); g.moveTo(L, yy); g.lineTo(L + pw, yy); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
-      g.fillStyle = col; g.fillText(`${lv.r} ${fp(lv.p)}`, L + pw + 4, yy);
+      right.push({ y: yy, text: `${lv.r} ${fp(lv.p)}`, col, box: false });
     }
     // candles
     const cw = Math.max(1.5, (pw / Math.max(1, (t1 - t0) / 60000)) * 0.62);
@@ -41,12 +43,25 @@
     }
     // the trade: entry, stop, take, and the price now
     const hl = (v, col, label, dash) => { if (v == null) return; const yy = Math.round(y(v)) + 0.5; g.strokeStyle = col; g.setLineDash(dash || []); g.lineWidth = 1.4; g.beginPath(); g.moveTo(L, yy); g.lineTo(L + pw, yy); g.stroke(); g.setLineDash([]); g.lineWidth = 1;
-      const tw = g.measureText(label).width + 8; g.fillStyle = col; g.fillRect(L + 2, yy - 7, tw, 14); g.fillStyle = "#06070a"; g.fillText(label, L + 6, yy); };
+      left.push({ y: yy, text: label, col, box: true }); };
     hl(c.entry, "#a78bfa", `entry ${fp(c.entry)}`);
     hl(c.stop, "#ff6b7a", `stop ${fp(c.stop)}`, [6, 3]);
     (c.takes || []).forEach((v) => hl(v, "#4ade80", `take +5% ${fp(v)}`, [6, 3]));
     if (c.price != null) { const yy = Math.round(y(c.price)) + 0.5; g.strokeStyle = "#eef2f7"; g.setLineDash([1, 2]); g.beginPath(); g.moveTo(L, yy); g.lineTo(L + pw, yy); g.stroke(); g.setLineDash([]);
-      g.fillStyle = "#eef2f7"; g.fillRect(L + pw + 2, yy - 7, R - 4, 14); g.fillStyle = "#06070a"; g.fillText(`now ${fp(c.price)}`, L + pw + 5, yy); }
+      right.push({ y: yy, text: `now ${fp(c.price)}`, col: "#eef2f7", box: true }); }
+    // labels: sorted by price line, pushed apart so every one is readable, with a tick back to its line when moved
+    const lay = (arr, side) => {
+      const h = FS + 4; arr.sort((a, b) => a.y - b.y); arr.forEach((a, i) => { a.ly = Math.max(a.y, i ? arr[i - 1].ly + h : T + h / 2); });
+      for (let i = arr.length - 1; i >= 0; i--) a_fix(arr, i, h);
+      for (const a of arr) {
+        const tw = g.measureText(a.text).width + 8, x0 = side === "r" ? L + pw + 8 : L + 10;
+        if (Math.abs(a.ly - a.y) > 1) { g.strokeStyle = a.col; g.globalAlpha = 0.8; g.beginPath(); g.moveTo(side === "r" ? L + pw : L, a.y); g.lineTo(side === "r" ? x0 - 1 : x0, a.ly); g.stroke(); g.globalAlpha = 1; }
+        if (a.box) { g.fillStyle = a.col; g.fillRect(x0 - 2, a.ly - h / 2 + 1, tw - 2, h - 2); g.fillStyle = "#06070a"; } else { g.fillStyle = "rgba(6,7,10,.75)"; g.fillRect(x0 - 2, a.ly - h / 2 + 1, tw - 2, h - 2); g.fillStyle = a.col; }
+        g.fillText(a.text, x0 + 2, a.ly);
+      }
+    };
+    const a_fix = (arr, i, h) => { const max = i === arr.length - 1 ? H - B - h / 2 : arr[i + 1].ly - h; if (arr[i].ly > max) arr[i].ly = max; };
+    lay(right, "r"); lay(left, "l");
   }
   function panel(charts) {
     const sec = document.createElement("div"); sec.className = "glass panel fib";
