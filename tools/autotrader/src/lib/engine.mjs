@@ -3,6 +3,7 @@ import { rugCheck } from "./rug.mjs";
 import * as O from "./organism.mjs";
 import { why as narrWhy } from "./narrative.mjs";
 import { exitsFor } from "./intel.mjs";
+import { chartRead, chartExit, newGuard, guardStep, CR } from "./chart.mjs";
 
 export class Engine {
   constructor({ feed, exec, journal, cfg = DEFAULTS, rug = rugCheck, now = Date.now, startEq = 100, scanTop = 8, org = null, rng = Math.random, narr = null, intel = null, whales = null }) {
@@ -14,6 +15,9 @@ export class Engine {
     for (const e of this.pending.values()) this.journal.write({ type: "fail", id: e.id, why: "restart before fill" });
     this.pending.clear();
     this.shadow = new Map(); this.shadowClosed = r.shadow || []; this.ready = []; this.cc = new Map(); this.live = new Map(); this.peaks = new Map(); this.closing = new Set(); this.events = []; this.seq = 0; this.watch = new Map(); this.watching = { total: 0, young: 0, thin: 0, ready: 0 }; this.paused = false; this.unknown = new Map(); this.sellTries = new Map(); this.skips = new Map(); this.recent = []; this.rugCache = new Map(); this.cool = new Map(); this.errors = []; this.hist = new Map(); this.ph = new Map(); this.lastDrop = new Map(); this.whale = new Map(); this.whaleAt = new Map();
+    // chartRead v1: 1-minute charts per pool (60 s), the live flow ring, and the guard that learns the score bar from real closes (lesson 47)
+    this.chart = new Map(); this.flow = new Map(); this.crFetches = []; this.crGuard = newGuard({ ...CR, ...cfg });
+    for (const c of r.closed) if (c.feat && c.cr) guardStep(this.crGuard, { ret: c.ret, feat: c.feat });
     this.ticks = 0; this.lastTickAt = null; this.startedAt = this.now(); this.counts = { drop: 0, block: 0, buy: 0, sell: 0, fail: 0 };
     // a restart (live update) must not forget which coins just lost: PODCAT was bought again right after a -12.5% loss
     // the living organism: what it measured survives restarts (config.json), else it is rebuilt from the journal's closes
@@ -44,14 +48,7 @@ export class Engine {
     try { await this.#manage(); } catch (e) { this.#err("manage", e); }
     try {
       const list = await this.#discover();
-      let n = 0;
-      const want = [...list.map((m) => m.pool), ...[...this.open.values()].map((p) => p.pool)];
-      for (const pool of want) {
-        const hit = this.cc.get(pool);
-        if (hit && this.now() - hit.at < 70000) continue;
-        if (n++ >= 6) break;
-        try { this.cc.set(pool, { cs: await this.feed.candles(pool, { limit: 100 }), at: this.now() }); } catch (e) { this.#err(`candles ${pool.slice(0, 6)}`, e); }
-      }
+      await this.#chartFetch(list);
       for (const [k, v] of this.cc) if (this.now() - v.at > 600000) this.cc.delete(k);
       // intel: research the coins closest to a buy in the background (never awaited), so it is ready before the bounce
       if (this.intel) for (const m of this.ready.slice(0, 12)) { try { this.intel.want(m); } catch (e) { this.#err("intel", e); } }
@@ -72,13 +69,39 @@ export class Engine {
       }
     } catch (e) { this.#err("slow", e); }
   }
+  /** chartRead data: 240 one-minute candles per pool, refetched after 60 s, only for pools worth it (open; liquidity >= 15k and
+   *  the tick or last chart retrace near the zone; never read yet), the closest to 0.618 first, inside ~25 calls a minute.
+   *  A failure is remembered quietly and the gate falls back to the tick fib: it never stalls trading. */
+  async #chartFetch(list) {
+    const t = this.now(), ttl = (this.cfg.candleTtl ?? CR.candleTtl) * 1000, budget = this.cfg.crFetchMin ?? 25;
+    this.crFetches = this.crFetches.filter((x) => t - x < 60000);
+    const tickR = (pool) => { const ph = this.ph.get(pool) || []; if (ph.length < 4) return null; let hi = 0, at = 0; ph.forEach(([, v], i) => { if (v > hi) { hi = v; at = i; } }); const lo = Math.min(...ph.slice(0, at + 1).map(([, v]) => v)), P = ph[ph.length - 1][1]; return hi > lo ? (hi - P) / (hi - lo) : null; };
+    const open = [...this.open.values()].map((p) => p.pool);
+    const cands = list.filter((m) => (this.live.get(m.pool)?.liqUsd ?? m.liqUsd ?? 0) >= CR.crLiq).map((m) => { const ch = this.chart.get(m.pool), tr = tickR(m.pool), r = ch?.lastR ?? tr; return { pool: m.pool, ch, r, never: !ch, vol: m.vol5 || 0 }; })
+      .filter((x) => x.never || (x.r != null && x.r >= 0.4 && x.r <= 0.9))
+      .sort((a, b) => (a.r != null && b.r != null ? Math.abs(a.r - 0.618) - Math.abs(b.r - 0.618) : a.r != null ? -1 : b.r != null ? 1 : b.vol - a.vol));
+    let n = 0;
+    for (const pool of [...new Set([...open, ...cands.map((x) => x.pool)])]) {
+      const ch = this.chart.get(pool);
+      if (ch && t - ch.fetchedAt < ttl) continue;
+      if (n++ >= 6 || this.crFetches.length >= budget) break;
+      this.crFetches.push(t);
+      try {
+        const cs1 = await this.feed.candles(pool, { aggregate: 1, limit: 240 });
+        this.chart.set(pool, { ...(ch || {}), cs1, fetchedAt: t, fail: null, dead: ch?.dead || new Set() });
+        this.cc.set(pool, { cs: cs1.slice(-100), at: t });
+      } catch (e) { this.chart.set(pool, { ...(ch || { dead: new Set() }), fetchedAt: t, fail: String(e.message || e).slice(0, 60) }); }
+    }
+    for (const [k, v] of this.chart) if (t - v.fetchedAt > 600000) this.chart.delete(k);
+    for (const [k, v] of this.cc) if (t - v.at > 600000) this.cc.delete(k);
+  }
   /** The fast lane (every few seconds): live prices for everything that matters -> exits first, then entries. */
   async fast() {
     this.ticks++; this.lastTickAt = this.now();
     const pools = [...new Set([...this.open.values()].map((p) => p.pool).concat(this.ready.map((m) => m.pool), this.#followSignals().map((s) => s.pool)))];
     let q = new Map();
     if (pools.length) { try { q = await this.feed.quotes(pools); } catch (e) { this.#err("quotes", e); } }
-    for (const [pool, x] of q) { const ph = this.ph.get(pool) || []; ph.push([this.now(), x.price]); while (ph.length && this.now() - ph[0][0] > 120000) ph.shift(); this.ph.set(pool, ph); this.live.set(pool, { ...x, at: this.now() }); const w = this.watch.get(pool); if (w) { if (x.liqUsd != null) w.liqUsd = x.liqUsd; w.buys5 = x.buys5; w.sells5 = x.sells5; w.vol5 = x.vol5; } }
+    for (const [pool, x] of q) { const ph = this.ph.get(pool) || []; ph.push([this.now(), x.price]); while (ph.length && this.now() - ph[0][0] > 120000) ph.shift(); this.ph.set(pool, ph); this.live.set(pool, { ...x, at: this.now() }); { const fr = this.flow.get(pool) || []; fr.push({ t: this.now(), b: x.buys5 || 0, s: x.sells5 || 0, p: x.price }); if (fr.length > 40) fr.shift(); this.flow.set(pool, fr); } const w = this.watch.get(pool); if (w) { if (x.liqUsd != null) w.liqUsd = x.liqUsd; w.buys5 = x.buys5; w.sells5 = x.sells5; w.vol5 = x.vol5; } }
     for (const p of this.open.values()) { const lv = this.live.get(p.pool); if (!lv || this.now() - lv.at > 20000) continue; const h = this.hist.get(p.id) || []; h.push([this.now(), lv.price]); if (h.length > 150) h.shift(); this.hist.set(p.id, h); }   // what the trade cards draw
     try { await this.#fastExits(); } catch (e) { this.#err("exits", e); }
     try { await this.#fastEntries(); } catch (e) { this.#err("entries", e); }
@@ -119,11 +142,25 @@ export class Engine {
         }
       }
       let why = null, kind = null, trig = null;
+      if (p.cr && this.cfg.crExits === 1) {
+        const minute = Math.floor(this.now() / 60000) * 60000, prev = (this.ph.get(p.pool) || []).filter(([t]) => t < minute), fr = this.flow.get(p.pool) || [];
+        const d = chartExit(p.cr, { r: price / entry - 1, rStop: price / stopFrom - 1, real, t: this.now(), px: lv.price, close1m: prev.length ? prev[prev.length - 1][1] : null, Rs: fr.slice(-2).map((q) => q.b / Math.max(1, q.b + q.s)) }, { ...CR, ...this.cfg, tp1: c.partAt ?? CR.tp1 });
+        if (d?.action === "part") {
+          p.cr.tp1Done = true; p.partDone = true; p.tPartAt = held;
+          if (real && this.exec.sellPart) {
+            const f = c.partFrac ?? 0.5, r = await this.exec.sellPart({ mint: p.mint, frac: f }).catch((e) => ({ ok: false, why: e.message }));
+            if (r.ok) { const got = Number(r.outAmount) / 1e9; p.stake0 ??= p.stake; p.banked = (p.banked || 0) + got; p.stake = +(p.stake * (1 - f)).toFixed(6); if (p.base != null) p.base *= 1 - f; p.tokens = r.left; p.val = null; this.journal.write({ ...p, type: "open" }); this.#ev("sell", p.name, `chart take: sold ${Math.round(f * 100)}% at +${((price / entry - 1) * 100).toFixed(1)}%, banked ${got.toFixed(4)} SOL`, { ret: price / entry - 1, partial: true }); }
+          }
+          continue;
+        }
+        if (!d) continue;
+        why = d.why; kind = d.kind; trig = d.trig;
+      }
       // lesson 10: one bad quote is noise (wifbot: stop -7% fired, the sale filled +2.2%). A stop needs two looks in a row below it, unless it is already far through.
       const under = price <= stopFrom * (1 + (real ? sl * 0.8 : sl)); p.under   // lesson 44: crashes gap 6-20% past the stop between looks; a real quote fires at 80% of the stop so the fill lands near it
       = under ? (p.under || 0) + 1 : 0;
       // lesson 28 (team): waiting for a second look let 2 of 4 stops gap to -10..-12%. A REAL Jupiter quote under the stop sells at once; a chart price still needs two looks.
-      if (under && (real || p.under >= 2 || price <= entry * (1 + sl * 1.3))) { why = `stop ${Math.round(sl * 100)}%`; kind = "stop"; trig = sl; }
+      if (why) { /* chartExit decided */ } else if (under && (real || p.under >= 2 || price <= entry * (1 + sl * 1.3))) { why = `stop ${Math.round(sl * 100)}%`; kind = "stop"; trig = sl; }
       else if (under) why = null;
       else if (p.follow?.length && this.whales && (() => { try { const s = this.whales.sellers(p.mint, p.follow, p.at); if (s.length) { p.followSold = s.length; return true; } } catch (e) { this.#err("whales", e); } return false; })()) { why = `whales selling: ${p.followSold} of ${p.follow.length} followed wallet${p.follow.length === 1 ? "" : "s"} sold, out first`; kind = "follow"; }
       else if ((() => { const w = this.whale.get(p.pool); return w && this.now() - w.at < 60000 && w.sell >= (this.cfg.whaleUsd ?? 1500) && w.sell >= 2 * w.buy; })()) { why = "ULTRA INSTINCT: whales leaving"; kind = "whale"; }
@@ -149,6 +186,18 @@ export class Engine {
       // every coin it looks at shows on the screen as it is filtered (Alex: constant movement), at most once per coin every 20 s
       const quiet = (k) => { if (!loud) return;  const t = this.lastDrop.get(m.pool) || 0; if (this.now() - t > 20000) { this.lastDrop.set(m.pool, this.now()); this.skips.set(k, (this.skips.get(k) || 0) + 1); this.#ev("drop", m.name, k.replace(/^live: /, "")); } };   // lesson 35: count a coin once per 20 s, not once per pass (30k "too thin" was ~25 checks a second)
       if (!lv || this.now() - lv.at > 15000) { quiet("waiting: no live price yet"); return null; }
+      if (this.cfg.fib !== 0) {
+        // chartRead v1 (2026-10-30): the dominant swing on the 15/5/1-minute chart, buy only its 0.5-0.786 retrace on a bounce
+        // with no lower low, scored on 7 points whose weights and bar learn from real closes. No chart -> the tick fib.
+        const ch = this.chart.get(m.pool) || { dead: new Set() }; if (!this.chart.has(m.pool)) this.chart.set(m.pool, { ...ch, fetchedAt: 0 });
+        const it = this.intel ? this.#intel(m) : null;
+        const cr = chartRead(this.chart.get(m.pool), lv.price, lv, this.flow.get(m.pool) || [], { ...CR, ...this.cfg }, { now: this.now(), ticks: this.ph.get(m.pool) || [], whale: this.whale.get(m.pool), guard: this.crGuard, certainty: it?.full ? it.certainty : null });
+        if (cr.feat) this.chart.get(m.pool).lastR = cr.feat.r;
+        if (!cr.ok) { quiet(cr.why); return null; }
+        const t = Math.floor(this.now() / 60000) * 60000, c0 = { t, o: lv.price, h: lv.price, l: lv.price, c: lv.price, v: (lv.vol5 || 0) / 5 };
+        const sg = { path: "chart", fibTp: cr.tp2, rise: +cr.run.toFixed(4), vol5: lv.vol5 || 0, buys: lv.buys5 || 0, sells: lv.sells5 || 0, ratio: (lv.buys5 || 0) / Math.max(1, lv.sells5 || 0), liq: lv.liqUsd ?? 0, fib: +cr.r.toFixed(3), score: cr.score };
+        return { cs: Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), sig: sg, s: { ok: true, why: cr.why }, cr };
+      }
       if (!hit || hit.cs.length < 6) {
         // Alex 2026-10-29: never wait on a chart. Live volume + buyers ahead = buy, straight from the live price.
         const flow = (lv.buys5 || 0) + (lv.sells5 || 0);
@@ -162,25 +211,7 @@ export class Engine {
           // lesson 36 (the math): break-even needs a 32% win rate (avg win +18.6%, avg loss -8.9%); it won 23%, and 8 of the last 10
           // losers never rose once after the buy (peak 0): it was buying the TOP of the spike. Buy the PULLBACK instead: the coin ran
           // >= momMin inside the last 2 min, has come back 3-12% from that high, and the last tick is up again (a higher low).
-          if (this.cfg.fib !== 0) {
-            // Alex 2026-10-30 "read the coin's fibonacci chart, that's the whole point": the last swing low->high in 2 min; buy when the price
-            // has retraced into the golden zone (0.382-0.618 of the swing) and the last tick is up; take profit back at the swing high.
-            const ph = (this.ph.get(m.pool) || []).filter(([t]) => this.now() - t <= 120000);
-            if (ph.length < 8) { quiet("live: watching its price first"); return null; }   // 2026-10-30: at least 8 looks before a swing is read
-            let hi = 0, hiAt = 0; ph.forEach(([, v], i) => { if (v > hi) { hi = v; hiAt = i; } });
-            const lo = Math.min(...ph.slice(0, hiAt + 1).map(([, v]) => v)), run = hi / lo - 1;
-            const r = (hi - lv.price) / Math.max(1e-18, hi - lo), after = ph.slice(hiAt + 1).map(([, v]) => v);
-            if (run < (this.cfg.fibMinRun ?? 0.04)) { quiet("fib: no swing to read"); return null; }   // a 4% swing cannot pay a 2.9% round trip
-            if (r < (this.cfg.fibLo ?? 0.236)) { quiet("fib: above the zone, waiting for the pullback"); return null; }
-            if (r > (this.cfg.fibHi ?? 0.618)) { quiet("fib: broke 0.618, swing failed"); return null; }
-            if (!after.length) { quiet("fib: in the zone, waiting for the bounce"); return null; }
-            const minSince = Math.min(...after), minAt = after.lastIndexOf(minSince);
-            if ((hi - minSince) / Math.max(1e-18, hi - lo) > (this.cfg.fibDeep ?? 0.786)) { quiet("fib: dipped past 0.786, swing failed"); return null; }
-            if (hi / lv.price - 1 < (this.cfg.fibMinTp ?? 0.02)) { quiet("fib: target too close to pay the fees"); return null; }
-            // a real bounce: 0.5% off the low since the high, and the low held for 2 looks (one up-tick in a fall is not a bounce)
-            if (!(lv.price > minSince * 1.005 && minAt <= after.length - 3)) { quiet("fib: in the zone, waiting for the bounce"); return null; }
-            mom = run; s_pull = r; fibTp = hi / lv.price - 1;
-          } else if (this.cfg.pullback !== 0) {
+          if (this.cfg.pullback !== 0) {
             const ph = (this.ph.get(m.pool) || []).filter(([t]) => this.now() - t <= 120000);
             if (ph.length < 4) { quiet("live: watching its price first"); return null; }
             let lo = Infinity, hi = 0, hiAt = -1; ph.forEach(([, v], i) => { if (v < lo && hiAt < 0) lo = v; if (v > hi) { hi = v; hiAt = i; } });
@@ -205,26 +236,6 @@ export class Engine {
       const cs = hit.cs.slice(), last = cs[cs.length - 1], minute = Math.floor(this.now() / 60000) * 60000;
       if (last.t >= minute) cs[cs.length - 1] = { ...last, c: lv.price, h: Math.max(last.h, lv.price), l: Math.min(last.l, lv.price), v: Math.max(last.v, lv.vol5 / 5) };
       else cs.push({ t: minute, o: last.c, h: Math.max(last.c, lv.price), l: Math.min(last.c, lv.price), c: lv.price, v: lv.vol5 / 5 });
-      if (this.cfg.fib !== 0) {
-        // Alex 2026-10-30: "read the chart and throw the fibonacci tool on it". The swing on the 1-minute chart (last 30 min):
-        // low -> high; buy the bounce inside the golden zone (0.382-0.618 retrace), never a new high, never a broken swing.
-        const w = cs.slice(-30); let hi = 0, hiAt = 0; w.forEach((k, i) => { if (k.h > hi) { hi = k.h; hiAt = i; } });
-        const lo = Math.min(...w.slice(0, hiAt + 1).map((k) => k.l)), run = hi / lo - 1, r = (hi - lv.price) / Math.max(1e-18, hi - lo);
-        const ph = (this.ph.get(m.pool) || []).filter(([t]) => t > w[hiAt].t), after = ph.map(([, v]) => v);
-        const minSince = Math.min(...w.slice(hiAt + 1).map((k) => k.l), ...after, lv.price), minAt = after.lastIndexOf(minSince);
-        if (!(run >= (this.cfg.fibMinRun ?? 0.04))) { quiet("fib: no swing on the chart"); return null; }
-        if (r < (this.cfg.fibLo ?? 0.236)) { quiet("fib: above the zone, waiting for the pullback"); return null; }
-        if (r > (this.cfg.fibHi ?? 0.618)) { quiet("fib: broke 0.618, swing failed"); return null; }
-        if ((hi - minSince) / Math.max(1e-18, hi - lo) > (this.cfg.fibDeep ?? 0.786)) { quiet("fib: dipped past 0.786, swing failed"); return null; }
-        const fibTp = hi / lv.price - 1;
-        if (fibTp < (this.cfg.fibMinTp ?? 0.02)) { quiet("fib: target too close to pay the fees"); return null; }
-        if (after.length < 8) { quiet("live: watching its price first"); return null; }
-        if (!(lv.price > minSince * 1.005 && minAt <= after.length - 3 && cs.length >= 2 && cs[cs.length - 1].c > cs[cs.length - 2].c)) { quiet("fib: in the zone, waiting for the bounce"); return null; }
-        if ((lv.liqUsd ?? 0) < (this.cfg.liveMinLiq ?? 15000)) { quiet("live: pool too thin to get out of"); return null; }
-        if (!((lv.buys5 || 0) >= (lv.sells5 || 0) * (this.cfg.liveBuyRatio ?? 1.15))) { quiet("fib: sellers in control"); return null; }
-        const sg = { fibTp: +fibTp.toFixed(4), path: "fib", rise: +run.toFixed(4), vol5: lv.vol5 || 0, buys: lv.buys5 || 0, sells: lv.sells5 || 0, ratio: (lv.buys5 || 0) / Math.max(1, lv.sells5 || 0), liq: lv.liqUsd ?? 0, fib: +r.toFixed(3) };
-        return { cs, sig: sg, s: { ok: true, why: `fib buy (chart): 30-min swing +${(run * 100).toFixed(1)}%, at the ${r.toFixed(3)} retrace and bouncing, high +${((hi / lv.price - 1) * 100).toFixed(1)}% above` } };
-      }
       const sig = entrySignal(cs, cs.length - 1, this.cfg, { ...m, ...lv });
       if (!sig.ok) { if (!/no breakout|volume/.test(sig.why)) { if (loud) this.#skip(m.name, sig.why); } else quiet(sig.why.startsWith("volume") ? "volume too low" : "not near its high"); return null; }        // the thousand quiet checks a minute are not news
       const r3 = cs.length >= 4 && cs[cs.length - 4].c > 0 ? lv.price / cs[cs.length - 4].c - 1 : 0;   // the 3-minute breakout %
@@ -253,7 +264,7 @@ export class Engine {
       // size: rising -> full size (1.0, still capped by the executor), saturating / late copycat -> 0.618, else the organism's
       const mul = hot ? 1 : nh && (nh.trend === "saturating" || nh.late) ? O.INV : O.sizeMul(this.org, g.sig);
       const s1 = nh ? { ...g.s, why: `${g.s.why} · ${narrWhy(nh)}` } : g.s;
-      await this.#consider(m, g.cs, it ? { ...s1, why: `${s1.why} · ${this.#intelWhy(it)}` } : s1, { m: mul, sig: g.sig, narr: nh, intel: it });
+      await this.#consider(m, g.cs, it ? { ...s1, why: `${s1.why} · ${this.#intelWhy(it)}` } : s1, { m: mul, sig: g.sig, narr: nh, intel: it, cr: g.cr });
     }
     if (this.paused || this.open.size >= this.cfg.maxOpen) return;
     const pick = O.idlePick(this.org, this.now(), (m) => !!this.#gate(m, false) && this.narr?.heat(m)?.trend !== "dying" && !(() => { const it = this.#intel(m); return it && it.full && it.certainty < 0.4; })());
@@ -261,7 +272,7 @@ export class Engine {
       const g = this.#gate(pick.cand, false);
       this.cool.set(pick.cand.pool, this.now() + 30000);
       const it = this.#intel(pick.cand);
-      await this.#consider(pick.cand, g.cs, { ...g.s, why: `${g.s.why} (idle pick: least-bad band, 0.618 size)${it ? ` · ${this.#intelWhy(it)}` : ""}` }, { m: O.INV, sig: g.sig, intel: it });
+      await this.#consider(pick.cand, g.cs, { ...g.s, why: `${g.s.why} (idle pick: least-bad band, 0.618 size)${it ? ` · ${this.#intelWhy(it)}` : ""}` }, { m: O.INV, sig: g.sig, intel: it, cr: g.cr });
     }
   }
   #followSignals() { if (!this.whales) return []; try { return this.whales.signals() || []; } catch (e) { this.#err("whales", e); return []; } }
@@ -363,12 +374,13 @@ export class Engine {
       const restRet = r.ok && r.outAmount != null && p.stake > 0 ? Number(r.outAmount) / 1e9 / p.stake - 1 : est.ret ?? ret;   // the part still held at the exit, alone
       const trig = typeof est.trig === "number" ? est.trig : null, holdS = +((this.now() - p.at) / 1000).toFixed(1);
       // fee: the buy's network fee from the chain (the sale's fee is already inside its net lamports); unknown -> the cap
-      const learn = { sig: p.sig || null, slAt: typeof p.sl === "number" ? p.sl : null, holdS, stake: stake0, feeLamports: p.buyFee ?? this.exec.caps?.maxFeeLamports ?? null, trig, gap: trig != null ? +(restRet - trig).toFixed(4) : null, restRet: +restRet.toFixed(4), peak: p.hi ?? null, low: p.low ?? null, tPeak: p.tPeak ?? null, tLow: p.tLow ?? null, tPartAt: p.tPartAt ?? null, exitKind: est.kind || (why === "you pressed Sell" ? "manual" : "chart") };
+      const learn = { sig: p.sig || null, slAt: typeof p.sl === "number" ? p.sl : null, holdS, stake: stake0, feeLamports: p.buyFee ?? this.exec.caps?.maxFeeLamports ?? null, trig, gap: trig != null ? +(restRet - trig).toFixed(4) : null, restRet: +restRet.toFixed(4), peak: p.hi ?? null, low: p.low ?? null, tPeak: p.tPeak ?? null, tLow: p.tLow ?? null, tPartAt: p.tPartAt ?? null, feat: p.cr?.feat ?? null, exitKind: est.kind || (why === "you pressed Sell" ? "manual" : "chart") };
       const pnl = (p.stake0 ?? p.stake) * ret;   // ret is on the whole stake (banked part included), so the P&L is too; p.stake is only what was left after the golden take
       this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why, note, exitPx: x.exitPx, est: p.est || null, ...learn, sellFee: r.feeLamports ?? null });
       { const until = this.now() + (ret <= -0.5 ? 7 * 24 * 60 : ret < 0 ? (this.cfg.loserCoolMin ?? 60) : this.cfg.cooldownMin) * 60000;  /* a rug is banned for a week */ this.cool.set(p.pool, until); if (p.mint) this.cool.set(p.mint, until); }   // by coin, not just by pool (PODCAT x3)   // lesson 7: a coin that just lost gets an hour off (FLOAT x4)       // never re-enter the same coin straight after an exit
       this.open.delete(p.id); this.sellTries.delete(p.id); this.peaks.delete(p.id); this.hist.delete(p.id);
       this.closed.push({ ...p, type: "close", ret, pnl, why, note, at: this.now(), ...learn });
+      if (p.cr) { try { guardStep(this.crGuard, { ret, feat: p.cr.feat }); } catch (e) { this.#err("chartRead", e); } }
       if (p.follow?.length && this.whales) { try { this.whales.credit(p.follow, ret); } catch (e) { this.#err("whales", e); } }
       // the living organism (build 52; replaces the momMin tuner): p, W, L and fees per band from this REAL fill, and every 8
       // closes a golden-step re-fit of sl / partAt / tp inside their clamps. momMin stays where it is set (the floor is 3%).
@@ -404,7 +416,7 @@ export class Engine {
       }
     }
     // lesson 5: only pools priced in SOL. A '/ PUMP' or '/ USDC' pool's price is a different market from the SOL route Jupiter fills (HOYEAH: 'take profit +12%' filled at -19.7%).
-    const list = [...this.watch.values()].filter((m) => !/ \/ (?!SOL$)\S+$/.test(m.name || "") && ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) >= (this.fastMode ? Math.max(this.cfg.minLiqUsd ?? 0, this.cfg.scanMinLiq ?? 10000) : this.cfg.minLiqUsd)).sort((a, b) => b.vol5 - a.vol5).slice(0, this.fastMode ? 40 : this.scanTop);
+    const list = [...this.watch.values()].filter((m) => !/ \/ (?!SOL$)\S+$/.test(m.name || "") && ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) >= (this.fastMode ? Math.max(this.cfg.minLiqUsd ?? 0, this.cfg.scanMinLiq ?? 10000) : this.cfg.minLiqUsd)).sort((a, b) => b.vol5 - a.vol5).slice(0, this.fastMode ? (this.cfg.scanMax ?? 150) : this.scanTop);
     const all = [...this.watch.values()];
     this.watching = { total: all.length, young: all.filter((m) => ageMin(m) < this.cfg.minAgeMin).length, thin: all.filter((m) => ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) < this.cfg.minLiqUsd).length, ready: list.length };
     this.ready = list;
@@ -455,7 +467,7 @@ export class Engine {
     if (!(stake <= size + 1e-9)) { this.#skip(m.name, "stake above size: refused"); return; }
     const sigN = o.sig ? Object.fromEntries(Object.entries(o.sig).map(([k, v]) => [k, typeof v === "number" ? +v.toFixed(4) : v])) : null;
     const cx = o.intel ? exitsFor(o.intel.certainty, this.cfg) : {};   // high certainty: wider stop, wider trail, longer hold. Never a bigger size.
-    const lv0 = { sig: sigN, m: mul, narr: o.narr ? { label: o.narr.label, trend: o.narr.trend } : null, t0: this.now(), sl: cx.sl ?? this.cfg.sl, tp: this.cfg.tp, partAt: this.cfg.partAt, lockFrom: this.cfg.lockFrom, ...(cx.trail ? { trail: cx.trail } : {}), ...(cx.maxHoldMin ? { maxHoldMin: cx.maxHoldMin } : {}), ...(o.follow ? { follow: o.follow } : {}), certainty: o.intel ? o.intel.certainty : null, intel: o.intel ? (o.intel.reasons || []).slice(0, 8) : null };   // the exits it was bought under
+    const lv0 = { sig: sigN, m: mul, narr: o.narr ? { label: o.narr.label, trend: o.narr.trend } : null, t0: this.now(), sl: cx.sl ?? this.cfg.sl, tp: this.cfg.tp, partAt: this.cfg.partAt, lockFrom: this.cfg.lockFrom, ...(cx.trail ? { trail: cx.trail } : {}), ...(cx.maxHoldMin ? { maxHoldMin: cx.maxHoldMin } : {}), ...(o.follow ? { follow: o.follow } : {}), ...(o.cr ? { cr: { feat: o.cr.feat, sl: o.cr.sl, tp2: o.cr.tp2, trail: o.cr.trail, deepPx: o.cr.deepPx, H: o.cr.H, L: o.cr.L, fallback: !!o.cr.fallback } } : {}), certainty: o.intel ? o.intel.certainty : null, intel: o.intel ? (o.intel.reasons || []).slice(0, 8) : null };   // the exits it was bought under
     this.journal.write({ type: "intent", id, name: m.name, mint: m.mint, enter: s.why });   // on disk BEFORE anything is done
     const f = await this.exec.buy({ mint: m.mint, pool: m.pool, usd: stake, scale: mul });
     if (!f.ok && f.unknown && f.orderId) {
@@ -512,6 +524,7 @@ export class Engine {
       narrative: this.narr ? this.narr.summary() : null,
       whales: this.whales ? (() => { try { return { ...this.whales.summary(), following: [...this.open.values()].filter((p) => p.follow?.length).map((p) => ({ name: p.name, wallets: p.follow.length })) }; } catch { return null; } })() : null,
       intel: this.intel ? this.ready.slice(0, 6).map((m) => { const c = this.intel.cache.get(m.mint); return c ? { name: m.name, certainty: c.certainty, reasons: c.reasons.slice(0, 5) } : null; }).filter(Boolean) : null,
+      chartRead: { scoreMin: this.crGuard.scoreMin, closes: this.crGuard.n, last: this.crGuard.last, pStar: 0.65, charts: this.chart.size, fetchesLastMin: this.crFetches.length, exits: this.cfg.crExits === 1 ? "chartExit" : "data-fit (build 65)" },
       organism: { ...O.summary(this.org), exits: { sl: this.cfg.sl, partAt: this.cfg.partAt, tp: this.cfg.tp, lockFrom: this.cfg.lockFrom } },
       exits: { sl: this.cfg.sl, tp: this.cfg.tp, trailFrom: this.cfg.trailFrom, trail: this.cfg.trail, maxHoldMin: this.cfg.maxHoldMin },
       trades: c.length, wins: wins.length, winRate: c.length ? +(wins.length / c.length).toFixed(3) : null,
