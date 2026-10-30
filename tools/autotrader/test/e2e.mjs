@@ -10,6 +10,9 @@ import { start } from "../src/server.mjs";
 import { b58encode } from "../src/lib/solana.mjs";
 import { fakeFeed, moon, up, base } from "./fakefeed.mjs";
 import { world } from "./fakechain.mjs";
+import { DEFAULTS } from "../src/lib/strategy.mjs";
+// the page test drives the fake breakout chart through the server; fib entry rules are proven in fib.test / fixes.test
+Object.assign(DEFAULTS, { fib: 0, scanMinLiq: 0 });
 
 const require = createRequire(path.join(path.dirname(new URL(import.meta.url).pathname), "..", "..", "..", "package.json"));
 let pw; try { pw = require("playwright"); } catch { pw = require("playwright-core"); }
