@@ -189,6 +189,21 @@ export class Engine {
       const cs = hit.cs.slice(), last = cs[cs.length - 1], minute = Math.floor(this.now() / 60000) * 60000;
       if (last.t >= minute) cs[cs.length - 1] = { ...last, c: lv.price, h: Math.max(last.h, lv.price), l: Math.min(last.l, lv.price), v: Math.max(last.v, lv.vol5 / 5) };
       else cs.push({ t: minute, o: last.c, h: Math.max(last.c, lv.price), l: Math.min(last.c, lv.price), c: lv.price, v: lv.vol5 / 5 });
+      if (this.cfg.fib !== 0) {
+        // Alex 2026-10-30: "read the chart and throw the fibonacci tool on it". The swing on the 1-minute chart (last 30 min):
+        // low -> high; buy the bounce inside the golden zone (0.382-0.618 retrace), never a new high, never a broken swing.
+        const w = cs.slice(-30); let hi = 0, hiAt = 0; w.forEach((k, i) => { if (k.h > hi) { hi = k.h; hiAt = i; } });
+        const lo = Math.min(...w.slice(0, hiAt + 1).map((k) => k.l)), run = hi / lo - 1, r = (hi - lv.price) / Math.max(1e-18, hi - lo);
+        const ph = this.ph.get(m.pool) || [], prev = ph.length >= 2 ? ph[ph.length - 2][1] : null;
+        if (!(run >= (this.cfg.fibMinRun ?? 0.04))) { quiet("fib: no swing on the chart"); return null; }
+        if (r < 0.382) { quiet("fib: above 0.382, waiting for the golden zone"); return null; }
+        if (r > 0.618) { quiet("fib: broke 0.618, swing failed"); return null; }
+        if (!(prev != null && lv.price > prev)) { quiet("fib: in the zone, waiting for the bounce"); return null; }
+        if ((lv.liqUsd ?? 0) < (this.cfg.liveMinLiq ?? 15000)) { quiet("live: pool too thin to get out of"); return null; }
+        if (!((lv.buys5 || 0) >= (lv.sells5 || 0) * (this.cfg.liveBuyRatio ?? 1))) { quiet("fib: sellers in control"); return null; }
+        const sg = { path: "fib", rise: +run.toFixed(4), vol5: lv.vol5 || 0, buys: lv.buys5 || 0, sells: lv.sells5 || 0, ratio: (lv.buys5 || 0) / Math.max(1, lv.sells5 || 0), liq: lv.liqUsd ?? 0, fib: +r.toFixed(3) };
+        return { cs, sig: sg, s: { ok: true, why: `fib buy (chart): 30-min swing +${(run * 100).toFixed(1)}%, at the ${r.toFixed(3)} retrace and bouncing, high +${((hi / lv.price - 1) * 100).toFixed(1)}% above` } };
+      }
       const sig = entrySignal(cs, cs.length - 1, this.cfg, { ...m, ...lv });
       if (!sig.ok) { if (!/no breakout|volume/.test(sig.why)) { if (loud) this.#skip(m.name, sig.why); } else quiet(sig.why.startsWith("volume") ? "volume too low" : "not near its high"); return null; }        // the thousand quiet checks a minute are not news
       const r3 = cs.length >= 4 && cs[cs.length - 4].c > 0 ? lv.price / cs[cs.length - 4].c - 1 : 0;   // the 3-minute breakout %
