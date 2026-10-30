@@ -77,7 +77,7 @@ export class Engine {
     this.crFetches = this.crFetches.filter((x) => t - x < 60000);
     const tickR = (pool) => { const ph = this.ph.get(pool) || []; if (ph.length < 4) return null; let hi = 0, at = 0; ph.forEach(([, v], i) => { if (v > hi) { hi = v; at = i; } }); const lo = Math.min(...ph.slice(0, at + 1).map(([, v]) => v)), P = ph[ph.length - 1][1]; return hi > lo ? (hi - P) / (hi - lo) : null; };
     const open = [...this.open.values()].map((p) => p.pool);
-    const cands = list.filter((m) => (this.live.get(m.pool)?.liqUsd ?? m.liqUsd ?? 0) >= CR.crLiq).map((m) => { const ch = this.chart.get(m.pool), tr = tickR(m.pool), r = ch?.lastR ?? tr; return { pool: m.pool, ch, r, never: !ch, vol: m.vol5 || 0 }; })
+    const cands = list.filter((m) => (this.live.get(m.pool)?.liqUsd ?? m.liqUsd ?? 0) >= CR.crLiq).map((m) => { const ch = this.chart.get(m.pool), tr = tickR(m.pool), r = ch?.lastR ?? tr; return { pool: m.pool, ch, r, never: !ch?.cs1 && !ch?.fail, vol: m.vol5 || 0 }; })
       .filter((x) => x.never || (x.r != null && x.r >= 0.4 && x.r <= 0.9))
       .sort((a, b) => (a.r != null && b.r != null ? Math.abs(a.r - 0.618) - Math.abs(b.r - 0.618) : a.r != null ? -1 : b.r != null ? 1 : b.vol - a.vol));
     let n = 0;
@@ -128,7 +128,7 @@ export class Engine {
       const sl = p.sl ?? c.sl, tp = p.tp ?? c.tp, partAt = p.partAt ?? c.partAt ?? 0.25, lockFrom = p.lockFrom ?? c.lockFrom ?? 0.04;   // the levels it was bought under   // the deepest dip it showed (a ratio, so the golden take does not move it): tells the next check whether winners dip before they run
       // golden take (Alex): at +25% sell 38.2% (1 - 0.618). That banks 0.4775 of the stake; the 61.8% left rides the trail.
       // Worst case after this (the win lock at +1%): 0.4775 + 0.618 x 1.01 = 1.10, so the trade ends at least about +10% before fees.
-      if (real && !p.partDone && this.exec.sellPart && tp > partAt && price >= entry * (1 + partAt) && price < entry * (1 + tp)) {
+      if (!(p.cr && c.crExits === 1) && real && !p.partDone && this.exec.sellPart && tp > partAt && price >= entry * (1 + partAt) && price < entry * (1 + tp)) {
         p.partDone = true; p.tPartAt = held;
         const r = await this.exec.sellPart({ mint: p.mint, frac: c.partFrac ?? 0.382 }).catch((e) => ({ ok: false, why: e.message }));
         if (r.ok) {
