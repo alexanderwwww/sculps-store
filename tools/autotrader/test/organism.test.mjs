@@ -89,15 +89,37 @@ test("a replay row with tLow < tPeak takes the stop", () => {
   assert.equal(O.replayRow(org, row({ peak: 0.2, low: -0.1, tLow: 1000, tPeak: 5000 }), s), -0.08 + O.COLD.gS);
   assert.ok(O.replayRow(org, row({ peak: 0.2, low: -0.1, tLow: 9000, tPeak: 5000 }), s) > 0, "the peak came first: takes");
 });
-test("exits are fixed by Alex: stop -2%, first take +5%, the rest to +100%; refit can only land inside them", () => {
-  assert.deepEqual(O.CLAMP, { sl: [-0.02, -0.02], partAt: [0.05, 0.05], tp: [1, 1] });
+test("lesson 48: exits move with its own trips, inside -30%..-2% and +5%..+20%, size never touched", () => {
+  assert.deepEqual(O.CLAMP, { sl: [-0.30, -0.02], partAt: [0.05, 0.20], tp: [1, 1] });
+  // 40 trips traded under a -20% stop: each rose to +12% first, then fell to -15%, and the rest ended at -10%.
+  // Half at +5% banks +5% on half and loses on the rest; half at +12% banks more. Must move partAt up, stop within what the rows cover.
   const org = O.newOrg();
-  for (let i = 0; i < 20; i++) O.update(org, { ret: 0.07, sig: {}, peak: 0.3, low: -0.01, tPeak: 20000, tLow: 1000, restRet: 0.1, holdS: 60 });
-  const ex = O.refitExits(org, { sl: -0.02, partAt: 0.05, tp: 1, partFrac: 0.5 });
-  if (ex) for (const [k, [lo, hi]] of Object.entries(O.CLAMP)) assert.ok(ex[k] >= lo && ex[k] <= hi, k);
+  for (let i = 0; i < 40; i++) O.update(org, { ret: -0.02, sig: {}, slAt: -0.2, peak: 0.12, low: -0.15, tPeak: 20000, tLow: 90000, restRet: -0.1, holdS: 120, exitKind: "time" });
+  org.closes = 40;
+  const ex = O.refitExits(org, { sl: -0.2, partAt: 0.05, tp: 1, partFrac: 0.5 });
+  assert.ok(ex, "it learned"); assert.equal(ex.partAt, 0.12); assert.ok(ex.sl >= -0.30 && ex.sl <= -0.02); assert.equal(ex.tp, 1); assert.equal(ex.stake, undefined);
 });
-test("stop is fixed at -2% (Alex 2026-10-30)", () => {
-  assert.deepEqual(O.CLAMP.sl, [-0.02, -0.02]);
+test("lesson 48: a trip stopped at -2% never judges a wider stop (what came after the sale is unknown)", () => {
+  const org = O.newOrg();
+  for (let i = 0; i < 40; i++) O.update(org, { ret: -0.03, sig: {}, slAt: -0.02, peak: 0.01, low: -0.03, tPeak: 1000, tLow: 3000, restRet: -0.03, holdS: 5, exitKind: "stop" });
+  org.closes = 40;
+  assert.equal(O.covers(org.book[0], { sl: -0.2 }), false); assert.equal(O.covers(org.book[0], { sl: -0.02 }), true);
+  const ex = O.refitExits(org, { sl: -0.02, partAt: 0.05, tp: 1, partFrac: 0.5 });
+  assert.ok(!ex || ex.sl === -0.02, "no wider stop invented from stopped trips");
+});
+test("lesson 48: a set that wins one half and loses the other is not adopted", () => {
+  const org = O.newOrg();
+  // first half: coins ran to +25% then the rest fell to -10% (a higher take pays); second half: +6% then -10% (only +5% pays)
+  for (let i = 0; i < 25; i++) O.update(org, { ret: 0, sig: {}, slAt: -0.2, peak: 0.25, low: -0.01, tPeak: 2000, tLow: 9000, restRet: -0.1, holdS: 60, exitKind: "time" });
+  for (let i = 0; i < 25; i++) O.update(org, { ret: 0, sig: {}, slAt: -0.2, peak: 0.06, low: -0.01, tPeak: 2000, tLow: 9000, restRet: -0.1, holdS: 60, exitKind: "time" });
+  org.closes = 50;
+  assert.equal(O.refitExits(org, { sl: -0.2, partAt: 0.05, tp: 1, partFrac: 0.5 }), null, "a take that only paid in one half is refused");
+});
+test("lesson 48: a sure coin's stop is 1.5x the base, never past -30%", async () => {
+  const { exitsFor } = await import("../src/lib/intel.mjs");
+  assert.equal(exitsFor(0.95, { sl: -0.02 }).sl, -0.05);
+  assert.equal(exitsFor(0.95, { sl: -0.2 }).sl, -0.3);
+  assert.equal(exitsFor(0.95, { sl: -0.3 }).sl, -0.3);
 });
 
 // ------------------------------------------------------------------ the engine loop, fake feed and executor
@@ -125,7 +147,7 @@ function world({ onlyLosers = false, journalFile } = {}) {
     quotes: async (ids) => new Map(ids.filter((id) => pools.has(id)).map((id) => { const k = pools.get(id).kind; return [id, { price: price(id), liqUsd: k === "W" ? 60000 : 30000, buys5: k === "W" ? 300 : 110, sells5: 100, vol5: k === "W" ? 20000 : 8000 }]; })),
     newPools: async () => [], trendingPools: async () => [], candles: async () => [],
   };
-  const cfg = { ...DEFAULTS, pullback: 0, fib: 0, momMin: 0.03, momMax: 0.5, liveMinVol5: 500, liveMinFlow: 3, liveBuyRatio: 0.8, liveMinLiq: 25000, entryMinLiq: 25000, sl: -0.08, tp: 0.1, partAt: 0.05, partFrac: 0.5, lockFrom: 0.03, lockAt: 0.005, staleMin: 2, maxHoldMin: 5, cooldownMin: 2, maxOpen: 8 };
+  const cfg = { ...DEFAULTS, pullback: 0, fib: 0, momMin: 0.03, momMax: 0.5, liveMinVol5: 500, liveMinFlow: 3, liveBuyRatio: 0.8, liveMinLiq: 25000, entryMinLiq: 25000, sl: -0.08, tp: 0.1, partAt: 0.05, partFrac: 0.5, lockFrom: 0.03, lockAt: 0.005, staleMin: 2, maxHoldMin: 1, cooldownMin: 2, maxOpen: 8 };   // lesson 48: the refit moves the take to +12% here, so a winner is held to the time stop; 1 min keeps the bands cycling
   const make = (org = null) => {
     const e = new Engine({ feed, exec, cfg, journal: new Journal(journalFile), rug: async () => ({ pass: true, reason: "ok" }), now: () => now, org, rng: seeded(3) });
     e.learned = []; e.onLearn = (c) => e.learned.push(JSON.parse(JSON.stringify(c)));
@@ -149,6 +171,8 @@ test("engine loop: 60 trades, winning band favoured, losing band shrinks, caps h
     for (const p of e.open.values()) if (!opens.has(p.id)) opens.set(p.id, { sl: p.sl, tp: p.tp, stake: p.stake });
   }
   assert.ok(w.sells.length >= 60, `closed ${w.sells.length}`);
+  // lesson 48: it changed its own exits from what its trips did: losers fall 1%/s, so the -8% stop tightens; winners run, so the take moves up
+  assert.ok(e.cfg.sl > -0.08 && e.cfg.sl >= O.CLAMP.sl[0], `sl ${e.cfg.sl}`); assert.ok(e.cfg.partAt > 0.05, `partAt ${e.cfg.partAt}`);
   // caps: no stake above the size, multiplier only 0.618 or 1
   for (const b of w.buys) assert.ok(b.sol <= SIZE + 1e-12 && (b.sol === SIZE || b.sol === +(SIZE * 0.618).toFixed(5)), JSON.stringify(b));
   // learning: the winning band (rise 5-10%, liq 50-100k, buyers 3x) scores above the losing one, and the late buys show it

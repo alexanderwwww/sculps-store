@@ -70,7 +70,9 @@ export function score({ rc = null, dex = null, flow = null, x = null, smart = 0 
 /** The exits a certainty earns. Size is never touched. High: stop widens to -5%, a 15% trail, a longer hold. */
 export function exitsFor(certainty, cfg) {
   if (!(certainty >= 0.7)) return {};
-  return { sl: +Math.min(cfg.sl ?? -0.02, -0.05 + 0.03 * (1 - Math.min(1, (certainty - 0.7) / 0.2))).toFixed(4), trail: Math.max(cfg.trail ?? 0.1, 0.15), maxHoldMin: Math.round((cfg.maxHoldMin ?? 8) * 2) };
+  // lesson 48: the wider the base stop, the wider the sure-coin stop: up to 1.5x the base at certainty 0.9+, never past -30%
+  const k = Math.min(1, (certainty - 0.7) / 0.2), base = cfg.sl ?? -0.02;
+  return { sl: +Math.max(-0.30, Math.min(base, -0.05 + 0.03 * (1 - k), base * (1 + 0.5 * k))).toFixed(4), trail: Math.max(cfg.trail ?? 0.1, 0.15), maxHoldMin: Math.round((cfg.maxHoldMin ?? 8) * 2) };
 }
 
 export class Intel {

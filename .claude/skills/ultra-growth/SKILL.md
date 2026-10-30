@@ -53,3 +53,12 @@ Code: `tools/autotrader/src/lib/whales.mjs`, tests `test/whales.test.mjs`. Free 
 
 ## Build 64 (2026-10-30): cost edges
 Laddered priority fee (pay only what lands), token-account rent reclaimed after every full sell plus a stray sweep, and a Token-2022 trap stop ahead of rugcheck. Settings unchanged: 0.016 SOL, stop -2%, half at +5%, rest to +100%, no pause line. Details: `.claude/skills/gmgn-fib/research-2026-10-29-lessons.md`.
+
+## The formula (build 65, 2026-10-30) — learns from its own trips
+Live cfg (bridge, confirmed in /status): `sl -0.20`, `partAt 0.08`, `partFrac 0.5`, `trailFrom 0.08`, `trail 0.05`, `lockFrom 0.08`, `lockAt 0.01`, `tp 1`, `maxHoldMin 10`. Fibonacci entries unchanged. Size 0.016 SOL, never raised.
+1. Buy on the Fibonacci pullback (fibLo 0.5 .. fibHi 0.786), rug check untouched.
+2. Sell half at +8% (Alex's +5% tested at -1.6% a trade over 133 trips; +8% is the closest that made money).
+3. The rest rides a 5% trailing stop, the stop moves to +1% after the first take, +100% is the cap.
+4. Stop -20%, wider to -30% for high-certainty intel coins; everything out after 10 minutes.
+5. Every 10 closes it re-fits stop and first take on its own last 50 trips and changes only when the new set wins both halves (organism.refitExits, CLAMP sl -0.30..-0.02, partAt 0.05..0.20).
+Expected: about +0.9% a trade net of 3.5% cost, ~0.0007 SOL an hour at 0.016 and 5 trips an hour. Thin edge from one sample; re-check after 30 trips on build 65. Rent is recovered (separate CloseAccount tx), not a leak. Next lever: slippage/fees (~3.5% a trip).

@@ -11,8 +11,12 @@ export const IDLE_FRESH_MS = 97000;                      // the whole idle windo
 export const PART_FRAC = 0.382;                          // same default the engine sells at (engine.mjs partFrac ?? 0.382)
 export const SIZE_MIN_N = 13;                            // closes a band needs behind it before full size
 export const COLD = { W: 0.05, L: 0.06, fee: 0.004, gS: -0.04, gT: 0 };   // lesson 39: real W ~5%, L ~6% after the exit gap; stops filled 1.5-10 pts past the level
-export const CLAMP = { sl: [-0.02, -0.02],   // Alex 2026-10-30: "-2% and u are out"; was [-0.08, -0.04]   // the stop may tighten, never widen past the live -8% (lesson 3: -8% filled at -19%)
-  partAt: [0.05, 0.05], tp: [1, 1] };   // Alex 2026-10-30: first take at +5%, the rest rides to +100%
+// lesson 48 (build 65, Alex: "a hunter hunts with instinct and logic ... act different based on experience, that means data"):
+// 133 on-chain trips showed stop -2% / half at +5% loses about 1.6% a trade. The exits now move with Ultra's own results,
+// inside these bounds: Alex's -2% and +5% stay reachable, the stop never goes past -30%, +100% stays the cap. Size never moves.
+export const CLAMP = { sl: [-0.30, -0.02], partAt: [0.05, 0.20], tp: [1, 1] };
+export const GRID = { sl: [-0.02, -0.05, -0.10, -0.15, -0.20, -0.25, -0.30], partAt: [0.05, 0.08, 0.12, 0.20] };
+export const REFIT = { every: 10, minRows: 30, window: 50, margin: 0.003 };
 const EDGES = { rise: [0.05, 0.1, 0.15, 0.25], ratio: [1.3, 2], vol5: [15000, 50000], liq: [50000, 100000] };
 export const DIMS = ["rise", "ratio", "vol5", "liq", "path"];
 const fin = (x) => typeof x === "number" && Number.isFinite(x);
@@ -55,7 +59,7 @@ export function update(org, rec, { weight = 1 } = {}) {
     const m = rec.exitKind === "stop" ? org.gS : org.gT, lk = bk.liq ?? "all";
     for (const k of new Set([lk, "all"])) m[k] = LAMBDA * (fin(m[k]) ? m[k] : rec.exitKind === "stop" ? COLD.gS : COLD.gT) + (1 - LAMBDA) * rec.gap;
   }
-  org.book.push({ sig: rec.sig || null, liqB: bk.liq ?? null, ret, f, holdS: holdKnown ? holdS : null, peak: rec.peak ?? null, low: rec.low ?? null, tPeak: rec.tPeak ?? null, tLow: rec.tLow ?? null, restRet: rec.restRet ?? ret, exitKind: rec.exitKind || null });
+  org.book.push({ sig: rec.sig || null, liqB: bk.liq ?? null, slAt: fin(rec.slAt) ? rec.slAt : null, ret, f, holdS: holdKnown ? holdS : null, peak: rec.peak ?? null, low: rec.low ?? null, tPeak: rec.tPeak ?? null, tLow: rec.tLow ?? null, restRet: rec.restRet ?? ret, exitKind: rec.exitKind || null });
   if (org.book.length > 89) org.book.splice(0, org.book.length - 89);
   org.closes++;
   return org;
@@ -126,27 +130,29 @@ function objective(org, rows, s) {
   let sr = 0, sm = 0; for (const r of rows) { sr += replayRow(org, r, s) - r.f; sm += Math.max(0.1, r.holdS / 60); }
   return { perMin: sr / sm, perTrade: sr / rows.length };
 }
-/** every 5 closes once 8 rows carry tPeak/tLow: one golden step per setting at most, inside CLAMP. Returns the new exits or null. */
+/** can this row tell how exit set s would have done? A trip stopped out at its own stop says nothing about a WIDER stop
+ *  (what came after the sale is unknown), so it only judges stops at least as tight as the one it traded under. */
+export function covers(r, s) { return !(r.exitKind === "stop" && fin(r.slAt) && s.sl < r.slAt - 1e-9) && !(r.exitKind === "stop" && !fin(r.slAt) && s.sl < -0.02 - 1e-9); }
+/** every 10 closes once 30 replayable trips exist: try every stop x first-take pair on the last 50 trips (net of each trip's
+ *  real fee), and move only when a set beats the current one on BOTH halves of the window and overall by 0.3 points a trade.
+ *  Only sets the window can actually judge (every row covers them) are tried. Returns the new exits or null. */
 export function refitExits(org, cfg) {
   const rows0 = org.book.filter((r) => [r.peak, r.low, r.tPeak, r.tLow, r.restRet, r.f, r.holdS].every(fin));
-  if (rows0.length < 8 || org.closes % 5 !== 0) return null;
-  const rows = rows0.slice(-34);
+  if (rows0.length < REFIT.minRows || org.closes % REFIT.every !== 0) return null;
+  const rows = rows0.slice(-REFIT.window), h = Math.floor(rows.length / 2), A = rows.slice(0, h), Bh = rows.slice(h);
   const cur = { sl: clamp("sl", cfg.sl), partAt: clamp("partAt", cfg.partAt ?? 0.05), tp: clamp("tp", cfg.tp), partFrac: cfg.partFrac ?? PART_FRAC };
-  const out = {}; let moved = false;
-  for (const k of ["sl", "partAt", "tp"]) {
-    const base = objective(org, rows, cur);
-    let best = { v: cur[k], o: base };
-    for (const mul of [INV, PHI]) {
-      const v = +clamp(k, cur[k] * mul).toFixed(4);
-      if (v === cur[k]) continue;
-      if (k === "sl" && v > cur[k] && !((org.gS.all ?? COLD.gS) >= -0.02)) continue;   // a tighter stop only when stops fill near the level
-      const o = objective(org, rows, { ...cur, [k]: v });
-      if (o.perMin > best.o.perMin && o.perTrade - base.perTrade > 0.005) best = { v, o };
-    }
-    if (best.v !== cur[k]) { cur[k] = best.v; moved = true; }
-    out[k] = cur[k];
+  if (!rows.every((r) => covers(r, cur))) return null;
+  const ev = (rs, s) => rs.reduce((a, r) => a + replayRow(org, r, s) - r.f, 0) / rs.length;
+  const base = { all: ev(rows, cur), a: ev(A, cur), b: ev(Bh, cur) };
+  let best = null;
+  for (const sl of GRID.sl) for (const partAt of GRID.partAt) {
+    const s = { ...cur, sl: clamp("sl", sl), partAt: clamp("partAt", partAt) };
+    if (s.sl === cur.sl && s.partAt === cur.partAt) continue;
+    if (!rows.every((r) => covers(r, s))) continue;
+    const o = { all: ev(rows, s), a: ev(A, s), b: ev(Bh, s) };
+    if (o.a > base.a && o.b > base.b && o.all - base.all > REFIT.margin && (!best || o.all > best.o.all)) best = { s, o };
   }
-  return moved ? out : null;
+  return best ? { sl: best.s.sl, partAt: best.s.partAt, tp: cur.tp } : null;
 }
 /** update + refit when due */
 export function step(org, rec, cfg) { update(org, rec); return { exits: cfg ? refitExits(org, cfg) : null }; }
