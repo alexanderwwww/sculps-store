@@ -1,5 +1,5 @@
 // SOL balance of the wallet from the public chain: the number the sizer and the halt rule trust.
-const ENDPOINTS = ["https://api.mainnet-beta.solana.com", "https://solana-rpc.publicnode.com", "https://rpc.ankr.com/solana"];
+const ENDPOINTS = ["https://api.mainnet-beta.solana.com", "https://solana-rpc.publicnode.com"];
 export async function solBalance(wallet, { fetchImpl = fetch, endpoints = ENDPOINTS } = {}) {
   let last;
   for (const url of endpoints) {

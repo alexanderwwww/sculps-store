@@ -2,10 +2,11 @@ import { DEFAULTS, entrySignal, managePosition } from "./strategy.mjs";
 import { rugCheck } from "./rug.mjs";
 import * as O from "./organism.mjs";
 import { why as narrWhy } from "./narrative.mjs";
+import { exitsFor } from "./intel.mjs";
 
 export class Engine {
-  constructor({ feed, exec, journal, cfg = DEFAULTS, rug = rugCheck, now = Date.now, startEq = 100, scanTop = 8, org = null, rng = Math.random, narr = null }) {
-    Object.assign(this, { feed, exec, journal, cfg, rug, now, startEq, scanTop, rng, narr });
+  constructor({ feed, exec, journal, cfg = DEFAULTS, rug = rugCheck, now = Date.now, startEq = 100, scanTop = 8, org = null, rng = Math.random, narr = null, intel = null }) {
+    Object.assign(this, { feed, exec, journal, cfg, rug, now, startEq, scanTop, rng, narr, intel });
     const r = journal.replay();
     this.open = r.open;                       // survives restarts
     this.closed = r.closed;
@@ -51,6 +52,8 @@ export class Engine {
         try { this.cc.set(pool, { cs: await this.feed.candles(pool, { limit: 100 }), at: this.now() }); } catch (e) { this.#err(`candles ${pool.slice(0, 6)}`, e); }
       }
       for (const [k, v] of this.cc) if (this.now() - v.at > 600000) this.cc.delete(k);
+      // intel: research the coins closest to a buy in the background (never awaited), so it is ready before the bounce
+      if (this.intel) for (const m of this.ready.slice(0, 12)) { try { this.intel.want(m); } catch (e) { this.#err("intel", e); } }
       // ULTRA INSTINCT: read the big trades (whales) on what we hold and on the busiest coins we are close to buying, 2 pools a cycle
       if (this.feed.trades) {
         const hot = [...[...this.open.values()].map((p) => p.pool), ...[...this.ready].sort((a, b) => (b.vol5 || 0) - (a.vol5 || 0)).map((m) => m.pool)].filter((p, i, a) => a.indexOf(p) === i && !(this.now() - (this.whaleAt.get(p) || 0) < 30000)).slice(0, 2);
@@ -117,9 +120,9 @@ export class Engine {
       else if (under) why = null;
       else if ((() => { const w = this.whale.get(p.pool); return w && this.now() - w.at < 60000 && w.sell >= (this.cfg.whaleUsd ?? 1500) && w.sell >= 2 * w.buy; })()) { why = "ULTRA INSTINCT: whales leaving"; kind = "whale"; }
       else if ((p.partDone || peak >= entry * (1 + lockFrom)) && price <= entry * (1 + (c.lockAt ?? 0.01))) { why = `locked: was up ${Math.round((peak / entry - 1) * 100)}%, out before it turns red`; kind = "lock"; trig = c.lockAt ?? 0.01; }   // lesson 4: a winner never becomes a loser
-      else if (peak >= entry * (1 + c.trailFrom) && price <= peak * (1 - c.trail)) { why = `trailing stop from +${Math.round((peak / entry - 1) * 100)}%`; kind = "trail"; trig = (peak * (1 - c.trail)) / entry - 1; }
+      else if (peak >= entry * (1 + c.trailFrom) && price <= peak * (1 - (p.trail ?? c.trail))) { why = `trailing stop from +${Math.round((peak / entry - 1) * 100)}%`; kind = "trail"; trig = (peak * (1 - (p.trail ?? c.trail))) / entry - 1; }
       else if (price >= entry * (1 + tp)) { why = `take profit +${+(tp * 100).toFixed(1)}%`; kind = "take"; trig = tp; }
-      else if (this.now() - p.at >= c.maxHoldMin * 60000) { why = "time stop"; kind = "time"; }
+      else if (this.now() - p.at >= (p.maxHoldMin ?? c.maxHoldMin) * 60000) { why = "time stop"; kind = "time"; }
       else if (c.staleMin > 0 && c.staleOk === true && this.now() - p.at >= c.staleMin * 60000 && price / entry - 1 < (c.staleRet ?? 0.01)) { why = `flat after ${c.staleMin}m: money back to work`; kind = "stale"; }   // lesson 2: dead money out
       if (!why) continue;
       const ret = real ? price / entry - 1 : (price * (1 - c.slippage)) / entry - 1 - 2 * c.fee;
@@ -232,21 +235,29 @@ export class Engine {
       // the narrative (build 53): a dying theme is skipped, a hot rising theme passes a looser entry (organism score not needed)
       const nh = this.narr?.heat(m) || null, hot = nh?.trend === "rising" && nh.strong && !nh.late;
       if (nh?.trend === "dying") { this.#skip(m.name, narrWhy(nh)); continue; }
+      // intel (never waits): a coin the research reads as low certainty is skipped; pending or unreachable = medium
+      const it = this.#intel(m);
+      if (it && it.full && it.certainty < 0.4) { this.#skip(m.name, "intel: low certainty"); this.#ev("drop", m.name, `certainty ${it.certainty.toFixed(2)}: ${it.reasons.slice(-3).join(", ")}`); this.cool.set(m.pool, this.now() + 30000); continue; }
       // fewer than 3 closes measured: nothing to choose on yet, so it explores (sizeMul is 0.618 until a band has 13 closes)
       if (!(sc > 0) && O.measured(this.org) && !hot) { O.noteIdle(this.org, g.sig, sc, m, this.now()); continue; }
       this.cool.set(m.pool, this.now() + 30000);
       // size: rising -> full size (1.0, still capped by the executor), saturating / late copycat -> 0.618, else the organism's
       const mul = hot ? 1 : nh && (nh.trend === "saturating" || nh.late) ? O.INV : O.sizeMul(this.org, g.sig);
-      await this.#consider(m, g.cs, nh ? { ...g.s, why: `${g.s.why} · ${narrWhy(nh)}` } : g.s, { m: mul, sig: g.sig, narr: nh });
+      const s1 = nh ? { ...g.s, why: `${g.s.why} · ${narrWhy(nh)}` } : g.s;
+      await this.#consider(m, g.cs, it ? { ...s1, why: `${s1.why} · ${this.#intelWhy(it)}` } : s1, { m: mul, sig: g.sig, narr: nh, intel: it });
     }
     if (this.paused || this.open.size >= this.cfg.maxOpen) return;
-    const pick = O.idlePick(this.org, this.now(), (m) => !!this.#gate(m, false) && this.narr?.heat(m)?.trend !== "dying");
+    const pick = O.idlePick(this.org, this.now(), (m) => !!this.#gate(m, false) && this.narr?.heat(m)?.trend !== "dying" && !(() => { const it = this.#intel(m); return it && it.full && it.certainty < 0.4; })());
     if (pick) {
       const g = this.#gate(pick.cand, false);
       this.cool.set(pick.cand.pool, this.now() + 30000);
-      await this.#consider(pick.cand, g.cs, { ...g.s, why: `${g.s.why} (idle pick: least-bad band, 0.618 size)` }, { m: O.INV, sig: g.sig });
+      const it = this.#intel(pick.cand);
+      await this.#consider(pick.cand, g.cs, { ...g.s, why: `${g.s.why} (idle pick: least-bad band, 0.618 size)${it ? ` · ${this.#intelWhy(it)}` : ""}` }, { m: O.INV, sig: g.sig, intel: it });
     }
   }
+  /** The research on a coin right now (never awaited); null when there is no intel module or it threw. */
+  #intel(m) { if (!this.intel) return null; try { return this.intel.peek(m); } catch (e) { this.#err("intel", e); return null; } }
+  #intelWhy(it) { return `certainty ${it.certainty.toFixed(2)}${it.reasons?.length ? `: ${it.reasons.slice(0, 5).join(", ")}` : ""}`; }
   /** What the screen animates: one event per decision. type: drop | block | buy | sell | fail */
   #ev(type, name, why, extra = {}) { if (this.counts[type] != null) this.counts[type]++; this.events.push({ seq: ++this.seq, at: this.now(), type, name, why, ...extra }); if (this.events.length > 120) this.events.shift(); }
   #err(w, e) { this.errors.push({ at: this.now(), w, msg: String(e.message || e).slice(0, 140) }); if (this.errors.length > 20) this.errors.shift(); }
@@ -413,7 +424,8 @@ export class Engine {
     if (this.exec.sizeSol) { try { size = (await this.exec.sizeSol({ streak: 0, scale: 1 })).sol; stake = (await this.exec.sizeSol({ streak: 0, scale: mul })).sol; } catch (err) { this.#skip(m.name, `wallet balance: ${err.message.slice(0, 60)}`); return; } }
     if (!(stake <= size + 1e-9)) { this.#skip(m.name, "stake above size: refused"); return; }
     const sigN = o.sig ? Object.fromEntries(Object.entries(o.sig).map(([k, v]) => [k, typeof v === "number" ? +v.toFixed(4) : v])) : null;
-    const lv0 = { sig: sigN, m: mul, narr: o.narr ? { label: o.narr.label, trend: o.narr.trend } : null, t0: this.now(), sl: this.cfg.sl, tp: this.cfg.tp, partAt: this.cfg.partAt, lockFrom: this.cfg.lockFrom };   // the exits it was bought under
+    const cx = o.intel ? exitsFor(o.intel.certainty, this.cfg) : {};   // high certainty: wider stop, wider trail, longer hold. Never a bigger size.
+    const lv0 = { sig: sigN, m: mul, narr: o.narr ? { label: o.narr.label, trend: o.narr.trend } : null, t0: this.now(), sl: cx.sl ?? this.cfg.sl, tp: this.cfg.tp, partAt: this.cfg.partAt, lockFrom: this.cfg.lockFrom, ...(cx.trail ? { trail: cx.trail } : {}), ...(cx.maxHoldMin ? { maxHoldMin: cx.maxHoldMin } : {}), certainty: o.intel ? o.intel.certainty : null, intel: o.intel ? (o.intel.reasons || []).slice(0, 8) : null };   // the exits it was bought under
     this.journal.write({ type: "intent", id, name: m.name, mint: m.mint, enter: s.why });   // on disk BEFORE anything is done
     const f = await this.exec.buy({ mint: m.mint, pool: m.pool, usd: stake, scale: mul });
     if (!f.ok && f.unknown && f.orderId) {
@@ -433,8 +445,9 @@ export class Engine {
     const c = this.closed, wins = c.filter((x) => x.ret > 0);
     return {
       mode: this.exec.name, paused: this.paused, unit: this.unit, halted: this.exec.state?.halted || null, ticks: this.ticks, lastTickAt: this.lastTickAt, equity: +this.equity.toFixed(4), curve: this.closed.reduce((a, x) => (a.push(+((a[a.length - 1] ?? this.startEq) + (x.pnl || 0)).toFixed(4)), a), [this.startEq]).slice(-60), startEq: this.startEq,
-      open: [...this.open.values()].map((p) => { const h = this.hist.get(p.id) || [], px = h.length ? h[h.length - 1][1] : null, e0 = p.entryPx; return { id: p.id, name: p.name, mint: p.mint, entryPx: e0, stake: +p.stake.toFixed(5), since: p.at, enter: p.enter, ret: p.val != null && this.now() - p.valAt < 15000 && p.stake > 0 ? p.val / p.stake - 1 : px && e0 ? px / e0 - 1 : null, peak: (() => { const pk = this.peaks.get(p.id); return !pk ? null : +pk.r.toFixed(4); })(), path: e0 ? h.map(([, v]) => +(v / e0 - 1).toFixed(4)) : [] }; }),
+      open: [...this.open.values()].map((p) => { const h = this.hist.get(p.id) || [], px = h.length ? h[h.length - 1][1] : null, e0 = p.entryPx; return { id: p.id, name: p.name, mint: p.mint, certainty: p.certainty ?? null, intel: p.intel ?? null, sl: p.sl ?? null, trail: p.trail ?? null, entryPx: e0, stake: +p.stake.toFixed(5), since: p.at, enter: p.enter, ret: p.val != null && this.now() - p.valAt < 15000 && p.stake > 0 ? p.val / p.stake - 1 : px && e0 ? px / e0 - 1 : null, peak: (() => { const pk = this.peaks.get(p.id); return !pk ? null : +pk.r.toFixed(4); })(), path: e0 ? h.map(([, v]) => +(v / e0 - 1).toFixed(4)) : [] }; }),
       narrative: this.narr ? this.narr.summary() : null,
+      intel: this.intel ? this.ready.slice(0, 6).map((m) => { const c = this.intel.cache.get(m.mint); return c ? { name: m.name, certainty: c.certainty, reasons: c.reasons.slice(0, 5) } : null; }).filter(Boolean) : null,
       organism: { ...O.summary(this.org), exits: { sl: this.cfg.sl, partAt: this.cfg.partAt, tp: this.cfg.tp, lockFrom: this.cfg.lockFrom } },
       exits: { sl: this.cfg.sl, tp: this.cfg.tp, trailFrom: this.cfg.trailFrom, trail: this.cfg.trail, maxHoldMin: this.cfg.maxHoldMin },
       trades: c.length, wins: wins.length, winRate: c.length ? +(wins.length / c.length).toFixed(3) : null,
