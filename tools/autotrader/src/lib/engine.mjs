@@ -110,7 +110,8 @@ export class Engine {
       }
       let why = null, kind = null, trig = null;
       // lesson 10: one bad quote is noise (wifbot: stop -7% fired, the sale filled +2.2%). A stop needs two looks in a row below it, unless it is already far through.
-      const under = price <= entry * (1 + sl); p.under = under ? (p.under || 0) + 1 : 0;
+      const under = price <= entry * (1 + (real ? sl * 0.8 : sl)); p.under   // lesson 44: crashes gap 6-20% past the stop between looks; a real quote fires at 80% of the stop so the fill lands near it
+      = under ? (p.under || 0) + 1 : 0;
       // lesson 28 (team): waiting for a second look let 2 of 4 stops gap to -10..-12%. A REAL Jupiter quote under the stop sells at once; a chart price still needs two looks.
       if (under && (real || p.under >= 2 || price <= entry * (1 + sl * 1.3))) { why = `stop ${Math.round(sl * 100)}%`; kind = "stop"; trig = sl; }
       else if (under) why = null;
