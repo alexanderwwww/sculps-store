@@ -29,8 +29,8 @@ test("intel: high certainty widens the stop to -5% and the trail to 15%, longer 
   assert.match(p.enter, /certainty 0\.90: dev holds 0%, top10 18%, 3 smart wallets in, X linked/);
   assert.equal(r.e.status().open[0].certainty, 0.9);
 });
-test("intel: a high-certainty position rides a -4% dip that would stop a -2% one", async () => {
-  const dip = [...BOUNCE, 1.056, 1.056, 1.056, 1.056];   // bought at 1.1, -4%
+test("intel: a high-certainty position rides a dip that would stop a -2% one", async () => {
+  const dip = [...BOUNCE, 1.089, 1.089, 1.089, 1.089];   // bought at 1.1 (+slippage), about -4% on the model
   const lo = rig(null, dip); await lo.run(dip.length);
   const hi = rig(fake(HIGH), dip); await hi.run(dip.length);
   assert.equal(lo.e.open.size, 0, "plain -2% stop fired");
