@@ -68,7 +68,7 @@ const T0 = 1_800_000_000_000, M = 60000;
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ultra-jup-"));
 const { feed, state } = fakeFeed();
 const eT = mk(); eT.W.held = 0n;
-const eng = new Engine({ feed, exec: eT.ex, journal: new Journal(path.join(dir, "j.jsonl")), rug: async () => ({ pass: true, reason: "ok" }), now: () => state.now, startEq: 0.11 });
+const eng = new Engine({ feed, exec: eT.ex, journal: new Journal(path.join(dir, "j.jsonl")), rug: async () => ({ pass: true, reason: "ok" }), now: () => state.now, startEq: 0.11, cfg: { ...DEFAULTS, fib: 0, scanMinLiq: 0 } });
 await eng.tick();
 ok("engine + own wallet: a signal becomes a real-shaped buy and an open position with the order id", eng.open.size === 1 && [...eng.open.values()][0].orderId && eng.unit === "SOL", eng.status());
 state.series = moon; state.px.P1 = 2.6; state.now += 2 * M; eT.W.lastKind = "sell"; eT.W.zero = true;

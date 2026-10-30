@@ -11,7 +11,7 @@ let k = 0;
 const mk = (over = {}) => {
   const { feed, state } = fakeFeed(); state.series = base;                       // a quiet chart, nothing yet
   const sells = []; const exec = { name: "paper", buy: async () => ({ ok: true }), sell: async (p) => { sells.push(p.name); return { ok: true }; } };
-  const e = new Engine({ feed, exec, journal: new Journal(path.join(dir, `j${k++}.jsonl`)), rug: async () => ({ pass: true, reason: "ok" }), now: () => state.now, cfg: { ...DEFAULTS, nearHigh: 1, volSpike: 1.5, minGreen: 0.67, minAgeMin: 4, maxChase: 1.5, minBuyShare: 0.52, tp: 0.9, sl: -0.15, trailFrom: 0.22, trail: 0.1, maxHoldMin: 60 }, ...over });
+  const e = new Engine({ feed, exec, journal: new Journal(path.join(dir, `j${k++}.jsonl`)), rug: async () => ({ pass: true, reason: "ok" }), now: () => state.now, cfg: { ...DEFAULTS, fib: 0, scanMinLiq: 0, nearHigh: 1, volSpike: 1.5, minGreen: 0.67, minAgeMin: 4, maxChase: 1.5, minBuyShare: 0.52, tp: 0.9, sl: -0.15, trailFrom: 0.22, trail: 0.1, maxHoldMin: 60 }, ...over });
   return { e, state, sells };
 };
 const T0 = 1_800_000_000_000;
@@ -57,7 +57,7 @@ ok("the live price breaking out opens a position on the very next fast tick, bef
   e.feed = { ...e.feed, quotes: async () => new Map() }; await e.fast();
   ok("no live quote = no entry (never trade on a stale price)", e.open.size === 0);
 }
-{ const t = mk({ cfg: { ...DEFAULTS, maxOpen: 1 } }); e = t.e; state = t.state; state.series = up; state.now = T0 + 33 * M;
+{ const t = mk({ cfg: { ...DEFAULTS, fib: 0, scanMinLiq: 0, maxOpen: 1 } }); e = t.e; state = t.state; state.series = up; state.now = T0 + 33 * M;
   state.pools.push({ pool: "P3", name: "GAMMA", mint: "G".repeat(40) + "pump", created: T0, liqUsd: 9000, vol5: 90 }); state.byPool.P3 = up;
   await e.slow(); await e.fast();
   ok("the position limit holds in the fast lane too", e.open.size === 1, e.open.size);

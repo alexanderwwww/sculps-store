@@ -84,7 +84,7 @@ export class Engine {
       if (!lv || this.now() - lv.at > 20000) continue;                       // no fresh price: the chart backstop in slow() covers it
       // lesson 6: decide on what a sale would REALLY return (Jupiter's sell quote, every ~4 s), not on a chart price.
       // FLOAT's -8% stop on the chart filled at -22%. The chart price stays as the fallback when no quote is fresh.
-      if (this.exec.valueSol && p.stake > 0 && (!p.vAt || this.now() - p.vAt > Math.max(1000, 700 * this.open.size))) { p.vAt = this.now(); try { const v = await this.exec.valueSol(p); if (v != null) { p.val = v; p.valAt = this.now(); } } catch { /* chart fallback */ } }
+      if (this.exec.valueSol && p.stake > 0 && (!p.vAt || this.now() - p.vAt > Math.max(400, 400 * this.open.size))) { p.vAt = this.now(); try { const v = await this.exec.valueSol(p); if (v != null) { p.val = v; p.valAt = this.now(); } } catch { /* chart fallback */ } }
       const real = p.val != null && this.now() - p.valAt < 15000;
       const entry = real ? p.stake : p.entryPx, price = real ? p.val : lv.price;
       const pk = this.peaks.get(p.id); const pr = Math.max(pk?.r ?? 0, price / entry - 1); this.peaks.set(p.id, { r: pr }); const peak = entry * (1 + pr);   // peak as a RATIO: survives quote<->chart switches and the half sell
@@ -110,7 +110,7 @@ export class Engine {
       }
       let why = null, kind = null, trig = null;
       // lesson 10: one bad quote is noise (wifbot: stop -7% fired, the sale filled +2.2%). A stop needs two looks in a row below it, unless it is already far through.
-      const under = price <= entry * (1 + (real && sl < -0.04 ? sl * 0.8 : sl)); p.under   // lesson 44: crashes gap 6-20% past the stop between looks; a real quote fires at 80% of the stop so the fill lands near it
+      const under = price <= entry * (1 + (real ? sl * 0.8 : sl)); p.under   // lesson 44: crashes gap 6-20% past the stop between looks; a real quote fires at 80% of the stop so the fill lands near it
       = under ? (p.under || 0) + 1 : 0;
       // lesson 28 (team): waiting for a second look let 2 of 4 stops gap to -10..-12%. A REAL Jupiter quote under the stop sells at once; a chart price still needs two looks.
       if (under && (real || p.under >= 2 || price <= entry * (1 + sl * 1.3))) { why = `stop ${Math.round(sl * 100)}%`; kind = "stop"; trig = sl; }
@@ -120,7 +120,7 @@ export class Engine {
       else if (peak >= entry * (1 + c.trailFrom) && price <= peak * (1 - c.trail)) { why = `trailing stop from +${Math.round((peak / entry - 1) * 100)}%`; kind = "trail"; trig = (peak * (1 - c.trail)) / entry - 1; }
       else if (price >= entry * (1 + tp)) { why = `take profit +${+(tp * 100).toFixed(1)}%`; kind = "take"; trig = tp; }
       else if (this.now() - p.at >= c.maxHoldMin * 60000) { why = "time stop"; kind = "time"; }
-      else if (c.staleMin && this.now() - p.at >= c.staleMin * 60000 && price / entry - 1 < (c.staleRet ?? 0.01)) { why = `flat after ${c.staleMin}m: money back to work`; kind = "stale"; }   // lesson 2: dead money out
+      else if (c.staleMin > 0 && c.staleOk === true && this.now() - p.at >= c.staleMin * 60000 && price / entry - 1 < (c.staleRet ?? 0.01)) { why = `flat after ${c.staleMin}m: money back to work`; kind = "stale"; }   // lesson 2: dead money out
       if (!why) continue;
       const ret = real ? price / entry - 1 : (price * (1 - c.slippage)) / entry - 1 - 2 * c.fee;
       p.est = { ret: +ret.toFixed(4), real, peak: +(peak / entry - 1).toFixed(4), low: +p.low.toFixed(4), kind, trig: +(trig ?? ret).toFixed(4) };   // what it SAW when it decided, to compare with the fill
@@ -146,7 +146,7 @@ export class Engine {
         let mom = this.#mom(m.pool, this.cfg.momSecs ?? 30), s_pull = null, fibTp = null;
         // lesson 3: thin pools rug and slip (KIMWIFHAT -80%, Trump stop -8% filled at -19%). Only pools deep enough to get out of.
         if ((lv.liqUsd ?? 0) < (this.cfg.liveMinLiq ?? 15000)) { quiet("live: pool too thin to get out of"); return null; }
-        const w = this.whale.get(m.pool), instinct = w && this.now() - w.at < 60000 && w.buy >= (this.cfg.whaleUsd ?? 1500) && w.buy >= 2 * w.sell;
+        const w = this.whale.get(m.pool), instinct = this.cfg.fib === 0 && w && this.now() - w.at < 60000 && w.buy >= (this.cfg.whaleUsd ?? 1500) && w.buy >= 2 * w.sell;
         if (!instinct) {
           // lesson 36 (the math): break-even needs a 32% win rate (avg win +18.6%, avg loss -8.9%); it won 23%, and 8 of the last 10
           // losers never rose once after the buy (peak 0): it was buying the TOP of the spike. Buy the PULLBACK instead: the coin ran
@@ -155,14 +155,19 @@ export class Engine {
             // Alex 2026-10-30 "read the coin's fibonacci chart, that's the whole point": the last swing low->high in 2 min; buy when the price
             // has retraced into the golden zone (0.382-0.618 of the swing) and the last tick is up; take profit back at the swing high.
             const ph = (this.ph.get(m.pool) || []).filter(([t]) => this.now() - t <= 120000);
-            if (ph.length < 4) { quiet("live: watching its price first"); return null; }
+            if (ph.length < 8) { quiet("live: watching its price first"); return null; }   // 2026-10-30: at least 8 looks before a swing is read
             let hi = 0, hiAt = 0; ph.forEach(([, v], i) => { if (v > hi) { hi = v; hiAt = i; } });
-            const lo = Math.min(...ph.slice(0, hiAt + 1).map(([, v]) => v)), run = hi / lo - 1, prev = ph[ph.length - 2][1];
-            const r = (hi - lv.price) / Math.max(1e-18, hi - lo);
-            if (run < (this.cfg.fibMinRun ?? 0.04)) { quiet("fib: no swing to read"); return null; }
+            const lo = Math.min(...ph.slice(0, hiAt + 1).map(([, v]) => v)), run = hi / lo - 1;
+            const r = (hi - lv.price) / Math.max(1e-18, hi - lo), after = ph.slice(hiAt + 1).map(([, v]) => v);
+            if (run < (this.cfg.fibMinRun ?? 0.12)) { quiet("fib: no swing to read"); return null; }   // a 4% swing cannot pay a 2.9% round trip
             if (r < 0.382) { quiet("fib: above 0.382, waiting for the golden zone"); return null; }
             if (r > 0.618) { quiet("fib: broke 0.618, swing failed"); return null; }
-            if (!(lv.price > prev)) { quiet("fib: in the zone, waiting for the bounce"); return null; }
+            if (!after.length) { quiet("fib: in the zone, waiting for the bounce"); return null; }
+            const minSince = Math.min(...after), minAt = after.lastIndexOf(minSince);
+            if ((hi - minSince) / Math.max(1e-18, hi - lo) > 0.786) { quiet("fib: dipped past 0.786, swing failed"); return null; }
+            if (hi / lv.price - 1 < (this.cfg.fibMinTp ?? 0.08)) { quiet("fib: target too close to pay the fees"); return null; }
+            // a real bounce: 0.5% off the low since the high, and the low held for 2 looks (one up-tick in a fall is not a bounce)
+            if (!(lv.price > minSince * 1.005 && minAt <= after.length - 3)) { quiet("fib: in the zone, waiting for the bounce"); return null; }
             mom = run; s_pull = r; fibTp = hi / lv.price - 1;
           } else if (this.cfg.pullback !== 0) {
             const ph = (this.ph.get(m.pool) || []).filter(([t]) => this.now() - t <= 120000);
@@ -194,14 +199,19 @@ export class Engine {
         // low -> high; buy the bounce inside the golden zone (0.382-0.618 retrace), never a new high, never a broken swing.
         const w = cs.slice(-30); let hi = 0, hiAt = 0; w.forEach((k, i) => { if (k.h > hi) { hi = k.h; hiAt = i; } });
         const lo = Math.min(...w.slice(0, hiAt + 1).map((k) => k.l)), run = hi / lo - 1, r = (hi - lv.price) / Math.max(1e-18, hi - lo);
-        const ph = this.ph.get(m.pool) || [], prev = ph.length >= 2 ? ph[ph.length - 2][1] : null;
-        if (!(run >= (this.cfg.fibMinRun ?? 0.04))) { quiet("fib: no swing on the chart"); return null; }
+        const ph = (this.ph.get(m.pool) || []).filter(([t]) => t > w[hiAt].t), after = ph.map(([, v]) => v);
+        const minSince = Math.min(...w.slice(hiAt + 1).map((k) => k.l), ...after, lv.price), minAt = after.lastIndexOf(minSince);
+        if (!(run >= (this.cfg.fibMinRun ?? 0.12))) { quiet("fib: no swing on the chart"); return null; }
         if (r < 0.382) { quiet("fib: above 0.382, waiting for the golden zone"); return null; }
         if (r > 0.618) { quiet("fib: broke 0.618, swing failed"); return null; }
-        if (!(prev != null && lv.price > prev)) { quiet("fib: in the zone, waiting for the bounce"); return null; }
+        if ((hi - minSince) / Math.max(1e-18, hi - lo) > 0.786) { quiet("fib: dipped past 0.786, swing failed"); return null; }
+        const fibTp = hi / lv.price - 1;
+        if (fibTp < (this.cfg.fibMinTp ?? 0.08)) { quiet("fib: target too close to pay the fees"); return null; }
+        if (after.length < 8) { quiet("live: watching its price first"); return null; }
+        if (!(lv.price > minSince * 1.005 && minAt <= after.length - 3 && cs.length >= 2 && cs[cs.length - 1].c > cs[cs.length - 2].c)) { quiet("fib: in the zone, waiting for the bounce"); return null; }
         if ((lv.liqUsd ?? 0) < (this.cfg.liveMinLiq ?? 15000)) { quiet("live: pool too thin to get out of"); return null; }
-        if (!((lv.buys5 || 0) >= (lv.sells5 || 0) * (this.cfg.liveBuyRatio ?? 1))) { quiet("fib: sellers in control"); return null; }
-        const sg = { path: "fib", rise: +run.toFixed(4), vol5: lv.vol5 || 0, buys: lv.buys5 || 0, sells: lv.sells5 || 0, ratio: (lv.buys5 || 0) / Math.max(1, lv.sells5 || 0), liq: lv.liqUsd ?? 0, fib: +r.toFixed(3) };
+        if (!((lv.buys5 || 0) >= (lv.sells5 || 0) * (this.cfg.liveBuyRatio ?? 1.15))) { quiet("fib: sellers in control"); return null; }
+        const sg = { fibTp: +fibTp.toFixed(4), path: "fib", rise: +run.toFixed(4), vol5: lv.vol5 || 0, buys: lv.buys5 || 0, sells: lv.sells5 || 0, ratio: (lv.buys5 || 0) / Math.max(1, lv.sells5 || 0), liq: lv.liqUsd ?? 0, fib: +r.toFixed(3) };
         return { cs, sig: sg, s: { ok: true, why: `fib buy (chart): 30-min swing +${(run * 100).toFixed(1)}%, at the ${r.toFixed(3)} retrace and bouncing, high +${((hi / lv.price - 1) * 100).toFixed(1)}% above` } };
       }
       const sig = entrySignal(cs, cs.length - 1, this.cfg, { ...m, ...lv });
@@ -353,7 +363,7 @@ export class Engine {
       }
     }
     // lesson 5: only pools priced in SOL. A '/ PUMP' or '/ USDC' pool's price is a different market from the SOL route Jupiter fills (HOYEAH: 'take profit +12%' filled at -19.7%).
-    const list = [...this.watch.values()].filter((m) => !/ \/ (?!SOL$)\S+$/.test(m.name || "") && ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) >= this.cfg.minLiqUsd).sort((a, b) => b.vol5 - a.vol5).slice(0, this.fastMode ? 40 : this.scanTop);
+    const list = [...this.watch.values()].filter((m) => !/ \/ (?!SOL$)\S+$/.test(m.name || "") && ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) >= (this.fastMode ? Math.max(this.cfg.minLiqUsd ?? 0, this.cfg.scanMinLiq ?? 10000) : this.cfg.minLiqUsd)).sort((a, b) => b.vol5 - a.vol5).slice(0, this.fastMode ? 40 : this.scanTop);
     const all = [...this.watch.values()];
     this.watching = { total: all.length, young: all.filter((m) => ageMin(m) < this.cfg.minAgeMin).length, thin: all.filter((m) => ageMin(m) >= this.cfg.minAgeMin && ageMin(m) <= this.cfg.maxAgeMin && (m.liqUsd ?? 0) < this.cfg.minLiqUsd).length, ready: list.length };
     this.ready = list;

@@ -49,6 +49,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
     if (readCfg().phantomStartSol == null) writeCfg({ phantomStartSol: bal });
     const { org: savedOrg = null, ...tunedCfg } = readCfg().tuned || {};
     Object.assign(DEFAULTS, tunedCfg);
+    DEFAULTS.staleMin = 0;   // Alex 2026-10-30: never ordered a 'flat after 1 min' exit (16 of 69 exits, avg -4.5%)
     // first boot of the organism (no saved org): the old tuner's momMin goes back to the 3% growth floor, once. The organism
     // picks bands itself from here; a momMin the desk sets later is kept.
     if (!savedOrg && !(DEFAULTS.momMin <= 0.03)) { DEFAULTS.momMin = 0.03; writeCfg({ tuned: { ...(readCfg().tuned || {}), momMin: 0.03 } }); }

@@ -8,6 +8,9 @@ import { fakeFeed, moon } from "./fakefeed.mjs";
 import crypto from "node:crypto";
 import { world } from "./fakechain.mjs";
 import { b58encode, b58decode } from "../src/lib/solana.mjs";
+import { DEFAULTS } from "../src/lib/strategy.mjs";
+// these tests drive the server plumbing with the fake breakout chart; the fib entry rules have their own tests (fib.test.mjs)
+Object.assign(DEFAULTS, { fib: 0, scanMinLiq: 0 });
 
 async function boot(extra = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ultra-srv-"));
