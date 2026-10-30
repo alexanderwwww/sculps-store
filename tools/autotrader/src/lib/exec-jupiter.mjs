@@ -6,12 +6,14 @@ const BASE = { maxSolPerTrade: 0.05, perHour: 30, perDay: 200, floorFrac: 0.7 };
 export const SOL_MINT = "So11111111111111111111111111111111111111112";
 export const PLUG_CAPS_EXTRA = { fixedSol: 0.02618,   // Alex 2026-10-29: the golden step between 0.01618 and the doubled 0.03236 (0.01618 x 1.618)
   perHour: 200, perDay: 2000, floorFrac: 0.05, reserveSol: 0.004, minBalSol: null };   // Alex 2026-10-29: no pause line, keep trading to the last trade
-export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.06, buySlippageBps: 1200, sellSlippageBps: 3500, sellLadderBps: [800, 1500, 3500], maxFeeLamports: 150000, confirmMs: 45000, pollMs: 1500 };
+export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.06, buySlippageBps: 1200, sellSlippageBps: 3500, sellLadderBps: [800, 1500, 3500], maxFeeLamports: 50000,
+  // a sell pays more only when the cheaper try did not land; the last try keeps the old 150000 ceiling so exits still land
+  sellFeeLadder: [["medium", 30000], ["high", 80000], ["veryHigh", 150000]], confirmMs: 45000, pollMs: 1500 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date.now, wait = sleep, startSol = null }) {
   const stamps = [], pending = new Map();                  // signature -> what we expect, for recheck()
-  const state = { startSol, halted: null };
+  const state = { startSol, halted: null, rentLeak: [] };
   const exec = {
     name: "live", state, caps, source: "phantom",
     safety: "the position is still in the wallet: press Sell everything",
@@ -75,7 +77,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
         q = await jupiter.quote({ input: SOL_MINT, output: mint, amount: lamports, slippageBps: caps.buySlippageBps });
         if (!q.outAmount || !(Number(q.outAmount) > 0)) return { ok: false, why: "no route" };
         if (Math.abs(Number(q.priceImpactPct || 0)) > caps.maxImpact) return { ok: false, why: `price impact ${(Number(q.priceImpactPct) * 100).toFixed(1)}%` };
-        s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: caps.maxFeeLamports });
+        s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: caps.maxFeeLamports, priorityLevel: "medium" });
       } catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}` }; }
       stamps.push(now());
       const r = await exec.land(s.swapTransaction, { kind: "buy", mint, sol, inAmount: String(lamports), outAmount: q.outAmount });
@@ -101,12 +103,34 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       const total = accts.reduce((a, x) => a + x.raw, 0n), amount = (total * BigInt(Math.round(frac * 1000))) / 1000n;
       if (!(amount > 0n)) return { ok: false, why: "nothing to sell" };
       let q, s;
-      try { q = await jupiter.quote({ input: mint, output: SOL_MINT, amount: amount.toString(), slippageBps: caps.sellSlippageBps }); if (!q.outAmount) return { ok: false, why: "no route to sell" }; s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: caps.maxFeeLamports }); }
+      try { q = await jupiter.quote({ input: mint, output: SOL_MINT, amount: amount.toString(), slippageBps: caps.sellSlippageBps }); if (!q.outAmount) return { ok: false, why: "no route to sell" }; s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: (caps.sellFeeLadder?.[1] ?? [0, caps.maxFeeLamports])[1], priorityLevel: caps.sellFeeLadder?.[1]?.[0] ?? "high" }); }
       catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}` }; }
       const r = await exec.land(s.swapTransaction, { kind: "sell", mint });
       if (!r.ok) return r;
       let out = q.outAmount; const net = await rpc.netLamports(r.signature).catch(() => null); if (net != null) out = String(Math.max(0, net));
       return { ok: true, sold: amount.toString(), left: (total - amount).toString(), outAmount: out, signature: r.signature, feeLamports: rpc.feeOf?.(r.signature) ?? null };
+    },
+    /** Close token accounts that hold exactly 0 (about 0.002 SOL rent each back). Counts a close only once the chain confirms it;
+     *  a close that does not confirm is listed in state.rentLeak. Never touches an account that still holds tokens. */
+    async closeEmpty(accts) {
+      let n = 0;
+      for (const a of accts) {
+        if (a.raw !== 0n) continue;                               // a non-zero account is never closed
+        try {
+          const { blockhash } = await rpc.latestBlockhash();
+          const c = buildCloseAccountTx({ wallet, tokenAccount: a.pubkey, tokenProgram: a.program, blockhash });
+          const sig = await rpc.send(c.tx); let st = { state: "pending" };
+          for (let i = 0; i < 8 && st.state === "pending"; i++) { st = await rpc.status(sig).catch(() => ({ state: "pending" })); if (st.state === "pending") await wait(1250); }
+          if (st.state === "confirmed") { n++; state.rentLeak = state.rentLeak.filter((k) => k !== a.pubkey); continue; }
+          throw new Error(st.state === "failed" ? `rejected: ${st.err}` : "not confirmed");
+        } catch (e) { if (!state.rentLeak.includes(a.pubkey)) state.rentLeak.push(a.pubkey); state.rentLeak = state.rentLeak.slice(-20); console.log(`close failed ${a.pubkey}: ${e.message}`); }
+      }
+      return n;
+    },
+    /** Every empty token account in the wallet, closed for its rent (read, then close only raw === 0). */
+    async sweepRent() {
+      const accts = await rpc.tokenAccounts(wallet.address);
+      return { closed: await exec.closeEmpty(accts.filter((a) => a.raw === 0n)) };
     },
     async sell({ mint }) {
       let accts;
@@ -116,12 +140,13 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       // lesson 15 (VICECITY: seen at +103%, filled at +23%): a 35% slippage allowance lets a fast coin fill far below the price we
       // saw. Sell tight first (8%), widen only when the tight sale does not land (15%, then 35% as the last resort).
       let q, r;
-      for (const bps of caps.sellLadderBps || [caps.sellSlippageBps]) {
-        let s;
+      const ladder = caps.sellLadderBps || [caps.sellSlippageBps], fees = caps.sellFeeLadder || [["high", caps.maxFeeLamports]];
+      for (let i = 0; i < ladder.length; i++) {
+        const bps = ladder[i], [lvl, maxL] = fees[Math.min(i, fees.length - 1)]; let s;
         try {
           q = await jupiter.quote({ input: mint, output: SOL_MINT, amount, slippageBps: bps });
           if (!q.outAmount) return { ok: false, why: "no route to sell" };
-          s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: caps.maxFeeLamports });
+          s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: maxL, priorityLevel: lvl });
         } catch (e) { r = { ok: false, why: `route: ${e.message.slice(0, 120)}` }; continue; }
         r = await exec.land(s.swapTransaction, { kind: "sell", mint });
         if (r.ok || r.unknown) break;
@@ -129,14 +154,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       if (!r.ok) return { ...r, orderId: r.signature };
       // give the rent of the emptied token accounts back (about 0.002 SOL each) so the balance reflects real money
       let rent = 0;
-      try {
-        const left = (await rpc.tokenAccounts(wallet.address, mint)).filter((a) => a.raw === 0n);
-        for (const a of left) {
-          const { blockhash } = await rpc.latestBlockhash();
-          const c = buildCloseAccountTx({ wallet, tokenAccount: a.pubkey, tokenProgram: a.program, blockhash });
-          await rpc.send(c.tx); rent++;
-        }
-      } catch { /* the proceeds are in; rent is reclaimed on a later sale */ }
+      try { rent = await exec.closeEmpty(await rpc.tokenAccounts(wallet.address, mint)); } catch { /* the proceeds are in; sweepRent picks the account up later */ }
       let out = q.outAmount;                                   // the quote, if the chain cannot tell us
       const net = await rpc.netLamports(r.signature).catch(() => null);
       if (net != null) out = String(Math.max(0, net));

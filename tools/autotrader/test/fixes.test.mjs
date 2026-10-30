@@ -62,3 +62,26 @@ test("lesson 45: a fresh buy whose first real quote is -2.5% (round-trip cost) i
   v = pos.stake * 0.975 * 0.97; await r.step(3);
   assert.equal(r.e.open.size, 0, "sold on a real -3% from the first quote");
 });
+
+// Token-2022 traps (field names read live from PYUSD's jsonParsed mint, 2026-10-30)
+import { mintTraps, rugCheck as rugCheckT, TOKEN_2022 } from "../src/lib/rug.mjs";
+const SPL = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const fee = (bps) => ({ extension: "transferFeeConfig", state: { newerTransferFee: { epoch: 1, maximumFee: 0, transferFeeBasisPoints: bps }, olderTransferFee: { epoch: 1, maximumFee: 0, transferFeeBasisPoints: 0 } } });
+test("token traps: a plain SPL mint passes", () => assert.equal(mintTraps({ program: SPL, extensions: [], freezeAuthority: null }), null));
+test("token traps: Token-2022 with a 0 fee and a null hook passes", () => assert.equal(mintTraps({ program: TOKEN_2022, extensions: [fee(0), { extension: "transferHook", state: { programId: null } }, { extension: "metadataPointer", state: {} }], freezeAuthority: null }), null));
+test("token traps: a 100 bps transfer fee is blocked", async () => {
+  const r = await rugCheckT("M", { rpc: { mintInfo: async () => ({ program: TOKEN_2022, extensions: [fee(100)], freezeAuthority: null }) } });
+  assert.equal(r.pass, false); assert.match(r.reason, /transfer fee 1%/);
+});
+test("token traps: permanent delegate, live hook, non-transferable, frozen default, pausable, live freeze are blocked", async () => {
+  for (const [ext, re] of [[{ extension: "permanentDelegate", state: { delegate: "D" } }, /permanent delegate/], [{ extension: "transferHook", state: { programId: "H" } }, /transfer hook/], [{ extension: "nonTransferable", state: {} }, /non-transferable/], [{ extension: "defaultAccountState", state: { accountState: "frozen" } }, /frozen/], [{ extension: "pausableConfig", state: { paused: false } }, /pausable/]]) {
+    const r = await rugCheckT("M", { rpc: { mintInfo: async () => ({ program: TOKEN_2022, extensions: [ext], freezeAuthority: null }) } });
+    assert.equal(r.pass, false); assert.match(r.reason, re);
+  }
+  const r = await rugCheckT("M", { rpc: { mintInfo: async () => ({ program: SPL, extensions: [], freezeAuthority: "F" }) } });
+  assert.equal(r.pass, false); assert.match(r.reason, /freeze/);
+});
+test("token traps: the RPC failing blocks the buy (fail closed)", async () => {
+  const r = await rugCheckT("M", { rpc: { mintInfo: async () => { throw new Error("rpc down"); } } });
+  assert.equal(r.pass, false); assert.match(r.reason, /unreadable/);
+});

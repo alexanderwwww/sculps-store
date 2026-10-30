@@ -59,7 +59,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
     // whales: smart wallets found from public data, watched on the public RPC; intel reads the same live set
     const whales = feed === liveFeed ? new Whales({ feed, saved: readCfg().whales || null, seed: readCfg().smartWallets || [], onSave: (w) => writeCfg({ whales: w }) }) : null;
     const intel = feed === liveFeed ? new Intel({ smartWallets: [] }) : null; if (intel && whales) intel.smart = whales.set;
-    const eng = new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-phantom.jsonl")), rug: rugOverride || rugCheck, startEq: readCfg().phantomStartSol, now, org: savedOrg, narr: feed === liveFeed ? new Narrative({ now }) : null, intel, whales });
+    const eng = new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-phantom.jsonl")), rug: rugOverride || ((m) => rugCheck(m, { rpc: rpcI })), startEq: readCfg().phantomStartSol, now, org: savedOrg, narr: feed === liveFeed ? new Narrative({ now }) : null, intel, whales });
     eng.onLearn = (c) => onLearn(c);
     return eng;
   }

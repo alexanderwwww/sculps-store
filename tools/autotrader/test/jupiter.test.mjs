@@ -34,7 +34,7 @@ let t = mk(); let r = await t.ex.buy({ mint: MINT });
 ok("buy: quote -> swap -> signed -> sent -> confirmed, with the real amounts", r.ok && r.orderId && r.inAmount === String(Math.round((0.11 - 0.006) * 0.12 * 1e9 / 1e5) * 1e5) || (r.ok && Number(r.inAmount) > 0), r);
 ok("buy: stake is 12% of what is spendable (wallet minus the 0.006 SOL kept for fees)", Math.abs(r.sol - 0.0125) < 1e-9, r.sol);
 ok("buy: slippage 12% and the user key are what Jupiter was asked for", t.W.quotes[0].slippageBps === "1200" && t.W.lastSwap.userPublicKey === w.address && t.W.lastSwap.wrapAndUnwrapSol === true, t.W.lastSwap);
-ok("buy: the priority fee is capped (0.00015 SOL)", t.W.lastSwap.prioritizationFeeLamports.priorityLevelWithMaxLamports.maxLamports === 150000);
+ok("buy: the priority fee is medium, capped at 0.00005 SOL", t.W.lastSwapRaw.includes('"maxLamports":50000') && t.W.lastSwapRaw.includes('"priorityLevel":"medium"'), t.W.lastSwapRaw);
 ok("buy: the transaction that was SENT carries our valid signature", (() => { const tx = t.W.sent[0]; return crypto.verify(null, tx.subarray(65), crypto.createPublicKey({ key: Buffer.concat([Buffer.from("302a300506032b6570032100", "hex"), w.publicKey]), format: "der", type: "spki" }), tx.subarray(1, 65)); })());
 ok("buy: the token amount is read from the wallet after the buy", r.outAmount === "5000000000", r.outAmount);
 const big = mk({}, {}); big.W.sol = 5; r = await big.ex.buy({ mint: MINT });
@@ -62,6 +62,33 @@ t = mk({ held: 5000000000n }); t.W.lastKind = "sell"; t.W.zero = true; r = await
 ok("sell: the whole balance is sold, proceeds read from the chain, the empty account closed for its rent", r.ok && r.inAmount === "5000000000" && r.outAmount === "14000000" && r.closed === 1 && t.W.closes === 1, r);
 t = mk({ held: 0n }); r = await t.ex.sell({ mint: MINT });
 ok("selling a token that is not in the wallet says so (noBalance), sends nothing", !r.ok && r.noBalance && t.W.sent.length === 0, r);
+
+// fee ladder: a sell pays more only when the cheaper try did not land
+{
+  const sellRig = (fails) => { const x = mk({ held: 5000000000n }); x.W.lastKind = "sell"; x.W.zero = true; const bodies = []; const sw = x.jupiter.swap.bind(x.jupiter);
+    x.jupiter.swap = async (a) => { const out = await sw(a); bodies.push(x.W.lastSwapRaw); return out; };
+    let n = 0; x.rpc.status = async () => (n++ < fails ? { state: "failed", err: "slippage" } : { state: "confirmed" }); return { ...x, bodies }; };
+  let f = sellRig(1); let rr = await f.ex.sell({ mint: MINT });
+  ok("fee ladder: first sell try medium/30000, second high/80000, and it lands", rr.ok && f.bodies.length === 2 && f.bodies[0].includes('"maxLamports":30000') && f.bodies[0].includes('"priorityLevel":"medium"') && f.bodies[1].includes('"maxLamports":80000') && f.bodies[1].includes('"priorityLevel":"high"'), f.bodies);
+  f = sellRig(2); rr = await f.ex.sell({ mint: MINT });
+  ok("fee ladder: after two misses the last try pays the old 150000 ceiling", rr.ok && f.bodies.length === 3 && f.bodies[2].includes('"maxLamports":150000') && f.bodies[2].includes('"priorityLevel":"veryHigh"'), f.bodies);
+}
+
+// rent: a close counts only when the chain confirms it; strays are swept; a non-zero account is never closed
+{
+  let x = mk({ held: 5000000000n }); x.W.lastKind = "sell"; x.W.zero = true; let rr = await x.ex.sell({ mint: MINT });
+  ok("rent: close confirmed -> closed 1, nothing leaked", rr.ok && rr.closed === 1 && x.ex.state.rentLeak.length === 0, rr);
+  x = mk({ held: 5000000000n }); x.W.lastKind = "sell"; x.W.zero = true;
+  const st = x.rpc.status.bind(x.rpc); let k = 0; x.rpc.status = async (sig) => (k++ === 0 ? st(sig) : { state: "failed", err: "x" });
+  rr = await x.ex.sell({ mint: MINT });
+  ok("rent: close rejected -> closed 0, the account is in rentLeak, the sale is still ok with its proceeds", rr.ok && rr.closed === 0 && x.ex.state.rentLeak.length === 1 && rr.outAmount === "14000000", { rr, leak: x.ex.state.rentLeak });
+  x = mk(); const Z = b58encode(crypto.randomBytes(32)), NZ = b58encode(crypto.randomBytes(32)); const closedKeys = [];
+  x.rpc.tokenAccounts = async (_o, m) => (m ? [] : [{ pubkey: Z, program: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", raw: 0n }, { pubkey: NZ, program: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", raw: 7n }]);
+  const sendO = x.rpc.send.bind(x.rpc); x.rpc.send = async (tx) => { closedKeys.push(b58encode(Buffer.from(tx).subarray(65 + 3 + 1 + 32, 65 + 3 + 1 + 64))); return sendO(tx); };
+  const sw = await x.ex.sweepRent();
+  ok("sweepRent: one zero + one non-zero account -> exactly one close, for the zero one", sw.closed === 1 && x.W.sent.length === 1 && closedKeys[0] === Z && !closedKeys.includes(NZ), { sw, closedKeys, Z });
+  ok("closeEmpty refuses a non-zero account even if handed one", (await x.ex.closeEmpty([{ pubkey: NZ, program: "x", raw: 1n }])) === 0 && x.W.sent.length === 1);
+}
 
 // the engine around it
 const T0 = 1_800_000_000_000, M = 60000;

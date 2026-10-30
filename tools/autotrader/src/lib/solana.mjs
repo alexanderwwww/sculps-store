@@ -108,9 +108,17 @@ export class Rpc {
   }
   /** The network fee (lamports) of a transaction netLamports already read; null when unknown. Read-only. */
   feeOf(signature) { return this.fees?.get(signature) ?? null; }
+  /** The mint as the chain sees it (read-only): owning program, Token-2022 extensions, freeze authority. Field names checked live on PYUSD 2026-10-30. */
+  async mintInfo(mint) {
+    const r = await this.call("getAccountInfo", [mint, { encoding: "jsonParsed", commitment: "confirmed" }]);
+    const v = r?.value; if (!v) throw new Error("mint not found");
+    const info = v.data?.parsed?.info || {};
+    return { program: v.owner, extensions: info.extensions || [], freezeAuthority: info.freezeAuthority ?? null, mintAuthority: info.mintAuthority ?? null };
+  }
   /** Every account of this owner holding `mint`: [{pubkey, program, raw: BigInt, decimals}] */
   async tokenAccounts(owner, mint) {
-    const r = await this.call("getTokenAccountsByOwner", [owner, { mint }, { encoding: "jsonParsed", commitment: "confirmed" }]);
+    const q = (f) => this.call("getTokenAccountsByOwner", [owner, f, { encoding: "jsonParsed", commitment: "confirmed" }]);
+    const r = mint ? await q({ mint }) : { value: [...(await q({ programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" })).value, ...(await q({ programId: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb" })).value] };
     return r.value.map((a) => ({ pubkey: a.pubkey, program: a.account.owner, raw: BigInt(a.account.data.parsed.info.tokenAmount.amount), decimals: a.account.data.parsed.info.tokenAmount.decimals }));
   }
 }
@@ -128,10 +136,10 @@ export class Jupiter {
     throw new Error(`jupiter ${path}: rate limited`);
   }
   quote({ input, output, amount, slippageBps }) { return this.#go(`/quote?inputMint=${input}&outputMint=${output}&amount=${amount}&slippageBps=${slippageBps}`); }
-  swap({ quote, user, maxFeeLamports }) {
+  swap({ quote, user, maxFeeLamports, priorityLevel = "medium" }) {
     return this.#go("/swap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
       quoteResponse: quote, userPublicKey: user, wrapAndUnwrapSol: true, dynamicComputeUnitLimit: true,
-      prioritizationFeeLamports: { priorityLevelWithMaxLamports: { maxLamports: maxFeeLamports, priorityLevel: "high" } },
+      prioritizationFeeLamports: { priorityLevelWithMaxLamports: { maxLamports: maxFeeLamports, priorityLevel } },
     }) });
   }
 }

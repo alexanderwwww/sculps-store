@@ -39,6 +39,7 @@ export class Engine {
   }
   /** The slow lane (a minute-chart feed that allows ~30 calls a minute): discovery, chart cache, shadow book, backstop exits. */
   async slow() {
+    if (!this.swept && this.exec.sweepRent) { this.swept = true; this.exec.sweepRent().catch(() => {}); }   // once per start: empty token accounts left behind give their rent back
     try { await this.#reconcile(); } catch (e) { this.#err("reconcile", e); }
     try { await this.#manage(); } catch (e) { this.#err("manage", e); }
     try {
@@ -352,7 +353,7 @@ export class Engine {
       this.journal.write({ type: "sell-intent", id: p.id, name: p.name, why });                 // on disk BEFORE the sell goes out
       const r = (await this.exec.sell?.(p)) ?? { ok: true };
       if (!r.ok) {
-        if (r.noBalance) note = "the token was no longer in the wallet (result estimated from the chart)";
+        if (r.noBalance) { note = "the token was no longer in the wallet (result estimated from the chart)"; this.exec.sweepRent?.().catch(() => {}); }
         else if (hold + 1 < 4) { this.sellTries.set(p.id, hold + 1); this.#err(`sell ${p.name}`, new Error(r.why)); return false; }   // try again next tick
         else note = `sell failed 4 times (${r.why}): ${this.exec.safety || "the position is still in the wallet: press Sell everything"}`;
       } else if (r.outAmount != null && r.inAmount != null && p.stake > 0) {
@@ -364,7 +365,7 @@ export class Engine {
       // fee: the buy's network fee from the chain (the sale's fee is already inside its net lamports); unknown -> the cap
       const learn = { sig: p.sig || null, holdS, stake: stake0, feeLamports: p.buyFee ?? this.exec.caps?.maxFeeLamports ?? null, trig, gap: trig != null ? +(restRet - trig).toFixed(4) : null, restRet: +restRet.toFixed(4), peak: p.hi ?? null, low: p.low ?? null, tPeak: p.tPeak ?? null, tLow: p.tLow ?? null, tPartAt: p.tPartAt ?? null, exitKind: est.kind || (why === "you pressed Sell" ? "manual" : "chart") };
       const pnl = (p.stake0 ?? p.stake) * ret;   // ret is on the whole stake (banked part included), so the P&L is too; p.stake is only what was left after the golden take
-      this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why, note, exitPx: x.exitPx, est: p.est || null, ...learn });
+      this.journal.write({ type: "close", id: p.id, name: p.name, ret, pnl, why, note, exitPx: x.exitPx, est: p.est || null, ...learn, sellFee: r.feeLamports ?? null });
       { const until = this.now() + (ret <= -0.5 ? 7 * 24 * 60 : ret < 0 ? (this.cfg.loserCoolMin ?? 60) : this.cfg.cooldownMin) * 60000;  /* a rug is banned for a week */ this.cool.set(p.pool, until); if (p.mint) this.cool.set(p.mint, until); }   // by coin, not just by pool (PODCAT x3)   // lesson 7: a coin that just lost gets an hour off (FLOAT x4)       // never re-enter the same coin straight after an exit
       this.open.delete(p.id); this.sellTries.delete(p.id); this.peaks.delete(p.id); this.hist.delete(p.id);
       this.closed.push({ ...p, type: "close", ret, pnl, why, note, at: this.now(), ...learn });
@@ -481,7 +482,7 @@ export class Engine {
       organism: { ...O.summary(this.org), exits: { sl: this.cfg.sl, partAt: this.cfg.partAt, tp: this.cfg.tp, lockFrom: this.cfg.lockFrom } },
       exits: { sl: this.cfg.sl, tp: this.cfg.tp, trailFrom: this.cfg.trailFrom, trail: this.cfg.trail, maxHoldMin: this.cfg.maxHoldMin },
       trades: c.length, wins: wins.length, winRate: c.length ? +(wins.length / c.length).toFixed(3) : null,
-      recentClosed: c.slice(-8).map((x) => ({ name: x.name, ret: +(x.ret * 100).toFixed(1), pnl: +(x.pnl || 0).toFixed(4), why: x.why, note: x.note || null, enter: x.enter })),
+      recentClosed: c.slice(-8).map((x) => ({ name: x.name, ret: +(x.ret * 100).toFixed(1), pnl: +(x.pnl || 0).toFixed(4), why: x.why, note: x.note || null, enter: x.enter, buyFee: x.feeLamports ?? null, sellFee: x.sellFee ?? null })),
       startedAt: this.startedAt, counts: this.counts, lines: this.seq, next: this.ready.slice(0, 4).map((m) => m.name), whyNot: Object.fromEntries([...this.skips].sort((a, b) => b[1] - a[1]).slice(0, 12)), events: this.events.slice(-60), watching: this.watching, edge: this.edge(), shadowOpen: this.shadow.size, recentSkips: this.recent.slice(-10), errors: this.errors.slice(-5),
     };
   }

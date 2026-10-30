@@ -20,7 +20,7 @@ export function world(payer, { confirm = "confirmed", held = 0n, sellFails = fal
   const jupiter = new Jupiter({ fetchImpl: async (u, init) => {
     const url = new URL(u); let body;
     if (url.pathname.endsWith("/quote")) { W.quotes.push(Object.fromEntries(url.searchParams)); W.lastKind = url.searchParams.get("inputMint") === SOL_MINT ? "buy" : "sell"; body = { inAmount: url.searchParams.get("amount"), outAmount: "5000000000", priceImpactPct: "0.012", inputMint: url.searchParams.get("inputMint") }; }
-    else { W.lastSwap = JSON.parse(init.body); body = { swapTransaction: mkTx(payer || b58decode(W.lastSwap.userPublicKey)) }; }
+    else { W.lastSwapRaw = init.body; W.lastSwap = JSON.parse(init.body); body = { swapTransaction: mkTx(payer || b58decode(W.lastSwap.userPublicKey)) }; }
     return { status: 200, ok: true, text: async () => JSON.stringify(body) };
   }, wait: async () => {} });
   return { W, rpc, jupiter };
