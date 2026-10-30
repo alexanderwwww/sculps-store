@@ -366,7 +366,7 @@
     term.show(true);
     term.update(S, E, S.running && e ? null : !S.setup?.imported ? "plug in your wallet" : S.saved?.userStopped ? "stopped" : S.lastError ? `connecting… · ${S.lastError}` : "connecting…");
     const go = document.querySelector(".tm__go"); go.replaceChildren();
-    if (S.running && e) { toasts.feed(e.events); app.append(dashView().cols); }
+    if (S.running && e) { toasts.feed(e.events); app.append(window.UltraFib ? window.UltraFib.panel(e.charts || []) : "", dashView().cols); }
     else if (!S.setup?.imported) {
       // plug the wallet in once: the private key goes into this Mac's own secrets file and nowhere else
       const k = el("input", { type: "password", placeholder: "Paste your Phantom private key (Phantom: Settings → Manage accounts → your wallet → Show private key)", autocomplete: "off", spellcheck: "false" });

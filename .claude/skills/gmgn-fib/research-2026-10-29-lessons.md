@@ -82,3 +82,6 @@ Wallet tx history 07:02-08:14: buy -0.0177, sell +0.0157 two to six seconds late
 
 ## Lesson 46 — buy the low, never the top (Alex, 2026-10-30)
 "Enter when the price is down, wait, it goes up. You cannot buy the top." The 0.236-0.618 zone (build 61) bought too close to the high. Live now via bridge: fibLo 0.5, fibHi 0.786, fibDeep 0.886 — buy only the deep retrace (0.5-0.786) on a confirmed bounce, swing dead below 0.886. Keep this when tuning entries.
+
+## Lesson 47 — a hunter, not a pattern (Alex, 2026-10-30)
+"Don't rely on certain patterns only. A hunter hunts with instinct and logic. Act differently based on experience, which means data." Every rule (fib zone, stop, take) is a starting point the data may move; Ultra must learn from its own fills which setups pay and shift toward them.

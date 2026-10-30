@@ -91,7 +91,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const fail = (res, code, error) => send(res, code, { ok: false, error });
   const readBody = (req) => new Promise((r) => { let b = ""; req.on("data", (c) => { b += c; if (b.length > 20000) req.destroy(); }); req.on("end", () => { try { r(b ? JSON.parse(b) : {}); } catch { r({}); } }); });
   const ui = join(HERE, "ui");
-  const assets = { "/app.js": ["app.js", "text/javascript; charset=utf-8"], "/style.css": ["style.css", "text/css; charset=utf-8"], "/icon.png": ["icon.png", "image/png"] };
+  const assets = { "/app.js": ["app.js", "text/javascript; charset=utf-8"], "/fib.js": ["fib.js", "text/javascript; charset=utf-8"], "/style.css": ["style.css", "text/css; charset=utf-8"], "/icon.png": ["icon.png", "image/png"] };
 
   const server = createServer(async (req, res) => {
     try {
