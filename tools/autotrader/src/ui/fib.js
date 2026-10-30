@@ -11,7 +11,7 @@
     const vals = [...cs.flatMap((k) => [k.h, k.l]), ...ticks.map((x) => x[1]), c.lo, c.hi, c.entry, c.stop, ...(c.takes || []), c.price].filter((v) => v != null && isFinite(v));
     if (!vals.length) return;
     let mn = Math.min(...vals), mx = Math.max(...vals); const pad = (mx - mn || mx * 0.01 || 1) * 0.06; mn -= pad; mx += pad;
-    const L = 4, R = 74, T = 6, B = 6, pw = W - L - R, phh = H - T - B;
+    const L = 4, R = 104, T = 6, B = 6, pw = W - L - R, phh = H - T - B;
     const y = (v) => T + (1 - (v - mn) / (mx - mn)) * phh;
     const t0 = cs.length ? cs[0].t : ticks.length ? ticks[0][0] : 0, t1 = Math.max(cs.length ? cs[cs.length - 1].t + 60000 : 0, ticks.length ? ticks[ticks.length - 1][0] : 0, t0 + 60000);
     const x = (t) => L + ((t - t0) / (t1 - t0)) * pw;

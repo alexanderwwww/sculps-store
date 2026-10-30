@@ -1,0 +1,31 @@
+import test from "node:test"; import assert from "node:assert/strict";
+import fs from "node:fs"; import os from "node:os"; import path from "node:path";
+import { Engine } from "../src/lib/engine.mjs";
+import { Journal } from "../src/lib/journal.mjs";
+import { DEFAULTS } from "../src/lib/strategy.mjs";
+// Alex 2026-10-30: "the app must show what's in the chart, not just numbers". status().charts carries the swing the UI draws.
+test("status carries chart data: candles capped at 30, swing lo/hi, fib levels, zone, and entry/stop/take for an open coin", () => {
+  const now = 1_800_000_000_000;
+  const feed = { quotes: async () => new Map(), newPools: async () => [], trendingPools: async () => [], candles: async () => [] };
+  const exec = { name: "live", source: "own", buy: async () => ({ ok: false }), sell: async () => ({ ok: true }), sizeSol: async () => ({ bal: 1, sol: 0.02 }) };
+  const e = new Engine({ feed, exec, journal: new Journal(path.join(fs.mkdtempSync(path.join(os.tmpdir(), "ch-")), "j.jsonl")), rug: async () => ({ pass: true }), cfg: { ...DEFAULTS }, now: () => now });
+  const cs = Array.from({ length: 60 }, (_, i) => { const base = i < 40 ? 1 : i < 50 ? 1 + (i - 40) * 0.02 : 1.2 - (i - 50) * 0.01; return { t: now - (60 - i) * 60000, o: base, h: base * 1.01, l: base * 0.99, c: base }; });
+  e.cc.set("P", { cs, at: now }); e.cc.set("Q", { cs, at: now });
+  e.live.set("P", { price: 1.1 }); e.ph.set("P", Array.from({ length: 100 }, (_, i) => [now - (100 - i) * 3000, 1.1]));
+  e.ready = [{ pool: "Q", name: "WATCH", mint: "W" }];
+  const sl = DEFAULTS.sl;
+  e.open.set("x", { id: "x", pool: "P", name: "OPEN", mint: "O", entryPx: 1.1, stake: 0.02, at: now });
+  const out = e.status().charts;
+  assert.equal(out.length, 2);
+  const [o, w] = out;
+  assert.equal(o.name, "OPEN"); assert.equal(o.open, true); assert.equal(w.open, false);
+  assert.ok(o.cs.length <= 30 && w.cs.length === 30, "candles capped at 30");
+  assert.ok(o.ticks.length <= 41, "ticks thinned");
+  assert.deepEqual(o.levels.map((l) => l.r), [0, 0.236, 0.382, 0.5, 0.618, 0.786, 0.886, 1]);
+  assert.ok(o.hi > o.lo && o.levels[0].p === o.hi && Math.abs(o.levels[7].p - o.lo) < 1e-9);
+  assert.ok(o.zone.top > o.zone.bottom);
+  assert.equal(o.entry, 1.1); assert.equal(o.price, 1.1);
+  assert.ok(Math.abs(o.stop - 1.1 * (1 + sl)) < 1e-6); assert.ok(Math.abs(o.takes[0] - 1.155) < 1e-6);
+  assert.equal(w.entry, null); assert.deepEqual(w.takes, []);
+  assert.ok(JSON.stringify(out).length < 12000, "status payload stays small");
+});

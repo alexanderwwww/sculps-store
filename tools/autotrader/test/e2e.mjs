@@ -69,6 +69,11 @@ try {
   assert.match(await text(), /exit/i); ok("the exit shows up with its reason: take profit");
   if (process.env.SHOTS) { await page.waitForTimeout(1200); await page.screenshot({ path: path.join(process.env.SHOTS, "3.png"), fullPage: true }); }
   for (const sel of ["header .chip", ".agent", ".curve", ".row"]) assert.ok(await page.$(sel), sel);
+  await page.waitForSelector(".fib .fib__card canvas", { timeout: 10000 });
+  const drawn = await page.evaluate(() => { const cv = document.querySelector(".fib__card canvas"); const d = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; });
+  assert.ok(drawn > 500, "the fib chart is drawn on the canvas"); ok("the Fibonacci widget draws a coin's chart");
+  await page.click(".fib__card"); await page.waitForSelector(".fib__card.big", { timeout: 4000 }); ok("clicking a coin enlarges its chart");
+  await page.click(".fib__card.big"); await page.waitForFunction(() => !document.querySelector(".fib__card.big"), null, { timeout: 4000 });
   await noGmgn("while trading"); ok("still no GMGN anywhere while trading");
   const over = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
   assert.equal(over, false); ok("no sideways scroll at 1180 px");
