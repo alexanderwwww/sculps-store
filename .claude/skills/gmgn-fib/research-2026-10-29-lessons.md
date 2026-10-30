@@ -79,3 +79,6 @@ Wallet tx history 07:02-08:14: buy -0.0177, sell +0.0157 two to six seconds late
 - Every full sell closes the emptied token account (~0.002 SOL rent back), counted only once the chain confirms; failures go to state.rentLeak. sweepRent() closes stray zero-balance accounts on the first slow tick. On a ~0.03 SOL wallet each un-closed account is ~7% of the wallet.
 - mintTraps() reads the mint on-chain before rugcheck: freeze authority, transfer fee >0, permanent delegate, transfer hook, non-transferable, default-frozen, pausable -> no buy; RPC failure -> no buy. Field names checked live (PYUSD blocked, Fartcoin passes).
 - Watch live: medium-priority buy fill rate on fast coins; first real stray sweep; sell result reports ~10 s later while the close confirms.
+
+## Lesson 46 — buy the low, never the top (Alex, 2026-10-30)
+"Enter when the price is down, wait, it goes up. You cannot buy the top." The 0.236-0.618 zone (build 61) bought too close to the high. Live now via bridge: fibLo 0.5, fibHi 0.786, fibDeep 0.886 — buy only the deep retrace (0.5-0.786) on a confirmed bounce, swing dead below 0.886. Keep this when tuning entries.
