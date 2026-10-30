@@ -41,3 +41,12 @@ Alex: "build extensive instant research on coins … this creates certainty and 
 - Certainty 0..1 with reasons. < 0.4 skip. 0.4-0.7 normal -2%. >= 0.7 stop widens -2% -> -5% (at 0.9), trail 15%, hold x2. Size never changes. Rug check untouched.
 - Every buy line ends "certainty 0.xx: <top 3 positives + every negative>". Status shows `engine.intel` and certainty/sl/trail per open position.
 - Failure or timeout = 0.5, trading never waits.
+
+## Whale following (build 63, live 2026-10-30)
+Code: `tools/autotrader/src/lib/whales.mjs`, tests `test/whales.test.mjs`. Free sources only (GeckoTerminal trades, public Solana RPC, RugCheck); read-only, never signs.
+- Discovery: one top runner (pool liq >= $20k) per minute while fewer than 8 wallets, then every 10 min. Keeps wallets that sold >= 20% above their average buy with >= $150 sold; drops bots (>40 trades), buy-only wallets, the runner's creator and RugCheck insiders. Max 24, saved as `whales` in config.json. `cfg.smartWallets` are seeded too.
+- Watch: `getSignaturesForAddress` two wallets per pass (~1.5 s); first look only bookmarks. Same oldest funder counts as one wallet.
+- Follow: >= 2 independent wallets buy one coin within 60 s -> full rug check, normal 0.016 SOL size, reason "following N smart wallets into X". Fib agreement moves it up, never blocks. No follow without a RugCheck report.
+- Exit: any copied wallet sells -> Ultra sells first. -2% stop still checked first; half at +5%, rest to +100% unchanged.
+- Score: copied PnL credited to the wallets; drop after 3 copies averaging < -2% or 2 straight losses totalling < -4%.
+- Lesson: the first live discovery run picked up a runner's own creator as "smart money" (he sold well by dumping). Discovery must always exclude creator + insiders. Lag and the funder check (oldest of the last 1000 signatures only) are not proven yet; read `engine.whales` in /status.
