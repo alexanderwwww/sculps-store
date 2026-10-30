@@ -471,6 +471,39 @@ export class Engine {
     O.noteEntry(this.org, this.now());
     this.#ev("buy", m.name, s.why, { stake: pos.stake });
   }
+  /** Chart data for the UI's Fibonacci widget (display only, never used to trade): the last 30 one-minute candles with the
+   *  minute in progress from the live price, the live ticks, and the same swing the fib gate reads (low before the high, 30 min). */
+  chartFor(name, pool, pos = null) {
+    const g = (v) => (v == null || !isFinite(v) ? null : +(+v).toPrecision(6));
+    const hit = this.cc.get(pool), lv = this.live.get(pool), ph = (this.ph.get(pool) || []);
+    let cs = (hit?.cs || []).slice(-30).map((k) => ({ t: k.t, o: k.o, h: k.h, l: k.l, c: k.c }));
+    if (lv?.price > 0) {
+      const minute = Math.floor(this.now() / 60000) * 60000, last = cs[cs.length - 1];
+      if (last && last.t >= minute) cs[cs.length - 1] = { ...last, c: lv.price, h: Math.max(last.h, lv.price), l: Math.min(last.l, lv.price) };
+      else cs.push({ t: minute, o: last ? last.c : lv.price, h: Math.max(last ? last.c : lv.price, lv.price), l: Math.min(last ? last.c : lv.price, lv.price), c: lv.price });
+      cs = cs.slice(-30);
+    }
+    if (!cs.length) return null;
+    let hi = 0, hiAt = 0; cs.forEach((k, i) => { if (k.h > hi) { hi = k.h; hiAt = i; } });
+    const lo = Math.min(...cs.slice(0, hiAt + 1).map((k) => k.l)), d = hi - lo, at = (r) => hi - r * d;
+    const fibLo = this.cfg.fibLo ?? 0.236, fibHi = this.cfg.fibHi ?? 0.618;
+    const step = Math.max(1, Math.ceil(ph.length / 40)), ticks = ph.filter((_, i) => i % step === 0 || i === ph.length - 1).map(([t, v]) => [t, g(v)]);
+    const entry = pos?.entryPx ?? null, sl = pos ? (pos.sl ?? this.cfg.sl) : null;
+    return {
+      name, open: !!pos, cs: cs.map((k) => ({ t: k.t, o: g(k.o), h: g(k.h), l: g(k.l), c: g(k.c) })), ticks,
+      lo: g(lo), hi: g(hi), loT: cs[cs.slice(0, hiAt + 1).findIndex((k) => k.l === lo)]?.t ?? null, hiT: cs[hiAt].t,
+      levels: [0, 0.236, 0.382, 0.5, 0.618, 0.786, 0.886, 1].map((r) => ({ r, p: g(at(r)) })),
+      zone: { from: fibLo, to: fibHi, top: g(at(fibLo)), bottom: g(at(fibHi)) },
+      price: g(lv?.price ?? cs[cs.length - 1].c),
+      entry: g(entry), stop: entry && sl != null ? g(entry * (1 + sl)) : null, takes: entry ? [g(entry * 1.05)] : [],
+    };
+  }
+  charts() {
+    const out = [];
+    for (const p of this.open.values()) { if (out.length >= 6) break; try { const c = this.chartFor(p.name, p.pool, p); if (c) out.push(c); } catch {} }
+    for (const m of this.ready.slice(0, 3)) { if ([...this.open.values()].some((p) => p.pool === m.pool)) continue; try { const c = this.chartFor(m.name, m.pool); if (c) out.push(c); } catch {} }
+    return out;
+  }
   status() {
     const c = this.closed, wins = c.filter((x) => x.ret > 0);
     return {
@@ -483,7 +516,7 @@ export class Engine {
       exits: { sl: this.cfg.sl, tp: this.cfg.tp, trailFrom: this.cfg.trailFrom, trail: this.cfg.trail, maxHoldMin: this.cfg.maxHoldMin },
       trades: c.length, wins: wins.length, winRate: c.length ? +(wins.length / c.length).toFixed(3) : null,
       recentClosed: c.slice(-8).map((x) => ({ name: x.name, ret: +(x.ret * 100).toFixed(1), pnl: +(x.pnl || 0).toFixed(4), why: x.why, note: x.note || null, enter: x.enter, buyFee: x.feeLamports ?? null, sellFee: x.sellFee ?? null })),
-      startedAt: this.startedAt, counts: this.counts, lines: this.seq, next: this.ready.slice(0, 4).map((m) => m.name), whyNot: Object.fromEntries([...this.skips].sort((a, b) => b[1] - a[1]).slice(0, 12)), events: this.events.slice(-60), watching: this.watching, edge: this.edge(), shadowOpen: this.shadow.size, recentSkips: this.recent.slice(-10), errors: this.errors.slice(-5),
+      startedAt: this.startedAt, counts: this.counts, lines: this.seq, next: this.ready.slice(0, 4).map((m) => m.name), whyNot: Object.fromEntries([...this.skips].sort((a, b) => b[1] - a[1]).slice(0, 12)), events: this.events.slice(-60), watching: this.watching, edge: this.edge(), shadowOpen: this.shadow.size, recentSkips: this.recent.slice(-10), errors: this.errors.slice(-5), charts: this.charts(),
     };
   }
 }
