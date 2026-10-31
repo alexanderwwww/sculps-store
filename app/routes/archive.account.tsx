@@ -7,6 +7,7 @@ import { MA_SLUG, getThread, listThreads, markRead, readOwner, readSession, unre
 import { OFFER_HOURS, REPLY_TIME } from "~/lib/ma-shared";
 import type { Route } from "./+types/archive.account";
 import css from "~/storefronts/mysterious-archive/theme.css?url";
+import { CompanyLine, LegalLinks } from "~/storefronts/mysterious-archive/legal";
 
 export const links = () => [
   { rel: "stylesheet", href: css },
@@ -464,8 +465,10 @@ export default function Account({ loaderData }: Route.ComponentProps) {
       <footer>
         <img className="ma-footer-logo" src="/archive-logo-script.png" alt="Mysterious Archive" />
         <p><Link to={"/archive/certificates" + query}>Authenticity &amp; certificates</Link></p>
+        <LegalLinks query={query} />
         <p>Independent archive of collectible pieces.</p>
         <p>Chrome Hearts is a trademark of its respective owner. Mysterious Archive is an independent reseller.</p>
+        <CompanyLine />
         <small>© {new Date().getFullYear()} Mysterious Archive</small>
       </footer>
     </div>
