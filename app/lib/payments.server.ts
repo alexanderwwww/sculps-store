@@ -19,6 +19,8 @@ export interface PaymentIntent {
   status: string;
   /** what Stripe currently holds this intent at, in the smallest unit */
   amountCents: number;
+  /** "off_session" / "on_session" when Stripe will keep the card for later, null when it will not */
+  setupFutureUsage: string | null;
 }
 
 /**
@@ -435,5 +437,6 @@ function toIntent(intent: any): PaymentIntent {
     clientSecret: intent.client_secret,
     status: intent.status,
     amountCents: Number(intent.amount ?? 0),
+    setupFutureUsage: intent.setup_future_usage ? String(intent.setup_future_usage) : null,
   };
 }

@@ -61,8 +61,18 @@ export async function action({ context, request }: ActionFunctionArgs) {
      * cart. So a stored intent is trusted only while it is young; past that
      * it is read back from Stripe before it is trusted again.
      */
+    /*
+     * Whether this store keeps the card for a later charge. It has to agree with
+     * what the browser's Elements was told (checkout.tsx: setupFutureUsage), or
+     * Stripe refuses the payment at the last step: "The provided
+     * setup_future_usage (off_session) does not match the expected
+     * setup_future_usage (null)". Mysterious Archive keeps no cards.
+     */
+    const keepsCard = store.slug !== "mysterious-archive";
     const fresh = known.updatedAt ? Date.now() - known.updatedAt.getTime() < 15 * 60_000 : false;
-    if (known.id && known.clientSecret && known.amountCents === cart.totalCents && fresh) {
+    // The stored secret is not trusted blind on a store that keeps no card: an intent made before
+    // this was fixed carries off_session, and only a read from Stripe shows that.
+    if (known.id && known.clientSecret && known.amountCents === cart.totalCents && fresh && keepsCard) {
       return Response.json({ clientSecret: known.clientSecret, amountCents: cart.totalCents, error: null });
     }
 
@@ -73,8 +83,11 @@ export async function action({ context, request }: ActionFunctionArgs) {
         // An intent that is already being paid belongs to a charge that is
         // happening. It is never reused or written over — and a cart still
         // holding one is a cart whose order went through, so it is closed.
-        if (PAYABLE.has(found.status)) intent = found;
-        else if (found.status !== "canceled") {
+        if (PAYABLE.has(found.status)) {
+          // An unpaid intent that would save the card on a store that does not is dropped and replaced below.
+          // Nothing is charged by this: it never got paid and its secret is no longer handed out.
+          if (keepsCard || !found.setupFutureUsage) intent = found;
+        } else if (found.status !== "canceled") {
           if (found.status === "succeeded") await closeCartForPaidIntent(context.db, store.id, token, found.id);
           return Response.json({ clientSecret: null, error: "Check your existing order before starting another payment." }, { status: 409 });
         }
@@ -96,6 +109,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         currency: cart.currency,
         orderReference: `${store.name} order`,
         metadata: { storeId: store.id },
+        saveCard: keepsCard,
       });
     }
 
