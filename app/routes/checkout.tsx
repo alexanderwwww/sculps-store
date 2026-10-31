@@ -936,8 +936,11 @@ async function payAction({
   if (intentId) {
     try {
       const found = await provider.readIntent(intentId);
-      if (PAYABLE_INTENT_STATUSES.has(found.status)) intent = found;
-      else if (found.status !== "canceled") {
+      // Mysterious Archive keeps no cards: an unpaid intent that would save one (made before the fix, or by an old page) is never
+      // paid into, or Stripe refuses it with "setup_future_usage (off_session) does not match (null)". A fresh one is made below.
+      if (PAYABLE_INTENT_STATUSES.has(found.status)) {
+        if (store.slug !== "mysterious-archive" || !found.setupFutureUsage) intent = found;
+      } else if (found.status !== "canceled") {
         return { error: "Check your existing order before starting another payment." };
       }
     } catch {
