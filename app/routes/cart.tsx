@@ -382,6 +382,14 @@ export default function Cart({ loaderData, actionData }: Route.ComponentProps) {
           </>
         )}
       </div>
+      {store.slug === "mysterious-archive" ? (
+        <footer style={{ padding: "28px 0", textAlign: "center", fontSize: 13 }}>
+          {["terms", "privacy", "returns", "shipping", "contact", "about"].map((k) => (
+            <Link key={k} className="gk-quiet" to={`/archive/${k}${storeParam}`} style={{ margin: "0 10px", textTransform: "capitalize" }}>{k}</Link>
+          ))}
+          <p className="gk-quiet" style={{ margin: "12px 0 0" }}>Mysterious Archive · New York, NY, United States · mysterious@mysteriousarchive.com</p>
+        </footer>
+      ) : null}
     </div>
   );
 }

@@ -617,14 +617,17 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       currency: store.currency,
       logoUrl: store.logoUrl,
       faviconUrl: store.faviconUrl,
-      contactEmail: store.contactEmail,
+      contactEmail: store.contactEmail ?? (store.slug === "mysterious-archive" ? "mysterious@mysteriousarchive.com" : null),
       phoneMode: store.checkoutPhoneMode,
       companyMode: store.checkoutCompanyMode,
       nameMode: store.checkoutNameMode,
       consent: store.checkoutConsent,
       shipEstimate: store.shipEstimate,
     },
-    footerLinks: nav.footer,
+    // Mysterious Archive: the policy pages and a contact email on the checkout too, where a buyer decides whether to trust the shop.
+    footerLinks: store.slug === "mysterious-archive"
+      ? [["terms", "Terms"], ["privacy", "Privacy"], ["returns", "Returns"], ["shipping", "Shipping"], ["contact", "Contact"], ["about", "About"]].map(([k, label]) => ({ label, href: `/archive/${k}` }))
+      : nav.footer,
     photo,
     upsells,
     cart,
@@ -2252,6 +2255,11 @@ function Summary({
                 <span className="gb-co__qty" aria-hidden="true">
                   {line.quantity}
                 </span>
+              </span>
+            ) : archive && line.imageUrl ? (
+              // Mysterious Archive: the piece's own photograph beside its name, so the buyer sees what they are paying for.
+              <span style={{ flex: "0 0 72px", width: 72, height: 90, marginRight: 14, background: "#fff", border: "1px solid #e6e6e6", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                <img src={line.imageUrl} alt={line.productTitle} loading="lazy" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
               </span>
             ) : null}
             <span className={buddy ? "gb-co__line-body" : undefined} style={buddy ? undefined : { flex: 1 }}>

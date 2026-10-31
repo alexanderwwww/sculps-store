@@ -115,3 +115,17 @@ body:has(.ma){margin:0}
 .ma .ma-legal-links a{color:#111;text-decoration:underline;text-underline-offset:3px}
 .ma .ma-company a{color:inherit}
 @media(max-width:700px){.ma-legal{padding:35px 20px 60px}.ma-legal h1{font-size:32px}}
+
+.ma-legal-date{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8a8a8a;margin:-18px 0 30px}
+.ma-legal h2 span{display:inline-block;min-width:34px;color:#9a9a9a;font-weight:400}
+.ma-legal a{color:#111;text-decoration:underline;text-underline-offset:3px}
+.ma-legal-mail{font-weight:700;word-break:break-all}
+.ma-legal-card{margin:36px 0 0;padding:28px;border:1px solid #111;text-align:center;background:#fafafa}
+.ma-legal-card h2{margin:0 0 6px}
+.ma-legal-card p{margin:0 0 16px}
+.ma-legal .ma-legal-btn{display:inline-block;background:#111;color:#fff;text-decoration:none;padding:14px 34px;letter-spacing:.06em;font-size:13px}
+.ma-legal-card .ma-legal-mail{display:block;margin-top:14px;font-size:13px}
+
+/* iPhone Safari paints a bare <button> in its system blue: the category names are black, always */
+.ma nav button{color:#171717;-webkit-text-fill-color:#171717;font:inherit;font-size:13px}
+.ma nav a{color:#171717}
