@@ -88,3 +88,10 @@ Role handoff (Alex, October 17): Claude takes over website design/implementation
 ## 2026-10-31 legal pages and company line (live 7826bdeb-c883-4099-a53f-11a81184c757)
 - Vincent (a buyer) pointed out: no legal mention, no company name, nothing official. Added /archive/terms, /privacy, /returns, /shipping, /contact, /about (`app/storefronts/mysterious-archive/legal.tsx`), a legal links row and a company line (Mysterious Archive · New York, NY, United States · mysterious@mysteriousarchive.com) in the footer of the storefront and the account page.
 - Written only from what the site already says and does. NOT known and NOT invented: the legal business name and street address (set LEGAL_ENTITY in legal.tsx and Shop Admin → Settings when Alex gives them). Policy choices made for Alex, to confirm: 7 days to report a piece not as described, change-of-mind returns not offered, 6-hour offer links, Meta pixel mentioned in Privacy.
+
+## 2026-10-31 final round (live 35338601-8b1e-4e92-855f-a2e61fce789d)
+- Checkout summary now shows the piece's photo; cart and checkout footers carry Terms/Privacy/Returns/Shipping/Contact/About; policy pages rewritten (numbered, linked, no sentence ends on the email address, "Questions?" card).
+- Category names were iPhone-Safari system blue (bare <button>): now #171717 in theme.css. Loader asks DB/R2/session at once, policy pages skip the catalogue (18 KB instead of 93 KB, 0.3 s), certificates cached 60 s.
+- Discount code JUSTFORVINCENT: fixed $500, one use, no expiry (Alex's code, 2026-10-31). Change it in Shop Admin → Discounts.
+- Cloudflare rate-limits `wrangler deploy` after ~6 deploys in an hour ("Retry-After" 60-130 s). Batch changes into one deploy; never run two deploys at once.
+- Verified live, no charge: all pages 200, checkout PaymentIntent setup_future_usage=null, total with the code $3,550. A real card payment end to end is NOT proven.
