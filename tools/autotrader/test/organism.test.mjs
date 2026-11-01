@@ -55,16 +55,16 @@ test("seeding with today's 20 closes gives EV(rise 5-10) < 0", () => {
   assert.ok(O.score(org, { rise: 0.07 }) < 0, String(O.score(org, { rise: 0.07 })));
   assert.ok(band.length > 0);
 });
-test("an all-negative table still gives an idle pick at 0.618 after 97 s", () => {
+test("an all-negative table still gives an idle pick at 0.618 after 30 s", () => {
   const org = O.newOrg(); for (let i = 0; i < 30; i++) O.update(org, { ret: -0.08, sig: { rise: 0.2 } });
   assert.ok(O.score(org, { rise: 0.2 }) < 0);
   let t = 1e12; O.noteEntry(org, t);
   O.noteIdle(org, { rise: 0.2 }, -0.05, { pool: "A" }, t + 80000);
   O.noteIdle(org, { rise: 0.2 }, -0.02, { pool: "B" }, t + 90000);
-  assert.equal(O.idlePick(org, t + 96000), null, "not before 97 s");
-  const p = O.idlePick(org, t + 97000); assert.equal(p.cand.pool, "B"); assert.equal(p.m, 0.618);
+  assert.equal(O.idlePick(org, t + 29000), null, "not before 30 s");
+  const p = O.idlePick(org, t + 30000); assert.equal(p.cand.pool, "B"); assert.equal(p.m, 0.618);
   assert.equal(org.idleFires, 1);
-  O.noteIdle(org, {}, -1, { pool: "C" }, t + 97000);
+  O.noteIdle(org, {}, -1, { pool: "C" }, t + 30000);
   assert.equal(O.idlePick(org, t + 200000), null, "a candidate older than 30 s is not bought");
   O.noteIdle(org, {}, -1, { pool: "D" }, t + 200000);
   assert.equal(O.idlePick(org, t + 200000, () => false), null, "it must still pass every filter");
@@ -182,8 +182,8 @@ test("engine loop: 60 trades, winning band favoured, losing band shrinks, caps h
   const late = w.buys.slice(-20);
   assert.ok(late.filter((b) => b.kind === "W").length > late.filter((b) => b.kind === "L").length, JSON.stringify(late.map((b) => b.kind)));
   assert.ok(late.filter((b) => b.kind === "L").every((b) => b.sol < SIZE), "a losing band only ever gets 0.618");
-  // never stops: no gap between buys over 97 s (plus one 3 s tick) while candidates exist
-  for (let k = 1; k < w.buys.length; k++) assert.ok(w.buys[k].at - w.buys[k - 1].at <= 97000 + 3000, `gap ${(w.buys[k].at - w.buys[k - 1].at) / 1000}s`);
+  // never stops: no gap between buys over 30 s (plus one 3 s tick) while candidates exist
+  for (let k = 1; k < w.buys.length; k++) assert.ok(w.buys[k].at - w.buys[k - 1].at <= 30000 + 3000, `gap ${(w.buys[k].at - w.buys[k - 1].at) / 1000}s`);
   // the journal carries the numbers the organism learns from
   const closes = fs.readFileSync(jf, "utf8").trim().split("\n").map((l) => JSON.parse(l)).filter((x) => x.type === "close");
   assert.ok(closes.length >= 60);

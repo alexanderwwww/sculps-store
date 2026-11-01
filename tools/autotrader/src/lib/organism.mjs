@@ -6,7 +6,7 @@
 // and it never stops trading (idlePick enters the least-bad candidate at 0.618 after 97 s without an entry).
 export const PHI = 1.618, INV = 0.618;
 export const LAMBDA = Math.pow(INV, 1 / 21);              // decay per close: half-life about 29.6 closes
-export const IDLE_MS = 97000;                             // 1.618 min
+export const IDLE_MS = 30000;                             // 1.618 min
 export const IDLE_FRESH_MS = 97000;                      // the whole idle window: any candidate seen in it may be picked (it is re-gated live first)
 export const PART_FRAC = 0.382;                          // same default the engine sells at (engine.mjs partFrac ?? 0.382)
 export const SIZE_MIN_N = 13;                            // closes a band needs behind it before full size

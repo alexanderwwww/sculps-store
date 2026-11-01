@@ -33,7 +33,10 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
         // under 0.5 SOL: a flat 0.01618 SOL (Alex). From 0.5 SOL: base 0.1618 (0.2618 from 1 SOL), x1.618 per win in a row (at most 3 steps),
         // back to base after any loss; never more than 35% of what is spendable on one buy.
         const floor = +(caps.fixedSol * Math.min(1, scale)).toFixed(5);
-        if (bal < 0.5) return { bal, sol: spendable >= 0.012 ? 0.012 : spendable >= 0.0055 ? +(spendable * 0.92).toFixed(5) : 0 };   // Alex 2026-10-29: 0.016 all the time under 0.5 SOL; build 66 (2026-11-01, "0.012"): a wallet that cannot cover it trades 0.012, or what it has
+        // build 77 (Alex 2026-11-01: "size according to the wallet, golden ratio up and down, never stop trading, less money = trade less"):
+        // under 0.5 SOL the stake is a share of what is spendable (balance minus the fee reserve): 0.618 of it, x1.618 after a win (cap 92%), x0.618 after each loss
+        // (at most two), times the organism's scale. Never below 0.005 SOL while 0.0055 is spendable, so a small wallet trades smaller instead of stopping.
+        if (bal < 0.5) { const st = Math.max(-2, Math.min(1, Math.trunc(Number(streak)) || 0)); const f = 0.618 * Math.pow(1.618, st) * Math.min(1, scale); const want = +(spendable * f).toFixed(5); const sol = Math.min(spendable * 0.92, Math.max(0.005, want)); return { bal, sol: sol >= 0.005 ? +sol.toFixed(5) : 0 }; }
         if (spendable < floor) return { bal, sol: 0 };
         // Alex's heavier rocks: 0.5 SOL in the wallet -> base 0.1618; 1 SOL -> 0.1618 x 1.618 = 0.2618; below 0.5 -> 0.01618
         const base = bal >= 1 ? 0.2618 : bal >= 0.5 ? 0.1618 : caps.fixedSol;

@@ -119,3 +119,9 @@ Process slip: build 73 was published after the gate FAILED (a `grep` in the chai
 3. **A +0.6% take paid +12.4% and +2.5%** (the quote jumps): the take is right in direction but the real result is decided by the first real quote vs stake, not the target.
 4. Wins are 2 of 11: entries "rising 2-3% in 20 s" buy coins that already moved. Same finding as the Oct 28 backtest (-4.3% a trade for current rules AND random entries).
 Decision rule kept: judge on 20 closes, fresh-data backtest (collect.mjs, started 10:40, 445 pools) at 11:06.
+
+## Lesson 54 — size by the wallet, golden ratio up and down; never stop (build 77, Alex 2026-11-01)
+"The size is not 0.012, I told you it is according to wallet size. Golden ratio up and down. He has 0.019 and doesn't trade. When he has less he trades less."
+- Sizer under 0.5 SOL: stake = spendable (balance - 0.004 reserve) x 0.618, x1.618 after a win (cap 92% of spendable), x0.618 after each loss (at most two steps), x the organism scale (0.618 on idle picks). Floor 0.005 SOL so a small wallet trades smaller instead of stopping. Examples at 0.019 SOL: 0.0093 base, 0.0138 after a win, 0.0057 after a loss. Below ~0.0094 SOL (spendable < 0.0055) nothing can be bought: Jupiter minimum + fee reserve.
+- Never stop: idle pick after 30 s (was 97 s), idleOk liquidity 8000 (was 20000); bridge: momMin 0.005, liveMinLiq 6000, liveBuyRatio 0.9, liveMinVol5 100. Before: 3 buys in 40 min, rejections: 195 "volume or buyers too thin", 102 "pool too thin", 65 "not rising".
+- Tests updated: server/e2e expect the golden-ratio stake (0.04048 on the test wallet), organism idle test at 30 s.
