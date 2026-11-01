@@ -5,7 +5,7 @@ export const KIMCHI = "CSocnzcRpgSCr1naKcNTieWZUxb6rABe45j844m7pump";
 const BASE = { maxSolPerTrade: 0.05, perHour: 30, perDay: 200, floorFrac: 0.7 };
 export const SOL_MINT = "So11111111111111111111111111111111111111112";
 export const PLUG_CAPS_EXTRA = { fixedSol: 0.012,   // Alex 2026-10-29: the golden step between 0.01618 and the doubled 0.03236 (0.01618 x 1.618)
-  perHour: 200, perDay: 2000, floorFrac: 0, reserveSol: 0.004, minBalSol: null };   // Alex 2026-10-29: no pause line, keep trading to the last trade
+  perHour: 200, perDay: 2000, floorFrac: 0, reserveSol: 0.002, minBalSol: null };   // Alex 2026-10-29: no pause line, keep trading to the last trade
 export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.06, buySlippageBps: 1200, sellSlippageBps: 3500, sellLadderBps: [800, 1500, 3500], maxFeeLamports: 50000,
   // a sell pays more only when the cheaper try did not land; the last try keeps the old 150000 ceiling so exits still land
   sellFeeLadder: [["medium", 30000], ["high", 80000], ["veryHigh", 150000]], confirmMs: 45000, pollMs: 1500 };
@@ -24,7 +24,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       const q = await jupiter.quote({ input: p.mint, output: SOL_MINT, amount: String(p.tokens), slippageBps: caps.sellSlippageBps });
       return Number(q.outAmount) / 1e9;
     },
-    async sizeSol({ streak = 0, scale = 1 } = {}) {
+    async sizeSol({ streak = 0, scale = 1, openSol = 0 } = {}) {
       const bal = await exec.balance();
       if (state.startSol == null) state.startSol = bal;
       const spendable = Math.max(0, bal - caps.reserveSol);
@@ -36,7 +36,10 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
         // build 77 (Alex 2026-11-01: "size according to the wallet, golden ratio up and down, never stop trading, less money = trade less"):
         // under 0.5 SOL the stake is a share of what is spendable (balance minus the fee reserve): 0.618 of it, x1.618 after a win (cap 92%), x0.618 after each loss
         // (at most two), times the organism's scale. Never below 0.005 SOL while 0.0055 is spendable, so a small wallet trades smaller instead of stopping.
-        if (bal < 0.5) { const st = Math.max(-2, Math.min(1, Math.trunc(Number(streak)) || 0)); const f = 0.618 * Math.pow(1.618, st) * Math.min(1, scale); const want = +(spendable * f).toFixed(5); const sol = Math.min(spendable * 0.92, Math.max(0.005, want)); return { bal, sol: sol >= 0.005 ? +sol.toFixed(5) : 0 }; }
+        if (bal < 0.5) { // build 78 (Alex 2026-11-01: "take 3 trades at once, even 0.006 on each"): each stake is 0.318 of the WHOLE portfolio (wallet + what is in open coins), so about three fit side by side;
+          // golden ratio up (x1.618, cap 1 step) after a win and down (x0.618, 2 steps) after a loss. A new coin's token account costs 0.002 rent up front (back on sell), so the wallet must cover stake + rent.
+          const st = Math.max(-2, Math.min(1, Math.trunc(Number(streak)) || 0)), total = bal + (Number(openSol) || 0), want = +(0.318 * total * Math.pow(1.618, st) * Math.min(1, scale)).toFixed(5);
+          const room = (bal - caps.reserveSol - 0.002) * 0.92, sol = Math.min(room, Math.max(0.003, want)); return { bal, sol: sol >= 0.003 ? +sol.toFixed(5) : 0 }; }
         if (spendable < floor) return { bal, sol: 0 };
         // Alex's heavier rocks: 0.5 SOL in the wallet -> base 0.1618; 1 SOL -> 0.1618 x 1.618 = 0.2618; below 0.5 -> 0.01618
         const base = bal >= 1 ? 0.2618 : bal >= 0.5 ? 0.1618 : caps.fixedSol;
@@ -73,7 +76,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       const { bal, sol, why: sizeWhy } = await exec.sizeSol({ scale: Math.min(1, Number(scale) > 0 ? Number(scale) : 1) });
       const why = exec.gate(mint, bal);
       if (why) return { ok: false, why };
-      if (!(sol >= 0.005)) return { ok: false, why: sizeWhy || `stake ${sol} SOL is too small to trade (wallet ${bal.toFixed(4)} SOL, ${caps.reserveSol} kept for fees)` };
+      if (!(sol >= 0.003)) return { ok: false, why: sizeWhy || `stake ${sol} SOL is too small to trade (wallet ${bal.toFixed(4)} SOL, ${caps.reserveSol} kept for fees)` };
       const lamports = Math.round(sol * 1e9);
       let q, s;
       try {

@@ -144,6 +144,7 @@ export class Engine {
    *  into falling or thin coins; the 2 winners were real signals. Constant position stays; a falling coin is no longer taken to keep it. */
   /** consecutive wins (+) or losses (-) at the end of the closed list: the golden-ratio sizer steps up after a win and down after a loss */
   #streak() { let s = 0; for (let i = this.closed.length - 1; i >= 0; i--) { const w = this.closed[i].ret > 0; if (i === this.closed.length - 1) s = w ? 1 : -1; else if (w && s > 0) s++; else if (!w && s < 0) s--; else break; } return s; }
+  #openSol() { let t = 0; for (const p of this.open.values()) t += Number(p.stake) || 0; return t; }
   #idleOk(m) {
     const lv = this.live.get(m.pool); if (!lv) return false;
     const ph = this.ph.get(m.pool) || [], prev = ph.length > 1 ? ph[ph.length - 2][1] : null, mom = this.#mom(m.pool, 30);
@@ -461,7 +462,7 @@ export class Engine {
     // size = what the executor's own caps already allow at full scale; the stake is never above it (hard invariant).
     const mul = o.m === 1 ? 1 : O.INV;
     let size = this.equity * this.cfg.stakeFrac, stake = size * mul;
-    if (this.exec.sizeSol) { try { size = (await this.exec.sizeSol({ streak: this.#streak(), scale: 1 })).sol; stake = (await this.exec.sizeSol({ streak: this.#streak(), scale: mul })).sol; } catch (err) { this.#skip(m.name, `wallet balance: ${err.message.slice(0, 60)}`); return; } }
+    if (this.exec.sizeSol) { try { size = (await this.exec.sizeSol({ streak: this.#streak(), scale: 1, openSol: this.#openSol() })).sol; stake = (await this.exec.sizeSol({ streak: this.#streak(), scale: mul, openSol: this.#openSol() })).sol; } catch (err) { this.#skip(m.name, `wallet balance: ${err.message.slice(0, 60)}`); return; } }
     if (!(stake <= size + 1e-9)) { this.#skip(m.name, "stake above size: refused"); return; }
     const sigN = o.sig ? Object.fromEntries(Object.entries(o.sig).map(([k, v]) => [k, typeof v === "number" ? +v.toFixed(4) : v])) : null;
     const cx = o.intel ? exitsFor(o.intel.certainty, this.cfg) : {};   // high certainty: wider stop, wider trail, longer hold. Never a bigger size.

@@ -134,3 +134,7 @@ Findings, in order of weight:
 3. The only configuration positive on held-out pools is slow and wide (breakout L10 vol 1.5x, tp +90%, sl -25%, hold 60 min: train +6.5% n=35, test +3.2% +-2.4% n=46): rare fat winners pay for many -25% stops. Needs the fresh-data check (collect2.mjs -> data/pools-nov.json, saves every 10 pools).
 4. At 0.005-0.01 SOL stakes, fixed costs (priority fee, ATA rent cycle) weigh more; a wider/slower strategy also pays them less often.
 5. Process: collect.mjs died with a worker restart and saved nothing (writes only at the end). collect2.mjs saves incrementally and runs detached.
+
+## Lesson 56 — several positions at once, sized on the whole portfolio (build 78, Alex 2026-11-01: "take 3 trades at once, even 0.006 each")
+Stake = 0.318 x (wallet + SOL in open coins) x golden step (x1.618 after a win, x0.618 per loss, 2 steps) x organism scale; floor 0.003; reserve 0.002; a new coin's token account costs 0.002 rent up front (back on sell), so the wallet must cover stake + rent: room = (bal - 0.002 - 0.002) x 0.92. Wallet 0.0117 -> 0.0037 stake, and the second position does NOT fit (0.006 left). 0.03 SOL -> 0.0095 then 0.0089 (two at once). Three at once needs ~0.03-0.04 SOL. Idle pick stays 30 s: at 12/15/20 s the organism test "late buys favour the winning band" fails (8 W vs 12 L) because forced picks of losing bands outnumber real signals.
+Wallet: 0.0161 (08:50) -> 0.0117 (11:35) after 20 live closes.
