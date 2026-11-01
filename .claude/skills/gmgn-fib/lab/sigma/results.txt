@@ -1,0 +1,59 @@
+=== 0. STREAM SUMMARY (edge worlds sampled; net of costs) ===
+A MeanRev: 2 trades/day, sd/trade 6.0%, f=half-Kelly(central) 0.62, capacity $20000/trade
+   edge %/trade: posterior mean +0.187, median +0.268, P(edge<=0) 35%, central (half measured) 0.45
+   net %/day on wallet: central-edge +0.38% | posterior-mean +0.16% | max income at capacity $135/day
+   $1/min: K at central edge = IMPOSSIBLE, capacity ceiling $135/day
+   $1/2min: K at central edge = IMPOSSIBLE, capacity ceiling $135/day
+   $1/5min: K at central edge = IMPOSSIBLE, capacity ceiling $135/day
+C Breakout: 3 trades/day, sd/trade 20.0%, f=half-Kelly(central) 0.16, capacity $500/trade
+   edge %/trade: posterior mean -0.856, median +0.355, P(edge<=0) 30%, central (half measured) 1.25
+   net %/day on wallet: central-edge +0.59% | posterior-mean -0.40% | max income at capacity $19/day
+   $1/min: K at central edge = IMPOSSIBLE, capacity ceiling $19/day
+   $1/2min: K at central edge = IMPOSSIBLE, capacity ceiling $19/day
+   $1/5min: K at central edge = IMPOSSIBLE, capacity ceiling $19/day
+D Scalp: 4320 trades/day, sd/trade 1.2%, f=half-Kelly(central) 1.00, capacity $1000/trade
+   edge %/trade: posterior mean -0.353, median -0.379, P(edge<=0) 90%, central (half measured) 0.15
+   net %/day on wallet: central-edge +432.00% | posterior-mean -1016.94% | max income at capacity $6,480/day
+   $1/min: K at central edge = $333
+   $1/2min: K at central edge = $167
+   $1/5min: K at central edge = $67
+B Staking 5.3% APY = 0.0145%/day; K: $1/min $9,916,981  $1/2min $4,958,491  $1/5min $1,983,396
+
+=== 1. TIME TO REACH K (central-edge K). horizon 5y (D 1y); reach counts TRADING profit only (deposits excluded). P(reach), median over ALL paths, fast-10% = day by which fastest 10% arrived ===
+[A MeanRev] $1/min: K=$375,467  (CAPACITY IGNORED here: ceiling is $135/day, so in reality impossible)
+   $1     +$0  /wk | P(reach)  1.4% median  never fast10%  never | ruin  0.2% killed 97.2% medMaxDD  41% median final $1
+   $1     +$25 /wk | P(reach) 10.0% median  never fast10%  1597d | ruin  0.1% killed 96.1% medMaxDD  41% median final $7,508
+   $1     +$100/wk | P(reach) 15.2% median  never fast10%   899d | ruin  0.5% killed 96.2% medMaxDD  41% median final $29,568
+   $30    +$0  /wk | P(reach)  3.9% median  never fast10%  never | ruin  0.0% killed 97.0% medMaxDD  41% median final $35
+   $30    +$25 /wk | P(reach) 10.2% median  never fast10%  1557d | ruin  0.3% killed 95.8% medMaxDD  41% median final $7,725
+   $30    +$100/wk | P(reach) 15.4% median  never fast10%   945d | ruin  0.3% killed 96.0% medMaxDD  41% median final $30,251
+   $300   +$0  /wk | P(reach)  6.2% median  never fast10%  never | ruin  0.0% killed 97.2% medMaxDD  41% median final $348
+   $300   +$25 /wk | P(reach) 10.2% median  never fast10%  1452d | ruin  0.1% killed 95.8% medMaxDD  41% median final $7,909
+   $300   +$100/wk | P(reach) 14.9% median  never fast10%   934d | ruin  0.1% killed 95.5% medMaxDD  41% median final $30,636
+   $3000  +$0  /wk | P(reach) 10.9% median  never fast10%  1054d | ruin  0.0% killed 96.1% medMaxDD  41% median final $3,726
+   $3000  +$25 /wk | P(reach) 11.0% median  never fast10%   989d | ruin  0.0% killed 96.6% medMaxDD  41% median final $11,146
+   $3000  +$100/wk | P(reach) 13.2% median  never fast10%   844d | ruin  0.1% killed 97.2% medMaxDD  41% median final $33,719
+[A MeanRev] $1/2min: K=$187,733  (CAPACITY IGNORED here: ceiling is $135/day, so in reality impossible)
+   $1     +$0  /wk | P(reach)  1.7% median  never fast10%  never | ruin  0.5% killed 96.9% medMaxDD  41% median final $1
+   $1     +$25 /wk | P(reach) 13.4% median  never fast10%  1128d | ruin  0.1% killed 95.8% medMaxDD  41% median final $7,569
+   $1     +$100/wk | P(reach) 18.3% median  never fast10%   745d | ruin  0.1% killed 94.7% medMaxDD  41% median final $30,258
+   $30    +$0  /wk | P(reach)  4.2% median  never fast10%  never | ruin  0.0% killed 97.2% medMaxDD  41% median final $37
+   $30    +$25 /wk | P(reach) 12.8% median  never fast10%  1129d | ruin  0.3% killed 95.3% medMaxDD  41% median final $7,511
+   $30    +$100/wk | P(reach) 16.6% median  never fast10%   798d | ruin  0.4% killed 95.7% medMaxDD  41% median final $29,753
+   $300   +$0  /wk | P(reach)  6.8% median  never fast10%  never | ruin  0.0% killed 97.2% medMaxDD  41% median final $381
+   $300   +$25 /wk | P(reach) 12.2% median  never fast10%  1068d | ruin  0.1% killed 95.5% medMaxDD  41% median final $7,858
+   $300   +$100/wk | P(reach) 16.4% median  never fast10%   782d | ruin  0.2% killed 96.2% medMaxDD  41% median final $30,220
+   $3000  +$0  /wk | P(reach) 12.0% median  never fast10%   890d | ruin  0.0% killed 97.0% medMaxDD  41% median final $3,592
+   $3000  +$25 /wk | P(reach) 13.9% median  never fast10%   778d | ruin  0.0% killed 97.0% medMaxDD  41% median final $11,148
+   $3000  +$100/wk | P(reach) 18.9% median  never fast10%   635d | ruin  0.0% killed 97.0% medMaxDD  41% median final $33,401
+[A MeanRev] $1/5min: K=$75,093  (CAPACITY IGNORED here: ceiling is $135/day, so in reality impossible)
+   $1     +$0  /wk | P(reach)  2.2% median  never fast10%  never | ruin  0.3% killed 96.7% medMaxDD  41% median final $1
+   $1     +$25 /wk | P(reach) 16.2% median  never fast10%   907d | ruin  0.2% killed 95.1% medMaxDD  41% median final $7,544
+   $1     +$100/wk | P(reach) 22.7% median  never fast10%   604d | ruin  0.4% killed 96.2% medMaxDD  41% median final $29,755
+   $30    +$0  /wk | P(reach)  4.9% median  never fast10%  never | ruin  0.0% killed 97.4% medMaxDD  41% median final $36
+   $30    +$25 /wk | P(reach) 14.0% median  never fast10%   943d | ruin  0.2% killed 96.2% medMaxDD  41% median final $7,573
+   $30    +$100/wk | P(reach) 22.8% median  never fast10%   613d | ruin  0.2% killed 95.9% medMaxDD  41% median final $29,933
+   $300   +$0  /wk | P(reach)  8.5% median  never fast10%  never | ruin  0.0% killed 97.2% medMaxDD  41% median final $360
+   $300   +$25 /wk | P(reach) 14.8% median  never fast10%   816d | ruin  0.1% killed 96.2% medMaxDD  41% median final $7,809
+   $300   +$100/wk | P(reach) 25.2% median  never fast10%   581d | ruin  0.1% killed 95.5% medMaxDD  41% median final $30,474
+   $3000  +$0  /wk | P(reach) 16.0% median  never fast10%   568d | ruin  0.0% killed 96.8% medMaxDD  41% median final $3,828

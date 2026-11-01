@@ -16,7 +16,9 @@ def candles(inst,bar,days):
     rows=sorted({int(r[0]):[int(r[0])]+[float(x) for x in r[1:6]] for r in rows if r[8]=='1'}.values())
     json.dump(rows,open(fn,'w')); print(inst,bar,len(rows),flush=True)
 syms=['BTC','ETH','SOL','DOGE','XRP','LINK','AVAX','SUI']
-if sys.argv[1]=='5m':
+if sys.argv[1]=='sym':
+    candles(sys.argv[2]+'-USDT-SWAP','5m',180)
+elif sys.argv[1]=='5m':
     for s in syms: candles(f'{s}-USDT-SWAP','5m',180)
 else:
     for s in ['BTC','ETH','SOL']: candles(f'{s}-USDT-SWAP','1m',20)
