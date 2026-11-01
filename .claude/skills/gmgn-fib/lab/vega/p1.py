@@ -7,7 +7,8 @@ def fwd(ps,H,minstart=5):
     out=[];per=[]
     for p in ps:
         c=p['c'];x=[]
-        for t in range(minstart,p['n']-H):
+        for t in range(minstart,p["n"]-H):
+            if p["v"][t]<=0: continue
             x.append(c[t+H]/c[t]-1)
         out+=x
         if x: per.append(sum(x)/len(x))
@@ -28,7 +29,8 @@ def hit(ps,tp,sl,H,minstart=5):
     res=[]
     for p in ps:
         c,h,l=p['c'],p['h'],p['l']
-        for t in range(minstart,p['n']-1):
+        for t in range(minstart,p["n"]-1):
+            if p["v"][t]<=0: continue
             e=c[t];r=None
             for k in range(t+1,min(p['n'],t+1+H)):
                 if l[k]<=e*(1-sl): r=-sl;break

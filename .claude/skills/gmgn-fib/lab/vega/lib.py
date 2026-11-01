@@ -17,10 +17,24 @@ def load(f):
         out.append(dict(name=p['name'],created=p['created'],liq=p['liqUsd'],t0=t0,o=o,h=h,l=l,c=c,v=v,n=n,
                         age0=(t0-p['created'])/60000))
     return out
+def clean(p, jump=10.0, wick=2.5):
+    # truncate at first single-minute close jump >jump x (data glitch / illiquid print); cap wicks at wick x body
+    n=p['n']; cut=n
+    for t in range(1,n):
+        if p['c'][t]/p['c'][t-1]>jump: cut=t;break
+    for k in 'ohlcv': p[k]=p[k][:cut]
+    p['n']=cut
+    for t in range(cut):
+        hi=max(p['o'][t],p['c'][t]); lo=min(p['o'][t],p['c'][t])
+        p['h'][t]=min(p['h'][t],hi*wick); p['l'][t]=max(p['l'][t],lo/wick)
+    p['cut']=cut<n
+    return p
 def pools():
     a=load('pools-oct28.json'); b=load('pools-nov.json')
     for i,p in enumerate(a): p['src']='oct'
     for p in b: p['src']='nov'
+    a=[clean(p) for p in a]; b=[clean(p) for p in b]
+    a=[p for p in a if p['n']>70]; b=[p for p in b if p['n']>70]
     return a,b
 def net(r): return (1+r)*(1-COST)-1
 def stats(x):
