@@ -153,3 +153,10 @@ Next: keep collecting (collector resumes from scratch, ~6 pools/min), shadow-tra
 ## Lesson 59 — hourly check 11:59 UTC (build 78)
 Since the gates were opened (momMin 0, entryMinLiq 3000): 2 trades, both forced "idle pick" entries on coins "rising 0.0% in 20 s": MARVIN -10.6% ("take profit +0.6%" decided, filled -10.6%), KO -6.1% (stop -5%). Wallet 0.0117 -> 0.0111 SOL. Flat coins bought only to stay busy lose; momMin went back to 0.005 (coin must at least tick up). The standing "pause buying under 0.05 SOL" line of the hourly prompt is overridden by Alex's later explicit orders (no pause line, trade until the last trade, 2026-10-29 and 2026-11-01); wallet floor remains removed (floorFrac 0).
 Open: log decision quote vs actual swap output per sell (MARVIN gap 11 pts).
+
+## Lesson 60 — 3h watch, 12:30 UTC: activity decides the fill (liveMinFlow 700)
+15 closes 11:54-12:30: sum -32.5%, avg -2.2%, 8 wins (all tiny). Wallet 0.0111 -> 0.01044 SOL.
+- **Amazon** (5-min flow 1000-1600 trades, vol $7-15k): 8 trades, 7 wins +0.12..+1.96%, one -0.63% time stop; avg +0.56%. The scalp (take +0.6% on quote) works there.
+- **Everything else** (flow 103-619: BLACKED, 牦牛, SA, Bob, MARVIN, KO): 8 trades avg -4.7%, stops -3.6..-10.6%.
+Mechanism: busy pools quote and fill close together; quiet pools slip past stops and take quotes. n=15, one coin dominates: a hint, not a proof. Action: bridge liveMinFlow 700 (flow = buys5+sells5 in the gate). Watch: if trades fall under ~1 per 10 min, ease to 500.
+Entries on "rising 0.0%" (momMin 0) lost -10.6/-6.1; momMin back to 0.005 at 11:59.
