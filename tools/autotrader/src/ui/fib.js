@@ -83,7 +83,7 @@
         const bar = document.createElement("div"); bar.className = "fib__sell";
         const go = (label, fn, ask) => { const bt = document.createElement("button"); bt.className = "danger"; bt.type = "button"; bt.textContent = label;
           bt.addEventListener("click", (ev) => ev.stopPropagation());
-          bt.addEventListener("pointerdown", (ev) => { ev.preventDefault(); ev.stopPropagation(); if (!hooks.sell || !hooks.flatten) return; if (confirm(ask)) fn(); }); bar.append(bt); };
+          bt.addEventListener("pointerdown", (ev) => { ev.preventDefault(); ev.stopPropagation(); if (!hooks.sell || !hooks.flatten) return; if (hooks.instant || confirm(ask)) fn(); }); bar.append(bt); };
         const r = pos.ret == null ? "" : ` ${pos.ret >= 0 ? "+" : ""}${(pos.ret * 100).toFixed(1)}%`;
         go(`Sell ${c.name}${r}`, () => hooks.sell(pos.id), `Sell ${c.name} now?`);
         if (open.length > 1) go("Sell everything", () => hooks.flatten(), "Sell every open position now?");

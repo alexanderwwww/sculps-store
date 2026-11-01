@@ -53,7 +53,7 @@
           el("div", { class: "glass panel" }, el("h2", {}, "Controls"),
             el("div", { class: "actions" },
               el("button", { text: e.paused ? "Resume buying" : "Pause buying", class: e.paused ? "go" : "", onclick: () => act("/api/pause", { paused: !e.paused }) }),
-              el("button", { class: "danger", text: "Sell everything", disabled: !e.open.length, onclick: () => { if (confirm("Sell every open position now?")) act("/api/flatten"); } }),
+              el("button", { class: "danger", text: "Sell everything", disabled: !e.open.length, onpointerdown: () => act("/api/flatten") }),
               el("button", { text: "Stop", onclick: () => { if (confirm("Stop Ultra? Open positions stay in your Phantom wallet; press Sell everything first to sell them.")) act("/api/stop"); } })),
             e.halted ? el("p", { class: "err", text: e.halted }) : null, S.lastError ? el("p", { class: "err", text: S.lastError }) : null, msg ? el("p", { class: "err", text: msg }) : null),
           el("div", { class: "glass panel" }, el("h2", {}, "Limits"),
@@ -286,7 +286,7 @@
         q(".tr__band").textContent = `${Math.round(ex.sl * 100)}% / +${Math.round(ex.tp * 100)}%, trailing`; q(".tr__size").textContent = `${o.stake} SOL`;
         q(".tr__why i").textContent = o.enter || "–";
         // one Sell button per open position (Alex): money back out now
-        const box = q(".tr__sell"); box.replaceChildren(...e.open.map((x) => el("button", { class: "danger", text: `Sell ${tkn(x.name)} ${x.ret == null ? "" : (x.ret >= 0 ? "+" : "") + (x.ret * 100).toFixed(1) + "%"}`, onclick: () => act("/api/sell", { id: x.id }) })));
+        const box = q(".tr__sell"); box.replaceChildren(...e.open.map((x) => el("button", { class: "danger", text: `Sell ${tkn(x.name)} ${x.ret == null ? "" : (x.ret >= 0 ? "+" : "") + (x.ret * 100).toFixed(1) + "%"}`, onpointerdown: () => act("/api/sell", { id: x.id }) })), ...(e.open.length ? [el("button", { class: "danger", text: "Sell everything", onpointerdown: () => act("/api/flatten") })] : []));
       } else if (c) {
         q(".tr__sell").replaceChildren();
         st.textContent = "closed"; st.className = "tr__st";
@@ -366,7 +366,7 @@
     term.show(true);
     term.update(S, E, S.running && e ? null : !S.setup?.imported ? "plug in your wallet" : S.saved?.userStopped ? "stopped" : S.lastError ? `connecting… · ${S.lastError}` : "connecting…");
     const go = document.querySelector(".tm__go"); go.replaceChildren();
-    if (S.running && e) { toasts.feed(e.events); app.append(window.UltraFib ? window.UltraFib.panel(e.charts || [], e.open || [], { sell: (id) => act("/api/sell", { id }), flatten: () => act("/api/flatten") }) : "", dashView().cols); }
+    if (S.running && e) { toasts.feed(e.events); app.append(window.UltraFib ? window.UltraFib.panel(e.charts || [], e.open || [], { instant: true, sell: (id) => act("/api/sell", { id }), flatten: () => act("/api/flatten") }) : "", dashView().cols); }
     else if (!S.setup?.imported) {
       // plug the wallet in once: the private key goes into this Mac's own secrets file and nowhere else
       const k = el("input", { type: "password", placeholder: "Paste your Phantom private key (Phantom: Settings → Manage accounts → your wallet → Show private key)", autocomplete: "off", spellcheck: "false" });

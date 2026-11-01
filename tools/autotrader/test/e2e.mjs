@@ -53,6 +53,22 @@ try {
   assert.match(await text(), /Scanner/); assert.match(await text(), /Rug check/); assert.match(await text(), /Executor/);
   await page.waitForFunction((a) => document.querySelector(".tm__tape")?.textContent.includes(a.slice(0, 4)), ADDRESS, { timeout: 8000 });
   assert.match(await page.textContent(".tm__tape"), /Phantom.*Jupiter/); ok("the tape names the Phantom wallet and Jupiter");
+  // build 76 (Alex: "I want to press Sell everything and it sells instantly"): the page is fed a state with two open positions (the fake feed closes real ones in ~3 s).
+  // Sell everything must be on screen, thumb-sized, reachable by the mouse, and ONE mouse press must send /api/flatten with no confirm box.
+  const sent = []; let dialogs = 0; const onDlg = async (d) => { dialogs++; await d.dismiss(); }; page.on("dialog", onDlg);
+  await page.route("**/api/state", async (route) => { const r = await route.fetch(); const j = await r.json(); j.engine = { ...(j.engine || {}), open: [{ id: "t1", name: "$AAA", ret: 0.021, stake: 0.012, entryPx: 1 }, { id: "t2", name: "$BBB", ret: -0.004, stake: 0.007, entryPx: 1 }] }; await route.fulfill({ response: r, json: j }); });
+  await page.route("**/api/flatten", async (route) => { sent.push("flatten"); await route.fulfill({ json: { ok: true } }); });
+  await page.route("**/api/sell", async (route) => { sent.push("sell"); await route.fulfill({ json: { ok: true } }); });
+  await page.waitForFunction(() => [...document.querySelectorAll(".tr__sell button")].some((b) => /^Sell everything$/.test(b.textContent)), null, { timeout: 15000 });
+  const bts = await page.$$eval(".tr__sell button", (a) => a.map((b) => b.textContent)); assert.equal(bts.length, 3, "one Sell button per position plus Sell everything: " + bts.join(" | "));
+  const se = page.locator(".tr__sell button", { hasText: /^Sell everything$/ }).first(); const bb = await se.boundingBox();
+  assert.ok(bb && bb.height >= 44 && bb.width >= 100, "Sell everything is a thumb-sized button");
+  assert.equal(await page.evaluate(([x, y]) => /^Sell everything$/.test(document.elementFromPoint(x, y)?.textContent || ""), [bb.x + bb.width / 2, bb.y + bb.height / 2]), true, "the mouse lands on Sell everything");
+  await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down(); await page.waitForTimeout(300); await page.mouse.up();
+  assert.deepEqual(sent, ["flatten"]); assert.equal(dialogs, 0, "no confirm box");
+  ok("Sell everything: on screen with positions open, thumb-sized, one press sends /api/flatten, no confirm box");
+  page.off("dialog", onDlg);
+  await page.unroute("**/api/state"); await page.unroute("**/api/flatten"); await page.unroute("**/api/sell");
   await page.waitForFunction(() => /ALPHA/.test((document.querySelector(".lg__rows")?.textContent || "") + (document.querySelector(".tl__body")?.textContent || "")), null, { timeout: 15000 });
   ok("a signal shows up in the log with its coin name");
   assert.equal(await page.locator(".agent").count(), 7); assert.equal(await page.locator("#termhost").isVisible(), true); assert.equal(await page.locator(".tm__node").count(), 2); ok("the terminal is on screen: seven agents, rug check and executor nodes, live flow");

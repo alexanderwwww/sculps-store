@@ -269,3 +269,4 @@ header.top.slim { display: none; }
 .fib__card.big canvas { height: 420px; }
 .fib__sell { display: flex; gap: 8px; margin-top: 8px; }
 .fib__sell button { flex: 1; padding: 12px 14px; font: 700 14px var(--mono); border-radius: 10px; cursor: pointer; }
+.tr__sell button { min-height: 48px; font-size: 15px; font-weight: 700; flex: 1 1 140px; touch-action: manipulation; }
