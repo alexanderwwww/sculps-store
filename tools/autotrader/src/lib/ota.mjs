@@ -7,7 +7,7 @@ import { createHash } from "node:crypto";
 import { cpSync, mkdirSync, writeFileSync, rmSync, existsSync } from "node:fs";
 import { join, normalize, isAbsolute } from "node:path";
 
-const SAFE = /^(server\.mjs|lib\/[\w-]+\.mjs|ui\/(index\.html|app\.js|style\.css|icon\.png))$/;
+const SAFE = /^(server\.mjs|lib\/[\w-]+\.mjs|ui\/(index\.html|app\.js|fib\.js|style\.css|icon\.png))$/;
 
 /** Fetch the manifest; null when there is nothing newer (or the network is down). */
 export async function checkRuntime({ url, build, fetchImpl = fetch }) {

@@ -2,6 +2,7 @@
 // Plain canvas, no libraries. Data comes from engine.status().charts: the same 30-minute swing the fib gate reads.
 (() => {
   let big = null;   // the coin that is enlarged survives the re-render every 1.5 s
+  const closed = new Set();   // coins Alex shrank by hand: an open coin opens big on its own until he does
   const LV = { 0: "#9aa4b5", 0.236: "#7ee7ff", 0.382: "#4ade80", 0.5: "#ffc857", 0.618: "#ffc857", 0.786: "#ff9f5a", 0.886: "#ff6b7a", 1: "#9aa4b5" };
   const fp = (v) => { if (v == null) return "–"; const a = Math.abs(v); return a >= 1 ? v.toFixed(4) : a >= 0.001 ? v.toPrecision(4) : v.toExponential(3); };
   function draw(cv, c) {
@@ -63,17 +64,33 @@
     const a_fix = (arr, i, h) => { const max = i === arr.length - 1 ? H - B - h / 2 : arr[i + 1].ly - h; if (arr[i].ly > max) arr[i].ly = max; };
     lay(right, "r"); lay(left, "l");
   }
-  function panel(charts) {
+  function panel(charts, open = [], hooks = {}) {
     const sec = document.createElement("div"); sec.className = "glass panel fib";
     sec.innerHTML = `<h2>Fibonacci <small>1-min candles · swing low → high · buy zone shaded</small></h2>`;
     const grid = document.createElement("div"); grid.className = "fib__grid"; sec.append(grid);
     if (!charts.length) { const p = document.createElement("div"); p.className = "empty"; p.textContent = "No chart yet: waiting for a coin to watch."; grid.append(p); return sec; }
     const drawAll = [];
+    // a coin Ultra holds opens big by itself: that is the chart Alex watches with the Sell button beside it
+    const held = charts.find((c) => c.open && !closed.has(c.name));
+    if (held && big !== held.name && !charts.some((c) => c.name === big && c.open)) big = held.name;
     for (const c of charts) {
       const card = document.createElement("div"); card.className = "fib__card" + (big === c.name ? " big" : ""); card.dataset.coin = c.name;
       const b = document.createElement("b"); b.textContent = c.name; const tag = document.createElement("span"); tag.className = "tag" + (c.open ? " open" : ""); tag.textContent = c.open ? "open" : "watching";
-      const cv = document.createElement("canvas"); card.append(tag, b, cv);
-      card.addEventListener("click", () => { big = big === c.name ? null : c.name; const was = card.classList.contains("big"); grid.querySelectorAll(".fib__card.big").forEach((n) => n.classList.remove("big")); if (!was) card.classList.add("big"); drawAll.forEach((f) => f()); });
+      const cv = document.createElement("canvas"); card.append(tag, b);
+      const pos = c.open ? open.find((o) => o.name === c.name) : null;
+      if (pos) {
+        // pointerdown, not click: this panel is rebuilt every 1.5 s, and a click needs the same button under the finger at press and release
+        const bar = document.createElement("div"); bar.className = "fib__sell";
+        const go = (label, fn, ask) => { const bt = document.createElement("button"); bt.className = "danger"; bt.type = "button"; bt.textContent = label;
+          bt.addEventListener("click", (ev) => ev.stopPropagation());
+          bt.addEventListener("pointerdown", (ev) => { ev.preventDefault(); ev.stopPropagation(); if (!hooks.sell || !hooks.flatten) return; if (confirm(ask)) fn(); }); bar.append(bt); };
+        const r = pos.ret == null ? "" : ` ${pos.ret >= 0 ? "+" : ""}${(pos.ret * 100).toFixed(1)}%`;
+        go(`Sell ${c.name}${r}`, () => hooks.sell(pos.id), `Sell ${c.name} now?`);
+        if (open.length > 1) go("Sell everything", () => hooks.flatten(), "Sell every open position now?");
+        card.append(bar);
+      }
+      card.append(cv);
+      card.addEventListener("click", () => { big = big === c.name ? null : c.name; if (c.open) { if (big === null) closed.add(c.name); else closed.delete(c.name); } const was = card.classList.contains("big"); grid.querySelectorAll(".fib__card.big").forEach((n) => n.classList.remove("big")); if (!was) card.classList.add("big"); drawAll.forEach((f) => f()); });
       if (big === c.name) grid.prepend(card); else grid.append(card);
       drawAll.push(() => draw(cv, c));
     }
