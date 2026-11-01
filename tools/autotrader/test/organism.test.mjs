@@ -162,6 +162,15 @@ function world({ onlyLosers = false, journalFile } = {}) {
 }
 const tmpJ = () => path.join(fs.mkdtempSync(path.join(os.tmpdir(), "org-")), "j.jsonl");
 
+test("scalp mode: 60 closes later the organism has NOT rewritten the scalp exits (Rhea: it would have set tp to +100% at close 200)", async () => {
+  const jf = tmpJ(), w = world({ journalFile: jf });
+  Object.assign(w.cfg, { scalp: 1, sl: -0.02, tp: 0.006, partAt: 0.9 });
+  const e = w.make();
+  for (let i = 0; w.sells.length < 60 && i < 20000; i++) await w.step(e);
+  assert.ok(w.sells.length >= 60, `closed ${w.sells.length}`);
+  assert.equal(e.cfg.tp, 0.006); assert.equal(e.cfg.sl, -0.02); assert.equal(e.cfg.partAt, 0.9);
+});
+
 test("engine loop: 60 trades, winning band favoured, losing band shrinks, caps held, exits honoured, persists", async () => {
   const jf = tmpJ(), w = world({ journalFile: jf });
   const e = w.make();

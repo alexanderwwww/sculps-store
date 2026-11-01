@@ -48,3 +48,333 @@ part50@1.0 trail0.4 be             TR n  87   3.09%± 5.2 | TeOct n  78  11.72%�
 fix tp0.9 sl0.25 h60               TR n  87   2.25%± 3.3 | TeOct n  78   7.40%± 4.4 | TeNov n  66   1.88%± 5.4
   n configs 39 ; #train>0: 14
   family mean net on test (avg over configs): {'time': 8.3, 'fix': 0.38, 'ratchet': 3.23, 'part': 7.28, 'trail': 11.31}
+
+=== entry 3green / fill wick : top 6 by TRAIN mean (n>=15) -> test ===
+trail0.1 sl.35 h120                TR n1827   1.39%± 1.4 | TeOct n2074   5.34%± 3.3 | TeNov n1331   1.19%± 2.3
+trail0.2 sl.35 h120                TR n1827   0.48%± 1.4 | TeOct n2074   3.82%± 3.0 | TeNov n1331   0.29%± 2.4
+part50@1.0 trail0.25 be            TR n1827  -0.24%± 1.4 | TeOct n2074   1.33%± 1.9 | TeNov n1331  -0.40%± 2.2
+fix tp0.9 sl0.1 h120               TR n1827  -0.35%± 1.2 | TeOct n2074   0.01%± 1.0 | TeNov n1331  -1.06%± 1.8
+trail0.1 sl.35 h60                 TR n1827  -0.44%± 1.0 | TeOct n2074   1.83%± 1.8 | TeNov n1331  -1.25%± 1.3
+part50@0.5 trail0.25 be            TR n1827  -0.66%± 1.2 | TeOct n2074   0.78%± 1.8 | TeNov n1331  -1.05%± 1.9
+  n configs 39 ; #train>0: 2
+  family mean net on test (avg over configs): {'trail': 0.8, 'part': 0.15, 'fix': -2.53, 'ratchet': -0.21, 'time': -2.49}
+
+=== entry random / fill close : top 6 by TRAIN mean (n>=15) -> test ===
+time h15 sl.5                      TR n8219  -2.62%± 0.8 | TeOct n9158  -3.14%± 0.4 | TeNov n6679  -0.92%± 1.2
+time h30 sl.5                      TR n8219  -2.64%± 1.2 | TeOct n9158  -3.19%± 0.6 | TeNov n6679   0.58%± 2.0
+time h5 sl.5                       TR n8219  -3.05%± 0.5 | TeOct n9158  -3.66%± 0.1 | TeNov n6679  -2.69%± 0.4
+time h60 sl.5                      TR n8219  -3.11%± 2.1 | TeOct n9158  -4.02%± 1.0 | TeNov n6679   0.88%± 2.1
+fix tp0.9 sl0.25 h15               TR n8219  -3.23%± 0.4 | TeOct n9158  -3.57%± 0.2 | TeNov n6679  -2.62%± 0.4
+fix tp0.3 sl0.25 h15               TR n8219  -3.38%± 0.4 | TeOct n9158  -3.68%± 0.3 | TeNov n6679  -2.92%± 0.4
+  n configs 39 ; #train>0: 0
+  family mean net on test (avg over configs): {'time': -2.71, 'fix': -3.54, 'trail': -3.13, 'part': -3.47, 'ratchet': -3.95}
+
+=== entry breakout / fill close : top 6 by TRAIN mean (n>=15) -> test ===
+time h60 sl.5                      TR n  87   5.62%±11.9 | TeOct n  78  12.89%±12.3 | TeNov n  66  25.02%±17.6
+fix tp0.9 sl0.25 h120              TR n  87   4.60%± 6.4 | TeOct n  78   6.01%± 5.7 | TeNov n  66   5.62%± 5.7
+part50@1.0 trail0.25 be            TR n  87   1.02%± 4.6 | TeOct n  78   6.18%± 5.2 | TeNov n  66   7.70%± 8.2
+fix tp0.9 sl0.25 h15               TR n  87   0.97%± 3.9 | TeOct n  78   7.10%± 4.1 | TeNov n  66   7.35%± 3.4
+fix tp0.9 sl0.25 h60               TR n  87   0.68%± 4.4 | TeOct n  78   6.58%± 5.2 | TeNov n  66   6.35%± 5.9
+part50@0.5 trail0.25 be            TR n  87   0.31%± 4.4 | TeOct n  78   5.13%± 4.3 | TeNov n  66   7.31%± 7.2
+  n configs 39 ; #train>0: 6
+  family mean net on test (avg over configs): {'time': 7.79, 'fix': 2.87, 'part': 8.36, 'ratchet': 3.76, 'trail': 11.36}
+
+=== entry 3green / fill close : top 6 by TRAIN mean (n>=15) -> test ===
+fix tp0.9 sl0.25 h15               TR n1827  -3.31%± 0.5 | TeOct n2074  -3.80%± 0.4 | TeNov n1331  -3.00%± 0.5
+fix tp0.9 sl0.1 h15                TR n1827  -3.65%± 0.5 | TeOct n2074  -3.81%± 0.4 | TeNov n1331  -3.69%± 0.5
+trail0.1 sl.35 h120                TR n1827  -3.76%± 1.8 | TeOct n2074  -3.05%± 1.7 | TeNov n1331  -0.06%± 2.4
+trail0.1 sl.35 h60                 TR n1827  -3.78%± 1.1 | TeOct n2074  -1.76%± 1.2 | TeNov n1331  -2.11%± 1.4
+time h30 sl.5                      TR n1827  -3.80%± 0.9 | TeOct n2074  -3.39%± 0.8 | TeNov n1331  -0.10%± 1.9
+fix tp0.3 sl0.25 h15               TR n1827  -3.82%± 0.4 | TeOct n2074  -3.68%± 0.3 | TeNov n1331  -3.67%± 0.5
+  n configs 39 ; #train>0: 0
+  family mean net on test (avg over configs): {'fix': -3.77, 'trail': -2.65, 'time': -3.1, 'part': -3.34, 'ratchet': -4.06}
+##### p2s
+pools train/testOct/testNov 69 69 46
+39 exit configs
+
+=== entry random / fill slip : top 6 by TRAIN mean (n>=15) -> test ===
+trail0.1 sl.35 h120                TR n8219  -0.49%± 1.1 | TeOct n9158   0.56%± 1.8 | TeNov n6679  -1.63%± 1.5
+trail0.2 sl.35 h120                TR n8219  -0.97%± 1.2 | TeOct n9158  -0.21%± 1.7 | TeNov n6679  -2.45%± 1.6
+fix tp0.9 sl0.1 h120               TR n8219  -1.39%± 1.0 | TeOct n9158  -1.78%± 0.9 | TeNov n6679  -2.92%± 1.2
+part50@1.0 trail0.25 be            TR n8219  -1.48%± 1.2 | TeOct n9158  -1.69%± 1.3 | TeNov n6679  -2.50%± 1.6
+trail0.1 sl.35 h60                 TR n8219  -1.74%± 0.8 | TeOct n9158  -1.26%± 1.0 | TeNov n6679  -3.04%± 0.9
+part50@0.5 trail0.25 be            TR n8219  -1.77%± 1.1 | TeOct n9158  -1.96%± 1.2 | TeNov n6679  -2.78%± 1.4
+  n configs 39 ; #train>0: 0
+  family mean net on test (avg over configs): {'trail': -1.67, 'fix': -3.24, 'part': -2.05, 'time': -2.4, 'ratchet': -2.08}
+
+=== entry breakout / fill slip : top 6 by TRAIN mean (n>=15) -> test ===
+time h60 sl.5                      TR n  87   6.85%±11.8 | TeOct n  78  14.67%±12.4 | TeNov n  66  24.36%±17.5
+fix tp0.9 sl0.25 h120              TR n  87   4.60%± 4.7 | TeOct n  78   7.23%± 4.7 | TeNov n  66   1.48%± 5.5
+ratchet g1.0->0.5 sl.25 h120       TR n  87   2.51%± 6.4 | TeOct n  78   4.12%± 5.3 | TeNov n  66   2.71%± 7.0
+fix tp0.9 sl0.1 h120               TR n  87   2.30%± 3.6 | TeOct n  78   5.09%± 3.8 | TeNov n  66  -0.95%± 4.2
+part50@1.0 trail0.4 be             TR n  87   2.15%± 5.2 | TeOct n  78  10.64%± 7.4 | TeNov n  66   1.87%± 6.9
+fix tp0.9 sl0.25 h60               TR n  87   1.64%± 3.3 | TeOct n  78   6.95%± 4.4 | TeNov n  66   0.88%± 5.5
+  n configs 39 ; #train>0: 9
+  family mean net on test (avg over configs): {'time': 8.15, 'fix': -0.27, 'ratchet': 1.96, 'part': 5.98, 'trail': 9.8}
+
+=== entry 3green / fill slip : top 6 by TRAIN mean (n>=15) -> test ===
+trail0.1 sl.35 h120                TR n1827   0.42%± 1.4 | TeOct n2074   4.20%± 3.2 | TeNov n1331  -0.11%± 2.3
+trail0.2 sl.35 h120                TR n1827  -0.39%± 1.5 | TeOct n2074   2.85%± 3.0 | TeNov n1331  -0.88%± 2.4
+part50@1.0 trail0.25 be            TR n1827  -0.98%± 1.4 | TeOct n2074   0.55%± 1.9 | TeNov n1331  -1.36%± 2.3
+fix tp0.9 sl0.1 h120               TR n1827  -1.07%± 1.2 | TeOct n2074  -0.71%± 1.1 | TeNov n1331  -2.07%± 1.8
+trail0.1 sl.35 h60                 TR n1827  -1.30%± 1.0 | TeOct n2074   0.93%± 1.8 | TeNov n1331  -2.47%± 1.4
+part50@0.5 trail0.25 be            TR n1827  -1.35%± 1.3 | TeOct n2074   0.05%± 1.8 | TeNov n1331  -1.93%± 2.0
+  n configs 39 ; #train>0: 1
+  family mean net on test (avg over configs): {'trail': 0.04, 'part': -0.53, 'fix': -2.96, 'ratchet': -0.89, 'time': -2.55}
+##### p2b
+ slip trail0.15 sl0.25 h 60 n231 mean 2.75% se 3.9 win 0.31 med -3.49% trim-top3 -1.43% best 513% worst -21%
+close trail0.15 sl0.25 h 60 n231 mean 3.59% se 3.8 win 0.34 med -3.34% trim-top3 -0.58% best 513% worst -99%
+ slip trail0.15 sl0.25 h120 n231 mean 6.54% se 5.5 win 0.35 med -2.70% trim-top3 0.47% best 842% worst -21%
+close trail0.15 sl0.25 h120 n231 mean 2.91% se 2.6 win 0.38 med -2.45% trim-top3 0.07% best 235% worst -99%
+ slip trail0.15 sl0.25 h240 n231 mean 8.44% se 5.7 win 0.44 med -3.96% trim-top3 1.68% best 842% worst -21%
+close trail0.15 sl0.25 h240 n231 mean 3.12% se 2.9 win 0.46 med -2.69% trim-top3 -0.32% best 395% worst -100%
+ slip trail0.15 sl0.40 h 60 n231 mean 2.75% se 3.9 win 0.31 med -3.49% trim-top3 -1.43% best 513% worst -21%
+close trail0.15 sl0.40 h 60 n231 mean 3.59% se 3.8 win 0.34 med -3.34% trim-top3 -0.58% best 513% worst -99%
+ slip trail0.15 sl0.40 h120 n231 mean 6.54% se 5.5 win 0.35 med -2.70% trim-top3 0.47% best 842% worst -21%
+close trail0.15 sl0.40 h120 n231 mean 2.91% se 2.6 win 0.38 med -2.45% trim-top3 0.07% best 235% worst -99%
+ slip trail0.15 sl0.40 h240 n231 mean 8.44% se 5.7 win 0.44 med -3.96% trim-top3 1.68% best 842% worst -21%
+close trail0.15 sl0.40 h240 n231 mean 3.12% se 2.9 win 0.46 med -2.69% trim-top3 -0.32% best 395% worst -100%
+ slip trail0.25 sl0.25 h 60 n231 mean 3.32% se 4.0 win 0.32 med -3.36% trim-top3 -0.86% best 513% worst -30%
+close trail0.25 sl0.25 h 60 n231 mean 5.85% se 4.8 win 0.35 med -3.14% trim-top3 0.69% best 513% worst -99%
+ slip trail0.25 sl0.25 h120 n231 mean 5.68% se 5.0 win 0.34 med -3.15% trim-top3 0.30% best 731% worst -30%
+close trail0.25 sl0.25 h120 n231 mean 4.68% se 4.0 win 0.38 med -2.67% trim-top3 0.98% best 395% worst -99%
+ slip trail0.25 sl0.25 h240 n231 mean 6.80% se 5.2 win 0.42 med -4.40% trim-top3 0.73% best 731% worst -30%
+close trail0.25 sl0.25 h240 n231 mean 4.14% se 4.2 win 0.45 med -4.18% trim-top3 -0.27% best 395% worst -100%
+ slip trail0.25 sl0.40 h 60 n231 mean 3.32% se 4.0 win 0.32 med -3.36% trim-top3 -0.86% best 513% worst -30%
+close trail0.25 sl0.40 h 60 n231 mean 5.85% se 4.8 win 0.35 med -3.14% trim-top3 0.69% best 513% worst -99%
+ slip trail0.25 sl0.40 h120 n231 mean 5.68% se 5.0 win 0.34 med -3.15% trim-top3 0.30% best 731% worst -30%
+close trail0.25 sl0.40 h120 n231 mean 4.68% se 4.0 win 0.38 med -2.67% trim-top3 0.98% best 395% worst -99%
+ slip trail0.25 sl0.40 h240 n231 mean 6.80% se 5.2 win 0.42 med -4.40% trim-top3 0.73% best 731% worst -30%
+close trail0.25 sl0.40 h240 n231 mean 4.14% se 4.2 win 0.45 med -4.18% trim-top3 -0.27% best 395% worst -100%
+ slip trail0.40 sl0.25 h 60 n231 mean 4.51% se 4.7 win 0.32 med -3.37% trim-top3 -0.66% best 513% worst -30%
+close trail0.40 sl0.25 h 60 n231 mean 8.07% se 5.8 win 0.33 med -3.36% trim-top3 2.03% best 513% worst -99%
+ slip trail0.40 sl0.25 h120 n231 mean 5.79% se 4.9 win 0.35 med -4.13% trim-top3 0.79% best 565% worst -30%
+close trail0.40 sl0.25 h120 n231 mean 4.48% se 4.8 win 0.35 med -4.13% trim-top3 -0.32% best 516% worst -99%
+ slip trail0.40 sl0.25 h240 n231 mean 7.92% se 6.0 win 0.42 med -8.97% trim-top3 1.54% best 565% worst -30%
+close trail0.40 sl0.25 h240 n231 mean 5.82% se 5.9 win 0.42 med -8.46% trim-top3 -0.54% best 555% worst -100%
+ slip trail0.40 sl0.40 h 60 n231 mean 4.44% se 4.8 win 0.33 med -3.34% trim-top3 -0.73% best 513% worst -44%
+close trail0.40 sl0.40 h 60 n231 mean 10.68% se 6.8 win 0.35 med -3.14% trim-top3 4.53% best 513% worst -99%
+ slip trail0.40 sl0.40 h120 n231 mean 4.82% se 5.0 win 0.36 med -3.09% trim-top3 -0.19% best 565% worst -44%
+close trail0.40 sl0.40 h120 n231 mean 7.29% se 6.8 win 0.37 med -3.09% trim-top3 0.81% best 672% worst -99%
+ slip trail0.40 sl0.40 h240 n231 mean 6.82% se 6.1 win 0.42 med -6.41% trim-top3 0.43% best 565% worst -44%
+close trail0.40 sl0.40 h240 n231 mean 8.74% se 7.9 win 0.44 med -5.23% trim-top3 0.85% best 752% worst -100%
+ slip trail0.60 sl0.25 h 60 n231 mean 5.82% se 5.6 win 0.29 med -6.45% trim-top3 -0.24% best 513% worst -30%
+close trail0.60 sl0.25 h 60 n231 mean 9.29% se 6.2 win 0.33 med -3.46% trim-top3 3.26% best 513% worst -99%
+ slip trail0.60 sl0.25 h120 n231 mean 1.11% se 4.0 win 0.31 med -12.52% trim-top3 -2.94% best 343% worst -30%
+close trail0.60 sl0.25 h120 n231 mean 1.85% se 4.5 win 0.34 med -9.29% trim-top3 -2.94% best 516% worst -99%
+ slip trail0.60 sl0.25 h240 n231 mean 3.55% se 5.4 win 0.39 med -19.58% trim-top3 -2.16% best 518% worst -30%
+close trail0.60 sl0.25 h240 n231 mean 3.06% se 5.8 win 0.41 med -14.53% trim-top3 -3.36% best 555% worst -100%
+ slip trail0.60 sl0.40 h 60 n231 mean 9.67% se 6.9 win 0.33 med -3.37% trim-top3 3.51% best 513% worst -44%
+close trail0.60 sl0.40 h 60 n231 mean 11.55% se 7.1 win 0.35 med -3.14% trim-top3 5.41% best 513% worst -99%
+ slip trail0.60 sl0.40 h120 n231 mean 4.83% se 6.6 win 0.35 med -5.26% trim-top3 -1.82% best 672% worst -44%
+close trail0.60 sl0.40 h120 n231 mean 3.18% se 6.7 win 0.36 med -4.13% trim-top3 -3.35% best 672% worst -99%
+ slip trail0.60 sl0.40 h240 n231 mean 7.04% se 7.9 win 0.42 med -9.71% trim-top3 -0.87% best 752% worst -44%
+close trail0.60 sl0.40 h240 n231 mean 5.32% se 8.1 win 0.43 med -8.46% trim-top3 -2.61% best 752% worst -100%
+##### p3
+breakout trail.25 slip n 231 mean 5.68% med -3.15% win 0.34
+empirical measured: mean 5.68% -> Kelly f*=0.300, growth/trade at f*=0.681%
+drop top 1 trades: mean 2.52% -> Kelly f*=0.200, growth/trade at f*=0.230%
+drop top 3 trades: mean 0.30% -> Kelly f*=0.030, growth/trade at f*=0.004%
+drop top 5 trades: mean -1.57% -> Kelly f*=0.000, growth/trade at f*=0.000%
+measured minus 2pts: mean 3.68% -> Kelly f*=0.150, growth/trade at f*=0.238%
+measured minus 4pts: mean 1.68% -> Kelly f*=0.055, growth/trade at f*=0.041%
+measured minus 6pts: mean -0.32% -> Kelly f*=0.000, growth/trade at f*=0.000%
+train-only: mean -2.51% -> Kelly f*=0.000, growth/trade at f*=0.000%
+test-only: mean 10.62% -> Kelly f*=0.515, growth/trade at f*=1.959%
+bootstrap f* quantiles 5/25/50/75/95: [0.0, 0.105, 0.29, 0.435, 0.675]  P(f*=0)= 0.14
+
+WALLET SIM  start 0.0097 SOL, 200 trades, per-trade bootstrap of edge distribution
+ -- measured mean 5.68%
+   1 position f=0.25: med W 0.0187 mean 0.1523 p10 0.0045 p90 0.3233 dead 0.45 P(2x) 0.49 P(10x) 0.244
+   1 position f=0.5: med W 0.0049 mean 0.9086 p10 0.0044 p90 0.5979 dead 0.61 P(2x) 0.32 P(10x) 0.211
+   1 position f=0.8: med W 0.0048 mean 3.3201 p10 0.0044 p90 0.1607 dead 0.82 P(2x) 0.15 P(10x) 0.111
+   1 position f=1.0: med W 0.0047 mean 4.2945 p10 0.0043 p90 0.0050 dead 0.91 P(2x) 0.08 P(10x) 0.062
+ -- minus top-3 trades mean 0.30%
+   1 position f=0.25: med W 0.0048 mean 0.0097 p10 0.0044 p90 0.0212 dead 0.77 P(2x) 0.12 P(10x) 0.002
+   1 position f=0.5: med W 0.0048 mean 0.0103 p10 0.0044 p90 0.0086 dead 0.88 P(2x) 0.06 P(10x) 0.012
+   1 position f=0.8: med W 0.0048 mean 0.0111 p10 0.0044 p90 0.0050 dead 0.97 P(2x) 0.02 P(10x) 0.005
+   1 position f=1.0: med W 0.0047 mean 0.0097 p10 0.0043 p90 0.0050 dead 0.99 P(2x) 0.01 P(10x) 0.001
+ -- edge shaved to ~0 (mean-5pts) mean 0.68%
+   1 position f=0.25: med W 0.0047 mean 0.0127 p10 0.0043 p90 0.0165 dead 0.87 P(2x) 0.09 P(10x) 0.023
+   1 position f=0.5: med W 0.0047 mean 0.0097 p10 0.0043 p90 0.0050 dead 0.96 P(2x) 0.03 P(10x) 0.010
+   1 position f=0.8: med W 0.0047 mean 0.0055 p10 0.0042 p90 0.0050 dead 1.00 P(2x) 0.00 P(10x) 0.001
+   1 position f=1.0: med W 0.0047 mean 0.0046 p10 0.0042 p90 0.0049 dead 1.00 P(2x) 0.00 P(10x) 0.000
+k 1 needs 0.005 SOL min vs wallet 0.0097 feasible
+k 2 needs 0.01 SOL min vs wallet 0.0097 IMPOSSIBLE
+k 3 needs 0.015 SOL min vs wallet 0.0097 IMPOSSIBLE
+
+WALLET-SIZE CROSSOVER, measured edge, f=0.5 of free capital, 200 trades
+  W=0.0097 k=1: med 0.50x mean 56.42x p10 0.46x dead 0.64
+  W=0.0097 k=2: infeasible
+  W=0.0097 k=3: infeasible
+  W=0.0155 k=1: med 0.67x mean 62.73x p10 0.29x dead 0.47
+  W=0.0155 k=2: med 8.00x mean 114.17x p10 0.30x dead 0.21
+  W=0.0155 k=3: med 17.37x mean 130.95x p10 0.30x dead 0.19
+  W=0.025 k=1: med 1.69x mean 67.99x p10 0.18x dead 0.30
+  W=0.025 k=2: med 9.61x mean 116.70x p10 0.48x dead 0.09
+  W=0.025 k=3: med 22.59x mean 130.35x p10 2.04x dead 0.04
+  W=0.05 k=1: med 2.09x mean 71.01x p10 0.10x dead 0.19
+  W=0.05 k=2: med 10.60x mean 125.04x p10 0.93x dead 0.02
+  W=0.05 k=3: med 23.50x mean 138.52x p10 2.53x dead 0.00
+  W=0.1 k=1: med 2.13x mean 72.50x p10 0.08x dead 0.09
+  W=0.1 k=2: med 10.87x mean 130.34x p10 0.82x dead 0.01
+  W=0.1 k=3: med 24.61x mean 147.74x p10 2.40x dead 0.00
+##### p3b
+effective min fraction of wallet at W=0.0097, 1 slot: 0.38961038961038963
+-- measured (mean +5.7%) mean 5.68% n=231
+   k=1 f=0.15: stake floor binds=True  alive@100 0.61  median 1.77x  p25 0.49x p75 3.50x  P(>=2x) 0.47 P(>=5x) 0.15
+   k=1 f=0.3: stake floor binds=True  alive@100 0.60  median 1.37x  p25 0.49x p75 4.00x  P(>=2x) 0.41 P(>=5x) 0.20
+   k=1 f=0.5: stake floor binds=False  alive@100 0.47  median 0.51x  p25 0.48x p75 3.60x  P(>=2x) 0.33 P(>=5x) 0.21
+   k=1 f=1.0: stake floor binds=False  alive@100 0.16  median 0.49x  p25 0.47x p75 0.51x  P(>=2x) 0.13 P(>=5x) 0.09
+-- drop top-3 winners (mean +0.3%) mean 0.30% n=228
+   k=1 f=0.15: stake floor binds=True  alive@100 0.44  median 0.51x  p25 0.48x p75 1.53x  P(>=2x) 0.15 P(>=5x) 0.00
+   k=1 f=0.3: stake floor binds=True  alive@100 0.42  median 0.51x  p25 0.48x p75 1.31x  P(>=2x) 0.12 P(>=5x) 0.02
+   k=1 f=0.5: stake floor binds=False  alive@100 0.27  median 0.50x  p25 0.48x p75 0.72x  P(>=2x) 0.09 P(>=5x) 0.03
+   k=1 f=1.0: stake floor binds=False  alive@100 0.05  median 0.49x  p25 0.47x p75 0.50x  P(>=2x) 0.03 P(>=5x) 0.02
+-- thin-scalp proxy: random entry, tp.1 sl.05 mean -4.18% n=12077
+   k=1 f=0.15: stake floor binds=True  alive@100 0.00  median 0.50x  p25 0.50x p75 0.51x  P(>=2x) 0.00 P(>=5x) 0.00
+   k=1 f=0.3: stake floor binds=True  alive@100 0.00  median 0.50x  p25 0.50x p75 0.51x  P(>=2x) 0.00 P(>=5x) 0.00
+   k=1 f=0.5: stake floor binds=False  alive@100 0.00  median 0.51x  p25 0.50x p75 0.51x  P(>=2x) 0.00 P(>=5x) 0.00
+   k=1 f=1.0: stake floor binds=False  alive@100 0.00  median 0.50x  p25 0.50x p75 0.51x  P(>=2x) 0.00 P(>=5x) 0.00
+
+1 vs 3 slots, measured, f=0.3, 100 rounds
+  W=0.0097 k=1: alive 0.60 median 1.37x p25 0.49x P(>=2x) 0.41
+  W=0.0097 k=2: infeasible (needs 0.010)
+  W=0.0097 k=3: infeasible (needs 0.015)
+  W=0.015 k=1: alive 0.83 median 1.82x p25 0.79x P(>=2x) 0.47
+  W=0.015 k=2: alive 0.85 median 2.81x p25 1.48x P(>=2x) 0.64
+  W=0.015 k=3: alive 0.84 median 3.72x p25 1.75x P(>=2x) 0.73
+  W=0.02 k=1: alive 0.92 median 1.85x p25 0.81x P(>=2x) 0.47
+  W=0.02 k=2: alive 0.94 median 2.69x p25 1.53x P(>=2x) 0.63
+  W=0.02 k=3: alive 0.95 median 3.50x p25 2.05x P(>=2x) 0.76
+  W=0.03 k=1: alive 0.97 median 1.81x p25 0.85x P(>=2x) 0.46
+  W=0.03 k=2: alive 0.99 median 2.61x p25 1.44x P(>=2x) 0.60
+  W=0.03 k=3: alive 0.99 median 3.08x p25 1.86x P(>=2x) 0.71
+  W=0.05 k=1: alive 1.00 median 1.80x p25 0.78x P(>=2x) 0.47
+  W=0.05 k=2: alive 1.00 median 2.58x p25 1.38x P(>=2x) 0.59
+  W=0.05 k=3: alive 1.00 median 2.97x p25 1.73x P(>=2x) 0.68
+##### p4
+=== BASELINE random entry (every 4th minute, v>0) ===
+random                                    trail  TR n 8219  -1.04%± 1.4 w0.32 | TeOct n 9158  -1.25%± 1.7 w0.28 | TeNov n 6679  -2.27%± 1.7 w0.33
+random                                    scalp  TR n 8219  -3.64%± 0.2 w0.18 | TeOct n 9158  -3.50%± 0.2 w0.19 | TeNov n 6679  -4.25%± 0.3 w0.27
+random                                    short  TR n 8219  -4.06%± 0.1 w0.17 | TeOct n 9158  -3.97%± 0.1 w0.18 | TeNov n 6679  -4.54%± 0.2 w0.25
+
+=== A1 volatility regime: 30-min realized vol terciles from TRAIN:  0.0036 0.0242  ===
+A1 level low-vol                          trail  TR n 2082  -2.81%± 0.9 w0.26 | TeOct n 2199  -3.04%± 0.6 w0.15 | TeNov n  533  -1.25%± 0.8 w0.33
+A1 level low-vol                          scalp  TR n 2082  -3.64%± 0.1 w0.01 | TeOct n 2199  -3.61%± 0.1 w0.01 | TeNov n  533  -3.75%± 0.2 w0.01
+A1 level low-vol                          short  TR n 2082  -3.83%± 0.1 w0.00 | TeOct n 2199  -3.79%± 0.1 w0.01 | TeNov n  533  -3.86%± 0.1 w0.00
+A1 level mid-vol                          trail  TR n 2461   0.11%± 2.5 w0.35 | TeOct n 2807  -0.84%± 2.1 w0.34 | TeNov n 2139  -0.82%± 2.3 w0.33
+A1 level mid-vol                          scalp  TR n 2461  -3.56%± 0.3 w0.19 | TeOct n 2807  -3.35%± 0.4 w0.20 | TeNov n 2139  -3.33%± 0.4 w0.27
+A1 level mid-vol                          short  TR n 2461  -3.95%± 0.2 w0.14 | TeOct n 2807  -3.79%± 0.2 w0.16 | TeNov n 2139  -3.65%± 0.2 w0.20
+A1 level high-vol                         trail  TR n 2147  -4.13%± 2.4 w0.27 | TeOct n 2313  -2.44%± 3.0 w0.28 | TeNov n 2900  -6.25%± 1.3 w0.29
+A1 level high-vol                         scalp  TR n 2147  -4.52%± 0.4 w0.31 | TeOct n 2313  -4.35%± 0.3 w0.32 | TeNov n 2900  -5.31%± 0.2 w0.30
+A1 level high-vol                         short  TR n 2147  -4.77%± 0.2 w0.32 | TeOct n 2313  -4.65%± 0.2 w0.31 | TeNov n 2900  -5.27%± 0.1 w0.30
+A1 ratio compressed 5/30<0.6              trail  TR n 3478  -3.38%± 1.2 w0.29 | TeOct n 3781  -2.13%± 2.0 w0.26 | TeNov n 2994  -4.14%± 1.3 w0.31
+A1 ratio compressed 5/30<0.6              scalp  TR n 3478  -3.87%± 0.2 w0.19 | TeOct n 3781  -3.77%± 0.2 w0.19 | TeNov n 2994  -4.67%± 0.3 w0.24
+A1 ratio compressed 5/30<0.6              short  TR n 3478  -4.20%± 0.2 w0.16 | TeOct n 3781  -4.12%± 0.1 w0.16 | TeNov n 2994  -4.58%± 0.2 w0.23
+A1 ratio expanding 5/30>1.6               trail  TR n  770  -2.92%± 2.8 w0.21 | TeOct n  859  -1.62%± 2.3 w0.21 | TeNov n  569  -5.46%± 1.1 w0.29
+A1 ratio expanding 5/30>1.6               scalp  TR n  770  -4.73%± 0.3 w0.13 | TeOct n  859  -4.12%± 0.2 w0.15 | TeNov n  569  -4.89%± 0.4 w0.21
+A1 ratio expanding 5/30>1.6               short  TR n  770  -4.67%± 0.2 w0.14 | TeOct n  859  -4.28%± 0.2 w0.16 | TeNov n  569  -4.82%± 0.3 w0.21
+A1 squeeze then upside break              trail  TR n  134  -5.65%± 1.3 w0.20 | TeOct n  132  -0.77%± 3.3 w0.25 | TeNov n  116  -7.32%± 1.7 w0.25
+A1 squeeze then upside break              scalp  TR n  134  -4.51%± 0.6 w0.13 | TeOct n  132  -2.34%± 0.8 w0.24 | TeNov n  116  -5.36%± 1.0 w0.22
+A1 squeeze then upside break              short  TR n  134  -4.28%± 0.5 w0.19 | TeOct n  132  -2.75%± 0.5 w0.27 | TeNov n  116  -4.46%± 0.6 w0.25
+
+=== A2 capitulation wick: low >=W below ref, close recovers >=half of wick, volume>=2x ===
+A2 cap wick>=0.1                          scalp  TR n   95  -7.61%± 1.2 w0.23 | TeOct n   86  -6.42%± 1.5 w0.27 | TeNov n  128  -6.72%± 1.1 w0.28
+A2 cap wick>=0.1                          short  TR n   95  -7.05%± 0.8 w0.26 | TeOct n   86  -6.55%± 0.8 w0.31 | TeNov n  128  -6.01%± 0.9 w0.36
+A2 cap wick>=0.1                          trail  TR n   95  -9.22%± 3.2 w0.22 | TeOct n   86  -4.09%± 4.1 w0.24 | TeNov n  128  -6.86%± 2.0 w0.26
+A2 cap wick>=0.15                         scalp  TR n   50  -7.57%± 1.8 w0.24 | TeOct n   46  -6.16%± 1.8 w0.28 | TeNov n   54  -9.21%± 1.9 w0.22
+A2 cap wick>=0.15                         short  TR n   50  -7.35%± 1.3 w0.28 | TeOct n   46  -5.17%± 0.9 w0.39 | TeNov n   54  -8.01%± 1.1 w0.26
+A2 cap wick>=0.15                         trail  TR n   50 -13.19%± 2.4 w0.18 | TeOct n   46  -4.02%± 4.6 w0.26 | TeNov n   54 -10.39%± 3.2 w0.22
+A2 cap wick>=0.25                         scalp  TR n   17 -13.48%± 1.8 w0.06 | TeOct n   14  -8.98%± 2.5 w0.21 | TeNov n    8  -8.34%± 4.4 w0.25
+A2 cap wick>=0.25                         short  TR n   17  -8.80%± 1.4 w0.24 | TeOct n   14  -9.56%± 1.5 w0.14 | TeNov n    8  -8.65%± 2.7 w0.25
+A2 cap wick>=0.25                         trail  TR n   17 -18.72%± 3.5 w0.12 | TeOct n   14 -14.08%± 3.1 w0.21 | TeNov n    8  -0.63%±16.0 w0.38
+
+=== A3 cross-sectional rank by volume acceleration (3m vol / prior 15m vol), pick 1 pool every 10 min among active pools (age 5-240) ===
+A3 acc      trail  TR n 126   1.71%± 2.9 | TeOct n  98  -3.80%± 3.3 | TeNov n  71   3.67%± 8.8
+A3 acc      scalp  TR n 126  -2.80%± 1.1 | TeOct n  98  -3.58%± 1.1 | TeNov n  71  -4.82%± 2.2
+A3 acc_up   trail  TR n 126   5.76%± 3.2 | TeOct n  98   9.85%± 4.9 | TeNov n  71   8.95%±12.2
+A3 acc_up   scalp  TR n 126  -1.99%± 1.1 | TeOct n  98  -0.46%± 1.2 | TeNov n  71  -2.79%± 2.4
+A3 lowacc   trail  TR n 126  -3.95%± 3.2 | TeOct n  98  -5.41%± 2.7 | TeNov n  71  -8.40%± 3.5
+A3 lowacc   scalp  TR n 126  -2.72%± 0.9 | TeOct n  98  -4.63%± 0.9 | TeNov n  71  -5.96%± 1.2
+A3 random   trail  TR n 126  -2.23%± 3.0 | TeOct n  98   0.68%± 3.4 | TeNov n  71   3.94%± 6.9
+A3 random   scalp  TR n 126  -3.31%± 0.9 | TeOct n  98  -2.81%± 1.0 | TeNov n  71  -2.59%± 1.8
+##### p4b
+config(K,topN,accWin,baseWin,momWin) | TR | TeOct | TeNov
+configs 72 test(Oct+Nov pooled) mean >0 in 72 ; train>0 in 69
+rank corr train vs test mean: -0.06
+(10, 1, 3, 30, 3) n 172   5.99%± 3.9 | n 178   5.04%± 3.3 | n 136  16.89%± 8.5
+(10, 3, 3, 15, 10) n 440   5.36%± 3.3 | n 429   7.06%± 4.3 | n 297  11.68%± 6.9
+(10, 3, 3, 15, 3) n 440   5.25%± 3.1 | n 410   7.58%± 4.5 | n 293  11.34%± 7.2
+(20, 1, 3, 30, 3) n  86   5.00%± 4.5 | n  88   6.22%± 4.5 | n  68  14.23%± 7.9
+(10, 1, 2, 30, 3) n 172   4.88%± 3.3 | n 178   3.88%± 2.6 | n 137  16.69%± 8.7
+(10, 3, 2, 15, 3) n 442   4.79%± 3.3 | n 410   7.77%± 4.4 | n 297  10.94%± 7.2
+(5, 3, 3, 15, 10) n 888   4.66%± 3.3 | n 851   6.28%± 3.8 | n 596  11.94%± 7.1
+(5, 3, 3, 15, 3) n 878   4.64%± 3.3 | n 807   7.47%± 4.9 | n 590  12.00%± 7.3
+avg test mean over all configs: 9.25%
+CONTROL (momentum>0 only, random rank among them): train avg 3.34% test avg 9.58%
+##### p4c
+age bucket(min) x drawdown-from-peak (0:<10%,1:10-40%,2:>40%): n, P(-50% in 60m), P(2x in 60m), gross mean60, median60
+age 0-5      dd0  n   728  death 0.078  2x 0.332  mean  87.01%  med  14.84%
+age 5-15     dd0  n  1214  death 0.070  2x 0.218  mean  49.54%  med   8.14%
+age 5-15     dd1  n   489  death 0.360  2x 0.564  mean  94.38%  med  10.08%
+age 15-30    dd0  n  1454  death 0.074  2x 0.154  mean  27.64%  med   3.79%
+age 15-30    dd1  n   770  death 0.313  2x 0.323  mean  33.65%  med  -0.54%
+age 15-30    dd2  n   309  death 0.401  2x 0.583  mean 135.70%  med  25.99%
+age 30-60    dd0  n  2472  death 0.051  2x 0.032  mean  11.01%  med   3.34%
+age 30-60    dd1  n  1463  death 0.237  2x 0.216  mean  13.47%  med   0.20%
+age 30-60    dd2  n   854  death 0.405  2x 0.331  mean  48.95%  med  -9.78%
+age 60-120   dd0  n  4156  death 0.071  2x 0.032  mean   3.46%  med   2.49%
+age 60-120   dd1  n  2506  death 0.186  2x 0.101  mean  -2.82%  med  -4.95%
+age 60-120   dd2  n  2196  death 0.363  2x 0.156  mean  -3.94%  med -15.64%
+age 120-240  dd0  n  5844  death 0.023  2x 0.006  mean   3.99%  med   1.90%
+age 120-240  dd1  n  3806  death 0.069  2x 0.055  mean  -2.71%  med  -3.68%
+age 120-240  dd2  n  5366  death 0.158  2x 0.102  mean   0.51%  med  -5.24%
+age 240+     dd0  n 18995  death 0.048  2x 0.002  mean  -3.02%  med   1.26%
+age 240+     dd1  n 13275  death 0.026  2x 0.013  mean  -2.29%  med  -0.16%
+age 240+     dd2  n 33942  death 0.052  2x 0.033  mean  -1.22%  med  -0.83%
+
+SURVIVAL-guided entry (young + near high) vs controls, trail .25 exit
+mom5>0 any age                     TR n3472  -1.40%± 1.4 | TeOct n3774  -0.76%± 1.7 | TeNov n2669  -2.13%± 1.8 | all-trim3 -1.62%
+mom5>0 age<=90                     TR n 538   9.71%± 3.7 | TeOct n 537  11.20%± 5.4 | TeNov n 342  13.51%± 7.5 | all-trim3 9.80%
+mom5>0 age<=30                     TR n 184  18.48%± 6.1 | TeOct n 186  18.48%± 6.1 | TeNov n 116  27.61%±10.5 | all-trim3 18.76%
+mom5>0 age 90+                     TR n2955  -3.39%± 1.1 | TeOct n3257  -2.72%± 1.6 | TeNov n2338  -4.37%± 1.1 | all-trim3 -3.67%
+mom5>0 age<=90 within 10% of peak  TR n 395  11.63%± 4.5 | TeOct n 395  12.72%± 3.8 | TeNov n 211  28.37%±10.4 | all-trim3 14.65%
+mom5>0 age 5-60 within 5% of peak  TR n 251  17.48%± 5.7 | TeOct n 267  18.82%± 4.9 | TeNov n 133  35.31%±12.6 | all-trim3 20.37%
+breakout (brief rule)              TR n  87  -2.51%± 3.2 | TeOct n  78  19.28%±13.5 | TeNov n  66   0.39%± 4.5 | all-trim3 0.30%
+##### p5
+pools dead-now(liq<$100) 45 alive 139
+dead-now mom5>0 age<=90 n 357  39.17%± 7.5 win0.62
+dead-now mom5>0 age<=30 n 128  69.15%±11.1 win0.74
+dead-now mom5>0 age>90 n 732   1.78%± 3.6 win0.25
+dead-now breakout n  15  37.83%±21.3 win0.53
+alive-now mom5>0 age<=90 n1060   1.77%± 2.7 win0.39
+alive-now mom5>0 age<=30 n 358   3.33%± 2.5 win0.45
+alive-now mom5>0 age>90 n7818  -3.89%± 0.8 win0.28
+alive-now breakout n 216   3.44%± 5.1 win0.32
+PLACEBO time-reversed paths, mom5>0 age<=90: n 848 7270.87%±5130.3 win0.26
+##### p6
+NET mean % ±se (pool-cluster)  [gross = (1+net)/0.96-1 ~ net+4]; alive-now pools only, all 138
+exit                   random(alive)            mom5>0 age<=90(alive)    mom5>0 age<=30(alive)    breakout(alive)         
+time h5                 -3.39 ± 0.2 (n21265)      0.06 ± 0.9 (n1052)       3.90 ± 1.6 (n355)        1.51 ± 1.8 (n215)     
+time h30                -2.72 ± 0.6 (n21265)      7.34 ± 2.9 (n1052)      16.13 ± 5.3 (n355)        5.68 ± 4.3 (n215)     
+time h120               -3.89 ± 1.4 (n21265)      9.12 ± 6.6 (n1052)      26.89 ±10.8 (n355)        1.05 ± 8.0 (n215)     
+fix tp.1 sl.07 h8       -4.38 ± 0.1 (n21265)     -4.34 ± 0.3 (n1052)      -3.84 ± 0.5 (n355)       -4.70 ± 0.6 (n215)     
+fix tp.3 sl.1 h60       -3.83 ± 0.3 (n21265)     -2.53 ± 0.7 (n1052)      -1.45 ± 1.1 (n355)       -3.14 ± 1.1 (n215)     
+fix tp.9 sl.25 h120     -3.53 ± 0.7 (n21265)      3.33 ± 2.0 (n1052)      10.68 ± 2.9 (n355)        3.78 ± 3.0 (n215)     
+trail.1 h120            -2.12 ± 0.8 (n21265)      3.42 ± 3.2 (n1052)       4.22 ± 2.3 (n355)        3.96 ± 6.0 (n215)     
+trail.25 h120           -3.28 ± 0.8 (n21265)      1.81 ± 2.8 (n1052)       3.36 ± 2.5 (n355)        3.50 ± 5.1 (n215)     
+trail.4 h120            -3.75 ± 1.0 (n21265)      3.25 ± 3.1 (n1052)      11.05 ± 4.0 (n355)        2.84 ± 5.1 (n215)     
+part50@.5+trail.25      -3.57 ± 0.6 (n21265)      0.62 ± 1.8 (n1052)       2.76 ± 2.0 (n355)        1.17 ± 3.2 (n215)     
+ratchet 1.0->.5         -3.82 ± 0.9 (n21265)      1.79 ± 2.6 (n1052)       8.17 ± 4.0 (n355)        0.82 ± 3.5 (n215)     
+
+GROSS mean of random entries, close-fill (no stop slip) per exit, all pools — optional stopping check
+time h5                gross   0.81% ± 0.2
+time h30               gross   2.00% ± 0.5
+time h120              gross   1.95% ± 1.4
+fix tp.1 sl.07 h8      gross   0.23% ± 0.1
+fix tp.3 sl.1 h60      gross   1.64% ± 0.3
+fix tp.9 sl.25 h120    gross   2.62% ± 0.7
+trail.1 h120           gross   4.96% ± 0.9
+trail.25 h120          gross   3.49% ± 0.9
+trail.4 h120           gross   2.68% ± 1.0

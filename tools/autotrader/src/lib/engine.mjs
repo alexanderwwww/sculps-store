@@ -385,7 +385,7 @@ export class Engine {
       // closes a golden-step re-fit of sl / partAt / tp inside their clamps. momMin stays where it is set (the floor is 3%).
       try {
         const ch = O.step(this.org, { ...learn, ret }, this.cfg);
-        if (ch.exits) for (const k of ["sl", "partAt", "tp"]) if (typeof ch.exits[k] === "number") this.cfg[k] = Math.min(O.CLAMP[k][1], Math.max(O.CLAMP[k][0], ch.exits[k]));
+        if (ch.exits && this.cfg.scalp !== 1) for (const k of ["sl", "partAt", "tp"]) if (typeof ch.exits[k] === "number") this.cfg[k] = Math.min(O.CLAMP[k][1], Math.max(O.CLAMP[k][0], ch.exits[k]));
         this.onLearn?.({ org: O.persistable(this.org), exits: ch.exits });
       } catch (e) { this.#err("organism", e); }
       this.#ev("sell", p.name, why, { ret, pnl, stake: p.stake0 ?? p.stake, est: p.est || null });
