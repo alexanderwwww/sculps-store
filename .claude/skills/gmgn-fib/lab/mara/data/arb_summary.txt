@@ -1,0 +1,12 @@
+records 128 round trips 117 429/err 11
+JUP     n=15 mean cost -0.004%  best single +0.041%
+WIF     n=16 mean cost  0.033%  best single +0.042%
+JTO     n=12 mean cost  0.172%  best single -0.068%
+PYTH    n=16 mean cost  0.034%  best single +0.042%
+USDC    n=14 mean cost -0.011%  best single +0.046%
+RAY     n=16 mean cost  0.069%  best single +0.002%
+POPCAT  n=15 mean cost  0.084%  best single +0.038%
+BONK    n=13 mean cost  0.053%  best single -0.003%
+round trips >1.0: 30 of 117 ; best 0.045549999999994206 %
+cross-dex cells: 307 >1.0: 15 best [(1.0004173, 'WIF', 'Whirlpool>Whirlpool'), (1.0003514, 'WIF', 'Whirlpool>Whirlpool'), (1.0003514, 'POPCAT', 'Whirlpool>Whirlpool')]
+fixed fee floor: 2 swaps x 5000 lamports = 0.00001 SOL =  0.10309278350515465 % of a 0.0097 SOL stake; at maxFeeLamports 50000 each:  1.0309278350515463 %

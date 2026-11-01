@@ -1146,5 +1146,2013 @@
     "sroutes": "Pump.fun Amm"
    }
   }
+ },
+ {
+  "mint": "VWmjd6CyU6wL2UiGUEQeA4upVcanrApLae4qMe8pump",
+  "name": "XTO / SOL",
+  "liq": 3386091.5423,
+  "vol24": 1830800.32839775,
+  "dex": "pumpswap",
+  "ageMin": 1369.8495,
+  "chg1h": 4.01,
+  "tx1h": 3581,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.005996333333333381,
+    "imp": 0,
+    "impS": 0.0016291873095523697,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.005984800000000012,
+    "imp": 0.004385983239891797,
+    "impS": 0.0016058600353086787,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.005986166666666626,
+    "imp": 0.004386597221792512,
+    "impS": 0.006518747999880922,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.005993079999999984,
+    "imp": 0,
+    "impS": 0.006574272041502791,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "98sMhvDwXj1RQi5c5Mndm3vPe9cBqPrbLaufMXFNMh5g",
+  "name": "HYPE / SOL",
+  "liq": 4154894.1103,
+  "vol24": 1495954.41970967,
+  "dex": "orca",
+  "ageMin": 546441.8495,
+  "chg1h": 0.504,
+  "tx1h": 397,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": -0.0002126666666666388,
+    "imp": 0.00004845220738479606,
+    "impS": 0,
+    "routes": "Hadron",
+    "sroutes": "GoonFi V2+Manifest+Byreal"
+   },
+   "0.01": {
+    "rt": 0.00012129999999999086,
+    "imp": 0.00020138625760580324,
+    "impS": 0,
+    "routes": "Hadron",
+    "sroutes": "GoonFi V2+TesseraV"
+   },
+   "0.03": {
+    "rt": -0.000019333333333371172,
+    "imp": 0.00026201158377700437,
+    "impS": 0,
+    "routes": "Byreal+Manifest+BisonFi",
+    "sroutes": "GoonFi V2+TesseraV"
+   },
+   "0.1": {
+    "rt": 0.00007522000000004248,
+    "imp": 0.00029405923360430007,
+    "impS": 0,
+    "routes": "BisonFi+BisonFi",
+    "sroutes": "GoonFi V2+TesseraV"
+   }
+  }
+ },
+ {
+  "mint": "pumpCmXqMfrsAkQ5r49WcJnRayYRqmXz6ae8H7H9Dfn",
+  "name": "PUMP / SOL",
+  "liq": 2418050.3525,
+  "vol24": 3694007.64811147,
+  "dex": "orca",
+  "ageMin": 593140.1033833333,
+  "chg1h": 1.159,
+  "tx1h": 414,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": -0.00032166666666677557,
+    "imp": 0,
+    "impS": 0,
+    "routes": "Archer+ZeroFi",
+    "sroutes": "Whirlpool+BisonFi"
+   },
+   "0.01": {
+    "rt": 0.00031159999999996746,
+    "imp": 0.00021707487198201393,
+    "impS": 0.00009454565150318259,
+    "routes": "PancakeSwap+Deriverse+ZeroFi",
+    "sroutes": "TesseraV+GoonFi V2"
+   },
+   "0.03": {
+    "rt": -0.00012416666666670295,
+    "imp": 0.00027973903362648526,
+    "impS": 0,
+    "routes": "PancakeSwap+Deriverse+ZeroFi",
+    "sroutes": "TesseraV+Whirlpool"
+   },
+   "0.1": {
+    "rt": 0.00033055999999997976,
+    "imp": 0.0003444463439903177,
+    "impS": 0,
+    "routes": "GoonFi V2+ZeroFi",
+    "sroutes": "TesseraV+Whirlpool"
+   }
+  }
+ },
+ {
+  "mint": "Dz9mQ9NzkBcCsuGPFJ3r1bS4wgqKMHBPiVuniW8Mbonk",
+  "name": "USELESS / SOL",
+  "liq": 3592524.8394,
+  "vol24": 699525.779363454,
+  "dex": "raydium",
+  "ageMin": 777531.1033833333,
+  "chg1h": 0.958,
+  "tx1h": 58,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.0018329999999999735,
+    "imp": 0.001649046216619077,
+    "impS": 0.0001842576327330646,
+    "routes": "GoonFi V2+TesseraV",
+    "sroutes": "TesseraV+Deriverse"
+   },
+   "0.01": {
+    "rt": 0.0018167000000000044,
+    "imp": 0.0017057912364338058,
+    "impS": 0.00011109827402841472,
+    "routes": "Raydium CP",
+    "sroutes": "TesseraV+GoonFi V2+PancakeSwap"
+   },
+   "0.03": {
+    "rt": 0.0014355666666666655,
+    "imp": 0.0016366881042111682,
+    "impS": 0,
+    "routes": "Scorch",
+    "sroutes": "Scorch+GoonFi V2+PancakeSwap"
+   },
+   "0.1": {
+    "rt": 0.0006660200000000449,
+    "imp": 0.0011710335744090279,
+    "impS": 0,
+    "routes": "BisonFi+Scorch",
+    "sroutes": "Scorch+GoonFi V2"
+   }
+  }
+ },
+ {
+  "mint": "4rsSV6L6mQ6jN587eKi5tNgkbgdzc8c9fxEVY8wapump",
+  "name": "VAMPCAT / SOL",
+  "liq": 5064.8905,
+  "vol24": 259345.617790317,
+  "dex": "pumpswap",
+  "ageMin": 1600.6533833333333,
+  "chg1h": 11.878,
+  "tx1h": 32,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024853000000000014,
+    "imp": 0.022033405174168776,
+    "impS": 0.0028831197719318548,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.025226900000000052,
+    "imp": 0.02223084725988787,
+    "impS": 0.003064249271831368,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.026295033333333384,
+    "imp": 0.022958224642553298,
+    "impS": 0.0034152159866033126,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.03001609999999999,
+    "imp": 0.02483026773370139,
+    "impS": 0.005317876565186978,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "2gTbp2gwH46rqExzabSyrdR3294SLwCp2rSqWDS6Sim1",
+  "name": "CATPAD / SOL",
+  "liq": 30962.5087,
+  "vol24": 46757.1154227381,
+  "dex": "pumpswap",
+  "ageMin": 2775.886716666667,
+  "chg1h": 3.625,
+  "tx1h": 57,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.022772666666666663,
+    "imp": 0.020357062383889003,
+    "impS": 0.0026407787484761117,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.022848700000000055,
+    "imp": 0.020320487974865048,
+    "impS": 0.0025806521358283613,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.023067999999999977,
+    "imp": 0.020370517066137513,
+    "impS": 0.0027777600536820985,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.023850660000000024,
+    "imp": 0.008860325076190213,
+    "impS": 0.015124341506117302,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "7zfaqkUtUKUYywDoj1R9zQZgwRj8EVZgKdp7TpqKuEQD",
+  "name": "HUSS / SOL",
+  "liq": 18090.5639,
+  "vol24": 847969.694505803,
+  "dex": "pumpswap",
+  "ageMin": 1187.4033833333333,
+  "chg1h": 544.387,
+  "tx1h": 389,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.023773999999999962,
+    "imp": 0.009740852485052461,
+    "impS": 0.014171186956630173,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.023905500000000024,
+    "imp": 0.009807445081280761,
+    "impS": 0.013917902966941061,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.024284500000000042,
+    "imp": 0.01031387095240855,
+    "impS": 0.014116221939005915,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.025609419999999994,
+    "imp": 0.010985870593959663,
+    "impS": 0.014785986338559811,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "6QUHcqYuiPRHxhnYZoygewXtNQr9kUrhc9Tmwgtbpump",
+  "name": "RAM / SOL",
+  "liq": 23785.0227,
+  "vol24": 451761.755520821,
+  "dex": "pumpswap",
+  "ageMin": 1998.72005,
+  "chg1h": 38.598,
+  "tx1h": 503,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.023760666666666652,
+    "imp": 0,
+    "impS": 0.03522873510147082,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.02386109999999997,
+    "imp": 0,
+    "impS": 0.03527843947108074,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.008459499999999953,
+    "imp": 0,
+    "impS": 0.0007352207552943376,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.025156159999999983,
+    "imp": 0.02393844293914631,
+    "impS": 0.0012475822370471349,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "2j5SaS7xy776qCBpyPQbZjyQSAtKiFgrwjfErthnW2ZM",
+  "name": "CLAUDIA / SOL",
+  "liq": 187996.2266,
+  "vol24": 197102.716223912,
+  "dex": "pumpswap",
+  "ageMin": 36689.90338333333,
+  "chg1h": -2.775,
+  "tx1h": 45,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.01501466666666662,
+    "imp": 0.006959985404161504,
+    "impS": 0.008111134641219238,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.01": {
+    "rt": 0.01758700000000002,
+    "imp": 0.0027850033185725927,
+    "impS": 0.01484333541983032,
+    "routes": "Meteora DLMM",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.017851933333333347,
+    "imp": 0.0031701918449250533,
+    "impS": 0.014728433448013695,
+    "routes": "Meteora DLMM",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.018067469999999974,
+    "imp": 0.0032572085663140882,
+    "impS": 0.0008306430908627145,
+    "routes": "Meteora DLMM",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "HcRLc9VDgjLeK154xDawfb1dmVJ98DoSqcwTHGqiDeJR",
+  "name": "ZCAT / SOL",
+  "liq": 675401.0715,
+  "vol24": 294762.441258612,
+  "dex": "meteora",
+  "ageMin": 81416.10338333333,
+  "chg1h": 3.427,
+  "tx1h": 23,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.04628433333333337,
+    "imp": 0.01322901148616575,
+    "impS": 0.033498473538375775,
+    "routes": "Whirlpool+Whirlpool",
+    "sroutes": "Meteora DLMM+GoonFi V2"
+   },
+   "0.01": {
+    "rt": 0.04830500000000004,
+    "imp": 0.015295020061378206,
+    "impS": 0.033527292216463014,
+    "routes": "Whirlpool+Whirlpool",
+    "sroutes": "Meteora DLMM+TesseraV"
+   },
+   "0.03": {
+    "rt": 0.053896000000000055,
+    "imp": 0.021110065685815197,
+    "impS": 0.03349297317798532,
+    "routes": "Whirlpool+Whirlpool",
+    "sroutes": "Meteora DLMM+BisonFi"
+   },
+   "0.1": {
+    "rt": 0.06011407999999996,
+    "imp": 0.02662309599670278,
+    "impS": 0.03440700500038141,
+    "routes": "PancakeSwap+Raydium CP+Whirlpool",
+    "sroutes": "Meteora DLMM+TesseraV"
+   }
+  }
+ },
+ {
+  "mint": "HMYd9tosnUXuNHmq7pXmoePRVBLBBjA3JBfydq6upump",
+  "name": "SI276 / SOL",
+  "liq": 69720.1992,
+  "vol24": 41302.7886091342,
+  "dex": "pumpswap",
+  "ageMin": 37068.88671666667,
+  "chg1h": 2.352,
+  "tx1h": 1314,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.01981900000000003,
+    "imp": 0.01850181180181252,
+    "impS": 0.0012430840818147709,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.01985400000000004,
+    "imp": 0.018691213706126822,
+    "impS": 0.001263016963014631,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.019956900000000055,
+    "imp": 0.01866601216350666,
+    "impS": 0.0013154418908279206,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.020317669999999954,
+    "imp": 0.01883027066897578,
+    "impS": 0.0015159449854189352,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "HhBuvegE7Ew2stS5svkMcxL8povkaL8brwt9JUtfpump",
+  "name": "BALLS / SOL",
+  "liq": 11325.799,
+  "vol24": 656698.298185446,
+  "dex": "pumpswap",
+  "ageMin": 632.1867166666667,
+  "chg1h": -13.412,
+  "tx1h": 100,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024779666666666644,
+    "imp": 0.016045183083710578,
+    "impS": 0.008876915314394138,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.024981299999999984,
+    "imp": 0.017126389524470167,
+    "impS": 0.008950215675102043,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.025559766666666706,
+    "imp": 0.016467785747286735,
+    "impS": 0.009244212632412867,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.027579730000000025,
+    "imp": 0.01745477526596149,
+    "impS": 0.01029985425277327,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "CqpUBhhSxHsXbq6AGPKnbxDpWgECUXAVy3BCrwhGpump",
+  "name": "ber / SOL",
+  "liq": 32152.0266,
+  "vol24": 108293.060433549,
+  "dex": "pumpswap",
+  "ageMin": 11362.12005,
+  "chg1h": -9.896,
+  "tx1h": 39,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.02374833333333337,
+    "imp": 0.009381626746988019,
+    "impS": 0.014502766124928254,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.02381920000000004,
+    "imp": 0.009434120087596552,
+    "impS": 0.01452208298722699,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.024025566666666665,
+    "imp": 0.009675502829713828,
+    "impS": 0.014543648882663657,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.024747999999999992,
+    "imp": 0.00994411332970675,
+    "impS": 0.014952576788448725,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "3yeWYPG3BvGBFrwjar9e28GBYZgYmHT79d7FBVS6xL1a",
+  "name": "RTA / SOL",
+  "liq": 19614.3639,
+  "vol24": 19449.9279514254,
+  "dex": "raydium",
+  "ageMin": 784483.6867166667,
+  "chg1h": 2.5,
+  "tx1h": 23,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.005051333333333297,
+    "imp": 0,
+    "impS": 0.007026794920333962,
+    "routes": "Raydium CP",
+    "sroutes": "Raydium CP"
+   },
+   "0.01": {
+    "rt": 0.005185299999999948,
+    "imp": 0,
+    "impS": 0.0063412574166017074,
+    "routes": "Raydium CP",
+    "sroutes": "Raydium CP"
+   },
+   "0.03": {
+    "rt": 0.005568166666666707,
+    "imp": 0,
+    "impS": 0.00718945734365126,
+    "routes": "Raydium CP",
+    "sroutes": "Raydium CP"
+   },
+   "0.1": {
+    "rt": 0.006905790000000023,
+    "imp": 0,
+    "impS": 0.007812754788343992,
+    "routes": "Raydium CP",
+    "sroutes": "Raydium CP"
+   }
+  }
+ },
+ {
+  "mint": "ADTgcwrrshcZsamrrnq7TDcP7WYTqYY7NRmJEYwWpump",
+  "name": "UDTF / SOL",
+  "liq": 1569960.0028,
+  "vol24": 979860.085392053,
+  "dex": "pumpswap",
+  "ageMin": 783.3367166666667,
+  "chg1h": 2.619,
+  "tx1h": 3715,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.005984666666666638,
+    "imp": 0.00044641611146331784,
+    "impS": 0.00554072402367669,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.005985499999999977,
+    "imp": 0.00044694359359486916,
+    "impS": 0.0055410329355775854,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.005897000000000041,
+    "imp": 0.0004565613609114028,
+    "impS": 0.005442923667725671,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.006005869999999969,
+    "imp": 0.00042682175660542564,
+    "impS": 0.005581430519373224,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "DEW9dSN6QpWyNthphCpMmAbZP1Q4cEKR9xQXAri98WDP",
+  "name": "SI / SOL",
+  "liq": 286633.8367,
+  "vol24": 309833.428187641,
+  "dex": "meteora",
+  "ageMin": 47183.52005,
+  "chg1h": 1.69,
+  "tx1h": 130,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024773000000000045,
+    "imp": 0.009995004844269172,
+    "impS": 0.014862065124663527,
+    "routes": "TesseraV+Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.01": {
+    "rt": 0.024720799999999987,
+    "imp": 0.010004783352396716,
+    "impS": 0.014864735101888446,
+    "routes": "GoonFi V2+Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.03": {
+    "rt": 0.02474333333333334,
+    "imp": 0.010018170027126431,
+    "impS": 0.014874175323612137,
+    "routes": "TesseraV+Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.1": {
+    "rt": 0.024645750000000022,
+    "imp": 0.009976800206780621,
+    "impS": 0.014923027183070182,
+    "routes": "BisonFi+Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   }
+  }
+ },
+ {
+  "mint": "8Xg89xT8Ve34sKiYqYuMs46mycREsCA2F362UscRpump",
+  "name": "GLITCH / SOL",
+  "liq": 167245.1948,
+  "vol24": 431627.751944765,
+  "dex": "pumpswap",
+  "ageMin": 22899.603383333335,
+  "chg1h": 5.16,
+  "tx1h": 91,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.008078333333333299,
+    "imp": 0.01325909520107526,
+    "impS": 0,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.01": {
+    "rt": 0.01414800000000005,
+    "imp": 0.013468776250023063,
+    "impS": 0.0005513543945634387,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.013969833333333348,
+    "imp": 0.013398644854565609,
+    "impS": 0.0005789455647803423,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.013531210000000016,
+    "imp": 0.015432616043479959,
+    "impS": 0,
+    "routes": "Whirlpool",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "D7Q2ApyCUfAm9Vay3wC2g1tDBtrKdomYCLdiSPaNpump",
+  "name": "DOUGHBRIKS / SOL",
+  "liq": 14065.7961,
+  "vol24": 1274058.07490459,
+  "dex": "pumpswap",
+  "ageMin": 1245.4867166666668,
+  "chg1h": -0.332,
+  "tx1h": 3,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024761333333333302,
+    "imp": 0.02421804748379398,
+    "impS": 0.0005567697251813347,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.0249201,
+    "imp": 0.02424773869352872,
+    "impS": 0.0006890696882126948,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.025376266666666702,
+    "imp": 0.02452729639812641,
+    "impS": 0.0010264832223270365,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.026970269999999963,
+    "imp": 0.025173575603299452,
+    "impS": 0.001843091602499886,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "Hg5Ja55T5wESq4vyFoiVCMeHXtGyVA69X2UHq8hgpump",
+  "name": "baton / SOL",
+  "liq": 303398.7173,
+  "vol24": 127390.076088698,
+  "dex": "meteora",
+  "ageMin": 75540.48671666667,
+  "chg1h": -1.124,
+  "tx1h": 9,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.01329866666666668,
+    "imp": 0.015071181743235658,
+    "impS": 0,
+    "routes": "Meteora DLMM",
+    "sroutes": "Manifest"
+   },
+   "0.01": {
+    "rt": 0.013298299999999985,
+    "imp": 0.012630781975295581,
+    "impS": 0.0006760571552350318,
+    "routes": "Meteora DLMM",
+    "sroutes": "Manifest"
+   },
+   "0.03": {
+    "rt": 0.01329826666666667,
+    "imp": 0.012630747216213834,
+    "impS": 0.0006760585754223452,
+    "routes": "Meteora DLMM",
+    "sroutes": "Manifest"
+   },
+   "0.1": {
+    "rt": 0.013298240000000017,
+    "imp": 0.012628551979387732,
+    "impS": 0.0006179968391476662,
+    "routes": "Meteora DLMM",
+    "sroutes": "Manifest"
+   }
+  }
+ },
+ {
+  "mint": "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs",
+  "name": "WETH / SOL",
+  "liq": 6533739.5922,
+  "vol24": 4415228.43409739,
+  "dex": "orca",
+  "ageMin": 1749521.3367166666,
+  "chg1h": -0.138,
+  "tx1h": 888,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.00005999999999994898,
+    "imp": 0.00014063224581821278,
+    "impS": 0,
+    "routes": "PancakeSwap",
+    "sroutes": "GoonFi V2+Deriverse"
+   },
+   "0.01": {
+    "rt": 0,
+    "imp": 0.00010170169711649485,
+    "impS": 0,
+    "routes": "PancakeSwap",
+    "sroutes": "GoonFi V2+Deriverse"
+   },
+   "0.03": {
+    "rt": -0.0001440666666667756,
+    "imp": 0.00003502896222279083,
+    "impS": 0,
+    "routes": "PancakeSwap",
+    "sroutes": "GoonFi V2+BisonFi"
+   },
+   "0.1": {
+    "rt": 0.000003309999999978608,
+    "imp": 0.00006449943410808914,
+    "impS": 0,
+    "routes": "PancakeSwap",
+    "sroutes": "GoonFi V2+BisonFi"
+   }
+  }
+ },
+ {
+  "mint": "7pjxuW3KzszHVNcR8mAZKdMEvFTLEQZHKnRr7C2ipump",
+  "name": "LMC / SOL",
+  "liq": 2450.2435,
+  "vol24": 31.0491972704,
+  "dex": "pump-fun",
+  "ageMin": 3.89055,
+  "chg1h": 16.309,
+  "tx1h": 8,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "err": "nosell",
+    "imp": 0.00829079321586107
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0.00951884224064233
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0.010079396748338933
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0.011068855017436804
+   }
+  }
+ },
+ {
+  "mint": "27RQee2dkJbuf3ikwwQagtfXJQ2C4gak3TWb6Yewpump",
+  "name": "PUMP / SOL",
+  "liq": 1128.9993,
+  "vol24": 185.3186392855,
+  "dex": "pump-fun",
+  "ageMin": 4.04055,
+  "chg1h": -49.156,
+  "tx1h": 4,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "err": "nosell",
+    "imp": 0
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0
+   }
+  }
+ },
+ {
+  "mint": "27RR1kNa1CS9aPLoEJyhUWczYt254HLkM5D3NMaEpump",
+  "name": "GTA / SOL",
+  "liq": 2112.0592,
+  "vol24": 515.5289548082,
+  "dex": "pump-fun",
+  "ageMin": 4.04055,
+  "chg1h": -12.374,
+  "tx1h": 19,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024885333333333315,
+    "imp": 0.011292582433523185,
+    "impS": 0.013748001338218165,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "rt": 0.02533350000000001,
+    "imp": 0.011519924005675126,
+    "impS": 0.013974561885255622,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.03": {
+    "rt": 0.026614200000000032,
+    "imp": 0.012169966224228366,
+    "impS": 0.014620630057738945,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.1": {
+    "rt": 0.031071179999999976,
+    "imp": 0.014440499192722977,
+    "impS": 0.016874354915816594,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   }
+  }
+ },
+ {
+  "mint": "DSzvCPF2YZ5AqadUVdtrWf53vskat3cFqQ1atN2Npump",
+  "name": "cap / SOL",
+  "liq": 713.8189,
+  "vol24": 1537.2102879808,
+  "dex": "pump-fun",
+  "ageMin": 4.14055,
+  "chg1h": -64.333,
+  "tx1h": 142,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "err": "nosell",
+    "imp": 0.0018396165821373018
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0.0024977482833876533
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0.004421528189328946
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0.01109725949329937
+   }
+  }
+ },
+ {
+  "mint": "EavfZnhAWPHZJYy8MJbDCVjbGq5nQeiqBH8Fiyscpump",
+  "name": "GTA / SOL",
+  "liq": 571.0968,
+  "vol24": 16.2621336805,
+  "dex": "pump-fun",
+  "ageMin": 4.173883333333333,
+  "chg1h": -72.943,
+  "tx1h": 19,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.02531300000000003,
+    "imp": 0.011876528200687044,
+    "impS": 0.013597968455142509,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0.012626822317796561
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0.014776243173574368
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0.022015677850301344
+   }
+  }
+ },
+ {
+  "mint": "8RXcELkNRcSHsMQaKRGzkLHNsGKbuGA4s49XcBM38RJx",
+  "name": "OCTPAIN / SOL",
+  "liq": 2228.9109,
+  "vol24": 342.5801440252,
+  "dex": "pump-fun",
+  "ageMin": 4.19055,
+  "chg1h": 1.18,
+  "tx1h": 28,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024885000000000046,
+    "imp": 0.011465668418094275,
+    "impS": 0.013569816719981231,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "rt": 0.02533300000000005,
+    "imp": 0.01169796984179433,
+    "impS": 0.013796420266406819,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.03": {
+    "rt": 0.02661273333333336,
+    "imp": 0.012347406498852057,
+    "impS": 0.01444366868304558,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.1": {
+    "rt": 0.03106640000000005,
+    "imp": 0.014517950708110636,
+    "impS": 0.016792238178036958,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   }
+  }
+ },
+ {
+  "mint": "DhW5ohYAdNf8AHwhqkCCjmjqcWDtJf9D5EaaRC6spump",
+  "name": "$SMX / SOL",
+  "liq": 2104.7242,
+  "vol24": 3.8369056403,
+  "dex": "pump-fun",
+  "ageMin": 4.24055,
+  "chg1h": 0.112,
+  "tx1h": 3,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024885333333333315,
+    "imp": 0.011493620559650142,
+    "impS": 0.013547421698244383,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "rt": 0.02533350000000001,
+    "imp": 0.011720915906297884,
+    "impS": 0.01366295342353843,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.03": {
+    "rt": 0.026614200000000032,
+    "imp": 0.01248204635847217,
+    "impS": 0.014310664852110418,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.1": {
+    "rt": 0.031071179999999976,
+    "imp": 0.014750423570546161,
+    "impS": 0.01656509865104463,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   }
+  }
+ },
+ {
+  "mint": "4aeDhHqHENaP9aqeWniWBe8dao3AF6mouMiMmNTLpump",
+  "name": "$SUSDUCK / SOL",
+  "liq": 3047.0198,
+  "vol24": 574.7784164848,
+  "dex": "pump-fun",
+  "ageMin": 4.307216666666666,
+  "chg1h": 7.625,
+  "tx1h": 34,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "err": "nosell",
+    "imp": 0
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0
+   }
+  }
+ },
+ {
+  "mint": "6n2xhbzwUordT7ayecQLcYsFBjJVj2sd94qVsrvypump",
+  "name": "TrollYe / SOL",
+  "liq": 2104.1997,
+  "vol24": 4484.8512880875,
+  "dex": "pump-fun",
+  "ageMin": 4.34055,
+  "chg1h": -40.966,
+  "tx1h": 62,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024885333333333315,
+    "imp": 0.011115789567573958,
+    "impS": 0.013924323616956261,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "rt": 0.02533350000000001,
+    "imp": 0.011445159239413543,
+    "impS": 0.014049135351864623,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.03": {
+    "rt": 0.026614200000000032,
+    "imp": 0.012095250624052449,
+    "impS": 0.014696709763890767,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.1": {
+    "rt": 0.031071179999999976,
+    "imp": 0.014364399702536305,
+    "impS": 0.016741091616929105,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   }
+  }
+ },
+ {
+  "mint": "4VEAeZ7SZeeKNZDoQyaknj34jzB4AsJqyTKDbZn7Taz7",
+  "name": "Coinbase / SOL",
+  "liq": 0.00217544774,
+  "vol24": 0.09127777955,
+  "dex": "meteora-damm-v2",
+  "ageMin": 4.373883333333334,
+  "chg1h": -0.667,
+  "tx1h": 19,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.961128,
+    "imp": 1,
+    "impS": 1,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.01": {
+    "rt": 0.9880116,
+    "imp": 1,
+    "impS": 1,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.03": {
+    "rt": 0.9959715666666666,
+    "imp": 1,
+    "impS": 1,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.1": {
+    "rt": 0.99878805,
+    "imp": 1,
+    "impS": 1,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   }
+  }
+ },
+ {
+  "mint": "ERf5Rpb49ArnK1yLNuBwSEG9P3BV2BJzKgjAAPQ8pump",
+  "name": "Regretamin / SOL",
+  "liq": 2104.6705,
+  "vol24": 191.1908155302,
+  "dex": "pump-fun",
+  "ageMin": 4.39055,
+  "chg1h": -3.068,
+  "tx1h": 4,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024885333333333315,
+    "imp": 0.011115345184478107,
+    "impS": 0.013887021641641205,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "rt": 0.02533350000000001,
+    "imp": 0.01138056999423291,
+    "impS": 0.01411355025228029,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.03": {
+    "rt": 0.026614200000000032,
+    "imp": 0.012030703855133792,
+    "impS": 0.014761082355263626,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.1": {
+    "rt": 0.031071179999999976,
+    "imp": 0.013961824973988133,
+    "impS": 0.017351615241023015,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   }
+  }
+ },
+ {
+  "mint": "7XuzNeo8D31SK38PddQJ1oG47DprA6gnE2NPcQBTpump",
+  "name": "LMC / SOL",
+  "liq": 45.3403,
+  "vol24": 1767.7901119649,
+  "dex": "pumpswap",
+  "ageMin": 4.407216666666667,
+  "chg1h": -85.537,
+  "tx1h": 366,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.08656166666666665,
+    "imp": 0.07295450945187396,
+    "impS": 0.014677982206404271,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.20433179999999995,
+    "imp": 0.13877892588601332,
+    "impS": 0.07602703902267313,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.4185308666666666,
+    "imp": 0.284097833242533,
+    "impS": 0.18778129144799305,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.70061675,
+    "imp": 0.5498306652460478,
+    "impS": 0.33495414528039075,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "8RN9zJcWo9U4hQM1BDbhtxHWyN1crZiHCYEFBt7vGCNm",
+  "name": "JEETLANA / SOL",
+  "liq": 2387.6794,
+  "vol24": 2479.1267459503,
+  "dex": "pump-fun",
+  "ageMin": 4.407216666666667,
+  "chg1h": -44.564,
+  "tx1h": 13,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024885333333333315,
+    "imp": 0,
+    "impS": 0.06461911157371028,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "rt": 0.02533350000000001,
+    "imp": 0,
+    "impS": 0.06458898302354481,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.03": {
+    "rt": 0.026614200000000032,
+    "imp": 0,
+    "impS": 0.06545663348568852,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.1": {
+    "rt": 0.031071179999999976,
+    "imp": 0,
+    "impS": 0.06759408803404376,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   }
+  }
+ },
+ {
+  "mint": "37uum5jQDKaDXNzQj98TqEnXaqkozd9YoUxLqRUogv8w",
+  "name": "Propranolol / SOL",
+  "liq": 2105.8292,
+  "vol24": 9.2698163987,
+  "dex": "pump-fun",
+  "ageMin": 4.423883333333333,
+  "chg1h": 0.016,
+  "tx1h": 2,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024885333333333315,
+    "imp": 0.009932870163078429,
+    "impS": 0.015102474084477274,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "rt": 0.02533350000000001,
+    "imp": 0.010355891091848677,
+    "impS": 0.015134338469084336,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.03": {
+    "rt": 0.026614200000000032,
+    "imp": 0.011006698800877998,
+    "impS": 0.0157812001155098,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.1": {
+    "rt": 0.031071179999999976,
+    "imp": 0.013278348209127835,
+    "impS": 0.018418506440486978,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   }
+  }
+ },
+ {
+  "mint": "CjfkAPKbsNEmaDpD9seT76w2jzZDvfjCmDtPZoJUKKGn",
+  "name": "2026 / SOL",
+  "liq": 2207.1819,
+  "vol24": 1733.4875198076,
+  "dex": "pump-fun",
+  "ageMin": 4.473883333333333,
+  "chg1h": -12.374,
+  "tx1h": 16,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024885333333333315,
+    "imp": 0,
+    "impS": 0.026677489941937162,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "rt": 0.02533350000000001,
+    "imp": 0,
+    "impS": 0.026901080340680703,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.03": {
+    "rt": 0.026614200000000032,
+    "imp": 0,
+    "impS": 0.027412887017228618,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.1": {
+    "rt": 0.031071179999999976,
+    "imp": 0.001477618834952529,
+    "impS": 0.029637353877354805,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   }
+  }
+ },
+ {
+  "mint": "9fHL4VKTBSvpsxiZebbv4H9FRxt5te6ckDMC8NZWpump",
+  "name": "Fox / SOL",
+  "liq": 649.006,
+  "vol24": 602.1091620774,
+  "dex": "pump-fun",
+  "ageMin": 4.49055,
+  "chg1h": -70.015,
+  "tx1h": 43,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "err": "nosell",
+    "imp": 0.0022303897607760747
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0.0030256832384774036
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0.005151399484708459
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0.01239225093884363
+   }
+  }
+ },
+ {
+  "mint": "FBVLhzrWiCwEZxRjZE1e9YvRrRXTQqVZcprcM1Tqpump",
+  "name": "DIPS / SOL",
+  "liq": 2327.8353,
+  "vol24": 1347.5778533709,
+  "dex": "pump-fun",
+  "ageMin": 4.507216666666666,
+  "chg1h": -7.498,
+  "tx1h": 14,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024885333333333315,
+    "imp": 0,
+    "impS": 0.061095804215609915,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "rt": 0.02533350000000001,
+    "imp": 0,
+    "impS": 0.061191348606207195,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.03": {
+    "rt": 0.026614200000000032,
+    "imp": 0,
+    "impS": 0.06177543170714136,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.1": {
+    "rt": 0.031071179999999976,
+    "imp": 0,
+    "impS": 0.06364101375462276,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   }
+  }
+ },
+ {
+  "mint": "8yL4c4C8Q4ZBYuREZf9n8fhBP4AJ4aXWfLoTZ8k345iN",
+  "name": "REGRETAMIN / SOL",
+  "liq": 20483.4719,
+  "vol24": 137021.00992927,
+  "dex": "pumpswap",
+  "ageMin": 4.861433333333333,
+  "chg1h": 49.731,
+  "tx1h": 710,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.990944,
+    "imp": 0.9980883616143739,
+    "impS": 0,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.9972658,
+    "imp": 0.9994191887988341,
+    "impS": 0,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.9990869333333333,
+    "imp": 0.9998056876690592,
+    "impS": 0,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.9997259,
+    "imp": 0.9999416327624248,
+    "impS": 0,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "EPUH3GFD3XHTgAr3YrSCXvJtSSnUBoHXHBBj7i91pump",
+  "name": "NUTTY / SOL",
+  "liq": 591.5232,
+  "vol24": 118.0217383463,
+  "dex": "pump-fun",
+  "ageMin": 4.911433333333333,
+  "chg1h": -72.484,
+  "tx1h": 31,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "err": "nosell",
+    "imp": 0.011293716834090502
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0.012445416561132568
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0.014774858201361596
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0.02284260910759213
+   }
+  }
+ },
+ {
+  "mint": "7tVxX2zK7cpMTLeSzkUtwR5CAoX78YXW5XrZScsppump",
+  "name": "beer / SOL",
+  "liq": 179.1817,
+  "vol24": 35.819737695,
+  "dex": "pump-fun",
+  "ageMin": 4.9781,
+  "chg1h": -91.602,
+  "tx1h": 29,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "err": "nosell",
+    "imp": 0.006413203525598235
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0.009112089038139839
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0.017059555737852037
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0.04286221614941739
+   }
+  }
+ },
+ {
+  "mint": "2cv9bdxbf4fnYSurjD3RpxS2HHyGPDxRbJgJ3hkmpump",
+  "name": "$MFRG / SOL",
+  "liq": 4577.1454,
+  "vol24": 299.7753424148,
+  "dex": "pump-fun",
+  "ageMin": 4.9781,
+  "chg1h": 120.671,
+  "tx1h": 29,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "err": "nosell",
+    "imp": 0.01088334409046226
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0.011102070553894958
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0.011399799183329475
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0.01230432274406605
+   }
+  }
+ },
+ {
+  "mint": "3ENjEQPsP1Tc7ATE7Gf16b89j4xG2fCX45kc21oUpump",
+  "name": "LMC / SOL",
+  "liq": 2903.1735,
+  "vol24": 30.2491209429,
+  "dex": "pump-fun",
+  "ageMin": 5.111433333333333,
+  "chg1h": 37.826,
+  "tx1h": 7,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "err": "nosell",
+    "imp": 0.01175247267613247
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0.011707515403732703
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0.012171924948601922
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0.013815932632999305
+   }
+  }
+ },
+ {
+  "mint": "DxriaEjx67hHiab4hti1tfaEUe1PTqVnMT7Lzrndgua1",
+  "name": "REGRETAMIN / SOL",
+  "liq": 24080.8755,
+  "vol24": 9321.7239041714,
+  "dex": "meteora-damm-v2",
+  "ageMin": 5.1447666666666665,
+  "chg1h": 61.374,
+  "tx1h": 256,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.00022100000000002673,
+    "imp": 0,
+    "impS": 0.00512555114242495,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.01": {
+    "rt": 0.0002697999999999867,
+    "imp": 0,
+    "impS": 0.005149799158155519,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.03": {
+    "rt": -0.0023781000000000496,
+    "imp": 0,
+    "impS": 0,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.1": {
+    "rt": 0.0008966000000000252,
+    "imp": 0.0025689986606755423,
+    "impS": 0,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   }
+  }
+ },
+ {
+  "mint": "2TrB59EFmtw4cGGE4y7yrbzbVYnjcBZCL67QZcUfpump",
+  "name": "SPLITLY / SOL",
+  "liq": 2109.8135,
+  "vol24": 116.1860671231,
+  "dex": "pump-fun",
+  "ageMin": 5.161433333333333,
+  "chg1h": -6.031,
+  "tx1h": 5,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024885333333333315,
+    "imp": 0.008228318309632098,
+    "impS": 0.01679521136892228,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "rt": 0.02533350000000001,
+    "imp": 0.008428559542902258,
+    "impS": 0.017048635899905355,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.03": {
+    "rt": 0.026614200000000032,
+    "imp": 0.009140787155521876,
+    "impS": 0.0176346070339467,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.1": {
+    "rt": 0.031071179999999976,
+    "imp": 0.011416722434478652,
+    "impS": 0.019804316257277115,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   }
+  }
+ },
+ {
+  "mint": "7CcgDGMMeWBvKBqtWmfSyNAnoQ3tzRJVsM6Pvx7HjET",
+  "name": "REGRETAMINE / SOL",
+  "liq": 118266.1987,
+  "vol24": 211488.958481453,
+  "dex": "pumpswap",
+  "ageMin": 5.1781,
+  "chg1h": 30.785,
+  "tx1h": 621,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "err": "nosell",
+    "imp": 0.9999999091114044
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0.9999999727317951
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0.9999999909116694
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0.9999999972735008
+   }
+  }
+ },
+ {
+  "mint": "9NmvxPkHioQQekBvwre3snW5vrnxbnoQXdmjijcDfT3w",
+  "name": "SIS / SOL",
+  "liq": 21904.1912,
+  "vol24": 242213.155023105,
+  "dex": "meteora-damm-v2",
+  "ageMin": 5.3114333333333335,
+  "chg1h": 79.373,
+  "tx1h": 1053,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.980538,
+    "imp": 0.9905500833039302,
+    "impS": 0,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.01": {
+    "rt": 0.9940807,
+    "imp": 0.9970871112599567,
+    "impS": 0,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.03": {
+    "rt": 0.9980191,
+    "imp": 0.9990213580355771,
+    "impS": 0,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.1": {
+    "rt": 0.9994049,
+    "imp": 0.9997059276262856,
+    "impS": 0,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   }
+  }
+ },
+ {
+  "mint": "HxXUAaAXqAJWhW1y3MczQ1rD1h359ddMyPBnw9TEukk9",
+  "name": "BLUE / SOL",
+  "liq": 5108.7272,
+  "vol24": 48508.592438445,
+  "dex": "meteora-damm-v2",
+  "ageMin": 5.344766666666667,
+  "chg1h": 319.777,
+  "tx1h": 1735,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.0021160000000000068,
+    "imp": 0.04053349500856097,
+    "impS": 0,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.01": {
+    "rt": -0.016344899999999996,
+    "imp": 0.002500991105990687,
+    "impS": 0.011598275542792707,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.03": {
+    "rt": 0.003145700000000029,
+    "imp": 0.02093982513364016,
+    "impS": 0,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.1": {
+    "rt": 0.005833349999999959,
+    "imp": 0.005591824255671496,
+    "impS": 0,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   }
+  }
+ },
+ {
+  "mint": "b7Psh8hhHAUmYy48sUv1AAHnGBS55cxvra1MQsppump",
+  "name": "GrenCAT / SOL",
+  "liq": 2606.0289,
+  "vol24": 49.9007745063,
+  "dex": "pump-fun",
+  "ageMin": 5.3781,
+  "chg1h": 57.562,
+  "tx1h": 14,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "err": "nosell",
+    "imp": 0.005908794896738989
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0.006054890469276666
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0.006473147013267295
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0.008036671405932238
+   }
+  }
+ },
+ {
+  "mint": "6myLkrbRpCHeXXfWDxEW7FVZ37Fvfu7jDjKifKkGpump",
+  "name": "REGRETAMINE / SOL",
+  "liq": 2715.7717,
+  "vol24": 3663.7990741377,
+  "dex": "pump-fun",
+  "ageMin": 5.411433333333333,
+  "chg1h": -30.446,
+  "tx1h": 30,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024885333333333315,
+    "imp": 0,
+    "impS": 0.13200412325880856,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "rt": 0.02533350000000001,
+    "imp": 0,
+    "impS": 0.13134512975125062,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.03": {
+    "rt": 0.026614200000000032,
+    "imp": 0,
+    "impS": 0.13191569702300024,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.1": {
+    "rt": 0.031071179999999976,
+    "imp": 0,
+    "impS": 0.13480382927871873,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   }
+  }
+ },
+ {
+  "mint": "EgWikXWW2aRP64ndjanjACPkdnVLL3o3eUr2TG5wpump",
+  "name": "FUTURE / SOL",
+  "liq": 15746.7022,
+  "vol24": 349.0244927775,
+  "dex": "pump-fun",
+  "ageMin": 5.461433333333333,
+  "chg1h": 655.014,
+  "tx1h": 57,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "err": "nosell",
+    "imp": 0.010818784572640036
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0.01084874354103882
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0.01052884373476869
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0.010893580347792387
+   }
+  }
+ },
+ {
+  "mint": "41tj3mq6RpL29RKLYmgjmVM372mb2oX2N3QK81hspump",
+  "name": "$FROINK / SOL",
+  "liq": 228.5685,
+  "vol24": 261.3142004924,
+  "dex": "pump-fun",
+  "ageMin": 5.4781,
+  "chg1h": -89.211,
+  "tx1h": 46,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "err": "nosell",
+    "imp": 0.009241722350975168
+   },
+   "0.01": {
+    "err": "nosell",
+    "imp": 0.012275550358968355
+   },
+   "0.03": {
+    "err": "nosell",
+    "imp": 0.018227440096398227
+   },
+   "0.1": {
+    "err": "nosell",
+    "imp": 0.037323003834866426
+   }
+  }
+ },
+ {
+  "mint": "EvvTsj5ozJ9EKpvLk6t2ncVB29xbX7XFJ42Q7u6npump",
+  "name": "AMZ / SOL",
+  "liq": 2107.0038,
+  "vol24": 5.0188614782,
+  "dex": "pump-fun",
+  "ageMin": 5.5781,
+  "chg1h": 0,
+  "tx1h": 1,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024885000000000046,
+    "imp": 0.013566906055628965,
+    "impS": 0.011473757332202104,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "rt": 0.025332400000000033,
+    "imp": 0.01374629301251356,
+    "impS": 0.010674608278293482,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.03": {
+    "rt": 0.026610800000000046,
+    "imp": 0.014402001993404823,
+    "impS": 0.012387198463560069,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.1": {
+    "rt": 0.031060010000000027,
+    "imp": 0.016627002615905637,
+    "impS": 0.014677042609963992,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   }
+  }
+ },
+ {
+  "mint": "4NjvybwtFjP1cujCWKabMiATJDpE8HDiB8MUu8gwpump",
+  "name": "DIPS / SOL",
+  "liq": 2146.9054,
+  "vol24": 1181.9315480758,
+  "dex": "pump-fun",
+  "ageMin": 5.6281,
+  "chg1h": -14.991,
+  "tx1h": 16,
+  "src": "new_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.024885333333333315,
+    "imp": 0,
+    "impS": 0.03324717215502477,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.01": {
+    "rt": 0.02533350000000001,
+    "imp": 0,
+    "impS": 0.033449476959835446,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.03": {
+    "rt": 0.026614200000000032,
+    "imp": 0,
+    "impS": 0.03302394335897549,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   },
+   "0.1": {
+    "rt": 0.031071179999999976,
+    "imp": 0,
+    "impS": 0.03619330763904877,
+    "routes": "Pump.fun",
+    "sroutes": "Pump.fun"
+   }
+  }
  }
 ]
