@@ -1,0 +1,17 @@
+{'BTC': 28899, 'ETH': 28899, 'SOL': 28899}
+configs tested: 54 (x2 cost levels)  days of data 20
+== taker 0.10% rt ; top5 by TRAIN net, then their TEST
+(6, 3.5, 3, 'mom') TRAIN n=195 net=-0.055% /day=16.2 dd=12% | TEST n=181 net=-0.146% /day=22.5 dd=27%
+(3, 2.5, 6, 'rev') TRAIN n=496 net=-0.063% /day=41.2 dd=32% | TEST n=437 net=-0.078% /day=54.4 dd=36%
+(12, 2.5, 6, 'mom') TRAIN n=303 net=-0.068% /day=25.2 dd=21% | TEST n=276 net=-0.136% /day=34.4 dd=38%
+(12, 3.5, 3, 'mom') TRAIN n=175 net=-0.077% /day=14.5 dd=14% | TEST n=133 net=-0.122% /day=16.6 dd=17%
+(6, 3.5, 6, 'mom') TRAIN n=158 net=-0.078% /day=13.1 dd=12% | TEST n=137 net=-0.146% /day=17.1 dd=21%
+configs positive in BOTH train and test: 0 of 54
+== maker 0.04% rt (optimistic: assumes fills, no adverse selection) ; top5 by TRAIN net, then their TEST
+(6, 3.5, 3, 'mom') TRAIN n=195 net=+0.005% /day=16.2 dd=4% | TEST n=181 net=-0.086% /day=22.5 dd=17%
+(3, 2.5, 6, 'rev') TRAIN n=496 net=-0.003% /day=41.2 dd=7% | TEST n=437 net=-0.018% /day=54.4 dd=12%
+(12, 2.5, 6, 'mom') TRAIN n=303 net=-0.008% /day=25.2 dd=5% | TEST n=276 net=-0.076% /day=34.4 dd=22%
+(12, 3.5, 3, 'mom') TRAIN n=175 net=-0.017% /day=14.5 dd=3% | TEST n=133 net=-0.062% /day=16.6 dd=10%
+(6, 3.5, 6, 'mom') TRAIN n=158 net=-0.018% /day=13.1 dd=4% | TEST n=137 net=-0.086% /day=17.1 dd=14%
+configs positive in BOTH train and test: 0 of 54
+best gross TEST edges (no cost): [(0.04605315851410415, (6, 3.5, 3, 'rev')), (0.04910476203239539, (3, 3.5, 6, 'rev')), (0.06505863295637557, (3, 3.5, 12, 'rev'))]
