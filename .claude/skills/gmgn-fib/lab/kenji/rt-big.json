@@ -556,5 +556,67 @@
     "sroutes": "Whirlpool"
    }
   }
+ },
+ {
+  "name": "CLAUDIA / SOL",
+  "mint": "2j5SaS7xy776qCBpyPQbZjyQSAtKiFgrwjfErthnW2ZM",
+  "liq": 187996.2266,
+  "dex": "pumpswap",
+  "ageMin": 36689.90338333333,
+  "small": 0.01501466666666662,
+  "t": {
+   "0.105": {
+    "rt": 0.014997742857142837,
+    "imp": 0,
+    "impS": 0.01631050377517403,
+    "routes": "Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.21": {
+    "rt": 0.014997742857142837,
+    "imp": 0,
+    "impS": 0.01637282352443613,
+    "routes": "Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.42": {
+    "rt": 0.015703588095238086,
+    "imp": 0,
+    "impS": 0.017077685772204466,
+    "routes": "Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   }
+  }
+ },
+ {
+  "name": "UDTF / SOL",
+  "mint": "ADTgcwrrshcZsamrrnq7TDcP7WYTqYY7NRmJEYwWpump",
+  "liq": 1569960.0028,
+  "dex": "pumpswap",
+  "ageMin": 783.3367166666667,
+  "small": 0.005984666666666638,
+  "t": {
+   "0.105": {
+    "rt": 0.005836266666666701,
+    "imp": 0.005033272745730521,
+    "impS": 0.0058582794994330115,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.0060314761904761705,
+    "imp": 0.0001618030314810693,
+    "impS": 0.005870623043600258,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.006080876190476148,
+    "imp": 0.00018664807868383002,
+    "impS": 0.0058953284635232875,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
  }
 ]
