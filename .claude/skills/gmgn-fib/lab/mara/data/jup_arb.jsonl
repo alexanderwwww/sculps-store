@@ -62,3 +62,6 @@
 {"t": 1793539519, "tok": "USDC", "sz": 10000000, "buy": 948110, "rb": ["Byreal", "Manifest", "Byreal"], "rs": ["Manifest", "Byreal"], "sell": 10001344, "rt": 1.0001344, "cross": {"Byreal>Byreal": 0.9994245, "Byreal>Manifest": 0.9959361, "Manifest>Byreal": 0.9985027, "Manifest>Manifest": 0.9950177}}
 {"t": 1793539530, "tok": "RAY", "sz": 10000000, "buy": 589611, "rb": ["Raydium CLMM"], "rs": ["Raydium CLMM"], "sell": 9989991, "rt": 0.9989991, "cross": {"Raydium CLMM>Raydium CLMM": 0.9989991}}
 {"t": 1793539536, "tok": "POPCAT", "sz": 10000000, "buy": 23387446985, "rb": ["Whirlpool"], "rs": ["Whirlpool"], "sell": 9986958, "rt": 0.9986958, "cross": {"Whirlpool>Whirlpool": 0.9986958}}
+{"t": 1793539542, "tok": "JUP", "sz": 10000000, "buy": 3663479, "rb": ["BisonFi", "Byreal", "Whirlpool"], "rs": ["GoonFi V2", "Byreal"], "sell": 10000175, "rt": 1.0000175, "cross": {"Byreal>Byreal": 0.4032114, "Byreal>GoonFi V2": 0.5755135, "GoonFi V2>Byreal": 0.5742026, "GoonFi V2>GoonFi V2": 0.9998534}}
+{"t": 1793539558, "tok": "BONK", "sz": 10000000, "buy": 32255111211, "rb": ["Whirlpool"], "rs": ["Whirlpool"], "sell": 9989969, "rt": 0.9989969, "cross": {"Whirlpool>Whirlpool": 0.9989969}}
+{"t": 1793539564, "tok": "WIF", "sz": 10000000, "buy": 5282142, "rb": ["Byreal", "Manifest", "Whirlpool"], "rs": ["Whirlpool"], "sell": 9997373, "rt": 0.9997373, "cross": {}}
