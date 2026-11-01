@@ -160,3 +160,7 @@ Open: log decision quote vs actual swap output per sell (MARVIN gap 11 pts).
 - **Everything else** (flow 103-619: BLACKED, 牦牛, SA, Bob, MARVIN, KO): 8 trades avg -4.7%, stops -3.6..-10.6%.
 Mechanism: busy pools quote and fill close together; quiet pools slip past stops and take quotes. n=15, one coin dominates: a hint, not a proof. Action: bridge liveMinFlow 700 (flow = buys5+sells5 in the gate). Watch: if trades fall under ~1 per 10 min, ease to 500.
 Entries on "rising 0.0%" (momMin 0) lost -10.6/-6.1; momMin back to 0.005 at 11:59.
+
+## Lesson 61 — 3h watch, 12:50 UTC: the flow filter did not protect; buys fill up to 12% worse (build 79)
+After liveMinFlow 700 (12:31): ONE trade in 18 min, ELON (flow 1966, the busiest coin yet): bought 0.003 at 12:45, the FIRST real sell quote was already -15.5% under the stake (est low -0.1547, peak 0): the loss was in the buy fill, not the exit. Amazon's +0.56% was one coin, not a rule. liveMinFlow back to 300. Wallet 0.0111 -> 0.0099 SOL (-11%) in 50 min.
+Cause candidate: CAPS buySlippageBps 1200 (a buy may fill 12% worse than quoted) and maxImpact 0.06. Build 79: buySlippageBps 400, maxImpact 0.03, jupiter test updated. A buy that would slip more now fails instead of filling. Verify: share of closes whose first real quote is below -5% (needs est.low per close; est.low is in the sell log line).

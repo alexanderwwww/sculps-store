@@ -6,7 +6,7 @@ const BASE = { maxSolPerTrade: 0.05, perHour: 30, perDay: 200, floorFrac: 0.7 };
 export const SOL_MINT = "So11111111111111111111111111111111111111112";
 export const PLUG_CAPS_EXTRA = { fixedSol: 0.012,   // Alex 2026-10-29: the golden step between 0.01618 and the doubled 0.03236 (0.01618 x 1.618)
   perHour: 200, perDay: 2000, floorFrac: 0, reserveSol: 0.002, minBalSol: null };   // Alex 2026-10-29: no pause line, keep trading to the last trade
-export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.06, buySlippageBps: 1200, sellSlippageBps: 3500, sellLadderBps: [800, 1500, 3500], maxFeeLamports: 50000,
+export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.03, buySlippageBps: 400, sellSlippageBps: 3500, sellLadderBps: [800, 1500, 3500], maxFeeLamports: 50000,
   // a sell pays more only when the cheaper try did not land; the last try keeps the old 150000 ceiling so exits still land
   sellFeeLadder: [["medium", 30000], ["high", 80000], ["veryHigh", 150000]], confirmMs: 45000, pollMs: 1500 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
