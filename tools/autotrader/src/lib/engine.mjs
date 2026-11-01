@@ -83,6 +83,14 @@ export class Engine {
     try { await this.#fastExits(); } catch (e) { this.#err("exits", e); }
     try { await this.#fastEntries(); } catch (e) { this.#err("entries", e); }
   }
+  /** build 84: the exit loop on its OWN clock (every ~0.5 s) with fresh quotes for what we hold only. fast() runs quotes -> exits -> entries in one sequence, and an entry (rug check, intel, a buy that waits for the chain) could keep a stop waiting 15-45 s (Rhea). #close's closing guard keeps both paths from selling twice. */
+  async exitsOnly() {
+    if (!this.open.size) return;
+    const pools = [...new Set([...this.open.values()].map((p) => p.pool))];
+    let q = new Map(); try { q = await this.feed.quotes(pools); } catch (e) { this.#err("quotes", e); return; }
+    for (const [pool, x] of q) { const ph = this.ph.get(pool) || []; ph.push([this.now(), x.price]); while (ph.length && this.now() - ph[0][0] > 120000) ph.shift(); this.ph.set(pool, ph); this.live.set(pool, { ...x, at: this.now() }); }
+    try { await this.#fastExits(); } catch (e) { this.#err("exits", e); }
+  }
   async #fastExits() {
     const c = this.cfg;
     for (const p of [...this.open.values()]) {
@@ -141,7 +149,7 @@ export class Engine {
         price = fresh;
       }
       const ret = real ? price / entry - 1 : (price * (1 - c.slippage)) / entry - 1 - 2 * c.fee;
-      p.est = { ret: +ret.toFixed(4), real, peak: +(peak / entry - 1).toFixed(4), low: +p.low.toFixed(4), kind, trig: +(trig ?? ret).toFixed(4) };   // what it SAW when it decided, to compare with the fill
+      p.est = { ret: +ret.toFixed(4), real, peak: +(peak / entry - 1).toFixed(4), low: +p.low.toFixed(4), kind, trig: +(trig ?? ret).toFixed(4), at: this.now() };   // what it SAW when it decided, to compare with the fill
       await this.#close(p, { ret, why, exitPx: real ? lv.price : price });
     }
   }
@@ -370,6 +378,8 @@ export class Engine {
       const hold = this.sellTries.get(p.id) || 0;
       this.journal.write({ type: "sell-intent", id: p.id, name: p.name, why });                 // on disk BEFORE the sell goes out
       const r = (await this.exec.sell?.(p)) ?? { ok: true };
+      // build 84 (Alex: "every trade gets a full report"): decision-to-sold milliseconds, the round trip measured before the buy, the buy's own latency and the pool's liquidity ride along in est, so the lab can read each trade end to end
+      if (p.est) Object.assign(p.est, { sellMs: p.est.at ? this.now() - p.est.at : null, rt: p.rt ?? null, buyMs: p.buyMs ?? null, liq: p.liq ?? null, holdMs: this.now() - p.at });
       if (!r.ok) {
         if (r.noBalance) { note = "the token was no longer in the wallet (result estimated from the chart)"; this.exec.sweepRent?.().catch(() => {}); }
         else if (hold + 1 < 4) { this.sellTries.set(p.id, hold + 1); this.#err(`sell ${p.name}`, new Error(r.why)); return false; }   // try again next tick
@@ -475,6 +485,7 @@ export class Engine {
     const cx = o.intel ? exitsFor(o.intel.certainty, this.cfg) : {};   // high certainty: wider stop, wider trail, longer hold. Never a bigger size.
     const lv0 = { sig: sigN, m: mul, narr: o.narr ? { label: o.narr.label, trend: o.narr.trend } : null, t0: this.now(), sl: cx.sl ?? this.cfg.sl, tp: this.cfg.tp, partAt: this.cfg.partAt, lockFrom: this.cfg.lockFrom, ...(cx.trail ? { trail: cx.trail } : {}), ...(cx.maxHoldMin ? { maxHoldMin: cx.maxHoldMin } : {}), ...(o.follow ? { follow: o.follow } : {}), certainty: o.intel ? o.intel.certainty : null, intel: o.intel ? (o.intel.reasons || []).slice(0, 8) : null };   // the exits it was bought under
     this.journal.write({ type: "intent", id, name: m.name, mint: m.mint, enter: s.why });   // on disk BEFORE anything is done
+    const tBuy0 = this.now();
     const f = await this.exec.buy({ mint: m.mint, pool: m.pool, usd: stake, scale: mul });
     if (!f.ok && f.unknown && f.orderId) {
       const pos0 = { ...lv0, type: "open", id, name: m.name, mint: m.mint, pool: m.pool, stake, orderId: f.orderId, tokens: null, entryPx: cs[i].c * (1 + this.cfg.slippage), candleT: cs[i].t, enter: s.why, rug: r.reason, at: this.now() };
@@ -483,7 +494,7 @@ export class Engine {
     }
     if (!f.ok) { this.journal.write({ type: "fail", id, why: f.why }); this.#skip(m.name, `executor: ${f.why}`); this.#ev("fail", m.name, f.why); return; }
     if (f.sol != null) stake = Math.min(f.sol, size);
-    const pos = { ...lv0, buyFee: f.feeLamports ?? null, type: "open", id, name: m.name, mint: m.mint, pool: m.pool, stake, orderId: f.orderId || null, tokens: f.outAmount || null, entryPx: cs[i].c * (1 + this.cfg.slippage), candleT: cs[i].t, enter: s.why, rug: r.reason, at: this.now() };
+    const pos = { ...lv0, buyFee: f.feeLamports ?? null, rt: f.rt ?? null, buyMs: this.now() - tBuy0, liq: this.live.get(m.pool)?.liqUsd ?? m.liqUsd ?? null, type: "open", id, name: m.name, mint: m.mint, pool: m.pool, stake, orderId: f.orderId || null, tokens: f.outAmount || null, entryPx: cs[i].c * (1 + this.cfg.slippage), candleT: cs[i].t, enter: s.why, rug: r.reason, at: this.now() };
     this.journal.write(pos);
     this.open.set(id, pos);
     O.noteEntry(this.org, this.now());

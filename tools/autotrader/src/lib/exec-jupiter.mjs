@@ -8,7 +8,7 @@ export const PLUG_CAPS_EXTRA = { fixedSol: 0.012,   // Alex 2026-10-29: the gold
   perHour: 200, perDay: 2000, floorFrac: 0, reserveSol: 0.002, minBalSol: null };   // Alex 2026-10-29: no pause line, keep trading to the last trade
 export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.03, maxRoundTrip: 0.02, buySlippageBps: 400, sellSlippageBps: 3500, sellLadderBps: [800, 1500, 3500], maxFeeLamports: 50000,
   // a sell pays more only when the cheaper try did not land; the last try keeps the old 150000 ceiling so exits still land
-  sellFeeLadder: [["medium", 30000], ["high", 80000], ["veryHigh", 150000]], confirmMs: 45000, pollMs: 1500 };
+  sellFeeLadder: [["medium", 30000], ["high", 80000], ["veryHigh", 150000]], confirmMs: 45000, pollMs: 400 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date.now, wait = sleep, startSol = null }) {
@@ -59,7 +59,6 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
     },
     async land(base64, expect) {
       const { tx, signature } = signSwapTransaction(base64, wallet);
-      const h = await rpc.latestBlockhash().catch(() => null);
       try { await rpc.send(tx); } catch (e) { return { ok: false, why: `send: ${e.message.slice(0, 140)}`, signature, rejected: !/timeout|fetch|unreachable/i.test(e.message) }; }
       pending.set(signature, expect);
       const t0 = now();
@@ -78,7 +77,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       if (why) return { ok: false, why };
       if (!(sol >= 0.003)) return { ok: false, why: sizeWhy || `stake ${sol} SOL is too small to trade (wallet ${bal.toFixed(4)} SOL, ${caps.reserveSol} kept for fees)` };
       const lamports = Math.round(sol * 1e9);
-      let q, s;
+      let q, s, rtCost = null;
       try {
         q = await jupiter.quote({ input: SOL_MINT, output: mint, amount: lamports, slippageBps: caps.buySlippageBps });
         if (!q.outAmount || !(Number(q.outAmount) > 0)) return { ok: false, why: "no route" };
@@ -88,21 +87,23 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
         // trip costing more than maxRoundTrip (5%), or no route back at all, is skipped. One extra quote, no extra risk.
         if (caps.maxRoundTrip > 0) {
           const back = await jupiter.quote({ input: mint, output: SOL_MINT, amount: String(q.outAmount), slippageBps: caps.sellSlippageBps });
-          const got = Number(back.outAmount) / lamports;
+          const got = Number(back.outAmount) / lamports; rtCost = Number.isFinite(got) ? +(1 - got).toFixed(4) : null;
           if (!(got >= 1 - caps.maxRoundTrip)) return { ok: false, why: `round trip would cost ${Number.isFinite(got) ? ((1 - got) * 100).toFixed(1) : "?"}%` };
           q = await jupiter.quote({ input: SOL_MINT, output: mint, amount: lamports, slippageBps: caps.buySlippageBps });   // the swap is built from a fresh buy quote, taken right after the check
           if (!q.outAmount || !(Number(q.outAmount) > 0)) return { ok: false, why: "no route" };
         }
-        s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: caps.maxFeeLamports, priorityLevel: "medium" });
+        s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: caps.maxFeeLamports, priorityLevel: sol >= 0.03 ? "high" : "medium" });   // build 84: bigger stakes pay for speed (Kenji: priority fee buys speed, not price); the tiny ones keep the cheap fee
       } catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}` }; }
       stamps.push(now());
       const r = await exec.land(s.swapTransaction, { kind: "buy", mint, sol, inAmount: String(lamports), outAmount: q.outAmount });
       if (!r.ok) return { ...r, orderId: r.signature };
-      let out = q.outAmount;
-      try { const accts = await rpc.tokenAccounts(wallet.address, mint); const held = accts.reduce((a, x) => a + x.raw, 0n); if (held > 0n) out = held.toString(); } catch { /* the quote's number stands */ }
+      let out = q.outAmount, feeLamports = null;
+      // build 84: the token balance and the fee are two independent reads: run them together (the position used to wait for one, then the other, up to several seconds)
+      const readTokens = (async () => { try { const accts = await rpc.tokenAccounts(wallet.address, mint); const held = accts.reduce((a, x) => a + x.raw, 0n); if (held > 0n) out = held.toString(); } catch { /* the quote's number stands */ } })();
       // the organism's fee number: read from the confirmed transaction (a read, nothing sent); null -> the engine uses the cap
-      let feeLamports = null; if (rpc.netLamports && rpc.feeOf) { try { await rpc.netLamports(r.signature); feeLamports = rpc.feeOf(r.signature); } catch { /* unknown */ } }
-      return { ok: true, orderId: r.signature, hash: r.signature, sol, inAmount: String(lamports), outAmount: out, quoteOut: q.outAmount, feeLamports };
+      const readFee = (async () => { if (rpc.netLamports && rpc.feeOf) { try { await rpc.netLamports(r.signature); feeLamports = rpc.feeOf(r.signature); } catch { /* unknown */ } } })();
+      await Promise.all([readTokens, readFee]);
+      return { ok: true, orderId: r.signature, hash: r.signature, sol, inAmount: String(lamports), outAmount: out, quoteOut: q.outAmount, feeLamports, rt: rtCost };
     },
     /** One look at a sent order. */
     async recheck(orderId) {

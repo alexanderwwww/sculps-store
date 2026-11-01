@@ -33,7 +33,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const writeCfg = (patch) => writeFileSync(cfgFile, JSON.stringify({ ...readCfg(), ...patch }, null, 1));
   const token = randomBytes(16).toString("hex");
   const log = (...a) => { if (!quiet) console.log(new Date().toISOString(), ...a); };
-  let engine = null, mode = null, timer = null, timer2 = null, ticking = false, lastError = null, stopped = false;
+  let engine = null, mode = null, timer = null, timer2 = null, timer3 = null, ticking = false, lastError = null, stopped = false;
 
   const rpcI = rpcOverride || new Rpc(), jupI = jupiterOverride || new Jupiter();
   const rpc = () => rpcI, jup = () => jupI;
@@ -69,17 +69,19 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   }
   async function go(m) {
     if (stopped) return;
-    if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2);
+    if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); if (timer3) clearTimeout(timer3);
     engine = await build_(m); mode = m; lastError = null; writeCfg({ mode: m, running: true });
     log("engine started:", m, `(${engine.open.size} open, ${engine.closed.length} closed)`);
     const eng = engine;
     const stillMine = () => !stopped && engine === eng;
     if (eng.fastMode) {
       // two lanes: prices and decisions every few seconds, the slow chart feed on its own clock
-      let fastBusy = false, slowBusy = false;
+      let fastBusy = false, slowBusy = false, exitBusy = false;
       const fastLoop = async () => { if (!stillMine()) return; if (!fastBusy) { fastBusy = true; try { await eng.fast(); } catch (e) { lastError = String(e.message || e); } fastBusy = false; } timer = setTimeout(fastLoop, tickMs); timer.unref?.(); };
       const slowLoop = async () => { if (!stillMine()) return; if (!slowBusy) { slowBusy = true; try { await eng.slow(); } catch (e) { lastError = String(e.message || e); } slowBusy = false; } timer2 = setTimeout(slowLoop, 1500); timer2.unref?.(); };
-      slowLoop(); setTimeout(fastLoop, 400);
+      // build 84: the exits get their own 0.5 s clock so no entry, buy or chart fetch can keep a stop waiting
+      const exitLoop = async () => { if (!stillMine()) return; if (!exitBusy && eng.exitsOnly) { exitBusy = true; try { await eng.exitsOnly(); } catch (e) { lastError = String(e.message || e); } exitBusy = false; } timer3 = setTimeout(exitLoop, 500); timer3.unref?.(); };
+      slowLoop(); setTimeout(fastLoop, 400); setTimeout(exitLoop, 900);
     } else {
       const loop = async () => {
         if (!stillMine()) return;
@@ -89,7 +91,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
       loop();
     }
   }
-  const halt = () => { if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); timer = null; timer2 = null; engine = null; mode = null; writeCfg({ running: false }); };
+  const halt = () => { if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); if (timer3) clearTimeout(timer3); timer = null; timer2 = null; timer3 = null; engine = null; mode = null; writeCfg({ running: false }); };
 
   const send = (res, code, body, type = "application/json; charset=utf-8", extra = {}) => { res.writeHead(code, { "Content-Type": type, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...extra }); res.end(typeof body === "string" || Buffer.isBuffer(body) ? body : JSON.stringify(body)); };
   const fail = (res, code, error) => send(res, code, { ok: false, error });
@@ -140,7 +142,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   // strategy numbers Claude sets over the bridge survive restarts and live updates
   const tuned = () => readCfg().tuned || {};
   const linkI = link ? startLink({ getState: () => ({ build, running: !!engine, mode, lastError, cfg: engine ? engine.cfg : null, applied: linkI?.applied || [], engine: engine ? engine.status() : null }), getEngine: () => engine, onStart: () => go("live"), onSet: (cfg) => writeCfg({ tuned: { ...tuned(), ...cfg } }) }) : null;
-  const close = () => new Promise((r) => { stopped = true; linkI?.stop(); if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); server.close(() => r()); server.closeAllConnections?.(); });
+  const close = () => new Promise((r) => { stopped = true; linkI?.stop(); if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); if (timer3) clearTimeout(timer3); server.close(() => r()); server.closeAllConnections?.(); });
   // The app trades on its own: once the Phantom wallet is plugged in it starts on launch, and retries every 20 s if the network
   // or the balance is not ready. Only Stop ends that. In tests (no autoStart) it resumes only what was running.
   // In tests (execOverride, a stub executor and no wallet) a restart resumes what was running the same way.
