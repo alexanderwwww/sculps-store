@@ -41,7 +41,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const caps = { ...JUP_CAPS, ...PLUG_CAPS_EXTRA, preset: String(PLUG_CAPS_EXTRA.fixedSol) };
 
   // what the organism learned: its tables, and only the clamped exit levels (sl / partAt / tp). Never size, never caps.
-  const onLearn = ({ org, exits } = {}) => { const t = readCfg().tuned || {}; const ex = {}; for (const k of ["sl", "partAt", "tp"]) if (exits && typeof exits[k] === "number") ex[k] = exits[k]; writeCfg({ tuned: { ...t, ...ex, ...(org ? { org } : {}) } }); };
+  const onLearn = ({ org, exits } = {}) => { const t = readCfg().tuned || {}; const ex = {}; for (const k of ["sl", "partAt", "tp"]) if (!(DEFAULTS.scalp === 1 && process.env.ULTRA_SCALP !== "0") && exits && typeof exits[k] === "number") ex[k] = exits[k]; writeCfg({ tuned: { ...t, ...ex, ...(org ? { org } : {}) } }); };
   async function build_(m) {
     if (execOverride) { const e = new Engine({ feed, exec: execOverride, journal: new Journal(join(dataDir, "journal-test.jsonl")), rug: rugOverride || rugCheck, startEq: 100, now, org: readCfg().tuned?.org || null }); e.onLearn = (c) => onLearn(c); return e; }
     if (m !== "live") throw new Error("Only real trading exists.");
@@ -51,6 +51,10 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
     if (readCfg().phantomStartSol == null) writeCfg({ phantomStartSol: bal });
     const { org: savedOrg = null, ...tunedCfg } = readCfg().tuned || {};
     Object.assign(DEFAULTS, tunedCfg);
+    // build 72 SCALP MODE (Alex 2026-11-01: "3 trades a minute, small profit, out at 1-2% down, only coins that are rising, scrap the rest"):
+    // momentum entries only (no fib chart gate), a coin already rising over 20 s, sell at +0.6% on the real quote, out at -2%, at most ~24 s held.
+    // Set scalp: 0 over the bridge or delete this block to go back to the fib hunter. The organism may not move these exits while scalping.
+    if (DEFAULTS.scalp !== 0 && process.env.ULTRA_SCALP !== "0") Object.assign(DEFAULTS, { scalp: 1, fib: 0, pullback: 0, momSecs: 20, momMin: 0.01, momMax: 0.15, liveBuyRatio: 1, liveMinFlow: 1, sl: -0.02, tp: 0.006, partAt: 0.9, lockFrom: 0.02, lockAt: 0, trailFrom: 0.1, maxHoldMin: 0.4, cooldownMin: 0 });
     DEFAULTS.staleMin = 0;   // Alex 2026-10-30: never ordered a 'flat after 1 min' exit (16 of 69 exits, avg -4.5%)
     // first boot of the organism (no saved org): the old tuner's momMin goes back to the 3% growth floor, once. The organism
     // picks bands itself from here; a momMin the desk sets later is kept.

@@ -206,7 +206,7 @@ export class Engine {
         const sg = { path: "chart", fibTp: cr.tp2, rise: +cr.run.toFixed(4), vol5: lv.vol5 || 0, buys: lv.buys5 || 0, sells: lv.sells5 || 0, ratio: (lv.buys5 || 0) / Math.max(1, lv.sells5 || 0), liq: lv.liqUsd ?? 0, fib: +cr.r.toFixed(3), score: cr.score };
         return { cs: Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), sig: sg, s: { ok: true, why: cr.why }, cr };
       }
-      if (!hit || hit.cs.length < 6) {
+      if (this.cfg.scalp === 1 || !hit || hit.cs.length < 6) {   // scalp mode (build 73): always the live-momentum gate
         // Alex 2026-10-29: never wait on a chart. Live volume + buyers ahead = buy, straight from the live price.
         const flow = (lv.buys5 || 0) + (lv.sells5 || 0);
         if (!((lv.vol5 || 0) >= (this.cfg.liveMinVol5 ?? 3000) && flow >= (this.cfg.liveMinFlow ?? 8) && lv.buys5 >= lv.sells5 * (this.cfg.liveBuyRatio ?? 1.15))) { quiet("live: volume or buyers too thin"); return null; }

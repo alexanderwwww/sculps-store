@@ -1,3 +1,4 @@
+process.env.ULTRA_SCALP = "0";   // tests drive the fib/candle entry; scalp mode is the live default
 // The real page in a real browser, clicked the way Alex clicks it: the terminal, the Phantom box, a live run on a fake chain.
 // No real wallet and no real money: the key is generated here and the chain + Jupiter are fakes (test/fakechain.mjs).
 import fs from "node:fs";

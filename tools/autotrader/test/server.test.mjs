@@ -1,3 +1,4 @@
+process.env.ULTRA_SCALP = "0";   // tests drive the fib/candle entry; scalp mode is the live default
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
