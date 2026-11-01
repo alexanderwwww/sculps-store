@@ -12,6 +12,7 @@
  */
 import type { DB } from "~/db/client";
 import { recordOrderEvent } from "./admin.server";
+import { mstReference } from "./order-ref";
 import { formatMoney } from "./money";
 import {
   ARCHIVE_REPLY,
@@ -111,6 +112,11 @@ export interface OrderEmailInput extends BrandFields {
  * away. Uniqueness does not matter — the row id is the key, this is a label.
  */
 export function orderReference(storeLabel: string, orderNumber: number): string {
+  /* Mysterious Archive (Alex, 2026-11-01): references look like MST47832, not 1001. Three letters, five digits.
+     The digits are a permutation of 00000-99999 (multiply by an odd number that shares no factor with 10, add an offset,
+     mod 100000), so two orders can never share a reference, and orderNumberFromReference() can turn one back into the
+     order for the admin search. */
+  if (/mysterious/i.test(storeLabel)) return mstReference(orderNumber);
   /* Initials of the words in the shop's name, so Black Reaper is BR. The
      slug used to be split on hyphens alone, which turned a one-word slug
      like "reaper" into R and then padded it to RX. */
@@ -573,7 +579,7 @@ export async function sendOrderConfirmation(
   input: OrderEmailInput,
 ): Promise<boolean> {
   const from = input.fromAddress || "orders@resend.dev";
-  const subject = `${input.storeName} — order #${input.orderNumber} confirmed`;
+  const subject = `${input.storeName} — order ${orderReference(input.storeName, input.orderNumber)} confirmed`;
 
   if (isArchiveDomain(input.domain)) {
     const pieces = await loadPieces(
@@ -600,7 +606,7 @@ export async function sendOrderConfirmation(
   const text = [
     `Thanks ${input.customerName}.`,
     ``,
-    `Your order #${input.orderNumber} is confirmed.`,
+    `Your order ${orderReference(input.storeName, input.orderNumber)} is confirmed.`,
     ``,
     ...input.lines.map((line) => `${line.label} × ${line.quantity} — ${formatMoney(line.lineTotalCents, input.currency)}`),
     ``,
@@ -821,7 +827,7 @@ export async function sendShippingNotice(
   }
 
   const text = [
-    `Good news ${input.customerName} — order #${input.orderNumber} is on its way.`,
+    `Good news ${input.customerName} — order ${orderReference(input.storeName, input.orderNumber)} is on its way.`,
     ``,
     `Tracking${carrier}: ${input.tracking}`,
     link ? `Track it: ${link}` : ``,
@@ -838,7 +844,7 @@ export async function sendShippingNotice(
     `<div style="text-align:center;margin:0 0 22px">
 <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">On its way</div>
 <h1 style="margin:10px 0 8px;font-size:28px;line-height:1.14;font-weight:800;letter-spacing:-.03em;color:${ink}">It shipped, ${esc(input.customerName)}.</h1>
-<p style="margin:0;font-size:15.5px;color:#6E7480">Order <strong style="color:${ink}">#${input.orderNumber}</strong> is on its way${esc(carrier)}.</p>
+<p style="margin:0;font-size:15.5px;color:#6E7480">Order <strong style="color:${ink}">${orderReference(input.storeName, input.orderNumber)}</strong> is on its way${esc(carrier)}.</p>
 </div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${ink};border-radius:14px">
 <tr><td style="padding:20px 16px;text-align:center">
@@ -847,7 +853,7 @@ export async function sendShippingNotice(
 </td></tr></table>
 ${link ? button("Track your parcel", link, accent) : ""}
 <p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:#8C8678;text-align:center">Tracking can take a day or two to start updating after the first scan. That is normal.</p>`,
-    `Order #${input.orderNumber} has shipped — tracking ${input.tracking}`,
+    `Order ${orderReference(input.storeName, input.orderNumber)} has shipped — tracking ${input.tracking}`,
     false,
   );
 
@@ -855,7 +861,7 @@ ${link ? button("Track your parcel", link, accent) : ""}
     from: `${input.storeName} <${from}>`,
     to: input.to,
     replyTo: input.replyTo,
-    subject: `${input.storeName} — order #${input.orderNumber} has shipped`,
+    subject: `${input.storeName} — order ${orderReference(input.storeName, input.orderNumber)} has shipped`,
     html,
     text,
   });
@@ -895,11 +901,11 @@ export async function sendMerchantNewOrder(
     fromAddress: string | null;
   },
 ): Promise<boolean> {
-  const subject = `[${input.storeName}] New order #${input.orderNumber} · ${formatMoney(input.totalCents, input.currency)}`;
+  const subject = `[${input.storeName}] New order ${orderReference(input.storeName, input.orderNumber)} · ${formatMoney(input.totalCents, input.currency)}`;
   const when = input.placedAt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
   const text = [
-    `New order #${input.orderNumber} on ${input.storeName} · ${when}`,
+    `New order ${orderReference(input.storeName, input.orderNumber)} on ${input.storeName} · ${when}`,
     ``,
     `${input.customerName}`,
     input.email,
@@ -916,14 +922,14 @@ export async function sendMerchantNewOrder(
 
   const html = shell(
     brandOf(input),
-    `<p style="font-size:16px;margin:0 0 4px">New order <strong>#${input.orderNumber}</strong> · <strong>${formatMoney(input.totalCents, input.currency)}</strong></p>
+    `<p style="font-size:16px;margin:0 0 4px">New order <strong>${orderReference(input.storeName, input.orderNumber)}</strong> · <strong>${formatMoney(input.totalCents, input.currency)}</strong></p>
 <p style="font-size:13px;color:#888;margin:0 0 14px">${esc(when)} · ${esc(input.paymentMethod)}</p>
 <p style="font-size:15px;margin:0 0 2px"><strong>${esc(input.customerName)}</strong></p>
 <p style="font-size:14px;color:#555;margin:0 0 2px">${esc(input.email)}${input.phone ? ` · ${esc(input.phone)}` : ""}</p>
 <p style="font-size:14px;color:#555;margin:0 0 16px">${esc(input.address)}</p>
 <table style="width:100%;border-collapse:collapse;border-top:1px solid #eee">${lineRows(input.lines, input.currency)}</table>
 <a href="${esc(input.adminUrl)}" style="display:inline-block;margin-top:16px;background:#1A1A1A;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600">Open the order</a>`,
-    `New order #${input.orderNumber} · ${formatMoney(input.totalCents, input.currency)}`,
+    `New order ${orderReference(input.storeName, input.orderNumber)} · ${formatMoney(input.totalCents, input.currency)}`,
   );
 
   const result = await send(env, {
@@ -975,23 +981,23 @@ export async function sendRefundNotice(
   const text = [
     `Hi ${input.customerName},`,
     ``,
-    `We have refunded ${amount} on order #${input.orderNumber}${input.full ? "" : " (a partial refund)"}.`,
+    `We have refunded ${amount} on order ${orderReference(input.storeName, input.orderNumber)}${input.full ? "" : " (a partial refund)"}.`,
     `It usually shows on your card within 5–10 business days, depending on your bank.`,
   ].join("\n");
 
   const html = shell(
     brandOf(input),
     `<h1 style="margin:0 0 14px;font-size:21px;font-weight:800;letter-spacing:-.02em">Your refund is on its way</h1>
-<p style="margin:0 0 14px;font-size:15px;line-height:1.6">Hi ${esc(input.customerName)}, we have refunded <strong>${amount}</strong> on order <strong>#${input.orderNumber}</strong>${input.full ? "" : " (a partial refund)"}.</p>
+<p style="margin:0 0 14px;font-size:15px;line-height:1.6">Hi ${esc(input.customerName)}, we have refunded <strong>${amount}</strong> on order <strong>${orderReference(input.storeName, input.orderNumber)}</strong>${input.full ? "" : " (a partial refund)"}.</p>
 <p style="margin:0;padding:14px 16px;background:#FAF8F3;border-radius:12px;font-size:14px;line-height:1.6;color:#6B6559">It usually shows on your card within 5&ndash;10 business days, depending on your bank. Nothing else is needed from you.</p>`,
-    `Refund of ${amount} on order #${input.orderNumber}`,
+    `Refund of ${amount} on order ${orderReference(input.storeName, input.orderNumber)}`,
   );
 
   const result = await send(env, {
     from: `${input.storeName} <${input.fromAddress || "orders@resend.dev"}>`,
     to: input.to,
     replyTo: input.replyTo,
-    subject: `${input.storeName} — refund of ${amount} on order #${input.orderNumber}`,
+    subject: `${input.storeName} — refund of ${amount} on order ${orderReference(input.storeName, input.orderNumber)}`,
     html,
     text,
   });
@@ -1399,7 +1405,7 @@ export async function sendDeliveredSetupEmail(
   const text = [
     `It's at your door, ${first}.`,
     ``,
-    `Order #${input.orderNumber} has been delivered. Here is how to set it up.`,
+    `Order ${orderReference(input.storeName, input.orderNumber)} has been delivered. Here is how to set it up.`,
     ``,
     ...guides.flatMap(({ line, guide }) => productGuideText(line, guide)),
     `Something missing or broken? Reply to this email with a photo.`,
@@ -1689,7 +1695,7 @@ export function previewEmail(
       `<div style="text-align:center;margin:0 0 22px">
 <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">On its way</div>
 <h1 style="margin:10px 0 8px;font-size:28px;line-height:1.14;font-weight:800;letter-spacing:-.03em;color:${ink}">It shipped, Alex.</h1>
-<p style="margin:0;font-size:15.5px;color:#6E7480">Order <strong style="color:${ink}">#1001</strong> is on its way with USPS.</p>
+<p style="margin:0;font-size:15.5px;color:#6E7480">Order <strong style="color:${ink}">MST07380</strong> is on its way with USPS.</p>
 </div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${ink};border-radius:14px">
 <tr><td style="padding:20px 16px;text-align:center">
@@ -1706,7 +1712,7 @@ ${link ? button("Track my parcel", link, accent) : ""}`,
     return shell(
       brand,
       `<h1 style="margin:0 0 12px;font-size:26px;font-weight:800;letter-spacing:-.03em;color:${ink}">Your refund is on its way</h1>
-<p style="margin:0 0 16px;font-size:15.5px;line-height:1.6;color:#6E7480">Hi Alex, we have refunded <strong style="color:${ink}">${formatMoney(9999, input.currency)}</strong> on order <strong style="color:${ink}">#1001</strong>.</p>
+<p style="margin:0 0 16px;font-size:15.5px;line-height:1.6;color:#6E7480">Hi Alex, we have refunded <strong style="color:${ink}">${formatMoney(9999, input.currency)}</strong> on order <strong style="color:${ink}">MST07380</strong>.</p>
 <p style="margin:0;padding:16px 18px;background:#F7F5F0;border-radius:14px;font-size:14px;line-height:1.65;color:#6E7480">It usually shows on your card within 5&ndash;10 business days. Nothing else is needed from you.</p>`,
       "",
       false,
@@ -1774,7 +1780,7 @@ ${link ? button("Track my parcel", link, accent) : ""}`,
     `<div style="text-align:center">
 <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">Order confirmed</div>
 <h1 style="margin:10px 0 8px;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-.03em;color:${ink}">It's yours, Alex.</h1>
-<p style="margin:0 0 26px;font-size:15.5px;line-height:1.6;color:#6E7480">Order <strong style="color:${ink}">#1001</strong> is paid and we are packing it now.</p>
+<p style="margin:0 0 26px;font-size:15.5px;line-height:1.6;color:#6E7480">Order <strong style="color:${ink}">MST07380</strong> is paid and we are packing it now.</p>
 </div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0;border-radius:14px">
 <tr><td style="padding:18px 20px">

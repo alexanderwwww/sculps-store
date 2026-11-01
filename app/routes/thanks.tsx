@@ -543,7 +543,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
                 <ArrivalCard paid={paid} number={order.number} shipEstimate={shipEstimate} pin={pin} address={order.address} />
                 {order.address && store.contactEmail ? (
                   <p className="gb-co__note" style={{ margin: "0 0 18px" }}>
-                    Wrong address? Email {store.contactEmail} right away and quote #{order.number}.
+                    Wrong address? Email {store.contactEmail} right away and quote {order.number}.
                   </p>
                 ) : null}
                 <p className="gb-th__k">Order details</p>
@@ -566,7 +566,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
                 {paid ? <OfferShelf offers={offers} orderId={orderId} until={offerUntil} /> : null}
                 {store.contactEmail ? (
                   <p className="gb-co__note">
-                    Any questions, reply to your receipt or write to {store.contactEmail} and quote #{order.number}.
+                    Any questions, reply to your receipt or write to {store.contactEmail} and quote {order.number}.
                   </p>
                 ) : null}
                 <Link className="gb-co__btn" to={home} style={{ marginTop: 18 }}>
@@ -597,7 +597,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
           </h1>
 
           <p style={{ fontSize: 20 }}>
-            Order <strong>#{order.number}</strong>
+            Order <strong>{order.number}</strong>
             {paid ? (
               <> — a receipt is on its way to {order.email}.</>
             ) : (
@@ -608,7 +608,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
           {order.address ? (
             <p className="gk-quiet" style={{ marginTop: 0 }}>
               Shipping to: <strong style={{ color: "var(--gk-cream)" }}>{order.address}</strong>
-              {store.contactEmail ? ` — wrong? Email ${store.contactEmail} right away and quote #${order.number}.` : ""}
+              {store.contactEmail ? ` — wrong? Email ${store.contactEmail} right away and quote ${order.number}.` : ""}
             </p>
           ) : null}
           {items.map((item) => (
@@ -628,7 +628,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
 
           {store.contactEmail ? (
             <p className="gk-quiet" style={{ marginTop: 20 }}>
-              Any questions, reply to your receipt or write to {store.contactEmail} and quote #
+              Any questions, reply to your receipt or write to {store.contactEmail} and quote{" "}
               {order.number}.
             </p>
           ) : null}

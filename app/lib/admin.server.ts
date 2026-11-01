@@ -38,6 +38,7 @@ import { SECTIONS } from "./sections";
 import { MENU_HANDLES } from "./menus";
 import { recomputeCustomerTotals, upsertCustomer } from "./customers.server";
 import { money } from "./money";
+import { orderNumberFromReference } from "./order-ref";
 import { startOfDayIn } from "./day";
 
 export type StoreRow = typeof stores.$inferSelect;
@@ -294,8 +295,11 @@ export async function listOrders(
   if (options.state && options.state !== "all") filters.push(eq(orders.state, options.state));
   if (options.query) {
     const q = `%${options.query.toLowerCase()}%`;
+    // a customer quotes MST47832, the admin stores 1001: turn the reference back into the order number
+    const fromRef = orderNumberFromReference(options.query);
+    const refNumber = fromRef ?? -1;
     filters.push(
-      sql`(lower(${orders.customerName}) like ${q} or lower(${orders.email}) like ${q} or cast(${orders.number} as text) like ${q} or lower(coalesce(${orders.city}, '')) like ${q} or lower(coalesce(${orders.tracking}, '')) like ${q})`,
+      sql`(${orders.number} = ${refNumber} or lower(${orders.customerName}) like ${q} or lower(${orders.email}) like ${q} or cast(${orders.number} as text) like ${q} or lower(coalesce(${orders.city}, '')) like ${q} or lower(coalesce(${orders.tracking}, '')) like ${q})`,
     );
   }
   const where = filters.length ? and(...filters) : undefined;
