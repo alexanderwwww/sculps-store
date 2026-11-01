@@ -1,0 +1,6 @@
+pools with >=30 candles: 5 of snapshot; with liq>=2500: 4
+SLOW BREAKOUT on unbiased new pools (cost 5%): n=5 mean=11.24% se=4.36 win=80%  | at 4%: n=5 mean=12.24% se=4.36 win=100%
+buy minute 3 after first candle, hold 15 min (4%): n=5 mean=29.45% se=27.75 win=60%
+buy minute 3 after first candle, hold 60 min (4%): n=2 mean=295.46% se=399.46 win=50%
+buy minute 10 after first candle, hold 30 min (4%): n=4 mean=108.26% se=56.87 win=100%
+buy minute 10 after first candle, hold 60 min (4%): n=0 mean=0.00% se=0.00 win=0%

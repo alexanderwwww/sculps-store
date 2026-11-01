@@ -1,0 +1,3 @@
+jupSOL SOL->LST->SOL at 0.01 SOL ratio 0.9999903 ['Manifest']
+INF SOL->LST->SOL at 0.01 SOL ratio 0.9999535 ['Meteora DLMM']
+mSOL SOL->LST->SOL at 0.01 SOL ratio 0.9999596 ['Manifest', 'Meteora DLMM', 'Whirlpool']

@@ -1,0 +1,2 @@
+UNBIASED new pools with >=4 trade-minutes: n 68 of 180 | buy at 4th traded minute, mark at last traded price (upper bound), 4% cost: mean 1179.5% median -4% p10 -101% p90 31% win 19%
+of those, last trade >20 min ago (dead): 55
