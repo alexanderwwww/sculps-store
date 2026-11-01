@@ -1,0 +1,18 @@
+pools with swaps: [('PRESIDENT / SOL', 169), ('Nevada / SOL', 521), ('HACHI / SOL', 205), ('DICTATOR / SOL', 191), ('Darla / SOL', 467), ('MOONX / SOL', 377), ('dts02 / SOL', 465), ('Frongus / SOL', 502), ('Kimchi / SOL', 2338), ('CATPAD / SOL', 1493), ('CREDIT / SOL', 456)]
+
+minSold 0.3 SOL: smart wallets found in discovery pools: 6
+  of those, present in test pools: 0 of 1245 test-pool wallets
+  lag  0 swaps: FOLLOW smart  n=  0 mean=   0.0% se= 0.0 win=  0% | control random wallets n=741 mean=19943.6% se=7609.7 win= 34%
+  lag  3 swaps: FOLLOW smart  n=  0 mean=   0.0% se= 0.0 win=  0% | control random wallets n=741 mean=355312.6% se=301818.5 win= 36%
+  lag 10 swaps: FOLLOW smart  n=  0 mean=   0.0% se= 0.0 win=  0% | control random wallets n=741 mean=45356.2% se=27467.9 win= 38%
+  lag 25 swaps: FOLLOW smart  n=  0 mean=   0.0% se= 0.0 win=  0% | control random wallets n=741 mean=23349.0% se=16157.8 win= 37%
+
+minSold 1.0 SOL: smart wallets found in discovery pools: 4
+  of those, present in test pools: 0 of 1245 test-pool wallets
+  lag  0 swaps: FOLLOW smart  n=  0 mean=   0.0% se= 0.0 win=  0% | control random wallets n=741 mean=19943.6% se=7609.7 win= 34%
+  lag  3 swaps: FOLLOW smart  n=  0 mean=   0.0% se= 0.0 win=  0% | control random wallets n=741 mean=355312.6% se=301818.5 win= 36%
+  lag 10 swaps: FOLLOW smart  n=  0 mean=   0.0% se= 0.0 win=  0% | control random wallets n=741 mean=45356.2% se=27467.9 win= 38%
+  lag 25 swaps: FOLLOW smart  n=  0 mean=   0.0% se= 0.0 win=  0% | control random wallets n=741 mean=23349.0% se=16157.8 win= 37%
+
+IN-SAMPLE (same pools used to pick) lag3: n= 70 mean=  36.9% se=26.6 win= 61%
+LEAVE-ONE-POOL-OUT lag3 follow: n= 21 mean= -10.3% se= 5.4 win= 38%

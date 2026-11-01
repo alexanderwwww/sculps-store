@@ -1,0 +1,1150 @@
+[
+ {
+  "mint": "8pjfN5Ayb4rucGpYE3tZWN6v3EysizjPx1v62zx1pump",
+  "name": "KIM / SOL",
+  "liq": 44121.5444,
+  "vol24": 7021586.15489611,
+  "dex": "pumpswap",
+  "ageMin": 972.2956,
+  "chg1h": 3.288,
+  "tx1h": 668,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.022763666666666627,
+    "imp": 0.021829841366416837,
+    "impS": 0.0009546654965985696,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.022818400000000016,
+    "imp": 0.021857219016634247,
+    "impS": 0.0009826591802880162,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.02297729999999998,
+    "imp": 0.022036035805969953,
+    "impS": 0.000759730634766478,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.023533550000000014,
+    "imp": 0.022477137535126982,
+    "impS": 0.001080703588056469,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "7ttfwuBSnbNTgf32gUAT7v9bjdDWsn6pYpp7nmGmpump",
+  "name": "FOCO / SOL",
+  "liq": 73639.0896,
+  "vol24": 2414799.90407768,
+  "dex": "pumpswap",
+  "ageMin": 12562.428933333333,
+  "chg1h": -4.945,
+  "tx1h": 295,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.01981866666666665,
+    "imp": 0.016554369962528986,
+    "impS": 0.0016044904925032108,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.01985250000000005,
+    "imp": 0.01845503869412891,
+    "impS": 0.001423736416528362,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.019952466666666613,
+    "imp": 0.01849730061546528,
+    "impS": 0.0014825899634446937,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.017693709999999974,
+    "imp": 0.01867283316014453,
+    "impS": 0.01832224292527635,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "FWatMYieKhRuJ1yuTcmVG1njRhZWwqHwjR11pBympump",
+  "name": "Leverhedge / SOL",
+  "liq": 87078.2283,
+  "vol24": 1456777.42963251,
+  "dex": "pumpswap",
+  "ageMin": 2253.1289333333334,
+  "chg1h": 6.18,
+  "tx1h": 721,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.018835333333333315,
+    "imp": 0.007816564940896954,
+    "impS": 0.011053757227133911,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.018864400000000003,
+    "imp": 0.007828270231399578,
+    "impS": 0.011123205224940572,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.018949800000000017,
+    "imp": 0.00795659365191347,
+    "impS": 0.011081376356862002,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.019249390000000033,
+    "imp": 0.008127609374719845,
+    "impS": 0.011212914816863631,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "4kjruqGHDsSqkMdFfCjV7Vb62HPFhtXyWc2t6JpQzDnz",
+  "name": "GTA6 / SOL",
+  "liq": 317423.6496,
+  "vol24": 1146377.26222759,
+  "dex": "meteora",
+  "ageMin": 94677.6456,
+  "chg1h": -7.144,
+  "tx1h": 71,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.00518799999999997,
+    "imp": 0.0056231495874640505,
+    "impS": 0.004734850429663566,
+    "routes": "Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.01": {
+    "rt": 0.005187900000000023,
+    "imp": 0.0004552719498703973,
+    "impS": 0.0047347836643206725,
+    "routes": "Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.03": {
+    "rt": 0.005187866666666707,
+    "imp": 0.0004552719498703973,
+    "impS": 0.004734750315804695,
+    "routes": "Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.1": {
+    "rt": 0.001532300000000042,
+    "imp": 0,
+    "impS": 0.00817320572191361,
+    "routes": "Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   }
+  }
+ },
+ {
+  "mint": "6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx",
+  "name": "STONK / SOL",
+  "liq": 2498205.5741,
+  "vol24": 750987.988822463,
+  "dex": "meteora",
+  "ageMin": 116782.66226666667,
+  "chg1h": -1.547,
+  "tx1h": 500,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.000747666666666702,
+    "imp": 0.0008283014806303159,
+    "impS": 0,
+    "routes": "Raydium CLMM+Deriverse+Meteora DLMM",
+    "sroutes": "Meteora DLMM+GoonFi V2+Meteora DLMM"
+   },
+   "0.01": {
+    "rt": 0.0009576000000000029,
+    "imp": 0.0008395323171387572,
+    "impS": 0,
+    "routes": "Raydium CLMM+Byreal+Meteora DLMM",
+    "sroutes": "Meteora DLMM+TesseraV"
+   },
+   "0.03": {
+    "rt": 0.0005039000000000016,
+    "imp": 0.0005510656991492117,
+    "impS": 0,
+    "routes": "Pump.fun Amm+Meteora DLMM",
+    "sroutes": "Meteora DLMM+GoonFi V2+Meteora DLMM"
+   },
+   "0.1": {
+    "rt": 0.0010108500000000076,
+    "imp": 0.0010371071531887596,
+    "impS": 0,
+    "routes": "PancakeSwap+GoonFi V2+Meteora DLMM",
+    "sroutes": "Meteora DLMM+GoonFi V2+Meteora DLMM"
+   }
+  }
+ },
+ {
+  "mint": "GYKnd6jGUSQoBUnj6LdGCBtCWYDgr2Zd6QwNPcy5pump",
+  "name": "AAPLCAT / SOL",
+  "liq": 83540.9991,
+  "vol24": 3734327.41909799,
+  "dex": "pumpswap",
+  "ageMin": 1109.4456,
+  "chg1h": 1.449,
+  "tx1h": 12683,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.019816666666666705,
+    "imp": 0.008671415195226635,
+    "impS": 0.011175838236855716,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.019846299999999983,
+    "imp": 0.008651254414199805,
+    "impS": 0.01129274196961323,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.01396093333333337,
+    "imp": 0.008641480275686224,
+    "impS": 0.01175071636251151,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.020239070000000026,
+    "imp": 0.00839742198182383,
+    "impS": 0.012038528241123943,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "npz2FhoufQ7pKqhGpaipYWacrAkidyW2yDpVWSvpump",
+  "name": "DESSA / SOL",
+  "liq": 434698.2963,
+  "vol24": 3968958.24050298,
+  "dex": "pumpswap",
+  "ageMin": 8649.028933333333,
+  "chg1h": -8.963,
+  "tx1h": 573,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.005986333333333316,
+    "imp": 0.0031227726175662887,
+    "impS": 0.0028725309768446463,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.005991199999999974,
+    "imp": 0.0021509271676748956,
+    "impS": 0.0038485507847642302,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.006008266666666651,
+    "imp": 0.002236981632560891,
+    "impS": 0.0037797402436065748,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.0060690199999999805,
+    "imp": 0.002267427972918543,
+    "impS": 0.003920232004870645,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "CPoGSmcjprCvzA2MFYLJMpQkGjmgVzKg4RVwMdrzpump",
+  "name": "BLUE / SOL",
+  "liq": 46747.2438,
+  "vol24": 3489514.49412814,
+  "dex": "pumpswap",
+  "ageMin": 689.8289333333333,
+  "chg1h": -5.111,
+  "tx1h": 1052,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.019251666666666667,
+    "imp": 0.008491528282479928,
+    "impS": 0.010852290919459025,
+    "routes": "Whirlpool",
+    "sroutes": "Whirlpool"
+   },
+   "0.01": {
+    "rt": 0.019328400000000023,
+    "imp": 0.008532400370681375,
+    "impS": 0.010903170434510355,
+    "routes": "Whirlpool",
+    "sroutes": "Whirlpool"
+   },
+   "0.03": {
+    "rt": 0.0055323000000000455,
+    "imp": 0.006003215208609629,
+    "impS": 0,
+    "routes": "Meteora DLMM",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": -0.00028578999999995247,
+    "imp": 0.006053853437946416,
+    "impS": 0,
+    "routes": "Meteora DLMM",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "Ai66LHZG9MCzg1WKdawwqduVAXpNDUuV8M3uyq5ppump",
+  "name": "CATE / SOL",
+  "liq": 2245212.7571,
+  "vol24": 605342.377179757,
+  "dex": "pumpswap",
+  "ageMin": 140921.61226666666,
+  "chg1h": -0.141,
+  "tx1h": 69,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.0011523333333333108,
+    "imp": 0,
+    "impS": 0.0013865251635163767,
+    "routes": "Archer+Meteora DLMM",
+    "sroutes": "Meteora DLMM+Manifest+PancakeSwap"
+   },
+   "0.01": {
+    "rt": 0.001196300000000039,
+    "imp": 0,
+    "impS": 0.0014767026730741711,
+    "routes": "Archer+Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.03": {
+    "rt": 0.0014627333333333548,
+    "imp": 0,
+    "impS": 0.001490553156670387,
+    "routes": "TesseraV+Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.1": {
+    "rt": 0.0016938100000000178,
+    "imp": 0.00003676416301240015,
+    "impS": 0.0016571067591306214,
+    "routes": "PancakeSwap+Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   }
+  }
+ },
+ {
+  "mint": "FdKdpz11GsTofLaNiddrhxrsE4APZYSSfLFqQ9YKpump",
+  "name": "SIS / SOL",
+  "liq": 41186.2184,
+  "vol24": 3976633.59115987,
+  "dex": "pumpswap",
+  "ageMin": 1161.3289333333332,
+  "chg1h": -6.673,
+  "tx1h": 7773,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.023750999999999967,
+    "imp": 0.010169014468615404,
+    "impS": 0.013721519865427523,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": -0.03519270000000008,
+    "imp": 0.0155759964373135,
+    "impS": 0.013544468367922296,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.024036733333333338,
+    "imp": 0.026040932708529457,
+    "impS": 0,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.024742189999999997,
+    "imp": 0.02228167299380009,
+    "impS": 0.0025165908608198837,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "762ZqBCd5m2q3QJ5UPkFL5rqdEUeygNkfTZrpGEZpump",
+  "name": "PAWCAT / SOL",
+  "liq": 183714.9399,
+  "vol24": 5462698.1991015,
+  "dex": "pumpswap",
+  "ageMin": 1039.9789333333333,
+  "chg1h": -36.665,
+  "tx1h": 15355,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.012924000000000047,
+    "imp": 0.004099354506756864,
+    "impS": 0.008860969749520067,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.012937199999999982,
+    "imp": 0.012610265646115646,
+    "impS": 0.00033110973560839056,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.013507066666666678,
+    "imp": 0.004252503055931108,
+    "impS": 0.008736852800397439,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.013124420000000026,
+    "imp": 0.004421553759358104,
+    "impS": 0.00874151732945243,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "Ewyifvp8X9NxeaKawXamGXBFDisuMfcFfcdvSZ8opump",
+  "name": "CREDIT / SOL",
+  "liq": 19090.7378,
+  "vol24": 1878453.04855421,
+  "dex": "pumpswap",
+  "ageMin": 1014.8122666666667,
+  "chg1h": -17.583,
+  "tx1h": 231,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.023770333333333338,
+    "imp": 0.023551637527660985,
+    "impS": 0.00022397068199143488,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.02389260000000004,
+    "imp": 0.023351150569242796,
+    "impS": 0.0005543951964647146,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.024245933333333358,
+    "imp": 0.023395122800581872,
+    "impS": 0.0008711921808042846,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.025480999999999976,
+    "imp": 0.02401099077102756,
+    "impS": 0.001430899871872323,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+  "name": "Bonk / SOL",
+  "liq": 294969.8744,
+  "vol24": 106334.432637904,
+  "dex": "orca",
+  "ageMin": 1749513.1789333334,
+  "chg1h": 0.079,
+  "tx1h": 280,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.00033933333333335813,
+    "imp": 0.00000350412243459776,
+    "impS": 0.0003358303876895313,
+    "routes": "Whirlpool+Whirlpool",
+    "sroutes": "Whirlpool"
+   },
+   "0.01": {
+    "rt": 0.00045709999999998807,
+    "imp": 0.00011852444215037701,
+    "impS": 0,
+    "routes": "Whirlpool+Whirlpool",
+    "sroutes": "Whirlpool"
+   },
+   "0.03": {
+    "rt": 0.0007944666666667155,
+    "imp": 0.0003058547791199458,
+    "impS": 0.0004887613775498938,
+    "routes": "Whirlpool+Whirlpool",
+    "sroutes": "Whirlpool"
+   },
+   "0.1": {
+    "rt": 0.0008981999999999601,
+    "imp": 0.0004648169762951287,
+    "impS": 0.0004335845611695624,
+    "routes": "BisonFi+Scorch",
+    "sroutes": "Scorch+GoonFi V2"
+   }
+  }
+ },
+ {
+  "mint": "3kRQDKPGqMWwBdGjiVPpPqVzFsnYG5PDqvrVz1D2pump",
+  "name": "tipr / SOL",
+  "liq": 21199.3447,
+  "vol24": 1294932.36205297,
+  "dex": "pumpswap",
+  "ageMin": 576.0956,
+  "chg1h": 15.129,
+  "tx1h": 298,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.02667133333333338,
+    "imp": 0.022481961937846892,
+    "impS": 0.0018234881958297034,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.02388979999999996,
+    "imp": 0.02199866718314007,
+    "impS": 0.0019336710016672985,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.024237399999999965,
+    "imp": 0.022228601966090073,
+    "impS": 0.0020544672571021004,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.025452759999999963,
+    "imp": 0.023256154154082487,
+    "impS": 0.0022489067684016216,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "9cRCn9rGT8V2imeM2BaKs13yhMEais3ruM3rPvTGpump",
+  "name": "ANSEM / SOL",
+  "liq": 1297662.518,
+  "vol24": 739982.366228312,
+  "dex": "pumpswap",
+  "ageMin": 198248.52893333332,
+  "chg1h": 0.764,
+  "tx1h": 116,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.0039963333333333795,
+    "imp": 0.0031884876094250038,
+    "impS": 0.0008104297691856874,
+    "routes": "Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.01": {
+    "rt": 0.003996099999999947,
+    "imp": 0.003188561717259674,
+    "impS": 0.0008729439324621026,
+    "routes": "Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.03": {
+    "rt": 0.003996033333333315,
+    "imp": 0.00317071628930277,
+    "impS": 0.0008279422138947606,
+    "routes": "Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.1": {
+    "rt": 0.003920730000000039,
+    "imp": 0.0030599670386308726,
+    "impS": 0.0008634049520634321,
+    "routes": "GoonFi V2+Meteora DLMM+Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   }
+  }
+ },
+ {
+  "mint": "HsprHxBRgiVaQdRf3TnKNuZZtaX9JUSPgMFdAkk6pump",
+  "name": "GATO / SOL",
+  "liq": 268057.8823,
+  "vol24": 1061615.30471635,
+  "dex": "pumpswap",
+  "ageMin": 97966.97893333333,
+  "chg1h": -2.804,
+  "tx1h": 1404,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.00896600000000003,
+    "imp": 0.008151709017704142,
+    "impS": 0.0008209834000816888,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.008974400000000049,
+    "imp": 0.00815574674068773,
+    "impS": 0.0008253848894340847,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.008555633333333312,
+    "imp": 0.008101469326461866,
+    "impS": 0.000747983277535318,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.009101020000000015,
+    "imp": 0.008309840995718954,
+    "impS": 0.0007978086674525837,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "Fp4JkqEcKYKBKhb9iMu9NSDeo71HWgq2q9QtXaaKpump",
+  "name": "paws / SOL",
+  "liq": 86742.4699,
+  "vol24": 2476828.60916432,
+  "dex": "pumpswap",
+  "ageMin": 7740.61615,
+  "chg1h": 7.068,
+  "tx1h": 521,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.019815666666666676,
+    "imp": 0.007212999000074679,
+    "impS": 0.012692966777534483,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.019842899999999997,
+    "imp": 0.006703458094180853,
+    "impS": 0.013228116027272934,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.01992336666666672,
+    "imp": 0.006720621629095551,
+    "impS": 0.013292076051377586,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.020206089999999954,
+    "imp": 0.006923218075425466,
+    "impS": 0.01345669535951976,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "EYqygbhZjP7EbM4fSn8devctnksAvPAD1Bt57XBFpump",
+  "name": "BNB / SOL",
+  "liq": 21613.7892,
+  "vol24": 4889191.39440849,
+  "dex": "pumpswap",
+  "ageMin": 2424.2328166666666,
+  "chg1h": -2.062,
+  "tx1h": 1244,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.02376233333333333,
+    "imp": 0,
+    "impS": 0.024188663132508392,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.02386619999999995,
+    "imp": 0.017198120594115913,
+    "impS": 0.006784764605776927,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.024166233333333342,
+    "imp": 0.011616215919419937,
+    "impS": 0.012697514483797145,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.025227730000000004,
+    "imp": 0.01611444143018448,
+    "impS": 0.009262549379282154,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "GTBxUiw6wJdmmkCGZgRHLyYxqu1vG4KtRpeox6yDpump",
+  "name": "JEANPHIL / SOL",
+  "liq": 266877.4299,
+  "vol24": 211290.617045676,
+  "dex": "pumpswap",
+  "ageMin": 61567.382816666664,
+  "chg1h": -2.275,
+  "tx1h": 17,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.007001333333333304,
+    "imp": 0,
+    "impS": 0.00986152386456647,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.01": {
+    "rt": 0.007005200000000045,
+    "imp": 0,
+    "impS": 0.00986112250347599,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.03": {
+    "rt": 0.007018933333333366,
+    "imp": 0,
+    "impS": 0.009861064394487716,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.1": {
+    "rt": 0.007067559999999973,
+    "imp": 0,
+    "impS": 0.009871831692109926,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   }
+  }
+ },
+ {
+  "mint": "5tCju6YNxHq5zrA6tGndr6F7TK42mpUFmeE31cSFpump",
+  "name": "swordcat / SOL",
+  "liq": 181429.063,
+  "vol24": 244226.787885522,
+  "dex": "pumpswap",
+  "ageMin": 49201.21615,
+  "chg1h": -1.899,
+  "tx1h": 68,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.017352666666666683,
+    "imp": 0,
+    "impS": 0.017918341043809436,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM+BisonFi"
+   },
+   "0.01": {
+    "rt": 0.01733220000000002,
+    "imp": 0,
+    "impS": 0.017924603596280002,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM+TesseraV"
+   },
+   "0.03": {
+    "rt": 0.017351499999999964,
+    "imp": 0,
+    "impS": 0.017918887343969937,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM+BisonFi"
+   },
+   "0.1": {
+    "rt": 0.017419430000000014,
+    "imp": 0,
+    "impS": 0.017917413775797683,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM+BisonFi"
+   }
+  }
+ },
+ {
+  "mint": "CTPoyCwkjMvoJwU4xvZZqoD8tiYk6yDchySiN5gGpump",
+  "name": "fone / SOL",
+  "liq": 330373.2574,
+  "vol24": 166258.63660729,
+  "dex": "pumpswap",
+  "ageMin": 95830.63283333334,
+  "chg1h": -7.125,
+  "tx1h": 98,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.004678999999999989,
+    "imp": 0.0007502177502713354,
+    "impS": 0.003931731904792949,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.01": {
+    "rt": 0.004798500000000039,
+    "imp": 0.0007534710535463672,
+    "impS": 0.004063376484830664,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.03": {
+    "rt": 0.006121700000000008,
+    "imp": 0.0007493628136727026,
+    "impS": 0.005154204616237008,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.1": {
+    "rt": 0.009760149999999967,
+    "imp": 0.0009885187964573014,
+    "impS": 0.008759881179158978,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   }
+  }
+ },
+ {
+  "mint": "33jENUQnjoitkMFpvNJcSHyLAHFWJuHwT6E3E8CNpump",
+  "name": "DOPE / SOL",
+  "liq": 171839.521,
+  "vol24": 148190.204338458,
+  "dex": "pumpswap",
+  "ageMin": 30221.23283333333,
+  "chg1h": -4.109,
+  "tx1h": 69,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.00402233333333335,
+    "imp": 0,
+    "impS": 0.012654589072160842,
+    "routes": "Raydium+Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.0062950000000000506,
+    "imp": 0,
+    "impS": 0.012869958868438362,
+    "routes": "Whirlpool+Raydium CLMM+Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.012741499999999961,
+    "imp": 0,
+    "impS": 0.012891154726800308,
+    "routes": "Whirlpool+Raydium CLMM+Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.018051330000000032,
+    "imp": 0.005097938392148831,
+    "impS": 0.013002462398495614,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "CvRJ8MrnB1AwjrgX25uyeLJiXNSugTo2ZHh8UXDTpump",
+  "name": "ANSEM / SOL",
+  "liq": 57036.3287,
+  "vol24": 2100441.59506536,
+  "dex": "pumpswap",
+  "ageMin": 1273.6328333333333,
+  "chg1h": 7.541,
+  "tx1h": 964,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.019818000000000002,
+    "imp": 0.017217897908119558,
+    "impS": 0.002645654704482357,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.019850400000000046,
+    "imp": 0.017294413467338992,
+    "impS": 0.0026009687618439694,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.01885720000000002,
+    "imp": 0.01776600281307923,
+    "impS": 0.001110934044276535,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.02028125000000003,
+    "imp": 0.01767648774745977,
+    "impS": 0.002651633825365047,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "MukLDtJ8Cx9DxLbeyLRSWPSposTMWuwHANbuaudpump",
+  "name": "OTC / SOL",
+  "liq": 522247.8354,
+  "vol24": 128253.963458925,
+  "dex": "pumpswap",
+  "ageMin": 93581.18283333334,
+  "chg1h": 1.178,
+  "tx1h": 48,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.0031723333333333326,
+    "imp": 0.0007211229810791636,
+    "impS": 0.002414475561154228,
+    "routes": "Raydium CLMM",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.0062605999999999495,
+    "imp": 0.0038535265641335362,
+    "impS": 0.002416385039806533,
+    "routes": "Raydium CLMM",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.01096123333333332,
+    "imp": 0.008558637016212298,
+    "impS": 0.0024160596015242223,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.011010819999999977,
+    "imp": 0.008615033985702427,
+    "impS": 0.0024166051497930643,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "6a81PfhejwCM3bB4F3Rnbzk9ALNmg4YGeyjKd5Nxpump",
+  "name": "DAVID / SOL",
+  "liq": 47137.0868,
+  "vol24": 2883418.85058807,
+  "dex": "pumpswap",
+  "ageMin": 1261.0661666666667,
+  "chg1h": -17.629,
+  "tx1h": 111,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.010538333333333316,
+    "imp": 0,
+    "impS": 0.012275044054908521,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.01": {
+    "rt": 0.010565599999999953,
+    "imp": 0,
+    "impS": 0.012474306449253373,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.03": {
+    "rt": 0.017004433333333346,
+    "imp": 0,
+    "impS": 0.018822511378703607,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.1": {
+    "rt": 0.02254159,
+    "imp": 0,
+    "impS": 0.02407303031772,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "2MXhpKgHBREgYYj3bSdorqbuJjkPAve1LTNHtk8Lpump",
+  "name": "Pikmin / SOL",
+  "liq": 22427.2461,
+  "vol24": 1620329.31155919,
+  "dex": "pumpswap",
+  "ageMin": 1377.4161666666666,
+  "chg1h": -34.431,
+  "tx1h": 410,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.023764000000000007,
+    "imp": 0.022071848313558847,
+    "impS": 0.001730343567186436,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.02387260000000002,
+    "imp": 0.021121047721964485,
+    "impS": 0.0028109218934906444,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.024185800000000035,
+    "imp": 0.021278160959149237,
+    "impS": 0.0030845496759288817,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.02528127999999996,
+    "imp": 0.02171638863263025,
+    "impS": 0.003652941452598157,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "mint": "5UUH9RTDiSpq6HKS6bp4NdU9PNJpXRXuiw6ShBTBhgH2",
+  "name": "TROLL / SOL",
+  "liq": 2443242.5398,
+  "vol24": 133346.704223776,
+  "dex": "pumpswap",
+  "ageMin": 806083.9328333334,
+  "chg1h": -0.157,
+  "tx1h": 36,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.00447933333333328,
+    "imp": 0,
+    "impS": 0.006208965405455316,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.01": {
+    "rt": 0.004479099999999958,
+    "imp": 0,
+    "impS": 0.006296292984393857,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.03": {
+    "rt": 0.004480299999999993,
+    "imp": 0,
+    "impS": 0.0063000879027973996,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.1": {
+    "rt": 0.0044855999999999785,
+    "imp": 0,
+    "impS": 0.0063312759036629205,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   }
+  }
+ },
+ {
+  "mint": "HCkhfdDNF2dqMxxtL51AzgWU26MBNkUkEzGAHtqkpump",
+  "name": "BatCat / SOL",
+  "liq": 72632.0508,
+  "vol24": 76975.5788994813,
+  "dex": "pumpswap",
+  "ageMin": 165407.48283333334,
+  "chg1h": 0.151,
+  "tx1h": 86,
+  "src": "trending_pools",
+  "t": {
+   "0.003": {
+    "rt": 0.01981866666666665,
+    "imp": 0.007067797431822281,
+    "impS": 0.012841631283449962,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.01": {
+    "rt": 0.019852399999999992,
+    "imp": 0.007060480237362013,
+    "impS": 0.012882879075752663,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.03": {
+    "rt": 0.019952300000000034,
+    "imp": 0.007281530809122806,
+    "impS": 0.012763708527760747,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.1": {
+    "rt": 0.020302390000000003,
+    "imp": 0.007531840216222533,
+    "impS": 0.012867465477743593,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ }
+]
