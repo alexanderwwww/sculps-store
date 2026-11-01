@@ -92,7 +92,7 @@ export class Engine {
       // FLOAT's -8% stop on the chart filled at -22%. The chart price stays as the fallback when no quote is fresh.
       if (this.exec.valueSol && p.stake > 0 && (!p.vAt || this.now() - p.vAt > Math.max(1000, 700 * this.open.size))) { p.vAt = this.now(); try { const v = await this.exec.valueSol(p); if (v != null) { p.val = v; p.valAt = this.now(); } } catch { /* chart fallback */ } }
       const real = p.val != null && this.now() - p.valAt < 15000;
-      const entry = real ? p.stake : p.entryPx, price = real ? p.val : lv.price;
+      const entry = real ? p.stake : p.entryPx; let price = real ? p.val : lv.price;
       // lesson 45 (on-chain, 2026-10-30): the real sell quote right after a buy already sits ~2.5% under the stake (fees + spread),
       // so a -2% stop measured from the stake sold every trade 2-6 s after buying. The stop is measured from the first real quote.
       if (real && p.base == null) p.base = p.val;
@@ -133,6 +133,13 @@ export class Engine {
       else if (this.now() - p.at >= (p.maxHoldMin ?? c.maxHoldMin) * 60000) { why = "time stop"; kind = "time"; }
       else if (c.staleMin > 0 && c.staleOk === true && this.now() - p.at >= c.staleMin * 60000 && price / entry - 1 < (c.staleRet ?? 0.01)) { why = `flat after ${c.staleMin}m: money back to work`; kind = "stale"; }   // lesson 2: dead money out
       if (!why) continue;
+      // build 82 (Kenji, 17 live take-profits: quote +3.2% at the decision, fill +1.17%; MARVIN quoted +14.8% and filled -10.6%): quote spikes vanish before the
+      // sell lands. A take-profit asks Jupiter once more, right now, and only sells if the fresh quote still clears the take. It re-checks next tick otherwise.
+      if (kind === "take" && real && this.exec.valueSol && p.stake > 0) {
+        let fresh = null; try { fresh = await this.exec.valueSol(p); } catch { /* no fresh quote: do not sell on a stale spike */ }
+        if (fresh == null || fresh / entry - 1 < tp) { p.val = fresh ?? p.val; p.valAt = this.now(); p.vAt = this.now(); continue; }
+        price = fresh;
+      }
       const ret = real ? price / entry - 1 : (price * (1 - c.slippage)) / entry - 1 - 2 * c.fee;
       p.est = { ret: +ret.toFixed(4), real, peak: +(peak / entry - 1).toFixed(4), low: +p.low.toFixed(4), kind, trig: +(trig ?? ret).toFixed(4) };   // what it SAW when it decided, to compare with the fill
       await this.#close(p, { ret, why, exitPx: real ? lv.price : price });

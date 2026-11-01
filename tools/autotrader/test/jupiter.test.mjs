@@ -66,6 +66,10 @@ ok("a 20% price impact is refused before sending", !r.ok && /impact/.test(r.why)
   rn.jupiter.quote = async (a2) => { if (a2.input === MINT) throw new Error("no route back"); return on(a2); };
   r = await rn.ex.buy({ mint: MINT });
   ok("a coin with no route back to SOL is never bought", !r.ok && rn.W.sent.length === 0, r);
+  const r3 = mk(); let sp3 = 0; const o3 = r3.jupiter.quote.bind(r3.jupiter);
+  r3.jupiter.quote = async (a2) => { const q2 = await o3(a2); if (a2.input !== MINT) { sp3 = Number(a2.amount); return q2; } return { ...q2, outAmount: String(Math.round(sp3 * 0.975)) }; };   // 2.5% round trip: pump.fun's fixed cost (Kenji)
+  r = await r3.ex.buy({ mint: MINT });
+  ok("a pump.fun-style 2.5% round trip is refused at the default 2% cap (Kenji: 14 of 14 pump.fun pools cost 2.5%)", !r.ok && /round trip/.test(r.why) && r3.W.sent.length === 0, r);
   const rg = mk(); r = await rg.ex.buy({ mint: MINT });
   ok("a normal round trip still buys, from a fresh buy quote", r.ok === true && rg.W.sent.length >= 1, r);
 }
