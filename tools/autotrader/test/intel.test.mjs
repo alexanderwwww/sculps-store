@@ -36,6 +36,13 @@ test("intel: a high-certainty position rides a dip that would stop a -2% one", a
   assert.equal(lo.e.open.size, 0, "plain -2% stop fired");
   assert.equal(hi.e.open.size, 1, "high certainty still holding");
 });
+test("intel (build 88): in scalp mode a high-certainty coin keeps the -2% stop and the 2% trail, nothing widens", async () => {
+  const r = rig(fake(HIGH), BOUNCE, { scalp: 1, sl: -0.02, trail: 0.02 }); await r.run(BOUNCE.length);
+  assert.equal(r.buys.length, 1);
+  const p = [...r.e.open.values()][0];
+  assert.ok(p, "position opened");
+  assert.equal(p.sl, -0.02, "stop not widened"); assert.ok(!p.trail || p.trail <= 0.02, "trail not widened: " + p.trail);
+});
 test("intel: low certainty is skipped with the reasons on screen", async () => {
   const r = rig(fake(LOW)); await r.run(BOUNCE.length);
   assert.equal(r.buys.length, 0);

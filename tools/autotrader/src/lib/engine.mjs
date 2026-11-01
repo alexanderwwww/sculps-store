@@ -482,7 +482,7 @@ export class Engine {
     if (this.exec.sizeSol) { try { size = (await this.exec.sizeSol({ streak: this.#streak(), scale: 1, openSol: this.#openSol() })).sol; stake = (await this.exec.sizeSol({ streak: this.#streak(), scale: mul, openSol: this.#openSol() })).sol; } catch (err) { this.#skip(m.name, `wallet balance: ${err.message.slice(0, 60)}`); return; } }
     if (!(stake <= size + 1e-9)) { this.#skip(m.name, "stake above size: refused"); return; }
     const sigN = o.sig ? Object.fromEntries(Object.entries(o.sig).map(([k, v]) => [k, typeof v === "number" ? +v.toFixed(4) : v])) : null;
-    const cx = o.intel ? exitsFor(o.intel.certainty, this.cfg) : {};   // high certainty: wider stop, wider trail, longer hold. Never a bigger size.
+    const cx = o.intel && this.cfg.scalp !== 1 ? exitsFor(o.intel.certainty, this.cfg) : {};   // build 88: scalp mode keeps its own -2% stop and 2% trail (a 'sure' coin got -5% and a 15% trail: it lost -18.7% on a -5% stop, 2026-11-01)   // high certainty: wider stop, wider trail, longer hold. Never a bigger size.
     const lv0 = { sig: sigN, m: mul, narr: o.narr ? { label: o.narr.label, trend: o.narr.trend } : null, t0: this.now(), sl: cx.sl ?? this.cfg.sl, tp: this.cfg.tp, partAt: this.cfg.partAt, lockFrom: this.cfg.lockFrom, ...(cx.trail ? { trail: cx.trail } : {}), ...(cx.maxHoldMin ? { maxHoldMin: cx.maxHoldMin } : {}), ...(o.follow ? { follow: o.follow } : {}), certainty: o.intel ? o.intel.certainty : null, intel: o.intel ? (o.intel.reasons || []).slice(0, 8) : null };   // the exits it was bought under
     this.journal.write({ type: "intent", id, name: m.name, mint: m.mint, enter: s.why });   // on disk BEFORE anything is done
     const tBuy0 = this.now();
