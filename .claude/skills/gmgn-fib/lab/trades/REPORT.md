@@ -1,5 +1,5 @@
 # Ultra trade report (auto)
-Updated 2026-11-01T15:00:28.102Z: 58 closed trades (+58 new), wins 26, avg ret -2.53%, wallet equity 0.0015, build 83
+Updated 2026-11-01T15:02:01.044Z: 58 closed trades (+0 new), wins 26, avg ret -2.53%, wallet equity 0.0015, build 84
 
 ## by exit
 | exit | n | win | avg |
