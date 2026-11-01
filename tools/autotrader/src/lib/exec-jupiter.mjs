@@ -4,7 +4,7 @@ import { signSwapTransaction, buildCloseAccountTx } from "./solana.mjs";
 export const KIMCHI = "CSocnzcRpgSCr1naKcNTieWZUxb6rABe45j844m7pump";
 const BASE = { maxSolPerTrade: 0.05, perHour: 30, perDay: 200, floorFrac: 0.7 };
 export const SOL_MINT = "So11111111111111111111111111111111111111112";
-export const PLUG_CAPS_EXTRA = { fixedSol: 0.02618,   // Alex 2026-10-29: the golden step between 0.01618 and the doubled 0.03236 (0.01618 x 1.618)
+export const PLUG_CAPS_EXTRA = { fixedSol: 0.012,   // Alex 2026-10-29: the golden step between 0.01618 and the doubled 0.03236 (0.01618 x 1.618)
   perHour: 200, perDay: 2000, floorFrac: 0.05, reserveSol: 0.004, minBalSol: null };   // Alex 2026-10-29: no pause line, keep trading to the last trade
 export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.06, buySlippageBps: 1200, sellSlippageBps: 3500, sellLadderBps: [800, 1500, 3500], maxFeeLamports: 50000,
   // a sell pays more only when the cheaper try did not land; the last try keeps the old 150000 ceiling so exits still land
@@ -33,7 +33,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
         // under 0.5 SOL: a flat 0.01618 SOL (Alex). From 0.5 SOL: base 0.1618 (0.2618 from 1 SOL), x1.618 per win in a row (at most 3 steps),
         // back to base after any loss; never more than 35% of what is spendable on one buy.
         const floor = +(caps.fixedSol * Math.min(1, scale)).toFixed(5);
-        if (bal < 0.5) return { bal, sol: spendable >= 0.01618 ? 0.01618 : spendable >= 0.012 ? 0.012 : spendable >= 0.0055 ? +(spendable * 0.92).toFixed(5) : 0 };   // Alex 2026-10-29: 0.016 all the time under 0.5 SOL; build 66 (2026-11-01, "0.012"): a wallet that cannot cover it trades 0.012, or what it has
+        if (bal < 0.5) return { bal, sol: spendable >= 0.012 ? 0.012 : spendable >= 0.0055 ? +(spendable * 0.92).toFixed(5) : 0 };   // Alex 2026-10-29: 0.016 all the time under 0.5 SOL; build 66 (2026-11-01, "0.012"): a wallet that cannot cover it trades 0.012, or what it has
         if (spendable < floor) return { bal, sol: 0 };
         // Alex's heavier rocks: 0.5 SOL in the wallet -> base 0.1618; 1 SOL -> 0.1618 x 1.618 = 0.2618; below 0.5 -> 0.01618
         const base = bal >= 1 ? 0.2618 : bal >= 0.5 ? 0.1618 : caps.fixedSol;
