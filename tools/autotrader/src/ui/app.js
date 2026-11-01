@@ -131,7 +131,7 @@
   const AG = [
     ["scan", "Scanner", "new pairs + volume spikes", "flags only, never trades", "scan"],
     ["rug", "Rug check", "filters suspicious tokens", "nothing executes before a pass", "pass"],
-    ["size", "Sizer", "sizes every buy", "0.01618 SOL, every time", "idle"],
+    ["size", "Sizer", "sizes every buy", "0.012 SOL, every time", "idle"],
     ["exec", "Executor", "opens + closes through Jupiter", "signs with your Phantom key, checks the chain", "live"],
     ["log", "Logger", "writes every decision", "no trade without a reason", "write"],
     ["eq", "Equity", "wallet + curve", "updates on every close", "update"],
