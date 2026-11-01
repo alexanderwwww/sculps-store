@@ -149,3 +149,7 @@ Nothing was broken: 87-204 coins looked at per few minutes, 0 passed. Second hid
 - Slow breakout L10 vol1.5x green0.34 tp+90% sl-25% hold 60 min age 4-90: **NOV n=30, win 67%, avg +1.53% +-2.95** (Oct train +6.5%, Oct test +3.15% +-2.36). Same sign in all three sets but shrinking: out-of-sample (Oct test + Nov) ~ +2.5% a trade, ~1.4 sigma. NOT proven. The other 11 top configs: NOV -0.7% to -1.2%.
 - At a 0.012-0.019 SOL wallet a +2.5% edge is ~+0.0001 SOL a trade: invisible next to fees. It needs size and n>=150 to mean anything.
 Next: keep collecting (collector resumes from scratch, ~6 pools/min), shadow-trade the slow breakout alongside live before any switch.
+
+## Lesson 59 — hourly check 11:59 UTC (build 78)
+Since the gates were opened (momMin 0, entryMinLiq 3000): 2 trades, both forced "idle pick" entries on coins "rising 0.0% in 20 s": MARVIN -10.6% ("take profit +0.6%" decided, filled -10.6%), KO -6.1% (stop -5%). Wallet 0.0117 -> 0.0111 SOL. Flat coins bought only to stay busy lose; momMin went back to 0.005 (coin must at least tick up). The standing "pause buying under 0.05 SOL" line of the hourly prompt is overridden by Alex's later explicit orders (no pause line, trade until the last trade, 2026-10-29 and 2026-11-01); wallet floor remains removed (floorFrac 0).
+Open: log decision quote vs actual swap output per sell (MARVIN gap 11 pts).
