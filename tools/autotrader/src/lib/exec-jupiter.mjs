@@ -36,7 +36,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
         // build 77 (Alex 2026-11-01: "size according to the wallet, golden ratio up and down, never stop trading, less money = trade less"):
         // under 0.5 SOL the stake is a share of what is spendable (balance minus the fee reserve): 0.618 of it, x1.618 after a win (cap 92%), x0.618 after each loss
         // (at most two), times the organism's scale. Never below 0.005 SOL while 0.0055 is spendable, so a small wallet trades smaller instead of stopping.
-        if (bal < 0.5) { // build 78 (Alex 2026-11-01: "take 3 trades at once, even 0.006 on each"): each stake is 0.318 of the WHOLE portfolio (wallet + what is in open coins), so about three fit side by side;
+        { // build 83 (Alex: "try $10-$20 a trade ... you have wrong math there"): ONE proportional rule at every wallet size. It used to jump to a flat 0.1618 / 0.2618 SOL above 0.5 SOL. // build 78 (Alex 2026-11-01: "take 3 trades at once, even 0.006 on each"): each stake is 0.318 of the WHOLE portfolio (wallet + what is in open coins), so about three fit side by side;
           // golden ratio up (x1.618, cap 1 step) after a win and down (x0.618, 2 steps) after a loss. A new coin's token account costs 0.002 rent up front (back on sell), so the wallet must cover stake + rent.
           const st = Math.max(-2, Math.min(1, Math.trunc(Number(streak)) || 0)), total = bal + (Number(openSol) || 0), want = +(0.318 * total * Math.pow(1.618, st) * Math.min(1, scale)).toFixed(5);
           const room = (bal - caps.reserveSol - 0.002) * 0.92, sol = Math.min(room, Math.max(0.003, want)); return { bal, sol: sol >= 0.003 ? +sol.toFixed(5) : 0 }; }

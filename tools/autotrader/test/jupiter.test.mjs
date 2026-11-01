@@ -128,4 +128,11 @@ test("no pause line: a 0.0457 SOL wallet still buys (Alex 2026-10-29)", async ()
   assert.ok((await mk(0.0457).sizeSol()).sol > 0);
   assert.ok((await mk(0.0457).sizeSol({ scale: 0.618 })).sol > 0);
   assert.ok((await mk(0.06).sizeSol()).sol > 0);
+  // build 83: ONE proportional rule at every wallet size (0.318 of the portfolio): $10 a trade at ~0.33 SOL, $20 at ~0.66 SOL, no flat jump at 0.5 SOL
+  const near = (a2, b2) => Math.abs(a2 - b2) < 1e-4;
+  assert.ok(near((await mk(0.3).sizeSol()).sol, 0.0954), "0.3 SOL -> 0.0954 (~$9)");
+  assert.ok(near((await mk(0.66).sizeSol()).sol, 0.20988), "0.66 SOL -> 0.2099 (~$20)");
+  assert.ok(near((await mk(2).sizeSol()).sol, 0.636), "2 SOL -> 0.636");
+  assert.ok((await mk(0.6).sizeSol()).sol > (await mk(0.49).sizeSol()).sol, "no drop at the 0.5 SOL line");
+  assert.ok(near((await mk(0.66).sizeSol({ scale: 0.618 })).sol, 0.20988 * 0.618), "forced picks are 0.618 of it");
 });
