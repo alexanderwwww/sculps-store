@@ -93,3 +93,11 @@ Build 65 code: `organism.refitExits` every 10 closes tries every stop (-2..-30%)
 
 ## Lesson 48 — farm the farms, break it to the atom (Alex, 2026-10-30)
 "Fake coins pumped by farm bots: who cares, we can farm it too — ride the wave and get out early." Bot-farmed volume (many same-size buys, fresh wallets, wash loops) is a tradeable wave if Ultra enters early and exits before the farm stops: tight time limit, sell on the first slowdown of the bot buys, never hold through the farm's exit. Measure it as its own path in the organism; keep it only if its own EV is positive. And: break every path into atoms (entry signal, fill, hold, exit, cost) and measure each one separately.
+
+## Lesson 49 — quick small profits, 0.012 SOL stake (Alex, 2026-11-01)
+Alex, after seeing 1 trade lose 10%: "make small profits all the time, 3 trades a minute, if the coin doesn't flow just sell it, you can risk more." Wallet 0.0161 SOL, stake 0.012 (build 66+, sizer card says 0.012).
+- Live via bridge on build 70: partAt +3%, lockFrom +3% / lockAt +1.5%, trail 2% from +3%, tp +6%, maxHold 2 min, stale +0.5%, sl -8%, cooldown 0.5 min.
+- Before this (5 closes, 2026-11-01): the 3 big losers (-14.6, -22, -25.1%) were all "idle pick: least-bad band" entries; the 2 small wins (+1.4, +4.7) were real signals. Idle picks are kept ON because Alex wants more trades; watch their P&L separately.
+- Honest limits: a 0.0161 SOL wallet fits ONE 0.012 trade at a time, so 3 trades a minute cannot happen until it holds ~3x more; round-trip cost was measured ~3.5% a trip (lesson 48), so +3% takes are break-even at best. Measure after 20 closes.
+- Known gap: staleMin set to 1 did not stick over the bridge (stayed 0).
+- Mac app: v70 live. Live chart + Sell button ships with the zip (v69) only; fib.js is not in the live-update file list on apps older than 69.
