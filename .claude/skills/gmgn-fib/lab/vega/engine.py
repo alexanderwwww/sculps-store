@@ -83,3 +83,10 @@ def summ(res,npools=None):
     se=(num**.5)/n
     return dict(n=n,mean=m,se=se,win=sum(1 for _,_,r in res if r>0)/n,pools=len(by),
                 med=sorted(r for _,_,r in res)[n//2])
+def sig_mom(p,mw=5,agemax=10**6,agemin=0,ddmax=1.0):
+    c=p['c'];out=[];pk=0
+    for t in range(max(mw+1,agemin),min(p['n']-2,agemax)):
+        pk=max(pk,p['h'][t])
+        if p['v'][t]<=0: continue
+        if c[t]/c[t-mw]-1>0 and 1-c[t]/pk<=ddmax: out.append(t)
+    return out

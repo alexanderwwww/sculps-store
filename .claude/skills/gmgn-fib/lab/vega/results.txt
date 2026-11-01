@@ -1,0 +1,50 @@
+##### p1
+pools 138 46 age0 min median -0.23333333333333334
+H | n | gross mean | median | p5 | p95 | p99 | skew | xkurt | %net>0 | net mean | net median | pool-eq-weight gross mean
+1 106694 0.13 0.01 -5.3 5.5 17.5 sk21.5 k1578 pos=6.8% netmean=-3.87 netmed=-3.99 poolEq=0.47
+2 106568 0.28 0.03 -7.6 7.9 26.1 sk54.6 k6556 pos=9.9% netmean=-3.73 netmed=-3.97 poolEq=1.01
+5 106204 0.66 0.10 -12.1 13.0 41.2 sk44.8 k3834 pos=15.3% netmean=-3.37 netmed=-3.91 poolEq=2.07
+15 104975 1.59 0.30 -21.4 23.8 77.4 sk64.1 k6829 pos=21.8% netmean=-2.47 netmed=-3.71 poolEq=5.94
+30 103102 2.34 0.57 -31.4 33.4 107.8 sk86.5 k11670 pos=25.6% netmean=-1.76 netmed=-3.46 poolEq=11.56
+60 99346 2.08 0.95 -51.4 44.3 160.8 sk15.0 k434 pos=28.9% netmean=-2.00 netmed=-3.08 poolEq=14.52
+120 92694 -0.12 1.14 -89.0 53.8 205.5 sk18.9 k1154 pos=32.0% netmean=-4.11 netmed=-2.90 poolEq=4.77
+log growth per trade (net), H:
+1 -4.33% per trade -> expgrowth -4.24%
+2 -4.58% per trade -> expgrowth -4.48%
+5 -5.33% per trade -> expgrowth -5.19%
+15 -7.93% per trade -> expgrowth -7.62%
+30 -12.24% per trade -> expgrowth -11.52%
+60 -21.17% per trade -> expgrowth -19.08%
+120 -37.97% per trade -> expgrowth -31.59%
+hit-rate +x before -y (stop-first on ambiguous bars), horizon 60m, gross thresholds; EV net
+tp0.05 sl0.05 n=106694 P(tp)=0.363 P(sl)=0.350 breakeven-need P(tp)>=0.900 netEV=-3.58%
+tp0.10 sl0.05 n=106694 P(tp)=0.236 P(sl)=0.415 breakeven-need P(tp)>=0.600 netEV=-3.11%
+tp0.10 sl0.10 n=106694 P(tp)=0.308 P(sl)=0.296 breakeven-need P(tp)>=0.700 netEV=-3.38%
+tp0.20 sl0.10 n=106694 P(tp)=0.188 P(sl)=0.347 breakeven-need P(tp)>=0.467 netEV=-2.76%
+tp0.30 sl0.10 n=106694 P(tp)=0.121 P(sl)=0.368 breakeven-need P(tp)>=0.350 netEV=-2.50%
+tp0.50 sl0.20 n=106694 P(tp)=0.081 P(sl)=0.239 breakeven-need P(tp)>=0.343 netEV=-2.49%
+tp1.00 sl0.25 n=106694 P(tp)=0.035 P(sl)=0.196 breakeven-need P(tp)>=0.232 netEV=-2.14%
+tp0.90 sl0.25 n=106694 P(tp)=0.041 P(sl)=0.195 breakeven-need P(tp)>=0.252 netEV=-2.17%
+##### p2
+pools train/testOct/testNov 69 69 46
+39 exit configs
+
+=== entry random / fill wick : top 6 by TRAIN mean (n>=15) -> test ===
+trail0.1 sl.35 h120                TR n8219   0.63%± 1.1 | TeOct n9158   1.72%± 1.8 | TeNov n6679  -0.21%± 1.4
+trail0.2 sl.35 h120                TR n8219   0.01%± 1.2 | TeOct n9158   0.78%± 1.7 | TeNov n6679  -1.21%± 1.5
+fix tp0.9 sl0.1 h120               TR n8219  -0.63%± 1.0 | TeOct n9158  -1.01%± 0.8 | TeNov n6679  -1.88%± 1.2
+part50@1.0 trail0.25 be            TR n8219  -0.67%± 1.2 | TeOct n9158  -0.89%± 1.3 | TeNov n6679  -1.48%± 1.5
+trail0.1 sl.35 h60                 TR n8219  -0.75%± 0.8 | TeOct n9158  -0.29%± 1.0 | TeNov n6679  -1.71%± 0.8
+part50@0.5 trail0.25 be            TR n8219  -1.02%± 1.1 | TeOct n9158  -1.21%± 1.1 | TeNov n6679  -1.84%± 1.3
+  n configs 39 ; #train>0: 2
+  family mean net on test (avg over configs): {'trail': -0.88, 'fix': -2.8, 'part': -1.34, 'time': -2.35, 'ratchet': -1.4}
+
+=== entry breakout / fill wick : top 6 by TRAIN mean (n>=15) -> test ===
+time h60 sl.5                      TR n  87   7.08%±11.7 | TeOct n  78  14.90%±12.4 | TeNov n  66  24.64%±17.5
+fix tp0.9 sl0.25 h120              TR n  87   5.39%± 4.7 | TeOct n  78   7.82%± 4.7 | TeNov n  66   2.49%± 5.4
+ratchet g1.0->0.5 sl.25 h120       TR n  87   3.68%± 6.3 | TeOct n  78   5.28%± 5.3 | TeNov n  66   4.01%± 7.0
+fix tp0.9 sl0.1 h120               TR n  87   3.32%± 3.6 | TeOct n  78   5.93%± 3.7 | TeNov n  66   0.49%± 4.1
+part50@1.0 trail0.4 be             TR n  87   3.09%± 5.2 | TeOct n  78  11.72%± 7.5 | TeNov n  66   3.28%± 6.9
+fix tp0.9 sl0.25 h60               TR n  87   2.25%± 3.3 | TeOct n  78   7.40%± 4.4 | TeNov n  66   1.88%± 5.4
+  n configs 39 ; #train>0: 14
+  family mean net on test (avg over configs): {'time': 8.3, 'fix': 0.38, 'ratchet': 3.23, 'part': 7.28, 'trail': 11.31}
