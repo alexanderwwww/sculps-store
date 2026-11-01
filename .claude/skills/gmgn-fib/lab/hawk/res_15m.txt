@@ -1,0 +1,17 @@
+{'AVAX': 17299, 'BTC': 17299, 'DOGE': 17299, 'ETH': 17299, 'LINK': 17299, 'SOL': 17299, 'XRP': 17299}
+configs tested: 54 (x2 cost levels)  days of data 180
+== taker 0.10% rt ; top5 by TRAIN net, then their TEST
+(6, 3.5, 12, 'rev') TRAIN n=214 net=+0.353% /day=2.0 dd=10% | TEST n=144 net=+0.111% /day=2.0 dd=14%
+(6, 3.5, 6, 'rev') TRAIN n=220 net=+0.150% /day=2.0 dd=12% | TEST n=146 net=+0.051% /day=2.0 dd=18%
+(3, 3.5, 12, 'rev') TRAIN n=335 net=+0.104% /day=3.1 dd=17% | TEST n=231 net=-0.050% /day=3.2 dd=34%
+(6, 3.5, 3, 'rev') TRAIN n=263 net=+0.036% /day=2.4 dd=14% | TEST n=172 net=+0.051% /day=2.4 dd=13%
+(12, 2.5, 12, 'rev') TRAIN n=413 net=+0.014% /day=3.8 dd=38% | TEST n=278 net=+0.115% /day=3.9 dd=14%
+configs positive in BOTH train and test: 5 of 54
+== maker 0.04% rt (optimistic: assumes fills, no adverse selection) ; top5 by TRAIN net, then their TEST
+(6, 3.5, 12, 'rev') TRAIN n=214 net=+0.413% /day=2.0 dd=9% | TEST n=144 net=+0.171% /day=2.0 dd=11%
+(6, 3.5, 6, 'rev') TRAIN n=220 net=+0.210% /day=2.0 dd=9% | TEST n=146 net=+0.111% /day=2.0 dd=15%
+(3, 3.5, 12, 'rev') TRAIN n=335 net=+0.164% /day=3.1 dd=16% | TEST n=231 net=+0.010% /day=3.2 dd=28%
+(6, 3.5, 3, 'rev') TRAIN n=263 net=+0.096% /day=2.4 dd=10% | TEST n=172 net=+0.111% /day=2.4 dd=10%
+(12, 2.5, 12, 'rev') TRAIN n=413 net=+0.074% /day=3.8 dd=24% | TEST n=278 net=+0.175% /day=3.9 dd=13%
+configs positive in BOTH train and test: 9 of 54
+best gross TEST edges (no cost): [(0.4530053195715057, (12, 3.5, 3, 'rev')), (0.5460002743210598, (12, 3.5, 6, 'rev')), (0.7678211887504828, (12, 3.5, 12, 'rev'))]

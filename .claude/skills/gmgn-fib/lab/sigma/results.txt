@@ -21,63 +21,220 @@ B Staking 5.3% APY = 0.0145%/day; K: $1/min $9,916,981  $1/2min $4,958,491  $1/5
 
 === 1. TIME TO REACH K (central-edge K). horizon 5y (D 1y); reach counts TRADING profit only (deposits excluded). P(reach), median over ALL paths, fast-10% = day by which fastest 10% arrived ===
 [A MeanRev] $1/min: K=$375,467  (CAPACITY IGNORED here: ceiling is $135/day, so in reality impossible)
-   $1     +$0  /wk | P(reach)  1.4% median  never fast10%  never | ruin  0.2% killed 97.2% medMaxDD  41% median final $1
-   $1     +$25 /wk | P(reach) 10.0% median  never fast10%  1597d | ruin  0.1% killed 96.1% medMaxDD  41% median final $7,508
-   $1     +$100/wk | P(reach) 15.2% median  never fast10%   899d | ruin  0.5% killed 96.2% medMaxDD  41% median final $29,568
-   $30    +$0  /wk | P(reach)  3.9% median  never fast10%  never | ruin  0.0% killed 97.0% medMaxDD  41% median final $35
-   $30    +$25 /wk | P(reach) 10.2% median  never fast10%  1557d | ruin  0.3% killed 95.8% medMaxDD  41% median final $7,725
-   $30    +$100/wk | P(reach) 15.4% median  never fast10%   945d | ruin  0.3% killed 96.0% medMaxDD  41% median final $30,251
-   $300   +$0  /wk | P(reach)  6.2% median  never fast10%  never | ruin  0.0% killed 97.2% medMaxDD  41% median final $348
-   $300   +$25 /wk | P(reach) 10.2% median  never fast10%  1452d | ruin  0.1% killed 95.8% medMaxDD  41% median final $7,909
-   $300   +$100/wk | P(reach) 14.9% median  never fast10%   934d | ruin  0.1% killed 95.5% medMaxDD  41% median final $30,636
-   $3000  +$0  /wk | P(reach) 10.9% median  never fast10%  1054d | ruin  0.0% killed 96.1% medMaxDD  41% median final $3,726
-   $3000  +$25 /wk | P(reach) 11.0% median  never fast10%   989d | ruin  0.0% killed 96.6% medMaxDD  41% median final $11,146
-   $3000  +$100/wk | P(reach) 13.2% median  never fast10%   844d | ruin  0.1% killed 97.2% medMaxDD  41% median final $33,719
+   $1     +$0  /wk | P(reach)  2.6% median  never fast10%  never | ruin 30.1% killed 71.0% medMaxDD  60% median final $2
+   $1     +$25 /wk | P(reach) 29.3% median  never fast10%  1155d | ruin 12.4% killed 61.9% medMaxDD  60% median final $10,241
+   $1     +$100/wk | P(reach) 37.1% median  never fast10%   853d | ruin 11.7% killed 62.1% medMaxDD  60% median final $37,630
+   $30    +$0  /wk | P(reach) 10.7% median  never fast10%  1771d | ruin  0.0% killed 71.4% medMaxDD  61% median final $40
+   $30    +$25 /wk | P(reach) 30.7% median  never fast10%  1062d | ruin 11.2% killed 59.2% medMaxDD  60% median final $14,435
+   $30    +$100/wk | P(reach) 38.6% median  never fast10%   856d | ruin 11.9% killed 60.6% medMaxDD  60% median final $49,002
+   $300   +$0  /wk | P(reach) 19.8% median  never fast10%  1311d | ruin  0.0% killed 71.7% medMaxDD  61% median final $458
+   $300   +$25 /wk | P(reach) 29.8% median  never fast10%  1062d | ruin 10.9% killed 62.7% medMaxDD  60% median final $10,903
+   $300   +$100/wk | P(reach) 39.0% median  never fast10%   857d | ruin 13.4% killed 62.0% medMaxDD  60% median final $45,047
+   $3000  +$0  /wk | P(reach) 32.1% median  never fast10%   851d | ruin  0.0% killed 68.8% medMaxDD  60% median final $5,600
+   $3000  +$25 /wk | P(reach) 33.1% median  never fast10%   819d | ruin  0.0% killed 69.0% medMaxDD  60% median final $12,078
+   $3000  +$100/wk | P(reach) 39.5% median  never fast10%   727d | ruin  7.5% killed 64.3% medMaxDD  60% median final $47,227
 [A MeanRev] $1/2min: K=$187,733  (CAPACITY IGNORED here: ceiling is $135/day, so in reality impossible)
-   $1     +$0  /wk | P(reach)  1.7% median  never fast10%  never | ruin  0.5% killed 96.9% medMaxDD  41% median final $1
-   $1     +$25 /wk | P(reach) 13.4% median  never fast10%  1128d | ruin  0.1% killed 95.8% medMaxDD  41% median final $7,569
-   $1     +$100/wk | P(reach) 18.3% median  never fast10%   745d | ruin  0.1% killed 94.7% medMaxDD  41% median final $30,258
-   $30    +$0  /wk | P(reach)  4.2% median  never fast10%  never | ruin  0.0% killed 97.2% medMaxDD  41% median final $37
-   $30    +$25 /wk | P(reach) 12.8% median  never fast10%  1129d | ruin  0.3% killed 95.3% medMaxDD  41% median final $7,511
-   $30    +$100/wk | P(reach) 16.6% median  never fast10%   798d | ruin  0.4% killed 95.7% medMaxDD  41% median final $29,753
-   $300   +$0  /wk | P(reach)  6.8% median  never fast10%  never | ruin  0.0% killed 97.2% medMaxDD  41% median final $381
-   $300   +$25 /wk | P(reach) 12.2% median  never fast10%  1068d | ruin  0.1% killed 95.5% medMaxDD  41% median final $7,858
-   $300   +$100/wk | P(reach) 16.4% median  never fast10%   782d | ruin  0.2% killed 96.2% medMaxDD  41% median final $30,220
-   $3000  +$0  /wk | P(reach) 12.0% median  never fast10%   890d | ruin  0.0% killed 97.0% medMaxDD  41% median final $3,592
-   $3000  +$25 /wk | P(reach) 13.9% median  never fast10%   778d | ruin  0.0% killed 97.0% medMaxDD  41% median final $11,148
-   $3000  +$100/wk | P(reach) 18.9% median  never fast10%   635d | ruin  0.0% killed 97.0% medMaxDD  41% median final $33,401
+   $1     +$0  /wk | P(reach)  3.9% median  never fast10%  never | ruin 29.5% killed 71.5% medMaxDD  60% median final $1
+   $1     +$25 /wk | P(reach) 35.1% median  never fast10%   975d | ruin 10.4% killed 59.2% medMaxDD  60% median final $13,387
+   $1     +$100/wk | P(reach) 44.2% median  never fast10%   719d | ruin 11.2% killed 60.8% medMaxDD  60% median final $48,773
+   $30    +$0  /wk | P(reach) 14.2% median  never fast10%  1600d | ruin  0.0% killed 69.7% medMaxDD  60% median final $48
+   $30    +$25 /wk | P(reach) 33.5% median  never fast10%   967d | ruin 11.8% killed 62.9% medMaxDD  60% median final $10,278
+   $30    +$100/wk | P(reach) 41.4% median  never fast10%   752d | ruin 11.8% killed 61.5% medMaxDD  60% median final $37,907
+   $300   +$0  /wk | P(reach) 23.1% median  never fast10%  1153d | ruin  0.0% killed 70.8% medMaxDD  60% median final $505
+   $300   +$25 /wk | P(reach) 34.5% median  never fast10%   920d | ruin 11.8% killed 63.1% medMaxDD  60% median final $10,907
+   $300   +$100/wk | P(reach) 41.9% median  never fast10%   734d | ruin 11.2% killed 62.0% medMaxDD  60% median final $41,539
+   $3000  +$0  /wk | P(reach) 33.7% median  never fast10%   725d | ruin  0.0% killed 70.0% medMaxDD  60% median final $4,087
+   $3000  +$25 /wk | P(reach) 37.9% median  never fast10%   678d | ruin  0.0% killed 68.0% medMaxDD  60% median final $14,539
+   $3000  +$100/wk | P(reach) 44.0% median  never fast10%   590d | ruin  8.8% killed 64.8% medMaxDD  60% median final $46,649
 [A MeanRev] $1/5min: K=$75,093  (CAPACITY IGNORED here: ceiling is $135/day, so in reality impossible)
-   $1     +$0  /wk | P(reach)  2.2% median  never fast10%  never | ruin  0.3% killed 96.7% medMaxDD  41% median final $1
-   $1     +$25 /wk | P(reach) 16.2% median  never fast10%   907d | ruin  0.2% killed 95.1% medMaxDD  41% median final $7,544
-   $1     +$100/wk | P(reach) 22.7% median  never fast10%   604d | ruin  0.4% killed 96.2% medMaxDD  41% median final $29,755
-   $30    +$0  /wk | P(reach)  4.9% median  never fast10%  never | ruin  0.0% killed 97.4% medMaxDD  41% median final $36
-   $30    +$25 /wk | P(reach) 14.0% median  never fast10%   943d | ruin  0.2% killed 96.2% medMaxDD  41% median final $7,573
-   $30    +$100/wk | P(reach) 22.8% median  never fast10%   613d | ruin  0.2% killed 95.9% medMaxDD  41% median final $29,933
-   $300   +$0  /wk | P(reach)  8.5% median  never fast10%  never | ruin  0.0% killed 97.2% medMaxDD  41% median final $360
-   $300   +$25 /wk | P(reach) 14.8% median  never fast10%   816d | ruin  0.1% killed 96.2% medMaxDD  41% median final $7,809
-   $300   +$100/wk | P(reach) 25.2% median  never fast10%   581d | ruin  0.1% killed 95.5% medMaxDD  41% median final $30,474
-   $3000  +$0  /wk | P(reach) 16.0% median  never fast10%   568d | ruin  0.0% killed 96.8% medMaxDD  41% median final $3,828
-   $3000  +$25 /wk | P(reach) 17.8% median  never fast10%   543d | ruin  0.0% killed 96.4% medMaxDD  41% median final $11,109
-   $3000  +$100/wk | P(reach) 22.8% median  never fast10%   449d | ruin  0.1% killed 96.6% medMaxDD  41% median final $33,547
+   $1     +$0  /wk | P(reach)  6.6% median  never fast10%  never | ruin 30.8% killed 69.9% medMaxDD  60% median final $1
+   $1     +$25 /wk | P(reach) 39.4% median  never fast10%   835d | ruin 12.1% killed 60.2% medMaxDD  60% median final $10,962
+   $1     +$100/wk | P(reach) 48.2% median  never fast10%   586d | ruin 12.2% killed 61.6% medMaxDD  60% median final $42,124
+   $30    +$0  /wk | P(reach) 18.1% median  never fast10%  1412d | ruin  0.0% killed 69.0% medMaxDD  60% median final $50
+   $30    +$25 /wk | P(reach) 38.0% median  never fast10%   845d | ruin 12.8% killed 62.6% medMaxDD  60% median final $11,355
+   $30    +$100/wk | P(reach) 47.8% median  never fast10%   598d | ruin 12.2% killed 62.3% medMaxDD  60% median final $42,362
+   $300   +$0  /wk | P(reach) 28.5% median  never fast10%   996d | ruin  0.0% killed 70.1% medMaxDD  61% median final $435
+   $300   +$25 /wk | P(reach) 38.6% median  never fast10%   761d | ruin 10.9% killed 63.6% medMaxDD  60% median final $10,009
+   $300   +$100/wk | P(reach) 49.2% median  never fast10%   562d | ruin 11.3% killed 59.8% medMaxDD  60% median final $48,681
+   $3000  +$0  /wk | P(reach) 38.2% median  never fast10%   521d | ruin  0.0% killed 69.3% medMaxDD  60% median final $5,319
+   $3000  +$25 /wk | P(reach) 42.6% median  never fast10%   512d | ruin  0.0% killed 67.0% medMaxDD  60% median final $14,082
+   $3000  +$100/wk | P(reach) 48.3% median  never fast10%   439d | ruin  9.2% killed 65.6% medMaxDD  60% median final $46,297
 [C Breakout] $1/min: K=$245,760  (CAPACITY IGNORED here: ceiling is $19/day, so in reality impossible)
-   $1     +$0  /wk | P(reach)  0.1% median  never fast10%  never | ruin  0.1% killed 99.9% medMaxDD  41% median final $1
-   $1     +$25 /wk | P(reach)  4.0% median  never fast10%  never | ruin  7.0% killed 99.5% medMaxDD  41% median final $7,459
-   $1     +$100/wk | P(reach)  6.6% median  never fast10%  never | ruin  9.4% killed 99.5% medMaxDD  41% median final $29,491
-   $30    +$0  /wk | P(reach)  0.7% median  never fast10%  never | ruin  0.0% killed 99.8% medMaxDD  41% median final $31
-   $30    +$25 /wk | P(reach)  4.5% median  never fast10%  never | ruin  7.3% killed 99.5% medMaxDD  41% median final $7,475
-   $30    +$100/wk | P(reach)  7.2% median  never fast10%  never | ruin  8.8% killed 99.5% medMaxDD  42% median final $29,700
-   $300   +$0  /wk | P(reach)  1.3% median  never fast10%  never | ruin  0.0% killed 99.9% medMaxDD  41% median final $321
-   $300   +$25 /wk | P(reach)  4.2% median  never fast10%  never | ruin  0.1% killed 99.6% medMaxDD  41% median final $7,736
-   $300   +$100/wk | P(reach)  8.1% median  never fast10%  never | ruin  8.2% killed 99.8% medMaxDD  41% median final $29,985
-   $3000  +$0  /wk | P(reach)  5.1% median  never fast10%  never | ruin  0.0% killed 99.9% medMaxDD  41% median final $3,307
-   $3000  +$25 /wk | P(reach)  4.6% median  never fast10%  never | ruin  0.0% killed 99.8% medMaxDD  41% median final $10,443
-   $3000  +$100/wk | P(reach)  8.8% median  never fast10%  never | ruin  0.0% killed 99.8% medMaxDD  42% median final $33,163
+   $1     +$0  /wk | P(reach)  1.1% median  never fast10%  never | ruin 38.7% killed 82.1% medMaxDD  61% median final $1
+   $1     +$25 /wk | P(reach) 26.4% median  never fast10%  1092d | ruin 27.9% killed 77.0% medMaxDD  61% median final $9,851
+   $1     +$100/wk | P(reach) 34.2% median  never fast10%   816d | ruin 31.1% killed 77.2% medMaxDD  61% median final $35,447
+   $30    +$0  /wk | P(reach)  7.6% median  never fast10%  never | ruin  0.0% killed 84.8% medMaxDD  61% median final $39
+   $30    +$25 /wk | P(reach) 26.3% median  never fast10%  1082d | ruin 28.6% killed 77.7% medMaxDD  61% median final $8,954
+   $30    +$100/wk | P(reach) 33.2% median  never fast10%   838d | ruin 28.4% killed 77.1% medMaxDD  61% median final $35,751
+   $300   +$0  /wk | P(reach) 17.0% median  never fast10%  1330d | ruin  0.0% killed 82.8% medMaxDD  61% median final $368
+   $300   +$25 /wk | P(reach) 26.1% median  never fast10%  1009d | ruin 22.4% killed 78.5% medMaxDD  61% median final $8,490
+   $300   +$100/wk | P(reach) 34.2% median  never fast10%   778d | ruin 29.5% killed 78.3% medMaxDD  61% median final $35,341
+   $3000  +$0  /wk | P(reach) 24.6% median  never fast10%   797d | ruin  0.0% killed 83.5% medMaxDD  61% median final $3,879
+   $3000  +$25 /wk | P(reach) 28.8% median  never fast10%   754d | ruin  0.0% killed 82.1% medMaxDD  61% median final $12,065
+   $3000  +$100/wk | P(reach) 35.5% median  never fast10%   644d | ruin  0.2% killed 80.7% medMaxDD  61% median final $41,045
 [C Breakout] $1/2min: K=$122,880  (CAPACITY IGNORED here: ceiling is $19/day, so in reality impossible)
-   $1     +$0  /wk | P(reach)  0.2% median  never fast10%  never | ruin  0.1% killed 99.9% medMaxDD  41% median final $1
-   $1     +$25 /wk | P(reach)  5.5% median  never fast10%  never | ruin  9.3% killed 99.7% medMaxDD  41% median final $7,434
-   $1     +$100/wk | P(reach) 11.1% median  never fast10%   882d | ruin  9.8% killed 99.8% medMaxDD  42% median final $29,618
-   $30    +$0  /wk | P(reach)  0.7% median  never fast10%  never | ruin  0.0% killed 99.8% medMaxDD  41% median final $33
-   $30    +$25 /wk | P(reach)  5.1% median  never fast10%  never | ruin  8.5% killed 99.7% medMaxDD  41% median final $7,457
-   $30    +$100/wk | P(reach) 11.1% median  never fast10%   821d | ruin  8.6% killed 99.7% medMaxDD  41% median final $29,582
-   $300   +$0  /wk | P(reach)  2.0% median  never fast10%  never | ruin  0.0% killed 99.9% medMaxDD  42% median final $324
-   $300   +$25 /wk | P(reach)  6.2% median  never fast10%  never | ruin  0.2% killed 99.8% medMaxDD  41% median final $7,822
+   $1     +$0  /wk | P(reach)  1.6% median  never fast10%  never | ruin 38.4% killed 83.0% medMaxDD  61% median final $1
+   $1     +$25 /wk | P(reach) 30.6% median  never fast10%   956d | ruin 30.0% killed 77.6% medMaxDD  61% median final $8,730
+   $1     +$100/wk | P(reach) 38.2% median  never fast10%   681d | ruin 31.4% killed 78.1% medMaxDD  61% median final $33,199
+   $30    +$0  /wk | P(reach)  9.9% median  never fast10%  never | ruin  0.0% killed 83.9% medMaxDD  61% median final $47
+   $30    +$25 /wk | P(reach) 30.5% median  never fast10%   953d | ruin 27.4% killed 77.2% medMaxDD  61% median final $9,630
+   $30    +$100/wk | P(reach) 40.4% median  never fast10%   680d | ruin 30.0% killed 77.2% medMaxDD  61% median final $34,723
+   $300   +$0  /wk | P(reach) 19.1% median  never fast10%  1172d | ruin  0.0% killed 83.2% medMaxDD  61% median final $416
+   $300   +$25 /wk | P(reach) 30.9% median  never fast10%   855d | ruin 21.3% killed 78.3% medMaxDD  61% median final $9,592
+   $300   +$100/wk | P(reach) 39.1% median  never fast10%   667d | ruin 29.9% killed 77.8% medMaxDD  61% median final $35,711
+   $3000  +$0  /wk | P(reach) 28.5% median  never fast10%   655d | ruin  0.0% killed 82.8% medMaxDD  61% median final $4,143
+   $3000  +$25 /wk | P(reach) 32.6% median  never fast10%   605d | ruin  0.0% killed 82.2% medMaxDD  61% median final $11,687
+   $3000  +$100/wk | P(reach) 38.6% median  never fast10%   516d | ruin  0.1% killed 81.4% medMaxDD  61% median final $37,655
+[C Breakout] $1/5min: K=$49,152  (CAPACITY IGNORED here: ceiling is $19/day, so in reality impossible)
+   $1     +$0  /wk | P(reach)  3.4% median  never fast10%  never | ruin 37.8% killed 84.4% medMaxDD  61% median final $1
+   $1     +$25 /wk | P(reach) 35.7% median  never fast10%   771d | ruin 29.8% killed 76.8% medMaxDD  61% median final $9,037
+   $1     +$100/wk | P(reach) 47.5% median  never fast10%   524d | ruin 29.1% killed 78.3% medMaxDD  61% median final $35,748
+   $30    +$0  /wk | P(reach) 13.5% median  never fast10%  1564d | ruin  0.0% killed 83.9% medMaxDD  61% median final $39
+   $30    +$25 /wk | P(reach) 36.2% median  never fast10%   778d | ruin 29.3% killed 77.1% medMaxDD  61% median final $8,558
+   $30    +$100/wk | P(reach) 48.1% median  never fast10%   517d | ruin 28.6% killed 77.3% medMaxDD  61% median final $36,662
+   $300   +$0  /wk | P(reach) 23.4% median  never fast10%   962d | ruin  0.0% killed 82.8% medMaxDD  61% median final $431
+   $300   +$25 /wk | P(reach) 36.7% median  never fast10%   701d | ruin 20.2% killed 78.8% medMaxDD  61% median final $9,157
+   $300   +$100/wk | P(reach) 48.5% median  never fast10%   500d | ruin 29.0% killed 76.8% medMaxDD  61% median final $37,960
+   $3000  +$0  /wk | P(reach) 32.4% median  never fast10%   457d | ruin  0.0% killed 83.8% medMaxDD  61% median final $4,010
+   $3000  +$25 /wk | P(reach) 35.5% median  never fast10%   434d | ruin  0.0% killed 84.8% medMaxDD  61% median final $11,198
+   $3000  +$100/wk | P(reach) 48.8% median  never fast10%   365d | ruin  0.2% killed 79.2% medMaxDD  61% median final $40,597
+[D Scalp] $1/min: K=$333
+   $1     +$0  /wk | P(reach)  9.6% median  never fast10%  never | ruin 89.7% killed 90.6% medMaxDD  70% median final $0
+   $1     +$100/wk | P(reach) 10.4% median  never fast10%     6d | ruin 89.1% killed 89.7% medMaxDD  69% median final $5,338
+   $30    +$0  /wk | P(reach) 10.3% median  never fast10%     3d | ruin 19.9% killed 90.0% medMaxDD  69% median final $10
+   $30    +$100/wk | P(reach) 10.6% median  never fast10%     3d | ruin 18.9% killed 89.7% medMaxDD  69% median final $5,348
+   $300   +$0  /wk | P(reach) 10.7% median  never fast10%     1d | ruin 19.4% killed 90.0% medMaxDD  69% median final $97
+   $300   +$100/wk | P(reach) 10.2% median  never fast10%     1d | ruin 17.6% killed 90.8% medMaxDD  69% median final $5,437
+   $3000  +$0  /wk | P(reach) 11.3% median  never fast10%     1d | ruin 18.6% killed 89.8% medMaxDD  69% median final $976
+   $3000  +$100/wk | P(reach) 12.2% median  never fast10%     1d | ruin 20.1% killed 88.8% medMaxDD  69% median final $6,312
+[D Scalp] $1/2min: K=$167
+   $1     +$0  /wk | P(reach)  9.0% median  never fast10%  never | ruin 90.3% killed 91.0% medMaxDD  70% median final $0
+   $1     +$100/wk | P(reach) 10.8% median  never fast10%     4d | ruin 88.6% killed 89.4% medMaxDD  69% median final $5,338
+   $30    +$0  /wk | P(reach)  9.1% median  never fast10%  never | ruin 19.4% killed 91.2% medMaxDD  69% median final $10
+   $30    +$100/wk | P(reach)  9.7% median  never fast10%  never | ruin 19.1% killed 90.6% medMaxDD  69% median final $5,348
+   $300   +$0  /wk | P(reach) 10.6% median  never fast10%     1d | ruin 17.9% killed 90.0% medMaxDD  69% median final $98
+   $300   +$100/wk | P(reach) 10.8% median  never fast10%     1d | ruin 18.9% killed 90.0% medMaxDD  70% median final $5,435
+   $3000  +$0  /wk | P(reach)  9.0% median  never fast10%  never | ruin 19.0% killed 92.2% medMaxDD  70% median final $963
+   $3000  +$100/wk | P(reach) 11.2% median  never fast10%     1d | ruin 20.3% killed 89.8% medMaxDD  69% median final $6,317
+[D Scalp] $1/5min: K=$67
+   $1     +$0  /wk | P(reach)  9.8% median  never fast10%  never | ruin 89.5% killed 90.3% medMaxDD  69% median final $0
+   $1     +$100/wk | P(reach)  9.1% median  never fast10%  never | ruin 90.2% killed 91.2% medMaxDD  70% median final $5,338
+   $30    +$0  /wk | P(reach)  9.3% median  never fast10%  never | ruin 20.6% killed 91.1% medMaxDD  70% median final $10
+   $30    +$100/wk | P(reach)  9.8% median  never fast10%  never | ruin 20.4% killed 90.6% medMaxDD  70% median final $5,348
+   $300   +$0  /wk | P(reach) 10.8% median  never fast10%     1d | ruin 20.3% killed 90.2% medMaxDD  70% median final $96
+   $300   +$100/wk | P(reach) 10.6% median  never fast10%     1d | ruin 20.5% killed 90.6% medMaxDD  70% median final $5,434
+   $3000  +$0  /wk | P(reach) 10.1% median  never fast10%     1d | ruin 19.8% killed 91.2% medMaxDD  70% median final $950
+   $3000  +$100/wk | P(reach) 11.3% median  never fast10%     1d | ruin 20.3% killed 89.6% medMaxDD  70% median final $6,303
+[B Staking] $1/min: K=$9,916,981
+   $1     +$0  /wk | not within 60 years
+   $1     +$25 /wk | not within 60 years
+   $1     +$100/wk | not within 60 years
+   $30    +$0  /wk | not within 60 years
+   $30    +$25 /wk | not within 60 years
+   $30    +$100/wk | not within 60 years
+   $300   +$0  /wk | not within 60 years
+   $300   +$25 /wk | not within 60 years
+   $300   +$100/wk | not within 60 years
+   $3000  +$0  /wk | not within 60 years
+   $3000  +$25 /wk | not within 60 years
+   $3000  +$100/wk | not within 60 years
+[B Staking] $1/2min: K=$4,958,491
+   $1     +$0  /wk | not within 60 years
+   $1     +$25 /wk | not within 60 years
+   $1     +$100/wk | not within 60 years
+   $30    +$0  /wk | not within 60 years
+   $30    +$25 /wk | not within 60 years
+   $30    +$100/wk | not within 60 years
+   $300   +$0  /wk | not within 60 years
+   $300   +$25 /wk | not within 60 years
+   $300   +$100/wk | not within 60 years
+   $3000  +$0  /wk | not within 60 years
+   $3000  +$25 /wk | not within 60 years
+   $3000  +$100/wk | not within 60 years
+[B Staking] $1/5min: K=$1,983,396
+   $1     +$0  /wk | not within 60 years
+   $1     +$25 /wk | not within 60 years
+   $1     +$100/wk | not within 60 years
+   $30    +$0  /wk | not within 60 years
+   $30    +$25 /wk | not within 60 years
+   $30    +$100/wk | not within 60 years
+   $300   +$0  /wk | not within 60 years
+   $300   +$25 /wk | not within 60 years
+   $300   +$100/wk | 57.4 years
+   $3000  +$0  /wk | not within 60 years
+   $3000  +$25 /wk | not within 60 years
+   $3000  +$100/wk | 45.9 years
+
+=== 2. GROWTH-OPTIMAL STAKE incl. rent 0.002 SOL (locked), min stake 0.003 SOL, tx fee 0.00003 SOL ===
+A MeanRev, posterior-predictive
+   wallet $0.7 (0.0074 SOL): NO BET (growth<=0; min stake+rent = $0.48 = 68% of wallet)
+   wallet $5 (0.0526 SOL): stake $2.92 = 58% of wallet, growth +0.0056%/trade
+   wallet $30 (0.3158 SOL): stake $17.85 = 60% of wallet, growth +0.0535%/trade
+   wallet $300 (3.1579 SOL): stake $174.69 = 58% of wallet, growth +0.0615%/trade
+   wallet $3000 (31.5789 SOL): stake $1,405.13 = 47% of wallet, growth +0.0406%/trade
+A MeanRev, central edge treated as certain
+   wallet $0.7 (0.0074 SOL): NO BET (growth<=0; min stake+rent = $0.48 = 68% of wallet)
+   wallet $5 (0.0526 SOL): stake $4.81 = 96% of wallet, growth +0.2442%/trade
+   wallet $30 (0.3158 SOL): stake $29.81 = 99% of wallet, growth +0.3054%/trade
+   wallet $300 (3.1579 SOL): stake $299.81 = 100% of wallet, growth +0.2756%/trade
+   wallet $3000 (31.5789 SOL): stake $2,999.81 = 100% of wallet, growth +0.2431%/trade
+C Breakout, posterior-predictive
+   wallet $0.7 (0.0074 SOL): NO BET (growth<=0; min stake+rent = $0.48 = 68% of wallet)
+   wallet $5 (0.0526 SOL): NO BET (growth<=0; min stake+rent = $0.48 = 10% of wallet)
+   wallet $30 (0.3158 SOL): NO BET (growth<=0; min stake+rent = $0.48 = 2% of wallet)
+   wallet $300 (3.1579 SOL): NO BET (growth<=0; min stake+rent = $0.48 = 0% of wallet)
+   wallet $3000 (31.5789 SOL): NO BET (growth<=0; min stake+rent = $0.48 = 0% of wallet)
+D Scalp, posterior-predictive
+   wallet $0.7 (0.0074 SOL): NO BET (growth<=0; min stake+rent = $0.48 = 68% of wallet)
+   wallet $5 (0.0526 SOL): NO BET (growth<=0; min stake+rent = $0.48 = 10% of wallet)
+   wallet $30 (0.3158 SOL): NO BET (growth<=0; min stake+rent = $0.48 = 2% of wallet)
+   wallet $300 (3.1579 SOL): NO BET (growth<=0; min stake+rent = $0.48 = 0% of wallet)
+   wallet $3000 (31.5789 SOL): NO BET (growth<=0; min stake+rent = $0.48 = 0% of wallet)
+D Scalp, +0.15% central treated as certain
+   wallet $0.7 (0.0074 SOL): NO BET (growth<=0; min stake+rent = $0.48 = 68% of wallet)
+   wallet $5 (0.0526 SOL): stake $4.81 = 96% of wallet, growth +0.0802%/trade
+   wallet $30 (0.3158 SOL): stake $29.81 = 99% of wallet, growth +0.1322%/trade
+   wallet $300 (3.1579 SOL): stake $299.81 = 100% of wallet, growth +0.1382%/trade
+   wallet $3000 (31.5789 SOL): stake $2,999.81 = 100% of wallet, growth +0.1430%/trade
+rent effect at the real wallet: 0.0074 SOL -> one 0.003 stake + 0.002 rent = 68% of the wallet is one position; fee 0.00003 SOL on 0.003 = 1.0% extra cost per round trip.
+
+--- cost sweep at wallet $300: central GROSS edge, round-trip cost 0.5/1/4% ---
+A MeanRev (gross .75%/trade, 1.5/day, sd 6%)
+   cost 0.5%: net +0.25%/trade, Kelly f 0.69, growth 0.1%/day, doubling 510.3 days
+   cost 1.0%: net -0.25%/trade, Kelly f 0.00, NO BET (negative)
+   cost 4.0%: net -3.25%/trade, Kelly f 0.00, NO BET (negative)
+C Breakout (gross 5.25%/trade, 3/day, sd 20%)
+   cost 0.5%: net +4.75%/trade, Kelly f 0.51, growth 4.6%/day, doubling 15.4 days
+   cost 1.0%: net +4.25%/trade, Kelly f 0.46, growth 3.8%/day, doubling 18.5 days
+   cost 4.0%: net +1.25%/trade, Kelly f 0.21, growth 0.4%/day, doubling 168.2 days
+D Scalp (gross .65%/trade, 2880 positions/day, sd 1.2%)
+   cost 0.5%: net +0.15%/trade, Kelly f 1.00, growth 5,570.0%/day, doubling 0.2 days
+   cost 1.0%: net -0.35%/trade, Kelly f 0.00, NO BET (negative)
+   cost 4.0%: net -3.35%/trade, Kelly f 0.00, NO BET (negative)
+
+=== 3. CHANCE / LOTTERY (pump.fun tiny pools) ===
+Mara unbiased snapshot: 180 new pools, 68 traded >=4 min; buy 4th traded minute close, mark last print (upper bound)
+   <=-90%: 12%; within +-5%: 50%; >=+100%: 3/68; one print of +805x (suspect), 7x, 2.8x; >=10x at WICK 8/68 (cannot be captured)
+   non-jackpot (<5x) mean -9.4%, n=66
+   capturable jackpot rate ~ 1/68 = 1.5% (Beta(2,68) mean 2.9%, 95% CI 0.4%..7.8%)
+EV per ticket by scenario (jackpot = 10-100x log-uniform x capture; non-jackpot tickets from the 66 real outcomes):
+  round-trip cost 3%:  S0 -12.1% | S1 -6.1% | S2 +15.0% | S3 +42.1% | weighted(25/30/30/15) +6.0%
+  round-trip cost 6%:  S0 -14.8% | S1 -9.0% | S2 +11.5% | S3 +37.8% | weighted(25/30/30/15) +2.7%
+  break-even jackpot rate p*: capture 25%, cost 3%: 1.41%
+  break-even jackpot rate p*: capture 25%, cost 6%: 1.78%
+  break-even jackpot rate p*: capture 50%, cost 3%: 0.67%
+  break-even jackpot rate p*: capture 50%, cost 6%: 0.85%
+  measured: 1 of 68 closes >=10x (1.5%); that one is +805x (likely a price glitch). se of p at n=68 is 1.5 pts, at n=2000 0.27, n=5000 0.17. Unbiased logger needs ~2000+ tradable pools (~5 days of births) to put p within +-0.5 pt.
+--- stake per ticket: EV% is independent of stake except fixed fee 0.00003 SOL=$0.003: at $0.29 stake that is +1.0% cost, at $1 0.3%, at $5 0.06%. Fixed fee makes tickets below ~0.01 SOL ($1) worse. ---
+--- 3b. wallet simulation: scenario mix 25/30/30/15, round trip 6% (3% pump.fun + 3% landing/slippage on tiny curves), hold 45 min, rent locked, fee $0.003/ticket, $5/ticket cap, 365 d, no kill switch ---
+   start $30 N/day 100: $1/5min: P(reach) 15.8% median-of-reachers    43d | P(ruin<$0.5) 54.4% | P(final>start) 45% | by scenario P(reach): S0=0% S1=0% S2=1% S3=100%
+   start $30 N/day 100: $1/min: P(reach)  0.0% median-of-reachers    n/a | P(ruin<$0.5) 55.7% | P(final>start) 44% | by scenario P(reach): S0=0% S1=0% S2=0% S3=0%
+   start $30 N/day 500: $1/5min: P(reach) 44.5% median-of-reachers    12d | P(ruin<$0.5) 55.4% | P(final>start) 45% | by scenario P(reach): S0=0% S1=0% S2=99% S3=100%
+   start $30 N/day 500: $1/min: P(reach)  3.4% median-of-reachers   190d | P(ruin<$0.5) 53.7% | P(final>start) 46% | by scenario P(reach): S0=0% S1=0% S2=0% S3=22%
+   start $300 N/day 100: $1/5min: P(reach) 15.2% median-of-reachers    32d | P(ruin<$0.5) 53.6% | P(final>start) 46% | by scenario P(reach): S0=0% S1=0% S2=2% S3=100%
+   start $300 N/day 100: $1/min: P(reach)  0.0% median-of-reachers    n/a | P(ruin<$0.5) 54.9% | P(final>start) 45% | by scenario P(reach): S0=0% S1=0% S2=0% S3=0%
+   start $300 N/day 500: $1/5min: P(reach) 43.5% median-of-reachers     8d | P(ruin<$0.5) 56.5% | P(final>start) 43% | by scenario P(reach): S0=0% S1=0% S2=100% S3=100%
+   start $300 N/day 500: $1/min: P(reach)  3.5% median-of-reachers   164d | P(ruin<$0.5) 57.6% | P(final>start) 42% | by scenario P(reach): S0=0% S1=0% S2=0% S3=24%
+ticket flow: ~29 births/min = 41,760/day x 38% tradable = ~15,900 candidate tickets/day. $5/ticket cap.
+   $1/5min: needs EV/ticket = N=1000: 5.8%, N=3000: 1.9%, N=15000: 0.4%
+   $1/min: needs EV/ticket = N=1000: 28.8%, N=3000: 9.6%, N=15000: 1.9%

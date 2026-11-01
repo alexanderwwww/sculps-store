@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 jito/blocks.json
 *.log
+jito/blocks*.json
+jito/*.out

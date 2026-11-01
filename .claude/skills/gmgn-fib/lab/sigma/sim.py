@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Sigma (Ultra lab round 2): capital path to $1/min. Run: /usr/bin/python3 sim.py > results.txt
 USD, SOL=$95. Seeded. Edge uncertainty is sampled PER PATH (a path lives in one 'world').
-Kill switch: a strategy stops trading permanently when equity is 40% under its peak (money then idles in staking).
+Kill switch: a strategy stops trading permanently when equity is 60% under its peak (money then idles in staking).
 """
 import numpy as np, json, sys
 rng = np.random.default_rng(7)
@@ -11,7 +11,7 @@ TARGETS = {'$1/min': 1440.0, '$1/2min': 720.0, '$1/5min': 288.0}
 STARTS = [1, 30, 300, 3000]
 DEPS = [0, 25, 100]
 STAKE_DAY = 0.053 / 365
-KILL = 0.40
+KILL = 0.60
 
 def tnorm(df, size):
     x = rng.standard_t(df, size)
@@ -66,7 +66,7 @@ def run(name, start, dep, days, K):
             dd = 1 - W / np.maximum(peak, 1e-9); maxdd = np.maximum(maxdd, dd)
             killed |= dd > KILL
         ruin |= W < np.maximum(0.5, 0.2 * paid)
-        hit = ((W - (paid - start)) >= K) & np.isinf(reach); reach[hit] = d + 1
+        hit = ((W - (paid - start)) >= K) & np.isinf(reach) & ~killed; reach[hit] = d + 1
     return mu, W, reach, killed, ruin, maxdd
 
 def staking(start, dep, years, K):
