@@ -618,5 +618,656 @@
     "sroutes": "Pump.fun Amm"
    }
   }
+ },
+ {
+  "name": "GLITCH / SOL",
+  "mint": "8Xg89xT8Ve34sKiYqYuMs46mycREsCA2F362UscRpump",
+  "liq": 167245.1948,
+  "dex": "pumpswap",
+  "ageMin": 22899.603383333335,
+  "small": 0.008078333333333299,
+  "t": {
+   "0.105": {
+    "rt": 0.014140342857142829,
+    "imp": 0.0066290605093274994,
+    "impS": 0.00756140737483884,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.014377814285714274,
+    "imp": 0.00674872507571949,
+    "impS": 0.007680925665639233,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.01485246190476186,
+    "imp": 0.0069879983853605105,
+    "impS": 0.00790964904642665,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "baton / SOL",
+  "mint": "Hg5Ja55T5wESq4vyFoiVCMeHXtGyVA69X2UHq8hgpump",
+  "liq": 303398.7173,
+  "dex": "meteora",
+  "ageMin": 75540.48671666667,
+  "small": 0.01329866666666668,
+  "t": {
+   "0.105": {
+    "rt": 0.009975838095238054,
+    "imp": 0,
+    "impS": 0.010850525532245673,
+    "routes": "Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.21": {
+    "rt": 0.009975833333333295,
+    "imp": 0,
+    "impS": 0.01085052077454806,
+    "routes": "Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.42": {
+    "rt": 0.010939978571428588,
+    "imp": 0,
+    "impS": 0.011656052015182834,
+    "routes": "Meteora DLMM",
+    "sroutes": "Meteora DLMM"
+   }
+  }
+ },
+ {
+  "name": "WETH / SOL",
+  "mint": "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs",
+  "liq": 6533739.5922,
+  "dex": "orca",
+  "ageMin": 1749521.3367166666,
+  "small": 0.00005999999999994898,
+  "t": {
+   "0.105": {
+    "rt": 0.00008085714285710477,
+    "imp": 0.00008031864602853301,
+    "impS": 5.385400834201789e-7,
+    "routes": "BisonFi+GoonFi V2",
+    "sroutes": "PancakeSwap"
+   },
+   "0.21": {
+    "rt": 0.00008188571428568991,
+    "imp": 0.00008031864602853301,
+    "impS": 0.000056321646552971343,
+    "routes": "BisonFi+GoonFi V2",
+    "sroutes": "Whirlpool+TesseraV"
+   },
+   "0.42": {
+    "rt": 0.00007159047619043069,
+    "imp": 0.00006021520752972488,
+    "impS": 0.000011375953666162164,
+    "routes": "BisonFi+TesseraV",
+    "sroutes": "Whirlpool+GoonFi V2"
+   }
+  }
+ },
+ {
+  "name": "KIM / SOL",
+  "mint": "8pjfN5Ayb4rucGpYE3tZWN6v3EysizjPx1v62zx1pump",
+  "liq": 44121.5444,
+  "dex": "pumpswap",
+  "ageMin": 972.2956,
+  "small": 0.022763666666666627,
+  "t": {
+   "0.105": {
+    "rt": 0.02352071428571434,
+    "imp": 0.021145151932515906,
+    "impS": 0.0024268790800682665,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.02433034285714286,
+    "imp": 0.022708783288374477,
+    "impS": 0.0016592388645674913,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.025916969047619087,
+    "imp": 0.023504707636471937,
+    "impS": 0.0024703256943599053,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "FOCO / SOL",
+  "mint": "7ttfwuBSnbNTgf32gUAT7v9bjdDWsn6pYpp7nmGmpump",
+  "liq": 73639.0896,
+  "dex": "pumpswap",
+  "ageMin": 12562.428933333333,
+  "small": 0.01981866666666665,
+  "t": {
+   "0.105": {
+    "rt": 0.021943828571428625,
+    "imp": 0.0005400396009483554,
+    "impS": 0.002180957807627969,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.02078989047619051,
+    "imp": 0.01840193703963456,
+    "impS": 0.0024327202005209507,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.0217757833333333,
+    "imp": 0.01889658350907457,
+    "impS": 0.002934654773251822,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "Leverhedge / SOL",
+  "mint": "FWatMYieKhRuJ1yuTcmVG1njRhZWwqHwjR11pBympump",
+  "liq": 87078.2283,
+  "dex": "pumpswap",
+  "ageMin": 2253.1289333333334,
+  "small": 0.018835333333333315,
+  "t": {
+   "0.105": {
+    "rt": 0.019270390476190502,
+    "imp": 0.018285459613698315,
+    "impS": 0.0010032762294674726,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.019719114285714268,
+    "imp": 0.018510150224582814,
+    "impS": 0.001231764201543302,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.01382802380952386,
+    "imp": 0.018959237198019847,
+    "impS": 0.009892540395932434,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "AAPLCAT / SOL",
+  "mint": "GYKnd6jGUSQoBUnj6LdGCBtCWYDgr2Zd6QwNPcy5pump",
+  "liq": 83540.9991,
+  "dex": "pumpswap",
+  "ageMin": 1109.4456,
+  "small": 0.019816666666666705,
+  "t": {
+   "0.105": {
+    "rt": 0.020248076190476194,
+    "imp": 0.01878994642729407,
+    "impS": 0.0014860526121526073,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.02078363333333333,
+    "imp": 0.019013191483729742,
+    "impS": 0.001804756021420269,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.021583833333333358,
+    "imp": 0.007910549778532618,
+    "impS": 0.013782309197772825,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "BLUE / SOL",
+  "mint": "CPoGSmcjprCvzA2MFYLJMpQkGjmgVzKg4RVwMdrzpump",
+  "liq": 46747.2438,
+  "dex": "pumpswap",
+  "ageMin": 689.8289333333333,
+  "small": 0.019251666666666667,
+  "t": {
+   "0.105": {
+    "rt": 0.021459895238095217,
+    "imp": 0.019980577222320342,
+    "impS": 0.0015094782627695783,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.021470866666666644,
+    "imp": 0.020319873948701297,
+    "impS": 0.0011561569632596276,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.023487485714285716,
+    "imp": 0.021689943198502648,
+    "impS": 0.0018373955202504813,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "SIS / SOL",
+  "mint": "FdKdpz11GsTofLaNiddrhxrsE4APZYSSfLFqQ9YKpump",
+  "liq": 41186.2184,
+  "dex": "pumpswap",
+  "ageMin": 1161.3289333333332,
+  "small": 0.023750999999999967,
+  "t": {
+   "0.105": {
+    "rt": 0.023649609523809567,
+    "imp": 0.009015280142567922,
+    "impS": 0.014767462189878133,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.02453692857142853,
+    "imp": 0.03246154251743206,
+    "impS": 0,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.026328704761904742,
+    "imp": 0.03335178776115552,
+    "impS": 0.004642302471391575,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "tipr / SOL",
+  "mint": "3kRQDKPGqMWwBdGjiVPpPqVzFsnYG5PDqvrVz1D2pump",
+  "liq": 21199.3447,
+  "dex": "pumpswap",
+  "ageMin": 576.0956,
+  "small": 0.02667133333333338,
+  "t": {
+   "0.105": {
+    "rt": 0.027878257142857188,
+    "imp": 0.00989218359235026,
+    "impS": 0.0029141206476459625,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.027464966666666646,
+    "imp": 0.023683903202146108,
+    "impS": 0.0038727861569852087,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.031185807142857125,
+    "imp": 0.025558729374404454,
+    "impS": 0.005774671022338865,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "paws / SOL",
+  "mint": "Fp4JkqEcKYKBKhb9iMu9NSDeo71HWgq2q9QtXaaKpump",
+  "liq": 86742.4699,
+  "dex": "pumpswap",
+  "ageMin": 7740.61615,
+  "small": 0.019815666666666676,
+  "t": {
+   "0.105": {
+    "rt": 0.019628095238095278,
+    "imp": 0.01866737459444687,
+    "impS": 0.0009789959273506592,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.21": {
+    "rt": 0.019849471428571408,
+    "imp": 0.018888970547918788,
+    "impS": 0.0009789930515703715,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Meteora DLMM"
+   },
+   "0.42": {
+    "rt": 0.021570388095238147,
+    "imp": 0.0193318765975756,
+    "impS": 0.0018612335965564064,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "BNB / SOL",
+  "mint": "EYqygbhZjP7EbM4fSn8devctnksAvPAD1Bt57XBFpump",
+  "liq": 21613.7892,
+  "dex": "pumpswap",
+  "ageMin": 2424.2328166666666,
+  "small": 0.02376233333333333,
+  "t": {
+   "0.105": {
+    "rt": 0.025205657142857163,
+    "imp": 0.021789571452162964,
+    "impS": 0.0034921787695162787,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.026691285714285695,
+    "imp": 0.022193791068243873,
+    "impS": 0.004599576690104382,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.029603985714285685,
+    "imp": 0.015406259626261229,
+    "impS": 0.014419882542250588,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "ANSEM / SOL",
+  "mint": "CvRJ8MrnB1AwjrgX25uyeLJiXNSugTo2ZHh8UXDTpump",
+  "liq": 57036.3287,
+  "dex": "pumpswap",
+  "ageMin": 1273.6328333333333,
+  "small": 0.019818000000000002,
+  "t": {
+   "0.105": {
+    "rt": 0.020061304761904708,
+    "imp": 0.014864914305297907,
+    "impS": 0.005274799905174873,
+    "routes": "Whirlpool",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": -0.0013813476190476237,
+    "imp": 0.015102718188402916,
+    "impS": 0.012942932355569516,
+    "routes": "Whirlpool",
+    "sroutes": "Whirlpool"
+   },
+   "0.42": {
+    "rt": 0.021030630952381002,
+    "imp": 0.007723100271683569,
+    "impS": 0.013411105997066908,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Whirlpool"
+   }
+  }
+ },
+ {
+  "name": "DAVID / SOL",
+  "mint": "6a81PfhejwCM3bB4F3Rnbzk9ALNmg4YGeyjKd5Nxpump",
+  "liq": 47137.0868,
+  "dex": "pumpswap",
+  "ageMin": 1261.0661666666667,
+  "small": 0.010538333333333316,
+  "t": {
+   "0.105": {
+    "rt": 0.02262834285714288,
+    "imp": 0,
+    "impS": 0.022895518533828842,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.02349444761904762,
+    "imp": 0.000117204558665731,
+    "impS": 0.023379983301006296,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.02522210238095235,
+    "imp": 0.0010032776950813344,
+    "impS": 0.024243147294810502,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "Pikmin / SOL",
+  "mint": "2MXhpKgHBREgYYj3bSdorqbuJjkPAve1LTNHtk8Lpump",
+  "liq": 22427.2461,
+  "dex": "pumpswap",
+  "ageMin": 1377.4161666666666,
+  "small": 0.023764000000000007,
+  "t": {
+   "0.105": {
+    "rt": 0.024516809523809524,
+    "imp": 0.0015967295491935488,
+    "impS": 0.025321159648762297,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.027040242857142904,
+    "imp": 0.0009146132694435952,
+    "impS": 0.026149546309744084,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.030342473809523818,
+    "imp": 0.002615840120716768,
+    "impS": 0.02779935235001415,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "BatCat / SOL",
+  "mint": "HCkhfdDNF2dqMxxtL51AzgWU26MBNkUkEzGAHtqkpump",
+  "liq": 72632.0508,
+  "dex": "pumpswap",
+  "ageMin": 165407.48283333334,
+  "small": 0.01981866666666665,
+  "t": {
+   "0.105": {
+    "rt": 0.020371857142857164,
+    "imp": 0.008143562569686855,
+    "impS": 0.012328694064688606,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.020941038095238063,
+    "imp": 0.008431867261347214,
+    "impS": 0.012533164224334922,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.02524690952380948,
+    "imp": 0.009090661733127104,
+    "impS": 0.003180117657300856,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "CATPAD / SOL",
+  "mint": "2gTbp2gwH46rqExzabSyrdR3294SLwCp2rSqWDS6Sim1",
+  "liq": 30962.5087,
+  "dex": "pumpswap",
+  "ageMin": 2775.886716666667,
+  "small": 0.022772666666666663,
+  "t": {
+   "0.105": {
+    "rt": 0.0248955904761905,
+    "imp": 0.02258148193937572,
+    "impS": 0.002367571817041454,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.02607286190476188,
+    "imp": 0.023172228309645857,
+    "impS": 0.0029694421874355984,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.028418930952380905,
+    "imp": 0.023607575225922175,
+    "impS": 0.004927686455138211,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "RAM / SOL",
+  "mint": "6QUHcqYuiPRHxhnYZoygewXtNQr9kUrhc9Tmwgtbpump",
+  "liq": 23785.0227,
+  "dex": "pumpswap",
+  "ageMin": 1998.72005,
+  "small": 0.023760666666666652,
+  "t": {
+   "0.105": {
+    "rt": 0.025300438095238076,
+    "imp": 0.016750949109353912,
+    "impS": 0.008695140847723055,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.02688028095238093,
+    "imp": 0.017711868837927018,
+    "impS": 0.009305777846202816,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.030024669047619024,
+    "imp": 0.019331691722568517,
+    "impS": 0.010903765559461192,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "SI276 / SOL",
+  "mint": "HMYd9tosnUXuNHmq7pXmoePRVBLBBjA3JBfydq6upump",
+  "liq": 69720.1992,
+  "dex": "pumpswap",
+  "ageMin": 37068.88671666667,
+  "small": 0.01981900000000003,
+  "t": {
+   "0.105": {
+    "rt": 0.020342371428571426,
+    "imp": 0.018798317392214887,
+    "impS": 0.0015736357404655449,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.020882100000000015,
+    "imp": 0.019168895451159053,
+    "impS": 0.001746686601694776,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.02195981904761901,
+    "imp": 0.0197351577765656,
+    "impS": 0.002269449209264179,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "ber / SOL",
+  "mint": "CqpUBhhSxHsXbq6AGPKnbxDpWgECUXAVy3BCrwhGpump",
+  "liq": 32152.0266,
+  "dex": "pumpswap",
+  "ageMin": 11362.12005,
+  "small": 0.02374833333333337,
+  "t": {
+   "0.105": {
+    "rt": 0.06715243809523808,
+    "imp": 0.022371582038705463,
+    "impS": 0.023414939135985732,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.21": {
+    "rt": 0.024844328571428598,
+    "imp": 0.0009018218092503181,
+    "impS": 0.023964118126544223,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   },
+   "0.42": {
+    "rt": 0.026941061904761865,
+    "imp": 0.0019782417825818925,
+    "impS": 0.02501230050010782,
+    "routes": "Pump.fun Amm",
+    "sroutes": "Pump.fun Amm"
+   }
+  }
+ },
+ {
+  "name": "REGRETAMIN / SOL",
+  "mint": "DxriaEjx67hHiab4hti1tfaEUe1PTqVnMT7Lzrndgua1",
+  "liq": 24080.8755,
+  "dex": "meteora-damm-v2",
+  "ageMin": 5.1447666666666665,
+  "small": 0.00022100000000002673,
+  "t": {
+   "0.105": {
+    "rt": 0.0008824571428571737,
+    "imp": 0.007796126801721601,
+    "impS": 0,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.21": {
+    "rt": 0.001563990476190491,
+    "imp": 0.008134800419500501,
+    "impS": 0,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   },
+   "0.42": {
+    "rt": -0.027243838095238004,
+    "imp": 0.00881145453055228,
+    "impS": 0,
+    "routes": "Meteora DAMM v2",
+    "sroutes": "Meteora DAMM v2"
+   }
+  }
  }
 ]
