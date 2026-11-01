@@ -75,3 +75,9 @@ B Staking 5.3% APY = 0.0145%/day; K: $1/min $9,916,981  $1/2min $4,958,491  $1/5
 [C Breakout] $1/2min: K=$122,880  (CAPACITY IGNORED here: ceiling is $19/day, so in reality impossible)
    $1     +$0  /wk | P(reach)  0.2% median  never fast10%  never | ruin  0.1% killed 99.9% medMaxDD  41% median final $1
    $1     +$25 /wk | P(reach)  5.5% median  never fast10%  never | ruin  9.3% killed 99.7% medMaxDD  41% median final $7,434
+   $1     +$100/wk | P(reach) 11.1% median  never fast10%   882d | ruin  9.8% killed 99.8% medMaxDD  42% median final $29,618
+   $30    +$0  /wk | P(reach)  0.7% median  never fast10%  never | ruin  0.0% killed 99.8% medMaxDD  41% median final $33
+   $30    +$25 /wk | P(reach)  5.1% median  never fast10%  never | ruin  8.5% killed 99.7% medMaxDD  41% median final $7,457
+   $30    +$100/wk | P(reach) 11.1% median  never fast10%   821d | ruin  8.6% killed 99.7% medMaxDD  41% median final $29,582
+   $300   +$0  /wk | P(reach)  2.0% median  never fast10%  never | ruin  0.0% killed 99.9% medMaxDD  42% median final $324
+   $300   +$25 /wk | P(reach)  6.2% median  never fast10%  never | ruin  0.2% killed 99.8% medMaxDD  41% median final $7,822
