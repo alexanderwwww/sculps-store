@@ -65,6 +65,7 @@ export default function BuyBox({ item, query, viewerEmail, certImage, certPdf }:
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [going, setGoing] = useState(false);
   const [error, setError] = useState("");
   const dialogRef = useRef<HTMLDivElement | null>(null);
 
@@ -159,9 +160,9 @@ export default function BuyBox({ item, query, viewerEmail, certImage, certPdf }:
       </div>
 
       <div className="ma-bb-actions">
-        <Form method="post" action={action(true)}>
+        <Form method="post" action={action(true)} onSubmit={() => setGoing(true)}>
           <input type="hidden" name="variantId" value={item.variantId} />
-          <button className="ma-bb-btn ma-bb-buy" disabled={off}>{item.notForSale ? "Not for sale" : item.available > 0 ? "Buy now" : "Sold"}</button>
+          <button className="ma-bb-btn ma-bb-buy" disabled={off || going}>{item.notForSale ? "Not for sale" : item.available > 0 ? (going ? "Opening checkout…" : "Buy now") : "Sold"}</button>
         </Form>
         <Form method="post" action={action(false)}>
           <input type="hidden" name="variantId" value={item.variantId} />
@@ -175,9 +176,9 @@ export default function BuyBox({ item, query, viewerEmail, certImage, certPdf }:
         <div className="ma-bb-sticky" role="region" aria-label="Buy this piece">
           <div className="ma-bb-sticky-price">{money(item.priceCents, item.currency)}</div>
           <button type="button" className="ma-bb-btn ma-bb-offer" onClick={() => open("offer")}>Make an offer</button>
-          <Form method="post" action={action(true)}>
+          <Form method="post" action={action(true)} onSubmit={() => setGoing(true)}>
             <input type="hidden" name="variantId" value={item.variantId} />
-            <button className="ma-bb-btn ma-bb-buy">Buy now</button>
+            <button className="ma-bb-btn ma-bb-buy" disabled={going}>{going ? "Opening checkout…" : "Buy now"}</button>
           </Form>
         </div>
       )}

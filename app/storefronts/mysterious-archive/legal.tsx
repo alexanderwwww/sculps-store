@@ -48,12 +48,11 @@ export const LEGAL: Record<string, LegalPageDef> = {
   },
   returns: {
     title: "Returns & refunds",
-    lead: "One of a kind, sold as photographed, guaranteed authentic.",
+    lead: "Every customer is welcome to a refund.",
     sections: [
+      { h: "Refunds, for everyone", p: ["Every customer is welcome to a refund. If a piece is not right for you, send it back and your payment comes back to you."] },
+      { h: "How it works", p: ["Email [[email]] to start your return, and we arrange it with you.", "Send the piece back to us.", "The moment we receive it, your refund is issued, instantly, to the payment method you paid with."] },
       { h: "Authenticity guarantee", p: ["If a piece is ever proven not authentic, you receive a full refund."] },
-      { h: "A piece that is not as described", p: ["Every piece is photographed in detail, and the photographs show the individual piece you are buying. If it arrives and is not as described, email [[email]] within 7 days of delivery. Return it in the condition you received it, and you receive a full refund."] },
-      { h: "Change of mind", p: ["Each piece is unique, so returns for change of mind are not offered. Look closely at the photographs and ask us anything before you buy: Chat and Make an offer are on every piece."] },
-      { h: "How refunds are paid", p: ["Refunds go back to the original payment method."] },
     ],
   },
   privacy: {
@@ -77,7 +76,7 @@ export const LEGAL: Record<string, LegalPageDef> = {
       { h: "Prices and payment", p: ["Prices are in US dollars. Payment is taken at checkout through Stripe, with the methods shown there. Your order is confirmed when your payment is confirmed."] },
       { h: "Offers", p: ["Make an offer opens a conversation with us. When we accept an offer, you receive a private checkout link at the agreed price, for that piece and for you only, valid for 6 hours. If it is not used within 6 hours, it expires."] },
       { h: "Authenticity", p: ["Every order includes a printed Mysterious Archive certificate of authenticity. If a piece is ever proven not authentic, you receive a full refund. Certificates are issued independently by Mysterious Archive and are not manufacturer certificates or laboratory reports."] },
-      { h: "Delivery, returns and refunds", p: ["[[/shipping|Shipping]] and [[/returns|Returns & refunds]] form part of these terms."] },
+      { h: "Delivery, returns and refunds", p: ["Every customer is welcome to a refund: return the piece and your refund is issued the moment we receive it. [[/shipping|Shipping]] and [[/returns|Returns & refunds]] form part of these terms."] },
       { h: "Trademarks", p: ["Mysterious Archive is an independent reseller. It is not affiliated with, or endorsed by, Chrome Hearts. Chrome Hearts is a trademark of its respective owner."] },
       { h: "Privacy", p: ["Our [[/privacy|Privacy page]] explains how your information is handled."] },
     ],
