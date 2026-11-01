@@ -85,14 +85,18 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
         // build 80 (watch, 2026-11-01): the losses happen at the BUY. ELON's first sell quote was -15.5% under the stake, 白いヤク -7.4%, tipr -2.5%; the
         // coins whose first quote sat at the stake won small. So before buying, ask Jupiter what selling exactly these tokens back would return: a round
         // trip costing more than maxRoundTrip (5%), or no route back at all, is skipped. One extra quote, no extra risk.
+        // build 86 (Alex: "he is not faster"): the buy used to wait for four Jupiter calls in a row (quote, sell-back quote, a second buy quote, swap build).
+        // The sell-back check and the swap build both need only the first quote, so they run TOGETHER; the second buy quote is gone (the 4% slippage covers
+        // the sub-second age). If the round trip is too dear the built swap is thrown away unsent. Two round trips saved on every buy.
+        const priorityLevel = sol >= 0.03 ? "high" : "medium";
+        const build = jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: caps.maxFeeLamports, priorityLevel });
+        build.catch(() => {});
         if (caps.maxRoundTrip > 0) {
           const back = await jupiter.quote({ input: mint, output: SOL_MINT, amount: String(q.outAmount), slippageBps: caps.sellSlippageBps });
           const got = Number(back.outAmount) / lamports; rtCost = Number.isFinite(got) ? +(1 - got).toFixed(4) : null;
           if (!(got >= 1 - caps.maxRoundTrip)) return { ok: false, why: `round trip would cost ${Number.isFinite(got) ? ((1 - got) * 100).toFixed(1) : "?"}%` };
-          q = await jupiter.quote({ input: SOL_MINT, output: mint, amount: lamports, slippageBps: caps.buySlippageBps });   // the swap is built from a fresh buy quote, taken right after the check
-          if (!q.outAmount || !(Number(q.outAmount) > 0)) return { ok: false, why: "no route" };
         }
-        s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: caps.maxFeeLamports, priorityLevel: sol >= 0.03 ? "high" : "medium" });   // build 84: bigger stakes pay for speed (Kenji: priority fee buys speed, not price); the tiny ones keep the cheap fee
+        s = await build;
       } catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}` }; }
       stamps.push(now());
       const r = await exec.land(s.swapTransaction, { kind: "buy", mint, sol, inAmount: String(lamports), outAmount: q.outAmount });
