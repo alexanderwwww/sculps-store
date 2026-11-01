@@ -176,6 +176,14 @@ export class Engine {
     }
   }
   /** price change over the last `secs` seconds from the live quotes (null until there is that much history) */
+  /** build 71 (Alex 2026-11-01: "improve your filters, he loses, you don't protect him"): a forced entry must still be a coin that is rising right now,
+   *  with buyers at least matching sellers and a pool deep enough to get out of. The 5 closes before this: all 3 big losers were forced entries
+   *  into falling or thin coins; the 2 winners were real signals. Constant position stays; a falling coin is no longer taken to keep it. */
+  #idleOk(m) {
+    const lv = this.live.get(m.pool); if (!lv) return false;
+    const ph = this.ph.get(m.pool) || [], prev = ph.length > 1 ? ph[ph.length - 2][1] : null, mom = this.#mom(m.pool, 30);
+    return (lv.buys5 || 0) >= (lv.sells5 || 0) && (lv.liqUsd ?? 0) >= (this.cfg.idleMinLiq ?? 20000) && mom != null && mom >= 0 && prev != null && lv.price >= prev;
+  }
   #mom(pool, secs) { const ph = this.ph.get(pool) || []; if (ph.length < 2) return null; const now = ph[ph.length - 1]; const then = ph.find(([t]) => now[0] - t <= secs * 1000); if (!then || now[0] - then[0] < secs * 500) return null; return now[1] / then[1] - 1; }
   /** Every hard filter (unchanged since build 51: live price, volume/flow, the $25k pool floor, momMin..momMax, the chart
    *  breakout, cooldowns). -> { cs, s, sig } when the coin may be bought right now, else null. loud=false: a silent re-check. */
@@ -267,7 +275,7 @@ export class Engine {
       await this.#consider(m, g.cs, it ? { ...s1, why: `${s1.why} · ${this.#intelWhy(it)}` } : s1, { m: mul, sig: g.sig, narr: nh, intel: it, cr: g.cr });
     }
     if (this.paused || this.open.size >= this.cfg.maxOpen) return;
-    const pick = O.idlePick(this.org, this.now(), (m) => !!this.#gate(m, false) && this.narr?.heat(m)?.trend !== "dying" && !(() => { const it = this.#intel(m); return it && it.full && it.certainty < 0.4; })());
+    const pick = O.idlePick(this.org, this.now(), (m) => this.#idleOk(m) && !!this.#gate(m, false) && this.narr?.heat(m)?.trend !== "dying" && !(() => { const it = this.#intel(m); return it && it.full && it.certainty < 0.4; })());
     if (pick) {
       const g = this.#gate(pick.cand, false);
       this.cool.set(pick.cand.pool, this.now() + 30000);

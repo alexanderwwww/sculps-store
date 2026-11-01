@@ -101,3 +101,6 @@ Alex, after seeing 1 trade lose 10%: "make small profits all the time, 3 trades 
 - Honest limits: a 0.0161 SOL wallet fits ONE 0.012 trade at a time, so 3 trades a minute cannot happen until it holds ~3x more; round-trip cost was measured ~3.5% a trip (lesson 48), so +3% takes are break-even at best. Measure after 20 closes.
 - Known gap: staleMin set to 1 did not stick over the bridge (stayed 0).
 - Mac app: v70 live. Live chart + Sell button ships with the zip (v69) only; fib.js is not in the live-update file list on apps older than 69.
+
+## Lesson 50 — a forced entry must still be rising (build 71, Alex 2026-11-01: "improve your filters, he loses, you don't protect him")
+Constant position stays (idlePick on), but `#idleOk` now gates every idle pick: price rising over 30 s and the last tick up, buyers >= sellers over 5 min, pool liquidity >= $20k (`idleMinLiq`). Evidence: the 3 big losses of the last 5 closes (-14.6, -22, -25.1%) were forced "least-bad band" entries; the 2 small wins were real signals. n=5, so this is a protection, not a proof: judge it on the next 20 closes, forced entries separately from real signals. Live via OTA 71; zip builds are 69 (+chart widget).
