@@ -111,3 +111,11 @@ Process slip: build 73 was published after the gate FAILED (a `grep` in the chai
 
 ## Lesson 52 — the pause line was still on (build 75, Alex 2026-11-01: "he has 0.0117 and doesn't trade")
 `floorFrac: 0.05` halted every buy once the wallet fell under 5% of the recorded start balance ("wallet is 97% down: trading halted", sticky). That is the pause line Alex banned on 2026-10-29 and it was never removed from PLUG_CAPS_EXTRA. floorFrac is now 0 and the halt only applies when it is > 0. The stake scales to the wallet: 0.012 when spendable (balance minus 0.004 reserve) covers it, otherwise 92% of spendable, down to 0.0055. First buy after the fix: MINTED, +12.4% (take +0.6%), 9 s. Fresh-data validation of the slow breakout (lesson 51 research) is scheduled for 11:06 UTC.
+
+## Lesson 53 — 11 live scalps (builds 72-75), hourly check 10:59 UTC
+11 closes in ~3 h (incl. 3 older fib closes): 2 wins, avg -3.1% a close, engine equity 0.0075 -> 0.0058. Leaks, in order:
+1. **Stops fill 2-4x past their level**: stop -2% sold at -7.65% (MrBeast), stop -3% at -2.34% only once. Quote-to-fill gap on thin coins.
+2. **"stale data, closed"** (tipr -3.2%, 牦牛 -7.9%): slow() backstop closes any position whose live price is >20 s old after 2x maxHold; with scalp maxHold 0.4 min that is 48 s, so a feed gap becomes a forced sale at a bad price.
+3. **A +0.6% take paid +12.4% and +2.5%** (the quote jumps): the take is right in direction but the real result is decided by the first real quote vs stake, not the target.
+4. Wins are 2 of 11: entries "rising 2-3% in 20 s" buy coins that already moved. Same finding as the Oct 28 backtest (-4.3% a trade for current rules AND random entries).
+Decision rule kept: judge on 20 closes, fresh-data backtest (collect.mjs, started 10:40, 445 pools) at 11:06.
