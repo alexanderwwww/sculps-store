@@ -56,6 +56,19 @@ ok("recheck of a still-pending order says pending", re.status === "pending");
 const imp = mk(); const origQ = imp.jupiter.quote.bind(imp.jupiter); imp.jupiter.quote = async (a) => ({ ...(await origQ(a)), priceImpactPct: "0.2" });
 r = await imp.ex.buy({ mint: MINT });
 ok("a 20% price impact is refused before sending", !r.ok && /impact/.test(r.why) && imp.W.sent.length === 0, r);
+// build 80: a buy whose round trip would cost more than 5% (ELON: the first sell quote was -15.5%) is skipped before anything is signed or sent
+{
+  const rt = mk(); const oq = rt.jupiter.quote.bind(rt.jupiter);
+  let spent = 0; rt.jupiter.quote = async (a2) => { const q2 = await oq(a2); if (a2.input !== MINT) { spent = Number(a2.amount); return q2; } return { ...q2, outAmount: String(Math.round(spent * 0.8)) }; };   // selling the tokens back returns only 80% of the SOL spent
+  r = await rt.ex.buy({ mint: MINT });
+  ok("a round trip that would cost 20% is refused before sending", !r.ok && /round trip/.test(r.why) && rt.W.sent.length === 0, r);
+  const rn = mk(); const on = rn.jupiter.quote.bind(rn.jupiter);
+  rn.jupiter.quote = async (a2) => { if (a2.input === MINT) throw new Error("no route back"); return on(a2); };
+  r = await rn.ex.buy({ mint: MINT });
+  ok("a coin with no route back to SOL is never bought", !r.ok && rn.W.sent.length === 0, r);
+  const rg = mk(); r = await rg.ex.buy({ mint: MINT });
+  ok("a normal round trip still buys, from a fresh buy quote", r.ok === true && rg.W.sent.length >= 1, r);
+}
 
 // sells
 t = mk({ held: 5000000000n }); t.W.lastKind = "sell"; t.W.zero = true; r = await t.ex.sell({ mint: MINT });
