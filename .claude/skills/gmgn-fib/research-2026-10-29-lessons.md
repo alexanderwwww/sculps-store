@@ -142,3 +142,10 @@ Wallet: 0.0161 (08:50) -> 0.0117 (11:35) after 20 live closes.
 ## Lesson 57 — why it "did not trade" (2026-11-01 11:40-11:55 UTC, Alex: "make him trade")
 Nothing was broken: 87-204 coins looked at per few minutes, 0 passed. Second hidden liquidity gate found: `entryMinLiq` (cfg, 10000) inside #consider rejects with "pool too thin to get out of" even after `liveMinLiq` was lowered (that message is printed by BOTH). Bridge now: entryMinLiq 3000, liveMinLiq 3000, liveBuyRatio 0.3, liveMinVol5 10, momMin 0, momMax 0.3, minAgeMin 0. First trade after: MARVIN 11:54, 0.0037 stake.
 **Anomaly to chase**: MARVIN exit "take profit +0.6%" filled at -10.6% (pnl -0.0003 on a 0.0037 stake). The take is decided on Jupiter's sell QUOTE vs stake; the fill was 11 points worse. At tiny stakes, fixed costs (priority fee, ATA rent cycle) and quote staleness are a large share. Next: log decision quote vs actual swap output per sell, and test whether quote > fill gap grows as stake shrinks.
+
+## Lesson 58 — the Oct-chosen configs on fresh November pools (2026-11-01 11:56 UTC; `tools/autotrader/nov-check.mjs`)
+60 pools, 31k candles (collector died after 60 of 431; data/pools-nov.json, oldest candle 2026-10-31 05:51). Pools never used to choose anything.
+- Current defaults -5.13% a trade (n=953, win 20%); random entries -4.67%. Both worse than Oct (-4.3/-4.2): costs plus a harsher market.
+- Slow breakout L10 vol1.5x green0.34 tp+90% sl-25% hold 60 min age 4-90: **NOV n=30, win 67%, avg +1.53% +-2.95** (Oct train +6.5%, Oct test +3.15% +-2.36). Same sign in all three sets but shrinking: out-of-sample (Oct test + Nov) ~ +2.5% a trade, ~1.4 sigma. NOT proven. The other 11 top configs: NOV -0.7% to -1.2%.
+- At a 0.012-0.019 SOL wallet a +2.5% edge is ~+0.0001 SOL a trade: invisible next to fees. It needs size and n>=150 to mean anything.
+Next: keep collecting (collector resumes from scratch, ~6 pools/min), shadow-trade the slow breakout alongside live before any switch.
