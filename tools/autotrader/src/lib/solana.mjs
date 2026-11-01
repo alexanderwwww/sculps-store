@@ -82,7 +82,7 @@ export class Rpc {
           const j = await r.json();
           if (j.error) { const e = new Error(`${method}: ${j.error.message}`); e.rpc = j.error; throw e; }
           return j.result;
-        } catch (e) { last = e; if (e.rpc) throw e; }
+        } catch (e) { if (e.rpc) throw e; const c = e.cause; last = new Error(`${e.message}${c ? ` (${c.code || c.name || ""} ${String(c.message || "").slice(0, 80)} @ ${new URL(url).host})` : ` @ ${new URL(url).host}`}`); }
       }
     }
     throw new Error(`${method}: ${last?.message || "unreachable"}`);

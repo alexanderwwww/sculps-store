@@ -9,7 +9,7 @@ export async function solBalance(wallet, { fetchImpl = fetch, endpoints = ENDPOI
       const v = j?.result?.value;
       if (typeof v === "number") return v / 1e9;
       last = new Error(j?.error?.message || "no value");
-    } catch (e) { last = e; }
+    } catch (e) { const c = e.cause; last = new Error(`${e.message}${c ? ` (${c.code || c.name || ""} ${String(c.message || "").slice(0, 80)} @ ${new URL(url).host})` : ` @ ${new URL(url).host}`}`); }
   }
   throw new Error(`could not read the wallet balance: ${last?.message || "unknown"}`);
 }
