@@ -153,3 +153,5 @@ Cite key: [xugc skill] = `.claude/skills/xugc/SKILL.md` (section named) | [bible
 - **Face references are her own photos only** (selfie without glasses, a frame with the burgundy glasses from her store video), never an earlier AI output.
 - **Real best-seller data for Greek Christmas costumes is not on the open web** (Skroutz publishes categories, retailer pages return 403). The one real signal: a Thessaloniki tailor (CNN Greece) says Santa suit first, elf with bells second, Nutcracker for school plays. Ask her what sells.
 - Rate limit: `generate_image_batch` rejected 2 of 6 with 429 (never charged); resubmit those alone.
+
+- **Alex's video rule (2026-11-02): no `generate_video` call at all without his word "generate", price checks included.** His budget is small (he had 193 credits, then 385; 210 for one 30 s Intone ad was refused). The cheap way that looks real: 3 talking shots of about 8 s at 480p, cut with still pictures and her real voice running underneath. Candidates with 480p and an audio reference: Seedance 2.5, Grok Video 1.5, Wan 3.0 / Prime, MiniMax H3 Max. Intone (best lip-sync) is 720p minimum: 49 credits for 6.4 s, 210 for 29.5 s.
