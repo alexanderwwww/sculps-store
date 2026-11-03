@@ -95,3 +95,7 @@ Role handoff (Alex, October 17): Claude takes over website design/implementation
 - Discount code JUSTFORVINCENT: fixed $500, one use, no expiry (Alex's code, 2026-10-31). Change it in Shop Admin → Discounts.
 - Cloudflare rate-limits `wrangler deploy` after ~6 deploys in an hour ("Retry-After" 60-130 s). Batch changes into one deploy; never run two deploys at once.
 - Verified live, no charge: all pages 200, checkout PaymentIntent setup_future_usage=null, total with the code $3,550. A real card payment end to end is NOT proven.
+
+## 2026-11-03 company identity on the site (live version b851774d-d291-47dc-ba6b-e930cf186766)
+- A customer asked who is behind the site. Alex gave: company **AIGIS LLC**, owner **Alexandros Bougiouklis**. Every archive footer now reads "Mysterious Archive is the trade name of AIGIS LLC, owned and operated by Alexandros Bougiouklis." (`CompanyLine`, `COMPANY_STATEMENT` in `legal.tsx`), and the sentence is also on About ("The company"), Contact, Terms ("Who is selling") and Privacy ("Who we are"). `stores.legal_name` = AIGIS LLC.
+- NOT published, on purpose: a street address and the state of formation. AIGIS LLC was Administratively Dissolved (Tax) in Wyoming on 2025-07-09 (see payments skill): reinstate it and get the Good Standing certificate before adding "a Wyoming limited liability company" or any address, and before a processor or customer checks the state record.

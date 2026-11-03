@@ -9,7 +9,9 @@ import { Link } from "react-router";
  * and nothing is invented. Add them to Shop Admin → Settings (legal name, address) and to LEGAL_ENTITY below.
  */
 export const CONTACT_EMAIL = "mysterious@mysteriousarchive.com";
-export const LEGAL_ENTITY = ""; // legal business name, when Alex gives it (shown in the footer and Terms)
+export const LEGAL_ENTITY = "AIGIS LLC"; // the company behind the trade name Mysterious Archive (given by Alex, 2026-11-03)
+export const OWNER = "Alexandros Bougiouklis"; // owner and operator (given by Alex, 2026-11-03)
+export const COMPANY_STATEMENT = "Mysterious Archive is the trade name of " + LEGAL_ENTITY + ", owned and operated by " + OWNER + ".";
 export const PLACE = "New York, NY, United States";
 
 type Section = { h: string; p: string[] };
@@ -23,6 +25,7 @@ export const LEGAL: Record<string, LegalPageDef> = {
       { h: "The archive", p: ["Mysterious Archive collects and offers Chrome Hearts pieces: sterling silver jewelry, leather belts and buckles, hats, eyewear and footwear. Each piece is one of a kind and is inspected and photographed before it is offered."] },
       { h: "Authenticity", p: ["Every piece is inspected and authenticated by Mysterious Archive, and every order includes a printed Mysterious Archive certificate of authenticity. If a piece is ever proven not authentic, you receive a full refund.", "Our certificates are issued independently by Mysterious Archive. They are not manufacturer certificates or gemstone laboratory reports."] },
       { h: "Independent", p: ["Mysterious Archive is an independent reseller and is not affiliated with, or endorsed by, Chrome Hearts. Chrome Hearts is a trademark of its respective owner."] },
+      { h: "The company", p: [COMPANY_STATEMENT] },
       { h: "Where we are", p: [PLACE + "."] },
     ],
   },
@@ -33,6 +36,7 @@ export const LEGAL: Record<string, LegalPageDef> = {
       { h: "Email", p: ["Write to [[email]]"] },
       { h: "Questions about a piece", p: ["Ask about condition, sizing or details from the piece's page with “Chat”, or make an offer. Both open a conversation in your Messages, where we answer personally."] },
       { h: "Your order", p: ["Include the email you ordered with and the piece's reference (MA-xxxxxx), and we will help."] },
+      { h: "The company", p: [COMPANY_STATEMENT] },
       { h: "Where we are", p: [PLACE + "."] },
     ],
   },
@@ -59,6 +63,7 @@ export const LEGAL: Record<string, LegalPageDef> = {
     title: "Privacy",
     lead: "What we collect, why, and who sees it.",
     sections: [
+      { h: "Who we are", p: [COMPANY_STATEMENT + " Contact: [[email]]"] },
       { h: "What we collect", p: ["Your email address, when you sign in with a code, send a message or make an offer, or place an order.", "Your name, delivery address and phone number, when you place an order.", "Your messages and offers to us.", "Basic visit information: pages viewed, device type and approximate location, and where you arrived from."] },
       { h: "Payments", p: ["Payments are processed by Stripe. Your card details go directly to Stripe and never reach our servers. We receive confirmation of the payment, and the last four digits and brand of the card."] },
       { h: "How we use it", p: ["To sign you in, answer your messages, take and deliver your order, send your order emails and keep the site secure. We also use visit information to understand how the site is used and to measure our advertising."] },
@@ -71,7 +76,7 @@ export const LEGAL: Record<string, LegalPageDef> = {
     title: "Terms of sale",
     lead: "The terms for buying from Mysterious Archive.",
     sections: [
-      { h: "Who is selling", p: ["Mysterious Archive" + (LEGAL_ENTITY ? " (" + LEGAL_ENTITY + ")" : "") + ", " + PLACE + ". Contact: [[email]]"] },
+      { h: "Who is selling", p: [COMPANY_STATEMENT, PLACE + ". Contact: [[email]]"] },
       { h: "The pieces", p: ["Every piece is a one-of-a-kind collectible and is sold as photographed. Pieces are pre-owned unless the page says new or unworn; condition is stated on each piece and the photographs show any patina or wear. Each piece exists once: if two people try to buy it, the first completed payment secures it."] },
       { h: "Prices and payment", p: ["Prices are in US dollars. Payment is taken at checkout through Stripe, with the methods shown there. Your order is confirmed when your payment is confirmed."] },
       { h: "Offers", p: ["Make an offer opens a conversation with us. When we accept an offer, you receive a private checkout link at the agreed price, for that piece and for you only, valid for 6 hours. If it is not used within 6 hours, it expires."] },
@@ -99,7 +104,12 @@ export function LegalLinks({ query }: { query: string }) {
 
 /** The line that names who is behind the site, shown in the footer of every archive page. */
 export function CompanyLine() {
-  return <p className="ma-company">Mysterious Archive{LEGAL_ENTITY ? " · " + LEGAL_ENTITY : ""} · {PLACE} · <a href={"mailto:" + CONTACT_EMAIL}>{CONTACT_EMAIL}</a></p>;
+  return (
+    <p className="ma-company">
+      Mysterious Archive is the trade name of {LEGAL_ENTITY}, owned and operated by {OWNER}.<br />
+      {PLACE} · <a href={"mailto:" + CONTACT_EMAIL}>{CONTACT_EMAIL}</a>
+    </p>
+  );
 }
 
 /** Turns [[email]] and [[/page|Label]] inside a paragraph into real links, so an address never sits at the end of a sentence next to a full stop. */
@@ -113,7 +123,7 @@ function rich(text: string, query: string) {
   });
 }
 
-export const LEGAL_UPDATED = "October 31, 2026";
+export const LEGAL_UPDATED = "November 3, 2026";
 
 export function LegalPage({ def, query = "" }: { def: LegalPageDef; query?: string }) {
   return (
