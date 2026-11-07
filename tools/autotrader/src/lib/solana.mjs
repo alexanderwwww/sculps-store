@@ -95,7 +95,7 @@ export function findPda(seeds, programId) {
 }
 export const ATA_PROGRAM = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 export const ataOf = (owner, mint, tokenProgram) => findPda([b58decode(owner), b58decode(tokenProgram), b58decode(mint)], ATA_PROGRAM);
-const ENDPOINTS = ["https://api.mainnet.solana.com", "https://api.mainnet-beta.solana.com", "https://solana-rpc.publicnode.com"];
+const ENDPOINTS = ["https://solana-rpc.publicnode.com", "https://api.mainnet.solana.com", "https://api.mainnet-beta.solana.com"];   // build 103: publicnode first (answers every non-indexed call)
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export class Rpc {
   constructor({ fetchImpl = fetch, endpoints = ENDPOINTS, wait = sleep } = {}) { Object.assign(this, { fetchImpl, endpoints, wait }); }
@@ -107,7 +107,7 @@ export class Rpc {
           const r = await this.fetchImpl(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(15000) });
           if (r.status === 429) { await this.wait(1500 * (attempt + 1)); continue; }
           const j = await r.json();
-          if (j.error) { const e = new Error(`${method}: ${j.error.message}`); e.rpc = j.error; throw e; }
+          if (j.error) { const e = new Error(`${method}: ${j.error.message}`); if (/blocked|personal token|too many|rate limit|not allowed|upgrade|api key/i.test(String(j.error.message))) { last = e; break; } e.rpc = j.error; throw e; }   // build 103: a refusing endpoint is skipped, not fatal
           return j.result;
         } catch (e) { if (e.rpc) throw e; const c = e.cause; last = new Error(`${e.message}${c ? ` (${c.code || c.name || ""} ${String(c.message || "").slice(0, 80)} @ ${new URL(url).host})` : ` @ ${new URL(url).host}`}`); }
       }

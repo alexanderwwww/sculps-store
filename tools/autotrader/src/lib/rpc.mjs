@@ -1,6 +1,6 @@
 // SOL balance of the wallet from the public chain: the number the sizer and the halt rule trust.
 // build 100: publicnode now refuses getTokenAccountsByOwner without a paid token, so every sell failed to find its tokens (2026-11-07)
-const ENDPOINTS = ["https://api.mainnet.solana.com", "https://api.mainnet-beta.solana.com", "https://solana-rpc.publicnode.com"];
+const ENDPOINTS = ["https://solana-rpc.publicnode.com", "https://api.mainnet.solana.com", "https://api.mainnet-beta.solana.com"];   // build 103: publicnode first (answers every non-indexed call)
 export async function solBalance(wallet, { fetchImpl = fetch, endpoints = ENDPOINTS } = {}) {
   let last;
   for (const url of endpoints) {
