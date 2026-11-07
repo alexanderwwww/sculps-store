@@ -1,6 +1,12 @@
 // Ultra. A small local server on this Mac: the engine runs in here, the screen is a page on 127.0.0.1, and the only
 // things that leave the machine are the market feeds, the Jupiter quotes and the signed transactions from the Phantom wallet.
 import { createServer } from "node:http";
+import dns from "node:dns";
+import net from "node:net";
+// build 94 (2026-11-07): on Alex's Mac every Jupiter and RugCheck call failed with "fetch failed" while the link to Cloudflare worked.
+// Node tries IPv6 first; a broken IPv6 route kills fetch. Prefer IPv4 and let Node race both families.
+try { dns.setDefaultResultOrder("ipv4first"); } catch { /* old node */ }
+try { net.setDefaultAutoSelectFamily(true); } catch { /* old node */ }
 import { spawn } from "node:child_process";
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";

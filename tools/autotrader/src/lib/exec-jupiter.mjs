@@ -97,7 +97,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
           if (!(got >= 1 - caps.maxRoundTrip)) return { ok: false, why: `round trip would cost ${Number.isFinite(got) ? ((1 - got) * 100).toFixed(1) : "?"}%` };
         }
         s = await build;
-      } catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}` }; }
+      } catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}${e.cause ? ` (${String(e.cause.code || e.cause.message || e.cause).slice(0, 60)})` : ""}` }; }
       stamps.push(now());
       const r = await exec.land(s.swapTransaction, { kind: "buy", mint, sol, inAmount: String(lamports), outAmount: q.outAmount });
       if (!r.ok) return { ...r, orderId: r.signature };
@@ -125,7 +125,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       if (!(amount > 0n)) return { ok: false, why: "nothing to sell" };
       let q, s;
       try { q = await jupiter.quote({ input: mint, output: SOL_MINT, amount: amount.toString(), slippageBps: caps.sellSlippageBps }); if (!q.outAmount) return { ok: false, why: "no route to sell" }; s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: (caps.sellFeeLadder?.[1] ?? [0, caps.maxFeeLamports])[1], priorityLevel: caps.sellFeeLadder?.[1]?.[0] ?? "high" }); }
-      catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}` }; }
+      catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}${e.cause ? ` (${String(e.cause.code || e.cause.message || e.cause).slice(0, 60)})` : ""}` }; }
       const r = await exec.land(s.swapTransaction, { kind: "sell", mint });
       if (!r.ok) return r;
       let out = q.outAmount; const net = await rpc.netLamports(r.signature).catch(() => null); if (net != null) out = String(Math.max(0, net));
@@ -168,7 +168,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
           q = await jupiter.quote({ input: mint, output: SOL_MINT, amount, slippageBps: bps });
           if (!q.outAmount) return { ok: false, why: "no route to sell" };
           s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: maxL, priorityLevel: lvl });
-        } catch (e) { r = { ok: false, why: `route: ${e.message.slice(0, 120)}` }; continue; }
+        } catch (e) { r = { ok: false, why: `route: ${e.message.slice(0, 120)}${e.cause ? ` (${String(e.cause.code || e.cause.message || e.cause).slice(0, 60)})` : ""}` }; continue; }
         r = await exec.land(s.swapTransaction, { kind: "sell", mint });
         if (r.ok || r.unknown) break;
       }
