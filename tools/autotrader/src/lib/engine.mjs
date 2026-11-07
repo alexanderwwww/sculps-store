@@ -337,7 +337,7 @@ export class Engine {
   async flatten() {
     this.paused = true;
     // build 100: Sell everything also sells any token left in the wallet that the engine no longer tracks
-    if (this.exec.sellWallet) { try { const r = await this.exec.sellWallet(new Set([...this.open.values()].map((p) => p.mint)), [...new Set(this.closed.slice(-200).map((c) => c.mint))]); for (const x of r) this.journal.write({ type: "wallet-sell", ...x }); } catch (e) { this.#err("sell wallet", e); } }
+    if (this.exec.sellWallet) { try { const r = await this.exec.sellWallet(new Set([...this.open.values()].map((p) => p.mint)), [...new Set([...this.closed.slice(-200).map((c) => c.mint), ...(this.journal.mints?.() || [])])]); for (const x of r) this.journal.write({ type: "wallet-sell", ...x }); } catch (e) { this.#err("sell wallet", e); } }
     for (const p of [...this.open.values()]) {
       this.journal.write({ type: "sell-intent", id: p.id, name: p.name, why: "flatten (you pressed it)" });
       const r = (await this.exec.sell?.(p)) ?? { ok: true };
