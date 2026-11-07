@@ -2075,6 +2075,12 @@ function DeliveryFields({
             onTouch={onBlur}
           />
         </Row>
+        {store.slug === "mysterious-archive" && country !== "US" ? (
+          // Alex 2026-11-07: international buyers are told up front that shipping is free and there is nothing to pay on arrival.
+          <p className="ma-intl-note" style={{ margin: "2px 0 10px", fontSize: 13, lineHeight: 1.45, opacity: 0.85 }}>
+            Free international shipping. All duties and import fees are covered by us: nothing to pay on delivery.
+          </p>
+        ) : null}
 
         <Row cn={cn} cols={2}>
           <Cell
