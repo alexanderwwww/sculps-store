@@ -6,7 +6,7 @@ const BASE = { maxSolPerTrade: 0.05, perHour: 30, perDay: 200, floorFrac: 0.7 };
 export const SOL_MINT = "So11111111111111111111111111111111111111112";
 export const PLUG_CAPS_EXTRA = { fixedSol: 0.012,   // Alex 2026-10-29: the golden step between 0.01618 and the doubled 0.03236 (0.01618 x 1.618)
   perHour: 200, perDay: 2000, floorFrac: 0, reserveSol: 0.0012, minBalSol: null };   // Alex 2026-10-29: no pause line, keep trading to the last trade
-export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.03, maxRoundTrip: 0.015, buySlippageBps: 400, sellSlippageBps: 3500, sellLadderBps: [800, 1500, 3500], maxFeeLamports: 50000,
+export const CAPS = { ...BASE, reserveSol: 0.006, maxImpact: 0.03, maxRoundTrip: 0.026, buySlippageBps: 400, sellSlippageBps: 3500, sellLadderBps: [800, 1500, 3500], maxFeeLamports: 50000,
   // a sell pays more only when the cheaper try did not land; the last try keeps the old 150000 ceiling so exits still land
   sellFeeLadder: [["medium", 30000], ["high", 80000], ["veryHigh", 150000]], confirmMs: 45000, pollMs: 400 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -97,7 +97,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
           if (!(got >= 1 - caps.maxRoundTrip)) return { ok: false, why: `round trip would cost ${Number.isFinite(got) ? ((1 - got) * 100).toFixed(1) : "?"}%` };
         }
         s = await build;
-      } catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}${e.cause ? ` (${String(e.cause.code || e.cause.message || e.cause).slice(0, 60)})` : ""}` }; }
+      } catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}${e.cause ? ` (${String(e.cause.code || e.cause.message || e.cause).slice(0, 60)}${e.cause.host ? " " + e.cause.host : ""})` : ""}` }; }
       stamps.push(now());
       const r = await exec.land(s.swapTransaction, { kind: "buy", mint, sol, inAmount: String(lamports), outAmount: q.outAmount });
       if (!r.ok) return { ...r, orderId: r.signature };
@@ -125,7 +125,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       if (!(amount > 0n)) return { ok: false, why: "nothing to sell" };
       let q, s;
       try { q = await jupiter.quote({ input: mint, output: SOL_MINT, amount: amount.toString(), slippageBps: caps.sellSlippageBps }); if (!q.outAmount) return { ok: false, why: "no route to sell" }; s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: (caps.sellFeeLadder?.[1] ?? [0, caps.maxFeeLamports])[1], priorityLevel: caps.sellFeeLadder?.[1]?.[0] ?? "high" }); }
-      catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}${e.cause ? ` (${String(e.cause.code || e.cause.message || e.cause).slice(0, 60)})` : ""}` }; }
+      catch (e) { return { ok: false, why: `route: ${e.message.slice(0, 120)}${e.cause ? ` (${String(e.cause.code || e.cause.message || e.cause).slice(0, 60)}${e.cause.host ? " " + e.cause.host : ""})` : ""}` }; }
       const r = await exec.land(s.swapTransaction, { kind: "sell", mint });
       if (!r.ok) return r;
       let out = q.outAmount; const net = await rpc.netLamports(r.signature).catch(() => null); if (net != null) out = String(Math.max(0, net));
@@ -168,7 +168,7 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
           q = await jupiter.quote({ input: mint, output: SOL_MINT, amount, slippageBps: bps });
           if (!q.outAmount) return { ok: false, why: "no route to sell" };
           s = await jupiter.swap({ quote: q, user: wallet.address, maxFeeLamports: maxL, priorityLevel: lvl });
-        } catch (e) { r = { ok: false, why: `route: ${e.message.slice(0, 120)}${e.cause ? ` (${String(e.cause.code || e.cause.message || e.cause).slice(0, 60)})` : ""}` }; continue; }
+        } catch (e) { r = { ok: false, why: `route: ${e.message.slice(0, 120)}${e.cause ? ` (${String(e.cause.code || e.cause.message || e.cause).slice(0, 60)}${e.cause.host ? " " + e.cause.host : ""})` : ""}` }; continue; }
         r = await exec.land(s.swapTransaction, { kind: "sell", mint });
         if (r.ok || r.unknown) break;
       }
