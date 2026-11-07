@@ -148,6 +148,7 @@
           <h1>Ultra <span class="tm__ver"></span></h1>
           <div class="tm__run"><i></i><span class="tm__state">running</span> · <span class="tm__clock">00:00:00</span></div>
           <div class="tm__tape"><span></span></div>
+          <div class="tm__addr"><span>send SOL to</span><code class="tm__addrv">–</code><button type="button" class="tm__copy">Copy address</button></div>
           <small>every trade gets a reason</small>
           <small class="tm__narr">narratives: reading the meta…</small>
           <small class="tm__whales">whales: finding smart wallets…</small>
@@ -307,6 +308,7 @@
         const w = S.own?.address || "";
         q(".tm__tape span").textContent = `${w ? "Phantom " + w.slice(0, 4) + "…" + w.slice(-4) : "Phantom"} · signed on this Mac · Jupiter swaps · ${S.caps?.preset || "–"} SOL a buy · ${e.open.length}/${S.cfg.maxOpen} open · `.repeat(3);
         const bal = S.own?.sol ?? null;
+        { const av = q(".tm__addrv"), cb = q(".tm__copy"); if (w) { av.textContent = w; cb.onclick = async () => { try { await navigator.clipboard.writeText(w); } catch { const r = document.createRange(); r.selectNodeContents(av); const g = getSelection(); g.removeAllRanges(); g.addRange(r); try { document.execCommand("copy"); } catch { /* the address is selected: Cmd+C */ } } cb.textContent = "Copied"; setTimeout(() => { cb.textContent = "Copy address"; }, 1500); }; } }
         if (bal != null) { tween(q(".tm__bal"), shownBal ?? bal, bal, (v) => v.toFixed(4)); shownBal = bal; }
         tween(q(".tm__trades"), Number(q(".tm__trades").textContent) || 0, e.trades, (v) => String(Math.round(v)));
         tween(q(".tm__wins"), Number(q(".tm__wins").textContent) || 0, e.wins, (v) => String(Math.round(v)));

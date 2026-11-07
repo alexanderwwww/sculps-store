@@ -141,7 +141,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
   const listening = new Promise((r, j) => { let n = 0; const tryListen = () => server.listen(port, "127.0.0.1", () => r(server.address().port)); server.on("error", (e) => { if (e.code === "EADDRINUSE" && n++ < 40) setTimeout(tryListen, 250); else j(e); }); tryListen(); });
   // strategy numbers Claude sets over the bridge survive restarts and live updates
   const tuned = () => readCfg().tuned || {};
-  const linkI = link ? startLink({ getState: () => ({ build, running: !!engine, mode, lastError, cfg: engine ? engine.cfg : null, applied: linkI?.applied || [], engine: engine ? engine.status() : null }), getEngine: () => engine, onStart: () => go("live"), onSet: (cfg) => writeCfg({ tuned: { ...tuned(), ...cfg } }) }) : null;
+  const linkI = link ? startLink({ getState: () => ({ build, running: !!engine, mode, lastError, wallet: secrets.imported ? (() => { try { return wallet().address; } catch { return null; } })() : null, cfg: engine ? engine.cfg : null, applied: linkI?.applied || [], engine: engine ? engine.status() : null }), getEngine: () => engine, onStart: () => go("live"), onSet: (cfg) => writeCfg({ tuned: { ...tuned(), ...cfg } }) }) : null;
   const close = () => new Promise((r) => { stopped = true; linkI?.stop(); if (timer) clearTimeout(timer); if (timer2) clearTimeout(timer2); if (timer3) clearTimeout(timer3); server.close(() => r()); server.closeAllConnections?.(); });
   // The app trades on its own: once the Phantom wallet is plugged in it starts on launch, and retries every 20 s if the network
   // or the balance is not ready. Only Stop ends that. In tests (no autoStart) it resumes only what was running.

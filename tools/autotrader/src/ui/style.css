@@ -270,3 +270,7 @@ header.top.slim { display: none; }
 .fib__sell { display: flex; gap: 8px; margin-top: 8px; }
 .fib__sell button { flex: 1; padding: 12px 14px; font: 700 14px var(--mono); border-radius: 10px; cursor: pointer; }
 .tr__sell button { min-height: 48px; font-size: 15px; font-weight: 700; flex: 1 1 140px; touch-action: manipulation; }
+
+.tm__addr { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; font-size: 11px; color: #9aa; }
+.tm__addrv { user-select: all; -webkit-user-select: all; font-size: 11px; word-break: break-all; color: #e8eef2; }
+.tm__copy { cursor: pointer; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.08); color: #fff; border-radius: 7px; padding: 4px 10px; font-size: 11px; }
