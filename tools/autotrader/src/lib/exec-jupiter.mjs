@@ -150,10 +150,13 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
     },
     /** Every empty token account in the wallet, closed for its rent (read, then close only raw === 0). */
     /** build 100: sell every token in the wallet with a balance (not SOL, not mints the engine still manages) */
-    async sellWallet(skip = new Set()) {
-      const accts = (await rpc.tokenAccounts(wallet.address)).filter((a) => a.raw > 0n), out = [], seen = new Set();
-      for (const a of accts) {
-        const mint = a.mint; if (!mint || seen.has(mint) || skip.has(mint) || mint === SOL_MINT) continue; seen.add(mint);
+    async sellWallet(skip = new Set(), mints = []) {
+      // build 101: no indexed call: the engine names the coins it bought, each ATA is read directly
+      const out = [], seen = new Set();
+      for (const mint of mints) {
+        if (!mint || seen.has(mint) || skip.has(mint) || mint === SOL_MINT) continue; seen.add(mint);
+        let held = 0n; try { held = (await rpc.tokenAccounts(wallet.address, mint)).reduce((t, a) => t + a.raw, 0n); } catch (e) { out.push({ mint, ok: false, why: `balance: ${e.message.slice(0, 80)}` }); continue; }
+        if (held === 0n) continue;
         const r = await exec.sell({ mint }); out.push({ mint, ok: !!r.ok, why: r.why || null, out: r.outAmount ?? null });
       }
       return out;

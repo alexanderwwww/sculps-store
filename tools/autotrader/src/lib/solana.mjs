@@ -69,6 +69,32 @@ export function buildTransferTx({ wallet, to, lamports, blockhash }) {
 }
 
 // build 100: publicnode now refuses getTokenAccountsByOwner without a paid token, so every sell failed to find its tokens (2026-11-07)
+
+// build 101: associated token accounts without any indexed RPC call. publicnode and api.mainnet.solana.com refuse
+// getTokenAccountsByOwner from Alex's Mac, so every sell failed to find its tokens. The ATA is a PDA we can compute.
+const P25519 = 2n ** 255n - 19n;
+const modp = (a) => ((a % P25519) + P25519) % P25519;
+const powp = (b, e) => { let r = 1n; b = modp(b); while (e > 0n) { if (e & 1n) r = (r * b) % P25519; b = (b * b) % P25519; e >>= 1n; } return r; };
+const D25519 = modp(-121665n * powp(121666n, P25519 - 2n));
+export function onCurve(bytes) {
+  const b = Buffer.from(bytes); const last = b[31]; b[31] = last & 0x7f;
+  let y = 0n; for (let i = 31; i >= 0; i--) y = (y << 8n) + BigInt(b[i]);
+  if (y >= P25519) return false;
+  const y2 = (y * y) % P25519, u = modp(y2 - 1n), v = modp(D25519 * y2 + 1n);
+  const x2 = (u * powp(v, P25519 - 2n)) % P25519;
+  if (x2 === 0n) return (last & 0x80) === 0;
+  return powp(x2, (P25519 - 1n) / 2n) === 1n;
+}
+export function findPda(seeds, programId) {
+  const prog = b58decode(programId);
+  for (let bump = 255; bump >= 0; bump--) {
+    const h = crypto.createHash("sha256"); for (const sd of seeds) h.update(sd); h.update(Buffer.from([bump])); h.update(prog); h.update(Buffer.from("ProgramDerivedAddress"));
+    const out = h.digest(); if (!onCurve(out)) return b58encode(out);
+  }
+  throw new Error("no PDA");
+}
+export const ATA_PROGRAM = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+export const ataOf = (owner, mint, tokenProgram) => findPda([b58decode(owner), b58decode(tokenProgram), b58decode(mint)], ATA_PROGRAM);
 const ENDPOINTS = ["https://api.mainnet.solana.com", "https://api.mainnet-beta.solana.com", "https://solana-rpc.publicnode.com"];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export class Rpc {
@@ -118,6 +144,15 @@ export class Rpc {
   }
   /** Every account of this owner holding `mint`: [{pubkey, program, raw: BigInt, decimals}] */
   async tokenAccounts(owner, mint) {
+    if (mint) {   // build 101: read the two possible ATAs directly (getAccountInfo is not an indexed call)
+      const out = [];
+      for (const prog of ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"]) {
+        const pk = ataOf(owner, mint, prog), r = await this.call("getAccountInfo", [pk, { encoding: "jsonParsed", commitment: "confirmed" }]), v = r?.value;
+        const info = v?.data?.parsed?.info; if (!info) continue;
+        out.push({ pubkey: pk, mint, program: v.owner, raw: BigInt(info.tokenAmount.amount), decimals: info.tokenAmount.decimals });
+      }
+      return out;
+    }
     const q = (f) => this.call("getTokenAccountsByOwner", [owner, f, { encoding: "jsonParsed", commitment: "confirmed" }]);
     const r = mint ? await q({ mint }) : { value: [...(await q({ programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" })).value, ...(await q({ programId: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb" })).value] };
     return r.value.map((a) => ({ pubkey: a.pubkey, mint: a.account.data.parsed.info.mint, program: a.account.owner, raw: BigInt(a.account.data.parsed.info.tokenAmount.amount), decimals: a.account.data.parsed.info.tokenAmount.decimals }));
