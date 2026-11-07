@@ -22,9 +22,15 @@ export async function rugCheck(mint, { rpc = null } = {}) {
     let m; try { m = await rpc.mintInfo(mint); } catch (e) { return { pass: false, reason: `mint unreadable on-chain (${String(e.message).slice(0, 40)})`, risks: [] }; }   // fail closed
     const trap = mintTraps(m); if (trap) return { pass: false, reason: `trap: ${trap}`, risks: [] };
   }
-  let s;
+  let s, m0 = null;
+  if (rpc?.mintInfo) { try { m0 = await rpc.mintInfo(mint); } catch { m0 = null; } }
   try { s = await getJson(`https://api.rugcheck.xyz/v1/tokens/${mint}/report/summary`, { tries: 2 }); }
-  catch (e) { return { pass: false, reason: `rugcheck unreachable (${e.message.replace(/^https?:\S+: /, "").slice(0, 40)})`, risks: [] }; }
+  catch (e) {
+    // build 92 (2026-11-07): RugCheck was unreachable from Alex's Mac for every coin, so Ultra bought nothing for an hour.
+    // When it is down, the on-chain facts decide: no mint authority, no freeze authority, no Token-2022 trap -> pass, flagged.
+    if (m0 && !m0.mintAuthority && !m0.freezeAuthority && !mintTraps(m0)) return { pass: true, reason: "rugcheck down: on-chain clean (mint and freeze off)", risks: [], onchainOnly: true };
+    return { pass: false, reason: `rugcheck unreachable (${e.message.replace(/^https?:\S+: /, "").slice(0, 40)})`, risks: [] };
+  }
   const risks = s.risks || [];
   const danger = risks.filter((r) => r.level === "danger");
   const names = risks.map((r) => r.name);
