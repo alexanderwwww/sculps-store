@@ -16,7 +16,10 @@ try { net.setDefaultAutoSelectFamily(true); } catch { /* old node */ }
     const url = typeof input === "string" ? input : input?.url || String(input), hit = MAP.find(([h]) => url.startsWith(h + "/"));
     if (!hit || RELAY === "off") return direct(input, init);
     // build 97: always through the relay (a direct try first still failed buys on the Mac: quote and swap build race in parallel)
-    return direct(RELAY + hit[1] + url.slice(hit[0].length), init);
+    // build 99: the Mac's network also answers the link host with a wrong certificate now and then (HOPE, 20:03). Those are
+    // momentary: retry up to 4 times, 250 ms apart. TLS stays verified; a bad certificate is never accepted.
+    const to = RELAY + hit[1] + url.slice(hit[0].length);
+    for (let i = 0; ; i++) { try { return await direct(to, init); } catch (e) { if (!(e instanceof TypeError) || i >= 3) throw e; await new Promise((r) => setTimeout(r, 250)); } }
   };
 }
 import { spawn } from "node:child_process";
