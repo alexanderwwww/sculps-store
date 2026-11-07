@@ -68,3 +68,9 @@ Expected: about +0.9% a trade net of 3.5% cost, ~0.0007 SOL an hour at 0.016 and
 - Ultra (`tools/autotrader`, wallet = his Phantom; address `8Gyirjrgyz2bMPVEYMEsxcaMGWiKB5svUH7zpcxgrrvX`, shown in the window with a Copy button since build 89). Status: `GET https://kerberos.gardenbuddystore.workers.dev/ultra/<key from link.mjs>/status`.
 - Loop: read status (equity, trades, wins, lines, errors) -> find the fault from evidence -> change one thing -> tests -> `tools/autotrader/publish-live.sh <n>` (needs CLOUDFLARE_* env, present in the cloud session) -> confirm the new build in status -> record the lesson. Use bridge `set` for strategy numbers where the code allows it.
 - Limits that stay: SOL pools only, rug check, 0.05 SOL floor, caps in the app. Say real numbers every time, never fake a result.
+
+## 2026-11-07 evening: builds 89-103, what broke and what is fixed
+- Alex's Mac network answers jup.ag / rugcheck.xyz (and now and then the link host) with a WRONG TLS certificate (ERR_TLS_CERT_ALTNAME_INVALID). Fixed: Jupiter + RugCheck go through `/ultra/<key>/jup|rug` on kerberos (app/routes/ultra.$.tsx), retried 4x. Never accept a bad cert.
+- publicnode refuses getTokenAccountsByOwner without a paid token; mainnet RPCs block Cloudflare. Sells could not find their tokens, and after 4 tries the engine marked them CLOSED while the tokens stayed in the wallet (7 buys on-chain, 0 sells). Fixed: balances read from the computed ATA (getAccountInfo, `ataOf` in solana.mjs), sells are never abandoned, Sell everything sells every coin in the journal, a refusing RPC is skipped.
+- Result of the session: 0.0622 SOL in, 0.0319 SOL after selling everything (Alex said "sell all"). Ultra paused.
+- Always verify sells ON-CHAIN (getSignaturesForAddress + token balances), never trust the engine's "closed".
