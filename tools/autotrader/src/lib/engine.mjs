@@ -336,6 +336,8 @@ export class Engine {
   }
   async flatten() {
     this.paused = true;
+    // build 100: Sell everything also sells any token left in the wallet that the engine no longer tracks
+    if (this.exec.sellWallet) { try { const r = await this.exec.sellWallet(new Set([...this.open.values()].map((p) => p.mint))); for (const x of r) this.journal.write({ type: "wallet-sell", ...x }); } catch (e) { this.#err("sell wallet", e); } }
     for (const p of [...this.open.values()]) {
       this.journal.write({ type: "sell-intent", id: p.id, name: p.name, why: "flatten (you pressed it)" });
       const r = (await this.exec.sell?.(p)) ?? { ok: true };
@@ -382,8 +384,8 @@ export class Engine {
       if (p.est) Object.assign(p.est, { sellMs: p.est.at ? this.now() - p.est.at : null, rt: p.rt ?? null, buyMs: p.buyMs ?? null, liq: p.liq ?? null, holdMs: this.now() - p.at });
       if (!r.ok) {
         if (r.noBalance) { note = "the token was no longer in the wallet (result estimated from the chart)"; this.exec.sweepRent?.().catch(() => {}); }
-        else if (hold + 1 < 4) { this.sellTries.set(p.id, hold + 1); this.#err(`sell ${p.name}`, new Error(r.why)); return false; }   // try again next tick
-        else note = `sell failed 4 times (${r.why}): ${this.exec.safety || "the position is still in the wallet: press Sell everything"}`;
+        // build 100: never drop a position whose sell failed: 6 coins were marked closed while their tokens stayed in the wallet. Keep trying.
+        else { this.sellTries.set(p.id, hold + 1); this.#err(`sell ${p.name} (try ${hold + 1})`, new Error(r.why)); return false; }
       } else if (r.outAmount != null && r.inAmount != null && p.stake > 0) {
         ret = p.banked ? (Number(r.outAmount) / 1e9 + p.banked) / p.stake0 - 1 : Number(r.outAmount) / 1e9 / p.stake - 1;   // the real fill (plus anything banked on the way), not the model
       }

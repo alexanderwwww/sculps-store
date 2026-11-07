@@ -149,6 +149,15 @@ export function jupiterExec({ wallet, rpc, jupiter, cfg, caps = CAPS, now = Date
       return n;
     },
     /** Every empty token account in the wallet, closed for its rent (read, then close only raw === 0). */
+    /** build 100: sell every token in the wallet with a balance (not SOL, not mints the engine still manages) */
+    async sellWallet(skip = new Set()) {
+      const accts = (await rpc.tokenAccounts(wallet.address)).filter((a) => a.raw > 0n), out = [], seen = new Set();
+      for (const a of accts) {
+        const mint = a.mint; if (!mint || seen.has(mint) || skip.has(mint) || mint === SOL_MINT) continue; seen.add(mint);
+        const r = await exec.sell({ mint }); out.push({ mint, ok: !!r.ok, why: r.why || null, out: r.outAmount ?? null });
+      }
+      return out;
+    },
     async sweepRent() {
       const accts = await rpc.tokenAccounts(wallet.address);
       return { closed: await exec.closeEmpty(accts.filter((a) => a.raw === 0n)) };

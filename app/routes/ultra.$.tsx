@@ -28,9 +28,22 @@ async function write(env: Env, slot: Slot, v: unknown) { await env.MEDIA?.put(FI
 
 // Relay (2026-11-07): Alex's network answers jup.ag / rugcheck.xyz with a wrong TLS certificate, but reaches this worker.
 // Only these read/build paths pass; Jupiter returns an UNSIGNED transaction, so no key ever comes through here.
+const RPC_OK = new Set(["getBalance", "getLatestBlockhash", "getBlockHeight", "sendTransaction", "getSignatureStatuses", "getAccountInfo", "getTokenAccountsByOwner", "getTransaction", "getSignaturesForAddress", "getTokenAccountBalance", "simulateTransaction"]);
 const RELAY_HOST = { jup: "https://lite-api.jup.ag", rug: "https://api.rugcheck.xyz" } as const;
 const RELAY_OK = { jup: /^\/(swap\/v1\/(quote|swap)|tokens\/v2\/)/, rug: /^\/v1\/tokens\/[1-9A-HJ-NP-Za-km-z]{32,44}\/report(\/summary)?$/ } as const;
 async function relay(parts: string[], request: Request): Promise<Response | null> {
+  if (parts[1] === "rpc" && request.method === "POST") {
+    // Solana RPC relay (2026-11-07): publicnode now refuses getTokenAccountsByOwner without a paid token, and the Mac's network
+    // breaks TLS to mainnet-beta, so sells could not find the tokens. Read and send methods only; the transaction is already signed on the Mac.
+    const body = await request.text(); let m = ""; try { m = String((JSON.parse(body) as { method?: string }).method || ""); } catch { /* bad json */ }
+    if (!RPC_OK.has(m)) return new Response("no", { status: 404 });
+    let r: Response | null = null;
+    for (const u of ["https://api.mainnet.solana.com", "https://api.mainnet-beta.solana.com"]) {
+      try { r = await fetch(u, { method: "POST", headers: { "content-type": "application/json" }, body }); const t = await r.clone().text(); if (r.ok && !/blocked|Too Many|upgrade/i.test(t.slice(0, 300))) break; } catch { r = null; }
+    }
+    if (!r) return new Response(JSON.stringify({ jsonrpc: "2.0", id: 1, error: { code: -32000, message: "relay: no RPC answered" } }), { status: 502 });
+    return new Response(r.body, { status: r.status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
+  }
   const kind = parts[1] as keyof typeof RELAY_HOST; if (kind !== "jup" && kind !== "rug") return null;
   const path = "/" + parts.slice(2).join("/"); if (!RELAY_OK[kind].test(path)) return new Response("no", { status: 404 });
   const u = new URL(request.url);

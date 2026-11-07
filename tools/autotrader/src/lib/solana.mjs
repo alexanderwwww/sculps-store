@@ -68,7 +68,8 @@ export function buildTransferTx({ wallet, to, lamports, blockhash }) {
   return { tx: Buffer.concat([shortvecWrite(1), sig, msg]), signature: b58encode(sig) };
 }
 
-const ENDPOINTS = ["https://api.mainnet-beta.solana.com", "https://solana-rpc.publicnode.com"];
+// build 100: publicnode now refuses getTokenAccountsByOwner without a paid token, so every sell failed to find its tokens (2026-11-07)
+const ENDPOINTS = ["https://api.mainnet.solana.com", "https://api.mainnet-beta.solana.com", "https://solana-rpc.publicnode.com"];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export class Rpc {
   constructor({ fetchImpl = fetch, endpoints = ENDPOINTS, wait = sleep } = {}) { Object.assign(this, { fetchImpl, endpoints, wait }); }
@@ -119,7 +120,7 @@ export class Rpc {
   async tokenAccounts(owner, mint) {
     const q = (f) => this.call("getTokenAccountsByOwner", [owner, f, { encoding: "jsonParsed", commitment: "confirmed" }]);
     const r = mint ? await q({ mint }) : { value: [...(await q({ programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" })).value, ...(await q({ programId: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb" })).value] };
-    return r.value.map((a) => ({ pubkey: a.pubkey, program: a.account.owner, raw: BigInt(a.account.data.parsed.info.tokenAmount.amount), decimals: a.account.data.parsed.info.tokenAmount.decimals }));
+    return r.value.map((a) => ({ pubkey: a.pubkey, mint: a.account.data.parsed.info.mint, program: a.account.owner, raw: BigInt(a.account.data.parsed.info.tokenAmount.amount), decimals: a.account.data.parsed.info.tokenAmount.decimals }));
   }
 }
 
