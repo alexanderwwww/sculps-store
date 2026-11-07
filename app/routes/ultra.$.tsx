@@ -25,9 +25,23 @@ const json = (v: unknown, status = 200) =>
 async function read(env: Env, slot: Slot) { const o = await env.MEDIA?.get(FILES[slot]); if (!o) return null; try { return JSON.parse(await o.text()); } catch { return null; } }
 async function write(env: Env, slot: Slot, v: unknown) { await env.MEDIA?.put(FILES[slot], JSON.stringify(v), { httpMetadata: { contentType: "application/json", cacheControl: "no-store" } }); }
 
-export async function loader({ params, context }: Route.LoaderArgs) {
+
+// Relay (2026-11-07): Alex's network answers jup.ag / rugcheck.xyz with a wrong TLS certificate, but reaches this worker.
+// Only these read/build paths pass; Jupiter returns an UNSIGNED transaction, so no key ever comes through here.
+const RELAY_HOST = { jup: "https://lite-api.jup.ag", rug: "https://api.rugcheck.xyz" } as const;
+const RELAY_OK = { jup: /^\/(swap\/v1\/(quote|swap)|tokens\/v2\/)/, rug: /^\/v1\/tokens\/[1-9A-HJ-NP-Za-km-z]{32,44}\/report(\/summary)?$/ } as const;
+async function relay(parts: string[], request: Request): Promise<Response | null> {
+  const kind = parts[1] as keyof typeof RELAY_HOST; if (kind !== "jup" && kind !== "rug") return null;
+  const path = "/" + parts.slice(2).join("/"); if (!RELAY_OK[kind].test(path)) return new Response("no", { status: 404 });
+  const u = new URL(request.url);
+  const r = await fetch(RELAY_HOST[kind] + path + u.search, { method: request.method, headers: { "content-type": request.headers.get("content-type") || "application/json", accept: "application/json" }, body: request.method === "POST" ? await request.text() : undefined });
+  return new Response(r.body, { status: r.status, headers: { "content-type": r.headers.get("content-type") || "application/json", "cache-control": "no-store" } });
+}
+
+export async function loader({ params, request, context }: Route.LoaderArgs) {
   const parts = (params["*"] ?? "").split("/").filter(Boolean);
   if (parts[0] !== KEY) return new Response("no", { status: 404 });
+  { const rr = await relay(parts, request); if (rr) return rr; }
   const env = context.cloudflare.env as unknown as Env;
   const what = parts[1] ?? "";
   if (!Object.hasOwn(FILES, what)) return new Response("no", { status: 404 });
@@ -42,6 +56,7 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   const env = context.cloudflare.env as unknown as Env;
   const what = parts[1] ?? "";
   if (request.method === "OPTIONS") return json({ ok: true });
+  { const rr = await relay(parts, request); if (rr) return rr; }
   const body = ((await request.json().catch(() => ({}))) ?? {}) as Record<string, unknown>;
   if (what === "status") { await write(env, "status", { ...body, receivedAt: Date.now() }); return json({ ok: true }); }
   if (what === "log") {

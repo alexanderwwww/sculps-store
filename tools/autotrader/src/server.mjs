@@ -10,7 +10,8 @@ try { net.setDefaultAutoSelectFamily(true); } catch { /* old node */ }
 // build 95: the real cause was ERR_TLS_CERT_ALTNAME_INVALID: Alex's network answers jup.ag / rugcheck.xyz with a wrong certificate.
 // When a direct call fails at the network/TLS level, the same request goes through ultra-relay (Cloudflare, no keys: Jupiter
 // returns an unsigned transaction and Ultra still signs on this Mac). TLS stays verified end to end on both legs.
-{ const RELAY = process.env.ULTRA_RELAY || "https://ultra-relay.gardenbuddystore.workers.dev", MAP = [["https://lite-api.jup.ag", "/jup"], ["https://api.rugcheck.xyz", "/rug"]], direct = globalThis.fetch;
+{ const RELAY = process.env.ULTRA_RELAY || "https://kerberos.gardenbuddystore.workers.dev/ultra/YFu9uEm3fUwr928Yn70Qov73wVWbEZj",   // build 96: the link host, the one host Alex's network lets through
+  MAP = [["https://lite-api.jup.ag", "/jup"], ["https://api.rugcheck.xyz", "/rug"]], direct = globalThis.fetch;
   let viaRelay = 0;
   globalThis.fetch = async (input, init) => {
     const url = typeof input === "string" ? input : input?.url || String(input), hit = MAP.find(([h]) => url.startsWith(h + "/"));
