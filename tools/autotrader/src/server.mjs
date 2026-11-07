@@ -12,13 +12,11 @@ try { net.setDefaultAutoSelectFamily(true); } catch { /* old node */ }
 // returns an unsigned transaction and Ultra still signs on this Mac). TLS stays verified end to end on both legs.
 { const RELAY = process.env.ULTRA_RELAY || "https://kerberos.gardenbuddystore.workers.dev/ultra/YFu9uEm3fUwr928Yn70Qov73wVWbEZj",   // build 96: the link host, the one host Alex's network lets through
   MAP = [["https://lite-api.jup.ag", "/jup"], ["https://api.rugcheck.xyz", "/rug"]], direct = globalThis.fetch;
-  let viaRelay = 0;
   globalThis.fetch = async (input, init) => {
     const url = typeof input === "string" ? input : input?.url || String(input), hit = MAP.find(([h]) => url.startsWith(h + "/"));
     if (!hit || RELAY === "off") return direct(input, init);
-    if (viaRelay > Date.now()) return direct(RELAY + hit[1] + url.slice(hit[0].length), init);
-    try { return await direct(input, init); }
-    catch (e) { if (!(e instanceof TypeError)) throw e; viaRelay = Date.now() + 10 * 60e3; return direct(RELAY + hit[1] + url.slice(hit[0].length), init); }
+    // build 97: always through the relay (a direct try first still failed buys on the Mac: quote and swap build race in parallel)
+    return direct(RELAY + hit[1] + url.slice(hit[0].length), init);
   };
 }
 import { spawn } from "node:child_process";
