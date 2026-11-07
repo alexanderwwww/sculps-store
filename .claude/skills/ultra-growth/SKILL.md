@@ -62,3 +62,9 @@ Live cfg (bridge, confirmed in /status): `sl -0.20`, `partAt 0.08`, `partFrac 0.
 4. Stop -20%, wider to -30% for high-certainty intel coins; everything out after 10 minutes.
 5. Every 10 closes it re-fits stop and first take on its own last 50 trips and changes only when the new set wins both halves (organism.refitExits, CLAMP sl -0.30..-0.02, partAt 0.05..0.20).
 Expected: about +0.9% a trade net of 3.5% cost, ~0.0007 SOL an hour at 0.016 and 5 trips an hour. Thin edge from one sample; re-check after 30 trips on build 65. Rent is recovered (separate CloseAccount tx), not a leak. Next lever: slippage/fees (~3.5% a trip).
+
+## STANDING ORDER (Alex, 2026-11-07): stay connected, fix on the spot, don't stop until it profits
+> "From this moment moving forward, you will inspect the app and you will be connected to it. Don't stop until you start making profit. You must fix the app on the spot and you must trade yourself there. More trades, more profit, small profits every time. I don't have to say it again."
+- Ultra (`tools/autotrader`, wallet = his Phantom; address `8Gyirjrgyz2bMPVEYMEsxcaMGWiKB5svUH7zpcxgrrvX`, shown in the window with a Copy button since build 89). Status: `GET https://kerberos.gardenbuddystore.workers.dev/ultra/<key from link.mjs>/status`.
+- Loop: read status (equity, trades, wins, lines, errors) -> find the fault from evidence -> change one thing -> tests -> `tools/autotrader/publish-live.sh <n>` (needs CLOUDFLARE_* env, present in the cloud session) -> confirm the new build in status -> record the lesson. Use bridge `set` for strategy numbers where the code allows it.
+- Limits that stay: SOL pools only, rug check, 0.05 SOL floor, caps in the app. Say real numbers every time, never fake a result.
