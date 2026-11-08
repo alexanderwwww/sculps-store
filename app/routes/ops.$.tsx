@@ -23,6 +23,7 @@ export async function loader() {
 export async function action({ params, request, context }: Route.ActionArgs) {
   const [key, what] = (params["*"] ?? "").split("/").filter(Boolean);
   if (key === KEY && what === "stripe-health" && request.method === "POST") return stripeHealth(request, context);
+  if (key === KEY && what === "stripe-link" && request.method === "POST") return stripeLink(request, context);
   if (key !== KEY || what !== "resend-confirmation" || request.method !== "POST") throw new Response("Not found", { status: 404 });
   let body: { store?: string; number?: number } = {};
   try { body = await request.json(); } catch { return json({ ok: false, error: "bad json" }, 400); }
@@ -55,4 +56,28 @@ async function stripeHealth(request: Request, context: Route.ActionArgs["context
     webhooks: (w?.data || []).map((x: Record<string, any>) => ({ url: x.url, status: x.status, events: (x.enabled_events || []).length })),
     error: a.error?.message || null,
   });
+}
+
+/** POST /ops/<key>/stripe-link {store, name, description, amountCents}: creates ONE Stripe Payment Link (product + price + link).
+ *  No charge is made; the customer pays on Stripe's own page. Shipping address and phone are collected. (2026-11-08, Alex) */
+async function stripeLink(request: Request, context: Route.ActionArgs["context"]) {
+  let body: { store?: string; name?: string; description?: string; amountCents?: number } = {}; try { body = await request.json(); } catch { /* empty */ }
+  const amount = Number(body.amountCents);
+  if (!body.name || !Number.isInteger(amount) || amount < 100 || amount > 5_000_000) return json({ ok: false, error: "name and amountCents (100..5,000,000) required" }, 400);
+  const [store] = await context.db.select().from(stores).where(eq(stores.slug, String(body.store || ""))).limit(1);
+  if (!store) return json({ ok: false, error: "no such store" }, 404);
+  const [row] = await context.db.select().from(paymentProviders).where(and(eq(paymentProviders.storeId, store.id), eq(paymentProviders.provider, "stripe"))).limit(1);
+  const sk = row ? await decryptSecret(context.cloudflare.env, row.secretKeyEnc) : null;
+  if (!sk) return json({ ok: false, error: "no stripe key" }, 404);
+  const post = async (path: string, form: Record<string, string>) => { const r = await fetch(`https://api.stripe.com/v1/${path}`, { method: "POST", headers: { authorization: `Bearer ${sk}`, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(form).toString() }); return r.json() as Promise<Record<string, any>>; };
+  const prod = await post("products", { name: String(body.name), ...(body.description ? { description: String(body.description) } : {}) });
+  if (!prod.id) return json({ ok: false, step: "product", error: prod.error?.message }, 400);
+  const price = await post("prices", { product: prod.id, unit_amount: String(amount), currency: "usd" });
+  if (!price.id) return json({ ok: false, step: "price", error: price.error?.message }, 400);
+  const countries = ["US","CA","GB","AU","NZ","IE","DE","FR","NL","ES","IT","GR","BE","AT","CH","SE","DK","NO","FI","PT","PL","JP","KR","SG","HK","AE","CY","LU"];
+  const form: Record<string, string> = { "line_items[0][price]": price.id, "line_items[0][quantity]": "1", "phone_number_collection[enabled]": "true", "metadata[store]": store.slug, "after_completion[type]": "hosted_confirmation", "after_completion[hosted_confirmation][custom_message]": "Thank you. Your piece is reserved and your Mysterious Archive certificate is being prepared." };
+  countries.forEach((c, i) => { form[`shipping_address_collection[allowed_countries][${i}]`] = c; });
+  const link = await post("payment_links", form);
+  if (!link.url) return json({ ok: false, step: "link", error: link.error?.message }, 400);
+  return json({ ok: true, url: link.url, id: link.id, amount, livemode: link.livemode });
 }
