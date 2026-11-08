@@ -47,7 +47,7 @@ async function stripeHealth(request: Request, context: Route.ActionArgs["context
   const get = async (path: string) => { const r = await fetch(`https://api.stripe.com/v1/${path}`, { headers: { authorization: `Bearer ${sk}` } }); return r.json() as Promise<Record<string, any>>; };
   const [a, b, w] = await Promise.all([get("account"), get("balance"), get("webhook_endpoints?limit=10")]);
   return json({
-    ok: true, livemode: String(sk).startsWith("sk_live"), id: a.id, country: a.country, business_name: a.business_profile?.name, url: a.business_profile?.url, mcc: a.business_profile?.mcc,
+    ok: true, livemode: String(sk).startsWith("sk_live"), id: a.id, email: a.email, country: a.country, business_name: a.business_profile?.name, url: a.business_profile?.url, mcc: a.business_profile?.mcc,
     charges_enabled: a.charges_enabled, payouts_enabled: a.payouts_enabled, details_submitted: a.details_submitted,
     requirements: a.requirements && { currently_due: a.requirements.currently_due, past_due: a.requirements.past_due, eventually_due: a.requirements.eventually_due, disabled_reason: a.requirements.disabled_reason, current_deadline: a.requirements.current_deadline, errors: a.requirements.errors },
     capabilities: a.capabilities, statement_descriptor: a.settings?.payments?.statement_descriptor, payout_schedule: a.settings?.payouts?.schedule,
