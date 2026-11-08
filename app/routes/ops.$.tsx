@@ -24,6 +24,7 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   const [key, what] = (params["*"] ?? "").split("/").filter(Boolean);
   if (key === KEY && what === "stripe-health" && request.method === "POST") return stripeHealth(request, context);
   if (key === KEY && what === "stripe-link" && request.method === "POST") return stripeLink(request, context);
+  if (key === KEY && what === "stripe-link-update" && request.method === "POST") return stripeLinkUpdate(request, context);
   if (key !== KEY || what !== "resend-confirmation" || request.method !== "POST") throw new Response("Not found", { status: 404 });
   let body: { store?: string; number?: number } = {};
   try { body = await request.json(); } catch { return json({ ok: false, error: "bad json" }, 400); }
@@ -80,4 +81,32 @@ async function stripeLink(request: Request, context: Route.ActionArgs["context"]
   const link = await post("payment_links", form);
   if (!link.url) return json({ ok: false, step: "link", error: link.error?.message }, 400);
   return json({ ok: true, url: link.url, id: link.id, amount, livemode: link.livemode });
+}
+
+/** POST /ops/<key>/stripe-link-update {store, id, message?, description?, images?[]}: edits a Payment Link we made (its thank-you message,
+ *  its product's description and pictures). Read-modify only; no charge, no new link. */
+async function stripeLinkUpdate(request: Request, context: Route.ActionArgs["context"]) {
+  let body: { store?: string; id?: string; message?: string; description?: string; images?: string[]; active?: boolean } = {}; try { body = await request.json(); } catch { /* empty */ }
+  if (!/^plink_[A-Za-z0-9]+$/.test(String(body.id || ""))) return json({ ok: false, error: "id must be a plink_" }, 400);
+  const [store] = await context.db.select().from(stores).where(eq(stores.slug, String(body.store || ""))).limit(1);
+  if (!store) return json({ ok: false, error: "no such store" }, 404);
+  const [row] = await context.db.select().from(paymentProviders).where(and(eq(paymentProviders.storeId, store.id), eq(paymentProviders.provider, "stripe"))).limit(1);
+  const sk = row ? await decryptSecret(context.cloudflare.env, row.secretKeyEnc) : null;
+  if (!sk) return json({ ok: false, error: "no stripe key" }, 404);
+  const call = async (method: string, path: string, form?: Record<string, string>) => { const r = await fetch(`https://api.stripe.com/v1/${path}`, { method, headers: { authorization: `Bearer ${sk}`, "content-type": "application/x-www-form-urlencoded" }, body: form ? new URLSearchParams(form).toString() : undefined }); return r.json() as Promise<Record<string, any>>; };
+  const out: Record<string, unknown> = {};
+  const lf: Record<string, string> = {};
+  if (typeof body.message === "string") { lf["after_completion[type]"] = "hosted_confirmation"; lf["after_completion[hosted_confirmation][custom_message]"] = body.message; }
+  if (typeof body.active === "boolean") lf.active = String(body.active);
+  if (Object.keys(lf).length) { const l = await call("POST", `payment_links/${body.id}`, lf); out.link = l.error?.message || "updated"; }
+  if (typeof body.description === "string" || Array.isArray(body.images)) {
+    const items = await call("GET", `payment_links/${body.id}/line_items?limit=1`);
+    const prodId = items?.data?.[0]?.price?.product; if (!prodId) return json({ ok: false, error: "no product on link", items }, 400);
+    const pf: Record<string, string> = {};
+    if (typeof body.description === "string") pf.description = body.description;
+    (body.images || []).slice(0, 8).forEach((u, i) => { pf[`images[${i}]`] = String(u); });
+    const pr = await call("POST", `products/${prodId}`, pf); out.product = pr.error?.message || "updated";
+  }
+  const l = await call("GET", `payment_links/${body.id}`);
+  return json({ ok: true, ...out, url: l.url, active: l.active, methods: l.payment_method_types ?? "automatic (account settings)", message: l.after_completion?.hosted_confirmation?.custom_message });
 }
