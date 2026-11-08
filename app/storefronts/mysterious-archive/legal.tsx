@@ -12,7 +12,9 @@ export const CONTACT_EMAIL = "mysterious@mysteriousarchive.com";
 export const LEGAL_ENTITY = "AIGIS LLC"; // the company behind the trade name Mysterious Archive (given by Alex, 2026-11-03)
 export const OWNER = "Alexandros Bougiouklis"; // owner and operator (given by Alex, 2026-11-03)
 export const COMPANY_STATEMENT = "Mysterious Archive is the trade name of " + LEGAL_ENTITY + ", owned and operated by " + OWNER + ".";
-export const PLACE = "New York, NY, United States";
+export const PLACE = "505 West 162nd Street, New York, NY, United States";   // business address, given by Alex 2026-11-08
+/** The business address shown on the Legal notice. Alex 2026-11-08: New York. Put the full street address here when he gives it. */
+export const ADDRESS = PLACE;
 
 type Section = { h: string; p: string[] };
 export type LegalPageDef = { title: string; lead: string; sections: Section[] };
@@ -72,6 +74,19 @@ export const LEGAL: Record<string, LegalPageDef> = {
       { h: "Your choices", p: ["Email [[email]] to see, correct or delete the information we hold about you."] },
     ],
   },
+  "legal-notice": {
+    title: "Legal notice",
+    lead: "Who operates this website.",
+    sections: [
+      { h: "Operator", p: ["This website, mysteriousarchive.com, is operated by " + LEGAL_ENTITY + " under the trade name Mysterious Archive."] },
+      { h: "Owner", p: [OWNER + ", owner and operator."] },
+      { h: "Business address", p: [ADDRESS] },
+      { h: "Contact", p: ["Email: [[email]]"] },
+      { h: "Payments", p: ["Payments are processed by Stripe. Card details go directly to Stripe and never reach our servers."] },
+      { h: "Trademarks", p: ["Mysterious Archive is an independent reseller. It is not affiliated with, or endorsed by, Chrome Hearts. Chrome Hearts is a trademark of its respective owner."] },
+      { h: "Policies", p: ["[[/terms|Terms of sale]], [[/privacy|Privacy]], [[/returns|Returns & refunds]] and [[/shipping|Shipping]] apply to every purchase."] },
+    ],
+  },
   terms: {
     title: "Terms of sale",
     lead: "The terms for buying from Mysterious Archive.",
@@ -88,8 +103,8 @@ export const LEGAL: Record<string, LegalPageDef> = {
   },
 };
 
-export const LEGAL_ORDER = ["terms", "privacy", "returns", "shipping", "contact", "about"] as const;
-const LABEL: Record<string, string> = { terms: "Terms", privacy: "Privacy", returns: "Returns", shipping: "Shipping", contact: "Contact", about: "About" };
+export const LEGAL_ORDER = ["terms", "privacy", "returns", "shipping", "contact", "about", "legal-notice"] as const;
+const LABEL: Record<string, string> = { terms: "Terms", privacy: "Privacy", returns: "Returns", shipping: "Shipping", contact: "Contact", about: "About", "legal-notice": "Legal notice" };
 
 /** The row of policy links shown in the footer of every archive page. */
 export function LegalLinks({ query }: { query: string }) {
@@ -123,7 +138,7 @@ function rich(text: string, query: string) {
   });
 }
 
-export const LEGAL_UPDATED = "November 3, 2026";
+export const LEGAL_UPDATED = "November 8, 2026";
 
 export function LegalPage({ def, query = "" }: { def: LegalPageDef; query?: string }) {
   return (

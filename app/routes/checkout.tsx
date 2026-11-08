@@ -626,7 +626,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     },
     // Mysterious Archive: the policy pages and a contact email on the checkout too, where a buyer decides whether to trust the shop.
     footerLinks: store.slug === "mysterious-archive"
-      ? [["terms", "Terms"], ["privacy", "Privacy"], ["returns", "Returns"], ["shipping", "Shipping"], ["contact", "Contact"], ["about", "About"]].map(([k, label]) => ({ label, href: `/archive/${k}` }))
+      ? [["terms", "Terms"], ["privacy", "Privacy"], ["returns", "Returns"], ["shipping", "Shipping"], ["contact", "Contact"], ["about", "About"], ["legal-notice", "Legal notice"]].map(([k, label]) => ({ label, href: `/archive/${k}` }))
       : nav.footer,
     photo,
     upsells,
