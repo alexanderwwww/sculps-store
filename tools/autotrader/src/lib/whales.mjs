@@ -53,7 +53,7 @@ export function swapsOf(tx, owner) {
 }
 
 export class Whales {
-  constructor({ fetchImpl = globalThis.fetch, now = Date.now, feed = null, timeout = 2500, saved = null, seed = [], maxWallets = 24, windowMs = 60000, minWallets = 2, pollGapMs = 1500, onSave = null } = {}) {
+  constructor({ fetchImpl = globalThis.fetch, now = Date.now, feed = null, timeout = 2500, saved = null, seed = [], maxWallets = 360, windowMs = 60000, minWallets = 2, pollGapMs = 1500, onSave = null } = {}) {
     Object.assign(this, { fetchImpl, now, feed, timeout, maxWallets, windowMs, minWallets, pollGapMs, onSave });
     this.w = new Map(); this.set = new Set(); this.events = []; this.vet = new Map(); this.vetBusy = new Set(); this.rpcI = 0; this.busy = false; this.lastPump = 0; this.lastDisc = 0; this.discI = 0;
     this.lags = []; this.errors = 0; this.polls = 0; this.seen = 0; this.dropped = [];
@@ -82,7 +82,7 @@ export class Whales {
     if (this.busy || this.now() - this.lastPump < this.pollGapMs) return null;
     this.busy = true; this.lastPump = this.now();
     return (async () => {
-      if (this.feed?.trades && (this.w.size < 8 ? this.now() - this.lastDisc > 60000 : this.now() - this.lastDisc > 600000) && runners.length) { this.lastDisc = this.now(); await this.discover(runners).catch(() => { this.errors++; }); }
+      if (this.feed?.trades && (this.now() - this.lastDisc > 60000) && runners.length) { this.lastDisc = this.now(); await this.discover(runners).catch(() => { this.errors++; }); }
       await this.poll().catch(() => { this.errors++; });
     })().finally(() => { this.busy = false; });
   }
@@ -94,7 +94,7 @@ export class Whales {
     const rc = r.mint ? await this.#get(`https://api.rugcheck.xyz/v1/tokens/${r.mint}/report`).catch(() => null) : null;
     if (!rc) return;
     const bad = new Set([rc.creator, ...(rc.topHolders || []).filter((h) => h.insider).map((h) => h.owner)].filter(Boolean));
-    for (const f of found.filter((f) => !bad.has(f.addr)).slice(0, 6)) { if (!this.w.has(f.addr)) this.#add(f.addr, { src: r.name || "runner", own: f.realized }); else this.w.get(f.addr).own = Math.max(this.w.get(f.addr).own, f.realized); }
+    for (const f of found.filter((f) => !bad.has(f.addr)).slice(0, 12)) { if (!this.w.has(f.addr)) this.#add(f.addr, { src: r.name || "runner", own: f.realized }); else this.w.get(f.addr).own = Math.max(this.w.get(f.addr).own, f.realized); }
     this.#trim(); this.#save();
   }
   #trim() {

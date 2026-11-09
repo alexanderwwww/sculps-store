@@ -59,12 +59,16 @@ export class Engine {
       if (this.whales) { try { const runners = [...this.watch.values()].filter((m) => m.pool && (m.liqUsd ?? 0) >= 20000).sort((a, b) => (b.vol1h || b.vol5 || 0) - (a.vol1h || a.vol5 || 0)).slice(0, 5); this.whales.pump(runners)?.catch?.(() => {}); } catch (e) { this.#err("whales", e); } }
       // ULTRA INSTINCT: read the big trades (whales) on what we hold and on the busiest coins we are close to buying, 2 pools a cycle
       if (this.feed.trades) {
-        const hot = [...[...this.open.values()].map((p) => p.pool), ...[...this.ready].sort((a, b) => (b.vol5 || 0) - (a.vol5 || 0)).map((m) => m.pool)].filter((p, i, a) => a.indexOf(p) === i && !(this.now() - (this.whaleAt.get(p) || 0) < 30000)).slice(0, 2);
+        const hot = [...[...this.open.values()].map((p) => p.pool), ...[...this.ready].sort((a, b) => (b.vol5 || 0) - (a.vol5 || 0)).map((m) => m.pool)].filter((p, i, a) => a.indexOf(p) === i && !(this.now() - (this.whaleAt.get(p) || 0) < 30000)).slice(0, 4);   // build 105: 4 pools a cycle
         for (const pool of hot) {
           this.whaleAt.set(pool, this.now());
           try {
             const liq = this.live.get(pool)?.liqUsd || this.watch.get(pool)?.liqUsd || 0, big = Math.max(400, liq * 0.02), since = this.now() - 120000;
-            const tr = (await this.feed.trades(pool, 300)).filter((x) => x.t >= since && x.usd >= big);
+            const all = await this.feed.trades(pool, 50);
+            // build 105 (Alex: "watch everybody at the same time"): every trade on the pools we read is checked against ALL known smart
+            // wallets at once (a Set lookup), so 360 wallets cost nothing extra. A smart buy here is a signal like the per-wallet poller's.
+            if (this.whales?.set?.size) { const mint = this.live.get(pool)?.mint || this.watch.get(pool)?.mint || [...this.open.values()].find((p) => p.pool === pool)?.mint; if (mint) for (const x of all) if (x.from && this.whales.set.has(x.from) && x.t >= this.now() - 120000) this.whales.note({ wallet: x.from, mint, side: x.kind, t: x.t, sig: `${pool}:${x.from}:${x.t}` }); }
+            const tr = all.filter((x) => x.t >= since && x.usd >= big);
             const buy = tr.filter((x) => x.kind === "buy").reduce((a, x) => a + x.usd, 0), sell = tr.filter((x) => x.kind === "sell").reduce((a, x) => a + x.usd, 0);
             this.whale.set(pool, { buy, sell, whales: new Set(tr.filter((x) => x.kind === "buy").map((x) => x.from)).size, at: this.now() });
           } catch (e) { this.#err(`whales ${pool.slice(0, 6)}`, e); }
