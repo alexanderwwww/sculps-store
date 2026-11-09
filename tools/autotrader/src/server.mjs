@@ -6,6 +6,11 @@ import net from "node:net";
 // build 94 (2026-11-07): on Alex's Mac every Jupiter and RugCheck call failed with "fetch failed" while the link to Cloudflare worked.
 // Node tries IPv6 first; a broken IPv6 route kills fetch. Prefer IPv4 and let Node race both families.
 try { dns.setDefaultResultOrder("ipv4first"); } catch { /* old node */ }
+// build 117: when the Mac's own lookup fails (ENOTFOUND while Chrome works), ask Cloudflare and Google DNS directly
+{ const sys = dns.lookup, R = new dns.Resolver(); R.setServers(["1.1.1.1", "8.8.8.8", "1.0.0.1"]);
+  dns.lookup = function (host, opts, cb) { if (typeof opts === "function") { cb = opts; opts = {}; } if (typeof opts === "number") opts = { family: opts };
+    sys.call(dns, host, opts, (err, addr, fam) => { if (!err) return cb(null, addr, fam);
+      R.resolve4(host, (e2, a4) => { if (e2 || !a4?.length) return cb(err); if (opts?.all) return cb(null, a4.map((x) => ({ address: x, family: 4 }))); cb(null, a4[0], 4); }); }); }; }
 try { net.setDefaultAutoSelectFamily(true); } catch { /* old node */ }
 // build 95: the real cause was ERR_TLS_CERT_ALTNAME_INVALID: Alex's network answers jup.ag / rugcheck.xyz with a wrong certificate.
 // When a direct call fails at the network/TLS level, the same request goes through ultra-relay (Cloudflare, no keys: Jupiter

@@ -23,6 +23,8 @@
     if (t.matches(".tm__gbtn")) { box.hidden = !box.hidden; if (!box.hidden) { if (!box.firstChild) box.innerHTML = `<p>1. On gmgn.ai, API, Create API Key: paste this <b>public key</b> into "Upload Public Key".</p> <textarea class="tm__gpub" readonly rows="4"></textarea><button type="button" class="tm__gcp1">Copy public key</button> <p>2. "Trusted IP For Trading": this Mac's IP is <code class="tm__gip">–</code> <button type="button" class="tm__gcp2">Copy IP</button></p> <p>3. Paste the API key GMGN gives you here, then Save. It stays on this Mac.</p> <input class="tm__gkey" type="password" placeholder="GMGN API key" autocomplete="off"><button type="button" class="tm__gsave">Save</button> <span class="tm__gmsg"></span>`; const g = await api("/api/gmgn-key"); document.querySelector(".tm__gpub").value = g.publicKey || ""; document.querySelector(".tm__gip").textContent = g.ip || "unknown"; document.querySelector(".tm__gmsg").textContent = g.apiKeySaved ? "API key saved" : ""; } }
     if (t.matches(".tm__gcp1")) cp(document.querySelector(".tm__gpub").value, t);
     if (t.matches(".tm__gcp2")) cp(document.querySelector(".tm__gip").textContent, t);
+    if (t.matches(".tm__wbtn")) { const b = document.querySelector(".tm__wbox"); b.hidden = !b.hidden; }
+    if (t.matches(".tm__wsend")) { const to = document.querySelector(".tm__wto").value.trim(), m = document.querySelector(".tm__wmsg"); if (!to) { m.textContent = "Paste an address first"; return; } if (!confirm(`Send the whole balance to\n${to}?`)) return; m.textContent = "Sending…"; const r = await api("/api/withdraw", { to, all: true }).catch((e) => ({ error: String(e) })); m.textContent = r.ok ? `Sent ${r.sol} SOL · ${String(r.signature).slice(0, 10)}…` : (r.error || "not sent"); }
     if (t.matches(".tm__gsave")) { const r = await api("/api/gmgn-key", { apiKey: document.querySelector(".tm__gkey").value }); document.querySelector(".tm__gmsg").textContent = r.ok && r.saved ? "API key saved" : (r.error || "not saved"); if (r.ok) document.querySelector(".tm__gkey").value = ""; }
   });
   const fmt = (n, d = 4) => (n == null ? "–" : Number(n).toFixed(d));
@@ -158,7 +160,7 @@
           <div class="tm__run"><i></i><span class="tm__state">running</span> · <span class="tm__clock">00:00:00</span></div>
           <div class="tm__tape"><span></span></div>
           <div class="tm__addr"><span>send SOL to</span><code class="tm__addrv">–</code><button type="button" class="tm__copy">Copy address</button></div>
-          <div class="tm__gmgn"><button type="button" class="tm__gbtn">Connect GMGN</button><div class="tm__gbox" hidden></div></div>
+          <div class="tm__gmgn"><button type="button" class="tm__gbtn">Connect GMGN</button><div class="tm__gbox" hidden></div></div><div class="tm__gmgn"><button type="button" class="tm__wbtn">Send SOL out</button><div class="tm__wbox" hidden><p>Send the whole balance (minus the network fee) to:</p><input class="tm__wto" placeholder="Solana address" autocomplete="off" spellcheck="false"><button type="button" class="tm__wsend">Send all</button> <span class="tm__wmsg"></span></div></div>
           <small>every trade gets a reason</small>
           <small class="tm__narr">narratives: reading the meta…</small>
           <small class="tm__whales">whales: finding smart wallets…</small>
