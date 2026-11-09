@@ -56,7 +56,7 @@ export class Engine {
       // intel: research the coins closest to a buy in the background (never awaited), so it is ready before the bounce
       if (this.intel) for (const m of this.ready.slice(0, 12)) { try { this.intel.want(m); } catch (e) { this.#err("intel", e); } }
       // whales (Alex 2026-10-30): find and watch smart wallets in the background, never awaited
-      if (this.whales) { try { const runners = [...this.watch.values()].filter((m) => m.pool && (m.liqUsd ?? 0) >= 20000).sort((a, b) => (b.vol1h || b.vol5 || 0) - (a.vol1h || a.vol5 || 0)).slice(0, 15); /* build 109: learn from the 15 busiest runners */ this.whales.pump(runners)?.catch?.(() => {}); } catch (e) { this.#err("whales", e); } }
+      if (this.whales) { try { this.whales.soloWeight = this.cfg.minSmartWeight ?? 2.4; const runners = [...this.watch.values()].filter((m) => m.pool && (m.liqUsd ?? 0) >= 20000).sort((a, b) => (b.vol1h || b.vol5 || 0) - (a.vol1h || a.vol5 || 0)).slice(0, 15); /* build 109: learn from the 15 busiest runners */ this.whales.pump(runners)?.catch?.(() => {}); } catch (e) { this.#err("whales", e); } }
       // ULTRA INSTINCT: read the big trades (whales) on what we hold and on the busiest coins we are close to buying, 2 pools a cycle
       if (this.feed.trades) {
         const hot = [...[...this.open.values()].map((p) => p.pool), ...[...this.ready].sort((a, b) => (b.vol5 || 0) - (a.vol5 || 0)).map((m) => m.pool)].filter((p, i, a) => a.indexOf(p) === i && !(this.now() - (this.whaleAt.get(p) || 0) < 30000)).slice(0, 4);   // build 105: 4 pools a cycle
@@ -268,7 +268,7 @@ export class Engine {
   async #fastEntries() {
     // build 110: the smart-wallet watcher runs from the fast loop (every 3 s), never behind the slow chart scan.
     // On the Mac it sat behind slow candle fetches and never polled a wallet (polls 0 for minutes = no trades).
-    if (this.whales) { try { const runners = [...this.watch.values()].filter((m) => m.pool && (m.liqUsd ?? 0) >= 20000).sort((a, b) => (b.vol1h || b.vol5 || 0) - (a.vol1h || a.vol5 || 0)).slice(0, 15); this.whales.pump(runners)?.catch?.(() => {}); } catch (e) { this.#err("whales", e); } }
+    if (this.whales) { try { this.whales.soloWeight = this.cfg.minSmartWeight ?? 2.4; const runners = [...this.watch.values()].filter((m) => m.pool && (m.liqUsd ?? 0) >= 20000).sort((a, b) => (b.vol1h || b.vol5 || 0) - (a.vol1h || a.vol5 || 0)).slice(0, 15); this.whales.pump(runners)?.catch?.(() => {}); } catch (e) { this.#err("whales", e); } }
     if (this.paused || this.open.size >= this.cfg.maxOpen) return;
     try { await this.#follow(); } catch (e) { this.#err("follow", e); }
     // build 104 SMART MODE (Alex 2026-11-09, the "smart money" strategy): buy ONLY what 2+ independent smart wallets just bought
