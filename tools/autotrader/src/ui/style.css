@@ -274,3 +274,10 @@ header.top.slim { display: none; }
 .tm__addr { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; font-size: 11px; color: #9aa; }
 .tm__addrv { user-select: all; -webkit-user-select: all; font-size: 11px; word-break: break-all; color: #e8eef2; }
 .tm__copy { cursor: pointer; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.08); color: #fff; border-radius: 7px; padding: 4px 10px; font-size: 11px; }
+
+.tm__gmgn { margin-top: 8px; font-size: 11px; color: #c9d1d6; }
+.tm__gbtn, .tm__gcp1, .tm__gcp2, .tm__gsave { cursor: pointer; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.08); color: #fff; border-radius: 7px; padding: 4px 10px; font-size: 11px; }
+.tm__gbox { margin-top: 8px; padding: 10px; border: 1px solid rgba(255,255,255,.15); border-radius: 9px; max-width: 520px; }
+.tm__gbox p { margin: 6px 0; }
+.tm__gpub { width: 100%; box-sizing: border-box; font: 11px ui-monospace, monospace; background: #0b0d10; color: #e8eef2; border: 1px solid rgba(255,255,255,.2); border-radius: 6px; }
+.tm__gkey { width: 60%; background: #0b0d10; color: #fff; border: 1px solid rgba(255,255,255,.25); border-radius: 6px; padding: 4px 6px; }

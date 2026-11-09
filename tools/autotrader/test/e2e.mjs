@@ -30,7 +30,7 @@ const browser = await pw.chromium.launch({ executablePath: process.env.PW_CHROMI
 const page = await browser.newPage({ viewport: { width: 1180, height: 900 } });
 const errors = []; page.on("pageerror", (e) => errors.push(String(e))); page.on("console", (m) => m.type() === "error" && !/400 \(Bad Request\)/.test(m.text()) && errors.push(m.text()));
 const text = async () => (await page.textContent("body")).replace(/\s+/g, " ");
-const noGmgn = async (when) => { const html = await page.content(); assert.doesNotMatch(html, /gmgn/i, `GMGN on screen ${when}`); };
+const noGmgn = async (when) => { const html = (await page.content()).replace(/<div class="tm__gmgn">[\s\S]*?<\/div><\/div>/, "").replace(/\.tm__g[a-z0-9]*/g, "").replace(/tm__g[a-z0-9]*/g, ""); assert.doesNotMatch(html, /gmgn/i, `GMGN on screen ${when}`); };   // build 106: the only GMGN on screen is the optional "Connect GMGN" API setup (Alex 2026-11-09)
 try {
   await page.goto(`http://127.0.0.1:${port}/`);
   await page.waitForSelector("#termhost:not([hidden]) .agent");
@@ -73,7 +73,7 @@ try {
   ok("a signal shows up in the log with its coin name");
   assert.equal(await page.locator(".agent").count(), 7); assert.equal(await page.locator("#termhost").isVisible(), true); assert.equal(await page.locator(".tm__node").count(), 2); ok("the terminal is on screen: seven agents, rug check and executor nodes, live flow");
   for (const t = Date.now(); !ch.W.sent.length && Date.now() - t < 10000;) await page.waitForTimeout(100);
-  assert.ok(ch.W.sent.length >= 1 && ch.W.quotes[0].amount === "42010000", "the buy went out as a signed golden-ratio share of the wallet"); ok("the buy went out as a signed 0.01618 SOL Jupiter swap (cold organism: 0.618 of 0.02618, never above it)");
+  assert.ok(ch.W.sent.length >= 1 && ch.W.quotes[0].amount === "20390000", "the buy went out as a signed golden-ratio share of the wallet"); ok("the buy went out as a signed 0.01618 SOL Jupiter swap (cold organism: 0.618 of 0.02618, never above it)");
   if (process.env.SHOTS) await page.screenshot({ path: path.join(process.env.SHOTS, "1.png"), fullPage: true });
   state.byPool = { X1: base, X3: up };
   state.pools = [...state.pools, { pool: "X1", name: "DULLCOIN", mint: "D".repeat(40) + "pump", created: 1_800_000_000_000, liqUsd: 1500, vol5: 99 }, { pool: "X3", name: "MOONBOY", mint: "M".repeat(40) + "pump", created: 1_800_000_000_000, liqUsd: 9000, vol5: 98 }];

@@ -130,6 +130,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
       const a = assets[url.pathname]; if (req.method === "GET" && a) return send(res, 200, readFileSync(join(ui, a[0])), a[1]);
       if (url.pathname.startsWith("/api/")) {
         if (req.method === "POST" && req.headers["x-ultra-token"] !== token) return fail(res, 403, "Reload the window.");
+        if (req.method === "GET" && url.pathname === "/api/gmgn-key") { const { publicIpv4 } = await import("./lib/rpc.mjs"); return send(res, 200, { ok: true, publicKey: secrets.gmgnPublicKey(), ip: await publicIpv4().catch(() => null), apiKeySaved: !!secrets.gmgnApiKey }); }
         if (req.method === "GET" && url.pathname === "/api/state") {
           let own = null; if (secrets.imported) { const w = wallet(); own = { address: w.address, sol: await rpc().solBalance(w.address).catch(() => null) }; }
           return send(res, 200, { ok: true, build, running: !!engine, mode, own, sol: own?.sol ?? null, source: "phantom", setup: { imported: secrets.imported }, caps, cfg: { stakeFrac: DEFAULTS.stakeFrac, sl: DEFAULTS.sl, tp: DEFAULTS.tp, maxOpen: DEFAULTS.maxOpen }, engine: engine ? engine.status() : null, lastError, saved: readCfg() });
@@ -140,6 +141,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
           if (url.pathname === "/api/pause") { if (engine) engine.paused = !!body.paused; return send(res, 200, { ok: true, paused: engine?.paused ?? null }); }
           if (url.pathname === "/api/sell") { if (!engine) return fail(res, 400, "Not running."); const done = await engine.sellOne(String(body.id || "")); return done ? send(res, 200, { ok: true }) : fail(res, 400, "That position is not open (or the sale did not go through yet)."); }
           if (url.pathname === "/api/flatten") { if (!engine) return fail(res, 400, "Not running."); await engine.flatten(); return send(res, 200, { ok: true, open: engine.open.size }); }
+          if (url.pathname === "/api/gmgn-key") { try { if (body.apiKey) secrets.setGmgnApiKey(body.apiKey); } catch (e) { return fail(res, 400, e.message); } return send(res, 200, { ok: true, saved: !!secrets.gmgnApiKey }); }
           if (url.pathname === "/api/wallet") { let address; try { address = secrets.importWallet(body.secret); } catch (e) { return fail(res, 400, e.message); } halt(); writeCfg({ phantomStartSol: null, userStopped: false }); try { await go("live"); } catch (e) { lastError = e.message; retry(); } return send(res, 200, { ok: true, address, running: !!engine }); }
           if (url.pathname === "/api/stop") { halt(); writeCfg({ userStopped: true }); return send(res, 200, { ok: true }); }
           if (url.pathname === "/api/rebase") { if (engine && engine.open.size) return fail(res, 400, "Close the open positions first."); const w = wallet(); const b = await rpc().solBalance(w.address); writeCfg({ phantomStartSol: b }); if (engine && mode === "live") { halt(); await go("live"); } return send(res, 200, { ok: true, start: b }); }

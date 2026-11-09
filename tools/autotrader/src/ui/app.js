@@ -16,6 +16,15 @@
     const r = await fetch(path, body === undefined ? {} : { method: "POST", headers: { "content-type": "application/json", "x-ultra-token": TOKEN }, body: JSON.stringify(body) });
     return r.json();
   };
+  // build 106: GMGN API setup (the public key is made on this Mac; the private half never leaves it)
+  document.addEventListener("click", async (ev) => {
+    const t = ev.target; if (!(t instanceof HTMLElement)) return;
+    const box = document.querySelector(".tm__gbox"), cp = async (txt, b) => { try { await navigator.clipboard.writeText(txt); b.textContent = "Copied"; } catch { b.textContent = "Select and copy"; } };
+    if (t.matches(".tm__gbtn")) { box.hidden = !box.hidden; if (!box.hidden) { if (!box.firstChild) box.innerHTML = `<p>1. On gmgn.ai, API, Create API Key: paste this <b>public key</b> into "Upload Public Key".</p> <textarea class="tm__gpub" readonly rows="4"></textarea><button type="button" class="tm__gcp1">Copy public key</button> <p>2. "Trusted IP For Trading": this Mac's IP is <code class="tm__gip">–</code> <button type="button" class="tm__gcp2">Copy IP</button></p> <p>3. Paste the API key GMGN gives you here, then Save. It stays on this Mac.</p> <input class="tm__gkey" type="password" placeholder="GMGN API key" autocomplete="off"><button type="button" class="tm__gsave">Save</button> <span class="tm__gmsg"></span>`; const g = await api("/api/gmgn-key"); document.querySelector(".tm__gpub").value = g.publicKey || ""; document.querySelector(".tm__gip").textContent = g.ip || "unknown"; document.querySelector(".tm__gmsg").textContent = g.apiKeySaved ? "API key saved" : ""; } }
+    if (t.matches(".tm__gcp1")) cp(document.querySelector(".tm__gpub").value, t);
+    if (t.matches(".tm__gcp2")) cp(document.querySelector(".tm__gip").textContent, t);
+    if (t.matches(".tm__gsave")) { const r = await api("/api/gmgn-key", { apiKey: document.querySelector(".tm__gkey").value }); document.querySelector(".tm__gmsg").textContent = r.ok && r.saved ? "API key saved" : (r.error || "not saved"); if (r.ok) document.querySelector(".tm__gkey").value = ""; }
+  });
   const fmt = (n, d = 4) => (n == null ? "–" : Number(n).toFixed(d));
   const pct = (x) => (x == null ? "–" : `${x >= 0 ? "+" : ""}${(x * 100).toFixed(1)}%`);
   const ago = (t) => { const s = Math.max(0, Math.round((Date.now() - t) / 1000)); return s < 90 ? `${s}s` : s < 5400 ? `${Math.round(s / 60)}m` : `${Math.round(s / 3600)}h`; };
@@ -149,6 +158,7 @@
           <div class="tm__run"><i></i><span class="tm__state">running</span> · <span class="tm__clock">00:00:00</span></div>
           <div class="tm__tape"><span></span></div>
           <div class="tm__addr"><span>send SOL to</span><code class="tm__addrv">–</code><button type="button" class="tm__copy">Copy address</button></div>
+          <div class="tm__gmgn"><button type="button" class="tm__gbtn">Connect GMGN</button><div class="tm__gbox" hidden></div></div>
           <small>every trade gets a reason</small>
           <small class="tm__narr">narratives: reading the meta…</small>
           <small class="tm__whales">whales: finding smart wallets…</small>

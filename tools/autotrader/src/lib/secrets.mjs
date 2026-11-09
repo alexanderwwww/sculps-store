@@ -12,6 +12,14 @@ export class Secrets {
   get imported() { return !!(this.d.walletImported && this.d.walletPem); }
   /** Alex's own wallet, plugged in once (Alex, 2026-10-29): the private key exported from Phantom, base58 (64 or 32 bytes) or a
    *  JSON byte array. Kept only in this file (mode 600) on his Mac; never sent anywhere. Any earlier key is kept, never lost. */
+  /** build 106: GMGN API signing key (Ed25519), made once on this Mac; only the PUBLIC half is ever shown. */
+  gmgnPublicKey() {
+    if (!this.d.gmgnPem) { const { privateKey } = crypto.generateKeyPairSync("ed25519"); this.d.gmgnPem = privateKey.export({ type: "pkcs8", format: "pem" }); this.#save(); }
+    return crypto.createPublicKey(this.d.gmgnPem).export({ type: "spki", format: "pem" }).trim();
+  }
+  get gmgnPem() { return this.d.gmgnPem || null; }
+  setGmgnApiKey(k) { const t = String(k || "").trim(); if (t.length < 16 || /\s/.test(t)) throw new Error("That does not look like a GMGN API key."); this.d.gmgnApiKey = t; this.#save(); }
+  get gmgnApiKey() { return this.d.gmgnApiKey || null; }
   importWallet(secret) {
     const t = String(secret || "").trim();
     let bytes;
