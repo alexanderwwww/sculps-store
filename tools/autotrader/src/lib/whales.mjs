@@ -164,14 +164,14 @@ export class Whales {
     const L = this.live, t = this.now();
     if (this.ws && L.up && L.lastMsgAt && t - L.lastMsgAt > 120000 && L.subs) { try { this.ws.close(); } catch { /* */ } }   // silent for 2 min = dead
     if (!this.ws) { if (t < this.wsRetryAt) return; this.#liveOpen(); return; }
-    if (!L.up) return;
+    if (!L.up) { if (t - this.wsOpenAt > 15000) { const d = this.ws; this.ws = null; L.fails = (L.fails || 0) + 1; this.wsRetryAt = t + 2000; try { d.close(); } catch { /* */ } } return; }
     const want = [...this.w.keys()].filter((a) => ![...this.subOf.values()].includes(a) && ![...this.reqOf.values()].includes(a)).slice(0, 20);
     for (const a of want) { const id = ++this.reqId || (this.reqId = 1); this.reqOf.set(id, a); this.ws.send(JSON.stringify({ jsonrpc: "2.0", id, method: "logsSubscribe", params: [{ mentions: [a] }, { commitment: "confirmed" }] })); }
   }
   #liveOpen() {
     const L = this.live, url = this.wsUrls[this.wsI++ % this.wsUrls.length];
     let ws; try { ws = new this.WS(url); } catch { this.errors++; this.wsRetryAt = this.now() + 10000; return; }
-    this.ws = ws; this.subOf.clear(); this.reqOf.clear(); L.url = url; L.subs = 0; L.opens++;
+    this.ws = ws; this.wsOpenAt = this.now(); this.subOf.clear(); this.reqOf.clear(); L.url = url; L.subs = 0; L.opens++;
     ws.onopen = () => { L.up = true; L.lastMsgAt = this.now(); };
     ws.onclose = () => { if (this.ws === ws) { this.ws = null; L.up = false; L.subs = 0; this.wsRetryAt = this.now() + 5000; } };
     ws.onerror = () => { this.errors++; };
@@ -234,7 +234,7 @@ export class Whales {
     const ws = [...this.w.values()].sort((a, b) => this.weight(b) - this.weight(a));
     const lag = this.lags.length ? Math.round(this.lags.reduce((a, x) => a + x, 0) / this.lags.length / 100) / 10 : null;
     const L = this.live, ll = L.lags.length ? Math.round(L.lags.reduce((a, x) => a + x, 0) / L.lags.length / 100) / 10 : null;
-    return { live: { up: L.up, url: L.url, subs: L.subs, hits: L.hits, lagS: ll, opens: L.opens }, count: ws.length, polls: this.polls, swapsSeen: this.seen, lagS: lag, errors: this.errors, dropped: this.dropped.length,
+    return { live: { up: L.up, url: L.url, subs: L.subs, hits: L.hits, lagS: ll, opens: L.opens, fails: L.fails || 0 }, count: ws.length, polls: this.polls, swapsSeen: this.seen, lagS: lag, errors: this.errors, dropped: this.dropped.length,
       wallets: ws.slice(0, 12).map((x) => ({ addr: x.addr, short: `${x.addr.slice(0, 4)}…${x.addr.slice(-4)}`, src: x.src, weight: +this.weight(x).toFixed(2), copies: x.copies, wins: x.wins, avgRet: x.copies ? +(x.sumRet / x.copies).toFixed(4) : null, own: +(x.own || 0).toFixed(0) })),
       signals: this.signals().slice(0, 4).map((s) => ({ name: s.name, mint: s.mint, wallets: s.wallets.length })) };
   }
