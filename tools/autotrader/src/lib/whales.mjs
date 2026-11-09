@@ -66,7 +66,7 @@ export class Whales {
     this.set.add(addr);
   }
   /** weight: >1 for wallets that made Ultra money, <1 for losers; untested wallets 1 */
-  weight(x) { if (!x) return 0; const avg = x.copies ? x.sumRet / x.copies : 0; return Math.max(0.2, Math.min(3, 1 + avg * 20 + (x.own > 0 ? 0.2 : 0))); }
+  weight(x) { if (!x) return 0; const avg = x.copies ? x.sumRet / x.copies : 0, wr = x.copies >= 3 ? x.wins / x.copies : null; return Math.max(0.2, Math.min(3, 1 + avg * 20 + (x.own > 0 ? Math.min(0.8, Math.log10(1 + x.own / 100) * 0.4) : 0) + (wr == null ? 0 : (wr - 0.5) * 1.2))); }   // build 108: bigger realized profit and a proven win rate count more
   async #get(url, opts = {}) {
     const r = await withTimeout(this.fetchImpl(url, { headers: { accept: "application/json" }, ...opts, signal: AbortSignal.timeout(this.timeout) }), this.timeout);
     if (!r.ok) throw new Error(`HTTP ${r.status}`);

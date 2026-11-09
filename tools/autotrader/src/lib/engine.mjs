@@ -315,6 +315,7 @@ export class Engine {
     for (const { s, m, fib } of sigs) {
       if (this.paused || this.open.size >= this.cfg.maxOpen) return;
       if (this.followed?.has(s.mint)) continue;
+      if ((s.weight ?? 0) < (this.cfg.minSmartWeight ?? 2.4)) { this.#skip(m.name, `follow: smart weight ${(s.weight ?? 0).toFixed(1)} too low`); continue; }   // build 108: two weak or unproven wallets are not enough
       if ([...this.open.values()].some((p) => p.pool === s.pool || p.mint === s.mint) || [...this.closing].some((id) => this.open.get(id)?.mint === s.mint) || this.cool.get(s.pool) > this.now() || this.cool.get(s.mint) > this.now()) continue;
       const lv = this.live.get(s.pool); if (!lv || this.now() - lv.at > 15000) continue;   // price comes on the next fast pass
       if ((lv.liqUsd ?? 0) < (this.cfg.liveMinLiq ?? 15000)) { this.#skip(m.name, "follow: pool too thin to get out of"); this.cool.set(s.pool, this.now() + 60000); continue; }
@@ -324,7 +325,7 @@ export class Engine {
       const sig = { path: "follow", rise: 0, vol5: lv.vol5 || 0, buys: lv.buys5 || 0, sells: lv.sells5 || 0, ratio: (lv.buys5 || 0) / Math.max(1, lv.sells5 || 0), liq: lv.liqUsd ?? 0, whales: s.wallets.length };
       const it = this.#intel(m);
       const why = `following ${s.wallets.length} smart wallets into ${(m.name || "").replace(/ \/ SOL$/, "")}${fib ? " · fib agrees" : ""}${it ? ` · ${this.#intelWhy(it)}` : ""}`;
-      await this.#consider({ ...m, pool: s.pool, mint: s.mint }, Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), { ok: true, why }, { m: O.sizeMul(this.org, sig), sig, intel: it, follow: s.wallets });
+      await this.#consider({ ...m, pool: s.pool, mint: s.mint }, Array.from({ length: 6 }, (_, k) => ({ ...c0, t: t - (5 - k) * 60000 })), { ok: true, why }, { m: (s.weight ?? 0) >= 4 ? 1 : O.INV, sig, intel: it, follow: s.wallets });
     }
   }
   /** The research on a coin right now (never awaited); null when there is no intel module or it threw. */

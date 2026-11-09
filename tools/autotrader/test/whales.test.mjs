@@ -46,7 +46,7 @@ function rig({ wallets = ["A", "B", "C"], ch = chain(), rugPass = true, prices =
   const px = () => (prices ? prices[Math.min(i, prices.length - 1)] : 1);
   const feed = { quotes: async (pools) => new Map(pools.includes("P") ? [["P", { price: px(), liqUsd: 60000, buys5: 50, sells5: 50, vol5: 20000 }]] : []), newPools: async () => [], trendingPools: async () => [], candles: async () => [] };
   const exec = { name: "live", buy: async (o) => { buys.push(o); return { ok: true, sol: 0.016 }; }, sell: async () => { sells.push(now); return { ok: true }; }, sizeSol: async ({ scale }) => ({ bal: 1, sol: 0.016 * Math.min(1, scale) }) };
-  const whales = new Whales({ fetchImpl: ch.fetchImpl, now: () => now, seed: wallets, pollGapMs: 0 });
+  const whales = new Whales({ fetchImpl: ch.fetchImpl, now: () => now, saved: { wallets: wallets.map((a) => ({ addr: a, src: "test", own: 500 })) }, pollGapMs: 0 });
   const rugs = [];
   const e = new Engine({ feed, exec, whales, journal: new Journal(path.join(fs.mkdtempSync(path.join(os.tmpdir(), "wh-")), "j.jsonl")), rug: async (m) => { rugs.push(m); return rugPass ? { pass: true, reason: "ok" } : { pass: false, reason: "danger: test" }; }, cfg: { ...DEFAULTS, sl: -0.02, maxOpen: 3, entryMinLiq: 0, liveMinLiq: 20000 }, now: () => now });
   const pass = async () => { await e.slow(); await whales.pump([]); await whales.poll(); await flush(); await e.fast(); i++; now += 3000; };
