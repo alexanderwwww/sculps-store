@@ -307,7 +307,7 @@ export class Engine {
     for (const p of this.open.values()) {
       if (p.redFlag || p.rfBusy || this.now() - (p.rfAt || p.at) < 60000) continue;
       p.rfBusy = true; p.rfAt = this.now();
-      Promise.resolve().then(() => this.rug({ mint: p.mint, pool: p.pool, name: p.name })).then((r) => { if (r && r.pass === false && !/unreachable|rugcheck down/i.test(r.reason || "")) p.redFlag = String(r.reason || "contract check failed").slice(0, 80); }).catch(() => {}).finally(() => { p.rfBusy = false; });
+      Promise.resolve().then(() => this.rug({ mint: p.mint, pool: p.pool, name: p.name })).then((r) => { if (r && r.pass === false && !/unreachable|rugcheck down|unreadable/i.test(r.reason || "")) p.redFlag = String(r.reason || "contract check failed").slice(0, 80); }).catch(() => {}).finally(() => { p.rfBusy = false; });
     }
   }
   #followSignals() { if (!this.whales) return []; try { return this.whales.signals() || []; } catch (e) { this.#err("whales", e); return []; } }
