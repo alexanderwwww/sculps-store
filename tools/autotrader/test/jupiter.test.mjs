@@ -131,10 +131,10 @@ test("no pause line: a 0.0457 SOL wallet still buys (Alex 2026-10-29)", async ()
   assert.ok((await mk(0.06).sizeSol()).sol > 0);
   // build 83: ONE proportional rule at every wallet size (0.318 of the portfolio): $10 a trade at ~0.33 SOL, $20 at ~0.66 SOL, no flat jump at 0.5 SOL
   const near = (a2, b2) => Math.abs(a2 - b2) < 1e-4;
-  assert.ok(near((await mk(0.3).sizeSol()).sol, 0.09), "0.3 SOL -> 0.09: 0.3 of the portfolio (build 91, three positions)");
-  assert.ok(near((await mk(0.66).sizeSol()).sol, 0.198), "0.66 SOL -> 0.198");
-  assert.ok(near((await mk(2).sizeSol()).sol, 0.6), "2 SOL -> 0.6");
-  assert.ok((await mk(0.66).sizeSol({ streak: 1 })).sol <= 0.4 * 0.66 + 1e-9, "after a win a single trade is still at most 40% of the portfolio");
+  assert.ok(near((await mk(0.3).sizeSol()).sol, 0.135), "0.3 SOL -> 0.135: 0.45 of the portfolio (build 107, two positions)");
+  assert.ok(near((await mk(0.66).sizeSol()).sol, 0.297), "0.66 SOL -> 0.297");
+  assert.ok(near((await mk(2).sizeSol()).sol, 0.9), "2 SOL -> 0.9");
+  assert.ok((await mk(0.66).sizeSol({ streak: 1 })).sol <= 0.5 * 0.66 + 1e-9, "after a win a single trade is still at most 50% of the portfolio");
   assert.ok((await mk(0.6).sizeSol()).sol > (await mk(0.49).sizeSol()).sol, "no drop at the 0.5 SOL line");
-  assert.ok(near((await mk(0.66).sizeSol({ scale: 0.618 })).sol, 0.198 * 0.618), "forced picks are 0.618 of it");
+  assert.ok(near((await mk(0.66).sizeSol({ scale: 0.618 })).sol, 0.297 * 0.618), "forced picks are 0.618 of it");
 });

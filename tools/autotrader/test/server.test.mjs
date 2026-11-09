@@ -134,8 +134,8 @@ test("PHANTOM: paste the private key once -> it trades that wallet, 0.02618 SOL 
   const st = await s.until(async () => { const x = await s.get("/api/state"); return x.engine?.open.length === 1 ? x : null; });
   assert.equal(st.source, "phantom"); assert.equal(st.own.address, s.key.address); assert.equal(st.setup.imported, true);
   // build 52: a cold organism (fewer than 13 closes measured) buys at 0.618 of the 0.02618 size; it is never above it
-  assert.equal(st.engine.open[0].stake, 0.02039); assert.equal(st.caps.fixedSol, 0.012); assert.equal(st.caps.perHour, 200);
-  assert.equal(s.ch.W.quotes[0].amount, "20390000", "the Jupiter quote is 0.3 of the portfolio x 0.618 (0.02039 SOL, build 91)");
+  assert.equal(st.engine.open[0].stake, 0.03059); assert.equal(st.caps.fixedSol, 0.012); assert.equal(st.caps.perHour, 200);
+  assert.equal(s.ch.W.quotes[0].amount, "30590000", "the Jupiter quote is 0.45 of the portfolio x 0.618 (0.03059 SOL, build 107)");
   assert.equal(s.ch.W.lastSwap.userPublicKey, s.key.address, "the swap is for the plugged-in wallet");
   const text = JSON.stringify(st);
   assert.ok(!text.includes(s.key.secret), "the key never appears in the state"); assert.doesNotMatch(text, /PRIVATE KEY|walletPem/);
