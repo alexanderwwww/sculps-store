@@ -82,7 +82,7 @@ export function start({ dataDir, port = 47401, build = "dev", feed = liveFeed, t
     if (!savedOrg && !(DEFAULTS.momMin <= 0.03)) { DEFAULTS.momMin = 0.03; writeCfg({ tuned: { ...(readCfg().tuned || {}), momMin: 0.03 } }); }
     const exec = jupiterExec({ wallet: w, rpc: rpc(), jupiter: jup(), cfg: DEFAULTS, caps, startSol: readCfg().phantomStartSol, now });
     // whales: smart wallets found from public data, watched on the public RPC; intel reads the same live set
-    const whales = feed === liveFeed ? new Whales({ feed, saved: readCfg().whales || null, seed: readCfg().smartWallets || [], onSave: (w) => writeCfg({ whales: w }) }) : null;
+    const whales = feed === liveFeed ? new Whales({ feed, WS: globalThis.WebSocket, saved: readCfg().whales || null, seed: readCfg().smartWallets || [], onSave: (w) => writeCfg({ whales: w }) }) : null;
     const intel = feed === liveFeed ? new Intel({ smartWallets: [] }) : null; if (intel && whales) intel.smart = whales.set;
     const eng = new Engine({ feed, exec, journal: new Journal(join(dataDir, "journal-phantom.jsonl")), rug: rugOverride || ((m) => rugCheck(m, { rpc: rpcI })), startEq: readCfg().phantomStartSol, now, org: savedOrg, narr: feed === liveFeed ? new Narrative({ now }) : null, intel, whales });
     eng.onLearn = (c) => onLearn(c);

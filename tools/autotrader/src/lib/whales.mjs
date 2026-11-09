@@ -53,8 +53,9 @@ export function swapsOf(tx, owner) {
 }
 
 export class Whales {
-  constructor({ fetchImpl = globalThis.fetch, now = Date.now, feed = null, timeout = 2500, saved = null, seed = [], maxWallets = 360, windowMs = 60000, minWallets = 2, soloWeight = 2.4, pollGapMs = 1500, onSave = null } = {}) {
-    Object.assign(this, { fetchImpl, now, feed, timeout, maxWallets, windowMs, minWallets, soloWeight, pollGapMs, onSave });
+  constructor({ fetchImpl = globalThis.fetch, now = Date.now, feed = null, timeout = 2500, saved = null, seed = [], maxWallets = 360, windowMs = 60000, minWallets = 2, soloWeight = 2.4, pollGapMs = 1500, onSave = null, WS = null, wsUrls = ["wss://solana-rpc.publicnode.com", "wss://api.mainnet-beta.solana.com"] } = {}) {
+    Object.assign(this, { fetchImpl, now, feed, timeout, maxWallets, windowMs, minWallets, soloWeight, pollGapMs, onSave, WS, wsUrls });
+    this.live = { up: false, url: null, subs: 0, hits: 0, lags: [], opens: 0, lastMsgAt: 0 }; this.ws = null; this.subOf = new Map(); this.reqOf = new Map(); this.wsI = 0; this.wsRetryAt = 0;
     this.w = new Map(); this.set = new Set(); this.events = []; this.vet = new Map(); this.vetBusy = new Set(); this.rpcI = 0; this.busy = false; this.lastPump = 0; this.lastDisc = 0; this.discI = 0;
     this.lags = []; this.errors = 0; this.polls = 0; this.seen = 0; this.dropped = [];
     for (const x of saved?.wallets || []) this.#add(x.addr, x);
@@ -81,6 +82,7 @@ export class Whales {
   pump(runners = []) {
     if (this.busy || this.now() - this.lastPump < this.pollGapMs) return null;
     this.busy = true; this.lastPump = this.now();
+    try { this.#liveTick(); } catch { this.errors++; }
     return (async () => {
       if (this.feed?.trades && (this.now() - this.lastDisc > (this.w.size < this.maxWallets ? 8000 : 120000)) && runners.length) { this.lastDisc = this.now(); await this.discover(runners).catch(() => { this.errors++; }); }
       await this.poll().catch(() => { this.errors++; });
@@ -156,6 +158,42 @@ export class Whales {
       if (this.vet.size > 300) this.vet.delete(this.vet.keys().next().value);
     })().catch(() => { this.errors++; }).finally(() => this.vetBusy.delete(mint));
   }
+  /** Build 115: live feed. One websocket, one logsSubscribe per wallet: a wallet's swap arrives in ~1 s instead of a poll round later. */
+  #liveTick() {
+    if (!this.WS) return;
+    const L = this.live, t = this.now();
+    if (this.ws && L.up && L.lastMsgAt && t - L.lastMsgAt > 120000 && L.subs) { try { this.ws.close(); } catch { /* */ } }   // silent for 2 min = dead
+    if (!this.ws) { if (t < this.wsRetryAt) return; this.#liveOpen(); return; }
+    if (!L.up) return;
+    const want = [...this.w.keys()].filter((a) => ![...this.subOf.values()].includes(a) && ![...this.reqOf.values()].includes(a)).slice(0, 20);
+    for (const a of want) { const id = ++this.reqId || (this.reqId = 1); this.reqOf.set(id, a); this.ws.send(JSON.stringify({ jsonrpc: "2.0", id, method: "logsSubscribe", params: [{ mentions: [a] }, { commitment: "confirmed" }] })); }
+  }
+  #liveOpen() {
+    const L = this.live, url = this.wsUrls[this.wsI++ % this.wsUrls.length];
+    let ws; try { ws = new this.WS(url); } catch { this.errors++; this.wsRetryAt = this.now() + 10000; return; }
+    this.ws = ws; this.subOf.clear(); this.reqOf.clear(); L.url = url; L.subs = 0; L.opens++;
+    ws.onopen = () => { L.up = true; L.lastMsgAt = this.now(); };
+    ws.onclose = () => { if (this.ws === ws) { this.ws = null; L.up = false; L.subs = 0; this.wsRetryAt = this.now() + 5000; } };
+    ws.onerror = () => { this.errors++; };
+    ws.onmessage = (m) => { try { this.#liveMsg(JSON.parse(String(m.data))); } catch { this.errors++; } };
+  }
+  #liveMsg(j) {
+    const L = this.live; L.lastMsgAt = this.now();
+    if (j.id != null && this.reqOf.has(j.id)) { const a = this.reqOf.get(j.id); this.reqOf.delete(j.id); if (typeof j.result === "number") { this.subOf.set(j.result, a); L.subs = this.subOf.size; } else this.errors++; return; }
+    if (j.method !== "logsNotification") return;
+    const a = this.subOf.get(j.params?.subscription), v = j.params?.result?.value; if (!a || !v?.signature || v.err) return;
+    if (!this.w.has(a)) return;
+    L.hits++;
+    const x = this.w.get(a); x.lastSig = v.signature;
+    this.#liveTx(a, v.signature, 0);
+  }
+  async #liveTx(a, sig, n) {
+    const tx = await this.#rpc("getTransaction", [sig, { encoding: "jsonParsed", maxSupportedTransactionVersion: 0, commitment: "confirmed" }]).catch(() => null);
+    if (!tx) { if (n < 3) setTimeout(() => this.#liveTx(a, sig, n + 1), 700); return; }
+    const t = (tx.blockTime || Math.floor(this.now() / 1000)) * 1000;
+    const sw = swapsOf(tx, a); if (sw.length) { this.live.lags.push(Math.max(0, this.now() - t)); if (this.live.lags.length > 50) this.live.lags.shift(); }
+    for (const s of sw) this.note({ wallet: a, mint: s.mint, side: s.side, t, sig });
+  }
   /** Step 3: coins 2+ independent smart wallets bought inside the window, strongest first. */
   signals() {
     const t = this.now(), by = new Map();
@@ -195,7 +233,8 @@ export class Whales {
   summary() {
     const ws = [...this.w.values()].sort((a, b) => this.weight(b) - this.weight(a));
     const lag = this.lags.length ? Math.round(this.lags.reduce((a, x) => a + x, 0) / this.lags.length / 100) / 10 : null;
-    return { count: ws.length, polls: this.polls, swapsSeen: this.seen, lagS: lag, errors: this.errors, dropped: this.dropped.length,
+    const L = this.live, ll = L.lags.length ? Math.round(L.lags.reduce((a, x) => a + x, 0) / L.lags.length / 100) / 10 : null;
+    return { live: { up: L.up, url: L.url, subs: L.subs, hits: L.hits, lagS: ll, opens: L.opens }, count: ws.length, polls: this.polls, swapsSeen: this.seen, lagS: lag, errors: this.errors, dropped: this.dropped.length,
       wallets: ws.slice(0, 12).map((x) => ({ addr: x.addr, short: `${x.addr.slice(0, 4)}…${x.addr.slice(-4)}`, src: x.src, weight: +this.weight(x).toFixed(2), copies: x.copies, wins: x.wins, avgRet: x.copies ? +(x.sumRet / x.copies).toFixed(4) : null, own: +(x.own || 0).toFixed(0) })),
       signals: this.signals().slice(0, 4).map((s) => ({ name: s.name, mint: s.mint, wallets: s.wallets.length })) };
   }
