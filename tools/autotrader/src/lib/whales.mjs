@@ -53,8 +53,8 @@ export function swapsOf(tx, owner) {
 }
 
 export class Whales {
-  constructor({ fetchImpl = globalThis.fetch, now = Date.now, feed = null, timeout = 2500, saved = null, seed = [], maxWallets = 360, windowMs = 60000, minWallets = 2, pollGapMs = 1500, onSave = null } = {}) {
-    Object.assign(this, { fetchImpl, now, feed, timeout, maxWallets, windowMs, minWallets, pollGapMs, onSave });
+  constructor({ fetchImpl = globalThis.fetch, now = Date.now, feed = null, timeout = 2500, saved = null, seed = [], maxWallets = 360, windowMs = 60000, minWallets = 2, soloWeight = 2.4, pollGapMs = 1500, onSave = null } = {}) {
+    Object.assign(this, { fetchImpl, now, feed, timeout, maxWallets, windowMs, minWallets, soloWeight, pollGapMs, onSave });
     this.w = new Map(); this.set = new Set(); this.events = []; this.vet = new Map(); this.vetBusy = new Set(); this.rpcI = 0; this.busy = false; this.lastPump = 0; this.lastDisc = 0; this.discI = 0;
     this.lags = []; this.errors = 0; this.polls = 0; this.seen = 0; this.dropped = [];
     for (const x of saved?.wallets || []) this.#add(x.addr, x);
@@ -82,7 +82,7 @@ export class Whales {
     if (this.busy || this.now() - this.lastPump < this.pollGapMs) return null;
     this.busy = true; this.lastPump = this.now();
     return (async () => {
-      if (this.feed?.trades && (this.now() - this.lastDisc > (this.w.size < this.maxWallets ? 30000 : 120000)) && runners.length) { this.lastDisc = this.now(); await this.discover(runners).catch(() => { this.errors++; }); }
+      if (this.feed?.trades && (this.now() - this.lastDisc > (this.w.size < this.maxWallets ? 8000 : 120000)) && runners.length) { this.lastDisc = this.now(); await this.discover(runners).catch(() => { this.errors++; }); }
       await this.poll().catch(() => { this.errors++; });
     })().finally(() => { this.busy = false; });
   }
@@ -170,7 +170,8 @@ export class Whales {
       const clusters = new Map();
       for (const e of inWin) { const f = this.w.get(e.wallet)?.funder; const k = f ? `f:${f}` : `w:${e.wallet}`; if (!clusters.has(k)) clusters.set(k, e.wallet); }
       const wallets = [...clusters.values()];
-      if (wallets.length < this.minWallets) continue;
+      // one proven wallet (weight 2.4+) is enough on its own; unproven ones need company
+      if (wallets.length < this.minWallets && !(wallets.length === 1 && this.weight(this.w.get(wallets[0])) >= this.soloWeight)) continue;
       out.push({ mint, pool: v.pool, name: v.name, liqUsd: v.liqUsd, wallets, weight: wallets.reduce((a, w) => a + this.weight(this.w.get(w)), 0), at: Math.max(...inWin.map((e) => e.t)) });
     }
     return out.sort((a, b) => b.weight - a.weight);
