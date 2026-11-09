@@ -133,6 +133,7 @@ export class Engine {
       // lesson 28 (team): waiting for a second look let 2 of 4 stops gap to -10..-12%. A REAL Jupiter quote under the stop sells at once; a chart price still needs two looks.
       if (under && (real || p.under >= 2 || price <= entry * (1 + sl * 1.3))) { why = `stop ${Math.round(sl * 100)}%`; kind = "stop"; trig = sl; }
       else if (under) why = null;
+      else if (p.redFlag) { why = `red flag: ${p.redFlag}`; kind = "redflag"; }   // build 104: the contract re-check failed while we hold it: out at once
       else if (p.follow?.length && this.whales && (() => { try { const s = this.whales.sellers(p.mint, p.follow, p.at); if (s.length) { p.followSold = s.length; return true; } } catch (e) { this.#err("whales", e); } return false; })()) { why = `whales selling: ${p.followSold} of ${p.follow.length} followed wallet${p.follow.length === 1 ? "" : "s"} sold, out first`; kind = "follow"; }
       else if ((() => { const w = this.whale.get(p.pool); return w && this.now() - w.at < 60000 && w.sell >= (this.cfg.whaleUsd ?? 1500) && w.sell >= 2 * w.buy; })()) { why = "ULTRA INSTINCT: whales leaving"; kind = "whale"; }
       else if ((p.partDone || peak >= entry * (1 + lockFrom)) && price <= entry * (1 + (c.lockAt ?? 0.01))) { why = `locked: was up ${Math.round((peak / entry - 1) * 100)}%, out before it turns red`; kind = "lock"; trig = c.lockAt ?? 0.01; }   // lesson 4: a winner never becomes a loser
@@ -263,6 +264,10 @@ export class Engine {
   async #fastEntries() {
     if (this.paused || this.open.size >= this.cfg.maxOpen) return;
     try { await this.#follow(); } catch (e) { this.#err("follow", e); }
+    // build 104 SMART MODE (Alex 2026-11-09, the "smart money" strategy): buy ONLY what 2+ independent smart wallets just bought
+    // (#follow above). No momentum buys, no idle picks. Fewer trades, better coins.
+    this.#redFlags();
+    if (this.cfg.smart === 1) return;
     for (const m of this.ready) {
       if (this.open.size >= this.cfg.maxOpen || this.paused) break;
       const g = this.#gate(m, true); if (!g) continue;
@@ -288,6 +293,14 @@ export class Engine {
       this.cool.set(pick.cand.pool, this.now() + 30000);
       const it = this.#intel(pick.cand);
       await this.#consider(pick.cand, g.cs, { ...g.s, why: `${g.s.why} (idle pick: least-bad band, 0.618 size)${it ? ` · ${this.#intelWhy(it)}` : ""}` }, { m: O.INV, sig: g.sig, intel: it });
+    }
+  }
+  /** build 104: while a position is open, re-run the rug/contract check every 60 s in the background; a failure marks a red flag. */
+  #redFlags() {
+    for (const p of this.open.values()) {
+      if (p.redFlag || p.rfBusy || this.now() - (p.rfAt || p.at) < 60000) continue;
+      p.rfBusy = true; p.rfAt = this.now();
+      Promise.resolve().then(() => this.rug({ mint: p.mint, pool: p.pool, name: p.name })).then((r) => { if (r && r.pass === false && !/unreachable|rugcheck down/i.test(r.reason || "")) p.redFlag = String(r.reason || "contract check failed").slice(0, 80); }).catch(() => {}).finally(() => { p.rfBusy = false; });
     }
   }
   #followSignals() { if (!this.whales) return []; try { return this.whales.signals() || []; } catch (e) { this.#err("whales", e); return []; } }
