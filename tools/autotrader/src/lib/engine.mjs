@@ -266,6 +266,9 @@ export class Engine {
    *  so thin bands still get tried). Positive -> buy at its size. Not positive -> remembered; after 97 s with no entry the
    *  best-scored fresh coin that still passes every filter is bought at 0.618 size. It never stops trading. */
   async #fastEntries() {
+    // build 110: the smart-wallet watcher runs from the fast loop (every 3 s), never behind the slow chart scan.
+    // On the Mac it sat behind slow candle fetches and never polled a wallet (polls 0 for minutes = no trades).
+    if (this.whales) { try { const runners = [...this.watch.values()].filter((m) => m.pool && (m.liqUsd ?? 0) >= 20000).sort((a, b) => (b.vol1h || b.vol5 || 0) - (a.vol1h || a.vol5 || 0)).slice(0, 15); this.whales.pump(runners)?.catch?.(() => {}); } catch (e) { this.#err("whales", e); } }
     if (this.paused || this.open.size >= this.cfg.maxOpen) return;
     try { await this.#follow(); } catch (e) { this.#err("follow", e); }
     // build 104 SMART MODE (Alex 2026-11-09, the "smart money" strategy): buy ONLY what 2+ independent smart wallets just bought
