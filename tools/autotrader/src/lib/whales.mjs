@@ -82,7 +82,7 @@ export class Whales {
     if (this.busy || this.now() - this.lastPump < this.pollGapMs) return null;
     this.busy = true; this.lastPump = this.now();
     return (async () => {
-      if (this.feed?.trades && (this.now() - this.lastDisc > 60000) && runners.length) { this.lastDisc = this.now(); await this.discover(runners).catch(() => { this.errors++; }); }
+      if (this.feed?.trades && (this.now() - this.lastDisc > (this.w.size < this.maxWallets ? 30000 : 120000)) && runners.length) { this.lastDisc = this.now(); await this.discover(runners).catch(() => { this.errors++; }); }
       await this.poll().catch(() => { this.errors++; });
     })().finally(() => { this.busy = false; });
   }
