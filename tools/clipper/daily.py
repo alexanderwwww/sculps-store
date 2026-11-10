@@ -9,7 +9,8 @@ def gql(game):
     r = urllib.request.Request("https://gql.twitch.tv/gql", json.dumps(q).encode(), {"Client-Id": "kimne78kx3ncx6brgo4mv6wki5h1ko", "content-type": "application/json"})
     return [e["node"] for e in json.load(urllib.request.urlopen(r, timeout=20))["data"]["game"]["clips"]["edges"]]
 def sh(*c, **k): return subprocess.run(c, capture_output=True, text=True, **k)
-try: used = set(json.load(urllib.request.urlopen("https://blackreaper.us/media/oraktys-used.json", timeout=15)))
+# read straight from R2: the public /media URL is cached for a year, so it would return the first list forever
+try: _f = os.path.join(TMP, "used-in.json"); sh("npx", "wrangler", "r2", "object", "get", "gardenbuddy-media/oraktys-used.json", "--file", _f, "--remote", timeout=120); used = set(json.load(open(_f)))
 except Exception: used = {"ResourcefulBlazingKumquatPraiseIt-dbnC1oRVhIZpi3Bp"}
 cands = [dict(c, six=(g == "Grand Theft Auto VI")) for g in ("Grand Theft Auto VI", "Grand Theft Auto V") for c in gql(g)]
 cands = [c for c in cands if c["slug"] not in used and c["durationSeconds"] >= 20 and (c.get("language") or "").lower() == "en"]
