@@ -18,6 +18,8 @@ mx = max(loud) or 1; loud = [x/mx for x in loud]
 from faster_whisper import WhisperModel
 segs, _ = WhisperModel(a.model, compute_type="int8").transcribe(a.src, word_timestamps=True)
 words = [(w.start, w.end, w.word.strip()) for sg in segs for w in (sg.words or []) if w.word.strip()]
+SLUR = re.compile(r"\bnigg(a|er)s?\b|\bfag(got)?s?\b|\bretard(ed)?\b", re.I)   # never burned into captions (ads + policy)
+words = [(x, y, SLUR.sub(lambda m: m.group(0)[0] + "*" * (len(m.group(0)) - 1), z)) for x, y, z in words]
 best = None
 for L in range(int(a.min), int(a.max)+1, 5):
   for st in range(0, max(1, int(dur - L)+1)):

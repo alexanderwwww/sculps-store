@@ -32,3 +32,10 @@ Runs from a cloud session on a schedule. Proven pieces (2026-11-10):
 1. `python3 tools/clipper/daily.py pick 3` -> candidates with what is SAID (English + 25+ words only; junk dropped). 80% GTA 6 (Twitch + Kick "GTA VI" week, 30+ views), GTA 5 fills the rest. Before the Nov 19 launch there is almost no good GTA 6 clip, so most will be GTA 5 until then: that is expected.
 2. For each: write an IGN-style headline from what is SAID (max ~6 words, the hook, e.g. "SHE ASKED HIM TO KILL JUN"), then `python3 tools/clipper/daily.py make <slug> "<headline>"` -> {url, credit}. Look at one frame before posting.
 3. Schedule with Metricool; text ends with "🎥 <credit>" (twitch.tv/... or kick.com/...).
+
+## Daily run v3 (2026-11-10, Alex: "ONLY GTA 6", "12 every day", "go for GTA 6 trailer reactions")
+- 12 Shorts a day, every 2 h (Athens 03:00 → 01:00 next day = all US hours). Daily run 13:23 Athens schedules the NEXT day.
+- Source order: Twitch "Grand Theft Auto VI" category clips (last week, last month, all time: every big trailer/reveal reaction lives there — Jynxzi, Kai Cenat, IShowSpeed, xQc, Asmongold, Charlie, DDG), then Kick GTA VI (100+ views), then watchlist streamers' clips whose SPEECH is about GTA. Never GTA 5.
+- Watchlist (research 2026-11-10): Kai Cenat (announced a no-end GTA 6 launch marathon), IShowSpeed, Adin Ross (Kick), N3on (Kick), xQc. Launch Nov 19: their live clips first.
+- Rules from research: no story spoilers (Rockstar takes those down), no AI-fake "leaks", reaction clips over raw trailer. Slurs are masked in captions.
+- Money before YouTube pays: Whop "Content Rewards" clipping campaigns pay $1–5 per 1,000 views. Check contentrewards.com/discover around Nov 17–19 for GTA 6 / streamer campaigns and tell Alex.
