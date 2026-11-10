@@ -24,7 +24,14 @@
       "Bash(node --test tools/flip/test/:*)",
       "Bash(cd tools/flip && npm test)",
       "Edit(tools/flip/**)",
-      "Read(tools/flip/**)"
+      "Read(tools/flip/**)",
+      "Bash",
+      "Edit",
+      "Write",
+      "Read",
+      "mcp__Metricool_Social_Media_Management",
+      "mcp__Claude_Code_Remote__update_trigger",
+      "mcp__Claude_Code_Remote__send_later"
     ]
   }
 }
