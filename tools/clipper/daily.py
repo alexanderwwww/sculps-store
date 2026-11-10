@@ -11,9 +11,9 @@ def gql(game):
 def sh(*c, **k): return subprocess.run(c, capture_output=True, text=True, **k)
 try: used = set(json.load(urllib.request.urlopen("https://blackreaper.us/media/oraktys-used.json", timeout=15)))
 except Exception: used = {"ResourcefulBlazingKumquatPraiseIt-dbnC1oRVhIZpi3Bp"}
-cands = [c for g in ("Grand Theft Auto VI", "Grand Theft Auto V") for c in gql(g)]
+cands = [dict(c, six=(g == "Grand Theft Auto VI")) for g in ("Grand Theft Auto VI", "Grand Theft Auto V") for c in gql(g)]
 cands = [c for c in cands if c["slug"] not in used and c["durationSeconds"] >= 20 and (c.get("language") or "").lower() == "en"]
-cands.sort(key=lambda c: -c["viewCount"])
+cands.sort(key=lambda c: -(c["viewCount"] * (8 if c["six"] or re.search(r"gta ?(6|vi)\b", c["title"], re.I) else 1)))   # Alex 2026-11-10: GTA 6 first (launch Nov 19)
 out = []
 for c in cands:
     if len(out) >= N: break
