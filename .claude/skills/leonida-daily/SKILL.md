@@ -27,3 +27,8 @@ Runs from a cloud session on a schedule. Proven pieces (2026-11-10):
 - Post each with Metricool createScheduledPost: youtubeData {type "short", privacy "public", category "GAMING", madeForKids false}, title = punchy hook from what was said + " #gta #shorts" (<70 chars), text ends with "🎥 twitch.tv/<streamer>". Slots Athens 17:00, 21:00, 01:00 (= 10am / 2pm / 6pm New York). Never a time in the past.
 - First posts: xQc Brick Boy (2026-11-10 21:30), Crystalst garage juke (2026-11-11 17:00).
 - Alex 2026-11-10: GTA 6 clips first (8x weight) — streamer + GTA 6 footage on screen in the same clip keeps people watching. Never the bare trailer alone (copyright). GTA 6 launches Nov 19: launch week go to 6 a day.
+
+## Daily run v2 (2026-11-10): two steps, red headline, 80% GTA 6
+1. `python3 tools/clipper/daily.py pick 3` -> candidates with what is SAID (English + 25+ words only; junk dropped). 80% GTA 6 (Twitch + Kick "GTA VI" week, 30+ views), GTA 5 fills the rest. Before the Nov 19 launch there is almost no good GTA 6 clip, so most will be GTA 5 until then: that is expected.
+2. For each: write an IGN-style headline from what is SAID (max ~6 words, the hook, e.g. "SHE ASKED HIM TO KILL JUN"), then `python3 tools/clipper/daily.py make <slug> "<headline>"` -> {url, credit}. Look at one frame before posting.
+3. Schedule with Metricool; text ends with "🎥 <credit>" (twitch.tv/... or kick.com/...).

@@ -4,7 +4,7 @@ Brain v1: every window is scored on loudness (hype), speech density and GTA keyw
 usage: clip.py SRC.mp4 OUT.mp4 [--min 20 --max 40]"""
 import sys, json, subprocess, re, math, argparse, os
 p = argparse.ArgumentParser(); p.add_argument("src"); p.add_argument("out"); p.add_argument("--min", type=float, default=20); p.add_argument("--max", type=float, default=40)
-p.add_argument("--model", default="small"); a = p.parse_args()
+p.add_argument("--model", default="small"); p.add_argument("--headline", default=""); a = p.parse_args()
 KEY = re.compile(r"gta|vice|leonida|lucia|jason|trailer|rockstar|map|leak|release|2026|insane|crazy|no way|bro|what|oh my", re.I)
 
 def run(*c): return subprocess.run(c, capture_output=True, text=True, check=True).stdout
@@ -31,13 +31,17 @@ sc, st, L, ws = best
 t0 = max(0, ws[0][0]-0.15); t1 = min(dur, ws[-1][1]+0.4)
 def ts(t): h=int(t//3600); m=int(t%3600//60); return f"{h}:{m:02d}:{t%60:05.2f}"
 ass = ["[Script Info]","PlayResX: 1080","PlayResY: 1920","[V4+ Styles]",
- "Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, Bold, Outline, Shadow, Alignment, MarginV",
- "Style: W,Arial Black,92,&H00FFFFFF,&H00000000,&H64000000,1,7,2,2,560","[Events]","Format: Layer, Start, End, Style, Text"]
+ "Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, Bold, BorderStyle, Outline, Shadow, Alignment, MarginV",
+ "Style: W,Arial Black,92,&H00FFFFFF,&H00000000,&H64000000,1,1,7,2,2,560",
+ "Style: H,Arial Black,64,&H00FFFFFF,&H001010D8,&H00000000,1,3,14,0,8,250","[Events]","Format: Layer, Start, End, Style, Text"]
+# IGN-style red headline box on top for the whole Short (Alex 2026-11-10)
+if a.headline: ass.append(f"Dialogue: 1,{ts(0)},{ts(t1-t0+1)},H,{a.headline.upper()}")
 grp = [ws[i:i+3] for i in range(0, len(ws), 3)]
 for g in grp:
   for j, w in enumerate(g):
     txt = " ".join(("{\\c&H00E1FF&}" + x[2].upper() + "{\\c&HFFFFFF&}") if k == j else x[2].upper() for k, x in enumerate(g))
-    e = g[j+1][0] if j+1 < len(g) else w[1]
+    gi = grp.index(g); nxt = grp[gi+1][0][0] if gi+1 < len(grp) else 1e9
+    e = min(g[j+1][0] if j+1 < len(g) else w[1], nxt)   # never overlap the next caption
     ass.append(f"Dialogue: 0,{ts(w[0]-t0)},{ts(max(e, w[0]+0.05)-t0)},W,{txt}")
 open(a.out + ".ass", "w").write("\n".join(ass))
 vf = ("split[a][b];[a]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=30[bg];"
