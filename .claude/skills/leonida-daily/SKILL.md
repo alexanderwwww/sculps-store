@@ -20,3 +20,9 @@ Runs from a cloud session on a schedule. Proven pieces (2026-11-10):
 3. **Post:** needs ONE connection by Alex (unavoidable: Google asks the channel owner). Options: Metricool connector (has createScheduledPost + getBestTimeToPostByNetwork) or YouTube Studio via ultracursor in his Chrome.
 4. **Schedule:** 3 Shorts a day at the times Metricool's best-time tool gives (default 12:00, 17:00, 21:00 US Eastern). Never the same clip twice (keep a list of used slugs). Credit the streamer in the title/description ("🎥 twitch.tv/<login>").
 - "viewmax" from the reel is not in the connector registry; vidIQ (trending, outliers, keywords) is the closest and is optional.
+
+## LIVE setup (2026-11-10)
+- Channel: **ORAKTYS** (Alex's own name, keep it). YouTube id UCF6z0XOYoC8N8Sl0Q5O9Uzw. Metricool brand blogId **8014971**, timezone Europe/Athens.
+- Daily run: `python3 tools/clipper/daily.py 3` (needs `pip install faster-whisper yt-dlp`, ffmpeg, wrangler creds) → prints [{url, streamer, name, title, said}]; videos at blackreaper.us/media/oraktys-*.mp4 (flat keys only, no slashes); used clips in oraktys-used.json.
+- Post each with Metricool createScheduledPost: youtubeData {type "short", privacy "public", category "GAMING", madeForKids false}, title = punchy hook from what was said + " #gta #shorts" (<70 chars), text ends with "🎥 twitch.tv/<streamer>". Slots Athens 17:00, 21:00, 01:00 (= 10am / 2pm / 6pm New York). Never a time in the past.
+- First posts: xQc Brick Boy (2026-11-10 21:30), Crystalst garage juke (2026-11-11 17:00).
