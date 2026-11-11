@@ -17,6 +17,7 @@ def kick(cat):
     except Exception: return []
     return [{"slug": "kick-" + c["id"], "title": c["title"], "viewCount": c.get("views") or 0, "durationSeconds": c.get("duration") or 0, "six": True,
              "broadcaster": {"login": c["channel"]["slug"], "displayName": c["channel"]["username"]}, "src_url": c["video_url"], "kick": True} for c in cs]
+BOOST = {"kaicenat": 4}   # Alex 2026-11-11: "keep posting more Kai" (Kai's reveal crash was the first Short to take off)
 WATCH_TWITCH = ["kaicenat", "ishowspeed", "xqcow", "jynxzi", "agent00", "darkviperau"]
 WATCH_KICK = ["adinross", "n3on", "xqc"]
 def user_clips(login):
@@ -73,7 +74,7 @@ def pick(n):
     for slug in WATCH_KICK:
         talk += [dict(c, talk=True) for c in kick_user(slug) if ok(c) and c["durationSeconds"] >= 15]
     six = [c for c in six if not c.get("kick") or c["viewCount"] >= 100]   # tiny Kick category clips were junk before launch
-    seen = set(); cands = [c for c in sorted(six, key=lambda c: -c["viewCount"]) + sorted(talk, key=lambda c: -c["viewCount"]) if not (c["slug"] in seen or seen.add(c["slug"]))]
+    seen = set(); cands = [c for c in sorted(six, key=lambda c: -c["viewCount"] * BOOST.get(c["broadcaster"]["login"].lower(), 1)) + sorted(talk, key=lambda c: -c["viewCount"]) if not (c["slug"] in seen or seen.add(c["slug"]))]
     out = []
     for c in cands:
         if len(out) >= n: break

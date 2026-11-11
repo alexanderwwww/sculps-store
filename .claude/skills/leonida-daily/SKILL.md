@@ -39,3 +39,4 @@ Runs from a cloud session on a schedule. Proven pieces (2026-11-10):
 - Watchlist (research 2026-11-10): Kai Cenat (announced a no-end GTA 6 launch marathon), IShowSpeed, Adin Ross (Kick), N3on (Kick), xQc. Launch Nov 19: their live clips first.
 - Rules from research: no story spoilers (Rockstar takes those down), no AI-fake "leaks", reaction clips over raw trailer. Slurs are masked in captions.
 - Money before YouTube pays: Whop "Content Rewards" clipping campaigns pay $1–5 per 1,000 views. Check contentrewards.com/discover around Nov 17–19 for GTA 6 / streamer campaigns and tell Alex.
+- Alex 2026-11-11: more Kai Cenat (BOOST kaicenat x4 in daily.py). His reveal-crash Short was first to take off (190 views day 1).
