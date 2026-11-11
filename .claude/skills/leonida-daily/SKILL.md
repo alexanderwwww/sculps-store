@@ -40,3 +40,4 @@ Runs from a cloud session on a schedule. Proven pieces (2026-11-10):
 - Rules from research: no story spoilers (Rockstar takes those down), no AI-fake "leaks", reaction clips over raw trailer. Slurs are masked in captions.
 - Money before YouTube pays: Whop "Content Rewards" clipping campaigns pay $1–5 per 1,000 views. Check contentrewards.com/discover around Nov 17–19 for GTA 6 / streamer campaigns and tell Alex.
 - Alex 2026-11-11: more Kai Cenat (BOOST kaicenat x4 in daily.py). His reveal-crash Short was first to take off (190 views day 1).
+- Alex 2026-11-11: 80% Kai, 20% others (quota in daily.py pick; Kai's own clips last day/week/month whose speech is about GTA count too). Pre-launch Kai supply is limited (test: 3 of 5).

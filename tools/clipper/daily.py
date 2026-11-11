@@ -20,8 +20,8 @@ def kick(cat):
 BOOST = {"kaicenat": 4}   # Alex 2026-11-11: "keep posting more Kai" (Kai's reveal crash was the first Short to take off)
 WATCH_TWITCH = ["kaicenat", "ishowspeed", "xqcow", "jynxzi", "agent00", "darkviperau"]
 WATCH_KICK = ["adinross", "n3on", "xqc"]
-def user_clips(login):
-    q = {"query": '{ user(login: "%s") { clips(first: 20, criteria: {period: LAST_DAY, sort: VIEWS_DESC}) { edges { node { slug title viewCount durationSeconds language broadcaster { login displayName } } } } } }' % login}
+def user_clips(login, period="LAST_DAY"):
+    q = {"query": '{ user(login: "%s") { clips(first: 20, criteria: {period: %s, sort: VIEWS_DESC}) { edges { node { slug title viewCount durationSeconds language broadcaster { login displayName } } } } } }' % (login, period)}
     try:
         r = urllib.request.Request("https://gql.twitch.tv/gql", json.dumps(q).encode(), {"Client-Id": "kimne78kx3ncx6brgo4mv6wki5h1ko", "content-type": "application/json"})
         return [e["node"] for e in json.load(urllib.request.urlopen(r, timeout=20))["data"]["user"]["clips"]["edges"]]
@@ -70,11 +70,14 @@ def pick(n):
             if (c.get("language") or "").lower() == "en" and ok(c) and c["durationSeconds"] >= 20]
     # watchlist (research 2026-11-10): the streamers expected to play GTA 6 hardest at launch; their clips count if the speech is about GTA
     for login in WATCH_TWITCH:
-        talk += [dict(c, six=True, talk=True, src_url="https://clips.twitch.tv/" + c["slug"]) for c in user_clips(login) if ok(c) and c["durationSeconds"] >= 15]
+        talk += [dict(c, six=True, talk=True, src_url="https://clips.twitch.tv/" + c["slug"]) for per in (("LAST_DAY", "LAST_WEEK", "LAST_MONTH") if login == "kaicenat" else ("LAST_DAY",)) for c in user_clips(login, per) if ok(c) and c["durationSeconds"] >= 15]
     for slug in WATCH_KICK:
         talk += [dict(c, talk=True) for c in kick_user(slug) if ok(c) and c["durationSeconds"] >= 15]
     six = [c for c in six if not c.get("kick") or c["viewCount"] >= 100]   # tiny Kick category clips were junk before launch
     seen = set(); cands = [c for c in sorted(six, key=lambda c: -c["viewCount"] * BOOST.get(c["broadcaster"]["login"].lower(), 1)) + sorted(talk, key=lambda c: -c["viewCount"]) if not (c["slug"] in seen or seen.add(c["slug"]))]
+    # Alex 2026-11-11: 80% Kai Cenat, 20% others. Kai first up to 80% of n, then the rest (Kai again if others run out)
+    kai = [c for c in cands if c["broadcaster"]["login"].lower() == "kaicenat"]; rest = [c for c in cands if c not in kai]
+    k = round(n * 0.8); cands = kai[:k] + rest + kai[k:]
     out = []
     for c in cands:
         if len(out) >= n: break
