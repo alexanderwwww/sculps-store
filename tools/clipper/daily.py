@@ -9,7 +9,8 @@ def sh(*c, **k): return subprocess.run(c, capture_output=True, text=True, **k)
 def gql(game, period="LAST_DAY"):
     q = {"query": '{ game(name: "%s") { clips(first: 100, criteria: {period: %s, sort: VIEWS_DESC}) { edges { node { slug title viewCount durationSeconds language broadcaster { login displayName } } } } } }' % (game, period)}
     r = urllib.request.Request("https://gql.twitch.tv/gql", json.dumps(q).encode(), {"Client-Id": "kimne78kx3ncx6brgo4mv6wki5h1ko", "content-type": "application/json"})
-    return [e["node"] for e in json.load(urllib.request.urlopen(r, timeout=20))["data"]["game"]["clips"]["edges"]]
+    try: return [e["node"] for e in json.load(urllib.request.urlopen(r, timeout=20))["data"]["game"]["clips"]["edges"]]
+    except Exception: return []   # Twitch sometimes answers null for a category: skip it, never crash the day
 def kick(cat):
     try:
         r = urllib.request.Request(f"https://kick.com/api/v2/categories/{cat}/clips?sort=view&time=week", headers={"User-Agent": "Mozilla/5.0"})
