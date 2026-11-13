@@ -47,3 +47,4 @@ Runs from a cloud session on a schedule. Proven pieces (2026-11-10):
 - Alex makes the Whop account + payout himself. Claude picks campaigns (list with $/1K views for his OK), clips, posts via Metricool, submits links in his Chrome via ultracursor (or sends him links to paste).
 - Only clips posted AFTER joining, of that campaign's creator, following its rules, count. Most campaigns accept YouTube Shorts/TikTok/Reels — check each.
 - TikTok Creator Rewards won't pay for these (needs >1 min, original, 10k followers); Whop pays per view from day one.
+- Alex 2026-11-13 (replaces "ONLY GTA 6"): "post ALL streamers, I don't care" — any topic, any big English streamer, plus all Whop jobs, all on ORAKTYS + its TikTok. GTA 6 and Kai still ranked first.

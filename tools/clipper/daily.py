@@ -75,6 +75,10 @@ def pick(n):
     for slug in WATCH_KICK:
         talk += [dict(c, talk=True) for c in kick_user(slug) if ok(c) and c["durationSeconds"] >= 15]
     six = [c for c in six if not c.get("kick") or c["viewCount"] >= 100]   # tiny Kick category clips were junk before launch
+    # Alex 2026-11-13: "post all streamers, I don't care" -> also the biggest clips of the day from top English categories, no GTA speech filter
+    for cat in ("Just Chatting", "IRL", "Fortnite", "Minecraft", "Grand Theft Auto V"):
+        talk += [dict(c, six=False, talk=True, src_url="https://clips.twitch.tv/" + c["slug"]) for c in gql(cat, "LAST_DAY")[:30]
+                 if (c.get("language") or "").lower() == "en" and ok(c) and c["durationSeconds"] >= 15]
     seen = set(); cands = [c for c in sorted(six, key=lambda c: -c["viewCount"] * BOOST.get(c["broadcaster"]["login"].lower(), 1)) + sorted(talk, key=lambda c: -c["viewCount"]) if not (c["slug"] in seen or seen.add(c["slug"]))]
     # Alex 2026-11-11: 80% Kai Cenat, 20% others. Kai first up to 80% of n, then the rest (Kai again if others run out)
     kai = [c for c in cands if c["broadcaster"]["login"].lower() == "kaicenat"]; rest = [c for c in cands if c not in kai]
@@ -95,7 +99,7 @@ def pick(n):
             segs, info = _W.transcribe(src)
             said = " ".join(x.text.strip() for x in segs)[:400]
             if info.language != "en" or len(said.split()) < (25 if c.get("talk") else 6): continue   # reactions can be mostly screaming   # junk: not English, or nobody talking
-            if c.get("talk") and not re.search(r"\bgta\b|grand theft|gta ?(6|six|vi)|rockstar|leonida|vice city|lucia", said, re.I): continue   # not about GTA 6
+            if False and c.get("talk") and not re.search(r"\bgta\b|grand theft|gta ?(6|six|vi)|rockstar|leonida|vice city|lucia", said, re.I): continue   # not about GTA 6
         except Exception: pass
         out.append({"slug": c["slug"], "streamer": c["broadcaster"]["login"], "title": c["title"], "views": c["viewCount"], "gta6": c["six"], "platform": "kick" if c.get("kick") else "twitch", "said": said})   # write the headline from what is SAID
     print(json.dumps(out, ensure_ascii=False, indent=1))
