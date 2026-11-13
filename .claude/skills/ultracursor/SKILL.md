@@ -152,3 +152,9 @@ The trader inside ultracursor is called **symbiot**. It's part of Alex's ecosyst
 ## Job: Content Rewards clipping (Alex 2026-11-13)
 - Fresh zip for reinstall (Alex deleted the app): https://blackreaper.us/media/ultracursor-54-3f6c21b6dd029318.zip (build 54, pack.sh all checks passed; self-update moves it to the newest runtime).
 - What the cursor does for ORAKTYS: on contentrewards.com (Alex's Whop login), read each joined campaign's rules, join the gaming/streamer ones that accept YouTube (Eneba $3, Stream House LA $2, FOMO x ClipFarm $2, Expedia x IShowSpeed $1, FaZe Tournament $1, TJR $0.75), submit each posted Short's link to its campaign, read views/earnings daily. Skip gambling campaigns (Flip.gg, Clash). Final clicks (submit/join) show his Approve card unless he adds an autoApprove rule.
+
+## Build 61 (2026-11-13): connects through its own DNS + Whop/Content Rewards profile
+- Why: the app sat "NOT connected" (last check-in 17 days, build 60) while open on his Mac. Alex refused to debug ("remake the app and resend it").
+- ultra.mjs: IPv4 first, family racing, and dns.lookup falls back to 1.1.1.1/8.8.8.8 (same fix that brought Ultra back in build 117). Proven here with a forced ENOTFOUND: the fallback resolved kerberos.
+- profiles/contentrewards.json (contentrewards.com, whop.com): join only YouTube gaming/streamer campaigns, never gambling, read rules first, submit only ORAKTYS Shorts, never touch payout/ID/bank. Join/submit are final words (card).
+- pack.sh: every test passed. Zip: https://blackreaper.us/media/ultracursor-61-938a14663cfd4387.zip. Runtime rs-runtime.json now build 61 (uc61-ultra.mjs, uc61-profiles-contentrewards.json), so the 54 zip also updates to 61. Way back: rs60.json (build 60 manifest) re-uploaded as rs-runtime.json.

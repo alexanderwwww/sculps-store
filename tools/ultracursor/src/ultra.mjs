@@ -34,6 +34,17 @@ import * as tiktok from "./sites/tiktok.mjs";
 import * as instagram from "./sites/instagram.mjs";
 import * as trends from "./sites/trends.mjs";
 import * as stores from "./sites/stores.mjs";
+import dns from "node:dns";
+import net from "node:net";
+// build 61 (2026-11-13): the app never checked in from Alex's Mac while Chrome worked (same as Ultra build 117:
+// ENOTFOUND from the Mac's own lookup). Prefer IPv4, race both families, and when the system lookup fails ask
+// Cloudflare and Google DNS directly.
+try { dns.setDefaultResultOrder("ipv4first"); } catch { /* old node */ }
+try { net.setDefaultAutoSelectFamily(true); } catch { /* old node */ }
+{ const sys = dns.lookup, R = new dns.Resolver(); R.setServers(["1.1.1.1", "8.8.8.8", "1.0.0.1"]);
+  dns.lookup = function (host, opts, cb) { if (typeof opts === "function") { cb = opts; opts = {}; } if (typeof opts === "number") opts = { family: opts };
+    sys.call(dns, host, opts, (err, addr, fam) => { if (!err) return cb(null, addr, fam);
+      R.resolve4(host, (e2, a4) => { if (e2 || !a4?.length) return cb(err); if (opts?.all) return cb(null, a4.map((x) => ({ address: x, family: 4 }))); cb(null, a4[0], 4); }); }); }; }
 
 const WORK = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
