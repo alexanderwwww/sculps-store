@@ -273,6 +273,9 @@ async function download(url) {
 }
 
 async function checkRuntime() {
+  // Clipper never updates itself from the network: the only way a new Clipper arrives is a new zip.
+  // (build 1 pulled ultracursor 63 here at startup and opened GMGN - Alex, 2026-11-13.)
+  if (true) return false;
   const rt = await cloud.get("runtime");
   if (!rt || !rt.build || !rt.files || String(rt.build) === BUILD) return false;
   const want = String(rt.build);
@@ -428,7 +431,7 @@ async function sweep(hunt) {
 /* ------------------------------------------------------------------ the loop */
 
 async function main() {
-  log(`ultracursor build ${BUILD} starting (control plane ${cloud.base.replace(/\/research\/.+$/, "/research/…")})`);
+  log(`Clipper build ${BUILD} starting (control plane ${cloud.base.replace(/\/research\/.+$/, "/research/…")})`);
   status({ state: "idle", phase: "starting" });
   await chrome();
   let lastStatus = 0, lastHunt = 0, lastRuntime = 0;

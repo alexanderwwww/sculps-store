@@ -219,30 +219,24 @@ await until(() => huntGets() >= g0 + 2, 20000);
 await sleep(2000);
 check("hunt h2 is not run again after a restart", stub.reports.length === reportsBefore && !stub.statuses.slice(-5).some((s) => s.state === "sweeping"), { reports: stub.reports.length, before: reportsBefore });
 
-/* ------------------------------------------------------------------ 6. self-update */
+/* ------------------------------------------------------------------ 6. Clipper never self-updates */
 
-console.log("== self-update");
+console.log("== no self-update (Clipper)");
 const base = `http://127.0.0.1:${stubPort}/files`;
-stub.files["broken-ultra.mjs"] = "export const = ;\n";
-stub.set("runtime", { build: "2", files: { "ultra.mjs": `${base}/broken-ultra.mjs` } });
+stub.files["gmgn-ultra.mjs"] = "// ultracursor 63 that opens GMGN\n";
+const before = fs.readFileSync(path.join(WORK, "ultra.mjs"), "utf8");
+stub.set("runtime", { build: "63", files: { "ultra.mjs": `${base}/gmgn-ultra.mjs` } });
 stub.set("order", { cmd: "update" });
-const refused = await until(() => stub.logs.find((l) => /update to build 2 refused/.test(l)), 15000);
-check("a build that does not parse is refused", Boolean(refused), stub.logs.slice(-5));
-await sleep(2500);
-check("…and the runner keeps going on build 1", runnerExit === null && fs.readFileSync(path.join(WORK, "ultra.mjs"), "utf8").includes("ultracursor's runner") && !fs.existsSync(path.join(WORK, "build.txt")), { exit: runnerExit });
-stub.files["good-ultra.mjs"] = fs.readFileSync(path.join(SRC, "ultra.mjs"), "utf8") + "\n// build 3\n";
-stub.files["good-tiktok.mjs"] = fs.readFileSync(path.join(SRC, "sites/tiktok.mjs"), "utf8") + "\n// build 3\n";
-stub.set("runtime", { build: "3", files: { "ultra.mjs": `${base}/good-ultra.mjs`, "sites/tiktok.mjs": `${base}/good-tiktok.mjs` } });
-stub.set("order", { cmd: "update" });
-await until(() => runnerExit !== null, 20000);
-check("a good build is installed and the runner exits 97", runnerExit === 97, { exit: runnerExit, out: runnerOut.slice(-600) });
-check("build.txt says 3 and the new files are in place", fs.readFileSync(path.join(WORK, "build.txt"), "utf8").trim() === "3"
-  && fs.readFileSync(path.join(WORK, "ultra.mjs"), "utf8").endsWith("// build 3\n")
-  && fs.readFileSync(path.join(WORK, "sites/tiktok.mjs"), "utf8").endsWith("// build 3\n") && !fs.existsSync(path.join(WORK, ".next")));
-// What run.command does next: start it again with the new number.
-startRunner({ ULTRA_BUILD: "3" });
-const s3 = await until(() => stub.statuses.find((s) => s.build === "3"), 15000);
-check("the restarted runner reports build 3", Boolean(s3));
+await sleep(8000);
+check("an update order downloads nothing", !stub.logs.some((l) => /is available|downloading|installed; restarting/.test(l)), stub.logs.slice(-5));
+check("…the runner keeps going, its files untouched", runnerExit === null && fs.readFileSync(path.join(WORK, "ultra.mjs"), "utf8") === before && !fs.existsSync(path.join(WORK, "build.txt")), { exit: runnerExit });
+await stopRunner();
+// The real failure of build 1: a newer runtime already waiting when the app starts.
+const nLogs = stub.logs.length;
+startRunner({ ULTRA_BUILD: "2" });
+await until(() => stub.statuses.find((x) => x.build === "2"), 15000);
+await sleep(5000);
+check("a fresh start with build 63 waiting downloads nothing", !stub.logs.slice(nLogs).some((l) => /is available|downloading/.test(l)) && runnerExit === null && fs.readFileSync(path.join(WORK, "ultra.mjs"), "utf8") === before, stub.logs.slice(nLogs).slice(-5));
 await stopRunner();
 
 sampling = false;
