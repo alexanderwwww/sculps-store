@@ -26,3 +26,6 @@ Alex, after ultracursor and "Clipper" both opened GMGN: "Remake a whole new app 
 - Lesson: read every brief after joining for follower minimums and story requirements before making clips for it. Rules unlock only after Join.
 - Discover page snapshots are huge (2000+ lines): use read_text, or open campaigns by URL. The FaZe card in "Top clips" has no URL in the snapshot.
 - Next: open FaZe Tournament, SkiiMaskTimmy, Warzone, Jason Pool briefs; keep only those with no follower minimum and YouTube allowed; then make/post Shorts to their rules and submit.
+- Also joined RoCode (/c/campaigns/91425ed7-...): needs real Roblox Studio screen recordings made on a PC. Claude cannot film that; only Alex can. Not a fit for ORAKTYS.
+- Call of Duty MW4 (/c/campaigns/78b4e379-...): TikTok + Instagram only, NOT YouTube. Most big campaigns are TikTok/IG only -> an Instagram account (Alex: "we can make an insta later") unlocks them.
+- YouTube-friendly streamer targets still to open: FaZe Tournament ($1/1K, $8.5K), $2,500 SkiiMaskTimmy, $9K Jason Pool (JasonTheWeen). Their card links are not in the Discover snapshot; open via the campaign search / "All campaigns" list.
