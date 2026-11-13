@@ -86,6 +86,7 @@ const ENV = {
   ULTRA_CLOUD: `http://127.0.0.1:${stubPort}/research/${KEY}`,
   ULTRA_CDP_PORT: String(CDP),
   ULTRA_FAST: "1",
+  ULTRA_RESEARCH: "1",
   ULTRA_SITE_ADLIBRARY: `${S}/fb`,
   ULTRA_SITE_TIKTOK: `${S}/tt`,
   ULTRA_SITE_INSTAGRAM: `${S}/ig`,

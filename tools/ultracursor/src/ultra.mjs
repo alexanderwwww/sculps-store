@@ -458,8 +458,11 @@ async function main() {
           const files = await fetchTaskFiles(hunt.id, urls);
           log(`task from Claude (hunt ${hunt.id}): ${text.slice(0, 160)}${files.length ? ` with ${files.length} photo(s)` : ""}`);
           desk.enqueue({ id: hunt.id, huntId: hunt.id, text, files, source: "cloud" });
+        } else if (process.env.ULTRA_RESEARCH === "1") {
+          await sweep(hunt); // kept only for the old test suite; never set on his Mac
         } else {
-          await sweep(hunt);
+          // build 63: clipping only, no research sweeps.
+          log(`hunt ${hunt.id} ignored: this app is only for clipping`);
         }
         lastStatus = 0;
       }

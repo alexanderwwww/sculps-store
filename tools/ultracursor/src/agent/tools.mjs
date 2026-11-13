@@ -112,6 +112,14 @@ export const TOOLS = [
 ];
 
 export const TOOL_NAMES = new Set(TOOLS.map((t) => t.name));
+/** build 63: the only sites ultracursor may open (Whop Content Rewards, YouTube for ORAKTYS, Google sign-in). */
+export const CLIPPING_HOSTS = ["contentrewards.com", "whop.com", "youtube.com", "youtu.be", "accounts.google.com"];
+export function clippingHost(host) {
+  host = String(host || "").toLowerCase();
+  if (host === "127.0.0.1" || host === "localhost") return true; // the test fixtures; nothing on his Mac listens there for the agent
+  return CLIPPING_HOSTS.some((h) => host === h || host.endsWith("." + h));
+}
+
 export const ACTIONS = new Set(["click", "type", "select", "upload", "press", "scroll", "navigate"]);
 const KEYS = new Set(["Enter", "Tab", "Escape", "Backspace", "Delete", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown", "Space"]);
 
@@ -342,6 +350,8 @@ export const act = {
     let u;
     try { u = new URL(String(input.url)); } catch { return { ok: false, error: "that is not a web address" }; }
     if (!/^https?:$/.test(u.protocol)) return { ok: false, error: "only http and https addresses" };
+    // build 63 (Alex, 2026-11-13: "use it only for clipping"): the app opens clipping sites and nothing else.
+    if (!clippingHost(u.hostname)) return { ok: false, error: `this app is only for clipping: ${u.hostname} is not allowed` };
     try { await page.goto(u.href, { waitUntil: "domcontentloaded", timeout: 45000 }); }
     catch (e) { return { ok: false, error: `the page did not load: ${errLine(e)}` }; }
     await settle(page);

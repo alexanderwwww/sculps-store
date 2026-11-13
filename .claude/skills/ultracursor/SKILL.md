@@ -163,3 +163,8 @@ The trader inside ultracursor is called **symbiot**. It's part of Alex's ecosyst
 - Alex, angry: "Don't ever open GMGN again… It is not a trading app." Build 61 opened GMGN on launch because the cloud flag R2 `uc-trader.json` was still `{"on":true}`.
 - Done: flag set to `{"on":false}`; `trader/inapp.mjs` `want()` returns false always, so no flag or panel can start the trader. Runtime build 62 published; zip https://blackreaper.us/media/ultracursor-62-f1968fc1610124d4.zip (pack.sh all tests passed).
 - Never turn the trader back on in ultracursor. Its job now: Whop / Content Rewards for ORAKTYS, and browser tasks Alex gives.
+
+## Build 63 (2026-11-13): clipping only
+- Alex: "Remake the app so you can use it only for clipping." The real reason GMGN kept opening: run.command's START_URL was gmgn.ai. Now https://contentrewards.com/ (run.command only changes with a new zip).
+- agent/tools.mjs navigate opens only CLIPPING_HOSTS: contentrewards.com, whop.com, youtube.com, youtu.be, accounts.google.com (plus 127.0.0.1 for tests). Research sweeps off (only ULTRA_RESEARCH=1 in the test suite). Trader off since 62.
+- Zip https://blackreaper.us/media/ultracursor-63-55e9781695f0a855.zip, runtime build 63. pack.sh all tests passed.
