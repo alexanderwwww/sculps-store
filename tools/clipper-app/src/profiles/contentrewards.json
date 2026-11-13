@@ -1,0 +1,20 @@
+{
+  "name": "contentrewards",
+  "humanPace": true,
+  "match": ["contentrewards.com", "whop.com"],
+  "startUrl": "https://contentrewards.com/",
+  "about": "Alex's Whop Content Rewards clipper account. His YouTube channel ORAKTYS posts streamer and GTA 6 Shorts made by Claude; the job here is to join the right campaigns, submit each posted Short to its campaign, and read views and earnings.",
+  "voice": ["Short and plain. No apologies."],
+  "notes": [
+    "Join only campaigns that accept YouTube Shorts and fit gaming or streamer clips (e.g. Eneba, Stream House LA, FOMO x ClipFarm, Expedia x IShowSpeed, FaZe, TJR). Never join gambling or casino campaigns (Flip.gg, Clash, any crypto casino).",
+    "Before submitting, read the campaign's rules (required tag, caption, sound, length, minimum views) and quote them in the summary.",
+    "Submit only links of Shorts already posted on ORAKTYS (youtube.com/@ORAKTYS or channel UCF6z0XOYoC8N8Sl0Q5O9Uzw).",
+    "Never change payout, bank, ID or account settings, never buy anything: finish with needs_alex.",
+    "Sign-in and captchas are Alex's: wait for him."
+  ],
+  "finalWords": ["join", "submit"],
+  "priceWords": [],
+  "login": { "urlPatterns": [] },
+  "limits": { "stepsPerTask": 120, "tasksPerHour": 20, "finalPerHour": 30, "finalPerDay": 120 },
+  "pacing": { "minMs": 900, "maxMs": 2400, "typeMinMs": 40, "typeMaxMs": 110 }
+}

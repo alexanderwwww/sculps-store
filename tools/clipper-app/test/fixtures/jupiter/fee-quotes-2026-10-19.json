@@ -1,0 +1,228 @@
+{
+ "solUsd": 105.08,
+ "at": 1792452027660,
+ "quotes": {
+  "Alt-coin@2.36": {
+   "ok": true,
+   "route": "jupiter",
+   "costSide": 0.033912,
+   "costRt": 0.067823,
+   "solUsd": 105.08,
+   "netSol": 0.000014174,
+   "netUsdSide": 0.00149,
+   "buyTax": 0.01,
+   "sellTax": 0.01,
+   "poolFee": 0.0025,
+   "routes": [
+    {
+     "route": "jupiter",
+     "priced": true,
+     "costSide": 0.033911511394053795,
+     "rtSwap": 0.04656081607624318,
+     "swapSide": 0.02328040803812159,
+     "impact": 0.010780408038121593,
+     "jupImpactPct": 0.010523898390458137,
+     "path": [
+      "BisonFi",
+      "Whirlpool",
+      "Raydium CP"
+     ],
+     "buyOut": 9363910727,
+     "sellOut": 21413365
+    },
+    {
+     "route": "gmgn",
+     "priced": false,
+     "poolFee": 0.0025,
+     "exchange": "Ray V4",
+     "autoPrioritySol": 0.000244214,
+     "why": "GMGN's own swap fee is not exposed by any read endpoint: unpriced, not chosen"
+    }
+   ]
+  },
+  "Alt-coin@100": {
+   "ok": false,
+   "why": "price impact 2.61% over the 2.36% cap",
+   "route": "jupiter",
+   "costSide": 0.04864678265987252,
+   "solUsd": 105.08,
+   "netSol": 0.000014174,
+   "netUsdSide": 0.00149,
+   "buyTax": 0.01,
+   "sellTax": 0.01,
+   "poolFee": 0.0025,
+   "routes": [
+    {
+     "route": "jupiter",
+     "priced": true,
+     "costSide": 0.04864678265987252,
+     "rtSwap": 0.07726377724134503,
+     "swapSide": 0.038631888620672516,
+     "impact": 0.026131888620672512,
+     "jupImpactPct": 0.056197717892664166,
+     "path": [
+      "BisonFi",
+      "Meteora DLMM",
+      "Raydium CP"
+     ],
+     "buyOut": 404483544717,
+     "sellOut": 878127353
+    },
+    {
+     "route": "gmgn",
+     "priced": false,
+     "poolFee": 0.0025,
+     "exchange": "Ray V4",
+     "autoPrioritySol": 0.000244214,
+     "why": "GMGN's own swap fee is not exposed by any read endpoint: unpriced, not chosen"
+    }
+   ]
+  },
+  "Mii@2.36": {
+   "ok": true,
+   "route": "jupiter",
+   "costSide": 0.015839,
+   "costRt": 0.031677,
+   "solUsd": 105.08,
+   "netSol": 0.00006401,
+   "netUsdSide": 0.00673,
+   "buyTax": 0,
+   "sellTax": 0,
+   "poolFee": 0.0115,
+   "routes": [
+    {
+     "route": "jupiter",
+     "priced": true,
+     "costSide": 0.01583858418979565,
+     "rtSwap": 0.02597702363382859,
+     "swapSide": 0.012988511816914294,
+     "impact": 0.0014885118169142945,
+     "jupImpactPct": 0.010683473902663394,
+     "path": [
+      "Pump.fun Amm"
+     ],
+     "buyOut": 15165716799,
+     "sellOut": 21875658
+    },
+    {
+     "route": "gmgn",
+     "priced": false,
+     "poolFee": 0.0115,
+     "exchange": "Pump AMM",
+     "autoPrioritySol": 0.000244214,
+     "why": "GMGN's own swap fee is not exposed by any read endpoint: unpriced, not chosen"
+    }
+   ]
+  },
+  "Mii@100": {
+   "ok": true,
+   "route": "jupiter",
+   "costSide": 0.017323,
+   "costRt": 0.034645,
+   "solUsd": 105.08,
+   "netSol": 0.00006401,
+   "netUsdSide": 0.00673,
+   "buyTax": 0,
+   "sellTax": 0,
+   "poolFee": 0.0115,
+   "routes": [
+    {
+     "route": "jupiter",
+     "priced": true,
+     "costSide": 0.01732260508143099,
+     "rtSwap": 0.034510686746861974,
+     "swapSide": 0.017255343373430987,
+     "impact": 0.005755343373430987,
+     "jupImpactPct": 0.006631063278806771,
+     "path": [
+      "Pump.fun Amm"
+     ],
+     "buyOut": 640441993492,
+     "sellOut": 918813583
+    },
+    {
+     "route": "gmgn",
+     "priced": false,
+     "poolFee": 0.0115,
+     "exchange": "Pump AMM",
+     "autoPrioritySol": 0.000244214,
+     "why": "GMGN's own swap fee is not exposed by any read endpoint: unpriced, not chosen"
+    }
+   ]
+  },
+  "COLLECTOOOR@2.36": {
+   "ok": true,
+   "route": "jupiter",
+   "costSide": 0.011891,
+   "costRt": 0.023781,
+   "solUsd": 105.08,
+   "netSol": 0.00002,
+   "netUsdSide": 0.0021,
+   "buyTax": 0,
+   "sellTax": 0,
+   "poolFee": 0.011,
+   "routes": [
+    {
+     "route": "jupiter",
+     "priced": true,
+     "costSide": 0.01189050847457627,
+     "rtSwap": 0.021616559682458902,
+     "swapSide": 0.011,
+     "impact": 0,
+     "jupImpactPct": 0.002780099024457535,
+     "path": [
+      "1DEX",
+      "Pump.fun Amm"
+     ],
+     "buyOut": 4041269383,
+     "sellOut": 21973590
+    },
+    {
+     "route": "gmgn",
+     "priced": false,
+     "poolFee": 0.011,
+     "exchange": "Pump AMM",
+     "autoPrioritySol": 0.000244214,
+     "why": "GMGN's own swap fee is not exposed by any read endpoint: unpriced, not chosen"
+    }
+   ]
+  },
+  "COLLECTOOOR@100": {
+   "ok": true,
+   "route": "jupiter",
+   "costSide": 0.013883,
+   "costRt": 0.027767,
+   "solUsd": 105.08,
+   "netSol": 0.00002,
+   "netUsdSide": 0.0021,
+   "buyTax": 0,
+   "sellTax": 0,
+   "poolFee": 0.011,
+   "routes": [
+    {
+     "route": "jupiter",
+     "priced": true,
+     "costSide": 0.013883341934599018,
+     "rtSwap": 0.027724651869198036,
+     "swapSide": 0.013862325934599018,
+     "impact": 0.0028623259345990186,
+     "jupImpactPct": 0.01115057860409964,
+     "path": [
+      "Kipseli",
+      "Pump.fun Amm"
+     ],
+     "buyOut": 173118575033,
+     "sellOut": 925271553
+    },
+    {
+     "route": "gmgn",
+     "priced": false,
+     "poolFee": 0.011,
+     "exchange": "Pump AMM",
+     "autoPrioritySol": 0.000244214,
+     "why": "GMGN's own swap fee is not exposed by any read endpoint: unpriced, not chosen"
+    }
+   ]
+  }
+ }
+}

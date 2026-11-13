@@ -48,3 +48,11 @@ Runs from a cloud session on a schedule. Proven pieces (2026-11-10):
 - Only clips posted AFTER joining, of that campaign's creator, following its rules, count. Most campaigns accept YouTube Shorts/TikTok/Reels — check each.
 - TikTok Creator Rewards won't pay for these (needs >1 min, original, 10k followers); Whop pays per view from day one.
 - Alex 2026-11-13 (replaces "ONLY GTA 6"): "post ALL streamers, I don't care" — any topic, any big English streamer, plus all Whop jobs, all on ORAKTYS + its TikTok. GTA 6 and Kai still ranked first.
+
+## Clipper — the Mac app for Whop / Content Rewards (2026-11-13)
+- Alex: "Forget this app. Remake it. Rename it Clipper. Another logo. Only clipping. Don't put any trading in this app." It replaces ultracursor for him.
+- Code: tools/clipper-app (built from ultracursor, trader folder deleted, GMGN/Depop profiles deleted, auto-buy false, research sweeps off). Logo: design/clipper/icon-1024.png (black squircle, play button cut in two, white + red).
+- Own Chrome profile ~/.clipper-chrome on port 9444, starts on https://contentrewards.com/, opens only contentrewards.com, whop.com, youtube.com, youtu.be, accounts.google.com; on connect every other tab goes to Content Rewards. No self-update (ULTRA_NO_UPDATE=1): a new build = a new zip.
+- Talks to Claude on the same link as ultracursor, so the ultra_* tools drive it.
+- Build 1 zip: https://blackreaper.us/media/clipper-1-1da4df6fe6e65478.zip (pack.sh all tests passed).
+- NEVER put trading into Clipper.

@@ -1,0 +1,10 @@
+{
+  "name": "ultracursor",
+  "private": true,
+  "type": "module",
+  "description": "ultracursor's runner: drives Alex's own Chrome over the DevTools port, reads and reports to Claude, and runs plain-language tasks with Claude as the brain.",
+  "dependencies": {
+    "playwright-core": "1.63.0",
+    "@anthropic-ai/sdk": "0.125.0"
+  }
+}
