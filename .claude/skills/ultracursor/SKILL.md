@@ -148,3 +148,7 @@ The trader inside ultracursor is called **symbiot**. It's part of Alex's ecosyst
 - NOT covered: shop checkouts, processors, ad spend. Rules 18, 20, 22 in AGENTS.md stand.
 - After a trade, say what happened in one line. Never write "please approve".
 - 2026-10-27 first cursor trade: Alex asked for one trade with the cursor; the Instant window opened (presets 0.01618 / 0.1 / 0.5 / 1, Sell 10 / 25 / 50 / 100%), the click raised a card (build 52 had no auto rule) and was still waiting on his Approve.
+
+## Job: Content Rewards clipping (Alex 2026-11-13)
+- Fresh zip for reinstall (Alex deleted the app): https://blackreaper.us/media/ultracursor-54-3f6c21b6dd029318.zip (build 54, pack.sh all checks passed; self-update moves it to the newest runtime).
+- What the cursor does for ORAKTYS: on contentrewards.com (Alex's Whop login), read each joined campaign's rules, join the gaming/streamer ones that accept YouTube (Eneba $3, Stream House LA $2, FOMO x ClipFarm $2, Expedia x IShowSpeed $1, FaZe Tournament $1, TJR $0.75), submit each posted Short's link to its campaign, read views/earnings daily. Skip gambling campaigns (Flip.gg, Clash). Final clicks (submit/join) show his Approve card unless he adds an autoApprove rule.
