@@ -41,3 +41,9 @@ Runs from a cloud session on a schedule. Proven pieces (2026-11-10):
 - Money before YouTube pays: Whop "Content Rewards" clipping campaigns pay $1–5 per 1,000 views. Check contentrewards.com/discover around Nov 17–19 for GTA 6 / streamer campaigns and tell Alex.
 - Alex 2026-11-11: more Kai Cenat (BOOST kaicenat x4 in daily.py). His reveal-crash Short was first to take off (190 views day 1).
 - Alex 2026-11-11: 80% Kai, 20% others (quota in daily.py pick; Kai's own clips last day/week/month whose speech is about GTA count too). Pre-launch Kai supply is limited (test: 3 of 5).
+
+## Whop clipping (Alex 2026-11-13)
+- ONE YouTube (ORAKTYS) + ONE TikTok carry everything: GTA 6 clips AND all Whop/Content Rewards campaign clips. Prefer gaming/streamer campaigns (niche fit).
+- Alex makes the Whop account + payout himself. Claude picks campaigns (list with $/1K views for his OK), clips, posts via Metricool, submits links in his Chrome via ultracursor (or sends him links to paste).
+- Only clips posted AFTER joining, of that campaign's creator, following its rules, count. Most campaigns accept YouTube Shorts/TikTok/Reels — check each.
+- TikTok Creator Rewards won't pay for these (needs >1 min, original, 10k followers); Whop pays per view from day one.
