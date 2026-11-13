@@ -14,3 +14,9 @@ Alex, after ultracursor and "Clipper" both opened GMGN: "Remake a whole new app 
 - pack.sh proves: 13-check runner test against real Chrome + stub link, then a REAL first launch of the unzipped app (npm install, own Chrome, heartbeat "Cursor Clipper" build N on contentrewards). Zip only if all pass.
 - Build 1: https://blackreaper.us/media/cursor-clipper-1-593da21ec32ced52.zip
 - Why the earlier apps opened GMGN (never repeat): ultracursor's run.command START_URL was gmgn.ai, its runner sent the first tab to gmgn.ai on connect, the cloud flag uc-trader.json was on, and "Clipper" self-updated at startup from ultracursor's runtime. Shared runtime rs-runtime.json is now {"build":"1","files":{}}.
+
+## Build 2 (2026-11-13)
+- Alex: "get all the jobs done and don't stop… I just want you to make money." Joins, submits and Enter on clipping pages go through with NO card. Pages whose URL says settings/payout/earning/withdraw/billing/bank/account still ask, and nothing there happens unanswered.
+- Bug fixed: the heartbeat ran in the command loop, so a card waiting >30 s made the link say "not connected". Heartbeat now on its own 5 s timer (tested).
+- Zip: https://blackreaper.us/media/cursor-clipper-2-6c396771e1f2699c.zip (16/16 runner checks + real first launch).
+- Logged in on contentrewards.com as "sculps". First target campaign: Stream House LA (/c/campaigns/5f6b6ac5-9878-4ad6-b90f-c2f2a3392e91, $2/1K YouTube, max $500/clip, rules unlock after join).

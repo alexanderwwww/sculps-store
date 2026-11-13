@@ -49,7 +49,7 @@ for (let i = 0; i < 50; i++) { try { const r = await fetch(`http://127.0.0.1:${P
 
 let out = "";
 const app = spawn(process.execPath, [path.join(HERE, "../src/app.mjs")], {
-  env: { ...process.env, CC_LINK: `http://127.0.0.1:${link.address().port}/KEY`, CC_PORT: String(PORT), CC_TEST_HOSTS: "127.0.0.1", CC_CARD_MS: "8000" },
+  env: { ...process.env, CC_LINK: `http://127.0.0.1:${link.address().port}/KEY`, CC_PORT: String(PORT), CC_TEST_HOSTS: "127.0.0.1", CC_CARD_MS: "8000", CC_ALWAYS_ASK: "1" },
 });
 app.stdout.on("data", (d) => { out += d; }); app.stderr.on("data", (d) => { out += d; });
 
@@ -59,7 +59,7 @@ async function send(action, input = {}) { const id = `c${++n}`; queue.push({ id,
 
 // 1. connects, heartbeats, and the stray tab is sent to Content Rewards (no internet here, so only the attempt is seen)
 const st = await until(() => statuses.find((s) => s.chrome === true));
-ok("heartbeat says Cursor Clipper and Chrome connected", st && st.app === "Cursor Clipper" && st.build === "1", st);
+ok("heartbeat says Cursor Clipper and Chrome connected", st && st.app === "Cursor Clipper" && st.build === "2", st);
 ok("a tab on a non-clipping site is left at once", await until(() => /not a clipping site, leaving it: localhost/.test(out)), out);
 
 // 2. GMGN and any other site are refused
@@ -82,7 +82,9 @@ let pr = press("deny"); r = await send("click", { ref: joinRef, why: "join", fin
 ok("Deny on the card: the click does not happen", /Alex pressed Deny/.test(r.text) && (await spyPage().title()) !== "joined", r.text);
 pr = press("approve"); r = await send("click", { ref: joinRef, why: "join", final: "publish" }); await pr;
 ok("Approve on the card: clicked", /did: clicked "Join campaign"/.test(r.text) && (await spyPage().title()) === "joined", r.text);
+const sBefore = statuses.length;
 r = await send("click", { ref: joinRef, why: "join", final: "publish" });
+ok("the heartbeat keeps going while a card waits", statuses.slice(sBefore).some((s) => s.card && s.card.title === "publish"), statuses.slice(sBefore).map((s) => s.card));
 ok("no answer on the card: nothing happens", /did not answer the card/.test(r.text), r.text);
 
 // 5. typing works; Enter needs the card; a password field is never typed into
@@ -103,8 +105,24 @@ ok("done answers", /session ended/.test(r.text), r.text);
 const src = fs.readFileSync(path.join(HERE, "../src/app.mjs"), "utf8");
 ok("no GMGN, trading or self-update code in the app", !/gmgn|trade|wallet|solana|runtime|update/i.test(src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "")));
 
-await spy.close().catch(() => {});
-app.kill(); chrome.kill(); site.close(); link.close(); bad.close();
+// 8. build 2: without CC_ALWAYS_ASK a join on a clipping page goes through with no card; a settings page still asks
+app.kill(); await sleep(500);
+const app2 = spawn(process.execPath, [path.join(HERE, "../src/app.mjs")], {
+  env: { ...process.env, CC_LINK: `http://127.0.0.1:${link.address().port}/KEY`, CC_PORT: String(PORT), CC_TEST_HOSTS: "127.0.0.1", CC_CARD_MS: "3000" },
+});
+app2.stdout.on("data", (d) => { out += d; });
+r = await send("navigate", { url: `${SITE}/campaign`, why: "open" });
+const ref2 = (r.text.match(/button "Join campaign" \[ref=([a-z0-9]+)\]/) || [])[1];
+await spyPage().evaluate(() => { document.title = "x"; });
+r = await send("click", { ref: ref2, why: "join", final: "other" });
+ok("a join on a clipping page goes through with no card", /did: clicked "Join campaign"/.test(r.text) && /auto-approved/.test(out), r.text);
+r = await send("navigate", { url: `${SITE}/settings/payouts`, why: "open" });
+const ref3 = (r.text.match(/button "Join campaign" \[ref=([a-z0-9]+)\]/) || [])[1];
+r = await send("click", { ref: ref3, why: "x", final: "other" });
+ok("on a payouts/settings page it still asks (and does nothing unanswered)", /did not answer the card/.test(r.text), r.text);
+app2.kill();
+
+await spy.close().catch(() => {}); chrome.kill(); site.close(); link.close(); bad.close();
 clearTimeout(KILL);
 console.log(`app.test.mjs: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
