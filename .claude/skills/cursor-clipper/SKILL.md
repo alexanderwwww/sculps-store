@@ -20,3 +20,9 @@ Alex, after ultracursor and "Clipper" both opened GMGN: "Remake a whole new app 
 - Bug fixed: the heartbeat ran in the command loop, so a card waiting >30 s made the link say "not connected". Heartbeat now on its own 5 s timer (tested).
 - Zip: https://blackreaper.us/media/cursor-clipper-2-6c396771e1f2699c.zip (16/16 runner checks + real first launch).
 - Logged in on contentrewards.com as "sculps". First target campaign: Stream House LA (/c/campaigns/5f6b6ac5-9878-4ad6-b90f-c2f2a3392e91, $2/1K YouTube, max $500/clip, rules unlock after join).
+
+## Content Rewards state (2026-11-13 evening)
+- JOINED: Stream House LA (/c/campaigns/5f6b6ac5-9878-4ad6-b90f-c2f2a3392e91). Brief: no botting; every clip needs a title; account must be a branded streamer account with 5k followers OR soft-dedicated; top-3 audience USA/UK/CA; hashtags #streamhouselacwe #streamhousela #cwetv on every clip; must post a story on IG and TikTok (link / QR provided). ORAKTYS does not meet 5k yet -> submissions likely rejected until it does.
+- Lesson: read every brief after joining for follower minimums and story requirements before making clips for it. Rules unlock only after Join.
+- Discover page snapshots are huge (2000+ lines): use read_text, or open campaigns by URL. The FaZe card in "Top clips" has no URL in the snapshot.
+- Next: open FaZe Tournament, SkiiMaskTimmy, Warzone, Jason Pool briefs; keep only those with no follower minimum and YouTube allowed; then make/post Shorts to their rules and submit.
