@@ -38,7 +38,8 @@ export function createTraderMode({ dir, getBrowser, cards = null, log = () => {}
   let run = null;            // {lanes, gm, memory, book, done}
   let starting = false, lastFlag = 0, lastError = null;
 
-  const want = () => (cloud.at > local.at ? cloud.on === true : local.on === true);
+  // build 62 (Alex, 2026-11-13: "Don't ever open GMGN again"): the trader never starts, whatever the flag or the panel says.
+  const want = () => false;
 
   function set(on, by = "panel") {
     local = { on: !!on, at: Date.now(), by };

@@ -158,3 +158,8 @@ The trader inside ultracursor is called **symbiot**. It's part of Alex's ecosyst
 - ultra.mjs: IPv4 first, family racing, and dns.lookup falls back to 1.1.1.1/8.8.8.8 (same fix that brought Ultra back in build 117). Proven here with a forced ENOTFOUND: the fallback resolved kerberos.
 - profiles/contentrewards.json (contentrewards.com, whop.com): join only YouTube gaming/streamer campaigns, never gambling, read rules first, submit only ORAKTYS Shorts, never touch payout/ID/bank. Join/submit are final words (card).
 - pack.sh: every test passed. Zip: https://blackreaper.us/media/ultracursor-61-938a14663cfd4387.zip. Runtime rs-runtime.json now build 61 (uc61-ultra.mjs, uc61-profiles-contentrewards.json), so the 54 zip also updates to 61. Way back: rs60.json (build 60 manifest) re-uploaded as rs-runtime.json.
+
+## Build 62 (2026-11-13): NOT a trading app. Never opens GMGN.
+- Alex, angry: "Don't ever open GMGN again… It is not a trading app." Build 61 opened GMGN on launch because the cloud flag R2 `uc-trader.json` was still `{"on":true}`.
+- Done: flag set to `{"on":false}`; `trader/inapp.mjs` `want()` returns false always, so no flag or panel can start the trader. Runtime build 62 published; zip https://blackreaper.us/media/ultracursor-62-f1968fc1610124d4.zip (pack.sh all tests passed).
+- Never turn the trader back on in ultracursor. Its job now: Whop / Content Rewards for ORAKTYS, and browser tasks Alex gives.
