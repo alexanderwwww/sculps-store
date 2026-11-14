@@ -1,0 +1,14 @@
+# mob — our own posting platform (YouTube Shorts, Instagram Reels, TikTok) for Content Rewards clipping.
+# Standalone: deploying it never touches Kerberos.
+name = "mob"
+main = "src/worker.mjs"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "gardenbuddy-media"
+
+[triggers]
+crons = ["*/5 * * * *"]
