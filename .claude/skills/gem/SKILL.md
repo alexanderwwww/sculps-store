@@ -52,5 +52,5 @@ What the machine adds: the billionaire operator's discipline.
 ## Hard limits (gem never crosses them, however good the money looks)
 No deceiving a processor, bank, platform or customer. No live test charges. No paid generation without "generate". Customer messages shown to Alex before sending. Stock orders need his yes. No passwords or keys in chat. No unlicensed gambling. No copyrighted IP. Never push to main.
 
-## The button
-`/gem` in this chat runs one full loop. Scheduled runs fire it automatically 3× a day (Athens 11:47, 21:47, 02:47) in fresh sessions; push notification when something needs Alex.
+## Magic Genie (the button and the clock, Alex 2026-11-14)
+The widget/plug is called **Magic Genie**. It types into Alex's chat like the cursor and the Wand do: a scheduled task "Magic Genie — runs every business" (trig_01NCQHDdxJKZPoar7YGKBKVp) fires INTO the main session at Athens 02:47, 07:47, 11:47, 15:47, 21:47 and starts with "🧞 Magic Genie here". It schedules every business. When it needs Alex: ONE line question at the top, then keeps working on everything else. `/gem` runs a loop on demand.
