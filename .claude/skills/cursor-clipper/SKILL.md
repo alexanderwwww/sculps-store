@@ -38,3 +38,7 @@ Alex, after ultracursor and "Clipper" both opened GMGN: "Remake a whole new app 
 - tools/clipper/timmy.py N renders N new Timmy Shorts (skips used slugs, R2 oraktys-timmy-used.txt). Check titles: raw Twitch titles like "XDD"/"bc" must be rewritten before posting. When re-uploading to the same R2 key, give Metricool ?v=2 so it does not fetch the cached old file.
 - 6 more scheduled 15 Nov 10:10-21:10 Athens (9 total).
 - Alex ideas, not yet "build": "mob" = own Metricool on our server + 10 TikTok / 10 YouTube / 5 IG accounts; long-video -> many clips like Ssemble (clip.py already windows long sources). IG coming 15 Nov.
+
+## RULE (Alex, 2026-11-14, furious): NO SkiiMaskTimmy, no small streamers. Only FAMOUS streamers.
+"Fuck Timmy... only the famous streamers. Kai, Marlon, Lacy... GTA 6 or gaming campaigns." Timmy posts set to draft, reminder deleted, timmy.py not to be used.
+Only join campaigns for famous streamers (Kai Cenat, Marlon, Lacy, IShowSpeed, xQc, Adin Ross...) or GTA 6 / big gaming campaigns.
