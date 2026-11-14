@@ -60,3 +60,57 @@ test("preflight answers with CORS; no key configured means locked", async () => 
   const R2 = reqOf({ ...env, AQUARIUS_KEY: undefined });
   assert.equal((await R2("GET", "/api/aquarius/feed?key=")).status, 401);
 });
+
+test("brain: bearer only; write, update and read back what was tried and what paid", async () => {
+  await db(env).q(`TRUNCATE mob_aquarius_brain RESTART IDENTITY`);
+  assert.equal((await R("GET", "/api/aquarius/brain")).status, 401);
+  assert.equal((await R("GET", `/api/aquarius/brain?key=${KEY}`)).status, 401);
+  const B = (body, p = "/api/aquarius/brain") => R("POST", p, { bearer: "tok-test", body });
+  assert.equal((await B({ business: "flip" })).status, 400, "idea required");
+  assert.equal((await B({ idea: "x", cost: "lots" })).status, 400);
+  assert.equal((await B({ idea: "x", kill_date: "next week" })).status, 400);
+  const r = await B({ idea: "Chrome Hearts rings at €180", business: "flip", cost: 120, expected_return: 60, kill_date: "2026-11-30", source: "gem run 14 Nov" });
+  assert.equal(r.status, 201);
+  const row = await r.json();
+  assert.equal(row.idea, "Chrome Hearts rings at €180"); assert.equal(Number(row.cost), 120);
+  await B({ idea: "Timmy shorts", business: "clipping", cost: 0 });
+  const u = await B({ result: "sold 2 in 3 days", score: 8.5 }, `/api/aquarius/brain/${row.id}`);
+  assert.equal(u.status, 200); const ur = await u.json();
+  assert.deepEqual([ur.result, Number(ur.score)], ["sold 2 in 3 days", 8.5]);
+  assert.equal((await B({ score: 1 }, "/api/aquarius/brain/999")).status, 404);
+  assert.equal((await B({}, `/api/aquarius/brain/${row.id}`)).status, 400);
+  const all = await (await R("GET", "/api/aquarius/brain", { bearer: "tok-test" })).json();
+  assert.equal(all.rows.length, 2); assert.equal(all.rows[0].idea, "Timmy shorts");
+  const flip = await (await R("GET", "/api/aquarius/brain?business=flip", { bearer: "tok-test" })).json();
+  assert.deepEqual(flip.rows.map((x) => x.idea), ["Chrome Hearts rings at €180"]);
+});
+
+test("link: the key routes to Aquarius's own mailbox; MCP act waits for the app's answer", async () => {
+  const { LINK_WAIT_MS } = await import("../src/worker.mjs");
+  LINK_WAIT_MS.v = 4000;
+  const L = (what) => `/api/aquarius/link/lk-test/${what}`;
+  const envL = { ...env, AQ_LINK_KEY: "lk-test" }; const RL = reqOf(envL);
+  assert.equal((await RL("GET", "/api/aquarius/link/wrong/next")).status, 404);
+  assert.equal((await R("GET", "/api/aquarius/link/lk-test/next")).status, 404, "no key configured = closed");
+  const rpc = async (method, params) => (await (await RL("POST", L("mcp"), { body: { jsonrpc: "2.0", id: 1, method, params } })).json()).result;
+  assert.deepEqual((await rpc("tools/list")).tools.map((t) => t.name), ["aquarius_status", "aquarius_act", "aquarius_result"]);
+  assert.match((await rpc("tools/call", { name: "aquarius_act", arguments: { action: "look" } })).content[0].text, /not on right now/);
+  assert.equal((await RL("POST", L("status"), { body: { app: "Aquarius", build: "1", chrome: true } })).status, 200);
+  assert.match((await rpc("tools/call", { name: "aquarius_status", arguments: {} })).content[0].text, /^connected[\s\S]*"app": "Aquarius"/);
+  // the app answers while the MCP call waits
+  const pending = rpc("tools/call", { name: "aquarius_act", arguments: { action: "navigate", url: "https://www.google.com/", why: "t" } });
+  let cmd = null;
+  for (let i = 0; i < 30 && !cmd; i++) { cmd = await (await RL("GET", L("next"))).json(); if (!cmd) await new Promise((r) => setTimeout(r, 100)); }
+  assert.equal(cmd.action, "navigate"); assert.equal(cmd.input.url, "https://www.google.com/");
+  assert.equal(await (await RL("GET", L("next"))).json(), null, "taken once");
+  await RL("POST", L("result"), { body: { id: cmd.id, text: "ok: true\nurl: https://www.google.com/" } });
+  assert.match((await pending).content[0].text, /ok: true/);
+  // a slow answer gives an id; aquarius_result picks it up
+  LINK_WAIT_MS.v = 300;
+  const slow = (await rpc("tools/call", { name: "aquarius_act", arguments: { action: "look" } })).content[0].text;
+  const id = slow.match(/id "([a-z0-9]+)"/)[1];
+  const c2 = await (await RL("GET", L("next"))).json();
+  await RL("POST", L("result"), { body: { id: c2.id, text: "late answer" } });
+  assert.equal((await rpc("tools/call", { name: "aquarius_result", arguments: { id } })).content[0].text, "late answer");
+  LINK_WAIT_MS.v = 40000;
+});

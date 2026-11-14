@@ -436,7 +436,33 @@ async function aquarius(req, env, url, path, M) {
     const r = await d.one(`INSERT INTO mob_aquarius (kind, text) VALUES ('heard', $1) RETURNING id, created_at`, [text]);
     return cors(json({ id: r.id, at: r.created_at }, 201));
   }
+  let lm;
+  if ((lm = path.match(/^\/api\/aquarius\/link\/([^/]+)\/(mcp|next|result|status)$/))) {
+    if (!env.AQ_LINK_KEY || !safeEqual(lm[1], env.AQ_LINK_KEY)) return new Response("Not found", { status: 404 });
+    return cors(await aquariusLink(req, env, lm[2], M));
+  }
   if (!isBearer(req, env)) return apiErr(401, "unauthorized", "Bearer MOB_API_TOKEN required");
+  if (path === "/api/aquarius/brain" && M === "GET") {
+    const biz = url.searchParams.get("business"), lim = Math.min(500, Math.max(1, Number(url.searchParams.get("limit")) || 100));
+    return json({ rows: await d.q(`SELECT * FROM mob_aquarius_brain WHERE ($1::text IS NULL OR business=$1) ORDER BY id DESC LIMIT $2`, [biz, lim]) });
+  }
+  if ((path === "/api/aquarius/brain" || /^\/api\/aquarius\/brain\/\d+$/.test(path)) && M === "POST") {
+    const b = await body();
+    if (!b || typeof b !== "object") return apiErr(400, "bad_json", "Body must be JSON");
+    const v = brainFields(b);
+    if (v.error) return apiErr(400, "validation", v.error);
+    const id = path.split("/")[4];
+    if (!id) {
+      if (!v.set.idea) return apiErr(400, "validation", "idea is required");
+      const cols = Object.keys(v.set);
+      const r = await d.one(`INSERT INTO mob_aquarius_brain (${cols.join(",")}) VALUES (${cols.map((_, i) => "$" + (i + 1)).join(",")}) RETURNING *`, Object.values(v.set));
+      return json(r, 201);
+    }
+    const cols = Object.keys(v.set);
+    if (!cols.length) return apiErr(400, "validation", "nothing to change");
+    const r = await d.one(`UPDATE mob_aquarius_brain SET ${cols.map((c, i) => `${c}=$${i + 2}`).join(",")}, updated_at=now() WHERE id=$1 RETURNING *`, [Number(id), ...Object.values(v.set)]);
+    return r ? json(r) : apiErr(404, "not_found", "No such brain row");
+  }
   if (path === "/api/aquarius/say" && M === "POST") {
     const b = await body();
     if (!b) return apiErr(400, "bad_json", "Body must be JSON");
@@ -453,4 +479,114 @@ async function aquarius(req, env, url, path, M) {
     return json({ commands: rows.map((r) => ({ id: r.id, text: r.text, at: r.created_at })) });
   }
   return apiErr(404, "not_found", "No such endpoint");
+}
+
+// The brain: every gem run writes what it tried and what paid, and reads the history back before choosing.
+const BRAIN_TEXT = ["idea", "business", "result", "source"], BRAIN_NUM = ["cost", "expected_return", "score"];
+function brainFields(b) {
+  const set = {};
+  for (const k of BRAIN_TEXT) if (b[k] != null) { if (typeof b[k] !== "string" || b[k].length > 4000) return { error: `${k} must be text` }; set[k] = b[k].trim(); }
+  for (const k of BRAIN_NUM) if (b[k] != null) { const n = Number(b[k]); if (!Number.isFinite(n)) return { error: `${k} must be a number` }; set[k] = n; }
+  if (b.kill_date != null) { if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.kill_date)) || isNaN(new Date(b.kill_date))) return { error: "kill_date must be YYYY-MM-DD" }; set.kill_date = b.kill_date; }
+  return { set };
+}
+
+/*
+ * Aquarius's hands: a mailbox between Claude (MCP) and the agent in his own Chrome on Alex's Mac.
+ *   POST /api/aquarius/link/<AQ_LINK_KEY>/mcp     JSON-RPC: aquarius_status, aquarius_act, aquarius_result
+ *   GET  .../next     the app takes the oldest queued command
+ *   POST .../result   the app answers {id, text, image?}
+ *   POST .../status   the app's heartbeat
+ */
+const LINK_ACTIONS = ["look", "find", "read_text", "click", "type", "select", "press", "scroll", "navigate", "screenshot", "wait", "done"];
+const LINK_TOOLS = [
+  { name: "aquarius_status", description: "Is Aquarius on (on Alex's Mac), is his Chrome up, and what page is it on? Call first.", inputSchema: { type: "object", properties: {} } },
+  { name: "aquarius_act", description: [
+    "Do ONE step in Aquarius's own Chrome on Alex's Mac (any site; he sparkles where he types and clicks).",
+    "Fast: answers with the url and title only. Pass look:true, or call action look, to get the accessibility snapshot with refs like [ref=e17].",
+    "action: look {full?} | find {text} | read_text {ref?} | click {ref, why, final?} | type {ref, text, why, clear?, enter?} | select {ref, option} |",
+    "press {key} | scroll {direction, amount?} | navigate {url, why} | screenshot {} | wait {seconds} | done {summary}.",
+    "final on click: none|publish|send|buy|delete|price|other. Anything to do with payments, checkout, orders, billing or settings shows Alex an",
+    "Approve/Deny card first; if he takes longer than ~40 s you get an id for aquarius_result. Password and card fields are never typed.",
+  ].join(" "), inputSchema: { type: "object", properties: {
+    action: { type: "string", enum: LINK_ACTIONS }, ref: { type: "string" }, text: { type: "string" }, why: { type: "string" },
+    final: { type: "string", enum: ["none", "publish", "send", "buy", "delete", "price", "other"] }, clear: { type: "boolean" }, enter: { type: "boolean" },
+    option: { type: "string" }, key: { type: "string" }, url: { type: "string" }, direction: { type: "string", enum: ["down", "up"] },
+    amount: { type: "string", enum: ["small", "page"] }, full: { type: "boolean" }, look: { type: "boolean" }, seconds: { type: "number" }, summary: { type: "string" },
+  }, required: ["action"] } },
+  { name: "aquarius_result", description: "The answer to an aquarius_act that was still waiting (usually for Alex's card). Waits up to ~40 s.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
+];
+export const LINK_WAIT_MS = { v: 40000 };
+async function linkWait(env, id) {
+  const end = Date.now() + LINK_WAIT_MS.v;
+  for (;;) {
+    const r = await db(env).one(`SELECT result FROM mob_aquarius_link WHERE id=$1 AND state='done'`, [id]);
+    if (r) return r.result;
+    if (Date.now() > end) return null;
+    await new Promise((ok) => setTimeout(ok, 700));
+  }
+}
+const linkContent = (r, id) => {
+  if (!r) return [{ type: "text", text: `Still running (most likely waiting for Alex's card). Call aquarius_result with id "${id}".` }];
+  const out = [{ type: "text", text: String(r.text || "") }];
+  if (r.image) out.push({ type: "image", data: r.image, mimeType: "image/jpeg" });
+  return out;
+};
+async function linkStatus(env) { const s = await db(env).one(`SELECT value FROM mob_settings WHERE key='aquarius_link_status'`); return s ? s.value : null; }
+async function linkTool(env, name, args) {
+  if (name === "aquarius_status") {
+    const s = await linkStatus(env);
+    if (!s) return [{ type: "text", text: "Aquarius has never connected. Alex needs to open the app." }];
+    const age = Math.round((Date.now() - (s.at || 0)) / 1000);
+    return [{ type: "text", text: `${age < 30 ? "connected" : `NOT connected (last seen ${age} s ago)`}\n${JSON.stringify(s, null, 1)}` }];
+  }
+  if (name === "aquarius_act") {
+    const action = String(args.action || "");
+    if (!LINK_ACTIONS.includes(action)) return [{ type: "text", text: `action must be one of ${LINK_ACTIONS.join(", ")}` }];
+    const s = await linkStatus(env);
+    if (!s || Date.now() - (s.at || 0) > 30000) return [{ type: "text", text: "Aquarius is not on right now (Alex must open the app). Nothing was queued." }];
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const { action: _, ...input } = args;
+    await db(env).q(`INSERT INTO mob_aquarius_link (id, action, input) VALUES ($1,$2,$3)`, [id, action, JSON.stringify(input)]);
+    return linkContent(await linkWait(env, id), id);
+  }
+  if (name === "aquarius_result") { const id = String(args.id || "").replace(/[^a-z0-9]/gi, ""); return linkContent(await linkWait(env, id), id); }
+  return [{ type: "text", text: `no such tool: ${name}` }];
+}
+async function linkRpc(env, b) {
+  const id = b && b.id !== undefined ? b.id : null, m = b && b.method;
+  const reply = (result) => ({ jsonrpc: "2.0", id, result });
+  if (m === "initialize") return reply({ protocolVersion: "2024-11-05", capabilities: { tools: {} }, serverInfo: { name: "aquarius", title: "Aquarius", version: "1.0.0" } });
+  if (m === "notifications/initialized") return null;
+  if (m === "tools/list") return reply({ tools: LINK_TOOLS });
+  if (m === "tools/call") return reply({ content: await linkTool(env, b.params?.name || "", b.params?.arguments || {}) });
+  if (m === "ping") return reply({});
+  return { jsonrpc: "2.0", id, error: { code: -32601, message: "method not found" } };
+}
+async function aquariusLink(req, env, what, M) {
+  const d = db(env);
+  if (what === "mcp") {
+    if (M === "GET") return json({ ok: true, server: "aquarius", tools: LINK_TOOLS.map((t) => t.name) });
+    let b; try { b = await req.json(); } catch { return json({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "parse error" } }, 400); }
+    const out = Array.isArray(b) ? (await Promise.all(b.map((x) => linkRpc(env, x)))).filter(Boolean) : await linkRpc(env, b);
+    return out && (!Array.isArray(out) || out.length) ? json(out) : new Response(null, { status: 202 });
+  }
+  if (what === "next" && M === "GET") {
+    const r = await d.one(`UPDATE mob_aquarius_link SET state='running', taken_at=now() WHERE id=(SELECT id FROM mob_aquarius_link WHERE state='queued' ORDER BY created_at, id LIMIT 1 FOR UPDATE SKIP LOCKED) RETURNING id, action, input`);
+    return json(r ? { id: r.id, action: r.action, input: r.input } : null);
+  }
+  if (what === "result" && M === "POST") {
+    let b; try { b = await req.json(); } catch { b = null; }
+    if (!b || !b.id) return json({ ok: false }, 400);
+    await d.q(`UPDATE mob_aquarius_link SET state='done', done_at=now(), result=$2 WHERE id=$1`, [String(b.id), JSON.stringify({ text: String(b.text || ""), image: b.image || null })]);
+    await d.q(`DELETE FROM mob_aquarius_link WHERE created_at < now() - interval '2 days'`);
+    return json({ ok: true });
+  }
+  if (what === "status" && M === "POST") {
+    let b; try { b = await req.json(); } catch { b = {}; }
+    await d.q(`INSERT INTO mob_settings (key, value, updated_at) VALUES ('aquarius_link_status', $1, now()) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=now()`, [JSON.stringify({ ...b, at: Date.now() })]);
+    return json({ ok: true });
+  }
+  if (what === "status") return json(await linkStatus(env));
+  return new Response("Not found", { status: 404 });
 }

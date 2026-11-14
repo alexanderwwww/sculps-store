@@ -137,4 +137,27 @@ CREATE TABLE IF NOT EXISTS mob_aquarius (
   suit boolean,
   taken_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS mob_aquarius_brain (
+  id serial PRIMARY KEY,
+  idea text NOT NULL,
+  business text,
+  cost numeric,
+  expected_return numeric,
+  result text,
+  score numeric,
+  kill_date date,
+  source text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS mob_aquarius_link (
+  id text PRIMARY KEY,
+  action text NOT NULL,
+  input jsonb NOT NULL DEFAULT '{}',
+  state text NOT NULL DEFAULT 'queued',
+  result jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  taken_at timestamptz,
+  done_at timestamptz
 )`;
