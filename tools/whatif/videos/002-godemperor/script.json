@@ -1,0 +1,21 @@
+{
+  "id": "whatif-002",
+  "premise": "What if you woke up as the God-Emperor of a galaxy-wide empire?",
+  "style": "aesthetic-blocks",
+  "scene": "scenes/godemperor.js",
+  "title": "WHAT IF YOU RULED\nTHE GALAXY?",
+  "voice": { "model": "en_US-lessac-medium", "length_scale": 0.9, "gap": 0.3, "lead_in": 0.15, "tail": 1.8 },
+  "lines": [
+    { "text": "What if you woke up tomorrow as the God-Emperor of the whole galaxy?", "shot": "hook", "sfx": "impact" },
+    { "text": "Golden armour. A throne as tall as a mountain.", "shot": "armour", "sfx": "whoosh" },
+    { "text": "And a trillion subjects, kneeling, all at once.", "shot": "kneel", "chip": "1 TRILLION SUBJECTS", "sfx": "impact" },
+    { "text": "Our galaxy has about one hundred billion stars. Imagine every single one is yours.", "shot": "stars", "chip": "100 BILLION STARS",
+      "facts": [ { "claim": "NASA estimates the Milky Way has approximately 100 billion stars.", "quote": "the Milky Way is made up of approximately 100 billion stars", "source": "https://imagine.gsfc.nasa.gov/science/objects/milkyway1.html" } ] },
+    { "text": "Star fleets wait for your command.", "shot": "fleet", "sfx": "whoosh" },
+    { "text": "And everyone wants something. Wars to end. Prayers to answer. Paperwork. So much paperwork.", "shot": "paperwork", "chip": "INBOX: FULL" },
+    { "text": "So you try one normal thing. You order a sandwich.", "shot": "sandwich" },
+    { "text": "Tiny problem. Your galaxy is a hundred thousand light years wide, and the kitchen is on the other side.", "shot": "kitchen", "chip": "100,000 LIGHT YEARS", "sfx": "whoosh",
+      "facts": [ { "claim": "The Milky Way's disk is about 100,000 light years in diameter.", "quote": "diameter is about 100,000 light years", "source": "https://imagine.gsfc.nasa.gov/science/objects/milkyway1.html" } ] },
+    { "text": "Your sandwich is on its way.", "shot": "twist", "sfx": "whoosh+impact", "pause": 0.2 }
+  ]
+}

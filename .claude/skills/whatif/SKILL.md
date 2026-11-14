@@ -59,10 +59,19 @@ under the voice), whooshes and impacts at the lines' `sfx` -> loudnorm -14 LUFS 
 - Whisper splits "great-great" into "-great": words.py strips leading hyphens.
 - Piper output length changes a little each run; timings always come from the run's own audio.
 
+## Lessons (paid for on 002)
+- Never read a world position with `getWorldPosition` inside update(t): matrices are from the previous render, so the
+  first frame (and every still) gets a stale point. Compute positions from the numbers you placed them with.
+- Portrait frame is narrow: at fov 60 a target 360 away only shows about +-117 units across. Put markers inside that.
+- A close object between a side camera and a face covers the face (parallax). Keep props near the subject's plane.
+- Whisper writes "100,000" as "100" + ",000": words.py now glues them back.
+- The end-card text is per video: return `notifyText: [app line, title, sub]` from update(); default is 001's card.
+- 002 (God-Emperor): original look-alike only (sun-ray crown, gold armour, stepped throne, robed crowd, blocky fleets).
+
 ## Style LOCKED (Alex, 2026-11-14)
 "Keep this style of nice World of Warcraft, the heartwarming magical thing." Blocky fantasy world with a WoW-like vibe: warm golden light, glowing magic, cozy chunky shapes, epic skies, heartwarming tone. Original designs only (no Blizzard characters, names, logos or assets). Every video uses this unless Alex says otherwise. Alex drops the premise; only make the premises he gives.
 
 ## Premise queue (Alex)
 1. Anti-aging as easy as having a phone — in production (whatif-001).
-2. "What if you woke up as the God-Emperor of a galaxy-wide empire?" — Alex's idea was "the Emperor of Mankind from Warhammer". Make it ORIGINAL: no Warhammer/40k/Games Workshop names, Golden Throne, aquila, Space Marines or other GW designs (GW takes fan content down). Same feel: golden armour, giant throne, endless worshippers and wars, funny + epic, our blocky magical style.
+2. (whatif-002, made 2026-11-14) "What if you woke up as the God-Emperor of a galaxy-wide empire?" — Alex's idea was "the Emperor of Mankind from Warhammer". Make it ORIGINAL: no Warhammer/40k/Games Workshop names, Golden Throne, aquila, Space Marines or other GW designs (GW takes fan content down). Same feel: golden armour, giant throne, endless worshippers and wars, funny + epic, our blocky magical style.
 Rule: famous IP in a premise -> make an original look-alike, never the real names/designs.

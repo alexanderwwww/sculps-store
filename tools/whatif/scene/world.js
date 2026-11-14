@@ -137,8 +137,8 @@ export function overlay(ctx, st) {
   if (st.notify > 0) { const a = easeOut(st.notify); ctx.save(); ctx.translate(0, lerp(-260, 0, a)); ctx.globalAlpha = clamp(st.notify * 3);
     const x = 60, y = 150, w = W - 120, h = 230; ctx.fillStyle = 'rgba(28,10,40,.94)'; rr(ctx, x, y, w, h, 56); ctx.fill(); ctx.lineWidth = 6; ctx.strokeStyle = '#ff4f6a'; ctx.stroke();
     ctx.fillStyle = '#ff4f6a'; rr(ctx, x + 40, y + 50, 130, 130, 32); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = '900 100px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('!', x + 105, y + 118);
-    ctx.textAlign = 'left'; ctx.font = '700 40px Inter'; ctx.fillStyle = '#ffb3c0'; ctx.fillText('YOUTH+   ·   now', x + 200, y + 62);
-    ctx.font = '900 66px Inter'; ctx.fillStyle = '#fff'; ctx.fillText('Free trial ended', x + 200, y + 125); ctx.font = '700 44px Inter'; ctx.fillStyle = '#ffd6dd'; ctx.fillText('Renew to stay young?', x + 200, y + 185); ctx.restore(); }
+    ctx.textAlign = 'left'; ctx.font = '700 40px Inter'; ctx.fillStyle = '#ffb3c0'; const NT = st.notifyText || ['YOUTH+   ·   now', 'Free trial ended', 'Renew to stay young?']; ctx.fillText(NT[0], x + 200, y + 62);
+    ctx.font = '900 66px Inter'; ctx.fillStyle = '#fff'; ctx.fillText(NT[1], x + 200, y + 125); ctx.font = '700 44px Inter'; ctx.fillStyle = '#ffd6dd'; ctx.fillText(NT[2], x + 200, y + 185); ctx.restore(); }
   // word-timed chunks of 2-3 words, current word highlighted
   const ch = chunks(words); const c = [...ch].reverse().find(k => t >= k.start - .05); if (!c || t > c.end + .35) return;
   ctx.save(); ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; const pop = 1 + .12 * (1 - easeOut((t - c.start) / .15));

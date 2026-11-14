@@ -13,5 +13,13 @@ for s in segs:
         mid = (wd.start + wd.end) / 2
         li = next((l["i"] for l in lines if l["start"] - 0.3 <= mid <= l["end"] + 0.3), None)
         words.append({"w": wd.word.strip().lstrip("-"), "start": round(wd.start, 3), "end": round(wd.end, 3), "line": li})
+# whisper splits numbers like "100,000" into "100" + ",000": glue them back together
+merged = []
+for w in words:
+    if merged and w["w"][:1] == "," and w["w"][1:2].isdigit() and merged[-1]["w"][-1:].isdigit():
+        merged[-1]["w"] += w["w"]; merged[-1]["end"] = w["end"]
+    else:
+        merged.append(w)
+words = merged
 json.dump({"duration": round(total, 3), "lines": lines, "words": words}, open(os.path.join(work, "timing.json"), "w"), indent=1)
 print(f"voice {total:.2f}s, {len(words)} words")
