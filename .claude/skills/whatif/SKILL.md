@@ -75,3 +75,7 @@ under the voice), whooshes and impacts at the lines' `sfx` -> loudnorm -14 LUFS 
 1. Anti-aging as easy as having a phone — in production (whatif-001).
 2. (whatif-002, made 2026-11-14) "What if you woke up as the God-Emperor of a galaxy-wide empire?" — Alex's idea was "the Emperor of Mankind from Warhammer". Make it ORIGINAL: no Warhammer/40k/Games Workshop names, Golden Throne, aquila, Space Marines or other GW designs (GW takes fan content down). Same feel: golden armour, giant throne, endless worshippers and wars, funny + epic, our blocky magical style.
 Rule: famous IP in a premise -> make an original look-alike, never the real names/designs.
+
+## Alex 2026-11-14 after video 001: "it's good"
+- Style v2 wanted: textures on every 3D object like WoW (hand-painted grass, stone, wood, roof tiles, tiles everywhere) + golden-ratio framing/proportions. "Something easy." Must be a look nobody else has. Perfect the style before mass posting.
+- Alex made the channel himself; he uploads 001. Plan: post daily; TikTok + Instagram for the what-if channel coming. Connect his new channel in mob when he presses Connect.
