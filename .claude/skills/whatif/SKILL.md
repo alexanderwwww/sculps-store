@@ -106,3 +106,6 @@ Rule: famous IP in a premise -> make an original look-alike, never the real name
 ## Alex 2026-11-14 after video 001: "it's good"
 - Style v2 wanted: textures on every 3D object like WoW (hand-painted grass, stone, wood, roof tiles, tiles everywhere) + golden-ratio framing/proportions. "Something easy." Must be a look nobody else has. Perfect the style before mass posting.
 - Alex made the channel himself; he uploads 001. Plan: post daily; TikTok + Instagram for the what-if channel coming. Connect his new channel in mob when he presses Connect.
+
+## RULE (Alex, 2026-11-14): science, not nonsense
+"The stuff you make, make it scientific, not just nonsense." Every what-if is a real cause->effect chain of sourced facts (min 5, each fetched). The magical/funny character is only the vehicle; jokes max 1-2, the twist at the end. Viewer must learn something real.
