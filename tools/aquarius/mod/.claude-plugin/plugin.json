@@ -1,0 +1,1 @@
+{ "name": "aquarius", "version": "0.1.0", "description": "Aquarius, the CEO genie: a pane in the chat that works, whips and runs every business", "types": "./types/index.d.ts" }
