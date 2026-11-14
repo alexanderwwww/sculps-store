@@ -46,3 +46,8 @@ Set by Alex on /settings: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `IG_APP_ID
 ## mob v2 / build mob-3 (2026-11-14) — "Shopify for clipping"
 Deployed and live (healthz build mob-3, 68/68 tests). Shop Admin look: dark top bar with search and channel switcher, sidebar (Home, Clips, Posts, Calendar, Analytics + Live, Campaigns, Earnings, channels list), KPI cards, area charts, channel table with est. $. First login goes to /welcome onboarding. Screenshots of every page (made with test data) in tools/mob/shots/.
 Cursor Clipper build 3 (dev-console hosts so Claude can set up the YouTube/Meta/TikTok developer apps): https://blackreaper.us/media/cursor-clipper-3-bbbd73af3e5d3a8a.zip
+
+## YouTube developer app — DONE 2026-11-14 (set up by Claude through Cursor Clipper)
+- Google Cloud project `mob-clips` (account getsculps@gmail.com, 2-step verification now on). YouTube Data API v3 + YouTube Analytics API enabled.
+- OAuth consent: app "mob", External, Testing; test user getsculps@gmail.com. Web client "Web client 1", redirect https://mob.gardenbuddystore.workers.dev/oauth/youtube/callback. Keys set in mob via POST /api/settings/keys -> /api/platform-keys youtube ready/live.
+- STILL TO DO: Publish app (Branding page needs home page + privacy policy + terms URLs on an authorized domain). In Testing, Google refresh tokens expire after 7 days -> add /privacy and /terms pages to mob, fill Branding, press Publish. Any other Google account that owns a channel must be added as a test user until then.
