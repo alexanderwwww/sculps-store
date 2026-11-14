@@ -16,7 +16,7 @@ const acct = (platform, ext) => C.upsertAccount(env, platform, { external_id: ex
 
 test("healthz is public and reports db + build", async () => {
   const r = await R("GET", "/healthz");
-  assert.deepEqual(await r.json(), { ok: true, db: "up", build: "mob-3" });
+  assert.deepEqual(await r.json(), { ok: true, db: "up", build: "mob-4" });
   const bad = await reqOf({ ...env, __db: undefined, DATABASE_URL: "postgresql://u:p@nope.invalid/db" })("GET", "/healthz");
   assert.equal((await bad.json()).db, "down");
 });
@@ -43,7 +43,7 @@ test("every admin route serves the app shell with the build number; data endpoin
   for (const path of ["/", "/welcome", "/channels", `/channels/${a.id}`, "/accounts", "/clips", "/posts", "/calendar", "/schedule", "/analytics", "/analytics/live", "/campaigns", `/campaigns/${c.id}`, "/earnings", "/settings", "/admin/migrate"]) {
     const r = await R("GET", path, { cookie });
     const t = await r.text();
-    assert.equal(r.status, 200, path); assert.match(t, /data-build="mob-3"/, path); assert.match(t, /\/static\/app\.js/, path);
+    assert.equal(r.status, 200, path); assert.match(t, /data-build="mob-4"/, path); assert.match(t, /\/static\/app\.js/, path);
   }
   assert.equal((await R("GET", "/nope", { cookie })).status, 404);
   const js = await R("GET", "/static/app.js");
@@ -51,7 +51,7 @@ test("every admin route serves the app shell with the build number; data endpoin
   new Function(await js.text()); // parses as a classic script
   const get = async (u) => { const r = await R("GET", u, { cookie }); const j = await r.json(); assert.equal(r.status, 200, u + " " + JSON.stringify(j)); return j; };
   const boot = await get("/ui/data/boot");
-  assert.equal(boot.build, "mob-3"); assert.equal(boot.accounts.length, 1); assert.equal(boot.counts.failed, 1);
+  assert.equal(boot.build, "mob-4"); assert.equal(boot.accounts.length, 1); assert.equal(boot.counts.failed, 1);
   assert.equal((await get("/ui/data/posts?status=failed")).posts[0].error, "403 x: y");
   assert.equal((await get("/ui/data/posts")).counts.all, 2);
   assert.ok((await get(`/ui/data/posts/${p.id}`)).events.length >= 2);

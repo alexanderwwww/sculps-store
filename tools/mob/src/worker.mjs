@@ -11,7 +11,7 @@ import { shell, loginPage, appScript } from "./ui.mjs";
 import * as S from "./stats.mjs";
 import { uiData, uiAct } from "./uiapi.mjs";
 
-export const BUILD = "mob-3";
+export const BUILD = "mob-4";
 const json = (v, status = 200) => new Response(JSON.stringify(v), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
 const apiErr = (status, code, message) => json({ error: { code, message } }, status);
 const html = (s, status = 200, headers = {}) => new Response(s, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", ...headers } });
@@ -289,6 +289,7 @@ async function addSubmission(env, f) {
 
 /* ---------------- JSON API ---------------- */
 async function api(req, env, url, path, M) {
+  if (path.startsWith("/api/aquarius/")) return aquarius(req, env, url, path, M);
   if (!isBearer(req, env)) return apiErr(401, "unauthorized", "Bearer MOB_API_TOKEN required");
   try { await C.setSetting(env, "claude_seen", new Date().toISOString()); } catch {}
   let m;
@@ -402,3 +403,54 @@ async function api(req, env, url, path, M) {
   return apiErr(404, "not_found", "No such endpoint");
 }
 
+
+/*
+ * Aquarius — the genie on Alex's screen. A tiny mailbox:
+ *   POST /api/aquarius/say {text, face?, suit?}   bearer MOB_API_TOKEN   -> he types it
+ *   GET  /api/aquarius/feed?key=AQUARIUS_KEY                             -> last 20 messages (the app polls this)
+ *   POST /api/aquarius/heard?key=AQUARIUS_KEY {text}                     -> a voice command Alex said ("Aquarius, ...")
+ *   GET  /api/aquarius/inbox                      bearer MOB_API_TOKEN   -> commands not yet taken, marked taken
+ * The key is baked into the app; it can only read his own speech bubbles and drop commands in the inbox.
+ */
+export const AQUARIUS_FACES = ["happy", "focused", "smug", "worried", "talking"];
+const CORS = { "access-control-allow-origin": "*", "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type, x-aquarius-key" };
+const cors = (r) => { for (const [k, v] of Object.entries(CORS)) r.headers.set(k, v); return r; };
+async function aquarius(req, env, url, path, M) {
+  if (M === "OPTIONS") return cors(new Response(null, { status: 204 }));
+  const keyOk = () => !!env.AQUARIUS_KEY && safeEqual(url.searchParams.get("key") || req.headers.get("x-aquarius-key") || "", env.AQUARIUS_KEY);
+  const d = db(env);
+  const body = async () => { try { return await req.json(); } catch { return null; } };
+  const cleanText = (t) => (typeof t === "string" ? t.replace(/\s+/g, " ").trim() : "");
+  if (path === "/api/aquarius/feed" && M === "GET") {
+    if (!keyOk()) return cors(apiErr(401, "unauthorized", "key required"));
+    const rows = await d.q(`SELECT id, text, face, suit, created_at FROM mob_aquarius WHERE kind='say' ORDER BY id DESC LIMIT 20`);
+    return cors(json({ messages: rows.reverse().map((r) => ({ id: r.id, text: r.text, face: r.face, suit: r.suit, at: r.created_at })) }));
+  }
+  if (path === "/api/aquarius/heard" && M === "POST") {
+    if (!keyOk()) return cors(apiErr(401, "unauthorized", "key required"));
+    const b = await body();
+    const text = cleanText(b?.text);
+    if (!text || text.length > 500) return cors(apiErr(400, "validation", "text must be 1-500 characters"));
+    const { n } = await d.one(`SELECT count(*)::int n FROM mob_aquarius WHERE kind='heard' AND created_at > now() - interval '1 hour'`);
+    if (n >= 120) return cors(apiErr(429, "too_many", "Too many commands this hour"));
+    const r = await d.one(`INSERT INTO mob_aquarius (kind, text) VALUES ('heard', $1) RETURNING id, created_at`, [text]);
+    return cors(json({ id: r.id, at: r.created_at }, 201));
+  }
+  if (!isBearer(req, env)) return apiErr(401, "unauthorized", "Bearer MOB_API_TOKEN required");
+  if (path === "/api/aquarius/say" && M === "POST") {
+    const b = await body();
+    if (!b) return apiErr(400, "bad_json", "Body must be JSON");
+    const text = cleanText(b.text);
+    if (!text || text.length > 500) return apiErr(400, "validation", "text must be 1-500 characters");
+    if (b.face != null && !AQUARIUS_FACES.includes(b.face)) return apiErr(400, "validation", `face must be one of ${AQUARIUS_FACES.join(", ")}`);
+    if (b.suit != null && typeof b.suit !== "boolean") return apiErr(400, "validation", "suit must be true or false");
+    const r = await d.one(`INSERT INTO mob_aquarius (kind, text, face, suit) VALUES ('say', $1, $2, $3) RETURNING id, created_at`, [text, b.face ?? null, b.suit ?? null]);
+    return json({ id: r.id, at: r.created_at }, 201);
+  }
+  if (path === "/api/aquarius/inbox" && M === "GET") {
+    const rows = await d.q(`UPDATE mob_aquarius SET taken_at=now() WHERE id IN (SELECT id FROM mob_aquarius WHERE kind='heard' AND taken_at IS NULL ORDER BY id FOR UPDATE SKIP LOCKED) RETURNING id, text, created_at`);
+    rows.sort((a, b) => a.id - b.id);
+    return json({ commands: rows.map((r) => ({ id: r.id, text: r.text, at: r.created_at })) });
+  }
+  return apiErr(404, "not_found", "No such endpoint");
+}

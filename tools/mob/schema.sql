@@ -127,3 +127,12 @@ CREATE TABLE IF NOT EXISTS mob_settings (
   value jsonb NOT NULL,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE TABLE IF NOT EXISTS mob_aquarius (
+  id serial PRIMARY KEY,
+  kind text NOT NULL CHECK (kind IN ('say','heard')),
+  text text NOT NULL,
+  face text,
+  suit boolean,
+  taken_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
