@@ -29,3 +29,9 @@ Alex, after ultracursor and "Clipper" both opened GMGN: "Remake a whole new app 
 - Also joined RoCode (/c/campaigns/91425ed7-...): needs real Roblox Studio screen recordings made on a PC. Claude cannot film that; only Alex can. Not a fit for ORAKTYS.
 - Call of Duty MW4 (/c/campaigns/78b4e379-...): TikTok + Instagram only, NOT YouTube. Most big campaigns are TikTok/IG only -> an Instagram account (Alex: "we can make an insta later") unlocks them.
 - YouTube-friendly streamer targets still to open: FaZe Tournament ($1/1K, $8.5K), $2,500 SkiiMaskTimmy, $9K Jason Pool (JasonTheWeen). Their card links are not in the Discover snapshot; open via the campaign search / "All campaigns" list.
+
+## SkiiMaskTimmy — the first campaign that fits (2026-11-14)
+- JOINED /c/campaigns/9a53cf91-e0ac-4157-bed0-81eb7095827d ($1/1K, YouTube allowed, max $150/clip, no follower minimum).
+- Rules: only his Twitch streams/VODs; facecam visible; twitch.tv/skiimasktimmy overlay on every clip AND in the caption; his voice audible (no music over it); min 7 s, vertical 9:16; comments/likes on; no reuploads of his own TikToks/Shorts.
+- Recipe that passes: tools/clipper daily.user_clips('skiimasktimmy','LAST_WEEK') -> yt-dlp https://clips.twitch.tv/<slug> -> ffmpeg full clip (clip.py windows cut them under 7 s), blurred 9:16 fill, red title box at y=330, purple (#9146FF) "twitch.tv/skiimasktimmy" box at h-300. R2 key oraktys-timmy-*.mp4. Metricool YouTube short, category GAMING, caption with twitch.tv/skiimasktimmy.
+- First 3 scheduled 14 Nov 12:10/16:10/20:10 Athens; reminder at 21:00 to submit their YouTube links via "Submit clip".
