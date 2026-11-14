@@ -59,7 +59,7 @@ async function send(action, input = {}) { const id = `c${++n}`; queue.push({ id,
 
 // 1. connects, heartbeats, and the stray tab is sent to Content Rewards (no internet here, so only the attempt is seen)
 const st = await until(() => statuses.find((s) => s.chrome === true));
-ok("heartbeat says Cursor Clipper and Chrome connected", st && st.app === "Cursor Clipper" && st.build === "2", st);
+ok("heartbeat says Cursor Clipper and Chrome connected", st && st.app === "Cursor Clipper" && st.build === "3", st);
 ok("a tab on a non-clipping site is left at once", await until(() => /not a clipping site, leaving it: localhost/.test(out)), out);
 
 // 2. GMGN and any other site are refused
@@ -120,7 +120,22 @@ r = await send("navigate", { url: `${SITE}/settings/payouts`, why: "open" });
 const ref3 = (r.text.match(/button "Join campaign" \[ref=([a-z0-9]+)\]/) || [])[1];
 r = await send("click", { ref: ref3, why: "x", final: "other" });
 ok("on a payouts/settings page it still asks (and does nothing unanswered)", /did not answer the card/.test(r.text), r.text);
+r = await send("navigate", { url: `${SITE}/billing/payment`, why: "open" });
+const ref4 = (r.text.match(/button "Join campaign" \[ref=([a-z0-9]+)\]/) || [])[1];
+r = await send("click", { ref: ref4, why: "x", final: "other" });
+ok("on a billing/payment page it still asks", /did not answer the card/.test(r.text), r.text);
+r = await send("navigate", { url: `${SITE}/app-review/submit`, why: "open" });
+const ref5 = (r.text.match(/button "Join campaign" \[ref=([a-z0-9]+)\]/) || [])[1];
+r = await send("click", { ref: ref5, why: "x", final: "other" });
+ok("on an app-review submit page it still asks", /did not answer the card/.test(r.text), r.text);
 app2.kill();
+
+// 9. build 3: developer-console hosts allowed, business.facebook.com and look-alikes are not
+const { allowedHost } = await import("file://" + path.join(HERE, "../src/app.mjs"));
+for (const h of ["console.cloud.google.com", "console.developers.google.com", "developers.facebook.com", "www.instagram.com", "developers.tiktok.com", "www.tiktok.com", "accounts.google.com", "contentrewards.com"])
+  ok(`build 3 allows ${h}`, allowedHost(h) === true);
+for (const h of ["business.facebook.com", "facebook.com", "instagram.com.evil.io", "gmgn.ai", "ads.tiktok.com", "google.com", "evilconsole.cloud.google.com.x"])
+  ok(`build 3 refuses ${h}`, allowedHost(h) === false);
 
 await spy.close().catch(() => {}); chrome.kill(); site.close(); link.close(); bad.close();
 clearTimeout(KILL);

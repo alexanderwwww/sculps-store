@@ -4,7 +4,7 @@
 # Chrome (own profile, own port) on Content Rewards, and runs the clipper.
 # No trading. No self-update: the bundle is the truth, every launch.
 
-BUILD="2"
+BUILD="3"
 APP="Cursor Clipper"
 BUNDLE="$(cd "$(dirname "$0")" && pwd)"
 WORK="${CC_WORK:-$HOME/Library/Application Support/Cursor Clipper}"

@@ -19,7 +19,10 @@ import { PlatformError, readBody, form, inSeconds, redirectUri } from "./common.
 
 export const API_VERSION = "v27.0";
 export const G = `https://graph.instagram.com/${API_VERSION}`;
-export const SCOPES = ["instagram_business_basic", "instagram_business_content_publish"];
+// instagram_business_manage_insights: required by media insights with Instagram Login
+// (https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights).
+export const STATS_SCOPES = ["instagram_business_manage_insights"];
+export const SCOPES = ["instagram_business_basic", "instagram_business_content_publish", ...STATS_SCOPES];
 export const CAPTION_MAX = 2200;
 export const HASHTAGS_MAX = 30;
 export const MENTIONS_MAX = 20;
@@ -57,7 +60,9 @@ export async function exchange(env, code) {
   return {
     external_id: String(p.user_id || short.user_id), handle: p.username || String(short.user_id),
     access_token: l.access_token, refresh_token: null, token_expires_at: inSeconds(l.expires_in), refresh_expires_at: null,
-    scopes: Array.isArray(short.permissions) ? short.permissions.join(",") : SCOPES.join(","), meta: { token_issued_at: new Date().toISOString() },
+    // The doc's sample shows permissions as a comma-separated STRING ("instagram_business_basic,...").
+    // Store exactly what was granted; never fall back to what we asked for (a declined insights scope must show Reconnect).
+    scopes: Array.isArray(short.permissions) ? short.permissions.join(",") : (typeof short.permissions === "string" ? short.permissions : ""), meta: { token_issued_at: new Date().toISOString() },
   };
 }
 
@@ -105,4 +110,47 @@ export async function poll(env, acct, post, save = noSave) {
   });
   await save({ published_id: String(pub.id) });
   return { status: "posted", remote_id: String(pub.id), url: await permalink(acct, pub.id) };
+}
+
+/*
+ * Stats. Docs read 2026-11-14:
+ *   GET /me fields user_id,username,profile_picture_url,followers_count,media_count:
+ *     https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/get-started
+ *   GET /<IG_ID>/media (paging.cursors.after; max 10K most recent):
+ *     https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media
+ *   IG Media fields id, media_type (VIDEO for reels), permalink, timestamp, like_count, comments_count:
+ *     https://developers.facebook.com/docs/instagram-platform/reference/instagram-media
+ *   GET /<MEDIA_ID>/insights metric=views,likes,comments,shares,saved -> data[].values[].value:
+ *     https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights
+ *   An empty insight array means no data: stored as null, never 0.
+ */
+export const STATS_MEDIA = 25;
+// Graph API error codes: https://developers.facebook.com/docs/graph-api/guides/error-handling (10 = permission denied, 200-299 = permission errors)
+export function isPermissionError(e) {
+  const c = parseInt(String(e?.code ?? "").split("/")[0], 10);
+  return e?.status === 403 || c === 10 || (c >= 200 && c <= 299);
+}
+const insightVal = (data, name) => { const m = (data || []).find((d) => d.name === name); const v = m?.values?.[0]?.value ?? m?.total_value?.value; return v == null ? null : Number(v); };
+export async function stats(env, acct) {
+  const t = acct.access_token;
+  const me0 = await call(`${G}/me?${form({ fields: "user_id,username,profile_picture_url,followers_count,media_count", access_token: t })}`);
+  const me = Array.isArray(me0.data) ? me0.data[0] : me0;
+  const media = await call(`${G}/${acct.external_id}/media?${form({ fields: "id,media_type,permalink,timestamp,like_count,comments_count", limit: String(STATS_MEDIA), access_token: t })}`);
+  const videos = [];
+  for (const m of (media.data || []).filter((x) => x.media_type === "VIDEO").slice(0, STATS_MEDIA)) {
+    let ins = [];
+    try { ins = (await call(`${G}/${m.id}/insights?${form({ metric: "views,likes,comments,shares,saved", access_token: t })}`)).data || []; } catch (e) {
+      if (e.auth) throw e;
+      // Graph error 10 (permission denied) / 200 (permissions error) or HTTP 403: the insights permission is missing,
+      // which must surface as Reconnect, not as blank views. Other errors (unsupported media, no data yet) stay null.
+      if (isPermissionError(e)) throw new PlatformError(403, "needs_reconnect", e.message || "Instagram insights permission missing", { retryable: false });
+    }
+    videos.push({ remote_id: String(m.id), url: m.permalink || null, title: null, views: insightVal(ins, "views"), likes: insightVal(ins, "likes") ?? m.like_count ?? null,
+      comments: insightVal(ins, "comments") ?? m.comments_count ?? null, shares: insightVal(ins, "shares"), saves: insightVal(ins, "saved") });
+  }
+  const known = videos.filter((v) => v.views != null);
+  return {
+    channel: { views_total: known.length ? known.reduce((a, v) => a + v.views, 0) : null, followers: me.followers_count ?? null, videos: me.media_count ?? null, likes_total: null, avatar: me.profile_picture_url || null, title: me.username || null },
+    videos,
+  };
 }

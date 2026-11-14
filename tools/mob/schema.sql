@@ -77,3 +77,53 @@ CREATE TABLE IF NOT EXISTS mob_login_fail (
   at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS mob_login_fail_ip ON mob_login_fail (ip, at);
+ALTER TABLE mob_campaigns ADD COLUMN IF NOT EXISTS min_payout_usd numeric;
+ALTER TABLE mob_campaigns ADD COLUMN IF NOT EXISTS max_payout_usd numeric;
+ALTER TABLE mob_campaigns ADD COLUMN IF NOT EXISTS budget_usd numeric;
+ALTER TABLE mob_campaigns ADD COLUMN IF NOT EXISTS paid_out_usd numeric;
+ALTER TABLE mob_submissions ADD COLUMN IF NOT EXISTS est_payout_usd numeric;
+ALTER TABLE mob_submissions ADD COLUMN IF NOT EXISTS views_at timestamptz;
+CREATE TABLE IF NOT EXISTS mob_platform_apps (
+  platform text PRIMARY KEY CHECK (platform IN ('youtube','instagram','tiktok')),
+  stage text NOT NULL DEFAULT 'none',
+  stage_note text,
+  client_id_hint text,
+  keys_set_at timestamptz,
+  review_status text NOT NULL DEFAULT 'none',
+  updated_by text,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS mob_account_stats (
+  id serial PRIMARY KEY,
+  account_id int NOT NULL REFERENCES mob_accounts(id) ON DELETE CASCADE,
+  day date NOT NULL,
+  taken_at timestamptz NOT NULL DEFAULT now(),
+  views_total bigint,
+  followers bigint,
+  videos int,
+  likes_total bigint,
+  raw jsonb NOT NULL DEFAULT '{}',
+  UNIQUE (account_id, day)
+);
+CREATE TABLE IF NOT EXISTS mob_post_stats (
+  id serial PRIMARY KEY,
+  account_id int NOT NULL REFERENCES mob_accounts(id) ON DELETE CASCADE,
+  post_id int REFERENCES mob_posts(id) ON DELETE SET NULL,
+  remote_id text NOT NULL,
+  day date NOT NULL,
+  taken_at timestamptz NOT NULL DEFAULT now(),
+  title text,
+  url text,
+  views bigint,
+  likes bigint,
+  comments bigint,
+  shares bigint,
+  saves bigint,
+  UNIQUE (account_id, remote_id, day)
+);
+CREATE INDEX IF NOT EXISTS mob_post_stats_day ON mob_post_stats (day);
+CREATE TABLE IF NOT EXISTS mob_settings (
+  key text PRIMARY KEY,
+  value jsonb NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);

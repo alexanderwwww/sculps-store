@@ -20,14 +20,14 @@ test("authorize URLs carry exactly the documented params", () => {
   assert.equal(g.origin + g.pathname, "https://accounts.google.com/o/oauth2/v2/auth");
   assert.deepEqual(Object.fromEntries(g.searchParams), {
     client_id: "gid", redirect_uri: "https://mob.gardenbuddystore.workers.dev/oauth/youtube/callback", response_type: "code",
-    scope: "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly", access_type: "offline", prompt: "consent", include_granted_scopes: "true", state: "S1",
+    scope: "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly", access_type: "offline", prompt: "consent", include_granted_scopes: "true", state: "S1",
   });
   const i = new URL(ig.authorizeUrl(env, "S2"));
   assert.equal(i.origin + i.pathname, "https://www.instagram.com/oauth/authorize");
-  assert.deepEqual(Object.fromEntries(i.searchParams), { client_id: "igid", redirect_uri: "https://mob.gardenbuddystore.workers.dev/oauth/instagram/callback", response_type: "code", scope: "instagram_business_basic,instagram_business_content_publish", state: "S2" });
+  assert.deepEqual(Object.fromEntries(i.searchParams), { client_id: "igid", redirect_uri: "https://mob.gardenbuddystore.workers.dev/oauth/instagram/callback", response_type: "code", scope: "instagram_business_basic,instagram_business_content_publish,instagram_business_manage_insights", state: "S2" });
   const t = new URL(tt.authorizeUrl(env, "S3"));
   assert.equal(t.origin + t.pathname, "https://www.tiktok.com/v2/auth/authorize/");
-  assert.deepEqual(Object.fromEntries(t.searchParams), { client_key: "tkey", response_type: "code", scope: "user.info.basic,video.publish", redirect_uri: "https://mob.gardenbuddystore.workers.dev/oauth/tiktok/callback", state: "S3" });
+  assert.deepEqual(Object.fromEntries(t.searchParams), { client_key: "tkey", response_type: "code", scope: "user.info.basic,video.publish,user.info.stats,video.list", redirect_uri: "https://mob.gardenbuddystore.workers.dev/oauth/tiktok/callback", state: "S3" });
 });
 
 test("YouTube exchange + refresh bodies", async () => {

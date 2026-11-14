@@ -13,7 +13,10 @@ import { PlatformError, readBody, form, inSeconds, redirectUri } from "./common.
 
 export const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 export const TOKEN_URL = "https://oauth2.googleapis.com/token";
-export const SCOPES = ["https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/youtube.readonly"];
+// yt-analytics.readonly: https://developers.google.com/youtube/analytics/reference/reports/query (scope table; the
+// same page says youtube.readonly is now also required, which we already ask for).
+export const STATS_SCOPES = ["https://www.googleapis.com/auth/yt-analytics.readonly"];
+export const SCOPES = ["https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/youtube.readonly", ...STATS_SCOPES];
 export const DAILY_UPLOAD_CAP = 100;
 export const TITLE_MAX = 100;
 export const DESC_MAX_BYTES = 5000;
@@ -99,3 +102,58 @@ export async function publish(env, acct, post, clip, save = noSave) {
 }
 
 export async function poll() { return null; }
+
+/*
+ * Stats. Docs read 2026-11-14:
+ *   channels.list part=statistics,snippet mine=true: https://developers.google.com/youtube/v3/docs/channels/list
+ *     statistics.viewCount / subscriberCount (rounded to 3 sig. figures) / hiddenSubscriberCount / videoCount
+ *     (https://developers.google.com/youtube/v3/docs/channels)
+ *   reports.query: https://developers.google.com/youtube/analytics/reference/reports/query
+ *     GET https://youtubeanalytics.googleapis.com/v2/reports ids, startDate, endDate, metrics (+dimensions, sort, maxResults)
+ *     -> {columnHeaders[{name}], rows[[...]]} (rows omitted when empty)
+ *   Top videos report: https://developers.google.com/youtube/analytics/channel_reports
+ *     dimension=video requires sort and maxResults <= 200; metrics views, likes, comments, shares allowed
+ *   videos.list part=statistics,snippet id=<<=50 ids> (1 quota unit): https://developers.google.com/youtube/v3/docs/videos/list
+ *     statistics.viewCount/likeCount/commentCount are current; Analytics reports lag a day or more, so for the posts mob
+ *     published (postedIds) the videos.list counts win over the Analytics row. Analytics still covers the other videos.
+ */
+async function getJson(acct, url) {
+  const res = await fetch(url, { headers: { authorization: `Bearer ${acct.access_token}` } });
+  const j = await readBody(res);
+  if (!res.ok) throw ytError(res, j);
+  return j;
+}
+const day = (d) => d.toISOString().slice(0, 10);
+export async function stats(env, acct, { postedIds = [] } = {}) {
+  const ch = (await getJson(acct, "https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&mine=true")).items?.[0];
+  if (!ch) throw new PlatformError(404, "no_channel", "No channel on this sign-in", { retryable: false });
+  const st = ch.statistics || {};
+  const q = new URLSearchParams({ ids: "channel==MINE", startDate: "2005-02-14", endDate: day(new Date()), metrics: "views,likes,comments,shares", dimensions: "video", sort: "-views", maxResults: "200" });
+  const rep = await getJson(acct, `https://youtubeanalytics.googleapis.com/v2/reports?${q}`);
+  const cols = (rep.columnHeaders || []).map((c) => c.name);
+  const videos = (rep.rows || []).map((r) => {
+    const o = Object.fromEntries(cols.map((c, i) => [c, r[i]]));
+    return { remote_id: String(o.video), views: Number(o.views ?? 0), likes: o.likes ?? null, comments: o.comments ?? null, shares: o.shares ?? null, saves: null, url: `https://www.youtube.com/shorts/${o.video}`, title: null };
+  });
+  const posted = new Set(postedIds.map(String));
+  for (const id of posted) if (!videos.some((v) => v.remote_id === id))
+    videos.push({ remote_id: id, views: null, likes: null, comments: null, shares: null, saves: null, url: `https://www.youtube.com/shorts/${id}`, title: null });
+  const ids = [...new Set([...posted, ...videos.map((v) => v.remote_id)])].slice(0, 50);
+  if (ids.length) {
+    const t = await getJson(acct, `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${ids.map(encodeURIComponent).join(",")}`);
+    const num = (x) => (x == null ? null : Number(x));
+    for (const it of t.items || []) {
+      const v = videos.find((x) => x.remote_id === it.id); if (!v) continue;
+      v.title = it.snippet?.title || null;
+      const s = it.statistics || {};
+      if (posted.has(it.id) || v.views == null) { v.views = num(s.viewCount) ?? v.views; v.likes = num(s.likeCount) ?? v.likes; v.comments = num(s.commentCount) ?? v.comments; }
+    }
+  }
+  return {
+    channel: {
+      views_total: st.viewCount != null ? Number(st.viewCount) : null, followers: st.hiddenSubscriberCount ? null : (st.subscriberCount != null ? Number(st.subscriberCount) : null),
+      videos: st.videoCount != null ? Number(st.videoCount) : null, likes_total: null, avatar: ch.snippet?.thumbnails?.default?.url || null, title: ch.snippet?.title || null,
+    },
+    videos,
+  };
+}

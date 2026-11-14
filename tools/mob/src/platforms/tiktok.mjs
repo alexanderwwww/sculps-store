@@ -22,7 +22,9 @@
 import { PlatformError, readBody, form, inSeconds, redirectUri } from "./common.mjs";
 
 export const API = "https://open.tiktokapis.com";
-export const SCOPES = ["user.info.basic", "video.publish"];
+// user.info.stats (follower_count, likes_count, video_count) and video.list: https://developers.tiktok.com/doc/tiktok-api-scopes
+export const STATS_SCOPES = ["user.info.stats", "video.list"];
+export const SCOPES = ["user.info.basic", "video.publish", ...STATS_SCOPES];
 export const TITLE_MAX_UTF16 = 2200;
 export const secrets = ["TIKTOK_CLIENT_KEY", "TIKTOK_CLIENT_SECRET"];
 const MB = 1024 * 1024;
@@ -131,4 +133,37 @@ export async function poll(env, acct, post) {
   if (d.status !== "PUBLISH_COMPLETE") return null;
   const id = Array.isArray(d.publicaly_available_post_id) ? d.publicaly_available_post_id[0] : d.publicaly_available_post_id;
   return { status: "posted", remote_id: post.remote_id, url: id ? `https://www.tiktok.com/@${acct.handle}/video/${id}` : null };
+}
+
+/*
+ * Stats. Docs read 2026-11-14:
+ *   GET /v2/user/info/?fields=... -> data.user ; follower_count, likes_count, video_count need user.info.stats;
+ *     avatar_url, display_name need user.info.basic: https://developers.tiktok.com/doc/tiktok-api-v2-get-user-info
+ *   POST /v2/video/list/?fields=... body {cursor, max_count<=20} -> data.videos, data.cursor, data.has_more (public videos only):
+ *     https://developers.tiktok.com/doc/tiktok-api-v2-video-list
+ *   Video object fields id, title, share_url, view_count, like_count, comment_count, share_count:
+ *     https://developers.tiktok.com/doc/tiktok-api-v2-video-object
+ *   No channel view total exists, so views_total = sum of view_count over what we read (null when no video has a count);
+ *   views_partial=true when has_more is still true after STATS_PAGES pages (the sum is NOT the whole channel).
+ */
+export const STATS_PAGES = 5;
+export async function stats(env, acct) {
+  const res = await fetch(`${API}/v2/user/info/?fields=open_id,display_name,avatar_url,follower_count,likes_count,video_count`, { headers: { authorization: `Bearer ${acct.access_token}` } });
+  const j = await readBody(res);
+  if (!res.ok || (j.error?.code && j.error.code !== "ok")) throw new PlatformError(res.status, j.error?.code, j.error?.message || j._text);
+  const u = j.data?.user || {};
+  const videos = [];
+  let cursor = null, more = false;
+  for (let i = 0; i < STATS_PAGES; i++) {
+    const d = await api(acct, "/v2/video/list/?fields=id,title,share_url,view_count,like_count,comment_count,share_count", cursor == null ? { max_count: 20 } : { cursor, max_count: 20 });
+    for (const v of d.videos || []) videos.push({ remote_id: String(v.id), title: v.title || null, url: v.share_url || null, views: v.view_count ?? null, likes: v.like_count ?? null, comments: v.comment_count ?? null, shares: v.share_count ?? null, saves: null });
+    more = !!d.has_more;
+    if (!more) break;
+    cursor = d.cursor;
+  }
+  const counted = videos.filter((v) => v.views != null);
+  return {
+    channel: { views_total: counted.length ? counted.reduce((a, v) => a + v.views, 0) : null, views_partial: more, followers: u.follower_count ?? null, videos: u.video_count ?? null, likes_total: u.likes_count ?? null, avatar: u.avatar_url || null, title: u.display_name || null },
+    videos,
+  };
 }

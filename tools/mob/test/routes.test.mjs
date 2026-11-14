@@ -16,7 +16,7 @@ const acct = (platform, ext) => C.upsertAccount(env, platform, { external_id: ex
 
 test("healthz is public and reports db + build", async () => {
   const r = await R("GET", "/healthz");
-  assert.deepEqual(await r.json(), { ok: true, db: "up", build: "mob-2" });
+  assert.deepEqual(await r.json(), { ok: true, db: "up", build: "mob-3" });
   const bad = await reqOf({ ...env, __db: undefined, DATABASE_URL: "postgresql://u:p@nope.invalid/db" })("GET", "/healthz");
   assert.equal((await bad.json()).db, "down");
 });
@@ -36,30 +36,45 @@ test("admin auth: wrong password 401, pages redirect to /login, tampered cookie 
   assert.equal((await R("GET", "/login")).status, 200);
 });
 
-test("every admin page renders with the build number", async () => {
+test("every admin route serves the app shell with the build number; data endpoints answer", async () => {
   const a = await acct("youtube", "UC1");
   const c = await db(env).one(`INSERT INTO mob_campaigns (name, platforms) VALUES ('Oraktys', '{youtube}') RETURNING id`);
-  await db(env).q(`INSERT INTO mob_posts (account_id, clip_key, scheduled_at, status, error, campaign_id, remote_url) VALUES ($1,'oraktys-a.mp4',now(),'failed','403 x: y',$2,NULL),($1,'oraktys-a.mp4',now(),'posted',NULL,$2,'https://www.youtube.com/shorts/v')`, [a.id, c.id]);
-  for (const p of ["/", "/accounts", "/clips", "/clips?f=unused&q=oraktys", "/schedule", "/schedule?clip=oraktys-a.mp4", "/campaigns", `/campaigns/${c.id}`, "/settings", "/posts?status=failed", "/admin/migrate"]) {
-    const r = await R("GET", p, { cookie });
+  const p = await db(env).one(`INSERT INTO mob_posts (account_id, clip_key, scheduled_at, status, error, campaign_id, remote_url) VALUES ($1,'oraktys-a.mp4',now(),'failed','403 x: y',$2,NULL),($1,'oraktys-a.mp4',now(),'posted',NULL,$2,'https://www.youtube.com/shorts/v') RETURNING id`, [a.id, c.id]);
+  for (const path of ["/", "/welcome", "/channels", `/channels/${a.id}`, "/accounts", "/clips", "/posts", "/calendar", "/schedule", "/analytics", "/analytics/live", "/campaigns", `/campaigns/${c.id}`, "/earnings", "/settings", "/admin/migrate"]) {
+    const r = await R("GET", path, { cookie });
     const t = await r.text();
-    assert.equal(r.status, 200, p); assert.match(t, /build mob-2/, p);
+    assert.equal(r.status, 200, path); assert.match(t, /data-build="mob-3"/, path); assert.match(t, /\/static\/app\.js/, path);
   }
-  const dash = await (await R("GET", "/", { cookie })).text();
-  assert.match(dash, /403 x: y/); assert.match(dash, /Retry/);
-  const camp = await (await R("GET", `/campaigns/${c.id}`, { cookie })).text();
-  assert.match(camp, /shorts\/v/);
-  const lib = await (await R("GET", "/clips", { cookie })).text();
-  assert.match(lib, /oraktys-a\.mp4/); assert.doesNotMatch(lib, /other\.txt/);
+  assert.equal((await R("GET", "/nope", { cookie })).status, 404);
+  const js = await R("GET", "/static/app.js");
+  assert.equal(js.status, 200); assert.match(js.headers.get("content-type"), /javascript/);
+  new Function(await js.text()); // parses as a classic script
+  const get = async (u) => { const r = await R("GET", u, { cookie }); const j = await r.json(); assert.equal(r.status, 200, u + " " + JSON.stringify(j)); return j; };
+  const boot = await get("/ui/data/boot");
+  assert.equal(boot.build, "mob-3"); assert.equal(boot.accounts.length, 1); assert.equal(boot.counts.failed, 1);
+  assert.equal((await get("/ui/data/posts?status=failed")).posts[0].error, "403 x: y");
+  assert.equal((await get("/ui/data/posts")).counts.all, 2);
+  assert.ok((await get(`/ui/data/posts/${p.id}`)).events.length >= 2);
+  assert.ok((await get("/ui/data/clips")).clips.some((x) => x.key === "oraktys-a.mp4" && x.platforms.includes("youtube")));
+  assert.equal((await get(`/ui/data/campaigns/${c.id}`)).clips.length, 1);
+  assert.equal((await get(`/ui/data/channels/${a.id}`)).account.handle, "UC1");
+  assert.equal((await get("/ui/data/overview?range=7d")).days.length, 7);
+  const cal = await get(`/ui/data/calendar?from=${new Date(Date.now() - 864e5).toISOString()}&to=${new Date(Date.now() + 864e5).toISOString()}`);
+  assert.equal(cal.posts.length, 2);
+  assert.equal((await R("GET", "/ui/data/boot")).status, 302); // no cookie
 });
 
-test("accounts page greys a platform whose keys are missing; connect redirects to settings", async () => {
+test("/connect with no keys shows the onboarding card, never a dead end in Settings", async () => {
   const env2 = { ...env, GOOGLE_CLIENT_SECRET: undefined };
   const R2 = reqOf(env2);
-  const t = await (await R2("GET", "/accounts", { cookie })).text();
-  assert.match(t, /Add the YouTube keys in Settings first/);
+  await C.setStage(env2, "youtube", { stage: "claude_working", stage_note: "Creating the project" });
   const r = await R2("GET", "/connect/youtube", { cookie });
-  assert.match(r.headers.get("location"), /^\/settings\?msg=/);
+  assert.equal(r.status, 200);
+  const t = await r.text();
+  assert.match(t, /data-route="\/welcome"/); assert.match(t, /Claude is setting up YouTube\. Creating the project/);
+  const st = await (await R2("GET", "/ui/data/setup", { cookie })).json();
+  assert.equal(st.youtube.state, "setting_up"); assert.equal(st.instagram.state, "ready");
+  await db(env).q(`DELETE FROM mob_platform_apps`);
 });
 
 test("OAuth connect -> callback stores the account; bad/expired state rejected", async () => {
@@ -142,7 +157,9 @@ test("settings saves secrets through the Cloudflare API, never other names", asy
   assert.deepEqual(bodies, [{ name: "GOOGLE_CLIENT_ID", text: "x", type: "secret_text" }, { name: "GOOGLE_CLIENT_SECRET", text: "y", type: "secret_text" }]);
   const page = await (await R("GET", "/settings", { cookie })).text();
   assert.doesNotMatch(page, /gsec|igsec|tsec/);
-  assert.match(page, /https:\/\/mob\.gardenbuddystore\.workers\.dev\/oauth\/youtube\/callback/);
+  const st = await (await R("GET", "/ui/data/setup", { cookie })).json();
+  assert.equal(st.youtube.redirect_uri, "https://mob.gardenbuddystore.workers.dev/oauth/youtube/callback");
+  assert.doesNotMatch(JSON.stringify(st), /gsec|igsec|tsec/);
   resetMocks();
   mock("PUT", "https://api.cloudflare.com/", () => res({ success: false, errors: [{ code: 10000, message: "Authentication error" }] }, 403));
   const f = await R("POST", "/settings/secret", { cookie, form: { IG_APP_ID: "z" } });

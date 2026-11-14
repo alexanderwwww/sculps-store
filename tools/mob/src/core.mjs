@@ -5,6 +5,7 @@ import { PlatformError } from "./platforms/common.mjs";
 import * as youtube from "./platforms/youtube.mjs";
 import * as instagram from "./platforms/instagram.mjs";
 import * as tiktok from "./platforms/tiktok.mjs";
+import { pullStats } from "./stats.mjs";
 
 export const PLATFORMS = { youtube, instagram, tiktok };
 export const PLATFORM_NAMES = { youtube: "YouTube", instagram: "Instagram", tiktok: "TikTok" };
@@ -74,7 +75,7 @@ export async function refreshAccount(env, acct) {
 }
 
 // Run fn(acct); on an auth error refresh once and retry once.
-async function withAuth(env, acct, fn) {
+export async function withAuth(env, acct, fn) {
   try { return await fn(acct); } catch (e) {
     if (!(e instanceof PlatformError) || !e.auth) throw e;
     const r = await refreshAccount(env, acct);
@@ -103,7 +104,8 @@ export async function listClips(env, cursor) {
   const clips = r.objects.filter((o) => /\.mp4$/i.test(o.key)).map((o) => ({ key: o.key, url: clipUrl(env, o.key), size: o.size, uploaded: o.uploaded }));
   if (!cursor) {
     const ups = await db(env).q(`SELECT key, size_bytes, created_at FROM mob_clips ORDER BY created_at DESC LIMIT 200`);
-    clips.unshift(...ups.map((u) => ({ key: u.key, url: clipUrl(env, u.key), size: Number(u.size_bytes), uploaded: u.created_at })));
+    const have = new Set(clips.map((c) => c.key));
+    clips.unshift(...ups.filter((u) => !have.has(u.key)).map((u) => ({ key: u.key, url: clipUrl(env, u.key), size: Number(u.size_bytes), uploaded: u.created_at })));
   }
   return { clips, cursor: r.truncated ? r.cursor : null };
 }
@@ -166,7 +168,16 @@ export async function ensureMigrated(env) {
   migrated = true;
 }
 
+export async function getSetting(env, key, dflt = null) {
+  const r = await db(env).one(`SELECT value FROM mob_settings WHERE key=$1`, [key]);
+  return r ? r.value : dflt;
+}
+export async function setSetting(env, key, value) {
+  await db(env).q(`INSERT INTO mob_settings (key, value) VALUES ($1,$2::jsonb) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=now()`, [key, JSON.stringify(value)]);
+}
+
 export async function claimDue(env, limit = CLAIM_BATCH) {
+  if (await getSetting(env, "paused", false)) return [];
   return db(env).q(
     `UPDATE mob_posts SET status='publishing', attempts=attempts+1, updated_at=now()
      WHERE id IN (SELECT id FROM mob_posts WHERE status='scheduled' AND scheduled_at<=now() ORDER BY scheduled_at LIMIT $1 FOR UPDATE SKIP LOCKED)
@@ -274,6 +285,7 @@ export async function runTick(env) {
     }
   } catch (e) { out.errors.push(`claim: ${e.message}`); }
   try { out.polled = await pollProcessing(env); } catch (e) { out.errors.push(`poll: ${e.message}`); }
+  try { const s = await pullStats(env, STATS_DEPS); out.stats = s.pulled; out.errors.push(...s.errors); } catch (e) { out.errors.push(`stats: ${e.message}`); }
   try {
     const r = await db(env).q(`UPDATE mob_posts SET status='failed', error=$1, updated_at=now() WHERE status='publishing' AND updated_at < now() - interval '15 minutes' RETURNING id`, [MAYBE_LIVE]);
     out.reaped = r.length;
@@ -281,3 +293,42 @@ export async function runTick(env) {
   return out;
 }
 export const _resetMigrated = () => { migrated = false; };
+
+export const STATS_DEPS = { P: PLATFORMS, load: loadAccount, withAuth };
+
+/* ---------- platform setup (Claude prepares the developer apps; Alex only presses Connect) ---------- */
+export const STAGES = ["none", "claude_working", "app_created", "keys_set", "live", "review_pending", "needs_alex"];
+export const REVIEW = ["none", "testing", "sandbox", "in_review", "approved", "rejected"];
+// UI state per platform: not_set_up | setting_up | activating | needs_alex | ready | connected
+export async function setupState(env) {
+  const rows = await db(env).q(`SELECT * FROM mob_platform_apps`);
+  const counts = await db(env).q(`SELECT platform, count(*)::int n, count(*) FILTER (WHERE status='needs_reconnect')::int bad FROM mob_accounts GROUP BY platform`);
+  const out = {};
+  for (const p of Object.keys(PLATFORMS)) {
+    const r = rows.find((x) => x.platform === p) || { stage: "none", review_status: "none" };
+    const live = hasSecrets(env, p);
+    if (live && r.stage === "keys_set") { await db(env).q(`UPDATE mob_platform_apps SET stage='live', updated_at=now() WHERE platform=$1 AND stage='keys_set'`, [p]); r.stage = "live"; }
+    const c = counts.find((x) => x.platform === p) || { n: 0, bad: 0 };
+    let state;
+    if (live) state = c.n ? "connected" : "ready";
+    else if (r.stage === "needs_alex") state = "needs_alex";
+    else if (r.stage === "keys_set") state = "activating";
+    else if (["claude_working", "app_created"].includes(r.stage)) state = "setting_up";
+    else state = "not_set_up";
+    out[p] = {
+      state, stage: r.stage, note: r.stage_note || null, review_status: r.review_status, keys_set: live, live,
+      client_id_hint: r.client_id_hint || null, accounts: c.n, needs_reconnect: c.bad,
+      redirect_uri: `${(env.MOB_BASE_URL || "https://mob.gardenbuddystore.workers.dev").replace(/\/$/, "")}/oauth/${p}/callback`,
+      scopes_required: PLATFORMS[p].SCOPES, updated_at: r.updated_at || null,
+    };
+  }
+  return out;
+}
+export async function setStage(env, p, { stage, stage_note, review_status, client_id_hint, by = "claude" }) {
+  await db(env).q(`INSERT INTO mob_platform_apps (platform, stage, stage_note, review_status, client_id_hint, keys_set_at, updated_by)
+    VALUES ($1, COALESCE($2,'none'), $3, COALESCE($4,'none'), $5, CASE WHEN $2='keys_set' THEN now() END, $6)
+    ON CONFLICT (platform) DO UPDATE SET stage=COALESCE($2, mob_platform_apps.stage), stage_note=CASE WHEN $2 IS NOT NULL OR $3 IS NOT NULL THEN $3 ELSE mob_platform_apps.stage_note END,
+      review_status=COALESCE($4, mob_platform_apps.review_status), client_id_hint=COALESCE($5, mob_platform_apps.client_id_hint),
+      keys_set_at=CASE WHEN $2='keys_set' THEN now() ELSE mob_platform_apps.keys_set_at END, updated_by=$6, updated_at=now()`,
+  [p, stage ?? null, stage_note ?? null, review_status ?? null, client_id_hint ?? null, by]);
+}

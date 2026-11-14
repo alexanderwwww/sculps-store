@@ -11,7 +11,9 @@
  *             POST <LINK>/result  {id, text, image?}
  *             POST <LINK>/status  heartbeat (every 5 s)
  *   Sites   : contentrewards.com, whop.com, youtube.com, youtu.be,
- *             accounts.google.com. Any other tab is sent to Content Rewards.
+ *             accounts.google.com, and (build 3) the Google Cloud, Meta and
+ *             TikTok developer consoles plus www.instagram.com and
+ *             www.tiktok.com. Any other tab is sent to Content Rewards.
  *   Cards   : anything final (join, submit, post, Enter in a box) waits for
  *             Alex to press Approve on the page. Passwords are never typed.
  */
@@ -44,9 +46,14 @@ const require = createRequire(import.meta.url);
 const { chromium } = require("playwright-core");
 
 export const APP = "Cursor Clipper";
-export const BUILD = String(process.env.CC_BUILD || "2");
+export const BUILD = String(process.env.CC_BUILD || "3");
 export const HOME_URL = "https://contentrewards.com/";
-export const ALLOWED = ["contentrewards.com", "whop.com", "youtube.com", "youtu.be", "accounts.google.com"];
+// build 3 (2026-11-14, mob v2): the developer consoles where Claude creates mob's YouTube, Instagram and TikTok
+// apps for Alex, plus the two sign-in pages those flows need. business.facebook.com is NOT here: Business
+// Verification and App Review are done in Alex's name.
+export const ALLOWED = ["contentrewards.com", "whop.com", "youtube.com", "youtu.be", "accounts.google.com",
+  "console.cloud.google.com", "console.developers.google.com", "developers.facebook.com",
+  "www.instagram.com", "developers.tiktok.com", "www.tiktok.com"];
 const LINK = (process.env.CC_LINK || "https://ultra-link.gardenbuddystore.workers.dev/uL7kQ2vN9xR4tB8mW3zY6pD1sF5hJ0cA").replace(/\/+$/, "");
 const PORT = Number(process.env.CC_PORT || 9555);
 const TEST_HOSTS = (process.env.CC_TEST_HOSTS || "").split(",").filter(Boolean); // tests only
@@ -141,7 +148,8 @@ async function moveCursor(p, loc) {
 // build 2 (Alex, 2026-11-13: "get all the jobs done and don't stop"): on clipping pages joins, submits and Enter go
 // through without a card. Pages about money or the account (payouts, earnings, settings, billing, withdraw) still
 // ask him, and nothing there is ever done on its own.
-const ASK_PAGES = /settings|payout|earning|withdraw|billing|bank|account/i;
+// build 3: payment pages, business verification and app-review submission on the developer consoles always ask too.
+const ASK_PAGES = /settings|payout|earning|withdraw|billing|bank|account|payment|verification\/business|app-review\/submit|submit-for-review/i;
 const ALWAYS_ASK = process.env.CC_ALWAYS_ASK === "1"; // tests of the card itself
 
 /** Shows Approve / Deny on the page and waits for Alex. -> "approve" | "deny" | "expired" */

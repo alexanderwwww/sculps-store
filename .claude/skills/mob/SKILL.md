@@ -6,10 +6,15 @@ description: mob is Alex's own posting platform, like Metricool, running on our 
 
 **What it is:** our own platform for posting clips. Claude drives it, and Alex's job is to connect accounts. It takes clips from R2 (`oraktys-*.mp4`, made by `tools/clipper/daily.py`, plus uploads) and posts them to **YouTube Shorts, Instagram Reels and TikTok**, from as many accounts as are connected. Any platform with no connected account is skipped, which is not an error. Campaigns and submissions for Whop Content Rewards (contentrewards.com) are tracked in the same place.
 
-- **URL:** https://mob.gardenbuddystore.workers.dev (Worker `mob`, standalone; it never touches Kerberos). The build number shows in the sidebar, and `/healthz` returns `{"ok":true,"db":"up","build":"mob-2"}`.
+- **URL:** https://mob.gardenbuddystore.workers.dev (Worker `mob`, standalone; it never touches Kerberos). The build number shows in the sidebar, and `/healthz` returns `{"ok":true,"db":"up","build":"mob-2"}` live; mob-3 (Shopify-for-clipping rebuild, 2026-11-14) is built and tested but NOT deployed yet. Way back: `npx wrangler rollback -c ./wrangler.toml` to mob-2.
 - **Code:** `tools/mob` (see its README). Neon tables `mob_*` live in the Kerberos DB. R2 bucket is `gardenbuddy-media`, served publicly at `https://blackreaper.us/media/<key>`.
 - **Cron:** runs every 5 min. Each pass refreshes tokens, claims due posts, publishes them, polls IG/TikTok processing, and reaps stuck posts.
 - **Deploy:** `cd tools/mob && npx wrangler deploy -c ./wrangler.toml`. **Always pass -c.** A plain deploy from this folder picks up the Kerberos redirect config. Tests: `npm test`, which needs DATABASE_URL, runs against a throwaway schema and mocks all platform HTTP.
+
+## mob-3 look and setup (settled 2026-11-14, Alex: "Do it like a Shopify, but for clipping")
+- mob is Shop Admin's sibling: same tokens/type/keyframes copied byte for byte (src/shopadmin.mjs), light only. Pages: Home, Clips, Posts, Calendar, Analytics (+Live), Campaigns, Earnings, Channels, Settings, /welcome onboarding.
+- Alex never sees a developer console or the words OAuth/client/secret/token/scope/API. Claude sets up each platform's developer app (Cursor Clipper) and reports with POST /api/setup/:p {stage}, then POST /api/settings/keys. Alex only presses Connect.
+- Stats: hourly pull, 3 accounts per tick. Earnings estimate = views/1000 x $/1K, 0 below min, capped at max (src/money.mjs; "min" meaning still to verify on a live Content Rewards page).
 
 ## Admin pages (password login, 5 wrong tries per 15 min locks the IP)
 `/` dashboard · `/accounts` connect, reconnect, turn off, remove · `/clips` library and MP4 upload · `/schedule` (clip → accounts → time in Athens → caption; a typed time always wins) · `/posts` · `/campaigns`, `/campaigns/:id` (posts waiting to be submitted, submissions) · `/settings` (Alex pastes platform keys here, no terminal).
