@@ -68,6 +68,33 @@ under the voice), whooshes and impacts at the lines' `sfx` -> loudnorm -14 LUFS 
 - The end-card text is per video: return `notifyText: [app line, title, sub]` from update(); default is 001's card.
 - 002 (God-Emperor): original look-alike only (sun-ray crown, gold armour, stepped throne, robed crowd, blocky fleets).
 
+## Style v2 (Alex, 2026-11-14): textures, golden ratio, the recipe — default from whatif-003 on
+Switch: `STYLE.v2` in `scene/world.js` (true). 001 and 002 were rendered before it and are not re-rendered.
+- **Painted textures, all procedural (canvas 256px, no files):** grass (blotches + 4-7px tufts), dirt strata, chunky
+  bricks with light top-left / dark bottom-right edges, cobbles, wood planks with grain, scalloped roof tiles, cloth
+  weave, leaf dabs, and a soft brush "paint" for everything else. `mat(color)` picks one by colour (`texFor`);
+  `mat(color, {tex:'brick'})` forces one, `{tex:'none'}` turns it off. Mapped in world space (`painted()`), so tall
+  columns never stretch. Scales: grass .14, dirt .18, brick/cobble/tile .3, wood .35, leaf .35, cloth .7, paint .15.
+  Textures must be strong (lows ~120-150 of 255) or they vanish at phone size — the first, gentler pass was invisible.
+- **Baked AO feel:** terrain sides darken toward the water (x0.7 at y=-4 -> x1 at y=7), painted bands per block unit,
+  grass tops get a lighter rim at each cell edge (x1.13).
+- **Golden ratio:** captions at H*0.618, chip ~H*0.236, title ~H*0.146; ornaments sit on 0.382/0.618 points; size steps
+  1 : 0.618 : 0.382; colour proportion 62% warm (honey/coral/plum light) / 38% cool (mint-teal magic, teal shadows).
+- **Palette "Aurum Dusk" (ours only):** sky 0x1a0f3d / 0x6b2d86 / 0xff9a5a, fog 0x7e4a8a, honey gold 0xffc23d,
+  mint-teal magic 0x46f0d2, rose 0xff6f91.
+- **2D vector magic over the 3D (`ornaments()` in overlay):** twinkling 4-point stars on phi points (honey / mint),
+  a rotating rune ring behind the title (13 glyphs, two rings r=300 and r*0.618+70, glow 18px), a flat honey->mint
+  swoosh under the caption. Drawn under title, chips and captions.
+
+### The recipe (colour) — exact numbers, one grade for every video
+1. Tone map ACES filmic, exposure 1.05 (renderer).
+2. Bloom (UnrealBloom) radius .55, threshold .88 (only magic/lights pass), strength .7 default (shots may go .6-1.0).
+3. Grade pass (`GRADE` ShaderPass after OutputPass, display space):
+   white balance x(1.04, 1.00, 0.94); shadows += (-0.020, 0.035, 0.060)*(1-L)^2 (teal);
+   highlights += (0.050, 0.022, -0.030)*L^2 (honey); saturation 1.12; S-curve mix 0.18 of smoothstep;
+   vignette 1 - 0.36*smoothstep(0.36, 1.0, r) with r = |uv-0.5| * (0.5625, 1) * 1.6.
+4. Emissive stays 1-2; never a bright white surface (bloom blobs).
+
 ## Style LOCKED (Alex, 2026-11-14)
 "Keep this style of nice World of Warcraft, the heartwarming magical thing." Blocky fantasy world with a WoW-like vibe: warm golden light, glowing magic, cozy chunky shapes, epic skies, heartwarming tone. Original designs only (no Blizzard characters, names, logos or assets). Every video uses this unless Alex says otherwise. Alex drops the premise; only make the premises he gives.
 
