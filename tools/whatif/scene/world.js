@@ -32,6 +32,7 @@ export const PAL = {
 const mats = new Map();
 export function mat(color, o = {}) { const k = color + JSON.stringify(o); if (!mats.has(k)) mats.set(k, new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: .85, metalness: 0, ...o })); return mats.get(k); }
 export function glowMat(color, intensity = 2.5) { return new THREE.MeshStandardMaterial({ color: 0x000000, emissive: color, emissiveIntensity: intensity, flatShading: true }); }
+export function P(o, x, y, z) { o.position.set(x, y, z); return o; }
 export function box(w, h, d, color, o) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), typeof color === 'number' ? mat(color, o) : color); m.castShadow = m.receiveShadow = true; return m; }
 
 let haloTex;
@@ -94,12 +95,12 @@ export function createWorld(canvas) {
 }
 
 // ---------- props ----------
-export function tree(r) { const g = new THREE.Group(); const h = 2 + Math.floor(r() * 3); g.add(Object.assign(box(1, h, 1, PAL.trunk), { position: new THREE.Vector3(0, h / 2, 0) }));
+export function tree(r) { const g = new THREE.Group(); const h = 2 + Math.floor(r() * 3); g.add(P(box(1, h, 1, PAL.trunk), 0, h / 2, 0));
   const c = PAL.leaf[Math.floor(r() * PAL.leaf.length)]; const n = 2 + Math.floor(r() * 2);
   for (let i = 0; i < n; i++) { const s = 3.2 - i * .9; const b = box(s, s * .8, s, c); b.position.set((r() - .5) * .6, h + i * 1.8 + .6, (r() - .5) * .6); b.rotation.y = r(); g.add(b); } return g; }
 
 export function house(r, w = 5, d = 5, floors = 1) { const g = new THREE.Group(); const wall = PAL.wall[Math.floor(r() * 3)], roof = PAL.roof[Math.floor(r() * 4)];
-  const hh = 3.6 * floors; g.add(Object.assign(box(w, hh, d, wall), { position: new THREE.Vector3(0, hh / 2, 0) }));
+  const hh = 3.6 * floors; g.add(P(box(w, hh, d, wall), 0, hh / 2, 0));
   const rf = new THREE.Mesh(new THREE.ConeGeometry(Math.max(w, d) * .8, 3, 4), mat(roof)); rf.rotation.y = Math.PI / 4; rf.position.y = hh + 1.5; rf.castShadow = true; g.add(rf);
   const win = glowMat(PAL.warm, 2.2); for (let f = 0; f < floors; f++) for (const sx of [-1, 1]) { const wdw = new THREE.Mesh(new THREE.BoxGeometry(.9, 1.1, .1), win); wdw.position.set(sx * w * .25, 1.9 + f * 3.6, d / 2 + .05); g.add(wdw); }
   const door = box(1.1, 1.8, .1, 0x6b3e22); door.position.set(0, .9, d / 2 + .06); g.add(door); return g; }
@@ -133,6 +134,11 @@ export function overlay(ctx, st) {
     ctx.fillStyle = PALCSS.gold; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(chip, 0, 3); ctx.restore(); }
   if (st.counter != null) { ctx.save(); ctx.textAlign = 'center'; ctx.lineJoin = 'round'; ctx.font = '900 150px Inter'; ctx.lineWidth = 20; ctx.strokeStyle = '#140826';
     const s = `YEAR ${st.counter}`; ctx.strokeText(s, W / 2, 700); ctx.fillStyle = '#fff'; ctx.fillText(s, W / 2, 700); ctx.restore(); }
+  if (st.notify > 0) { const a = easeOut(st.notify); ctx.save(); ctx.translate(0, lerp(-260, 0, a)); ctx.globalAlpha = clamp(st.notify * 3);
+    const x = 60, y = 150, w = W - 120, h = 230; ctx.fillStyle = 'rgba(28,10,40,.94)'; rr(ctx, x, y, w, h, 56); ctx.fill(); ctx.lineWidth = 6; ctx.strokeStyle = '#ff4f6a'; ctx.stroke();
+    ctx.fillStyle = '#ff4f6a'; rr(ctx, x + 40, y + 50, 130, 130, 32); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = '900 100px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('!', x + 105, y + 118);
+    ctx.textAlign = 'left'; ctx.font = '700 40px Inter'; ctx.fillStyle = '#ffb3c0'; ctx.fillText('YOUTH+   ·   now', x + 200, y + 62);
+    ctx.font = '900 66px Inter'; ctx.fillStyle = '#fff'; ctx.fillText('Free trial ended', x + 200, y + 125); ctx.font = '700 44px Inter'; ctx.fillStyle = '#ffd6dd'; ctx.fillText('Renew to stay young?', x + 200, y + 185); ctx.restore(); }
   // word-timed chunks of 2-3 words, current word highlighted
   const ch = chunks(words); const c = [...ch].reverse().find(k => t >= k.start - .05); if (!c || t > c.end + .35) return;
   ctx.save(); ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; const pop = 1 + .12 * (1 - easeOut((t - c.start) / .15));

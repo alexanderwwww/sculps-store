@@ -1,7 +1,7 @@
 """Voice + word timings for a WHAT IF short.
 
 usage: python3.13 voice.py <script.json> <workdir> <model.onnx>
-Writes <workdir>/voice.wav (all lines, with gaps) and <workdir>/timing.json:
+Writes <workdir>/voice.wav (all lines, with gaps) and <workdir>/lines.json; words.py adds word timings.
   {"duration": s, "lines": [{"i","start","end","text"}], "words": [{"w","start","end","line"}]}
 Piper speaks each line; faster-whisper re-reads the finished voice track so the
 caption words land on what is actually heard, not on an estimate.
@@ -38,14 +38,5 @@ for start, data in frames:
 with wave.open(os.path.join(work, "voice.wav"), "wb") as w:
     w.setnchannels(1); w.setsampwidth(2); w.setframerate(rate); w.writeframes(bytes(buf))
 
-from faster_whisper import WhisperModel
-wm = WhisperModel(v.get("whisper", "base.en"), device="cpu", compute_type="int8")
-segs, _ = wm.transcribe(os.path.join(work, "voice.wav"), word_timestamps=True, language="en")
-words = []
-for s in segs:
-    for wd in s.words:
-        mid = (wd.start + wd.end) / 2
-        li = next((l["i"] for l in lines if l["start"] - 0.3 <= mid <= l["end"] + 0.3), None)
-        words.append({"w": wd.word.strip(), "start": round(wd.start, 3), "end": round(wd.end, 3), "line": li})
-json.dump({"duration": round(total, 3), "lines": lines, "words": words}, open(os.path.join(work, "timing.json"), "w"), indent=1)
-print(f"voice {total:.2f}s, {len(words)} words")
+json.dump({"duration": round(total, 3), "lines": lines}, open(os.path.join(work, "lines.json"), "w"), indent=1)
+print(f"voice {total:.2f}s")
