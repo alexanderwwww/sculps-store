@@ -10,7 +10,10 @@ Method copied from a viral reel (method only, never footage): a one-line "what i
 a real source for every fact -> code builds a 3D world and animates it -> look at your own frames and
 fix the weak ones -> render locally -> voice, captions, sound.
 
-## The look: "aesthetic blocks" (Alex, 2026-11-14) — the default style
+## The look: "aesthetic blocks" (Alex, 2026-11-14) — LOCKED default, confirmed by Alex
+Heartwarming, magical, cozy: warm golden light, glowing magic, cozy blocky fantasy with a
+World-of-Warcraft-like feel. Every WHAT IF video uses it unless Alex himself names another look.
+
 Blocky voxel / low-poly fantasy world with a WoW-like *vibe*: warm saturated colours, chunky shapes,
 glowing magic (bloom), epic twilight sky, dramatic light. ORIGINAL only: no Blizzard (or any game)
 characters, names, logos or assets. Preset lives in `tools/whatif/scene/world.js` (palette, sky, island,
@@ -55,3 +58,6 @@ under the voice), whooshes and impacts at the lines' `sfx` -> loudnorm -14 LUFS 
 - Module pages need http, not file:// — make.mjs serves the repo on a local port.
 - Whisper splits "great-great" into "-great": words.py strips leading hyphens.
 - Piper output length changes a little each run; timings always come from the run's own audio.
+
+## Style LOCKED (Alex, 2026-11-14)
+"Keep this style of nice World of Warcraft, the heartwarming magical thing." Blocky fantasy world with a WoW-like vibe: warm golden light, glowing magic, cozy chunky shapes, epic skies, heartwarming tone. Original designs only (no Blizzard characters, names, logos or assets). Every video uses this unless Alex says otherwise. Alex drops the premise; only make the premises he gives.
