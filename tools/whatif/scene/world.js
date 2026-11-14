@@ -34,7 +34,17 @@ const mats = new Map();
 export function mat(color, o = {}) { const k = color + JSON.stringify(o); if (!mats.has(k)) { const { tex, ...rest } = o; const m = new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: .85, metalness: 0, ...rest });
   if (STYLE.v2 && tex !== 'none') painted(m, tex || texFor(color)); mats.set(k, m); } return mats.get(k); }
 // ---------- style v2: hand-painted procedural textures (canvas), mapped in world space ----------
-export const STYLE = { v2: true };
+export const STYLE = { v2: true, lowpolyMagic: false, LW: 270, LH: 480 };
+// STYLE.lowpolyMagic (Alex, 2026-11-14, whatif-003): PS1-style retro low-poly + our magic. The 3D renders at LWxLH
+// (270x480) and page.html upscales it nearest-neighbour to 1080x1920; vertices snap to a coarse clip-space grid (wobble),
+// textures are 32px nearest, the grade adds a 4x4 Bayer dither + 24-level colour quantize. Captions/magic stay crisp on top.
+// Turn on with "style": "lowpoly-magic" in script.json (setStyle is called by page.html before createWorld). v2 stays on.
+export function setStyle(name) { STYLE.lowpolyMagic = name === 'lowpoly-magic'; }
+export function ps1(m) { if (!m || m.userData.ps1 || !(m.isMeshStandardMaterial || m.isMeshBasicMaterial || m.isMeshLambertMaterial)) return; m.userData.ps1 = 1;
+  const prev = m.onBeforeCompile, pk = m.customProgramCacheKey, gx = STYLE.LW / 4, gy = STYLE.LH / 4;
+  m.onBeforeCompile = (sh, r) => { if (prev) prev.call(m, sh, r); sh.vertexShader = sh.vertexShader.replace('#include <fog_vertex>', `#include <fog_vertex>
+      { vec2 sg = vec2(${gx.toFixed(1)}, ${gy.toFixed(1)}); gl_Position.xy = floor(gl_Position.xy / gl_Position.w * sg + .5) / sg * gl_Position.w; }`); };
+  m.customProgramCacheKey = () => (pk ? pk.call(m) : '') + 'ps1'; m.needsUpdate = true; }
 const texCache = {};
 function texFor(c) { if (c === PAL.stone || PAL.rock.includes(c)) return 'brick'; if (PAL.roof.includes(c)) return 'tile'; if (c === PAL.trunk || c === 0x6b3e22 || c === 0x7a4a2a) return 'wood';
   if (PAL.shirts.includes(c) || c === 0x34386b) return 'cloth'; if (PAL.leaf.includes(c)) return 'leaf'; return 'paint'; }
@@ -62,6 +72,8 @@ function paintTex(kind) { if (texCache[kind]) return texCache[kind]; const N = 2
   else if (kind === 'cloth') { g.fillStyle = rgb(240); g.fillRect(0, 0, N, N); g.globalAlpha = .1; for (let i = 0; i < N; i += 4) { g.fillStyle = rgb(150); g.fillRect(i, 0, 1, N); g.fillRect(0, i, N, 1); } g.globalAlpha = 1; blot(8, .25, 180, 255, 30, 80); }
   else if (kind === 'leaf') { g.fillStyle = rgb(230); g.fillRect(0, 0, N, N); for (let i = 0; i < 120; i++) { const x = r() * N, y = r() * N, s = 8 + r() * 14; g.fillStyle = r() > .5 ? rgb(255, .5) : rgb(175, .4); g.beginPath(); g.ellipse(x, y, s, s * .55, r() * 3, 0, 7); g.fill(); } }
   else { g.fillStyle = rgb(236); g.fillRect(0, 0, N, N); blot(30, .45, 165, 255, 30, 90); for (let i = 0; i < 70; i++) { const y = r() * N, x = r() * N; g.strokeStyle = rgb(170 + r() * 85, .4); g.lineWidth = 10 + r() * 14; g.lineCap = 'round'; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 20 + r() * 40, y + (r() - .5) * 10); g.stroke(); } }
+  if (STYLE.lowpolyMagic) { const lc = document.createElement('canvas'); lc.width = lc.height = 32; const lg = lc.getContext('2d'); lg.drawImage(c, 0, 0, 32, 32);
+    const t = new THREE.CanvasTexture(lc); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; return (texCache[kind] = t); }
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return (texCache[kind] = t); }
 const TEX_SCALE = { grass: .14, dirt: .18, brick: .3, cobble: .3, wood: .35, tile: .3, cloth: .7, leaf: .35, paint: .15 };
 // world-space box mapping: top faces use `top`, sides use `side`; sides get a soft height gradient (baked AO) and painted edge bands.
@@ -93,8 +105,9 @@ export function halo(color, size, opacity = .9) {
 
 // ---------- the world ----------
 export function createWorld(canvas) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
-  renderer.setPixelRatio(1); renderer.setSize(W, H, false);
+  const LP = STYLE.lowpolyMagic, RW = LP ? STYLE.LW : W, RH = LP ? STYLE.LH : H;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LP, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(1); renderer.setSize(RW, RH, false);
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
   const scene = new THREE.Scene();
@@ -117,7 +130,7 @@ export function createWorld(canvas) {
   // light
   const hemi = new THREE.HemisphereLight(0xb9a6ff, 0x6a3d2a, 1.1); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffb070, 3.2); sun.position.set(80, 60, -90); sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -80, right: 80, top: 80, bottom: -80, near: 1, far: 400 }); sun.shadow.bias = -0.0008; scene.add(sun);
+  sun.shadow.mapSize.set(LP ? 1024 : 2048, LP ? 1024 : 2048); Object.assign(sun.shadow.camera, { left: -80, right: 80, top: 80, bottom: -80, near: 1, far: 400 }); sun.shadow.bias = -0.0008; scene.add(sun);
   const rim = new THREE.DirectionalLight(0x6fd8ff, 1.0); rim.position.set(-70, 40, 80); scene.add(rim);
 
   // voxel island
@@ -135,18 +148,21 @@ export function createWorld(canvas) {
   const water = new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ color: PAL.water, roughness: .25, metalness: .1, transparent: true, opacity: .9, emissive: 0x0b4a7a, emissiveIntensity: .35 }));
   water.position.y = .3; water.receiveShadow = true; scene.add(water);
 
-  const composer = new EffectComposer(renderer); composer.setPixelRatio(1); composer.setSize(W, H);
+  const composer = new EffectComposer(renderer); composer.setPixelRatio(1); composer.setSize(RW, RH);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), .75, .55, STYLE.v2 ? .88 : .82); composer.addPass(bloom);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(RW / 2, RH / 2), .75, .55, STYLE.v2 ? .88 : .82); composer.addPass(bloom);
   composer.addPass(new OutputPass());
-  if (STYLE.v2) composer.addPass(new ShaderPass(GRADE));
-
-  return { renderer, scene, camera, composer, bloom, sky, skyU, sun, hemi, rim, water, height, flat: (x, z) => Math.max(height(x, z), 0) };
+  if (STYLE.v2) { const gp = new ShaderPass(GRADE); gp.uniforms.uLow.value = LP ? 1 : 0; gp.uniforms.uRes.value.set(RW, RH); composer.addPass(gp); }
+  // lowpolyMagic: call once after the scene is built, so every mesh material gets the vertex wobble
+  const prepare = () => { if (LP) scene.traverse(o => { if (o.isMesh || o.isInstancedMesh) [].concat(o.material).forEach(ps1); }); };
+  return { renderer, prepare, island: im, lowpoly: LP, scene, camera, composer, bloom, sky, skyU, sun, hemi, rim, water, height, flat: (x, z) => Math.max(height(x, z), 0) };
 }
 
 // ---------- the recipe: one shared grade after tone mapping (ACES, exposure 1.05) ----------
-export const GRADE = { uniforms: { tDiffuse: { value: null } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }',
-  fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv; void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb;
+export const GRADE = { uniforms: { tDiffuse: { value: null }, uLow: { value: 0 }, uRes: { value: new THREE.Vector2(W, H) } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uLow; uniform vec2 uRes; varying vec2 vUv;
+    float bay2(vec2 a){ a = floor(a); return fract(dot(a, vec2(.5, a.y * .75))); } float bay4(vec2 a){ return bay2(.5 * a) * .25 + bay2(a); }
+    void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb;
     c *= vec3(1.04, 1.0, 0.94);                                  // white balance: warm
     float l = dot(c, vec3(.2126, .7152, .0722));
     c += vec3(-.020, .035, .060) * (1. - l) * (1. - l);          // teal-leaning shadows
@@ -154,6 +170,7 @@ export const GRADE = { uniforms: { tDiffuse: { value: null } }, vertexShader: 'v
     c = mix(vec3(l), c, 1.12);                                   // saturation +12%
     c = clamp(c, 0., 1.); c = mix(c, c * c * (3. - 2. * c), .18); // soft S-curve
     vec2 d = (vUv - .5) * vec2(.5625, 1.) * 1.6; c *= 1. - .36 * smoothstep(.36, 1., length(d)); // vignette
+    if (uLow > .5) c = floor(c * 24. + bay4(vUv * uRes)) / 24.;  // lowpolyMagic: Bayer 4x4 dither, 24 levels per channel
     gl_FragColor = vec4(c, 1.); }` };
 
 // ---------- props ----------
@@ -208,7 +225,7 @@ export function overlay(ctx, st) {
   if (tw > W - 140) { fs = Math.floor(fs * (W - 140) / tw); ctx.font = `900 ${fs}px Inter`; tw = txt.reduce((a, w) => a + ctx.measureText(w).width, 0) + sp * (txt.length - 1); }
   ctx.translate(W / 2, SAFE_Y); ctx.scale(pop, pop); let x = -tw / 2;
   txt.forEach((w, i) => { const on = t >= c.words[i].start - .03; const cur = on && (i === txt.length - 1 || t < c.words[i + 1].start - .03);
-    ctx.lineWidth = 22; ctx.strokeStyle = '#140826'; ctx.strokeText(w, x, 0); ctx.fillStyle = cur ? PALCSS.gold : '#ffffff'; ctx.globalAlpha = on ? 1 : .55; ctx.fillText(w, x, 0); ctx.globalAlpha = 1; x += ctx.measureText(w).width + sp; });
+    if (STYLE.lowpolyMagic) { ctx.lineWidth = 34; ctx.strokeStyle = PALCSS.gold; ctx.strokeText(w, x, 0); ctx.lineWidth = 16; } else ctx.lineWidth = 22; ctx.strokeStyle = '#140826'; ctx.strokeText(w, x, 0); ctx.fillStyle = cur ? (STYLE.lowpolyMagic ? '#7ff5e0' : PALCSS.gold) : '#ffffff'; ctx.globalAlpha = on ? 1 : .55; ctx.fillText(w, x, 0); ctx.globalAlpha = 1; x += ctx.measureText(w).width + sp; });
   ctx.restore();
 }
 const PALCSS = { gold: '#FFD23F' };

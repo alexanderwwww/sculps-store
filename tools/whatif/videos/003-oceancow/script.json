@@ -1,0 +1,31 @@
+{
+  "id": "whatif-003",
+  "premise": "What if someone drained all the oceans? (a giant cosmic cow god drinks them; the consequences are real, sourced science)",
+  "style": "lowpoly-magic",
+  "scene": "scenes/oceancow.js",
+  "title": "WHAT IF A COW\nDRANK THE OCEANS?",
+  "voice": { "model": "en_US-lessac-medium", "length_scale": 0.9, "gap": 0.3, "lead_in": 0.15, "tail": 2.2 },
+  "lines": [
+    { "text": "What if a giant cosmic cow drank every ocean on Earth?", "shot": "hook", "sfx": "impact" },
+    { "text": "Golden halo. A hide full of galaxies. And one very long straw.", "shot": "cow", "sfx": "whoosh" },
+    { "text": "That's about one point three billion cubic kilometres of seawater. Slurp.", "shot": "slurp", "chip": "1,338,000,000 KM³", "sfx": "whoosh",
+      "facts": [ { "claim": "USGS: of the world's water, about 1,338,000,000 km³ is stored in oceans.", "quote": "is stored in oceans", "quote2": "1,338,000,000", "source": "https://www.usgs.gov/special-topics/water-science-school/science/oceans-and-seas-and-water-cycle" } ] },
+    { "text": "Water covered seventy one percent of the planet. Now it's bare rock.", "shot": "globe", "chip": "71% OF EARTH", "sfx": "impact",
+      "facts": [ { "claim": "USGS: about 71 percent of the Earth's surface is water-covered.", "quote": "About 71 percent of the", "source": "https://www.usgs.gov/special-topics/water-science-school/science/how-much-water-there-earth" } ] },
+    { "text": "Sea level falls, and every ship is left sitting on the sand.", "shot": "ships", "sfx": "whoosh" },
+    { "text": "Whales flop around, very confused.", "shot": "whale" },
+    { "text": "You could walk to America, over the longest mountain range on Earth. The mid ocean ridge, nearly sixty five thousand kilometres long.", "shot": "walk", "chip": "65,000 KM RIDGE", "sfx": "whoosh",
+      "facts": [ { "claim": "NOAA Ocean Exploration: the mid-ocean ridge system is the longest mountain range on Earth, nearly 65,000 km.", "quote": "stretching nearly 65,000 kilometers", "quote2": "forms the longest and largest mountain range on Earth", "source": "https://oceanexplorer.noaa.gov/facts/mid-ocean-ridge.html" } ] },
+    { "text": "And the deepest point of the Mariana Trench sits almost eleven kilometres down.", "shot": "trench", "chip": "10,935 M DEEP", "sfx": "impact",
+      "facts": [ { "claim": "NOAA: Challenger Deep, the deepest point in the Mariana Trench, is approximately 10,935 meters deep.", "quote": "approximately 10,935 meters", "source": "https://oceanservice.noaa.gov/facts/oceandepth.html" } ] },
+    { "text": "Then the chain reaction. Oceans supply about ninety percent of the water that evaporates. No ocean, no clouds, no rain. Rivers and lakes dry up.", "shot": "rain", "chip": "90% OF EVAPORATION",
+      "facts": [ { "claim": "USGS: the oceans supply about 90 percent of the evaporated water that goes into the water cycle.", "quote": "the oceans supply about 90 percent of the evaporated water", "source": "https://www.usgs.gov/special-topics/water-science-school/science/oceans-and-seas-and-water-cycle" } ] },
+    { "text": "The ocean also soaked up about ninety percent of the extra heat from warming. Without it, temperatures swing wildly.", "shot": "heat", "chip": "90% OF EXTRA HEAT", "sfx": "whoosh",
+      "facts": [ { "claim": "NASA: about 90% of the excess heat from planetary warming over the past century has been absorbed by the ocean.", "quote": "About 90% of the excess heat from planetary warming over the past century has been absorbed by the ocean", "source": "https://science.nasa.gov/earth/explore/earth-indicators/ocean-warming/" } ] },
+    { "text": "And roughly half of our oxygen is made in the ocean. Gone.", "shot": "oxygen", "chip": "~50% OF OUR OXYGEN", "sfx": "impact",
+      "facts": [ { "claim": "NOAA: roughly half of the oxygen production on Earth comes from the ocean.", "quote": "roughly half of the oxygen production on Earth comes from the ocean", "source": "https://oceanservice.noaa.gov/facts/ocean-oxygen.html" } ] },
+    { "text": "Luckily, the cow finally tastes it. Seawater is about three and a half percent salt.", "shot": "salty", "chip": "3.5% SALT",
+      "facts": [ { "claim": "NOAA: about 3.5 percent of the weight of seawater comes from the dissolved salts.", "quote": "about 3.5 percent of the weight of seawater comes from the dissolved salts", "source": "https://oceanservice.noaa.gov/facts/whysalty.html" } ] },
+    { "text": "So it burps, spits every drop back, and asks for a refill.", "shot": "spit", "sfx": "whoosh+impact", "pause": 0.2 }
+  ]
+}
