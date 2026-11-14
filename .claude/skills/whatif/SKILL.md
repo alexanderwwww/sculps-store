@@ -61,3 +61,8 @@ under the voice), whooshes and impacts at the lines' `sfx` -> loudnorm -14 LUFS 
 
 ## Style LOCKED (Alex, 2026-11-14)
 "Keep this style of nice World of Warcraft, the heartwarming magical thing." Blocky fantasy world with a WoW-like vibe: warm golden light, glowing magic, cozy chunky shapes, epic skies, heartwarming tone. Original designs only (no Blizzard characters, names, logos or assets). Every video uses this unless Alex says otherwise. Alex drops the premise; only make the premises he gives.
+
+## Premise queue (Alex)
+1. Anti-aging as easy as having a phone — in production (whatif-001).
+2. "What if you woke up as the God-Emperor of a galaxy-wide empire?" — Alex's idea was "the Emperor of Mankind from Warhammer". Make it ORIGINAL: no Warhammer/40k/Games Workshop names, Golden Throne, aquila, Space Marines or other GW designs (GW takes fan content down). Same feel: golden armour, giant throne, endless worshippers and wars, funny + epic, our blocky magical style.
+Rule: famous IP in a premise -> make an original look-alike, never the real names/designs.
