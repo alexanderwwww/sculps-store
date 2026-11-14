@@ -113,8 +113,8 @@ export function build(world, { script, timing }) {
         const b = clamp((u - .9) / .5); world.bloom.strength = .75 + .7 * Math.sin(Math.PI * b);
         cure.visible = u > .9; const ck = easeOut((u - .9) / 2.2); cure.position.set(lerp(0, p.x * .3, ck), lerp(topY + 4, p.y + 1.5, ck), lerp(-4, p.z - 20, ck)); cure.rotation.y = Math.sin(t * 1.5) * .35; cure.scale.setScalar(lerp(.2, .8, ck));
         break; }
-      case 'mice': { const c = lab.position; const a = lerp(.4, 1.1, ease(k)); cam(V(c.x + Math.sin(a) * 15, c.y + 8 - 3 * ease(k), c.z + Math.cos(a) * 15), V(c.x, c.y + 3.4, c.z), 45);
-        genes.forEach((g, i) => { const ga = t * 2.2 + i * Math.PI / 2, rad = lerp(4.5, 2.4, ease(k)); g.position.set(Math.cos(ga) * rad, 4.6 + Math.sin(t * 3 + i) * .4, Math.sin(ga) * rad); g.scale.setScalar(clamp(u / .6)); });
+      case 'mice': { const c = lab.position; const a = lerp(.4, 1.1, ease(k)); cam(V(c.x + Math.sin(a) * 13, c.y + 6.5 - 1.5 * ease(k), c.z + Math.cos(a) * 13), V(c.x, c.y + 3.6, c.z), 42);
+        genes.forEach((g, i) => { const ga = t * 2.2 + i * Math.PI / 2, rad = lerp(5, 3.2, ease(k)); g.position.set(Math.cos(ga) * rad, 6.4 + Math.sin(t * 3 + i) * .4, Math.sin(ga) * rad); g.scale.setScalar(clamp(u / .6) * .8); });
         mouse.rotation.y = Math.sin(t * 1.3) * .5; mouse.position.y = 3 + Math.abs(Math.sin(t * 4)) * .25 * ease(k); glass.visible = false; pill.visible = false; break; }
       case 'pill': { const c = lab.position; const a = lerp(1.1, 1.9, ease(k)); cam(V(c.x + Math.sin(a) * 13, c.y + 6, c.z + Math.cos(a) * 13), V(c.x, c.y + 3.6, c.z), 45);
         genes.forEach((g, i) => { const ga = t * 2.2 + i * Math.PI / 2; g.position.set(Math.cos(ga) * 2.4, 4.6, Math.sin(ga) * 2.4); g.scale.setScalar(1 - clamp(u / .5)); });
