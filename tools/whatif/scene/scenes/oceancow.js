@@ -118,7 +118,7 @@ export function build(world, { script, timing }) {
     const sea = si < 4 ? 0 : S_.name === 'ships' ? lerp(0, -48, ease(clamp((u - .3) / 2.6))) : -60; water.position.y = sea; water.visible = sea > -47;
     ships.forEach(({ s, x, z, g }) => { const fl = Math.max(sea, g + 2) - 1; s.position.set(x, fl + Math.sin(t * 1.3 + x) * (sea > g + 2 ? .3 : 0), z); s.rotation.z = sea > g + 2 ? 0 : .16; s.rotation.x = sea > g + 2 ? 0 : .05; });
     wbody.rotation.set(0, 0, 0); wbody.position.y = 3.5; spout.userData.update(t); snow.userData.update(t); snow.visible = false; lake.scale.setScalar(1); lake.position.y = 3; clouds.visible = si < 8; clouds.children.forEach(c => c.material.opacity = .95);
-    walker.position.set(-30, gh(-30, SZ) + .5, SZ - 6); walker.rotation.set(0, Math.PI / 2, 0);
+    walker.position.set(-30, gh(-30, SZ) + .5, SZ - 6); walker.rotation.set(0, Math.PI / 2, 0); walker.visible = S_.name === 'walk';
     eyes.forEach(e => e.scale.set(1, 1, 1)); trL.visible = false; tongue.visible = false; sweat.visible = false; burp.visible = false; drops.visible = false; straw.visible = false; tail.rotation.x = .5 + Math.sin(t * 3) * .2;
     haloRing.rotation.z = t * .8; haloGlow.material.opacity = .35 + .1 * Math.sin(t * 3); earth.rotation.y = t * .12; eClouds.rotation.y = t * .05;
     const oc = si <= 1 ? 1 : S_.name === 'slurp' ? lerp(1, .95, k) : S_.name === 'globe' ? lerp(.95, .86, ease(k)) : S_.name === 'spit' ? lerp(.86, 1, ease(clamp((u - .9) / 2.2))) : .86;
