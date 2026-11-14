@@ -42,3 +42,7 @@ Set by Alex on /settings: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `IG_APP_ID
 - Duplicate safety: once bytes may have reached a platform (`upload_started_at` set), mob never requeues on its own. Instagram `media_publish` runs at most once per container (`published_id`).
 - A refresh failure signs an account out only on a real refusal (invalid_grant/400/401). 5xx, 429 and network errors are retried on the next tick.
 - No live test posts to real accounts. Platform code is proven with mocked fetch.
+
+## mob v2 / build mob-3 (2026-11-14) — "Shopify for clipping"
+Deployed and live (healthz build mob-3, 68/68 tests). Shop Admin look: dark top bar with search and channel switcher, sidebar (Home, Clips, Posts, Calendar, Analytics + Live, Campaigns, Earnings, channels list), KPI cards, area charts, channel table with est. $. First login goes to /welcome onboarding. Screenshots of every page (made with test data) in tools/mob/shots/.
+Cursor Clipper build 3 (dev-console hosts so Claude can set up the YouTube/Meta/TikTok developer apps): https://blackreaper.us/media/cursor-clipper-3-bbbd73af3e5d3a8a.zip
