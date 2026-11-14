@@ -51,3 +51,8 @@ Cursor Clipper build 3 (dev-console hosts so Claude can set up the YouTube/Meta/
 - Google Cloud project `mob-clips` (account getsculps@gmail.com, 2-step verification now on). YouTube Data API v3 + YouTube Analytics API enabled.
 - OAuth consent: app "mob", External, Testing; test user getsculps@gmail.com. Web client "Web client 1", redirect https://mob.gardenbuddystore.workers.dev/oauth/youtube/callback. Keys set in mob via POST /api/settings/keys -> /api/platform-keys youtube ready/live.
 - STILL TO DO: Publish app (Branding page needs home page + privacy policy + terms URLs on an authorized domain). In Testing, Google refresh tokens expire after 7 days -> add /privacy and /terms pages to mob, fill Branding, press Publish. Any other Google account that owns a channel must be added as a test user until then.
+
+## Live state 2026-11-14 evening
+- YouTube connected: account id 1 @gtadailyby.mr-cj (alleqsh@gmail.com, added as test user). 6 Shorts queued via POST /api/posts (ids 1-6, every 90 min). Check-in trigger trig_012A5sQGkKbnjxed9bmc3R3b reads post 1.
+- Connect widget (claude.ai artifact, private): https://claude.ai/artifact/LmjwaLGaavbTiXRS7CLnKN — tiles link to mob /connect/<platform>. Static labels: update them when Instagram/TikTok go live.
+- Alex's plan: mob is the organic machine for EVERY business (rename channels per business when needed, mass-produce, push from all machines together).
