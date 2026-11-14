@@ -109,3 +109,26 @@ Rule: famous IP in a premise -> make an original look-alike, never the real name
 
 ## RULE (Alex, 2026-11-14): science, not nonsense
 "The stuff you make, make it scientific, not just nonsense." Every what-if is a real cause->effect chain of sourced facts (min 5, each fetched). The magical/funny character is only the vehicle; jokes max 1-2, the twist at the end. Viewer must learn something real.
+
+## RULE: science first, a sourced chain of consequences (Alex, 2026-11-14, on 003: "make it scientific, not just nonsense")
+The funny premise is only the vehicle. The body of every video is real science, told as cause -> effect so the viewer
+learns something: at least 5 real facts, each with a fetched source and an exact quote in script.json (make.mjs checks them).
+Keep the jokes to 1-2 beats (the hook and the twist). Never state a number the source does not give.
+
+## Style preset `lowpolyMagic` (Alex, 2026-11-14, from @lowpolyshorts reels he liked) — `"style": "lowpoly-magic"`
+PS1-style retro low-poly PLUS our magic. Opt-in per script; v2 stays the default and is untouched.
+- 3D renders at 270x480 (`STYLE.LW/LH`), page.html upscales nearest-neighbour to 1080x1920 (and renders ~3x faster).
+- Vertex wobble: every mesh material gets a clip-space snap (`ps1()`, grid LW/4 x LH/4) via `world.prepare()` after build.
+- Textures 32px NearestFilter (the v2 painted ones, downsampled); no antialias; shadow map 1024.
+- Grade pass adds a 4x4 Bayer dither and 24 levels per channel (after the v2 recipe: ACES, bloom, grade, vignette).
+- On top, crisp at 1080: v2 ornaments (phi stars, rune ring, swoosh), chips, and captions with a thick YELLOW outline,
+  a dark inner stroke, white words and the current word mint (#7ff5e0).
+- Scene canvas textures should check `world.lowpoly` and use 64px + NearestFilter.
+
+## Lessons (paid for on 003)
+- `-(x) ** 2` is a SyntaxError in JS: write `-((x) ** 2)`.
+- A camera placed outside the trench band sat inside solid ground: the frame was black. Put cameras inside the cut you film.
+- Backlit shots (camera facing the sun) wash a small character out: turn the camera so the sun is behind it.
+- Title lines over ~13 characters at 104px overflow the 1080 width: break into 3 lines.
+- Space stage: put it high (y=600) inside the 900 sky dome and push fog near/far out; hide `world.island` for a custom world.
+- 003 = 13 lines, 62 s with 10 sourced facts — long for a Short; aim for 9-11 lines next time.

@@ -3,7 +3,7 @@
   "premise": "What if someone drained all the oceans? (a giant cosmic cow god drinks them; the consequences are real, sourced science)",
   "style": "lowpoly-magic",
   "scene": "scenes/oceancow.js",
-  "title": "WHAT IF A COW\nDRANK THE OCEANS?",
+  "title": "WHAT IF A COW\nDRANK THE\nOCEANS?",
   "voice": { "model": "en_US-lessac-medium", "length_scale": 0.9, "gap": 0.3, "lead_in": 0.15, "tail": 2.2 },
   "lines": [
     { "text": "What if a giant cosmic cow drank every ocean on Earth?", "shot": "hook", "sfx": "impact" },
