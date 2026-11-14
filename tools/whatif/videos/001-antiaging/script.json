@@ -1,0 +1,23 @@
+{
+  "id": "whatif-001",
+  "premise": "What if humans discovered the real anti-aging molecule, and it became as easy and common as having a phone?",
+  "style": "aesthetic-blocks",
+  "scene": "scenes/antiaging.js",
+  "title": "WHAT IF AGING\nWAS AN APP?",
+  "voice": { "model": "en_US-lessac-medium", "length_scale": 0.9, "gap": 0.3, "lead_in": 0.15, "tail": 1.8 },
+  "lines": [
+    { "text": "What if the cure for aging fit in your pocket, like a phone?", "shot": "hook", "sfx": "impact" },
+    { "text": "Scientists already reversed signs of aging in mice, by switching on four special genes.", "shot": "mice", "chip": "4 GENES · MICE",
+      "facts": [ { "claim": "Partial reprogramming with the four Yamanaka factors countered signs of aging in mice.", "quote": "the expression of four genes known as the Yamanaka factors", "quote2": "countering signs of aging and increasing the animals’ lifespan by 30 percent", "source": "https://www.salk.edu/news-release/turning-back-time-salk-scientists-reverse-signs-aging/" } ] },
+    { "text": "A drug called rapamycin made old mice live longer. Now imagine it worked on us.", "shot": "pill", "chip": "RAPAMYCIN · MICE",
+      "facts": [ { "claim": "Rapamycin fed late in life extended median and maximal lifespan of mice.", "quote": "rapamycin, an inhibitor of the mTOR pathway, extends median and maximal lifespan of both male and female mice", "source": "https://www.nature.com/articles/nature08221" } ] },
+    { "text": "One tap a day. All eight billion of us, staying young.", "shot": "everyone", "chip": "8,000,000,000", "sfx": "whoosh",
+      "facts": [ { "claim": "World population reached 8 billion on 15 November 2022.", "quote": "the world’s population reached 8 billion people", "source": "https://www.un.org/en/global-issues/population" } ] },
+    { "text": "Cities overflow. Towers stack up into the clouds.", "shot": "cities", "sfx": "whoosh" },
+    { "text": "Your great great great grandma looks twenty five, and she still wants the window seat.", "shot": "family", "chip": "6 GENERATIONS" },
+    { "text": "Retirement? Gone. Your first job could last a hundred and fifty years.", "shot": "career", "chip": "150-YEAR CAREER", "sfx": "whoosh" },
+    { "text": "The oldest person ever reached one hundred twenty two. Now that's just middle age.", "shot": "cake", "chip": "RECORD: 122 YEARS",
+      "facts": [ { "claim": "Jeanne Calment died at 122 years and 164 days, the oldest verified person.", "quote": "at 122 years and 164 days", "source": "https://en.wikipedia.org/wiki/Jeanne_Calment" } ] },
+    { "text": "Then one morning, every phone on Earth buzzes at once. Your free trial has ended.", "shot": "twist", "sfx": "whoosh+impact", "pause": 0.2 }
+  ]
+}
