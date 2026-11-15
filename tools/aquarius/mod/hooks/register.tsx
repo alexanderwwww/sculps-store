@@ -72,26 +72,8 @@ export const register: Register = on => {
     return next(e)
   })
   on('turn.complete', async ($, e, next) => {
-    if ((await read($, isOn)) && (await read($, isCeo))) {
-      const hour = Math.floor((await $.clock.now()) / 3600000)
-      const r = await read($, runs)
-      const n = r.hour === hour ? r.n : 0
-      // Claude ends a turn with 'CEO: idle' when every open job is waiting on Alex: rest until the next hour.
-      if (false) { await update($, runs, () => ({ hour, n: CAP })); await update($, line, () => 'Waiting on you, boss. Back at the next hour.'); return next(e) }
-      const now = await $.clock.now()
-      const due = await read($, nextAt)
-      if (now >= due) {
-        await update($, runs, () => ({ hour, n: n + 1 }))
-        await update($, nextAt, () => now + GAP_MS)
-        void $.prompt.submit({ text: NEXT })
-      } else {
-        // pace: wait out the gap, then fire once
-        const wait = due - now
-        await update($, line, () => `CEO: next move in ${Math.ceil(wait / 60000)} min.`)
-        void $.clock.in(wait, () => $.prompt.submit({ text: NEXT }))
-        await update($, nextAt, () => due + GAP_MS)
-      }
-    }
+    // CEO auto-continue DISABLED (2026-11-15): it fired back-to-back and burned Alex's weekly usage.
+    // Aquarius still works via the hourly Magic Genie trigger and the manual "Work now" button.
     if (await read($, isOn)) {
       await update($, face, () => 'happy' as Face)
       await update($, line, () => 'Done. Next wish?')
