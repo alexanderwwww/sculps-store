@@ -33,7 +33,8 @@ Stocks (paper first): trader-master → trader-scanner · trader-news · trader-
 Memecoins: gmgn-fib · ultra-growth (inside caps, no asking)
 
 ## 💰 ENGINE 7 — SIDE HUSTLES (brain-tracked)
-US real-estate wholesaling (no money down) · what-if-as-a-service · sell Kerberos/mob as SaaS
+real-estate (US wholesaling, no money down) · what-if-as-a-service · sell Kerberos/mob as SaaS
+→ real-estate skill = Engine 7's playbook: find distressed house → comp (MAO=ARV×0.70−repairs) → contract w/ assignment clause → assign to cash buyer for $5k-20k fee. Only cash at risk = earnest money $500-2k. Bot does leads+comps+buyer lists (free county data); a HUMAN must call sellers, sign, and hold a US LLC+phone+title company. From Greece needs US LLC/EIN, Mercury/Wise, US VoIP, closing attorney, FIRPTA check. Avoid restricted states IL/OK/PA/CT/KY/SC/NM/MD. Biggest risk = legal (licensing line).
 
 ## 👤 PERSONAL
 kcal (Alex's weight/diet)
