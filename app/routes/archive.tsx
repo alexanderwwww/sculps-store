@@ -58,9 +58,10 @@ let viewerEmail:string|null=sess?.email??null;
    for(const c of metaCookieHeaders(request,url))resHeaders.append('Set-Cookie',c);
   }
  }catch{pixel=null;}}
- return withHeaders({store,rows:visible,selected,certificates,legal,certs,viewerEmail,unread,vitals,pixel,query:url.searchParams.has('store')?'?store=mysterious-archive':''},{headers:resHeaders});
+ const welcome={percent:store.welcomePopupPercent??10,enabled:store.welcomePopupEnabled!==false};
+ return withHeaders({store,rows:visible,selected,certificates,legal,certs,viewerEmail,unread,vitals,pixel,welcome,query:url.searchParams.has('store')?'?store=mysterious-archive':''},{headers:resHeaders});
 }
-export default function Archive({loaderData:{store,rows,selected,certificates,legal,certs,viewerEmail,unread,vitals,pixel,query}}:Route.ComponentProps){
+export default function Archive({loaderData:{store,rows,selected,certificates,legal,certs,viewerEmail,unread,vitals,pixel,welcome,query}}:Route.ComponentProps){
  const [params]=useSearchParams();
  const [filter,setFilter]=useState(params.get('category')||'All pieces'),[search,setSearch]=useState(params.get('q')||''),[sort,setSort]=useState('Featured'),[photo,setPhoto]=useState(0);
  useEffect(()=>{setFilter(params.get('category')||'All pieces');setSearch(params.get('q')||'');},[params]);
@@ -75,5 +76,66 @@ export default function Archive({loaderData:{store,rows,selected,certificates,le
 {certs[selected.product.handle]?.image&&<section className="ma-piece-cert"><h2>This piece’s certificate</h2><p>Every order includes a printed physical Mysterious Archive certificate of authenticity.</p><a href={certs[selected.product.handle].image} target="_blank" rel="noreferrer"><img src={certs[selected.product.handle].image} alt={'Certificate of authenticity — '+selected.product.title}/></a>{certs[selected.product.handle].pdf&&<p><a href={certs[selected.product.handle].pdf} target="_blank" rel="noreferrer">Certificate (PDF) →</a></p>}</section>}
 <section className="ma-recs"><h2>You may also like</h2><div className="ma-grid">{rows.filter(r=>r.product.id!==selected.product.id).sort((a,b)=>(category(b.product.title)===category(selected.product.title)?1:0)-(category(a.product.title)===category(selected.product.title)?1:0)).slice(0,4).map(({product:p,variant:v})=><Link className="ma-card" key={p.id} to={'/archive/'+p.handle+query}><div className="ma-card-photo"><img src={p.images[0]?.thumb??p.images[0]?.url} alt={p.title} loading="lazy"/>{v.available<1&&<span>{nfs(p,v)?'Archive only':'Sold'}</span>}</div><p className="ma-brand">CHROME HEARTS</p><h3>{p.title.replace(/^Chrome Hearts\s*/,'')}</h3><strong>{nfs(p,v)?'Not for sale':money(v.priceCents)}</strong></Link>)}</div></section>
 <section className="ma-review"><h2>About this piece</h2><div className="ma-review-grid"><div><h3>The piece</h3><div dangerouslySetInnerHTML={{__html:selected.product.description}}/></div><div><h3>Materials</h3><ul>{certs[selected.product.handle]?.material&&<li>Material: {certs[selected.product.handle].material}</li>}<li>Category: {category(selected.product.title)}</li><li>Condition: {certs[selected.product.handle]?.condition??selected.variant.label}</li></ul><h3>Authentication</h3><p>Inspected and authenticated by Mysterious Archive. Every piece ships with its certificate of authenticity, which carries our buyer guarantee: if a piece is ever proven not authentic, you receive a full refund.</p><h3>Delivery & packaging</h3><p>Shipped in Mysterious Archive packaging; some pieces arrive in our art-piece packaging. Signature required on delivery.</p><Link className="ma-authenticated" to={'/archive/certificates'+query}>✓ Authenticated</Link></div></div></section></>:<><section className="ma-intro"><p className="ma-eyebrow">THE COLLECTION</p><h1>Objects worth finding.</h1><p>Chrome Hearts. Sterling silver. Leather. Collected with intention.</p></section><main className="ma-catalogue"><div className="ma-toolbar"><h2>{filter} <small>({list.length})</small></h2><select aria-label="Sort pieces" value={sort} onChange={e=>setSort(e.target.value)}><option>Featured</option><option>Price: low to high</option><option>Price: high to low</option></select></div><div className="ma-grid">{list.map(({product:p,variant:v})=><Link className="ma-card" key={p.id} to={'/archive/'+p.handle+query}><div className="ma-card-photo"><img src={p.images[0]?.thumb??p.images[0]?.url} alt={p.title} loading="lazy"/>{v.available<1&&<span>{nfs(p,v)?'Archive only':'Sold'}</span>}</div><p className="ma-brand">CHROME HEARTS</p><h3>{p.title.replace(/^Chrome Hearts\s*/,'')}</h3><p>{v.label}</p><strong>{nfs(p,v)?'Not for sale':money(v.priceCents)}</strong></Link>)}</div>{!list.length&&<p>No pieces match your search.</p>}</main></>}
- <footer><img className="ma-footer-logo" src="/archive-logo-script.png" alt="Mysterious Archive"/><p><Link to={'/archive/certificates'+query}>Authenticity & certificates</Link></p><LegalLinks query={query}/><p>Independent archive of collectible pieces.</p><p>Chrome Hearts is a trademark of its respective owner. Mysterious Archive is an independent reseller.</p><CompanyLine/><small>© {new Date().getFullYear()} Mysterious Archive</small></footer></div>;
+ <footer><img className="ma-footer-logo" src="/archive-logo-script.png" alt="Mysterious Archive"/><p><Link to={'/archive/certificates'+query}>Authenticity & certificates</Link></p><LegalLinks query={query}/><p>Independent archive of collectible pieces.</p><p>Chrome Hearts is a trademark of its respective owner. Mysterious Archive is an independent reseller.</p><CompanyLine/><small>© {new Date().getFullYear()} Mysterious Archive</small></footer>{welcome?.enabled&&!legal?<WelcomePopup percent={welcome.percent} query={query}/>:null}</div>;
+}
+
+/**
+ * Welcome pop-up. Clean white card matching the archive. Offers a welcome
+ * discount for an email or phone, shows once per visitor (localStorage),
+ * dismissible, mobile-friendly. The % is a store setting passed from the loader.
+ */
+function WelcomePopup({percent,query}:{percent:number;query:string}){
+ const [open,setOpen]=useState(false);
+ const [email,setEmail]=useState('');
+ const [phone,setPhone]=useState('');
+ const [busy,setBusy]=useState(false);
+ const [done,setDone]=useState<{code:string;percent:number}|null>(null);
+ const [err,setErr]=useState('');
+ useEffect(()=>{
+  let seen=false;
+  try{seen=localStorage.getItem('ma_welcome_v1')==='1';}catch{}
+  if(seen)return;
+  const t=setTimeout(()=>setOpen(true),3500);
+  return()=>clearTimeout(t);
+ },[]);
+ const close=()=>{setOpen(false);try{localStorage.setItem('ma_welcome_v1','1');}catch{}};
+ const submit=async(e:{preventDefault:()=>void})=>{
+  e.preventDefault();
+  if(busy)return;
+  setErr('');setBusy(true);
+  try{
+   const body=new URLSearchParams();if(email)body.set('email',email);if(phone)body.set('phone',phone);
+   const r=await fetch('/archive/api/subscribe'+query,{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body});
+   const j=await r.json() as any;
+   if(j.ok){setDone({code:j.code,percent:j.percent});try{localStorage.setItem('ma_welcome_v1','1');}catch{}}
+   else setErr(j.reason||'Please check what you entered.');
+  }catch{setErr('Something went wrong. Try again.');}
+  setBusy(false);
+ };
+ if(!open)return null;
+ return <div role="dialog" aria-modal="true" aria-label="Welcome offer" onClick={close} style={{position:'fixed',inset:0,zIndex:9999,background:'rgba(20,18,16,.55)',display:'flex',alignItems:'center',justifyContent:'center',padding:'18px'}}>
+  <div onClick={e=>e.stopPropagation()} style={{position:'relative',width:'100%',maxWidth:'420px',background:'#fff',borderRadius:'14px',boxShadow:'0 24px 70px rgba(0,0,0,.35)',padding:'34px 30px 30px',fontFamily:"Georgia,'Times New Roman',serif",color:'#1a1a1a'}}>
+   <button type="button" aria-label="Close" onClick={close} style={{position:'absolute',top:'12px',right:'14px',border:0,background:'transparent',fontSize:'22px',lineHeight:1,cursor:'pointer',color:'#999'}}>×</button>
+   {done?<div style={{textAlign:'center'}}>
+    <div style={{fontSize:'12px',letterSpacing:'3px',textTransform:'uppercase',color:'#999'}}>Mysterious Archive</div>
+    <h2 style={{fontSize:'23px',margin:'14px 0 6px',fontWeight:400}}>Your code is ready</h2>
+    <p style={{fontSize:'15px',color:'#555',margin:'0 0 18px'}}>{done.percent}% off your first piece.</p>
+    <div style={{display:'inline-block',padding:'12px 22px',border:'1.5px dashed #1a1a1a',borderRadius:'8px',fontSize:'22px',letterSpacing:'3px',fontWeight:700}}>{done.code}</div>
+    <p style={{fontSize:'13px',color:'#999',margin:'18px 0 0'}}>Enter it at checkout.</p>
+    <button type="button" onClick={close} style={{marginTop:'22px',width:'100%',height:'46px',border:0,borderRadius:'8px',background:'#1a1a1a',color:'#fff',fontSize:'15px',letterSpacing:'2px',textTransform:'uppercase',cursor:'pointer'}}>Start exploring</button>
+   </div>:<form onSubmit={submit}>
+    <div style={{textAlign:'center',marginBottom:'20px'}}>
+     <div style={{fontSize:'12px',letterSpacing:'3px',textTransform:'uppercase',color:'#999'}}>Mysterious Archive</div>
+     <h2 style={{fontSize:'25px',margin:'14px 0 6px',fontWeight:400}}>{percent}% off your first piece</h2>
+     <p style={{fontSize:'15px',color:'#555',margin:0}}>Join the collection. We will send you your code.</p>
+    </div>
+    <input type="email" name="email" placeholder="Email address" value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email" style={{width:'100%',height:'46px',padding:'0 14px',marginBottom:'10px',border:'1px solid #d6d2ca',borderRadius:'8px',fontSize:'15px',fontFamily:'inherit',boxSizing:'border-box'}}/>
+    <div style={{textAlign:'center',fontSize:'12px',letterSpacing:'2px',color:'#bbb',margin:'2px 0 10px'}}>OR</div>
+    <input type="tel" name="phone" placeholder="Phone number" value={phone} onChange={e=>setPhone(e.target.value)} autoComplete="tel" style={{width:'100%',height:'46px',padding:'0 14px',marginBottom:'14px',border:'1px solid #d6d2ca',borderRadius:'8px',fontSize:'15px',fontFamily:'inherit',boxSizing:'border-box'}}/>
+    {err?<p style={{color:'#b23',fontSize:'13px',margin:'0 0 12px',textAlign:'center'}}>{err}</p>:null}
+    <button type="submit" disabled={busy} style={{width:'100%',height:'48px',border:0,borderRadius:'8px',background:'#1a1a1a',color:'#fff',fontSize:'15px',letterSpacing:'2px',textTransform:'uppercase',cursor:busy?'default':'pointer',opacity:busy?.6:1}}>{busy?'…':'Get my code'}</button>
+    <p style={{fontSize:'11px',color:'#aaa',textAlign:'center',margin:'14px 0 0',lineHeight:1.5}}>One code per customer. Unsubscribe anytime.</p>
+   </form>}
+  </div>
+ </div>;
 }

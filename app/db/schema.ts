@@ -119,8 +119,44 @@ export const stores = pgTable("stores", {
   /* Email sender domain, verified through Resend */
   resendDomainId: text("resend_domain_id"),
 
+  /*
+   * Lead-capture pop-up (Mysterious Archive). The welcome discount percent is a
+   * store setting, never decided by the browser. Default 10 — Alex sets the
+   * exact % in Shop Admin. `welcomePopupEnabled` turns the pop-up off in one
+   * toggle without a deploy.
+   */
+  welcomePopupEnabled: boolean("welcome_popup_enabled").notNull().default(true),
+  welcomePopupPercent: integer("welcome_popup_percent").notNull().default(10),
+
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * One lead from the storefront welcome pop-up — an email, a phone number, or
+ * both. Separate from `customers` (which is order-derived and needs an email):
+ * this keeps phone-only sign-ups too. Email sign-ups are also upserted into
+ * `customers` with marketing consent so the existing flows see them.
+ */
+export const marketingSubscribers = pgTable(
+  "marketing_subscribers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    email: text("email"),
+    phone: text("phone"),
+    /** the welcome code they were shown */
+    code: text("code"),
+    consent: boolean("consent").notNull().default(true),
+    source: text("source").notNull().default("popup"),
+    city: text("city"),
+    region: text("region"),
+    country: text("country"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("marketing_subscribers_store_idx").on(t.storeId, t.createdAt)],
+);
 
 /** Manual per-state sales tax rates. Only read when taxMode = manual. */
 export const taxRates = pgTable(

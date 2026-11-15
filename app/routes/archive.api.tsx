@@ -72,6 +72,17 @@ export async function action({ request, context, params }: Route.ActionArgs) {
       await endSession(context.db, store.id, request);
       return json({ ok: true }, { cookies: [clearSessionCookie(url)] });
     }
+    case "subscribe": {
+      const { subscribeLead } = await import("~/lib/ma-popup.server");
+      const { readVisitorSession, geoFromContext } = await import("~/lib/visitor.server");
+      const res = await subscribeLead(context.db, store, {
+        email: text("email"),
+        phone: text("phone"),
+        sessionId: readVisitorSession(request),
+        geo: geoFromContext(context, request),
+      });
+      return json(res, { status: res.ok ? 200 : 400 });
+    }
   }
 
   if (params.op === "owner-signin") {

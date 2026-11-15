@@ -207,6 +207,104 @@ async function send(
 /** The raw sender, for templates built elsewhere (emails/reaper-flows.ts). */
 export const sendEmail = send;
 
+/** Crude text fallback from an HTML body — tags out, entities decoded, blank lines trimmed. */
+function htmlToText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<head[\s\S]*?<\/head>/gi, "")
+    .replace(/<(br|\/p|\/div|\/h[1-6]|\/tr)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+/** The unsubscribe + postal footer bolted onto a full-document marketing email. Confident, never apologetic. */
+function campaignFooter(unsubscribeUrl: string, postalAddress?: string | null): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:20px 16px 30px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+<div style="font-size:12px;line-height:1.7;color:#9a948a">You are on the Mysterious Archive list. <a href="${esc(unsubscribeUrl)}" style="color:#9a948a;text-decoration:underline">Unsubscribe</a>${postalAddress ? `<br>${esc(postalAddress)}` : ""}</div>
+</td></tr></table>`;
+}
+
+export interface CampaignEmailInput {
+  storeName: string;
+  domain: string | null;
+  logoUrl?: string | null;
+  brandColor?: string | null;
+  accentColor?: string | null;
+  from: string;
+  replyTo?: string | null;
+  to: string;
+  subject: string;
+  /** a full HTML document or a body fragment — both are handled */
+  html: string;
+  /** marketing sends carry the one-click unsubscribe header, link and postal address */
+  marketing: boolean;
+  unsubscribeUrl?: string | null;
+  postalAddress?: string | null;
+}
+
+/**
+ * A marketing / campaign email, sent through the same `send()` path as every
+ * other message (so Mysterious Archive leaves from its own domain through the
+ * Cloudflare EMAIL binding). A full HTML document is sent as written (with the
+ * unsubscribe footer injected before `</body>` for marketing sends); a plain
+ * fragment is wrapped in the store's branded shell, which renders the footer
+ * itself.
+ */
+export async function sendCampaignEmail(
+  env: Env,
+  input: CampaignEmailInput,
+): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
+  const isFullDoc = /<!doctype|<html[\s>]/i.test(input.html);
+  const brand = brandOf({
+    storeName: input.storeName,
+    domain: input.domain,
+    logoUrl: input.logoUrl ?? null,
+    brandColor: input.brandColor ?? null,
+    accentColor: input.accentColor ?? null,
+    heroImageUrl: null,
+    unsubscribeUrl: input.marketing ? input.unsubscribeUrl ?? null : null,
+    postalAddress: input.marketing ? input.postalAddress ?? null : null,
+  });
+
+  let html: string;
+  if (isFullDoc) {
+    html = input.html;
+    if (input.marketing && input.unsubscribeUrl) {
+      const footer = campaignFooter(input.unsubscribeUrl, input.postalAddress);
+      html = html.includes("</body>") ? html.replace("</body>", `${footer}</body>`) : html + footer;
+    }
+  } else {
+    html = shell(brand, input.html, input.subject, false);
+  }
+
+  const text = `${htmlToText(input.html)}${
+    input.marketing && input.unsubscribeUrl
+      ? `\n\nUnsubscribe: ${input.unsubscribeUrl}${input.postalAddress ? `\n${input.postalAddress}` : ""}`
+      : ""
+  }`;
+
+  return send(env, {
+    from: input.from,
+    to: input.to,
+    replyTo: input.replyTo ?? null,
+    subject: input.subject,
+    html,
+    text,
+    headers:
+      input.marketing && input.unsubscribeUrl
+        ? { "List-Unsubscribe": `<${input.unsubscribeUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
+        : undefined,
+  });
+}
+
 /** Every customer-typed string goes through this before it touches HTML. */
 export function esc(value: unknown): string {
   return String(value ?? "")

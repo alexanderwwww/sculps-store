@@ -102,3 +102,18 @@ Role handoff (Alex, October 17): Claude takes over website design/implementation
 
 ## Never say "one of one" on Chrome Hearts (Alex, 2026-11-15, angry)
 Chrome Hearts pieces are produced in runs, not unique. NEVER write "one of one", "1/1", or "unique" for a Chrome Hearts item in any listing, email or page. Say "genuine", "authenticated", "pre-owned", the condition. This applies to Mysterious Archive and flip.
+
+## 2026-11-15 campaign sender + welcome pop-up (Claude, live version 5c2d7802-73ba-4b17-88bf-8ffeeef191d6)
+Two features built into the live Kerberos app, MA only, deployed from branch claude/kerberos-phase1-db-setup-6vjdq9. Healthz/storefront/checkout/intent all verified green after deploy (no charge).
+
+### Feature 1 — "Send an email" in Shop Admin → Marketing → Campaigns
+- `app/routes/admin.marketing.tsx` now has a real `action` (admin-authenticated via requireUser). Compose subject + HTML body and send to (a) one customer email, or (b) the whole marketing audience. MA only; other stores get a plain "not connected" state.
+- Audience = `audienceEmails()` in `app/lib/ma-popup.server.ts`: checkout-consent order emails ∪ consented customers (incl. pop-up email leads) ∪ marketing_subscribers emails, de-duped.
+- Sends through `sendCampaignEmail()` in `app/lib/email.server.ts`, which reuses the existing `send()` path (Cloudflare EMAIL binding for mysteriousarchive.com, from `mysterious@mysteriousarchive.com`). A full HTML document is sent as-is (unsubscribe footer injected before `</body>` for marketing sends); a fragment is wrapped in the branded shell. Marketing sends carry one-tap `List-Unsubscribe` + postal address and skip suppressed addresses (`isSuppressed`). The sender MUST carry a display name (`Store Name <addr>`), or the binding rejects it with "Incorrect type for the 'name' field".
+- **LIMITATION FOUND LIVE (not a code bug):** the Cloudflare EMAIL binding (`send_email`, Email Routing) only delivers to **verified destination addresses**. Sending the erwan email to randomcliptwitch@gmail.com returned `E_RECIPIENT_NOT_ALLOWED: destination address is not a verified address`. MA has 1 order and 0 email events — this path has never delivered to an external customer. To email real customers, either verify each recipient as a destination in Cloudflare Email Routing, or move MA's outbound to a real ESP (Resend) with mysteriousarchive.com verified. Owner-verified addresses (getsculps@…) do work. erwan's email was composed and submitted but NOT delivered.
+
+### Feature 2 — welcome pop-up on the storefront
+- Tasteful white card in `app/routes/archive.tsx` (`WelcomePopup`): offers X% off for an email OR phone, shows once per visitor (`localStorage ma_welcome_v1`), dismissible, mobile-friendly, appears ~3.5s in. Posts to `/archive/api/subscribe` (new op in `archive.api.tsx`).
+- **The discount % is a store setting**: `stores.welcome_popup_percent` (default **10**, Alex sets the exact % — NOT 50) and `stores.welcome_popup_enabled`. Change it in the DB / Shop Admin settings; the pop-up copy and the code update automatically.
+- `subscribeLead()` (`app/lib/ma-popup.server.ts`) stores the lead: email leads → `customers` (marketing consent) AND `marketing_subscribers`; phone-only → `marketing_subscribers` (new table, added via `scripts/ma-popup.sql`, applied to prod). It ensures/refreshes the standing **WELCOME** percentage code (kind=percentage, value=the setting, once-per-customer, no limit, no expiry) — a real code that works at checkout. It is `oncePerCustomer`, so `publicOffer()` never promotes it store-wide.
+- Verified live: email, phone-only and invalid submits all behave; WELCOME discount row created at 10%; test leads cleaned up.

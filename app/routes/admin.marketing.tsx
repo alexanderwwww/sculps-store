@@ -26,7 +26,8 @@
  *  - Import CSV / Export on Subscribers: nothing to import into (no
  *    subscribers table — consent lives on the order) and no export route.
  */
-import { Form, Link } from "react-router";
+import { useState } from "react";
+import { Form, Link, useActionData, useNavigation } from "react-router";
 import { desc, eq } from "drizzle-orm";
 import type { Route } from "./+types/admin.marketing";
 import { requireUser } from "~/lib/auth.server";
@@ -34,6 +35,20 @@ import { resolveAdminStore } from "~/lib/admin.server";
 import { orders as ordersTable } from "~/db/schema";
 import { useIsMobile } from "~/admin/use-mobile";
 import { Empty, card } from "~/admin/ui";
+import { sendCampaignEmail } from "~/lib/email.server";
+import { audienceEmails } from "~/lib/ma-popup.server";
+import { unsubscribeUrl } from "~/lib/suppression.server";
+import { isSuppressed } from "~/lib/suppression.server";
+import { looksLikeEmail, normaliseEmail } from "~/lib/customers.server";
+
+const MA_SLUG = "mysterious-archive";
+
+/** The postal line marketing mail must carry. Built from the store, with a sensible archive default. */
+function postalFor(store: { name: string; legalName?: string | null; city?: string | null; region?: string | null; country?: string | null }): string {
+  const who = store.legalName || store.name;
+  const where = [store.city, store.region, store.country].filter(Boolean).join(", ");
+  return where ? `${who} · ${where}` : `${who} · New York, NY, United States`;
+}
 
 export function meta() {
   return [{ title: "Marketing — Shop Admin" }];
@@ -102,12 +117,118 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       date: x.date,
     }));
 
+  const canSend = store.slug === MA_SLUG;
+  const audienceCount = canSend ? (await audienceEmails(context.db, store.id)).length : 0;
+
   return {
     store: { slug: store.slug, name: store.name },
     tab,
     subs,
     subQuery: url.searchParams.get("subq") || "",
     sender,
+    canSend,
+    audienceCount,
+  };
+}
+
+/**
+ * Send an HTML email: to one customer, or to the marketing audience (checkout
+ * consent + pop-up leads) the loader builds. Mysterious Archive only for now —
+ * it is the store with its own verified sender through the Cloudflare EMAIL
+ * binding. Admin-authenticated. Marketing sends carry one-click unsubscribe and
+ * a postal address, and skip anyone who has unsubscribed.
+ */
+export async function action({ context, request }: Route.ActionArgs) {
+  await requireUser(context.db, request);
+  const url = new URL(request.url);
+  const { store } = await resolveAdminStore(context.db, url);
+  if (!store) return { error: "No store selected." };
+  if (store.slug !== MA_SLUG) {
+    return { error: "Campaign sending is wired for Mysterious Archive only right now." };
+  }
+
+  const form = await request.formData();
+  const subject = String(form.get("subject") ?? "").trim();
+  const html = String(form.get("html") ?? "").trim();
+  const mode = String(form.get("mode") ?? "single");
+  const single = normaliseEmail(String(form.get("email") ?? ""));
+  const marketingFlag = form.get("marketing") != null;
+
+  if (!subject || !html) return { error: "A subject and an HTML body are both required." };
+
+  const env = context.cloudflare.env as Env;
+  const site = `https://${store.domain}`;
+  // The Cloudflare EMAIL binding needs a display name on the sender, so a bare
+  // address gets the store name wrapped around it (same shape the other sends use).
+  const addr = store.emailFrom || `mysterious@${store.domain}`;
+  const from = addr.includes("<") ? addr : `${store.name} <${addr}>`;
+  const replyTo = store.contactEmail || store.emailFrom || null;
+  const postal = postalFor(store);
+
+  let recipients: string[];
+  // The audience send is marketing by definition; a single send is marketing
+  // only when the box is ticked (a one-off reply to a buyer need not be).
+  const isMarketing = mode === "audience" ? true : marketingFlag;
+
+  if (mode === "single") {
+    if (!looksLikeEmail(single)) return { error: "Enter a valid recipient email." };
+    recipients = [single];
+  } else {
+    recipients = await audienceEmails(context.db, store.id);
+    if (!recipients.length) return { error: "No subscribers to send to yet." };
+  }
+
+  // Keep a single admin action well inside the Worker's limits.
+  const CAP = 300;
+  const capped = recipients.length > CAP;
+  const list = recipients.slice(0, CAP);
+
+  let sent = 0;
+  let failed = 0;
+  let skipped = 0;
+  let firstId = "";
+  const errors: string[] = [];
+
+  for (const to of list) {
+    if (isMarketing && (await isSuppressed(context.db, to))) {
+      skipped++;
+      continue;
+    }
+    const unsub = isMarketing ? await unsubscribeUrl(env, site, to) : null;
+    const r = await sendCampaignEmail(env, {
+      storeName: store.name,
+      domain: store.domain,
+      logoUrl: store.logoUrl,
+      brandColor: store.brandColor,
+      accentColor: store.accentColor,
+      from,
+      replyTo,
+      to,
+      subject,
+      html,
+      marketing: isMarketing,
+      unsubscribeUrl: unsub,
+      postalAddress: isMarketing ? postal : null,
+    });
+    if (r.ok) {
+      sent++;
+      if (!firstId) firstId = r.id;
+    } else {
+      failed++;
+      if (errors.length < 6) errors.push(`${to}: ${r.reason}`);
+    }
+  }
+
+  return {
+    ok: true,
+    sent,
+    failed,
+    skipped,
+    firstId,
+    errors,
+    total: recipients.length,
+    capped,
+    mode,
   };
 }
 
@@ -117,8 +238,13 @@ const disabledButton = {
 };
 
 export default function Marketing({ loaderData }: Route.ComponentProps) {
-  const { store, tab, subs, subQuery, sender } = loaderData;
+  const { store, tab, subs, subQuery, sender, canSend, audienceCount } = loaderData;
   const isM = useIsMobile();
+  const actionData = useActionData<typeof action>() as
+    | { error?: string; ok?: boolean; sent?: number; failed?: number; skipped?: number; firstId?: string; errors?: string[]; total?: number; capped?: boolean; mode?: string }
+    | undefined;
+  const nav = useNavigation();
+  const sending = nav.state !== "idle" && nav.formMethod === "POST";
 
   if (!store) {
     return (
@@ -150,26 +276,9 @@ export default function Marketing({ loaderData }: Route.ComponentProps) {
         <h1 style={{ margin: 0, fontSize: 20, lineHeight: "28px", fontWeight: 650 }}>
           Marketing · {store.name}
         </h1>
-        {tab === "campaigns" ? (
+        {tab === "campaigns" && !canSend ? (
           <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 12, color: "var(--ink-2)" }}>Email sending is not connected yet</span>
-            <button
-              type="button"
-              disabled
-              style={{
-                height: 28,
-                padding: "0 12px",
-                borderRadius: 8,
-                border: 0,
-                background: "var(--accent)",
-                color: "var(--accent-ink)",
-                fontSize: 12,
-                fontWeight: 600,
-                ...disabledButton,
-              }}
-            >
-              Create campaign
-            </button>
+            <span style={{ fontSize: 12, color: "var(--ink-2)" }}>Email sending is not connected for this store</span>
           </span>
         ) : null}
       </div>
@@ -210,57 +319,40 @@ export default function Marketing({ loaderData }: Route.ComponentProps) {
       </div>
 
       {tab === "campaigns" ? (
-        <div
-          style={{
-            background: "var(--surface)",
-            border: "1px solid var(--border)",
-            borderRadius: 12,
-            boxShadow: "var(--shadow)",
-            overflow: "hidden",
-          }}
-        >
-          {/* No campaigns table and no sending provider: the design's own
-              empty state, with its call to action disabled. */}
+        canSend ? (
+          <CampaignComposer
+            sender={sender}
+            audienceCount={audienceCount}
+            sending={sending}
+            actionData={actionData}
+          />
+        ) : (
           <div
             style={{
-              padding: "52px 16px",
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 6,
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: 12,
+              boxShadow: "var(--shadow)",
+              overflow: "hidden",
             }}
           >
-            <div style={{ fontWeight: 650 }}>No campaigns yet</div>
-            <div style={{ color: "var(--ink-2)", maxWidth: 360 }}>
-              Create one to email your subscribers from your own domain.
-            </div>
-            <button
-              type="button"
-              disabled
+            <div
               style={{
-                marginTop: 6,
-                height: 28,
-                padding: "0 12px",
-                borderRadius: 8,
-                border: 0,
-                background: "var(--accent)",
-                color: "var(--accent-ink)",
-                fontSize: 12,
-                fontWeight: 600,
-                ...disabledButton,
+                padding: "52px 16px",
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 6,
               }}
             >
-              Create campaign
-            </button>
-            <div style={{ fontSize: 12, color: "var(--ink-2)" }}>
-              Connect an email provider first — nothing can be sent yet.
+              <div style={{ fontWeight: 650 }}>No campaigns yet</div>
+              <div style={{ color: "var(--ink-2)", maxWidth: 360 }}>
+                Email sending is connected for Mysterious Archive. Other stores need a verified sender first.
+              </div>
             </div>
           </div>
-          {/* The campaigns table markup (the mk.campCols header and rows) is
-              kept in design/port/marketing.html and renders here once a
-              campaigns table exists. */}
-        </div>
+        )
       ) : null}
 
       {tab === "automations"
@@ -540,6 +632,135 @@ export default function Marketing({ loaderData }: Route.ComponentProps) {
           ))}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+const inputStyle = {
+  width: "100%",
+  height: 36,
+  padding: "0 12px",
+  borderRadius: 8,
+  border: "1px solid var(--input-border)",
+  background: "var(--input)",
+  fontSize: 14,
+  boxSizing: "border-box" as const,
+};
+
+/**
+ * The real campaign composer: subject + HTML body, to one customer or to the
+ * whole marketing audience. Sends through the admin action above.
+ */
+function CampaignComposer({
+  sender,
+  audienceCount,
+  sending,
+  actionData,
+}: {
+  sender: string;
+  audienceCount: number;
+  sending: boolean;
+  actionData?: { error?: string; ok?: boolean; sent?: number; failed?: number; skipped?: number; firstId?: string; errors?: string[]; total?: number; capped?: boolean };
+}) {
+  const [mode, setMode] = useState<"single" | "audience">("single");
+  return (
+    <div
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 12,
+        boxShadow: "var(--shadow)",
+        padding: 16,
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+      }}
+    >
+      <div style={{ fontWeight: 650 }}>Send an email</div>
+      <div style={{ fontSize: 12, color: "var(--ink-2)" }}>
+        From {sender} · {audienceCount} subscriber{audienceCount === 1 ? "" : "s"} in the audience
+      </div>
+
+      {actionData?.error ? (
+        <div style={{ padding: "10px 12px", borderRadius: 8, background: "var(--b-danger-bg)", color: "var(--b-danger-fg)", fontSize: 13 }}>
+          {actionData.error}
+        </div>
+      ) : null}
+      {actionData?.ok ? (
+        <div style={{ padding: "10px 12px", borderRadius: 8, background: "var(--b-success-bg)", color: "var(--b-success-fg)", fontSize: 13 }}>
+          Sent {actionData.sent} · failed {actionData.failed} · skipped {actionData.skipped}
+          {actionData.firstId ? ` · first id ${actionData.firstId}` : ""}
+          {actionData.capped ? ` · only the first 300 of ${actionData.total} were sent, send again for the rest` : ""}
+          {actionData.errors && actionData.errors.length ? (
+            <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>{actionData.errors.join(" · ")}</div>
+          ) : null}
+        </div>
+      ) : null}
+
+      <Form method="post" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 14 }}>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+            <input type="radio" name="mode" value="single" checked={mode === "single"} onChange={() => setMode("single")} />
+            One customer
+          </label>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+            <input type="radio" name="mode" value="audience" checked={mode === "audience"} onChange={() => setMode("audience")} />
+            All subscribers ({audienceCount})
+          </label>
+        </div>
+
+        {mode === "single" ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <label style={{ fontSize: 12, color: "var(--ink-2)" }}>Recipient email</label>
+            <input name="email" type="email" placeholder="customer@example.com" style={inputStyle} />
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--ink-2)" }}>
+              <input type="checkbox" name="marketing" defaultChecked /> Marketing email (adds one-tap unsubscribe + address)
+            </label>
+          </div>
+        ) : (
+          <div style={{ fontSize: 12, color: "var(--ink-2)" }}>
+            Goes to everyone who opted in. Unsubscribes are skipped automatically and every message carries one-tap unsubscribe.
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <label style={{ fontSize: 12, color: "var(--ink-2)" }}>Subject</label>
+          <input name="subject" style={inputStyle} required />
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <label style={{ fontSize: 12, color: "var(--ink-2)" }}>HTML body (a full document or a fragment)</label>
+          <textarea
+            name="html"
+            required
+            rows={12}
+            style={{ ...inputStyle, height: "auto", padding: "10px 12px", fontFamily: "ui-monospace,Menlo,monospace", fontSize: 12.5, lineHeight: 1.5 }}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={sending}
+          onClick={(e) => {
+            if (mode === "audience" && !confirm(`Send to all ${audienceCount} subscribers?`)) e.preventDefault();
+          }}
+          style={{
+            alignSelf: "flex-start",
+            height: 34,
+            padding: "0 18px",
+            borderRadius: 8,
+            border: 0,
+            background: "var(--accent)",
+            color: "var(--accent-ink)",
+            fontSize: 13,
+            fontWeight: 650,
+            cursor: sending ? "default" : "pointer",
+            opacity: sending ? 0.6 : 1,
+          }}
+        >
+          {sending ? "Sending…" : mode === "single" ? "Send email" : "Send to audience"}
+        </button>
+      </Form>
     </div>
   );
 }
