@@ -7,7 +7,9 @@ description: US real-estate wholesaling engine and playbook — the end-to-end p
 
 **What it is.** Wholesaling: get a distressed/undervalued US house under a purchase contract at a low price, then sell (assign) that contract to a cash buyer for a fee before closing. You never buy the house, never take title, never need a mortgage. Only real cash at risk is the earnest-money deposit. Reported fee per deal: **$5,000–$20,000** ([Real Estate Skills summary via search](https://www.realestateskills.com/blog/how-to-wholesale-step-by-step); also brain row #10 source [beancount.io](https://beancount.io/blog/2026/09/25/real-estate-wholesaling-assignment-fees-state-disclosure-laws-bookkeeping-guide)).
 
-**The honest headline (tell Alex this first).** A bot can do the *paperwork-and-data* half: find leads, comp them, build buyer lists, draft outreach. A bot **cannot legally or practically** do the *human-and-money* half from Greece: phone/talk a distressed seller into a deal, sign contracts, hold a US entity + US phone, and be the local person a title company deals with. So this engine makes Alex a **deal-sourcing machine with a human closer bolted on** — the closer is either Alex on a US phone, or a US-based partner/acquisitions VA who splits the fee. Without that human, it produces leads, not money.
+**Gates cleared (2026-11-15).** Alex now has the **US LLC**, a **US phone**, and **signs the contracts himself**. So §4 (the Greece setup) is mostly done — the engine runs at operator level: Aquarius sources + comps + builds the buyer list + drafts every script, and Alex (or a US acquisitions VA) makes the seller calls and signs.
+
+**The honest headline (tell Alex this first).** A bot can do the *paperwork-and-data* half: find leads, comp them, build buyer lists, draft outreach. A bot **cannot legally or practically** do the *human-and-money* half: phone/talk a distressed seller into a deal, sign contracts, be the party the title company deals with. So this engine is a **deal-sourcing machine with a human closer (Alex or a paid US VA)**. Without that human on the phone, it produces leads, not money.
 
 **Not legal advice.** Wholesaling legality and licensing vary by state and change (CT now requires registration — see §5). Every "you may / must" below is **verify with a licensed attorney or the state real-estate commission** before acting.
 
@@ -37,6 +39,63 @@ description: US real-estate wholesaling engine and playbook — the end-to-end p
 ### Disclosure (the legal line that keeps it legal)
 - Marketing a property you have **no contract on**, or negotiating on a seller's behalf **for a fee**, is brokering and **needs a real-estate license**. You market the *contract*, not the house. ([resimpli](https://resimpli.com/blog/is-wholesaling-real-estate-legal-in-texas/))
 - Several states require written disclosure that you hold only an equitable/contract interest and intend to assign (TX cites Occupations Code §1101.0045). **Verify the exact statute with the state commission.** ([resimpli](https://resimpli.com/blog/is-wholesaling-real-estate-legal-in-texas/))
+
+---
+
+## 1B. MASTER OPERATING RULES — act like a seasoned operator from day one
+
+These are the judgment calls operators at scale actually make. Aquarius uses these thresholds; it does NOT re-derive them.
+
+### The ONE-LINE DEAL FILTER (buy vs pass)
+> **Pass unless `(ARV × 0.70) − repairs − your fee ≥ seller's likely price`, with ARV built from 3+ sold comps under ~9 months old and a repair number you'd bet on. If the spread is thin or the ARV leans on one comp or on "the area is trending up" — pass.**
+
+Everything below supports that one line.
+
+### Comping ARV like a pro (not Zestimate)
+- Use **actual SOLD comps**, not active listings, not Zestimate. Match **beds, baths, square footage, floors**; prefer sales **< 9 months old**; same neighborhood/subdivision. ([newsilver](https://newsilver.com/the-lender/what-is-the-70-rule-in-house-flipping/))
+- **Base ARV on sold prices only — never add a few % for "the area is trending up."** ([newsilver](https://newsilver.com/the-lender/what-is-the-70-rule-in-house-flipping/))
+- When comps give a range, **take the LOWER end** — err cautious or you give away your profit. ([BiggerPockets via search](https://www.biggerpockets.com/blog/70-percent-rule))
+- Thin or single-comp ARV = red flag; the 70% rule is worthless if you can't nail ARV and repairs. ([BiggerPockets via search](https://www.biggerpockets.com/blog/70-percent-rule))
+
+### The MAO math (what pros actually do)
+- **MAO = (ARV × 0.70) − Repairs − Your Fee.** The 30% haircut covers **holding + selling + financing costs + the flipper's profit** — it is NOT all profit, which is why you can't shrink it. ([BiggerPockets via search](https://www.biggerpockets.com/member-blogs/16427/106966-the-70-rule-in-house-flipping-and-how-100-financing-changes-it))
+- **Tier the %:** beginners stay near 70%; experienced flippers in hot markets will pay **75–80%** of ARV minus repairs, so in a strong market you have room to offer the seller a bit more and still assign. Use **65%** on high-dollar homes or slow markets where the flat 30% leaves the flipper too little. ([newsilver](https://newsilver.com/the-lender/what-is-the-70-rule-in-house-flipping/))
+- Worked example: ARV **$350,000** × 0.70 − **$65,000** repairs = **$180,000** max. ([newsilver](https://newsilver.com/the-lender/what-is-the-70-rule-in-house-flipping/))
+
+### Repair estimate rules of thumb
+- Quick band: **~$5/sq ft** for light (paint + carpet) up to **$40+/sq ft** for major (electrical/plumbing/roof). Always include **materials + labor + permits + an overrun cushion**. ([search: howtostartanllc / 70% rule guides](https://howtostartanllc.com/real-estate-investing/house-flipping-potential))
+- **Don't lean on per-sq-ft guesses until you have reps** — they're a sanity check, not the estimate. Verify big-ticket items (roof, HVAC, foundation) individually. ([same](https://howtostartanllc.com/real-estate-investing/house-flipping-potential))
+
+### Seller outreach & qualifying (Brent Daniels / TTP method)
+- **Pre-qualify every seller on the 4 pillars: Condition, Timeline, Motivation, Price.** Only chase a lead (and only book a signing) once you know the price and the other three. ([disruptors](https://disruptors.com/episodes/how-brent-daniels-generated-1-million-in-fees-with-one-simple-concept))
+- **Opener (role-play version):** introduce yourself by name, say you're calling "out of the blue" about their specific property, and ask **"would you consider an offer on it?"** The six answers back are *yes / no / maybe / how much / how'd you get my number / who are you* — all six are fine; keep talking on anything but a hard no. ([disruptors](https://disruptors.com/episodes/how-brent-daniels-generated-1-million-in-fees-with-one-simple-concept))
+- **Volume reality (so Alex isn't surprised):** ~**15 contacts/hour** with real owners → ~**1 qualified lead/hour**; ~**3 hrs/day (~15 hrs/wk)**. Deal yield today ~**1 per 150–200 calls** on driving-for-dollars lists (probate converts better). Avg time first-call-to-close ~**150 days**; **42%** close under 90 days. Avg deal ~**$23,000**. A dialer ~$150, numbers ~$0.25 each (~$250 → 1,000 leads to call). ([disruptors](https://disruptors.com/episodes/how-brent-daniels-generated-1-million-in-fees-with-one-simple-concept))
+- **Robo-dialing distressed owners is out** (TCPA risk + it doesn't close) — this is the human step; Aquarius drafts the call sheet and scripts, a person dials.
+
+### Cash-buyer list — build it FAST (dispo side)
+- **Fastest route: start with buyers who have already proven they can close, found in public deed records.** An all-cash buyer = a deed with **no mortgage recorded**. ([dealmachine](https://www.dealmachine.com/blog/the-way-90-of-real-estate-investors-start-with-anisa-crespo))
+- Method: pick **~3 ZIPs** you know, pull recent sales from county recorder, keep deeds with **no loan**, narrow to **repeat/multi-property buyers**, skip-trace for a phone. ([dealmachine](https://www.dealmachine.com/blog/the-way-90-of-real-estate-investors-start-with-anisa-crespo))
+- **You only need ~25–50 qualified buyers (some operators run on 3–4 strong ones).** Quality over size — only send a deal to a buyer whose **buy box** (ZIPs, property type/condition, price range, close speed) matches. ([dealmachine](https://www.dealmachine.com/blog/the-way-90-of-real-estate-investors-start-with-anisa-crespo), [BiggerPockets via search](https://www.biggerpockets.com/forums/93/topics/348723-the-fastest-ways-to-build-a-cash-buyers-list-as-a-wholesaler))
+- Record per buyer: name + entity, target ZIPs, type/condition, price range, close speed, proof-of-funds, preferred title company. ([dealmachine](https://www.dealmachine.com/blog/the-way-90-of-real-estate-investors-start-with-anisa-crespo))
+- Also mine **local REIAs, investor-friendly agents, hard-money lenders, title reps** for active buyers. ([search: resimpli](https://resimpli.com/blog/6-tools-and-tactics-to-find-reliable-cash-buyers-for-wholesale-deals/))
+
+### Assignment vs double-close — the decision
+- **Default = assignment** (cheapest, one closing). ([resimpli](https://resimpli.com/blog/is-wholesaling-real-estate-legal-in-texas/))
+- **Double-close when:** the **spread/fee is large** and you don't want the buyer to see your margin, OR the **state/buyer/title company restricts assignment**. Cost = two sets of closing costs + transactional funding. ([resimpli](https://resimpli.com/blog/is-wholesaling-real-estate-legal-in-texas/))
+
+### Numbers that KILL a deal (auto-pass)
+- Spread after `ARV×0.70 − repairs − fee` is **≤ 0 or razor-thin**.
+- ARV rests on **one comp**, a comp **> 9 months** old, or an **appreciation add-on**.
+- Repairs you **can't verify** on the big items (roof/HVAC/foundation/plumbing) — unknown rehab = unknown deal.
+- **No cash buyer whose buy box fits** this ZIP/type — a deal you can't dispo is not a deal.
+- **Title issues / liens that exceed the spread**, or a seller who won't sign an **inspection/option period** (your only free exit).
+- Seller's **price is above MAO and won't move** — no motivation, pass; don't fall in love with it.
+
+### Red flags
+- Occupied by tenants/owner refusing access (can't verify condition).
+- "I just want to see what it's worth" (tire-kicker, not motivated).
+- Clouded title, probate not yet granted, co-owners not all on board.
+- Any state where you're not sure wholesaling is allowed (see §5) — stop, confirm with the commission.
 
 ---
 
@@ -122,18 +181,22 @@ Avoid or get licensed first in restricted states (brain row #12, 2026):
 
 | # | Step | Aquarius (bot) | Alex (once) |
 |---|------|----------------|-------------|
-| 1 | Pick 1 non-restricted target state + county | drafts shortlist w/ reasons | **picks** |
-| 2 | Confirm that state's wholesaling/licensing rules with its commission | finds the page/number | **reads, decides** (attorney if unsure) |
-| 3 | Form US LLC + EIN | drafts the filing steps/provider | **signs up, pays filing** |
-| 4 | Open Mercury/Wise US bank account | preps documents list | **applies** |
-| 5 | Get a US phone/VoIP line | lists options that serve non-US | **sets up** |
-| 6 | Line up a US title company / closing attorney in the county | finds 3 candidates | **calls/picks one** |
-| 7 | Build the free lead list (tax-delinquent + pre-foreclosure + long-DOM) | **runs the engine (§3)** | — |
-| 8 | Comp the top 10 & compute MAO | **drafts comps + MAO** | spot-checks |
-| 9 | Build the cash-buyer list from deed records | **builds it** | — |
-| 10 | Contact top sellers, make offers, get 1 under contract | drafts the scripts/offers | **makes the calls, signs** |
+LLC, US phone and Alex-signs are DONE — so the live sequence is:
 
-Cheapest first real step = **#1, #2, #7**: all $0, all bot-led. The only early cash is LLC filing + earnest money once a real deal appears.
+| # | Step | Aquarius (bot) | Alex (once) |
+|---|------|----------------|-------------|
+| 1 | Pick 1 non-restricted target state + 3 ZIPs | drafts shortlist w/ reasons | **picks** |
+| 2 | Confirm that state's wholesaling rules with its commission | finds the page/number | **reads, decides** (attorney if unsure) |
+| 3 | **Build the cash-buyer list FIRST** (deeds w/ no mortgage, repeat buyers, 25–50) | **builds it from county records** | — |
+| 4 | Build the free lead list (tax-delinquent + pre-foreclosure + code + long-DOM) | **runs the engine (§3)** | — |
+| 5 | Comp the top 10, compute MAO, apply the deal filter | **drafts comps + MAO, ranks** | spot-checks |
+| 6 | Draft the 4-pillar call sheet + offer scripts | **writes them** | — |
+| 7 | Call top sellers, pre-qualify, make offers | drafts/updates scripts | **makes the calls** |
+| 8 | Get 1 under contract w/ assignment clause + option period | drafts the contract | **signs** (attorney reviews) |
+| 9 | Match it to a buyer in the list, send the deal | **matches + sends** | confirms |
+| 10 | Assign (or double-close), close at the title company, get paid | preps the assignment | **signs, collects fee** |
+
+Cheapest first real step = **#1–#4**: all $0, all bot-led. **Build the buyer list before the lead list** — knowing who buys what, where, tells you which leads are even worth comping. Only cash at risk is **earnest money ($500–$2,000)** once a real deal is signed.
 
 ## Risks (say them plainly)
 - **Biggest risk: legal.** Unlicensed wholesaling is restricted or banned in several states and the line (marketing contract vs. brokering) is easy to cross. One wrong state or one undisclosed deal = fines / cease-and-desist. Always route the state rule and the contract through a licensed attorney.
