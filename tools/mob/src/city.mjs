@@ -111,7 +111,7 @@ export async function cityProducts(env) {
   const d = db(env);
   const rows = await safe(() => d.q(`SELECT p.handle, p.title, p.description, p.images,
       (SELECT min(v.price_cents) FROM variants v WHERE v.product_id=p.id) AS price,
-      (SELECT coalesce(bool_or(v.available),false) FROM variants v WHERE v.product_id=p.id) AS avail,
+      (SELECT coalesce(max(v.available),0) > 0 FROM variants v WHERE v.product_id=p.id) AS avail,
       s.currency, s.domain
     FROM products p JOIN stores s ON s.id=p.store_id WHERE s.slug='mysterious-archive' AND p.status='active' ORDER BY p.created_at, p.handle`), null);
   if (!rows) return { items: [], note: "no data yet" };

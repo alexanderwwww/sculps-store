@@ -332,6 +332,7 @@ async function main() {
   }
   addEventListener("resize", () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight, false); });
   window.__city = {
+    enter: enterBuilding, leave: leaveBuilding,
     setView(pos, look) { manual = pos ? { pos: new THREE.Vector3(...pos), look: new THREE.Vector3(...look) } : null; }, teleport(x, z, yaw) { state.x = x; state.z = z; state.y = height(x, z); if (yaw != null) state.camYaw = yaw; camInit = false; },
     set(k, v) { state[k] = v; }, key(k, v) { keys[k] = v; }, openPanel, mainCalls() { renderer.shadowMap.enabled = false; renderer.info.reset(); renderer.render(scene, camera); const c = renderer.info.render.calls, t = renderer.info.render.triangles; renderer.shadowMap.enabled = true; return { c, t }; }, stats() { const a = ft.slice().sort((x, y) => x - y); const avg = ft.reduce((s, v) => s + v, 0) / (ft.length || 1); return { frames, avgMs: +avg.toFixed(2), p95Ms: +(a[Math.floor(a.length * 0.95)] || 0).toFixed(2), calls: renderer.info.render.calls, tris: renderer.info.render.triangles, geoms: renderer.info.memory.geometries, tex: renderer.info.memory.textures }; },
     info: { buildings: all.length, doors: X.doors, home: home.pos, hq: hq.pos, when, events: events.map((e) => e.id), statuses: Object.fromEntries(all.map((b) => [b.id, b.kind === "plot" ? "planned" : statusOf(b.id)])) }, workers: () => workers.map((w) => ({ id: w.w.id, ...w.live })),
