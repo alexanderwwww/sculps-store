@@ -283,6 +283,9 @@ function frame(now) {
   const t = frozen ?? (now - t0) / 1000;
   // bob + sway
   genie.position.y = Math.sin(t * 1.6) * 0.09;
+  // tricks (build 4): a backflip over 0.9 s with a hop; triggered by "*backflip*" in a message or {type:"trick"}
+  if (state.flipAt) { const k = Math.min(1, (performance.now() - state.flipAt) / 900);
+    genie.rotation.x = -k * Math.PI * 2; genie.position.y += Math.sin(k * Math.PI) * 0.6; if (k >= 1) { state.flipAt = 0; genie.rotation.x = 0; } }
   const targetYaw = state.listening ? 0 : Math.sin(t * 0.35) * 0.32;
   state.yaw += (targetYaw - state.yaw) * 0.12; body.rotation.y = state.yaw;
   body.rotation.z = Math.sin(t * 0.9) * 0.03;
@@ -325,6 +328,7 @@ const api = {
     if (m.type === "cancel") { state.listening = false; state.baseFace = "happy"; hideStatus(); }
     if (m.type === "state") { if ("suit" in m) state.suit = !!m.suit; if ("listen" in m) state.listen = !!m.listen; renderMenu(); }
     if (m.type === "working") { state.working = !!m.on; if (!m.on && state.baseFace === "focused" && !state.listening) state.baseFace = "happy"; }
+    if (m.type === "trick" || (m.type === "say" && /\*?back ?flip\*?/i.test(m.text || ""))) { state.flipAt = performance.now(); if (typeof sparkle === "function") try { sparkle(); } catch {} }
     if (m.type === "say") say(m.text, m.face, m.suit);
   },
   state: () => ({ face: state.face, baseFace: state.baseFace, talking: state.talking, suit: wearingSuit(), menuOpen: state.menuOpen, text: btext.textContent, bubble: bubble.dataset.state, body: bodyRect, listening: state.listening, working: state.working, listen: state.listen }),

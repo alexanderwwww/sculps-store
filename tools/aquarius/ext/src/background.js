@@ -87,6 +87,7 @@ async function magicAt(id, info) { await run(id, aqMagic, info.x, info.y, CONFIG
 export async function act(action, input = {}) {
   if (action === "done") return `ok: true\ndid: session ended: ${clip(input.summary || "done", 300)}`;
   const t = await tab(), id = t.id;
+  if (action === "close") { await chrome.tabs.remove(id).catch(() => {}); return `ok: true\ndid: closed his tab`; }
   const after = async (did) => (input.look ? `ok: true\ndid: ${did}\n${await look(id)}` : brief(id, did));
   const fail = (why) => `ok: false\nerror: ${why}`;
   switch (action) {

@@ -53,3 +53,6 @@ The Chrome extension does NOT show inside the Claude desktop app, only in Chrome
 
 ## Build 3 (2026-11-15)
 Conversation mode: after "Aquarius, ..." he keeps listening without the name for 2 minutes after each line ("that's all" ends it). Also wakes on Chrome mishearing "aquarium". Logic in page/wake.js decide(), unit-tested. Zip: https://blackreaper.us/media/aquarius-3-2f7e12c10b2cc55f.zip
+
+## Build 4 (2026-11-15)
+Backflip trick (`{type:"trick"}` or "*backflip*" in a say message; frames checked by eye) and a `close` hand action that closes his tab. Idea parked by Alex (fun, not priority): fly up to the tab and close it on screen. Zip: https://blackreaper.us/media/aquarius-4-5a12711aeed629cc.zip
