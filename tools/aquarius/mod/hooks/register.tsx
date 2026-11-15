@@ -7,6 +7,12 @@ const face = atom({ plugin: 'aquarius', key: 'face' } as const, 'happy' as Face)
 const isOn = atom({ plugin: 'aquarius', key: 'isOn' } as const, true)
 const line = atom({ plugin: 'aquarius', key: 'line' } as const, 'Your wish, boss. What are we making today?')
 const whips = atom({ plugin: 'aquarius', key: 'whips' } as const, 0)
+const isCeo = atom({ plugin: 'aquarius', key: 'isCeo' } as const, false)
+const runs = atom({ plugin: 'aquarius', key: 'runs' } as const, { hour: 0, n: 0 })
+// CEO mode: when Claude finishes a turn, Aquarius hands it the next job. Brake: at most CAP per clock hour,
+// so a loop can never burn Alex's week (it hit the weekly limit once on 2026-11-15).
+const CAP = 6
+const NEXT = '🧞 Aquarius (CEO): next job. Continue the open jobs (gem skill); if none are open, take the next money move. Verify, commit, report in 3 lines.'
 
 const EYES: Record<Face, string> = { happy: '^   ^', focused: '■   ■', smug: '¬   ¬', sleep: '-   -' }
 const MOUTH: Record<Face, string> = { happy: '\\___/', focused: ' ___ ', smug: ' __/ ', sleep: ' ~~~ ' }
@@ -64,6 +70,17 @@ export const register: Register = on => {
     return next(e)
   })
   on('turn.complete', async ($, e, next) => {
+    if ((await read($, isOn)) && (await read($, isCeo))) {
+      const hour = Math.floor((await $.clock.now()) / 3600000)
+      const r = await read($, runs)
+      const n = r.hour === hour ? r.n : 0
+      if (n < CAP) {
+        await update($, runs, () => ({ hour, n: n + 1 }))
+        void $.prompt.submit({ text: NEXT })
+      } else {
+        await update($, line, () => `CEO brake: ${CAP} jobs this hour. Back at the next hour.`)
+      }
+    }
     if (await read($, isOn)) {
       await update($, face, () => 'happy' as Face)
       await update($, line, () => 'Done. Next wish?')
@@ -85,6 +102,7 @@ export const register: Register = on => {
             <Button key="go" label="✨ Work now" onPress={() => say($, 'focused', 'On it. Running every business.', LOOP)} />
             <Button key="whip" label={`💥 Whip (${n})`} onPress={() => whip($)} />
             <Button key="night" label="🌙 Work all night" onPress={() => say($, 'focused', 'All night. Until the credits are done.', NIGHT)} />
+            <Button key="ceo" label={(await read($, isCeo)) ? '🧠 CEO mode: ON' : '🧠 CEO mode: off'} onPress={() => update($, isCeo, (v: boolean) => !v)} />
             <Button key="suit" label="👔 Suit" onPress={() => say($, 'smug', 'Business mode. Billionaire hours.')} />
             <Button key="off" label="Turn off" onPress={() => update($, isOn, () => false)} />
           </Box>
