@@ -4,20 +4,17 @@
 import * as THREE from "three";
 import { parseWake } from "./wake.js";
 
-const CFG = Object.assign({
-  build: "dev", key: "", feed: "https://mob.gardenbuddystore.workers.dev/api/aquarius/feed",
-  pollMs: 5000, suit: false, login: true, listen: true, typeMs: 32,
-}, window.AQ_CONFIG || {});
+import { CSS, HTML } from "./markup.js";
+export function mountGenie(root, cfg = {}, hooks = {}) {
+const CFG = Object.assign({ build: "dev", suit: false, listen: true, typeMs: 32 }, cfg);
+root.innerHTML = `<style>${CSS}</style>${HTML}`;
+const $ = (id) => root.querySelector("#" + id);
 const W = 260, H = 320, LW = 130, LH = 160;
 const FACES = ["happy", "focused", "smug", "worried", "talking"];
-const post = (m) => { try { window.webkit?.messageHandlers?.aq?.postMessage(m); } catch {} };
-const store = {
-  get(k) { try { return localStorage.getItem("aq." + k); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem("aq." + k, v); } catch {} },
-};
+const post = (m) => { try { hooks.post?.(m); } catch {} };
 
 // ---------------- renderer ----------------
-const canvas = document.getElementById("gl");
+const canvas = $("gl");
 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, premultipliedAlpha: false, preserveDrawingBuffer: true });
 renderer.setPixelRatio(1);
 renderer.setSize(LW, LH, false);
@@ -28,7 +25,7 @@ const camera = new THREE.PerspectiveCamera(34, LW / LH, 0.1, 50);
 camera.position.set(0, 0.95, 9.2);
 camera.lookAt(0, 0.95, 0);
 
-scene.add(new THREE.HemisphereLight(0xbff6ff, 0x3a2a66, 1.25));
+scene.add(new THREE.HemisphereLight(0xd8fbff, 0x4a3a86, 1.9));
 const key = new THREE.DirectionalLight(0xfff1d6, 2.2); key.position.set(-3, 4, 6); scene.add(key);
 const rim = new THREE.DirectionalLight(0x7ff5e0, 1.6); rim.position.set(4, 2, -5); scene.add(rim);
 
@@ -43,7 +40,7 @@ function ps1(m) {
   return m;
 }
 const mat = (color, o = {}) => ps1(new THREE.MeshPhongMaterial({ color, flatShading: true, shininess: o.shine ?? 12, specular: o.spec ?? 0x222222, emissive: o.em ?? 0x000000, transparent: !!o.t, opacity: o.op ?? 1, side: o.side ?? THREE.FrontSide }));
-const SKIN = 0x2f8fe0, SKIN_D = 0x1f63b8, GOLD = 0xf2c14e, HAIR = 0x14121c;
+const SKIN = 0x56b8ff, SKIN_D = 0x2f7fd6, GOLD = 0xf2c14e, HAIR = 0x14121c;
 const M = {
   skin: mat(SKIN, { shine: 20, spec: 0x335577 }), skinD: mat(SKIN_D), gold: mat(GOLD, { shine: 80, spec: 0xffffff, em: 0x3a2600 }),
   hair: mat(HAIR, { shine: 30, spec: 0x444466 }), suit: mat(0x101018, { shine: 30, spec: 0x333344 }), shirt: mat(0xf4f1ea),
@@ -96,11 +93,11 @@ const knotBand = mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.08, 6), M.gold, 0
 const pony = new THREE.Group(); pony.position.set(0, 0.84, -0.06); head.add(pony);
 const ponySegs = [];
 for (let i = 0; i < 5; i++) {
-  const s = mesh(new THREE.ConeGeometry(0.11 - i * 0.012, 0.32, 5), M.hair, 0, 0, 0); s.rotation.x = Math.PI;
+  const s = mesh(new THREE.IcosahedronGeometry(0.15 - i * 0.022, 0), M.hair, 0, 0, 0); s.scale.set(1, 1.35, 1);
   ponySegs.push(s); pony.add(s);
 }
 // goatee + brows live on the face texture; the goatee also gets a little 3D point
-const goatee = mesh(new THREE.ConeGeometry(0.1, 0.3, 4), M.hair, 0, -0.68, 0.3); goatee.rotation.x = Math.PI - 0.35; head.add(goatee);
+const goatee = mesh(new THREE.ConeGeometry(0.13, 0.36, 4), M.hair, 0, -0.66, 0.4); goatee.rotation.x = Math.PI - 0.5; head.add(goatee);
 
 // face: a 32px canvas on a plane, nearest-filtered
 const fc = document.createElement("canvas"); fc.width = fc.height = 48;
@@ -149,7 +146,7 @@ const postScene = new THREE.Scene(); const postCam = new THREE.OrthographicCamer
 postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMat));
 
 // ---------------- faces ----------------
-const state = { face: "happy", baseFace: "happy", talking: false, suit: !!CFG.suit, workSuitUntil: 0, listen: !!CFG.listen, login: !!CFG.login,
+const state = { face: "happy", baseFace: "happy", talking: false, suit: !!CFG.suit, workSuitUntil: 0, listen: !!CFG.listen, working: false,
   menuOpen: false, typed: [], listening: false, yaw: 0, blinkAt: 2, blink: 0, mouth: 0 };
 function drawFace(face, mouthOpen, blink) {
   const g = fx; g.clearRect(0, 0, 48, 48);
@@ -185,9 +182,9 @@ function drawFace(face, mouthOpen, blink) {
 }
 
 // ---------------- bubble + menu ----------------
-const bubble = document.getElementById("bubble"), btext = document.getElementById("btext");
-const menu = document.getElementById("menu");
-document.getElementById("mbuild").textContent = `CEO · build ${CFG.build}`;
+const bubble = $("bubble"), btext = $("btext");
+const menu = $("menu");
+$("mbuild").textContent = `CEO · build ${CFG.build}`;
 const queue = []; let typing = null;
 function say(text, face, suit) {
   queue.push({ text: String(text), face: FACES.includes(face) ? face : null, suit });
@@ -212,9 +209,8 @@ function next() {
 function setSuit(on, persist) { state.suit = !!on; if (persist) post({ type: "state", suit: state.suit }); renderMenu(); }
 function wearingSuit() { return state.suit || state.listening || Date.now() < state.workSuitUntil; }
 function renderMenu() {
-  document.getElementById("msuit").textContent = state.suit ? "Suit off" : "Suit on";
-  document.getElementById("mlisten").textContent = state.listen ? "Listening: on" : "Listening: off";
-  document.getElementById("mlogin").textContent = (state.login ? "✓ " : "  ") + "Open at login";
+  $("msuit").textContent = state.suit ? "Suit off" : "Suit on";
+  $("mlisten").textContent = state.listen ? "Listening: on" : "Listening: off";
 }
 let menuTimer = 0;
 function openMenu(open) {
@@ -226,9 +222,8 @@ menu.addEventListener("click", (e) => {
   const act = b.dataset.act;
   if (act === "suit") setSuit(!state.suit, true);
   if (act === "listen") { state.listen = !state.listen; renderMenu(); }
-  if (act === "login") { state.login = !state.login; renderMenu(); }
-  post({ type: "action", name: act, suit: state.suit, listen: state.listen, login: state.login });
-  if (act !== "login" && act !== "listen" && act !== "suit") openMenu(false);
+  post({ type: "action", name: act, suit: state.suit, listen: state.listen });
+  if (act !== "listen" && act !== "suit") openMenu(false);
 });
 
 // ---------------- hit areas (Swift lets clicks through everywhere else) ----------------
@@ -245,17 +240,15 @@ function measure() {
 function pushHits(force) {
   const rects = [bodyRect];
   if (state.menuOpen) { const r = menu.getBoundingClientRect(); rects.push({ x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }); }
-  const s = JSON.stringify(rects); if (!force && s === lastHits) return; lastHits = s; post({ type: "hit", rects });
+  const s = JSON.stringify(rects); if (!force && s === lastHits) return; lastHits = s;
+  const h = $("hit"); h.style.left = bodyRect.x + "px"; h.style.top = bodyRect.y + "px"; h.style.width = bodyRect.w + "px"; h.style.height = bodyRect.h + "px";
+  post({ type: "hit", rects });
 }
 const inside = (r, x, y) => x >= r.x && y >= r.y && x <= r.x + r.w && y <= r.y + r.h;
-document.addEventListener("pointerdown", (e) => {
-  if (menu.contains(e.target)) return;
-  if (inside(bodyRect, e.clientX, e.clientY)) openMenu(!state.menuOpen);
-});
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") openMenu(false); });
+$("hit").addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); openMenu(!state.menuOpen); });
 
 // ---------------- sparkles + glow (crisp, full resolution) ----------------
-const fxc = document.getElementById("fx"), fg = fxc.getContext("2d");
+const fxc = $("fx"), fg = fxc.getContext("2d");
 const dpr = Math.min(2, window.devicePixelRatio || 1); fxc.width = W * dpr; fxc.height = H * dpr; fg.scale(dpr, dpr);
 const sparks = Array.from({ length: 14 }, (_, i) => ({ seed: i * 7.31, life: (i / 14) }));
 function toScreen(obj, out = {}) { obj.getWorldPosition(v3); v3.project(camera); out.x = (v3.x + 1) / 2 * W; out.y = (1 - v3.y) / 2 * H; return out; }
@@ -273,7 +266,7 @@ function drawFx(t) {
   fg.globalAlpha = 1; fg.fillStyle = gl; fg.fillRect(0, 0, W, H);
   const hg = fg.createRadialGradient(hp.x, hp.y, 1, hp.x, hp.y, 22); hg.addColorStop(0, "rgba(255,230,150,.55)"); hg.addColorStop(1, "rgba(255,230,150,0)");
   fg.fillStyle = hg; fg.fillRect(hp.x - 24, hp.y - 24, 48, 48);
-  for (const s of sparks) {
+  for (const s of (state.working ? sparks.concat(sparks) : sparks)) {
     const life = (s.life + t * 0.18) % 1, sx = Math.sin(s.seed * 3.1) * 38, ox = s.seed % 2 > 1 ? hp : tp;
     const x = ox.x + sx * (0.4 + life) + Math.sin(t * 2 + s.seed) * 4, y = ox.y - life * 70;
     const a = Math.sin(life * Math.PI) * (0.55 + 0.45 * Math.sin(t * 9 + s.seed));
@@ -285,7 +278,7 @@ function drawFx(t) {
 // ---------------- animation ----------------
 let lastFaceKey = "", t0 = performance.now(), lastFrame = 0, frozen = null;
 function frame(now) {
-  requestAnimationFrame(frame);
+  if (dead) return; requestAnimationFrame(frame);
   if (now - lastFrame < 33) return; lastFrame = now;
   const t = frozen ?? (now - t0) / 1000;
   // bob + sway
@@ -297,8 +290,10 @@ function frame(now) {
   armL.g.rotation.z = -0.55 + Math.sin(t * 1.3) * 0.04; armL.el.rotation.z = -1.25; armL.g.rotation.x = -0.25; armL.el.rotation.x = -0.6;
   const gest = state.talking ? Math.sin(t * 7) * 0.18 : 0;
   armR.g.rotation.z = 0.45 + gest * 0.5; armR.g.rotation.x = -0.6 + gest; armR.el.rotation.z = 1.05; armR.el.rotation.x = -1.0 - gest;
-  for (let i = 0; i < ponySegs.length; i++) { const s = ponySegs[i]; s.position.set(Math.sin(t * 1.4 + i * 0.7) * 0.04 * i, -0.1 - i * 0.24, -0.12 - i * 0.07 - Math.sin(i * 0.5) * 0.05); s.rotation.z = Math.sin(t * 1.4 + i) * 0.15; }
-  pony.rotation.x = -0.35;
+  // the topknot ponytail: up out of the knot, then over and down to his left, swaying
+  for (let i = 0; i < ponySegs.length; i++) { const s = ponySegs[i], k = i / (ponySegs.length - 1), sw = Math.sin(t * 1.4 - i * 0.6) * 0.05 * i;
+    s.position.set(-0.32 * k * k - 0.08 * k + sw, 0.18 + Math.sin(k * 2.6) * 0.32 - k * 0.55, -0.05 - k * 0.1); s.rotation.set(0, 0, 0.9 + k * 1.2); }
+  pony.rotation.x = 0;
   for (let i = 0; i < tailSegs.length; i++) {
     const k = i / (tailSegs.length - 1), s = tailSegs[i];
     s.position.set(Math.sin(t * 1.2 - i * 0.6) * 0.12 * (1 + i * 0.35) + k * k * 0.55, -0.2 - i * 0.2, -0.1 + Math.cos(t - i) * 0.05);
@@ -306,10 +301,11 @@ function frame(now) {
   }
   // suit
   const suit = wearingSuit(); suitBody.visible = suit; chain.visible = medal.visible = !suit;
-  for (const a of [armL, armR]) { for (const p of a.suitParts) p.visible = suit; }
+  for (const a of [armL, armR]) { for (const p of a.suitParts) p.visible = suit; a.skinParts[0].visible = !suit; }
   // face
   if (!state.talking && t > state.blinkAt) { state.blink = 1; if (t > state.blinkAt + 0.12) { state.blink = 0; state.blinkAt = t + 2.5 + Math.random() * 3; } }
   const mouth = state.talking ? 1 + Math.floor(t * 9) % 4 : 0;
+  if (state.working && !state.talking && !state.listening) state.baseFace = "focused";
   state.face = state.talking ? "talking" : state.baseFace;
   const fk = `${state.baseFace}|${mouth}|${state.blink}`;
   if (fk !== lastFaceKey) { lastFaceKey = fk; drawFace(state.baseFace, mouth, state.blink); }
@@ -320,35 +316,19 @@ function frame(now) {
   if (Math.floor(t * 4) !== Math.floor((t - 0.034) * 4)) { measure(); pushHits(false); }
 }
 
-// ---------------- the feed ----------------
-let lastId = Number(store.get("lastId") || 0), firstPoll = true;
-async function poll() {
-  try {
-    const r = await fetch(`${CFG.feed}?key=${encodeURIComponent(CFG.key)}`, { cache: "no-store" });
-    if (r.ok) {
-      const { messages = [] } = await r.json();
-      if (firstPoll && !lastId && messages.length) { // a fresh install says only the latest, if it is recent
-        const newest = messages[messages.length - 1];
-        lastId = Date.now() - new Date(newest.at).getTime() < 10 * 60000 ? newest.id - 1 : newest.id;
-      }
-      firstPoll = false;
-      for (const m of messages) if (m.id > lastId) { lastId = m.id; say(m.text, m.face, m.suit); }
-      store.set("lastId", String(lastId));
-    }
-  } catch {}
-  setTimeout(poll, CFG.pollMs);
-}
-
-// ---------------- from the Swift shell ----------------
-window.AQ = {
+// ---------------- the API (content script) ----------------
+let dead = false;
+const api = {
   receive(m) {
     if (m.type === "listening") { state.listening = true; state.baseFace = "focused"; showStatus("Listening…"); }
     if (m.type === "sent") { state.listening = false; state.workSuitUntil = Date.now() + 10 * 60000; state.baseFace = "happy"; showStatus("On it."); }
     if (m.type === "cancel") { state.listening = false; state.baseFace = "happy"; hideStatus(); }
-    if (m.type === "state") { if ("suit" in m) state.suit = !!m.suit; if ("listen" in m) state.listen = !!m.listen; if ("login" in m) state.login = !!m.login; renderMenu(); }
+    if (m.type === "state") { if ("suit" in m) state.suit = !!m.suit; if ("listen" in m) state.listen = !!m.listen; renderMenu(); }
+    if (m.type === "working") { state.working = !!m.on; if (!m.on && state.baseFace === "focused" && !state.listening) state.baseFace = "happy"; }
     if (m.type === "say") say(m.text, m.face, m.suit);
   },
-  state: () => ({ face: state.face, baseFace: state.baseFace, talking: state.talking, suit: wearingSuit(), menuOpen: state.menuOpen, text: btext.textContent, bubble: bubble.dataset.state, lastId, body: bodyRect, listening: state.listening }),
+  state: () => ({ face: state.face, baseFace: state.baseFace, talking: state.talking, suit: wearingSuit(), menuOpen: state.menuOpen, text: btext.textContent, bubble: bubble.dataset.state, body: bodyRect, listening: state.listening, working: state.working, listen: state.listen }),
+  destroy() { dead = true; renderer.dispose(); root.innerHTML = ""; },
   setFace(f) { state.baseFace = f === "talking" ? "happy" : f; state.talking = f === "talking"; },
   setSuit(on) { state.suit = !!on; },
   freeze(t) { frozen = t; },
@@ -366,5 +346,6 @@ function hideStatus() { if (bubble.dataset.state === "status") { bubble.classLis
 renderMenu();
 drawFace("happy", 0, 0);
 requestAnimationFrame(frame);
-poll();
 post({ type: "ready", build: CFG.build });
+return api;
+}

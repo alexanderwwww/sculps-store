@@ -14,10 +14,8 @@ test("wake word: only the words after Aquarius count", () => {
   assert.deepEqual(parseWake(""), { woke: false, command: "" });
 });
 
-test("the Swift shell carries the same parser", () => {
-  const swift = readFileSync(new URL("../app/Aquarius.app/Contents/Resources/Shell/main.swift", import.meta.url), "utf8");
-  assert.match(swift, /func parseWake\(_ transcript: String\) -> \(woke: Bool, command: String\)/);
-  assert.match(swift, /\\\\baquarius\\\\b/, "same word-boundary pattern");
-  assert.match(swift, /\.caseInsensitive/);
-  assert.match(swift, /requiresOnDeviceRecognition = true/);
+test("the extension uses the same parser (one source)", () => {
+  const c = readFileSync(new URL("../ext/src/content.js", import.meta.url), "utf8");
+  assert.match(c, /import \{ parseWake \} from "..\/..\/page\/wake.js"/);
+  assert.match(c, /from Alex's voice\): \$\{cmd\}/);
 });
