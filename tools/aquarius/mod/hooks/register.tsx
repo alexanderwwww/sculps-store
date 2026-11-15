@@ -75,7 +75,7 @@ export const register: Register = on => {
       const r = await read($, runs)
       const n = r.hour === hour ? r.n : 0
       // Claude ends a turn with 'CEO: idle' when every open job is waiting on Alex: rest until the next hour.
-      if (/CEO: idle/.test(String((e as any).answer || ''))) { await update($, runs, () => ({ hour, n: CAP })); await update($, line, () => 'Waiting on you, boss. Back at the next hour.'); return next(e) }
+      if (/CEO: idle/.test(String((e as any).answer || '')) || Number((e as any).durationMs || 0) < 45000) { await update($, runs, () => ({ hour, n: CAP })); await update($, line, () => 'Waiting on you, boss. Back at the next hour.'); return next(e) }
       if (n < CAP) {
         await update($, runs, () => ({ hour, n: n + 1 }))
         void $.prompt.submit({ text: NEXT })
