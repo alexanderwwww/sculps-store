@@ -56,3 +56,6 @@ Cursor Clipper build 3 (dev-console hosts so Claude can set up the YouTube/Meta/
 - YouTube connected: account id 1 @gtadailyby.mr-cj (alleqsh@gmail.com, added as test user). 6 Shorts queued via POST /api/posts (ids 1-6, every 90 min). Check-in trigger trig_012A5sQGkKbnjxed9bmc3R3b reads post 1.
 - Connect widget (claude.ai artifact, private): https://claude.ai/artifact/LmjwaLGaavbTiXRS7CLnKN — tiles link to mob /connect/<platform>. Static labels: update them when Instagram/TikTok go live.
 - Alex's plan: mob is the organic machine for EVERY business (rename channels per business when needed, mass-produce, push from all machines together).
+
+## Clip library gap (2026-11-15)
+56 unposted `oraktys-*.mp4` clips in R2 have NO streamer metadata, and the keys are lowercased Twitch slugs (Twitch slugs are case-sensitive), so the streamer cannot be looked up. Some may be SkiiMaskTimmy (banned by Alex). Rule: never post a clip whose streamer is unknown. Fix: future clips are stored with a sidecar `<key>.json` {streamer, title, game, src} written by daily.py at download time.
