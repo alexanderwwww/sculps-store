@@ -42,3 +42,6 @@ kcal (Alex's weight/diet)
 
 ## How Aquarius uses the map
 Each CEO run: pick the branch with the most money for the least of Alex's time → load that skill → do one real step → write result in aquarius_brain → report. Rotate across engines so none goes stale.
+
+## 🎮 GAME DEV (gamedev skill)
+gamedev · threejs-* · camera-systems · game-feel · game-ui-ux · input-systems · level-design · performance-optimization · prototype-fast — used for The City and any browser game.
