@@ -12,7 +12,7 @@ const runs = atom({ plugin: 'aquarius', key: 'runs' } as const, { hour: 0, n: 0 
 // CEO mode: when Claude finishes a turn, Aquarius hands it the next job. Brake: at most CAP per clock hour,
 // so a loop can never burn Alex's week (it hit the weekly limit once on 2026-11-15).
 const CAP = 60
-const NEXT = '🧞 Aquarius (CEO): next job. Continue the open jobs (gem skill); if none are open, take the next money move. Verify, commit, report in 3 lines.'
+const NEXT = '🧞 Aquarius (CEO): next job. Continue the open jobs (gem skill); if none are open, take the next money move. Verify, commit, report in 3 lines. If every open job is waiting on Alex or another worker, end with "CEO: idle".'
 
 const EYES: Record<Face, string> = { happy: '^   ^', focused: '■   ■', smug: '¬   ¬', sleep: '-   -' }
 const MOUTH: Record<Face, string> = { happy: '\\___/', focused: ' ___ ', smug: ' __/ ', sleep: ' ~~~ ' }
@@ -74,6 +74,8 @@ export const register: Register = on => {
       const hour = Math.floor((await $.clock.now()) / 3600000)
       const r = await read($, runs)
       const n = r.hour === hour ? r.n : 0
+      // Claude ends a turn with 'CEO: idle' when every open job is waiting on Alex: rest until the next hour.
+      if (/CEO: idle/.test(String((e as any).answer || ''))) { await update($, runs, () => ({ hour, n: CAP })); await update($, line, () => 'Waiting on you, boss. Back at the next hour.'); return next(e) }
       if (n < CAP) {
         await update($, runs, () => ({ hour, n: n + 1 }))
         void $.prompt.submit({ text: NEXT })
