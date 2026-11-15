@@ -7,11 +7,11 @@ const face = atom({ plugin: 'aquarius', key: 'face' } as const, 'happy' as Face)
 const isOn = atom({ plugin: 'aquarius', key: 'isOn' } as const, true)
 const line = atom({ plugin: 'aquarius', key: 'line' } as const, 'Your wish, boss. What are we making today?')
 const whips = atom({ plugin: 'aquarius', key: 'whips' } as const, 0)
-const isCeo = atom({ plugin: 'aquarius', key: 'isCeo' } as const, false)
+const isCeo = atom({ plugin: 'aquarius', key: 'isCeo' } as const, true)
 const runs = atom({ plugin: 'aquarius', key: 'runs' } as const, { hour: 0, n: 0 })
 // CEO mode: when Claude finishes a turn, Aquarius hands it the next job. Brake: at most CAP per clock hour,
 // so a loop can never burn Alex's week (it hit the weekly limit once on 2026-11-15).
-const CAP = 6
+const CAP = 60
 const NEXT = '🧞 Aquarius (CEO): next job. Continue the open jobs (gem skill); if none are open, take the next money move. Verify, commit, report in 3 lines.'
 
 const EYES: Record<Face, string> = { happy: '^   ^', focused: '■   ■', smug: '¬   ¬', sleep: '-   -' }
