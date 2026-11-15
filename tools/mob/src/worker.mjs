@@ -10,6 +10,7 @@ import * as C from "./core.mjs";
 import { shell, loginPage, appScript } from "./ui.mjs";
 import * as S from "./stats.mjs";
 import { uiData, uiAct } from "./uiapi.mjs";
+import { cityRoute, incomeApi } from "./city.mjs";
 
 export const BUILD = "mob-4";
 const json = (v, status = 200) => new Response(JSON.stringify(v), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
@@ -82,6 +83,7 @@ async function route(req, env) {
   if (!(await isAdmin(req, env))) return redirect("/login");
   if (path === "/logout") return redirect("/login", { "set-cookie": "mob_session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" });
 
+  if (path === "/city" || path.startsWith("/city/")) return cityRoute(req, env, path, { json, html });
   const msg = url.searchParams.get("msg");
   let m;
   const SH = (route, boot = "", status = 200) => html(shell({ build: BUILD, route, boot }), status);
@@ -292,6 +294,7 @@ async function addSubmission(env, f) {
 /* ---------------- JSON API ---------------- */
 async function api(req, env, url, path, M) {
   if (path.startsWith("/api/aquarius/")) return aquarius(req, env, url, path, M);
+  if (path === "/api/income") return incomeApi(req, env, M, { json, apiErr, ok: isBearer(req, env) || (await isAdmin(req, env)) });
   if (!isBearer(req, env)) return apiErr(401, "unauthorized", "Bearer MOB_API_TOKEN required");
   try { await C.setSetting(env, "claude_seen", new Date().toISOString()); } catch {}
   let m;

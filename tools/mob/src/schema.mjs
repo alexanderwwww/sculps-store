@@ -161,4 +161,16 @@ CREATE TABLE IF NOT EXISTS mob_aquarius_link (
   created_at timestamptz NOT NULL DEFAULT now(),
   taken_at timestamptz,
   done_at timestamptz
-)`;
+);
+CREATE TABLE IF NOT EXISTS mob_income (
+  id serial PRIMARY KEY,
+  date date NOT NULL DEFAULT current_date,
+  business text NOT NULL,
+  source text NOT NULL,
+  amount_cents bigint NOT NULL,
+  currency text NOT NULL DEFAULT 'USD',
+  ext_ref text,
+  note text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS mob_income_ext_ref ON mob_income (ext_ref) WHERE ext_ref IS NOT NULL`;
