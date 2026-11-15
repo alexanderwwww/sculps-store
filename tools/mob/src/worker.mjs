@@ -58,6 +58,8 @@ async function route(req, env) {
     try { await db(env).q("SELECT 1"); up = "up"; } catch {}
     return json({ ok: up === "up", db: up, build: BUILD });
   }
+  // Public policy pages: required by the Google app publish and the Chrome Web Store listing.
+  if (path === "/privacy" || path === "/terms") return new Response(policyPage(path), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=3600" } });
   if (path === "/static/app.js") return new Response(appScript(), { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "public, max-age=300" } });
   await C.ensureMigrated(env);
   if (path.startsWith("/api/")) return api(req, env, url, path, M);
@@ -590,4 +592,19 @@ async function aquariusLink(req, env, what, M) {
   }
   if (what === "status") return json(await linkStatus(env));
   return new Response("Not found", { status: 404 });
+}
+
+function policyPage(path) {
+  const privacy = path === "/privacy";
+  const body = privacy
+    ? `<h1>Privacy policy</h1><p>Updated 15 November 2026.</p>
+<p>mob is a private posting tool used by its owner to publish their own videos to their own YouTube, Instagram and TikTok accounts, and to read those accounts' public statistics.</p>
+<h2>What we access</h2><p>When the owner connects an account, the platform gives mob an access token. mob uses it only to upload the owner's videos, set their titles and captions, and read view counts and channel statistics. Tokens are stored encrypted on our server and are never shared or sold.</p>
+<h2>Aquarius browser extension</h2><p>The extension shows an assistant on claude.ai. If the owner turns listening on, Chrome's built-in speech recognition transcribes speech; only the words said after the name "Aquarius" are sent, to the owner's own mob server. The extension does not collect browsing history, sell data, or load remote code.</p>
+<h2>Removal</h2><p>The owner can disconnect any account at any time in mob or in the platform's own settings, and the tokens are deleted. Google users can also revoke access at myaccount.google.com/permissions.</p>
+<h2>Contact</h2><p>Questions: reply through the store listing's support contact.</p>`
+    : `<h1>Terms of service</h1><p>Updated 15 November 2026.</p>
+<p>mob is a private tool operated for its owner. Access is limited to the owner and accounts the owner connects. You may use it only to post content you have the rights to, in line with each platform's own terms. The service is provided as is, without warranty. Access can be withdrawn at any time.</p>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>mob · ${privacy ? "Privacy" : "Terms"}</title>
+<style>body{font:16px/1.6 -apple-system,Helvetica,Arial,sans-serif;max-width:680px;margin:40px auto;padding:0 16px;color:#1a1a1a}h1{font-size:28px}h2{font-size:18px;margin-top:28px}</style></head><body>${body}</body></html>`;
 }
