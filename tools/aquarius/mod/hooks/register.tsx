@@ -9,6 +9,8 @@ const line = atom({ plugin: 'aquarius', key: 'line' } as const, 'Your wish, boss
 const whips = atom({ plugin: 'aquarius', key: 'whips' } as const, 0)
 const isCeo = atom({ plugin: 'aquarius', key: 'isCeo' } as const, true)
 const runs = atom({ plugin: 'aquarius', key: 'runs' } as const, { hour: 0, n: 0 })
+const nextAt = atom({ plugin: 'aquarius', key: 'nextAt' } as const, 0)
+const GAP_MS = 600000 // one CEO job every 10 min: all night, without burning the week
 // CEO mode: when Claude finishes a turn, Aquarius hands it the next job. Brake: at most CAP per clock hour,
 // so a loop can never burn Alex's week (it hit the weekly limit once on 2026-11-15).
 const CAP = 1000
@@ -76,11 +78,18 @@ export const register: Register = on => {
       const n = r.hour === hour ? r.n : 0
       // Claude ends a turn with 'CEO: idle' when every open job is waiting on Alex: rest until the next hour.
       if (false) { await update($, runs, () => ({ hour, n: CAP })); await update($, line, () => 'Waiting on you, boss. Back at the next hour.'); return next(e) }
-      if (n < CAP) {
+      const now = await $.clock.now()
+      const due = await read($, nextAt)
+      if (now >= due) {
         await update($, runs, () => ({ hour, n: n + 1 }))
+        await update($, nextAt, () => now + GAP_MS)
         void $.prompt.submit({ text: NEXT })
       } else {
-        await update($, line, () => `CEO brake: ${CAP} jobs this hour. Back at the next hour.`)
+        // pace: wait out the gap, then fire once
+        const wait = due - now
+        await update($, line, () => `CEO: next move in ${Math.ceil(wait / 60000)} min.`)
+        void $.clock.in(wait, () => $.prompt.submit({ text: NEXT }))
+        await update($, nextAt, () => due + GAP_MS)
       }
     }
     if (await read($, isOn)) {
