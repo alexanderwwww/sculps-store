@@ -84,3 +84,6 @@ Everything Aquarius manages, and checks every rotation:
 - **Aquarius himself:** his builds, the Chrome Web Store, his hands.
 
 Each CEO turn rotates to the business that has gone longest without a move.
+
+## WEEKLY FOCUS (Alex, 2026-11-15): THIS WEEK = ONLY TRADING
+"This week it's only trading." Every gem/Aquarius run this week works on trading only: the five open-source tools evaluation and backtests (trading-lab), paper trading, and the GTA 6 launch-day memecoin watcher (GTA 6 releases Thu 2026-11-19; there is no official coin, only fan memecoins with high rug risk). No new businesses, clips, stores or hustle ideas until Alex changes the focus; if something else breaks, report it in one line. GTA clip daily job stays paused. Live trades: stocks need Alex's yes; GMGN only inside the caps (0.05 SOL per click, hourly and daily limits). Focus resets by Alex's word, not by the calendar.
