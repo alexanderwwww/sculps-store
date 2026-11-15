@@ -142,3 +142,9 @@ PS1-style retro low-poly PLUS our magic. Opt-in per script; v2 stays the default
 - Glowing disks are made of many small emissive blocks, so keep emissive at .35-.6 and bloom at .5-.6, or the whole frame turns white.
 - Reset every per-shot scale each frame. The eclipse shot shrank the Moon to 0 and it stayed gone in the next shot.
 - A house between the camera and the wizard hides the wizard. Keep the camera's line of sight clear when placing props.
+
+## Alex rejected the 001–005 look (2026-11-15) — style v3 brief, his words
+"I don't like his videos… not Minecraft, bad-looking blocks. PS1 mixed with World of Warcraft, nice movements. Low-poly 3D models made properly, textured properly. Crazy shit with good lighting, crisp, vibrant colours, real rendering, very developed code in every video. Brain-rot entertaining."
+- NOT: cube/voxel people, flat lighting, muddy dither, random sparkle spam passed off as "magic".
+- YES: real modeled low-poly characters (silhouette, faces, hands, proportions WoW-like: big hands/shoulders), crisp hand-painted textures, real lighting (key + rim + bounce, soft shadows, ACES tonemap, bloom only on emissive), vibrant saturated palette, smooth character animation, camera moves with intent, fast brain-rot pacing.
+- Process: style study FIRST (stills Alex picks from), then videos. No video is made in the old look again.
