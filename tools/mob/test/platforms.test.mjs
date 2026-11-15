@@ -20,7 +20,7 @@ test("authorize URLs carry exactly the documented params", () => {
   assert.equal(g.origin + g.pathname, "https://accounts.google.com/o/oauth2/v2/auth");
   assert.deepEqual(Object.fromEntries(g.searchParams), {
     client_id: "gid", redirect_uri: "https://mob.gardenbuddystore.workers.dev/oauth/youtube/callback", response_type: "code",
-    scope: "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly", access_type: "offline", prompt: "consent", include_granted_scopes: "true", state: "S1",
+    scope: "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly", access_type: "offline", prompt: "select_account consent", include_granted_scopes: "true", state: "S1",
   });
   const i = new URL(ig.authorizeUrl(env, "S2"));
   assert.equal(i.origin + i.pathname, "https://www.instagram.com/oauth/authorize");

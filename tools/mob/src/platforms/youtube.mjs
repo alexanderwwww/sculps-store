@@ -26,7 +26,7 @@ export function authorizeUrl(env, state) {
   const u = new URL(AUTH_URL);
   u.search = form({
     client_id: env.GOOGLE_CLIENT_ID, redirect_uri: redirectUri(env, "youtube"), response_type: "code",
-    scope: SCOPES.join(" "), access_type: "offline", prompt: "consent", include_granted_scopes: "true", state,
+    scope: SCOPES.join(" "), access_type: "offline", prompt: "select_account consent", include_granted_scopes: "true", state,
   });
   return u.toString();
 }
