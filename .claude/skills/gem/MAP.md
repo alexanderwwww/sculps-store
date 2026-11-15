@@ -32,7 +32,8 @@ organicx · ugc-master-prompter · micro-trust · xugc · magic-wand
 Stocks (paper first): trader-master → trader-scanner · trader-news · trader-entry · trader-exit · trader-timemachine · trader-budget · trader-risk · trader-alerts · trader-broker · trader-analyst · trader-pelosi
 Memecoins: gmgn-fib · ultra-growth (inside caps, no asking)
 
-## 💰 ENGINE 7 — SIDE HUSTLES (brain-tracked)
+## 💰 ENGINE 7 — SIDE HUSTLES / FREESTYLE (hustle skill)
+hustle · real-estate — always hunt ONE new money way per run (local-biz websites, AI automation for SMBs, digital products, tools-as-SaaS). Build the asset; Alex connects identity/money.
 real-estate (US wholesaling, no money down) · what-if-as-a-service · sell Kerberos/mob as SaaS
 → real-estate skill = Engine 7's playbook: find distressed house → comp (MAO=ARV×0.70−repairs) → contract w/ assignment clause → assign to cash buyer for $5k-20k fee. Only cash at risk = earnest money $500-2k. Bot does leads+comps+buyer lists (free county data); a HUMAN must call sellers, sign, and hold a US LLC+phone+title company. From Greece needs US LLC/EIN, Mercury/Wise, US VoIP, closing attorney, FIRPTA check. Avoid restricted states IL/OK/PA/CT/KY/SC/NM/MD. Biggest risk = legal (licensing line).
 
