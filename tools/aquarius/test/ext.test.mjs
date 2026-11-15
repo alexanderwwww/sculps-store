@@ -63,7 +63,7 @@ const EXT = fs.mkdtempSync(path.join(os.tmpdir(), "aq-ext-"));
 execFileSync(process.execPath, [path.join(HERE, "../ext/build.mjs"), EXT, "--test", WEB, `http://127.0.0.1:${MP}`], { stdio: "inherit" });
 const prof = fs.mkdtempSync(path.join(os.tmpdir(), "aq-prof-"));
 const ctx = await chromium.launchPersistentContext(prof, {
-  headless: true, viewport: { width: 1100, height: 760 },
+  headless: true, channel: "chromium", viewport: { width: 1100, height: 760 },
   args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, "--enable-unsafe-swiftshader", "--use-angle=swiftshader", "--autoplay-policy=no-user-gesture-required"],
 });
 const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker", { timeout: 15000 });

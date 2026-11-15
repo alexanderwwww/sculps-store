@@ -42,7 +42,7 @@ if (window.top === window && !window.__aquarius) {
       if (!host) return;
       const st = genie.state(); if ((++frames % 8) === 0) host.dataset.aq = JSON.stringify(st); // read by the tests, nothing else
       if (st.menuOpen) return;
-      const W = Math.max(300, innerWidth - 260), H = Math.max(200, innerHeight - 320), per = 2 * (W + H);
+      const W = Math.max(300, innerWidth - 260), H = Math.max(40, innerHeight - 320 - 170), per = 2 * (W + H); // never down over the composer
       p = (p + (CONFIG.driftPx ?? 14) * dt / per) % 1;
       let d = p * per, x, y;
       if (d < W) { x = d; y = 0; } else if ((d -= W) < H) { x = W; y = d; } else if ((d -= H) < W) { x = W - d; y = H; } else { x = 0; y = H - (d - W); }

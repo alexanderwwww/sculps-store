@@ -40,3 +40,4 @@ tools/xugc/seed.json
 tools/xugc/bin/
 tools/xugc/dist/
 private/
+tools/aquarius/.keys.json
