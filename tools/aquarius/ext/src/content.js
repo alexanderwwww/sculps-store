@@ -1,7 +1,7 @@
 // Aquarius on claude.ai: the floating genie (shadow DOM), his voice (wake word "Aquarius") and his typing into the chat.
 import { CONFIG } from "./config.js";
 import { mountGenie } from "../../page/genie.js";
-import { parseWake } from "../../page/wake.js";
+import { parseWake, decide } from "../../page/wake.js";
 import { aqMagic } from "./magic.js";
 
 if (window.top === window && !window.__aquarius) {
@@ -97,18 +97,20 @@ if (window.top === window && !window.__aquarius) {
     const SR = window.webkitSpeechRecognition || window.SpeechRecognition;
     if (!on || !SR) { if (rec) { rec.onend = null; try { rec.abort(); } catch {} rec = null; } return; }
     if (rec) return;
-    let heard = "", woke = false, quiet = 0, denied = false;
+    // Conversation mode (Alex, build 3): after "Aquarius, …" he keeps listening WITHOUT the name
+    // for CONVO_MS after each thing Alex says, so they can talk normally. "that's all" / "stop listening" ends it.
+    let heard = "", woke = false, quiet = 0, denied = false, convoUntil = 0;
+    const CONVO_MS = CONFIG.convoMs || 120000;
     const start = () => { try { rec.start(); } catch {} };
     rec = new SR(); rec.continuous = true; rec.interimResults = true; rec.lang = CONFIG.lang || "en-US";
     rec.onresult = (e) => {
       heard = ""; for (let i = 0; i < e.results.length; i++) heard += e.results[i][0].transcript + " ";
-      const w = parseWake(heard);
-      if (!w.woke) return;
+      if (decide(heard, convoUntil, Date.now(), CONVO_MS).act === "ignore") return;
       if (!woke) { woke = true; genie && genie.receive({ type: "listening" }); }
       clearTimeout(quiet);
-      quiet = setTimeout(() => { // 1.5 s of quiet after the name: send what came after it
-        const cmd = parseWake(heard).command; woke = false;
-        if (cmd) { genie && genie.receive({ type: "sent" }); typeIntoChat(`🧞 Aquarius (from Alex's voice): ${cmd}`); }
+      quiet = setTimeout(() => { // 1.5 s of quiet: act on what was said
+        const d = decide(heard, convoUntil, Date.now(), CONVO_MS); woke = false; convoUntil = d.convoUntil;
+        if (d.act === "send") { genie && genie.receive({ type: "sent" }); typeIntoChat(`🧞 Aquarius (from Alex's voice): ${d.cmd}`); }
         else genie && genie.receive({ type: "cancel" });
         try { rec.abort(); } catch {} // a fresh session, so the old words are never sent twice
       }, 1500);

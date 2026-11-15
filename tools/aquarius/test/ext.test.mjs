@@ -69,7 +69,7 @@ const ctx = await chromium.launchPersistentContext(prof, {
 const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker", { timeout: 15000 });
 ok("the extension loads (its service worker runs)", /background\.js$/.test(sw.url()), sw.url());
 const manifest = JSON.parse(fs.readFileSync(path.join(EXT, "manifest.json"), "utf8"));
-ok("manifest v3, build 2, content script on claude.ai", manifest.manifest_version === 3 && manifest.version_name === "build 2" && manifest.content_scripts[0].matches.includes("https://claude.ai/*"));
+ok("manifest v3, build 3, content script on claude.ai", manifest.manifest_version === 3 && manifest.version_name === "build 3" && manifest.content_scripts[0].matches.includes("https://claude.ai/*"));
 
 // 1. the genie appears on the chat page
 const page = await ctx.newPage();
@@ -106,7 +106,7 @@ ok("then sends once the composer is free", await until(async () => (await page.l
 
 // 4. the menu: build number, suit, turn off, back on from the toolbar, hide 1 hour
 await page.locator("#aquarius-genie >> #hit").click();
-ok("clicking him opens the menu with CEO · build 2", await until(async () => (await page.locator("#aquarius-genie >> #menu").isVisible()) && (await page.locator("#aquarius-genie >> #mbuild").innerText()) === "CEO · build 2"));
+ok("clicking him opens the menu with CEO · build 3", await until(async () => (await page.locator("#aquarius-genie >> #menu").isVisible()) && (await page.locator("#aquarius-genie >> #mbuild").innerText()) === "CEO · build 3"));
 await page.locator("#aquarius-genie >> #msuit").click();
 ok("Suit on: he wears the suit", await until(async () => (await st()).suit === true));
 await sleep(500);
@@ -132,7 +132,7 @@ let n = 0;
 async function send(action, input = {}) { const id = `c${++n}`; queue.push({ id, action, input }); return (await until(() => results.get(id), 40000)) || { text: "(no answer)" }; }
 let r = await send("navigate", { url: `${WEB}/search`, look: true, why: "t" });
 ok("navigate opens his tab and returns refs when asked", /ok: true[\s\S]*textbox "Search" \[ref=(a\d+)\]/.test(r.text), r.text);
-ok("the heartbeat says Aquarius build 2", statuses.some((s) => s.app === "Aquarius" && s.build === "2"));
+ok("the heartbeat says Aquarius build 3", statuses.some((s) => s.app === "Aquarius" && s.build === "3"));
 const hands = () => ctx.pages().find((p) => p.url().startsWith(WEB));
 const searchRef = r.text.match(/textbox "Search" \[ref=(a\d+)\]/)[1];
 r = await send("type", { ref: searchRef, text: "aquarius constellation", why: "t" });

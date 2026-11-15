@@ -8,7 +8,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const [out, flag, origin, mobTest] = process.argv.slice(2);
 if (!out) { console.error("usage: node build.mjs <outDir> [--test <origin> <mob>]"); process.exit(1); }
 const test = flag === "--test";
-const BUILD = process.env.AQ_BUILD || "2";
+const BUILD = process.env.AQ_BUILD || "3";
 const keysFile = join(HERE, "../.keys.json");
 const keys = test ? { feedKey: "aq-key-test", linkKey: "lk-test" } : JSON.parse(readFileSync(keysFile, "utf8"));
 const chatMatches = ["https://claude.ai/*"].concat(test ? ["http://127.0.0.1/*"] : []);

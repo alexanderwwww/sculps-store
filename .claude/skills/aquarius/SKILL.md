@@ -50,3 +50,6 @@ Form: a **Chrome extension (Manifest V3) on claude.ai**, not a Mac app (Alex cha
 ## Build 2 (2026-11-15)
 Alex installed build 1 and nothing appeared: content scripts only reach claude.ai tabs loaded after install, and the icon click only messaged scripts that were not there. Build 2 injects content.js into every open chat tab on install, on browser start and on icon click (content.js guards against doubles), and the icon opens claude.ai/code when clicked elsewhere. Test: a tab open before install gets him after the click; no double genie. 34/34. Zip: https://blackreaper.us/media/aquarius-2-7409642785f11b07.zip. Way back: build 1 zip https://blackreaper.us/media/aquarius-1-693076ac1817fd41.zip.
 The Chrome extension does NOT show inside the Claude desktop app, only in Chrome. Inside any Claude Code surface he is the pane mod (tools/aquarius/mod, command /genie, because /aquarius is this skill).
+
+## Build 3 (2026-11-15)
+Conversation mode: after "Aquarius, ..." he keeps listening without the name for 2 minutes after each line ("that's all" ends it). Also wakes on Chrome mishearing "aquarium". Logic in page/wake.js decide(), unit-tested. Zip: https://blackreaper.us/media/aquarius-3-2f7e12c10b2cc55f.zip
