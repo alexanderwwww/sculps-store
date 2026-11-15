@@ -1,0 +1,35 @@
+// Style v3 study: four looks that share one hero + one diorama (v3-core.js) and differ only in light, palette and grade.
+const base = { hair: ['#c2481f', '#a5371a', '#e0662a'], hairHi: '#ffb070', skin: ['#e9a77e', '#dc9670', '#f0b58c'], skinHi: '#ffd2b0', eyeWhite: 0xf4efe6, iris: 0x2a5a8a,
+  metal: ['#fff0b0', '#f2b640', '#b57418', '#7a4610'], metalHi: '#fffbe0', metalLo: '#5a3008', leather: ['#7a4a2a', '#6a3e22', '#8a5634'], leatherHi: '#c58a5a',
+  cloth: ['#2b5fd0', '#2452b8', '#3a72e8'], clothHi: '#7fb0ff', trim: '#ffc83d', trimHi: '#fff0a0', wood: ['#a86a3a', '#9a5e32', '#5e3418'], woodHi: '#e0a36a',
+  plaster: ['#f4e6c8', '#ecd9b4', '#fff3dc'], roof: ['#d8442e', '#c83a26', '#e85a3a'], roofHi: '#ff9a6a', roofLo: '#5a1a12',
+  rock: ['#8e8aa8', '#7c789a', '#a09cba'], rockHi: '#d8d6f0', rockLo: '#4a4666', bark: ['#7a4a2a', '#6a3e22', '#8a5634'], barkHi: '#c08050',
+  grass: ['#3f9a3a', '#4fb444', '#6cd056'], grassHi: '#b8f070', dirt: ['#c89a5e', '#b8864c', '#8a5c34'], leaf: ['#2f8a3a', '#3fa848', '#56c254'], leafHi: '#b0f06a', leafTint: 0xfff0a0,
+  moss: 0x7ad04a, tuft: 0x55b84a, flowers: ['#ff5f8a', '#ffd84a', '#ffffff', '#b07aff'], magic: 0x44f0d8, window: 0xffa040, far: 0x7a8ab8 };
+export const LOOKS = {
+  A: { name: 'Golden Hour', pal: { ...base },
+    sky: { top: 0x2a5ad0, mid: 0x7aa8f0, low: 0xffc890, sun: 0xffb060, sunK: 1, fog: 0xf0c8a0, clouds: 0xfff0e0 },
+    light: { exposure: 1.0, key: 0xffc890, keyI: 3.4, keyPos: [14, 9, 10], rim: 0xffe2b0, rimI: 2.2, rimPos: [-10, 8, -14], bounce: 0x9ad070, bounceI: .5, hemiSky: 0x9ac0ff, hemiGround: 0x6a8a3a, hemiI: .55,
+      groundBounce: 0x5a8a3a, env: .55, ao: 1, bloom: .9, bloomR: .5, magicI: 3, magicL: 2.5, windowI: 2.5, windowL: 1.2, fogNear: 40, fogFar: 160 },
+    grade: { wb: [1.03, 1, .96], sh: [-.01, .02, .05], hi: [.04, .02, -.02], sat: 1.12, con: .2, vig: .32 } },
+  B: { name: 'Rim-lit Night', pal: { ...base, cloth: ['#7a2ad0', '#6a22b8', '#8e3ee8'], clothHi: '#c08aff', magic: 0x38e8ff, far: 0x1a2a5a, grass: ['#2a7a5a', '#358a62', '#46a070'], grassHi: '#8af0c0', leaf: ['#1f6a5a', '#2a806a', '#3a9a7a'], leafHi: '#90f0d0', leafTint: 0xa0e0ff },
+    sky: { top: 0x050a24, mid: 0x15225a, low: 0x3a3a8a, sun: 0x6080ff, sunK: .25, fog: 0x1a2458, stars: 1, moon: 0xdfe8ff, moonPos: [-70, 70, -150] },
+    light: { exposure: 1.1, key: 0x8aa8ff, keyI: 1.4, keyPos: [12, 14, 8], rim: 0x7ae8ff, rimI: 5.5, rimPos: [-8, 7, -14], bounce: 0xff6ab0, bounceI: .6, hemiSky: 0x3a4a9a, hemiGround: 0x2a1a3a, hemiI: .55,
+      groundBounce: 0x1a2040, env: .7, ao: 1, bloom: 1.2, bloomR: .55, magicI: 4, magicL: 6, windowI: 3, windowL: 3, fogNear: 30, fogFar: 120 },
+    grade: { wb: [.98, 1, 1.05], sh: [.0, .02, .07], hi: [.03, .0, .03], sat: 1.15, con: .28, vig: .42 } },
+  C: { name: 'Candy', pal: { ...base, grass: ['#3fc88a', '#56dc98', '#7af0b0'], grassHi: '#d0ffc0', leaf: ['#ff6fa8', '#ff8ac0', '#ffa8d4'], leafHi: '#fff0f8', leafTint: 0xfff0ff, roof: ['#8a5aff', '#7a4aee', '#a070ff'], roofHi: '#d8b8ff', roofLo: '#2a1a6a',
+      cloth: ['#ff4a7a', '#ee3a6a', '#ff6a94'], clothHi: '#ffb0c8', plaster: ['#fff4e0', '#ffe8d0', '#ffffff'], rock: ['#9ab0e0', '#88a0d4', '#b0c4f0'], rockHi: '#f0f6ff', rockLo: '#4a5a9a', moss: 0x9af0b0, tuft: 0x58dc98, magic: 0xffd040, dirt: ['#ffd08a', '#f0bc78', '#c88a50'], far: 0xb8a8f0 },
+    sky: { top: 0x4a8aff, mid: 0x9ac8ff, low: 0xffd8f0, sun: 0xfff0d0, sunK: .7, fog: 0xf0d8ff, clouds: 0xffffff },
+    light: { exposure: 1.05, key: 0xfff0e8, keyI: 3.0, keyPos: [10, 16, 12], rim: 0xffc0f0, rimI: 2, rimPos: [-10, 8, -12], bounce: 0x80ffd0, bounceI: .7, hemiSky: 0xc0d8ff, hemiGround: 0xffc0e0, hemiI: .8,
+      groundBounce: 0xa0f0d0, env: .7, ao: .8, bloom: .8, bloomR: .45, magicI: 2.6, magicL: 2.5, windowI: 2.2, windowL: 1, fogNear: 45, fogFar: 170 },
+    grade: { wb: [1, 1, 1.01], sh: [.02, .0, .05], hi: [.03, .02, .0], sat: 1.25, con: .12, vig: .2, lift: .02 } },
+  D: { name: 'PS1 Lit Dusk', ps1: [320, 568], flatLeaves: 1, pal: { ...base, roof: ['#2f6ad8', '#2a5ac8', '#4a82ee'], roofHi: '#9ac8ff', roofLo: '#10204a', cloth: ['#c8302a', '#b02620', '#e04a3a'], clothHi: '#ff9a7a' },
+    sky: { top: 0x1a1a5a, mid: 0x7a3a8a, low: 0xff8a4a, sun: 0xff8a40, sunK: 1.2, fog: 0xc06a7a, clouds: 0xffb090 },
+    light: { exposure: 1.05, key: 0xff9a5a, keyI: 3.2, keyPos: [14, 6, 6], rim: 0x8ad0ff, rimI: 3, rimPos: [-10, 7, -14], bounce: 0xb070ff, bounceI: .6, hemiSky: 0x8a7aff, hemiGround: 0x6a3a2a, hemiI: .6,
+      groundBounce: 0x4a3a5a, env: .5, ao: .6, bloom: 1, bloomR: .5, magicI: 3.2, magicL: 3.5, windowI: 3, windowL: 2, fogNear: 30, fogFar: 120 },
+    grade: { wb: [1.03, 1, .97], sh: [-.01, .02, .06], hi: [.05, .02, -.02], sat: 1.15, con: .22, vig: .35 } },
+};
+export const CAMS = {
+  wide: { pos: [2.6, 2.4, 9.6], look: [-.2, 1.9, -.6], fov: 40 },
+  hero: { pos: [-2.3, .75, 5.0], look: [.3, 1.55, .4], fov: 40 },
+};

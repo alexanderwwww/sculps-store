@@ -148,3 +148,17 @@ PS1-style retro low-poly PLUS our magic. Opt-in per script; v2 stays the default
 - NOT: cube/voxel people, flat lighting, muddy dither, random sparkle spam passed off as "magic".
 - YES: real modeled low-poly characters (silhouette, faces, hands, proportions WoW-like: big hands/shoulders), crisp hand-painted textures, real lighting (key + rim + bounce, soft shadows, ACES tonemap, bloom only on emissive), vibrant saturated palette, smooth character animation, camera moves with intent, fast brain-rot pacing.
 - Process: style study FIRST (stills Alex picks from), then videos. No video is made in the old look again.
+
+## Style v3 study (2026-11-15) — code in `tools/whatif/scene/styles/v3-*.js`; old styles untouched
+Render: `node tools/whatif/scene/styles/v3-render.mjs <dir> stills A,B,C,D` / `... motion A`. Video: script.json `"style": "v3", "look": "A", "scene": "styles/v3-moon.js"` -> make.mjs uses `styles/v3-video.html`.
+Shared by all 4 (v3-core.js): modeled hero (lathe barrel chest, 2-plate pauldrons, capsule fingers, sphere head with eyes/pupils/glints, brows, ears, beard, topknot, cape, tabard with original sun-leaf emblem, staff + crystal);
+diorama (polar-grid plateau with ONE 2048px painted ground canvas: grass strokes, cobble path, flowers, painted contact AO; strata cliff; stone/plaster/timber cottage with shingle roof; lathe tree + noisy icosa canopy with vertex AO; mossy rock);
+textures 512px canvas, world-scale UVs (`wuv`), anisotropy 8; key + rim + bounce + hemi + PMREM of the sky (IBL); shadow 4096 PCF radius 4 (r186 removed PCFSoft: it silently falls back);
+GTAO; MSAA x4 half-float target; ACES; SELECTIVE bloom (BLOOM layer, everything else drawn black in the bloom pass); display-space grade.
+- A Golden Hour: key 0xffc890 3.4 from (14,9,10), rim 0xffe2b0 2.2, bounce green .5, sky 0x2a5ad0/0x7aa8f0/0xffc890, grade sat 1.12 con .2. **PICKED.**
+- B Rim-lit Night: moon key 0x8aa8ff 1.4, rim cyan 5.5, pink bounce, stars + moon, grade con .28 vig .42. Moody but the teal goes muddy on grass.
+- C Candy: white-pink key 3.0, pink trees, mint grass, violet roof, sat 1.25. Loud; skin/pink compete.
+- D PS1 Lit Dusk: dusk orange key, vertex snap 320x568 + affine UVs, 128px nearest textures. Most "PS1", reads darker/less crisp.
+Lessons: polar index winding wrong = ground culled (hero floats on fog) — check a top view; a torus strap read as a tongue; the moon on the bloom layer is a white blob (keep it off bloom, emissive .3);
+don't put the house between camera and sky targets; motion test on R2: https://blackreaper.us/media/whatif-style-v3-motion.mp4
+Weak still: hands/boots are chunky primitives, cloth texture is busy, no facial animation.

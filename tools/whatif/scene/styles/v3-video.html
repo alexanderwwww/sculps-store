@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>html,body{margin:0;background:#000}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"../../../../node_modules/three/build/three.module.js","three/addons/":"../../../../node_modules/three/examples/jsm/"}}</script>
+</head><body><canvas id="gl" width="1080" height="1920"></canvas>
+<script type="module">
+// style v3 video page (make.mjs uses it when script.json has "style": "v3"); captions/chips/title from world.js overlay
+import { overlay, STYLE, W, H } from '../world.js';
+import { createStudy } from './v3-core.js';
+import { LOOKS } from './v3-looks.js';
+window.setup = async (script, timing) => {
+  await document.fonts.load('900 100px Inter'); await document.fonts.load('800 50px Inter'); await document.fonts.load('700 50px Inter');
+  STYLE.v2 = false; STYLE.lowpolyMagic = true; // overlay only: no sparkle ornaments, thick yellow-outline captions
+  const S = createStudy(document.getElementById('gl'), LOOKS[script.look || 'A']);
+  const mod = await import('./' + script.scene.replace(/^styles\//, '')); const update = mod.build(S, { script, timing });
+  const out = document.createElement('canvas'); out.width = W; out.height = H; const ctx = out.getContext('2d');
+  window.frame = (t) => { const st = update(t) || {}; S.place(t, st.cam); S.render(); ctx.drawImage(S.renderer.domElement, 0, 0, W, H);
+    const li = timing.lines.findIndex(l => t >= l.start && t < (timing.lines[l.i + 1]?.start ?? timing.duration)); const line = li >= 0 ? script.lines[li] : null;
+    const chipLeft = li >= 0 ? (timing.lines[li + 1]?.start ?? timing.duration) - t : 0;
+    overlay(ctx, { words: timing.words, t, chip: line?.chip, chipAge: li >= 0 ? t - timing.lines[li].start - .3 : -1, chipLeft, ...st });
+    return out.toDataURL('image/jpeg', .94); };
+  return true;
+};
+window.ready = true;
+</script></body></html>

@@ -45,7 +45,7 @@ log(`duration ${dur.toFixed(2)}s, ${nFrames} frames`);
 // ---- 3. frames ----
 const server = http.createServer((q, s) => { const f = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { s.writeHead(404); return s.end(); }
   s.writeHead(200, { 'content-type': f.endsWith('.js') ? 'text/javascript' : f.endsWith('.html') ? 'text/html' : 'application/octet-stream' }); fs.createReadStream(f).pipe(s); });
-await new Promise(r => server.listen(0, '127.0.0.1', r)); const base = `http://127.0.0.1:${server.address().port}/tools/whatif/scene/page.html`;
+await new Promise(r => server.listen(0, '127.0.0.1', r)); const base = `http://127.0.0.1:${server.address().port}/tools/whatif/scene/${script.style === 'v3' ? 'styles/v3-video.html' : 'page.html'}`; // style v3 has its own page; 001-005 unchanged
 const sceneScript = { ...script, scene: script.scene };
 async function renderTimes(list, tag) {
   const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
