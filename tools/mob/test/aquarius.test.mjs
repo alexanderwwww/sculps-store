@@ -100,6 +100,10 @@ test("link: the key routes to Aquarius's own mailbox; MCP act waits for the app'
   assert.equal((await R("GET", "/api/aquarius/link/lk-test/next")).status, 404, "no key configured = closed");
   const rpc = async (method, params) => (await (await RL("POST", L("mcp"), { body: { jsonrpc: "2.0", id: 1, method, params } })).json()).result;
   assert.deepEqual((await rpc("tools/list")).tools.map((t) => t.name), ["aquarius_status", "aquarius_act", "aquarius_result"]);
+  { const act = (await rpc("tools/list")).tools.find((t) => t.name === "aquarius_act").inputSchema;
+    assert.equal(act.properties.url.type, "string", "navigate reads input.url, so the schema must offer url");
+    assert.ok(act.properties.action.enum.includes("close"), "close is a valid action (extension build 4)");
+    assert.ok(act.properties.action.enum.includes("navigate")); }
   assert.match((await rpc("tools/call", { name: "aquarius_act", arguments: { action: "look" } })).content[0].text, /not on right now/);
   assert.equal((await RL("POST", L("status"), { body: { app: "Aquarius", build: "1", chrome: true } })).status, 200);
   assert.match((await rpc("tools/call", { name: "aquarius_status", arguments: {} })).content[0].text, /^connected[\s\S]*"app": "Aquarius"/);

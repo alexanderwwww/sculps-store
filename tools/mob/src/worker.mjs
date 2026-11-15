@@ -499,14 +499,14 @@ function brainFields(b) {
  *   POST .../result   the app answers {id, text, image?}
  *   POST .../status   the app's heartbeat
  */
-const LINK_ACTIONS = ["look", "find", "read_text", "click", "type", "select", "press", "scroll", "navigate", "screenshot", "wait", "done"];
+const LINK_ACTIONS = ["look", "find", "read_text", "click", "type", "select", "press", "scroll", "navigate", "screenshot", "wait", "close", "done"];
 const LINK_TOOLS = [
   { name: "aquarius_status", description: "Is Aquarius on (on Alex's Mac), is his Chrome up, and what page is it on? Call first.", inputSchema: { type: "object", properties: {} } },
   { name: "aquarius_act", description: [
     "Do ONE step in Aquarius's own Chrome on Alex's Mac (any site; he sparkles where he types and clicks).",
     "Fast: answers with the url and title only. Pass look:true, or call action look, to get the accessibility snapshot with refs like [ref=e17].",
     "action: look {full?} | find {text} | read_text {ref?} | click {ref, why, final?} | type {ref, text, why, clear?, enter?} | select {ref, option} |",
-    "press {key} | scroll {direction, amount?} | navigate {url, why} | screenshot {} | wait {seconds} | done {summary}.",
+    "press {key} | scroll {direction, amount?} | navigate {url, why} | screenshot {} | wait {seconds} | close {} (closes his tab) | done {summary}.",
     "final on click: none|publish|send|buy|delete|price|other. Anything to do with payments, checkout, orders, billing or settings shows Alex an",
     "Approve/Deny card first; if he takes longer than ~40 s you get an id for aquarius_result. Password and card fields are never typed.",
   ].join(" "), inputSchema: { type: "object", properties: {
