@@ -10,7 +10,7 @@ import * as C from "./core.mjs";
 import { shell, loginPage, appScript } from "./ui.mjs";
 import * as S from "./stats.mjs";
 import { uiData, uiAct } from "./uiapi.mjs";
-import { cityRoute, incomeApi } from "./city.mjs";
+import { cityRoute, incomeApi, newsApi } from "./city.mjs";
 
 export const BUILD = "mob-4";
 const json = (v, status = 200) => new Response(JSON.stringify(v), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
@@ -294,6 +294,7 @@ async function addSubmission(env, f) {
 /* ---------------- JSON API ---------------- */
 async function api(req, env, url, path, M) {
   if (path.startsWith("/api/aquarius/")) return aquarius(req, env, url, path, M);
+  if (path === "/api/news") return newsApi(req, env, M, { json, apiErr, ok: isBearer(req, env) || (await isAdmin(req, env)) });
   if (path === "/api/income") return incomeApi(req, env, M, { json, apiErr, ok: isBearer(req, env) || (await isAdmin(req, env)) });
   if (!isBearer(req, env)) return apiErr(401, "unauthorized", "Bearer MOB_API_TOKEN required");
   try { await C.setSetting(env, "claude_seen", new Date().toISOString()); } catch {}

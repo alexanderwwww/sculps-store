@@ -173,4 +173,13 @@ CREATE TABLE IF NOT EXISTS mob_income (
   note text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE UNIQUE INDEX IF NOT EXISTS mob_income_ext_ref ON mob_income (ext_ref) WHERE ext_ref IS NOT NULL`;
+CREATE UNIQUE INDEX IF NOT EXISTS mob_income_ext_ref ON mob_income (ext_ref) WHERE ext_ref IS NOT NULL;
+CREATE TABLE IF NOT EXISTS mob_news (
+  id serial PRIMARY KEY,
+  topic text NOT NULL DEFAULT 'business',
+  headline text NOT NULL,
+  url text,
+  source text,
+  published_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+)`;

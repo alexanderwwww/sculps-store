@@ -10,7 +10,7 @@ export const DISTRICTS = {
   stores:   { name: "Stores (Kerberos)",        engine: "Engine 4", r: 38, a0: -58, a1: 58,  rowGap: 13 },
   reselling:{ name: "Reselling",                engine: "Engine 1", r: 46, a0: 72,  a1: 108, rowGap: 12 },
   clipping: { name: "Clipping",                 engine: "Engine 2", r: 46, a0: 118, a1: 146, rowGap: 12 },
-  core:     { name: "Core / HQ",                engine: "Core",     r: 50, a0: 158, a1: 202, rowGap: 12 },
+  core:     { name: "Core / HQ",                engine: "Core",     r: 50, a0: 150, a1: 210, rowGap: 12 },
   whatif:   { name: "WHAT IF studio",           engine: "Engine 3", r: 48, a0: 214, a1: 226, rowGap: 12 },
   trading:  { name: "Trading market",           engine: "Engine 6", r: 46, a0: 232, a1: 256, rowGap: 12 },
   organic:  { name: "Organic / Ads",            engine: "Engine 5", r: 46, a0: 266, a1: 290, rowGap: 12 },
@@ -59,9 +59,14 @@ export const BUILDINGS = [
   { id: "whatif",   name: "WHAT IF studio",     district: "whatif", kind: "skill", skill: "whatif", purpose: "Faceless Shorts made from code. 1 a day, science first. Needs 1k subs to pay.", status: "open", accent: "#4a3aa8", trim: "#d8ccff", prop: "observatory", brain: "what.?if", next: ["Make the next one; style v3 is locked."] },
 
   // ---- Trading (Engine 6) ----
-  { id: "stocks",   name: "Stock trading floor",district: "trading", kind: "skill", skill: "trader-master + 11 trader-* skills", purpose: "Scan, news, entry, exit, budget, risk, broker. Paper first.", status: "construction", accent: "#2a8a5a", trim: "#e8fff4", prop: "candles", brain: "trad|stock", next: ["Alpaca paper account, then the pipeline end to end."] },
-  { id: "memecoins",name: "GMGN memecoin pit",  district: "trading", kind: "trading", skill: "gmgn-fib + ultra-growth", purpose: "Fibonacci memecoin scalps on a separate wallet, inside the caps.", status: "open", accent: "#7a3ad8", trim: "#f0e0ff", prop: "coin", brain: "gmgn|memecoin|solana" },
+  { id: "stocks",   name: "Stock market stall", district: "trading", kind: "market", skill: "trader-master + scanner/news/entry/exit/budget/risk/broker", purpose: "Scan, news, entry, exit, budget, risk, broker. Paper first, nothing live.", status: "construction", accent: "#2a8a5a", trim: "#e8fff4", prop: "candles", style: "stall", brain: "stock|trader", next: ["Alpaca paper account, then the pipeline end to end."] },
+  { id: "daytrade", name: "Day-trading stall",  district: "trading", kind: "market", skill: "trader-entry + trader-exit + trader-risk", purpose: "Opening-range entries with a stop and target set before the trade.", status: "construction", accent: "#2a6ad8", trim: "#e8f0ff", prop: "clock", style: "stall", brain: "day.?trad" },
+  { id: "crypto",   name: "Crypto / memecoin stall", district: "trading", kind: "market", skill: "gmgn-fib + ultra-growth", purpose: "Fibonacci memecoin scalps on a separate wallet, inside the caps.", status: "open", accent: "#7a3ad8", trim: "#f0e0ff", prop: "coin", style: "stall", brain: "gmgn|memecoin|solana|crypto" },
   { id: "ultra",    name: "ultracursor lab",    district: "trading", kind: "skill", skill: "ultracursor", purpose: "Product-research Mac app, and the cursor that does the trades.", status: "open", accent: "#2a7ad8", trim: "#e0f0ff", prop: "pointer" },
+
+  // ---- Idea lab + news (read from our own data) ----
+  { id: "lab",      name: "Idea Lab",           district: "core", kind: "lab", skill: "aquarius brain", purpose: "Aquarius's study: every new money idea from the brain table, as a scroll.", status: "open", accent: "#6a3aa8", trim: "#ffe0a0", prop: "scrolls", brain: "." },
+  { id: "news",     name: "News Hall",          district: "core", kind: "news", skill: "town crier", purpose: "Headlines Aquarius collects on stocks, crypto, memes and business.", status: "open", accent: "#a83a3a", trim: "#fff0d0", prop: "crier" },
 
   // ---- Organic / Ads (Engine 5) ----
   { id: "organicx", name: "OrganicX",           district: "organic", kind: "skill", skill: "organicx", purpose: "Organic dropshipping: real browsers and a real phone post the reels.", status: "open", accent: "#e85a2a", trim: "#fff0e0", prop: "phone", brain: "organic|reel|tiktok" },
@@ -90,7 +95,7 @@ export const PLOTS = [
 export const WORKERS = [
   { id: "poster",     name: "Clip poster",  home: "mob",      color: "#ff6a3a" },
   { id: "keeper",     name: "Store keeper", home: "reaper",   color: "#3a7ad8" },
-  { id: "trader",     name: "Trader",       home: "memecoins",color: "#7a3ad8" },
+  { id: "trader",     name: "Trader",       home: "crypto",color: "#7a3ad8" },
   { id: "researcher", name: "Researcher",   home: "hq",       color: "#3aa876" },
   { id: "builder",    name: "Builder",      home: "kerberos", color: "#e8a020" },
 ];

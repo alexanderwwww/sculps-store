@@ -4,7 +4,7 @@
 import { db } from "./db.mjs";
 import * as S from "./stats.mjs";
 import { BUILDINGS, WORKERS, STATUS_DAYS, MIN_VISITS } from "../city/config.mjs";
-import { APP_JS, TRADING, TODOS, BUILT_AT } from "./city-bundle.mjs";
+import { APP_JS, TRADING, TRADER_FILES, TODOS, BUILT_AT } from "./city-bundle.mjs";
 
 const ids = new Set(BUILDINGS.map((b) => b.id));
 const money = (cents, cur = "USD") => { try { return new Intl.NumberFormat("en-US", { style: "currency", currency: cur || "USD" }).format(Number(cents || 0) / 100); } catch { return `${(Number(cents || 0) / 100).toFixed(2)} ${cur}`; } };
@@ -74,6 +74,27 @@ export async function incomeApi(req, env, M, { json, apiErr, ok }) {
   }
 }
 
+// ---------- news (Aquarius pushes headlines; the town crier reads the latest 20) ----------
+export async function newsApi(req, env, M, { json, apiErr, ok }) {
+  if (!ok) return apiErr(401, "unauthorized", "Bearer MOB_API_TOKEN or an admin session is required");
+  const d = db(env);
+  if (M === "GET") return json({ news: await d.q(`SELECT id, topic, headline, url, source, published_at, created_at FROM mob_news ORDER BY id DESC LIMIT 20`) });
+  if (M !== "POST") return apiErr(405, "method", "GET or POST");
+  let b; try { b = await req.json(); } catch { return apiErr(400, "bad_json", "Body must be JSON"); }
+  const items = Array.isArray(b?.items) ? b.items : [b];
+  if (!items.length || items.length > 50) return apiErr(400, "validation", "send 1-50 items");
+  const TOPICS = ["stocks", "crypto", "memes", "business", "clipping", "stores", "other"];
+  const rows = [];
+  for (const it of items) {
+    const headline = trim(it?.headline, 200), topic = String(it?.topic || "business").toLowerCase();
+    if (!headline) return apiErr(400, "validation", "headline is required");
+    if (!TOPICS.includes(topic)) return apiErr(400, "validation", `topic must be one of ${TOPICS.join(", ")}`);
+    let url = it?.url ? String(it.url).slice(0, 500) : null; if (url && !/^https?:\/\//.test(url)) url = null;
+    rows.push(await d.one(`INSERT INTO mob_news (topic, headline, url, source, published_at) VALUES ($1,$2,$3,$4,$5) RETURNING id, topic, headline`, [topic, headline, url, trim(it?.source, 80) || null, it?.published_at && !isNaN(new Date(it.published_at)) ? new Date(it.published_at).toISOString() : null]));
+  }
+  return json({ added: rows }, 201);
+}
+
 // ---------- routes ----------
 export async function cityRoute(req, env, path, { json, html }) {
   if (req.method !== "GET") return json({ error: { message: "read-only" } }, 405);
@@ -88,7 +109,7 @@ const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
 
 export async function cityData(env, now = new Date()) {
   const d = db(env);
-  const [stores, ord, carts, vis, brain, inc, prov, mobCounts, ov, last24] = await Promise.all([
+  const [stores, ord, carts, vis, brain, inc, prov, mobCounts, ov, last24, news] = await Promise.all([
     safe(() => d.q(`SELECT slug, name, currency FROM stores`), []),
     safe(() => d.q(`SELECT s.slug,
       count(*) FILTER (WHERE o.payment_status='paid')::int paid,
@@ -126,6 +147,7 @@ export async function cityData(env, now = new Date()) {
       count(*) FILTER (WHERE status IN ('publishing','processing'))::int posting, count(*) FILTER (WHERE status='failed')::int failed FROM mob_posts`)),
     safe(() => S.overview(env, "7d")),
     safe(() => d.one(`SELECT (SELECT count(*) FROM mob_aquarius_brain WHERE updated_at > now() - interval '24 hours')::int brain24`)),
+    safe(() => d.q(`SELECT id, topic, headline, url, source, created_at FROM mob_news ORDER BY id DESC LIMIT 20`), []),
   ]);
 
   const by = (rows) => Object.fromEntries((rows || []).map((r) => [r.slug, r]));
@@ -172,16 +194,13 @@ export async function cityData(env, now = new Date()) {
       if (kp) { k("Views (7 days)", kp.views_range); k("Views (all)", kp.views_total); k("Est. earnings (7d)", money(Math.round(N(kp.est_usd) * 100)), { tag: "est" }); }
       if (!ov || !ov.accounts?.length) p.notes.push("No connected accounts reporting stats yet.");
       else p.lists.push({ title: "Channels", rows: ov.accounts.map((a) => ({ t: `${a.platform} @${a.handle}`, s: `${a.status}${a.views != null ? ` · ${a.views} views` : ""}` })) });
-    } else if (b.kind === "trading") {
-      k("Mode", "paper / backtest only"); k("Live trades", null);
-      const t = TRADING; if (t) { k("Backtest trades", t.tradesTaken); k("Backtest win rate", `${(t.winRate * 100).toFixed(1)}%`); k("Backtest equity", `${t.startEq} → ${t.endEq}`); p.notes.push(`Backtest snapshot from the repo (fake money, ${t.costsAssumed}); not live results.`); }
     } else if (b.kind === "miner") {
       p.notes.push("Waiting for the machine."); k("Hash rate", null); k("Earnings", null);
     } else if (b.kind === "bank") {
       const autoAll = {}, auto30 = {};
       let paid = 0, pend = 0, fail = 0, refunds = 0, refunded = 0;
       for (const o of Object.values(O)) { const cur = SN[o.slug]?.currency || "USD"; autoAll[cur] = (autoAll[cur] || 0) + N(o.rev); auto30[cur] = (auto30[cur] || 0) + N(o.r30); paid += N(o.paid); pend += N(o.pending); fail += N(o.failed); refunds += N(o.refunds); refunded += N(o.refunded_cents); }
-      const man = manualFor.call ? { all: {}, d30: {} } : null;
+      const man = { all: {}, d30: {} };
       for (const r of manual) man.all[r.currency] = (man.all[r.currency] || 0) + N(r.amount_cents);
       for (const r of manual) if (inWindow(r, 30)) man.d30[r.currency] = (man.d30[r.currency] || 0) + N(r.amount_cents);
       k("Order revenue (all)", fmtMap(autoAll) || "no data yet", { tag: "auto" }); k("Order revenue (30d)", fmtMap(auto30), { tag: "auto" });
@@ -195,6 +214,18 @@ export async function cityData(env, now = new Date()) {
       p.lists.push({ title: "Manual income ledger (not from orders)", rows: manual.slice(0, 8).map((r) => ({ t: `${money(r.amount_cents, r.currency)} · ${r.source}`, s: `${r.date} · ${r.business}${r.ext_ref ? " · " + r.ext_ref : ""}${r.note ? " · " + trim(r.note, 90) : ""}`, tag: "manual" })) });
       if (!manual.length) p.notes.push("No manual income entries yet.");
       p.lists.push({ title: "Payments health per store", rows: BUILDINGS.filter((x) => x.kind === "store" && O[x.slug]).map((x) => { const o = O[x.slug]; return { t: x.name, s: `${N(o.paid)} paid · ${N(o.pending)} pending · ${N(o.failed)} failed` }; }) });
+    } else if (b.kind === "lab") {
+      k("Ideas in the brain", brain ? brain.length : null);
+      if (brain && brain.length) p.lists.push({ title: "Scrolls (best score first)", rows: [...brain].sort((a, c) => N(c.score) - N(a.score) || c.id - a.id).slice(0, 12).map((r) => ({ t: trim(r.idea, 140), s: [r.business, r.cost != null ? `cost ${r.cost}` : null, r.expected_return != null ? `expected ${r.expected_return}` : null, r.score != null ? `score ${r.score}` : null, r.kill_date ? `kill ${String(r.kill_date).slice(0, 10)}` : null].filter(Boolean).join(" · ") + (r.result ? ` — ${trim(r.result, 120)}` : "") })) });
+    } else if (b.kind === "news") {
+      k("Headlines", news ? news.length : null);
+      p.lists.push({ title: "Latest 20 (pushed by Aquarius via POST /api/news)", rows: (news || []).map((r) => ({ t: trim(r.headline, 150), s: `${r.topic}${r.source ? " · " + r.source : ""}`, tag: "news" })) });
+      if (!news || !news.length) p.notes.push("No headlines yet. Aquarius pushes them with POST /api/news.");
+    } else if (b.kind === "market") {
+      const tf = (TRADER_FILES || {})[b.id];
+      k("Mode", "paper only, nothing live"); k("Last plan / ticket", tf ? trim(JSON.stringify(tf), 120) : null);
+      if (b.id === "crypto" && TRADING) { k("Backtest trades", TRADING.tradesTaken); k("Backtest win rate", `${(TRADING.winRate * 100).toFixed(1)}%`); p.notes.push(`Backtest snapshot from the repo (fake money); not live results.`); }
+      if (!tf) p.notes.push("No trades yet. The trader skills have not written a plan or ticket file.");
     } else if (b.kind === "home") {
       p.notes.push("Home. Nothing to count here.");
     }
@@ -222,6 +253,7 @@ export async function cityData(env, now = new Date()) {
     builder: (() => { const n = BUILDINGS.filter((b) => out[b.id].status === "construction").length; return n ? { s: "working", t: `${n} building${n > 1 ? "s" : ""} going up` } : { s: "idle", t: "nothing to build" }; })(),
   };
   const board = {
+    news: (news || []).slice(0, 5).map((r) => ({ t: trim(r.headline, 100), s: r.topic })),
     jobs: [
       m ? { t: `Clips: ${N(m.live)} live, ${N(m.queued)} queued, ${N(m.posting)} posting, ${N(m.failed)} failed` } : { t: "Clips: no data" },
       { t: `Under construction: ${BUILDINGS.filter((b) => out[b.id].status === "construction").map((b) => b.name).join(", ") || "none"}` },

@@ -3,7 +3,7 @@
 import { neon } from "@neondatabase/serverless";
 import { SCHEMA } from "./schema.mjs";
 
-const TABLES = /\bmob_(accounts|clips|posts|campaigns|submissions|oauth_state|login_fail|posts_due|login_fail_ip|platform_apps|account_stats|post_stats|post_stats_day|settings|aquarius_brain|aquarius_link|aquarius|income)\b/g;
+const TABLES = /\bmob_(accounts|clips|posts|campaigns|submissions|oauth_state|login_fail|posts_due|login_fail_ip|platform_apps|account_stats|post_stats|post_stats_day|settings|aquarius_brain|aquarius_link|aquarius|income|news)\b/g;
 
 export function db(env) {
   if (env.__db) return env.__db;
