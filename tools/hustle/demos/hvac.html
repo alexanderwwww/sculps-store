@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Northgate Heating &amp; Air — 24/7 HVAC Repair &amp; Installation</title>
+<style>
+  :root{
+    --navy:#0b2440; --navy2:#123a63; --ice:#eaf4fb; --sky:#1d9bf0; --sky2:#0f7fd1;
+    --amber:#ff8a2b; --ink:#14212e; --muted:#5b6b7a; --line:#e3ebf2; --white:#fff;
+    --ok:#1aa260; --shadow:0 18px 50px -20px rgba(11,36,64,.35);
+    --radius:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--white);line-height:1.5;-webkit-font-smoothing:antialiased}
+  img{max-width:100%;display:block}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;border-radius:999px;padding:14px 24px;font-size:16px;cursor:pointer;border:0;transition:transform .15s ease,box-shadow .15s ease;white-space:nowrap}
+  .btn:hover{transform:translateY(-2px)}
+  .btn-call{background:var(--amber);color:#2a1400;box-shadow:0 10px 24px -8px rgba(255,138,43,.7)}
+  .btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.4)}
+  .btn-quote{background:var(--sky);color:#fff;box-shadow:0 10px 24px -8px rgba(29,155,240,.7)}
+
+  /* SAMPLE ribbon */
+  .sample-bar{background:#111;color:#fff;text-align:center;font-size:13px;font-weight:600;letter-spacing:.04em;padding:7px 12px}
+  .sample-bar span{color:var(--amber)}
+
+  /* header */
+  header{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:19px;color:var(--navy)}
+  .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--sky),var(--navy));display:grid;place-items:center;color:#fff;font-size:20px;box-shadow:var(--shadow)}
+  .nav-links{display:flex;gap:26px;font-weight:600;color:var(--muted);font-size:15px}
+  .nav-links a:hover{color:var(--navy)}
+  .nav-cta{display:flex;align-items:center;gap:14px}
+  .phone-top{font-weight:800;color:var(--navy);font-size:17px}
+  @media(max-width:860px){.nav-links{display:none}.phone-top{display:none}}
+
+  /* hero */
+  .hero{position:relative;background:radial-gradient(1200px 600px at 75% -10%,var(--navy2),var(--navy) 60%);color:#fff;overflow:hidden}
+  .hero:before{content:"";position:absolute;inset:0;background:
+    radial-gradient(500px 300px at 90% 20%,rgba(29,155,240,.35),transparent 70%),
+    radial-gradient(400px 260px at 10% 90%,rgba(255,138,43,.18),transparent 70%)}
+  .hero-grid{position:relative;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:64px 0 72px}
+  .badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:22px}
+  .dot{width:8px;height:8px;border-radius:50%;background:#49e08b;box-shadow:0 0 0 4px rgba(73,224,139,.25)}
+  h1{font-size:clamp(34px,5vw,54px);line-height:1.04;font-weight:850;letter-spacing:-.02em;margin-bottom:18px}
+  h1 em{font-style:normal;color:#7fd0ff}
+  .sub{font-size:19px;color:#cfe0ef;max-width:520px;margin-bottom:28px}
+  .hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:26px}
+  .trust-row{display:flex;gap:22px;flex-wrap:wrap;color:#bcd0e2;font-size:14px;font-weight:600}
+  .trust-row b{color:#fff}
+  .hero-card{background:#fff;color:var(--ink);border-radius:22px;padding:26px;box-shadow:0 30px 70px -25px rgba(0,0,0,.6)}
+  .hero-card h3{font-size:19px;margin-bottom:4px;color:var(--navy)}
+  .hero-card p{font-size:14px;color:var(--muted);margin-bottom:18px}
+  .field{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;font-size:15px;margin-bottom:12px;font-family:inherit}
+  .field:focus{outline:none;border-color:var(--sky)}
+  .form-note{font-size:12px;color:var(--muted);margin-top:10px;text-align:center}
+  @media(max-width:860px){.hero-grid{grid-template-columns:1fr;padding:44px 0 50px}}
+
+  /* trust logos */
+  .strip{background:var(--ice);padding:18px 0}
+  .strip .wrap{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;color:var(--navy);font-weight:700;font-size:14px}
+  .strip .item{display:flex;align-items:center;gap:8px;opacity:.85}
+
+  /* sections */
+  section.pad{padding:72px 0}
+  .eyebrow{color:var(--sky2);font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:13px;margin-bottom:12px;text-align:center}
+  h2{font-size:clamp(27px,3.4vw,38px);font-weight:820;letter-spacing:-.02em;text-align:center;color:var(--navy);margin-bottom:12px}
+  .lead{text-align:center;color:var(--muted);font-size:17px;max-width:620px;margin:0 auto 46px}
+
+  /* services */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:28px 24px;box-shadow:var(--shadow);transition:transform .18s ease}
+  .card:hover{transform:translateY(-4px)}
+  .ci{width:52px;height:52px;border-radius:14px;background:var(--ice);display:grid;place-items:center;font-size:26px;margin-bottom:16px}
+  .card h3{font-size:19px;color:var(--navy);margin-bottom:8px}
+  .card p{color:var(--muted);font-size:15px}
+  @media(max-width:860px){.cards{grid-template-columns:1fr}}
+
+  /* why / stats */
+  .why{background:linear-gradient(180deg,var(--ice),#fff)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:8px}
+  .stat{text-align:center;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:26px 14px;box-shadow:var(--shadow)}
+  .stat b{display:block;font-size:34px;color:var(--sky2);font-weight:850;letter-spacing:-.02em}
+  .stat span{color:var(--muted);font-size:14px;font-weight:600}
+  @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+  /* reviews */
+  .reviews{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .rev{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow)}
+  .stars{color:#ffb300;font-size:18px;letter-spacing:2px;margin-bottom:12px}
+  .rev p{font-size:15px;color:var(--ink);margin-bottom:16px}
+  .who{display:flex;align-items:center;gap:11px}
+  .av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--sky),var(--navy));color:#fff;display:grid;place-items:center;font-weight:800}
+  .who b{display:block;font-size:14px;color:var(--navy)}
+  .who span{font-size:12px;color:var(--muted)}
+  .ph{background:repeating-linear-gradient(45deg,#eef4f9,#eef4f9 10px,#e7eef5 10px,#e7eef5 20px);color:#9fb2c4}
+  @media(max-width:860px){.reviews{grid-template-columns:1fr}}
+
+  /* map / hours */
+  .maparea{display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:22px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--line)}
+  .hours{background:var(--navy);color:#fff;padding:40px 36px}
+  .hours h3{font-size:22px;margin-bottom:18px}
+  .hrow{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.12);font-size:15px}
+  .hrow b{color:#7fd0ff}
+  .open-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(73,224,139,.15);color:#8ff0b6;padding:7px 14px;border-radius:999px;font-weight:700;font-size:13px;margin-top:20px}
+  .mapbox{min-height:340px;background:
+    linear-gradient(135deg,#dfeaf2,#eef5fb);position:relative;color:var(--muted)}
+  .mapbox .pin{position:absolute;top:46%;left:52%;transform:translate(-50%,-100%);font-size:40px}
+  .mapbox .glabel{position:absolute;left:18px;top:16px;background:#fff;padding:8px 13px;border-radius:10px;font-size:13px;font-weight:700;color:var(--navy);box-shadow:var(--shadow)}
+  .maproads{position:absolute;inset:0;opacity:.5;background:
+    linear-gradient(90deg,transparent 48%,#c3d4e2 48%,#c3d4e2 52%,transparent 52%),
+    linear-gradient(0deg,transparent 60%,#c3d4e2 60%,#c3d4e2 63%,transparent 63%),
+    linear-gradient(0deg,transparent 28%,#cdd c 28%,#c3d4e2 31%,transparent 31%)}
+  @media(max-width:860px){.maparea{grid-template-columns:1fr}}
+
+  /* final cta */
+  .final{background:radial-gradient(900px 500px at 50% -40%,var(--sky2),var(--navy) 70%);color:#fff;text-align:center;border-radius:26px;padding:62px 24px;box-shadow:var(--shadow)}
+  .final h2{color:#fff}
+  .final p{color:#d7e7f5;font-size:18px;max-width:540px;margin:0 auto 28px}
+  .final .hero-cta{justify-content:center}
+
+  /* footer */
+  footer{background:var(--navy);color:#9db6cc;padding:46px 0 30px;font-size:14px}
+  .fgrid{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;margin-bottom:26px}
+  .fbrand{color:#fff;font-weight:800;font-size:18px;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  footer a:hover{color:#fff}
+  .fcol b{color:#fff;display:block;margin-bottom:10px;font-size:14px}
+  .fcol a,.fcol div{display:block;margin-bottom:7px}
+  .fbar{border-top:1px solid rgba(255,255,255,.12);padding-top:18px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px}
+
+  /* sticky mobile call */
+  .mobcall{display:none}
+  @media(max-width:860px){
+    .mobcall{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:50;gap:10px;padding:10px 14px;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-top:1px solid var(--line)}
+    .mobcall .btn{flex:1;justify-content:center;padding:14px}
+    body{padding-bottom:74px}
+  }
+</style>
+</head>
+<body>
+
+<div class="sample-bar">SAMPLE DEMO SITE &mdash; <span>Northgate Heating &amp; Air is a fictional business.</span> Built to show what your new site could look like.</div>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand"><div class="logo">&#10052;</div>Northgate Heating &amp; Air</div>
+    <nav class="nav-links">
+      <a href="#services">Services</a>
+      <a href="#why">Why us</a>
+      <a href="#reviews">Reviews</a>
+      <a href="#area">Service area</a>
+    </nav>
+    <div class="nav-cta">
+      <span class="phone-top">&#9742; (555) 014-2200</span>
+      <a href="#quote" class="btn btn-quote">Free estimate</a>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="badge"><span class="dot"></span> Open now &middot; Same-day service in Northgate</div>
+      <h1>Heating or AC out? <em>We'll have it running today.</em></h1>
+      <p class="sub">Licensed, insured HVAC repair &amp; installation across the Northgate metro. Upfront pricing, no surprise fees, and a real technician at your door in hours &mdash; not days.</p>
+      <div class="hero-cta">
+        <a href="tel:+15550142200" class="btn btn-call">&#9742; Call (555) 014-2200</a>
+        <a href="#quote" class="btn btn-ghost">Get a free estimate</a>
+      </div>
+      <div class="trust-row">
+        <div>&#11088; <b>4.9</b> / 5 &middot; 380+ reviews</div>
+        <div>&#128737; Licensed &amp; insured</div>
+        <div>&#9203; Same-day service</div>
+      </div>
+    </div>
+    <div class="hero-card" id="quote">
+      <h3>Get your free estimate</h3>
+      <p>Tell us the problem &mdash; we'll call you back within 15 minutes.</p>
+      <form onsubmit="return false">
+        <input class="field" placeholder="Your name" aria-label="Your name">
+        <input class="field" placeholder="Phone number" aria-label="Phone number">
+        <select class="field" aria-label="Service">
+          <option>What do you need?</option>
+          <option>AC not cooling</option>
+          <option>Heating / furnace repair</option>
+          <option>New system installation</option>
+          <option>Maintenance / tune-up</option>
+          <option>Emergency &mdash; no heat / no AC</option>
+        </select>
+        <button class="btn btn-quote" style="width:100%;justify-content:center">Request my free estimate</button>
+      </form>
+      <div class="form-note">No obligation &middot; We never share your info</div>
+    </div>
+  </div>
+</section>
+
+<div class="strip">
+  <div class="wrap">
+    <div class="item">&#9989; EPA Certified</div>
+    <div class="item">&#9989; NATE-Trained Technicians</div>
+    <div class="item">&#9989; Financing Available</div>
+    <div class="item">&#9989; 100% Satisfaction Guarantee</div>
+    <div class="item">&#9989; 24/7 Emergency Line</div>
+  </div>
+</div>
+
+<section class="pad" id="services">
+  <div class="wrap">
+    <div class="eyebrow">What we do</div>
+    <h2>Heating &amp; cooling, done right the first time</h2>
+    <p class="lead">From a quick repair to a full system swap, our technicians show up on time, explain the fix in plain language, and quote the price before they start.</p>
+    <div class="cards">
+      <div class="card"><div class="ci">&#10052;</div><h3>AC Repair &amp; Install</h3><p>Not cooling, leaking, or running up your bill? We diagnose fast and fix it today, or install a high-efficiency system that lowers your costs.</p></div>
+      <div class="card"><div class="ci">&#128293;</div><h3>Heating &amp; Furnace</h3><p>No heat on the coldest night? We repair all furnace and heat-pump brands and have same-day emergency slots reserved all winter.</p></div>
+      <div class="card"><div class="ci">&#128167;</div><h3>Maintenance Plans</h3><p>Two tune-ups a year, priority booking, and 15% off repairs. Catch small problems before they become a $6,000 replacement.</p></div>
+      <div class="card"><div class="ci">&#127788;</div><h3>Indoor Air Quality</h3><p>Filters, purifiers, and humidity control that keep your family breathing clean air all year, installed in a single visit.</p></div>
+      <div class="card"><div class="ci">&#9889;</div><h3>Thermostats &amp; Smart Controls</h3><p>Upgrade to a smart thermostat and cut your energy bill. We set it up and show you exactly how to use it.</p></div>
+      <div class="card"><div class="ci">&#128222;</div><h3>24/7 Emergency Service</h3><p>Heat or AC out after hours? A real technician answers, day or night, and heads your way. No call centers, no runaround.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="pad why" id="why">
+  <div class="wrap">
+    <div class="eyebrow">Why Northgate</div>
+    <h2>Your neighbors already trust us</h2>
+    <p class="lead">We've kept the Northgate metro comfortable for over 15 years &mdash; one honest job at a time.</p>
+    <div class="stats">
+      <div class="stat"><b>15+</b><span>Years in Northgate</span></div>
+      <div class="stat"><b>12k+</b><span>Systems serviced</span></div>
+      <div class="stat"><b>4.9&#9733;</b><span>Average rating</span></div>
+      <div class="stat"><b>&lt;2hr</b><span>Average response</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="pad" id="reviews">
+  <div class="wrap">
+    <div class="eyebrow">Reviews</div>
+    <h2>What customers are saying</h2>
+    <p class="lead">Real reviews from Google &amp; Facebook will appear here once your profiles are connected.</p>
+    <div class="reviews">
+      <div class="rev"><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p>&ldquo;AC died in a heatwave at 9pm. They answered, came out same night, and had us cooling again within the hour. Fair price, no drama.&rdquo;</p><div class="who"><div class="av">M</div><div><b>Maria R.</b><span>Northgate, verified</span></div></div></div>
+      <div class="rev"><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p>&ldquo;Quoted the furnace replacement upfront, no hidden fees, and finished in a day. The tech walked me through everything. Highly recommend.&rdquo;</p><div class="who"><div class="av">J</div><div><b>James T.</b><span>Westfield, verified</span></div></div></div>
+      <div class="rev ph"><div class="stars" style="color:#b9c8d6">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p>&ldquo;Your next Google review will show up right here &mdash; we pull your 5-star reviews in automatically so new customers see them first.&rdquo;</p><div class="who"><div class="av" style="background:#b9c8d6">+</div><div><b>Review placeholder</b><span>Auto-synced from Google</span></div></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="pad" id="area">
+  <div class="wrap">
+    <div class="eyebrow">Service area &amp; hours</div>
+    <h2>Fast across the whole Northgate metro</h2>
+    <p class="lead">Northgate, Westfield, Cedar Park, Lakeside, and every neighborhood in between.</p>
+    <div class="maparea">
+      <div class="mapbox">
+        <div class="maproads"></div>
+        <div class="glabel">&#128205; Northgate Heating &amp; Air</div>
+        <div class="pin">&#128205;</div>
+      </div>
+      <div class="hours">
+        <h3>Hours</h3>
+        <div class="hrow"><span>Monday &ndash; Friday</span><b>7:00a &ndash; 8:00p</b></div>
+        <div class="hrow"><span>Saturday</span><b>8:00a &ndash; 6:00p</b></div>
+        <div class="hrow"><span>Sunday</span><b>Emergency only</b></div>
+        <div class="hrow"><span>Emergency line</span><b>24 / 7</b></div>
+        <div class="open-pill"><span class="dot"></span> Open now &middot; closes 8:00p</div>
+        <div style="margin-top:22px;font-size:15px;color:#cfe0ef">1420 Service Rd, Northgate &middot; (555) 014-2200</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pad">
+  <div class="wrap">
+    <div class="final">
+      <div class="eyebrow" style="color:#bfe0ff">Ready when you are</div>
+      <h2>Stop sweating it &mdash; call now</h2>
+      <p>Same-day heating &amp; AC service across Northgate. Talk to a real technician in the next two minutes.</p>
+      <div class="hero-cta">
+        <a href="tel:+15550142200" class="btn btn-call">&#9742; Call (555) 014-2200</a>
+        <a href="#quote" class="btn btn-ghost">Get a free estimate</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div style="max-width:300px">
+        <div class="fbrand"><div class="logo">&#10052;</div>Northgate Heating &amp; Air</div>
+        <div>Licensed, insured, and local since 2011. Keeping the Northgate metro comfortable one honest job at a time.</div>
+      </div>
+      <div class="fcol"><b>Services</b><a href="#services">AC repair &amp; install</a><a href="#services">Heating &amp; furnace</a><a href="#services">Maintenance plans</a><a href="#services">24/7 emergency</a></div>
+      <div class="fcol"><b>Company</b><a href="#why">Why us</a><a href="#reviews">Reviews</a><a href="#area">Service area</a><a href="#quote">Free estimate</a></div>
+      <div class="fcol"><b>Contact</b><div>&#9742; (555) 014-2200</div><div>1420 Service Rd</div><div>Northgate</div><div>Open 7 days</div></div>
+    </div>
+    <div class="fbar">
+      <div>&copy; 2026 Northgate Heating &amp; Air (SAMPLE). All rights reserved.</div>
+      <div>EPA Certified &middot; License #HVAC-00000 &middot; A fictional demo business</div>
+    </div>
+  </div>
+</footer>
+
+<div class="mobcall">
+  <a href="tel:+15550142200" class="btn btn-call">&#9742; Call now</a>
+  <a href="#quote" class="btn btn-quote">Free estimate</a>
+</div>
+
+</body>
+</html>
