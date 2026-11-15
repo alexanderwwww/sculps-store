@@ -7,7 +7,7 @@ OUT="$1"; SHOTS="${2:-$(mktemp -d)}"
 case "$OUT" in /*) ;; *) OUT="$PWD/$OUT" ;; esac
 fail() { printf 'FAIL  %s\n' "$1" >&2; exit 1; }
 ok() { printf '  ok  %s\n' "$1"; }
-export AQ_BUILD="${AQ_BUILD:-5}"
+export AQ_BUILD="${AQ_BUILD:-6}"
 [ -f "$HERE/.keys.json" ] || fail "no .keys.json (feed + link keys)"
 ( cd "$HERE" && node --test test/wake.test.mjs >/dev/null ) || fail "wake word test"; ok "wake word parser"
 ( cd "$HERE" && node test/shots.mjs "$SHOTS" | grep -q "no page errors" ) || fail "the genie page has errors"; ok "genie renders: every face, suit, typing ($SHOTS)"

@@ -106,7 +106,7 @@ export async function act(action, input = {}) {
     case "navigate": {
       let u; try { u = new URL(String(input.url)); } catch { return fail("that is not a web address"); }
       if (!/^https?:$/.test(u.protocol)) return fail("only http and https addresses");
-      await chrome.tabs.update(id, { url: u.href }); await sleep(50); await loaded(id);
+      await chrome.tabs.update(id, { url: u.href, active: true }); await sleep(50); await loaded(id);
       return after(`opened ${u.hostname}${u.pathname}`);
     }
     case "click": {
