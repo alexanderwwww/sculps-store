@@ -1,7 +1,7 @@
 // People and critters: one chunky low-poly rig (hero, Perla, workers, citizens), cat, fisherman, boats, gulls, genie.
 import { THREE, Geo, G, cylT, hash, lerp } from "./gfx.js";
 import { height } from "./world.js";
-export const charMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, flatShading: true });
+export const charMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, flatShading: true, emissive: 0x2a2a38, emissiveIntensity: 0.55 });
 const mk = (fn, name) => { const g = new Geo(); fn((t, s, p, c, r, tg) => g.part(t, s, p, c, r || [0, 0, 0], tg || "solid")); const m = g.mesh("solid", charMat); m.castShadow = true; m.receiveShadow = false; m.name = name || ""; return m; };
 const grp = (x = 0, y = 0, z = 0) => { const o = new THREE.Group(); o.position.set(x, y, z); return o; };
 const LEG = 0.92;
@@ -37,10 +37,10 @@ export function makePerson(o) {
   const headG = grp(0, 0.66, 0); torso.add(headG);
   headG.add(mk((P) => {
     P("sph", [0.2, 0.22, 0.2], [0, 0.22, 0], o.skin);
-    for (const s of [-1, 1]) { P("sph", [0.045, 0.055, 0.02], [s * 0.075, 0.24, 0.185], "#ffffff"); P("sph", 0.028, [s * 0.075, 0.24, 0.2], "#2a1a12"); P("box", [0.09, 0.02, 0.02], [s * 0.075, 0.31, 0.185], o.hair, [0, 0, s * 0.1]); P("sph", [0.03, 0.05, 0.03], [s * 0.2, 0.2, 0], o.skin); }
+    for (const s of [-1, 1]) { P("sph", [0.034, 0.042, 0.02], [s * 0.08, 0.24, 0.186], "#ffffff"); P("sph", 0.021, [s * 0.08, 0.24, 0.202], "#2a1a12"); P("box", [0.09, 0.02, 0.02], [s * 0.075, 0.31, 0.185], o.hair, [0, 0, s * 0.1]); P("sph", [0.03, 0.05, 0.03], [s * 0.2, 0.2, 0], o.skin); }
     P("sph", [0.03, 0.04, 0.03], [0, 0.18, 0.2], o.skin); P("box", [0.07, 0.014, 0.02], [0, 0.1, 0.19], "#8a3a3a");
     if (o.beard) P("sph", [0.17, 0.1, 0.12], [0, 0.09, 0.1], o.hair);
-    P("sph", [0.215, 0.215, 0.21], [0, 0.29, -0.045], o.hair);                                    // hair cap (front hidden inside the forehead)
+    P("sph", [0.215, 0.215, 0.21], [0, 0.31, -0.045], o.hair);                                    // hair cap (front hidden inside the forehead)
     P("sph", [0.2, 0.1, 0.12], [0, 0.42, 0.05], o.hairHi);
     for (const s of [-1, 1]) P("box", [0.05, 0.22, 0.14], [s * 0.2, 0.2, -0.04], o.hair);
   }));

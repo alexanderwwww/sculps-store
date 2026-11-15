@@ -8,8 +8,8 @@ export const lerp = (a, b, t) => a + (b - a) * t;
 const cache = {};
 export function cylT(rt, rb, seg = 12) { const k = `${rt},${rb},${seg}`; return (cache[k] ||= new THREE.CylinderGeometry(rt, rb, 1, seg)); }
 export const G = {
-  box: new THREE.BoxGeometry(1, 1, 1), cyl: new THREE.CylinderGeometry(1, 1, 1, 14), cyl6: new THREE.CylinderGeometry(1, 1, 1, 6), cone: new THREE.ConeGeometry(1, 1, 10), cone4: new THREE.ConeGeometry(1, 1, 4),
-  sph: new THREE.SphereGeometry(1, 14, 10), hemi: new THREE.SphereGeometry(1, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), ico: new THREE.IcosahedronGeometry(1, 1), ico0: new THREE.IcosahedronGeometry(1, 0),
+  box: new THREE.BoxGeometry(1, 1, 1), cyl: new THREE.CylinderGeometry(1, 1, 1, 10), cyl6: new THREE.CylinderGeometry(1, 1, 1, 6), cone: new THREE.ConeGeometry(1, 1, 10), cone4: new THREE.ConeGeometry(1, 1, 4),
+  sph: new THREE.SphereGeometry(1, 10, 7), hemi: new THREE.SphereGeometry(1, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), ico: new THREE.IcosahedronGeometry(1, 1), ico0: new THREE.IcosahedronGeometry(1, 0),
   tor: new THREE.TorusGeometry(1, 0.2, 8, 20), plane: new THREE.PlaneGeometry(1, 1),
 };
 const V = new THREE.Vector3(), Q = new THREE.Quaternion(), E = new THREE.Euler(), S = new THREE.Vector3();
@@ -56,8 +56,8 @@ export function canvasTex(w, h, draw, opts = {}) {
 export function plasterTex() {
   return canvasTex(256, 256, (x) => {
     x.fillStyle = "#ffffff"; x.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 260; i++) { const r = 6 + hash(i) * 26; x.fillStyle = `rgba(${150 + hash(i + 9) * 80 | 0},${140 + hash(i + 3) * 70 | 0},${120 + hash(i + 5) * 70 | 0},${0.05 + hash(i + 1) * 0.07})`; x.beginPath(); x.ellipse(hash(i + 2) * 256, hash(i + 4) * 256, r, r * (0.5 + hash(i + 6) * 0.6), hash(i) * 3, 0, 7); x.fill(); }
-    for (let i = 0; i < 700; i++) { x.fillStyle = `rgba(90,80,60,${0.04 + hash(i + 11) * 0.06})`; x.fillRect(hash(i + 12) * 256, hash(i + 13) * 256, 1 + hash(i + 14) * 2, 1 + hash(i + 15) * 2); }
+    for (let i = 0; i < 260; i++) { const r = 6 + hash(i) * 26; x.fillStyle = `rgba(${150 + hash(i + 9) * 80 | 0},${140 + hash(i + 3) * 70 | 0},${120 + hash(i + 5) * 70 | 0},${0.025 + hash(i + 1) * 0.035})`; x.beginPath(); x.ellipse(hash(i + 2) * 256, hash(i + 4) * 256, r, r * (0.5 + hash(i + 6) * 0.6), hash(i) * 3, 0, 7); x.fill(); }
+    for (let i = 0; i < 700; i++) { x.fillStyle = `rgba(90,80,60,${0.03 + hash(i + 11) * 0.04})`; x.fillRect(hash(i + 12) * 256, hash(i + 13) * 256, 1 + hash(i + 14) * 2, 1 + hash(i + 15) * 2); }
     x.strokeStyle = "rgba(255,255,255,.35)"; x.lineWidth = 1.5; for (let i = 0; i < 40; i++) { const px = hash(i + 20) * 256, py = hash(i + 21) * 256; x.beginPath(); x.moveTo(px, py); x.lineTo(px + 12 + hash(i + 22) * 30, py + (hash(i + 23) - 0.5) * 5); x.stroke(); }
   }, { repeat: true });
 }

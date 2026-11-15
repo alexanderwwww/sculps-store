@@ -19,10 +19,10 @@ export function groundY(x, z) { return height(x, z); }
 
 // ---------- painted terrain ----------
 export function makeTerrain(paths) {
-  const SEG = 190, geo = new THREE.PlaneGeometry(HALF * 2, HALF * 2, SEG, SEG); geo.rotateX(-Math.PI / 2);
+  const SEG = 150, geo = new THREE.PlaneGeometry(HALF * 2, HALF * 2, SEG, SEG); geo.rotateX(-Math.PI / 2);
   const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, Math.max(-6, height(p.getX(i), p.getZ(i))));
   const uv = geo.attributes.uv; for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) + HALF) / (HALF * 2), 1 - (p.getZ(i) + HALF) / (HALF * 2) * 0 - 0); // set below
-  for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) + HALF) / (HALF * 2), (p.getZ(i) + HALF) / (HALF * 2));
+  for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) + HALF) / (HALF * 2), 1 - (p.getZ(i) + HALF) / (HALF * 2));
   geo.computeVertexNormals();
   const N = 512, hg = new Float32Array(N * N); for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) hg[j * N + i] = height(-HALF + (i + 0.5) * (HALF * 2 / N), -HALF + (j + 0.5) * (HALF * 2 / N));
   const base = document.createElement("canvas"); base.width = base.height = N; const bx = base.getContext("2d"), id = bx.createImageData(N, N);
@@ -93,7 +93,7 @@ function baseHeight(x, z, w, d, ry) {
   return m;
 }
 const WALLS = ["#f7f2e6", "#f2ebdd", "#faf6ee", "#efe6d2"];
-const STONE = "#cdc3b0", DARK = "#243a58", GOLD = "#f0c040", WOOD = "#6a4428";
+const STONE = "#cdc3b0", DARK = "#243a58", GOLD = "#f0c040", WOOD = "#9a6a3a";
 
 export function buildTown(layout, ctx) {
   // ctx: {status(id)->status, atlas, decor:{christmas,bf,celebrate,newyear}, X:{halos,chimneys,colliders,picks,blades,doors,spots}}
@@ -216,13 +216,13 @@ function villa(g, b, ctx, w, d, Y0, by, X) {
   P("box", [1.7, 2.8, 0.16], [0, Y0 + 1.4, d / 2 + 0.05], b.trim); P("box", [1.4, 2.4, 0.2], [0, Y0 + 1.2, d / 2 + 0.1], "#6a4428");
   for (const i of [-1, 1]) for (const j of [-1, 1]) { P("box", [1.1, 1.5, 0.14], [i * w * 0.32, Y0 + 2.2, d / 2 + 0.06], "#3a6ab8"); P("box", [0.85, 1.25, 0.18], [i * w * 0.32, Y0 + 2.2, d / 2 + 0.08], "#ffc968", [0, 0, 0], "glow"); X.halos.push({ p: g.world([i * w * 0.32, Y0 + 2.2, d / 2 + 0.6]), s: 2.4, a: 0.5 }); break; }
   // pool + lounge on the sea side (behind the villa, local -z)
-  g.frame([w * 0.05, 0, -d / 2 - 7], 0, () => {
-    P("box", [11, 0.5, 6.4], [0, 0.0, 0], "#efe6d2"); P("box", [9.6, 0.15, 5.0], [0, 0.28, 0], "#3ac8e8", [0, 0, 0], "glow"); P("box", [9.6, 0.1, 5.0], [0, 0.27, 0], "#7ee6f4");
+  g.frame([w / 2 + 8.2, 0, -1.0], 0, () => {
+    P("box", [11, 3.4, 6.4], [0, -1.35, 0], "#efe6d2"); P("box", [9.6, 0.1, 5.0], [0, 0.41, 0], "#3ac8e8", [0, 0, 0], "glow");
     for (let i = 0; i < 2; i++) { P("box", [0.7, 0.18, 2.0], [-3 + i * 1.1, 0.7, -4.4], "#fff6e0", [-0.25, 0, 0]); P("box", [0.7, 0.35, 1.4], [-3 + i * 1.1, 0.45, -3.9], "#ffd8c0"); }
     P("cyl", [0.06, 3.0, 0.06], [3.8, 1.8, -4.2], WOOD); P("cone", [1.6, 0.5, 1.6], [3.8, 3.4, -4.2], "#e86a4a"); P("box", [1.6, 0.35, 0.8], [3.6, 0.45, -4.2], "#e8dcc0");
     for (let i = 0; i < 3; i++) P("box", [0.14, 1.1, 0.14], [-5.4, 0.6, -2.5 + i * 2.5], "#fff"); 
   });
-  X.pool = { c: g.world([w * 0.05, 0, -d / 2 - 7]), hw: 4.8, hd: 2.5 };
+  X.pool = { c: g.world([w / 2 + 8.2, 0, -1.0]), hw: 4.9, hd: 2.6, ry: b.ry, y: by + 0.35 }; X.platforms.push({ x: X.pool.c.x, z: X.pool.c.z, hw: 5.5, hd: 3.2, ry: b.ry, y: by + 0.35 });
   // olive grove marker positions handled by trees
 }
 function olivePos() {}

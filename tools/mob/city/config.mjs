@@ -80,7 +80,7 @@ export const BUILDINGS = [
   { id: "miner",    name: "Miner workshop",     district: "side", kind: "miner", skill: "miner", purpose: "Crypto mining rig. Waiting for the machine.", status: "construction", accent: "#6a6a72", trim: "#ffd84a", prop: "gear", brain: "mining|asic" },
 
   // ---- Alex's house (spawn) ----
-  { id: "home",     name: "Alex's villa",       district: "home", kind: "home", skill: "home", purpose: "Home on the hill by the sea. Pool, lounge, olive trees.", status: "open", accent: "#c8643a", trim: "#fffaf0", prop: "villa", pos: [66, 50], size: [10, 7, 4.6], big: true },
+  { id: "home",     name: "Alex's villa",       district: "home", kind: "home", skill: "home", purpose: "Home on the hill by the sea. Pool, lounge, olive trees.", status: "open", accent: "#c8643a", trim: "#fffaf0", prop: "villa", pos: [52, 50], size: [10, 7, 4.6], big: true },
 
   // ---- Friendly market (decoration, easter egg only) ----
   { id: "super",    name: "Friendly Market",    district: "home", kind: "super", skill: "supermarket", purpose: "Just a supermarket.", status: "open", accent: "#e8504a", trim: "#fff6e0", prop: "cart", pos: [-30, 6], size: [9, 6, 3.8] },

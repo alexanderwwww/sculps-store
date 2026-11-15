@@ -59,3 +59,6 @@ Cursor Clipper build 3 (dev-console hosts so Claude can set up the YouTube/Meta/
 
 ## Clip library gap (2026-11-15)
 56 unposted `oraktys-*.mp4` clips in R2 have NO streamer metadata, and the keys are lowercased Twitch slugs (Twitch slugs are case-sensitive), so the streamer cannot be looked up. Some may be SkiiMaskTimmy (banned by Alex). Rule: never post a clip whose streamer is unknown. Fix: future clips are stored with a sidecar `<key>.json` {streamer, title, game, src} written by daily.py at download time.
+
+## The City (2026-11-15)
+`/city` = walkable dashboard of the whole operation, behind the same admin login; also `/api/income` (manual income ledger) and `/api/news`. See `.claude/skills/city/SKILL.md`..

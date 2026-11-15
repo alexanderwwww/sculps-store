@@ -12,7 +12,7 @@ const N = (v) => Number(v || 0);
 const trim = (s, n) => { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > n ? s.slice(0, n - 1) + "…" : s; };
 
 export function cityPage() {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><title>The City</title>
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><link rel="icon" href="data:,"><title>The City</title>
 <style>${CSS}</style></head><body>
 <canvas id="gl"></canvas>
 <div id="load"><div><b>THE CITY</b><i id="loadmsg">Lighting the lanterns…</i></div></div>
