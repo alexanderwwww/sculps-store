@@ -69,7 +69,7 @@ const ctx = await chromium.launchPersistentContext(prof, {
 const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker", { timeout: 15000 });
 ok("the extension loads (its service worker runs)", /background\.js$/.test(sw.url()), sw.url());
 const manifest = JSON.parse(fs.readFileSync(path.join(EXT, "manifest.json"), "utf8"));
-ok("manifest v3, build 1, content script on claude.ai", manifest.manifest_version === 3 && manifest.version_name === "build 1" && manifest.content_scripts[0].matches.includes("https://claude.ai/*"));
+ok("manifest v3, build 2, content script on claude.ai", manifest.manifest_version === 3 && manifest.version_name === "build 2" && manifest.content_scripts[0].matches.includes("https://claude.ai/*"));
 
 // 1. the genie appears on the chat page
 const page = await ctx.newPage();
@@ -106,7 +106,7 @@ ok("then sends once the composer is free", await until(async () => (await page.l
 
 // 4. the menu: build number, suit, turn off, back on from the toolbar, hide 1 hour
 await page.locator("#aquarius-genie >> #hit").click();
-ok("clicking him opens the menu with CEO · build 1", await until(async () => (await page.locator("#aquarius-genie >> #menu").isVisible()) && (await page.locator("#aquarius-genie >> #mbuild").innerText()) === "CEO · build 1"));
+ok("clicking him opens the menu with CEO · build 2", await until(async () => (await page.locator("#aquarius-genie >> #menu").isVisible()) && (await page.locator("#aquarius-genie >> #mbuild").innerText()) === "CEO · build 2"));
 await page.locator("#aquarius-genie >> #msuit").click();
 ok("Suit on: he wears the suit", await until(async () => (await st()).suit === true));
 await sleep(500);
@@ -132,7 +132,7 @@ let n = 0;
 async function send(action, input = {}) { const id = `c${++n}`; queue.push({ id, action, input }); return (await until(() => results.get(id), 40000)) || { text: "(no answer)" }; }
 let r = await send("navigate", { url: `${WEB}/search`, look: true, why: "t" });
 ok("navigate opens his tab and returns refs when asked", /ok: true[\s\S]*textbox "Search" \[ref=(a\d+)\]/.test(r.text), r.text);
-ok("the heartbeat says Aquarius build 1", statuses.some((s) => s.app === "Aquarius" && s.build === "1"));
+ok("the heartbeat says Aquarius build 2", statuses.some((s) => s.app === "Aquarius" && s.build === "2"));
 const hands = () => ctx.pages().find((p) => p.url().startsWith(WEB));
 const searchRef = r.text.match(/textbox "Search" \[ref=(a\d+)\]/)[1];
 r = await send("type", { ref: searchRef, text: "aquarius constellation", why: "t" });
@@ -169,6 +169,19 @@ const { aqMagic } = await import("../ext/src/magic.js");
 await hands().evaluate(`(${aqMagic.toString()})(300, 70, { freeze: 0.3, keep: true, silent: true })`);
 await hands().screenshot({ path: path.join(SHOTS, "sparkle.png"), clip: { x: 150, y: 0, width: 320, height: 200 } });
 
+// build 2: a chat tab open BEFORE he loaded (no content script) gets him when the toolbar icon is clicked
+{
+  const old = await ctx.newPage(); await old.goto(CHAT + "old-tab"); await sleep(1500);
+  ok("a tab open before install starts without him", (await old.locator("#aquarius-genie").count()) === 0);
+  const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker");
+  await sw.evaluate(() => self.__aq.injectOpenChats());
+  let n = 0; for (let i = 0; i < 20 && !n; i++) { n = await old.locator("#aquarius-genie").count(); await sleep(250); }
+  ok("clicking his icon puts him on that already-open tab", n === 1);
+  await sw.evaluate(() => self.__aq.injectOpenChats());
+  await sleep(800);
+  ok("injecting twice never makes two genies", (await old.locator("#aquarius-genie").count()) === 1);
+  await old.close();
+}
 await ctx.close(); chat.close(); web.close(); mob.close();
 clearTimeout(KILL);
 console.log(`ext.test.mjs: ${pass} passed, ${fail} failed   (screenshots: ${SHOTS})`);

@@ -188,10 +188,23 @@ chrome.runtime.onMessage.addListener((m, sender, reply) => {
   return false;
 });
 // Clicking the toolbar icon always brings him back (that is how "opening the app again" works here).
-chrome.action.onClicked.addListener(async () => { await set({ on: true, hiddenUntil: 0 }); await toChats({ type: "wake" }); });
+// Put him on claude.ai tabs that were already open before install (content
+// scripts only reach tabs loaded after install). content.js guards itself.
+async function injectOpenChats() {
+  const tabs = await chatTabs();
+  for (const t of tabs) { try { await chrome.scripting.executeScript({ target: { tabId: t.id }, files: ["content.js"] }); } catch {} }
+}
+chrome.action.onClicked.addListener(async (tab) => {
+  await set({ on: true, hiddenUntil: 0 });
+  await injectOpenChats();
+  await toChats({ type: "wake" });
+  if (!tab || !/^https:\/\/claude\.ai\//.test(tab.url || "")) await chrome.tabs.create({ url: "https://claude.ai/code" });
+});
+chrome.runtime.onStartup?.addListener(injectOpenChats);
 chrome.runtime.onInstalled.addListener(async () => {
+  injectOpenChats();
   const s = await chrome.storage.local.get(["on", "listen"]);
   await set({ on: s.on ?? true, listen: s.listen ?? true });
 });
-self.__aq = { act, tick, pollFeed, pollLink }; // tests drive these
+self.__aq = { act, tick, pollFeed, pollLink, injectOpenChats }; // tests drive these
 tick();

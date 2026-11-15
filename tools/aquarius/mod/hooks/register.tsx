@@ -42,14 +42,14 @@ async function whip($: any) {
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'aquarius', description: 'Aquarius runs a full money loop now' })
+    await $.command.register({ name: 'genie', description: 'Aquarius runs a full money loop now' })
     await $.command.register({ name: 'whip', description: 'Whip Aquarius: no stopping, keep working' })
     void $.ui.open({ id: PANE, title: '🧞 Aquarius · CEO' })
     return next(e)
   })
 
 
-  on('command.run', { command: 'aquarius' }, async $ => {
+  on('command.run', { command: 'genie' }, async $ => {
     await $.ui.open({ id: PANE, title: '🧞 Aquarius · CEO' })
     await say($, 'focused', 'On it. Running every business.', LOOP)
     return { text: '🧞 Aquarius is on it.' }

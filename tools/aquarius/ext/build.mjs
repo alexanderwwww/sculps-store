@@ -8,7 +8,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const [out, flag, origin, mobTest] = process.argv.slice(2);
 if (!out) { console.error("usage: node build.mjs <outDir> [--test <origin> <mob>]"); process.exit(1); }
 const test = flag === "--test";
-const BUILD = process.env.AQ_BUILD || "1";
+const BUILD = process.env.AQ_BUILD || "2";
 const keysFile = join(HERE, "../.keys.json");
 const keys = test ? { feedKey: "aq-key-test", linkKey: "lk-test" } : JSON.parse(readFileSync(keysFile, "utf8"));
 const chatMatches = ["https://claude.ai/*"].concat(test ? ["http://127.0.0.1/*"] : []);
@@ -27,7 +27,7 @@ const manifest = {
   icons: { 16: "icon-16.png", 32: "icon-32.png", 48: "icon-48.png", 128: "icon-128.png" },
   action: { default_title: `Aquarius · build ${BUILD} (click to bring him back)`, default_icon: { 16: "icon-16.png", 32: "icon-32.png" } },
   background: { service_worker: "background.js", type: "module" },
-  content_scripts: [{ matches: chatMatches, js: ["content.js"], run_at: "document_idle" }],
+  content_scripts: [{ matches: chatMatches, ...(test ? { exclude_matches: ["http://127.0.0.1/old*"] } : {}), js: ["content.js"], run_at: "document_idle" }],
   permissions: ["storage", "tabs", "scripting", "alarms"],
   host_permissions: ["<all_urls>"],
 };
