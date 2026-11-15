@@ -99,3 +99,6 @@ Role handoff (Alex, October 17): Claude takes over website design/implementation
 ## 2026-11-03 company identity on the site (live version b851774d-d291-47dc-ba6b-e930cf186766)
 - A customer asked who is behind the site. Alex gave: company **AIGIS LLC**, owner **Alexandros Bougiouklis**. Every archive footer now reads "Mysterious Archive is the trade name of AIGIS LLC, owned and operated by Alexandros Bougiouklis." (`CompanyLine`, `COMPANY_STATEMENT` in `legal.tsx`), and the sentence is also on About ("The company"), Contact, Terms ("Who is selling") and Privacy ("Who we are"). `stores.legal_name` = AIGIS LLC.
 - NOT published, on purpose: a street address and the state of formation. AIGIS LLC was Administratively Dissolved (Tax) in Wyoming on 2025-07-09 (see payments skill): reinstate it and get the Good Standing certificate before adding "a Wyoming limited liability company" or any address, and before a processor or customer checks the state record.
+
+## Never say "one of one" on Chrome Hearts (Alex, 2026-11-15, angry)
+Chrome Hearts pieces are produced in runs, not unique. NEVER write "one of one", "1/1", or "unique" for a Chrome Hearts item in any listing, email or page. Say "genuine", "authenticated", "pre-owned", the condition. This applies to Mysterious Archive and flip.
