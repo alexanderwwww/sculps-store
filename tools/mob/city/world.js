@@ -8,7 +8,7 @@ export function snowAmt(x, z) { let a = 0; for (const s of SNOW_ZONES) a = Math.
 export function height(x, z) {
   const ang = Math.atan2(z, x), r = Math.hypot(x, z) + (vnoise(Math.cos(ang) * 2.2 + 5, Math.sin(ang) * 2.2) - 0.5) * 12;
   let h = 3.2 - 9 * smooth(78, 104, r);
-  h += 8 * Math.exp(-((z + 60) ** 2) / (2 * 16 * 16) - (x * x) / (2 * 34 * 34));
+  h += 14 * Math.exp(-((z + 70) ** 2) / (2 * 20 * 20) - (x * x) / (2 * 36 * 36));
   h += 11 * Math.exp(-((x + 74) ** 2 + (z + 60) ** 2) / (2 * 15 * 15));
   const far = smooth(26, 50, Math.hypot(x, z));
   h += ((vnoise(x * 0.07, z * 0.07) - 0.5) * 3.2 + (vnoise(x * 0.23, z * 0.23) - 0.5) * 0.7) * far;
@@ -102,16 +102,16 @@ export function buildTown(layout, ctx) {
   for (const [bi, b] of layout.entries()) {
     g.seed = bi + 1;
     const st = ctx.status(b.id), [w0, d0, h0] = b.size, ry = b.ry, [x, z] = b.pos;
-    const small = st === "closed" ? 0.62 : 1, w = w0 * small, d = d0 * small, h = h0 * (st === "closed" ? 0.55 : 1);
+    const small = st === "closed" ? 0.5 : 1, w = w0 * small, d = d0 * small, h = h0 * (st === "closed" ? 0.55 : 1);
     const by = baseHeight(x, z, w0, d0, ry);
     g.base.makeRotationY(ry).setPosition(x, by, z); g.baseY = by;
     const Y0 = 0.35, wall = WALLS[bi % 4], P = (t, s, p, c, r, tg) => g.part(t, s, p, c, r || [0, 0, 0], tg || "solid");
     const sn = snowAmt(x, z);
-    const door = [x + Math.sin(ry) * (d0 / 2 + 2.6), z + Math.cos(ry) * (d0 / 2 + 2.6)];
+    const fe = b.style === "palace" ? 8.5 : 0, door = [x + Math.sin(ry) * (d0 / 2 + 2.6 + fe), z + Math.cos(ry) * (d0 / 2 + 2.6 + fe)];
     X.doors[b.id] = door;
-    X.colliders.push({ x, z, hw: w0 / 2 + 0.25, hd: d0 / 2 + 0.25, ry });
+    X.colliders.push({ x: x + Math.sin(ry) * fe / 2, z: z + Math.cos(ry) * fe / 2, hw: (fe ? w0 : w) / 2 + 0.25, hd: (fe ? d0 : d) / 2 + 0.25 + fe / 2, ry });
     X.picks.push({ id: b.id, c: [x, by + h0 / 2 + 1, z], s: [w0 + 1, h0 + 3, d0 + 1], ry });
-    P("box", [w0 + 0.5, 3.4, d0 + 0.5], [0, -1.35, 0], STONE);
+    P("box", [w0 + 0.5, fe ? 9 : 3.4, d0 + 0.5], [0, fe ? -4.1 : -1.35, 0], STONE);
     const sign = (text, sub, bg, opts = {}) => { const Sw = Math.min(Math.max(w0 * 0.95, 4.8), 7), Sh = Sw / 4, rect = ctx.atlas.add({ text, sub, bg, ...opts }); const yy = Y0 + h + Sh / 2 + 0.55;
       P("box", [Sw + 0.25, Sh + 0.25, 0.18], [0, yy, d / 2 - 0.15], WOOD, [-0.08, 0, 0]); P("box", [0.18, 0.7, 0.18], [-Sw * 0.4, yy - Sh / 2 - 0.25, d / 2 - 0.25], WOOD); P("box", [0.18, 0.7, 0.18], [Sw * 0.4, yy - Sh / 2 - 0.25, d / 2 - 0.25], WOOD);
       g.sign(Sw, Sh, [0, yy - 0.01, d / 2 - 0.04], [-0.08, 0, 0], rect); };
@@ -121,7 +121,8 @@ export function buildTown(layout, ctx) {
       if (lit) X.halos.push({ p: g.world([0, 0, 0.5]), s: 2.2, a: 0.5 }); });
     const lantern = (px) => { P("box", [0.1, 2.3, 0.1], [px, Y0 + 1.15, d / 2 + 0.45], "#2a2a30"); P("box", [0.32, 0.44, 0.32], [px, Y0 + 2.45, d / 2 + 0.45], "#ffcf6a", [0, 0, 0], "glow"); X.halos.push({ p: g.world([px, Y0 + 2.45, d / 2 + 0.45]), s: 3.2, a: 0.9 }); };
 
-    if (b.kind === "bank") { bank(g, b, ctx, w0, d0, Y0, by); }
+    if (b.style === "palace") { palace(g, b, ctx, w0, d0, h0, Y0, X); }
+    else if (b.kind === "bank") { bank(g, b, ctx, w0, d0, Y0, by); }
     else if (b.kind === "home") { villa(g, b, ctx, w0, d0, Y0, by, X); }
     else if (b.style === "stall") { stall(g, b, st, ctx, w0, d0, Y0, sign, lantern); }
     else if (st === "planned") {
@@ -204,6 +205,38 @@ function bank(g, b, ctx, w, d, Y0, by) {
   // coin fountain in front
   g.frame([ -5.5, 0, d / 2 + 5 ], 0, () => { P("cyl", [1.8, 0.5, 1.8], [0, 0.25, 0], STONE); P("cyl", [1.5, 0.12, 1.5], [0, 0.55, 0], "#ffd24a"); P("cyl", [0.3, 1.4, 0.3], [0, 1.1, 0], "#e6c040"); P("cyl", [0.8, 0.14, 0.8], [0, 1.8, 0], "#ffd24a"); for (let i = 0; i < 8; i++) P("cyl", [0.25, 0.05, 0.25], [Math.cos(i) * 1.1, 0.62, Math.sin(i) * 1.1], "#fff2a0", [0.2, 0, 0.2], "glow"); ctx.X.halos.push({ p: g.world([0, 1.6, 0]), s: 5, a: 0.9 }); });
   ctx.X.bank = { p: g.world([0, 0, d / 2 + 3]), by };
+}
+// The flagship: a grand ornate palace on the central hill, by far the biggest thing in town.
+function palace(g, b, ctx, w, d, h, Y0, X) {
+  const P = (t, s, p, c, r, tg) => g.part(t, s, p, c, r || [0, 0, 0], tg || "solid");
+  const LIME = "#efe4cc", LIME2 = "#e4d6b8", SLATE = "#3a3a48", GOLDC = "#e8b84a", BLK = "#17171d", SIL = "#cfd4e0";
+  P("box", [w + 1, 0.5, d + 1], [0, Y0 + 0.25, 0], LIME2);
+  P("box", [w, h, d], [0, Y0 + h / 2, 0], LIME); P("box", [w * 0.5, h * 0.55, d * 0.8], [0, Y0 + h + h * 0.275, -1], LIME);
+  for (const s of [-1, 1]) { P("box", [8, h * 0.78, d * 0.9], [s * (w / 2 + 4), Y0 + h * 0.39, -0.5], LIME); P("box", [8.4, 0.7, d * 0.9 + 0.4], [s * (w / 2 + 4), Y0 + h * 0.78 + 0.3, -0.5], LIME2); P("hemi", [3.6, 3.6, 3.6], [s * (w / 2 + 4), Y0 + h * 0.78 + 0.6, -0.5], "#2a62c8");
+    P("box", [4.2, h + 8, 4.2], [s * (w / 2 - 1.2), Y0 + (h + 8) / 2, -d / 2 + 2.2], LIME); P("box", [4.8, 0.8, 4.8], [s * (w / 2 - 1.2), Y0 + h + 8.2, -d / 2 + 2.2], LIME2); P("cone4", [3.4, 5, 3.4], [s * (w / 2 - 1.2), Y0 + h + 11, -d / 2 + 2.2], SLATE, [0, Math.PI / 4, 0]); P("cyl", [0.12, 3, 0.12], [s * (w / 2 - 1.2), Y0 + h + 15, -d / 2 + 2.2], GOLDC);
+    for (let k = 0; k < 4; k++) P("box", [1.3, 2.6, 0.2], [s * (w / 2 + 4 + (k % 2 ? 1.8 : -1.8)), Y0 + 2.8 + (k > 1 ? 4 : 0), d * 0.45 - 0.5], "#ffd78a", [0, 0, 0], "glow"); }
+  P("box", [w + 2, 0.9, 1.4], [0, Y0 + h + 0.2, d / 2 + 0.5], LIME2);
+  for (let k = 0; k < 12; k++) { const x = -w * 0.44 + k * (w * 0.88 / 11); P("cyl", [0.78, h - 0.4, 0.78], [x, Y0 + (h - 0.4) / 2 + 0.5, d / 2 + 2.2], "#fbf3e0"); P("box", [1.9, 0.5, 1.9], [x, Y0 + h - 0.1, d / 2 + 2.2], LIME2); P("box", [1.9, 0.5, 1.9], [x, Y0 + 0.75, d / 2 + 2.2], LIME2); }
+  P("box", [w * 0.96, 1.2, 3.4], [0, Y0 + h + 0.35, d / 2 + 2.2], LIME2);
+  for (const s of [-1, 1]) P("box", [w * 0.5, 0.4, 3.9], [s * w * 0.25, Y0 + h + 1.8 + 0.9, d / 2 + 2.2], GOLDC, [0, 0, -s * 0.12]);
+  for (let k = 0; k < 6; k++) { P("box", [1.4, 4.4, 0.3], [-w * 0.42 + k * w * 0.168 + 0.5, Y0 + 5.6, d / 2 + 0.2], "#ffd78a", [0, 0, 0], "glow"); P("cyl", [0.7, 0.3, 0.7], [-w * 0.42 + k * w * 0.168 + 0.5, Y0 + 7.8, d / 2 + 0.2], "#ffd78a", [Math.PI / 2, 0, 0], "glow"); }
+  P("box", [5.2, 8, 0.5], [0, Y0 + 4.5, d / 2 + 0.3], BLK); P("cyl", [2.6, 0.5, 2.6], [0, Y0 + 8.5, d / 2 + 0.3], BLK, [Math.PI / 2, 0, 0]); P("box", [4.2, 7.3, 0.6], [0, Y0 + 4.2, d / 2 + 0.35], "#2a1a14"); P("cyl", [2.1, 0.6, 2.1], [0, Y0 + 7.8, d / 2 + 0.35], "#2a1a14", [Math.PI / 2, 0, 0]); P("sph", 0.2, [1.4, Y0 + 4, d / 2 + 0.8], GOLDC);
+  P("box", [0.12, 6.8, 0.1], [0, Y0 + 4.2, d / 2 + 0.7], GOLDC); P("box", [3.4, 0.12, 0.1], [0, Y0 + 5.0, d / 2 + 0.7], GOLDC);
+  for (let i = 0; i < 5; i++) P("box", [w * 0.9 - i * 1.4, 0.12 * (i + 1) + 0.1, 1.4], [0, Y0 + (0.12 * (i + 1) + 0.1) / 2, d / 2 + 5.5 - i * 0.8], i % 2 ? LIME2 : "#f6ecd6");
+  for (const s of [-1, 1]) { P("box", [2.2, 3.2, 2.2], [s * (w * 0.36), Y0 + 1.6, d / 2 + 9.5], LIME2); P("box", [0.3, 3.4, 0.3], [s * w * 0.36, Y0 + 4.9, d / 2 + 9.5], SIL); P("box", [1.6, 0.3, 0.3], [s * w * 0.36, Y0 + 5.6, d / 2 + 9.5], SIL); P("ico", 0.18, [s * w * 0.36, Y0 + 6.6, d / 2 + 9.5], "#ffffff", [0, 0, 0], "glow"); }
+  for (let k = 0; k < 5; k++) { const x = -w * 0.4 + k * w * 0.2; P("box", [1.0, 5.2, 0.12], [x, Y0 + 7.2, d / 2 + 4.0], k % 2 ? "#a82a3a" : BLK); P("box", [0.2, 2.4, 0.04], [x, Y0 + 7.6, d / 2 + 4.08], SIL); P("box", [1.0, 0.2, 0.04], [x, Y0 + 8.1, d / 2 + 4.08], SIL); }
+  const tw = w * 0.5, ty = Y0 + h + h * 0.55;
+  for (let k = 0; k < 6; k++) P("box", [1.6, 3.6, 0.2], [-tw * 0.4 + k * tw * 0.16, Y0 + h + 3.0, d * 0.4 - 1], "#ffd78a", [0, 0, 0], "glow");
+  P("box", [tw + 1.4, 1.0, d * 0.8 + 1.4], [0, ty + 0.3, -1], LIME2); P("cyl", [tw * 0.4, 2.6, tw * 0.4], [0, ty + 1.9, -1], LIME); P("hemi", [tw * 0.42, tw * 0.42, tw * 0.42], [0, ty + 3.2, -1], GOLDC);
+  for (let k = 0; k < 8; k++) P("box", [0.12, tw * 0.42, 0.5], [0, ty + 3.2, -1], "#c8962a", [0, k * Math.PI / 8, Math.PI / 2 - 0.0], "solid");
+  P("cyl", [0.3, 3.6, 0.3], [0, ty + 3.2 + tw * 0.42 + 1.4, -1], GOLDC);
+  const cy = ty + 3.2 + tw * 0.42 + 3.6;   // the archive cross: our own design, a cross with four small orbs
+  P("box", [0.5, 5.0, 0.5], [0, cy + 1.2, -1], GOLDC); P("box", [3.0, 0.5, 0.5], [0, cy + 2.4, -1], GOLDC); for (const [dx, dy] of [[0, 3.9], [0, -1.4], [-1.7, 2.4], [1.7, 2.4]]) P("ico", 0.45, [dx, cy + dy + 0.0, -1], "#fff6c0", [0, 0, 0], "glow");
+  X.halos.push({ p: g.world([0, cy + 2.4, -1]), s: 14, a: 1 }); X.halos.push({ p: g.world([0, Y0 + 4.5, d / 2 + 2.5]), s: 9, a: 0.9 }); X.halos.push({ p: g.world([w * 0.3, Y0 + 7, d / 2 + 2.5]), s: 7, a: 0.7 }); X.halos.push({ p: g.world([-w * 0.3, Y0 + 7, d / 2 + 2.5]), s: 7, a: 0.7 });
+  X.chimneys.push(g.world([w * 0.3, Y0 + h + 6, -d * 0.2]));
+  const rect = ctx.atlas.add({ text: "MYSTERIOUS ARCHIVE", sub: "Chrome Hearts · one piece at a time", bg: "#17171d", fg: "#f0f2ff", subColor: "#e8b84a" });
+  P("box", [w * 0.5 + 0.4, w * 0.5 / 4 + 0.4, 0.3], [0, Y0 + h + 3.6, d / 2 + 4.0], GOLDC); g.sign(w * 0.5, w * 0.5 / 4, [0, Y0 + h + 3.6, d / 2 + 4.17], [0, 0, 0], rect);
+  for (const [dx, dz] of [[-1, 1], [1, 1]]) { P("cyl", [0.12, 3.2, 0.12], [dx * 5.4, Y0 + 1.6 + 0.5, d / 2 + 4.0 + dz * 0], "#2a2a30"); P("box", [0.5, 0.7, 0.5], [dx * 5.4, Y0 + 3.6, d / 2 + 4.0], "#ffcf6a", [0, 0, 0], "glow"); X.halos.push({ p: g.world([dx * 5.4, Y0 + 3.6, d / 2 + 4.0]), s: 5, a: 1 }); }
 }
 function villa(g, b, ctx, w, d, Y0, by, X) {
   const P = (t, s, p, c, r, tg) => g.part(t, s, p, c, r || [0, 0, 0], tg || "solid");

@@ -18,7 +18,7 @@ export function cityPage() {
 <div id="load"><div><b>THE CITY</b><i id="loadmsg">Lighting the lanterns…</i></div></div>
 <div id="hud"><b>THE CITY</b><span id="tot">loading live numbers…</span></div>
 <canvas id="mini" width="160" height="160"></canvas>
-<div id="tip"></div><div id="labels"></div>
+<div id="fade"></div><div id="tip"></div><div id="labels"></div>
 <div id="panel"><button id="x" aria-label="Close">×</button><div id="pc"></div></div>
 <div id="btns"><button id="snow">Snow: on</button><button id="orbit">Orbit view</button><a href="/">mob</a></div>
 <div id="help">WASD walk · Shift run · Space jump · drag to look · wheel zoom · click a building · E opens the nearest</div>
@@ -30,7 +30,7 @@ const CSS = `*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hid
 #load{position:fixed;inset:0;background:linear-gradient(#2a3a7a,#f1a860);display:flex;align-items:center;justify-content:center;text-align:center;z-index:9;transition:opacity .6s}#load b{display:block;font:700 34px Georgia,serif;letter-spacing:.2em}#load i{display:block;margin-top:8px;opacity:.8}
 #hud{position:fixed;left:16px;top:14px;padding:8px 14px;background:rgba(24,22,48,.55);border:1px solid rgba(255,214,140,.5);border-radius:12px;backdrop-filter:blur(8px);max-width:60vw}#hud b{font:700 15px Georgia,serif;letter-spacing:.18em;margin-right:12px;color:#ffd98a}#hud span{font-size:13px}
 #mini{position:fixed;right:14px;top:14px;border-radius:50%;border:2px solid rgba(255,214,140,.6);background:rgba(20,30,60,.5)}
-#tip{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);padding:6px 14px;border-radius:20px;background:rgba(24,22,48,.7);border:1px solid rgba(255,214,140,.5);display:none;white-space:nowrap}
+#fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .38s;z-index:8}#tip{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);padding:6px 14px;border-radius:20px;background:rgba(24,22,48,.7);border:1px solid rgba(255,214,140,.5);display:none;white-space:nowrap}
 #labels div{position:fixed;transform:translate(-50%,-100%);padding:2px 8px;border-radius:10px;background:rgba(24,22,48,.6);font-size:12px;white-space:nowrap;pointer-events:none;border:1px solid rgba(255,214,140,.35)}
 #labels div.say{background:#fffdf4;color:#2a2438;border-color:#e8c880;font-weight:600}
 #panel{position:fixed;right:0;top:0;bottom:0;width:min(400px,100vw);transform:translateX(105%);transition:transform .35s;background:linear-gradient(#211d3e,#2d2748);border-left:2px solid #e8c880;overflow:auto;padding:18px 18px 40px;z-index:5}#panel.on{transform:none}
@@ -101,7 +101,34 @@ export async function cityRoute(req, env, path, { json, html }) {
   if (path === "/city") return html(cityPage(), 200, { "content-security-policy": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; worker-src 'self' blob:", "x-robots-tag": "noindex" });
   if (path === "/city/app.js") return new Response(APP_JS, { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" } });
   if (path === "/city/data") return json(await cityData(env));
+  if (path === "/city/products") return json(await cityProducts(env));
+  if (path === "/city/img") return cityImg(env, new URL(req.url).searchParams.get("p") || "");
   return json({ error: { message: "not found" } }, 404);
+}
+
+// Mysterious Archive products for the gallery (read only). The more products are listed, the more wings the gallery builds.
+export async function cityProducts(env) {
+  const d = db(env);
+  const rows = await safe(() => d.q(`SELECT p.handle, p.title, p.description, p.images,
+      (SELECT min(v.price_cents) FROM variants v WHERE v.product_id=p.id) AS price,
+      (SELECT coalesce(bool_or(v.available),false) FROM variants v WHERE v.product_id=p.id) AS avail,
+      s.currency, s.domain
+    FROM products p JOIN stores s ON s.id=p.store_id WHERE s.slug='mysterious-archive' AND p.status='active' ORDER BY p.created_at, p.handle`), null);
+  if (!rows) return { items: [], note: "no data yet" };
+  const dom = rows[0]?.domain || "mysteriousarchive.com";
+  return { domain: dom, items: rows.map((r) => {
+    const im = Array.isArray(r.images) ? r.images[0] : null, img = im ? (im.thumb || im.url || im.original) : null;
+    return { handle: r.handle, title: trim(r.title, 120), price_cents: r.price == null ? null : N(r.price), currency: r.currency || "USD", available: !!r.avail, img: img && /^\/media\/[A-Za-z0-9._-]+$/.test(img) ? img : null, desc: trim(String(r.description || "").replace(/<[^>]*>/g, " "), 320), url: `https://${dom}/products/${r.handle}` };
+  }) };
+}
+// Same-origin image proxy so WebGL can use product photos (R2 first, then the public storefront). Only /media/<file> paths.
+export async function cityImg(env, p) {
+  if (!/^\/media\/[A-Za-z0-9._-]+$/.test(p)) return new Response("bad path", { status: 400 });
+  const key = p.slice(7);
+  try { const o = env.MEDIA && (await env.MEDIA.get(key)); if (o) return new Response(o.body, { headers: { "content-type": (o.httpMetadata && o.httpMetadata.contentType) || (key.endsWith(".webp") ? "image/webp" : key.endsWith(".png") ? "image/png" : "image/jpeg"), "cache-control": "private, max-age=3600" } }); } catch {}
+  const r = await fetch(`https://mysteriousarchive.com${p}`);
+  if (!r.ok) return new Response("not found", { status: 404 });
+  return new Response(r.body, { headers: { "content-type": r.headers.get("content-type") || "image/jpeg", "cache-control": "private, max-age=3600" } });
 }
 
 const safe = async (f, fb = null) => { try { return await f(); } catch (e) { return fb; } };

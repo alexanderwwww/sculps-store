@@ -3,6 +3,7 @@ import { THREE, Geo, G, hash, smooth, lerp, canvasTex, plasterTex, cylT } from "
 import { BUILDINGS, PLOTS, WORKERS, DISTRICTS, CALENDAR, TZ, layout, PLAZA } from "./config.mjs";
 import { height, snowAmt, makeTerrain, buildTown, Atlas, HALF } from "./world.js";
 import { makePerson, Walker, makeCat, makeBoat, makeGull, makeGenie, makeCoinCart, charMat } from "./actors.js";
+import { buildGallery } from "./interior.js";
 import { makeSky, makeSea, makeClouds, makeSnow, makeSmoke, makeHalos, mixPreset } from "./fx.js";
 
 const $ = (id) => document.getElementById(id), qs = new URLSearchParams(location.search);
@@ -172,6 +173,7 @@ async function main() {
 
   // ---- collision / movement ----
   const inBox = (c, x, z, pad) => { const dx = x - c.x, dz = z - c.z, cs = Math.cos(c.ry), sn = Math.sin(c.ry); return Math.abs(dx * cs - dz * sn) < c.hw + pad && Math.abs(dx * sn + dz * cs) < c.hd + pad; };
+  let inside = null, busy = false; const blk = (x, z) => (inside ? inside.blocked(x, z) : blocked(x, z)), gAt = (x, z) => (inside ? 0 : groundAt(x, z));
   const blocked = (x, z) => { if (height(x, z) < 0.28 && !onPier(x, z)) return true; for (const c of X.colliders) if (inBox(c, x, z, 0.45)) return true; if (X.pool && inBox({ x: X.pool.c.x, z: X.pool.c.z, hw: 4.9, hd: 2.6, ry: X.pool.ry }, x, z, 0.1)) return true; return Math.hypot(x, z) > 118; };
   const onPier = (x, z) => Math.abs(x - pierX) < 1.4 && z > shoreZ - 6.6 && z < pierEnd[1] + 0.2;
   const groundAt = (x, z) => { let y = height(x, z); if (onPier(x, z)) y = Math.max(y, pierY + 0.1); for (const p of X.platforms) if (inBox(p, x, z, 0)) y = Math.max(y, p.y); return y; };
@@ -189,7 +191,7 @@ async function main() {
   const genieHit = new THREE.Mesh(new THREE.BoxGeometry(5, 8, 5), new THREE.MeshBasicMaterial()); genieHit.visible = false; genieHit.userData.id = "hq"; pickGroup.add(genieHit);
   const ndc = new THREE.Vector2(); function pickAt(cx, cy) { ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); const h = ray.intersectObjects(pickGroup.children, false)[0]; return h ? h.object.userData.id : null; }
   let lastHover = 0; function hover(e) { const n = performance.now(); if (n - lastHover < 120) return; lastHover = n; canvas.style.cursor = pickAt(e.clientX, e.clientY) ? "pointer" : "default"; }
-  function pick(cx, cy) { const id = pickAt(cx, cy); if (id) openPanel(id, true); }
+  function pick(cx, cy) { if (inside) { ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); const h = ray.intersectObjects(inside.items.map((i) => i.mesh), false)[0]; if (h) showItem(h.object.userData.item); return; } const id = pickAt(cx, cy); if (id) openPanel(id, true); }
   $("snow").onclick = () => { snowOn = !snowOn; $("snow").textContent = "Snow: " + (snowOn ? "on" : "off"); };
   $("orbit").onclick = () => { orbitMode = !orbitMode; $("orbit").textContent = orbitMode ? "Walk view" : "Orbit view"; };
   $("x").onclick = () => closePanel();
@@ -215,10 +217,37 @@ async function main() {
     $("pc").innerHTML = h; $("panel").classList.add("on"); state.open = id; if (user) state.dismissed = null;
   }
   function closePanel() { $("panel").classList.remove("on"); state.dismissed = state.open; state.open = null; }
-  let nearId = null; function openNearest() { if (nearId) openPanel(nearId, true); }
+  let nearId = null; function openNearest() { if (inside) { if (curItem) showItem(curItem); return; } if (nearId && byId[nearId]?.interior && !busy) enterBuilding(nearId); else if (nearId) openPanel(nearId, true); }
 
+  // ---- enterable buildings ----
+  let curItem = null, productsP = null; const fade = $("fade"), sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const getProducts = () => (productsP ||= fetch("/city/products", { credentials: "same-origin" }).then((r) => r.json()).catch(() => ({ items: [] })));
+  async function enterBuilding(id) {
+    if (busy || inside) return; busy = true; fade.style.opacity = 1; await sleep(380);
+    $("panel").classList.remove("on"); state.open = null; for (const k in chips) chips[k].style.display = "none"; $("tip").style.display = "none";
+    const prod = await getProducts(); const b = byId[id];
+    inside = buildGallery({ items: prod.items || [] }); inside.buildingId = id; inside.scene.userData.px = px;
+    state.out = { x: state.x, z: state.z }; scene.remove(hero.root, blob); inside.scene.add(hero.root, blob);
+    state.x = inside.spawn.x; state.z = inside.spawn.z; state.y = 0; state.vy = 0; state.face = inside.spawn.yaw; state.camYaw = 0; state.camPitch = 0.3; camInit = false; manual = null;
+    $("help").textContent = "WASD walk · E on a display opens it · walk to the green EXIT door to leave"; fade.style.opacity = 0; busy = false;
+    window.__city.inside = { rooms: inside.rooms, items: inside.items.length };
+  }
+  async function leaveBuilding() {
+    if (busy || !inside) return; busy = true; fade.style.opacity = 1; await sleep(380); const b = byId[inside.buildingId];
+    inside.scene.remove(hero.root, blob); scene.add(hero.root, blob); inside.dispose(); inside = null; curItem = null;
+    const d = X.doors[b.id]; const ox = Math.sin(b.ry), oz = Math.cos(b.ry); state.x = d[0] + ox * 3.2; state.z = d[1] + oz * 3.2; state.y = height(state.x, state.z); state.face = b.ry; state.camYaw = b.ry + Math.PI; camInit = false; state.noEnter = tAll + 2.5; state.dismissed = b.id;
+    $("help").textContent = HELP; fade.style.opacity = 0; busy = false; window.__city.inside = null;
+  }
+  function showItem(it) { const d = it.data; $("pc").innerHTML = `<h2>${esc(d.title)}</h2><div class="dist">Mysterious Archive · gallery</div><span class="st ${d.available ? "open" : "closed"}">${d.available ? "AVAILABLE" : "SOLD"}</span><p style="font-size:22px;font-weight:700;color:#ffd98a">${d.available ? esc(new Intl.NumberFormat("en-US", { style: "currency", currency: d.currency || "USD" }).format((d.price_cents || 0) / 100)) : "Sold"}</p>${d.img ? `<img src="/city/img?p=${encodeURIComponent(d.img)}" alt="" style="width:100%;border-radius:10px;margin:6px 0">` : ""}<p>${esc(d.desc)}</p><p><a href="${esc(d.url)}" target="_blank" rel="noopener" style="color:#ffd98a">Open the real product page</a></p><div class="asof">Live from the store's products. Read-only.</div>`; $("panel").classList.add("on"); }
+  function insideUpdate(dt, l) {
+    inside.update(dt, state.x, state.z, tAll); curItem = inside.nearest(state.x, state.z);
+    const tip = $("tip"); if (curItem) { tip.style.display = "block"; tip.textContent = `${curItem.data.title.slice(0, 48)} · press E`; } else tip.style.display = "none";
+    if (curItem === null && state.open !== "x") { /* keep panel until closed */ }
+    if (Math.hypot(state.x - inside.exit.x, state.z - inside.exit.z) < inside.exit.r && state.z > inside.exit.z - 1.4) leaveBuilding();
+    miniT += dt; if (miniT > 0.15) { miniT = 0; drawMini(); }
+  }
   // ---- labels (nearby names) and bubbles ----
-  const labelsEl = $("labels"), chips = {}; const mkChip = (id, cls = "") => { const d = document.createElement("div"); if (cls) d.className = cls; labelsEl.appendChild(d); chips[id] = d; return d; };
+  const HELP = $("help").textContent; const labelsEl = $("labels"), chips = {}; const mkChip = (id, cls = "") => { const d = document.createElement("div"); if (cls) d.className = cls; labelsEl.appendChild(d); chips[id] = d; return d; };
   const chipFor = (id, text) => (chips[id] || mkChip(id)).textContent !== text ? ((chips[id].textContent = text), chips[id]) : chips[id];
   const proj = new THREE.Vector3(); const place = (id, wp, text, cls) => { const el = chips[id] || mkChip(id, cls); if (el.textContent !== text) el.textContent = text; proj.copy(wp).project(camera); const vis = proj.z < 1 && proj.z > -1 && Math.abs(proj.x) < 1.1 && Math.abs(proj.y) < 1.1; el.style.display = vis ? "block" : "none"; if (vis) { el.style.left = (proj.x * 0.5 + 0.5) * innerWidth + "px"; el.style.top = (-proj.y * 0.5 + 0.5) * innerHeight + "px"; } };
 
@@ -245,20 +274,22 @@ async function main() {
     const fx = -Math.sin(state.camYaw), fz = -Math.cos(state.camYaw), rx = -fz, rz = fx;
     let mxv = (fx * f + rx * r), mzv = (fz * f + rz * r); const l = Math.hypot(mxv, mzv);
     const target = l > 0.05 ? (run ? 6.8 : 3.6) * mag : 0; state.speed = lerp(state.speed, target, Math.min(1, dt * 9));
-    if (l > 0.05 && state.speed > 0.05) { mxv /= l; mzv /= l; const nx = state.x + mxv * state.speed * dt, nz = state.z + mzv * state.speed * dt; if (!blocked(nx, nz)) { state.x = nx; state.z = nz; } else if (!blocked(nx, state.z)) state.x = nx; else if (!blocked(state.x, nz)) state.z = nz; let da = Math.atan2(mxv, mzv) - state.face; while (da > Math.PI) da -= 6.283; while (da < -Math.PI) da += 6.283; state.face += da * Math.min(1, dt * 11); }
-    if (keys.Space && state.y <= groundAt(state.x, state.z) + 0.02) state.vy = 5.2; state.vy -= 14 * dt; state.y += state.vy * dt; const gy = groundAt(state.x, state.z); if (state.y < gy) { state.y = gy; state.vy = 0; }
+    if (l > 0.05 && state.speed > 0.05) { mxv /= l; mzv /= l; const nx = state.x + mxv * state.speed * dt, nz = state.z + mzv * state.speed * dt; if (!blk(nx, nz)) { state.x = nx; state.z = nz; } else if (!blk(nx, state.z)) state.x = nx; else if (!blk(state.x, nz)) state.z = nz; let da = Math.atan2(mxv, mzv) - state.face; while (da > Math.PI) da -= 6.283; while (da < -Math.PI) da += 6.283; state.face += da * Math.min(1, dt * 11); }
+    if (keys.Space && state.y <= gAt(state.x, state.z) + 0.02) state.vy = 5.2; state.vy -= 14 * dt; state.y += state.vy * dt; const gy = gAt(state.x, state.z); if (state.y < gy) { state.y = gy; state.vy = 0; }
     const sp01 = Math.min(1, state.speed / 6.8) * (state.y > gy + 0.05 ? 0.5 : 1);
     hero.root.position.set(state.x, state.y, state.z); hero.root.rotation.y = state.face; hero.update(dt, sp01 * 1.0);
     blob.position.set(state.x, gy + 0.05, state.z); blob.scale.setScalar(1 - Math.min(0.5, (state.y - gy) * 0.2));
     // camera
-    const cp = Math.cos(state.camPitch), sd = state.camDist; camTarget.set(state.x, state.y + 1.9, state.z); camPos.set(state.x + Math.sin(state.camYaw) * cp * sd, state.y + 1.9 + Math.sin(state.camPitch) * sd, state.z + Math.cos(state.camYaw) * cp * sd);
-    camPos.y = Math.max(camPos.y, height(camPos.x, camPos.z) + 1.0);
+    const cp = Math.cos(state.camPitch), sd = inside ? Math.min(state.camDist, 6.5) : state.camDist; camTarget.set(state.x, state.y + 1.9, state.z); camPos.set(state.x + Math.sin(state.camYaw) * cp * sd, state.y + 1.9 + Math.sin(state.camPitch) * sd, state.z + Math.cos(state.camYaw) * cp * sd);
+    if (inside) inside.camClamp(camPos); else camPos.y = Math.max(camPos.y, height(camPos.x, camPos.z) + 1.0);
     if (manual) { camera.position.copy(manual.pos); camera.lookAt(manual.look); } else { if (!camInit) { camera.position.copy(camPos); camInit = true; } camera.position.lerp(camPos, Math.min(1, dt * 7)); camera.lookAt(camTarget); }
+    if (inside) { insideUpdate(dt, l); return; }
     // sun shadow follows the hero
     sunDirV.copy(key.userData.dir || new THREE.Vector3(-0.7, 0.4, 0.6)); const fcx = manual ? manual.look.x : state.x, fcz = manual ? manual.look.z : state.z; key.target.position.set(Math.round(fcx / 2) * 2, 0, Math.round(fcz / 2) * 2); key.position.copy(key.target.position).addScaledVector(sunDirV, 90); key.target.updateMatrixWorld();
     // proximity: door zone opens the panel (once per approach), E key too
     nearId = null; let best = 99; for (const id in X.doors) { const d = X.doors[id], dist = Math.hypot(state.x - d[0], state.z - d[1]); if (dist < best) { best = dist; nearId = id; } } if (best > 4.2) nearId = null;
     $("tip").style.display = nearId && !state.open ? "block" : "none"; if (nearId) $("tip").textContent = (byId[nearId]?.name || "Notice board") + " · press E";
+    if (nearId && byId[nearId]?.interior && best < 1.7 && tAll > (state.noEnter || 0) && l > 0.05 && !busy) { enterBuilding(nearId); return; }
     if (nearId && state.dismissed !== nearId && state.open !== nearId && best < 3.0) openPanel(nearId, false);
     if (!nearId || (state.dismissed && state.dismissed !== nearId)) { if (state.dismissed && (!nearId || nearId !== state.dismissed)) state.dismissed = null; }
     if (state.open && state.open !== "hq" && best > 9 && X.doors[state.open] && Math.hypot(state.x - X.doors[state.open][0], state.z - X.doors[state.open][1]) > 11) { $("panel").classList.remove("on"); state.open = null; }
@@ -296,7 +327,7 @@ async function main() {
     miniT += dt; if (miniT > 0.15) { miniT = 0; drawMini(); }
   }
   function frame() {
-    const nowT = performance.now(), dt = Math.min(0.05, (nowT - lastT) / 1000); lastT = nowT; update(dt); renderer.render(scene, camera);
+    const nowT = performance.now(), dt = Math.min(0.05, (nowT - lastT) / 1000); lastT = nowT; update(dt); renderer.render(inside ? inside.scene : scene, camera);
     ft.push(dt * 1000); if (ft.length > 240) ft.shift(); frames++; requestAnimationFrame(frame);
   }
   addEventListener("resize", () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight, false); });

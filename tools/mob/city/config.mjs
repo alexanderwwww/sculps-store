@@ -25,7 +25,7 @@ export const DISTRICTS = {
 export const BUILDINGS = [
   // ---- Stores (live data from Neon orders/carts/visits) ----
   { id: "reaper",   name: "Black Reaper",       district: "stores", kind: "store", slug: "reaper", purpose: "Halloween store, driven by organic reels.", status: "auto", idle: "closed", accent: "#15151a", trim: "#ff7a1a", prop: "reaper", brain: "reaper|halloween", next: ["Second processor before more ads (payments checklist)."] },
-  { id: "archive",  name: "Mysterious Archive", district: "stores", kind: "store", slug: "mysterious-archive", purpose: "Genuine Chrome Hearts, sourced one piece at a time.", status: "auto", idle: "closed", accent: "#25252e", trim: "#c9ccd6", prop: "cross", brain: "archive|chrome", next: ["Reviews first: they set the price ceiling."] },
+  { id: "archive",  name: "Mysterious Archive", district: "stores", kind: "store", slug: "mysterious-archive", purpose: "THE flagship: genuine Chrome Hearts, one piece at a time. Walk in for the gallery.", status: "open", style: "palace", pos: [0, -74], size: [28, 18, 14], big: true, interior: "gallery", accent: "#25252e", trim: "#c9ccd6", prop: "cross", brain: "archive|chrome", next: ["Reviews first: they set the price ceiling."] },
   { id: "bodies",   name: "bodies",             district: "stores", kind: "store", slug: "bodies", purpose: "Portable smart Pilates board: Icy Swan, Lilac Heat, Matcha.", status: "auto", idle: "closed", accent: "#9a7ad8", trim: "#f2e6ff", prop: "ring", brain: "bodies|pilates" },
   { id: "cryo",     name: "cryo",               district: "stores", kind: "store", slug: "cryo", purpose: "Countertop bottle chiller. No fridge, no ice.", status: "auto", idle: "closed", accent: "#4ab6e8", trim: "#e8fbff", prop: "ice", brain: "cryo" },
   { id: "snowman",  name: "Snow Buddy",         district: "stores", kind: "store", slug: "snowman", purpose: "Snow machine: your house is the only one on the street with snow.", status: "auto", idle: "construction", pos: [-72, -52], accent: "#7fb6ff", trim: "#ffffff", prop: "snowman", brain: "snow" },
@@ -40,7 +40,7 @@ export const BUILDINGS = [
   { id: "bank",     name: "The Bank",           district: "finance", kind: "bank", skill: "payments", purpose: "Where the money lives: processors, orders, manual income.", status: "open", accent: "#5c5348", trim: "#f0c040", prop: "bank", size: [9, 7, 5.4], brain: "payment|stripe|bank", next: ["Two processors before ads (payments law)."] },
 
   // ---- Core / HQ ----
-  { id: "hq",       name: "Aquarius HQ",        district: "core", kind: "skill", skill: "gem + aquarius", purpose: "Alex's CEO genie: gem runs the whole map every day.", status: "open", accent: "#1c4fb8", trim: "#f0c040", prop: "hq", big: true, pos: [0, -62], size: [13, 10, 7], brain: "aquarius|gem|hustle", next: ["Keep the daily loop running; one real money step per run."] },
+  { id: "hq",       name: "Aquarius HQ",        district: "core", kind: "skill", skill: "gem + aquarius", purpose: "Alex's CEO genie: gem runs the whole map every day.", status: "open", accent: "#1c4fb8", trim: "#f0c040", prop: "hq", big: true, pos: [-40, -62], size: [13, 10, 7], brain: "aquarius|gem|hustle", next: ["Keep the daily loop running; one real money step per run."] },
   { id: "lean",     name: "Lean tower",         district: "core", kind: "skill", skill: "lean", purpose: "Token saver so Alex's usage lasts. Always on.", status: "open", accent: "#3aa876", trim: "#e8fff0", prop: "battery" },
   { id: "laws",     name: "Hall of Laws",       district: "core", kind: "skill", skill: "never-again + shipping + payments", purpose: "Every mistake already paid for, and the rule that stops it.", status: "open", accent: "#8a6a3a", trim: "#f6ecd0", prop: "pillars" },
   { id: "cursor",   name: "Cursor workshop",    district: "core", kind: "skill", skill: "cursor", purpose: "Personal agent app that drives the real internet.", status: "open", accent: "#d85a8a", trim: "#ffe8f0", prop: "pointer" },
@@ -138,7 +138,7 @@ export function layout(buildings = BUILDINGS, districts = DISTRICTS) {
       out.push({ ...b, pos: b.pos || [Math.round(r * Math.sin(a) * 10) / 10, Math.round(r * Math.cos(a) * 10) / 10] });
     });
   }
-  return out.map((b) => ({ size: [6.4, 5.4, 4.2], ...b, ry: Math.atan2(PLAZA[0] - b.pos[0], PLAZA[1] - b.pos[1]) }));
+  return out.map((b) => ({ size: b.kind === "store" ? [7.4, 6.2, 5.0] : [6.4, 5.4, 4.2], ...b, ry: Math.atan2(PLAZA[0] - b.pos[0], PLAZA[1] - b.pos[1]) }));
 }
 
 // Worker cottages: generated from WORKERS so a new worker = one line in WORKERS.
