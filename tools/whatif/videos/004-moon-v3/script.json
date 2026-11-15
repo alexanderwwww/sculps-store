@@ -1,0 +1,110 @@
+{
+  "id": "whatif-moon-v3",
+  "premise": "What if the Moon vanished? (a wizard sneezes it away; every consequence is real, sourced science)",
+  "style": "v3",
+  "scene": "styles/v3-moon.js",
+  "title": "WHAT IF THE\nMOON JUST\nVANISHED?",
+  "voice": {
+    "model": "en_US-lessac-medium",
+    "length_scale": 0.9,
+    "gap": 0.3,
+    "lead_in": 0.15,
+    "tail": 2.2
+  },
+  "lines": [
+    {
+      "text": "What if a wizard sneezed, and the Moon just vanished?",
+      "shot": "hook",
+      "sfx": "impact"
+    },
+    {
+      "text": "Poof. Three hundred eighty four thousand kilometres of empty sky.",
+      "shot": "poof",
+      "chip": "384,400 KM",
+      "sfx": "whoosh+impact",
+      "facts": [
+        {
+          "claim": "NASA: the Moon is an average of 384,400 km away.",
+          "quote": "The Moon is an average of 238,855 miles (384,400 kilometers) away",
+          "source": "https://science.nasa.gov/moon/facts/"
+        }
+      ]
+    },
+    {
+      "text": "First, the oceans notice. The Moon's gravity makes the bulges that give us high tides.",
+      "shot": "tides",
+      "chip": "MOON = HIGH TIDES",
+      "sfx": "whoosh",
+      "facts": [
+        {
+          "claim": "NASA: the Moon's pull makes the oceans bulge on both sides; these bulges create high tides.",
+          "quote": "causes the oceans to bulge out on both the side closest to the Moon and the side farthest from the Moon",
+          "quote2": "These bulges create high tides",
+          "source": "https://science.nasa.gov/moon/tides/"
+        }
+      ]
+    },
+    {
+      "text": "The Sun still pulls, but its tide force is only about half the Moon's. So the tides shrink.",
+      "shot": "small",
+      "chip": "SUN = HALF THE PULL",
+      "facts": [
+        {
+          "claim": "NOAA: the sun's tide-generating force is about half that of the moon.",
+          "quote": "the sun's tide-generating force is about half that of the moon",
+          "source": "https://oceanservice.noaa.gov/education/tutorial_tides/tides02_cause.html"
+        }
+      ]
+    },
+    {
+      "text": "Nights get darker. No moonlight. Just stars.",
+      "shot": "night",
+      "sfx": "whoosh"
+    },
+    {
+      "text": "And total solar eclipses are gone forever. Only the Moon can block the whole face of the Sun.",
+      "shot": "eclipse",
+      "chip": "NO MORE ECLIPSES",
+      "sfx": "impact",
+      "facts": [
+        {
+          "claim": "NASA: a total solar eclipse happens when the Moon passes between the Sun and Earth, completely blocking the face of the Sun.",
+          "quote": "completely blocking the face of the Sun",
+          "source": "https://science.nasa.gov/eclipses/types/"
+        }
+      ]
+    },
+    {
+      "text": "Fun part: we only ever saw one side of it. The same face, all the time.",
+      "shot": "face",
+      "chip": "ONE SIDE ONLY",
+      "sfx": "whoosh",
+      "facts": [
+        {
+          "claim": "NASA: synchronous rotation, so the same hemisphere faces Earth all the time.",
+          "quote": "so the same hemisphere faces Earth all the time",
+          "source": "https://science.nasa.gov/moon/facts/"
+        }
+      ]
+    },
+    {
+      "text": "So the wizard puts it back. But it's already drifting away, about an inch every year.",
+      "shot": "back",
+      "chip": "+1 INCH / YEAR",
+      "sfx": "whoosh+impact",
+      "facts": [
+        {
+          "claim": "NASA: the Moon is getting about an inch farther away each year.",
+          "quote": "getting about an inch farther away each year",
+          "source": "https://science.nasa.gov/moon/facts/"
+        }
+      ]
+    },
+    {
+      "text": "So look up tonight. It's leaving us. Very, very slowly.",
+      "shot": "end",
+      "pause": 0.2
+    }
+  ],
+  "look": "A"
+}
