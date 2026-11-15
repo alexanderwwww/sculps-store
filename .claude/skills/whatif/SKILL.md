@@ -132,3 +132,13 @@ PS1-style retro low-poly PLUS our magic. Opt-in per script; v2 stays the default
 - Title lines over ~13 characters at 104px overflow the 1080 width: break into 3 lines.
 - Space stage: put it high (y=600) inside the 900 sky dome and push fog near/far out; hide `world.island` for a custom world.
 - 003 = 13 lines, 62 s with 10 sourced facts — long for a Short; aim for 9-11 lines next time.
+
+## 004 + 005 (made 2026-11-15, night run; NOT posted: the what-if channel is not connected in mob yet)
+- whatif-004 "What if the Moon vanished?" (scenes/moon.js, 41 s, 7 NASA/NOAA facts) -> https://blackreaper.us/media/whatif-004.mp4
+- whatif-005 "What if you fell into a black hole?" (scenes/blackhole.js, 40 s, 7 NASA facts) -> https://blackreaper.us/media/whatif-005.mp4
+- 9 lines ~= 40 s. That is the length to aim for.
+- Whisper mishears: "pull" -> "pole", "Closer in" -> "Ploser in". Read the captions on the contact sheet and reword the line when a word comes out wrong.
+- In space scenes the world's sky sun term (`skyU.sunCol`) paints an orange glare. Set it dark at night and in space.
+- Glowing disks are made of many small emissive blocks, so keep emissive at .35-.6 and bloom at .5-.6, or the whole frame turns white.
+- Reset every per-shot scale each frame. The eclipse shot shrank the Moon to 0 and it stayed gone in the next shot.
+- A house between the camera and the wizard hides the wizard. Keep the camera's line of sight clear when placing props.
