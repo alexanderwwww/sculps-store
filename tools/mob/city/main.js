@@ -3,7 +3,7 @@ import { THREE, Geo, G, hash, smooth, lerp, canvasTex, plasterTex, cylT } from "
 import { BUILDINGS, PLOTS, WORKERS, DISTRICTS, CALENDAR, TZ, layout, PLAZA } from "./config.mjs";
 import { height, snowAmt, makeTerrain, buildTown, Atlas, HALF } from "./world.js";
 import { makePerson, Walker, makeCat, makeBoat, makeGull, makeGenie, makeCoinCart, charMat } from "./actors.js";
-import { buildGallery } from "./interior.js";
+import { buildGallery, buildRoom } from "./interior.js";
 import { makeSky, makeSea, makeClouds, makeSnow, makeSmoke, makeHalos, mixPreset } from "./fx.js";
 
 const $ = (id) => document.getElementById(id), qs = new URLSearchParams(location.search);
@@ -217,7 +217,7 @@ async function main() {
     $("pc").innerHTML = h; $("panel").classList.add("on"); state.open = id; if (user) state.dismissed = null;
   }
   function closePanel() { $("panel").classList.remove("on"); state.dismissed = state.open; state.open = null; }
-  let nearId = null; function openNearest() { if (inside) { if (curItem) showItem(curItem); return; } if (nearId && byId[nearId]?.interior && !busy) enterBuilding(nearId); else if (nearId) openPanel(nearId, true); }
+  let nearId = null; function openNearest() { if (inside) { if (curItem?.screen) openPanel(inside.buildingId, true); else if (curItem) showItem(curItem); return; } if (nearId && byId[nearId] && byId[nearId].kind !== "plot" && !busy) enterBuilding(nearId); else if (nearId) openPanel(nearId, true); }
 
   // ---- enterable buildings ----
   let curItem = null, productsP = null; const fade = $("fade"), sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -225,8 +225,7 @@ async function main() {
   async function enterBuilding(id) {
     if (busy || inside) return; busy = true; fade.style.opacity = 1; await sleep(380);
     $("panel").classList.remove("on"); state.open = null; for (const k in chips) chips[k].style.display = "none"; $("tip").style.display = "none";
-    const prod = await getProducts(); const b = byId[id];
-    inside = buildGallery({ items: prod.items || [] }); inside.buildingId = id; inside.scene.userData.px = px;
+    const b = byId[id]; inside = b.interior === "gallery" ? buildGallery({ items: (await getProducts()).items || [] }) : buildRoom({ b, panel: data?.buildings?.[id] }); inside.buildingId = id; inside.scene.userData.px = px;
     state.out = { x: state.x, z: state.z }; scene.remove(hero.root, blob); inside.scene.add(hero.root, blob);
     state.x = inside.spawn.x; state.z = inside.spawn.z; state.y = 0; state.vy = 0; state.face = inside.spawn.yaw; state.camYaw = 0; state.camPitch = 0.3; camInit = false; manual = null;
     $("help").textContent = "WASD walk · E on a display opens it · walk to the green EXIT door to leave"; fade.style.opacity = 0; busy = false;
@@ -241,7 +240,7 @@ async function main() {
   function showItem(it) { const d = it.data; $("pc").innerHTML = `<h2>${esc(d.title)}</h2><div class="dist">Mysterious Archive · gallery</div><span class="st ${d.available ? "open" : "closed"}">${d.available ? "AVAILABLE" : "SOLD"}</span><p style="font-size:22px;font-weight:700;color:#ffd98a">${d.available ? esc(new Intl.NumberFormat("en-US", { style: "currency", currency: d.currency || "USD" }).format((d.price_cents || 0) / 100)) : "Sold"}</p>${d.img ? `<img src="/city/img?p=${encodeURIComponent(d.img)}" alt="" style="width:100%;border-radius:10px;margin:6px 0">` : ""}<p>${esc(d.desc)}</p><p><a href="${esc(d.url)}" target="_blank" rel="noopener" style="color:#ffd98a">Open the real product page</a></p><div class="asof">Live from the store's products. Read-only.</div>`; $("panel").classList.add("on"); }
   function insideUpdate(dt, l) {
     inside.update(dt, state.x, state.z, tAll); curItem = inside.nearest(state.x, state.z);
-    const tip = $("tip"); if (curItem) { tip.style.display = "block"; tip.textContent = `${curItem.data.title.slice(0, 48)} · press E`; } else tip.style.display = "none";
+    const tip = $("tip"); if (curItem) { tip.style.display = "block"; tip.textContent = curItem.screen ? "Live screen · press E for the full panel" : `${curItem.data.title.slice(0, 48)} · press E`; } else tip.style.display = "none";
     if (curItem === null && state.open !== "x") { /* keep panel until closed */ }
     if (Math.hypot(state.x - inside.exit.x, state.z - inside.exit.z) < inside.exit.r && state.z > inside.exit.z - 1.4) leaveBuilding();
     miniT += dt; if (miniT > 0.15) { miniT = 0; drawMini(); }
@@ -289,7 +288,7 @@ async function main() {
     // proximity: door zone opens the panel (once per approach), E key too
     nearId = null; let best = 99; for (const id in X.doors) { const d = X.doors[id], dist = Math.hypot(state.x - d[0], state.z - d[1]); if (dist < best) { best = dist; nearId = id; } } if (best > 4.2) nearId = null;
     $("tip").style.display = nearId && !state.open ? "block" : "none"; if (nearId) $("tip").textContent = (byId[nearId]?.name || "Notice board") + " · press E";
-    if (nearId && byId[nearId]?.interior && best < 1.7 && tAll > (state.noEnter || 0) && l > 0.05 && !busy) { enterBuilding(nearId); return; }
+    if (nearId && byId[nearId] && byId[nearId].kind !== "plot" && best < 1.7 && tAll > (state.noEnter || 0) && l > 0.05 && !busy) { enterBuilding(nearId); return; }
     if (nearId && state.dismissed !== nearId && state.open !== nearId && best < 3.0) openPanel(nearId, false);
     if (!nearId || (state.dismissed && state.dismissed !== nearId)) { if (state.dismissed && (!nearId || nearId !== state.dismissed)) state.dismissed = null; }
     if (state.open && state.open !== "hq" && best > 9 && X.doors[state.open] && Math.hypot(state.x - X.doors[state.open][0], state.z - X.doors[state.open][1]) > 11) { $("panel").classList.remove("on"); state.open = null; }

@@ -82,3 +82,76 @@ export function buildGallery({ items: data = [], onNear }) {
   };
   return api;
 }
+
+// ---------- themed rooms for every other building (small, cheap, built on entry, disposed on exit) ----------
+function screenTex(b, d) {
+  return canvasTex(1024, 512, (c) => {
+    const g = c.createLinearGradient(0, 0, 0, 512); g.addColorStop(0, "#14233a"); g.addColorStop(1, "#0a1424"); c.fillStyle = g; c.fillRect(0, 0, 1024, 512);
+    c.strokeStyle = "#e8b84a"; c.lineWidth = 6; c.strokeRect(8, 8, 1008, 496); c.fillStyle = "#ffd98a"; c.font = "800 52px Georgia,serif"; c.textBaseline = "alphabetic"; c.fillText(b.name, 36, 80);
+    const st = d ? d.status : b.status; c.fillStyle = { open: "#3aa876", construction: "#f2b21c", closed: "#777", planned: "#6a8ad8" }[st] || "#777"; c.fillRect(36, 100, 230, 40); c.fillStyle = "#06100a"; c.font = "800 24px Arial"; c.fillText({ open: "OPEN", construction: "UNDER CONSTRUCTION", closed: "CLOSED", planned: "PLANNED" }[st] || st, 46, 129);
+    c.fillStyle = "#cfe0f5"; c.font = "500 26px 'Trebuchet MS',Arial"; c.fillText((b.purpose || "").slice(0, 70), 36, 182);
+    const k = d?.kpis || []; k.slice(0, 8).forEach((x, i) => { const px = 36 + (i % 2) * 490, py = 214 + Math.floor(i / 2) * 68; c.fillStyle = "rgba(255,255,255,.07)"; c.fillRect(px, py, 470, 58); c.fillStyle = "#9fb4d0"; c.font = "500 20px Arial"; c.fillText(x.l + (x.tag ? "  [" + x.tag + "]" : ""), px + 12, py + 22); c.fillStyle = x.no ? "#6a7890" : "#ffffff"; c.font = "700 28px Arial"; c.fillText(String(x.v).slice(0, 28), px + 12, py + 50); });
+    if (!k.length) { c.fillStyle = "#6a7890"; c.font = "500 30px Arial"; c.fillText((d?.notes?.[0] || "no data yet").slice(0, 60), 36, 260); }
+    c.fillStyle = "#6a7890"; c.font = "500 18px Arial"; c.fillText("Live, read-only. Press E for the full panel.", 36, 496);
+  });
+}
+function floorTex(kind) {
+  return canvasTex(256, 256, (c) => {
+    if (kind === "wood") { for (let i = 0; i < 8; i++) { c.fillStyle = ["#9a6a3a", "#8a5a2e", "#a87a46", "#946432"][i % 4]; c.fillRect(0, i * 32, 256, 32); c.strokeStyle = "rgba(40,20,5,.35)"; c.strokeRect(0, i * 32, 256, 32); for (let k = 0; k < 6; k++) { c.strokeStyle = "rgba(60,30,10,.2)"; c.beginPath(); c.moveTo(hash(i * 9 + k) * 256, i * 32); c.lineTo(hash(i * 9 + k) * 256 + 30, i * 32 + 30); c.stroke(); } } }
+    else { for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) { c.fillStyle = (i + j) % 2 ? "#e8dcc0" : "#cfc2a0"; c.fillRect(i * 64, j * 64, 64, 64); c.strokeStyle = "rgba(90,70,40,.4)"; c.strokeRect(i * 64, j * 64, 64, 64); } }
+  }, { repeat: true });
+}
+const THEME = { bank: "bank", lab: "lab", home: "villa", news: "news", super: "super", workerhome: "cozy", market: "market" };
+export function buildRoom({ b, panel }) {
+  const theme = THEME[b.id] || THEME[b.kind] || "office", big = theme === "villa" ? [22, 18] : theme === "bank" ? [20, 16] : theme === "lab" ? [16, 14] : theme === "super" ? [18, 14] : [14, 12], [W, D] = big, H = theme === "villa" ? 6.5 : 6;
+  const scene = new THREE.Scene(); const bgc = theme === "villa" ? "#9ad4ff" : "#241a2a"; scene.background = new THREE.Color(bgc); scene.add(new THREE.HemisphereLight(0xffe8c8, 0x6a4a3a, 1.45)); const dl = new THREE.DirectionalLight(0xfff0d8, 1.1); dl.position.set(5, 12, 8); scene.add(dl);
+  const g = new Geo(); g.baseY = 0; g.seed = 21; const P = (t, s, p, c, r, tg) => g.part(t, s, p, c, r || [0, 0, 0], tg || "solid");
+  const acc = b.accent || "#6a4a8a", wall = theme === "villa" ? "#f4ece0" : theme === "bank" ? "#6a5a48" : theme === "lab" ? "#3a2a4a" : theme === "super" ? "#e8f0e8" : theme === "cozy" ? "#d8b890" : theme === "news" ? "#5a3a2a" : new THREE.Color(acc).multiplyScalar(0.55).getStyle();
+  const obstacles = [], halos = [], screens = [], items = [], status = panel?.status || b.status;
+  for (const s of [-1, 1]) { P("box", [0.5, H, D], [s * (W / 2 + 0.25), H / 2, 0], wall); P("box", [0.2, 0.22, D], [s * (W / 2 - 0.05), 1.2, 0], "#e8b84a"); }
+  P("box", [W + 1, H, 0.5], [0, H / 2, -D / 2 - 0.25], wall); P("box", [W + 1, 0.6, D + 1], [0, H + 0.3, 0], "#2a2030");
+  for (const s of [-1, 1]) P("box", [(W - 3.2) / 2, H, 0.5], [s * (1.6 + (W - 3.2) / 4), H / 2, D / 2 + 0.25], wall); P("box", [3.2, H - 3.4, 0.5], [0, 3.4 + (H - 3.4) / 2, D / 2 + 0.25], wall); P("box", [3.6, 0.25, 0.7], [0, 3.4, D / 2 + 0.25], "#e8b84a"); P("box", [2.2, 0.5, 0.1], [0, 3.9, D / 2 - 0.1], "#2a9a5a", [0, 0, 0], "glow");
+  for (const x of [-W * 0.3, W * 0.3]) { P("box", [1.6, 1.8, 0.12], [x, 3.4, D / 2 - 0.05], status === "open" ? "#ffd78a" : "#222", [0, 0, 0], status === "open" ? "glow" : "solid"); } for (let i = 0; i < 3; i++) { P("cyl", [0.4, 0.14, 0.4], [-W / 4 + i * W / 4, H - 0.3, 0], "#ffd890", [0, 0, 0], "glow"); halos.push([-W / 4 + i * W / 4, H - 0.5, 0]); }
+  // diegetic screen on the back wall + counter in front of it
+  const sc = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 2.6), new THREE.MeshBasicMaterial({ map: screenTex(b, panel), toneMapped: false })); sc.position.set(0, 3.3, -D / 2 + 0.02); scene.add(sc); P("box", [5.5, 2.9, 0.12], [0, 3.3, -D / 2 + 0.0], "#e8b84a");
+  P("box", [4.0, 1.0, 1.2], [0, 0.5, -D / 2 + 1.6], "#5a3a22"); P("box", [4.2, 0.14, 1.4], [0, 1.05, -D / 2 + 1.6], "#8a6a3a"); obstacles.push({ x: 0, z: -D / 2 + 1.6, r: 2.3 }); screens.push({ x: 0, z: -D / 2 + 3.4, panel: true });
+  const rug = acc; P("box", [W * 0.5, 0.04, D * 0.4], [0, 0.03, 1], rug);
+  const ob = (x, z, r) => obstacles.push({ x, z, r });
+  if (theme === "bank") {
+    P("cyl", [2.6, 0.7, 2.6], [W / 2 - 3, 3, -D / 2 + 0.5], "#4a4a54", [Math.PI / 2, 0, 0]); P("cyl", [2.0, 0.8, 2.0], [W / 2 - 3, 3, -D / 2 + 0.6], "#8a8a96", [Math.PI / 2, 0, 0]); for (let k = 0; k < 6; k++) P("box", [0.14, 3.6, 0.14], [W / 2 - 3, 3, -D / 2 + 1.1], "#6a6a76", [0, 0, k * 0.52]); P("sph", 0.35, [W / 2 - 3, 3, -D / 2 + 1.2], "#e8b84a");
+    for (let i = 0; i < 18; i++) P("cyl", [0.5 + hash(i) * 0.2, 0.09, 0.5], [-W / 2 + 2 + (i % 6) * 0.9, 0.1 + Math.floor(i / 6) * 0.2, D / 2 - 3 - Math.floor(i / 6) * 0.3], "#ffd24a", [0.1, 0, 0.1]); for (let i = 0; i < 6; i++) P("box", [1.2, 0.7, 0.8], [-W / 2 + 2 + i * 1.4, 0.35, -D / 2 + 1.0], "#e8b84a"); ob(-W / 2 + 4.5, D / 2 - 3, 2.2);
+    P("box", [9, 1.2, 0.9], [-3, 0.6, 0.5], "#4a3a2a"); P("box", [9.2, 0.14, 1.1], [-3, 1.25, 0.5], "#8a6a3a"); for (let i = 0; i < 3; i++) P("box", [1.2, 1.3, 0.1], [-6.2 + i * 3.2, 2.1, 0.5], "#c8e0f0"); ob(-3, 0.5, 4.8); halos.push([W / 2 - 3, 3, -D / 2 + 1.4]);
+  } else if (theme === "lab") {
+    for (const s of [-1, 1]) for (let r = 0; r < 3; r++) { P("box", [0.7, 0.1, D - 3], [s * (W / 2 - 0.5), 1.2 + r * 1.4, 0], "#6a4428"); for (let k = 0; k < 9; k++) { P("cyl", [0.13, 0.55, 0.13], [s * (W / 2 - 0.5), 1.45 + r * 1.4, -D / 2 + 2 + k * 1.1], ["#f4e4b8", "#e8d4a0"][k % 2], [0, 0, 1.45 + (k % 3) * 0.05]); P("sph", 0.1, [s * (W / 2 - 0.5), 1.5 + r * 1.4, -D / 2 + 2.3 + k * 1.1], "#ffd878", [0, 0, 0], k % 3 ? "solid" : "glow"); } }
+    P("box", [2.6, 0.9, 1.4], [0, 0.45, 0.5], "#6a4428"); P("box", [2.2, 0.06, 1.0], [0, 0.95, 0.5], "#f4e4b8"); P("cyl", [0.1, 0.5, 0.1], [0.8, 1.2, 0.3], "#c8a050"); ob(0, 0.5, 1.6); halos.push([0, 1.2, 0.5]);
+  } else if (theme === "villa") {
+    P("box", [9, 0.4, 5.5], [W / 2 - 6, 0.2, 2.2], "#efe6d2"); P("box", [8, 0.1, 4.6], [W / 2 - 6, 0.43, 2.2], "#3ac8e8", [0, 0, 0], "glow"); ob(W / 2 - 6, 2.2, 4.2);
+    P("box", [3.2, 0.5, 2.2], [-W / 2 + 3, 0.35, -D / 2 + 2.2], "#7a4a2a"); P("box", [3.0, 0.4, 2.0], [-W / 2 + 3, 0.75, -D / 2 + 2.2], "#f4ece0"); P("box", [1.0, 0.2, 0.6], [-W / 2 + 2.3, 1.05, -D / 2 + 1.6], "#fff"); ob(-W / 2 + 3, -D / 2 + 2.2, 2.4);
+    P("box", [4, 0.6, 1.2], [-W / 2 + 3.5, 0.35, 3], "#a8482a"); P("box", [4, 0.9, 0.3], [-W / 2 + 3.5, 0.95, 3.5], "#a8482a"); ob(-W / 2 + 3.5, 3, 2.4);
+    P("box", [3, 2.2, 0.7], [-3, 1.1, -D / 2 + 0.5], "#cfc6b4"); P("box", [1.8, 1.1, 0.5], [-3, 0.7, -D / 2 + 0.75], "#2a1a14"); P("sph", 0.4, [-3, 0.5, -D / 2 + 0.9], "#ff8a3a", [0, 0, 0], "glow"); halos.push([-3, 0.6, -D / 2 + 1]);
+    for (let i = 0; i < 6; i++) P("cyl", [0.3, 1.0, 0.3], [-W / 2 + 1 + i * 4, 0.5, D / 2 - 1.2], "#fffaf0");
+  } else if (theme === "news") {
+    P("box", [3.4, 1.6, 2.0], [-W / 4, 0.8, 0.5], "#2a2a34"); for (let i = 0; i < 3; i++) P("cyl", [0.3, 3.0, 0.3], [-W / 4, 1.9 + i * 0.4, 0.5], "#8a8a96", [0, 0, Math.PI / 2]); P("box", [3.0, 0.05, 1.6], [-W / 4 + 2.4, 0.6, 0.5], "#f4efe4"); ob(-W / 4, 0.5, 2.2);
+    for (const s of [-1, 1]) for (let i = 0; i < 4; i++) P("box", [0.08, 1.2, 1.0], [s * (W / 2 - 0.1), 3 + (i % 2) * 1.5, -D / 2 + 2.6 + i * 2.2], ["#f4efe4", "#fff0c8"][i % 2]);
+  } else if (theme === "super") {
+    for (let r = 0; r < 3; r++) { P("box", [W * 0.6, 1.8, 0.7], [-1, 0.9, -D / 2 + 3 + r * 3], "#cfd8d0"); for (let k = 0; k < 14; k++) P("box", [0.5, 0.5 + (k % 3) * 0.2, 0.4], [-1 - W * 0.28 + k * 0.82, 1.9, -D / 2 + 3 + r * 3], ["#e0383a", "#e8a03a", "#7ac04a", "#4a8ae8", "#e8e0d0"][k % 5]); ob(-1, -D / 2 + 3 + r * 3, 0); obstacles.pop(); for (let k = 0; k < 5; k++) obstacles.push({ x: -1 - 3.5 + k * 2.4, z: -D / 2 + 3 + r * 3, r: 1.3 }); }
+    P("box", [3, 1.0, 1.0], [W / 2 - 2.5, 0.5, D / 2 - 2], "#e8504a");
+  } else if (theme === "cozy") {
+    P("box", [2.6, 0.5, 1.4], [-W / 2 + 2, 0.3, -D / 2 + 1.5], "#8a5a34"); P("box", [2.4, 0.3, 1.2], [-W / 2 + 2, 0.65, -D / 2 + 1.5], acc); P("box", [0.9, 0.15, 0.5], [-W / 2 + 1.2, 0.9, -D / 2 + 1.5], "#fff"); ob(-W / 2 + 2, -D / 2 + 1.5, 1.8);
+    P("box", [1.8, 0.8, 1.0], [W / 2 - 3, 0.4, 0], "#6a4428"); for (const dz of [-1, 1]) P("box", [0.6, 0.5, 0.6], [W / 2 - 3, 0.25, dz * 1.1], "#8a5a34"); ob(W / 2 - 3, 0, 1.4); P("box", [2.2, 1.8, 0.6], [W / 2 - 1.2, 0.9, -D / 2 + 1], "#a89a88"); P("sph", 0.3, [W / 2 - 1.2, 0.4, -D / 2 + 1.35], "#ff8a3a", [0, 0, 0], "glow"); halos.push([W / 2 - 1.2, 0.5, -D / 2 + 1.4]);
+  } else if (theme === "market") {
+    for (let i = 0; i < 3; i++) { P("box", [2.6, 1.0, 1.2], [-W / 3 + i * W / 3, 0.5, 0], "#7a5a34"); P("box", [2.8, 0.1, 1.4], [-W / 3 + i * W / 3, 1.05, 0], "#a8844e"); for (let k = 0; k < 5; k++) P("box", [0.2, 0.6 + k * 0.15, 0.2], [-W / 3 + i * W / 3 - 0.8 + k * 0.4, 1.4 + k * 0.07, 0], k % 2 ? "#d83a3a" : "#2ac868"); ob(-W / 3 + i * W / 3, 0, 1.7); }
+  } else { P("box", [1.6, 0.9, 0.9], [W / 2 - 2.5, 0.45, 1], "#6a4428"); P("cyl", [0.5, 1.4, 0.5], [-W / 2 + 1.5, 0.7, D / 2 - 2], "#8a5a34"); P("ico", [0.9, 0.9, 0.9], [-W / 2 + 1.5, 1.8, D / 2 - 2], "#4aa83a"); ob(-W / 2 + 1.5, D / 2 - 2, 1.0); ob(W / 2 - 2.5, 1, 1.2); }
+  const solid = g.mesh("solid", new THREE.MeshStandardMaterial({ vertexColors: true, map: plasterTex(), roughness: 0.85, flatShading: true, emissive: 0x2a1a22, emissiveIntensity: 0.5 }), false); scene.add(solid); const glow = g.mesh("glow", new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }), false); if (glow) scene.add(glow);
+  const ft = floorTex(theme === "villa" || theme === "super" || theme === "bank" ? "tile" : "wood"); ft.repeat.set(W / 3, D / 3); const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshBasicMaterial({ map: ft, color: 0xdcd0c0 })); floor.rotation.x = -Math.PI / 2; scene.add(floor);
+  if (theme === "villa") { const sky = new THREE.Mesh(new THREE.PlaneGeometry(W - 1, 2.4), new THREE.MeshBasicMaterial({ color: 0x8fd0ff })); sky.position.set(0, 3.6, -D / 2 + 0.01); scene.add(sky); sc.position.z += 0.02; }
+  const hp = new Float32Array(halos.length * 3); halos.forEach((h, i) => hp.set(h, i * 3)); const hg = new THREE.BufferGeometry(); hg.setAttribute("position", new THREE.BufferAttribute(hp, 3));
+  scene.add(new THREE.Points(hg, new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexShader: "void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); gl_Position=projectionMatrix*mv; gl_PointSize=clamp(500.0/-mv.z,4.0,160.0); }", fragmentShader: "void main(){ float a=smoothstep(1.0,0.0,length(gl_PointCoord-0.5)*2.0)*0.5; gl_FragColor=vec4(1.0,0.8,0.45,a); }" })));
+  return {
+    scene, rooms: 1, items, spawn: { x: 0, z: D / 2 - 2.6, yaw: Math.PI }, exit: { x: 0, z: D / 2 - 0.5, r: 1.8 }, name: theme, theme, panelOnly: true,
+    blocked(x, z) { if (x < -W / 2 + 0.7 || x > W / 2 - 0.7 || z < -D / 2 + 0.7 || z > D / 2 + 0.6) return true; if (z > D / 2 - 0.7 && Math.abs(x) > 1.4) return true; for (const o of obstacles) if (Math.hypot(x - o.x, z - o.z) < o.r) return true; return false; },
+    groundY: () => 0, camClamp(v) { v.x = Math.min(W / 2 - 0.5, Math.max(-W / 2 + 0.5, v.x)); v.z = Math.min(D / 2 + 0.3, Math.max(-D / 2 + 0.5, v.z)); v.y = Math.min(H - 0.8, Math.max(0.8, v.y)); },
+    nearest(x, z) { const s = screens[0]; return Math.hypot(x - s.x, z - s.z) < 3.4 ? { screen: true, data: { title: b.name + " · live screen" } } : null; },
+    update() {}, dispose() { scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }); },
+  };
+}
