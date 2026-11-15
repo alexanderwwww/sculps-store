@@ -69,7 +69,7 @@ const ctx = await chromium.launchPersistentContext(prof, {
 const sw = ctx.serviceWorkers()[0] || await ctx.waitForEvent("serviceworker", { timeout: 15000 });
 ok("the extension loads (its service worker runs)", /background\.js$/.test(sw.url()), sw.url());
 const manifest = JSON.parse(fs.readFileSync(path.join(EXT, "manifest.json"), "utf8"));
-ok("manifest v3, build 4, content script on claude.ai", manifest.manifest_version === 3 && manifest.version_name === "build 4" && manifest.content_scripts[0].matches.includes("https://claude.ai/*"));
+ok("manifest v3, build 5, content script on claude.ai", manifest.manifest_version === 3 && manifest.version_name === "build 5" && manifest.content_scripts[0].matches.includes("https://claude.ai/*"));
 
 // 1. the genie appears on the chat page
 const page = await ctx.newPage();
@@ -106,7 +106,7 @@ ok("then sends once the composer is free", await until(async () => (await page.l
 
 // 4. the menu: build number, suit, turn off, back on from the toolbar, hide 1 hour
 await page.locator("#aquarius-genie >> #hit").click();
-ok("clicking him opens the menu with CEO · build 4", await until(async () => (await page.locator("#aquarius-genie >> #menu").isVisible()) && (await page.locator("#aquarius-genie >> #mbuild").innerText()) === "CEO · build 4"));
+ok("clicking him opens the menu with CEO · build 5", await until(async () => (await page.locator("#aquarius-genie >> #menu").isVisible()) && (await page.locator("#aquarius-genie >> #mbuild").innerText()) === "CEO · build 5"));
 await page.locator("#aquarius-genie >> #msuit").click();
 ok("Suit on: he wears the suit", await until(async () => (await st()).suit === true));
 await sleep(500);
@@ -132,7 +132,7 @@ let n = 0;
 async function send(action, input = {}) { const id = `c${++n}`; queue.push({ id, action, input }); return (await until(() => results.get(id), 40000)) || { text: "(no answer)" }; }
 let r = await send("navigate", { url: `${WEB}/search`, look: true, why: "t" });
 ok("navigate opens his tab and returns refs when asked", /ok: true[\s\S]*textbox "Search" \[ref=(a\d+)\]/.test(r.text), r.text);
-ok("the heartbeat says Aquarius build 4", statuses.some((s) => s.app === "Aquarius" && s.build === "4"));
+ok("the heartbeat says Aquarius build 5", statuses.some((s) => s.app === "Aquarius" && s.build === "5"));
 const hands = () => ctx.pages().find((p) => p.url().startsWith(WEB));
 const searchRef = r.text.match(/textbox "Search" \[ref=(a\d+)\]/)[1];
 r = await send("type", { ref: searchRef, text: "aquarius constellation", why: "t" });
@@ -169,6 +169,16 @@ const { aqMagic } = await import("../ext/src/magic.js");
 await hands().evaluate(`(${aqMagic.toString()})(300, 70, { freeze: 0.3, keep: true, silent: true })`);
 await hands().screenshot({ path: path.join(SHOTS, "sparkle.png"), clip: { x: 150, y: 0, width: 320, height: 200 } });
 
+// build 5: he speaks Claude's 🧞 replies out loud, never Alex's own voice lines, and never old ones
+{
+  await page.evaluate(() => { const p = document.createElement("p"); p.textContent = "🧞 Old line already on the page."; document.getElementById("sent").append(p); });
+  await sleep(3500);
+  await page.evaluate(() => { const p = document.createElement("p"); p.textContent = "🧞 Aquarius (from Alex's voice): do a backflip"; document.getElementById("sent").append(p); });
+  await page.evaluate(() => { const p = document.createElement("p"); p.textContent = "🧞 Yes boss, flipping now."; document.getElementById("sent").append(p); });
+  let said = ""; for (let i = 0; i < 20 && !said; i++) { said = (await page.locator("#aquarius-genie").getAttribute("data-last-spoken")) || ""; if (/flipping/.test(said)) break; said = ""; await sleep(300); }
+  ok("he speaks Claude's 🧞 reply out loud", /Yes boss, flipping now/.test(said), said);
+  ok("he does not read Alex's own voice line back", !/backflip/.test(said));
+}
 // build 2: a chat tab open BEFORE he loaded (no content script) gets him when the toolbar icon is clicked
 {
   const old = await ctx.newPage(); await old.goto(CHAT + "old-tab"); await sleep(1500);

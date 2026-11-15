@@ -116,9 +116,40 @@ if (window.top === window && !window.__aquarius) {
       }, 1500);
     };
     rec.onerror = (e) => { if (e.error === "not-allowed" || e.error === "service-not-allowed") { denied = true; genie && genie.receive({ type: "say", text: "I can't hear you yet: allow the microphone for claude.ai." , face: "worried" }); } };
-    rec.onend = () => { if (rec && !denied) setTimeout(start, 250); };
+    const again = () => { if (!rec || denied) return; if (window.__aqTalking && window.__aqTalking()) return setTimeout(again, 400); start(); };
+    rec.onend = () => setTimeout(again, 250);
     start();
   }
+  /* ---------------- his voice (build 5) ----------------
+     He speaks out loud with Chrome's speechSynthesis: his feed messages, and Claude's replies in the
+     chat that start with 🧞 (Alex's own voice lines are skipped). While he talks, his ears pause so he
+     never hears himself. */
+  const spoken = new Set(); let talking = false;
+  function speak(text) {
+    const t = String(text || "").replace(/\*[^*]+\*/g, "").replace(/🧞/g, "").replace(/https?:\/\/\S+/g, "the link").trim();
+    if (!t) return;
+    const h = document.getElementById("aquarius-genie"); if (h) h.dataset.lastSpoken = t.slice(0, 120); // tests read this
+    if (!window.speechSynthesis) return;
+    const u = new SpeechSynthesisUtterance(t.slice(0, 600)); u.rate = 1.05; u.pitch = 0.9; u.lang = CONFIG.lang || "en-US";
+    const v = speechSynthesis.getVoices().find((x) => /en(-|_)(US|GB)/.test(x.lang) && /male|daniel|alex|google uk english male/i.test(x.name));
+    if (v) u.voice = v;
+    u.onstart = () => { talking = true; try { rec && rec.abort(); } catch {} };
+    u.onend = u.onerror = () => { talking = false; };
+    speechSynthesis.speak(u);
+  }
+  window.__aqSpeak = speak; window.__aqTalking = () => talking;
+  let seen = new Map();
+  setInterval(() => {
+    const blocks = [...document.querySelectorAll("p, div")].filter((el) => el.childElementCount < 6 && /^\s*🧞/.test(el.textContent || "") && !/from Alex's voice/.test(el.textContent) && !el.closest("#aquarius-genie, [contenteditable]"));
+    const now = Date.now();
+    for (const el of blocks.slice(-3)) {
+      const txt = el.textContent.trim(); if (spoken.has(txt)) continue;
+      const prev = seen.get(el);
+      if (!prev || prev.txt !== txt) { seen.set(el, { txt, at: now }); continue; }
+      if (now - prev.at > 1500) { spoken.add(txt); if (spoken.size > 1) speak(txt); } // the first pass only learns what is already on the page
+    }
+  }, 700);
+  setTimeout(() => { for (const el of document.querySelectorAll("p, div")) if (/^\s*🧞/.test(el.textContent || "")) spoken.add(el.textContent.trim()); spoken.add("__primed__"); }, 2500);
   window.__aqParseWake = parseWake;
 
   /* ---------------- messages from the worker ---------------- */
@@ -126,6 +157,7 @@ if (window.top === window && !window.__aquarius) {
     if (m.type === "wake") show();
     if (!genie && m.type !== "chat") return;
     if (m.type === "say") genie.receive({ type: "say", text: m.text, face: m.face, suit: m.suit });
+    if (m.type === "say") speak(m.text);
     if (m.type === "working") genie.receive({ type: "working", on: m.on });
     if (m.type === "chat") typeIntoChat(m.text);
   });

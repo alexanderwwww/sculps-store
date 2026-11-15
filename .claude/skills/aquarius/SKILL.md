@@ -56,3 +56,6 @@ Conversation mode: after "Aquarius, ..." he keeps listening without the name for
 
 ## Build 4 (2026-11-15)
 Backflip trick (`{type:"trick"}` or "*backflip*" in a say message; frames checked by eye) and a `close` hand action that closes his tab. Idea parked by Alex (fun, not priority): fly up to the tab and close it on screen. Zip: https://blackreaper.us/media/aquarius-4-5a12711aeed629cc.zip
+
+## Build 5 (2026-11-15)
+He speaks out loud (speechSynthesis): feed messages and Claude replies starting with 🧞, never Alex voice lines; ears pause while he talks. close with text closes any tab by title/url (never claude.ai). 36/36. Zip: https://blackreaper.us/media/aquarius-5-eb3e0429a057a199.zip

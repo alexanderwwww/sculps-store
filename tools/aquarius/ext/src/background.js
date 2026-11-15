@@ -86,6 +86,15 @@ async function magicAt(id, info) { await run(id, aqMagic, info.x, info.y, CONFIG
 
 export async function act(action, input = {}) {
   if (action === "done") return `ok: true\ndid: session ended: ${clip(input.summary || "done", 300)}`;
+  // close (build 5): with text, closes every tab whose title or address contains it (never a claude.ai chat);
+  // without text, closes his own tab.
+  if (action === "close" && input.text) {
+    const q = String(input.text).toLowerCase(), all = await chrome.tabs.query({});
+    const hit = all.filter((x) => !/^https:\/\/claude\.ai\//.test(x.url || "") && ((x.title || "").toLowerCase().includes(q) || (x.url || "").toLowerCase().includes(q)));
+    if (!hit.length) return `ok: false\nerror: no tab matches "${clip(input.text, 60)}"`;
+    await chrome.tabs.remove(hit.map((x) => x.id)).catch(() => {});
+    return `ok: true\ndid: closed ${hit.length} tab(s): ${hit.map((x) => clip(x.title || x.url, 40)).join(", ")}`;
+  }
   const t = await tab(), id = t.id;
   if (action === "close") { await chrome.tabs.remove(id).catch(() => {}); return `ok: true\ndid: closed his tab`; }
   const after = async (did) => (input.look ? `ok: true\ndid: ${did}\n${await look(id)}` : brief(id, did));
