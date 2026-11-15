@@ -7,16 +7,17 @@ export const STATUS_DAYS = 60;
 export const MIN_VISITS = 5;
 
 export const DISTRICTS = {
-  stores:   { name: "Stores (Kerberos)",        engine: "Engine 4", r: 38, a0: -58, a1: 58,  rowGap: 13 },
-  reselling:{ name: "Reselling",                engine: "Engine 1", r: 46, a0: 72,  a1: 108, rowGap: 12 },
-  clipping: { name: "Clipping",                 engine: "Engine 2", r: 46, a0: 118, a1: 146, rowGap: 12 },
-  core:     { name: "Core / HQ",                engine: "Core",     r: 50, a0: 150, a1: 210, rowGap: 12 },
+  stores:   { name: "Stores (Kerberos)",        engine: "Engine 4", r: 38, a0: -54, a1: 54,  rowGap: 13 },
+  reselling:{ name: "Reselling",                engine: "Engine 1", r: 46, a0: 74,  a1: 102, rowGap: 12 },
+  clipping: { name: "Clipping",                 engine: "Engine 2", r: 46, a0: 116, a1: 140, rowGap: 12 },
+  core:     { name: "Core / HQ",                engine: "Core",     r: 50, a0: 158, a1: 208, rowGap: 12 },
   whatif:   { name: "WHAT IF studio",           engine: "Engine 3", r: 48, a0: 214, a1: 226, rowGap: 12 },
   trading:  { name: "Trading market",           engine: "Engine 6", r: 46, a0: 232, a1: 256, rowGap: 12 },
   organic:  { name: "Organic / Ads",            engine: "Engine 5", r: 46, a0: 266, a1: 290, rowGap: 12 },
   side:     { name: "Side hustles",             engine: "Engine 7", r: 66, a0: -100, a1: -72, rowGap: 12 },
   personal: { name: "Personal",                 engine: "Personal", r: 70, a0: -62,  a1: -52, rowGap: 12 },
   home:     { name: "Home",                     engine: "Home",     r: 0, a0: 0, a1: 0, rowGap: 12 },
+  workers:  { name: "Worker neighbourhood",      engine: "Workers",  r: 64, a0: -36,  a1: -6,  rowGap: 10 },
   finance:  { name: "Finance",                  engine: "Finance",  r: 22, a0: 80,   a1: 80,  rowGap: 12 },
 };
 
@@ -27,13 +28,13 @@ export const BUILDINGS = [
   { id: "archive",  name: "Mysterious Archive", district: "stores", kind: "store", slug: "mysterious-archive", purpose: "Genuine Chrome Hearts, sourced one piece at a time.", status: "auto", idle: "closed", accent: "#25252e", trim: "#c9ccd6", prop: "cross", brain: "archive|chrome", next: ["Reviews first: they set the price ceiling."] },
   { id: "bodies",   name: "bodies",             district: "stores", kind: "store", slug: "bodies", purpose: "Portable smart Pilates board: Icy Swan, Lilac Heat, Matcha.", status: "auto", idle: "closed", accent: "#9a7ad8", trim: "#f2e6ff", prop: "ring", brain: "bodies|pilates" },
   { id: "cryo",     name: "cryo",               district: "stores", kind: "store", slug: "cryo", purpose: "Countertop bottle chiller. No fridge, no ice.", status: "auto", idle: "closed", accent: "#4ab6e8", trim: "#e8fbff", prop: "ice", brain: "cryo" },
-  { id: "snowman",  name: "Snow Buddy",         district: "stores", kind: "store", slug: "snowman", purpose: "Snow machine: your house is the only one on the street with snow.", status: "auto", idle: "construction", accent: "#7fb6ff", trim: "#ffffff", prop: "snowman", brain: "snow" },
+  { id: "snowman",  name: "Snow Buddy",         district: "stores", kind: "store", slug: "snowman", purpose: "Snow machine: your house is the only one on the street with snow.", status: "auto", idle: "construction", pos: [-72, -52], accent: "#7fb6ff", trim: "#ffffff", prop: "snowman", brain: "snow" },
   { id: "garden",   name: "Garden Buddy",       district: "stores", kind: "store", slug: "garden-buddy", purpose: "Garden kneeler. Live on Shopify (amboras.com) and on Kerberos.", status: "auto", idle: "closed", accent: "#3f8f3a", trim: "#f7f3d0", prop: "planter", brain: "garden|amboras" },
   { id: "ceiling",  name: "Ceiling Buddy",      district: "stores", kind: "store", slug: "ceiling-buddy", purpose: "Ceiling-mounted helper store.", status: "auto", idle: "closed", accent: "#e8b84a", trim: "#fff6d8", prop: "lamp", brain: "ceiling" },
   { id: "xero",     name: "XERO",               district: "stores", kind: "store", slug: "xero", purpose: "XERO store.", status: "auto", idle: "closed", accent: "#2f6fb8", trim: "#ffffff", prop: "windmill", brain: "xero" },
   { id: "scream",   name: "Giant Scream",       district: "stores", kind: "store", slug: "giant-scream", purpose: "Giant Scream store.", status: "auto", idle: "closed", accent: "#d8d8e0", trim: "#1a1a22", prop: "scream", brain: "scream" },
   { id: "kerberos", name: "Kerberos HQ",        district: "stores", kind: "skill", skill: "kerberos", purpose: "Our own Shopify replacement running every store above.", status: "open", accent: "#1c3d6e", trim: "#f0c040", prop: "gate", brain: "kerberos", next: ["Phase 1 left: on-site checkout proven in test mode, Meta pixel + Conversions API, confirmation emails, real domain."] },
-  { id: "projector",name: "HoloHaunt projector",district: "stores", kind: "skill", skill: "black-reaper-projector", purpose: "Halloween/Christmas projector add-on for Black Reaper.", status: "planned", accent: "#a04ad8", trim: "#ffd8ff", prop: "projector", brain: "projector|holohaunt" },
+  { id: "projector",name: "HoloHaunt projector",district: "stores", kind: "skill", skill: "black-reaper-projector", purpose: "Halloween/Christmas projector add-on for Black Reaper.", status: "planned", pos: [-86, -40], accent: "#a04ad8", trim: "#ffd8ff", prop: "projector", brain: "projector|holohaunt" },
 
   // ---- Finance ----
   { id: "bank",     name: "The Bank",           district: "finance", kind: "bank", skill: "payments", purpose: "Where the money lives: processors, orders, manual income.", status: "open", accent: "#5c5348", trim: "#f0c040", prop: "bank", size: [9, 7, 5.4], brain: "payment|stripe|bank", next: ["Two processors before ads (payments law)."] },
@@ -81,6 +82,9 @@ export const BUILDINGS = [
   // ---- Alex's house (spawn) ----
   { id: "home",     name: "Alex's villa",       district: "home", kind: "home", skill: "home", purpose: "Home on the hill by the sea. Pool, lounge, olive trees.", status: "open", accent: "#c8643a", trim: "#fffaf0", prop: "villa", pos: [66, 50], size: [10, 7, 4.6], big: true },
 
+  // ---- Friendly market (decoration, easter egg only) ----
+  { id: "super",    name: "Friendly Market",    district: "home", kind: "super", skill: "supermarket", purpose: "Just a supermarket.", status: "open", accent: "#e8504a", trim: "#fff6e0", prop: "cart", pos: [-30, 6], size: [9, 6, 3.8] },
+
   // ---- Personal ----
   { id: "kcal",     name: "kcal gym",           district: "personal", kind: "skill", skill: "kcal", purpose: "Alex's weight and calorie tracker. Goal 96 kg by 25 Dec.", status: "open", accent: "#d85a3a", trim: "#fff0e8", prop: "dumbbell" },
 ];
@@ -98,8 +102,18 @@ export const WORKERS = [
   { id: "trader",     name: "Trader",       home: "crypto",color: "#7a3ad8" },
   { id: "researcher", name: "Researcher",   home: "hq",       color: "#3aa876" },
   { id: "builder",    name: "Builder",      home: "kerberos", color: "#e8a020" },
+  { id: "genie",      name: "Aquarius",     home: "hq",       color: "#3a8ae8" },
 ];
 
+export const SNOW_ZONES = [{ c: [-74, -58], r0: 22, r1: 36, name: "Snow mountain" }];
+// Real-life calendar (month-day, Europe/Athens). Add an event = add a line. decor: christmas | bf | newyear
+export const CALENDAR = [
+  { id: "xmas",    from: "11-24", to: "12-26", decor: "christmas", note: "Christmas is coming" },
+  { id: "bf",      from: "11-27", to: "11-30", decor: "bf",        note: "Black Friday" },
+  { id: "xmaseve", from: "12-24", to: "12-25", decor: "celebrate", note: "Christmas" },
+  { id: "newyear", from: "12-31", to: "01-02", decor: "newyear",   note: "New Year" },
+];
+export const TZ = "Europe/Athens";
 export const PLAZA = [0, 0];
 const rad = (d) => (d * Math.PI) / 180;
 
@@ -126,3 +140,6 @@ export function layout(buildings = BUILDINGS, districts = DISTRICTS) {
   }
   return out.map((b) => ({ size: [6.4, 5.4, 4.2], ...b, ry: Math.atan2(PLAZA[0] - b.pos[0], PLAZA[1] - b.pos[1]) }));
 }
+
+// Worker cottages: generated from WORKERS so a new worker = one line in WORKERS.
+for (const w of WORKERS) BUILDINGS.push({ id: "wh-" + w.id, name: w.name + "'s cottage", district: "workers", kind: "workerhome", worker: w.id, purpose: "Where " + w.name + " lives and sleeps.", status: "open", accent: w.color, trim: "#fff6e0", prop: "chimneyonly", size: [4.4, 4, 3.2] });
