@@ -24,8 +24,8 @@ export function build(S, { timing }) {
   const MOON = V(-2, 24, -30), mt = moonTex();
   const moon = mesh(new THREE.SphereGeometry(5.5, 40, 24), new THREE.MeshStandardMaterial({ map: mt, emissiveMap: mt, emissive: 0xfff4e0, emissiveIntensity: .32, roughness: 1, fog: false }), false);
   moon.position.copy(MOON); scene.add(moon);
-  const SUN = V(14, 9, 10).normalize().multiplyScalar(160); const sun = mesh(new THREE.SphereGeometry(9, 24, 16), glow(0xffd890, 1.25), false); sun.material.fog = false; sun.position.copy(SUN); scene.add(sun);
-  const ghost = mesh(new THREE.SphereGeometry(9.3, 24, 16), new THREE.MeshBasicMaterial({ color: 0x150c20, transparent: true, fog: false, depthWrite: false }), false); scene.add(ghost);
+  const SUN = V(14, 9, 10).normalize().multiplyScalar(160); const sun = mesh(new THREE.SphereGeometry(6.5, 24, 16), glow(0xffb84a, 0.55), false); sun.material.fog = false; sun.position.copy(SUN); scene.add(sun);
+  const ghost = mesh(new THREE.SphereGeometry(6.7, 24, 16), new THREE.MeshBasicMaterial({ color: 0x0a0612, transparent: true, fog: false, depthWrite: false }), false); scene.add(ghost);
   const ring = mesh(new THREE.TorusGeometry(1, .08, 8, 64), glow(0xbffcff, 4), false); ring.material.transparent = true; scene.add(ring);
   const shards = [...Array(16)].map((_, i) => { const m = mesh(new THREE.OctahedronGeometry(.6, 0), glow(i % 2 ? 0xffe9a0 : 0x8ff6ff, 3), false); scene.add(m); return m; });
   const water = mesh(new THREE.PlaneGeometry(600, 600, 1, 1).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: waterTex(), roughness: .22, metalness: .05, color: 0xffffff, envMapIntensity: 1 }), false); scene.add(water);
@@ -58,7 +58,7 @@ export function build(S, { timing }) {
     [L[3], 14.8, (u, t) => C([-2.5 - u * .4, 2.2, -1.2 - u * .4], [6, 4.5, 5], 44, { ...H0, ry: .9, lookUp: .4 })],
     [14.8, L[4], (u, t) => { const a = .6 + u * .9; return C([Math.cos(a) * 15, 5, Math.sin(a) * 15], [0, -.5, 0], 40); }],
     [L[4], L[5], (u, t) => { const a = -.1 + u * .5; return C([.2 + Math.sin(a) * 3.6, 1.0, .6 + Math.cos(a) * 3.6], [.2, 2.0, .6], 40, { ...H0, ry: a * .6, cast: .55 * sm(L[4] + .2, L[4] + 1, t), lookUp: .3 }); }],
-    [L[5], 23.3, (u, t) => C([0, 1.5, 3], [SUN.x * .25, SUN.y * .25 + 1, SUN.z * .25], 30 + u * 6)],
+    [L[5], 23.3, (u, t) => C([-2, 2.5, 4], [SUN.x * .22, SUN.y * .22 - 2.5, SUN.z * .22], 34 + u * 5)],
     [23.3, L[6], (u, t) => C([.6 + u * .4, 1.6, 4.6 - u * .6], [.2, 1.6, .6], 36, { ...H0, ry: -.1, shrug: sm(23.6, 24.2, t) * (1 - sm(25.2, 25.8, t)) })],
     [L[6], 28.2, (u, t) => C([0, 22 - u * 3, 14 - u * 2], [0, 1, 0], 44)],
     [28.2, L[7], (u, t) => { const a = 2.2 + u * .5; return C([Math.cos(a) * 15, 7, Math.sin(a) * 15], [0, 3, 0], 46); }],
@@ -78,7 +78,7 @@ export function build(S, { timing }) {
     const pp = t - L[1] + .05; ring.visible = pp > 0 && pp < 1.4; if (ring.visible) { ring.position.copy(MOON); ring.lookAt(...cam.pos); ring.scale.setScalar(2 + eo(pp / 1.2) * 14); ring.material.opacity = 1 - pp / 1.4; }
     shards.forEach((s, i) => { s.visible = pp > 0 && pp < 1.6; if (!s.visible) return; const r = rng(i * 7 + 1), d = V(r() - .5, r() - .5, r() - .5).normalize(); s.position.copy(MOON).addScaledVector(d, eo(pp / 1.5) * 16); s.rotation.set(t * 3 + i, t * 2, 0); s.scale.setScalar(1 - pp / 1.6); });
     // eclipse that never happens: the dark disc slides toward the sun and dissolves before it covers it
-    const ec = clamp((t - L[5]) / 2.7); ghost.visible = t >= L[5] && t < 23.3; ghost.position.copy(SUN).add(V(-30 + ec * 22, 6 - ec * 4, 0).applyAxisAngle(V(0, 1, 0), Math.atan2(SUN.x, SUN.z))); ghost.material.opacity = .95 * (1 - sm(.55, .95, ec)); ghost.lookAt(0, 0, 0);
+    const ec = clamp((t - L[5]) / 2.7); ghost.visible = t >= L[5] && t < 23.3; ghost.position.copy(SUN).add(V(-30 + ec * 22, 6 - ec * 4, 0).applyAxisAngle(V(0, 1, 0), Math.atan2(SUN.x, SUN.z))); ghost.material.opacity = 1 * (1 - sm(.62, .98, ec)); ghost.lookAt(0, 0, 0);
     // tides: high bulge -> collapses when the Moon is gone; the Sun alone gives a smaller tide
     const sea = t < L[2] + .3 ? -.7 : t < L[3] ? lerp(-.7, -2.0, sm(L[2] + .3, L[3] - .5, t)) : t < L[4] ? -1.7 + .3 * Math.sin((t - L[3]) * 2.2) : -1.6;
     water.position.y = sea; water.material.map.offset.set(t * .004, t * .007); foam.position.y = sea + .05; foam.scale.setScalar(1 + (-1.6 - sea) * -.06);
