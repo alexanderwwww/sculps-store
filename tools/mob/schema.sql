@@ -133,6 +133,7 @@ CREATE TABLE IF NOT EXISTS mob_aquarius (
   text text NOT NULL,
   face text,
   suit boolean,
+  to_chat boolean NOT NULL DEFAULT false,
   taken_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
 );

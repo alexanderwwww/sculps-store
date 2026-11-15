@@ -34,6 +34,12 @@ test("say validates text, face and suit", async () => {
   assert.equal((await S({ text: "x".repeat(501) })).status, 400);
   assert.equal((await S({ text: "ok", face: "angry" })).status, 400);
   assert.equal((await S({ text: "ok", suit: "yes" })).status, 400);
+  assert.equal((await S({ text: "ok", to_chat: "yes" })).status, 400);
+  assert.equal((await S({ text: "type me", to_chat: true })).status, 201);
+  const f = await (await R("GET", `/api/aquarius/feed?key=${KEY}`)).json();
+  assert.equal(f.messages.at(-1).to_chat, true);
+  assert.equal((await S({ text: "bubble only" })).status, 201);
+  assert.equal((await (await R("GET", `/api/aquarius/feed?key=${KEY}`)).json()).messages.at(-1).to_chat, false);
   for (const face of ["happy", "focused", "smug", "worried", "talking"]) assert.equal((await S({ text: "ok", face })).status, 201);
 });
 

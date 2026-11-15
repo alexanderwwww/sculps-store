@@ -406,7 +406,7 @@ async function api(req, env, url, path, M) {
 
 /*
  * Aquarius — the genie on Alex's screen. A tiny mailbox:
- *   POST /api/aquarius/say {text, face?, suit?}   bearer MOB_API_TOKEN   -> he types it
+ *   POST /api/aquarius/say {text, face?, suit?, to_chat?} bearer MOB_API_TOKEN   -> he types it
  *   GET  /api/aquarius/feed?key=AQUARIUS_KEY                             -> last 20 messages (the app polls this)
  *   POST /api/aquarius/heard?key=AQUARIUS_KEY {text}                     -> a voice command Alex said ("Aquarius, ...")
  *   GET  /api/aquarius/inbox                      bearer MOB_API_TOKEN   -> commands not yet taken, marked taken
@@ -423,8 +423,8 @@ async function aquarius(req, env, url, path, M) {
   const cleanText = (t) => (typeof t === "string" ? t.replace(/\s+/g, " ").trim() : "");
   if (path === "/api/aquarius/feed" && M === "GET") {
     if (!keyOk()) return cors(apiErr(401, "unauthorized", "key required"));
-    const rows = await d.q(`SELECT id, text, face, suit, created_at FROM mob_aquarius WHERE kind='say' ORDER BY id DESC LIMIT 20`);
-    return cors(json({ messages: rows.reverse().map((r) => ({ id: r.id, text: r.text, face: r.face, suit: r.suit, at: r.created_at })) }));
+    const rows = await d.q(`SELECT id, text, face, suit, to_chat, created_at FROM mob_aquarius WHERE kind='say' ORDER BY id DESC LIMIT 20`);
+    return cors(json({ messages: rows.reverse().map((r) => ({ id: r.id, text: r.text, face: r.face, suit: r.suit, to_chat: r.to_chat, at: r.created_at })) }));
   }
   if (path === "/api/aquarius/heard" && M === "POST") {
     if (!keyOk()) return cors(apiErr(401, "unauthorized", "key required"));
@@ -470,7 +470,8 @@ async function aquarius(req, env, url, path, M) {
     if (!text || text.length > 500) return apiErr(400, "validation", "text must be 1-500 characters");
     if (b.face != null && !AQUARIUS_FACES.includes(b.face)) return apiErr(400, "validation", `face must be one of ${AQUARIUS_FACES.join(", ")}`);
     if (b.suit != null && typeof b.suit !== "boolean") return apiErr(400, "validation", "suit must be true or false");
-    const r = await d.one(`INSERT INTO mob_aquarius (kind, text, face, suit) VALUES ('say', $1, $2, $3) RETURNING id, created_at`, [text, b.face ?? null, b.suit ?? null]);
+    if (b.to_chat != null && typeof b.to_chat !== "boolean") return apiErr(400, "validation", "to_chat must be true or false");
+    const r = await d.one(`INSERT INTO mob_aquarius (kind, text, face, suit, to_chat) VALUES ('say', $1, $2, $3, $4) RETURNING id, created_at`, [text, b.face ?? null, b.suit ?? null, b.to_chat === true]);
     return json({ id: r.id, at: r.created_at }, 201);
   }
   if (path === "/api/aquarius/inbox" && M === "GET") {
