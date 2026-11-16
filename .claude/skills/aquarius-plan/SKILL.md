@@ -53,3 +53,13 @@ Game design draft (Alex: "take your time"; build only on "build"):
 - Main screen HUD (always on): top bar = equity, today's P&L after costs, open positions, PAPER or LIVE badge, evidence counter ("NO EVIDENCE yet" under 100 trades), kill switch, Council verdict. Money-moving strip with icons: each buy/sell/fee/win/loss pops as a coin icon with amount and flies from the district that caused it. Right: agent list with status bars. Bottom-left: minimap. Big wall screen at HQ = portfolio + neurons.
 - Everything is data: a worker's nameplate and animation come from its real job status; a tower's height = a strategy's profit after costs; a building lights when its feed is live and goes dark when data is stale.
 - Style: modeled low-poly in three.js (style v3), not AI art.
+
+## DECISIONS (Alex, 2026-11-16, voice) - waiting only for the word "build"
+- Every bot is a real worker: name, job, rules, its OWN skills. Every section, the Council and the CEO (= Alex) have their own skills. Tapping a worker shows its skills and what it is doing; Alex does not have to command them.
+- Whole island playable, every building enterable, every building has a purpose (no purpose = not there). HQ interior, Council, departments, market square with public market screens.
+- Look: ancient Greece + PS2 + World of Warcraft vibe, real-looking buildings and obvious statues, NOT blocky/Roblox; characters must not look ugly. (Honest limit: browser 3D, stylized hand-painted, not WoW production art.)
+- Main screen like Ultra's: money made, trades taken, live. It is a website, runs on our server 24/7, always learning into the database (progressive learning, a real brain).
+- Paper first; then one day of a tiny live test only inside rule-26 caps. Spawn rule: a bot may create a bot only if the Council approves.
+- Usage: Alex pays for NO extra usage. Smart bots run on Claude's own usage (the hourly runs) and free sources; most workers are free code jobs.
+- Risk per trade: Alex leaves it to us: use the recipe (Fibonacci, Time Machine, 6x-cost gate); ceiling 2% per trade, kill switch always.
+- Grok and ChatGPT connect later through his logged-in browser, the same way the city is set up.
