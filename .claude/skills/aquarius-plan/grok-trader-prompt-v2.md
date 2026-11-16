@@ -49,5 +49,5 @@ Send every pick the moment you take it, and post the top narratives every 15 min
 FIRST MOVES
 1. Tell Alex, step by step, how to create and connect the fresh 0.3 SOL wallet without ever showing you the seed phrase, and say plainly what you can and cannot do by yourself (place trades, run continuously, call the link).
 2. Build the seven skills and the dashboard. Show them.
-3. Take 20 paper trades at real prices with measured costs. Then go live with the 0.3 SOL inside the laws above.
+3. PAPER FIRST: trade a paper wallet of 10 SOL at real prices with measured costs (positions up to 2.6 SOL, 3 at once). Report it like real money. You go live with the real 0.3 SOL only when Alex says "go live".
 ---
