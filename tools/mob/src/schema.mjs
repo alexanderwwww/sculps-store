@@ -182,4 +182,34 @@ CREATE TABLE IF NOT EXISTS mob_news (
   source text,
   published_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
-)`;
+);
+CREATE TABLE IF NOT EXISTS mob_aq_depts (id text PRIMARY KEY, name text NOT NULL, god text, skills jsonb NOT NULL DEFAULT '[]', live boolean NOT NULL DEFAULT false, note text, last_run_at timestamptz);
+CREATE TABLE IF NOT EXISTS mob_aq_bots (
+  id serial PRIMARY KEY, key text UNIQUE, dept text NOT NULL, name text NOT NULL, job text NOT NULL, rules text NOT NULL DEFAULT '',
+  skills jsonb NOT NULL DEFAULT '[]', power text NOT NULL DEFAULT 'code', status text NOT NULL DEFAULT 'idle', note text,
+  created_by text NOT NULL DEFAULT 'seed', approved boolean NOT NULL DEFAULT true, proposed_by text, verdict text,
+  created_at timestamptz NOT NULL DEFAULT now(), last_run_at timestamptz
+);
+CREATE TABLE IF NOT EXISTS mob_aq_positions (
+  id serial PRIMARY KEY, strategy text NOT NULL, mint text NOT NULL, pool text NOT NULL, symbol text, decimals int NOT NULL,
+  tokens_raw text NOT NULL, size_sol double precision NOT NULL, fee_sol double precision NOT NULL, entry_price_usd double precision NOT NULL,
+  entry_mid_usd double precision, stop_price double precision NOT NULL, target_price double precision NOT NULL, stop_pct double precision, target_pct double precision,
+  rt_pct double precision, buy_slip_pct double precision, opened_at timestamptz NOT NULL DEFAULT now(), time_stop_at timestamptz NOT NULL,
+  last_price_usd double precision, last_value_sol double precision, last_at timestamptz
+);
+CREATE TABLE IF NOT EXISTS mob_aq_trades (
+  id serial PRIMARY KEY, position_id int, strategy text NOT NULL, mint text, symbol text, size_sol double precision, back_sol double precision,
+  entry_price_usd double precision, exit_price_usd double precision, pnl_sol double precision, pnl_pct double precision, fees_sol double precision,
+  slippage_pct double precision, reason text, grade text, opened_at timestamptz, closed_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS mob_aq_flows (id bigserial PRIMARY KEY, kind text NOT NULL, sol double precision NOT NULL, dept text, label text, at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS mob_aq_council (id serial PRIMARY KEY, verdict text NOT NULL, symbol text, mint text, strategy text, reason text, number double precision, facts jsonb, at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS mob_aq_brain (id serial PRIMARY KEY, dept text NOT NULL, kind text NOT NULL DEFAULT 'lesson', text text NOT NULL, data jsonb, at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS mob_aq_state (k text PRIMARY KEY, v jsonb, at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS mob_aq_market (k text PRIMARY KEY, data jsonb, ok boolean NOT NULL DEFAULT false, err text, at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS mob_aq_strategies (id text PRIMARY KEY, name text NOT NULL, market text, params jsonb NOT NULL DEFAULT '{}', alive boolean NOT NULL DEFAULT true, status text NOT NULL DEFAULT 'not tested', stats jsonb, parent text, created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS mob_aq_tools (name text PRIMARY KEY, licence text, verdict text, status text NOT NULL DEFAULT 'planned', used_by text, best_use text);
+CREATE TABLE IF NOT EXISTS mob_aq_helpers (id serial PRIMARY KEY, from_helper text NOT NULL, role text, dept text, channel text, text text NOT NULL, labels jsonb NOT NULL DEFAULT '[]', at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS mob_aq_candles (pool text NOT NULL, t bigint NOT NULL, o double precision, h double precision, l double precision, c double precision, v double precision, PRIMARY KEY (pool, t));
+CREATE TABLE IF NOT EXISTS mob_aq_tasks (id serial PRIMARY KEY, kind text NOT NULL DEFAULT 'research', title text NOT NULL, detail text, created_by text NOT NULL DEFAULT 'alex', status text NOT NULL DEFAULT 'open', result text, done_by text, created_at timestamptz NOT NULL DEFAULT now(), done_at timestamptz);
+CREATE TABLE IF NOT EXISTS mob_aq_helper_log (id serial PRIMARY KEY, helper text NOT NULL, session text, tool text NOT NULL, args jsonb, ok boolean, at timestamptz NOT NULL DEFAULT now())`;

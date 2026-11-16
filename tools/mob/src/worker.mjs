@@ -11,6 +11,8 @@ import { shell, loginPage, appScript } from "./ui.mjs";
 import * as S from "./stats.mjs";
 import { uiData, uiAct } from "./uiapi.mjs";
 import { cityRoute, incomeApi, newsApi } from "./city.mjs";
+import { aqPage, aqApi } from "./aq/routes.mjs";
+import { tick as aqTick } from "./aq/engine.mjs";
 
 export const BUILD = "mob-4";
 const json = (v, status = 200) => new Response(JSON.stringify(v), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
@@ -45,6 +47,8 @@ export default {
     }
   },
   async scheduled(event, env, ctx) {
+    // Aquarius paper tick runs every minute ("* * * * *"); mob's own tick keeps its */5 schedule.
+    if (event?.cron === "* * * * *") { ctx.waitUntil(C.ensureMigrated(env).then(() => aqTick(env)).then((r) => console.log("aq", JSON.stringify(r))).catch((e) => console.log("aq error", e.message || e))); return; }
     ctx.waitUntil(C.runTick(env).then((r) => console.log("tick", JSON.stringify(r))));
   },
 };
@@ -83,6 +87,7 @@ async function route(req, env) {
   if (!(await isAdmin(req, env))) return redirect("/login");
   if (path === "/logout") return redirect("/login", { "set-cookie": "mob_session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" });
 
+  if (path === "/aq" || path.startsWith("/aq/")) return aqPage(req, env, path, { json, html });
   if (path === "/city" || path.startsWith("/city/")) return cityRoute(req, env, path, { json, html });
   const msg = url.searchParams.get("msg");
   let m;
@@ -294,6 +299,8 @@ async function addSubmission(env, f) {
 /* ---------------- JSON API ---------------- */
 async function api(req, env, url, path, M) {
   if (path.startsWith("/api/aquarius/")) return aquarius(req, env, url, path, M);
+  if (path.startsWith("/api/aq/")) return aqApi(req, env, url, path, { json, apiErr, admin: await isAdmin(req, env), bearer: isBearer(req, env),
+    keyOk: !!env.AQUARIUS_KEY && safeEqual(url.searchParams.get("key") || req.headers.get("x-aquarius-key") || "", env.AQUARIUS_KEY) });
   if (path === "/api/news") return newsApi(req, env, M, { json, apiErr, ok: isBearer(req, env) || (await isAdmin(req, env)) });
   if (path === "/api/income") return incomeApi(req, env, M, { json, apiErr, ok: isBearer(req, env) || (await isAdmin(req, env)) });
   if (!isBearer(req, env)) return apiErr(401, "unauthorized", "Bearer MOB_API_TOKEN required");
