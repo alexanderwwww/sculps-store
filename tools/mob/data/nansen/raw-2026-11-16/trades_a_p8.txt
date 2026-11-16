@@ -1,0 +1,314 @@
+ok: true
+text:
+Home
+Trade
+Smart Money
+Tokens
+Profiler
+Chains
+Get Mobile App
+Portfolio
+Points
+Stake
+Smart Alerts
+Watchlists
+HISTORY
+Profiler / 
+ 
+ RaRa
+Token God Mode / WBTC
+Token God Mode / BTC
+Get Started
+Nansen API
+What's New
+Academy
+Help
+Settings
+Collapse Menu
+
+⌘B
+
+Smart Money
+
+Solana
+
+Tokens
+Perps
+Search anything...
+
+⌘
+
+K
+
+Ask AI
+⌘ E
+Wallet
+$0
+Deposit
+Leaderboard
+Top Tokens
+Trades
+Real-time Smart Money DEX Trades
+LIVE
+
+Label
+
+Filter
+Bought Token:
+
+All Caps
+
+​
+
+Any
+
+Token Age(D)
+Chain
+	Trader	
+Amount
+	Bought	
+Amount
+	Sold	
+Value
+	
+Time
+	Tx
+ 
+	
+ 
+	
+ 
+	
+ 
+	
+ 
+	
+ 
+	
+ 
+	
+ 
+	
+ 
+
+
+	
+Smart Trader [9CXAmZ8B]
+	4.25	
+SOL
+	300.00	
+USDC
+	
+$299.39
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	7.07	
+SOL
+	500.00	
+USDC
+	
+$498.98
+	6h ago	
+
+
+	
+Smart Trader [HU8zKRvP]
+	0.159	
+SOL
+	1.64K	
+ANTS
+	
+$9.40
+	6h ago	
+
+
+	
+"trxter" on pump.fun [FcyNwbpS]
+	7.67M	
+FEDE
+	2.00	
+SOL
+	
+$144.71
+	6h ago	
+
+
+	
+pablo [7Mwof5tB]
+	7.16	
+SOL
+	15.17M	
+HUANG
+	
+$518.14
+	6h ago	
+
+
+	
+Smart Trader [HU8zKRvP]
+	1.64K	
+ANTS
+	0.160	
+SOL
+	
+$11.58
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	3.48	
+JUPSOL
+	300.00	
+USDC
+	
+$299.39
+	6h ago	
+
+
+	
+Smart Trader [HU8zKRvP]
+	0.368	
+SOL
+	3.79K	
+ANTS
+	
+$21.71
+	6h ago	
+
+
+	
+Smart Trader [HU8zKRvP]
+	3.79K	
+ANTS
+	0.370	
+SOL
+	
+$26.77
+	6h ago	
+
+
+	
+pablo [7Mwof5tB]
+	1.89	
+SOL
+	10.01M	
+PERCY
+	
+$136.73
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	4.23	
+SOL
+	300.00	
+USDC
+	
+$299.39
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	4.23	
+SOL
+	300.00	
+USDC
+	
+$299.39
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	3.47	
+JUPSOL
+	300.00	
+JUPUSD
+	
+$300.18
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	4.14	
+JUPSOL
+	358.00	
+USDC
+	
+$357.27
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	2.89	
+JUPSOL
+	250.00	
+USDC
+	
+$249.49
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	86.15K	
+PUMP
+	250.00	
+USDC
+	
+$249.49
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	86.10K	
+PUMP
+	250.00	
+USDC
+	
+$249.49
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	4.23	
+SOL
+	300.00	
+JUPUSD
+	
+$300.18
+	6h ago	
+
+
+	
+"BoughtEm" on FOMO [BE7oDsS7]
+	1.30K	
+DACITYCOIN
+	5.31	
+USDC
+	
+$5.29
+	6h ago	
+
+
+	
+"BoughtEm" on FOMO [BE7oDsS7]
+	5.22	
+USDC
+	0.0222	
+TTWO
+	
+$4.98
+	6h ago	
+Page 8
+1m ago

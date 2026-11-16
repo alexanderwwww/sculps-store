@@ -1,0 +1,2 @@
+ok: true
+url: https://app.nansen.ai/smart-money?chains=solana

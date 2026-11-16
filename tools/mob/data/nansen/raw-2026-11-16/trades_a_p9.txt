@@ -1,0 +1,314 @@
+ok: true
+text:
+Home
+Trade
+Smart Money
+Tokens
+Profiler
+Chains
+Get Mobile App
+Portfolio
+Points
+Stake
+Smart Alerts
+Watchlists
+HISTORY
+Profiler / 
+ 
+ RaRa
+Token God Mode / WBTC
+Token God Mode / BTC
+Get Started
+Nansen API
+What's New
+Academy
+Help
+Settings
+Collapse Menu
+
+⌘B
+
+Smart Money
+
+Solana
+
+Tokens
+Perps
+Search anything...
+
+⌘
+
+K
+
+Ask AI
+⌘ E
+Wallet
+$0
+Deposit
+Leaderboard
+Top Tokens
+Trades
+Real-time Smart Money DEX Trades
+LIVE
+
+Label
+
+Filter
+Bought Token:
+
+All Caps
+
+​
+
+Any
+
+Token Age(D)
+Chain
+	Trader	
+Amount
+	Bought	
+Amount
+	Sold	
+Value
+	
+Time
+	Tx
+ 
+	
+ 
+	
+ 
+	
+ 
+	
+ 
+	
+ 
+	
+ 
+	
+ 
+	
+ 
+
+
+	
+Smart Trader [9CXAmZ8B]
+	2.31	
+JUPSOL
+	200.00	
+USDC
+	
+$199.59
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	2.31	
+JUPSOL
+	200.00	
+USDC
+	
+$199.59
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	5.77	
+JUPSOL
+	500.00	
+USDC
+	
+$498.98
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	0.0₂387	
+CBBTC
+	250.00	
+USDC
+	
+$249.49
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	68.98K	
+PUMP
+	200.00	
+USDC
+	
+$199.59
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	86.29K	
+PUMP
+	250.00	
+USDC
+	
+$249.49
+	6h ago	
+
+
+	
+"Kaaox" on pump.fun [3j5c4aD1]
+	754.57K	
+XRL
+	1.00	
+SOL
+	
+$72.35
+	6h ago	
+
+
+	
+"Kaaox" on pump.fun [3j5c4aD1]
+	764.18K	
+XRL
+	1.00	
+SOL
+	
+$72.35
+	6h ago	
+
+
+	
+"Kaaox" on pump.fun [3j5c4aD1]
+	8.54M	
+XRL
+	10.00	
+SOL
+	
+$723.53
+	6h ago	
+
+
+	
+"trxter" on pump.fun [FcyNwbpS]
+	1.20M	
+GTA$
+	2.00	
+SOL
+	
+$144.71
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	5.78	
+JUPSOL
+	500.00	
+USDC
+	
+$498.98
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	0.0₂774	
+CBBTC
+	500.00	
+USDC
+	
+$498.98
+	6h ago	
+
+
+	
+Smart Trader [9CXAmZ8B]
+	7.04	
+SOL
+	500.00	
+USDC
+	
+$498.98
+	6h ago	
+
+
+	
+narracanz: "narc" on pump.fun [C…
+	12.32M	
+PIKACHU
+	2.99	
+SOL
+	
+$216.08
+	6h ago	
+
+
+	
+pablo [7Mwof5tB]
+	15.17M	
+HUANG
+	750.00	
+USDC
+	
+$748.47
+	6h ago	
+
+
+	
+narracanz: "narc" on pump.fun [C…
+	10.79M	
+SQUISHY
+	2.99	
+SOL
+	
+$216.08
+	6h ago	
+
+
+	
+Smart Trader [DWqE7x1o]
+	2.07	
+SOL
+	21.22K	
+ANTS
+	
+$121.48
+	6h ago	
+
+
+	
+Smart Trader [DWqE7x1o]
+	21.22K	
+ANTS
+	2.12	
+SOL
+	
+$153.39
+	7h ago	
+
+
+	
+Smart Trader [DWqE7x1o]
+	0.587	
+SOL
+	5.89K	
+ANTS
+	
+$33.69
+	7h ago	
+
+
+	
+Smart Trader [DWqE7x1o]
+	5.89K	
+ANTS
+	0.590	
+SOL
+	
+$42.69
+	7h ago	
+Page 9
+1m ago
