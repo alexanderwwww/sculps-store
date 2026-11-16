@@ -42,6 +42,7 @@ export function r2(objects = {}) {
       const s = opts?.range ? v.slice(opts.range.offset, opts.range.offset + opts.range.length) : v;
       return { size: v.length, body: new Response(s).body, text: async () => new TextDecoder().decode(s) };
     },
+    async delete(k) { store.delete(k); },
     async put(k, val) { const b = val instanceof Uint8Array ? val : new Uint8Array(await new Response(val).arrayBuffer()); store.set(k, b); return {}; },
     async list({ prefix = "", cursor, limit = 1000 } = {}) {
       const keys = [...store.keys()].filter((k) => k.startsWith(prefix)).sort();

@@ -102,6 +102,10 @@ export async function aqApi(req, env, url, path, { json, apiErr, admin, bearer, 
   if (path === "/api/aq/briefing" && M === "GET") return new Response(await briefing(env), { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
   if (!(admin || bearer)) return apiErr(401, "unauthorized", "Admin session or bearer MOB_API_TOKEN required");
   if (path === "/api/aq/state" && M === "GET") return json(await buildState(env));
+  // the daily brain backups in R2: the list, and one file to download (for scripts/aq-restore.mjs)
+  if (path === "/api/aq/backup" && M === "GET") { const l = env.MEDIA ? await env.MEDIA.list({ prefix: "aq-backup/", limit: 1000 }) : { objects: [] }; return json({ backups: l.objects.map((o) => ({ day: o.key.slice(10, 20), key: o.key, bytes: o.size })) }); }
+  const bm = path.match(/^\/api\/aq\/backup\/(\d{4}-\d\d-\d\d)$/);
+  if (bm && M === "GET") { const o = env.MEDIA && (await env.MEDIA.get(`aq-backup/${bm[1]}.json.gz`)); return o ? new Response(o.body, { headers: { "content-type": "application/gzip", "content-disposition": `attachment; filename="aq-backup-${bm[1]}.json.gz"`, "cache-control": "no-store" } }) : apiErr(404, "not_found", "No backup for that day"); }
   if (path === "/api/aq/bots" && M === "POST") { const r = await createBot(env, await body()); return r.error ? apiErr(400, "validation", r.error) : json(r, 201); }
   if (path === "/api/aq/sellall" && M === "POST") return admin ? json(await sellAll(env)) : apiErr(403, "forbidden", "Only Alex (admin session) can sell all");
   if (path === "/api/aq/rebuild" && M === "POST") return admin ? json(await rebuild(env)) : apiErr(403, "forbidden", "Only Alex (admin session) can rebuild the island");

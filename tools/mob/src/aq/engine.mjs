@@ -11,6 +11,7 @@ import { councilTick, learnFromTrade, recomputeRules, costBook, ruleWeights, MIN
 import { R6_PARAMS, R7_PARAMS } from "./seed.mjs";
 import { COUNCIL, STRENGTH_BUCKETS } from "./logic.mjs";
 import { trainingState } from "./arena.mjs";
+import { watch } from "./keeper.mjs";
 import { seatTick, seatStats, exitVotes, exitVoteRule, markHandled, impliedMid, warroom, chatFor, recentAlerts } from "./seat.mjs";
 import { START_SOL, reconcile, scaleOut, closePosition, resetLedger, walletBase, tickLock, tickUnlock } from "./ledger.mjs";
 export { START_SOL };
@@ -677,7 +678,7 @@ export async function buildState(env) {
       timeArms: ["L", "S"].map((v) => { const st4 = stats(trd.filter((t) => t.strategy === r.id && t.tvar === v && !seatCut(t)).map((t) => t.pnl_pct)); return { id: v, n: st4.n, winRate: st4.winRate, expectancyPct: st4.expectancyPct }; }) })),
     tools: tools.map((t) => ({ name: t.name, licence: t.licence, verdict: t.verdict, status: t.status, usedBy: t.used_by, bestUse: t.best_use })),
     replay: S.replay_R3 ? { trades: S.replay_R3.trades, expectancyPct: S.replay_R3.expectancyPct, ci95: S.replay_R3.ci95, costPct: S.replay_R3.costPct, evidence: S.replay_R3.evidence } : null,
-    health: { ...(S.health || {}), ledger: ledNow.ok, errors: mkt.filter((r) => !r.ok).slice(0, 12).map((r) => ({ feed: r.k, error: r.err, at: r.at })) },
+    health: { ...(S.health || {}), ledger: ledNow.ok, watch: await watch(d, S), errors: mkt.filter((r) => !r.ok).slice(0, 12).map((r) => ({ feed: r.k, error: r.err, at: r.at })) },
     history: { priceSamples1h: hist.n, coins: hist.m, barsNeeded: MIN_OWN_BARS, ready: hist.ready },
     shadow: await shadowStats(d),
     whales: { ...(await whaleState(d)), nansen: nzs.state },

@@ -1888,3 +1888,148 @@ test("training switch and arena tick: off by default, Alex only (or Claude for h
   for (const t of ["mob_aq_arena_agg", "mob_aq_arena_px", "mob_aq_arena_samples", "mob_aq_arena_costs"]) await d.q(`DELETE FROM ${t}`);
   await d.q(`DELETE FROM mob_aq_watch WHERE symbol LIKE 'AR%' OR symbol='THIN'`); await d.q(`DELETE FROM mob_aq_state WHERE k IN ('training_mode','arena','arena_min','arena_hour','arena_wf_day')`); await cleanBook(d);
 });
+
+// ================================================================ THE KEEPER: rollups, backup, watchdog, weekly review
+import * as KP from "../src/aq/keeper.mjs";
+import { saveTrades } from "../src/aq/whales.mjs";
+import { restoreFile } from "../scripts/aq-restore.mjs";
+const KEEPER_KEYS = `'keeper_measure','keeper_hour','keeper_day','keeper_week','keeper_size_alert','keeper_tick_alert','keeper_noise','keeper','storage','backup'`;
+
+test("keeper rollups: swaps -> pairs -> wallet totals, candles 1m -> 5m -> 1h, Council blocks -> daily counts; each aggregate equals the raw data it replaces", async () => {
+  const d = db(env); await S();
+  for (const t of ["mob_aq_wtrades", "mob_aq_wroll", "mob_aq_wfold", "mob_aq_whales", "mob_aq_candles", "mob_aq_candles_five", "mob_aq_candles_hour", "mob_aq_council", "mob_aq_council_daily"]) await d.q(`DELETE FROM ${t}`);
+  await d.q(`DELETE FROM mob_aq_state WHERE k IN (${KEEPER_KEYS})`);
+  // 600 swaps of 40 wallets on 8 coins over six days; wallet w0 is a steady winner on six coins (bought, then sold higher an hour later)
+  const now = Date.now(), swaps = [];
+  for (let i = 0; i < 600; i++) { const r = (k) => AR_seed(`sw${i}|${k}`); swaps.push({ tx: `tx${i}`, wallet: `w${1 + Math.floor(r(1) * 39)}`, mint: `coin${Math.floor(r(2) * 8)}`, kind: r(3) < 0.55 ? "buy" : "sell", sol: Math.round((0.1 + r(4) * 3) * 1000) / 1000, at: new Date(now - r(5) * 6 * 86400000).toISOString() }); }
+  for (let c = 0; c < 6; c++) { const t = now - (5 - c * 0.6) * 86400000; swaps.push({ tx: `wb${c}`, wallet: "w0", mint: `coin${c}`, kind: "buy", sol: 1, at: new Date(t).toISOString() }, { tx: `ws${c}`, wallet: "w0", mint: `coin${c}`, kind: "sell", sol: 1.5, at: new Date(t + 3600000).toISOString() }); }
+  for (const m of new Set(swaps.map((s) => s.mint))) assert.equal(await saveTrades(d, m, swaps.filter((s) => s.mint === m)), swaps.filter((s) => s.mint === m).length);
+  const book = () => d.q(`SELECT wallet, wins, closed, round(net_sol::numeric, 6)::float8 net, cand FROM mob_aq_whales ORDER BY wallet`);
+  const PAIRS = `SELECT wallet, mint, round(sum(b)::numeric, 6)::float8 b, round(sum(s)::numeric, 6)::float8 s, sum(n)::int n, min(fb) fb, min(fs) fs, max(ls) ls FROM (
+      SELECT wallet, mint, coalesce(sum(sol) FILTER (WHERE kind='buy'), 0) b, coalesce(sum(sol) FILTER (WHERE kind='sell'), 0) s, count(*) n, min(at) FILTER (WHERE kind='buy') fb, min(at) FILTER (WHERE kind='sell') fs, max(at) FILTER (WHERE kind='sell') ls FROM mob_aq_wtrades GROUP BY wallet, mint
+      UNION ALL SELECT wallet, mint, buy_sol, sell_sol, n, first_buy, first_sell, last_sell FROM mob_aq_wroll) u GROUP BY wallet, mint ORDER BY wallet, mint`;
+  await refreshWinners(d); const book0 = await book(), pairs0 = await d.q(PAIRS);
+  assert.ok(book0.length > 20); assert.deepEqual((({ wins, closed, cand }) => [wins, closed, cand])(book0.find((w) => w.wallet === "w0")), [6, 6, true]);
+  // roll everything older than 48 hours except the newest 5 swaps of each coin
+  const rolled = await KP.rollSwaps(d, 48, 5);
+  const keep = new Set(); for (const m of new Set(swaps.map((s) => s.mint))) swaps.filter((s) => s.mint === m).sort((a, b) => Date.parse(b.at) - Date.parse(a.at) || (a.tx < b.tx ? -1 : 1)).slice(0, 5).forEach((s) => keep.add(s.tx));
+  const stay = swaps.filter((s) => keep.has(s.tx) || now - Date.parse(s.at) < 48 * 3600000 - 5000);
+  assert.equal(rolled.swaps, swaps.length - stay.length); assert.ok(rolled.swaps > 300 && rolled.pairs > 100, JSON.stringify(rolled));
+  assert.deepEqual((await d.q(`SELECT tx FROM mob_aq_wtrades ORDER BY tx`)).map((r) => r.tx), stay.map((s) => s.tx).sort());
+  assert.deepEqual(await d.q(PAIRS), pairs0, "per wallet and coin: SOL in, SOL out, swap count, first buy, first sell, last sell are what the raw swaps said");
+  await refreshWinners(d); assert.deepEqual(await book(), book0, "the whale book is the same after the rollup");
+  // the swap reader fetches a coin's latest swaps again: nothing is counted twice
+  const again = swaps.filter((s) => s.mint === "coin0").sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 5); assert.equal(await saveTrades(d, "coin0", again), 0);
+  assert.deepEqual(await KP.rollSwaps(d, 48, 5), { swaps: 0, pairs: 0 }); await refreshWinners(d); assert.deepEqual(await book(), book0);
+  // fold: pairs idle for 3 days, with no raw swap left, of wallets outside the book's short list -> that wallet's totals
+  const brute = await d.q(`SELECT wallet, count(*)::int coins, count(*) FILTER (WHERE ok)::int closed, count(*) FILTER (WHERE ok AND sell_sol > buy_sol)::int wins, round(coalesce(sum(sell_sol - buy_sol) FILTER (WHERE ok), 0)::numeric, 6)::float8 net, sum(n)::int swaps FROM (
+    SELECT r.*, (buy_sol > 0 AND sell_sol > 0 AND first_buy < first_sell AND extract(epoch FROM last_sell - first_buy) > 60) ok FROM mob_aq_wroll r WHERE last_at < now() - interval '3 days' AND NOT EXISTS (SELECT 1 FROM mob_aq_wtrades t WHERE t.wallet = r.wallet AND t.mint = r.mint)
+      AND NOT EXISTS (SELECT 1 FROM mob_aq_whales w WHERE w.wallet = r.wallet AND (w.cand OR w.winner))) x GROUP BY wallet ORDER BY wallet`);
+  const folded = await KP.foldPairs(d, 3); assert.equal(folded.wallets, brute.length); assert.ok(folded.pairs > 20, JSON.stringify(folded));
+  assert.deepEqual(await d.q(`SELECT wallet, coins, closed, wins, round(net_sol::numeric, 6)::float8 net, swaps FROM mob_aq_wfold ORDER BY wallet`), brute);
+  assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_wroll WHERE wallet='w0'`)).n >= 1, "a candidate keeps every pair");
+  await refreshWinners(d); assert.deepEqual(await book(), book0, "pairs + folded totals still give the same whale book");
+  // noise: a wallet with under three coins in total and nothing left raw or paired is dropped and counted
+  const noiseExp = await d.one(`SELECT count(*)::int wallets, coalesce(sum(swaps), 0)::int swaps FROM mob_aq_wfold f WHERE coins < 3 AND last_at < now() - interval '3 days' AND NOT EXISTS (SELECT 1 FROM mob_aq_wroll r WHERE r.wallet = f.wallet) AND NOT EXISTS (SELECT 1 FROM mob_aq_wtrades t WHERE t.wallet = f.wallet)`);
+  const nz = await KP.dropNoise(d, 3); assert.equal(nz.wallets, noiseExp.wallets); assert.equal(nz.swaps, noiseExp.swaps);
+  if (nz.wallets) assert.deepEqual((({ wallets, swaps }) => [wallets, swaps])((await d.one(`SELECT v FROM mob_aq_state WHERE k='keeper_noise'`)).v), [nz.wallets, nz.swaps]);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_whales`)).n, book0.length, "the whale book itself is never pruned");
+  // ---- candles: three hours of 1-minute bars; the first two hours are older than the cut
+  const H = Math.floor(now / 3600000) * 3600, t0 = H - 4 * 3600, bars = Array.from({ length: 180 }, (_, i) => { const o = 1 + AR_seed(`cb${i}`), c = 1 + AR_seed(`cc${i}`); return { t: t0 + i * 60, o, h: Math.max(o, c) + 0.1, l: Math.min(o, c) - 0.1, c, v: 1 + (i % 7) }; });
+  await d.q(`INSERT INTO mob_aq_candles (pool, t, o, h, l, c, v) SELECT 'KP', * FROM unnest($1::bigint[],$2::float8[],$3::float8[],$4::float8[],$5::float8[],$6::float8[])`, [bars.map((b) => b.t), bars.map((b) => b.o), bars.map((b) => b.h), bars.map((b) => b.l), bars.map((b) => b.c), bars.map((b) => b.v)]);
+  const bucket = (bs, size) => { const m = new Map(); for (const b of bs) { const k = b.t - (b.t % size); (m.get(k) || m.set(k, []).get(k)).push(b); } return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([t, g]) => ({ t, o: g[0].o, h: Math.max(...g.map((x) => x.h)), l: Math.min(...g.map((x) => x.l)), c: g.at(-1).c, v: g.reduce((a, x) => a + x.v, 0), bars: g.length })); };
+  const cut = H - 2 * 3600, old = bars.filter((b) => b.t < cut), eq = (rows, exp) => { assert.equal(rows.length, exp.length); rows.forEach((r, i) => { assert.equal(Number(r.t), exp[i].t); for (const k of ["o", "h", "l", "c", "v"]) assert.ok(Math.abs(r[k] - exp[i][k]) < 1e-9, `${k} of bucket ${i}`); assert.equal(r.bars, exp[i].bars); }); };
+  let rc = await KP.rollCandles(d, { hours: 2, days: 30, nowSec: H + 10 }); assert.deepEqual(rc.m5, { rolled: 120, made: 24 }); assert.deepEqual(rc.h1, { rolled: 0, made: 0 });
+  eq(await d.q(`SELECT * FROM mob_aq_candles_five WHERE pool='KP' ORDER BY t`), bucket(old, 300)); assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_candles WHERE pool='KP'`)).n, 60, "the recent hour stays at one minute");
+  rc = await KP.rollCandles(d, { hours: 2, days: 0, nowSec: H + 10 }); assert.deepEqual(rc.h1, { rolled: 24, made: 2 });
+  eq(await d.q(`SELECT * FROM mob_aq_candles_hour WHERE pool='KP' ORDER BY t`), bucket(old, 3600)); assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_candles_five WHERE pool='KP'`)).n, 0);
+  // ---- Council: old BLOCKs become daily counts per reason; a PASS (the verdict of a trade) and anything recent stay
+  const cn = (verdict, reason, days, kind = "soft") => d.q(`INSERT INTO mob_aq_council (verdict, symbol, mint, reason, number, facts, at) VALUES ($1,'X','m',$2,1,$3, date_trunc('day', now()) - make_interval(days => $4::int) + interval '3 hours')`, [verdict, reason, JSON.stringify(verdict === "PASS" ? {} : { block: kind }), days]);
+  await cn("BLOCK", "soft rules: score 66 under 70 (fear)", 10); await cn("BLOCK", "soft rules: score 61.5 under 70 (fear)", 10); await cn("BLOCK", "liquidity too low", 10, "hard"); await cn("BLOCK", "liquidity too low", 9, "hard"); await cn("PASS", "R7 bounce; hard blocks clear", 10); await cn("BLOCK", "cost gate", 2, "hard");
+  assert.deepEqual(await KP.compactCouncil(d, 7), { rows: 4, lines: 3 });
+  assert.deepEqual((await d.q(`SELECT kind, reason, n FROM mob_aq_council_daily ORDER BY day, reason`)).map((r) => [r.kind, r.reason, r.n]), [["hard", "liquidity too low", 1], ["soft", "soft rules: score # under # (fear)", 2], ["hard", "liquidity too low", 1]]);
+  assert.deepEqual((await d.q(`SELECT verdict, reason FROM mob_aq_council ORDER BY id`)).map((r) => r.reason), ["R7 bounce; hard blocks clear", "cost gate"]);
+  assert.deepEqual(await KP.compactCouncil(d, 7), { rows: 0, lines: 0 });
+  for (const t of ["mob_aq_wtrades", "mob_aq_wroll", "mob_aq_wfold", "mob_aq_whales", "mob_aq_candles", "mob_aq_candles_five", "mob_aq_candles_hour", "mob_aq_council", "mob_aq_council_daily"]) await d.q(`DELETE FROM ${t}`);
+});
+
+test("keeper: watchdog numbers and alerts, the weekly review, and nothing of it touches the money", async () => {
+  const d = db(env); await seatDesk(d); await d.q(`DELETE FROM mob_aq_state WHERE k IN (${KEEPER_KEYS})`); await tick(env);
+  const money0 = await moneyState(d), trades0 = (await d.one(`SELECT count(*)::int n FROM mob_aq_trades`)).n, brain0 = (await d.one(`SELECT count(*)::int n FROM mob_aq_brain`)).n;
+  const k1 = await KP.keeperTick(env);
+  assert.equal(k1.storage.mode, "normal"); assert.ok(k1.storage.dbMb > 0 && k1.storage.pct < 60); assert.ok(k1.swaps && k1.candles && k1.council && k1.fold && k1.noise); assert.equal(k1.backup.ok, true); assert.equal(k1.review, 1);
+  assert.deepEqual(await KP.keeperTick(env), {}, "measured every 10 minutes, rolled every hour, backed up once a day, reviewed once a week: the next minute does nothing");
+  let s = await S(); const w = s.health.watch;
+  assert.ok(w.dbMb > 0 && w.limitMb === 1024 && w.pctOfLimit < 60 && w.retention === "normal"); assert.ok(w.tables.some((t) => t.table === "mob_aq_trades" && t.rows >= 0 && t.mb >= 0)); assert.ok(w.tables.every((t) => /^mob_aq_/.test(t.table)));
+  assert.ok(w.lastTickAgeSec >= 0 && w.lastTickAgeSec < 120 && w.ticksAlive === true && w.lastBrainWriteAgeSec >= 0 && w.daysOfHistory >= 0); assert.equal(w.lastBackup.key, k1.backup.key); assert.match(w.limitSource, /1 GB a project/);
+  // the weekly review, by code
+  const rv = await d.one(`SELECT text, data FROM mob_aq_brain WHERE kind='week' ORDER BY id DESC LIMIT 1`);
+  assert.match(rv.text, /^Week 1 review \(written by code, no AI\): \d+ trades closed in the last 7 days, -?[\d.]+ SOL realized/); for (const part of ["BY STRATEGY:", "BY SIGNAL SOURCE", "COUNCIL SEATS:", "RULE CHANGES:", "BLOCKS THAT COST MONEY"]) assert.ok(rv.text.includes(part), part);
+  const wk = await d.q(`SELECT strategy, pnl_pct FROM mob_aq_trades WHERE closed_at > now() - interval '7 days'`), r3 = stats(wk.filter((t) => t.strategy === "R3").map((t) => t.pnl_pct));
+  if (r3.n) assert.ok(rv.text.includes(`R3: ${r3.n} trades, ${Math.round(r3.winRate * 1000) / 10}% won, ${r3.expectancyPct}% a trade`), rv.text.slice(0, 400));
+  // over 60% of the limit: one alert a day, tighter retention, and the main tick keeps running
+  env.AQ_DB_LIMIT_MB = String(Math.max(0.01, w.dbMb / 0.7));
+  let k2 = await KP.keeperTick(env, { force: true }); assert.equal(k2.storage.mode, "tight"); assert.ok(k2.storage.pct >= 60 && k2.storage.pct < 80);
+  const al = await d.q(`SELECT text FROM mob_aq_brain WHERE kind='alert' AND text LIKE 'STORAGE:%'`); assert.equal(al.length, 1); assert.match(al[0].text, /% of the [\d.]+ MB limit\. Retention is now "tight" \(raw swaps 24 h, 1-minute candles 24 h, Council blocks 3 days\)\. Learning continues/);
+  await KP.keeperTick(env, { force: true }); assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_brain WHERE kind='alert' AND text LIKE 'STORAGE:%'`)).n, 1, "once a day, not every run"); assert.equal((await d.one(`SELECT v FROM mob_aq_state WHERE k='keeper'`)).v.mode, "tight");
+  env.AQ_DB_LIMIT_MB = String(Math.max(0.01, w.dbMb / 0.9)); k2 = await KP.keeperTick(env, { force: true }); assert.equal(k2.storage.mode, "hard");
+  const tk = await tick(env); assert.ok(!tk.skipped, "a full database never stops the tick"); s = await S(); assert.equal(s.health.watch.retention, "hard"); assert.equal(s.ledger.ok, true);
+  delete env.AQ_DB_LIMIT_MB; await KP.keeperTick(env, { force: true }); assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_brain WHERE text LIKE 'Storage is back under 60%%'`)).n >= 1);
+  // the tick stops: the 5-minute timer says so, once an hour
+  assert.equal((await KP.watchTicks(env)).ok, true);
+  await d.q(`UPDATE mob_aq_state SET at = now() - interval '25 minutes' WHERE k='last_tick'`);
+  const dead = await KP.watchTicks(env); assert.equal(dead.ok, false); await KP.watchTicks(env);
+  const wa = await d.q(`SELECT text FROM mob_aq_brain WHERE text LIKE 'WATCHDOG:%'`); assert.equal(wa.length, 1); assert.match(wa[0].text, /has not finished for 25 minutes/); assert.equal((await S()).health.watch.ticksAlive, false);
+  await d.q(`UPDATE mob_aq_state SET at = now() WHERE k='last_tick'`);
+  // never deleted, never moved
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_trades`)).n, trades0); assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_brain`)).n > brain0); assert.equal((await reconcile(d)).ok, true);
+  const m1 = JSON.parse(await moneyState(d)), m0 = JSON.parse(money0); assert.deepEqual([m1[0], m1[1], m1[3], m1[4]], [m0[0], m0[1], m0[3], m0[4]], "cash, settings, strategies, positions and trades are as they were");
+  await d.q(`DELETE FROM mob_aq_state WHERE k IN (${KEEPER_KEYS})`);
+});
+
+test("brain backup to R2 and restore: a gzip a day, 60 days kept; the dry run changes nothing; apply puts back only what is missing; the ledger only into an empty book", async () => {
+  const d = db(env); await seatDesk(d); await d.q(`DELETE FROM mob_aq_state WHERE k IN (${KEEPER_KEYS})`);
+  await setRule("fear", 1); await setRule("young", 1);
+  for (const sym of ["BKA", "BKB"]) { const id = await openPosition(d, posRow(sym), 5); assert.ok(await closePosition(d, { id, tokens_raw: TOK(0.05) }, { gross: sym === "BKA" ? 0.06 : 0.04, feeSol: 0.0001, why: "target", gradePrefix: "A" })); await d.q(`INSERT INTO mob_aq_brain (dept, kind, text) VALUES ('review','lesson',$1)`, [`${sym} lesson`]); }
+  for (const day of ["2026-01-01", "2026-09-10", "2026-10-20"]) await env.MEDIA.put(`aq-backup/${day}.json.gz`, new Uint8Array(3));
+  await env.MEDIA.put("aq-backup/notes.txt", new Uint8Array(1));
+  const b = await KP.backup(env, { day: "2026-11-16" });
+  assert.equal(b.ok, true); assert.equal(b.key, "aq-backup/2026-11-16.json.gz"); assert.ok(b.bytes > 100 && b.bytes < b.rawBytes, "gzip is smaller than the JSON");
+  assert.deepEqual(b.deleted.sort(), ["aq-backup/2026-01-01.json.gz", "aq-backup/2026-09-10.json.gz"], "older than 60 days"); assert.ok(env.MEDIA.store.has("aq-backup/2026-10-20.json.gz") && env.MEDIA.store.has("aq-backup/notes.txt"));
+  const bytes = env.MEDIA.store.get(b.key), data = JSON.parse(await KP.gunzip(bytes));
+  assert.equal(data.kind, "aquarius-brain-backup"); for (const t of ["mob_aq_trades", "mob_aq_brain", "mob_aq_rules", "mob_aq_strategies", "mob_aq_whales", "mob_aq_signals", "mob_aq_votes", "mob_aq_chat", "mob_aq_arena_agg", "mob_aq_wroll"]) assert.ok(Array.isArray(data.tables[t]), t);
+  for (const t of ["mob_aq_trades", "mob_aq_brain", "mob_aq_rules", "mob_aq_signals"]) assert.equal(data.tables[t].length, (await d.one(`SELECT count(*)::int n FROM ${t}`)).n, t);
+  assert.ok(data.tables.mob_aq_trades.length >= 2 && data.tables.mob_aq_brain.length >= 2); assert.ok(!JSON.stringify(data).includes(env.DATABASE_URL) && !JSON.stringify(data).includes("helperkey123"));
+  assert.equal((await d.one(`SELECT v FROM mob_aq_state WHERE k='backup'`)).v.key, b.key);
+  // the list and the download
+  assert.equal((await R("GET", "/api/aq/backup")).status, 401); const ls = await (await R("GET", "/api/aq/backup", { bearer: "tok-test" })).json(); assert.deepEqual(ls.backups.map((x) => x.day).filter((x) => /^\d/.test(x)), ["2026-10-20", "2026-11-16"]);
+  const dl = await R("GET", "/api/aq/backup/2026-11-16", { cookie }); assert.equal(dl.status, 200); assert.equal(new Uint8Array(await dl.arrayBuffer()).length, bytes.length); assert.equal((await R("GET", "/api/aq/backup/2026-11-15", { cookie })).status, 404);
+  // nothing missing: the dry run says so
+  const lines = []; let r = await restoreFile(d, bytes, { log: (x) => lines.push(x) });
+  assert.equal(r.apply, false); assert.equal(r.freshBook, false); assert.ok(Object.values(r.tables).every((x) => x.skipped || x.missing === 0), JSON.stringify(r.tables)); assert.match(lines.at(-1), /^DRY RUN: nothing was changed/);
+  assert.match(r.tables.mob_aq_positions.skipped, /only restored into an empty book/);
+  // lose a lesson, a rule and a signal; change one row that still exists
+  const lostBrain = (await d.one(`DELETE FROM mob_aq_brain WHERE id = (SELECT max(id) FROM mob_aq_brain WHERE kind='lesson') RETURNING id, text`)), lostRule = await d.one(`DELETE FROM mob_aq_rules WHERE name='fear' RETURNING name`);
+  await d.q(`INSERT INTO mob_aq_rules (name, weight) VALUES ('young', 2.5) ON CONFLICT (name) DO UPDATE SET weight = 2.5`); const counts = async () => JSON.stringify(await d.one(`SELECT (SELECT count(*) FROM mob_aq_brain)::int b, (SELECT count(*) FROM mob_aq_rules)::int r, (SELECT count(*) FROM mob_aq_trades)::int t`));
+  const c0 = await counts(); r = await restoreFile(d, bytes, { log: () => {} });
+  assert.deepEqual([r.tables.mob_aq_brain.missing, r.tables.mob_aq_rules.missing, r.tables.mob_aq_trades.missing, r.tables.mob_aq_brain.added], [1, 1, 0, 0]); assert.equal(await counts(), c0, "a dry run changes nothing");
+  const money0 = await moneyState(d);
+  r = await restoreFile(d, bytes, { apply: true, log: () => {} });
+  assert.deepEqual([r.tables.mob_aq_brain.added, r.tables.mob_aq_rules.added, r.tables.mob_aq_trades.added], [1, 1, 0]); assert.equal((await d.one(`SELECT text FROM mob_aq_brain WHERE id=$1`, [lostBrain.id])).text, lostBrain.text); assert.equal(lostRule.name, "fear");
+  assert.equal((await d.one(`SELECT weight FROM mob_aq_rules WHERE name='young'`)).weight, 2.5, "a row that exists is never overwritten"); assert.equal(r.ledger.ok, true);
+  const mA = JSON.parse(await moneyState(d)), mB = JSON.parse(money0); assert.deepEqual([mA[0], mA[3], mA[4], mA[5]], [mB[0], mB[3], mB[4], mB[5]], "in a book that has traded, the restore moves no cash, no position, no flow");
+  const nb = await d.one(`INSERT INTO mob_aq_brain (dept, kind, text) VALUES ('ops','event','after restore') RETURNING id`); assert.ok(nb.id > lostBrain.id, "ids are not handed out twice after a restore");
+  assert.deepEqual((await restoreFile(d, bytes, { apply: true, log: () => {} })).tables.mob_aq_brain.added, 0, "restoring twice adds nothing");
+  await assert.rejects(() => KP.restore(d, { kind: "something else", tables: {} }), /not an Aquarius brain backup/); await assert.rejects(() => KP.restore(d, { kind: "aquarius-brain-backup", tables: { "mob_accounts": [] } }), /unexpected table/);
+  // a disaster: the book is gone. The whole ledger comes back and the cash reconciles with the trades again.
+  const b2 = await KP.backup(env, { day: "2026-11-17" }), bytes2 = env.MEDIA.store.get(b2.key), before = await reconcile(d), posN = (await d.one(`SELECT count(*)::int n FROM mob_aq_positions`)).n, trN = (await d.one(`SELECT count(*)::int n FROM mob_aq_trades`)).n;
+  assert.ok(posN >= 1 && before.ok);
+  for (const t of ["mob_aq_trades", "mob_aq_positions", "mob_aq_flows", "mob_aq_brain"]) await d.q(`DELETE FROM ${t}`);
+  await d.q(`DELETE FROM mob_aq_state WHERE k = 'ledger_base'`); await d.q(`UPDATE mob_aq_state SET v='1' WHERE k='cash_sol'`);
+  r = await restoreFile(d, bytes2, { log: () => {} }); assert.equal(r.freshBook, true); assert.equal(r.tables.mob_aq_trades.missing, trN); assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_trades`)).n, 0);
+  r = await restoreFile(d, bytes2, { apply: true, log: () => {} });
+  const after = await reconcile(d); assert.deepEqual([after.ok, after.cashSol, after.realizedSol, after.openCostSol, after.baseSol], [true, before.cashSol, before.realizedSol, before.openCostSol, before.baseSol]);
+  assert.deepEqual([(await d.one(`SELECT count(*)::int n FROM mob_aq_positions`)).n, (await d.one(`SELECT count(*)::int n FROM mob_aq_trades`)).n], [posN, trN]);
+  const tk = await tick(env); assert.ok(!tk.skipped); assert.equal((await S()).ledger.ok, true, "the restored book ticks and reconciles");
+  await d.q(`DELETE FROM mob_aq_state WHERE k IN (${KEEPER_KEYS})`); await cleanBook(d);
+});

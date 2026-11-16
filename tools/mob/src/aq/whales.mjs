@@ -57,11 +57,15 @@ export const MIN_CLOSED = 5, MIN_HOLD_SEC = 60, MAX_SWAPS_DAY = 100, SCORE_PER_T
 export async function refreshWinners(d) {
   await d.q(`INSERT INTO mob_aq_whales (wallet, wins, closed, net_sol, cand, updated_at)
     SELECT wallet, wins, closed, net, (closed >= $2 AND net > 0 AND wins::float / closed >= 0.6 AND swaps::float / coins <= $1), now() FROM (
-      SELECT wallet, count(*) FILTER (WHERE ok AND s > b)::int wins, count(*) FILTER (WHERE ok)::int closed, coalesce(sum(s - b) FILTER (WHERE ok), 0)::float net, sum(n)::int swaps, count(*)::int coins FROM (
+      -- raw swaps, the pairs the keeper rolled them into (keeper.mjs: rollSwaps) and the per-wallet totals of old folded pairs: the same sums as over every swap ever seen
+      SELECT wallet, p.wins + coalesce(f.wins, 0) wins, p.closed + coalesce(f.closed, 0) closed, p.net + coalesce(f.net_sol, 0) net, p.swaps + coalesce(f.swaps, 0) swaps, p.coins + coalesce(f.coins, 0) coins FROM (
+      SELECT wallet, count(*) FILTER (WHERE ok AND s > b)::int wins, count(*) FILTER (WHERE ok)::int closed, coalesce(sum(s - b) FILTER (WHERE ok), 0)::float net, sum(n)::int swaps, count(*)::int coins, count(*) FILTER (WHERE b > 0 AND s > 0)::int both_sides FROM (
         SELECT wallet, mint, b, s, n, (b > 0 AND s > 0 AND fb < fs AND extract(epoch FROM ls - fb) > $3) ok FROM (
-          SELECT wallet, mint, coalesce(sum(sol) FILTER (WHERE kind='buy'), 0) b, coalesce(sum(sol) FILTER (WHERE kind='sell'), 0) s, count(*) n,
-            min(at) FILTER (WHERE kind='buy') fb, min(at) FILTER (WHERE kind='sell') fs, max(at) FILTER (WHERE kind='sell') ls FROM mob_aq_wtrades GROUP BY wallet, mint) w) x
-      GROUP BY wallet HAVING count(*) FILTER (WHERE b > 0 AND s > 0) > 0) y
+          SELECT wallet, mint, sum(b) b, sum(s) s, sum(n) n, min(fb) fb, min(fs) fs, max(ls) ls FROM (
+            SELECT wallet, mint, coalesce(sum(sol) FILTER (WHERE kind='buy'), 0) b, coalesce(sum(sol) FILTER (WHERE kind='sell'), 0) s, count(*) n,
+              min(at) FILTER (WHERE kind='buy') fb, min(at) FILTER (WHERE kind='sell') fs, max(at) FILTER (WHERE kind='sell') ls FROM mob_aq_wtrades GROUP BY wallet, mint
+            UNION ALL SELECT wallet, mint, buy_sol, sell_sol, n, first_buy, first_sell, last_sell FROM mob_aq_wroll) u GROUP BY wallet, mint) w) x
+      GROUP BY wallet) p LEFT JOIN mob_aq_wfold f USING (wallet) WHERE p.both_sides + coalesce(f.both_sides, 0) > 0) y
     ON CONFLICT (wallet) DO UPDATE SET wins=EXCLUDED.wins, closed=EXCLUDED.closed, net_sol=EXCLUDED.net_sol, cand=EXCLUDED.cand OR mob_aq_whales.source='kolscan', updated_at=now()`, [BOT_TRADES, MIN_CLOSED, MIN_HOLD_SEC]);
   // a wallet that is no longer a candidate, or was never scored by Jupiter, is not a winner; a KOLscan seed is scored
   // like the others but is a winner only with its own 5+ closed coins in our swaps (a name is not a record)
@@ -191,7 +195,7 @@ export async function whaleSignal(env, c, rug, set, ctx = {}) {
   if (!tr.ok) { set("wh.steady", "blocked", `swaps feed failed: ${tr.err}`.slice(0, 190)); return { ok: false, signal: false, reason: "missing data: swaps" }; }
   const t = tr.data;
   await saveTrades(d, c.mint, t);
-  await d.q(`DELETE FROM mob_aq_wtrades WHERE at < now() - interval '14 days'`);
+  // (old swaps are no longer deleted here: the keeper rolls them into mob_aq_wroll, so what they taught the whale book stays)
   const excluded = new Set([rug?.creator, c.dev, ...(rug?.insiders || [])].filter(Boolean));
   const buyers = [...new Set(t.filter((x) => x.kind === "buy" && Date.now() - Date.parse(x.at) < 15 * 60000).map((x) => x.wallet))].filter((w) => !excluded.has(w));
   const winners = buyers.length ? await d.q(`SELECT wallet, wins, closed, net_sol FROM mob_aq_whales WHERE winner AND wallet = ANY($1)`, [buyers]) : [];
