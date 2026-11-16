@@ -4,7 +4,12 @@ import assert from "node:assert/strict";
 import { makeEnv, dropEnv, reqOf, login, mock, resetMocks, res, calls } from "./helpers.mjs";
 import { db } from "../src/db.mjs";
 import { FX, FX2, FX3, FX5, FX6 } from "./aq-fixtures.mjs";
-import { whaleSignal, refreshWinners, mineTick } from "../src/aq/whales.mjs";
+import { whaleSignal, refreshWinners, mineTick, scoreTick, scoreWallet, parseKolscan, kolTick } from "../src/aq/whales.mjs";
+import { readFileSync } from "node:fs";
+const FXD = JSON.parse(readFileSync(new URL("./aq-fixtures-d.json", import.meta.url), "utf8"));
+// Jupiter's wallet scorecard in its real shape: the fixture wallet is the real one (a bot); any other wallet gets a human pace
+const humanPnl = (w) => ({ [w]: { [SOL]: { pnl: { totalBuys: 40, totalSells: 38, firstActiveTime: new Date(Date.now() - 20 * 86400000).toISOString(), lastActiveTime: new Date().toISOString() } }, HeldCoin1: { pnl: { unrealizedPnl: -3.5 } } } });
+let pnlFor = {}, kolPage = null;
 import { GT_GAP, GT_BACKOFF, DS_BACKOFF, bestPairs, jupPool, resetCalls, CALLS } from "../src/aq/feeds.mjs";
 GT_GAP.ms = 0; GT_BACKOFF.sec = 0; DS_BACKOFF.sec = 0;
 const JSOL = Object.values(FX5.jupPrice).find((x) => x.decimals === 9);
@@ -68,6 +73,8 @@ function stubAll() {
   mock("GET", "https://lite-api.jup.ag/price/v3", jupPx(() => prices));
   mock("GET", "https://datapi.jup.ag/v1/pools/", () => jupLists());
   mock("GET", "https://datapi.jup.ag/v2/charts/", (rec) => (jupCharts[rec.url.split("/charts/")[1].split("?")[0]] ? jupCharts[rec.url.split("/charts/")[1].split("?")[0]]() : res({ status: 404 }, 404)));
+  mock("GET", "https://datapi.jup.ag/v1/pnl", (rec, u) => { const w = u.searchParams.get("addresses"); return pnlFor[w] ? pnlFor[w]() : w === FXD.jupPnlWallet ? clone(FXD.jupPnl) : humanPnl(w); });
+  mock("GET", "https://kolscan.io/leaderboard", () => (kolPage ? new Response(kolPage, { status: 200, headers: { "content-type": "text/html" } }) : res({ status: 503 }, 503)));
   mock("GET", "https://datapi.jup.ag/v1/txs/", (rec, u) => (tradesFor[u.pathname.split("/").pop()] || (() => ({ txs: [], next: null })))(u));
   mock("GET", "https://lite-api.jup.ag/swap/v1/quote", quoteMock(() => prices));
 }
@@ -176,18 +183,53 @@ test("shadow lane: a cost-gate near miss is probed on paper, closed, graded, and
 
 test("whales: 2+ independent winners buying = signal; creator excluded; bots not winners; Helius funder clustering merges one owner", async () => {
   const d = db(env), W1 = "WhaleOne111", W2 = "WhaleTwo222", DEV = "CreatorDev333", BOT = "BotWallet444", MW = "WhaleMint1pump";
-  for (const w of [W1, W2, DEV]) for (const m of ["m1", "m2", "m3"])
-    await d.q(`INSERT INTO mob_aq_wtrades (tx, wallet, mint, kind, sol, at) VALUES ($1,$2,$3,'buy',1,now()),($1,$2,$3,'sell',$4,now())`, [`${w}${m}`, w, m, m === "m3" ? 0.5 : 2]);
+  // three real traders: six coins each, bought ten minutes before they were sold, five of them for a profit
+  for (const w of [W1, W2, DEV]) for (const m of ["m1", "m2", "m3", "m4", "m5", "m6"])
+    await d.q(`INSERT INTO mob_aq_wtrades (tx, wallet, mint, kind, sol, at) VALUES ($1,$2,$3,'buy',1,now() - interval '20 minutes'),($1,$2,$3,'sell',$4,now() - interval '10 minutes')`, [`${w}${m}`, w, m, m === "m6" ? 0.5 : 2]);
   // a bot: profitable on two coins but with hundreds of swaps per coin
   for (const m of ["m1", "m2"]) await d.q(`INSERT INTO mob_aq_wtrades (tx, wallet, mint, kind, sol, at) SELECT 'bot' || $2 || i, $1, $2, CASE WHEN i % 2 = 0 THEN 'buy' ELSE 'sell' END, CASE WHEN i % 2 = 0 THEN 1 ELSE 1.1 END, now() FROM generate_series(1, 200) i`, [BOT, m]);
-  const book = await refreshWinners(d);
-  assert.equal(book.winners, 3, "W1, W2 and the dev win on 2 of 3 coins; the bot is not a winner");
-  assert.equal((await d.one(`SELECT winner FROM mob_aq_whales WHERE wallet=$1`, [BOT])).winner, false);
-  tradesFor[MW] = () => ({ txs: [W1, W2, DEV, BOT].map((w, i) => jtx(w, "buy", 1, MW, i)).concat([{ ...jtx("Mev555", "buy", 5, MW), isMev: true }]), next: null });
+  // the old book's fake winners: only two closed coins; "wins" whose sell came before any buy we saw; same-second round trips
+  for (const m of ["m1", "m2"]) await d.q(`INSERT INTO mob_aq_wtrades (tx, wallet, mint, kind, sol, at) VALUES ($1,'TwoCoin',$2,'buy',1,now() - interval '20 minutes'),($1,'TwoCoin',$2,'sell',3,now() - interval '10 minutes')`, [`two${m}`, m]);
+  for (const m of ["m1", "m2", "m3", "m4", "m5", "m6"]) {
+    await d.q(`INSERT INTO mob_aq_wtrades (tx, wallet, mint, kind, sol, at) VALUES ($1,'SellFirst',$2,'sell',3,now() - interval '20 minutes'),($1,'SellFirst',$2,'buy',1,now() - interval '10 minutes')`, [`sf${m}`, m]);
+    await d.q(`INSERT INTO mob_aq_wtrades (tx, wallet, mint, kind, sol, at) VALUES ($1,'SameSec',$2,'buy',1,now() - interval '10 minutes'),($1,'SameSec',$2,'sell',3,now() - interval '10 minutes' + interval '20 seconds')`, [`ss${m}`, m]);
+  }
+  let book = await refreshWinners(d);
+  assert.equal(book.candidates, 3, "W1, W2 and the dev: five wins on six closed coins each"); assert.equal(book.winners, 0, "a candidate is not a winner until Jupiter's scorecard is read");
+  const rowOf = async (w) => d.one(`SELECT cand, winner, closed, wins, jup FROM mob_aq_whales WHERE wallet=$1`, [w]);
+  assert.deepEqual([(await rowOf("TwoCoin")).cand, (await rowOf("TwoCoin")).closed], [false, 2]); assert.deepEqual([(await rowOf("SellFirst")).closed, (await rowOf("SellFirst")).cand], [0, false], "a sell before any buy is not a closed coin"); assert.deepEqual([(await rowOf("SameSec")).closed, (await rowOf("SameSec")).cand], [0, false], "held 20 seconds: not counted");
+  assert.equal((await rowOf(BOT)).cand, false);
+  // Jupiter's scorecard on real responses: the old book's top wallet does 4,543 swaps a day (a bot); a human pace with a positive net passes
+  const bot = scoreWallet(FXD.jupPnl, FXD.jupPnlWallet, 0.436, 71.5);
+  assert.deepEqual([bot.ok, bot.swaps, bot.swapsDay > 1000, bot.heldCoins], [false, 23367, true, 8]); assert.match(bot.why, /^bot pace: \d+ swaps a day$/);
+  const hum = scoreWallet(humanPnl("X"), "X", 0.5, 70); assert.deepEqual([hum.ok, hum.swapsDay, hum.bagsUsd, hum.netUsd], [true, 3.9, -3.5, 31.5]);
+  assert.equal(scoreWallet(humanPnl("X"), "X", 0.01, 70).ok, false, "the bag it still holds is counted: net with bags below zero"); assert.equal(scoreWallet({}, "X", 1, 70), null);
+  stubAll(); resetCalls();
+  pnlFor[DEV] = () => { const j = humanPnl(DEV); j[DEV][SOL].pnl.totalBuys = 90000; return j; }; // one candidate turns out to trade at a bot's pace
+  let sc = await scoreTick(env, { solUsd: 72 });
+  assert.deepEqual([sc.scored, sc.ok], [3, 2]); assert.equal(CALLS.jupiterData, 3, "three scorecards a tick, inside the Jupiter budget");
+  book = await refreshWinners(d);
+  assert.equal(book.winners, 2); assert.equal((await rowOf(DEV)).winner, false); assert.match((await rowOf(DEV)).jup.why, /^bot pace/); assert.equal((await rowOf(W1)).winner, true);
+  sc = await scoreTick(env, { solUsd: 72 }); assert.equal(sc.scored, 0, "scored wallets rest for 12 hours");
+  delete pnlFor[DEV];
+  // KOLscan: the real page slice parses into named wallets with their 1/7/30 day frames; they are seeds, not winners
+  const kols = parseKolscan(FXD.kolscanSlice);
+  assert.ok(kols.length >= 5, String(kols.length)); assert.equal(kols[0].wallet, "5YRgrP3mjGzrzirYYN5HAQH19cTYREYwGxW6XRJQUzij"); assert.equal(kols[0].name, "slingoor"); assert.ok(kols[0].frames["1"].wins >= 0 && typeof kols[0].frames["1"].profitSol === "number");
+  assert.deepEqual(parseKolscan("<html>nothing</html>"), []);
+  let kt = await kolTick(env); assert.equal(kt.ok, false, "page down: said so, nothing invented");
+  kolPage = FXD.kolscanSlice; await d.q(`DELETE FROM mob_aq_market WHERE k='kolscan'`);
+  kt = await kolTick(env); assert.deepEqual([kt.ok, kt.wallets, kt.fresh], [true, kols.length, true]);
+  const k0 = await d.one(`SELECT source, label, cand, winner, kol FROM mob_aq_whales WHERE wallet=$1`, [kols[0].wallet]);
+  assert.deepEqual([k0.source, k0.label, k0.cand, k0.winner], ["kolscan", "slingoor", true, false]); assert.ok(k0.kol["1"]);
+  kolPage = null;
+  // the signal reads up to three pages of swaps (the first page of a busy coin is seconds, not 15 minutes); a KOL's buy is logged as its own source
+  tradesFor[MW] = (u) => (u.searchParams.get("offset") ? { txs: [jtx(W2, "buy", 1, MW, 7), jtx(kols[0].wallet, "buy", 4, MW, 8)], next: null }
+    : { txs: [W1, DEV, BOT].map((w, i) => jtx(w, "buy", 1, MW, i)).concat([{ ...jtx("Mev555", "buy", 5, MW), isMev: true }]), next: 777 });
   resetCalls();
   let w = await whaleSignal(env, { mint: MW, symbol: "WH", priceUsd: 1 }, { creator: DEV, insiders: [] }, () => {});
-  assert.equal(w.signal, true); assert.equal(w.independent, 2); assert.equal(w.excluded, 1); assert.match(w.funders, /unchecked \(no HELIUS_API_KEY\)/);
-  assert.equal((await d.one(`SELECT independent FROM mob_aq_signals WHERE mint=$1`, [MW])).independent, 2, "every signal is logged");
+  assert.equal(w.signal, true); assert.equal(w.independent, 2, "W2 was on the second page"); assert.equal(w.excluded, 1); assert.match(w.funders, /unchecked \(no HELIUS_API_KEY\)/);
+  assert.equal((await d.one(`SELECT independent FROM mob_aq_signals WHERE mint=$1 AND source='own'`, [MW])).independent, 2, "every signal is logged");
+  const ks = await d.one(`SELECT label, source FROM mob_aq_signals WHERE mint=$1 AND source='kolscan'`, [MW]); assert.equal(ks.label, "slingoor");
   assert.ok(!(await d.one(`SELECT 1 FROM mob_aq_wtrades WHERE wallet='Mev555'`)), "MEV swaps never enter the book");
   // with a Helius key: both winners were first funded by the same wallet -> one owner -> no signal
   env.HELIUS_API_KEY = "hk-test"; let lastWallet = null;

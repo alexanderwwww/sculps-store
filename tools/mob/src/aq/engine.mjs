@@ -4,7 +4,7 @@ import { db } from "../db.mjs";
 import { DEPTS, seedWorkers, TOOLS, STRATEGIES, GTA6_DATE, GTA_RE, CEO, R5_PARAMS } from "./seed.mjs";
 import { feeds, midPrices, jupQuote, SOL_MINT, jupPrices, getJson, CALLS, CAPS, resetCalls } from "./feeds.mjs";
 import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round, survival, whaleSetup, replaySetup, momentumSetup, bounceSetup, planFor, atr5Pct, median } from "./logic.mjs";
-import { whaleSignal, shadowTick, shadowStats, mineTick, followSignals, whaleState, logSignal, signalEvidence, EVIDENCE_MIN } from "./whales.mjs";
+import { whaleSignal, shadowTick, shadowStats, mineTick, followSignals, whaleState, logSignal, signalEvidence, EVIDENCE_MIN, scoreTick, kolTick } from "./whales.mjs";
 import { lanesTick, laneStats } from "./lanes.mjs";
 import { nansenTick, nansenSignals, nansenState } from "./nansen.mjs";
 import { councilTick, learnFromTrade, recomputeRules, costBook, ruleWeights, MIN_OWN_BARS } from "./council.mjs";
@@ -65,6 +65,11 @@ export async function ensureSeed(env) {
     await brain(d, "learning", "tournament", "Recipe v4 (audit 2026-11-16), all strategies: (1) a coin is tradable only when 6x its measured round trip fits inside 3x its 5-minute ATR; (2) stop and target are anchored to the actual fill and a fill outside them is refused; (3) a stop is confirmed against the executable sell quote; (4) stops are never inside the noise of the hold (ATR5 x sqrt(hold/5)); (5) two independent seeded coin flips per trade: exit A plain / B half off at +1R (B no longer caps the stop), and time L recipe time stop / S flat after 10 minutes; (6) R6 and R5 leave the real paper ledger for the shadow lane until R6's replay with measured cost is positive and R5's signals beat a matched control on 200+ signals; (7) every strategy is blocked when its own replay loses; (8) EXPLORE takes the smallest size that clears the fee floor. These are hypotheses from one 8-hour sample, to be judged by the tournament, not proof.");
     await recomputeRules(d, "recipe v4: the old step counted losses for rules that object to every coin");
     await brain(d, "costs", "tournament", `Network fee corrected by measurement: ${NET_FEE_LAMPORTS} lamports (${NET_FEE_SOL} SOL) a side, the mean of 122 real swaps of 0.01-0.2 SOL read from the chain on 2026-11-16 (median 15,001, 90th percentile 145,000). Was $0.0067 a side (about 95,000 lamports), near the 85th percentile. Jito tips and token-account rent are not in the measurement.`);
+  }
+  if (!(await getState(d, "whale_book_v2", null))) {
+    await setState(d, "whale_book_v2", { at: new Date().toISOString() });
+    const old = await d.one(`SELECT count(*) FILTER (WHERE winner)::int w FROM mob_aq_whales`);
+    await brain(d, "whales", "tournament", `Whale book rebuilt (audit 2026-11-16, cause 5): the ${old.w} old "winners" are dropped. A winner now needs 5+ closed coins whose buy we saw before the sell and that were held over a minute, 60% of them won and a positive net, and then Jupiter's wallet scorecard: at most 100 swaps a day and a net with open bags above zero. The old top wallet has 23,080 swaps in five days by that scorecard: a bot. KOLscan's named wallets join as labelled seeds. The signal reads up to 90 swaps instead of 30. R5 stays on the shadow lane until 200+ signals beat their control.`);
   }
   seeded.add(tag);
 }
@@ -374,6 +379,9 @@ export async function tick(env, opts = {}) {
     await followSignals(env, (m) => jp?.[m]?.price ?? null);
     const runners = jtop.filter((p) => (p.liqUsd || 0) >= P.minLiqUsd && ((p.ch24 ?? 0) >= 50 || (p.ch1h ?? 0) >= 20)).map((p) => ({ mint: p.mint, symbol: p.symbol, why: `ran ${round(p.ch24 ?? 0, 0)}% in 24h, ${round(p.ch1h ?? 0, 0)}% in 1h` }));
     out.mining = await mineTick(env, { runners: runners.length ? runners : jtrade.slice(0, 6).map((p) => ({ mint: p.mint, symbol: p.symbol, why: "trending, tradable" })), set });
+    // the rebuilt book: KOLscan seeds every six hours, a few candidates scored by Jupiter each tick (inside the call budget)
+    try { out.kol = await kolTick(env, { set }); } catch (e) { out.kol = { ok: false, error: String(e.message || e).slice(0, 100) }; }
+    try { out.scoring = await scoreTick(env, { solUsd: solExit, set }); } catch (e) { out.scoring = { error: String(e.message || e).slice(0, 100) }; }
     health.budget = { heliusCalls: CALLS.helius, heliusCap: CAPS.helius, heliusKey: !!env.HELIUS_API_KEY, jupiterDataCalls: CALLS.jupiterData, jupiterDataCap: CAPS.jupiterData, dexscreenerCalls: CALLS.dexscreener, geckoterminalCalls: CALLS.geckoterminal };
     // ---- helper lanes (second brains): judged by the same Council for the record, paper-tracked apart, never the real ledger
     out.lanes = await lanesTick(env, { halted: dead || kill, nowSec, gap, feeSol, P, set, council: (v, c, reason, number, facts) => council(d, v, c, reason, number, facts) });

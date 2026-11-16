@@ -16,6 +16,9 @@ export const URLS = {
   jupTop: (kind) => `https://datapi.jup.ag/v1/pools/${kind}/1h?limit=50`,
   jupChart: (mint, nowMs) => `https://datapi.jup.ag/v2/charts/${mint}?interval=1_MINUTE&to=${nowMs}&candles=120&type=price&quote=usd`,
   jupTxs: (mint, cur) => `https://datapi.jup.ag/v1/txs/${mint}?limit=30${cur ? `&offset=${cur.offset}&offsetTs=${encodeURIComponent(cur.ts)}` : ""}`,
+  // wallet scorecard and the KOL board (shapes read 2026-11-16 from the sandbox; Worker egress is read by /diag, never assumed)
+  jupPnl: (wallet) => `https://datapi.jup.ag/v1/pnl?addresses=${wallet}`,
+  kolscan: "https://kolscan.io/leaderboard",
   jupPrice: (mints) => `https://lite-api.jup.ag/price/v3?ids=${mints.join(",")}`,
   dsProfiles: "https://api.dexscreener.com/token-profiles/latest/v1",
   dsTokens: (mints) => `https://api.dexscreener.com/tokens/v1/solana/${mints.join(",")}`,
