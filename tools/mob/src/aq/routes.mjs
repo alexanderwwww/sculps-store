@@ -6,6 +6,7 @@ import { buildState, createBot, helperMessage, briefing, ensureSeed, rebuild, se
 import { helperMcp, createTask } from "./mcp.mjs";
 import { safeEqual } from "../auth.mjs";
 
+const DROP_MAX = 95 * 1024 * 1024;
 const TYPES = { glb: "model/gltf-binary", gltf: "model/gltf+json", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", ktx2: "image/ktx2",
   json: "application/json", js: "text/javascript", mp3: "audio/mpeg", ogg: "audio/ogg", wav: "audio/wav", bin: "application/octet-stream", hdr: "application/octet-stream", svg: "image/svg+xml" };
 
@@ -26,6 +27,32 @@ export async function aqPage(req, env, path, { json, html }) {
 export async function aqApi(req, env, url, path, { json, apiErr, admin, bearer, keyOk }) {
   const M = req.method;
   const body = async () => { try { return await req.json(); } catch { return null; } };
+  // File drop-off (ChatGPT has no GitHub): PUT a .zip with the access code, list, read back. Nothing else.
+  const dm = path.match(/^\/api\/aq\/drop\/([^/]+)(?:\/([^/]+))?$/);
+  if (dm) {
+    if (!env.AQ_DROP_KEY || !safeEqual(dm[1], env.AQ_DROP_KEY) || !env.MEDIA) return new Response("Not found", { status: 404 });
+    const name = dm[2] ? decodeURIComponent(dm[2]) : null;
+    if (M === "PUT" && name) {
+      if (!/^[A-Za-z0-9._-]{1,80}\.zip$/.test(name)) return apiErr(400, "validation", "name must be letters, digits, dot, dash or underscore and end in .zip");
+      const len = Number(req.headers.get("content-length") || 0);
+      if (len > DROP_MAX) return apiErr(413, "too_large", "95 MB at most");
+      if (!req.body) return apiErr(400, "validation", "empty body");
+      const key = `aq-drop/${Date.now()}-${name}`;
+      await env.MEDIA.put(key, req.body, { httpMetadata: { contentType: "application/zip" } });
+      const h = await env.MEDIA.head(key);
+      if (h && h.size > DROP_MAX) { await env.MEDIA.delete?.(key); return apiErr(413, "too_large", "95 MB at most"); }
+      return json({ ok: true, key, size: h ? h.size : len });
+    }
+    if (M === "GET" && !name) {
+      const l = await env.MEDIA.list({ prefix: "aq-drop/", limit: 200 });
+      return json({ files: l.objects.map((o) => ({ name: o.key.slice(8), size: o.size, uploaded: o.uploaded })) });
+    }
+    if (M === "GET" && /^[A-Za-z0-9._-]{1,120}\.zip$/.test(name)) {
+      const o = await env.MEDIA.get(`aq-drop/${name}`);
+      return o ? new Response(o.body, { headers: { "content-type": "application/zip", "content-disposition": `attachment; filename="${name}"`, "cache-control": "no-store" } }) : new Response("Not found", { status: 404 });
+    }
+    return apiErr(405, "method_not_allowed", "PUT a .zip, GET the list, or GET one file");
+  }
   const hm = path.match(/^\/api\/aq\/helper\/([^/]+)\/mcp$/);
   if (hm) {
     // Link + access code for ChatGPT / Codex / Grok. Unset secret or wrong key = 404 (nothing to discover).

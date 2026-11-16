@@ -466,3 +466,23 @@ test("production path: GeckoTerminal refuses (429), DexScreener alone feeds cand
   assert.ok(s.health.errors.some((e) => e.feed === "ds:universe" && /429 error code: 1015/.test(e.error)), JSON.stringify(s.health.errors));
   assert.equal(s.positions[0].price, 1.1, "the open position is still priced");
 });
+
+test("zip drop-off: access code, .zip names only, put + list + get; nothing else", async () => {
+  env.AQ_DROP_KEY = "dropkey456";
+  const zip = new Uint8Array(1024).fill(7);
+  assert.equal((await R("PUT", "/api/aq/drop/wrong/a.zip", { body: zip })).status, 404);
+  const saved = env.AQ_DROP_KEY; delete env.AQ_DROP_KEY;
+  assert.equal((await R("PUT", "/api/aq/drop/dropkey456/a.zip", { body: zip })).status, 404, "unset secret = 404");
+  env.AQ_DROP_KEY = saved;
+  for (const bad of ["a.txt", "a.zip.exe", "sp%20ace.zip", "..zip.sh"]) assert.equal((await R("PUT", `/api/aq/drop/dropkey456/${bad}`, { body: zip })).status, 400, bad);
+  assert.equal((await R("PUT", "/api/aq/drop/dropkey456/big.zip", { body: zip, headers: { "content-length": String(96 * 1024 * 1024) } })).status, 413);
+  const r = await R("PUT", "/api/aq/drop/dropkey456/work-1.zip", { body: zip }); assert.equal(r.status, 200);
+  const o = await r.json(); assert.equal(o.ok, true); assert.equal(o.size, 1024); assert.match(o.key, /^aq-drop\/\d+-work-1\.zip$/);
+  const list = await (await R("GET", "/api/aq/drop/dropkey456")).json();
+  assert.equal(list.files.length, 1); assert.equal(list.files[0].size, 1024); assert.equal(`aq-drop/${list.files[0].name}`, o.key);
+  const g = await R("GET", `/api/aq/drop/dropkey456/${list.files[0].name}`); assert.equal(g.status, 200);
+  assert.deepEqual(new Uint8Array(await g.arrayBuffer()), zip);
+  assert.equal((await R("GET", "/api/aq/drop/dropkey456/oraktys-a.mp4")).status, 405, "cannot read anything outside aq-drop zips");
+  assert.equal((await R("DELETE", `/api/aq/drop/dropkey456/${list.files[0].name}`)).status, 405);
+  assert.equal((await R("POST", "/api/aq/kill?key=dropkey456", { body: { on: true } })).status, 401, "the drop key opens nothing else");
+});
