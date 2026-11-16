@@ -71,3 +71,5 @@ Main menu has an Inventory page. From it Alex creates a bot (worker) with a prom
 
 ## SURVIVAL MODE (Alex, 2026-11-16)
 The island lives on the wallet: health = equity vs start. Thriving/healthy/hurt/critical/destroyed changes the world (sun to storm to ruins). At 10% or less of the start it is destroyed: trading stops, a post-mortem goes into the brain, only Alex can rebuild (memory kept). Risk tightens as health drops.
+
+## BOT MODE LOOK (Alex, 2026-11-16, replaces Apple-style): like the ATS Matrix GROK DESK screen, even better: dark dense terminal, central agent reactor ring with handoff trails, tape, swarm PnL, trace, pricer, signal spectrogram. Real data only.
