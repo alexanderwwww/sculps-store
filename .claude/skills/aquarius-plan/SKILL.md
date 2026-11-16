@@ -68,3 +68,6 @@ Game design draft (Alex: "take your time"; build only on "build"):
 
 ## BOT CREATOR + INVENTORY (Alex, 2026-11-16)
 Main menu has an Inventory page. From it Alex creates a bot (worker) with a prompt: name, job, rules, skills, and which brain powers it (Claude, Grok or ChatGPT). The new bot appears in the city at its department's building. Inventory also holds skills, recipes, strategies and bots. A bot made by Alex needs no vote (CEO); a bot made by another bot needs the Council. Grok/ChatGPT-powered bots run through his logged-in browser (no paid API); Claude-powered ones run on Claude's own usage. Every new bot starts on paper with a budget cap. Not built.
+
+## SURVIVAL MODE (Alex, 2026-11-16)
+The island lives on the wallet: health = equity vs start. Thriving/healthy/hurt/critical/destroyed changes the world (sun to storm to ruins). At 10% or less of the start it is destroyed: trading stops, a post-mortem goes into the brain, only Alex can rebuild (memory kept). Risk tightens as health drops.
