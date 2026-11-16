@@ -7,3 +7,4 @@
 | iclosegreen reel (screenshots 2026-11-16) | iclosegreen | Open-source trading projects list: Hummingbot (market making/execution, Apache-2.0), NautilusTrader (Rust backtest/live engine), skfolio (portfolio optimization), Freqtrade (crypto bot with backtesting), Kronos (financial foundation model). "Comment GIT for the list". | evaluated 2026-11-16 (trading-lab section 6): Freqtrade USE first (R2), skfolio USE (sizing), Nautilus + Hummingbot maybe later, Kronos skip. Tools are real; none ships a strategy or profit record |
 | DfkhxoEMtmX | taloslabs.ai | Game-dev skills; "comment GAME" for the guide. | done: gamedev skills installed |
 | Liquid leaderboard screenshot | tradeplug21 | Copy-trading leaderboard (Liquid app: Trade/Predict/Leaderboard/Co-Invest). | untested; check what Liquid is |
+- 2026-11-16 batch: bunjiai, nickafischer, ECC, OpenBB, Paperclip: see 2026-11-16-batch.md
