@@ -11,7 +11,7 @@ const TYPES = { glb: "model/gltf-binary", gltf: "model/gltf+json", png: "image/p
 
 export async function aqPage(req, env, path, { json, html }) {
   if (req.method !== "GET") return json({ error: { message: "read-only" } }, 405);
-  if (path === "/aq") return html(AQ_PAGE, 200, { "content-security-policy": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; worker-src 'self' blob:", "x-robots-tag": "noindex" });
+  if (path === "/aq") return html(AQ_PAGE, 200, { "content-security-policy": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' blob: data:; worker-src 'self' blob:", "x-robots-tag": "noindex" });
   if (path === "/aq/app.js") return new Response(AQ_JS, { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" } });
   const m = path.match(/^\/aq\/assets\/([A-Za-z0-9._\/-]+)$/);
   if (m && !m[1].split("/").includes("..")) {
