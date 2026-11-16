@@ -2,7 +2,7 @@
 // Hermes paper fill -> Review -> Learning -> Ops. PAPER ONLY: no wallet, no keys, no orders. Missing data = NO trade.
 import { db } from "../db.mjs";
 import { DEPTS, seedWorkers, TOOLS, STRATEGIES, GTA6_DATE, GTA_RE, CEO } from "./seed.mjs";
-import { feeds, midPrices, jupQuote, SOL_MINT } from "./feeds.mjs";
+import { feeds, midPrices, jupQuote, SOL_MINT, dsTokens } from "./feeds.mjs";
 import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round, survival } from "./logic.mjs";
 import { whaleSignal, shadowTick, shadowStats } from "./whales.mjs";
 import { lanesTick, laneStats } from "./lanes.mjs";
@@ -13,6 +13,14 @@ export const START_SOL = 1;
 export const NET_FEE_USD = 0.0067;
 const KB_COST_PCT = 5; // trading-kb: measured memecoin round trip ~5%, used by the replay only when no quote was measured yet
 const MAX_EVAL = 3, COOLDOWN_MIN = 10;
+export const MIN_OWN_BARS = 30;
+// Our own 1-minute candles from the price samples: open = the previous bar's close (one sample a minute would otherwise
+// make every bar flat), high/low/close from the samples inside the minute. Last 60 minutes, oldest first.
+export async function ownCandles(d, mint) {
+  const rows = await d.q(`SELECT extract(epoch from date_trunc('minute', at))::bigint t, max(price) h, min(price) l, (array_agg(price ORDER BY at DESC))[1] c, (array_agg(price ORDER BY at))[1] f
+    FROM mob_aq_prices WHERE mint=$1 AND at > now() - interval '61 minutes' GROUP BY 1 ORDER BY 1`, [mint]);
+  return rows.map((r, i) => { const o = i ? rows[i - 1].c : r.f; return { t: Number(r.t), o, h: Math.max(r.h, o), l: Math.min(r.l, o), c: r.c, v: 0 }; });
+}
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const seeded = new Set();
@@ -67,14 +75,13 @@ export async function tick(env, opts = {}) {
     const P = strategies.R3?.params || STRATEGIES[2][4];
 
     // ---- feeds (cached, so most ticks read the database, not the internet)
-    const [tr, nw, bo, pr, mj, fg] = await Promise.all([feeds.trending(env), feeds.newPools(env), feeds.boosts(env), feeds.profiles(env), feeds.majors(env), feeds.fng(env)]);
-    Object.assign(health, { geckoterminal: tr.ok && nw.ok, dexscreener: bo.ok && pr.ok, coingecko: mj.ok, feargreed: fg.ok });
+    const [tr, nw, bo, pr, mj, fg, un] = await Promise.all([feeds.trending(env), feeds.newPools(env), feeds.boosts(env), feeds.profiles(env), feeds.majors(env), feeds.fng(env), feeds.universe(env)]);
+    Object.assign(health, { geckoterminal: tr.ok && nw.ok, dexscreener: un.ok, coingecko: mj.ok, feargreed: fg.ok });
     const solUsd = mj.data?.sol?.price ?? (tr.data || []).find((p) => p.solUsd)?.solUsd ?? null;
     const feeSol = solUsd ? NET_FEE_USD / solUsd : null;
     const boosted = new Set(bo.data || []);
     const profiles = pr.data || {};
-    set("sol.trending", tr.ok ? "busy" : "blocked", tr.ok ? `${tr.data.length} SOL pools trending` : `GeckoTerminal failed: ${tr.err}`);
-    set("sol.new_pairs", nw.ok ? "busy" : "blocked", nw.ok ? `${nw.data.length} new SOL pools` : `GeckoTerminal failed: ${nw.err}`);
+    set("sol.new_pairs", un.ok || nw.ok ? "busy" : "blocked", `${un.ok ? `${un.data.length} DexScreener pairs` : `DexScreener failed: ${un.err}`}; ${nw.ok ? `${nw.data.length} new GeckoTerminal pools` : "GeckoTerminal not answering (bonus feed)"}`.slice(0, 190));
     set("sol.boosted", bo.ok ? "busy" : "blocked", bo.ok ? `${boosted.size} paid boosts flagged` : `DexScreener failed: ${bo.err}`);
     set("nw.tokens", pr.ok ? "busy" : "blocked", pr.ok ? `${Object.keys(profiles).length} token profiles read` : `DexScreener failed: ${pr.err}`);
     set("stk.regime", mj.ok ? "busy" : "blocked", mj.ok ? `SOL $${mj.data.sol?.price ?? "?"} BTC $${mj.data.btc?.price ?? "?"}` : `CoinGecko failed: ${mj.err}`);
@@ -83,9 +90,34 @@ export async function tick(env, opts = {}) {
     set("nw.calendar", "busy", daysToGta > 0 ? `GTA 6 in ${daysToGta} day(s)` : daysToGta === 0 ? "GTA 6 releases today" : `GTA 6 out ${-daysToGta} day(s)`);
 
     // ---- candidates: trending first, then new; copycats and narrative tags
-    const all = [...(tr.data || []).map((p) => ({ ...p, src: "trending" })), ...(nw.data || []).map((p) => ({ ...p, src: "new" }))];
+    // ---- watchlist: every pair seen at or above the liquidity gate is tracked from then on; the top 15 get a price
+    // sample every tick, which builds our own 1-minute candles (no dependence on GeckoTerminal for history)
+    const found = [...(tr.data || []).map((p) => ({ ...p, src: "trending" })), ...(un.data || []).map((p) => ({ ...p, src: "dexscreener" })), ...(nw.data || []).map((p) => ({ ...p, src: "new" }))];
+    const liquid = [...new Map(found.filter((p) => p.mint && (p.liqUsd || 0) >= P.minLiqUsd).map((p) => [p.mint, p])).values()]; // one row per mint
+    if (liquid.length) await d.q(`INSERT INTO mob_aq_watch (mint, pool, symbol, liq_usd, vol_h1, ch1h, price_usd, src) SELECT * FROM unnest($1::text[],$2::text[],$3::text[],$4::float8[],$5::float8[],$6::float8[],$7::float8[],$8::text[])
+      ON CONFLICT (mint) DO UPDATE SET liq_usd=EXCLUDED.liq_usd, vol_h1=EXCLUDED.vol_h1, ch1h=EXCLUDED.ch1h, price_usd=EXCLUDED.price_usd, last_seen=now()`,
+      [liquid.map((p) => p.mint), liquid.map((p) => p.pool), liquid.map((p) => p.symbol), liquid.map((p) => p.liqUsd), liquid.map((p) => p.volH1), liquid.map((p) => p.ch1h), liquid.map((p) => p.priceUsd), liquid.map((p) => p.src)]);
+    const watch = await d.q(`SELECT * FROM mob_aq_watch WHERE last_seen > now() - interval '1 day' AND liq_usd >= $1 ORDER BY liq_usd DESC LIMIT 15`, [P.minLiqUsd]);
+    let fresh = [];
+    if (watch.length) {
+      try { fresh = await dsTokens(watch.map((w) => w.mint)); health.dexscreener_prices = true; } catch (e) { health.dexscreener_prices = false; }
+      const px = fresh.filter((p) => p.priceUsd != null);
+      if (px.length) {
+        await d.q(`INSERT INTO mob_aq_prices (mint, price) SELECT * FROM unnest($1::text[],$2::float8[]) ON CONFLICT DO NOTHING`, [px.map((p) => p.mint), px.map((p) => p.priceUsd)]);
+        await d.q(`UPDATE mob_aq_watch w SET liq_usd=x.l, vol_h1=x.v, ch1h=x.c, price_usd=x.p, pool=x.pool, last_seen=now() FROM unnest($1::text[],$2::float8[],$3::float8[],$4::float8[],$5::float8[],$6::text[]) x(m,l,v,c,p,pool) WHERE w.mint=x.m`,
+          [px.map((p) => p.mint), px.map((p) => p.liqUsd), px.map((p) => p.volH1), px.map((p) => p.ch1h), px.map((p) => p.priceUsd), px.map((p) => p.pool)]);
+      }
+      await d.q(`DELETE FROM mob_aq_prices WHERE at < now() - interval '2 days'`);
+    }
+    const tracked = fresh.map((p) => ({ ...p, src: "watchlist" })).sort((a, b) => (b.volH1 || 0) - (a.volH1 || 0));
+    const trendingNow = (tracked.length ? tracked : liquid).slice(0, 12).map((p) => ({ symbol: p.symbol, mint: p.mint, ch1h: p.ch1h, liqUsd: p.liqUsd }));
+    await d.q(`INSERT INTO mob_aq_market (k, data, ok, at) VALUES ('trending', $1, true, now()) ON CONFLICT (k) DO UPDATE SET data=EXCLUDED.data, ok=true, err=null, at=now()`, [JSON.stringify(trendingNow)]);
+    const bars = await d.one(`SELECT count(*)::int n, count(DISTINCT mint)::int m FROM mob_aq_prices WHERE at > now() - interval '1 hour'`);
+    set("sol.trending", trendingNow.length ? "busy" : "blocked", trendingNow.length ? `${watch.length} liquid pairs on the watchlist; ${bars.n} price samples in the last hour (${bars.m} coins)` : "no liquid pair found this tick");
+    // candidates: the tracked watchlist first (liquid, with history), then everything else found this tick
+    const all = [...tracked, ...found];
     const seen = new Set(), cands = [];
-    for (const p of all) if (!seen.has(p.pool)) { seen.add(p.pool); cands.push(p); }
+    for (const p of all) if (p.mint && !seen.has(p.mint)) { seen.add(p.mint); cands.push(p); }
     const bySym = {};
     for (const c of cands) (bySym[c.symbol.toLowerCase()] ||= []).push(c);
     let copies = 0, gta = 0, hot = 0, spikes = 0;
@@ -220,17 +252,23 @@ export async function tick(env, opts = {}) {
         Object.assign(facts, { safety: rg.data });
         set("cn.safety", rg.ok ? "busy" : "blocked", `${c.symbol}: ${sf.reason}`);
         // candles and whales are read before the safety verdict so a blocked coin still has levels for the shadow lane
-        const oh = await feeds.ohlcv(env, c.pool);
-        health.geckoterminal_ohlcv = oh.ok;
+        // our own 1-minute candles first (>= 30 bars from the price samples); GeckoTerminal only as a bonus when it answers
+        let oh = { ok: false, data: null, src: "own" };
+        const own = await ownCandles(d, c.mint);
+        if (own.length >= MIN_OWN_BARS) oh = { ok: true, data: own, src: "own" };
+        else if (health.geckoterminal) { oh = await feeds.ohlcv(env, c.pool); oh.src = "geckoterminal"; health.geckoterminal_ohlcv = oh.ok; }
+        facts.candles = { src: oh.src, ownBars: own.length };
+        health.candles = oh.ok || health.candles === true;
         if (oh.ok && oh.data?.length) s = fibSetup(oh.data, SP, nowSec);
         // whales only for coins that pass the gate (keeps GeckoTerminal calls inside its free rate limit)
         const wh = sf.ok ? await whaleSignal(env, c, rg.data, set) : { ok: null, signal: false, reason: "not read: safety failed" };
         if (wh.ok != null) health.whales_trades = wh.ok;
         facts.whale = wh;
         if (!sf.ok) { await block(sf.reason, sf.number); continue; }
-        if (!oh.ok || !oh.data?.length) { await block("missing data: candles", null); continue; }
-        if (oh.data.length) await d.q(`INSERT INTO mob_aq_candles (pool, t, o, h, l, c, v) SELECT $1, t, o, h, l, c, v FROM unnest($2::bigint[],$3::float8[],$4::float8[],$5::float8[],$6::float8[],$7::float8[]) x(t,o,h,l,c,v) ON CONFLICT DO NOTHING`,
-          [c.pool, oh.data.map((x) => x.t), oh.data.map((x) => x.o), oh.data.map((x) => x.h), oh.data.map((x) => x.l), oh.data.map((x) => x.c), oh.data.map((x) => x.v)]);
+        if (!oh.ok || !oh.data?.length) { await block(`missing data: candles (own history ${own.length}/${MIN_OWN_BARS} bars)`, own.length); continue; }
+        const keep = oh.src === "own" ? oh.data.slice(0, -1) : oh.data; // the running minute is not stored for the replay
+        if (keep.length) await d.q(`INSERT INTO mob_aq_candles (pool, t, o, h, l, c, v) SELECT $1, t, o, h, l, c, v FROM unnest($2::bigint[],$3::float8[],$4::float8[],$5::float8[],$6::float8[],$7::float8[]) x(t,o,h,l,c,v) ON CONFLICT DO NOTHING`,
+          [c.pool, keep.map((x) => x.t), keep.map((x) => x.o), keep.map((x) => x.h), keep.map((x) => x.l), keep.map((x) => x.c), keep.map((x) => x.v)]);
         Object.assign(facts, { setup: s });
         set("st.fib", "busy", `${c.symbol}: ${s.why}`);
         set("st.swing", "busy", `${c.symbol}: impulse ${s.impulsePct ?? "?"}%`);
@@ -333,8 +371,8 @@ export async function tick(env, opts = {}) {
 
     // department live flags: a department is live when every feed it needs answered this tick
     const live = {
-      scouts_sol: !!(health.geckoterminal && health.dexscreener), scouts_stocks: !!health.coingecko, news: !!health.feargreed,
-      setups: health.geckoterminal_ohlcv !== false && !!health.geckoterminal, costs: health.jupiter !== false, council: health.rugcheck !== false,
+      scouts_sol: !!(health.dexscreener || health.geckoterminal) && trendingNow.length > 0, scouts_stocks: !!health.coingecko, news: !!health.feargreed,
+      setups: bars.n > 0 || health.geckoterminal_ohlcv === true, costs: health.jupiter !== false, council: health.rugcheck !== false,
       whales: health.whales_trades === true, risk: true, execution: health.dexscreener_prices !== false && health.jupiter !== false, review: true, learning: true, ops: true,
     };
     await d.q(`UPDATE mob_aq_depts d SET live=x.l, last_run_at=now() FROM unnest($1::text[], $2::bool[]) x(id, l) WHERE d.id=x.id`, [Object.keys(live), Object.values(live)]);
@@ -445,9 +483,10 @@ export async function buildState(env) {
     d.q(`SELECT * FROM mob_aq_tools ORDER BY name`),
     d.q(`SELECT from_helper, max(at) at FROM mob_aq_helpers GROUP BY from_helper`),
     d.q(`SELECT at, dept, text, labels, weight FROM mob_aq_helpers WHERE channel='x' AND from_helper='grok' ORDER BY id DESC LIMIT 30`),
-    d.q(`SELECT k, data, ok FROM mob_aq_market WHERE k IN ('gt:trending','ds:boosts','cg:majors','fng')`),
+    d.q(`SELECT k, data, ok, err, at FROM mob_aq_market WHERE k IN ('trending','ds:boosts','cg:majors','fng') OR (ok=false AND at > now() - interval '1 hour')`),
   ]);
   const S = Object.fromEntries(st.map((r) => [r.k, r.v]));
+  const hist = await d.one(`SELECT coalesce(sum(n),0)::int n, count(*)::int m, count(*) FILTER (WHERE n >= $1)::int ready FROM (SELECT mint, count(DISTINCT date_trunc('minute', at))::int n FROM mob_aq_prices WHERE at > now() - interval '1 hour' GROUP BY mint) x`, [MIN_OWN_BARS]);
   const M = Object.fromEntries(mkt.map((r) => [r.k, r.ok ? r.data : null]));
   const cash = Number(S.cash_sol ?? START_SOL);
   const equity = cash + pos.reduce((a, p) => a + (p.last_value_sol ?? p.size_sol), 0);
@@ -480,12 +519,13 @@ export async function buildState(env) {
     }),
     ceo: CEO,
     market: { sol: M["cg:majors"]?.sol ?? null, btc: M["cg:majors"]?.btc ?? null, fearGreed: M.fng ?? null,
-      trending: (M["gt:trending"] || []).slice(0, 12).map((p) => ({ symbol: p.symbol, ch1h: p.ch1h, liqUsd: p.liqUsd, boosted: boosted.has(p.mint) })) },
+      trending: (M.trending || []).slice(0, 12).map((p) => ({ symbol: p.symbol, ch1h: p.ch1h, liqUsd: p.liqUsd, boosted: boosted.has(p.mint) })) },
     brain: brainRows.map((r) => ({ at: r.at, dept: r.dept, text: r.text })),
     strategies: strat.map((r) => ({ id: r.id, name: r.name, trades: r.stats?.n ?? 0, pnlSol: r.stats?.pnlSol ?? 0, alive: r.alive, status: r.status, market: r.market })),
     tools: tools.map((t) => ({ name: t.name, licence: t.licence, verdict: t.verdict, status: t.status, usedBy: t.used_by, bestUse: t.best_use })),
     replay: S.replay_R3 ? { trades: S.replay_R3.trades, expectancyPct: S.replay_R3.expectancyPct, ci95: S.replay_R3.ci95, costPct: S.replay_R3.costPct, evidence: S.replay_R3.evidence } : null,
-    health: S.health || {},
+    health: { ...(S.health || {}), errors: mkt.filter((r) => !r.ok).slice(0, 12).map((r) => ({ feed: r.k, error: r.err, at: r.at })) },
+    history: { priceSamples1h: hist.n, coins: hist.m, barsNeeded: MIN_OWN_BARS, ready: hist.ready },
     shadow: await shadowStats(d),
     lanes: await laneStats(d, { n: s.n, winRate: s.winRate, expectancyPct: s.expectancyPct, open: pos.length }),
     survival: (() => { const sv = survival(equity, START_SOL); return { health: sv.health, stage: S.destroyed === true ? "destroyed" : sv.stage, sizeMult: S.destroyed === true ? 0 : sv.sizeMult, maxOpen: S.destroyed === true ? 0 : sv.maxOpen }; })(),

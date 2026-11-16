@@ -6,10 +6,9 @@
 // (https://mainnet.helius-rpc.com/?api-key=..., per helius.dev docs); without it the signal says "funders unchecked".
 // Shadow lane: when nothing passes, paper probes on near misses, own ledger, never mixed into the real one.
 import { db } from "../db.mjs";
-import { getJson, cached, SOL_MINT, midPrices } from "./feeds.mjs";
+import { gt, URLS, cached, SOL_MINT, midPrices, GT_BACKOFF } from "./feeds.mjs";
 import { stats, round, num } from "./logic.mjs";
 
-export const TRADES_URL = (pool) => `https://api.geckoterminal.com/api/v2/networks/solana/pools/${pool}/trades`;
 export const HELIUS_URL = (key) => `https://mainnet.helius-rpc.com/?api-key=${encodeURIComponent(key)}`;
 const KB_COST_PCT = 5;
 
@@ -49,8 +48,8 @@ export async function funderOf(env, wallet) {
 
 export async function whaleSignal(env, c, rug, set) {
   const d = db(env);
-  const tr = await cached(env, `gt:trades:${c.pool}`, 50, async () => slimTrades(await getJson(TRADES_URL(c.pool)), c.mint));
-  if (!tr.ok) { set("wh.gmgn", "blocked", `trades feed failed: ${tr.err}`); return { ok: false, signal: false, reason: "missing data: trades" }; }
+  const tr = await cached(env, `gt:trades:${c.pool}`, 50, async () => slimTrades(await gt(env, URLS.gtTrades(c.pool)), c.mint), GT_BACKOFF.sec);
+  if (!tr.ok) { set("wh.steady", "blocked", `trades feed failed: ${tr.err}`.slice(0, 190)); return { ok: false, signal: false, reason: "missing data: trades" }; }
   const t = tr.data;
   if (t.length) await d.q(`INSERT INTO mob_aq_wtrades (tx, wallet, mint, kind, sol, at) SELECT tx, w, $1, k, s, at::timestamptz FROM unnest($2::text[],$3::text[],$4::text[],$5::float8[],$6::text[]) x(tx,w,k,s,at) ON CONFLICT DO NOTHING`,
     [c.mint, t.map((x) => x.tx), t.map((x) => x.wallet), t.map((x) => x.kind), t.map((x) => x.sol), t.map((x) => x.at)]);

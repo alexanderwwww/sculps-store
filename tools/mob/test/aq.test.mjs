@@ -3,10 +3,10 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { makeEnv, dropEnv, reqOf, login, mock, resetMocks, res, calls } from "./helpers.mjs";
 import { db } from "../src/db.mjs";
-import { FX, FX2 } from "./aq-fixtures.mjs";
+import { FX, FX2, FX3 } from "./aq-fixtures.mjs";
 import { whaleSignal, slimTrades } from "../src/aq/whales.mjs";
-import { GT_GAP } from "../src/aq/feeds.mjs";
-GT_GAP.ms = 0;
+import { GT_GAP, GT_BACKOFF, bestPairs } from "../src/aq/feeds.mjs";
+GT_GAP.ms = 0; GT_BACKOFF.sec = 0;
 import { tick, proposeBot, _resetSeeded } from "../src/aq/engine.mjs";
 import { fibSetup, safety, slimRug, stats, replay, candlesFromGT } from "../src/aq/logic.mjs";
 import { R3_PARAMS, seedWorkers, DEPT_IDS } from "../src/aq/seed.mjs";
@@ -50,6 +50,8 @@ function stubAll() {
   mock("GET", /geckoterminal\.com\/api\/v2\/networks\/solana\/pools\/[^/]+\/trades$/, (rec) => tradesFor[rec.url.split("/").at(-2)] || clone(FX2.gtTrades));
   mock("GET", "https://api.dexscreener.com/token-boosts/latest/v1", () => { const b = clone(FX.dsBoosts); b[0].tokenAddress = MINT.C; return b; });
   mock("GET", "https://api.dexscreener.com/token-profiles/latest/v1", () => clone(FX.dsProfiles));
+  mock("GET", "https://api.dexscreener.com/token-boosts/top/v1", () => []);
+  mock("GET", "https://api.dexscreener.com/community-takeovers/latest/v1", () => []);
   mock("GET", "https://api.coingecko.com/api/v3/simple/price", () => clone(FX.cg));
   mock("GET", "https://api.alternative.me/fng/", () => clone(FX.fng));
   mock("GET", /rugcheck\.xyz\/v1\/tokens\/([^/]+)\/report$/, (rec) => (rec.url.includes(MINT.B) ? clone(FX.rugNew) : safeRug()));
@@ -402,4 +404,45 @@ test("helper lanes: a pick is judged for the record, paper-tracked apart, scored
   assert.ok(st2.brain.some((b) => /LANE:codex pick CX: stop .* Council had said BLOCK \(cost gate\): the Council was RIGHT/.test(b.text)));
   const after = { trades: (await d.one(`SELECT count(*)::int n FROM mob_aq_trades`)).n, pos: (await d.one(`SELECT count(*)::int n FROM mob_aq_positions`)).n, cash: (await d.one(`SELECT v FROM mob_aq_state WHERE k='cash_sol'`)).v };
   assert.deepEqual(after, before, "no helper pick ever opens, closes or moves money on the real ledger");
+});
+
+test("production path: GeckoTerminal refuses (429), DexScreener alone feeds candidates, trending, prices and our own candles", async () => {
+  const d = db(env);
+  await d.q(`DELETE FROM mob_aq_market`); await d.q(`DELETE FROM mob_aq_watch`); await d.q(`DELETE FROM mob_aq_prices`); await d.q(`DELETE FROM mob_aq_positions`);
+  await d.q(`DELETE FROM mob_aq_trades WHERE symbol IN ('L1','L2','L3')`); await d.q(`DELETE FROM mob_aq_council`);
+  resetMocks();
+  const GATO = FX3.dsBatch[0].baseToken.address;
+  assert.equal(bestPairs(FX3.dsBatch).length, 5);
+  mock("GET", /api\.geckoterminal\.com|api\.coingecko\.com\/api\/v3\/onchain/, () => res({ status: { error_code: 429, error_message: "Rate limit exceeded" } }, 429));
+  mock("GET", "https://api.dexscreener.com/token-boosts/latest/v1", () => clone(FX3.dsBoostsLatest));
+  mock("GET", "https://api.dexscreener.com/token-boosts/top/v1", () => clone(FX3.dsBoostsTop));
+  mock("GET", "https://api.dexscreener.com/token-profiles/latest/v1", () => clone(FX3.dsProfiles));
+  mock("GET", "https://api.dexscreener.com/community-takeovers/latest/v1", () => clone(FX3.dsCto));
+  mock("GET", "https://api.dexscreener.com/tokens/v1/solana/", (rec) => { const want = rec.url.split("/").pop().split(","); return clone(FX3.dsBatch).filter((p) => want.includes(p.baseToken.address)).map((p) => (p.baseToken.address === GATO ? { ...p, priceUsd: "1.1" } : p)); });
+  mock("GET", "https://api.coingecko.com/api/v3/simple/price", () => clone(FX.cg));
+  mock("GET", "https://api.alternative.me/fng/", () => clone(FX.fng));
+  mock("GET", /rugcheck\.xyz\/v1\/tokens\/([^/]+)\/report$/, () => safeRug());
+  mock("GET", "https://lite-api.jup.ag/swap/v1/quote", (rec, u) => {
+    const q = clone(u.searchParams.get("inputMint") === SOL ? FX.jupBuy : FX.jupSell), amt = Number(u.searchParams.get("amount"));
+    q.inAmount = String(amt); q.outAmount = String(u.searchParams.get("inputMint") === SOL ? Math.floor(amt * 1000) : Math.floor((amt / 1000) * 0.99)); return q;
+  });
+  let t = await tick(env);
+  let s = await S();
+  assert.equal(t.feeds.geckoterminal, false); assert.equal(t.feeds.dexscreener, true);
+  assert.ok(s.market.trending.length >= 3, "trending comes from DexScreener"); assert.ok(s.market.trending.some((x) => x.symbol === "GATO" && x.boosted === true));
+  assert.equal(s.departments.find((x) => x.id === "scouts_sol").live, true);
+  assert.ok(s.health.errors.some((e) => e.feed === "gt:trending" && /HTTP 429 .*Rate limit/.test(e.error)), JSON.stringify(s.health.errors));
+  assert.ok(s.history.priceSamples1h >= 3 && s.history.ready === 0);
+  assert.ok((await d.q(`SELECT 1 FROM mob_aq_council WHERE reason LIKE 'missing data: candles (own history 1/30 bars)'`)).length, "no history yet = NO, with the bar count");
+  // 59 minutes of our own samples for GATO: 1.00 -> 1.20, back to 1.09, then the live tick samples 1.10 (a green bounce)
+  await d.q(`DELETE FROM mob_aq_council`); await d.q(`DELETE FROM mob_aq_prices WHERE mint=$1`, [GATO]);
+  const px = (i) => (i < 40 ? 1 + (0.2 * i) / 40 : i === 40 ? 1.2 : 1.2 - (0.11 * (i - 40)) / 18);
+  await d.q(`INSERT INTO mob_aq_prices (mint, at, price) SELECT $1, date_trunc('minute', now()) - make_interval(mins => 59 - i), p FROM unnest($2::int[], $3::float8[]) x(i, p)`, [GATO, [...Array(59).keys()], [...Array(59).keys()].map(px)]);
+  t = await tick(env);
+  const g = t.evaluated.find((e) => e.symbol === "GATO");
+  assert.equal(g.verdict, "PASS", JSON.stringify(t.evaluated));
+  const row = await d.one(`SELECT facts FROM mob_aq_council WHERE symbol='GATO' AND verdict='PASS'`);
+  assert.equal(row.facts.candles.src, "own"); assert.ok(row.facts.candles.ownBars >= 30); assert.equal(row.facts.setup.signal, true);
+  s = await S(); assert.ok(s.history.ready >= 1); assert.equal(s.positions[0].symbol, "GATO");
+  assert.equal(s.departments.find((x) => x.id === "setups").live, true);
 });

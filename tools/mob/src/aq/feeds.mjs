@@ -5,10 +5,13 @@ import { num, slimRug, candlesFromGT } from "./logic.mjs";
 
 export const SOL_MINT = "So11111111111111111111111111111111111111112";
 export const URLS = {
-  gtTrending: "https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=1",
-  gtNew: "https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1",
-  gtOhlcv: (pool) => `https://api.geckoterminal.com/api/v2/networks/solana/pools/${pool}/ohlcv/minute?aggregate=1&limit=60`,
+  gtTrending: "/networks/solana/trending_pools?page=1",
+  gtNew: "/networks/solana/new_pools?page=1",
+  gtOhlcv: (pool) => `/networks/solana/pools/${pool}/ohlcv/minute?aggregate=1&limit=60`,
+  gtTrades: (pool) => `/networks/solana/pools/${pool}/trades`,
   dsBoosts: "https://api.dexscreener.com/token-boosts/latest/v1",
+  dsBoostsTop: "https://api.dexscreener.com/token-boosts/top/v1",
+  dsCto: "https://api.dexscreener.com/community-takeovers/latest/v1",
   dsProfiles: "https://api.dexscreener.com/token-profiles/latest/v1",
   dsTokens: (mints) => `https://api.dexscreener.com/tokens/v1/solana/${mints.join(",")}`,
   rug: (mint) => `https://api.rugcheck.xyz/v1/tokens/${mint}/report`,
@@ -20,8 +23,21 @@ export const URLS = {
 // GeckoTerminal's free API answers 429 to bursts (seen live 2026-11-16 with 8 calls in ~1 s): space its calls 2.1 s apart.
 export const GT_GAP = { ms: 2100 };
 let lastGt = 0;
-export async function getJson(url, ms = 8000) {
-  if (url.startsWith("https://api.geckoterminal.com/")) {
+// GeckoTerminal data has two doors with the same JSON (both read 2026-11-16): api.geckoterminal.com/api/v2 and
+// api.coingecko.com/api/v3/onchain (keyless works; with COINGECKO_DEMO_KEY the documented header x-cg-demo-api-key is sent).
+// Production (Cloudflare egress) got HTTP 429 on the first door, so the second is tried when the first fails.
+export const GT_BASES = ["https://api.geckoterminal.com/api/v2", "https://api.coingecko.com/api/v3/onchain"];
+export async function gt(env, path) {
+  const key = env.COINGECKO_DEMO_KEY, order = key ? [GT_BASES[1], GT_BASES[0]] : GT_BASES;
+  let first = null;
+  for (const b of order) {
+    try { return await getJson(b + path, 8000, key && b === GT_BASES[1] ? { "x-cg-demo-api-key": key } : {}); }
+    catch (e) { first = first ? `${first}; ${new URL(b).hostname}: ${e.message}` : `${new URL(b).hostname}: ${e.message}`; }
+  }
+  throw new Error(first);
+}
+export async function getJson(url, ms = 8000, extra = {}) {
+  if (url.startsWith("https://api.geckoterminal.com/") || url.includes("/api/v3/onchain/")) {
     const wait = lastGt + GT_GAP.ms - Date.now();
     lastGt = Math.max(Date.now(), lastGt + GT_GAP.ms);
     if (wait > 0) await new Promise((r) => setTimeout(r, wait));
@@ -29,17 +45,19 @@ export async function getJson(url, ms = 8000) {
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), ms);
   try {
-    const r = await fetch(url, { headers: { accept: "application/json", "user-agent": "aquarius-paper/1" }, signal: ac.signal });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const r = await fetch(url, { headers: { accept: "application/json", "user-agent": "aquarius-paper/1", ...extra }, signal: ac.signal });
+    if (!r.ok) { let body = ""; try { body = (await r.text()).replace(/\s+/g, " ").slice(0, 80); } catch {} throw new Error(`HTTP ${r.status}${body ? ` ${body}` : ""}`); }
     return await r.json();
   } finally { clearTimeout(t); }
 }
 
 // Cache wrapper: fresh row -> cached data; else fetch, store, return. Failure -> {ok:false, data:null}.
-export async function cached(env, key, ttlSec, fn) {
+export async function cached(env, key, ttlSec, fn, backoffSec = 0) {
   const d = db(env);
-  const row = await d.one(`SELECT data, ok, extract(epoch from now()-at)::float age FROM mob_aq_market WHERE k=$1`, [key]);
+  const row = await d.one(`SELECT data, ok, err, extract(epoch from now()-at)::float age FROM mob_aq_market WHERE k=$1`, [key]);
   if (row && row.ok && row.age < ttlSec) return { ok: true, data: row.data, cached: true };
+  // a refused feed is not hammered: wait out the backoff before asking again
+  if (row && !row.ok && row.age < backoffSec) return { ok: false, data: null, err: row.err, backoff: true };
   try {
     const data = await fn();
     await d.q(`INSERT INTO mob_aq_market (k, data, ok, err, at) VALUES ($1,$2,true,null,now()) ON CONFLICT (k) DO UPDATE SET data=EXCLUDED.data, ok=true, err=null, at=now()`, [key, JSON.stringify(data)]);
@@ -62,9 +80,41 @@ function pools(j) {
   }).filter((p) => p.pool && p.mint && p.quoteMint === SOL_MINT && p.mint !== SOL_MINT);
 }
 
+export const GT_BACKOFF = { sec: 300 };
+// DexScreener pair (tokens/v1 shape, read 2026-11-16) -> the same candidate shape as a GeckoTerminal pool.
+export function dsPool(p) {
+  return { pool: p.pairAddress, name: `${p.baseToken?.symbol} / SOL`, symbol: String(p.baseToken?.symbol || "").trim(), mint: p.baseToken?.address, quoteMint: p.quoteToken?.address,
+    priceUsd: num(p.priceUsd), solUsd: null, liqUsd: num(p.liquidity?.usd), createdAt: p.pairCreatedAt ? new Date(p.pairCreatedAt).toISOString() : null,
+    ch5m: num(p.priceChange?.m5), ch1h: num(p.priceChange?.h1), volM5: num(p.volume?.m5), volH1: num(p.volume?.h1) };
+}
+// Deepest SOL-quoted pair per mint.
+export function bestPairs(list) {
+  const best = {};
+  for (const p of list || []) {
+    if (p.chainId !== "solana" || p.quoteToken?.address !== SOL_MINT || !p.baseToken?.address || p.baseToken.address === SOL_MINT || num(p.priceUsd) == null) continue;
+    const m = p.baseToken.address;
+    if (!best[m] || (p.liquidity?.usd || 0) > (best[m].liquidity?.usd || 0)) best[m] = p;
+  }
+  return Object.values(best).map(dsPool);
+}
+export async function dsTokens(mints) {
+  const out = [];
+  for (let i = 0; i < mints.length; i += 30) out.push(...(await getJson(URLS.dsTokens(mints.slice(i, i + 30))) || []));
+  return bestPairs(out);
+}
+// Candidates without GeckoTerminal: boosted (latest + top), fresh profiles and community takeovers name the mints;
+// tokens/v1 returns their pairs with price, liquidity and volume. At least one list must answer.
+async function dsUniverse() {
+  const lists = await Promise.all([URLS.dsBoosts, URLS.dsBoostsTop, URLS.dsProfiles, URLS.dsCto].map((u) => getJson(u).catch(() => null)));
+  if (lists.every((l) => !Array.isArray(l))) throw new Error("no DexScreener list answered");
+  const mints = [...new Set(lists.flatMap((l) => (Array.isArray(l) ? l : [])).filter((x) => x.chainId === "solana" && x.tokenAddress).map((x) => x.tokenAddress))].slice(0, 90);
+  return (await dsTokens(mints)).sort((a, b) => (b.liqUsd || 0) - (a.liqUsd || 0));
+}
+
 export const feeds = {
-  trending: (env) => cached(env, "gt:trending", 55, async () => pools(await getJson(URLS.gtTrending))),
-  newPools: (env) => cached(env, "gt:new", 55, async () => pools(await getJson(URLS.gtNew))),
+  trending: (env) => cached(env, "gt:trending", 55, async () => pools(await gt(env, URLS.gtTrending)), GT_BACKOFF.sec),
+  newPools: (env) => cached(env, "gt:new", 55, async () => pools(await gt(env, URLS.gtNew)), GT_BACKOFF.sec),
+  universe: (env) => cached(env, "ds:universe", 55, () => dsUniverse()),
   boosts: (env) => cached(env, "ds:boosts", 55, async () => [...new Set((await getJson(URLS.dsBoosts)).filter((b) => b.chainId === "solana").map((b) => b.tokenAddress))]),
   profiles: (env) => cached(env, "ds:profiles", 55, async () => Object.fromEntries((await getJson(URLS.dsProfiles)).filter((b) => b.chainId === "solana").map((b) => [b.tokenAddress, String(b.description || "").slice(0, 300)]))),
   majors: (env) => cached(env, "cg:majors", 110, async () => {
@@ -78,7 +128,7 @@ export const feeds = {
     return { value: num(x.value), label: x.value_classification || null };
   }),
   ohlcv: (env, pool) => cached(env, `gt:ohlcv:${pool}`, 50, async () => {
-    const list = (await getJson(URLS.gtOhlcv(pool)))?.data?.attributes?.ohlcv_list;
+    const list = (await gt(env, URLS.gtOhlcv(pool)))?.data?.attributes?.ohlcv_list;
     if (!Array.isArray(list)) throw new Error("no ohlcv_list");
     return candlesFromGT(list);
   }),
