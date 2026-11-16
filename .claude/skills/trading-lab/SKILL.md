@@ -115,3 +115,58 @@ Data: 144 pools, 17 trades, costs assumed 1.5% slippage + 1% fee each side (stra
 
 ## 5. Best next step
 Build and run a **cost-aware paper evaluation on the Desk**: log every signal from the existing GMGN/Time Machine pipeline for 2+ weeks with real Jupiter round-trip cost attached, and only after >= 100 trades read the mean net return and its 95% CI. Add the DexScreener boost list as a *negative* flag and StockTwits/Fear and Greed as context labels. No live money until the CI lower bound is above 0.
+
+## 6. Five tools (read 2026-11-16)
+
+Alex's reel (iclosegreen): Hummingbot, NautilusTrader, skfolio, Freqtrade, Kronos. Read only (clones in /home/user/trading-research/, `--depth 1`); nothing installed, run or backtested. Facts are from each repo's own files. Open-issue counts and release dates could not be read (GitHub API not enabled for this session), so "issue health" is unknown here; check each Issues tab before adopting. No repo ships a strategy with a net-of-fees, out-of-sample profit record.
+
+| Tool | Verdict | Single best use for us |
+|---|---|---|
+| Freqtrade | **USE (R2 first)** | Backtest + dry-run R2 crypto majors with the 6x cost gate; later trade Hyperliquid perps 24/7 |
+| NautilusTrader | **MAYBE LATER (R1)** | Stocks day strategy on Interactive Brokers once R2 proves a process; too heavy now |
+| skfolio | **USE (small, on demand)** | Size/allocate across the recipes that survive testing (needs returns series, not live trading) |
+| Hummingbot | **MAYBE LATER (R3 execution only)** | Jupiter/Solana execution via Gateway, only after a memecoin edge is proven; its market making is not our edge |
+| Kronos | **SKIP for money** (toy research later) | None now: no cost-adjusted evidence, stale repo, wrong market (Chinese A-shares demo) |
+
+### Freqtrade (https://github.com/freqtrade/freqtrade)
+- License GPL-3.0 (fine for private use; copying code into a closed product would need care). Python. Version `2026.11-dev`, last commit 2026-11-15 (daily activity).
+- Does: crypto bot with backtesting, plotting, hyperopt, FreqAI (ML), Telegram/web UI, dry-run (docs/index.md). Backtest takes real exchange fees by default or `--fee` (docs/backtesting.md); `--timerange` gives the out-of-sample split; `lookahead-analysis` and recursive checks exist (docs list). Slippage is NOT modelled: its own docs say backtesting "will always be biased in one way or the other" (backtesting.md l.623). Add our own cost on top.
+- Heavy? Docs: 2 GB RAM, 2 vCPU, 1 GB disk, Docker recommended. Runs 24/7 on an old laptop. No GPU (FreqAI optional).
+- Data: free. `download-data` pulls OHLCV from the exchange via ccxt, no key for public candles.
+- Venues: Binance, Bybit, OKX, Kraken, Gate, Bitget, HTX, **Hyperliquid (spot + futures, stoploss on exchange, wallet-signed API wallet)**. No Solana DEX, no Jupiter, no GMGN, no stocks.
+- Plug in: **R2** exactly (crypto majors: breakout/mean-reversion rules written first). Cost gate: ~0.1-0.2% a side fits it; add our 6x rule as a pre-registered check. Not for R3-R5.
+
+### NautilusTrader (https://github.com/nautechsystems/nautilus_trader)
+- License LGPL-3.0. Rust core + Python (3.13-3.15 wheels, v2.0.0 in progress; RELEASES.md "Released on TBD" with a Breaking Changes list). Last commit 2026-11-16. Very active.
+- Does: one event-driven engine for backtest and live (same code), nanosecond tick/book data, multi-venue. Backtest has fill/latency/fee/margin models (docs/concepts/behavioral_models.md: `DefaultFillModel`, `TwoTierFillModel`) so it is the most realistic of the five, but you must configure them.
+- Heavy: biggest learning curve and install; runs fine 24/7 on a modest machine once set up, no GPU. Python API still changing in v2.
+- Data: bring your own; adapters for Databento, Tardis (paid), exchange feeds (free live), nothing free for stock history built in.
+- Venues (README integrations): Binance, Bybit, OKX, Coinbase, Kraken, Deribit, **Hyperliquid (stable)**, dYdX, **Interactive Brokers (stable)**, Polymarket, Kalshi, Betfair. **No Alpaca, no Solana/Jupiter/GMGN** (grep README/ADAPTERS/docs: none).
+- Plug in: **R1 stocks via IBKR** (needs an IBKR account, off limits now), or R2 on Hyperliquid. Overkill before one recipe shows an edge.
+
+### skfolio (https://github.com/skfolio/skfolio)
+- License BSD-3. Python >=3.10, deps numpy/scipy/pandas/cvxpy/scikit-learn. Last commit 2026-11-14. Light: no GPU, seconds of CPU.
+- Does: portfolio optimization (mean-risk, HRP, risk parity, CVaR, etc.), cross-validation incl. walk-forward / combinatorial purged CV, stress tests, `transaction_costs` parameter in the optimizers. It allocates weights across assets; it generates no entries, has no broker, no live trading.
+- Data: any returns table you give it (free Yahoo/Hyperliquid candles work).
+- Plug in: after R1/R2/R3 each have 100+ trade records, use it to split risk between them (sizing layer on the recipe's RISK step; our 2%/6%/-10% ceilings stay the hard cap). Also a CI-friendly way to compute drawdown and CVaR for the Skeptic.
+
+### Hummingbot (https://github.com/hummingbot/hummingbot)
+- License Apache-2.0. Python + Cython; v2.17.0 (VERSION file), last commit in clone 2026-09-22 (about 8 weeks old); conda or Docker; new `hbot` CLI and "Condor" LLM harness (README).
+- Does: market making, arbitrage, grid, perp strategies (V2 executors/controllers) with a built-in backtest engine (`strategy_v2/backtesting`, scripts/backtest_*.py). Fee/slippage handling there not verified by me.
+- Heavy: moderate (Python, a few hundred MB RAM per bot); 24/7 on a laptop is the normal use. No GPU.
+- Venues: CEX connectors (Binance, Bybit, OKX, Kraken, Coinbase, KuCoin...), **Hyperliquid spot + perp**, dYdX, Lighter, plus **Gateway** middleware for DEXes: `jupiter/router` on Solana, Meteora CLMM, Orca (executors/gateway_utils.py; README table). **GMGN: no.** Stocks: no.
+- Free paper mode against live Binance data, no keys (README: `binance_paper_trade`).
+- Plug in: only as the **R3 execution leg** (Jupiter swaps from Python) if we ever prove a memecoin edge. Its main product is market making, which needs capital and inventory risk; at ~5% memecoin round-trip cost it does not apply. Also useful as a read-only example of how to talk to Jupiter.
+
+### Kronos (https://github.com/shiyu-coder/Kronos, the exact repo: MIT, AAAI 2026 paper arXiv 2508.02739)
+- License MIT. Python >=3.10, PyTorch. **Last commit 2026-04-13** (7 months old); weights on Hugging Face (NeoQuasar).
+- Predicts: the next candles of OHLCV (autoregressive token model over "K-lines"). It is a price forecaster, not a trading system.
+- Sizes: mini 4.1M params (context 2048), small 24.7M, base 102.3M (context 512); large 499.2M is NOT released. Small models fit on CPU (PyTorch runs on cpu; examples take a device argument); the README gives no CPU speed numbers and I did not run it, so "runs on CPU" is expected from the size, unproven by me.
+- What its repo shows: a live demo of a BTC/USDT 24h forecast (picture, not a result table) and a Qlib fine-tune demo on **Chinese A-share daily data** with a top-K backtest (finetune/qlib_test.py, costs 0.1% open / 0.15% close). The README itself says the pipeline is "a demonstration ... not a production-ready quantitative trading system". No table of net returns, no crypto or US-stock out-of-sample trading result in the repo. Any "Kronos makes money" claim in a reel is not from this repo.
+- Adversarial: forecasting the next candle's shape is not an edge until a rule built on it clears costs; our own R3 numbers show costs can eat 83% of a real gross edge. Context is 512 bars, so it sees little history. Zero evidence for memecoins (launch tokens have no history).
+- Plug in: nothing in R1-R5 needs it. At most a later experiment: use its forecast as a filter in R2 and test it like any signal (rules first, costs, 100 trades).
+
+### Fund-office setup on a laptop, what to adopt first
+1. **Freqtrade** (R2): the whole loop is already built (data download, backtest with fees, out-of-sample timerange, dry-run, Telegram, Docker, 2 GB RAM). It gives us the cost-aware backtest the Time Machine lacks, for free data.
+2. **skfolio** (sizing layer): light, free, on demand once there are return series from two or more tested recipes.
+Not now: Nautilus (needs IBKR and a bigger build), Hummingbot (only if memecoin execution via Jupiter is earned), Kronos (no evidence). Cost gate applies to all: a tool is plumbing, not edge.
