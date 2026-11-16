@@ -95,7 +95,12 @@ export async function councilTick(env, x) {
     if (!hs.ok) { await block(hs.reason, hs.number); continue; }
     // every strategy looks at the same bars; the first real signal wins, whales first
     const tries = [];
-    if (wh.signal && live("R5")) tries.push(["R5", whaleSetup(bars || [], strategies.R5.params, nowSec, c.priceUsd)]);
+    // R5 entry variants, alternating per signal: A = 2 independent winners; B = 3 winners, or 2 with volume rising (5-minute pace above the hourly pace)
+    const rising = c.volM5 != null && c.volH1 ? c.volM5 * 12 > c.volH1 : false;
+    const ev = wh.signal ? ((await d.one(`SELECT count(*)::int n FROM mob_aq_signals`)).n % 2 ? "A" : "B") : null; // the signal row was just written, so the first signal is A
+    const r5ok = wh.signal && (ev === "A" || wh.independent >= 3 || rising);
+    facts.r5 = wh.signal ? { entryVariant: ev, independent: wh.independent, rising, taken: r5ok } : null;
+    if (r5ok && live("R5")) tries.push(["R5", whaleSetup(bars || [], strategies.R5.params, nowSec, c.priceUsd)]);
     if (bars && live(c.gta ? "R4" : "R3")) tries.push([c.gta ? "R4" : "R3", fib]);
     if (bars && tier !== "C" && live("R6")) tries.push(["R6", momentumSetup(bars, { ...R6_PARAMS, ...strategies.R6.params }, nowSec)]);
     if (bars && tier === "A" && live("R7")) tries.push(["R7", bounceSetup(bars, { ...R7_PARAMS, ...strategies.R7.params }, nowSec)]);
@@ -117,7 +122,7 @@ export async function councilTick(env, x) {
     // too quiet: even the cheapest possible round trip (the fixed network fee at this tier's size, plus 0.1% of pool cost)
     // times 6 is above the target this coin's own volatility gives. No quote is spent on it.
     if (feeSol) {
-      const floorRt = ((2 * feeSol) / (C.maxSizeSol * C.tiers[tier].size * sv.sizeMult * throttle.size)) * 100 + 0.1, needs = round(C.costMultiple * floorRt, 2);
+      const floorRt = ((2 * feeSol) / (C.maxSizeSol * sv.sizeMult * throttle.size)) * 100 + 0.1, needs = round(C.costMultiple * floorRt, 2);
       if (s.targetPct < needs) { await block(`too quiet: ${sid} target ${s.targetPct}% cannot clear 6x cost (needs >= ${needs}%)`, s.targetPct, "quiet"); continue; }
     }
     if ((sid === "R3" || sid === "R4") && rpl && rpl.n >= 30 && rpl.ci95 && rpl.ci95[1] < 0) { await block("time machine: replay loses", rpl.expectancyPct, "soft"); continue; }
@@ -126,7 +131,7 @@ export async function councilTick(env, x) {
     // tier C (new launches) keeps the strict rules: an LP-lock, holder or danger objection is not a normal PASS there
     const strict = tier === "C" && objections.some((o) => ["lp_locked", "top10", "top_holder", "danger_risk", "copycat"].includes(o));
     Object.assign(facts, { soft: objections, score: sc.score, strict });
-    ready.push({ c, tier, s, sid, SP, objections, sc, strict, facts, rg, wh, block, noteSignal, tape: bars ? { c, src: oh.src, bars, fib, setup: s, verdict: "BLOCK" } : null });
+    ready.push({ ev: sid === "R5" ? ev : null, c, tier, s, sid, SP, objections, sc, strict, facts, rg, wh, block, noteSignal, tape: bars ? { c, src: oh.src, bars, fib, setup: s, verdict: "BLOCK" } : null });
   }
   // ---- decide: a normal PASS needs the score; otherwise EXPLORE takes the best-scored signal when no entry happened lately
   const lastOpen = await d.one(`SELECT greatest((SELECT max(opened_at) FROM mob_aq_positions), (SELECT max(opened_at) FROM mob_aq_trades)) t`);
@@ -135,7 +140,13 @@ export async function councilTick(env, x) {
   ready.sort((a, b) => b.sc.score - a.sc.score);
   let tries = 0;
   for (const g of ready) {
-    const { c, s, sid, SP, tier } = g;
+    const { c, sid, SP, tier } = g;
+    // exit variant alternates per entry of this strategy unless the tournament already named a default
+    const dfl = x.variantDefault?.[sid];
+    const variant = dfl || ((await d.one(`SELECT (SELECT count(*) FROM mob_aq_positions WHERE strategy=$1) + (SELECT count(*) FROM mob_aq_trades WHERE strategy=$1 AND variant IS NOT NULL) n`, [sid])).n % 2 ? "B" : "A");
+    // variant B caps the initial stop at 6% (one stop must never erase five wins); the target is untouched
+    let s = g.s;
+    if (variant === "B" && s.stopPct > 6) s = { ...s, stopPct: 6, stopPrice: s.price * 0.94 };
     const normal = !g.strict && g.sc.score >= C.passScore + throttle.score;
     const tag = normal ? "PASS" : exploreDue ? "EXPLORE" : null;
     if (out.entered || !tag || tries >= QUOTE_TRIES) {
@@ -146,9 +157,9 @@ export async function councilTick(env, x) {
     }
     if (!feeSol) { await g.block("missing data: SOL price", null); continue; }
     const mult = C.tiers[tier].size * g.sc.sizeMult * (tag === "EXPLORE" ? C.exploreSize : 1) * sv.sizeMult * throttle.size;
-    // soft rules and EXPLORE cut the RISK taken; the SOL cap only shrinks with the tier, because the network fee is a fixed
-    // amount and a much smaller position could never clear the 6x cost gate
-    const SZ = { stressMult: C.stressMult, riskPct: C.riskPct * mult, maxSizeSol: C.maxSizeSol * C.tiers[tier].size * sv.sizeMult * throttle.size };
+    // tier, soft rules and EXPLORE cut the RISK taken (never above 1% of equity); the SOL cap itself is not shrunk, because the
+    // network fee is a fixed amount and a small position could never clear the 6x cost gate (tier C explores died on that)
+    const SZ = { stressMult: C.stressMult, riskPct: C.riskPct * mult, maxSizeSol: C.maxSizeSol * sv.sizeMult * throttle.size };
     const est = sizeFor(equity, cash, s.stopPct, KB_COST_PCT, SZ);
     set("st.stress", "busy", `${c.symbol}: stressed ${est.stressedPct}% -> ${est.sizeSol} SOL (tier ${tier}, x${round(mult, 2)})`);
     if (est.sizeSol < C.minSizeSol) { await g.block("size too small", est.sizeSol); continue; }
@@ -176,15 +187,15 @@ export async function councilTick(env, x) {
     const reason = `${tag === "EXPLORE" ? "EXPLORE: " : ""}${sid} ${s.why}; hard blocks clear; score ${g.sc.score}${g.objections.length ? ` (soft: ${g.objections.join(", ")})` : ""}`;
     await g.noteSignal("PASS", reason);
     await council("PASS", c, reason, x6, g.facts);
-    const p = await d.one(`INSERT INTO mob_aq_positions (strategy, mint, pool, symbol, decimals, tokens_raw, size_sol, fee_sol, entry_price_usd, entry_mid_usd, stop_price, target_price, stop_pct, target_pct, rt_pct, buy_slip_pct, time_stop_at, last_price_usd, last_value_sol, tier, tag, soft, score)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16, to_timestamp($17), $10, $7, $18, $19, $20, $21) RETURNING id`,
-      [sid, c.mint, c.pool, c.symbol, g.rg.data.decimals, tokensRaw, size, feeSol, entryPx, c.priceUsd, s.stopPrice, s.targetPrice, s.stopPct, s.targetPct, rt, slip, nowSec + (sid === "R6" && x.r6TimeStopMin ? x.r6TimeStopMin : SP.timeStopMin) * 60, tier, tag, JSON.stringify(g.objections), g.sc.score]);
+    const p = await d.one(`INSERT INTO mob_aq_positions (strategy, mint, pool, symbol, decimals, tokens_raw, size_sol, fee_sol, entry_price_usd, entry_mid_usd, stop_price, target_price, stop_pct, target_pct, rt_pct, buy_slip_pct, time_stop_at, last_price_usd, last_value_sol, tier, tag, soft, score, variant, entry_variant)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16, to_timestamp($17), $10, $7, $18, $19, $20, $21, $22, $23) RETURNING id`,
+      [sid, c.mint, c.pool, c.symbol, g.rg.data.decimals, tokensRaw, size, feeSol, entryPx, c.priceUsd, s.stopPrice, s.targetPrice, s.stopPct, s.targetPct, rt, slip, nowSec + (sid === "R6" && x.r6TimeStopMin ? x.r6TimeStopMin : SP.timeStopMin) * 60, tier, tag, JSON.stringify(g.objections), g.sc.score, variant, g.ev]);
     if (sid === "R5") await brain(d, "whales", "entry", `R5 paper entry ${c.symbol}: ${g.wh.independent} independent winners bought in 15 min (funders ${g.wh.funders}); stop ${s.stopPct}% (${s.structure}), target ${s.targetPct}%, round trip ${rt}%, size ${size} SOL.`, { whale: g.wh, setup: s });
     await setState(d, "cash_sol", cash - size - feeSol);
     await flow(d, "buy", -size, "execution", `buy ${c.symbol} (${sid}${tag === "EXPLORE" ? ", explore" : ""})`);
     await flow(d, "fee", -feeSol, "costs", `network fee ${c.symbol}`);
     if (g.tape) tape = { ...g.tape, verdict: "PASS" };
-    out.entered = { id: p.id, symbol: c.symbol, tier, strategy: sid, tag, sizeSol: size, entryUsd: entryPx, rtPct: rt, stopPct: s.stopPct, targetPct: s.targetPct, score: g.sc.score };
+    out.entered = { id: p.id, symbol: c.symbol, tier, strategy: sid, tag, variant, entryVariant: g.ev, sizeSol: size, entryUsd: entryPx, rtPct: rt, stopPct: s.stopPct, targetPct: s.targetPct, score: g.sc.score };
     out.evaluated.push({ symbol: c.symbol, tier, verdict: "PASS", tag, reason, number: x6 });
     set("ex.paper", "busy", `bought ${size} SOL of ${c.symbol} (paper, ${sid}, tier ${tier}${tag === "EXPLORE" ? ", EXPLORE" : ""})`); set("ex.caps", "busy", `cap ${C.maxSizeSol} SOL respected`);
   }

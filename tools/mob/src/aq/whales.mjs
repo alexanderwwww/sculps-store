@@ -140,7 +140,8 @@ export async function whaleState(d) {
     d.q(`SELECT symbol, at, independent, funders, verdict, reason, pct_15m, pct_60m FROM mob_aq_signals ORDER BY id DESC LIMIT 10`),
     d.q(`SELECT wallet, wins, closed, net_sol FROM mob_aq_whales WHERE winner ORDER BY wins DESC, net_sol DESC LIMIT 10`),
   ]);
-  return { book: b.book, winners: b.winners, mining: m, signals: sg.map((s) => ({ symbol: s.symbol, at: s.at, independent: s.independent, funders: s.funders, verdict: s.verdict, reason: s.reason, pct15m: s.pct_15m, pct60m: s.pct_60m })),
+  const hr = await d.one(`SELECT (SELECT count(*)::int FROM mob_aq_signals WHERE at > now() - interval '1 hour') sph, (SELECT count(*)::int FROM mob_aq_trades WHERE strategy='R5') n, (SELECT count(*)::int FROM mob_aq_trades WHERE strategy='R5' AND pnl_sol > 0) w, (SELECT count(*)::int FROM mob_aq_funders) f`);
+  return { book: b.book, winners: b.winners, signalsLastHour: hr.sph, r5: { trades: hr.n, wins: hr.w, hitRate: hr.n ? round(hr.w / hr.n, 3) : null }, fundersKnown: hr.f, mining: m, signals: sg.map((s) => ({ symbol: s.symbol, at: s.at, independent: s.independent, funders: s.funders, verdict: s.verdict, reason: s.reason, pct15m: s.pct_15m, pct60m: s.pct_60m })),
     top: top.map((w) => ({ wallet: `${w.wallet.slice(0, 4)}…${w.wallet.slice(-4)}`, wins: w.wins, closed: w.closed, netSol: round(w.net_sol, 3) })) };
 }
 

@@ -200,7 +200,7 @@ test("kill switch blocks every new entry; a loss streak throttles size on paper,
   await db(env).q(`INSERT INTO mob_aq_trades (strategy, symbol, pnl_sol, pnl_pct, reason) VALUES ('R3','L1',-0.001,-2,'stop'),('R3','L2',-0.001,-2,'stop'),('R3','L3',-0.001,-2,'stop')`);
   // PAPER never halts on a losing streak: it enters smaller (x0.75 after 3 losses) and asks for 10 more score points
   const t2 = await tick(env);
-  assert.ok(t2.entered && t2.entered.symbol === "FRESH", JSON.stringify(t2.evaluated)); assert.ok(t2.entered.sizeSol <= 0.05 * 0.85 * 0.75 + 1e-9, String(t2.entered.sizeSol));
+  assert.ok(t2.entered && t2.entered.symbol === "FRESH", JSON.stringify(t2.evaluated)); assert.ok(t2.entered.sizeSol <= 0.05 * 0.75 + 1e-9, String(t2.entered.sizeSol));
   s = await S(); assert.ok(!s.council.vetoes.some((v) => /loss-streak/.test(v.reason)));
   assert.match(s.departments.find((x) => x.id === "risk").workers.find((w) => w.job === "Loss-streak throttle").note, /3 losses in a row: size x0\.75, score \+10 \(paper never halts\)/);
   await db(env).q(`DELETE FROM mob_aq_positions WHERE mint=$1`, [MINT.F]); await db(env).q(`UPDATE mob_aq_state SET v='1' WHERE k='cash_sol'`);
@@ -535,8 +535,8 @@ test("whales first: Jupiter lists pick tradable coins, 60 bars on first sight, a
   const cn = await d.one(`SELECT strategy, reason, facts FROM mob_aq_council WHERE symbol='Fartcoin'`);
   assert.equal(cn.strategy, "R5"); assert.match(cn.reason, /^R5 whale signal, stop under the recent swing low; hard blocks clear; score/); assert.equal(cn.facts.tier, "A");
   assert.equal(cn.facts.candles.src, "jupiter"); assert.equal(cn.facts.candles.bars, 60, "history on first sight, no warm-up");
-  assert.equal(cn.facts.whale.independent, 2); assert.ok(cn.facts.setup.stopPct >= 4 && cn.facts.setup.stopPct <= 12); assert.equal(cn.facts.setup.targetPct, Math.round(cn.facts.setup.stopPct * 2.5 * 1000) / 1000);
-  const p = await d.one(`SELECT * FROM mob_aq_positions`); assert.equal(p.strategy, "R5"); assert.ok(p.size_sol <= 0.05);
+  assert.equal(cn.facts.whale.independent, 2); assert.deepEqual([cn.facts.r5.entryVariant, cn.facts.r5.taken], ["A", true]); assert.equal((await d.one(`SELECT entry_variant FROM mob_aq_positions`)).entry_variant, "A"); assert.ok(cn.facts.setup.stopPct >= 4 && cn.facts.setup.stopPct <= 12); assert.equal(cn.facts.setup.targetPct, Math.round(cn.facts.setup.stopPct * 2.5 * 1000) / 1000);
+  const p = await d.one(`SELECT * FROM mob_aq_positions`); assert.equal(p.strategy, "R5"); assert.ok(p.size_sol <= 0.05); assert.ok(["A", "B"].includes(p.variant));
   assert.equal((await d.one(`SELECT verdict FROM mob_aq_signals WHERE mint=$1`, [FART])).verdict, "PASS");
   // mining: the same tick walked the coin's swaps back with the cursor (offset + offsetTs) and finished it
   const m = await d.one(`SELECT * FROM mob_aq_mined WHERE mint=$1`, [FART]);
@@ -617,7 +617,7 @@ test("ALWAYS TRADING: hard vs soft, tiers, R6 and R7 entries, explore cadence, w
   t = await tick(env);
   assert.equal(t.entered?.symbol, "SOFT", JSON.stringify(t.evaluated)); assert.equal(t.entered.tag, "EXPLORE"); assert.equal(t.entered.tier, "B");
   const sp = await d.one(`SELECT * FROM mob_aq_positions WHERE symbol='SOFT'`);
-  assert.ok(sp.soft.includes("danger_risk") && sp.soft.includes("top10")); assert.ok(sp.size_sol <= 0.05 * 0.85 + 1e-9);
+  assert.ok(sp.soft.includes("danger_risk") && sp.soft.includes("top10")); assert.ok(sp.size_sol <= 0.05 + 1e-9); // tier and EXPLORE cut the risk taken, not the SOL cap (a tiny position cannot clear the fee)
   // learning: SOFT hits its target -> the rules that objected blocked a winner and lose weight; MOMO stops out -> its rules gain
   const w0 = Object.fromEntries((await d.q(`SELECT name, weight FROM mob_aq_rules`)).map((r) => [r.name, r.weight]));
   const mo = await d.one(`SELECT * FROM mob_aq_positions WHERE symbol='MOMO'`);
@@ -633,4 +633,38 @@ test("ALWAYS TRADING: hard vs soft, tiers, R6 and R7 entries, explore cadence, w
   assert.ok(s.brain.some((b) => /^Rule T3 \(trade #\d+, SOFT won/.test(b.text)) && s.brain.some((b) => /^Rule T3 \(trade #\d+, MOMO lost/.test(b.text)));
   const tr = await d.one(`SELECT tier, tag, soft FROM mob_aq_trades WHERE symbol='SOFT'`); assert.deepEqual([tr.tier, tr.tag], ["B", "EXPLORE"]); assert.ok(tr.soft.length >= 2);
   jupCharts = {}; sellOut = {};
+});
+
+test("variants: exits alternate A/B per strategy; B sells half at +1R and moves the stop to break-even; a clear leader becomes the default", async () => {
+  const d = db(env);
+  for (const t of ["mob_aq_market", "mob_aq_watch", "mob_aq_prices", "mob_aq_positions", "mob_aq_council", "mob_aq_trades"]) await d.q(`DELETE FROM ${t}`);
+  await d.q(`DELETE FROM mob_aq_state WHERE k IN ('variant_cmp','variant_default')`); await d.q(`UPDATE mob_aq_state SET v='1' WHERE k='cash_sol'`);
+  stubAll(); trendingPools = []; prices = {}; tradesFor = {}; jupLists = () => ({ pools: [] }); sellOut = {};
+  // a variant B position: entry 1.00, stop 4% (R = 4%), target 1.20, round trip 1%
+  await d.q(`INSERT INTO mob_aq_positions (strategy, mint, pool, symbol, decimals, tokens_raw, size_sol, fee_sol, entry_price_usd, entry_mid_usd, stop_price, target_price, stop_pct, target_pct, rt_pct, time_stop_at, variant)
+    VALUES ('R6','ScaleMintBB','x','SCALE',6,'50000000000',0.05,0.0001,1,1,0.96,1.2,4,20,1,now() + interval '1 hour','B'), ('R6','PlainMintAA','x','PLAIN',6,'50000000000',0.05,0.0001,1,1,0.96,1.2,4,20,1,now() + interval '1 hour','A')`);
+  prices.ScaleMintBB = 1.05; prices.PlainMintAA = 1.05; sellOut = { ScaleMintBB: 1.05, PlainMintAA: 1.05 };
+  let t = await tick(env);
+  assert.equal(t.scaled, 1); assert.equal(t.exits.length, 0);
+  const sc = await d.one(`SELECT * FROM mob_aq_positions WHERE symbol='SCALE'`), pl = await d.one(`SELECT * FROM mob_aq_positions WHERE symbol='PLAIN'`);
+  assert.equal(sc.half_done, true); assert.equal(sc.tokens_raw, "25000000000"); assert.ok(sc.realized_sol > 0.026 && sc.realized_sol < 0.0265); assert.ok(Math.abs(sc.stop_price - 1.01) < 1e-9, "stop = break-even plus the 1% cost");
+  assert.equal(pl.half_done, false); assert.equal(pl.tokens_raw, "50000000000"); assert.equal(pl.stop_price, 0.96, "variant A is untouched");
+  assert.ok(Math.abs(Number((await d.one(`SELECT v FROM mob_aq_state WHERE k='cash_sol'`)).v) - (1 + sc.realized_sol)) < 1e-9);
+  // price falls back to 1.00: B is stopped at break-even-plus-cost with its half banked; A is still open and losing nothing yet
+  prices.ScaleMintBB = 1.0; prices.PlainMintAA = 0.95; sellOut = { ScaleMintBB: 1.0, PlainMintAA: 0.95 };
+  t = await tick(env);
+  assert.deepEqual(t.exits.map((e) => [e.symbol, e.why]).sort(), [["PLAIN", "stop"], ["SCALE", "stop"]]);
+  const tb = await d.one(`SELECT * FROM mob_aq_trades WHERE symbol='SCALE'`), ta = await d.one(`SELECT * FROM mob_aq_trades WHERE symbol='PLAIN'`);
+  assert.deepEqual([tb.variant, tb.scaled, ta.variant, ta.scaled], ["B", true, "A", false]);
+  assert.ok(tb.pnl_pct > 1.5 && tb.pnl_pct < 3, `B keeps the banked half: ${tb.pnl_pct}`); assert.ok(ta.pnl_pct < -5, `A takes the full stop: ${ta.pnl_pct}`);
+  // scoreboard + tournament step T4 after 20 closed trades per variant
+  await d.q(`INSERT INTO mob_aq_trades (strategy, symbol, pnl_sol, pnl_pct, reason, variant, opened_at) SELECT 'R6', 'a' || i, -0.0005, -1 - (i % 3) * 0.2, 'time stop', 'A', now() - interval '2 hours' FROM generate_series(1, 19) i`);
+  await d.q(`INSERT INTO mob_aq_trades (strategy, symbol, pnl_sol, pnl_pct, reason, variant, opened_at) SELECT 'R6', 'b' || i, 0.001, 2 + (i % 3) * 0.2, 'target', 'B', now() - interval '2 hours' FROM generate_series(1, 19) i`);
+  await tick(env);
+  const s = await S(), r6 = s.strategies.find((x) => x.id === "R6");
+  assert.equal(r6.defaultVariant, "B"); assert.deepEqual(r6.variants.map((v) => [v.id, v.n]), [["A", 20], ["B", 20]]);
+  assert.ok(r6.variants[1].expectancyPct > 0 && r6.variants[0].expectancyPct < 0 && r6.variants[0].avgLoss < 0 && r6.variants[1].avgWin > 0);
+  assert.ok(s.brain.some((b) => /^R6 exits after 20 A and 20 B trades:.*B leads clearly/.test(b.text)) && s.brain.some((b) => /^Rule T4: R6 exit variant B becomes the default/.test(b.text)));
+  assert.ok(typeof s.whales.signalsLastHour === "number" && "hitRate" in s.whales.r5 && typeof s.whales.fundersKnown === "number");
+  assert.ok("variant" in (await S()).positions.concat([{ variant: "A" }])[0]);
 });

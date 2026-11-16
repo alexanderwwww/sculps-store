@@ -167,6 +167,22 @@ export async function tick(env, opts = {}) {
       for (const p of open) {
         const mid = mids?.[p.mint] ?? null;
         if (mid == null) { set("ex.stops", "blocked", `${p.symbol}: no price, holding`); continue; }
+        // exit variant B (scale-out): at +1R sell half, then the stop on the rest moves to break-even plus the measured cost
+        if (p.variant === "B" && !p.half_done && p.entry_mid_usd && p.stop_pct && mid >= p.entry_mid_usd * (1 + p.stop_pct / 100) && mid < p.target_price && feeSol) {
+          const half = (BigInt(p.tokens_raw) / 2n).toString();
+          if (out.exits.length || out.scaled) await sleep(gap);
+          const hq = half !== "0" ? await jupQuote(p.mint, SOL_MINT, half) : null;
+          if (hq) {
+            const got = Number(hq.outAmount) / 1e9 - feeSol, be = p.entry_price_usd * (1 + (p.rt_pct || 0) / 100);
+            await d.q(`UPDATE mob_aq_positions SET tokens_raw=$2, realized_sol=realized_sol+$3, half_done=true, stop_price=$4 WHERE id=$1`, [p.id, (BigInt(p.tokens_raw) - BigInt(half)).toString(), got, be]);
+            await setState(d, "cash_sol", Number(await getState(d, "cash_sol", START_SOL)) + got);
+            await flow(d, "sell", Number(hq.outAmount) / 1e9, "execution", `sell half ${p.symbol} at +1R (variant B)`);
+            await flow(d, "fee", -feeSol, "costs", `network fee ${p.symbol}`);
+            Object.assign(p, { tokens_raw: (BigInt(p.tokens_raw) - BigInt(half)).toString(), realized_sol: (p.realized_sol || 0) + got, half_done: true, stop_price: be });
+            out.scaled = (out.scaled || 0) + 1;
+            set("ex.stops", "busy", `${p.symbol}: half sold at +1R, stop moved to break-even plus cost`);
+          }
+        }
         const why = mid <= p.stop_price ? "stop" : mid >= p.target_price ? "target" : nowSec * 1000 >= new Date(p.time_stop_at).getTime() ? "time stop" : null;
         const markSol = solUsd ? (Number(p.tokens_raw) / 10 ** p.decimals) * mid / solUsd : null;
         await d.q(`UPDATE mob_aq_positions SET last_price_usd=$2, last_value_sol=$3, last_at=now() WHERE id=$1`, [p.id, mid, markSol]);
@@ -176,7 +192,7 @@ export async function tick(env, opts = {}) {
         if (!q || !feeSol) { set("ex.reconcile", "blocked", `${p.symbol}: ${why} hit but no sell quote; retry next tick`); health.jupiter = false; continue; }
         health.jupiter = true;
         const back = Number(q.outAmount) / 1e9 - feeSol;
-        const pnl = back - (p.size_sol + p.fee_sol);
+        const pnl = (p.realized_sol || 0) + back - (p.size_sol + p.fee_sol);
         const pnlPct = (pnl / (p.size_sol + p.fee_sol)) * 100;
         const exitPx = solUsd ? (Number(q.outAmount) / 1e9) * solUsd / (Number(p.tokens_raw) / 10 ** p.decimals) : null;
         const slip = exitPx ? round((mid / exitPx - 1) * 100, 3) : null;
@@ -196,6 +212,7 @@ export async function tick(env, opts = {}) {
         set("rv.journal", "busy", `trade #${t.id} journaled`);
         set("rv.lesson", "busy", `lesson from ${p.symbol}`);
         await learnFromTrade(d, p, t.id, pnlPct);
+        await d.q(`UPDATE mob_aq_trades SET variant=$2, entry_variant=$3, scaled=$4 WHERE id=$1`, [t.id, p.variant || "A", p.entry_variant || null, !!p.half_done]);
       }
       if (!W["ex.stops"]) set("ex.stops", "busy", `${open.length} open position(s) checked`);
     } else set("ex.stops", "idle", "no open positions");
@@ -273,7 +290,7 @@ export async function tick(env, opts = {}) {
       set("cn.veto", "busy", `BLOCK: ${riskBlock[0]}`);
     } else {
       // ---- the Council (hard blocks, soft score, tiers, R3/R5/R6/R7, explore) lives in council.mjs
-      await councilTick(env, { throttle, r6TimeStopMin: r6rep?.timeStopMin ?? null, d, cands, tradable, strategies, pos, cash, equity, sv, solUsd, feeSol, nowSec, gap, health, set, out, near, rpl, fng: fg.data?.value ?? null, ownCandles, brain, flow, setState,
+      await councilTick(env, { variantDefault: (await getState(d, "variant_default", {})) || {}, throttle, r6TimeStopMin: r6rep?.timeStopMin ?? null, d, cands, tradable, strategies, pos, cash, equity, sv, solUsd, feeSol, nowSec, gap, health, set, out, near, rpl, fng: fg.data?.value ?? null, ownCandles, brain, flow, setState,
         council: (v, c, reason, number, facts) => council(d, v, c, reason, number, facts) });
     }
     if (!W["ex.paper"]) set("ex.paper", "idle", "no PASS this tick");
@@ -306,6 +323,23 @@ export async function tick(env, opts = {}) {
       else if (alive && ss.n >= 100 && ss.ci95 && ss.ci95[0] > 0 && status !== "edge") { status = "edge"; await brain(d, "learning", "tournament", `Rule T2: ${sid} shows an edge over ${ss.n} trades, 95% CI ${ss.ci95.join(" to ")}. Live stays locked until Alex says.`, ss); }
       await d.q(`UPDATE mob_aq_strategies SET stats=$2, alive=$3, status=$4 WHERE id=$1`, [sid, JSON.stringify(ss), alive, status]);
     }
+    // ---- exit variants A/B per strategy: compared every 20 closed trades per variant; a clear leader becomes the default (step T4)
+    const vt = await d.q(`SELECT strategy, coalesce(variant,'A') v, pnl_pct FROM mob_aq_trades WHERE variant IS NOT NULL`);
+    const cmp = (await getState(d, "variant_cmp", {})) || {}, dflt = (await getState(d, "variant_default", {})) || {};
+    for (const sid of ["R3", "R4", "R5", "R6", "R7"]) {
+      const a = stats(vt.filter((t) => t.strategy === sid && t.v === "A").map((t) => t.pnl_pct)), b = stats(vt.filter((t) => t.strategy === sid && t.v === "B").map((t) => t.pnl_pct));
+      const mark = Math.floor(Math.min(a.n, b.n) / 20) * 20;
+      if (mark >= 20 && (cmp[sid] || 0) < mark) {
+        cmp[sid] = mark;
+        const lead = a.expectancyPct >= b.expectancyPct ? ["A", a, b] : ["B", b, a], clear = lead[1].ci95 && lead[1].ci95[0] > lead[2].expectancyPct;
+        await brain(d, "review", "variants", `${sid} exits after ${a.n} A and ${b.n} B trades: A (plain stop/target) ${a.expectancyPct}% per trade, 95% CI ${a.ci95?.join(" to ")}; B (half off at +1R, stop to break-even, stop capped at 6%) ${b.expectancyPct}%, 95% CI ${b.ci95?.join(" to ")}. ${clear ? `${lead[0]} leads clearly.` : "No clear leader: both keep running."}`, { sid, a, b });
+        if (clear && dflt[sid] !== lead[0]) {
+          dflt[sid] = lead[0];
+          await brain(d, "learning", "tournament", `Rule T4: ${sid} exit variant ${lead[0]} becomes the default (its 95% interval is above the other variant's mean). A new challenger is needed: proposed next test is a trailing stop of 1x ATR after +1R against the new default.`, { sid, winner: lead[0] });
+        }
+      }
+    }
+    await setState(d, "variant_cmp", cmp); await setState(d, "variant_default", dflt);
     set("ln.tournament", "busy", `${Object.keys(strategies).length} recipes scored`);
     set("ln.killer", "busy", "rule T1: 100+ trades with the 95% CI below zero");
 
@@ -455,7 +489,7 @@ export async function buildState(env) {
   const equity = cash + pos.reduce((a, p) => a + (p.last_value_sol ?? p.size_sol), 0);
   const startDay = new Date(); startDay.setUTCHours(0, 0, 0, 0);
   const realizedToday = trd.filter((t) => new Date(t.closed_at) >= startDay).reduce((a, t) => a + t.pnl_sol, 0);
-  const unreal = pos.reduce((a, p) => a + ((p.last_value_sol ?? p.size_sol) - p.size_sol - p.fee_sol), 0);
+  const unreal = pos.reduce((a, p) => a + ((p.last_value_sol ?? p.size_sol) + (p.realized_sol || 0) - p.size_sol - p.fee_sol), 0);
   const s = stats(trd.map((t) => t.pnl_pct));
   const v = (r) => (r ? { verdict: r.verdict, symbol: r.symbol, reason: r.reason, number: r.number, at: r.at } : null);
   const recent = [
@@ -470,7 +504,8 @@ export async function buildState(env) {
     equitySol: round(equity, 9), startSol: START_SOL, pnlTodaySol: round(realizedToday + unreal, 9), pnlTotalSol: round(equity - START_SOL, 9),
     trades: { n: s.n, wins: s.wins, winRate: s.winRate, expectancyPct: s.expectancyPct, ci95: s.ci95, evidence: s.evidence },
     positions: pos.map((p) => ({ id: p.id, symbol: p.symbol, mint: p.mint, entryPrice: p.entry_price_usd, price: p.last_price_usd, stopPct: p.stop_pct, targetPct: p.target_pct,
-      sizeSol: p.size_sol, tier: p.tier || null, tag: p.tag || null, openedAt: p.opened_at, pnlPct: p.last_value_sol == null ? null : round(((p.last_value_sol - p.size_sol - p.fee_sol) / (p.size_sol + p.fee_sol)) * 100, 3), strategy: p.strategy })),
+      sizeSol: p.size_sol, tier: p.tier || null, tag: p.tag || null, openedAt: p.opened_at, variant: p.variant || "A", scaledOut: !!p.half_done,
+      pnlPct: p.last_value_sol == null ? null : round(((p.last_value_sol + (p.realized_sol || 0) - p.size_sol - p.fee_sol) / (p.size_sol + p.fee_sol)) * 100, 3), strategy: p.strategy })),
     recent,
     flows: flows.map((f) => ({ id: Number(f.id), kind: f.kind, sol: f.sol, dept: f.dept, label: f.label, at: f.at })),
     council: { last: v(cn[0]), vetoes: cn.filter((r) => r.verdict === "BLOCK").slice(0, 10).map(v), recent: cn.slice(0, 20).map(v) },
@@ -485,7 +520,9 @@ export async function buildState(env) {
     market: { sol: M["cg:majors"]?.sol ?? null, btc: M["cg:majors"]?.btc ?? null, fearGreed: M.fng ?? null,
       trending: (M.trending || []).slice(0, 12).map((p) => ({ symbol: p.symbol, ch1h: p.ch1h, liqUsd: p.liqUsd, boosted: !!p.boosted })) },
     brain: brainRows.map((r) => ({ at: r.at, dept: r.dept, text: r.text })),
-    strategies: strat.map((r) => ({ id: r.id, name: r.name, trades: r.stats?.n ?? 0, pnlSol: r.stats?.pnlSol ?? 0, alive: r.alive, status: r.status, market: r.market })),
+    strategies: strat.map((r) => ({ id: r.id, name: r.name, trades: r.stats?.n ?? 0, pnlSol: r.stats?.pnlSol ?? 0, alive: r.alive, status: r.status, market: r.market, defaultVariant: S.variant_default?.[r.id] || null,
+      variants: ["A", "B"].map((v) => { const xs = trd.filter((t) => t.strategy === r.id && t.variant === v).map((t) => t.pnl_pct), w = xs.filter((p) => p > 0), l = xs.filter((p) => p <= 0), st2 = stats(xs);
+        return { id: v, n: st2.n, winRate: st2.winRate, expectancyPct: st2.expectancyPct, avgWin: w.length ? round(w.reduce((a, c) => a + c, 0) / w.length, 2) : null, avgLoss: l.length ? round(l.reduce((a, c) => a + c, 0) / l.length, 2) : null }; }) })),
     tools: tools.map((t) => ({ name: t.name, licence: t.licence, verdict: t.verdict, status: t.status, usedBy: t.used_by, bestUse: t.best_use })),
     replay: S.replay_R3 ? { trades: S.replay_R3.trades, expectancyPct: S.replay_R3.expectancyPct, ci95: S.replay_R3.ci95, costPct: S.replay_R3.costPct, evidence: S.replay_R3.evidence } : null,
     health: { ...(S.health || {}), errors: mkt.filter((r) => !r.ok).slice(0, 12).map((r) => ({ feed: r.k, error: r.err, at: r.at })) },
@@ -529,7 +566,7 @@ export async function sellAll(env, opts = {}) {
     if (i) await sleep(gap);
     const q = feeSol ? await jupQuote(p.mint, SOL_MINT, p.tokens_raw) : null;
     if (!q) { out.kept.push({ symbol: p.symbol, reason: feeSol ? "no sell quote" : "no SOL price" }); continue; }
-    const gross = Number(q.outAmount) / 1e9, back = gross - feeSol, cost = p.size_sol + p.fee_sol, pnl = back - cost, pnlPct = (pnl / cost) * 100;
+    const gross = Number(q.outAmount) / 1e9, back = gross - feeSol, cost = p.size_sol + p.fee_sol, pnl = (p.realized_sol || 0) + back - cost, pnlPct = (pnl / cost) * 100;
     const exitPx = (gross * solUsd) / (Number(p.tokens_raw) / 10 ** p.decimals);
     const slip = p.last_price_usd ? round((p.last_price_usd / exitPx - 1) * 100, 3) : null;
     await d.q(`INSERT INTO mob_aq_trades (position_id, strategy, mint, symbol, size_sol, back_sol, entry_price_usd, exit_price_usd, pnl_sol, pnl_pct, fees_sol, slippage_pct, reason, grade, opened_at)
