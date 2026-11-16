@@ -2,7 +2,7 @@
 // the helper inbox and briefing also take AQUARIUS_KEY (same key as /api/aquarius) so Grok/ChatGPT bridges can post evidence.
 import { db } from "../db.mjs";
 import { AQ_PAGE, AQ_JS } from "../aq-bundle.mjs";
-import { buildState, createBot, helperMessage, briefing, ensureSeed, rebuild } from "./engine.mjs";
+import { buildState, createBot, helperMessage, briefing, ensureSeed, rebuild, sellAll } from "./engine.mjs";
 import { helperMcp, createTask } from "./mcp.mjs";
 import { safeEqual } from "../auth.mjs";
 
@@ -38,6 +38,7 @@ export async function aqApi(req, env, url, path, { json, apiErr, admin, bearer, 
   if (!(admin || bearer)) return apiErr(401, "unauthorized", "Admin session or bearer MOB_API_TOKEN required");
   if (path === "/api/aq/state" && M === "GET") return json(await buildState(env));
   if (path === "/api/aq/bots" && M === "POST") { const r = await createBot(env, await body()); return r.error ? apiErr(400, "validation", r.error) : json(r, 201); }
+  if (path === "/api/aq/sellall" && M === "POST") return admin ? json(await sellAll(env)) : apiErr(403, "forbidden", "Only Alex (admin session) can sell all");
   if (path === "/api/aq/rebuild" && M === "POST") return admin ? json(await rebuild(env)) : apiErr(403, "forbidden", "Only Alex (admin session) can rebuild the island");
   if (path === "/api/aq/tasks" && M === "POST") { const r = await createTask(env, await body(), admin ? "alex" : "brain"); return r.error ? apiErr(400, "validation", r.error) : json(r, 201); }
   if (path === "/api/aq/kill" && M === "POST") {

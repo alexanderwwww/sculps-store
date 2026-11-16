@@ -499,3 +499,45 @@ export async function rebuild(env) {
   await brain(d, "ops", "event", `Alex rebuilt the island: paper wallet reset to ${START_SOL} SOL (${n} open position(s) written off). The brain keeps everything it learned.`);
   return { rebuilt: true, equitySol: START_SOL };
 }
+
+// Alex's "sell all": every open paper position is sold at the live Jupiter sell quote (minus the network fee), every
+// shadow probe is closed at the live mid minus its cost. No quote / no price = that one stays open (never a made-up fill).
+// Live path note: swaps would go through Jupiter and be signed in Alex's own wallet on the page; the server never holds a key.
+export async function sellAll(env, opts = {}) {
+  await ensureSeed(env);
+  const d = db(env), gap = opts.gapMs ?? Number(env.AQ_JUP_GAP_MS ?? 1100), why = "CEO sell all";
+  const mj = await feeds.majors(env);
+  const solUsd = mj.data?.sol?.price ?? null, feeSol = solUsd ? NET_FEE_USD / solUsd : null;
+  const out = { sold: [], kept: [], shadowClosed: [] };
+  const open = await d.q(`SELECT * FROM mob_aq_positions ORDER BY id`);
+  for (const [i, p] of open.entries()) {
+    if (i) await sleep(gap);
+    const q = feeSol ? await jupQuote(p.mint, SOL_MINT, p.tokens_raw) : null;
+    if (!q) { out.kept.push({ symbol: p.symbol, reason: feeSol ? "no sell quote" : "no SOL price" }); continue; }
+    const gross = Number(q.outAmount) / 1e9, back = gross - feeSol, cost = p.size_sol + p.fee_sol, pnl = back - cost, pnlPct = (pnl / cost) * 100;
+    const exitPx = (gross * solUsd) / (Number(p.tokens_raw) / 10 ** p.decimals);
+    const slip = p.last_price_usd ? round((p.last_price_usd / exitPx - 1) * 100, 3) : null;
+    await d.q(`INSERT INTO mob_aq_trades (position_id, strategy, mint, symbol, size_sol, back_sol, entry_price_usd, exit_price_usd, pnl_sol, pnl_pct, fees_sol, slippage_pct, reason, grade, opened_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`, [p.id, p.strategy, p.mint, p.symbol, p.size_sol, back, p.entry_price_usd, exitPx, pnl, round(pnlPct, 3), p.fee_sol + feeSol, slip, why, "CEO/" + (pnl > 0 ? "win" : "loss"), p.opened_at]);
+    await d.q(`DELETE FROM mob_aq_positions WHERE id=$1`, [p.id]);
+    await setState(d, "cash_sol", Number(await getState(d, "cash_sol", START_SOL)) + back);
+    await flow(d, "sell", gross, "execution", `sell ${p.symbol} (${why})`);
+    await flow(d, "fee", -feeSol, "costs", `network fee ${p.symbol}`);
+    await flow(d, pnl > 0 ? "win" : "loss", pnl, "review", `${p.symbol} ${pnl > 0 ? "+" : ""}${round(pnlPct, 2)}%`);
+    out.sold.push({ symbol: p.symbol, pnlPct: round(pnlPct, 3), backSol: round(back, 9) });
+  }
+  const sh = await d.q(`SELECT * FROM mob_aq_shadow WHERE closed_at IS NULL`);
+  if (sh.length) {
+    let mids = {};
+    try { mids = await midPrices(sh.map((s) => ({ mint: s.mint, pool: s.pool }))); } catch {}
+    for (const s of sh) {
+      const mid = mids[s.mint];
+      if (mid == null) { out.kept.push({ symbol: s.symbol, reason: "SHADOW: no price" }); continue; }
+      const pnl = round(((mid - s.entry_price) / s.entry_price) * 100 - s.cost_pct, 3);
+      await d.q(`UPDATE mob_aq_shadow SET closed_at=now(), exit_price=$2, pnl_pct=$3, outcome=$4 WHERE id=$1`, [s.id, mid, pnl, why]);
+      out.shadowClosed.push({ symbol: s.symbol, pnlPct: pnl });
+    }
+  }
+  await brain(d, "execution", "event", `${why}: sold ${out.sold.length} paper position(s) (${out.sold.map((x) => `${x.symbol} ${x.pnlPct}%`).join(", ") || "none"}), closed ${out.shadowClosed.length} shadow probe(s)${out.kept.length ? `, kept ${out.kept.length} with no live price` : ""}.`, out);
+  return out;
+}

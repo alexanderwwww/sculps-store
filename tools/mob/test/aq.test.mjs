@@ -338,3 +338,25 @@ test("survival: every stage, critical tightens risk, destroyed stops trading, on
   assert.equal(s.survival.stage, "healthy"); assert.equal(s.equitySol, 1); assert.equal(s.positions.length, 0);
   assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_brain`)).n > brainN, "brain memory kept and grows");
 });
+
+test("sell all: Alex only; positions sold at the Jupiter quote, shadows closed, no-price ones kept", async () => {
+  const d = db(env);
+  await d.q(`DELETE FROM mob_aq_positions`); await d.q(`UPDATE mob_aq_shadow SET closed_at=now() WHERE closed_at IS NULL`);
+  await d.q(`INSERT INTO mob_aq_positions (strategy, mint, pool, symbol, decimals, tokens_raw, size_sol, fee_sol, entry_price_usd, stop_price, target_price, time_stop_at, last_price_usd)
+    VALUES ('R3','SELLmint','x','SELL',6,'50000000000',0.05,0.0001,1.1,1,2,now() + interval '1 hour',1.1)`);
+  await d.q(`INSERT INTO mob_aq_shadow (mint, pool, symbol, block_reason, entry_price, stop_price, target_price, cost_pct, time_stop_at) VALUES ('SHmint','x','SH','cost gate',1,0.9,1.2,2,now() + interval '1 hour'), ('NOPXmint','x','NOPX','cost gate',1,0.9,1.2,2,now() + interval '1 hour')`);
+  prices.SELLmint = 1.1; prices.SHmint = 1.05; prices.NOPXmint = null;
+  const cash0 = Number((await d.one(`SELECT v FROM mob_aq_state WHERE k='cash_sol'`)).v);
+  assert.equal((await R("POST", "/api/aq/sellall", { bearer: "tok-test" })).status, 403);
+  assert.equal((await R("POST", "/api/aq/sellall")).status, 401);
+  const r = await R("POST", "/api/aq/sellall", { cookie }); assert.equal(r.status, 200);
+  const o = await r.json();
+  assert.equal(o.sold.length, 1); assert.equal(o.shadowClosed.length, 1); assert.equal(o.kept[0].symbol, "NOPX");
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_positions`)).n, 0);
+  const t = await d.one(`SELECT * FROM mob_aq_trades WHERE symbol='SELL'`);
+  assert.equal(t.reason, "CEO sell all"); assert.ok(t.fees_sol > 0.0001 && t.back_sol > 0);
+  assert.ok(Math.abs(Number((await d.one(`SELECT v FROM mob_aq_state WHERE k='cash_sol'`)).v) - (cash0 + t.back_sol)) < 1e-9, "cash gets the quote minus the fee");
+  assert.equal((await d.one(`SELECT outcome FROM mob_aq_shadow WHERE symbol='SH'`)).outcome, "CEO sell all");
+  const s = await S();
+  assert.ok(s.flows.some((f) => f.label === "sell SELL (CEO sell all)")); assert.ok(s.brain.some((b) => /^CEO sell all: sold 1/.test(b.text)));
+});
