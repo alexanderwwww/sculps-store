@@ -60,3 +60,6 @@ learn-links · watch · reel-reader — every link Alex sends is watched and its
 
 ## 🧭 TRADING KB (start here)
 trading-kb — the central map of all trading work, results, failures and open questions.
+
+## 🏛 AQUARIUS PLAN (draft)
+aquarius-plan — the 144 workers, the learning loop and the city; draft v0, not agreed, not built.
