@@ -769,3 +769,158 @@ test("nansen reader: real page text parses; gentle state machine over the link q
   assert.deepEqual(s.whales.r5BySource, { ownWinners: { trades: 0, wins: 0 }, nansen: { trades: 0, wins: 0 } });
   jupCharts = {}; backOf = {};
 });
+
+// ---------------------------------------------------------------- ledger: atomic claims (2026-11-16 SELL ALL sold every position three times)
+import { reconcile, openPosition, closePosition, scaleOut, tickLock, tickUnlock, TICK_LOCK_SEC } from "../src/aq/ledger.mjs";
+import { sellAll } from "../src/aq/engine.mjs";
+import { repairLedger } from "../scripts/aq-repair-ledger.mjs";
+// a clean book: no positions, cash 1, the reconciliation base moved past every trade the earlier tests wrote by hand
+async function cleanBook(d) {
+  await d.q(`DELETE FROM mob_aq_positions`); await d.q(`UPDATE mob_aq_shadow SET closed_at=now() WHERE closed_at IS NULL`); await d.q(`UPDATE mob_aq_picks SET status='closed' WHERE status IN ('open','queued')`);
+  await d.q(`UPDATE mob_aq_state SET v='1' WHERE k='cash_sol'`); await d.q(`UPDATE mob_aq_state SET v='false' WHERE k IN ('kill','destroyed','tick_lock')`);
+  await d.q(`INSERT INTO mob_aq_state (k, v) VALUES ('ledger_base', jsonb_build_object('cash', 1, 'tradeId', (SELECT coalesce(max(id),0) FROM mob_aq_trades))) ON CONFLICT (k) DO UPDATE SET v=EXCLUDED.v`);
+}
+const posRow = (sym, over = {}) => ({ strategy: "R3", mint: `${sym}mint`, pool: "x", symbol: sym, decimals: 6, tokens_raw: "50000000000", size_sol: 0.05, fee_sol: 0.0001, entry_price_usd: 1.1, entry_mid_usd: 1.1, stop_price: 1, target_price: 2,
+  stop_pct: 9, target_pct: 80, rt_pct: 0.7, buy_slip_pct: 0, last_price_usd: 1.1, last_value_sol: 0.05, tier: "A", tag: "PASS", soft: [], score: 80, variant: "A", entry_variant: null, strength: 1, timeStopSec: Date.now() / 1000 + 3600, ...over });
+const perPosition = (d) => d.q(`SELECT position_id, count(*)::int n FROM mob_aq_trades WHERE position_id IS NOT NULL GROUP BY position_id HAVING count(*) > 1`);
+
+test("ledger: open and close are single claims; the reconciliation identity holds after every move", async () => {
+  const d = db(env); await cleanBook(d);
+  assert.equal((await reconcile(d)).ok, true);
+  const id = await openPosition(d, posRow("LEDA"), 5);
+  assert.ok(id > 0);
+  let rc = await reconcile(d);
+  assert.equal(rc.ok, true); assert.ok(Math.abs(rc.cashSol - (1 - 0.0501)) < 1e-12, "buy debits size + fee");
+  assert.equal((await d.q(`SELECT kind FROM mob_aq_flows WHERE position_id=$1 ORDER BY id`, [id])).map((f) => f.kind).join(), "buy,fee");
+  assert.equal(await openPosition(d, posRow("LEDA"), 5), null, "the same coin is never bought twice");
+  assert.equal(await openPosition(d, posRow("LEDB", { size_sol: 5 }), 5), null, "no cash, no position");
+  assert.equal((await reconcile(d)).ok, true, "a refused open leaves cash alone");
+  const p = await d.one(`SELECT * FROM mob_aq_positions WHERE id=$1`, [id]);
+  // variant-B half: ten concurrent claims, one wins
+  const halves = await Promise.all(Array.from({ length: 10 }, () => scaleOut(d, p, { half: "25000000000", gross: 0.03, feeSol: 0.0001, stopPrice: 1.11 })));
+  assert.equal(halves.filter(Boolean).length, 1);
+  rc = await reconcile(d); assert.equal(rc.ok, true); assert.ok(Math.abs(rc.cashSol - (1 - 0.0501 + 0.0299)) < 1e-12);
+  // a close quoted for the old token amount loses: the position changed under it
+  assert.equal(await closePosition(d, p, { gross: 0.06, feeSol: 0.0001, why: "stop", gradePrefix: "A" }), null);
+  const p2 = await d.one(`SELECT * FROM mob_aq_positions WHERE id=$1`, [id]);
+  assert.equal(p2.tokens_raw, "25000000000"); assert.equal(p2.half_done, true);
+  // twelve concurrent closes of one position: exactly one trade, cash credited once
+  const closes = await Promise.all(Array.from({ length: 12 }, () => closePosition(d, p2, { gross: 0.03, feeSol: 0.0001, exitPx: 1.2, slip: 0.1, why: "target", gradePrefix: "A", exitMid: 1.21 })));
+  const won = closes.filter(Boolean);
+  assert.equal(won.length, 1);
+  const t = won[0];
+  assert.ok(Math.abs(t.pnl_sol - (0.0299 + 0.0299 - 0.0501)) < 1e-12); assert.equal(t.grade, "A/win"); assert.equal(t.scaled, true); assert.equal(t.reason, "target");
+  // the plan is stored on the trade row (audit bug 11)
+  assert.deepEqual([t.stop_price, t.target_price, t.stop_pct, t.target_pct, t.rt_pct, t.pool, t.entry_mid_usd, t.exit_mid_usd, t.strength, t.tier, t.variant, t.tag, t.score], [1.11, 2, 9, 80, 0.7, "x", 1.1, 1.21, 1, "A", "A", "PASS", 80]);
+  assert.equal((await d.q(`SELECT kind FROM mob_aq_flows WHERE trade_id=$1 ORDER BY id`, [t.id])).map((f) => f.kind).join(), "sell,fee,win");
+  rc = await reconcile(d);
+  assert.equal(rc.ok, true); assert.equal(rc.openCostSol, 0); assert.ok(Math.abs(rc.cashSol - (1 + t.pnl_sol)) < 1e-12, "start + sum(pnl) - open cost = cash");
+  // the database itself refuses a second trade for one position
+  await assert.rejects(d.q(`INSERT INTO mob_aq_trades (position_id, strategy, pnl_sol) VALUES ($1,'R3',0)`, [id]), /duplicate key/);
+});
+
+test("ledger: racing entries never double-buy a coin and never pass the slot cap", async () => {
+  const d = db(env); await cleanBook(d);
+  const same = await Promise.all(Array.from({ length: 8 }, () => openPosition(d, posRow("RACE"), 5)));
+  assert.equal(same.filter((x) => x != null).length, 1, "eight racing buys of one coin: one position");
+  const many = await Promise.all(Array.from({ length: 10 }, (_, i) => openPosition(d, posRow(`CAP${i}`), 3)));
+  const n = (await d.one(`SELECT count(*)::int n FROM mob_aq_positions`)).n;
+  assert.ok(n <= 3 && n >= 1, `slot cap 3 held under a race (open ${n})`);
+  assert.equal(many.filter((x) => x != null).length, n - 1);
+  assert.equal(await openPosition(d, posRow("LATE"), n), null, "cap reached: refused");
+  const rc = await reconcile(d);
+  assert.equal(rc.ok, true); assert.ok(Math.abs(rc.cashSol - (1 - n * 0.0501)) < 1e-12, "cash was debited once per position that exists");
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_flows WHERE kind='buy' AND label LIKE 'buy CAP%'`)).n, n - 1);
+});
+
+test("SELL ALL pressed many times at once: every position is sold exactly once and cash reconciles", async () => {
+  const d = db(env); await cleanBook(d); stubAll(); trendingPools = []; await clearCache();
+  const syms = ["SA1", "SA2", "SA3", "SA4", "SA5"];
+  for (const s of syms) { assert.ok(await openPosition(d, posRow(s), 5)); prices[`${s}mint`] = 1.1; }
+  const ids = (await d.q(`SELECT id FROM mob_aq_positions`)).map((r) => r.id);
+  const trades0 = (await d.one(`SELECT coalesce(max(id),0)::int n FROM mob_aq_trades`)).n;
+  // six HTTP requests in the same instant (double click, retries), like 14:39:30Z in production
+  const rs = await Promise.all(Array.from({ length: 6 }, () => R("POST", "/api/aq/sellall", { cookie })));
+  const outs = await Promise.all(rs.map((r) => (assert.equal(r.status, 200), r.json())));
+  assert.equal(outs.reduce((a, o) => a + o.sold.length, 0), 5, "five positions, five sales in total across the six requests");
+  assert.equal(outs.reduce((a, o) => a + o.sold.length + o.skipped.length, 0), 30, "every request saw the same five rows; the losers skipped them");
+  const tr = await d.q(`SELECT * FROM mob_aq_trades WHERE id > $1 ORDER BY id`, [trades0]);
+  assert.equal(tr.length, 5); assert.deepEqual(tr.map((t) => t.position_id).sort(), ids.sort()); assert.equal((await perPosition(d)).length, 0);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_positions`)).n, 0);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_flows WHERE trade_id = ANY($1::int[])`, [tr.map((t) => t.id)])).n, 15, "three flow rows per sale, no more");
+  const rc = await reconcile(d);
+  assert.equal(rc.ok, true);
+  assert.ok(Math.abs(rc.cashSol - (1 + tr.reduce((a, t) => a + t.pnl_sol, 0))) < 1e-9, "cash = start + sum(pnl): the proceeds were credited once");
+  const s = await S();
+  assert.equal(s.health.ledger, true); assert.equal(s.ledger.ok, true); assert.ok(Math.abs(s.equitySol - rc.cashSol) < 1e-9); assert.ok(s.pnlTotalSol < 0 && s.pnlTotalSol > -0.01);
+});
+
+test("cron tick and SELL ALL overlap on positions at their stop: one trade each; two ticks never run together; a dead lock expires", async () => {
+  const d = db(env); await cleanBook(d); stubAll(); trendingPools = []; await clearCache();
+  const syms = ["OV1", "OV2", "OV3", "OV4"];
+  for (const s of syms) { assert.ok(await openPosition(d, posRow(s), 5)); prices[`${s}mint`] = 0.9; } // under the stop at 1: the tick wants to sell them too
+  const trades0 = (await d.one(`SELECT coalesce(max(id),0)::int n FROM mob_aq_trades`)).n;
+  const [t1, t2, s1, s2, s3] = await Promise.all([tick(env), tick(env), sellAll(env), sellAll(env), sellAll(env)]);
+  assert.equal([t1, t2].filter((t) => t.skipped).length, 1, "the second tick found the lock and did nothing");
+  const ran = [t1, t2].find((t) => !t.skipped);
+  const tr = await d.q(`SELECT * FROM mob_aq_trades WHERE id > $1`, [trades0]);
+  assert.equal(tr.length, 4); assert.equal((await perPosition(d)).length, 0);
+  assert.equal(ran.exits.length + s1.sold.length + s2.sold.length + s3.sold.length, 4, "tick exits plus sell-all sales = the four positions");
+  assert.equal(tr.filter((t) => t.reason === "stop").length, ran.exits.length);
+  let rc = await reconcile(d);
+  assert.equal(rc.ok, true); assert.ok(Math.abs(rc.cashSol - (1 + tr.reduce((a, t) => a + t.pnl_sol, 0))) < 1e-9);
+  assert.equal((await d.one(`SELECT v FROM mob_aq_state WHERE k='tick_lock'`)).v, false, "the tick released its lock");
+  // lock: owned, not released by someone else, expires
+  const a = await tickLock(d); assert.ok(a); assert.equal(await tickLock(d), null);
+  assert.equal((await tick(env)).skipped, "another tick is running");
+  await tickUnlock(d, "someone-else"); assert.equal(await tickLock(d), null, "only the owner releases");
+  await d.q(`UPDATE mob_aq_state SET at = now() - make_interval(secs => $1) WHERE k='tick_lock'`, [TICK_LOCK_SEC + 5]);
+  const tk = await tick(env); assert.ok(!tk.skipped, "a lock left by a dead tick expires");
+  assert.equal((await d.one(`SELECT v FROM mob_aq_state WHERE k='tick_lock'`)).v, false);
+});
+
+test("ledger invariant every tick: a cash mismatch raises one brain alert and health.ledger=false; the repair script fixes duplicate closes", async () => {
+  const d = db(env); await cleanBook(d); stubAll(); trendingPools = []; await clearCache();
+  await tick(env);
+  let s = await S(); assert.equal(s.health.ledger, true); assert.equal(s.ledger.diffSol, 0);
+  // reproduce production: one position, three closes, three credits (the unique index is dropped the way production never had it)
+  const id = await openPosition(d, posRow("DUPE"), 5); const p = await d.one(`SELECT * FROM mob_aq_positions WHERE id=$1`, [id]);
+  const t = await closePosition(d, p, { gross: 0.048, feeSol: 0.0001, why: "CEO sell all", gradePrefix: "CEO" });
+  await d.q(`DROP INDEX ${env.MOB_SCHEMA}.aqx_trades_position`);
+  for (let i = 0; i < 2; i++) {
+    await d.q(`INSERT INTO mob_aq_trades (position_id, strategy, mint, symbol, size_sol, back_sol, pnl_sol, pnl_pct, fees_sol, reason, grade, opened_at) SELECT position_id, strategy, mint, symbol, size_sol, back_sol, pnl_sol, pnl_pct, fees_sol, reason, grade, opened_at FROM mob_aq_trades WHERE id=$1`, [t.id]);
+    await d.q(`INSERT INTO mob_aq_flows (kind, sol, dept, label) SELECT kind, sol, dept, label FROM mob_aq_flows WHERE trade_id=$1 ORDER BY id`, [t.id]);
+    await d.q(`UPDATE mob_aq_state SET v = to_jsonb((v #>> '{}')::float8 + $1::float8) WHERE k='cash_sol'`, [t.back_sol]);
+  }
+  const alerts = async () => (await d.one(`SELECT count(*)::int n FROM mob_aq_brain WHERE kind='alert' AND text LIKE 'LEDGER ALERT%'`)).n;
+  const a0 = await alerts();
+  await tick(env);
+  s = await S();
+  assert.equal(s.health.ledger, false); assert.equal(s.ledger.ok, false); assert.equal(s.ledger.duplicateCloses, 1); assert.ok(s.ledger.diffSol > 0.09);
+  assert.equal(await alerts(), a0 + 1); assert.ok(s.brain.some((b) => /^LEDGER ALERT: cash .* does not reconcile/.test(b.text)));
+  const rcBot = await d.one(`SELECT status, note FROM mob_aq_bots WHERE key='ex.reconcile'`);
+  assert.equal(rcBot.status, "blocked"); assert.match(rcBot.note, /^LEDGER MISMATCH/);
+  await tick(env); assert.equal(await alerts(), a0 + 1, "the same mismatch is not written again every minute");
+  // dry run changes nothing
+  const lines = [];
+  const dry = await repairLedger(d, { log: (x) => lines.push(x) });
+  assert.equal(dry.applied, false); assert.equal(dry.plan.length, 1); assert.equal(dry.plan[0].keep, t.id); assert.equal(dry.plan[0].deleteTrades.length, 2); assert.equal(dry.plan[0].deleteFlows.length, 6);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_trades WHERE position_id=$1`, [id])).n, 3); assert.equal((await reconcile(d)).ok, false);
+  assert.ok(lines.some((l) => /^DRY RUN/.test(l)));
+  // apply: first trade kept, extras and their flows gone, cash from first principles
+  const fix = await repairLedger(d, { apply: true, log: () => {} });
+  assert.equal(fix.after.ok, true); assert.ok(Math.abs(fix.after.cashSol - dry.predictedCashSol) < 1e-12); assert.ok(Math.abs(fix.after.cashSol - (1 + t.pnl_sol)) < 1e-12);
+  assert.deepEqual((await d.q(`SELECT id FROM mob_aq_trades WHERE position_id=$1`, [id])).map((r) => r.id), [t.id]);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_flows WHERE label IN ('sell DUPE (CEO sell all)')`)).n, 1);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_flows WHERE label = 'network fee DUPE'`)).n, 2, "the buy fee and one sell fee remain");
+  // idempotent: a second apply finds nothing and does not move cash
+  const again = await repairLedger(d, { apply: true, log: () => {} });
+  assert.equal(again.plan.length, 0); assert.equal(again.after.cashSol, fix.after.cashSol);
+  await d.q(`CREATE UNIQUE INDEX aqx_trades_position ON mob_aq_trades (position_id) WHERE position_id IS NOT NULL`);
+  await tick(env);
+  s = await S(); assert.equal(s.health.ledger, true); assert.ok(s.brain.some((b) => /^Ledger reconciles again/.test(b.text)));
+  // a rebuild moves the base, so the identity still holds afterwards
+  await openPosition(d, posRow("WOFF"), 5);
+  assert.equal((await R("POST", "/api/aq/rebuild", { cookie })).status, 200);
+  const rc = await reconcile(d); assert.equal(rc.ok, true); assert.equal(rc.cashSol, 1); assert.equal(rc.realizedSol, 0);
+});

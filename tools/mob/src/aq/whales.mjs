@@ -164,7 +164,7 @@ export async function shadowTick(env, { kill, entered, near, solUsd, nowSec, set
       // fill at the level that was hit (stop/target) or the mid (time stop), then subtract the round-trip cost
       const px = why === "stop" ? Math.min(mid, s.stop_price) : why === "target" ? s.target_price : mid;
       const pnl = round(((px - s.entry_price) / s.entry_price) * 100 - s.cost_pct, 3);
-      await d.q(`UPDATE mob_aq_shadow SET closed_at=now(), exit_price=$2, pnl_pct=$3, outcome=$4 WHERE id=$1`, [s.id, px, pnl, why]);
+      if (!(await d.one(`UPDATE mob_aq_shadow SET closed_at=now(), exit_price=$2, pnl_pct=$3, outcome=$4 WHERE id=$1 AND closed_at IS NULL RETURNING id`, [s.id, px, pnl, why]))) continue; // closed by another request
       const right = pnl <= 0;
       await d.q(`INSERT INTO mob_aq_brain (dept, kind, text, data) VALUES ('review','shadow',$1,$2)`,
         [`SHADOW ${s.symbol}: blocked for "${s.block_reason}", the probe hit ${why} at ${pnl}% net of ${s.cost_pct}% cost. The block was ${right ? "RIGHT" : "WRONG (it cost a win)"}.`, JSON.stringify({ id: s.id, pnl, why, reason: s.block_reason })]);

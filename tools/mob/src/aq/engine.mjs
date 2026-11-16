@@ -9,9 +9,10 @@ import { lanesTick, laneStats } from "./lanes.mjs";
 import { nansenTick, nansenSignals, nansenState } from "./nansen.mjs";
 import { councilTick, learnFromTrade, ruleWeights, MIN_OWN_BARS } from "./council.mjs";
 import { COUNCIL, STRENGTH_BUCKETS } from "./logic.mjs";
+import { START_SOL, reconcile, scaleOut, closePosition, resetLedger, tickLock, tickUnlock } from "./ledger.mjs";
+export { START_SOL };
 
 export const AQ_BUILD = "aq-engine-1";
-export const START_SOL = 1;
 // Network fee per side: the worst measured value in trading-kb section 7 ($0.0015-0.0067 per trade), converted at the live SOL price.
 export const NET_FEE_USD = 0.0067;
 const KB_COST_PCT = 5; // trading-kb: measured memecoin round trip ~5%, used by the replay only when no quote was measured yet
@@ -67,8 +68,7 @@ async function council(d, verdict, c, reason, number, facts = {}) {
 export async function tick(env, opts = {}) {
   const d = db(env);
   await ensureSeed(env);
-  const lock = await d.one(`INSERT INTO mob_aq_state (k, v, at) VALUES ('tick_lock', 'true', now()) ON CONFLICT (k) DO UPDATE SET v='true', at=now()
-    WHERE mob_aq_state.v <> 'true'::jsonb OR mob_aq_state.at < now() - interval '50 seconds' RETURNING k`);
+  const lock = await tickLock(d);
   if (!lock) return { skipped: "another tick is running" };
   const gap = opts.gapMs ?? Number(env.AQ_JUP_GAP_MS ?? 1100);
   const nowSec = (opts.now ?? Date.now()) / 1000;
@@ -179,12 +179,11 @@ export async function tick(env, opts = {}) {
           if (out.exits.length || out.scaled) await sleep(gap);
           const hq = half !== "0" ? await jupQuote(p.mint, SOL_MINT, half) : null;
           if (hq) {
-            const got = Number(hq.outAmount) / 1e9 - feeSol, be = p.entry_price_usd * (1 + (p.rt_pct || 0) / 100);
-            await d.q(`UPDATE mob_aq_positions SET tokens_raw=$2, realized_sol=realized_sol+$3, half_done=true, stop_price=$4 WHERE id=$1`, [p.id, (BigInt(p.tokens_raw) - BigInt(half)).toString(), got, be]);
-            await setState(d, "cash_sol", Number(await getState(d, "cash_sol", START_SOL)) + got);
-            await flow(d, "sell", Number(hq.outAmount) / 1e9, "execution", `sell half ${p.symbol} at +1R (variant B)`);
-            await flow(d, "fee", -feeSol, "costs", `network fee ${p.symbol}`);
-            Object.assign(p, { tokens_raw: (BigInt(p.tokens_raw) - BigInt(half)).toString(), realized_sol: (p.realized_sol || 0) + got, half_done: true, stop_price: be });
+            const be = p.entry_price_usd * (1 + (p.rt_pct || 0) / 100);
+            // one statement: the half is claimed, cash credited and the flows written together, or nothing is (ledger.mjs)
+            const sc = await scaleOut(d, p, { half, gross: Number(hq.outAmount) / 1e9, feeSol, stopPrice: be });
+            if (!sc) { set("ex.stops", "busy", `${p.symbol}: changed by another request, left alone this tick`); continue; }
+            Object.assign(p, { tokens_raw: sc.tokens_raw, realized_sol: sc.realized_sol, half_done: true, stop_price: sc.stop_price });
             out.scaled = (out.scaled || 0) + 1;
             set("ex.stops", "busy", `${p.symbol}: half sold at +1R, stop moved to break-even plus cost`);
           }
@@ -197,28 +196,20 @@ export async function tick(env, opts = {}) {
         const q = await jupQuote(p.mint, SOL_MINT, p.tokens_raw);
         if (!q || !feeSol) { set("ex.reconcile", "blocked", `${p.symbol}: ${why} hit but no sell quote; retry next tick`); health.jupiter = false; continue; }
         health.jupiter = true;
-        const back = Number(q.outAmount) / 1e9 - feeSol;
-        const pnl = (p.realized_sol || 0) + back - (p.size_sol + p.fee_sol);
-        const pnlPct = (pnl / (p.size_sol + p.fee_sol)) * 100;
-        const exitPx = solUsd ? (Number(q.outAmount) / 1e9) * solUsd / (Number(p.tokens_raw) / 10 ** p.decimals) : null;
+        const gross = Number(q.outAmount) / 1e9;
+        const exitPx = solUsd ? gross * solUsd / (Number(p.tokens_raw) / 10 ** p.decimals) : null;
         const slip = exitPx ? round((mid / exitPx - 1) * 100, 3) : null;
-        const grade = (why === "time stop" ? "B" : "A") + (pnl > 0 ? "/win" : "/loss");
-        const t = await d.one(`INSERT INTO mob_aq_trades (position_id, strategy, mint, symbol, size_sol, back_sol, entry_price_usd, exit_price_usd, pnl_sol, pnl_pct, fees_sol, slippage_pct, reason, grade, opened_at)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id`,
-          [p.id, p.strategy, p.mint, p.symbol, p.size_sol, back, p.entry_price_usd, exitPx, pnl, round(pnlPct, 3), p.fee_sol + feeSol, slip, why, grade, p.opened_at]);
-        await d.q(`DELETE FROM mob_aq_positions WHERE id=$1`, [p.id]);
-        const cash = Number(await getState(d, "cash_sol", START_SOL)) + back;
-        await setState(d, "cash_sol", cash);
-        await flow(d, "sell", Number(q.outAmount) / 1e9, "execution", `sell ${p.symbol} (${why})`);
-        await flow(d, "fee", -feeSol, "costs", `network fee ${p.symbol}`);
-        await flow(d, pnl > 0 ? "win" : "loss", pnl, "review", `${p.symbol} ${pnl > 0 ? "+" : ""}${round(pnlPct, 2)}%`);
+        // the claim: one statement deletes the position, writes the trade, credits cash and writes the flows (ledger.mjs).
+        // null = another request (SELL ALL, an overlapping tick) closed it first; this tick writes nothing for it.
+        const t = await closePosition(d, p, { gross, feeSol, exitPx, slip, why, gradePrefix: why === "time stop" ? "B" : "A", exitMid: mid });
+        if (!t) { set("ex.stops", "busy", `${p.symbol}: already closed by another request`); continue; }
+        const pnlPct = t.pnl_pct, grade = t.grade;
         await brain(d, "review", "lesson", `${p.symbol} ${p.strategy}: ${why} at ${round(pnlPct, 2)}% net (round trip at entry ${round(p.rt_pct, 2)}%, exit slippage ${slip ?? "unknown"}%). Process ${grade.split("/")[0]}: ${why === "time stop" ? "time stop is a plan exit but the setup did not move" : "plan followed"}.`, { trade: t.id, pnlPct: round(pnlPct, 3), why });
         out.exits.push({ symbol: p.symbol, why, pnlPct: round(pnlPct, 3) });
         set("ex.stops", "busy", `${p.symbol}: ${why}`);
         set("rv.journal", "busy", `trade #${t.id} journaled`);
         set("rv.lesson", "busy", `lesson from ${p.symbol}`);
         await learnFromTrade(d, p, t.id, pnlPct);
-        await d.q(`UPDATE mob_aq_trades SET variant=$2, entry_variant=$3, scaled=$4, strength=$5 WHERE id=$1`, [t.id, p.variant || "A", p.entry_variant || null, !!p.half_done, p.strength ?? null]);
       }
       if (!W["ex.stops"]) set("ex.stops", "busy", `${open.length} open position(s) checked`);
     } else set("ex.stops", "idle", "no open positions");
@@ -361,6 +352,15 @@ export async function tick(env, opts = {}) {
     }
     set("ln.experiments", pending.length ? "busy" : "idle", pending.length ? `${pending.length} bot proposal(s) judged` : "no bot proposals");
 
+    // ---- ledger invariant, every tick: cash must equal base + realized P&L - cost still open, and no position may have two closes
+    const led = await reconcile(d);
+    health.ledger = led.ok;
+    const ledPrev = await getState(d, "ledger_check", null);
+    if (!led.ok && !(ledPrev && ledPrev.ok === false && Math.abs((ledPrev.diffSol ?? 0) - (led.diffSol ?? 0)) < 1e-9 && ledPrev.duplicateCloses === led.duplicateCloses))
+      await brain(d, "ops", "alert", `LEDGER ALERT: cash ${round(led.cashSol, 9)} SOL does not reconcile with the trades (expected ${round(led.expectedSol, 9)} = base ${led.baseSol} + realized ${round(led.realizedSol, 9)} - open cost ${round(led.openCostSol, 9)}; difference ${round(led.diffSol, 9)} SOL; ${led.duplicateCloses} position(s) closed more than once). Equity and P&L on the desk are not to be trusted until this is repaired.`, led);
+    else if (led.ok && ledPrev && ledPrev.ok === false) await brain(d, "ops", "event", `Ledger reconciles again: cash ${round(led.cashSol, 9)} SOL = base ${led.baseSol} + realized ${round(led.realizedSol, 9)} - open cost ${round(led.openCostSol, 9)}.`, led);
+    await setState(d, "ledger_check", { ...led, at: new Date(nowSec * 1000).toISOString() });
+    set("ex.reconcile", led.ok ? "busy" : "blocked", led.ok ? `cash reconciles with ${round(led.realizedSol, 6)} SOL realized and ${round(led.openCostSol, 6)} SOL open` : `LEDGER MISMATCH ${round(led.diffSol, 9)} SOL`);
     // ---- helpers (Grok / ChatGPT) and ops
     const h = await d.one(`SELECT max(at) FILTER (WHERE from_helper='grok') g, count(*) FILTER (WHERE at > now() - interval '1 day')::int n FROM mob_aq_helpers`);
     set("nw.x", h?.g ? "busy" : "idle", h?.g ? `last Grok message ${new Date(h.g).toISOString()}` : "Grok not connected: no free X API");
@@ -391,7 +391,7 @@ export async function tick(env, opts = {}) {
     }
     return out;
   } finally {
-    await d.q(`UPDATE mob_aq_state SET v='false', at=now() WHERE k='tick_lock'`);
+    await tickUnlock(d, lock);
   }
 }
 
@@ -492,6 +492,7 @@ export async function buildState(env) {
   const hist = await d.one(`SELECT coalesce(sum(n),0)::int n, count(*)::int m, count(*) FILTER (WHERE n >= $1)::int ready FROM (SELECT mint, count(DISTINCT date_trunc('minute', at))::int n FROM mob_aq_prices WHERE at > now() - interval '1 hour' GROUP BY mint) x`, [MIN_OWN_BARS]);
   const M = Object.fromEntries(mkt.map((r) => [r.k, r.ok ? r.data : null]));
   const nzs = await nansenState(d);
+  const ledNow = await reconcile(d); // read live on every state call, not only what the last tick stored
   const cash = Number(S.cash_sol ?? START_SOL);
   const equity = cash + pos.reduce((a, p) => a + (p.last_value_sol ?? p.size_sol), 0);
   const startDay = new Date(); startDay.setUTCHours(0, 0, 0, 0);
@@ -533,7 +534,7 @@ export async function buildState(env) {
         return { id: v, n: st2.n, winRate: st2.winRate, expectancyPct: st2.expectancyPct, avgWin: w.length ? round(w.reduce((a, c) => a + c, 0) / w.length, 2) : null, avgLoss: l.length ? round(l.reduce((a, c) => a + c, 0) / l.length, 2) : null }; }) })),
     tools: tools.map((t) => ({ name: t.name, licence: t.licence, verdict: t.verdict, status: t.status, usedBy: t.used_by, bestUse: t.best_use })),
     replay: S.replay_R3 ? { trades: S.replay_R3.trades, expectancyPct: S.replay_R3.expectancyPct, ci95: S.replay_R3.ci95, costPct: S.replay_R3.costPct, evidence: S.replay_R3.evidence } : null,
-    health: { ...(S.health || {}), errors: mkt.filter((r) => !r.ok).slice(0, 12).map((r) => ({ feed: r.k, error: r.err, at: r.at })) },
+    health: { ...(S.health || {}), ledger: ledNow.ok, errors: mkt.filter((r) => !r.ok).slice(0, 12).map((r) => ({ feed: r.k, error: r.err, at: r.at })) },
     history: { priceSamples1h: hist.n, coins: hist.m, barsNeeded: MIN_OWN_BARS, ready: hist.ready },
     shadow: await shadowStats(d),
     whales: { ...(await whaleState(d)), nansen: nzs.state },
@@ -542,6 +543,7 @@ export async function buildState(env) {
     tradesLastHour: trd.filter((t) => t.opened_at && Date.now() - new Date(t.opened_at).getTime() < 3600000).length + pos.filter((p) => Date.now() - new Date(p.opened_at).getTime() < 3600000).length,
     funnel: S.funnel || null,
     lanes: await laneStats(d, { n: s.n, winRate: s.winRate, expectancyPct: s.expectancyPct, open: pos.length }),
+    ledger: ledNow,
     survival: (() => { const sv = survival(equity, START_SOL); return { health: sv.health, stage: S.destroyed === true ? "destroyed" : sv.stage, sizeMult: S.destroyed === true ? 0 : sv.sizeMult, maxOpen: S.destroyed === true ? 0 : sv.maxOpen }; })(),
     helpers: { grok: conn("grok"), chatgpt: conn("chatgpt"), codex: conn("codex"), codexLastAt: hl.codex || null, grokLastAt: hl.grok || null, chatgptLastAt: hl.chatgpt || null },
     xfeed: xs.map((r) => ({ at: r.at, section: r.dept, text: r.text, label: (r.labels || [])[0] || "CLAIMED", source: "grok", weight: r.weight })),
@@ -553,9 +555,7 @@ export async function buildState(env) {
 export async function rebuild(env) {
   await ensureSeed(env);
   const d = db(env);
-  const n = (await d.one(`SELECT count(*)::int n FROM mob_aq_positions`)).n;
-  await d.q(`DELETE FROM mob_aq_positions`);
-  await setState(d, "cash_sol", START_SOL);
+  const n = await resetLedger(d); // positions written off, cash and the reconciliation base reset, one statement
   await setState(d, "destroyed", false);
   await brain(d, "ops", "event", `Alex rebuilt the island: paper wallet reset to ${START_SOL} SOL (${n} open position(s) written off). The brain keeps everything it learned.`);
   return { rebuilt: true, equitySol: START_SOL };
@@ -569,23 +569,19 @@ export async function sellAll(env, opts = {}) {
   const d = db(env), gap = opts.gapMs ?? Number(env.AQ_JUP_GAP_MS ?? 1100), why = "CEO sell all";
   const mj = await feeds.majors(env);
   const solUsd = mj.data?.sol?.price ?? null, feeSol = solUsd ? NET_FEE_USD / solUsd : null;
-  const out = { sold: [], kept: [], shadowClosed: [] };
+  const out = { sold: [], kept: [], shadowClosed: [], skipped: [] };
   const open = await d.q(`SELECT * FROM mob_aq_positions ORDER BY id`);
   for (const [i, p] of open.entries()) {
     if (i) await sleep(gap);
     const q = feeSol ? await jupQuote(p.mint, SOL_MINT, p.tokens_raw) : null;
     if (!q) { out.kept.push({ symbol: p.symbol, reason: feeSol ? "no sell quote" : "no SOL price" }); continue; }
-    const gross = Number(q.outAmount) / 1e9, back = gross - feeSol, cost = p.size_sol + p.fee_sol, pnl = (p.realized_sol || 0) + back - cost, pnlPct = (pnl / cost) * 100;
+    const gross = Number(q.outAmount) / 1e9;
     const exitPx = (gross * solUsd) / (Number(p.tokens_raw) / 10 ** p.decimals);
     const slip = p.last_price_usd ? round((p.last_price_usd / exitPx - 1) * 100, 3) : null;
-    await d.q(`INSERT INTO mob_aq_trades (position_id, strategy, mint, symbol, size_sol, back_sol, entry_price_usd, exit_price_usd, pnl_sol, pnl_pct, fees_sol, slippage_pct, reason, grade, opened_at)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`, [p.id, p.strategy, p.mint, p.symbol, p.size_sol, back, p.entry_price_usd, exitPx, pnl, round(pnlPct, 3), p.fee_sol + feeSol, slip, why, "CEO/" + (pnl > 0 ? "win" : "loss"), p.opened_at]);
-    await d.q(`DELETE FROM mob_aq_positions WHERE id=$1`, [p.id]);
-    await setState(d, "cash_sol", Number(await getState(d, "cash_sol", START_SOL)) + back);
-    await flow(d, "sell", gross, "execution", `sell ${p.symbol} (${why})`);
-    await flow(d, "fee", -feeSol, "costs", `network fee ${p.symbol}`);
-    await flow(d, pnl > 0 ? "win" : "loss", pnl, "review", `${p.symbol} ${pnl > 0 ? "+" : ""}${round(pnlPct, 2)}%`);
-    out.sold.push({ symbol: p.symbol, pnlPct: round(pnlPct, 3), backSol: round(back, 9) });
+    // the claim (ledger.mjs): only the request that deletes the row writes the trade, the cash and the flows
+    const t = await closePosition(d, p, { gross, feeSol, exitPx, slip, why, gradePrefix: "CEO", exitMid: p.last_price_usd ?? null });
+    if (!t) { out.skipped.push({ symbol: p.symbol, reason: "already sold by another request" }); continue; }
+    out.sold.push({ symbol: p.symbol, pnlPct: t.pnl_pct, backSol: round(t.back_sol, 9) });
   }
   const sh = await d.q(`SELECT * FROM mob_aq_shadow WHERE closed_at IS NULL`);
   if (sh.length) {
@@ -595,10 +591,10 @@ export async function sellAll(env, opts = {}) {
       const mid = mids[s.mint];
       if (mid == null) { out.kept.push({ symbol: s.symbol, reason: "SHADOW: no price" }); continue; }
       const pnl = round(((mid - s.entry_price) / s.entry_price) * 100 - s.cost_pct, 3);
-      await d.q(`UPDATE mob_aq_shadow SET closed_at=now(), exit_price=$2, pnl_pct=$3, outcome=$4 WHERE id=$1`, [s.id, mid, pnl, why]);
-      out.shadowClosed.push({ symbol: s.symbol, pnlPct: pnl });
+      const won = await d.one(`UPDATE mob_aq_shadow SET closed_at=now(), exit_price=$2, pnl_pct=$3, outcome=$4 WHERE id=$1 AND closed_at IS NULL RETURNING id`, [s.id, mid, pnl, why]);
+      if (won) out.shadowClosed.push({ symbol: s.symbol, pnlPct: pnl });
     }
   }
-  await brain(d, "execution", "event", `${why}: sold ${out.sold.length} paper position(s) (${out.sold.map((x) => `${x.symbol} ${x.pnlPct}%`).join(", ") || "none"}), closed ${out.shadowClosed.length} shadow probe(s)${out.kept.length ? `, kept ${out.kept.length} with no live price` : ""}.`, out);
+  if (out.sold.length || out.shadowClosed.length || out.kept.length || !out.skipped.length) await brain(d, "execution", "event", `${why}: sold ${out.sold.length} paper position(s) (${out.sold.map((x) => `${x.symbol} ${x.pnlPct}%`).join(", ") || "none"}), closed ${out.shadowClosed.length} shadow probe(s)${out.kept.length ? `, kept ${out.kept.length} with no live price` : ""}.`, out);
   return out;
 }

@@ -46,7 +46,7 @@ export async function lanesTick(env, { halted, nowSec, gap, feeSol, P, council, 
       if (!why) continue;
       const px = why === "stop" ? Math.min(mid, p.stop_price) : why === "target" ? p.target_price : mid;
       const pnl = round(((px - p.entry_price) / p.entry_price) * 100 - p.cost_pct, 3);
-      await d.q(`UPDATE mob_aq_picks SET status='closed', closed_at=now(), exit_price=$2, pnl_pct=$3, outcome=$4 WHERE id=$1`, [p.id, px, pnl, why]);
+      if (!(await d.one(`UPDATE mob_aq_picks SET status='closed', closed_at=now(), exit_price=$2, pnl_pct=$3, outcome=$4 WHERE id=$1 AND status='open' RETURNING id`, [p.id, px, pnl, why]))) continue; // closed by another request
       const lane = stats((await d.q(`SELECT pnl_pct FROM mob_aq_picks WHERE helper=$1 AND status='closed'`, [p.helper])).map((x) => x.pnl_pct));
       const ours = stats((await d.q(`SELECT pnl_pct FROM mob_aq_trades`)).map((x) => x.pnl_pct));
       const w = weightFor(lane);
@@ -64,7 +64,7 @@ export async function lanesTick(env, { halted, nowSec, gap, feeSol, P, council, 
   const q = halted ? null : await d.one(`SELECT * FROM mob_aq_picks WHERE status='queued' ORDER BY id LIMIT 1`);
   if (q) {
     const tag = `LANE:${q.helper}`, c = { symbol: q.symbol || q.mint.slice(0, 6), mint: q.mint, strategy: tag };
-    const reject = async (why) => { await d.q(`UPDATE mob_aq_picks SET status='rejected', verdict='BLOCK', verdict_reason=$2, closed_at=now() WHERE id=$1`, [q.id, why]); await council("BLOCK", c, `${tag}: ${why}`, null, { pick: q.id }); res.judged = { id: q.id, helper: q.helper, status: "rejected", reason: why }; };
+    const reject = async (why) => { await d.q(`UPDATE mob_aq_picks SET status='rejected', verdict='BLOCK', verdict_reason=$2, closed_at=now() WHERE id=$1 AND status='queued'`, [q.id, why]); await council("BLOCK", c, `${tag}: ${why}`, null, { pick: q.id }); res.judged = { id: q.id, helper: q.helper, status: "rejected", reason: why }; };
     let pair = null, asked = true;
     try { pair = (await getJson(URLS.dsTokens([q.mint])) || []).filter((p) => p.baseToken?.address === q.mint && p.quoteToken?.address === SOL_MINT && num(p.priceUsd) != null).sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0))[0]; } catch { asked = false; }
     if (!asked) res.judged = { id: q.id, helper: q.helper, status: "queued", reason: "DexScreener did not answer; the pick waits for the next tick" };
@@ -89,7 +89,7 @@ export async function lanesTick(env, { halted, nowSec, gap, feeSol, P, council, 
       else if (rt > 0 && q.target_pct < P.costMultiple * rt) fail("cost gate", round(q.target_pct / rt, 2));
       await council(verdict, c, `${tag}: ${reason}`, number, { pick: q.id, rtPct: rt, liqUsd: liq, lane: tag });
       const cost = rt != null ? Math.max(rt, 0) : KB_COST_PCT;
-      await d.q(`UPDATE mob_aq_picks SET status='open', symbol=$2, pool=$3, verdict=$4, verdict_reason=$5, verdict_number=$6, entry_price=$7, stop_price=$8, target_price=$9, cost_pct=$10, cost_source=$11, opened_at=now(), time_stop_at=to_timestamp($12) WHERE id=$1`,
+      await d.q(`UPDATE mob_aq_picks SET status='open', symbol=$2, pool=$3, verdict=$4, verdict_reason=$5, verdict_number=$6, entry_price=$7, stop_price=$8, target_price=$9, cost_pct=$10, cost_source=$11, opened_at=now(), time_stop_at=to_timestamp($12) WHERE id=$1 AND status='queued'`,
         [q.id, c.symbol, pair.pairAddress, verdict, reason, number, mid, mid * (1 - q.stop_pct / 100), mid * (1 + q.target_pct / 100), cost, rt != null ? "measured" : "trading-kb 5%", nowSec + P.timeStopMin * 60]);
       res.judged = { id: q.id, helper: q.helper, status: "open", verdict, reason, rtPct: rt };
     }

@@ -7,6 +7,7 @@ import { R3_ATR, R6_PARAMS, R7_PARAMS } from "./seed.mjs";
 import { strengthOf } from "./logic.mjs";
 import { atr5Pct, fibSetup, whaleSetup, momentumSetup, bounceSetup, hardSafety, softObjections, scoreOf, tierOf, sizeFor, roundTripPct, round, COUNCIL, SOFT_RULES } from "./logic.mjs";
 import { whaleSignal } from "./whales.mjs";
+import { openPosition } from "./ledger.mjs";
 
 export const RUG_PER_TICK = 4;
 export const MAX_EVAL = 10, COOLDOWN_MIN = 10, RECHECK_MIN = 3, WHALE_CHECKS = 6, MIN_OWN_BARS = 30, KB_COST_PCT = 5, QUOTE_TRIES = 2;
@@ -214,15 +215,16 @@ export async function councilTick(env, x) {
     const entryPx = (solUsd * est.sizeSol) / tokensUi;
     const slip = c.priceUsd ? round((entryPx / c.priceUsd - 1) * 100, 3) : null;
     const reason = `${tag !== "PASS" ? `${tag}: ` : ""}${sid} ${g.weak ? `strength ${g.strength} (${s.why})` : s.why}; hard blocks clear; score ${g.sc.score}${g.objections.length ? ` (soft: ${g.objections.join(", ")})` : ""}`;
+    // the claim (ledger.mjs): cash debit, slot, position row and flows in one statement; a lost claim writes nothing
+    const pid = await openPosition(d, { strategy: sid, mint: c.mint, pool: c.pool, symbol: c.symbol, decimals: g.rg.data.decimals, tokens_raw: tokensRaw, size_sol: size, fee_sol: feeSol, entry_price_usd: entryPx, entry_mid_usd: c.priceUsd,
+      stop_price: s.stopPrice, target_price: s.targetPrice, stop_pct: s.stopPct, target_pct: s.targetPct, rt_pct: rt, buy_slip_pct: slip, last_price_usd: c.priceUsd, last_value_sol: size, tier, tag, soft: g.objections, score: g.sc.score,
+      variant, entry_variant: g.ev, strength: g.strength, timeStopSec: nowSec + (sid === "R6" && x.r6TimeStopMin ? x.r6TimeStopMin : SP.timeStopMin) * 60, buyLabel: `buy ${c.symbol} (${sid}${tag === "EXPLORE" ? ", explore" : ""})` },
+      Math.min(C.maxOpen, sv.maxOpen));
+    if (pid == null) { await g.block("risk: no free slot, coin already held, or not enough cash at the moment of entry", null); continue; }
+    const p = { id: pid };
     await g.noteSignal("PASS", reason);
     await council("PASS", c, reason, x6, g.facts);
-    const p = await d.one(`INSERT INTO mob_aq_positions (strategy, mint, pool, symbol, decimals, tokens_raw, size_sol, fee_sol, entry_price_usd, entry_mid_usd, stop_price, target_price, stop_pct, target_pct, rt_pct, buy_slip_pct, time_stop_at, last_price_usd, last_value_sol, tier, tag, soft, score, variant, entry_variant, strength)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16, to_timestamp($17), $10, $7, $18, $19, $20, $21, $22, $23, $24) RETURNING id`,
-      [sid, c.mint, c.pool, c.symbol, g.rg.data.decimals, tokensRaw, size, feeSol, entryPx, c.priceUsd, s.stopPrice, s.targetPrice, s.stopPct, s.targetPct, rt, slip, nowSec + (sid === "R6" && x.r6TimeStopMin ? x.r6TimeStopMin : SP.timeStopMin) * 60, tier, tag, JSON.stringify(g.objections), g.sc.score, variant, g.ev, g.strength]);
     if (sid === "R5") await brain(d, "whales", "entry", `R5 paper entry ${c.symbol}: ${g.ev === "N" ? `Nansen-labelled ${g.facts.nansen.traders.join(", ")} bought (REPORTED)` : `${g.wh.independent} independent winners bought in 15 min (funders ${g.wh.funders})`}; stop ${s.stopPct}% (${s.structure}), target ${s.targetPct}%, round trip ${rt}%, size ${size} SOL.`, { whale: g.wh, setup: s });
-    await setState(d, "cash_sol", cash - size - feeSol);
-    await flow(d, "buy", -size, "execution", `buy ${c.symbol} (${sid}${tag === "EXPLORE" ? ", explore" : ""})`);
-    await flow(d, "fee", -feeSol, "costs", `network fee ${c.symbol}`);
     if (g.tape) tape = { ...g.tape, verdict: "PASS" };
     out.entered = { id: p.id, symbol: c.symbol, tier, strategy: sid, tag, variant, entryVariant: g.ev, strength: g.strength, sizeSol: size, entryUsd: entryPx, rtPct: rt, stopPct: s.stopPct, targetPct: s.targetPct, score: g.sc.score };
     out.evaluated.push({ symbol: c.symbol, tier, verdict: "PASS", tag, reason, number: x6 });
