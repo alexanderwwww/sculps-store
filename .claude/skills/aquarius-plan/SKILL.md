@@ -46,3 +46,10 @@ Liked the place; said it "looks AI" and "doesn't make sense". Decisions:
 - NO genie in the city (deleted).
 - Must feel like playing a game, and be an ACTUAL DATA GAME we build: every building, worker and screen is driven by real data, nothing decorative. Style = in-engine low-poly, not polished AI art.
 - Statues required: Zeus, Athena, Apollo, Hermes (god of commerce), Dionysus, Hecate. Proposed roles (Alex to confirm): Zeus = hard limits and kill switch; Athena = strategy; Apollo = research and forecasts; Hermes = execution and trades; Dionysus = crowd sentiment and hype; Hecate = gatekeeper (rug and safety checks). They can be the Council of Olympus.
+
+## LOOK APPROVED (Alex, 2026-11-16): the v4 island image. Now: playable, WoW-like, real data, not AI-looking. NOT BUILT.
+Game design draft (Alex: "take your time"; build only on "build"):
+- Camera/controls: third person, Alex walks his character around the island like WoW (WASD + mouse), click a building or worker to open its panel. Flip to an overview camera with one key.
+- Main screen HUD (always on): top bar = equity, today's P&L after costs, open positions, PAPER or LIVE badge, evidence counter ("NO EVIDENCE yet" under 100 trades), kill switch, Council verdict. Money-moving strip with icons: each buy/sell/fee/win/loss pops as a coin icon with amount and flies from the district that caused it. Right: agent list with status bars. Bottom-left: minimap. Big wall screen at HQ = portfolio + neurons.
+- Everything is data: a worker's nameplate and animation come from its real job status; a tower's height = a strategy's profit after costs; a building lights when its feed is live and goes dark when data is stale.
+- Style: modeled low-poly in three.js (style v3), not AI art.
