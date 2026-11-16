@@ -57,3 +57,6 @@ watch (bradautomates/claude-video, MIT) · tools/reel-reader — Claude watches 
 
 ## 🔗 LEARN LINKS
 learn-links · watch · reel-reader — every link Alex sends is watched and its knowledge saved (trading-lab/reels).
+
+## 🧭 TRADING KB (start here)
+trading-kb — the central map of all trading work, results, failures and open questions.
