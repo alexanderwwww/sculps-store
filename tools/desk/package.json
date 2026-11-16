@@ -1,0 +1,1 @@
+{ "name": "desk", "private": true, "type": "module", "scripts": { "test": "node --test test/", "cycle": "node src/cli.mjs cycle", "report": "node src/cli.mjs report", "stats": "node src/cli.mjs stats" } }
