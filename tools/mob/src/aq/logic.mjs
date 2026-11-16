@@ -90,51 +90,37 @@ export function stats(pcts) {
   return { n, wins, winRate: round(wins / n, 4), expectancyPct: round(mean, 3), ci95, evidence };
 }
 
-// Time Machine for R3: walk stored candles, take every signal, exit on stop / target / time stop (stop first when both
-// fall in one candle: conservative), minus the round-trip cost. Signals do not overlap within one pool.
-export function replay(candlesByPool, p, costPct) {
-  const res = [];
-  for (const cs of Object.values(candlesByPool)) {
-    let i = 30;
-    while (i < cs.length - 1) {
-      const win = cs.slice(Math.max(0, i - 59), i + 1);
-      const s = fibSetup(win, p, cs[i].t + 60);
-      if (!s.signal || s.stopPct >= s.targetPct) { i++; continue; }
-      let j = i + 1, exit = null;
-      for (; j < cs.length && j <= i + p.timeStopMin; j++) {
-        if (cs[j].l <= s.stopPrice) { exit = s.stopPrice; break; }
-        if (cs[j].h >= s.targetPrice) { exit = s.targetPrice; break; }
-      }
-      if (exit == null) { if (j > i + p.timeStopMin) { j = i + p.timeStopMin; exit = cs[j].c; } else break; }
-      res.push(round(((exit - s.price) / s.price) * 100 - costPct, 3));
-      i = j + 1;
-    }
-  }
-  return { ...stats(res), costPct, trades: res.length };
-}
-
-// Replay any setup function on stored candles: net result per signal and how many bars the winners needed to reach target.
-export function replaySetup(candlesByPool, setupFn, p, costPct, maxBars = 90) {
-  const res = [], toTarget = [];
-  for (const cs of Object.values(candlesByPool)) {
+// Time Machine: walk stored (closed) candles, take every signal of a setup, exit on stop / target / time stop (stop first
+// when both fall in one candle: conservative). costOf is a number or a function of the pool key, so each coin pays the round
+// trip MEASURED for its tier. A stop does not fill at the stop: it fills overshootPct lower (measured on real paper stops),
+// or at the bar's open when the bar opened under the stop (a gap). Signals do not overlap within one pool.
+export function replaySetup(candlesByPool, setupFn, p, costOf, o = {}) {
+  const maxBars = typeof o === "number" ? o : o.maxBars ?? 90, os = (typeof o === "number" ? 0 : o.overshootPct ?? 0) / 100;
+  const res = [], toTarget = [], costs = [];
+  for (const [pool, cs] of Object.entries(candlesByPool)) {
+    const cost = typeof costOf === "function" ? costOf(pool) : costOf;
+    if (cost == null) continue; // no measured cost for this coin's tier: not replayed, never assumed
     let i = 30;
     while (i < cs.length - 1) {
       const s = setupFn(cs.slice(Math.max(0, i - 59), i + 1), p, cs[i].t + 60);
       if (!s.signal || s.stopPct >= s.targetPct) { i++; continue; }
       let j = i + 1, exit = null, hit = false;
       for (; j < cs.length && j <= i + maxBars; j++) {
-        if (cs[j].l <= s.stopPrice) { exit = s.stopPrice; break; }
+        if (cs[j].l <= s.stopPrice) { exit = Math.min(s.stopPrice * (1 - os), cs[j].o < s.stopPrice ? cs[j].o : Infinity); break; }
         if (cs[j].h >= s.targetPrice) { exit = s.targetPrice; hit = true; break; }
       }
       if (exit == null) { if (j > i + maxBars) { j = i + maxBars; exit = cs[j].c; } else break; }
       if (hit) toTarget.push(j - i);
-      res.push(round(((exit - s.price) / s.price) * 100 - costPct, 3));
+      res.push(round(((exit - s.price) / s.price) * 100 - cost, 3)); costs.push(cost);
       i = j + 1;
     }
   }
   toTarget.sort((a, b) => a - b);
-  return { ...stats(res), costPct, trades: res.length, targetsHit: toTarget.length, medianBarsToTarget: toTarget.length ? toTarget[Math.floor(toTarget.length / 2)] : null };
+  return { ...stats(res), costPct: costs.length ? round(costs.reduce((a, b) => a + b, 0) / costs.length, 3) : typeof costOf === "number" ? costOf : null, trades: res.length, overshootPct: round(os * 100, 3),
+    targetsHit: toTarget.length, medianBarsToTarget: toTarget.length ? toTarget[Math.floor(toTarget.length / 2)] : null };
 }
+// R3 keeps its name: the fib setup with its own time stop.
+export const replay = (candlesByPool, p, costOf, o = {}) => replaySetup(candlesByPool, fibSetup, p, costOf, { maxBars: p.timeStopMin, ...o });
 export function round(x, d) { if (x == null || !Number.isFinite(x)) return null; const f = 10 ** d; return Math.round(x * f) / f; }
 
 // Survival: the island lives on the paper wallet. health = equity / start as 0-100.
@@ -156,21 +142,30 @@ export function whaleSetup(candles, p, nowSec, price) {
     let low = Infinity;
     for (const c of candles.slice(-p.stopLookback)) low = Math.min(low, c.l);
     let stopPct = ((P - low * (1 - p.stopBufferPct / 100)) / P) * 100;
-    if (stopPct < p.minStopPct) stopPct = p.minStopPct;
-    const base = { staleSec, price: P, stopPct: round(stopPct, 3), targetPct: round(stopPct * p.rr, 3), stopPrice: P * (1 - stopPct / 100), targetPrice: P * (1 + (stopPct * p.rr) / 100), bars: n, structure: "swing" };
+    // floor in the coin's own volatility (audit 2026-11-16: the fixed 4% stop / 10% target was unreachable on quiet coins);
+    // the fixed minStopPct is only used by stored params from before that change
+    const atr = atr5Pct(candles), floor = p.atrStop != null ? (atr != null ? p.atrStop * atr : null) : p.minStopPct;
+    if (floor == null) return { staleSec, price: P, signal: false, why: "whale signal but too few bars for the ATR", number: n };
+    if (stopPct < floor) stopPct = floor;
+    const base = { staleSec, atrPct: atr, price: P, stopPct: round(stopPct, 3), targetPct: round(stopPct * p.rr, 3), stopPrice: P * (1 - stopPct / 100), targetPrice: P * (1 + (stopPct * p.rr) / 100), bars: n, structure: "swing" };
     if (stopPct > p.maxStopPct) return { ...base, signal: false, why: `whale signal but the swing stop is wider than ${p.maxStopPct}%`, number: base.stopPct };
     return { ...base, signal: true, why: "whale signal, stop under the recent swing low", number: base.stopPct };
   }
   if (price == null) return { signal: false, why: "whale signal but no price", number: null, staleSec: 0 };
   const stopPct = p.fixedStopPct;
+  if (stopPct == null) return { signal: false, why: "whale signal but no bars to size a stop", number: n, staleSec: 0 };
   return { staleSec: 0, price, stopPct, targetPct: stopPct * p.rr, stopPrice: price * (1 - stopPct / 100), targetPrice: price * (1 + (stopPct * p.rr) / 100), bars: n, structure: "fixed", signal: true, why: `whale signal, fixed ${stopPct}% stop (no bars yet)`, number: stopPct };
 }
 
 // ---------------------------------------------------------------- ALWAYS TRADING (aquarius-trader skill, 2026-11-16)
 // Hard blocks are never traded. Soft rules only move the score and the size. Tiers decide which soft rules apply.
 export const COUNCIL = {
-  hardMinLiq: 20000, passScore: 70, exploreEveryMin: 3, maxOpen: 5, riskPct: 1, costMultiple: 6, staleSec: 120,
-  maxSizeSol: 0.05, minSizeSol: 0.005, stressMult: 1.5, exploreSize: 0.75, lpLockedMin: 50, top10Max: 25, topHolderMax: 20,
+  hardMinLiq: 20000, passScore: 70, exploreEveryMin: 3, maxOpen: 3, riskPct: 3, costMultiple: 6, atrMultiple: 3, staleSec: 120,
+  // CEO sizing (Alex, 2026-11-16: "10 sol paper first, bigger"): the paper wallet is 10 SOL (a recorded deposit) and every
+  // position is positionSol = 2.6 SOL (26% of it; kept in mob_aq_state as position_sol so he can change it), EXPLORE-WEAK
+  // half. It is cut only when cash is short, in a survival stage, or to stay under 1% of the pool's liquidity; under 0.05 SOL
+  // or under the fee floor there is no trade. 3 open at most. Set by the CEO, not a learned result; riskPct is not a limiter.
+  positionSol: 2.6, maxPoolPct: 1, maxSizeSol: 2.6, minSizeSol: 0.05, stressMult: 1.5, exploreSize: 0.75, lpLockedMin: 50, top10Max: 25, topHolderMax: 20,
   // sizes stay close to the 0.05 SOL cap on purpose: the network fee is a fixed amount, so a tiny position cannot clear the 6x cost gate
   tiers: { A: { liq: 500000, ageDays: 7, size: 1, bonus: 10 }, B: { liq: 100000, ageDays: 1, size: 0.85, bonus: 5 }, C: { size: 0.6, bonus: 0 } },
 };
@@ -283,3 +278,45 @@ export function strengthOf(sid, t, p, whale) {
   return 0;
 }
 export const STRENGTH_BUCKETS = [[0, 0.25], [0.25, 0.5], [0.5, 0.75], [0.75, 1], [1, 9]];
+
+// ---------------------------------------------------------------- audit 2026-11-16: trade only what can pay
+// Tradability: six measured round trips must fit inside three of the coin's own 5-minute ATRs.
+export function tradability(rtPct, atrPct, costMultiple = COUNCIL.costMultiple, atrMultiple = COUNCIL.atrMultiple) {
+  if (rtPct == null || atrPct == null) return { ok: false, needPct: rtPct == null ? null : round(costMultiple * rtPct, 3), havePct: atrPct == null ? null : round(atrMultiple * atrPct, 3) };
+  const needPct = round(costMultiple * rtPct, 3), havePct = round(atrMultiple * atrPct, 3);
+  return { ok: needPct <= havePct, needPct, havePct };
+}
+// The network fee is a fixed amount of SOL, so a small position pays a bigger share of itself. Smallest size (SOL) at which
+// costMultiple x (pool cost + two fees) still fits under capPct (the target, or 3x ATR5). null = no size can.
+export function feeFloorSize(feeSol, capPct, poolRtPct, costMultiple = COUNCIL.costMultiple) {
+  const room = capPct / costMultiple - Math.max(0, poolRtPct);
+  return room > 0 ? (2 * feeSol * 100) / room : null;
+}
+// Noise of the hold: ATR5 scaled by the square root of time. A stop inside it is a coin flip on noise.
+export const noiseStopPct = (atrPct, holdMin) => (atrPct == null ? null : round(atrPct * Math.sqrt(Math.max(5, holdMin) / 5), 3));
+// The plan of one trade from a setup: the stop is the setup's own stop, never inside the noise of the hold; rr setups
+// (R5/R6/R7) keep target = rr x stop; structural setups (fib) keep their own target. Prices in the setup's unit (USD mid).
+export function planFor(setup, atrPct, holdMin, rr = null) {
+  const noise = noiseStopPct(atrPct, holdMin), stopPct = Math.max(setup.stopPct, noise ?? 0);
+  const targetPct = rr ? stopPct * rr : setup.targetPct;
+  return { stopPct: round(stopPct, 3), targetPct: round(targetPct, 3), stopPrice: setup.price * (1 - stopPct / 100), targetPrice: rr ? setup.price * (1 + targetPct / 100) : setup.targetPrice, noisePct: noise, holdMin };
+}
+// Seeded coin flip per trade (FNV-1a): the same trade always gets the same arm, different trades are independent of the
+// order they arrive in and of each other. 0 <= x < 1.
+export function seed01(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; h = Math.imul(h, 0x297a2d39); h ^= h >>> 15;
+  return (h >>> 0) / 4294967296;
+}
+// A soft rule's weight from its OWN evidence only: how the trades it objected to did against the trades it did not object to.
+// A rule that objects to (almost) every trade, like "fear" on a fearful day, has nothing to compare and stays at 1.
+export const RULE_MIN_N = 10;
+export function ruleWeight({ objN, objLosses, restN, restLosses }) {
+  if (objN < RULE_MIN_N || restN < RULE_MIN_N) return 1;
+  return round(Math.max(0.2, Math.min(3, 1 + 2 * (objLosses / objN - restLosses / restN))), 3);
+}
+// 5-minute pace above the pace of the other 55 minutes of the hour. null = volume unknown (never read as "not rising").
+export const volumeRising = (volM5, volH1) => (volM5 == null || !volH1 || volH1 <= volM5 ? null : volM5 > (volH1 - volM5) / 11);
+const median = (xs) => { const a = xs.filter((x) => x != null && Number.isFinite(x)).sort((x, y) => x - y); return a.length ? (a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2) : null; };
+export { median };

@@ -7,8 +7,8 @@
 // Funders come from Helius RPC (HELIUS_API_KEY, https://mainnet.helius-rpc.com/?api-key=..., 1 credit per call, capped per tick).
 // Shadow lane: when nothing passes, paper probes on near misses, own ledger, never mixed into the real one.
 import { db } from "../db.mjs";
-import { cached, SOL_MINT, midPrices, jupTxs, CALLS, CAPS } from "./feeds.mjs";
-import { stats, round, num } from "./logic.mjs";
+import { cached, SOL_MINT, midPrices, jupTxs, jupQuote, CALLS, CAPS } from "./feeds.mjs";
+import { stats, round, num, median, roundTripPct, COUNCIL } from "./logic.mjs";
 
 export const HELIUS_URL = (key) => `https://mainnet.helius-rpc.com/?api-key=${encodeURIComponent(key)}`;
 const KB_COST_PCT = 5;
@@ -81,7 +81,35 @@ export async function mineTick(env, { runners = [], pages = MINE_PAGES_PER_TICK,
   return res;
 }
 
-export async function whaleSignal(env, c, rug, set) {
+// ---- signal log with a matched control. Every signal, whatever its source (own whale book, nansen, kolscan), is one row:
+// the coin, its price, and a CONTROL coin priced in the same tick that nobody signalled, closest in liquidity. Forward returns
+// of both are stamped 5, 15, 30 and 60 minutes later. A source earns the real ledger only on 200+ such pairs.
+export const EVIDENCE_MIN = 200, SIGNAL_SOURCES = ["own", "nansen", "kolscan"];
+export async function logSignal(d, sg, controls = []) {
+  const dup = await d.one(`SELECT 1 FROM mob_aq_signals WHERE mint=$1 AND source=$2 AND at > now() - interval '30 minutes'`, [sg.mint, sg.source]);
+  if (dup) return null;
+  const busy = new Set((await d.q(`SELECT mint FROM mob_aq_signals WHERE at > now() - interval '60 minutes'`)).map((r) => r.mint));
+  const liq = sg.liqUsd > 0 ? sg.liqUsd : null;
+  const ctrl = sg.price == null ? null : controls.filter((c) => c.mint !== sg.mint && c.price > 0 && !busy.has(c.mint) && (!liq || c.liqUsd > 0))
+    .sort((a, b) => (liq ? Math.abs(Math.log(a.liqUsd / liq)) - Math.abs(Math.log(b.liqUsd / liq)) : 0))[0] || null;
+  return d.one(`INSERT INTO mob_aq_signals (mint, symbol, wallets, independent, funders, price_usd, source, label, ctrl_mint, ctrl_symbol, ctrl_price) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+    [sg.mint, sg.symbol, JSON.stringify(sg.wallets || []), sg.independent ?? null, sg.funders ?? null, sg.price ?? null, sg.source, sg.label ?? null, ctrl?.mint ?? null, ctrl?.symbol ?? null, ctrl?.price ?? null]);
+}
+export async function signalEvidence(d) {
+  const rows = await d.q(`SELECT source, pct_5m, pct_15m, pct_30m, pct_60m, ctrl_5m, ctrl_15m, ctrl_30m, ctrl_60m, ctrl_mint FROM mob_aq_signals`);
+  const out = {};
+  for (const src of SIGNAL_SOURCES) {
+    const all = rows.filter((r) => r.source === src), m = all.filter((r) => r.ctrl_mint && r.pct_15m != null && r.ctrl_15m != null);
+    const med = (k) => round(median(m.map((r) => r[k])), 3);
+    const e = { source: src, signals: all.length, withControl: m.length, needed: EVIDENCE_MIN, median: { m5: med("pct_5m"), m15: med("pct_15m"), m30: med("pct_30m"), m60: med("pct_60m") }, control: { m5: med("ctrl_5m"), m15: med("ctrl_15m"), m30: med("ctrl_30m"), m60: med("ctrl_60m") } };
+    e.edge15 = e.median.m15 != null && e.control.m15 != null ? round(e.median.m15 - e.control.m15, 3) : null;
+    e.real = m.length >= EVIDENCE_MIN && e.median.m15 > 0 && e.median.m15 > e.control.m15;
+    out[src] = e;
+  }
+  return out;
+}
+
+export async function whaleSignal(env, c, rug, set, ctx = {}) {
   const d = db(env);
   const tr = await cached(env, `jup:txs:${c.mint}`, 50, async () => (await jupTxs(c.mint)).txs, 120);
   if (!tr.ok) { set("wh.steady", "blocked", `swaps feed failed: ${tr.err}`.slice(0, 190)); return { ok: false, signal: false, reason: "missing data: swaps" }; }
@@ -111,24 +139,23 @@ export async function whaleSignal(env, c, rug, set) {
   set("wh.pnl", "busy", `wallet results recomputed from raw swaps (${t.length} of ${c.symbol})`);
   set("sol.dev", "busy", `${c.symbol}: ${excluded.size} creator/insider wallet(s) excluded`);
   set("wh.gmgn", out.signal ? "busy" : "idle", out.signal ? `WHALE SIGNAL ${c.symbol}: ${groups.size} independent winners buying` : "no GMGN key; our own whale book instead");
-  if (out.signal) {
-    const dup = await d.one(`SELECT 1 FROM mob_aq_signals WHERE mint=$1 AND at > now() - interval '30 minutes'`, [c.mint]);
-    if (!dup) await d.q(`INSERT INTO mob_aq_signals (mint, symbol, wallets, independent, funders, price_usd) VALUES ($1,$2,$3,$4,$5,$6)`, [c.mint, c.symbol, JSON.stringify(out.wallets), groups.size, funders, c.priceUsd ?? null]);
-  }
+  if (out.signal) await logSignal(d, { mint: c.mint, symbol: c.symbol, price: c.priceUsd ?? null, liqUsd: c.liqUsd, source: "own", wallets: out.wallets, independent: groups.size, funders }, ctx.controls || []);
   return out;
 }
-// What happened after each whale signal: price 15 and 60 minutes later, then a lesson. Prices come from the tick's Jupiter call.
+// What happened after each signal: the price of the coin and of its control 5, 15, 30 and 60 minutes later, then a lesson.
+// Prices come from the tick's one Jupiter price call. A horizon that was missed by more than half its length stays empty.
+const HORIZONS = [[5, "pct_5m", "ctrl_5m"], [15, "pct_15m", "ctrl_15m"], [30, "pct_30m", "ctrl_30m"], [60, "pct_60m", "ctrl_60m"]];
 export async function followSignals(env, priceOf) {
   const d = db(env);
-  const open = await d.q(`SELECT * FROM mob_aq_signals WHERE price_usd IS NOT NULL AND pct_60m IS NULL AND at > now() - interval '3 hours' ORDER BY id LIMIT 20`);
+  const open = await d.q(`SELECT * FROM mob_aq_signals WHERE price_usd IS NOT NULL AND (pct_60m IS NULL OR (ctrl_mint IS NOT NULL AND ctrl_60m IS NULL)) AND at > now() - interval '3 hours' ORDER BY id LIMIT 40`);
   for (const s of open) {
-    const px = priceOf(s.mint), age = (Date.now() - new Date(s.at).getTime()) / 60000;
-    if (px == null) continue;
-    const pct = round((px / s.price_usd - 1) * 100, 2);
-    if (age >= 15 && s.pct_15m == null) await d.q(`UPDATE mob_aq_signals SET price_15m=$2, pct_15m=$3 WHERE id=$1`, [s.id, px, pct]);
-    if (age >= 60) {
-      await d.q(`UPDATE mob_aq_signals SET price_60m=$2, pct_60m=$3 WHERE id=$1`, [s.id, px, pct]);
-      await d.q(`INSERT INTO mob_aq_brain (dept, kind, text, data) VALUES ('whales','signal',$1,$2)`, [`Whale signal on ${s.symbol} (${s.independent} independent winners, funders ${s.funders}): ${s.pct_15m ?? "n/a"}% after 15 min, ${pct}% after 60 min. Council verdict then: ${s.verdict || "none"}${s.reason ? ` (${s.reason})` : ""}.`, JSON.stringify({ signal: s.id, pct15: s.pct_15m, pct60: pct })]);
+    const px = priceOf(s.mint), cx = s.ctrl_mint ? priceOf(s.ctrl_mint) : null, age = (Date.now() - new Date(s.at).getTime()) / 60000;
+    const pct = px == null ? null : round((px / s.price_usd - 1) * 100, 2), cpct = cx == null || !s.ctrl_price ? null : round((cx / s.ctrl_price - 1) * 100, 2);
+    for (const [min, col, ccol] of HORIZONS) {
+      if (age < min || age > min * 1.5 + 2) continue;
+      if (pct != null && s[col] == null) { await d.q(`UPDATE mob_aq_signals SET ${col}=$2${min === 15 ? ", price_15m=$3" : min === 60 ? ", price_60m=$3" : ""} WHERE id=$1 AND ${col} IS NULL`, min === 15 || min === 60 ? [s.id, pct, px] : [s.id, pct]); s[col] = pct;
+        if (min === 60) await d.q(`INSERT INTO mob_aq_brain (dept, kind, text, data) VALUES ('whales','signal',$1,$2)`, [`${s.source} signal on ${s.symbol}${s.label ? ` (${s.label})` : s.independent ? ` (${s.independent} independent winners)` : ""}: ${s.pct_5m ?? "n/a"}% after 5 min, ${s.pct_15m ?? "n/a"}% after 15, ${s.pct_30m ?? "n/a"}% after 30, ${pct}% after 60. Control ${s.ctrl_symbol || "none"}: ${s.ctrl_15m ?? "n/a"}% after 15, ${cpct ?? "n/a"}% after 60. Council verdict then: ${s.verdict || "none"}${s.reason ? ` (${s.reason})` : ""}.`, JSON.stringify({ signal: s.id, source: s.source, pct15: s.pct_15m, pct60: pct, ctrl15: s.ctrl_15m, ctrl60: cpct })]); }
+      if (cpct != null && s[ccol] == null) { await d.q(`UPDATE mob_aq_signals SET ${ccol}=$2 WHERE id=$1 AND ${ccol} IS NULL`, [s.id, cpct]); s[ccol] = cpct; }
     }
   }
   return open.map((s) => s.mint);
@@ -137,19 +164,27 @@ export async function whaleState(d) {
   const [b, m, sg, top] = await Promise.all([
     d.one(`SELECT count(*)::int book, count(*) FILTER (WHERE winner)::int winners FROM mob_aq_whales`),
     d.one(`SELECT count(*)::int coins, count(*) FILTER (WHERE done)::int done, coalesce(sum(trades),0)::int swaps FROM mob_aq_mined`),
-    d.q(`SELECT symbol, at, independent, funders, verdict, reason, pct_15m, pct_60m FROM mob_aq_signals ORDER BY id DESC LIMIT 10`),
+    d.q(`SELECT symbol, at, independent, funders, verdict, reason, source, label, pct_5m, pct_15m, pct_30m, pct_60m, ctrl_symbol, ctrl_5m, ctrl_15m, ctrl_30m, ctrl_60m FROM mob_aq_signals ORDER BY id DESC LIMIT 10`),
     d.q(`SELECT wallet, wins, closed, net_sol FROM mob_aq_whales WHERE winner ORDER BY wins DESC, net_sol DESC LIMIT 10`),
   ]);
   const hr = await d.one(`SELECT (SELECT count(*)::int FROM mob_aq_signals WHERE at > now() - interval '1 hour') sph, (SELECT count(*)::int FROM mob_aq_trades WHERE strategy='R5') n, (SELECT count(*)::int FROM mob_aq_trades WHERE strategy='R5' AND pnl_sol > 0) w, (SELECT count(*)::int FROM mob_aq_funders) f`);
-  return { book: b.book, winners: b.winners, signalsLastHour: hr.sph, r5: { trades: hr.n, wins: hr.w, hitRate: hr.n ? round(hr.w / hr.n, 3) : null }, r5BySource: await (async () => { const q = await d.one(`SELECT count(*) FILTER (WHERE entry_variant = 'N')::int nn, count(*) FILTER (WHERE entry_variant = 'N' AND pnl_sol > 0)::int nw, count(*) FILTER (WHERE entry_variant IS DISTINCT FROM 'N')::int on_, count(*) FILTER (WHERE entry_variant IS DISTINCT FROM 'N' AND pnl_sol > 0)::int ow FROM mob_aq_trades WHERE strategy='R5'`); return { ownWinners: { trades: q.on_, wins: q.ow }, nansen: { trades: q.nn, wins: q.nw } }; })(), fundersKnown: hr.f, mining: m, signals: sg.map((s) => ({ symbol: s.symbol, at: s.at, independent: s.independent, funders: s.funders, verdict: s.verdict, reason: s.reason, pct15m: s.pct_15m, pct60m: s.pct_60m })),
+  return { book: b.book, winners: b.winners, signalsLastHour: hr.sph, r5: { trades: hr.n, wins: hr.w, hitRate: hr.n ? round(hr.w / hr.n, 3) : null }, r5BySource: await (async () => { const q = await d.one(`SELECT count(*) FILTER (WHERE entry_variant = 'N')::int nn, count(*) FILTER (WHERE entry_variant = 'N' AND pnl_sol > 0)::int nw, count(*) FILTER (WHERE entry_variant IS DISTINCT FROM 'N')::int on_, count(*) FILTER (WHERE entry_variant IS DISTINCT FROM 'N' AND pnl_sol > 0)::int ow FROM mob_aq_trades WHERE strategy='R5'`); return { ownWinners: { trades: q.on_, wins: q.ow }, nansen: { trades: q.nn, wins: q.nw } }; })(), fundersKnown: hr.f, mining: m, signals: sg.map((s) => ({ symbol: s.symbol, at: s.at, source: s.source, label: s.label, independent: s.independent, funders: s.funders, verdict: s.verdict, reason: s.reason, pct5m: s.pct_5m, pct15m: s.pct_15m, pct30m: s.pct_30m, pct60m: s.pct_60m,
+      control: s.ctrl_symbol ? { symbol: s.ctrl_symbol, pct5m: s.ctrl_5m, pct15m: s.ctrl_15m, pct30m: s.ctrl_30m, pct60m: s.ctrl_60m } : null })),
+    // forward returns of every source against its matched control: what decides whether R5 may touch the real ledger
+    evidence: Object.values(await signalEvidence(d)),
     top: top.map((w) => ({ wallet: `${w.wallet.slice(0, 4)}…${w.wallet.slice(-4)}`, wins: w.wins, closed: w.closed, netSol: round(w.net_sol, 3) })) };
 }
 
 // ------------------------------------------------------------------ shadow lane
-const NEAR_RANK = ["cost gate", "stop > target", "time machine", "no signal", "safety", "stale data", "liquidity too low"];
-const rank = (reason) => { const i = NEAR_RANK.findIndex((r) => reason.startsWith(r)); return i < 0 ? 99 : i; };
+// v2 (audit 2026-11-16, bug 5): a probe is charged the round trip MEASURED for that coin (a Jupiter buy+sell quote when the
+// block came before any quote; no quote = no probe) and uses the levels of the setup that was actually blocked (stop under
+// target, both around the entry). Probes from before that (v = 1: most charged an assumed 5%, many had fib levels with the
+// stop wider than the target) are kept in the table, flagged legacy and left out of every statistic.
+export const SHADOW_V = 2, SHADOW_MAX_OPEN = 5;
+const NEAR_RANK = ["not tradable", "cost gate", "size", "stop > target", "time machine", "soft rules", "no signal", "safety", "stale data", "liquidity too low"];
+const rank = (n) => { if (n.first) return -1; const i = NEAR_RANK.findIndex((r) => n.reason.startsWith(r)); return i < 0 ? 99 : i; };
 
-export async function shadowTick(env, { kill, entered, near, solUsd, nowSec, set, P }) {
+export async function shadowTick(env, { kill, entered, near, solUsd, feeSol, gap = 0, nowSec, set, P, positionSol = null }) {
   const d = db(env);
   const res = { opened: null, closed: [] };
   const open = await d.q(`SELECT * FROM mob_aq_shadow WHERE closed_at IS NULL ORDER BY id`);
@@ -167,34 +202,56 @@ export async function shadowTick(env, { kill, entered, near, solUsd, nowSec, set
       if (!(await d.one(`UPDATE mob_aq_shadow SET closed_at=now(), exit_price=$2, pnl_pct=$3, outcome=$4 WHERE id=$1 AND closed_at IS NULL RETURNING id`, [s.id, px, pnl, why]))) continue; // closed by another request
       const right = pnl <= 0;
       await d.q(`INSERT INTO mob_aq_brain (dept, kind, text, data) VALUES ('review','shadow',$1,$2)`,
-        [`SHADOW ${s.symbol}: blocked for "${s.block_reason}", the probe hit ${why} at ${pnl}% net of ${s.cost_pct}% cost. The block was ${right ? "RIGHT" : "WRONG (it cost a win)"}.`, JSON.stringify({ id: s.id, pnl, why, reason: s.block_reason })]);
+        [`SHADOW ${s.symbol}${s.strategy ? ` ${s.strategy}` : ""}: blocked for "${s.block_reason}", the probe hit ${why} at ${pnl}% net of ${s.cost_pct}% ${s.cost_source || ""} cost. The block was ${right ? "RIGHT" : "WRONG (it cost a win)"}.${s.v < SHADOW_V ? " (legacy probe: not counted)" : ""}`, JSON.stringify({ id: s.id, pnl, why, reason: s.block_reason, v: s.v })]);
       res.closed.push({ symbol: s.symbol, why, pnlPct: pnl });
     }
   }
   const stillOpen = open.length - res.closed.length;
-  if (!kill && !entered && near.length && stillOpen < 5) {
-    const cand = near.filter((n) => n.setup && n.setup.stopPrice && n.setup.targetPrice && n.setup.price && n.setup.stopPrice < n.setup.price && n.setup.targetPrice > n.setup.price && !n.reason.startsWith("missing data") && !n.reason.startsWith("copycat"))
-      .sort((a, b) => rank(a.reason) - rank(b.reason));
+  // a real entry this tick leaves the near misses alone, but a signal of a strategy that is off the real ledger is always
+  // probed: the shadow lane is the only record that strategy has
+  if (!kill && near.length && stillOpen < SHADOW_MAX_OPEN) {
+    const ok = (n) => n.setup && n.setup.price > 0 && n.setup.stopPrice > 0 && n.setup.stopPrice < n.setup.price && n.setup.targetPrice > n.setup.price && (n.setup.price - n.setup.stopPrice) < (n.setup.targetPrice - n.setup.price)
+      && !n.reason.startsWith("missing data") && !n.reason.startsWith("copycat") && !n.reason.startsWith("safety") && !n.reason.startsWith("cannot sell") && !n.reason.startsWith("liquidity");
+    const cand = near.filter((n) => ok(n) && (!entered || n.first)).sort((a, b) => rank(a) - rank(b));
+    let quoted = 0;
     for (const n of cand) {
       if (await d.one(`SELECT 1 FROM mob_aq_shadow WHERE mint=$1 AND (closed_at IS NULL OR closed_at > now() - interval '30 minutes')`, [n.c.mint])) continue;
-      const cost = n.rt != null ? n.rt : KB_COST_PCT;
-      const r = await d.one(`INSERT INTO mob_aq_shadow (mint, pool, symbol, block_reason, entry_price, stop_price, target_price, cost_pct, cost_source, time_stop_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,to_timestamp($10)) RETURNING id`,
-        [n.c.mint, n.c.pool, n.c.symbol, n.reason, n.setup.price, n.setup.stopPrice, n.setup.targetPrice, cost, n.rt != null ? "measured" : "trading-kb 5%", nowSec + P.timeStopMin * 60]);
-      res.opened = { id: r.id, symbol: n.c.symbol, reason: n.reason };
+      let cost = n.rt, src = "measured (the blocked trade's own quote)";
+      if (cost == null) {
+        if (!feeSol || quoted) continue; // one quoted probe a tick; no SOL price or no quote = no probe, never an assumed cost
+        quoted++;
+        // the cost at the size a real trade would have had: the CEO's position, cut to 1% of the pool like a real entry
+        const poolCap = n.c.liqUsd > 0 && solUsd ? ((COUNCIL.maxPoolPct / 100) * n.c.liqUsd) / solUsd : Infinity, size = round(Math.min(positionSol ?? COUNCIL.positionSol, poolCap), 6);
+        if (size < COUNCIL.minSizeSol) continue;
+        const buy = await jupQuote(SOL_MINT, n.c.mint, Math.floor(size * 1e9));
+        if (buy && gap) await new Promise((r) => setTimeout(r, gap));
+        const sell = buy ? await jupQuote(n.c.mint, SOL_MINT, buy.outAmount) : null;
+        if (!sell) continue;
+        cost = roundTripPct(size, Number(sell.outAmount) / 1e9, feeSol); src = `measured (Jupiter round trip at ${size} SOL)`;
+      }
+      const hold = n.setup.holdMin ?? P.timeStopMin;
+      const r = await d.one(`INSERT INTO mob_aq_shadow (mint, pool, symbol, block_reason, entry_price, stop_price, target_price, cost_pct, cost_source, time_stop_at, v, strategy, tier, atr5_pct)
+        SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,to_timestamp($10),$11,$12,$13,$14 WHERE NOT EXISTS (SELECT 1 FROM mob_aq_shadow WHERE mint=$1 AND closed_at IS NULL) RETURNING id`,
+        [n.c.mint, n.c.pool, n.c.symbol, n.reason.slice(0, 240), n.setup.price, n.setup.stopPrice, n.setup.targetPrice, Math.max(cost, 0), src, nowSec + hold * 60, SHADOW_V, n.sid || null, n.tier || null, n.atr ?? null]);
+      if (!r) continue;
+      res.opened = { id: r.id, symbol: n.c.symbol, reason: n.reason, strategy: n.sid || null, costPct: cost };
       break;
     }
   }
-  set("ln.paper", res.opened || res.closed.length ? "busy" : "idle", res.opened ? `SHADOW probe on ${res.opened.symbol} (blocked: ${res.opened.reason})` : res.closed.length ? `${res.closed.length} shadow probe(s) closed` : "no near miss to probe");
+  set("ln.paper", res.opened || res.closed.length ? "busy" : "idle", res.opened ? `SHADOW probe on ${res.opened.symbol} (${res.opened.reason})`.slice(0, 190) : res.closed.length ? `${res.closed.length} shadow probe(s) closed` : "no near miss to probe");
   set("rv.missed", "busy", `${stillOpen + (res.opened ? 1 : 0)} shadow probe(s) open`);
   return res;
 }
 
 export async function shadowStats(d) {
-  const rows = await d.q(`SELECT block_reason, pnl_pct, closed_at FROM mob_aq_shadow ORDER BY id`);
-  const closed = rows.filter((r) => r.closed_at);
+  const all = await d.q(`SELECT block_reason, pnl_pct, closed_at, v, strategy FROM mob_aq_shadow ORDER BY id`);
+  const rows = all.filter((r) => r.v >= SHADOW_V), closed = rows.filter((r) => r.closed_at);
   const s = stats(closed.map((r) => r.pnl_pct));
-  const by = {};
-  for (const r of closed) (by[r.block_reason.split(":")[0]] ||= []).push(r.pnl_pct);
-  return { tag: "SHADOW", n: s.n, winRate: s.winRate, expectancyPct: s.expectancyPct, open: rows.length - closed.length,
-    byReason: Object.entries(by).map(([reason, xs]) => ({ reason, n: xs.length, expectancyPct: stats(xs).expectancyPct })) };
+  const by = {}, bs = {};
+  for (const r of closed) { (by[r.block_reason.split(":")[0].replace(/,.*/, "")] ||= []).push(r.pnl_pct); if (r.strategy) (bs[r.strategy] ||= []).push(r.pnl_pct); }
+  return { tag: "SHADOW", n: s.n, winRate: s.winRate, expectancyPct: s.expectancyPct, ci95: s.ci95, open: rows.length - closed.length,
+    byReason: Object.entries(by).map(([reason, xs]) => ({ reason, n: xs.length, expectancyPct: stats(xs).expectancyPct })),
+    byStrategy: Object.entries(bs).map(([strategy, xs]) => { const st = stats(xs); return { strategy, n: st.n, winRate: st.winRate, expectancyPct: st.expectancyPct, ci95: st.ci95 }; }),
+    // probes opened before 2026-11-16 15:00Z: assumed cost and wrong levels, kept for the record, in no number above
+    legacy: { n: all.filter((r) => r.v < SHADOW_V).length, note: "probes from before the audit fix (assumed 5% cost, fib levels on no-signal coins): excluded from every statistic" } };
 }

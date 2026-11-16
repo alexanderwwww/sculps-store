@@ -28,9 +28,9 @@ export async function reconcile(d) {
 // Two racing opens cannot both land: the slot and the mint are unique, and a unique violation rolls the debit back too.
 export async function openPosition(d, r, maxOpen) {
   const cols = ["strategy", "mint", "pool", "symbol", "decimals", "tokens_raw", "size_sol", "fee_sol", "entry_price_usd", "entry_mid_usd", "stop_price", "target_price", "stop_pct", "target_pct", "rt_pct", "buy_slip_pct",
-    "last_price_usd", "last_value_sol", "tier", "tag", "soft", "score", "variant", "entry_variant", "strength"];
-  const TYPE = { strategy: "text", mint: "text", pool: "text", symbol: "text", decimals: "int", tokens_raw: "text", soft: "jsonb", tier: "text", tag: "text", variant: "text", entry_variant: "text" };
-  const vals = cols.map((c) => (c === "soft" ? JSON.stringify(r.soft ?? []) : r[c] ?? null));
+    "last_price_usd", "last_value_sol", "tier", "tag", "soft", "score", "variant", "entry_variant", "strength", "sol_usd_entry", "exit_k", "tvar", "atr5_pct", "hold_min", "sizing"];
+  const TYPE = { strategy: "text", mint: "text", pool: "text", symbol: "text", decimals: "int", tokens_raw: "text", soft: "jsonb", tier: "text", tag: "text", variant: "text", entry_variant: "text", tvar: "text", sizing: "jsonb" };
+  const vals = cols.map((c) => (c === "soft" ? JSON.stringify(r.soft ?? []) : c === "sizing" ? (r.sizing ? JSON.stringify(r.sizing) : null) : r[c] ?? null));
   const n = cols.length;
   try {
     const row = await d.one(`WITH pay AS (
@@ -67,11 +67,11 @@ export async function scaleOut(d, p, { half, gross, feeSol, stopPrice }) {
 export async function closePosition(d, p, { gross, feeSol, exitPx = null, slip = null, why, gradePrefix, exitMid = null }) {
   return d.one(`WITH claimed AS (DELETE FROM mob_aq_positions WHERE id = $1 AND tokens_raw = $2 RETURNING *),
       t AS (INSERT INTO mob_aq_trades (position_id, strategy, mint, symbol, size_sol, back_sol, entry_price_usd, exit_price_usd, pnl_sol, pnl_pct, fees_sol, slippage_pct, reason, grade, opened_at,
-          tier, tag, soft, variant, entry_variant, scaled, strength, pool, stop_price, target_price, stop_pct, target_pct, rt_pct, entry_mid_usd, exit_mid_usd, score, buy_slip_pct, time_stop_at)
+          tier, tag, soft, variant, entry_variant, scaled, strength, pool, stop_price, target_price, stop_pct, target_pct, rt_pct, entry_mid_usd, exit_mid_usd, score, buy_slip_pct, time_stop_at, sol_usd_entry, tvar, atr5_pct, hold_min, stop_unconfirmed, sizing)
         SELECT id, strategy, mint, symbol, size_sol, $3::float8 - $4::float8, entry_price_usd, $5::float8, realized_sol + $3::float8 - $4::float8 - (size_sol + fee_sol),
           round(((realized_sol + $3::float8 - $4::float8 - (size_sol + fee_sol)) / (size_sol + fee_sol) * 100)::numeric, 3)::float8, fee_sol + $4::float8, $6::float8, $7::text,
           $8::text || CASE WHEN realized_sol + $3::float8 - $4::float8 - (size_sol + fee_sol) > 0 THEN '/win' ELSE '/loss' END, opened_at,
-          tier, tag, coalesce(soft, '[]'::jsonb), coalesce(variant, 'A'), entry_variant, half_done, strength, pool, stop_price, target_price, stop_pct, target_pct, rt_pct, entry_mid_usd, $9::float8, score, buy_slip_pct, time_stop_at
+          tier, tag, coalesce(soft, '[]'::jsonb), coalesce(variant, 'A'), entry_variant, half_done, strength, pool, stop_price, target_price, stop_pct, target_pct, rt_pct, entry_mid_usd, $9::float8, score, buy_slip_pct, time_stop_at, sol_usd_entry, tvar, atr5_pct, hold_min, stop_unconfirmed, sizing
         FROM claimed RETURNING *),
       c AS (UPDATE mob_aq_state SET v = to_jsonb(${CASH} + $3::float8 - $4::float8), at = now() WHERE k='cash_sol' AND EXISTS (SELECT 1 FROM t) RETURNING 1),
       f AS (INSERT INTO mob_aq_flows (kind, sol, dept, label, position_id, trade_id)
@@ -82,14 +82,33 @@ export async function closePosition(d, p, { gross, feeSol, exitPx = null, slip =
       SELECT t.*, (SELECT count(*) FROM c) + (SELECT count(*) FROM f) wrote FROM t`, [p.id, p.tokens_raw, gross, feeSol, exitPx, slip, why, gradePrefix, exitMid]);
 }
 
-// Alex's rebuild: write the open positions off, restart the wallet and move the reconciliation base, in one statement.
+// The wallet base: what was put into the paper wallet (1 SOL at the start, plus every CEO deposit). Equity is measured against
+// it, so a deposit is a step in the base and never shows up as profit.
+const BASE = `coalesce((SELECT (v->>'cash')::float8 FROM mob_aq_state WHERE k='ledger_base'), ${START_SOL}::float8)`;
+export const walletBase = async (d) => (await d.one(`SELECT ${BASE} b`)).b;
+
+// A CEO deposit: cash and the base rise by the same amount in one statement, so base + realized - open cost = cash still
+// holds and nothing in the trade history changes. `id` makes it idempotent: the same deposit can never be applied twice.
+export async function deposit(d, { id, sol, note = null }) {
+  if (!id || !(sol > 0) || !Number.isFinite(sol)) throw new Error("deposit needs an id and a positive amount");
+  const entry = JSON.stringify([{ id, sol, note, at: new Date().toISOString() }]);
+  const r = await d.one(`WITH b AS (INSERT INTO mob_aq_state (k, v, at) VALUES ('ledger_base', jsonb_build_object('cash', ${START_SOL}::float8 + $2::float8, 'tradeId', 0, 'deposits', $3::jsonb), now())
+        ON CONFLICT (k) DO UPDATE SET v = mob_aq_state.v || jsonb_build_object('cash', (mob_aq_state.v->>'cash')::float8 + $2::float8, 'deposits', coalesce(mob_aq_state.v->'deposits', '[]'::jsonb) || $3::jsonb), at = now()
+        WHERE NOT coalesce(mob_aq_state.v->'deposits', '[]'::jsonb) @> jsonb_build_array(jsonb_build_object('id', $1::text)) RETURNING (v->>'cash')::float8 base),
+      c AS (UPDATE mob_aq_state SET v = to_jsonb(${CASH} + $2::float8), at = now() WHERE k='cash_sol' AND EXISTS (SELECT 1 FROM b) RETURNING ${CASH} cash)
+      SELECT (SELECT base FROM b) base, (SELECT cash FROM c) cash`, [id, sol, entry]);
+  return r?.base != null ? { applied: true, baseSol: r.base, cashSol: r.cash } : { applied: false };
+}
+
+// Alex's rebuild: write the open positions off, restart the wallet at its base (start + deposits) and move the
+// reconciliation point past every trade so far, in one statement.
 export async function resetLedger(d) {
   const r = await d.one(`WITH del AS (DELETE FROM mob_aq_positions RETURNING id),
-      c AS (UPDATE mob_aq_state SET v = to_jsonb($1::float8), at = now() WHERE k='cash_sol' RETURNING 1),
-      b AS (INSERT INTO mob_aq_state (k, v, at) VALUES ('ledger_base', jsonb_build_object('cash', $1::float8, 'tradeId', (SELECT coalesce(max(id),0) FROM mob_aq_trades), 'at', now()), now())
-        ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v, at = now() RETURNING 1)
-      SELECT (SELECT count(*)::int FROM del) n, (SELECT count(*) FROM c) + (SELECT count(*) FROM b) wrote`, [START_SOL]);
-  return r.n;
+      c AS (UPDATE mob_aq_state SET v = to_jsonb(${BASE}), at = now() WHERE k='cash_sol' RETURNING 1),
+      b AS (INSERT INTO mob_aq_state (k, v, at) VALUES ('ledger_base', jsonb_build_object('cash', ${START_SOL}::float8, 'tradeId', (SELECT coalesce(max(id),0) FROM mob_aq_trades), 'at', now()), now())
+        ON CONFLICT (k) DO UPDATE SET v = mob_aq_state.v || jsonb_build_object('tradeId', (SELECT coalesce(max(id),0) FROM mob_aq_trades), 'at', now()), at = now() RETURNING (v->>'cash')::float8 base)
+      SELECT (SELECT count(*)::int FROM del) n, (SELECT base FROM b) base, (SELECT count(*) FROM c) wrote`);
+  return { n: r.n, baseSol: r.base };
 }
 
 // One tick at a time. The lock row carries its owner and expires, so a tick that died cannot block the desk for good

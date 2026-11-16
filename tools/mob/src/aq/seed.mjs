@@ -229,7 +229,9 @@ export const R3_PARAMS = {
 // R5 whale follow (Alex, 2026-11-16: whales first, no warm-up). Same gates and risk as R3; its own stop/target structure.
 // Stop 4-12% under the recent swing low, target 2.5x the stop (so 10-30%): the smallest target (10%) still clears the 6x
 // cost gate at a measured round trip up to 1.66%, and the stop is never larger than the target. No bars: fixed 8% / 20%.
-export const R5_PARAMS = { ...R3_PARAMS, stopLookback: 15, minStopPct: 4, maxStopPct: 12, rr: 2.5, fixedStopPct: 8, timeStopMin: 30 };
+// Since the 2026-11-16 audit the stop floor is 1.5x the coin's own ATR5 (was a fixed 4%, so the target was a fixed 10% that
+// tier A coins never reached), and without bars there is no ATR and no trade (was a fixed 8% / 20%).
+export const R5_PARAMS = { ...R3_PARAMS, stopLookback: 15, atrStop: 1.5, maxStopPct: 12, rr: 2.5, timeStopMin: 30 };
 // R6/R7 (ALWAYS TRADING, ATR-relative since 2026-11-16): every threshold is in units of the coin's own 5-minute ATR.
 // A coin too quiet for a target of 6x the measured cost is simply not tradable, and the Council says so.
 export const R6_PARAMS = { minN: 8, maxN: 20, minBreakAtr: 0.25, atrStop: 1.5, minStopPct: 0.8, maxStopPct: 6, rr: 2, timeStopMin: 30 };

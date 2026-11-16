@@ -2,20 +2,30 @@
 // Hermes paper fill -> Review -> Learning -> Ops. PAPER ONLY: no wallet, no keys, no orders. Missing data = NO trade.
 import { db } from "../db.mjs";
 import { DEPTS, seedWorkers, TOOLS, STRATEGIES, GTA6_DATE, GTA_RE, CEO, R5_PARAMS } from "./seed.mjs";
-import { feeds, midPrices, jupQuote, SOL_MINT, jupPrices, CALLS, CAPS, resetCalls } from "./feeds.mjs";
-import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round, survival, whaleSetup, replaySetup, momentumSetup } from "./logic.mjs";
-import { whaleSignal, shadowTick, shadowStats, mineTick, followSignals, whaleState } from "./whales.mjs";
+import { feeds, midPrices, jupQuote, SOL_MINT, jupPrices, getJson, CALLS, CAPS, resetCalls } from "./feeds.mjs";
+import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round, survival, whaleSetup, replaySetup, momentumSetup, bounceSetup, planFor, atr5Pct, median } from "./logic.mjs";
+import { whaleSignal, shadowTick, shadowStats, mineTick, followSignals, whaleState, logSignal, signalEvidence, EVIDENCE_MIN } from "./whales.mjs";
 import { lanesTick, laneStats } from "./lanes.mjs";
 import { nansenTick, nansenSignals, nansenState } from "./nansen.mjs";
-import { councilTick, learnFromTrade, ruleWeights, MIN_OWN_BARS } from "./council.mjs";
+import { councilTick, learnFromTrade, recomputeRules, costBook, ruleWeights, MIN_OWN_BARS } from "./council.mjs";
+import { R6_PARAMS, R7_PARAMS } from "./seed.mjs";
 import { COUNCIL, STRENGTH_BUCKETS } from "./logic.mjs";
-import { START_SOL, reconcile, scaleOut, closePosition, resetLedger, tickLock, tickUnlock } from "./ledger.mjs";
+import { START_SOL, reconcile, scaleOut, closePosition, resetLedger, walletBase, tickLock, tickUnlock } from "./ledger.mjs";
 export { START_SOL };
 
 export const AQ_BUILD = "aq-engine-1";
-// Network fee per side: the worst measured value in trading-kb section 7 ($0.0015-0.0067 per trade), converted at the live SOL price.
-export const NET_FEE_USD = 0.0067;
-const KB_COST_PCT = 5; // trading-kb: measured memecoin round trip ~5%, used by the replay only when no quote was measured yet
+// Network fee per side, in SOL (the chain charges lamports, not dollars). MEASURED 2026-11-16 15:10-15:25Z: meta.fee (base +
+// priority fee) of 122 real swaps of 0.01-0.2 SOL on 40 trending / most-traded coins, read with getTransaction on the public
+// RPC: min 5,000, quartile 8,690, median 15,001, upper quartile 55,777, 90th percentile 145,000, MEAN 60,957 lamports.
+// The old assumption ($0.0067 = about 95,000 lamports at SOL $70) sat near the 85th percentile and alone was 39% of the
+// audited loss. The paper book now charges the measured mean, rounded up (0.000061 SOL): above the median on purpose, because
+// meta.fee does not include Jito tips or the one-time token-account rent. Detail: .claude/skills/trading-kb/fee-2026-11-16.md
+export const NET_FEE_LAMPORTS = 61000, NET_FEE_SOL = NET_FEE_LAMPORTS / 1e9;
+// A stop does not fill at the stop. Overshoot of the mid past the stop level, measured by the 2026-11-16 audit on 15 paper stops;
+// replaced by this desk's own measurement (trades.overshoot_pct) once ten stops carry one.
+export const AUDIT_OVERSHOOT_PCT = 0.69;
+export const SOL_PRICE_MAX_AGE_SEC = 600;
+const BINANCE_SOL = "https://data-api.binance.vision/api/v3/ticker/price?symbol=SOLUSDT"; // shape read 2026-11-16: {"symbol":"SOLUSDT","price":"70.43000000"}
 export { MIN_OWN_BARS };
 // Our own 1-minute candles from the price samples: open = the previous bar's close (one sample a minute would otherwise
 // make every bar flat), high/low/close from the samples inside the minute. Last 60 minutes, oldest first.
@@ -47,6 +57,15 @@ export async function ensureSeed(env) {
   const v3 = await d.q(`UPDATE mob_aq_strategies SET params = CASE id WHEN 'R6' THEN $1::jsonb ELSE $2::jsonb END WHERE id IN ('R6','R7') AND NOT (params ? 'atrStop') RETURNING id`, [JSON.stringify(STRATEGIES[5][4]), JSON.stringify(STRATEGIES[6][4])]);
   if (v3.length) await brain(d, "learning", "tournament", `Recipe v3 adopted for ${v3.map((r) => r.id).join(", ")}: breakout, bounce, stops and targets are measured in the coin's own 5-minute ATR instead of fixed percentages; fib swings need 3x ATR instead of a fixed 8%.`);
   if (r5) await brain(d, "learning", "tournament", "R5 whale follow activated on PAPER by Alex (2026-11-16): entry = 2+ independent winning wallets buying a coin that passes safety and the cost gate; stop under the recent swing low (4-12%), target 2.5x the stop, 30 min time stop.");
+  // recipe v4 (audit 2026-11-16), each change on the record once
+  const v4 = await d.one(`UPDATE mob_aq_strategies SET params=$1 WHERE id='R5' AND NOT (params ? 'atrStop') RETURNING id`, [JSON.stringify(R5_PARAMS)]);
+  if (v4) await brain(d, "learning", "tournament", "Recipe v4, R5: the fixed 4% stop / 10% target floor is gone (27 tier A trades never reached such targets); the stop floor is 1.5x the coin's own 5-minute ATR, the target stays 2.5x the stop. Source: audit 2026-11-16, cause 3.");
+  if (!(await getState(d, "recipe_v4", null))) {
+    await setState(d, "recipe_v4", { at: new Date().toISOString() });
+    await brain(d, "learning", "tournament", "Recipe v4 (audit 2026-11-16), all strategies: (1) a coin is tradable only when 6x its measured round trip fits inside 3x its 5-minute ATR; (2) stop and target are anchored to the actual fill and a fill outside them is refused; (3) a stop is confirmed against the executable sell quote; (4) stops are never inside the noise of the hold (ATR5 x sqrt(hold/5)); (5) two independent seeded coin flips per trade: exit A plain / B half off at +1R (B no longer caps the stop), and time L recipe time stop / S flat after 10 minutes; (6) R6 and R5 leave the real paper ledger for the shadow lane until R6's replay with measured cost is positive and R5's signals beat a matched control on 200+ signals; (7) every strategy is blocked when its own replay loses; (8) EXPLORE takes the smallest size that clears the fee floor. These are hypotheses from one 8-hour sample, to be judged by the tournament, not proof.");
+    await recomputeRules(d, "recipe v4: the old step counted losses for rules that object to every coin");
+    await brain(d, "costs", "tournament", `Network fee corrected by measurement: ${NET_FEE_LAMPORTS} lamports (${NET_FEE_SOL} SOL) a side, the mean of 122 real swaps of 0.01-0.2 SOL read from the chain on 2026-11-16 (median 15,001, 90th percentile 145,000). Was $0.0067 a side (about 95,000 lamports), near the 85th percentile. Jito tips and token-account rent are not in the measurement.`);
+  }
   seeded.add(tag);
 }
 export const _resetSeeded = () => seeded.clear();
@@ -97,7 +116,8 @@ export async function tick(env, opts = {}) {
     const uni = un.data || un.stale || null; // boost and profile flags may come from the last good read; candidates never do
     Object.assign(health, { geckoterminal: tr.ok && nw.ok, dexscreener: un.ok, coingecko: mj.ok && mj.data?.src === "coingecko", sol_price: !!mj.data?.sol, feargreed: fg.ok });
     let solUsd = mj.data?.sol?.price ?? (tr.data || []).find((p) => p.solUsd)?.solUsd ?? null;
-    let feeSol = solUsd ? NET_FEE_USD / solUsd : null;
+    let solSrc = solUsd ? (mj.data?.sol?.price ? mj.data.src : "geckoterminal") : null;
+    let feeSol = solUsd ? NET_FEE_SOL : null;
     const boosted = new Set(uni?.boosted || []);
     const profiles = uni?.profiles || {};
     set("sol.new_pairs", un.ok || nw.ok ? "busy" : "blocked", `${un.ok ? `${un.data.pairs.length} DexScreener pairs` : `DexScreener refused: ${un.err}`}; ${nw.ok ? `${nw.data.length} new GeckoTerminal pools` : "GeckoTerminal not answering (bonus feed)"}`.slice(0, 190));
@@ -119,7 +139,8 @@ export async function tick(env, opts = {}) {
     const watch = await d.q(`SELECT * FROM mob_aq_watch WHERE last_seen > now() - interval '1 day' AND liq_usd >= $1 ORDER BY liq_usd DESC LIMIT 15`, [P.minLiqUsd]);
     // one Jupiter price call a tick samples every watched coin (and SOL); the samples become our own 1-minute candles
     let jp = null;
-    const sigMints = (await d.q(`SELECT DISTINCT mint FROM mob_aq_signals WHERE pct_60m IS NULL AND price_usd IS NOT NULL AND at > now() - interval '3 hours' LIMIT 15`)).map((r) => r.mint);
+    const sigMints = (await d.q(`SELECT DISTINCT m FROM (SELECT mint m, id FROM mob_aq_signals WHERE pct_60m IS NULL AND price_usd IS NOT NULL AND at > now() - interval '3 hours'
+        UNION ALL SELECT ctrl_mint, id FROM mob_aq_signals WHERE ctrl_mint IS NOT NULL AND ctrl_60m IS NULL AND at > now() - interval '3 hours') x LIMIT 30`)).map((r) => r.m);
     if (watch.length || sigMints.length) {
       try { jp = await jupPrices([SOL_MINT, ...watch.map((w) => w.mint), ...sigMints]); health.prices = Object.keys(jp).length > 0; } catch (e) { health.prices = false; health.prices_error = String(e.message || e).slice(0, 120); }
       const px = watch.filter((w) => jp?.[w.mint]);
@@ -132,9 +153,30 @@ export async function tick(env, opts = {}) {
     // liquidity: DexScreener's number while it is fresh (seen in the last 30 minutes), else Jupiter's own liquidity figure
     const fresh = watch.filter((w) => jp?.[w.mint]).map((w) => ({ pool: w.pool, name: `${w.symbol} / SOL`, symbol: w.symbol || "", mint: w.mint, quoteMint: SOL_MINT, priceUsd: jp[w.mint].price, solUsd: null,
       liqUsd: Date.now() - new Date(w.last_seen).getTime() < 1800000 ? w.liq_usd : jp[w.mint].liqUsd, createdAt: null, ch5m: null, ch1h: w.ch1h, volM5: null, volH1: w.vol_h1 }));
-    if (!solUsd && jp?.[SOL_MINT]) { solUsd = jp[SOL_MINT].price; feeSol = NET_FEE_USD / solUsd; health.sol_price = true; }
+    if (!solUsd && jp?.[SOL_MINT]) { solUsd = jp[SOL_MINT].price; solSrc = "jupiter"; }
+    // a tick must never leave open positions unmanaged for want of a SOL price: Jupiter asked directly, then Binance's public
+    // ticker, then the last price this desk saw (any age, for exits only; entries need one no older than 10 minutes)
+    if (!solUsd) { try { solUsd = (await jupPrices([SOL_MINT]))[SOL_MINT]?.price ?? null; if (solUsd) solSrc = "jupiter"; } catch {} }
+    if (!solUsd) { try { const b = Number((await getJson(BINANCE_SOL, 5000))?.price); if (Number.isFinite(b) && b > 0) { solUsd = b; solSrc = "binance SOLUSDT"; } } catch {} }
+    const solLast = await getState(d, "sol_usd", null);
+    const noSol = await getState(d, "no_sol_ticks", { total: 0, run: 0 });
+    let solExit = solUsd, solAgeSec = 0;
+    if (solUsd) { await setState(d, "sol_usd", { price: solUsd, src: solSrc, at: nowSec }); if (noSol.run) await setState(d, "no_sol_ticks", { ...noSol, run: 0 }); }
+    else {
+      noSol.total++; noSol.run++; noSol.lastAt = new Date(nowSec * 1000).toISOString();
+      await setState(d, "no_sol_ticks", noSol);
+      if (solLast?.price) { solExit = solLast.price; solAgeSec = Math.round(nowSec - solLast.at); solSrc = `last seen ${solAgeSec}s ago (${solLast.src})`; if (solAgeSec <= SOL_PRICE_MAX_AGE_SEC) solUsd = solLast.price; }
+    }
+    feeSol = solUsd ? NET_FEE_SOL : null; // an entry needs a SOL price (its levels are dollar prices); the fee itself does not
+    const feeExit = NET_FEE_SOL;
+    health.sol_price = !!solUsd;
+    health.counters = { noSolPriceTicks: noSol.total, noSolPriceRun: solUsd && !solAgeSec ? 0 : noSol.run, solPriceSource: solSrc, solPriceAgeSec: solAgeSec, stopsUnconfirmed: 0 };
     const tracked = fresh.map((p) => ({ ...p, src: "watchlist" })).sort((a, b) => (b.volH1 || 0) - (a.volH1 || 0));
     const jtrade = jtop.filter(tradable);
+    // matched controls for signal logging: coins priced this very tick that nobody signalled
+    const controls = fresh.map((p) => ({ mint: p.mint, symbol: p.symbol, price: p.priceUsd, liqUsd: p.liqUsd }));
+    // every Nansen-labelled buy is logged as a signal of source "nansen" with its control, whether or not anything is traded
+    for (const [mint, v] of Object.entries(nz)) if (v.cand?.priceUsd) await logSignal(d, { mint, symbol: v.cand.symbol, price: jp?.[mint]?.price ?? v.cand.priceUsd, liqUsd: v.cand.liqUsd, source: "nansen", label: v.traders.slice(0, 3).join(", "), independent: v.traders.length }, controls);
     const trendingNow = (jtrade.length ? jtrade : tracked.length ? tracked : liquid).slice(0, 12).map((p) => ({ symbol: p.symbol, mint: p.mint, ch1h: p.ch1h, liqUsd: p.liqUsd, boosted: boosted.has(p.mint) }));
     await d.q(`INSERT INTO mob_aq_market (k, data, ok, at) VALUES ('trending', $1, true, now()) ON CONFLICT (k) DO UPDATE SET data=EXCLUDED.data, ok=true, err=null, at=now()`, [JSON.stringify(trendingNow)]);
     const bars = await d.one(`SELECT count(*)::int n, count(DISTINCT mint)::int m FROM mob_aq_prices WHERE at > now() - interval '1 hour'`);
@@ -165,7 +207,7 @@ export async function tick(env, opts = {}) {
     set("sol.volume", cands.length ? "busy" : "idle", `${spikes} 5-minute volume spikes`);
     set("sol.liquidity", cands.length ? "busy" : "idle", `${cands.filter((c) => (c.liqUsd || 0) >= P.minLiqUsd).length} pools at or above $${P.minLiqUsd}`);
 
-    // ---- exits first (Hermes): real prices every tick, stops keep working even with the kill switch on
+    // ---- exits first (Hermes): real prices every tick, stops keep working even with the kill switch on and without a fresh SOL price
     const open = await d.q(`SELECT * FROM mob_aq_positions ORDER BY id`);
     if (open.length && !destroyed) {
       let mids = null;
@@ -173,37 +215,57 @@ export async function tick(env, opts = {}) {
       for (const p of open) {
         const mid = mids?.[p.mint] ?? null;
         if (mid == null) { set("ex.stops", "blocked", `${p.symbol}: no price, holding`); continue; }
+        // ONE unit for levels and P&L: the position is paid for and paid out in SOL, so the USD mid is restated at the SOL price of
+        // the entry (m = the coin's price in SOL, scaled back to entry dollars). A SOL move alone no longer trips a stop.
+        const m = p.sol_usd_entry && solExit ? mid * (p.sol_usd_entry / solExit) : mid;
+        const ref = p.sol_usd_entry ? p.entry_price_usd : p.entry_mid_usd;
+        const tokensUi = Number(p.tokens_raw) / 10 ** p.decimals;
         // exit variant B (scale-out): at +1R sell half, then the stop on the rest moves to break-even plus the measured cost
-        if (p.variant === "B" && !p.half_done && p.entry_mid_usd && p.stop_pct && mid >= p.entry_mid_usd * (1 + p.stop_pct / 100) && mid < p.target_price && feeSol) {
+        if (p.variant === "B" && !p.half_done && ref && p.stop_pct && m >= ref * (1 + p.stop_pct / 100) && m < p.target_price && feeExit) {
           const half = (BigInt(p.tokens_raw) / 2n).toString();
           if (out.exits.length || out.scaled) await sleep(gap);
           const hq = half !== "0" ? await jupQuote(p.mint, SOL_MINT, half) : null;
           if (hq) {
             const be = p.entry_price_usd * (1 + (p.rt_pct || 0) / 100);
             // one statement: the half is claimed, cash credited and the flows written together, or nothing is (ledger.mjs)
-            const sc = await scaleOut(d, p, { half, gross: Number(hq.outAmount) / 1e9, feeSol, stopPrice: be });
+            const sc = await scaleOut(d, p, { half, gross: Number(hq.outAmount) / 1e9, feeSol: feeExit, stopPrice: be });
             if (!sc) { set("ex.stops", "busy", `${p.symbol}: changed by another request, left alone this tick`); continue; }
             Object.assign(p, { tokens_raw: sc.tokens_raw, realized_sol: sc.realized_sol, half_done: true, stop_price: sc.stop_price });
             out.scaled = (out.scaled || 0) + 1;
             set("ex.stops", "busy", `${p.symbol}: half sold at +1R, stop moved to break-even plus cost`);
           }
         }
-        const why = mid <= p.stop_price ? "stop" : mid >= p.target_price ? "target" : nowSec * 1000 >= new Date(p.time_stop_at).getTime() ? "time stop" : null;
-        const markSol = solUsd ? (Number(p.tokens_raw) / 10 ** p.decimals) * mid / solUsd : null;
+        const why = m <= p.stop_price ? "stop" : m >= p.target_price ? "target" : nowSec * 1000 >= new Date(p.time_stop_at).getTime() ? "time stop" : null;
+        const markSol = solExit ? (Number(p.tokens_raw) / 10 ** p.decimals) * mid / solExit : null;
         await d.q(`UPDATE mob_aq_positions SET last_price_usd=$2, last_value_sol=$3, last_at=now() WHERE id=$1`, [p.id, mid, markSol]);
         if (!why) continue;
         if (out.exits.length) await sleep(gap);
         const q = await jupQuote(p.mint, SOL_MINT, p.tokens_raw);
-        if (!q || !feeSol) { set("ex.reconcile", "blocked", `${p.symbol}: ${why} hit but no sell quote; retry next tick`); health.jupiter = false; continue; }
+        if (!q || !feeExit) { set("ex.reconcile", "blocked", `${p.symbol}: ${why} hit but no ${q ? "SOL price ever seen" : "sell quote"}; retry next tick`); health.jupiter = !!q && health.jupiter !== false; continue; }
         health.jupiter = true;
         const gross = Number(q.outAmount) / 1e9;
-        const exitPx = solUsd ? gross * solUsd / (Number(p.tokens_raw) / 10 ** p.decimals) : null;
-        const slip = exitPx ? round((mid / exitPx - 1) * 100, 3) : null;
+        const exitPx = gross * solExit / (Number(p.tokens_raw) / 10 ** p.decimals);
+        const slip = round((mid / exitPx - 1) * 100, 3);
+        // a stop is confirmed against the executable quote before it fills. exit_k = what a sale fetched against the mid when the
+        // position was opened; quote / exit_k is the mid the quote implies now. If that is still above the stop AND selling here
+        // would lose less than the planned stop, the mid was wrong (stale or a glitch): nothing is sold, the next tick looks again.
+        if (why === "stop" && p.exit_k && p.sol_usd_entry) {
+          const implied = ((gross / (Number(p.tokens_raw) / 10 ** p.decimals)) * p.sol_usd_entry) / p.exit_k, cost = p.size_sol + p.fee_sol;
+          const lossPct = (((p.realized_sol || 0) + gross - feeExit - cost) / cost) * 100;
+          if (implied > p.stop_price && lossPct > -(p.stop_pct ?? Infinity)) {
+            await d.q(`UPDATE mob_aq_positions SET stop_unconfirmed = stop_unconfirmed + 1 WHERE id=$1`, [p.id]);
+            health.counters.stopsUnconfirmed++;
+            set("ex.reconcile", "busy", `${p.symbol}: mid ${round(m, 10)} under the stop ${round(p.stop_price, 10)} but the sell quote implies ${round(implied, 10)}: stop NOT confirmed, holding`);
+            continue;
+          }
+        }
         // the claim: one statement deletes the position, writes the trade, credits cash and writes the flows (ledger.mjs).
         // null = another request (SELL ALL, an overlapping tick) closed it first; this tick writes nothing for it.
-        const t = await closePosition(d, p, { gross, feeSol, exitPx, slip, why, gradePrefix: why === "time stop" ? "B" : "A", exitMid: mid });
+        const t = await closePosition(d, p, { gross, feeSol: feeExit, exitPx, slip, why, gradePrefix: why === "time stop" ? "B" : "A", exitMid: mid });
         if (!t) { set("ex.stops", "busy", `${p.symbol}: already closed by another request`); continue; }
         const pnlPct = t.pnl_pct, grade = t.grade;
+        // how far the mid had run past the stop level when it was seen: the Time Machine fills its stops this much lower
+        if (why === "stop" && p.stop_price > 0) await d.q(`UPDATE mob_aq_trades SET overshoot_pct=$2 WHERE id=$1`, [t.id, round(((p.stop_price - m) / p.stop_price) * 100, 3)]);
         await brain(d, "review", "lesson", `${p.symbol} ${p.strategy}: ${why} at ${round(pnlPct, 2)}% net (round trip at entry ${round(p.rt_pct, 2)}%, exit slippage ${slip ?? "unknown"}%). Process ${grade.split("/")[0]}: ${why === "time stop" ? "time stop is a plan exit but the setup did not move" : "plan followed"}.`, { trade: t.id, pnlPct: round(pnlPct, 3), why });
         out.exits.push({ symbol: p.symbol, why, pnlPct: round(pnlPct, 3) });
         set("ex.stops", "busy", `${p.symbol}: ${why}`);
@@ -214,34 +276,48 @@ export async function tick(env, opts = {}) {
       if (!W["ex.stops"]) set("ex.stops", "busy", `${open.length} open position(s) checked`);
     } else set("ex.stops", "idle", "no open positions");
 
-    // ---- Time Machine: replay R3 on stored candles before it may trade (every 30 minutes)
-    const lastReplay = await getState(d, "replay_R3", null);
-    if (!lastReplay || nowSec - lastReplay.at > 1800) {
-      const rows = await d.q(`SELECT pool, t, o, h, l, c FROM mob_aq_candles WHERE t > $1 ORDER BY pool, t`, [Math.floor(nowSec) - 86400]);
-      const by = {};
-      for (const r of rows) (by[r.pool] ||= []).push({ t: Number(r.t), o: r.o, h: r.h, l: r.l, c: r.c });
-      const measured = await d.one(`SELECT avg(rt_pct)::float a, count(*)::int n FROM (SELECT rt_pct FROM mob_aq_positions UNION ALL SELECT (facts->>'rtPct')::float FROM mob_aq_council WHERE facts ? 'rtPct') x WHERE rt_pct IS NOT NULL`);
-      const cost = measured?.n ? round(measured.a, 3) : KB_COST_PCT;
-      const rp = replay(by, P, cost);
-      const v = { at: nowSec, pools: Object.keys(by).length, candles: rows.length, ...rp };
-      await setState(d, "replay_R3", v);
-      if (rows.length) await brain(d, "council", "finding", `Time Machine R3 replay: ${rp.trades} trades on ${v.pools} pools (${rows.length} candles), mean ${rp.expectancyPct ?? "n/a"}% net of ${cost}% cost, 95% CI ${rp.ci95 ? rp.ci95.join(" to ") : "n/a"}. ${rp.evidence}.`, v);
-      set("cn.timemachine", "busy", `replayed ${rp.trades} trades on ${v.pools} pools`);
-    } else set("cn.timemachine", "idle", `last replay ${lastReplay.trades} trades, mean ${lastReplay.expectancyPct ?? "n/a"}%`);
-    const rpl = await getState(d, "replay_R3", null);
-    // R6 replay on the same stored candles: how long winners really take to reach target sizes the R6 time stop
-    let r6rep = await getState(d, "replay_R6", null);
-    if (!r6rep || nowSec - r6rep.at > 1800) {
+    // ---- Time Machine, every strategy that can be replayed on candles (every 30 minutes): closed candles only, each coin
+    // charged the round trip measured for its tier, stops filled with the measured overshoot, the live plan's stop sizing
+    const positionState = await getState(d, "position_sol", COUNCIL.positionSol);
+    const book = await costBook(d, Number(positionState) > 0 ? Number(positionState) : COUNCIL.positionSol);
+    let replays = (await getState(d, "replays", null)) || {};
+    if (!replays.at || nowSec - replays.at > 1800) {
       const rows = await d.q(`SELECT pool, t, o, h, l, c, v FROM mob_aq_candles WHERE t > $1 ORDER BY pool, t`, [Math.floor(nowSec) - 86400]);
       const by = {};
       for (const r of rows) (by[r.pool] ||= []).push({ t: Number(r.t), o: r.o, h: r.h, l: r.l, c: r.c, v: r.v });
-      const rp = replaySetup(by, momentumSetup, { ...STRATEGIES[5][4], ...(strategies.R6?.params || {}) }, 0.6);
-      // time stop = twice the median bars winners needed, between 15 and 90 minutes; under 20 targets hit there is no evidence and the default stays
-      const timeStopMin = rp.targetsHit >= 20 ? Math.max(15, Math.min(90, rp.medianBarsToTarget * 2)) : null;
-      r6rep = { at: nowSec, pools: Object.keys(by).length, candles: rows.length, ...rp, timeStopMin };
-      await setState(d, "replay_R6", r6rep);
-      if (rows.length) await brain(d, "council", "finding", `Time Machine R6 replay: ${rp.trades} signals on ${r6rep.pools} pools, mean ${rp.expectancyPct ?? "n/a"}% net of 0.6% cost, ${rp.targetsHit} reached target (median ${rp.medianBarsToTarget ?? "n/a"} min). R6 time stop: ${timeStopMin ? `${timeStopMin} min from the replay` : "default (under 20 targets, no evidence yet)"}.`, r6rep);
-    }
+      // pools judged before the tier was recorded get it from the Council's own verdicts on that coin
+      await d.q(`INSERT INTO mob_aq_pools (pool, mint, symbol, tier) SELECT DISTINCT ON (w.pool) w.pool, w.mint, w.symbol, c.facts->>'tier' FROM mob_aq_watch w JOIN mob_aq_council c ON c.mint = w.mint
+        WHERE c.facts->>'tier' IN ('A','B','C') ORDER BY w.pool, c.id DESC ON CONFLICT (pool) DO NOTHING`);
+      const tierOf = Object.fromEntries((await d.q(`SELECT pool, tier FROM mob_aq_pools`)).map((r) => [r.pool, r.tier]));
+      // a pool whose tier was never recorded is charged as tier C, the dearest: never the hopeful number
+      const costOf = (pool) => book.tierCost(tierOf[pool] || "C").pct;
+      // each strategy is replayed only on the coins it may trade: R6 on tier A/B, R7 on tier A (a pool of unknown tier is left out for them)
+      const only = { R6: ["A", "B"], R7: ["A"] };
+      const os = await d.one(`SELECT avg(overshoot_pct)::float8 a, count(*)::int n FROM (SELECT overshoot_pct FROM mob_aq_trades WHERE reason='stop' AND overshoot_pct IS NOT NULL ORDER BY id DESC LIMIT 200) x`);
+      const overshootPct = os.n >= 10 ? round(Math.max(0, os.a), 3) : AUDIT_OVERSHOOT_PCT, overshootSrc = os.n >= 10 ? `measured on ${os.n} paper stops` : "audit 2026-11-16 (15 stops)";
+      const withPlan = (fn, hold, rr) => (cs, p, now) => { const st = fn(cs, p, now); return st.signal ? { ...st, ...planFor(st, atr5Pct(cs), hold, rr) } : st; };
+      const defs = { R3: [fibSetup, P, null], R6: [momentumSetup, { ...R6_PARAMS, ...(strategies.R6?.params || {}) }, "rr"], R7: [bounceSetup, { ...R7_PARAMS, ...(strategies.R7?.params || {}) }, "rr"] };
+      replays = { at: nowSec, pools: Object.keys(by).length, candles: rows.length, overshootPct, overshootSrc, costs: Object.fromEntries(["A", "B", "C"].map((t) => [t, book.tierCost(t)])) };
+      for (const [sid, [fn, p, rr]] of Object.entries(defs)) {
+        const mine = only[sid] ? Object.fromEntries(Object.entries(by).filter(([pool]) => only[sid].includes(tierOf[pool]))) : by;
+        const rp = { ...replaySetup(mine, withPlan(fn, p.timeStopMin, rr ? p.rr : null), p, costOf, { maxBars: p.timeStopMin, overshootPct }), pools: Object.keys(mine).length };
+        replays[sid] = rp;
+        if (rows.length) await brain(d, "council", "finding", `Time Machine ${sid} replay: ${rp.trades} trades on ${rp.pools} pools${only[sid] ? ` of tier ${only[sid].join("/")}` : ""} (${rows.length} closed candles), mean ${rp.expectancyPct ?? "n/a"}% net of the measured cost (A ${replays.costs.A.pct}%, B ${replays.costs.B.pct}%, C ${replays.costs.C.pct}%; mean charged ${rp.costPct ?? "n/a"}%), stops filled ${overshootPct}% past the level (${overshootSrc}), 95% CI ${rp.ci95 ? rp.ci95.join(" to ") : "n/a"}. ${rp.evidence}.`, rp);
+      }
+      await setState(d, "replays", replays);
+      await setState(d, "replay_R3", { at: nowSec, pools: replays.pools, candles: rows.length, ...replays.R3 });
+      set("cn.timemachine", "busy", `replayed R3 ${replays.R3.trades}, R6 ${replays.R6.trades}, R7 ${replays.R7.trades} trades on ${replays.pools} pools`);
+    } else set("cn.timemachine", "idle", `last replay R3 ${replays.R3?.trades ?? 0} trades (mean ${replays.R3?.expectancyPct ?? "n/a"}%), R6 ${replays.R6?.trades ?? 0} (${replays.R6?.expectancyPct ?? "n/a"}%), R7 ${replays.R7?.trades ?? 0} (${replays.R7?.expectancyPct ?? "n/a"}%)`);
+    const rpl = replays.R3 || null;
+    // ---- which strategies may touch the real paper ledger (the rest keep firing on the shadow lane)
+    const ev = await signalEvidence(d);
+    const evWhy = (e) => `${e.withControl}/${EVIDENCE_MIN} signals with a matched control; median after 15 min ${e.median.m15 ?? "n/a"}% vs control ${e.control.m15 ?? "n/a"}%`;
+    const r6 = replays.R6;
+    const modes = {
+      R6: r6 && r6.n >= 30 && r6.expectancyPct > 0 ? { real: true, why: `replay positive: ${r6.n} trades, ${r6.expectancyPct}% net` } : { real: false, why: r6 && r6.n >= 30 ? `its replay with measured cost loses ${r6.expectancyPct}% a trade over ${r6.n} trades` : `its replay with measured cost has ${r6?.n ?? 0} of the 30 trades needed` },
+      R5: { real: ev.own.real, why: evWhy(ev.own) }, "R5:nansen": { real: ev.nansen.real, why: evWhy(ev.nansen) },
+    };
+    await setState(d, "modes", modes);
 
     // ---- Zeus: limits before any candidate is looked at
     const cash = Number(await getState(d, "cash_sol", START_SOL));
@@ -253,12 +329,13 @@ export async function tick(env, opts = {}) {
     const dayPct = dayStartEq > 0 ? (today.s / dayStartEq) * 100 : 0;
     const lastTrades = await d.q(`SELECT pnl_sol, closed_at FROM mob_aq_trades ORDER BY id DESC LIMIT $1`, [P.lossStreak]);
     const streak = lastTrades.length >= P.lossStreak && lastTrades.every((t) => t.pnl_sol <= 0) && nowSec * 1000 - new Date(lastTrades[0].closed_at).getTime() < P.cooldownMin * 60000;
-    const sv = survival(equity, START_SOL);
+    const baseSol = await walletBase(d); // 1 SOL at the start plus every CEO deposit: health is measured against it
+    const sv = survival(equity, baseSol);
     if (sv.stage === "destroyed" && !destroyed) {
       await setState(d, "destroyed", true);
       const tl = await d.one(`SELECT count(*)::int n, coalesce(sum(pnl_sol),0)::float pnl, mode() WITHIN GROUP (ORDER BY reason) worst FROM mob_aq_trades`);
       const rs = await d.q(`SELECT reason, count(*)::int n, round(avg(pnl_pct)::numeric,2)::float avg FROM mob_aq_trades GROUP BY reason ORDER BY n DESC LIMIT 3`);
-      await brain(d, "review", "post-mortem", `POST-MORTEM: the island was destroyed at ${round(equity, 4)} SOL (${sv.health}% of ${START_SOL}). ${tl.n} trades, ${round(tl.pnl, 4)} SOL realized. Exits: ${rs.map((x) => `${x.reason} x${x.n} avg ${x.avg}%`).join("; ") || "none"}. Trading stopped until Alex rebuilds.`, { sv, trades: tl.n });
+      await brain(d, "review", "post-mortem", `POST-MORTEM: the island was destroyed at ${round(equity, 4)} SOL (${sv.health}% of ${baseSol}). ${tl.n} trades, ${round(tl.pnl, 4)} SOL realized. Exits: ${rs.map((x) => `${x.reason} x${x.n} avg ${x.avg}%`).join("; ") || "none"}. Trading stopped until Alex rebuilds.`, { sv, trades: tl.n });
     }
     const dead = destroyed || sv.stage === "destroyed";
     await setState(d, "survival", sv);
@@ -275,10 +352,10 @@ export async function tick(env, opts = {}) {
     const lossRun = (() => { let n = 0; for (const t of runTrades) { if (t.pnl_sol <= 0) n++; else break; } return n; })();
     const throttle = lossRun >= 5 ? { size: 0.5, score: 10, losses: lossRun } : lossRun >= 3 ? { size: 0.75, score: 10, losses: lossRun } : { size: 1, score: 0, losses: lossRun };
     set("rk.kill", kill ? "blocked" : "busy", kill ? "KILL SWITCH ON: no new entries" : "kill switch off");
-    set("rk.limits", "busy", `${pos.length}/${Math.min(COUNCIL.maxOpen, sv.maxOpen)} positions open, ${COUNCIL.riskPct}% risk each`);
+    set("rk.limits", "busy", `${pos.length}/${Math.min(COUNCIL.maxOpen, sv.maxOpen)} positions open, ${COUNCIL.positionSol} SOL each (CEO setting)`);
     set("rk.day", dayPct <= -P.dayStopPct ? "blocked" : "busy", `today ${round(dayPct, 2)}% (stop -${P.dayStopPct}%)`);
-    set("rk.streak", "busy", throttle.size < 1 ? `${throttle.losses} losses in a row: size x${throttle.size}, score +${throttle.score} (paper never halts)` : "no loss streak");
-    set("rk.dd", "busy", `equity ${round(equity, 4)} SOL vs start ${START_SOL}`);
+    set("rk.streak", "busy", throttle.size < 1 ? `${throttle.losses} losses in a row: score +${throttle.score} (paper never halts; the size stays the CEO's fixed position)` : "no loss streak");
+    set("rk.dd", "busy", `equity ${round(equity, 4)} SOL vs wallet base ${baseSol}`);
     set("ex.balance", "busy", `cash ${round(cash, 4)} SOL`);
     set("ex.live", "blocked", "locked: PAPER only, no wallet");
 
@@ -287,7 +364,7 @@ export async function tick(env, opts = {}) {
       set("cn.veto", "busy", `BLOCK: ${riskBlock[0]}`);
     } else {
       // ---- the Council (hard blocks, soft score, tiers, R3/R5/R6/R7, explore) lives in council.mjs
-      await councilTick(env, { nansen: nz, variantDefault: (await getState(d, "variant_default", {})) || {}, throttle, r6TimeStopMin: r6rep?.timeStopMin ?? null, d, cands, tradable, strategies, pos, cash, equity, sv, solUsd, feeSol, nowSec, gap, health, set, out, near, rpl, fng: fg.data?.value ?? null, ownCandles, brain, flow, setState,
+      await councilTick(env, { nansen: nz, variantDefault: (await getState(d, "variant_default", {})) || {}, throttle, r6TimeStopMin: null, book, modes, replays, controls, positionSol: (() => { const v = Number(positionState); return Number.isFinite(v) && v > 0 ? v : COUNCIL.positionSol; })(), d, cands, tradable, strategies, pos, cash, equity, sv, solUsd, feeSol, nowSec, gap, health, set, out, near, rpl, fng: fg.data?.value ?? null, ownCandles, brain, flow, setState,
         council: (v, c, reason, number, facts) => council(d, v, c, reason, number, facts) });
     }
     if (!W["ex.paper"]) set("ex.paper", "idle", "no PASS this tick");
@@ -300,7 +377,7 @@ export async function tick(env, opts = {}) {
     health.budget = { heliusCalls: CALLS.helius, heliusCap: CAPS.helius, heliusKey: !!env.HELIUS_API_KEY, jupiterDataCalls: CALLS.jupiterData, jupiterDataCap: CAPS.jupiterData, dexscreenerCalls: CALLS.dexscreener, geckoterminalCalls: CALLS.geckoterminal };
     // ---- helper lanes (second brains): judged by the same Council for the record, paper-tracked apart, never the real ledger
     out.lanes = await lanesTick(env, { halted: dead || kill, nowSec, gap, feeSol, P, set, council: (v, c, reason, number, facts) => council(d, v, c, reason, number, facts) });
-    out.shadow = dead ? { opened: null, closed: [] } : await shadowTick(env, { kill, entered: !!out.entered, near, solUsd, nowSec, set, P });
+    out.shadow = dead ? { opened: null, closed: [] } : await shadowTick(env, { kill, entered: !!out.entered, near, solUsd, feeSol, gap, book, nowSec, set, P, positionSol: Number(positionState) > 0 ? Number(positionState) : COUNCIL.positionSol });
 
     // ---- Review + Learning: stats, tournament rules (recorded, never silent)
     const trades = await d.q(`SELECT strategy, pnl_pct, pnl_sol FROM mob_aq_trades`);
@@ -509,7 +586,9 @@ export async function buildState(env) {
   const conn = (k) => (hl[k] && Date.now() - new Date(hl[k]).getTime() < 86400000 ? "connected" : "not connected");
   return {
     build: AQ_BUILD, mode: S.mode === "LIVE" ? "LIVE" : "PAPER", killSwitch: S.kill === true, updatedAt: S.last_tick?.at || null,
-    equitySol: round(equity, 9), startSol: START_SOL, pnlTodaySol: round(realizedToday + unreal, 9), pnlTotalSol: round(equity - START_SOL, 9),
+    // startSol is the wallet base (the first 1 SOL plus CEO deposits): a deposit raises it, so it is never counted as profit
+    equitySol: round(equity, 9), cashSol: round(cash, 9), positionSol: Number(S.position_sol) > 0 ? Number(S.position_sol) : COUNCIL.positionSol, maxOpen: COUNCIL.maxOpen, startSol: ledNow.baseSol,
+    wallet: { baseSol: ledNow.baseSol, firstSol: START_SOL, deposits: S.ledger_base?.deposits || [] }, pnlTodaySol: round(realizedToday + unreal, 9), pnlTotalSol: round(equity - ledNow.baseSol, 9),
     trades: { n: s.n, wins: s.wins, winRate: s.winRate, expectancyPct: s.expectancyPct, ci95: s.ci95, evidence: s.evidence },
     positions: pos.map((p) => ({ id: p.id, symbol: p.symbol, mint: p.mint, entryPrice: p.entry_price_usd, price: p.last_price_usd, stopPct: p.stop_pct, targetPct: p.target_pct,
       sizeSol: p.size_sol, tier: p.tier || null, tag: p.tag || null, openedAt: p.opened_at, variant: p.variant || "A", scaledOut: !!p.half_done, strength: p.strength ?? null,
@@ -531,7 +610,11 @@ export async function buildState(env) {
     strategies: strat.map((r) => ({ id: r.id, name: r.name, trades: r.stats?.n ?? 0, pnlSol: r.stats?.pnlSol ?? 0, alive: r.alive, status: r.status, market: r.market, defaultVariant: S.variant_default?.[r.id] || null,
       byStrength: STRENGTH_BUCKETS.map(([lo, hi]) => { const xs = trd.filter((t) => t.strategy === r.id && t.strength != null && t.strength >= lo && t.strength < hi).map((t) => t.pnl_pct), st3 = stats(xs); return { from: lo, to: hi === 9 ? null : hi, n: st3.n, winRate: st3.winRate, expectancyPct: st3.expectancyPct }; }),
       variants: ["A", "B"].map((v) => { const xs = trd.filter((t) => t.strategy === r.id && t.variant === v).map((t) => t.pnl_pct), w = xs.filter((p) => p > 0), l = xs.filter((p) => p <= 0), st2 = stats(xs);
-        return { id: v, n: st2.n, winRate: st2.winRate, expectancyPct: st2.expectancyPct, avgWin: w.length ? round(w.reduce((a, c) => a + c, 0) / w.length, 2) : null, avgLoss: l.length ? round(l.reduce((a, c) => a + c, 0) / l.length, 2) : null }; }) })),
+        return { id: v, n: st2.n, winRate: st2.winRate, expectancyPct: st2.expectancyPct, avgWin: w.length ? round(w.reduce((a, c) => a + c, 0) / w.length, 2) : null, avgLoss: l.length ? round(l.reduce((a, c) => a + c, 0) / l.length, 2) : null }; }),
+      // which book this strategy trades on now, and the evidence behind that
+      ledger: S.modes?.[r.id] ? (S.modes[r.id].real ? "real" : "shadow") : "real", ledgerWhy: S.modes?.[r.id]?.why ?? null,
+      replay: S.replays?.[r.id === "R4" ? "R3" : r.id] ? (({ trades, expectancyPct, ci95, costPct, overshootPct }) => ({ trades, expectancyPct, ci95, costPct, overshootPct }))(S.replays[r.id === "R4" ? "R3" : r.id]) : null,
+      timeArms: ["L", "S"].map((v) => { const st4 = stats(trd.filter((t) => t.strategy === r.id && t.tvar === v).map((t) => t.pnl_pct)); return { id: v, n: st4.n, winRate: st4.winRate, expectancyPct: st4.expectancyPct }; }) })),
     tools: tools.map((t) => ({ name: t.name, licence: t.licence, verdict: t.verdict, status: t.status, usedBy: t.used_by, bestUse: t.best_use })),
     replay: S.replay_R3 ? { trades: S.replay_R3.trades, expectancyPct: S.replay_R3.expectancyPct, ci95: S.replay_R3.ci95, costPct: S.replay_R3.costPct, evidence: S.replay_R3.evidence } : null,
     health: { ...(S.health || {}), ledger: ledNow.ok, errors: mkt.filter((r) => !r.ok).slice(0, 12).map((r) => ({ feed: r.k, error: r.err, at: r.at })) },
@@ -539,12 +622,12 @@ export async function buildState(env) {
     shadow: await shadowStats(d),
     whales: { ...(await whaleState(d)), nansen: nzs.state },
     rules: (await d.q(`SELECT name, weight, blocked_winners, blocked_losers FROM mob_aq_rules ORDER BY name`)).map((r) => ({ name: r.name, weight: round(r.weight, 2), blockedWinners: r.blocked_winners, blockedLosers: r.blocked_losers })),
-    council_rules: { hard: ["no Jupiter sell route", "mint or freeze authority", `liquidity under $${COUNCIL.hardMinLiq}`, "stale price", "stop > target", `target under ${COUNCIL.costMultiple}x measured round trip`, "kill switch", "destroyed"], passScore: COUNCIL.passScore, exploreEveryMin: COUNCIL.exploreEveryMin, maxOpen: COUNCIL.maxOpen, riskPct: COUNCIL.riskPct },
+    council_rules: { hard: ["no Jupiter sell route", "mint or freeze authority", `liquidity under $${COUNCIL.hardMinLiq}`, "stale price", "stop > target", `target under ${COUNCIL.costMultiple}x measured round trip`, `${COUNCIL.costMultiple}x measured round trip over ${COUNCIL.atrMultiple}x ATR5`, "fill outside its own stop/target", "strategy's own replay loses", "kill switch", "destroyed"], passScore: COUNCIL.passScore, exploreEveryMin: COUNCIL.exploreEveryMin, maxOpen: COUNCIL.maxOpen, riskPct: COUNCIL.riskPct },
     tradesLastHour: trd.filter((t) => t.opened_at && Date.now() - new Date(t.opened_at).getTime() < 3600000).length + pos.filter((p) => Date.now() - new Date(p.opened_at).getTime() < 3600000).length,
     funnel: S.funnel || null,
     lanes: await laneStats(d, { n: s.n, winRate: s.winRate, expectancyPct: s.expectancyPct, open: pos.length }),
     ledger: ledNow,
-    survival: (() => { const sv = survival(equity, START_SOL); return { health: sv.health, stage: S.destroyed === true ? "destroyed" : sv.stage, sizeMult: S.destroyed === true ? 0 : sv.sizeMult, maxOpen: S.destroyed === true ? 0 : sv.maxOpen }; })(),
+    survival: (() => { const sv = survival(equity, ledNow.baseSol); return { health: sv.health, stage: S.destroyed === true ? "destroyed" : sv.stage, sizeMult: S.destroyed === true ? 0 : sv.sizeMult, maxOpen: S.destroyed === true ? 0 : sv.maxOpen }; })(),
     helpers: { grok: conn("grok"), chatgpt: conn("chatgpt"), codex: conn("codex"), codexLastAt: hl.codex || null, grokLastAt: hl.grok || null, chatgptLastAt: hl.chatgpt || null },
     xfeed: xs.map((r) => ({ at: r.at, section: r.dept, text: r.text, label: (r.labels || [])[0] || "CLAIMED", source: "grok", weight: r.weight })),
     marketFeed: nzs.feed,
@@ -555,10 +638,10 @@ export async function buildState(env) {
 export async function rebuild(env) {
   await ensureSeed(env);
   const d = db(env);
-  const n = await resetLedger(d); // positions written off, cash and the reconciliation base reset, one statement
+  const { n, baseSol } = await resetLedger(d); // positions written off, cash back to the wallet base, one statement
   await setState(d, "destroyed", false);
-  await brain(d, "ops", "event", `Alex rebuilt the island: paper wallet reset to ${START_SOL} SOL (${n} open position(s) written off). The brain keeps everything it learned.`);
-  return { rebuilt: true, equitySol: START_SOL };
+  await brain(d, "ops", "event", `Alex rebuilt the island: paper wallet reset to ${baseSol} SOL (${n} open position(s) written off). The brain keeps everything it learned.`);
+  return { rebuilt: true, equitySol: baseSol };
 }
 
 // Alex's "sell all": every open paper position is sold at the live Jupiter sell quote (minus the network fee), every
@@ -568,7 +651,8 @@ export async function sellAll(env, opts = {}) {
   await ensureSeed(env);
   const d = db(env), gap = opts.gapMs ?? Number(env.AQ_JUP_GAP_MS ?? 1100), why = "CEO sell all";
   const mj = await feeds.majors(env);
-  const solUsd = mj.data?.sol?.price ?? null, feeSol = solUsd ? NET_FEE_USD / solUsd : null;
+  // no fresh SOL price: the last one the desk saw still sells (a sale is quoted in SOL; the price only sizes the tiny fee)
+  const solUsd = mj.data?.sol?.price ?? (await getState(d, "sol_usd", null))?.price ?? null, feeSol = solUsd ? NET_FEE_SOL : null;
   const out = { sold: [], kept: [], shadowClosed: [], skipped: [] };
   const open = await d.q(`SELECT * FROM mob_aq_positions ORDER BY id`);
   for (const [i, p] of open.entries()) {
