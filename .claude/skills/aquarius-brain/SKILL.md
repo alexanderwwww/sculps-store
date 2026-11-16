@@ -57,7 +57,7 @@ Average result per trade, as % of the trade, with the win rate:
 - NOT BUILT YET: the arena keeps counts per rule and tier, not the coin facts of each loss. Fix 8 below.
 
 ## Fibonacci, as observation (Alex, 2026-11-17: "apply the Fibonacci rules there, even as observation, this is going to give us some nice weapon")
-Live in the arena since 2026-11-17 01:30 Athens: entries , ,  (golden pocket),  = the price sitting in that retracement band of the last up-leg (lowest low of the 45-minute window, then the highest high after it, leg at least 2x ATR). Observation only: they trade on paper in the arena and are compared with random. First numbers at the next read.
+Live in the arena since 2026-11-17 01:30 Athens: entries `fib382`, `fib50`, `fib618` (golden pocket), `fib786` = the price sitting in that retracement band of the last up-leg (lowest low of the 45-minute window, then the highest high after it, leg at least 2x ATR). Observation only: they trade on paper in the arena and are compared with random. First numbers at the next read.
 
 ## Fixes found, NOT applied yet
 1. Drop coins that do not move (stablecoins, ATR under the round-trip cost) from the training list, so trades are spent on coins that can teach something.
