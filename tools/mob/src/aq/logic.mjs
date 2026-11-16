@@ -52,7 +52,7 @@ export function slimRug(r) {
     mintAuthority: r.mintAuthority ?? null, freezeAuthority: r.freezeAuthority ?? null, rugged: !!r.rugged,
     danger: (r.risks || []).filter((x) => x.level === "danger").map((x) => x.name),
     topHolderPct: round(pcts[0] || 0, 2), top10Pct: round(pcts.slice(0, 10).reduce((a, b) => a + b, 0), 2),
-    lpLockedPct: lq > 0 ? round((lqLocked / lq) * 100, 2) : null, decimals: num(r.token?.decimals), creator: r.creator || null,
+    lpLockedPct: lq > 0 ? round((lqLocked / lq) * 100, 2) : null, decimals: num(r.token?.decimals), creator: r.creator || null, insiders: (r.topHolders || []).filter((h) => h.insider).map((h) => h.owner).slice(0, 50),
   };
 }
 export function safety(s, p) {

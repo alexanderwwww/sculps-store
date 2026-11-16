@@ -24,3 +24,9 @@ gmgn-fib, trader-master and the 11 trader-* skills, recipe (R1-R5, trade math), 
 
 ## Law
 Paper first. No keys in chat. AGENTS rules 18-26. Missing data = NO trade (shadow lane may still record it as unknown).
+
+## Fibonacci order (Alex, 2026-11-16)
+When Alex says "Fibonacci": 1) validate the coin first (gate, safety, costs); 2) draw the Fibonacci levels from the CURRENT swing and apply the rules from this point forward; 3) also examine the past (Time Machine replay of the same rules on the stored candles) and show both.
+
+## Speed (Alex asked "why every minute, not every second")
+Cloudflare's timer fires at most once a minute, and free APIs block per-second polling. Plan: entries checked every minute on 1-minute candles; exits on open positions every few seconds via a fast loop (Durable Object alarm or the small always-on server) with Helius. Per-second scanning of everything only with the paid fast line and own server, after paper profit.

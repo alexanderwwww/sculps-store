@@ -4,6 +4,7 @@ import { db } from "../db.mjs";
 import { DEPTS, seedWorkers, TOOLS, STRATEGIES, GTA6_DATE, GTA_RE, CEO } from "./seed.mjs";
 import { feeds, midPrices, jupQuote, SOL_MINT } from "./feeds.mjs";
 import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round } from "./logic.mjs";
+import { whaleSignal, shadowTick, shadowStats } from "./whales.mjs";
 
 export const AQ_BUILD = "aq-engine-1";
 export const START_SOL = 1;
@@ -164,6 +165,7 @@ export async function tick(env, opts = {}) {
     // ---- Zeus: limits before any candidate is looked at
     const cash = Number(await getState(d, "cash_sol", START_SOL));
     const pos = await d.q(`SELECT * FROM mob_aq_positions`);
+    const near = [];
     const equity = cash + pos.reduce((a, p) => a + (p.last_value_sol ?? p.size_sol), 0);
     const today = await d.one(`SELECT coalesce(sum(pnl_sol),0)::float s FROM mob_aq_trades WHERE closed_at >= date_trunc('day', now())`);
     const dayStartEq = equity - today.s;
@@ -195,7 +197,8 @@ export async function tick(env, opts = {}) {
       for (const c of queue) {
         const SP = strategies[c.strategy].params;
         const facts = { liqUsd: c.liqUsd, boosted: c.boosted, copycat: c.copycat, gta: c.gta, src: c.src };
-        const block = async (reason, number) => { await council(d, "BLOCK", c, reason, number, facts); out.evaluated.push({ symbol: c.symbol, verdict: "BLOCK", reason, number }); };
+        let s = null;
+        const block = async (reason, number) => { await council(d, "BLOCK", c, reason, number, facts); out.evaluated.push({ symbol: c.symbol, verdict: "BLOCK", reason, number }); near.push({ c, reason, setup: s, rt: facts.rtPct ?? null }); };
         if (c.liqUsd == null || c.liqUsd < SP.minLiqUsd) { await block("liquidity too low", c.liqUsd); continue; }
         if (c.copycat) { await block("copycat name", c.copies); continue; }
         const rg = await feeds.rug(env, c.mint);
@@ -203,13 +206,17 @@ export async function tick(env, opts = {}) {
         const sf = safety(rg.data, SP);
         Object.assign(facts, { safety: rg.data });
         set("cn.safety", rg.ok ? "busy" : "blocked", `${c.symbol}: ${sf.reason}`);
-        if (!sf.ok) { await block(sf.reason, sf.number); continue; }
+        // candles and whales are read before the safety verdict so a blocked coin still has levels for the shadow lane
         const oh = await feeds.ohlcv(env, c.pool);
         health.geckoterminal_ohlcv = oh.ok;
+        if (oh.ok && oh.data?.length) s = fibSetup(oh.data, SP, nowSec);
+        const wh = await whaleSignal(env, c, rg.data, set);
+        health.whales_trades = wh.ok;
+        facts.whale = wh;
+        if (!sf.ok) { await block(sf.reason, sf.number); continue; }
         if (!oh.ok || !oh.data?.length) { await block("missing data: candles", null); continue; }
         if (oh.data.length) await d.q(`INSERT INTO mob_aq_candles (pool, t, o, h, l, c, v) SELECT $1, t, o, h, l, c, v FROM unnest($2::bigint[],$3::float8[],$4::float8[],$5::float8[],$6::float8[],$7::float8[]) x(t,o,h,l,c,v) ON CONFLICT DO NOTHING`,
           [c.pool, oh.data.map((x) => x.t), oh.data.map((x) => x.o), oh.data.map((x) => x.h), oh.data.map((x) => x.l), oh.data.map((x) => x.c), oh.data.map((x) => x.v)]);
-        const s = fibSetup(oh.data, SP, nowSec);
         Object.assign(facts, { setup: s });
         set("st.fib", "busy", `${c.symbol}: ${s.why}`);
         set("st.swing", "busy", `${c.symbol}: impulse ${s.impulsePct ?? "?"}%`);
@@ -261,6 +268,8 @@ export async function tick(env, opts = {}) {
       set("cn.adversary", out.evaluated.length ? "busy" : "idle", out.evaluated[0] ? `${out.evaluated[0].symbol}: ${out.evaluated[0].reason}` : "waiting");
     }
     if (!W["ex.paper"]) set("ex.paper", "idle", "no PASS this tick");
+    // ---- never idle: shadow lane (paper probes on near misses, own ledger, never mixed into the real one)
+    out.shadow = await shadowTick(env, { kill, entered: !!out.entered, near, solUsd, nowSec, set, P });
 
     // ---- Review + Learning: stats, tournament rules (recorded, never silent)
     const trades = await d.q(`SELECT strategy, pnl_pct, pnl_sol FROM mob_aq_trades`);
@@ -307,9 +316,9 @@ export async function tick(env, opts = {}) {
 
     // department live flags: a department is live when every feed it needs answered this tick
     const live = {
-      scouts_sol: !!(health.geckoterminal && health.dexscreener), scouts_stocks: !!health.coingecko, whales: false, news: !!health.feargreed,
+      scouts_sol: !!(health.geckoterminal && health.dexscreener), scouts_stocks: !!health.coingecko, news: !!health.feargreed,
       setups: health.geckoterminal_ohlcv !== false && !!health.geckoterminal, costs: health.jupiter !== false, council: health.rugcheck !== false,
-      risk: true, execution: health.dexscreener_prices !== false && health.jupiter !== false, review: true, learning: true, ops: true,
+      whales: health.whales_trades === true, risk: true, execution: health.dexscreener_prices !== false && health.jupiter !== false, review: true, learning: true, ops: true,
     };
     await d.q(`UPDATE mob_aq_depts d SET live=x.l, last_run_at=now() FROM unnest($1::text[], $2::bool[]) x(id, l) WHERE d.id=x.id`, [Object.keys(live), Object.values(live)]);
     const keys = Object.keys(W);
@@ -458,6 +467,7 @@ export async function buildState(env) {
     tools: tools.map((t) => ({ name: t.name, licence: t.licence, verdict: t.verdict, status: t.status, usedBy: t.used_by, bestUse: t.best_use })),
     replay: S.replay_R3 ? { trades: S.replay_R3.trades, expectancyPct: S.replay_R3.expectancyPct, ci95: S.replay_R3.ci95, costPct: S.replay_R3.costPct, evidence: S.replay_R3.evidence } : null,
     health: S.health || {},
+    shadow: await shadowStats(d),
     helpers: { grok: conn("grok"), chatgpt: conn("chatgpt"), grokLastAt: hl.grok || null, chatgptLastAt: hl.chatgpt || null },
     xfeed: xs.map((r) => ({ at: r.at, section: r.dept, text: r.text, label: (r.labels || [])[0] || "CLAIMED", source: "grok" })),
   };

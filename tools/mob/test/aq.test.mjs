@@ -3,7 +3,8 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { makeEnv, dropEnv, reqOf, login, mock, resetMocks, res, calls } from "./helpers.mjs";
 import { db } from "../src/db.mjs";
-import { FX } from "./aq-fixtures.mjs";
+import { FX, FX2 } from "./aq-fixtures.mjs";
+import { whaleSignal, slimTrades } from "../src/aq/whales.mjs";
 import { tick, proposeBot, _resetSeeded } from "../src/aq/engine.mjs";
 import { fibSetup, safety, slimRug, stats, replay, candlesFromGT } from "../src/aq/logic.mjs";
 import { R3_PARAMS, seedWorkers, DEPT_IDS } from "../src/aq/seed.mjs";
@@ -37,13 +38,14 @@ function goldenCandles() {
 const safeRug = () => { const r = clone(FX.rugWasted); r.topHolders = r.topHolders.map((h) => ({ ...h, pct: h.pct / 2 })); return r; };
 const MINT = { A: "AAAAgoodmint1111111111111111111111111111pump", B: "BBBBrugmint11111111111111111111111111111pump", C: "CCCCcostmint1111111111111111111111111111pump", F: "FFFFnewmint11111111111111111111111111111pump" };
 const POOL = { A: "PoolA111111111111111111111111111111111111111", B: "PoolB111111111111111111111111111111111111111", C: "PoolC111111111111111111111111111111111111111", F: "PoolF111111111111111111111111111111111111111" };
-let trendingPools = [], prices = {};
+let trendingPools = [], prices = {}, tradesFor = {};
 
 function stubAll() {
   resetMocks();
   mock("GET", "https://api.geckoterminal.com/api/v2/networks/solana/trending_pools", () => ({ data: trendingPools }));
   mock("GET", "https://api.geckoterminal.com/api/v2/networks/solana/new_pools", () => clone(FX.gtNew));
   mock("GET", /geckoterminal\.com\/.*\/ohlcv\/minute/, () => goldenCandles());
+  mock("GET", /geckoterminal\.com\/api\/v2\/networks\/solana\/pools\/[^/]+\/trades$/, (rec) => tradesFor[rec.url.split("/").at(-2)] || clone(FX2.gtTrades));
   mock("GET", "https://api.dexscreener.com/token-boosts/latest/v1", () => { const b = clone(FX.dsBoosts); b[0].tokenAddress = MINT.C; return b; });
   mock("GET", "https://api.dexscreener.com/token-profiles/latest/v1", () => clone(FX.dsProfiles));
   mock("GET", "https://api.coingecko.com/api/v3/simple/price", () => clone(FX.cg));
@@ -121,6 +123,46 @@ test("exits: stop, target and time stop with real-shape quotes; journal, flows, 
   for (let i = 1; i < s.flows.length; i++) assert.ok(s.flows[i - 1].id > s.flows[i].id, "flows newest first, ids monotonic");
   assert.ok(s.brain.some((b) => b.dept === "review" && /stop at/.test(b.text)));
   assert.equal(s.strategies.find((x) => x.id === "R3").trades, 3);
+});
+
+test("shadow lane: a cost-gate near miss is probed on paper, closed, graded, and kept out of the real ledger", async () => {
+  const d = db(env);
+  const sh = await d.one(`SELECT * FROM mob_aq_shadow WHERE symbol='COST'`);
+  assert.ok(sh, "the COST near miss got a SHADOW probe"); assert.equal(sh.block_reason, "cost gate"); assert.equal(sh.cost_source, "measured"); assert.ok(sh.cost_pct > 9);
+  const realBefore = (await d.one(`SELECT count(*)::int n FROM mob_aq_trades`)).n;
+  prices[MINT.C] = sh.target_price * 1.01;
+  const t = await tick(env);
+  assert.ok(t.shadow.closed.some((x) => x.symbol === "COST" && x.why === "target"));
+  const s = await S();
+  assert.equal(s.shadow.tag, "SHADOW"); assert.ok(s.shadow.n >= 1); assert.ok(s.shadow.expectancyPct < 0, "target 9% minus a 10% round trip still loses");
+  assert.ok(s.shadow.byReason.some((x) => x.reason === "cost gate"));
+  assert.ok(s.brain.some((b) => /SHADOW COST: blocked for "cost gate".*The block was RIGHT/.test(b.text)));
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_trades`)).n, realBefore, "shadow never touches the real ledger");
+  assert.equal(s.trades.n, realBefore);
+});
+
+test("whales: 2+ independent winners buying = signal; creator excluded; Helius funder clustering merges one owner", async () => {
+  const d = db(env), W1 = "WhaleOne111", W2 = "WhaleTwo222", DEV = "CreatorDev333", MW = "WhaleMint1pump", PW = "WhalePool1";
+  for (const w of [W1, W2, DEV]) for (const m of ["m1", "m2", "m3"])
+    await d.q(`INSERT INTO mob_aq_wtrades (tx, wallet, mint, kind, sol, at) VALUES ($1,$2,$3,'buy',1,now()),($1,$2,$3,'sell',$4,now())`, [`${w}${m}`, w, m, m === "m3" ? 0.5 : 2]);
+  const real = FX2.gtTrades.data[0];
+  tradesFor[PW] = { data: [W1, W2, DEV].map((w, i) => { const x = clone(real); Object.assign(x.attributes, { tx_hash: `tx${i}`, tx_from_address: w, kind: "buy", from_token_address: SOL, to_token_address: MW, block_timestamp: new Date().toISOString() }); return x; }) };
+  assert.equal(slimTrades(tradesFor[PW], MW).length, 3);
+  const notes = {};
+  let w = await whaleSignal(env, { pool: PW, mint: MW, symbol: "WH" }, { creator: DEV, insiders: [] }, (k, st, n) => { notes[k] = n; });
+  assert.equal(w.signal, true); assert.equal(w.independent, 2); assert.equal(w.excluded, 1); assert.match(w.funders, /unchecked/);
+  // with a Helius key: both winners were first funded by the same wallet -> one owner -> no signal
+  env.HELIUS_API_KEY = "hk-test"; let lastWallet = null;
+  mock("POST", "https://mainnet.helius-rpc.com/", (rec) => {
+    assert.ok(rec.url.includes("api-key=hk-test"));
+    const b = JSON.parse(rec.body);
+    if (b.method === "getSignaturesForAddress") { lastWallet = b.params[0]; return clone(FX2.rpcSigs); }
+    const tx = clone(FX2.rpcTx); tx.result.transaction.message.instructions[0].parsed.info.wallet = lastWallet; return tx;
+  });
+  w = await whaleSignal(env, { pool: PW, mint: MW, symbol: "WH" }, { creator: DEV, insiders: [] }, () => {});
+  delete env.HELIUS_API_KEY;
+  assert.equal(w.winners, 2); assert.equal(w.independent, 1); assert.equal(w.signal, false); assert.match(w.funders, /helius/);
+  assert.equal((await d.q(`SELECT DISTINCT funder FROM mob_aq_funders`)).length, 1);
 });
 
 test("kill switch blocks every new entry; loss streak throttles", async () => {
