@@ -71,3 +71,5 @@ Live in the arena since 2026-11-17 01:30 Athens: entries `fib382`, `fib50`, `fib
 
 ## Log
 - 2026-11-17 01:20: first read, 16,800 trades. Skill created.
+- 2026-11-17 01:50: FIX 1 APPLIED (Alex: "as you fix, try to raise your winning rate... observe and write and feed the brain"): coins whose 5-minute ATR is under 0.5% no longer trade in the arena. First three batches after it: 652 wins in 2,101 trades = 31.0% (was 12.7% before). HINT only: three minutes, one market hour. Still 700 a minute. Whether the average result per trade improved, not just the win rate, is for the next report read.
+- 2026-11-17 01:50: Grok asked (Alex's order) to run his own 700-a-minute paper data collection on his xAI machine and post aggregated lessons into the brain. He needs Alex's confirmation in his own chat.
