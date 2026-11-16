@@ -224,7 +224,7 @@ export async function trainingState(d, S = null) {
 // PACE: the minutes read each tick hold more candidate trades than 700; exactly ARENA.perMinute of them are taken, drawn at
 // random with a seed (an unbiased sample of every setting), each sized 0.8 to 1 SOL by its own seeded draw.
 // Live and replay are stored apart. Walk-forward graduation reads live days only.
-export const FEED = { livePerTick: 2, backPerTick: 2, chunkMin: 80, backChunkMin: 40, pad: 45, backDays: 30, tape: 60, path: 60, line: 180 };
+export const FEED = { livePerTick: 2, backPerTick: 2, chunkMin: 80, backChunkMin: 40, extraRounds: 3, pad: 45, backDays: 30, tape: 60, path: 60, line: 180 };
 const chartUrl = (mint, toMin, n) => `https://datapi.jup.ag/v2/charts/${mint}?interval=1_MINUTE&to=${toMin * 60000}&candles=${n}&type=price&quote=usd`;
 async function candlesOf(mint, toMin, n) {
   const cs = (await getJson(chartUrl(mint, toMin, n), 12000))?.candles;
@@ -272,28 +272,36 @@ export async function arenaTick(env, opts = {}) {
     if (to >= from) { jobs.push({ kind: "live", c, eFrom: from, eTo: to }); k++; }
     if (seen === coins.length - 1 || k === FEED.livePerTick) cur.li = (cur.li + seen + 1) % Math.max(1, coins.length);
   }
-  for (let k = 0, seen = 0; seen < coins.length && k < FEED.backPerTick; seen++) {
-    const c = coins[(cur.bi + seen) % coins.length], to = cur.back[c.mint] ?? backStart, from = Math.max(oldest, to - FEED.backChunkMin + 1);
-    if (to !== 0 && to >= from) { jobs.push({ kind: "replay", c, eFrom: from, eTo: to }); k++; }
-    if (seen === coins.length - 1 || k === FEED.backPerTick) cur.bi = (cur.bi + seen + 1) % Math.max(1, coins.length);
-  }
+  const pickBack = (want) => { const js = [];
+    for (let k = 0, seen = 0; seen < coins.length && k < want; seen++) {
+      const c = coins[(cur.bi + seen) % coins.length], to = cur.back[c.mint] ?? backStart, from = Math.max(oldest, to - FEED.backChunkMin + 1);
+      if (to !== 0 && to >= from && !busy.has(c.mint)) { js.push({ kind: "replay", c, eFrom: from, eTo: to }); busy.add(c.mint); k++; }
+      if (seen === coins.length - 1 || k === want) { cur.bi = (cur.bi + seen + 1) % Math.max(1, coins.length); break; }
+    }
+    return js; };
   // ---- fetch and resolve. A failed fetch leaves that coin's cursor where it was: the same minutes are tried again later.
-  const cand = [];
-  let skipped = 0, fetched = 0, failed = 0;
-  const got = await Promise.all(jobs.map(async (j) => { try { const from = j.eFrom - FEED.pad, to = j.eTo + FEED.pad; return { j, from, to, cs: await candlesOf(j.c.mint, to + 1, to - from + 2) }; } catch (e) { return { j, err: String(e.message || e) }; } }));
-  for (const g of got) {
-    const { j } = g;
-    if (g.err) { failed++; continue; }
-    fetched++;
-    const cost = costs[j.c.tier];
-    if (cost == null) continue;
-    const bars = minuteSeries(g.cs, g.from, g.to), r = resolveSeries(j.c, bars, g.from, j.eFrom, j.eTo, { cost, overshootPct: os, events });
-    skipped += r.skipped;
-    for (const t of r.trades) { t.src = j.kind; cand.push(t); }
-    if (j.kind === "live") cur.live[j.c.mint] = j.eTo;
-    // history is used up when the API has nothing before this chunk (or the 30-day line is reached)
-    else cur.back[j.c.mint] = !g.cs.length || Math.floor(Math.min(...g.cs.map((c) => c.t)) / 60) > j.eFrom || j.eFrom <= oldest ? 0 : j.eFrom - 1;
-  }
+  const cand = [], busy = new Set();
+  let skipped = 0, fetched = 0, failed = 0, nJobs = 0;
+  const run = async (js) => {
+    nJobs += js.length;
+    const got = await Promise.all(js.map(async (j) => { try { const from = j.eFrom - FEED.pad, to = j.eTo + FEED.pad; return { j, from, to, cs: await candlesOf(j.c.mint, to + 1, to - from + 2) }; } catch (e) { return { j, err: String(e.message || e) }; } }));
+    for (const g of got) {
+      const { j } = g;
+      if (g.err) { failed++; continue; }
+      fetched++;
+      const cost = costs[j.c.tier];
+      if (cost == null) continue;
+      const bars = minuteSeries(g.cs, g.from, g.to), r = resolveSeries(j.c, bars, g.from, j.eFrom, j.eTo, { cost, overshootPct: os, events });
+      skipped += r.skipped;
+      for (const t of r.trades) { t.src = j.kind; cand.push(t); }
+      if (j.kind === "live") cur.live[j.c.mint] = j.eTo;
+      // history is used up when the API has nothing before this chunk (or the 30-day line is reached)
+      else cur.back[j.c.mint] = !g.cs.length || Math.floor(Math.min(...g.cs.map((c) => c.t)) / 60) > j.eFrom || j.eFrom <= oldest ? 0 : j.eFrom - 1;
+    }
+  };
+  await run([...jobs, ...pickBack(FEED.backPerTick)]);
+  // not enough for the pace (quiet coins, a failed read): read more history, at most three more rounds this minute
+  for (let round = 0; round < FEED.extraRounds && cand.length < ARENA.perMinute * 1.2; round++) { const more = pickBack(FEED.backPerTick); if (!more.length) break; await run(more); }
   // the pace: ARENA.perMinute trades, a seeded random draw from the candidates (a partial Fisher-Yates shuffle), in that order
   const take = Math.min(ARENA.perMinute, cand.length);
   for (let i = 0; i < take; i++) { const k = i + Math.floor(seed01(`pace|${T}|${i}`) * (cand.length - i)); [cand[i], cand[k]] = [cand[k], cand[i]]; }
@@ -316,7 +324,7 @@ export async function arenaTick(env, opts = {}) {
       [ks.map((k) => k[0]), ks.map((k) => k[1]), ks.map((k) => Number(k[2])), vs.map((t) => t.mint), vs.map((t) => t.symbol), vs.map((t) => t.entryMin), vs.map((t) => t.hold), vs.map((t) => t.entryPx), vs.map((t) => t.atr), vs.map((t) => t.why), vs.map((t) => round(t.grossPct, 4)), vs.map((t) => round(t.netPct, 4))]);
     for (let i = 0; i < Math.min(FEED.tape, all.length); i++) { const t = all[Math.floor((i * all.length) / Math.min(FEED.tape, all.length))]; tape.push({ id: `${T}-${i}`, symbol: t.symbol, variant: t.variant, tier: t.tier, pnlPct: round(t.netPct, 3), pnlSol: round(t.pnlSol, 5), sizeSol: t.sizeSol, exit: t.why, holdMin: t.hold, enteredAt: new Date(t.entryMin * 60000).toISOString(), src: t.src }); }
   }
-  Object.assign(out, { coins: coins.length, jobs: jobs.length, fetched, failed, candidates: cand.length, trades, live: live.length, replay: replay.length, skipped });
+  Object.assign(out, { coins: coins.length, jobs: nJobs, fetched, failed, candidates: cand.length, trades, live: live.length, replay: replay.length, skipped });
   // ---- the scoreboard: live + replay together for the board (what the arena has seen), live alone for graduation
   const board = await d.q(`SELECT variant, tier, sum(n)::float8 n, sum(wins)::float8 wins, sum(sum_pct)::float8 sum, sum(sumsq_pct)::float8 sumsq, sum(pnl_sol)::float8 pnl FROM (SELECT variant, tier, n, wins, sum_pct, sumsq_pct, pnl_sol FROM mob_aq_arena_agg UNION ALL SELECT variant, tier, n, wins, sum_pct, sumsq_pct, pnl_sol FROM mob_aq_arena_replay) u GROUP BY variant, tier`);
   const scored = scoreDay(board).filter((x) => x.edgeLo != null && x.n >= ARENA.boardMin && x.baseN >= ARENA.boardMin); // the board shows a setting from 50 trades; graduation still needs 300 on each of two live days
@@ -344,7 +352,7 @@ export async function arenaTick(env, opts = {}) {
     graduated: picks.filter((p) => p.status === "graduated").map((p) => ({ variant: p.variant, tier: p.tier, pickedOn: p.selected_day, confirmedOn: p.confirm_day, stats: p.conf })),
     pending: picks.filter((p) => p.status === "selected").map((p) => ({ variant: p.variant, tier: p.tier, pickedOn: p.selected_day })),
     grok: gk.map((g) => ({ input: g.entry, rule: ENTRY_RULE[g.entry], ...(({ n, mean, lo, hi }) => ({ n, meanPct: mean, ci95: [lo, hi] }))(statOf(g)) })),
-    note: trades ? `${trades} virtual trades resolved this minute (${live.length} on fresh minutes, ${replay.length} replaying history) from the real 1-minute candles of ${fetched} coins; ${board.length} settings tried so far, so some lead by luck: only walk-forward graduates on fresh days count` : coins.length ? `no candles read this minute (${failed} of ${jobs.length} reads failed)` : "no tracked coin with liquidity yet" };
+    note: trades ? `${trades} virtual trades resolved this minute (${live.length} on fresh minutes, ${replay.length} replaying history) from the real 1-minute candles of ${fetched} coins; ${board.length} settings tried so far, so some lead by luck: only walk-forward graduates on fresh days count` : coins.length ? `no candles read this minute (${failed} of ${nJobs} reads failed)` : "no tracked coin with liquidity yet" };
   await setState(d, "arena", state);
   // ---- one lesson line from the batch just resolved: which entry family won and which lost, against luck in the same minutes
   if (all.length) { // (every minute: Alex, 2026-11-16, "lessons into the brain each minute")
