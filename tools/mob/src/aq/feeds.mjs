@@ -12,6 +12,7 @@ export const URLS = {
   dsBoosts: "https://api.dexscreener.com/token-boosts/latest/v1",
   dsBoostsTop: "https://api.dexscreener.com/token-boosts/top/v1",
   dsCto: "https://api.dexscreener.com/community-takeovers/latest/v1",
+  dsSolPairs: `https://api.dexscreener.com/token-pairs/v1/solana/${SOL_MINT}`,
   dsProfiles: "https://api.dexscreener.com/token-profiles/latest/v1",
   dsTokens: (mints) => `https://api.dexscreener.com/tokens/v1/solana/${mints.join(",")}`,
   rug: (mint) => `https://api.rugcheck.xyz/v1/tokens/${mint}/report`,
@@ -28,7 +29,8 @@ let lastGt = 0;
 // Production (Cloudflare egress) got HTTP 429 on the first door, so the second is tried when the first fails.
 export const GT_BASES = ["https://api.geckoterminal.com/api/v2", "https://api.coingecko.com/api/v3/onchain"];
 export async function gt(env, path) {
-  const key = env.COINGECKO_DEMO_KEY, order = key ? [GT_BASES[1], GT_BASES[0]] : GT_BASES;
+  // The CoinGecko door is used only with a demo key: keyless it shares (and in production used up) the quota of the SOL/BTC price call.
+  const key = env.COINGECKO_DEMO_KEY, order = key ? [GT_BASES[1], GT_BASES[0]] : [GT_BASES[0]];
   let first = null;
   for (const b of order) {
     try { return await getJson(b + path, 8000, key && b === GT_BASES[1] ? { "x-cg-demo-api-key": key } : {}); }
@@ -118,9 +120,14 @@ export const feeds = {
   boosts: (env) => cached(env, "ds:boosts", 55, async () => [...new Set((await getJson(URLS.dsBoosts)).filter((b) => b.chainId === "solana").map((b) => b.tokenAddress))]),
   profiles: (env) => cached(env, "ds:profiles", 55, async () => Object.fromEntries((await getJson(URLS.dsProfiles)).filter((b) => b.chainId === "solana").map((b) => [b.tokenAddress, String(b.description || "").slice(0, 300)]))),
   majors: (env) => cached(env, "cg:majors", 110, async () => {
-    const j = await getJson(URLS.cg);
     const m = (x) => (x && num(x.usd) != null ? { price: num(x.usd), ch24: num(x.usd_24h_change) } : null);
-    return { sol: m(j.solana), btc: m(j.bitcoin) };
+    try { const j = await getJson(URLS.cg); return { sol: m(j.solana), btc: m(j.bitcoin), src: "coingecko" }; }
+    catch (e) {
+      // CoinGecko refused (429 seen from Cloudflare): SOL from the deepest SOL/USDC pair on DexScreener; BTC stays unknown.
+      const ps = (await getJson(URLS.dsSolPairs) || []).filter((p) => p.baseToken?.address === SOL_MINT && p.quoteToken?.symbol === "USDC" && num(p.priceUsd) != null).sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
+      if (!ps.length) throw new Error(`coingecko: ${e.message}; dexscreener: no SOL/USDC pair`);
+      return { sol: { price: num(ps[0].priceUsd), ch24: num(ps[0].priceChange?.h24) }, btc: null, src: "dexscreener", note: `coingecko: ${String(e.message).slice(0, 60)}` };
+    }
   }),
   fng: (env) => cached(env, "fng", 3600, async () => {
     const x = (await getJson(URLS.fng))?.data?.[0];

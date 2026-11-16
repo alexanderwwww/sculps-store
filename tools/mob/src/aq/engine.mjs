@@ -76,7 +76,7 @@ export async function tick(env, opts = {}) {
 
     // ---- feeds (cached, so most ticks read the database, not the internet)
     const [tr, nw, bo, pr, mj, fg, un] = await Promise.all([feeds.trending(env), feeds.newPools(env), feeds.boosts(env), feeds.profiles(env), feeds.majors(env), feeds.fng(env), feeds.universe(env)]);
-    Object.assign(health, { geckoterminal: tr.ok && nw.ok, dexscreener: un.ok, coingecko: mj.ok, feargreed: fg.ok });
+    Object.assign(health, { geckoterminal: tr.ok && nw.ok, dexscreener: un.ok, coingecko: mj.ok && mj.data?.src !== "dexscreener", sol_price: !!mj.data?.sol, feargreed: fg.ok });
     const solUsd = mj.data?.sol?.price ?? (tr.data || []).find((p) => p.solUsd)?.solUsd ?? null;
     const feeSol = solUsd ? NET_FEE_USD / solUsd : null;
     const boosted = new Set(bo.data || []);
@@ -84,7 +84,7 @@ export async function tick(env, opts = {}) {
     set("sol.new_pairs", un.ok || nw.ok ? "busy" : "blocked", `${un.ok ? `${un.data.length} DexScreener pairs` : `DexScreener failed: ${un.err}`}; ${nw.ok ? `${nw.data.length} new GeckoTerminal pools` : "GeckoTerminal not answering (bonus feed)"}`.slice(0, 190));
     set("sol.boosted", bo.ok ? "busy" : "blocked", bo.ok ? `${boosted.size} paid boosts flagged` : `DexScreener failed: ${bo.err}`);
     set("nw.tokens", pr.ok ? "busy" : "blocked", pr.ok ? `${Object.keys(profiles).length} token profiles read` : `DexScreener failed: ${pr.err}`);
-    set("stk.regime", mj.ok ? "busy" : "blocked", mj.ok ? `SOL $${mj.data.sol?.price ?? "?"} BTC $${mj.data.btc?.price ?? "?"}` : `CoinGecko failed: ${mj.err}`);
+    set("stk.regime", mj.ok ? "busy" : "blocked", (mj.ok ? `SOL $${mj.data.sol?.price ?? "?"} BTC $${mj.data.btc?.price ?? "unknown"} (${mj.data.src})` : `price feeds failed: ${mj.err}`).slice(0, 190));
     set("nw.fng", fg.ok ? "busy" : "blocked", fg.ok ? `Fear and Greed ${fg.data.value} (${fg.data.label})` : `alternative.me failed: ${fg.err}`);
     const daysToGta = Math.ceil((Date.parse(GTA6_DATE + "T00:00:00Z") / 1000 - nowSec) / 86400);
     set("nw.calendar", "busy", daysToGta > 0 ? `GTA 6 in ${daysToGta} day(s)` : daysToGta === 0 ? "GTA 6 releases today" : `GTA 6 out ${-daysToGta} day(s)`);
@@ -371,7 +371,7 @@ export async function tick(env, opts = {}) {
 
     // department live flags: a department is live when every feed it needs answered this tick
     const live = {
-      scouts_sol: !!(health.dexscreener || health.geckoterminal) && trendingNow.length > 0, scouts_stocks: !!health.coingecko, news: !!health.feargreed,
+      scouts_sol: !!(health.dexscreener || health.geckoterminal) && trendingNow.length > 0, scouts_stocks: !!health.sol_price, news: !!health.feargreed,
       setups: bars.n > 0 || health.geckoterminal_ohlcv === true, costs: health.jupiter !== false, council: health.rugcheck !== false,
       whales: health.whales_trades === true, risk: true, execution: health.dexscreener_prices !== false && health.jupiter !== false, review: true, learning: true, ops: true,
     };

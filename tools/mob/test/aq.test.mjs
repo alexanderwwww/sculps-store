@@ -3,7 +3,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { makeEnv, dropEnv, reqOf, login, mock, resetMocks, res, calls } from "./helpers.mjs";
 import { db } from "../src/db.mjs";
-import { FX, FX2, FX3 } from "./aq-fixtures.mjs";
+import { FX, FX2, FX3, FX4 } from "./aq-fixtures.mjs";
 import { whaleSignal, slimTrades } from "../src/aq/whales.mjs";
 import { GT_GAP, GT_BACKOFF, bestPairs } from "../src/aq/feeds.mjs";
 GT_GAP.ms = 0; GT_BACKOFF.sec = 0;
@@ -419,7 +419,9 @@ test("production path: GeckoTerminal refuses (429), DexScreener alone feeds cand
   mock("GET", "https://api.dexscreener.com/token-profiles/latest/v1", () => clone(FX3.dsProfiles));
   mock("GET", "https://api.dexscreener.com/community-takeovers/latest/v1", () => clone(FX3.dsCto));
   mock("GET", "https://api.dexscreener.com/tokens/v1/solana/", (rec) => { const want = rec.url.split("/").pop().split(","); return clone(FX3.dsBatch).filter((p) => want.includes(p.baseToken.address)).map((p) => (p.baseToken.address === GATO ? { ...p, priceUsd: "1.1" } : p)); });
-  mock("GET", "https://api.coingecko.com/api/v3/simple/price", () => clone(FX.cg));
+  // CoinGecko's price call is refused too (seen in production): SOL comes from DexScreener's SOL/USDC pair, BTC stays unknown
+  mock("GET", "https://api.coingecko.com/api/v3/simple/price", () => res({ status: { error_code: 429, error_message: "Rate limit exceeded" } }, 429));
+  mock("GET", "https://api.dexscreener.com/token-pairs/v1/solana/", () => clone(FX4.dsSolPairs));
   mock("GET", "https://api.alternative.me/fng/", () => clone(FX.fng));
   mock("GET", /rugcheck\.xyz\/v1\/tokens\/([^/]+)\/report$/, () => safeRug());
   mock("GET", "https://lite-api.jup.ag/swap/v1/quote", (rec, u) => {
@@ -429,7 +431,8 @@ test("production path: GeckoTerminal refuses (429), DexScreener alone feeds cand
   let t = await tick(env);
   let s = await S();
   assert.equal(t.feeds.geckoterminal, false); assert.equal(t.feeds.dexscreener, true);
-  assert.ok(s.market.trending.length >= 3, "trending comes from DexScreener"); assert.ok(s.market.trending.some((x) => x.symbol === "GATO" && x.boosted === true));
+  assert.ok(s.market.trending.length >= 3, "trending comes from DexScreener");
+  assert.equal(s.market.sol.price, Number(FX4.dsSolPairs[0].priceUsd)); assert.equal(s.market.btc, null, "BTC unknown, never invented"); assert.equal(t.feeds.coingecko, false); assert.equal(t.feeds.sol_price, true); assert.ok(s.market.trending.some((x) => x.symbol === "GATO" && x.boosted === true));
   assert.equal(s.departments.find((x) => x.id === "scouts_sol").live, true);
   assert.ok(s.health.errors.some((e) => e.feed === "gt:trending" && /HTTP 429 .*Rate limit/.test(e.error)), JSON.stringify(s.health.errors));
   assert.ok(s.history.priceSamples1h >= 3 && s.history.ready === 0);
