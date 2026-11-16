@@ -218,3 +218,14 @@ CREATE TABLE IF NOT EXISTS mob_aq_shadow (id serial PRIMARY KEY, mint text NOT N
 CREATE TABLE IF NOT EXISTS mob_aq_picks (id serial PRIMARY KEY, helper text NOT NULL, symbol text, mint text NOT NULL, pool text, thesis text NOT NULL, labels jsonb NOT NULL DEFAULT '[]', stop_pct double precision NOT NULL, target_pct double precision NOT NULL, entry_hint double precision, status text NOT NULL DEFAULT 'queued', verdict text, verdict_reason text, verdict_number double precision, entry_price double precision, stop_price double precision, target_price double precision, cost_pct double precision, cost_source text, created_at timestamptz NOT NULL DEFAULT now(), opened_at timestamptz, time_stop_at timestamptz, closed_at timestamptz, exit_price double precision, pnl_pct double precision, outcome text);
 CREATE TABLE IF NOT EXISTS mob_aq_watch (mint text PRIMARY KEY, pool text NOT NULL, symbol text, liq_usd double precision, vol_h1 double precision, ch1h double precision, price_usd double precision, src text, first_seen timestamptz NOT NULL DEFAULT now(), last_seen timestamptz NOT NULL DEFAULT now());
 CREATE TABLE IF NOT EXISTS mob_aq_prices (mint text NOT NULL, at timestamptz NOT NULL DEFAULT now(), price double precision NOT NULL, PRIMARY KEY (mint, at));
+CREATE TABLE IF NOT EXISTS mob_aq_whales (wallet text PRIMARY KEY, wins int NOT NULL DEFAULT 0, closed int NOT NULL DEFAULT 0, net_sol double precision NOT NULL DEFAULT 0, winner boolean NOT NULL DEFAULT false, updated_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS mob_aq_mined (mint text PRIMARY KEY, symbol text, why text, cursor_offset text, cursor_ts text, pages int NOT NULL DEFAULT 0, trades int NOT NULL DEFAULT 0, done boolean NOT NULL DEFAULT false, oldest timestamptz, started_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS mob_aq_signals (id serial PRIMARY KEY, mint text NOT NULL, symbol text, at timestamptz NOT NULL DEFAULT now(), wallets jsonb NOT NULL DEFAULT '[]', independent int, funders text, price_usd double precision, verdict text, reason text, price_15m double precision, price_60m double precision, pct_15m double precision, pct_60m double precision);
+CREATE TABLE IF NOT EXISTS mob_aq_rules (name text PRIMARY KEY, weight double precision NOT NULL DEFAULT 1, blocked_winners int NOT NULL DEFAULT 0, blocked_losers int NOT NULL DEFAULT 0, history jsonb NOT NULL DEFAULT '[]', updated_at timestamptz NOT NULL DEFAULT now());
+ALTER TABLE mob_aq_positions ADD COLUMN IF NOT EXISTS tier text;
+ALTER TABLE mob_aq_positions ADD COLUMN IF NOT EXISTS tag text;
+ALTER TABLE mob_aq_positions ADD COLUMN IF NOT EXISTS soft jsonb;
+ALTER TABLE mob_aq_positions ADD COLUMN IF NOT EXISTS score double precision;
+ALTER TABLE mob_aq_trades ADD COLUMN IF NOT EXISTS tier text;
+ALTER TABLE mob_aq_trades ADD COLUMN IF NOT EXISTS tag text;
+ALTER TABLE mob_aq_trades ADD COLUMN IF NOT EXISTS soft jsonb;

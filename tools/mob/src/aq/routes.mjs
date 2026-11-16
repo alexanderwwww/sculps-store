@@ -4,6 +4,7 @@ import { db } from "../db.mjs";
 import { AQ_PAGE, AQ_JS } from "../aq-bundle.mjs";
 import { buildState, createBot, helperMessage, briefing, ensureSeed, rebuild, sellAll } from "./engine.mjs";
 import { helperMcp, createTask } from "./mcp.mjs";
+import { diag } from "./diag.mjs";
 import { safeEqual } from "../auth.mjs";
 
 const DROP_MAX = 95 * 1024 * 1024;
@@ -52,6 +53,13 @@ export async function aqApi(req, env, url, path, { json, apiErr, admin, bearer, 
       return o ? new Response(o.body, { headers: { "content-type": "application/zip", "content-disposition": `attachment; filename="${name}"`, "cache-control": "no-store" } }) : new Response("Not found", { status: 404 });
     }
     return apiErr(405, "method_not_allowed", "PUT a .zip, GET the list, or GET one file");
+  }
+  // Feed diagnostic with the helper access code: asks a FIXED list of public data sources from this Worker and reports the
+  // status and the first bytes, so "does it answer from production" is read, never guessed. No URL comes from the caller.
+  const gm = path.match(/^\/api\/aq\/helper\/([^/]+)\/diag$/);
+  if (gm) {
+    if (!env.AQ_HELPER_KEY || !safeEqual(gm[1], env.AQ_HELPER_KEY)) return new Response("Not found", { status: 404 });
+    return json(await diag(env));
   }
   const hm = path.match(/^\/api\/aq\/helper\/([^/]+)\/mcp$/);
   if (hm) {

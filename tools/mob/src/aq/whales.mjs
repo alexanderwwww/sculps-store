@@ -1,29 +1,21 @@
 // Whales and the shadow lane (aquarius-trader skill).
-// Whales: every pool we judge, its last trades (GeckoTerminal /trades, shape read 2026-11-16) go into our own wallet book.
-// A "winning wallet" is one whose book shows >= 2 tokens sold above cost and more SOL out than in on closed tokens.
-// Whale signal = 2+ INDEPENDENT winning wallets bought this coin in the last 15 minutes, creator and RugCheck insiders
-// excluded, wallets with one funder counted once. Funders come from Helius RPC only when HELIUS_API_KEY is set
-// (https://mainnet.helius-rpc.com/?api-key=..., per helius.dev docs); without it the signal says "funders unchecked".
+// Whale book: swaps come from Jupiter's data API (datapi.jup.ag/v1/txs/<mint>, paged back in time; answers from the Worker).
+// Every swap goes into mob_aq_wtrades; mob_aq_whales keeps each wallet's realized result per coin. A WINNER sold at least
+// two different coins for more SOL than it paid, is net positive, wins >= 60% of its closed coins, and is not a bot
+// (bots: more than BOT_TRADES swaps in the book per coin on average). Whale signal = 2+ INDEPENDENT winners bought the coin
+// in the last 15 minutes; the creator and RugCheck insiders never count; wallets with one funder count once.
+// Funders come from Helius RPC (HELIUS_API_KEY, https://mainnet.helius-rpc.com/?api-key=..., 1 credit per call, capped per tick).
 // Shadow lane: when nothing passes, paper probes on near misses, own ledger, never mixed into the real one.
 import { db } from "../db.mjs";
-import { gt, URLS, cached, SOL_MINT, midPrices, GT_BACKOFF } from "./feeds.mjs";
+import { cached, SOL_MINT, midPrices, jupTxs, CALLS, CAPS } from "./feeds.mjs";
 import { stats, round, num } from "./logic.mjs";
 
 export const HELIUS_URL = (key) => `https://mainnet.helius-rpc.com/?api-key=${encodeURIComponent(key)}`;
 const KB_COST_PCT = 5;
-
-export function slimTrades(j, mint) {
-  return (j?.data || []).map((t) => {
-    const a = t.attributes || {};
-    const buy = a.kind === "buy" && a.from_token_address === SOL_MINT && a.to_token_address === mint;
-    const sell = a.kind === "sell" && a.to_token_address === SOL_MINT && a.from_token_address === mint;
-    if (!buy && !sell) return null;
-    const sol = num(buy ? a.from_token_amount : a.to_token_amount);
-    return sol == null || !a.tx_from_address || !a.tx_hash ? null : { tx: a.tx_hash, wallet: a.tx_from_address, kind: buy ? "buy" : "sell", sol, at: a.block_timestamp };
-  }).filter(Boolean);
-}
+export const BOT_TRADES = 60, MINE_PAGES_PER_TICK = 6, MINE_MAX_PAGES = 60, MIN_SOL = 0.02;
 
 async function rpc(env, method, params) {
+  CALLS.helius++;
   const r = await fetch(HELIUS_URL(env.HELIUS_API_KEY), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
   if (!r.ok) throw new Error(`helius ${r.status}`);
   const j = await r.json();
@@ -46,40 +38,110 @@ export async function funderOf(env, wallet) {
   return p && p !== wallet ? p : null;
 }
 
+export async function saveTrades(d, mint, txs) {
+  const t = txs.filter((x) => x.sol >= MIN_SOL);
+  if (!t.length) return 0;
+  const r = await d.q(`INSERT INTO mob_aq_wtrades (tx, wallet, mint, kind, sol, at) SELECT tx, w, $1, k, s, at::timestamptz FROM unnest($2::text[],$3::text[],$4::text[],$5::float8[],$6::text[]) x(tx,w,k,s,at) ON CONFLICT DO NOTHING RETURNING 1`,
+    [mint, t.map((x) => x.tx), t.map((x) => x.wallet), t.map((x) => x.kind), t.map((x) => x.sol), t.map((x) => x.at)]);
+  return r.length;
+}
+// Recompute the book from raw swaps: realized result per wallet per coin, then winners. One statement, idempotent.
+export async function refreshWinners(d) {
+  await d.q(`INSERT INTO mob_aq_whales (wallet, wins, closed, net_sol, winner, updated_at)
+    SELECT wallet, wins, closed, net, (wins >= 2 AND net > 0 AND wins::float / closed >= 0.6 AND swaps::float / coins <= $1), now() FROM (
+      SELECT wallet, count(*) FILTER (WHERE b > 0 AND s > b)::int wins, count(*) FILTER (WHERE b > 0 AND s > 0)::int closed, coalesce(sum(s - b) FILTER (WHERE b > 0 AND s > 0), 0)::float net, sum(n)::int swaps, count(*)::int coins FROM (
+        SELECT wallet, mint, coalesce(sum(sol) FILTER (WHERE kind='buy'), 0) b, coalesce(sum(sol) FILTER (WHERE kind='sell'), 0) s, count(*) n FROM mob_aq_wtrades GROUP BY wallet, mint) x
+      GROUP BY wallet HAVING count(*) FILTER (WHERE b > 0 AND s > 0) > 0) y
+    ON CONFLICT (wallet) DO UPDATE SET wins=EXCLUDED.wins, closed=EXCLUDED.closed, net_sol=EXCLUDED.net_sol, winner=EXCLUDED.winner, updated_at=now()`, [BOT_TRADES]);
+  return d.one(`SELECT count(*)::int book, count(*) FILTER (WHERE winner)::int winners FROM mob_aq_whales`);
+}
+
+// Mining: walk a coin's swaps back in time, a few pages per tick, cursor kept in the database so it resumes next tick.
+export async function mineTick(env, { runners = [], pages = MINE_PAGES_PER_TICK, set = () => {} } = {}) {
+  const d = db(env), res = { pages: 0, trades: 0, coins: [] };
+  const { active } = await d.one(`SELECT count(*)::int active FROM mob_aq_mined WHERE NOT done`);
+  if (active < 3 && runners.length) {
+    const add = runners.slice(0, 6);
+    await d.q(`INSERT INTO mob_aq_mined (mint, symbol, why) SELECT * FROM unnest($1::text[],$2::text[],$3::text[]) ON CONFLICT (mint) DO NOTHING`, [add.map((r) => r.mint), add.map((r) => r.symbol), add.map((r) => r.why)]);
+  }
+  while (res.pages < pages && CALLS.jupiterData < CAPS.jupiterData) {
+    const m = await d.one(`SELECT * FROM mob_aq_mined WHERE NOT done ORDER BY updated_at LIMIT 1`);
+    if (!m) break;
+    let pg;
+    try { pg = await jupTxs(m.mint, m.cursor_offset ? { offset: m.cursor_offset, ts: m.cursor_ts } : null); } catch (e) { res.error = String(e.message || e).slice(0, 120); break; }
+    res.pages++;
+    const n = await saveTrades(d, m.mint, pg.txs);
+    res.trades += n;
+    const done = !pg.next || pg.n === 0 || m.pages + 1 >= MINE_MAX_PAGES || (pg.oldest && Date.now() - Date.parse(pg.oldest) > 3 * 86400000);
+    await d.q(`UPDATE mob_aq_mined SET cursor_offset=$2, cursor_ts=$3, pages=pages+1, trades=trades+$4, done=$5, oldest=$6, updated_at=now() WHERE mint=$1`, [m.mint, pg.next?.offset || m.cursor_offset, pg.next?.ts || m.cursor_ts, n, done, pg.oldest]);
+    if (!res.coins.includes(m.symbol)) res.coins.push(m.symbol);
+  }
+  if (res.pages) Object.assign(res, await refreshWinners(d));
+  set("wh.discover", res.pages ? "busy" : "idle", res.pages ? `mined ${res.pages} page(s), ${res.trades} new swaps from ${res.coins.join(", ")}` : res.error ? `mining stopped: ${res.error}` : "nothing to mine this tick");
+  return res;
+}
+
 export async function whaleSignal(env, c, rug, set) {
   const d = db(env);
-  const tr = await cached(env, `gt:trades:${c.pool}`, 50, async () => slimTrades(await gt(env, URLS.gtTrades(c.pool)), c.mint), GT_BACKOFF.sec);
-  if (!tr.ok) { set("wh.steady", "blocked", `trades feed failed: ${tr.err}`.slice(0, 190)); return { ok: false, signal: false, reason: "missing data: trades" }; }
+  const tr = await cached(env, `jup:txs:${c.mint}`, 50, async () => (await jupTxs(c.mint)).txs, 120);
+  if (!tr.ok) { set("wh.steady", "blocked", `swaps feed failed: ${tr.err}`.slice(0, 190)); return { ok: false, signal: false, reason: "missing data: swaps" }; }
   const t = tr.data;
-  if (t.length) await d.q(`INSERT INTO mob_aq_wtrades (tx, wallet, mint, kind, sol, at) SELECT tx, w, $1, k, s, at::timestamptz FROM unnest($2::text[],$3::text[],$4::text[],$5::float8[],$6::text[]) x(tx,w,k,s,at) ON CONFLICT DO NOTHING`,
-    [c.mint, t.map((x) => x.tx), t.map((x) => x.wallet), t.map((x) => x.kind), t.map((x) => x.sol), t.map((x) => x.at)]);
+  await saveTrades(d, c.mint, t);
   await d.q(`DELETE FROM mob_aq_wtrades WHERE at < now() - interval '14 days'`);
-  const excluded = new Set([rug?.creator, ...(rug?.insiders || [])].filter(Boolean));
+  const excluded = new Set([rug?.creator, c.dev, ...(rug?.insiders || [])].filter(Boolean));
   const buyers = [...new Set(t.filter((x) => x.kind === "buy" && Date.now() - Date.parse(x.at) < 15 * 60000).map((x) => x.wallet))].filter((w) => !excluded.has(w));
-  const winners = buyers.length ? await d.q(`SELECT wallet, count(*) FILTER (WHERE s > b)::int wins, count(*)::int closed, sum(s - b)::float net FROM (
-      SELECT wallet, mint, sum(sol) FILTER (WHERE kind='buy') b, sum(sol) FILTER (WHERE kind='sell') s FROM mob_aq_wtrades WHERE wallet = ANY($1) AND mint <> $2 GROUP BY wallet, mint) x
-      WHERE b > 0 AND s > 0 GROUP BY wallet HAVING count(*) FILTER (WHERE s > b) >= 2 AND sum(s - b) > 0 AND count(*) FILTER (WHERE s > b)::float / count(*) >= 0.6`, [buyers, c.mint]) : [];
-  let checked = false;
+  const winners = buyers.length ? await d.q(`SELECT wallet, wins, closed, net_sol FROM mob_aq_whales WHERE winner AND wallet = ANY($1)`, [buyers]) : [];
+  let checked = 0, unchecked = 0;
   const groups = new Set();
   for (const w of winners) {
-    let f = null;
-    if (env.HELIUS_API_KEY) {
-      const row = await d.one(`SELECT funder FROM mob_aq_funders WHERE wallet=$1`, [w.wallet]);
-      if (row) f = row.funder;
-      else { try { f = await funderOf(env, w.wallet); await d.q(`INSERT INTO mob_aq_funders (wallet, funder, source) VALUES ($1,$2,'helius') ON CONFLICT (wallet) DO UPDATE SET funder=EXCLUDED.funder, checked_at=now()`, [w.wallet, f]); } catch { f = null; } }
-      checked = true;
+    let f = null, known = false;
+    const row = await d.one(`SELECT funder FROM mob_aq_funders WHERE wallet=$1`, [w.wallet]);
+    if (row) { f = row.funder; known = true; }
+    else if (env.HELIUS_API_KEY && CALLS.helius + 2 <= CAPS.helius) {
+      try { f = await funderOf(env, w.wallet); known = true; await d.q(`INSERT INTO mob_aq_funders (wallet, funder, source) VALUES ($1,$2,'helius') ON CONFLICT (wallet) DO UPDATE SET funder=EXCLUDED.funder, checked_at=now()`, [w.wallet, f]); } catch { f = null; }
     }
+    known ? checked++ : unchecked++;
     groups.add(f || w.wallet);
   }
-  const { n: book } = await d.one(`SELECT count(DISTINCT wallet)::int n FROM mob_aq_wtrades`);
-  const out = { ok: true, signal: groups.size >= 2, independent: groups.size, winners: winners.length, buyers15m: buyers.length, excluded: excluded.size, funders: checked ? "checked (helius)" : "unchecked (no HELIUS_API_KEY)", book };
-  set("wh.steady", "busy", `${book} wallets in the book; ${winners.length} winners bought ${c.symbol} in 15 min`);
-  set("wh.funders", checked ? "busy" : "idle", checked ? `${groups.size} independent funder group(s)` : "no HELIUS_API_KEY: funders unchecked");
-  set("wh.pnl", "busy", `wallet results recomputed from ${t.length} raw trades of ${c.symbol}`);
+  const { book, win } = await d.one(`SELECT count(*)::int book, count(*) FILTER (WHERE winner)::int win FROM mob_aq_whales`);
+  const funders = !winners.length ? "none needed" : unchecked === 0 ? "checked (helius)" : checked ? `partly checked (${checked}/${winners.length}, Helius budget)` : env.HELIUS_API_KEY ? "unchecked (Helius budget used this tick)" : "unchecked (no HELIUS_API_KEY)";
+  const out = { ok: true, signal: groups.size >= 2, independent: groups.size, winners: winners.length, wallets: winners.map((w) => w.wallet), buyers15m: buyers.length, excluded: excluded.size, funders, book, winnersInBook: win };
+  set("wh.steady", "busy", `${book} wallets scored, ${win} winners; ${winners.length} of them bought ${c.symbol} in 15 min`);
+  set("wh.funders", checked ? "busy" : "idle", winners.length ? `${groups.size} independent group(s); funders ${funders}` : "no winners to cluster this tick");
+  set("wh.pnl", "busy", `wallet results recomputed from raw swaps (${t.length} of ${c.symbol})`);
   set("sol.dev", "busy", `${c.symbol}: ${excluded.size} creator/insider wallet(s) excluded`);
-  if (out.signal) set("wh.gmgn", "busy", `WHALE SIGNAL ${c.symbol}: ${groups.size} independent winners buying`);
-  else set("wh.gmgn", "idle", "no free GMGN key; own wallet book instead");
+  set("wh.gmgn", out.signal ? "busy" : "idle", out.signal ? `WHALE SIGNAL ${c.symbol}: ${groups.size} independent winners buying` : "no GMGN key; our own whale book instead");
+  if (out.signal) {
+    const dup = await d.one(`SELECT 1 FROM mob_aq_signals WHERE mint=$1 AND at > now() - interval '30 minutes'`, [c.mint]);
+    if (!dup) await d.q(`INSERT INTO mob_aq_signals (mint, symbol, wallets, independent, funders, price_usd) VALUES ($1,$2,$3,$4,$5,$6)`, [c.mint, c.symbol, JSON.stringify(out.wallets), groups.size, funders, c.priceUsd ?? null]);
+  }
   return out;
+}
+// What happened after each whale signal: price 15 and 60 minutes later, then a lesson. Prices come from the tick's Jupiter call.
+export async function followSignals(env, priceOf) {
+  const d = db(env);
+  const open = await d.q(`SELECT * FROM mob_aq_signals WHERE price_usd IS NOT NULL AND pct_60m IS NULL AND at > now() - interval '3 hours' ORDER BY id LIMIT 20`);
+  for (const s of open) {
+    const px = priceOf(s.mint), age = (Date.now() - new Date(s.at).getTime()) / 60000;
+    if (px == null) continue;
+    const pct = round((px / s.price_usd - 1) * 100, 2);
+    if (age >= 15 && s.pct_15m == null) await d.q(`UPDATE mob_aq_signals SET price_15m=$2, pct_15m=$3 WHERE id=$1`, [s.id, px, pct]);
+    if (age >= 60) {
+      await d.q(`UPDATE mob_aq_signals SET price_60m=$2, pct_60m=$3 WHERE id=$1`, [s.id, px, pct]);
+      await d.q(`INSERT INTO mob_aq_brain (dept, kind, text, data) VALUES ('whales','signal',$1,$2)`, [`Whale signal on ${s.symbol} (${s.independent} independent winners, funders ${s.funders}): ${s.pct_15m ?? "n/a"}% after 15 min, ${pct}% after 60 min. Council verdict then: ${s.verdict || "none"}${s.reason ? ` (${s.reason})` : ""}.`, JSON.stringify({ signal: s.id, pct15: s.pct_15m, pct60: pct })]);
+    }
+  }
+  return open.map((s) => s.mint);
+}
+export async function whaleState(d) {
+  const [b, m, sg, top] = await Promise.all([
+    d.one(`SELECT count(*)::int book, count(*) FILTER (WHERE winner)::int winners FROM mob_aq_whales`),
+    d.one(`SELECT count(*)::int coins, count(*) FILTER (WHERE done)::int done, coalesce(sum(trades),0)::int swaps FROM mob_aq_mined`),
+    d.q(`SELECT symbol, at, independent, funders, verdict, reason, pct_15m, pct_60m FROM mob_aq_signals ORDER BY id DESC LIMIT 10`),
+    d.q(`SELECT wallet, wins, closed, net_sol FROM mob_aq_whales WHERE winner ORDER BY wins DESC, net_sol DESC LIMIT 10`),
+  ]);
+  return { book: b.book, winners: b.winners, mining: m, signals: sg.map((s) => ({ symbol: s.symbol, at: s.at, independent: s.independent, funders: s.funders, verdict: s.verdict, reason: s.reason, pct15m: s.pct_15m, pct60m: s.pct_60m })),
+    top: top.map((w) => ({ wallet: `${w.wallet.slice(0, 4)}…${w.wallet.slice(-4)}`, wins: w.wins, closed: w.closed, netSol: round(w.net_sol, 3) })) };
 }
 
 // ------------------------------------------------------------------ shadow lane

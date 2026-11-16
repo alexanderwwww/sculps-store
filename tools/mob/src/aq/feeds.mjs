@@ -12,6 +12,10 @@ export const URLS = {
   dsBoosts: "https://api.dexscreener.com/token-boosts/latest/v1",
   dsBoostsTop: "https://api.dexscreener.com/token-boosts/top/v1",
   dsCto: "https://api.dexscreener.com/community-takeovers/latest/v1",
+  // datapi.jup.ag is what jup.ag's own pages read (shapes read 2026-11-16; proven to answer from the deployed Worker by /diag)
+  jupTop: (kind) => `https://datapi.jup.ag/v1/pools/${kind}/1h?limit=50`,
+  jupChart: (mint, nowMs) => `https://datapi.jup.ag/v2/charts/${mint}?interval=1_MINUTE&to=${nowMs}&candles=120&type=price&quote=usd`,
+  jupTxs: (mint, cur) => `https://datapi.jup.ag/v1/txs/${mint}?limit=30${cur ? `&offset=${cur.offset}&offsetTs=${encodeURIComponent(cur.ts)}` : ""}`,
   jupPrice: (mints) => `https://lite-api.jup.ag/price/v3?ids=${mints.join(",")}`,
   dsProfiles: "https://api.dexscreener.com/token-profiles/latest/v1",
   dsTokens: (mints) => `https://api.dexscreener.com/tokens/v1/solana/${mints.join(",")}`,
@@ -38,7 +42,14 @@ export async function gt(env, path) {
   }
   throw new Error(first);
 }
+// Calls made in the running tick, by provider (shown in state.health.budget).
+export const CALLS = { helius: 0, jupiterData: 0, geckoterminal: 0, dexscreener: 0 };
+export const CAPS = { helius: 12, jupiterData: 20 };
+export const resetCalls = () => { for (const k of Object.keys(CALLS)) CALLS[k] = 0; };
 export async function getJson(url, ms = 8000, extra = {}) {
+  if (url.startsWith("https://datapi.jup.ag/")) CALLS.jupiterData++;
+  else if (url.startsWith("https://api.dexscreener.com/")) CALLS.dexscreener++;
+  else if (url.includes("geckoterminal.com/") || url.includes("/api/v3/onchain/")) CALLS.geckoterminal++;
   if (url.startsWith("https://api.geckoterminal.com/") || url.includes("/api/v3/onchain/")) {
     const wait = lastGt + GT_GAP.ms - Date.now();
     lastGt = Math.max(Date.now(), lastGt + GT_GAP.ms);
@@ -82,6 +93,24 @@ function pools(j) {
   }).filter((p) => p.pool && p.mint && p.quoteMint === SOL_MINT && p.mint !== SOL_MINT);
 }
 
+// Jupiter pool (datapi shape) -> candidate. Stocks/RWA wrappers are not memecoins and are left out.
+export function jupPool(p) {
+  const b = p.baseAsset || {}, h = b.stats1h || {}, m5 = b.stats5m || {};
+  if (!b.id || b.id === SOL_MINT || b.stockData || (b.tags || []).some((t) => t === "stocks" || t === "rwa" || t === "lst")) return null;
+  return { pool: p.id, name: `${b.symbol} / ${p.quoteAsset === SOL_MINT ? "SOL" : "?"}`, symbol: String(b.symbol || "").trim(), mint: b.id, quoteMint: p.quoteAsset, priceUsd: num(b.usdPrice), solUsd: null,
+    liqUsd: num(b.liquidity), createdAt: b.firstPool?.createdAt || b.createdAt || null, ch5m: num(m5.priceChange), ch1h: num(h.priceChange), ch24: num(b.stats24h?.priceChange),
+    volM5: m5.buyVolume != null ? (num(m5.buyVolume) || 0) + (num(m5.sellVolume) || 0) : null, volH1: h.buyVolume != null ? (num(h.buyVolume) || 0) + (num(h.sellVolume) || 0) : null,
+    traders1h: num(h.numTraders), dev: b.dev || null, organic: num(b.organicScore) };
+}
+// One page of a coin's swaps from Jupiter: who bought or sold, how much SOL, when. MEV trades are dropped.
+export async function jupTxs(mint, cur = null) {
+  const j = await getJson(URLS.jupTxs(mint, cur));
+  const raw = j?.txs || [];
+  const txs = raw.filter((t) => !t.isMev && (t.type === "buy" || t.type === "sell") && t.traderAddress && t.txHash && num(t.nativeVolume) != null)
+    .map((t) => ({ tx: t.txHash, wallet: t.traderAddress, kind: t.type, sol: num(t.nativeVolume), at: t.timestamp, price: num(t.usdPrice) }));
+  const last = raw[raw.length - 1];
+  return { txs, n: raw.length, next: j?.next && last ? { offset: String(j.next), ts: last.timestamp } : null, oldest: last?.timestamp || null };
+}
 export const GT_BACKOFF = { sec: 300 };
 export const DS_BACKOFF = { sec: 240 };
 // DexScreener pair (tokens/v1 shape, read 2026-11-16) -> the same candidate shape as a GeckoTerminal pool.
@@ -122,6 +151,20 @@ export const feeds = {
   trending: (env) => cached(env, "gt:trending", 55, async () => pools(await gt(env, URLS.gtTrending)), GT_BACKOFF.sec),
   newPools: (env) => cached(env, "gt:new", 55, async () => pools(await gt(env, URLS.gtNew)), GT_BACKOFF.sec),
   // discovery only, every 3 minutes: DexScreener rate-limits Cloudflare egress (HTTP 429, error code 1015), so it is asked rarely
+  // discovery that answers from the Worker: Jupiter's own trending and most-traded lists, with liquidity and volume
+  jupTop: (env) => cached(env, "jup:top", 55, async () => {
+    const lists = await Promise.all(["toptrending", "toptraded", "toporganicscore"].map((k) => getJson(URLS.jupTop(k)).catch((e) => ({ error: e.message }))));
+    if (lists.every((l) => !Array.isArray(l?.pools))) throw new Error(`jupiter lists: ${lists[0]?.error || "no pools"}`);
+    const seen = new Set(), out = [];
+    for (const l of lists) for (const p of l.pools || []) { const c = jupPool(p); if (c && !seen.has(c.mint)) { seen.add(c.mint); out.push(c); } }
+    return out;
+  }, 120),
+  // the last two hours of 1-minute candles in one call: a new coin has history on first sight
+  jupCandles: (env, mint) => cached(env, `jup:chart:${mint}`, 50, async () => {
+    const cs = (await getJson(URLS.jupChart(mint, Date.now())))?.candles;
+    if (!Array.isArray(cs) || !cs.length) throw new Error("no candles");
+    return cs.map((c) => ({ t: Number(c.time), o: num(c.open), h: num(c.high), l: num(c.low), c: num(c.close), v: num(c.volume) || 0 })).filter((c) => [c.t, c.o, c.h, c.l, c.c].every(Number.isFinite)).sort((a, b) => a.t - b.t);
+  }),
   universe: (env) => cached(env, "ds:universe", 170, () => dsUniverse(), DS_BACKOFF.sec),
   majors: (env) => cached(env, "cg:majors", 55, async () => {
     const m = (x) => (x && num(x.usd) != null ? { price: num(x.usd), ch24: num(x.usd_24h_change) } : null);

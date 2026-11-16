@@ -226,12 +226,21 @@ export const R3_PARAMS = {
   timeStopMin: 21, minLiqUsd: 30000, costMultiple: 6, riskPct: 2, stressMult: 1.5, maxSizeSol: 0.05, minSizeSol: 0.005,
   maxOpen: 3, dayStopPct: 10, lossStreak: 3, cooldownMin: 30, staleSec: 120, topHolderMax: 20, top10Max: 25, lpLockedMin: 50,
 };
+// R5 whale follow (Alex, 2026-11-16: whales first, no warm-up). Same gates and risk as R3; its own stop/target structure.
+// Stop 4-12% under the recent swing low, target 2.5x the stop (so 10-30%): the smallest target (10%) still clears the 6x
+// cost gate at a measured round trip up to 1.66%, and the stop is never larger than the target. No bars: fixed 8% / 20%.
+export const R5_PARAMS = { ...R3_PARAMS, stopLookback: 15, minStopPct: 4, maxStopPct: 12, rr: 2.5, fixedStopPct: 8, timeStopMin: 30 };
+// R6/R7 (ALWAYS TRADING): liquid coins cost 0.1-0.9% a round trip, so 4-8% targets clear the 6x gate. Stop 2-4%, target 2x the stop.
+export const R6_PARAMS = { lookback: 20, stopBars: 5, minStopPct: 2, maxStopPct: 4, rr: 2, timeStopMin: 30 };
+export const R7_PARAMS = { minDropPct: 4, rsiMax: 30, stopBars: 10, minStopPct: 2, maxStopPct: 4, rr: 2, timeStopMin: 45 };
 export const STRATEGIES = [
   ["R1", "R1 US stocks ORB + Time Machine", "stocks", "not tested", {}],
   ["R2", "R2 crypto majors (Freqtrade)", "majors", "not tested", {}],
   ["R3", "R3 memecoin fib (1m golden ratio)", "solana", "paper", R3_PARAMS],
   ["R4", "R4 launch watcher (GTA 6)", "solana", "paper", { ...R3_PARAMS, narrative: "GTA6" }],
-  ["R5", "R5 copy wallets", "solana", "not tested", {}],
+  ["R5", "R5 whale follow (2+ independent winners)", "solana", "paper", R5_PARAMS],
+  ["R6", "R6 momentum breakout (tier A/B)", "solana", "paper", R6_PARAMS],
+  ["R7", "R7 oversold bounce (tier A)", "solana", "paper", R7_PARAMS],
 ];
 
 export const GTA6_DATE = "2026-11-19";

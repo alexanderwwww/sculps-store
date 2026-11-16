@@ -120,6 +120,112 @@ export function survival(equity, start) {
   const r = start > 0 ? equity / start : 0, health = Math.max(0, Math.min(100, Math.round(r * 100)));
   const stage = r <= 0.1 ? "destroyed" : r < 0.5 ? "critical" : r < 0.9 ? "hurt" : r < 1.1 ? "healthy" : "thriving";
   // risk tightens as health drops: critical = half size and one position; hurt = 3/4 size and two positions
-  const limits = { thriving: [1, 3], healthy: [1, 3], hurt: [0.75, 2], critical: [0.5, 1], destroyed: [0, 0] }[stage];
+  const limits = { thriving: [1, 5], healthy: [1, 5], hurt: [0.75, 3], critical: [0.5, 1], destroyed: [0, 0] }[stage];
   return { health, stage, ratio: round(r, 4), sizeMult: limits[0], maxOpen: limits[1] };
+}
+
+// R5 whale-follow setup. No pullback is waited for: the whales are the trigger. With bars: stop just under the lowest low of
+// the last p.stopLookback minutes, never tighter than p.minStopPct, refused when wider than p.maxStopPct. Without bars: the
+// fixed p.fixedStopPct. Target = p.rr x the stop distance, so the stop is never larger than the target.
+export function whaleSetup(candles, p, nowSec, price) {
+  const n = candles?.length || 0;
+  if (n >= 5) {
+    const last = candles[n - 1], P = last.c, staleSec = Math.round(nowSec - (last.t + 60));
+    let low = Infinity;
+    for (const c of candles.slice(-p.stopLookback)) low = Math.min(low, c.l);
+    let stopPct = ((P - low * (1 - p.stopBufferPct / 100)) / P) * 100;
+    if (stopPct < p.minStopPct) stopPct = p.minStopPct;
+    const base = { staleSec, price: P, stopPct: round(stopPct, 3), targetPct: round(stopPct * p.rr, 3), stopPrice: P * (1 - stopPct / 100), targetPrice: P * (1 + (stopPct * p.rr) / 100), bars: n, structure: "swing" };
+    if (stopPct > p.maxStopPct) return { ...base, signal: false, why: `whale signal but the swing stop is wider than ${p.maxStopPct}%`, number: base.stopPct };
+    return { ...base, signal: true, why: "whale signal, stop under the recent swing low", number: base.stopPct };
+  }
+  if (price == null) return { signal: false, why: "whale signal but no price", number: null, staleSec: 0 };
+  const stopPct = p.fixedStopPct;
+  return { staleSec: 0, price, stopPct, targetPct: stopPct * p.rr, stopPrice: price * (1 - stopPct / 100), targetPrice: price * (1 + (stopPct * p.rr) / 100), bars: n, structure: "fixed", signal: true, why: `whale signal, fixed ${stopPct}% stop (no bars yet)`, number: stopPct };
+}
+
+// ---------------------------------------------------------------- ALWAYS TRADING (aquarius-trader skill, 2026-11-16)
+// Hard blocks are never traded. Soft rules only move the score and the size. Tiers decide which soft rules apply.
+export const COUNCIL = {
+  hardMinLiq: 20000, passScore: 70, exploreEveryMin: 3, maxOpen: 5, riskPct: 1, costMultiple: 6, staleSec: 120,
+  maxSizeSol: 0.05, minSizeSol: 0.005, stressMult: 1.5, exploreSize: 0.75, lpLockedMin: 50, top10Max: 25, topHolderMax: 20,
+  // sizes stay close to the 0.05 SOL cap on purpose: the network fee is a fixed amount, so a tiny position cannot clear the 6x cost gate
+  tiers: { A: { liq: 500000, ageDays: 7, size: 1, bonus: 10 }, B: { liq: 100000, ageDays: 1, size: 0.85, bonus: 5 }, C: { size: 0.6, bonus: 0 } },
+};
+export const SOFT_RULES = ["lp_locked", "top10", "top_holder", "danger_risk", "young", "boosted", "copycat", "no_whale", "fear"];
+export function ageDays(createdAt, nowMs) { const t = createdAt ? Date.parse(createdAt) : NaN; return Number.isFinite(t) ? (nowMs - t) / 86400000 : null; }
+export function tierOf(liqUsd, createdAt, nowMs) {
+  const a = ageDays(createdAt, nowMs), T = COUNCIL.tiers;
+  if (liqUsd >= T.A.liq && a != null && a > T.A.ageDays) return "A";
+  if (liqUsd >= T.B.liq && a != null && a > T.B.ageDays) return "B";
+  return "C";
+}
+// The part of the RugCheck report that can never be traded past.
+export function hardSafety(s) {
+  if (!s) return { ok: false, reason: "missing data: safety report", number: null };
+  if (s.rugged) return { ok: false, reason: "safety: rugged", number: 1 };
+  if (s.mintAuthority) return { ok: false, reason: "safety: mint authority enabled", number: 1 };
+  if (s.freezeAuthority) return { ok: false, reason: "safety: freeze authority enabled", number: 1 };
+  if (s.decimals == null) return { ok: false, reason: "missing data: token decimals", number: null };
+  return { ok: true, reason: "hard safety pass", number: null };
+}
+// Soft rules that object to this coin. Tier A (established) is not judged on LP lock or holder concentration.
+export function softObjections({ tier, rug, createdAt, boosted, copycat, whale, fng, nowMs }) {
+  const o = [];
+  if (tier !== "A") {
+    if (rug.lpLockedPct == null || rug.lpLockedPct < COUNCIL.lpLockedMin) o.push("lp_locked");
+    if (rug.top10Pct > COUNCIL.top10Max) o.push("top10");
+    if (rug.topHolderPct > COUNCIL.topHolderMax) o.push("top_holder");
+  }
+  if (rug.danger?.length) o.push("danger_risk");
+  const a = ageDays(createdAt, nowMs);
+  if (a == null || a < 1) o.push("young");
+  if (boosted) o.push("boosted");
+  if (copycat) o.push("copycat");
+  if (!whale) o.push("no_whale");
+  if (fng != null && fng < 25) o.push("fear");
+  return o;
+}
+export function scoreOf(objections, weights, tier, whale) {
+  const w = objections.reduce((a, n) => a + (weights[n] ?? 1), 0);
+  return { score: round(100 - 10 * w + (whale ? 15 : 0) + COUNCIL.tiers[tier].bonus, 1), sizeMult: round(Math.max(0.7, 1 - 0.1 * w), 3) };
+}
+const clampStop = (pct, p) => (pct < p.minStopPct ? p.minStopPct : pct);
+function levels(P, stopPct, rr, extra) { return { price: P, stopPct: round(stopPct, 3), targetPct: round(stopPct * rr, 3), stopPrice: P * (1 - stopPct / 100), targetPrice: P * (1 + (stopPct * rr) / 100), ...extra }; }
+// R6 momentum breakout (tier A/B): the last 1m bar closes green above the high of the previous p.lookback bars.
+export function momentumSetup(candles, p, nowSec) {
+  const n = candles.length;
+  if (n < p.lookback + 2) return { signal: false, why: "too few candles", number: n };
+  const last = candles[n - 1], staleSec = Math.round(nowSec - (last.t + 60));
+  let hi = -Infinity, lo = Infinity;
+  for (const c of candles.slice(n - 1 - p.lookback, n - 1)) hi = Math.max(hi, c.h);
+  for (const c of candles.slice(-p.stopBars)) lo = Math.min(lo, c.l);
+  const P = last.c, stopPct = clampStop(((P - lo * 0.998) / P) * 100, p), out = { staleSec, ...levels(P, stopPct, p.rr, { breakout: hi }) };
+  if (!(P > hi)) return { ...out, signal: false, why: `no breakout (close under the ${p.lookback}-bar high)`, number: round((P / hi - 1) * 100, 3) };
+  if (!(last.c > last.o)) return { ...out, signal: false, why: "breakout bar is not green", number: 0 };
+  if (stopPct > p.maxStopPct) return { ...out, signal: false, why: `breakout but the stop is wider than ${p.maxStopPct}%`, number: out.stopPct };
+  return { ...out, signal: true, why: `breakout above the ${p.lookback}-bar high`, number: round((P / hi - 1) * 100, 3) };
+}
+export function rsi(closes, len = 14) {
+  if (closes.length < len + 1) return null;
+  let g = 0, l = 0;
+  for (let i = closes.length - len; i < closes.length; i++) { const ch = closes[i] - closes[i - 1]; if (ch > 0) g += ch; else l -= ch; }
+  return l === 0 ? 100 : round(100 - 100 / (1 + g / l), 2);
+}
+// R7 oversold bounce (tier A): price fell p.minDropPct from the window high, RSI(14) went under p.rsiMax in the last 5 bars,
+// and the last bar is green and closes above the previous close.
+export function bounceSetup(candles, p, nowSec) {
+  const n = candles.length;
+  if (n < 30) return { signal: false, why: "too few candles", number: n };
+  const last = candles[n - 1], prev = candles[n - 2], staleSec = Math.round(nowSec - (last.t + 60)), closes = candles.map((c) => c.c);
+  let H = -Infinity, lo = Infinity, minRsi = Infinity;
+  for (const c of candles) H = Math.max(H, c.h);
+  for (const c of candles.slice(-p.stopBars)) lo = Math.min(lo, c.l);
+  for (let k = 0; k < 5; k++) { const r = rsi(closes.slice(0, n - k)); if (r != null) minRsi = Math.min(minRsi, r); }
+  const P = last.c, drop = ((H - P) / H) * 100, stopPct = clampStop(((P - lo * 0.998) / P) * 100, p), out = { staleSec, ...levels(P, stopPct, p.rr, { dropPct: round(drop, 2), rsi: minRsi }) };
+  if (drop < p.minDropPct) return { ...out, signal: false, why: `not oversold (down ${round(drop, 2)}% from the high, needs ${p.minDropPct}%)`, number: round(drop, 2) };
+  if (!(minRsi < p.rsiMax)) return { ...out, signal: false, why: `RSI ${minRsi} not under ${p.rsiMax}`, number: minRsi };
+  if (!(last.c > last.o && last.c > prev.c)) return { ...out, signal: false, why: "oversold but no bounce bar yet", number: minRsi };
+  if (stopPct > p.maxStopPct) return { ...out, signal: false, why: `bounce but the stop is wider than ${p.maxStopPct}%`, number: out.stopPct };
+  return { ...out, signal: true, why: `oversold bounce (down ${round(drop, 2)}%, RSI ${minRsi})`, number: minRsi };
 }

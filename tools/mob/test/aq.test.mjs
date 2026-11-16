@@ -3,9 +3,9 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { makeEnv, dropEnv, reqOf, login, mock, resetMocks, res, calls } from "./helpers.mjs";
 import { db } from "../src/db.mjs";
-import { FX, FX2, FX3, FX5 } from "./aq-fixtures.mjs";
-import { whaleSignal, slimTrades } from "../src/aq/whales.mjs";
-import { GT_GAP, GT_BACKOFF, DS_BACKOFF, bestPairs } from "../src/aq/feeds.mjs";
+import { FX, FX2, FX3, FX5, FX6 } from "./aq-fixtures.mjs";
+import { whaleSignal, refreshWinners, mineTick } from "../src/aq/whales.mjs";
+import { GT_GAP, GT_BACKOFF, DS_BACKOFF, bestPairs, jupPool, resetCalls, CALLS } from "../src/aq/feeds.mjs";
 GT_GAP.ms = 0; GT_BACKOFF.sec = 0; DS_BACKOFF.sec = 0;
 const JSOL = Object.values(FX5.jupPrice).find((x) => x.decimals === 9);
 const jupPx = (px) => (rec, u) => Object.fromEntries(u.searchParams.get("ids").split(",").filter((m) => m === SOL || px()[m] != null).map((m) => [m, m === SOL ? clone(JSOL) : { ...clone(Object.values(FX5.jupPrice).find((x) => x.decimals === 6)), usdPrice: px()[m], liquidity: 250000 }]));
@@ -42,7 +42,9 @@ function goldenCandles() {
 const safeRug = () => { const r = clone(FX.rugWasted); r.topHolders = r.topHolders.map((h) => ({ ...h, pct: h.pct / 2 })); return r; };
 const MINT = { A: "AAAAgoodmint1111111111111111111111111111pump", B: "BBBBrugmint11111111111111111111111111111pump", C: "CCCCcostmint1111111111111111111111111111pump", F: "FFFFnewmint11111111111111111111111111111pump" };
 const POOL = { A: "PoolA111111111111111111111111111111111111111", B: "PoolB111111111111111111111111111111111111111", C: "PoolC111111111111111111111111111111111111111", F: "PoolF111111111111111111111111111111111111111" };
-let trendingPools = [], prices = {}, tradesFor = {}, liqOf = {};
+let trendingPools = [], prices = {}, tradesFor = {}, liqOf = {}, backOf = {}, rugFor = {}, sellOut = {}, jupLists = () => ({ pools: [] }), jupCharts = {};
+// a swap in Jupiter's real txs shape
+const jtx = (wallet, type, sol, mint, i = 0, at = new Date()) => ({ ...clone(FX6.jupTxs1.txs[0]), asset: mint, type, traderAddress: wallet, txHash: `tx-${wallet}-${mint}-${type}-${i}`, nativeVolume: sol, isMev: false, timestamp: at.toISOString() });
 
 function stubAll() {
   resetMocks();
@@ -56,17 +58,20 @@ function stubAll() {
   mock("GET", "https://api.dexscreener.com/community-takeovers/latest/v1", () => []);
   mock("GET", "https://api.coingecko.com/api/v3/simple/price", () => clone(FX.cg));
   mock("GET", "https://api.alternative.me/fng/", () => clone(FX.fng));
-  mock("GET", /rugcheck\.xyz\/v1\/tokens\/([^/]+)\/report$/, (rec) => (rec.url.includes(MINT.B) ? clone(FX.rugNew) : safeRug()));
+  mock("GET", /rugcheck\.xyz\/v1\/tokens\/([^/]+)\/report$/, (rec) => { const m = rec.url.split("/tokens/")[1].split("/")[0]; return rugFor[m] ? rugFor[m]() : rec.url.includes(MINT.B) ? clone(FX.rugNew) : safeRug(); });
   mock("GET", "https://api.dexscreener.com/tokens/v1/solana/", (rec) => {
     const mints = rec.url.split("/").pop().split(",");
     return mints.filter((m) => prices[m] != null).map((m) => { const p = clone(FX.dsTokens[0]); p.baseToken.address = m; p.pairAddress = "x"; p.priceUsd = String(prices[m]); if (liqOf[m] != null) p.liquidity.usd = liqOf[m]; return p; });
   });
   mock("GET", "https://lite-api.jup.ag/price/v3", jupPx(() => prices));
+  mock("GET", "https://datapi.jup.ag/v1/pools/", () => jupLists());
+  mock("GET", "https://datapi.jup.ag/v2/charts/", (rec) => (jupCharts[rec.url.split("/charts/")[1].split("?")[0]] ? jupCharts[rec.url.split("/charts/")[1].split("?")[0]]() : res({ status: 404 }, 404)));
+  mock("GET", "https://datapi.jup.ag/v1/txs/", (rec, u) => (tradesFor[u.pathname.split("/").pop()] || (() => ({ txs: [], next: null })))(u));
   mock("GET", "https://lite-api.jup.ag/swap/v1/quote", (rec, u) => {
     const q = clone(u.searchParams.get("inputMint") === SOL ? FX.jupBuy : FX.jupSell), amt = Number(u.searchParams.get("amount"));
     if (u.searchParams.get("inputMint") === SOL) { q.inAmount = String(amt); q.outAmount = String(Math.floor(amt * 1000)); return q; } // 1000 raw units per lamport
-    const mint = u.searchParams.get("inputMint"), back = mint === MINT.C ? 0.9 : 0.99;  // C loses 10% round trip
-    const px = prices[mint] != null ? prices[mint] / 1.1 : 1; q.inAmount = String(amt); q.outAmount = String(Math.floor((amt / 1000) * back * px)); return q;
+    const mint = u.searchParams.get("inputMint"), back = backOf[mint] ?? (mint === MINT.C ? 0.9 : 0.995);  // C loses 10% round trip
+    const px = sellOut[mint] != null ? sellOut[mint] / back : prices[mint] != null ? prices[mint] / 1.1 : 1; q.inAmount = String(amt); q.outAmount = String(Math.floor((amt / 1000) * back * px)); return q;
   });
 }
 const S = async () => (await R("GET", "/api/aq/state", { bearer: "tok-test" })).json();
@@ -94,12 +99,15 @@ test("tick: one PASS, one safety BLOCK, one WAIT; next tick the cost gate blocks
   stubAll();
   trendingPools = [pool("GOOD", MINT.A, POOL.A, 200000), pool("RUG", MINT.B, POOL.B, 200000), pool("COST", MINT.C, POOL.C, 200000)];
   const t1 = await tick(env);
-  assert.deepEqual(t1.evaluated.map((e) => [e.symbol, e.verdict]), [["GOOD", "PASS"], ["RUG", "BLOCK"], ["COST", "WAIT"]], JSON.stringify(t1.evaluated));
-  assert.match(t1.evaluated[1].reason, /^safety: /);
+  // all three are tier B (liquidity $200k, 17 days old); best score first: GOOD is taken, the others wait for the next tick
+  assert.deepEqual(t1.evaluated.map((e) => [e.symbol, e.verdict]), [["GOOD", "PASS"], ["COST", "WAIT"], ["RUG", "WAIT"]], JSON.stringify(t1.evaluated));
+  assert.equal(t1.entered.tier, "B"); assert.equal(t1.entered.tag, "PASS"); assert.equal(t1.entered.strategy, "R3");
   assert.ok(t1.entered && t1.entered.sizeSol <= 0.05 && t1.entered.rtPct > 0);
   const pos = await db(env).q(`SELECT * FROM mob_aq_positions`); assert.equal(pos.length, 1); assert.equal(pos[0].symbol, "GOOD");
   const t2 = await tick(env);
-  const cost = t2.evaluated.find((e) => e.symbol === "COST"); assert.equal(cost.verdict, "BLOCK"); assert.equal(cost.reason, "cost gate"); assert.ok(cost.number < 6);
+  const cost = t2.evaluated.find((e) => e.symbol === "COST"); assert.equal(cost.verdict, "BLOCK"); assert.equal(cost.kind, "hard"); assert.equal(cost.reason, "cost gate"); assert.ok(cost.number < 6);
+  // the rug-history coin is not a hard block any more: its soft rules sink the score (and a soft block names them)
+  const rug = t2.evaluated.find((e) => e.symbol === "RUG"); assert.equal(rug.verdict, "BLOCK"); assert.equal(rug.kind, "soft"); assert.match(rug.reason, /^soft rules: score .*danger_risk/); assert.ok(rug.number < 70);
   const s = await S();
   assert.equal(s.positions.length, 1); assert.ok(s.council.vetoes.some((v) => v.symbol === "COST" && v.reason === "cost gate"));
   assert.ok(s.flows.some((f) => f.kind === "buy") && s.flows.some((f) => f.kind === "fee"));
@@ -148,16 +156,21 @@ test("shadow lane: a cost-gate near miss is probed on paper, closed, graded, and
   assert.equal(s.trades.n, realBefore);
 });
 
-test("whales: 2+ independent winners buying = signal; creator excluded; Helius funder clustering merges one owner", async () => {
-  const d = db(env), W1 = "WhaleOne111", W2 = "WhaleTwo222", DEV = "CreatorDev333", MW = "WhaleMint1pump", PW = "WhalePool1";
+test("whales: 2+ independent winners buying = signal; creator excluded; bots not winners; Helius funder clustering merges one owner", async () => {
+  const d = db(env), W1 = "WhaleOne111", W2 = "WhaleTwo222", DEV = "CreatorDev333", BOT = "BotWallet444", MW = "WhaleMint1pump";
   for (const w of [W1, W2, DEV]) for (const m of ["m1", "m2", "m3"])
     await d.q(`INSERT INTO mob_aq_wtrades (tx, wallet, mint, kind, sol, at) VALUES ($1,$2,$3,'buy',1,now()),($1,$2,$3,'sell',$4,now())`, [`${w}${m}`, w, m, m === "m3" ? 0.5 : 2]);
-  const real = FX2.gtTrades.data[0];
-  tradesFor[PW] = { data: [W1, W2, DEV].map((w, i) => { const x = clone(real); Object.assign(x.attributes, { tx_hash: `tx${i}`, tx_from_address: w, kind: "buy", from_token_address: SOL, to_token_address: MW, block_timestamp: new Date().toISOString() }); return x; }) };
-  assert.equal(slimTrades(tradesFor[PW], MW).length, 3);
-  const notes = {};
-  let w = await whaleSignal(env, { pool: PW, mint: MW, symbol: "WH" }, { creator: DEV, insiders: [] }, (k, st, n) => { notes[k] = n; });
-  assert.equal(w.signal, true); assert.equal(w.independent, 2); assert.equal(w.excluded, 1); assert.match(w.funders, /unchecked/);
+  // a bot: profitable on two coins but with hundreds of swaps per coin
+  for (const m of ["m1", "m2"]) await d.q(`INSERT INTO mob_aq_wtrades (tx, wallet, mint, kind, sol, at) SELECT 'bot' || $2 || i, $1, $2, CASE WHEN i % 2 = 0 THEN 'buy' ELSE 'sell' END, CASE WHEN i % 2 = 0 THEN 1 ELSE 1.1 END, now() FROM generate_series(1, 200) i`, [BOT, m]);
+  const book = await refreshWinners(d);
+  assert.equal(book.winners, 3, "W1, W2 and the dev win on 2 of 3 coins; the bot is not a winner");
+  assert.equal((await d.one(`SELECT winner FROM mob_aq_whales WHERE wallet=$1`, [BOT])).winner, false);
+  tradesFor[MW] = () => ({ txs: [W1, W2, DEV, BOT].map((w, i) => jtx(w, "buy", 1, MW, i)).concat([{ ...jtx("Mev555", "buy", 5, MW), isMev: true }]), next: null });
+  resetCalls();
+  let w = await whaleSignal(env, { mint: MW, symbol: "WH", priceUsd: 1 }, { creator: DEV, insiders: [] }, () => {});
+  assert.equal(w.signal, true); assert.equal(w.independent, 2); assert.equal(w.excluded, 1); assert.match(w.funders, /unchecked \(no HELIUS_API_KEY\)/);
+  assert.equal((await d.one(`SELECT independent FROM mob_aq_signals WHERE mint=$1`, [MW])).independent, 2, "every signal is logged");
+  assert.ok(!(await d.one(`SELECT 1 FROM mob_aq_wtrades WHERE wallet='Mev555'`)), "MEV swaps never enter the book");
   // with a Helius key: both winners were first funded by the same wallet -> one owner -> no signal
   env.HELIUS_API_KEY = "hk-test"; let lastWallet = null;
   mock("POST", "https://mainnet.helius-rpc.com/", (rec) => {
@@ -166,10 +179,11 @@ test("whales: 2+ independent winners buying = signal; creator excluded; Helius f
     if (b.method === "getSignaturesForAddress") { lastWallet = b.params[0]; return clone(FX2.rpcSigs); }
     const tx = clone(FX2.rpcTx); tx.result.transaction.message.instructions[0].parsed.info.wallet = lastWallet; return tx;
   });
-  w = await whaleSignal(env, { pool: PW, mint: MW, symbol: "WH" }, { creator: DEV, insiders: [] }, () => {});
-  delete env.HELIUS_API_KEY;
-  assert.equal(w.winners, 2); assert.equal(w.independent, 1); assert.equal(w.signal, false); assert.match(w.funders, /helius/);
+  w = await whaleSignal(env, { mint: MW, symbol: "WH", priceUsd: 1 }, { creator: DEV, insiders: [] }, () => {});
+  assert.equal(w.winners, 2); assert.equal(w.independent, 1); assert.equal(w.signal, false); assert.match(w.funders, /checked \(helius\)/);
+  assert.equal(CALLS.helius, 4, "2 RPC calls per wallet, counted against the budget");
   assert.equal((await d.q(`SELECT DISTINCT funder FROM mob_aq_funders`)).length, 1);
+  await d.q(`DELETE FROM mob_aq_funders`); delete env.HELIUS_API_KEY;
 });
 
 test("kill switch blocks every new entry; loss streak throttles", async () => {
@@ -206,11 +220,15 @@ test("state JSON follows the contract", async () => {
   assert.ok(s.departments.find((x) => x.id === "scouts_sol").workers.find((w) => w.job === "Trending list").status === "busy");
   assert.ok(s.market.sol.price > 0 && s.market.fearGreed.value === 10);
   assert.ok(s.council.vetoes.length <= 10 && s.flows.length <= 40 && s.brain.length <= 30);
-  assert.deepEqual(s.strategies.map((x) => x.id), ["R1", "R2", "R3", "R4", "R5"]);
+  assert.deepEqual(s.strategies.map((x) => x.id), ["R1", "R2", "R3", "R4", "R5", "R6", "R7"]);
+  assert.deepEqual(s.rules.map((r) => r.name).sort(), ["boosted", "copycat", "danger_risk", "fear", "lp_locked", "no_whale", "top10", "top_holder", "young"]);
+  assert.ok(s.rules.every((r) => typeof r.weight === "number" && r.blockedWinners >= 0 && r.blockedLosers >= 0)); assert.ok(s.council_rules.hard.length === 8 && typeof s.tradesLastHour === "number");
   assert.equal(s.strategies.find((x) => x.id === "R1").status, "not tested");
   assert.deepEqual(s.tools.map((t) => t.name).sort(), ["Freqtrade", "Hummingbot", "Kronos", "NautilusTrader", "skfolio"]);
   assert.ok(s.tools.every((t) => t.status === "planned" && t.usedBy));
-  assert.deepEqual(s.helpers, { grok: "not connected", chatgpt: "not connected", grokLastAt: null, chatgptLastAt: null });
+  assert.deepEqual(s.helpers, { grok: "not connected", chatgpt: "not connected", codex: "not connected", codexLastAt: null, grokLastAt: null, chatgptLastAt: null });
+  assert.ok(s.tape && s.tape.candles.length > 10 && s.tape.candles.length <= 90 && ["PASS", "BLOCK"].includes(s.tape.verdict)); assert.ok(s.tape.candles[0].t < s.tape.candles.at(-1).t);
+  assert.ok(s.costs.length >= 1 && s.costs.every((c) => typeof c.rtPct === "number" && c.symbol)); assert.ok(s.council.recent.length <= 20 && s.council.recent.some((v) => v.verdict === "PASS"));
   assert.deepEqual(s.xfeed, [], "no invented posts");
   const txt = JSON.stringify(s);
   for (const secret of [env.ADMIN_PASSWORD, env.MOB_API_TOKEN, env.DATABASE_URL, "postgres://"]) assert.ok(!txt.includes(secret));
@@ -428,11 +446,12 @@ test("production path: GeckoTerminal refuses (429), DexScreener alone feeds cand
   // CoinGecko's price call is refused too (seen in production): SOL comes from DexScreener's SOL/USDC pair, BTC stays unknown
   mock("GET", "https://api.coingecko.com/api/v3/simple/price", () => res({ status: { error_code: 429, error_message: "Rate limit exceeded" } }, 429));
   mock("GET", "https://lite-api.jup.ag/price/v3", jupPx(() => gatoPx));
+  mock("GET", "https://datapi.jup.ag/", () => res({ status: 503 }, 503)); // Jupiter's data API down as well: our own bars are the fallback
   mock("GET", "https://api.alternative.me/fng/", () => clone(FX.fng));
   mock("GET", /rugcheck\.xyz\/v1\/tokens\/([^/]+)\/report$/, () => safeRug());
   mock("GET", "https://lite-api.jup.ag/swap/v1/quote", (rec, u) => {
     const q = clone(u.searchParams.get("inputMint") === SOL ? FX.jupBuy : FX.jupSell), amt = Number(u.searchParams.get("amount"));
-    q.inAmount = String(amt); q.outAmount = String(u.searchParams.get("inputMint") === SOL ? Math.floor(amt * 1000) : Math.floor((amt / 1000) * 0.99)); return q;
+    q.inAmount = String(amt); q.outAmount = String(u.searchParams.get("inputMint") === SOL ? Math.floor(amt * 1000) : Math.floor((amt / 1000) * 0.995)); return q;
   });
   let t = await tick(env);
   let s = await S();
@@ -447,9 +466,10 @@ test("production path: GeckoTerminal refuses (429), DexScreener alone feeds cand
   await d.q(`DELETE FROM mob_aq_council`); await d.q(`DELETE FROM mob_aq_prices WHERE mint=$1`, [GATO]);
   const px = (i) => (i < 40 ? 1 + (0.2 * i) / 40 : i === 40 ? 1.2 : 1.2 - (0.11 * (i - 40)) / 18);
   await d.q(`INSERT INTO mob_aq_prices (mint, at, price) SELECT $1, date_trunc('minute', now()) - make_interval(mins => 59 - i), p FROM unnest($2::int[], $3::float8[]) x(i, p)`, [GATO, [...Array(59).keys()], [...Array(59).keys()].map(px)]);
+  await d.q(`UPDATE mob_aq_trades SET opened_at = now() - interval '1 hour'`); // no entry for an hour: the Council must explore
   t = await tick(env);
   const g = t.evaluated.find((e) => e.symbol === "GATO");
-  assert.equal(g.verdict, "PASS", JSON.stringify(t.evaluated));
+  assert.equal(g.verdict, "PASS", JSON.stringify(t.evaluated)); assert.equal(g.tag, "EXPLORE"); assert.equal(g.tier, "C");
   const row = await d.one(`SELECT facts FROM mob_aq_council WHERE symbol='GATO' AND verdict='PASS'`);
   assert.equal(row.facts.candles.src, "own"); assert.ok(row.facts.candles.ownBars >= 30); assert.equal(row.facts.setup.signal, true);
   s = await S(); assert.ok(s.history.ready >= 1); assert.equal(s.positions[0].symbol, "GATO");
@@ -485,4 +505,126 @@ test("zip drop-off: access code, .zip names only, put + list + get; nothing else
   assert.equal((await R("GET", "/api/aq/drop/dropkey456/oraktys-a.mp4")).status, 405, "cannot read anything outside aq-drop zips");
   assert.equal((await R("DELETE", `/api/aq/drop/dropkey456/${list.files[0].name}`)).status, 405);
   assert.equal((await R("POST", "/api/aq/kill?key=dropkey456", { body: { on: true } })).status, 401, "the drop key opens nothing else");
+});
+
+test("whales first: Jupiter lists pick tradable coins, 60 bars on first sight, a whale signal opens an R5 paper trade; mining pages the swaps", async () => {
+  const d = db(env);
+  for (const t of ["mob_aq_market", "mob_aq_watch", "mob_aq_prices", "mob_aq_positions", "mob_aq_council", "mob_aq_signals", "mob_aq_mined"]) await d.q(`DELETE FROM ${t}`);
+  await d.q(`DELETE FROM mob_aq_trades WHERE reason='stop' AND symbol LIKE 'L%'`); await d.q(`UPDATE mob_aq_state SET v='false' WHERE k IN ('kill','destroyed')`); await d.q(`UPDATE mob_aq_state SET v='1' WHERE k='cash_sol'`);
+  await d.q(`DELETE FROM mob_aq_trades`);
+  // R5 activation is a recorded change on an already-seeded database
+  await d.q(`UPDATE mob_aq_strategies SET status='not tested', params='{}' WHERE id='R5'`); _resetSeeded();
+  stubAll(); trendingPools = [];
+  const pools = clone(FX6.jupTop.pools), FART = pools.find((p) => p.baseAsset.symbol === "Fartcoin").baseAsset.id;
+  assert.equal(jupPool(pools.find((p) => p.baseAsset.symbol === "SPCX")), null, "stock wrappers are not memecoins");
+  Object.assign(pools.find((p) => p.baseAsset.symbol === "ACT").baseAsset.stats1h, { buyVolume: 900, sellVolume: 800 }); // liquid but dead: not tradable
+  jupLists = () => ({ pools: clone(pools) });
+  const chart = clone(FX6.jupChart), shift = Math.floor(Date.now() / 60000) * 60 - chart.candles.at(-1).time;
+  for (const c of chart.candles) c.time += shift;
+  jupCharts[FART] = () => clone(chart);
+  // two winners from the book (seeded in the whale test) buy Fartcoin now; swaps page 1 then page 2
+  let pagesAsked = [];
+  tradesFor[FART] = (u) => { pagesAsked.push(u.searchParams.get("offset")); return u.searchParams.get("offset") ? { txs: [jtx("OldBuyer", "buy", 2, FART, 9, new Date(Date.now() - 3600000))], next: null } : { txs: [jtx("WhaleOne111", "buy", 3, FART, 1), jtx("WhaleTwo222", "buy", 2, FART, 2)], next: FX6.jupTxs1.next }; };
+  const t = await tick(env);
+  assert.ok((await d.one(`SELECT 1 FROM mob_aq_brain WHERE text LIKE 'R5 whale follow activated on PAPER%'`)), "activation recorded");
+  assert.equal(t.funnel.seen >= 3, true); assert.ok(t.funnel.tradable >= 1 && t.funnel.tradable < t.funnel.seen, JSON.stringify([t.funnel, t.evaluated])); assert.equal(t.funnel.judged, t.funnel.tradable);
+  assert.deepEqual([t.evaluated[0].symbol, t.evaluated[0].verdict, t.evaluated[0].tier, t.evaluated[0].tag], ["Fartcoin", "PASS", "A", "PASS"], JSON.stringify(t.evaluated));
+  assert.ok(!t.evaluated.some((e) => e.symbol === "ACT" || e.symbol === "NEIL" || e.symbol === "SPCX"), "dead, illiquid and stock coins never reach the Council");
+  const cn = await d.one(`SELECT strategy, reason, facts FROM mob_aq_council WHERE symbol='Fartcoin'`);
+  assert.equal(cn.strategy, "R5"); assert.match(cn.reason, /^R5 whale signal, stop under the recent swing low; hard blocks clear; score/); assert.equal(cn.facts.tier, "A");
+  assert.equal(cn.facts.candles.src, "jupiter"); assert.equal(cn.facts.candles.bars, 60, "history on first sight, no warm-up");
+  assert.equal(cn.facts.whale.independent, 2); assert.ok(cn.facts.setup.stopPct >= 4 && cn.facts.setup.stopPct <= 12); assert.equal(cn.facts.setup.targetPct, Math.round(cn.facts.setup.stopPct * 2.5 * 1000) / 1000);
+  const p = await d.one(`SELECT * FROM mob_aq_positions`); assert.equal(p.strategy, "R5"); assert.ok(p.size_sol <= 0.05);
+  assert.equal((await d.one(`SELECT verdict FROM mob_aq_signals WHERE mint=$1`, [FART])).verdict, "PASS");
+  // mining: the same tick walked the coin's swaps back with the cursor (offset + offsetTs) and finished it
+  const m = await d.one(`SELECT * FROM mob_aq_mined WHERE mint=$1`, [FART]);
+  assert.equal(m.pages, 2); assert.equal(m.done, true); assert.ok(pagesAsked.includes(String(FX6.jupTxs1.next)));
+  assert.ok(await d.one(`SELECT 1 FROM mob_aq_wtrades WHERE wallet='OldBuyer' AND mint=$1`, [FART]));
+  const s = await S();
+  assert.ok(s.whales.winners >= 2 && s.whales.book >= s.whales.winners); assert.equal(s.whales.signals[0].symbol, "Fartcoin"); assert.equal(s.whales.mining.done, 1);
+  assert.ok(s.health.budget.jupiterDataCalls > 0 && s.health.budget.jupiterDataCalls <= s.health.budget.jupiterDataCap); assert.equal(s.health.budget.heliusCalls, 0);
+  assert.ok(s.funnel.tradable >= 1); assert.ok(s.market.trending.some((x) => x.symbol === "Fartcoin"));
+  assert.equal(s.strategies.find((x) => x.id === "R5").status, "paper");
+  assert.equal(s.departments.find((x) => x.id === "whales").live, true);
+  assert.ok(s.brain.some((b) => /^R5 paper entry Fartcoin: 2 independent winners/.test(b.text)));
+  // no bars at all: the fixed structure (8% stop, 20% target), stop never larger than target
+  const { whaleSetup } = await import("../src/aq/logic.mjs"); const { R5_PARAMS } = await import("../src/aq/seed.mjs");
+  const fx = whaleSetup([], R5_PARAMS, Date.now() / 1000, 2); assert.deepEqual([fx.signal, fx.stopPct, fx.targetPct, fx.structure], [true, 8, 20, "fixed"]);
+  jupLists = () => ({ pools: [] }); jupCharts = {};
+});
+
+test("ALWAYS TRADING: hard vs soft, tiers, R6 and R7 entries, explore cadence, weights learn from closed trades", async () => {
+  const L = await import("../src/aq/logic.mjs"); const { R6_PARAMS, R7_PARAMS } = await import("../src/aq/seed.mjs");
+  const now = Date.now(), day = 86400000, iso = (d) => new Date(now - d * day).toISOString();
+  assert.deepEqual([L.tierOf(600000, iso(30), now), L.tierOf(600000, iso(2), now), L.tierOf(150000, iso(2), now), L.tierOf(150000, iso(0.2), now), L.tierOf(600000, null, now)], ["A", "B", "B", "C", "C"]);
+  // hard: authorities and rugged; soft: LP lock / holders (and not at all for tier A)
+  const base = { mintAuthority: null, freezeAuthority: null, rugged: false, danger: [], topHolderPct: 40, top10Pct: 60, lpLockedPct: 0, decimals: 6 };
+  assert.equal(L.hardSafety(base).ok, true, "LP lock and holders are not hard blocks");
+  assert.equal(L.hardSafety({ ...base, mintAuthority: "x" }).ok, false); assert.equal(L.hardSafety({ ...base, freezeAuthority: "x" }).ok, false); assert.equal(L.hardSafety(null).reason, "missing data: safety report");
+  const obj = (tier, extra = {}) => L.softObjections({ tier, rug: base, createdAt: iso(30), boosted: false, copycat: false, whale: true, fng: 50, nowMs: now, ...extra });
+  assert.deepEqual(obj("A"), []); assert.deepEqual(obj("B"), ["lp_locked", "top10", "top_holder"]); assert.deepEqual(obj("A", { boosted: true, whale: false, fng: 10 }), ["boosted", "no_whale", "fear"]);
+  const w1 = Object.fromEntries(L.SOFT_RULES.map((n) => [n, 1]));
+  assert.equal(L.scoreOf([], w1, "A", false).score, 110); assert.equal(L.scoreOf(["lp_locked", "top10", "top_holder"], w1, "B", false).score, 75); assert.ok(L.scoreOf(["lp_locked", "top10", "top_holder", "young"], w1, "C", false).score < L.COUNCIL.passScore);
+  assert.ok(L.scoreOf(["lp_locked"], { lp_locked: 0.2 }, "B", false).score > L.scoreOf(["lp_locked"], { lp_locked: 3 }, "B", false).score, "a rule's weight moves the score");
+  // R6: flat 40 bars then a green close above the 20-bar high; stop 2-4%, target 2x
+  const t0 = Math.floor(now / 60000) * 60 - 60, bar = (i, o, c2, n = 45) => ({ t: t0 - (n - 1 - i) * 60, o, h: Math.max(o, c2) * 1.0005, l: Math.min(o, c2) * 0.9995, c: c2, v: 1 });
+  const flat = Array.from({ length: 44 }, (_, i) => bar(i, 1, 1 + (i % 2) * 0.001));
+  const brk = L.momentumSetup([...flat, bar(44, 1.001, 1.012)], R6_PARAMS, now / 1000);
+  assert.equal(brk.signal, true, brk.why); assert.ok(brk.stopPct >= 2 && brk.stopPct <= 4); assert.equal(brk.targetPct, brk.stopPct * 2); assert.ok(brk.stopPct < brk.targetPct);
+  assert.equal(L.momentumSetup([...flat, bar(44, 1.001, 1.0005)], R6_PARAMS, now / 1000).signal, false, "no breakout, no trade");
+  assert.match(L.momentumSetup([...flat.slice(0, 43), bar(43, 1, 0.94), bar(44, 0.94, 1.02)], R6_PARAMS, now / 1000).why, /stop is wider/);
+  // R7: a 6% slide (RSI under 30) then a green bar closing above the previous close
+  const slide = Array.from({ length: 44 }, (_, i) => (i < 24 ? bar(i, 1, 1) : bar(i, 1 - (i - 24) * 0.003, 1 - (i - 23) * 0.003)));
+  const bounce = L.bounceSetup([...slide, bar(44, 0.94, 0.945)], R7_PARAMS, now / 1000);
+  assert.equal(bounce.signal, true, bounce.why); assert.ok(bounce.rsi < 30 && bounce.dropPct >= 4); assert.equal(bounce.targetPct, bounce.stopPct * 2);
+  assert.match(L.bounceSetup([...slide, bar(44, 0.94, 0.937)], R7_PARAMS, now / 1000).why, /no bounce bar/);
+  assert.match(L.bounceSetup([...flat, bar(44, 1, 1.001)], R7_PARAMS, now / 1000).why, /not oversold/);
+
+  // engine: an R6 breakout on a tier A coin and an R7 bounce on another; then explore cadence and learning
+  const d = db(env);
+  for (const t of ["mob_aq_market", "mob_aq_watch", "mob_aq_prices", "mob_aq_positions", "mob_aq_council", "mob_aq_trades", "mob_aq_rules"]) await d.q(`DELETE FROM ${t}`);
+  stubAll(); trendingPools = []; prices = {}; tradesFor = {};
+  const mk = (sym, mint, liq, days) => { const p = clone(FX6.jupTop.pools.find((q) => q.baseAsset.symbol === "Fartcoin")); Object.assign(p.baseAsset, { id: mint, symbol: sym, liquidity: liq, firstPool: { id: "x", createdAt: iso(days) } }); p.id = `pool-${sym}`; return p; };
+  const asJup = (cs) => ({ candles: cs.map((c2) => ({ time: c2.t, open: c2.o, high: c2.h, low: c2.l, close: c2.c, volume: 1 })) });
+  const MOM = "MomentumAAAA1111111111111111111111111111111", BNC = "BounceAAAAA11111111111111111111111111111111", NEW = "NewLaunchCC11111111111111111111111111111111";
+  backOf = { [MOM]: 0.998, [BNC]: 0.998 }; // liquid tier A coins: 0.2% pool cost, like the 0.09-0.25% measured live
+  jupLists = () => ({ pools: [mk("MOMO", MOM, 900000, 40), mk("BNCE", BNC, 800000, 40), mk("NEWC", NEW, 60000, 0.5)] });
+  jupCharts[MOM] = () => asJup([...flat, bar(44, 1.001, 1.012)]); jupCharts[BNC] = () => asJup([...slide, bar(44, 0.94, 0.945)]); jupCharts[NEW] = () => asJup([...flat, bar(44, 1.001, 1.012)]);
+  let t = await tick(env);
+  assert.equal(t.entered?.strategy, "R6", JSON.stringify([t.evaluated, t.funnel, t.survival])); assert.equal(t.entered.tier, "A"); assert.equal(t.entered.tag, "PASS"); assert.ok(t.entered.targetPct >= 4 && t.entered.targetPct <= 8);
+  assert.equal(t.evaluated.find((e) => e.symbol === "BNCE").verdict, "WAIT");
+  // tier C never gets R6/R7; its fib has no pullback -> a "signal" block, not a trade
+  const nw = t.evaluated.find((e) => e.symbol === "NEWC"); assert.equal(nw.tier, "C"); assert.equal(nw.kind, "signal"); assert.match(nw.reason, /^no signal: R3 /);
+  t = await tick(env);
+  assert.equal(t.entered.strategy, "R7", JSON.stringify(t.evaluated)); assert.equal(t.entered.tier, "A");
+  let s = await S(); assert.equal(s.positions.length, 2); assert.deepEqual(s.positions.map((p) => p.tier), ["A", "A"]); assert.equal(s.tradesLastHour, 2);
+  // explore cadence: a coin whose soft rules sink the score is refused while an entry is fresh, and taken as EXPLORE after 3 minutes
+  const SOFT = "SoftCoinBB111111111111111111111111111111111";
+  backOf[SOFT] = 0.998;
+  jupLists = () => ({ pools: [mk("SOFT", SOFT, 150000, 3)] }); jupCharts[SOFT] = () => asJup([...flat, bar(44, 1.001, 1.012)]);
+  rugFor[SOFT] = () => { const r = safeRug(); r.risks = [{ name: "Low Liquidity", level: "danger" }, { name: "x", level: "danger" }]; r.topHolders = r.topHolders.map((h) => ({ ...h, pct: h.pct * 8 })); return r; };
+  await d.q(`UPDATE mob_aq_rules SET weight = 1.5 WHERE name IN ('danger_risk','top10','top_holder')`);
+  await d.q(`DELETE FROM mob_aq_market WHERE k LIKE 'rug:%' OR k = 'jup:top'`);
+  t = await tick(env);
+  const sb = t.evaluated.find((e) => e.symbol === "SOFT"); assert.equal(sb.verdict, "BLOCK", JSON.stringify(t.evaluated)); assert.equal(sb.kind, "soft"); assert.match(sb.reason, /next explore in/);
+  await d.q(`UPDATE mob_aq_positions SET opened_at = now() - interval '4 minutes'`); await d.q(`DELETE FROM mob_aq_council WHERE symbol='SOFT'`);
+  t = await tick(env);
+  assert.equal(t.entered?.symbol, "SOFT", JSON.stringify(t.evaluated)); assert.equal(t.entered.tag, "EXPLORE"); assert.equal(t.entered.tier, "B");
+  const sp = await d.one(`SELECT * FROM mob_aq_positions WHERE symbol='SOFT'`);
+  assert.ok(sp.soft.includes("danger_risk") && sp.soft.includes("top10")); assert.ok(sp.size_sol <= 0.05 * 0.85 + 1e-9);
+  // learning: SOFT hits its target -> the rules that objected blocked a winner and lose weight; MOMO stops out -> its rules gain
+  const w0 = Object.fromEntries((await d.q(`SELECT name, weight FROM mob_aq_rules`)).map((r) => [r.name, r.weight]));
+  const mo = await d.one(`SELECT * FROM mob_aq_positions WHERE symbol='MOMO'`);
+  prices[SOFT] = sp.target_price * 1.01; prices[MOM] = mo.stop_price * 0.99;
+  sellOut = { [SOFT]: 1.1, [MOM]: 0.95 }; // what the sell quote returns per SOL put in
+  jupLists = () => ({ pools: [] });
+  t = await tick(env);
+  assert.deepEqual(t.exits.map((e) => [e.symbol, e.why]).sort(), [["MOMO", "stop"], ["SOFT", "target"]]);
+  s = await S();
+  const rule = (n) => s.rules.find((r) => r.name === n);
+  assert.ok(rule("danger_risk").weight < w0.danger_risk && rule("danger_risk").blockedWinners === 1, JSON.stringify(s.rules));
+  assert.ok(rule("fear").blockedLosers >= 1 && rule("fear").blockedWinners >= 1, "fear objected to both the winner and the loser");
+  assert.ok(s.brain.some((b) => /^Rule T3 \(trade #\d+, SOFT won/.test(b.text)) && s.brain.some((b) => /^Rule T3 \(trade #\d+, MOMO lost/.test(b.text)));
+  const tr = await d.one(`SELECT tier, tag, soft FROM mob_aq_trades WHERE symbol='SOFT'`); assert.deepEqual([tr.tier, tr.tag], ["B", "EXPLORE"]); assert.ok(tr.soft.length >= 2);
+  jupCharts = {}; sellOut = {};
 });
