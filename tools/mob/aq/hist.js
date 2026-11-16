@@ -11,3 +11,5 @@ export function specPush(shares, feeds, gap = 10000, cap = 360) { const n = Date
 export const spec = () => H.spec;
 function save() { if (!dirty) return; dirty = false; try { localStorage.setItem(KEY, JSON.stringify(H)); } catch {} }
 if (typeof window !== "undefined") { setInterval(save, 10000); window.addEventListener("pagehide", save); }
+// one point per real event time (e.g. one per Grok X sweep), not per page sample: [eventTime, value], oldest first
+export function mark(k, t, v, cap = 60) { if (!num(v) || !num(t)) return; const a = (H.s[k] ||= []), L = a[a.length - 1]; if (L && t <= L[0]) { if (t === L[0] && L[1] !== v) { L[1] = v; dirty = true; } return; } a.push([t, v]); if (a.length > cap) a.shift(); dirty = true; }

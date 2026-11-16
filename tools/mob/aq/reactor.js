@@ -164,6 +164,12 @@ function drawRider(g, G, r, t) {
 }
 function drawMoon(g, G, m, t) {
   const d = G.d, r = (m.on ? 6 : 3.2) * d * m.kk;
+  if (m.on && m.k === "grok") { // Grok: a black body with white eyes, a white halo and a slow white ping, so "connected" reads at a glance
+    const R = r * 2.1, pu = (t * 0.55) % 1; g.globalCompositeOperation = "lighter"; const gl = g.createRadialGradient(m.x, m.y, R * 0.7, m.x, m.y, R * 3.4); gl.addColorStop(0, "rgba(255,255,255,.5)"); gl.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gl; g.beginPath(); g.arc(m.x, m.y, R * 3.4, 0, TAU); g.fill();
+    g.strokeStyle = `rgba(255,255,255,${(0.6 * (1 - pu)).toFixed(3)})`; g.lineWidth = 1 * d; g.beginPath(); g.arc(m.x, m.y, R * (1.15 + pu * 1.7), 0, TAU); g.stroke(); g.globalCompositeOperation = "source-over";
+    const b = g.createRadialGradient(m.x - R * 0.35, m.y - R * 0.45, R * 0.1, m.x, m.y, R); b.addColorStop(0, "#3c3c44"); b.addColorStop(0.55, "#0e0e11"); b.addColorStop(1, "#000"); g.fillStyle = b; g.beginPath(); g.arc(m.x, m.y, R, 0, TAU); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 1.3 * d; g.stroke();
+    g.fillStyle = "#fff"; g.shadowColor = "#fff"; g.shadowBlur = 5 * d; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(m.x + sx * R * 0.34, m.y - R * 0.04, R * 0.15, R * 0.3, 0, 0, TAU); g.fill(); } g.shadowBlur = 0;
+    g.textAlign = "center"; g.textBaseline = "alphabetic"; text(g, m.lb, m.x + 3 * d, m.y + R + 9 * d, `700 ${7.5 * d}px ${MONO}`, "#fff", d); const tw = g.measureText(m.lb).width; g.fillStyle = "#22ff88"; g.beginPath(); g.arc(m.x + 3 * d - tw / 2 - 5 * d, m.y + R + 6.4 * d, 1.8 * d, 0, TAU); g.fill(); return; }
   if (m.on) { g.globalCompositeOperation = "lighter"; const gl = g.createRadialGradient(m.x, m.y, 0, m.x, m.y, r * 3.2); gl.addColorStop(0, col(m.cl, 0.55)); gl.addColorStop(1, col(m.cl, 0)); g.fillStyle = gl; g.beginPath(); g.arc(m.x, m.y, r * 3.2, 0, TAU); g.fill(); g.globalCompositeOperation = "source-over";
     const b = g.createRadialGradient(m.x - r * 0.3, m.y - r * 0.4, r * 0.1, m.x, m.y, r * 1.2); b.addColorStop(0, "#fff"); b.addColorStop(0.3, col(m.cl, 1)); b.addColorStop(1, col(m.cl.map((v) => v * 0.4), 1)); g.fillStyle = b; g.beginPath(); g.arc(m.x, m.y, r, 0, TAU); g.fill(); g.fillStyle = "#0b1020"; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(m.x + sx * r * 0.32, m.y, r * 0.13, r * 0.3, 0, 0, TAU); g.fill(); } }
   else { g.fillStyle = "#0a0e18"; g.strokeStyle = "rgba(125,138,160,.7)"; g.lineWidth = 1 * d; g.beginPath(); g.arc(m.x, m.y, r, 0, TAU); g.fill(); g.stroke(); }

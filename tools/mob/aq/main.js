@@ -2,6 +2,8 @@
 // Both read GET /api/aq/state every 3 s (tools/mob/aq/CONTRACT.md). Missing data shows "—", never invented.
 import { deskHTML, renderDesk, wakeReactor } from "./desk.js";
 import { reactorInfo } from "./reactor.js";
+import { helperBadges } from "./grok.js";
+import { trainingButton, renderTrainingButton } from "./training.js";
 export const BUILD = typeof __AQ_BUILD__ !== "undefined" ? __AQ_BUILD__ : "dev";
 
 import { DEPTS, GODS } from "./depts.js";
@@ -26,7 +28,7 @@ const helperConnected = (h) => { h = helperOf(h); return !!h && (h.status === "c
 const listeners = new Set();
 export const store = { state: null, ok: false, lastOk: 0, err: null, mode: "bot" };
 export const onState = (f) => { listeners.add(f); if (store.state) f(store.state); return () => listeners.delete(f); };
-async function poll() {
+export async function poll() {
   try {
     const r = await fetch("/api/aq/state", { credentials: "same-origin", cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
@@ -52,6 +54,7 @@ const h = (html) => { const t = document.createElement("template"); t.innerHTML 
 function topbar() {
   const el = h(`<header id="top">
     <div class="brand"><span class="logo">♒</span><b>AQUARIUS</b><span id="mode-badge" class="badge">—</span></div>
+    <div id="hbadges" class="hbs"></div>
     <div class="kpis">
       <div class="kpi"><small>Equity</small><b id="k-eq">—</b></div>
       <div class="kpi"><small>Today</small><b id="k-today">—</b></div>
@@ -72,6 +75,8 @@ function topbar() {
   el.querySelectorAll(".seg button").forEach((b) => (b.onclick = () => setMode(b.dataset.m)));
   el.querySelector("#kill").onclick = killDialog; el.querySelector("#sellall").onclick = sellAllDialog; el.querySelector("#xfer").onclick = transferDialog;
   el.querySelector("#menu-btn").onclick = () => openMenu();
+  el.querySelector("#sellall").before(trainingButton());
+  el.querySelector("#hbadges").onclick = () => { const g = document.getElementById("d-grok"); if (g && store.mode === "bot") g.scrollIntoView({ behavior: "smooth", block: "start" }); };
   return el;
 }
 function renderTop(s) {
@@ -79,6 +84,8 @@ function renderTop(s) {
   const mb = $("#mode-badge");
   if (mb) { mb.textContent = s ? s.mode || D : store.err ? "OFFLINE" : D; mb.className = "badge " + (s && s.mode === "LIVE" ? "live" : "paper"); }
   if (!s) return;
+  renderTrainingButton(s);
+  { const hb = $("#hbadges"), html = helperBadges(s); if (hb && hb.dataset.h !== html) { hb.innerHTML = html; hb.dataset.h = html; } }
   set("k-eq", fSol(s.equitySol)); set("k-today", fSol(s.pnlTodaySol, true), cls(s.pnlTodaySol)); set("k-total", fSol(s.pnlTotalSol, true), cls(s.pnlTotalSol));
   set("k-open", Array.isArray(s.positions) ? String(s.positions.length) : D);
   const ev = s.trades && s.trades.evidence; set("k-ev", ev ? String(ev).replace(/\s+yet$/i, "").toUpperCase() : D, ev === "EDGE" ? "up" : ev === "NO EDGE" ? "dn" : "muted"); set("k-evn", s.trades && s.trades.n != null ? s.trades.n + "/100" : "");

@@ -80,3 +80,9 @@ ENGINE WISHLIST (not in buildState today, the section says so on screen instead 
     so Grok's non-X posts (his whale watcher, his "war room, first change" opinion) never reach the page. xfeed also carries only the first label; send labels:[...].
  3. helpers.grokFirstAt (first post ever) and helpers.grokPosts / grokRadars (totals). Today the page can only say "heard since >= the oldest of the last 30 posts" and "N radars of the last 30 posts".
  4. The radar as data next to the text: xfeed[].radar = {sweepAt, posts, rows:[{rank, name, posts, authors, perMin, window, growth, tickers, ca, cred, swarm}]} so a wording change cannot break the table.
+
+## TRAINING MODE (aq/training.js): hidden until state.training exists
+ Header switch -> confirm dialog -> POST /api/aq/training {on:true|false} (2xx, then the page polls). Card "TRAINING ARENA" under GROK'S WORK.
+ The engine had no state.training when this was built, so the client reads the first of these names that exists and shows "—" for the rest. Engine: send these (first name preferred):
+ training:{ on:bool, since, walletSol (| wallet.sol | equitySol), startSol, trades (| tradesTotal | virtualTrades), perMin (| tradesPerMin), variants (| variantsTried | tried; number or array),
+            graduated (number or array), random:{expectancyPct}, leaders:[{name (| label | id), n (| trades), expectancyPct, vsRandomPct (else expectancy minus random), graduated:bool}] (top 5 used) }

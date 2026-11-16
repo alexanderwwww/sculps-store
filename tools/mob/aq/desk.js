@@ -5,6 +5,8 @@ import { DEPTS, GODS } from "./depts.js";
 import { fSol, fPct, fUsd, fNum, ago, esc, xFeed, openWorker, dialog, store } from "./main.js";
 import { feedReactor, wakeReactor as wake, wireReactor, reactorMood, SHORT, NEON, hoverRider } from "./reactor.js";
 import { sample, series, lastOf, specPush, spec } from "./hist.js";
+import { grokHTML, renderGrok } from "./grok.js";
+import { trainingHTML, renderTraining } from "./training.js";
 export const wakeReactor = wake;
 
 const D = "—", num = (v) => typeof v === "number" && isFinite(v), MONO = 'ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace';
@@ -34,6 +36,8 @@ export function deskHTML() {
         <div class="rx-f" id="d-rx-f"></div></div></div>
     <div class="col-r"><div class="ph"><b>CONTROL STACK</b><em id="d-ctl-m"></em></div><div id="d-ctl"></div></div>
   </section>
+  ${grokHTML()}
+  ${trainingHTML()}
   <section class="p pnl"><div class="ph"><b>SWARM PNL</b><span>paper · after costs</span><em id="d-pnl-ev"></em></div><div id="d-pnl"></div><canvas id="d-eqc"></canvas><div id="d-lanes"></div></section>
   <section class="p tape"><div class="ph"><b>THE TAPE</b><span id="d-tape-s">—</span><em id="d-tape-r"></em></div><div class="tape-in"><canvas id="d-tape"></canvas><div id="d-book" class="scroll"></div></div></section>
   <section class="p trace"><div class="ph"><b>THE TRACE</b><span>every pipeline step · dept → dept · verdict</span><em id="d-trace-n"></em></div><div id="d-trace-k"></div><div id="d-trace" class="scroll"></div></section>
@@ -219,6 +223,8 @@ export function renderDesk(root, s) {
       <div class="ctl-h">FEES</div>${fees.slice(0, 4).map((f) => `<div class="bk"><b>${Math.abs(f.sol || 0).toFixed(4)} SOL</b><span></span><small>${esc(f.label || "fee")} · ${ago(f.at)}</small></div>`).join("") || `<p class="empty">no fees yet</p>`}`); }
   // ---- spectrogram
   { const rows = spec(), feeds = [...new Set(rows.slice(-60).flatMap((r) => Object.keys(r[2] || {})))].sort().slice(0, 9); drawSpec($("d-spec"), rows, feeds); set("d-spec-n", rows.length ? `${rows.length} samples · ${span(rows[rows.length - 1][0] - rows[0][0])}` : ""); }
+  try { renderGrok(root, s); } catch (e) { console.error(e); }
+  try { renderTraining(root, s); } catch (e) { console.error(e); }
   // ---- X
   const xf = xFeed(s);
   set("d-x-s", gOn ? "Grok · live X search" : "Grok not connected");
