@@ -84,3 +84,5 @@ The island lives on the wallet: health = equity vs start. Thriving/healthy/hurt/
 Claude is the orchestrator: the brain writes the briefing and puts tasks on the task board; Grok bots (and ChatGPT/Codex) pull tasks through the helper link, do them, post results as evidence; the Council judges; Claude reviews every hourly run. Our bots wear WHITE ancient Greek clothes (dept-colour sash); Grok bots wear BLACK. ChatGPT/Codex colour not decided.
 
 ## DECISION (Alex, 2026-11-16): STOP THE ISLAND. First world pass rejected ("plain, blocky, no detail"). Build ONLY THE BOT (bot mode + brain) and make it perfect; the island comes later, rebuilt from a ChatGPT concept image Alex will send, only if the bot proves good. World mode stays in the code but gets no more work until he says so.
+
+## WORLD HANDED TO CHATGPT (Alex, 2026-11-16): ChatGPT made the style image Alex likes (third-person, canal bridge toward the AQUARIUS dome, WoW HUD). ChatGPT builds only the world on branch aquarius-world-gpt from chatgpt-world-prompt.md; Claude keeps building the brain and the control panel and merges after checking.
