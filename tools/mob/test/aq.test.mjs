@@ -782,16 +782,16 @@ test("paper explores by STRENGTH: a partial setup is taken as EXPLORE-WEAK at th
   const bucket = s.strategies.find((x) => x.id === "R6").byStrength.find((b) => p.strength >= b.from && (b.to == null || p.strength < b.to));
   assert.equal(bucket.n, 1); assert.ok(bucket.expectancyPct > 0); assert.equal(s.strategies.find((x) => x.id === "R6").byStrength.length, 5);
   assert.deepEqual(s.strategies.find((x) => x.id === "R6").timeArms.map((a) => [a.id, a.n]), [["L", 1], ["S", 0]]);
-  // a dead market: 6x the cheapest round trip measured in the tier does not fit inside 3x the coin's ATR5 -> not tradable, no quote spent, and one verdict says so with the numbers
+  // a dead market: 6x the coin's measured round trip does not fit inside 3x its ATR5 -> not tradable, and one verdict says so with the numbers
   await d.q(`UPDATE mob_aq_trades SET opened_at = now() - interval '10 minutes'`); await d.q(`DELETE FROM mob_aq_market WHERE k='jup:top'`);
   jupLists = () => ({ pools: [mk("DEAD", DD)] }); jupCharts[DD] = () => asJup(dead);
   const quotes0 = calls.filter((c) => c.url.includes("/swap/v1/quote")).length;
   t = await tick(env);
   assert.equal(t.entered, null); assert.ok(t.quiet && t.quiet.coins === 1 && t.quiet.best === "DEAD" && t.quiet.have < t.quiet.needed, JSON.stringify([t.quiet, t.evaluated]));
-  const dv = t.evaluated.find((e) => e.symbol === "DEAD"); assert.equal(dv.kind, "untradable"); assert.match(dv.reason, /^not tradable: 6x round trip [\d.]+% = [\d.]+% is over 3x ATR5 [\d.]+% = [\d.]+% \(cheapest tier A quote of \d+ \(24h\)\)$/);
+  const dv = t.evaluated.find((e) => e.symbol === "DEAD"); assert.equal(dv.kind, "untradable"); assert.match(dv.reason, /^size: needs [\d.]+ SOL \(minimum 0\.05, fee floor [\d.]+\) but the position size 0\.26 SOL \(half for EXPLORE-WEAK\), cash [\d.]+ SOL and 1% of the pool allow 0\.13 SOL$/, "so quiet that the fee floor is above the position: no quote is spent on it");
   s = await S(); assert.match(s.council.recent.find((v) => v.symbol == null).reason, /^market too quiet: 1 coin\(s\) cannot pay 6x their round trip; best DEAD has [\d.]+% of room against [\d.]+% needed$/);
   // not tradable = the shadow lane, and it is not judged again every tick: volatility does not change in 3 minutes
-  const shd = await d.one(`SELECT * FROM mob_aq_shadow WHERE symbol='DEAD'`); assert.ok(shd && shd.v === 2 && /^not tradable/.test(shd.block_reason), JSON.stringify(t.shadow)); assert.ok(shd.cost_pct > 0);
+  const shd = await d.one(`SELECT * FROM mob_aq_shadow WHERE symbol='DEAD'`); assert.ok(shd && shd.v === 2 && /^size: needs/.test(shd.block_reason), JSON.stringify(t.shadow)); assert.ok(shd.cost_pct > 0);
   assert.equal(calls.filter((c) => c.url.includes("/swap/v1/quote")).length - quotes0, 2, "only the shadow probe's own cost quote was spent");
   await d.q(`UPDATE mob_aq_council SET at = now() - interval '5 minutes' WHERE symbol='DEAD'`);
   t = await tick(env); assert.ok(!t.evaluated.some((e) => e.symbol === "DEAD"), "rests 15 minutes");

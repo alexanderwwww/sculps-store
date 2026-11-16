@@ -31,8 +31,9 @@ export async function costBook(d, positionSol = COUNCIL.positionSol) {
   const tier = Object.fromEntries(Object.keys(by).map((t) => [t, { n: by[t].length, median: round(median(by[t]), 3), min: by[t].length ? Math.min(...by[t]) : null, poolMin: pools[t].length ? Math.max(0, Math.min(...pools[t])) : null }]));
   // the cost a replay or a shadow probe charges a coin of this tier: this desk's own median when it has five, else the audit's
   const tierCost = (t) => (tier[t]?.n >= 5 ? { pct: tier[t].median, src: `measured median of ${tier[t].n} round trips (24h)` } : AUDIT_RT[t] != null ? { pct: AUDIT_RT[t], src: "audit 2026-11-16 (measured at about 0.03 SOL a trade)" } : { pct: null, src: "none" });
-  // the most hopeful honest cost for a coin BEFORE it is quoted: its own last quote, else the cheapest quote seen in its tier
-  const optimistic = (mint, t) => (byMint[mint] ? { pct: byMint[mint].rt, pool: byMint[mint].pool, src: "this coin's last quote" } : tier[t]?.n ? { pct: tier[t].min, pool: tier[t].poolMin, src: `cheapest tier ${t} quote of ${tier[t].n} (24h)` } : { pct: null, pool: null, src: "none" });
+  // the most hopeful honest cost for a coin BEFORE it is quoted: its own last quote, else the cheapest of at least five quotes
+  // in its tier (one quote of one coin says nothing about the others: then the coin's own quote decides)
+  const optimistic = (mint, t) => (byMint[mint] ? { pct: byMint[mint].rt, pool: byMint[mint].pool, src: "this coin's last quote" } : tier[t]?.n >= 5 ? { pct: tier[t].min, pool: tier[t].poolMin, src: `cheapest tier ${t} quote of ${tier[t].n} (24h)` } : { pct: null, pool: null, src: "none" });
   return { byMint, tier, tierCost, optimistic };
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
