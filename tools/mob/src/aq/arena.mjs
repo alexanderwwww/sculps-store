@@ -211,7 +211,7 @@ export async function trainingState(d, S = null) {
   // (trades, perMin, variants, random and leaders[].name/expectancyPct/vsRandomPct are the names the panel reads)
   return { on, since: a.since ?? null, walletSol: a.walletSol ?? ARENA.walletSol, startSol: ARENA.walletSol, sizeSol: ARENA.sizeSol, virtualTradesTotal: a.virtualTradesTotal ?? 0, perMinute: a.perMinute ?? 0, trades: a.virtualTradesTotal ?? 0, perMin: a.perMinute ?? 0, variants: a.variantsTried ?? 0, random: a.random ?? { n: 0, expectancyPct: null, ci95: null }, tickMs: a.tickMs ?? null, coins: a.coins ?? 0, coinsReady: a.coinsReady ?? 0,
     wins: a.wins ?? 0, losses: a.losses ?? 0, winRate: a.winRate ?? null, won: a.wins ?? 0, lost: a.losses ?? 0, liveTrades: a.liveTrades ?? 0, replayTrades: a.replayTrades ?? 0, prevTradesTotal: a.prevTradesTotal ?? 0, prevWins: a.prevWins ?? 0, prevWalletSol: a.prevWalletSol ?? ARENA.walletSol, coinsReadThisTick: a.coinsReadThisTick ?? 0, perMinuteLive: a.perMinuteLive ?? 0, perMinuteReplay: a.perMinuteReplay ?? 0, equitySol: a.walletSol ?? ARENA.walletSol, tape: a.tape ?? [], walletPath: a.walletPath ?? [], equityLine: a.equityLine ?? [], batchPnlSol: a.batchPnlSol ?? 0, sizeRange: [ARENA.sizeMin, ARENA.sizeMax], targetPerMin: ARENA.perMinute, replay: a.replay ?? null,
-    variantsTried: a.variantsTried ?? 0, leaders: (a.leaders ?? []).map((x) => ({ ...x, name: `${x.variant} tier ${x.tier}`, expectancyPct: x.meanPct, vsRandomPct: x.edgePct, graduated: grads.has(`${x.variant}\t${x.tier}`) })), laggards: a.laggards ?? [], graduated: a.graduated ?? [], pending: a.pending ?? [], grok: a.grok ?? [], costs: a.costs ?? null, lastTickAt: a.lastTickAt ?? null, resolution: "real 1-minute candles (open, high, low, close, volume) from Jupiter; inside a minute the low is checked before the high",
+    variantsTried: a.variantsTried ?? 0, boardOf: a.boardOf ?? null, families: a.families ?? [], leaders: (a.leaders ?? []).map((x) => ({ ...x, name: x.tier === "all" ? `${x.variant.split("|")[0]}: ${x.rule || ""}` : `${x.variant} tier ${x.tier}`, expectancyPct: x.meanPct, vsRandomPct: x.edgePct, graduated: grads.has(`${x.variant}\t${x.tier}`) })), laggards: a.laggards ?? [], graduated: a.graduated ?? [], pending: a.pending ?? [], grok: a.grok ?? [], costs: a.costs ?? null, lastTickAt: a.lastTickAt ?? null, resolution: "real 1-minute candles (open, high, low, close, volume) from Jupiter; inside a minute the low is checked before the high",
     note: a.note ?? (on ? "starting: the first candles are read on the next minute" : "off: turn it on in the panel") };
 }
 
@@ -320,6 +320,11 @@ export async function arenaTick(env, opts = {}) {
   // ---- the scoreboard: live + replay together for the board (what the arena has seen), live alone for graduation
   const board = await d.q(`SELECT variant, tier, sum(n)::float8 n, sum(wins)::float8 wins, sum(sum_pct)::float8 sum, sum(sumsq_pct)::float8 sumsq, sum(pnl_sol)::float8 pnl FROM (SELECT variant, tier, n, wins, sum_pct, sumsq_pct, pnl_sol FROM mob_aq_arena_agg UNION ALL SELECT variant, tier, n, wins, sum_pct, sumsq_pct, pnl_sol FROM mob_aq_arena_replay) u GROUP BY variant, tier`);
   const scored = scoreDay(board).filter((x) => x.edgeLo != null && x.n >= ARENA.boardMin && x.baseN >= ARENA.boardMin); // the board shows a setting from 50 trades; graduation still needs 300 on each of two live days
+  // at 700 trades a minute one setting on one tier gets a few hundred trades a day, so until five settings have 50+ trades the
+  // board ranks the entry families (every stop, target, hold and tier of one entry type together) against random entries
+  const famOf = (e) => board.filter((r) => r.variant.startsWith(`${e}|`)).reduce((a, r) => ({ n: a.n + r.n, wins: a.wins + r.wins, sum: a.sum + r.sum, sumsq: a.sumsq + r.sumsq }), { n: 0, wins: 0, sum: 0, sumsq: 0 });
+  const rndFam = famOf("random"), fams = Object.keys(ENTRY_RULE).filter((e) => e !== "random").map((e) => ({ variant: `${e}|all settings`, tier: "all", ...edgeOf(famOf(e), rndFam) })).filter((x) => x.edgeLo != null && x.n >= ARENA.boardMin && x.baseN >= ARENA.boardMin);
+  const rank = scored.length >= 5 ? scored : fams;
   const tot = board.reduce((a, r) => ({ n: a.n + r.n, s: a.s + r.sum, w: a.w + r.wins, p: a.p + r.pnl }), { n: 0, s: 0, w: 0, p: 0 });
   // the wallet after each part of this batch, in the order the trades were counted: what the panel plays back between refreshes
   const wallet = round(ARENA.walletSol + tot.p, 4), batchPnl = all.reduce((a, t) => a + t.pnlSol, 0), w0 = wallet - batchPnl, path = [];
@@ -335,7 +340,7 @@ export async function arenaTick(env, opts = {}) {
     perMinute: trades, perMinuteLive: live.length, perMinuteReplay: replay.length, tickMs: Date.now() - t0, coins: coins.length, coinsReady: coins.length, coinsReadThisTick: fetched, fetchFailed: failed, variantsTried: board.length, costs: table, overshootPct: os,
     random: { n: rnd.n, expectancyPct: rnd.mean, ci95: rnd.mean == null ? null : [rnd.lo, rnd.hi] }, tape,
     replay: { trades: repl.n, days: repl.days, from: repl.first ? new Date(repl.first).toISOString().slice(0, 10) : null, coinsFinished: backDone },
-    leaders: scored.slice().sort((a, b) => b.edgeLo - a.edgeLo).slice(0, 5).map(show), laggards: scored.slice().sort((a, b) => a.edgeHi - b.edgeHi).slice(0, 5).map(show),
+    boardOf: scored.length >= 5 ? "settings" : "entry families", leaders: rank.slice().sort((a, b) => b.edgeLo - a.edgeLo).slice(0, 5).map(show), laggards: rank.slice().sort((a, b) => a.edgeHi - b.edgeHi).slice(0, 5).map(show), families: fams.map(show),
     graduated: picks.filter((p) => p.status === "graduated").map((p) => ({ variant: p.variant, tier: p.tier, pickedOn: p.selected_day, confirmedOn: p.confirm_day, stats: p.conf })),
     pending: picks.filter((p) => p.status === "selected").map((p) => ({ variant: p.variant, tier: p.tier, pickedOn: p.selected_day })),
     grok: gk.map((g) => ({ input: g.entry, rule: ENTRY_RULE[g.entry], ...(({ n, mean, lo, hi }) => ({ n, meanPct: mean, ci95: [lo, hi] }))(statOf(g)) })),
@@ -349,10 +354,10 @@ export async function arenaTick(env, opts = {}) {
   }
   // ---- every hour: what beat random and what cost money, with the multiple-comparison warning
   const hour = Math.floor(T / 60), last = (await getState(d, "arena_hour", 0)) || 0, day = dayOf(T);
-  if (hour > last && scored.length) {
+  if (hour > last && rank.length) {
     await setState(d, "arena_hour", hour);
     const line = (x) => `${x.variant} tier ${x.tier} [${ENTRY_RULE[x.variant.split("|")[0]]}]: ${x.mean}% a trade after costs over ${x.n} (random ${x.base}%), edge ${x.edge}% (95% ${x.edgeLo} to ${x.edgeHi})`;
-    const top = scored.slice().sort((a, b) => b.edgeLo - a.edgeLo).slice(0, 5), bottom = scored.slice().sort((a, b) => a.edgeHi - b.edgeHi).slice(0, 5), clear = scored.filter((x) => x.edgeLo > 0).length;
+    const top = rank.slice().sort((a, b) => b.edgeLo - a.edgeLo).slice(0, 5), bottom = rank.slice().sort((a, b) => a.edgeHi - b.edgeHi).slice(0, 5), clear = scored.filter((x) => x.edgeLo > 0).length;
     await brain(d, "learning", "arena", `Training arena so far: ${tot.n} virtual trades (${liveTot.n} on fresh minutes, ${repl.n} replaying ${repl.days} days of real 1-minute candles), ${scored.length} settings with ${ARENA.boardMin}+ trades compared with their random baseline. ${clear} have an interval above random; with ${scored.length} tried, about ${round(scored.length * 0.025, 1)} would look like that by luck alone, and trades in the same minute move together, so the intervals are too narrow. The replay charges today's measured cost and today's liquidity tier to past minutes. Nothing here is a result until it repeats on a fresh live day. TOP: ${top.map(line).join("; ")}. BOTTOM (rules that cost money): ${bottom.map(line).join("; ")}.`.slice(0, 6000), { day, tried: scored.length, clear, top: top.map(show), bottom: bottom.map(show) });
     out.hourly = true;
   }

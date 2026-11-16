@@ -1878,47 +1878,49 @@ test("training switch and arena tick: off by default, Alex only (or Claude for h
     if (mint === coins[5].mint) return res({ status: 500 }, 500); // this coin's chart is down
     return { candles: (hist[mint] || []).filter((b) => b.t < to).slice(-n).map((b) => ({ time: b.t, open: b.o, high: b.h, low: b.l, close: b.c, volume: b.v })) }; });
   const money0 = await moneyState(d), rc0 = await reconcile(d), st0 = await S();
-  await d.q(`UPDATE mob_aq_state SET v = v || jsonb_build_object('since', to_jsonb($1::text)) WHERE k='arena'`, [new Date((T - 200) * 60000).toISOString()]); // switched on 200 minutes ago
+  await d.q(`UPDATE mob_aq_state SET v = v || jsonb_build_object('since', to_jsonb($1::text)) WHERE k='arena'`, [new Date((T - 60) * 60000).toISOString()]); // switched on 60 minutes ago
   const a1 = await AR.arenaTick(env, { now });
-  assert.ok(a1.trades > 5000, JSON.stringify(a1)); assert.ok(a1.live > 0 && a1.replay > 0 && a1.live + a1.replay === a1.trades); assert.equal(a1.coins, 6, "the pool under the liquidity floor is not in the arena"); assert.equal(a1.costQuote.ok, true);
+  assert.equal(a1.trades, 700, JSON.stringify(a1)); assert.ok(a1.candidates > 1400, "the minutes read hold more trades than the pace: 700 are drawn"); assert.ok(a1.live > 0 && a1.replay > 0 && a1.live + a1.replay === 700); assert.equal(a1.coins, 6, "the pool under the liquidity floor is not in the arena"); assert.equal(a1.costQuote.ok, true);
   assert.deepEqual(await AR.arenaTick(env, { now }), { skipped: "this minute is already done" }); assert.deepEqual(await AR.arenaTick(env, { now: now - 60000 }), { skipped: "this minute is already done" });
-  const n = async (t) => (await d.one(`SELECT coalesce(sum(n),0)::int n, coalesce(sum(wins),0)::int w, coalesce(sum(sum_pct),0)::float8 s FROM ${t}`));
+  const n = async (t) => (await d.one(`SELECT coalesce(sum(n),0)::int n, coalesce(sum(wins),0)::int w, coalesce(sum(sum_pct),0)::float8 s, coalesce(sum(pnl_sol),0)::float8 p FROM ${t}`));
   let lv = await n("mob_aq_arena_agg"), rp = await n("mob_aq_arena_replay"); assert.equal(lv.n, a1.live); assert.equal(rp.n, a1.replay);
   // fresh minutes are the ones since the switch (less the 45-minute lookback); history is everything before; nothing in both
-  const sinceMin = T - 200, liveDays = await d.q(`SELECT DISTINCT to_char(day,'YYYY-MM-DD') d FROM mob_aq_arena_agg`);
+  const sinceMin = T - 60, liveDays = await d.q(`SELECT DISTINCT to_char(day,'YYYY-MM-DD') d FROM mob_aq_arena_agg`);
   assert.ok(liveDays.every((x) => x.d >= new Date((sinceMin - 46) * 60000).toISOString().slice(0, 10)));
-  const cur = (await d.one(`SELECT v FROM mob_aq_state WHERE k='arena_cur'`)).v; for (const m of Object.keys(cur.live)) assert.equal(cur.live[m], T - 46, "live cursor: up to 45 minutes ago, so every hold has finished"); for (const m of Object.keys(cur.back)) assert.equal(cur.back[m], sinceMin - 46 - 600, "replay cursor: 600 minutes further back");
+  const cur = (await d.one(`SELECT v FROM mob_aq_state WHERE k='arena_cur'`)).v; for (const m of Object.keys(cur.live)) assert.equal(cur.live[m], T - 46, "live cursor: up to 45 minutes ago, so every hold has finished"); for (const m of Object.keys(cur.back)) assert.equal(cur.back[m], sinceMin - 46 - 40, "replay cursor: 40 minutes further back");
   assert.ok(!(coins[5].mint in cur.live) && !(coins[5].mint in cur.back) || a1.failed === 0, "a failed read leaves the cursor: those minutes are tried again"); assert.ok(a1.failed <= 2);
   assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_arena_costs`)).n, 1); const smp = await d.q(`SELECT * FROM mob_aq_arena_samples`); assert.ok(smp.length > 0 && smp.length <= 40 && smp.every((x) => x.slot < 20 && x.net_pct != null));
   s = await S(); let tr = s.training;
   assert.deepEqual([tr.on, tr.trades, tr.perMin, tr.wins, tr.losses, tr.liveTrades, tr.replayTrades, tr.startSol, tr.sizeSol], [true, a1.trades, a1.trades, lv.w + rp.w, a1.trades - lv.w - rp.w, a1.live, a1.replay, 1000, 1]);
-  assert.ok(Math.abs(tr.walletSol - (1000 + (lv.s + rp.s) / 100)) < 1e-3 && tr.equitySol === tr.walletSol); assert.ok(Math.abs(tr.winRate - (lv.w + rp.w) / a1.trades) < 1e-3); assert.ok(tr.variantsTried > 100 && tr.tickMs > 0 && tr.costs["A@1"].pct != null && tr.random.n > 0);
+  assert.ok(Math.abs(tr.walletSol - (1000 + lv.p + rp.p)) < 1e-3 && tr.equitySol === tr.walletSol, "the wallet is 1,000 SOL plus every trade's own result in SOL");
+  // every trade is 0.8 to 1 SOL, and its SOL result is its percentage on that size
+  assert.ok(tr.tape.every((x) => x.sizeSol >= 0.8 && x.sizeSol <= 1 && Math.abs(x.pnlSol - (x.pnlPct / 100) * x.sizeSol) < 2e-5)); assert.ok(new Set(tr.tape.map((x) => x.sizeSol)).size > 20, "sizes vary"); assert.deepEqual(tr.sizeRange, [0.8, 1]); assert.equal(tr.targetPerMin, 700);
+  assert.ok(Math.abs(lv.p + rp.p) <= 700 * 1 * 0.6 && Math.abs((lv.p + rp.p) - (lv.s + rp.s) / 100 * 0.9) < Math.abs((lv.s + rp.s) / 100) * 0.12 + 0.05, "SOL result is the percentage result on about 0.9 SOL a trade");
+  // the balance the panel plays back: 60 real points through the batch, from the wallet before it to the wallet after it
+  assert.equal(tr.walletPath.length, 60); assert.ok(Math.abs(tr.walletPath.at(-1) - tr.walletSol) < 1e-3 && Math.abs(tr.prevWalletSol - 1000) < 1e-6 && Math.abs(tr.batchPnlSol - (tr.walletSol - 1000)) < 1e-3); assert.ok(new Set(tr.walletPath).size > 30, "it moves"); assert.deepEqual(tr.equityLine.map((x) => x.w), [tr.walletSol]); assert.ok(Math.abs(tr.winRate - (lv.w + rp.w) / a1.trades) < 1e-3); assert.ok(tr.variantsTried > 100 && tr.tickMs > 0 && tr.costs["A@1"].pct != null && tr.random.n > 0);
   assert.equal(tr.tape.length, 60); assert.ok(tr.tape.every((x) => x.symbol && x.variant && typeof x.pnlPct === "number" && ["live", "replay"].includes(x.src) && ["stop", "target", "time"].includes(x.exit))); assert.ok(tr.leaders.length > 0 && tr.leaders[0].name && typeof tr.leaders[0].vsRandomPct === "number");
   assert.match(tr.resolution, /real 1-minute candles/); assert.match(tr.note, /settings tried so far, so some lead by luck/);
   // the next minutes: other coins, further back; every (coin, entry minute) is used exactly once however long it runs
   let total = a1.trades; const seenE = new Map();
-  for (let k = 1; k <= 6; k++) { const a = await AR.arenaTick(env, { now: now + k * 60000 }); total += a.trades; assert.ok(a.trades > 0, JSON.stringify(a)); }
+  for (let k = 1; k <= 6; k++) { const a = await AR.arenaTick(env, { now: now + k * 60000 }); total += a.trades; assert.equal(a.trades, 700, JSON.stringify(a)); }
   lv = await n("mob_aq_arena_agg"); rp = await n("mob_aq_arena_replay"); assert.equal(lv.n + rp.n, total);
-  // brute force over the whole run: resolve every coin's minutes once, straight from the candles, and compare the grand totals
-  const cur2 = (await d.one(`SELECT v FROM mob_aq_state WHERE k='arena_cur'`)).v, cost = (await S()).training.costs; let bn = 0, bw = 0, bs = 0;
-  for (const [i, c] of coins.slice(0, 5).entries()) { const tier = "ABC"[i % 3], lo = cur2.back[c.mint] != null ? cur2.back[c.mint] + 1 : sinceMin - 45, hi = cur2.live[c.mint] ?? sinceMin - 46;
-    if (hi < lo) continue; const from = lo - 45, bars = AR.minuteSeries(hist[c.mint], from, hi + 45), x = AR.resolveSeries({ ...c, tier }, bars, from, lo, hi, { cost: cost[`${tier}@1`].pct }).trades; bn += x.length; bw += x.filter((t) => t.netPct > 0).length; bs += x.reduce((a, t) => a + t.netPct, 0); }
-  assert.equal(lv.n + rp.n, bn, "the arena's totals are exactly the trades of the minutes its cursors say it has read, each once"); assert.equal(lv.w + rp.w, bw); assert.ok(Math.abs(lv.s + rp.s - bs) < 1e-4 * Math.max(1, Math.abs(bs)));
+  s = await S(); tr = s.training; assert.equal(tr.trades, 7 * 700); assert.equal(tr.perMin, 700); assert.equal(tr.equityLine.length, 7); assert.ok(Math.abs(tr.walletSol - (1000 + lv.p + rp.p)) < 1e-3); assert.ok(Math.abs(tr.walletPath.at(-1) - tr.walletSol) < 1e-3 && Math.abs(tr.prevWalletSol + tr.batchPnlSol - tr.walletSol) < 1e-3, "each minute's path starts where the last one ended");
+  assert.equal(tr.wins + tr.losses, tr.trades); assert.equal(tr.wins, lv.w + rp.w);
   // the main paper book did not move by one lamport or one row; its numbers in the state are the same
   assert.equal(await moneyState(d), money0); const rc1 = await reconcile(d); assert.deepEqual([rc1.ok, rc1.cashSol, rc1.realizedSol, rc1.openCostSol], [true, rc0.cashSol, rc0.realizedSol, rc0.openCostSol]);
   s = await S(); assert.deepEqual([s.cashSol, s.trades.n, s.positions.length, s.startSol, s.lanes.length], [st0.cashSol, st0.trades.n, st0.positions.length, st0.startSol, st0.lanes.length]); assert.equal(s.ledger.ok, true);
-  // a lesson line every ten minutes, written by code
-  const tenth = (Math.floor(T / 10) + 2) * 10; await AR.arenaTick(env, { now: tenth * 60000 });
+  // a lesson line every minute, written by code
+  const tenth = T + 10; assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_brain WHERE kind='arena-lesson' AND at > now() - interval '5 minutes'`)).n, 7);
   assert.match((await d.one(`SELECT text FROM mob_aq_brain WHERE kind='arena-lesson' ORDER BY id DESC LIMIT 1`)).text, /^Arena batch at .*Z: \d+ virtual trades \(\d+ fresh, \d+ replay\) on \d+ coins\. Random entries made -?[\d.]+% a trade after costs\. Best: \w+ \[.*\] -?[\d.]+% over \d+ .* Worst: /);
   // history runs out: the coin is finished, not asked again
-  for (const c of coins) hist[c.mint] = hist[c.mint].filter((b) => b.t / 60 > T - 1500);
-  for (let k = 1; k <= 8; k++) await AR.arenaTick(env, { now: (tenth + k) * 60000 });
+  for (const c of coins) hist[c.mint] = hist[c.mint].filter((b) => b.t / 60 > T - 400);
+  for (let k = 1; k <= 24; k++) await AR.arenaTick(env, { now: (tenth + k) * 60000 });
   const cur3 = (await d.one(`SELECT v FROM mob_aq_state WHERE k='arena_cur'`)).v; assert.ok(coins.slice(0, 5).every((c) => cur3.back[c.mint] === 0), JSON.stringify(cur3.back)); assert.equal((await S()).training.replay.coinsFinished, 5);
-  const before = asked.length; const aL = await AR.arenaTick(env, { now: (tenth + 9) * 60000 }); assert.equal(aL.replay, 0); assert.ok(asked.slice(before).filter((q) => q.mint !== coins[5].mint).every((q) => q.n < 200), "only the fresh minutes are read now (the coin whose chart is down is still being retried)");
+  const before = asked.length; const aL = await AR.arenaTick(env, { now: (tenth + 25) * 60000 }); assert.equal(aL.replay, 0); assert.ok(asked.slice(before).filter((q) => q.mint !== coins[5].mint).every((q) => q.n < 200), "only the fresh minutes are read now (the coin whose chart is down is still being retried)");
   // the main tick runs the same with the arena on; an arena that throws cannot touch it
   const tk = await tick(env); assert.ok(!tk.skipped); assert.equal((await reconcile(d)).ok, true);
   // off again: the arena stops, what it learned stays
-  const totalNow = (await S()).training.trades; assert.equal((await (await sw({ cookie }, { on: false })).json()).training.on, false); assert.deepEqual(await AR.arenaTick(env, { now: (tenth + 20) * 60000 }), { off: true });
+  const totalNow = (await S()).training.trades; assert.equal((await (await sw({ cookie }, { on: false })).json()).training.on, false); assert.deepEqual(await AR.arenaTick(env, { now: (tenth + 40) * 60000 }), { off: true });
   assert.equal((await S()).training.trades, totalNow);
   for (const t of ["mob_aq_arena_agg", "mob_aq_arena_replay", "mob_aq_arena_samples", "mob_aq_arena_costs"]) await d.q(`DELETE FROM ${t}`);
   await d.q(`DELETE FROM mob_aq_watch`); await d.q(`DELETE FROM mob_aq_state WHERE k IN (${AK})`); await cleanBook(d);
