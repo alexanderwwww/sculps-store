@@ -30,3 +30,12 @@ When Alex says "Fibonacci": 1) validate the coin first (gate, safety, costs); 2)
 
 ## Speed (Alex asked "why every minute, not every second")
 Cloudflare's timer fires at most once a minute, and free APIs block per-second polling. Plan: entries checked every minute on 1-minute candles; exits on open positions every few seconds via a fast loop (Durable Object alarm or the small always-on server) with Helius. Per-second scanning of everything only with the paid fast line and own server, after paper profit.
+
+## ALWAYS TRADING (Alex, 2026-11-16: "you didn't make a trade yet... should make trades all the time... your rules are the problem, but without breaking that... we need something faster... fix your recipe, pass it to the Council")
+Zero trades in the first hours was wrong. Rules are hypotheses; paper is where they get tested, not where we wait. The fix, without dropping the lessons Ultra paid for:
+1. **Hard blocks (never traded, any mode):** cannot sell (no Jupiter sell route / honeypot), mint or freeze authority still active, liquidity under $20k, stale price, stop larger than target, target under 6x the measured round-trip cost, kill switch, island destroyed.
+2. **Soft rules (scored, not vetoes):** LP locked %, top-10 holder %, age, boosts, copycat name, whale presence, sentiment. They change the SIZE and the score, they do not stop a trade alone.
+3. **Three tiers of coin:** A established (liquidity >= $500k, older than 7 days): LP-lock and holder rules do not apply, full size. B mid (>= $100k, older than 1 day): normal size. C new launches: smallest size, every hard block plus strict soft rules.
+4. **Several strategies at once (each its own scoreboard):** R3 Fibonacci pullback; R5 whale follow; R6 momentum breakout on tier A/B; R7 oversold bounce on tier A. Costs measured on liquid coins are 0.1-0.9%, so 3-6% targets clear the 6x gate.
+5. **Paper explores, live exploits.** On paper the Council must take the best-scored candidate at least every few minutes (EXPLORE trades, tagged, small), even when soft rules object. Max 5 open, 1% risk each. Every result updates the soft-rule weights through the tournament: a rule that blocks winners loses weight, a rule that blocks losers gains weight. Live money later uses only what paper proved.
+6. Still true: one stop must never erase five wins; no entry without a signal (EXPLORE needs at least one: momentum, pullback, whale or bounce).
