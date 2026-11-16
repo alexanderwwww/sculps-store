@@ -272,6 +272,12 @@ export async function councilTick(env, x) {
       continue;
     }
     const est = { sizeSol: hard.sizeSol, stressedPct: hard.stressedPct };
+    // The size is the CEO's and is not shrunk for risk. But one stop must never erase five wins (aquarius-trader skill): a
+    // trade whose loss at the stop would cost more than 3% of the wallet (1.5% for EXPLORE-WEAK) is REFUSED, not resized.
+    // (2026-11-16 18:08Z: SolFauc, ATR5 32%, a 47% stop on 1.3 SOL = 7.3% of the wallet at risk on an EXPLORE-WEAK.)
+    const lossCap = C.riskPct * (g.weak ? 0.5 : 1);
+    sizing.lossCapPctOfEquity = lossCap;
+    if ((hard.sizeSol * (plan.stopPct + (o.pct ?? 0))) / equity > lossCap) { await g.block(`risk: a stop here costs ${round((hard.sizeSol * (plan.stopPct + (o.pct ?? 0))) / equity, 2)}% of the wallet (${hard.sizeSol} SOL, stop ${plan.stopPct}%); the limit is ${lossCap}%${g.weak ? " for EXPLORE-WEAK" : ""}`, round((hard.sizeSol * plan.stopPct) / equity, 3), "soft"); continue; }
     set("st.stress", "busy", `${c.symbol}: ${est.sizeSol} SOL (position ${positionSol}${g.weak ? " halved for EXPLORE-WEAK" : ""}${sizing.limitedBy ? `, cut by ${sizing.limitedBy}` : ""}); fee floor ${round(floor, 4)} SOL; a stop costs ${riskPct}% of equity`);
     if (est.sizeSol < C.minSizeSol) { await g.block("size too small", est.sizeSol); continue; }
     // quote the round trip. The pool's own cost is only known now: if the fixed fee is too big a share at this size and a
@@ -312,6 +318,7 @@ export async function councilTick(env, x) {
     if (rt > 0 && targetPct < C.costMultiple * rt) { quiet.push({ symbol: c.symbol, have: targetPct, need: round(C.costMultiple * rt, 3) }); await g.block("cost gate", x6); continue; }
     if (rt > 0 && !tb.ok) { quiet.push({ symbol: c.symbol, have: tb.havePct, need: tb.needPct }); await g.block(`not tradable: 6x measured round trip ${rt}% = ${tb.needPct}% is over 3x ATR5 ${atr}% = ${tb.havePct}%`, round(tb.havePct / tb.needPct, 3), "untradable"); continue; }
     sizing.lossAtStopPctOfEquity = round((size * (stopPct + Math.max(rt, 0))) / equity, 3);
+    if (sizing.lossAtStopPctOfEquity > lossCap) { await g.block(`risk: a stop here costs ${sizing.lossAtStopPctOfEquity}% of the wallet (${size} SOL, stop ${stopPct}% from the fill, round trip ${rt}%); the limit is ${lossCap}%${g.weak ? " for EXPLORE-WEAK" : ""}`, sizing.lossAtStopPctOfEquity, "soft"); continue; }
     // what a sale fetches against the mid, measured now: the exit loop uses it to tell a real stop from a wrong mid
     const exitK = mid ? ((backSol * solUsd) / tokensUi) / mid : null;
     const reason = `${tag !== "PASS" ? `${tag}: ` : ""}${sid} ${g.weak ? `strength ${g.strength} (${s.why})` : s.why}; hard blocks clear; 6x round trip ${rt}% = ${tb.needPct}% fits target ${targetPct}% and 3x ATR5 ${tb.havePct}%; score ${g.sc.score}${g.objections.length ? ` (soft: ${g.objections.join(", ")})` : ""}`;

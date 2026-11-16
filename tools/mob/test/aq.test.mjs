@@ -219,6 +219,8 @@ test("whales: 2+ independent winners buying = signal; creator excluded; bots not
   let kt = await kolTick(env); assert.equal(kt.ok, false, "page down: said so, nothing invented");
   kolPage = FXD.kolscanSlice; await d.q(`DELETE FROM mob_aq_market WHERE k='kolscan'`);
   kt = await kolTick(env); assert.deepEqual([kt.ok, kt.wallets, kt.fresh], [true, kols.length, true]);
+  resetCalls(); sc = await scoreTick(env, { solUsd: 72, max: 200 }); assert.ok(sc.scored >= 5 && sc.scored <= 36, `seeds get a scorecard inside the call budget: ${JSON.stringify(sc)}`);
+  assert.equal((await refreshWinners(d)).winners, 2, "a good scorecard does not make a seed a winner: it has no closed coins of its own in our swaps");
   const k0 = await d.one(`SELECT source, label, cand, winner, kol FROM mob_aq_whales WHERE wallet=$1`, [kols[0].wallet]);
   assert.deepEqual([k0.source, k0.label, k0.cand, k0.winner], ["kolscan", "slingoor", true, false]); assert.ok(k0.kol["1"]);
   kolPage = null;
@@ -1217,6 +1219,14 @@ test("audit engine: closed candles only, fill anchoring, stop confirmed by the q
   await d.q(`DELETE FROM mob_aq_market WHERE k='jup:top'`);
   t = await tick(env);
   const bl = t.evaluated.find((e) => e.symbol === "BLOS"); assert.equal(bl.verdict, "BLOCK", JSON.stringify(t.evaluated)); assert.match(bl.reason, /^time machine: R7 replay loses \(45 trades, mean -1\.2% net of 0\.8% measured cost, 95% CI -2 to -0\.4\)$/);
+  // ---- the size is the CEO's and is not shrunk for risk, but a stop that would cost over 3% of the wallet is refused
+  await cleanBook(d); await d.q(`DELETE FROM mob_aq_council`); await d.q(`UPDATE mob_aq_state SET v='0.9' WHERE k='position_sol'`); await d.q(`DELETE FROM mob_aq_state WHERE k='replays'`);
+  jupCharts = {}; backOf = {}; jupLists = () => ({ pools: [] }); stubAll(); trendingPools = [pool("GOOD", MINT.A, POOL.A, 200000)]; prices[MINT.A] = 1.1; await clearCache();
+  t = await tick(env);
+  const rk = t.evaluated.find((e) => e.symbol === "GOOD"); assert.equal(rk.verdict, "BLOCK", JSON.stringify(t.evaluated)); assert.match(rk.reason, /^risk: a stop here costs [\d.]+% of the wallet \(0\.9 SOL, stop [\d.]+%\); the limit is 3%$/); assert.equal(t.entered, null);
+  await d.q(`UPDATE mob_aq_state SET v='0.26' WHERE k='position_sol'`); await d.q(`DELETE FROM mob_aq_council`);
+  t = await tick(env); assert.equal(t.entered?.symbol, "GOOD", "at the normal size the same coin is taken"); const gp = await d.one(`SELECT sizing FROM mob_aq_positions WHERE symbol='GOOD'`); assert.ok(gp.sizing.lossAtStopPctOfEquity <= 3 && gp.sizing.lossCapPctOfEquity === 3);
+  await cleanBook(d);
   jupCharts = {}; backOf = {}; jupLists = () => ({ pools: [] }); stubAll(); trendingPools = [];
 });
 

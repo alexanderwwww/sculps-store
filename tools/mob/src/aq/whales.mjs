@@ -63,8 +63,9 @@ export async function refreshWinners(d) {
             min(at) FILTER (WHERE kind='buy') fb, min(at) FILTER (WHERE kind='sell') fs, max(at) FILTER (WHERE kind='sell') ls FROM mob_aq_wtrades GROUP BY wallet, mint) w) x
       GROUP BY wallet HAVING count(*) FILTER (WHERE b > 0 AND s > 0) > 0) y
     ON CONFLICT (wallet) DO UPDATE SET wins=EXCLUDED.wins, closed=EXCLUDED.closed, net_sol=EXCLUDED.net_sol, cand=EXCLUDED.cand OR mob_aq_whales.source='kolscan', updated_at=now()`, [BOT_TRADES, MIN_CLOSED, MIN_HOLD_SEC]);
-  // a wallet that is no longer a candidate, or was never scored by Jupiter, is not a winner
-  await d.q(`UPDATE mob_aq_whales SET winner = (cand AND coalesce((jup->>'ok')::boolean, false)) WHERE winner IS DISTINCT FROM (cand AND coalesce((jup->>'ok')::boolean, false))`);
+  // a wallet that is no longer a candidate, or was never scored by Jupiter, is not a winner; a KOLscan seed is scored
+  // like the others but is a winner only with its own 5+ closed coins in our swaps (a name is not a record)
+  await d.q(`UPDATE mob_aq_whales SET winner = (cand AND closed >= ${MIN_CLOSED} AND net_sol > 0 AND wins::float / greatest(closed, 1) >= 0.6 AND coalesce((jup->>'ok')::boolean, false)) WHERE winner IS DISTINCT FROM (cand AND closed >= ${MIN_CLOSED} AND net_sol > 0 AND wins::float / greatest(closed, 1) >= 0.6 AND coalesce((jup->>'ok')::boolean, false))`);
   return d.one(`SELECT count(*)::int book, count(*) FILTER (WHERE cand)::int candidates, count(*) FILTER (WHERE jup IS NOT NULL)::int scored, count(*) FILTER (WHERE winner)::int winners, count(*) FILTER (WHERE source='kolscan')::int kol FROM mob_aq_whales`);
 }
 // Jupiter's scorecard for one wallet -> the few numbers we judge. The SOL row carries the wallet's swap counts and active
@@ -91,7 +92,7 @@ export async function scoreTick(env, { solUsd, set = () => {}, max = SCORE_PER_T
     let sc = null;
     try { sc = scoreWallet(await getJson(URLS.jupPnl(w.wallet)), w.wallet, w.net_sol, solUsd); } catch (e) { res.errors++; res.error = String(e.message || e).slice(0, 100); break; }
     if (!sc) sc = { ok: false, why: "no scorecard" };
-    await d.q(`UPDATE mob_aq_whales SET jup=$2, scored_at=now(), winner=(cand AND $3::boolean) WHERE wallet=$1`, [w.wallet, JSON.stringify(sc), sc.ok]);
+    await d.q(`UPDATE mob_aq_whales SET jup=$2, scored_at=now(), winner=(cand AND closed >= ${MIN_CLOSED} AND net_sol > 0 AND wins::float / greatest(closed, 1) >= 0.6 AND $3::boolean) WHERE wallet=$1`, [w.wallet, JSON.stringify(sc), sc.ok]);
     res.scored++; if (sc.ok) res.ok++;
   }
   if (res.scored || res.errors) set("wh.pnl", res.errors ? "blocked" : "busy", res.errors ? `Jupiter scorecard failed: ${res.error}` : `${res.scored} candidate wallet(s) scored by Jupiter, ${res.ok} at a human pace with a positive net`);

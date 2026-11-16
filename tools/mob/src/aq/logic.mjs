@@ -164,7 +164,7 @@ export const COUNCIL = {
   // CEO sizing (Alex, 2026-11-16: "10 sol paper first, bigger"): the paper wallet is 10 SOL (a recorded deposit) and every
   // position is positionSol = 2.6 SOL (26% of it; kept in mob_aq_state as position_sol so he can change it), EXPLORE-WEAK
   // half. It is cut only when cash is short, in a survival stage, or to stay under 1% of the pool's liquidity; under 0.05 SOL
-  // or under the fee floor there is no trade. 3 open at most. Set by the CEO, not a learned result; riskPct is not a limiter.
+  // or under the fee floor there is no trade. 3 open at most. Set by the CEO, not a learned result. riskPct resizes nothing: a trade whose loss at the stop would be over riskPct of the wallet (half for EXPLORE-WEAK) is refused.
   positionSol: 2.6, maxPoolPct: 1, maxSizeSol: 2.6, minSizeSol: 0.05, stressMult: 1.5, exploreSize: 0.75, lpLockedMin: 50, top10Max: 25, topHolderMax: 20,
   // sizes stay close to the 0.05 SOL cap on purpose: the network fee is a fixed amount, so a tiny position cannot clear the 6x cost gate
   tiers: { A: { liq: 500000, ageDays: 7, size: 1, bonus: 10 }, B: { liq: 100000, ageDays: 1, size: 0.85, bonus: 5 }, C: { size: 0.6, bonus: 0 } },
