@@ -1,15 +1,11 @@
 // Aquarius client. BOT MODE (default): a light dashboard, no three.js. WORLD MODE: lazy-loads /aq/assets/world.js.
 // Both read GET /api/aq/state every 3 s (tools/mob/aq/CONTRACT.md). Missing data shows "—", never invented.
 import { deskHTML, renderDesk, wakeReactor } from "./desk.js";
+import { reactorInfo } from "./reactor.js";
 export const BUILD = typeof __AQ_BUILD__ !== "undefined" ? __AQ_BUILD__ : "dev";
 
-export const DEPTS = [
-  ["scouts_sol", "Scouts · Solana", "#2fb7c9"], ["scouts_stocks", "Scouts · Stocks", "#3b82f6"], ["whales", "Whales", "#4f5bd5"],
-  ["news", "News & Mood", "#c03fb0"], ["setups", "Setups", "#e8a317"], ["costs", "Costs", "#7c9a2e"],
-  ["council", "Council of Olympus", "#d4a020"], ["risk", "Risk", "#d33a2c"], ["execution", "Execution", "#0e9f6e"],
-  ["review", "Review & Journal", "#8a5a32"], ["learning", "Learning", "#7d3cd8"], ["ops", "Ops", "#5b6b7c"],
-];
-export const GODS = { scouts_sol: "Hecate", learning: "Apollo", setups: "Athena", risk: "Zeus", execution: "Hermes", news: "Dionysus" };
+import { DEPTS, GODS } from "./depts.js";
+export { DEPTS, GODS };
 const deptName = (id) => (DEPTS.find((d) => d[0] === id) || [id, id])[1];
 const deptCol = (id) => (DEPTS.find((d) => d[0] === id) || [0, 0, "#888"])[2];
 
@@ -62,7 +58,7 @@ function topbar() {
       <div class="kpi"><small>Total P&amp;L</small><b id="k-total">—</b></div>
       <div class="kpi"><small>Open</small><b id="k-open">—</b></div>
       <div class="kpi hp"><small>Health <span id="k-stage">—</span></small><div class="hpbar"><i id="k-hp"></i></div></div>
-      <div class="kpi wide"><small>Evidence</small><b id="k-ev">—</b></div>
+      <div class="kpi"><small>Evidence <span id="k-evn"></span></small><b id="k-ev">—</b></div>
       <div class="kpi wide"><small>Council</small><b id="k-council">—</b></div>
     </div>
     <div class="kpi clock"><small>UTC</small><b id="k-utc">—</b></div><div class="kpi"><small>Agents live</small><b id="k-agents">—</b></div>
@@ -85,7 +81,7 @@ function renderTop(s) {
   if (!s) return;
   set("k-eq", fSol(s.equitySol)); set("k-today", fSol(s.pnlTodaySol, true), cls(s.pnlTodaySol)); set("k-total", fSol(s.pnlTotalSol, true), cls(s.pnlTotalSol));
   set("k-open", Array.isArray(s.positions) ? String(s.positions.length) : D);
-  const ev = s.trades && s.trades.evidence; set("k-ev", ev ? `${ev}${s.trades.n != null ? " · " + s.trades.n + "/100" : ""}` : D, ev === "EDGE" ? "up" : ev === "NO EDGE" ? "dn" : "muted");
+  const ev = s.trades && s.trades.evidence; set("k-ev", ev ? String(ev).replace(/\s+yet$/i, "").toUpperCase() : D, ev === "EDGE" ? "up" : ev === "NO EDGE" ? "dn" : "muted"); set("k-evn", s.trades && s.trades.n != null ? s.trades.n + "/100" : "");
   const lv = s.council && s.council.last; set("k-council", lv ? `${lv.verdict} ${lv.symbol || ""}` : D, lv ? (lv.verdict === "PASS" ? "up" : "dn") : "muted");
   const sv = s.survival || null, hp = sv && typeof sv.health === "number" ? Math.max(0, Math.min(100, sv.health)) : null;
   const hb = $("#k-hp"); if (hb) { hb.style.width = (hp ?? 0) + "%"; hb.className = "st-" + (sv ? sv.stage : "none"); }
@@ -288,6 +284,6 @@ function boot() {
   poll(); setInterval(poll, 3000); setInterval(() => listeners.forEach((f) => store.state && f(store.state)), 1000 * 15);
   let m = "bot"; try { m = new URLSearchParams(location.search).get("mode") || "bot"; } catch {}
   if (m === "world") setMode("world");
-  window.__aq = { store, setMode, openMenu, poll };
+  window.__aq = { store, setMode, openMenu, poll, reactorInfo };
 }
 if (typeof document !== "undefined") boot();

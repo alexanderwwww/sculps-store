@@ -14,6 +14,7 @@ http.createServer(async (req, res) => {
   if (u.pathname === "/aq" || u.pathname === "/") { res.writeHead(200, { "content-type": "text/html" }); return res.end(B.AQ_PAGE); }
   if (u.pathname === "/aq/app.js") { res.writeHead(200, { "content-type": "text/javascript" }); return res.end(B.AQ_JS); }
   if (u.pathname.startsWith("/aq/assets/")) { const f = join(aq, "assets", u.pathname.slice(11)); if (existsSync(f)) { res.writeHead(200, { "content-type": types[extname(f)] || "application/octet-stream" }); return res.end(readFileSync(f)); } res.writeHead(404); return res.end(); }
+  if (u.pathname === "/api/aq/state" && process.env.STATE_FILE) { res.writeHead(200, { "content-type": "application/json" }); return res.end(readFileSync(process.env.STATE_FILE)); }
   if (u.pathname === "/api/aq/state") { const s = fixture(); s.killSwitch = kill; for (const b of bots) s.departments.find((d) => d.id === b.dept)?.workers.push(b); if (process.env.EMPTY) { for (const k of ["equitySol", "pnlTodaySol", "market", "council"]) s[k] = null; s.xfeed = []; s.helpers = { grok: "not connected", chatgpt: "not connected" }; } res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(s)); }
   if (req.method === "POST") { let b = ""; for await (const c of req) b += c; const j = JSON.parse(b || "{}");
     if (u.pathname === "/api/aq/kill") kill = !!j.on; if (u.pathname === "/api/aq/rebuild") process.env.STAGE = "thriving";

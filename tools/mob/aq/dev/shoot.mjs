@@ -11,11 +11,11 @@ async function page(vp, mobile = false) { const ctx = await b.newContext({ viewp
 const want = (n) => !only || only.split(",").includes(n);
 const wait = (p, ms) => p.waitForTimeout(ms);
 // bot mode desktop + phone
-if (want("bot")) { const p = await page({ width: 1440, height: 1480 }); await p.goto(URL); await wait(p, 7000); await p.click("details.dept >> nth=0"); await wait(p, 400); await p.screenshot({ timeout: 240000, path: out + "/01-bot-desktop.png" }); await p.setViewportSize({ width: 1440, height: 900 });
+if (want("bot")) { const p = await page({ width: 1440, height: 1480 }); await p.goto(URL); await wait(p, Number(process.env.WAIT || 7000)); console.log("reactor", JSON.stringify(await p.evaluate(() => window.__aq.reactorInfo && window.__aq.reactorInfo()))); await p.screenshot({ timeout: 240000, path: out + "/01-bot-desktop.png" }); { const bb = await p.evaluate(() => { const r = document.querySelector(".reactor").getBoundingClientRect(); return { x: r.x, y: r.y + scrollY, width: r.width, height: r.height }; }); await p.screenshot({ path: out + "/01-reactor.png", clip: bb }); } await p.setViewportSize({ width: 1440, height: 900 });
   await p.keyboard.press("Escape"); await wait(p, 300); await p.click("nav [data-t=inv]"); await wait(p, 300); await p.screenshot({ timeout: 240000, path: out + "/02-inventory.png" });
   await p.click("nav [data-t=new]"); await wait(p, 200); await p.fill("input[name=name]", "Golden Hawk 2"); await p.fill("input[name=job]", "phi pullbacks"); await p.click("button[type=submit]"); await wait(p, 600); await p.screenshot({ timeout: 240000, path: out + "/03-bot-creator.png" });
   await p.click("nav [data-t=db]"); await wait(p, 200); await p.click("[data-db=flows]"); await wait(p, 200); await p.screenshot({ timeout: 240000, path: out + "/04-database.png" }); await p.context().close(); }
-if (want("phone")) { const p = await page({ width: 390, height: 844 }, true); await p.goto(URL); await wait(p, 1500); await p.screenshot({ timeout: 240000, path: out + "/05-bot-phone.png" }); await p.context().close(); }
+if (want("phone")) { const p = await page({ width: 390, height: 844 }, true); await p.goto(URL); await wait(p, Number(process.env.WAIT || 7000)); console.log("phone overflow px:", await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)); await p.screenshot({ timeout: 240000, path: out + "/05-bot-phone.png" }); await p.screenshot({ timeout: 240000, fullPage: true, path: out + "/05-bot-phone-full.png" }); await p.context().close(); }
 // world
 if (want("world") || want("wphone")) {
   const p = want("world") ? await page({ width: 1440, height: 900 }) : null;

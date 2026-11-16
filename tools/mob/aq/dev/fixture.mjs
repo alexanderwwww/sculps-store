@@ -16,10 +16,14 @@ const DEPTS = {
 const NAMES = ["Nikos", "Eleni", "Kostas", "Maria", "Yannis", "Sofia", "Dimitris", "Ioanna", "Petros", "Katerina", "Giorgos", "Anna", "Stavros", "Daphne", "Leon", "Irene"];
 let t0 = Date.now(), tick = 0, flowId = 1000;
 const ago = (s) => new Date(Date.now() - s * 1000).toISOString();
+// DEV ONLY: shape proposed in CONTRACT.md (state.tape). A deterministic walk so the candle renderer can be seen.
+function tapeFx() { let x = 42, r = () => ((x = (x * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff); const now = Math.floor(Date.now() / 60000) * 60, cs = []; let c = 0.0000205;
+  for (let i = 59; i >= 0; i--) { const o = c, drift = i > 34 ? 0.006 : i > 20 ? -0.003 : 0.002; c = o * (1 + drift + (r() - 0.5) * 0.012); const h = Math.max(o, c) * (1 + r() * 0.004), l = Math.min(o, c) * (1 - r() * 0.004); cs.push({ t: now - i * 60, o, h, l, c, v: 800 + r() * 4200 }); }
+  const hi = Math.max(...cs.map((k) => k.h)), lo = Math.min(...cs.map((k) => k.l)); return { symbol: "BONK", mint: "DezX…B263", src: "own", verdict: "PASS", candles: cs, fib: { high: hi, low: lo } }; }
 export function fixture() {
-  tick++;
+  tick = Math.floor((Date.now() - t0) / 9000) + 1; // one fixture step every 9 s, so events arrive at a believable pace
   const departments = Object.entries(DEPTS).map(([id, [name, god, jobs]], di) => ({
-    id, name, god, live: di !== 1, lastRunAt: di === 1 ? null : ago(20 + di * 7), skills: ["read the recipe", jobs[0], jobs[3]],
+    id, name, god, live: di !== 1, lastRunAt: di === 1 ? null : new Date(t0 + Math.floor((tick + di) / 3) * 27000 - 60000).toISOString(), skills: ["read the recipe", jobs[0], jobs[3]],
     workers: jobs.map((job, i) => {
       const k = (di * 7 + i * 3 + tick) % 11;
       const status = k < 5 ? "busy" : k < 10 ? "idle" : "blocked";
@@ -32,7 +36,12 @@ export function fixture() {
   const flows = []; const kinds = ["buy", "fee", "sell", "win", "loss", "fee"];
   for (let i = 0; i < 18; i++) { const k = kinds[(i + tick) % kinds.length]; flows.push({ id: flowId + tick * 2 - i, kind: k, sol: k === "fee" ? 0.0021 : k === "win" ? 0.0134 : k === "loss" ? -0.0087 : 0.05, dept: k === "fee" ? "costs" : k === "win" || k === "loss" ? "review" : "execution", label: k === "fee" ? "Jupiter round trip" : `${["BONK", "WIF", "POPCAT", "MEW"][i % 4]} ${k}`, at: ago(i * 41 + 3) }); }
   return {
-    build: "fixture-1", survival: { health: Number(process.env.HEALTH || 82), stage: process.env.STAGE || "thriving" }, mode: "PAPER", killSwitch: false, updatedAt: ago(2),
+    build: "fixture-1", survival: { health: Number(process.env.HEALTH || 101), stage: process.env.STAGE || "healthy", sizeMult: 1, maxOpen: 3 },
+    health: { coingecko: true, dexscreener: true, feargreed: true, geckoterminal: true, geckoterminal_ohlcv: tick % 7 !== 0, jupiter: true, rugcheck: true, whales_trades: true },
+    replay: { trades: 31, expectancyPct: -0.4, ci95: [-2.9, 2.1], costPct: 5, evidence: "NO EVIDENCE yet" },
+    shadow: { tag: "SHADOW", n: 14, winRate: 0.36, expectancyPct: -1.9, open: 3, byReason: [{ reason: "safety", n: 8, expectancyPct: -3.2 }, { reason: "liquidity too low", n: 4, expectancyPct: -0.6 }, { reason: "no signal", n: 2, expectancyPct: 1.1 }] },
+    lanes: [{ helper: "aquarius", tag: "REAL (paper)", n: 23, winRate: 0.565, expectancyPct: 0.8, open: 3, weight: null }, { helper: "grok", tag: "LANE:grok", n: 6, winRate: 0.5, expectancyPct: 0.3, open: 1, rejected: 4, weight: 1 }],
+    tape: process.env.NOCANDLES ? null : tapeFx(), mode: "PAPER", killSwitch: false, updatedAt: ago(2),
     equitySol: 1.0 + 0.0123 + Math.sin(tick / 3) * 0.002, startSol: 1.0, pnlTodaySol: 0.0081, pnlTotalSol: 0.0123,
     trades: { n: 23, wins: 13, winRate: 0.565, expectancyPct: 0.8, ci95: [-2.1, 3.4], evidence: "NO EVIDENCE yet" },
     positions: [
@@ -46,7 +55,7 @@ export function fixture() {
       { id: 49, symbol: "MEW", side: "buy", sizeSol: 0.05, pnlSol: null, reason: "61.8% pullback + volume", at: ago(7200) },
     ],
     flows,
-    council: { last: { verdict: "BLOCK", symbol: "PNUT2", reason: "copycat name, liquidity 4x below gate", number: "p=0.31", at: ago(120) },
+    council: { last: ((k) => ({ verdict: k % 3 === 2 ? "PASS" : "BLOCK", symbol: ["PNUT2", "GATO", "BONK", "HONEY", "mihao", "WIF"][k % 6], reason: k % 3 === 2 ? "costs 1.2% < 6x gate, OOS ok" : k % 3 ? "safety: LP locked under 50%" : "no signal: impulse too small (< 8%)", number: k % 3 === 2 ? "R:R 2.6" : 4.33, at: new Date(t0 + k * 36000 - 60000).toISOString() }))(Math.floor(tick / 4)),
       vetoes: [{ verdict: "BLOCK", symbol: "PNUT2", reason: "copycat name, liquidity 4x below gate", number: "p=0.31", at: ago(120) }, { verdict: "PASS", symbol: "BONK", reason: "costs 1.2% < 6x gate, OOS ok", number: "R:R 2.6", at: ago(1900) }, { verdict: "BLOCK", symbol: "HONEY", reason: "honeypot: sell simulation failed", number: "tax 99%", at: ago(5000) }] },
     departments,
     market: { sol: { price: 187.42, ch24: 3.1 }, btc: null, fearGreed: { value: 64, label: "Greed" }, trending: [{ symbol: "BONK", ch1h: 4.2, liqUsd: 2_400_000, boosted: false }, { symbol: "PNUT2", ch1h: 41.0, liqUsd: 18_000, boosted: true }, { symbol: "WIF", ch1h: -1.3, liqUsd: 5_100_000, boosted: false }] },

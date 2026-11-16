@@ -24,3 +24,14 @@ state = {
  helpers:{grok:"not connected"|"connected", chatgpt:"not connected"|"connected"}
 }
 Missing data = null, never invented.
+
+## Later additions the desk already reads (engine: src/aq/engine.mjs buildState)
+ survival:{health, stage:"thriving"|"healthy"|"hurt"|"critical"|"destroyed", sizeMult, maxOpen}, health:{<feed>:bool}, replay:{trades, expectancyPct, ci95, costPct, evidence}|null,
+ shadow:{tag, n, winRate, expectancyPct, open, byReason:[{reason, n, expectancyPct}]}, lanes:[{helper, tag, n, winRate, expectancyPct, open, rejected, weight}],
+ xfeed:[{at, section, text, label, source, weight}], helpers:{grok, chatgpt, grokLastAt, chatgptLastAt}, tools:[...], departments[].skills
+
+## PROPOSED, not sent by the engine yet (the desk draws them the moment they appear; until then it says what is missing)
+ tape:{symbol, mint, src:"own"|"geckoterminal", verdict:"PASS"|"BLOCK"|null, candles:[{t(sec), o, h, l, c, v}] (1m, oldest first, <= 60),
+       fib:{high, low, entry, stop, target}|null}|null     // the active candidate, else the most recently judged coin -> THE TAPE candlesticks
+ flows[].kind "fee" with the buy it belongs to, or costs:[{symbol, rtPct, at}]   // measured Jupiter round trips -> THE PRICER gauge (today it only has fee flows / open target)
+ council.vetoes carries BLOCKs only; PASS verdicts older than `last` are not in state, so the trace cannot list them.
