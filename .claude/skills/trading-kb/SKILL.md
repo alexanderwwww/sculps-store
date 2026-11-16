@@ -56,3 +56,11 @@ Round-trip cost 5% (memecoins); network fee $0.0015-0.0067 per trade; Pump AMM p
 3. Does the GMGN API key from build 106 still exist on the Mac?
 4. Study the 144 Hyperliquid steady winners over 90 days.
 5. The "trading fund office" city: parked, waiting for Alex's drawing. Not built.
+
+## 9. Ultra paper/live trade lab, read 2026-11-16 (files: gmgn-fib/lab/trades/trades.jsonl + REPORT.md)
+79 closed trades, 33 wins (42%), average -2.21% per trade (report at build 88: 64 trades, 28 wins, -2.71%).
+- Exits: take-profit 24 trades 88% win +1.64% avg; stop 22 trades 5% win -8.47% avg; time stop 16 trades -0.90%; stale-data 2 trades -6.02%.
+- Lesson 1: tiny wins (+1.6%) against big losses (-8.5%) means one stop erases about five wins. Win rate looks great (88%) and the account still bleeds.
+- Lesson 2: "idle pick" entries (49 trades, -3.33%) were worse than real signals (15 trades, -0.68%). Trading with no reason costs money.
+- Lesson 3: 1-2% measured round trip still lost -6.59% (4 trades); costs were not the only leak, exits were.
+- Rule for the next recipe: target must be >= 6x cost, stop distance must not exceed the target, no entry without a signal.
