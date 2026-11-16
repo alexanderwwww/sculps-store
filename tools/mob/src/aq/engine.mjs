@@ -6,6 +6,7 @@ import { feeds, midPrices, jupQuote, SOL_MINT, jupPrices, CALLS, CAPS, resetCall
 import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round, survival, whaleSetup, replaySetup, momentumSetup } from "./logic.mjs";
 import { whaleSignal, shadowTick, shadowStats, mineTick, followSignals, whaleState } from "./whales.mjs";
 import { lanesTick, laneStats } from "./lanes.mjs";
+import { nansenTick, nansenSignals, nansenState } from "./nansen.mjs";
 import { councilTick, learnFromTrade, ruleWeights, MIN_OWN_BARS } from "./council.mjs";
 import { COUNCIL, STRENGTH_BUCKETS } from "./logic.mjs";
 
@@ -86,8 +87,13 @@ export async function tick(env, opts = {}) {
     const [tr, nw, mj, fg, un, jt] = await Promise.all([feeds.trending(env), feeds.newPools(env), feeds.majors(env), feeds.fng(env), feeds.universe(env), feeds.jupTop(env)]);
     health.jupiter_lists = jt.ok;
     // tradable = can pass the gate: liquidity at or above it, real volume in the last hour, older than a few minutes
-    const tradable = (p) => (p.liqUsd || 0) >= COUNCIL.hardMinLiq && (p.volH1 == null || p.volH1 >= (P.minVolH1Usd ?? 10000)) && (!p.createdAt || nowSec * 1000 - Date.parse(p.createdAt) >= (P.minAgeMin ?? 10) * 60000);
+    // (a coin a Nansen-labelled trader just bought is judged on liquidity alone: the volume and age preference is for list coins)
+    const tradable = (p) => (p.liqUsd || 0) >= COUNCIL.hardMinLiq && (p.src === "nansen" || ((p.volH1 == null || p.volH1 >= (P.minVolH1Usd ?? 10000)) && (!p.createdAt || nowSec * 1000 - Date.parse(p.createdAt) >= (P.minAgeMin ?? 10) * 60000)));
     const jtop = (jt.data || []).map((p) => ({ ...p, src: "jupiter" }));
+    // Nansen (Alex's own signed-in browser): one gentle step per tick; its fresh labelled buys join the candidates
+    try { out.nansen = await nansenTick(env, { set, nowMs: nowSec * 1000 }); } catch (e) { out.nansen = { error: String(e.message || e).slice(0, 120) }; }
+    const nz = await nansenSignals(d);
+    const nzCands = Object.entries(nz).filter(([, v]) => v.cand).map(([, v]) => ({ ...v.cand, src: "nansen" }));
     const uni = un.data || un.stale || null; // boost and profile flags may come from the last good read; candidates never do
     Object.assign(health, { geckoterminal: tr.ok && nw.ok, dexscreener: un.ok, coingecko: mj.ok && mj.data?.src === "coingecko", sol_price: !!mj.data?.sol, feargreed: fg.ok });
     let solUsd = mj.data?.sol?.price ?? (tr.data || []).find((p) => p.solUsd)?.solUsd ?? null;
@@ -134,7 +140,7 @@ export async function tick(env, opts = {}) {
     const bars = await d.one(`SELECT count(*)::int n, count(DISTINCT mint)::int m FROM mob_aq_prices WHERE at > now() - interval '1 hour'`);
     set("sol.trending", trendingNow.length ? "busy" : "blocked", (trendingNow.length ? `${jtop.length} Jupiter trending/traded coins, ${jtrade.length} tradable; ${watch.length} liquid pairs on the watchlist (${bars.n} own price samples in 1h)` : `no tradable coin found this tick${jt.ok ? "" : ` (Jupiter lists: ${jt.err})`}`).slice(0, 190));
     // candidates: Jupiter's trending coins that can pass the gate first, then the tracked watchlist, then everything else
-    const all = [...jtrade, ...tracked, ...found];
+    const all = [...nzCands, ...jtrade, ...tracked, ...found];
     const seen = new Set(), cands = [];
     for (const p of all) if (p.mint && !seen.has(p.mint)) { seen.add(p.mint); cands.push(p); }
     const bySym = {};
@@ -290,7 +296,7 @@ export async function tick(env, opts = {}) {
       set("cn.veto", "busy", `BLOCK: ${riskBlock[0]}`);
     } else {
       // ---- the Council (hard blocks, soft score, tiers, R3/R5/R6/R7, explore) lives in council.mjs
-      await councilTick(env, { variantDefault: (await getState(d, "variant_default", {})) || {}, throttle, r6TimeStopMin: r6rep?.timeStopMin ?? null, d, cands, tradable, strategies, pos, cash, equity, sv, solUsd, feeSol, nowSec, gap, health, set, out, near, rpl, fng: fg.data?.value ?? null, ownCandles, brain, flow, setState,
+      await councilTick(env, { nansen: nz, variantDefault: (await getState(d, "variant_default", {})) || {}, throttle, r6TimeStopMin: r6rep?.timeStopMin ?? null, d, cands, tradable, strategies, pos, cash, equity, sv, solUsd, feeSol, nowSec, gap, health, set, out, near, rpl, fng: fg.data?.value ?? null, ownCandles, brain, flow, setState,
         council: (v, c, reason, number, facts) => council(d, v, c, reason, number, facts) });
     }
     if (!W["ex.paper"]) set("ex.paper", "idle", "no PASS this tick");
@@ -485,6 +491,7 @@ export async function buildState(env) {
   const S = Object.fromEntries(st.map((r) => [r.k, r.v]));
   const hist = await d.one(`SELECT coalesce(sum(n),0)::int n, count(*)::int m, count(*) FILTER (WHERE n >= $1)::int ready FROM (SELECT mint, count(DISTINCT date_trunc('minute', at))::int n FROM mob_aq_prices WHERE at > now() - interval '1 hour' GROUP BY mint) x`, [MIN_OWN_BARS]);
   const M = Object.fromEntries(mkt.map((r) => [r.k, r.ok ? r.data : null]));
+  const nzs = await nansenState(d);
   const cash = Number(S.cash_sol ?? START_SOL);
   const equity = cash + pos.reduce((a, p) => a + (p.last_value_sol ?? p.size_sol), 0);
   const startDay = new Date(); startDay.setUTCHours(0, 0, 0, 0);
@@ -529,7 +536,7 @@ export async function buildState(env) {
     health: { ...(S.health || {}), errors: mkt.filter((r) => !r.ok).slice(0, 12).map((r) => ({ feed: r.k, error: r.err, at: r.at })) },
     history: { priceSamples1h: hist.n, coins: hist.m, barsNeeded: MIN_OWN_BARS, ready: hist.ready },
     shadow: await shadowStats(d),
-    whales: await whaleState(d),
+    whales: { ...(await whaleState(d)), nansen: nzs.state },
     rules: (await d.q(`SELECT name, weight, blocked_winners, blocked_losers FROM mob_aq_rules ORDER BY name`)).map((r) => ({ name: r.name, weight: round(r.weight, 2), blockedWinners: r.blocked_winners, blockedLosers: r.blocked_losers })),
     council_rules: { hard: ["no Jupiter sell route", "mint or freeze authority", `liquidity under $${COUNCIL.hardMinLiq}`, "stale price", "stop > target", `target under ${COUNCIL.costMultiple}x measured round trip`, "kill switch", "destroyed"], passScore: COUNCIL.passScore, exploreEveryMin: COUNCIL.exploreEveryMin, maxOpen: COUNCIL.maxOpen, riskPct: COUNCIL.riskPct },
     tradesLastHour: trd.filter((t) => t.opened_at && Date.now() - new Date(t.opened_at).getTime() < 3600000).length + pos.filter((p) => Date.now() - new Date(p.opened_at).getTime() < 3600000).length,
@@ -538,6 +545,7 @@ export async function buildState(env) {
     survival: (() => { const sv = survival(equity, START_SOL); return { health: sv.health, stage: S.destroyed === true ? "destroyed" : sv.stage, sizeMult: S.destroyed === true ? 0 : sv.sizeMult, maxOpen: S.destroyed === true ? 0 : sv.maxOpen }; })(),
     helpers: { grok: conn("grok"), chatgpt: conn("chatgpt"), codex: conn("codex"), codexLastAt: hl.codex || null, grokLastAt: hl.grok || null, chatgptLastAt: hl.chatgpt || null },
     xfeed: xs.map((r) => ({ at: r.at, section: r.dept, text: r.text, label: (r.labels || [])[0] || "CLAIMED", source: "grok", weight: r.weight })),
+    marketFeed: nzs.feed,
   };
 }
 

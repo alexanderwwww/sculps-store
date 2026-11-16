@@ -705,3 +705,67 @@ test("paper explores by STRENGTH: a partial setup is taken as EXPLORE-WEAK at th
   s = await S(); assert.match(s.council.recent.find((v) => v.symbol == null).reason, /^market too quiet: 1 coin\(s\), best target [\d.]+% vs needed [\d.]+%$/);
   jupCharts = {}; backOf = {}; sellOut = {};
 });
+
+test("nansen reader: real page text parses; gentle state machine over the link queue; a labelled buy becomes an R5 signal of source nansen", async () => {
+  const { FX7 } = await import("./aq-fixtures.mjs");
+  const N = await import("../src/aq/nansen.mjs");
+  const rows = N.parseTrades(FX7.nansenTrades);
+  assert.ok(rows.length >= 15, String(rows.length));
+  assert.deepEqual(rows.find((r) => r.bought === "MASK"), { label: "SmoreGanic on pump.fun", prefix: "22WjtR", amtBought: 4090, bought: "MASK", amtSold: 0.99, sold: "SOL", valueUsd: 70.5, agoMin: 6 });
+  const doug = rows.find((r) => r.bought === "DOUG"); assert.deepEqual([doug.label, doug.prefix, doug.amtBought, doug.sold, doug.valueUsd], ["Smart Trader", "3YnKCVST", 8250000, "USDC", 1410]);
+  assert.equal(rows.find((r) => r.sold === "CLAWD").bought, "SOL", "a sell of CLAWD for SOL is read as that, never as a buy");
+  const leaders = N.parseLeaders(FX7.nansenLeaders);
+  assert.ok(leaders.length >= 10); assert.deepEqual(leaders[0], { label: "RaRa", prefix: "9tH2zRYd", totalPnl: 1190000, realizedPnl: 751210, roiPct: 3048, winRatePct: 39.13, trades: 3498 });
+  assert.deepEqual(N.parseTrades("Sign in to Nansen"), [], "a signed-out page gives no rows, never invented ones");
+
+  const d = db(env);
+  for (const t of ["mob_aq_market", "mob_aq_watch", "mob_aq_prices", "mob_aq_positions", "mob_aq_council", "mob_aq_trades", "mob_aq_nansen_trades", "mob_aq_nansen_leaders", "mob_aquarius_link"]) await d.q(`DELETE FROM ${t}`);
+  await d.q(`DELETE FROM mob_aq_state WHERE k='nansen'`); await d.q(`UPDATE mob_aq_state SET v='1' WHERE k='cash_sol'`);
+  stubAll(); trendingPools = []; prices = {}; tradesFor = {}; sellOut = {}; jupLists = () => ({ pools: [] });
+  // browser offline: nothing is queued, the state says so
+  let st = await N.nansenTick(env);
+  assert.equal(st.online, false); assert.equal(st.note, "nansen: browser offline"); assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aquarius_link`)).n, 0);
+  const online = (extra = {}) => d.q(`INSERT INTO mob_settings (key, value) VALUES ('aquarius_link_status', $1) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`, [JSON.stringify({ at: Date.now(), chrome: true, hands: true, busy: false, card: null, ...extra })]);
+  // browser busy, or another user of the tab: the cycle is skipped
+  await online({ busy: true }); st = await N.nansenTick(env); assert.match(st.note, /browser busy/); assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aquarius_link`)).n, 0);
+  await online(); await d.q(`INSERT INTO mob_aquarius_link (id, action, input) VALUES ('other1','look','{}')`);
+  st = await N.nansenTick(env); assert.match(st.note, /someone else is using the tab/); await d.q(`DELETE FROM mob_aquarius_link`);
+  // free: tick 1 navigates, tick 2 reads, tick 3 parses and stores
+  const ext = async (text) => d.q(`UPDATE mob_aquarius_link SET state='done', done_at=now(), result=$1 WHERE state='queued'`, [JSON.stringify({ text, image: null })]);
+  const GOODM = "MaskMint11111111111111111111111111111111111", item = (sym, id, liq) => ({ ...clone(FX7.jupSearch[0]), id, symbol: sym, liquidity: liq, firstPool: { id: `pool-${id}`, createdAt: new Date(Date.now() - 5 * 86400000).toISOString() } });
+  mock("GET", "https://lite-api.jup.ag/tokens/v2/search", (rec, u) => { const q = u.searchParams.get("query"); return q === "MASK" ? [item("MASK", GOODM, 400000), item("MASK", "dust1", 900)] : q === "DOUG" ? [item("DOUG", "d1", 90000), item("DOUG", "d2", 80000)] : clone(FX7.jupSearch); });
+  st = await N.nansenTick(env); assert.equal(st.phase, "nav"); assert.equal(st.kind, "trades");
+  let q = await d.one(`SELECT * FROM mob_aquarius_link`); assert.equal(q.action, "navigate"); assert.equal(q.input.url, N.NANSEN.trades);
+  st = await N.nansenTick(env); assert.equal(st.phase, "nav", "still waiting: the extension has not answered");
+  await ext("ok: true"); st = await N.nansenTick(env); assert.equal(st.phase, "read");
+  await ext(FX7.nansenTrades); st = await N.nansenTick(env);
+  assert.equal(st.phase, "idle"); assert.equal(st.online, true); assert.ok(st.lastReadAt);
+  const stored = await d.q(`SELECT * FROM mob_aq_nansen_trades`); assert.equal(stored.length, new Set(rows.map((r) => [r.prefix, r.bought, r.amtBought, r.sold, r.amtSold, r.valueUsd].join("|"))).size);
+  const mask = stored.find((r) => r.bought === "MASK"); assert.equal(mask.signal, true); assert.equal(mask.mint, GOODM, "one liquid MASK: resolved");
+  const dg = stored.find((r) => r.bought === "DOUG"); assert.equal(dg.signal, false); assert.match(dg.resolved, /ambiguous: 2 liquid tokens named DOUG/);
+  assert.equal(stored.find((r) => r.sold === "SNDK").signal, false, "a sell (and under $50): stored, not a signal");
+  assert.equal(stored.filter((r) => r.signal).length, 1, "old, small, stable and sell rows are never signals");
+  // the leaderboard is read once right after the first trades read (then every 4 hours), with the same three small steps
+  st = await N.nansenTick(env); assert.deepEqual([st.phase, st.kind], ["nav", "leaders"]);
+  await ext("ok: true"); st = await N.nansenTick(env); assert.equal(st.phase, "read");
+  await ext(FX7.nansenLeaders); st = await N.nansenTick(env); assert.equal(st.phase, "idle"); assert.equal(st.leaders, leaders.length);
+  assert.equal((await d.one(`SELECT win_rate_pct FROM mob_aq_nansen_leaders WHERE prefix='EFmDSnRb'`)).win_rate_pct, 51.85);
+  st = await N.nansenTick(env); assert.equal(st.phase, "idle", "nothing is due: not again before 3 minutes");
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aquarius_link WHERE state='queued'`)).n, 0);
+  // the Council: the Nansen buy is an R5 entry of its own source, and the scoreboard keeps it apart from our own winners
+  jupCharts[GOODM] = () => { const cs = clone(FX6.jupChart), shift = Math.floor(Date.now() / 60000) * 60 - cs.candles.at(-1).time; for (const c of cs.candles) c.time += shift; return cs; };
+  backOf = { [GOODM]: 0.998 };
+  // off by default: the signal is logged on the verdict, no trade is opened from it
+  const t0 = await tick(env);
+  assert.notEqual(t0.entered?.entryVariant, "N"); assert.deepEqual((await d.one(`SELECT facts FROM mob_aq_council WHERE symbol='MASK' ORDER BY id DESC LIMIT 1`)).facts.nansen.traders, ["SmoreGanic on pump.fun [22WjtR]"]);
+  await d.q(`DELETE FROM mob_aq_council`); await d.q(`DELETE FROM mob_aq_positions`); await d.q(`UPDATE mob_aq_state SET v='1' WHERE k='cash_sol'`);
+  env.AQ_NANSEN_R5 = "1";
+  const t = await tick(env); delete env.AQ_NANSEN_R5;
+  assert.equal(t.entered?.symbol, "MASK", JSON.stringify(t.evaluated)); assert.equal(t.entered.strategy, "R5"); assert.equal(t.entered.entryVariant, "N");
+  const cn = await d.one(`SELECT reason, facts FROM mob_aq_council WHERE symbol='MASK'`); assert.match(cn.reason, /R5 nansen: SmoreGanic on pump\.fun \[22WjtR\] bought/); assert.deepEqual(cn.facts.nansen.traders, ["SmoreGanic on pump.fun [22WjtR]"]);
+  const s = await S();
+  assert.deepEqual([s.whales.nansen.online, s.whales.nansen.signals1h, s.whales.nansen.tradesSeen1h], [true, 1, stored.length]); assert.ok(s.whales.nansen.lastReadAt);
+  assert.ok(s.marketFeed.length > 5 && s.marketFeed.every((r) => r.label === "REPORTED" && r.source === "nansen")); assert.ok(s.marketFeed.some((r) => /bought MASK for SOL \(\$70\.5\) -> R5 signal/.test(r.text)));
+  assert.deepEqual(s.whales.r5BySource, { ownWinners: { trades: 0, wins: 0 }, nansen: { trades: 0, wins: 0 } });
+  jupCharts = {}; backOf = {};
+});

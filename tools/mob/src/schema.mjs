@@ -239,4 +239,6 @@ ALTER TABLE mob_aq_trades ADD COLUMN IF NOT EXISTS variant text;
 ALTER TABLE mob_aq_trades ADD COLUMN IF NOT EXISTS entry_variant text;
 ALTER TABLE mob_aq_trades ADD COLUMN IF NOT EXISTS scaled boolean;
 ALTER TABLE mob_aq_positions ADD COLUMN IF NOT EXISTS strength double precision;
-ALTER TABLE mob_aq_trades ADD COLUMN IF NOT EXISTS strength double precision`;
+ALTER TABLE mob_aq_trades ADD COLUMN IF NOT EXISTS strength double precision;
+CREATE TABLE IF NOT EXISTS mob_aq_nansen_trades (id serial PRIMARY KEY, key text UNIQUE NOT NULL, label text, prefix text, wallet text, bought text, amt_bought double precision, sold text, amt_sold double precision, value_usd double precision, is_buy boolean, seen_at timestamptz NOT NULL DEFAULT now(), trade_at timestamptz, mint text, resolved text, signal boolean NOT NULL DEFAULT false, weight double precision, cand jsonb);
+CREATE TABLE IF NOT EXISTS mob_aq_nansen_leaders (prefix text PRIMARY KEY, label text, wallet text, total_pnl double precision, realized_pnl double precision, roi_pct double precision, win_rate_pct double precision, trades double precision, updated_at timestamptz NOT NULL DEFAULT now())`;
