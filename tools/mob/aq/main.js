@@ -3,7 +3,7 @@
 import { deskHTML, renderDesk, wakeReactor } from "./desk.js";
 import { reactorInfo } from "./reactor.js";
 import { helperBadges } from "./grok.js";
-import { trainingButton, renderTrainingButton } from "./training.js";
+import { trainingButton, renderTrainingButton, trainingHero } from "./training.js";
 export const BUILD = typeof __AQ_BUILD__ !== "undefined" ? __AQ_BUILD__ : "dev";
 
 import { DEPTS, GODS } from "./depts.js";
@@ -284,7 +284,7 @@ export async function setMode(m) {
 
 // ---------- boot ----------
 function boot() {
-  document.body.append(topbar(), h(`<div id="offline" hidden>Can't reach the engine. Showing the last data.</div>`), buildDash(), h(`<div id="stage"></div>`));
+  document.body.append(topbar(), trainingHero(), h(`<div id="offline" hidden>Can't reach the engine. Showing the last data.</div>`), buildDash(), h(`<div id="stage"></div>`));
   onState((s) => { renderTop(s); if (store.mode === "bot") renderDash(s); });
   window.addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.querySelector(".dlg-bg")) openMenu(); else if (e.key === "Escape") document.querySelector(".dlg-bg").remove(); });
   setInterval(() => { const e = document.getElementById("k-utc"); if (e) e.textContent = new Date().toISOString().slice(11, 19); }, 1000);

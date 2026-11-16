@@ -1,37 +1,78 @@
-// TRAINING MODE: the header switch and the compact TRAINING ARENA card. Both stay hidden until the engine sends state.training.
-// The engine's exact field names were not final when this was written, so each value is read from the first name that exists
-// (listed in CONTRACT.md); anything missing shows "—". Nothing is computed here except what the label says.
-import { esc, ago, dialog, poll, store } from "./main.js";
+// TRAINING MODE: the header switch, the headline band under the top bar, and the TRAINING ARENA card.
+// While training is ON the headline is the 1,000 SOL training wallet with TRADES / WON / LOST / per minute and a trade tape;
+// the 10 SOL book moves to a smaller second line (it is a separate ledger and keeps running). While OFF the headline shows the
+// main book's own TRADES / WON / LOST.
+// The engine resolves a batch of virtual trades once a minute (a Worker timer cannot fire faster). So that the numbers do
+// not jump once a minute, the counters run from the previous minute's totals up to the latest ones over the minute, and
+// the tape shows that batch trade by trade. Nothing shown is ever above what the engine has resolved.
+import { esc, ago, poll, store } from "./main.js";
 const D = "—", num = (v) => typeof v === "number" && isFinite(v);
-const pick = (o, ...ks) => { for (const k of ks) { const v = k.split(".").reduce((a, p) => (a == null ? a : a[p]), o); if (v != null) return v; } return null; };
-const big = (v) => (num(v) ? (Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(2) + "M" : Math.abs(v) >= 1e4 ? (v / 1e3).toFixed(1) + "k" : v.toLocaleString("en-US", { maximumFractionDigits: 2 })) : D);
-const pct = (v) => (num(v) ? (v > 0 ? "+" : "") + v.toFixed(2) + "%" : D), cls = (v) => (num(v) ? (v > 0 ? "up" : v < 0 ? "dn" : "") : "");
-export const trainingOn = (s) => { const t = s && s.training; return !!t && (t === true || t.on === true || t.mode === "on" || t.enabled === true); };
-export function trainingHTML() { return `<section class="p arena" id="d-arena" hidden><div class="ph"><b>TRAINING ARENA</b><span>its own paper wallet and ledger · virtual trades on real prices · never mixed into the main book</span><em id="t-st"></em></div><div id="t-body"></div></section>`; }
+const int = (v) => (num(v) ? Math.floor(v).toLocaleString("en-US") : D), pct = (v, d = 2) => (num(v) ? (v > 0 ? "+" : "") + v.toFixed(d) + "%" : D), cls = (v) => (num(v) ? (v > 0 ? "up" : v < 0 ? "dn" : "") : "");
+const sol = (v, d = 2) => (num(v) ? v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }) : D);
+export const trainingOn = (s) => !!(s && s.training && s.training.on === true);
+// how far through the minute after the last batch we are (0..1): what share of that batch the counters have run through
+const frac = (t) => { const a = t && t.lastTickAt ? (Date.now() - new Date(t.lastTickAt).getTime()) / 55000 : 1; return t && t.on ? Math.max(0, Math.min(1, a)) : 1; };
+const run = (prev, cur, f) => (num(cur) ? (num(prev) && prev <= cur ? prev + (cur - prev) * f : cur) : null);
+
+// ---------- headline band (under the top bar, both states) ----------
+export function trainingHero() { const el = document.createElement("section"); el.id = "t-hero"; el.className = "hero"; el.hidden = true; setInterval(() => { try { paintHero(store.state); } catch (e) { console.error(e); } }, 250); return el; }
+let heroKey = "";
+function paintHero(s) {
+  const el = document.getElementById("t-hero"); if (!el) return; el.hidden = !s; if (!s) return;
+  const t = s.training || null, on = trainingOn(s), T = s.trades || {}, key = on ? "on" : "off";
+  if (heroKey !== key) { heroKey = key; el.className = "hero " + key;
+    el.innerHTML = on ? `<div class="hr-top"><b class="hr-tag">TRAINING MODE ON</b><span>training wallet, separate from the 10 SOL book · virtual trades on real 1-minute candles · bad trades welcome</span><em id="h-age"></em></div>
+      <div class="hr-big"><div class="w"><small>TRAINING WALLET</small><b id="h-wal">${D}</b><i id="h-wsub"></i></div><div><small>TRADES</small><b id="h-n">${D}</b></div><div class="won"><small>WON</small><b id="h-w">${D}</b></div><div class="lost"><small>LOST</small><b id="h-l">${D}</b></div><div><small>WIN RATE</small><b id="h-wr">${D}</b></div><div><small>TRADES / MIN</small><b id="h-pm">${D}</b><i id="h-pmsub"></i></div></div>
+      <div class="hr-tape" id="h-tape"></div><div class="hr-main" id="h-main"></div>`
+      : `<div class="hr-top"><b class="hr-tag main">PAPER BOOK</b><span>the 10 SOL paper wallet</span></div>
+      <div class="hr-big"><div class="w"><small>WALLET</small><b id="h-wal">${D}</b><i id="h-wsub"></i></div><div><small>TRADES</small><b id="h-n">${D}</b></div><div class="won"><small>WON</small><b id="h-w">${D}</b></div><div class="lost"><small>LOST</small><b id="h-l">${D}</b></div><div><small>WIN RATE</small><b id="h-wr">${D}</b></div><div><small>OPEN NOW</small><b id="h-pm">${D}</b></div></div>`; }
+  const set = (id, v, c) => { const e = document.getElementById(id); if (e && e.textContent !== v) e.textContent = v; if (e && c != null && e.className !== c) e.className = c; };
+  const mainLine = `10 SOL book: ${sol(s.equitySol, 3)} SOL · ${int(T.n)} trades · ${int(T.wins)} won · ${num(T.n) && num(T.wins) ? int(T.n - T.wins) : D} lost · ${Array.isArray(s.positions) ? s.positions.length : D} open`;
+  if (!on) { set("h-wal", sol(s.equitySol, 3) + " SOL"); set("h-wsub", num(s.startSol) ? `started at ${sol(s.startSol, 0)} SOL` : ""); set("h-n", int(T.n)); set("h-w", int(T.wins)); set("h-l", num(T.n) && num(T.wins) ? int(T.n - T.wins) : D); set("h-wr", num(T.winRate) ? (T.winRate * 100).toFixed(1) + "%" : D); set("h-pm", Array.isArray(s.positions) ? String(s.positions.length) : D); return; }
+  const f = frac(t), n = run(t.prevTradesTotal, t.trades, f), w = run(t.prevWins, t.wins, f), wal = num(t.prevWalletSol) ? t.prevWalletSol + (t.walletSol - t.prevWalletSol) * f : t.walletSol;
+  set("h-wal", sol(wal, 2) + " SOL", cls(wal - (t.startSol || 1000))); set("h-wsub", `started at ${sol(t.startSol, 0)} SOL · ${t.sizeSol} SOL a trade`);
+  set("h-n", int(n)); set("h-w", int(w)); set("h-l", num(n) && num(w) ? int(n - w) : D); set("h-wr", num(n) && n > 0 && num(w) ? ((w / n) * 100).toFixed(1) + "%" : D);
+  set("h-pm", int(t.perMin)); set("h-pmsub", num(t.perMinuteLive) ? `${int(t.perMinuteLive)} fresh · ${int(t.perMinuteReplay)} replay` : "");
+  set("h-age", t.lastTickAt ? `last batch ${ago(t.lastTickAt)} ago · ${int(t.coins)} coins · ${int(t.variants)} settings` : "waiting for the first batch");
+  set("h-main", mainLine);
+  // the tape: the last batch, one more trade every quarter second, newest on top
+  const tape = Array.isArray(t.tape) ? t.tape : [], shown = tape.slice(0, Math.max(0, Math.min(tape.length, Math.ceil(f * tape.length)))).slice(-20).reverse();
+  const html = shown.length ? shown.map((x) => `<span class="${cls(x.pnlPct)}"><b>${esc(x.symbol)}</b> ${esc(String(x.variant).replace(/\|/g, " "))} <u>${pct(x.pnlPct)}</u></span>`).join("") : `<span class="mut">${esc(t.note || "waiting for the first batch")}</span>`;
+  const tp = document.getElementById("h-tape"); if (tp && tp.dataset.h !== html) { tp.innerHTML = html; tp.dataset.h = html; }
+}
+
+// ---------- the card (leaders, laggards, Grok, graduates) ----------
+export function trainingHTML() { return `<section class="p arena" id="d-arena" hidden><div class="ph"><b>TRAINING ARENA</b><span>its own 1,000 SOL paper wallet and ledger · virtual trades on real candles · never mixed into the main book</span><em id="t-st"></em></div><div id="t-body"></div></section>`; }
 let last = "";
 export function renderTraining(root, s) {
   const el = root.querySelector("#d-arena"); if (!el) return; const t = s && s.training && typeof s.training === "object" ? s.training : null; el.hidden = !t; if (!t) return;
-  const on = trainingOn(s), wallet = pick(t, "walletSol", "wallet.sol", "wallet.equitySol", "equitySol", "wallet"), start = pick(t, "startSol", "wallet.startSol", "wallet.baseSol"), total = pick(t, "trades", "tradesTotal", "virtualTrades", "stats.trades"), perMin = pick(t, "perMin", "tradesPerMin", "perMinute", "stats.perMin");
-  const variants = pick(t, "variants", "variantsTried", "tried", "settingsTried"), grad = pick(t, "graduated", "graduatedCount", "graduates"), rnd = pick(t, "random.expectancyPct", "randomExpectancyPct", "baseline.expectancyPct"), leaders = pick(t, "leaders", "top", "leaderboard");
-  const gN = Array.isArray(grad) ? grad.length : grad, vN = Array.isArray(variants) ? variants.length : variants, L = Array.isArray(leaders) ? leaders.slice(0, 5) : [];
-  const st = `${on ? "ON" : "OFF"}${pick(t, "since", "startedAt", "onSince") ? " · since " + ago(pick(t, "since", "startedAt", "onSince")) + " ago" : ""}`;
-  const tile = (k, v, sub = "") => `<div><small>${k}</small><b>${v}</b>${sub ? `<i>${sub}</i>` : ""}</div>`;
-  const html = `<div class="ar-k">${tile("WALLET", num(wallet) ? big(wallet) + " SOL" : D, num(start) ? "started at " + big(start) + " SOL" : "")}${tile("VIRTUAL TRADES", big(total))}${tile("PER MINUTE", big(perMin))}${tile("VARIANTS TRIED", big(vN))}${tile("GRADUATED", big(gN), "won again on fresh data")}${tile("RANDOM BASELINE", `<span class="${cls(rnd)}">${pct(rnd)}</span>`, "per trade, after costs")}</div>
-    <div class="ar-h">TOP 5 LEADERS vs RANDOM</div>${L.length ? `<div class="ar-l hd"><span>#</span><b>SETTING</b><span>TRADES</span><span>EXPECTANCY</span><span>vs RANDOM</span></div>` + L.map((x, i) => { const e = pick(x, "expectancyPct", "expPct", "expectancy"), n = pick(x, "n", "trades"), vs = pick(x, "vsRandomPct", "edgePct") ?? (num(e) && num(rnd) ? e - rnd : null);
-      return `<div class="ar-l"><span>${i + 1}</span><b title="${esc(pick(x, "name", "label", "id", "key") ?? D)}">${esc(pick(x, "name", "label", "id", "key") ?? D)}${x.graduated ? `<u>GRADUATED</u>` : ""}</b><span>${big(n)}</span><span class="${cls(e)}">${pct(e)}</span><span class="${cls(vs)}">${pct(vs)}</span></div>`; }).join("") : `<p class="empty">${on ? "no leaders yet: the arena needs trades on fresh data first" : "training is off"}</p>`}`;
+  const on = trainingOn(s), st = `${on ? "ON" : "OFF"}${t.since ? " · since " + ago(t.since) + " ago" : ""}`;
+  const tile = (k, v, sub = "", c = "") => `<div><small>${k}</small><b class="${c}">${v}</b>${sub ? `<i>${sub}</i>` : ""}</div>`;
+  const row = (x, i) => `<div class="ar-l"><span>${i + 1}</span><b title="${esc(x.rule || "")}">${esc(x.name || x.variant)}${x.graduated ? `<u>GRADUATED</u>` : ""}</b><span>${int(x.n)}</span><span class="${cls(x.expectancyPct ?? x.meanPct)}">${pct(x.expectancyPct ?? x.meanPct)}</span><span class="${cls(x.vsRandomPct ?? x.edgePct)}">${pct(x.vsRandomPct ?? x.edgePct)}</span></div>`;
+  const head = `<div class="ar-l hd"><span>#</span><b>SETTING</b><span>TRADES</span><span>PER TRADE</span><span>vs RANDOM</span></div>`;
+  const L = Array.isArray(t.leaders) ? t.leaders.slice(0, 5) : [], B = Array.isArray(t.laggards) ? t.laggards.slice(0, 5) : [], G = Array.isArray(t.grok) ? t.grok : [], R = t.replay || null;
+  const html = `<div class="ar-k">${tile("TRADES", int(t.trades))}${tile("WON", int(t.wins), "", "up")}${tile("LOST", int(t.losses), "", "dn")}${tile("WIN RATE", num(t.winRate) ? (t.winRate * 100).toFixed(1) + "%" : D)}${tile("WALLET", sol(t.walletSol, 2) + " SOL", `started at ${sol(t.startSol, 0)}`)}${tile("RANDOM BASELINE", `<span class="${cls(t.random && t.random.expectancyPct)}">${pct(t.random && t.random.expectancyPct)}</span>`, "per trade, after costs")}
+      ${tile("FRESH MINUTES", int(t.liveTrades), "trades since the switch")}${tile("REPLAY", int(t.replayTrades), R && R.from ? `history back to ${esc(R.from)}` : "real past candles")}${tile("SETTINGS TRIED", int(t.variants), "some lead by luck")}${tile("GRADUATED", int(Array.isArray(t.graduated) ? t.graduated.length : 0), "won again on a fresh day")}${tile("WAITING", int(Array.isArray(t.pending) ? t.pending.length : 0), "picked, not yet confirmed")}${tile("BATCH", num(t.tickMs) ? (t.tickMs / 1000).toFixed(1) + " s" : D, `${int(t.coinsReadThisTick)} coins read`)}</div>
+    <div class="ar-2"><div><div class="ar-h">TOP 5 vs RANDOM</div>${L.length ? head + L.map(row).join("") : `<p class="empty">${on ? "no leaders yet" : "training is off"}</p>`}</div>
+    <div><div class="ar-h">BOTTOM 5: RULES THAT COST MONEY</div>${B.length ? head + B.map(row).join("") : `<p class="empty">${on ? "nothing yet" : "training is off"}</p>`}</div></div>
+    <div class="ar-h">GROK IN THE ARENA</div>${G.length ? G.map((g) => `<div class="ar-l"><span></span><b>${esc(g.rule || g.input)}</b><span>${int(g.n)}</span><span class="${cls(g.meanPct)}">${pct(g.meanPct)}</span><span>${Array.isArray(g.ci95) && g.ci95.every(num) ? g.ci95.map((x) => x.toFixed(2)).join(" to ") : D}</span></div>`).join("") : `<p class="empty">no trade has started from a Grok pick, vote or X post yet</p>`}
+    <p class="ar-n">${esc(t.note || "")} · ${esc(t.resolution || "")}</p>`;
   const se = el.querySelector("#t-st"); if (se.textContent !== st) { se.textContent = st; se.className = on ? "up" : ""; }
   if (html !== last) { el.querySelector("#t-body").innerHTML = html; last = html; }
 }
-// header switch: hidden until state.training exists
-export function trainingButton() { const b = document.createElement("button"); b.id = "train"; b.className = "ghost train"; b.hidden = true; b.onclick = trainingDialog; return b; }
-export function renderTrainingButton(s) { const b = document.getElementById("train"); if (!b) return; const has = !!(s && s.training != null); b.hidden = !has; if (!has) return; const on = trainingOn(s); b.textContent = on ? "TRAINING ON" : "TRAINING"; b.classList.toggle("on", on); b.title = on ? "Training mode is on. Click to turn it off." : "Turn training mode on"; }
-function trainingDialog() {
-  const on = !trainingOn(store.state);
-  dialog(`<h3>${on ? "Turn TRAINING MODE on?" : "Turn TRAINING MODE off?"}</h3><p>${on ? "The training arena starts next to the normal paper book: its own paper wallet, its own ledger, thousands of virtual trades a minute on real prices. The main book and its stats are not touched." : "The training arena stops. What it learned stays in the brain. The main paper book carries on as it is."}</p>
-    <div class="row"><button class="ghost" data-x>Cancel</button><button class="primary" data-ok>${on ? "Start training" : "Stop training"}</button></div><p class="msg"></p>`, (d, close) => {
-    d.querySelector("[data-x]").onclick = close;
-    d.querySelector("[data-ok]").onclick = async () => { const m = d.querySelector(".msg"); m.textContent = "Sending…";
-      try { const r = await fetch("/api/aq/training", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ on }) }); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error((j.error && (j.error.message || j.error)) || "HTTP " + r.status); close(); poll(); }
-      catch (e) { m.textContent = "Not sent: " + e.message; m.className = "msg err"; } };
-  });
+
+// ---------- header switch: one click toggles it ----------
+let busy = false;
+export function trainingButton() { const b = document.createElement("button"); b.id = "train"; b.className = "train"; b.hidden = true; b.onclick = toggle; return b; }
+export function renderTrainingButton(s) {
+  const b = document.getElementById("train"); if (!b) return; const has = !!(s && s.training != null); b.hidden = !has; if (!has || busy) return; const on = trainingOn(s);
+  const html = `<span>TRAINING MODE</span><i class="sw"><u></u></i><b>${on ? "ON" : "OFF"}</b>`; if (b.dataset.h !== html) { b.innerHTML = html; b.dataset.h = html; }
+  b.classList.toggle("on", on); b.title = on ? "Training mode is ON. Click to turn it off." : "Training mode is OFF. Click to turn it on.";
+}
+async function toggle() {
+  const b = document.getElementById("train"); if (!b || busy) return; const on = !trainingOn(store.state); busy = true; b.classList.add("busy"); b.querySelector("b").textContent = on ? "ON…" : "OFF…";
+  try { const r = await fetch("/api/aq/training", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ on }) }); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error((j.error && (j.error.message || j.error)) || "HTTP " + r.status);
+    if (store.state && j.training) store.state.training = j.training; }
+  catch (e) { b.title = "Not switched: " + e.message; b.querySelector("b").textContent = "FAILED"; await new Promise((r) => setTimeout(r, 1500)); }
+  busy = false; b.classList.remove("busy"); b.dataset.h = ""; renderTrainingButton(store.state); poll();
 }
