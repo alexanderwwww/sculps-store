@@ -43,3 +43,14 @@ Rule: R1 and R2 are the cheapest to test properly (low costs). R3-R5 have ~5% co
 - Which two recipes first? (My pick: R1 stocks + R3 memecoins with the gate.)
 - Risk cap per trade for memecoins: 2% / 4% / keep phi.
 - GMGN API key: generate at gmgn.ai/ai (you, not me): now or later.
+
+## Trade math (Alex, 2026-11-16: "how does a trade work, how much must it hit, calculate before")
+Worked example, 1 SOL wallet, memecoin R3 (all numbers from measured costs in trading-lab):
+- Round-trip cost c ~ 5% (2.4-6.8% measured). Each side ~2.5%.
+- Risk per trade 4% of wallet = 0.04 SOL. Stop -12% gross => realized loss L = 12 + 5 = 17%. Position = 0.04 / 0.17 = ~0.23 SOL.
+- Target +45% gross => realized win W = 45 - 5 = 40%. Break-even win rate = L/(W+L) = 17/57 = ~30%.
+- Rule: target >= 6x cost (30% at c=5%). A 12% target at 8% stop needs 65% wins at c=5%.
+- Expectancy at 40% wins = 0.4*40 - 0.6*17 = +5.8% of position (~0.013 SOL per trade, ~1.3% of wallet). 20 trades/week ~ +0.26 SOL if (and only if) the 40% win rate is real; it is NOT proven until >= 100 trades with a 95% CI above 0.
+- Ruin check: 10 straight losses at 4% risk ~ -34% of wallet; 20 straight is not survivable. Keep a daily stop.
+- Old cap of 0.05 SOL per click (tools/ultracursor/src/profiles/gmgn.json) is Alex's call to raise; position size must still follow the 4% risk rule.
+- Speed: helps scanning many tokens and order latency; the fib entry is 15m-6h after launch, so first-second speed is not the edge. A cheap always-on server beats mining hardware; hashing power creates no trading edge.
