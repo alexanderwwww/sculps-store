@@ -1,0 +1,37 @@
+Whales for GMGN (from KOLscan, 2026-11-16). Filter: profit in both the last 7 and 30 days, 30-2500 coins traded, win rate 40-80%.
+
+ADDRESS, NAME
+J23qr98GjGJJqKq9CBEnyRhHbmkaVxtTJNNxKu597wsA, gr3g
+5hAgYC8TJCcEZV7LTXAzkTrm7YL29YXyQQJPCNrG84zM, Schoen
+ardinRsN1mNYVeoJWTBsWeYeXvuR9UUDGMsCDKpb6AT, trunoest
+862TYSvRYoiHAK3F3WwTRYAfuGiQaGdxedN9AGvRGWo2, Wugi
+B32QbbdDAyhvUQzjcaM5j6ZVKwjCxAwGH5Xgvb9SJqnC, Kadenox
+J9TYAsWWidbrcZybmLSfrLzryANf4CgJBLdvwdGuC8MB, Johnson
+BQVz7fQ1WsQmSTMY3umdPEPPTm1sdcBcX9sP7o6kPRmB, Limfork.eth
+5ZuV8eqkvzYFVEKbLvGBdexL2tFv7E5BCd2HZpjqbdg, Doji
+89HbgWduLwoxcofWpmn1EiF9wEdpgkNDEyPjzZ72mkDi, AlxCooks
+4BdKaxN8G6ka4GYtQQWk4G4dZRUTX2vQH9GcXdBREFUk, Jijo
+G6fUXjMKPJzCY1rveAE6Qm7wy5U3vZgKDJmN1VPAdiZC, clukz
+8oQoMhfBQnRspn7QtNAq2aPThRE4q94kLSTwaaFQvRgs, big bags bobby
+78N177fzNJpp8pG49xDv1efYcTMSzo9tPTKEA9mAVkh2, Sheep
+8MaVa9kdt3NW4Q5HyNAm1X5LbR8PQRVDc1W8NMVK88D5, Daumen
+6FWhUybWmnjsQ933v2r6o7bhEG5yH9g9XsV7NVWKj5EW, WheresLodo
+FqamE7xrahg7FEWoByrx1o8SeyHt44rpmE6ZQfT7zrve, EustazZ
+
+Details:
+gr3g: 30d +1538 SOL, 7d +1483 SOL, win 48%, 215 coins
+Schoen: 30d +1438 SOL, 7d +670 SOL, win 51%, 2124 coins
+trunoest: 30d +1338 SOL, 7d +369 SOL, win 54%, 2156 coins
+Wugi: 30d +1118 SOL, 7d +299 SOL, win 74%, 115 coins
+Kadenox: 30d +1061 SOL, 7d +324 SOL, win 54%, 1219 coins
+Johnson: 30d +648 SOL, 7d +254 SOL, win 58%, 675 coins
+Limfork.eth: 30d +640 SOL, 7d +444 SOL, win 53%, 1710 coins
+Doji: 30d +617 SOL, 7d +276 SOL, win 60%, 869 coins
+AlxCooks: 30d +418 SOL, 7d +270 SOL, win 41%, 1565 coins
+Jijo: 30d +345 SOL, 7d +64 SOL, win 55%, 429 coins
+clukz: 30d +305 SOL, 7d +52 SOL, win 48%, 449 coins
+big bags bobby: 30d +255 SOL, 7d +43 SOL, win 47%, 228 coins
+Sheep: 30d +246 SOL, 7d +139 SOL, win 53%, 729 coins
+Daumen: 30d +213 SOL, 7d +79 SOL, win 57%, 1994 coins
+WheresLodo: 30d +210 SOL, 7d +105 SOL, win 49%, 1065 coins
+EustazZ: 30d +174 SOL, 7d +50 SOL, win 42%, 2411 coins
