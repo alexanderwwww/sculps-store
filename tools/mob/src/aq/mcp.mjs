@@ -3,6 +3,7 @@
 // (pending until the Council), work the task board. No tool can trade, change limits, touch the kill switch, read secrets
 // or create an approved bot. Every call is logged with the helper's name.
 import { db } from "../db.mjs";
+import { submitPick } from "./lanes.mjs";
 import { buildState, briefing, helperMessage, proposeBot, ensureSeed, HELPERS, ROLE_DEPT } from "./engine.mjs";
 
 const S = (d, props = {}, req = []) => ({ type: "object", properties: { helper: { type: "string", enum: HELPERS, description: "who is calling" }, ...props }, required: req, additionalProperties: false, description: d });
@@ -13,6 +14,8 @@ export const HELPER_TOOLS = [
     inputSchema: S("", { role: { type: "string", enum: Object.keys(ROLE_DEPT) }, text: { type: "string" }, label: { type: "string", enum: ["VERIFIED", "REPORTED", "CLAIMED", "INFERRED"] }, section: { type: "string", description: "'x' for X/Twitter, else a dept id" } }, ["role", "text", "label"]) },
   { name: "aq_propose_bot", description: "Propose a new worker. It stays pending until the Council approves it on a tick (free code bots only).",
     inputSchema: S("", { name: { type: "string" }, dept: { type: "string" }, job: { type: "string" }, rules: { type: "string" }, skills: { type: "array", items: { type: "string" } }, power: { type: "string" } }, ["name", "dept", "job"]) },
+  { name: "aq_submit_pick", description: "Submit your own complete trade idea. It is NEVER traded on the real ledger: the Council judges it for the record and it is paper-tracked in your own lane (LANE:<helper>) with real prices and measured costs. Your lane's result sets the weight of your evidence.",
+    inputSchema: S("", { symbol: { type: "string" }, mint: { type: "string", description: "Solana token address" }, entry: { type: "number", description: "your intended entry price in USD (recorded; the lane enters at the live price)" }, stopPct: { type: "number" }, targetPct: { type: "number" }, thesis: { type: "string" }, labels: { type: "array", items: { type: "string", enum: ["VERIFIED", "REPORTED", "CLAIMED", "INFERRED"] } } }, ["mint", "stopPct", "targetPct", "thesis", "labels"]) },
   { name: "aq_list_tasks", description: "Open tasks on the board (research, writing, code suggestions).", inputSchema: S("", { status: { type: "string", enum: ["open", "done"] } }) },
   { name: "aq_task_done", description: "Hand in a task result.", inputSchema: S("", { id: { type: "integer" }, result: { type: "string" } }, ["id", "result"]) },
 ];
@@ -35,6 +38,11 @@ async function callTool(env, name, a, helper) {
     const r = await proposeBot(env, PROPOSER, { name: n, dept, job, rules: `${rules || ""} (proposed by ${helper})`.trim(), skills, power });
     if (r.error) throw new Error(r.error);
     return text({ id: r.bot.id, approved: false, note: "pending: the Council decides on the next tick" });
+  }
+  if (name === "aq_submit_pick") {
+    const r = await submitPick(env, helper, a);
+    if (r.error) throw new Error(r.error);
+    return text({ ...r.pick, note: "paper lane only; the Council judges it on the next tick" });
   }
   if (name === "aq_list_tasks") {
     const st = a.status === "done" ? "done" : "open";
@@ -71,7 +79,7 @@ async function rpc(env, b, session) {
     helper ||= "unknown";
     const { helper: _h, ...logged } = a;
     try {
-      if (name === "aq_post_evidence" && !HELPERS.includes(helper)) throw new Error(`say who you are: helper must be one of ${HELPERS.join(", ")}`);
+      if ((name === "aq_post_evidence" || name === "aq_submit_pick") && !HELPERS.includes(helper)) throw new Error(`say who you are: helper must be one of ${HELPERS.join(", ")}`);
       const content = await callTool(env, name, a, helper);
       await d.q(`INSERT INTO mob_aq_helper_log (helper, session, tool, args, ok) VALUES ($1,$2,$3,$4,true)`, [helper, session.id, name, JSON.stringify(logged)]);
       return reply({ content });

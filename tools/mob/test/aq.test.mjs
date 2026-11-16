@@ -40,7 +40,7 @@ function goldenCandles() {
 const safeRug = () => { const r = clone(FX.rugWasted); r.topHolders = r.topHolders.map((h) => ({ ...h, pct: h.pct / 2 })); return r; };
 const MINT = { A: "AAAAgoodmint1111111111111111111111111111pump", B: "BBBBrugmint11111111111111111111111111111pump", C: "CCCCcostmint1111111111111111111111111111pump", F: "FFFFnewmint11111111111111111111111111111pump" };
 const POOL = { A: "PoolA111111111111111111111111111111111111111", B: "PoolB111111111111111111111111111111111111111", C: "PoolC111111111111111111111111111111111111111", F: "PoolF111111111111111111111111111111111111111" };
-let trendingPools = [], prices = {}, tradesFor = {};
+let trendingPools = [], prices = {}, tradesFor = {}, liqOf = {};
 
 function stubAll() {
   resetMocks();
@@ -55,7 +55,7 @@ function stubAll() {
   mock("GET", /rugcheck\.xyz\/v1\/tokens\/([^/]+)\/report$/, (rec) => (rec.url.includes(MINT.B) ? clone(FX.rugNew) : safeRug()));
   mock("GET", "https://api.dexscreener.com/tokens/v1/solana/", (rec) => {
     const mints = rec.url.split("/").pop().split(",");
-    return mints.filter((m) => prices[m] != null).map((m) => { const p = clone(FX.dsTokens[0]); p.baseToken.address = m; p.pairAddress = "x"; p.priceUsd = String(prices[m]); return p; });
+    return mints.filter((m) => prices[m] != null).map((m) => { const p = clone(FX.dsTokens[0]); p.baseToken.address = m; p.pairAddress = "x"; p.priceUsd = String(prices[m]); if (liqOf[m] != null) p.liquidity.usd = liqOf[m]; return p; });
   });
   mock("GET", "https://lite-api.jup.ag/swap/v1/quote", (rec, u) => {
     const q = clone(u.searchParams.get("inputMint") === SOL ? FX.jupBuy : FX.jupSell), amt = Number(u.searchParams.get("amount"));
@@ -242,7 +242,7 @@ test("helper inbox is evidence only; xfeed and briefing", async () => {
   await R("POST", "/api/aq/helper", { bearer: "tok-test", body: { from: "chatgpt", role: "skeptic", text: "Costs eat the edge", labels: ["INFERRED"] } });
   const s = await S();
   assert.equal(s.helpers.grok, "connected"); assert.equal(s.helpers.chatgpt, "connected"); assert.ok(s.helpers.grokLastAt);
-  assert.equal(s.xfeed.length, 1); assert.deepEqual({ ...s.xfeed[0], at: 0 }, { at: 0, section: "news", text: "Posts say $GOOD listing soon", label: "CLAIMED", source: "grok" });
+  assert.equal(s.xfeed.length, 1); assert.deepEqual({ ...s.xfeed[0], at: 0 }, { at: 0, section: "news", text: "Posts say $GOOD listing soon", label: "CLAIMED", source: "grok", weight: 1 });
   assert.equal((await db(env).one(`SELECT count(*)::int n FROM mob_aq_positions`)).n, before.n, "a helper message never opens a trade");
   const b = await R("GET", "/api/aq/briefing?key=aqkey"); assert.equal(b.status, 200);
   const txt = await b.text();
@@ -280,7 +280,7 @@ test("helper MCP: link + access code, every tool, and no money control", async (
   assert.equal(init.status, 200); const sid = init.headers.get("mcp-session-id"); assert.ok(sid);
   assert.equal((await init.json()).result.serverInfo.name, "aquarius-helpers");
   const tools = (await (await mcp({ jsonrpc: "2.0", id: 2, method: "tools/list" })).json()).result.tools.map((t) => t.name);
-  assert.deepEqual(tools, ["aq_state", "aq_briefing", "aq_post_evidence", "aq_propose_bot", "aq_list_tasks", "aq_task_done"]);
+  assert.deepEqual(tools, ["aq_state", "aq_briefing", "aq_post_evidence", "aq_propose_bot", "aq_submit_pick", "aq_list_tasks", "aq_task_done"]);
   for (const t of tools) assert.ok(!/kill|trade|buy|sell|limit|secret|approve/.test(t));
   const st = JSON.parse((await call("aq_state", {}, { "mcp-session-id": sid })).content[0].text); assert.equal(st.mode, "PAPER");
   assert.match((await call("aq_briefing", { helper: "grok" })).content[0].text, /- Mode: PAPER/);
@@ -359,4 +359,47 @@ test("sell all: Alex only; positions sold at the Jupiter quote, shadows closed, 
   assert.equal((await d.one(`SELECT outcome FROM mob_aq_shadow WHERE symbol='SH'`)).outcome, "CEO sell all");
   const s = await S();
   assert.ok(s.flows.some((f) => f.label === "sell SELL (CEO sell all)")); assert.ok(s.brain.some((b) => /^CEO sell all: sold 1/.test(b.text)));
+});
+
+test("helper lanes: a pick is judged for the record, paper-tracked apart, scored, and never touches the real ledger", async () => {
+  const d = db(env);
+  const call = async (name, args) => (await (await R("POST", "/api/aq/helper/helperkey123/mcp", { body: { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } } })).json()).result;
+  const GM = "GrokPick11111111111111111111111111111111pump", BAD = "NoSuchMint1111111111111111111111111111111111";
+  const ok = { helper: "grok", symbol: "GP", mint: GM, entry: 2, stopPct: 5, targetPct: 12, thesis: "X talk plus volume", labels: ["CLAIMED"] };
+  assert.ok((await call("aq_submit_pick", { ...ok, mint: "not-a-mint" })).isError);
+  assert.ok((await call("aq_submit_pick", { ...ok, stopPct: 0 })).isError);
+  assert.ok((await call("aq_submit_pick", { ...ok, labels: ["SURE"] })).isError);
+  assert.ok((await call("aq_submit_pick", { ...ok, helper: undefined })).isError, "a pick needs a named helper");
+  const sub = JSON.parse((await call("aq_submit_pick", ok)).content[0].text);
+  assert.equal(sub.lane, "LANE:grok"); assert.equal(sub.realLedger, false); assert.equal(sub.status, "queued");
+  await call("aq_submit_pick", { ...ok, helper: "chatgpt", mint: BAD, symbol: "NOPE" });
+  const before = { trades: (await d.one(`SELECT count(*)::int n FROM mob_aq_trades`)).n, pos: (await d.one(`SELECT count(*)::int n FROM mob_aq_positions`)).n, cash: (await d.one(`SELECT v FROM mob_aq_state WHERE k='cash_sol'`)).v };
+  prices[GM] = 1.1; liqOf[GM] = 250000;
+  let t = await tick(env);
+  assert.equal(t.lanes.judged.status, "open"); assert.equal(t.lanes.judged.verdict, "PASS"); assert.ok(t.lanes.judged.rtPct > 0);
+  const pk = await d.one(`SELECT * FROM mob_aq_picks WHERE mint=$1`, [GM]);
+  assert.equal(pk.entry_price, 1.1); assert.ok(Math.abs(pk.stop_price - 1.045) < 1e-9); assert.ok(Math.abs(pk.target_price - 1.232) < 1e-9); assert.equal(pk.cost_source, "measured");
+  assert.ok(await d.one(`SELECT 1 FROM mob_aq_council WHERE strategy='LANE:grok' AND verdict='PASS'`), "Council verdict recorded");
+  t = await tick(env);
+  assert.equal(t.lanes.judged.status, "rejected"); assert.match(t.lanes.judged.reason, /mint not found/);
+  prices[GM] = 1.3;
+  t = await tick(env);
+  assert.deepEqual(t.lanes.closed.map((x) => [x.helper, x.why]), [["grok", "target"]]);
+  const s = await S();
+  const grok = s.lanes.find((l) => l.helper === "grok"), ours = s.lanes.find((l) => l.helper === "aquarius"), gpt = s.lanes.find((l) => l.helper === "chatgpt");
+  assert.equal(grok.n, 1); assert.equal(grok.winRate, 1); assert.ok(grok.expectancyPct > 9 && grok.expectancyPct < 12); assert.equal(grok.weight, 1, "weight moves only after 5 closed picks");
+  assert.equal(gpt.rejected, 1); assert.equal(gpt.n, 0); assert.equal(ours.n, s.trades.n);
+  assert.ok(s.brain.some((b) => /^LANE:grok pick GP: target at .* Council had said PASS .* RIGHT\. Lane grok: 1 picks.*ours: \d+ trades/.test(b.text)));
+  // weight: 5 closed picks averaging -5% -> 0.5; +30% -> capped at 2; the next evidence carries it
+  await d.q(`INSERT INTO mob_aq_picks (helper, mint, thesis, stop_pct, target_pct, status, pnl_pct) SELECT 'codex','m','t',5,10,'closed',-5 FROM generate_series(1,4)`);
+  await d.q(`INSERT INTO mob_aq_picks (helper, mint, pool, symbol, thesis, stop_pct, target_pct, status, verdict, verdict_reason, entry_price, stop_price, target_price, cost_pct, time_stop_at) VALUES ('codex','CodexMint','x','CX','t',5,10,'open','BLOCK','cost gate',1,0.95,1.1,1,now() + interval '1 hour')`);
+  prices.CodexMint = 0.9;
+  await tick(env);
+  const st2 = await S(); const codex = st2.lanes.find((l) => l.helper === "codex");
+  assert.equal(codex.n, 5); assert.ok(codex.weight < 1 && codex.weight >= 0.25, String(codex.weight));
+  const ev = await call("aq_post_evidence", { helper: "codex", role: "skeptic", text: "weighted note", label: "INFERRED" });
+  assert.ok(!ev.isError); assert.equal((await d.one(`SELECT weight FROM mob_aq_helpers WHERE text='weighted note'`)).weight, codex.weight);
+  assert.ok(st2.brain.some((b) => /LANE:codex pick CX: stop .* Council had said BLOCK \(cost gate\): the Council was RIGHT/.test(b.text)));
+  const after = { trades: (await d.one(`SELECT count(*)::int n FROM mob_aq_trades`)).n, pos: (await d.one(`SELECT count(*)::int n FROM mob_aq_positions`)).n, cash: (await d.one(`SELECT v FROM mob_aq_state WHERE k='cash_sol'`)).v };
+  assert.deepEqual(after, before, "no helper pick ever opens, closes or moves money on the real ledger");
 });

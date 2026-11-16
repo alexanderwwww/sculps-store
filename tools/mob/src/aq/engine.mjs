@@ -5,6 +5,7 @@ import { DEPTS, seedWorkers, TOOLS, STRATEGIES, GTA6_DATE, GTA_RE, CEO } from ".
 import { feeds, midPrices, jupQuote, SOL_MINT } from "./feeds.mjs";
 import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round, survival } from "./logic.mjs";
 import { whaleSignal, shadowTick, shadowStats } from "./whales.mjs";
+import { lanesTick, laneStats } from "./lanes.mjs";
 
 export const AQ_BUILD = "aq-engine-1";
 export const START_SOL = 1;
@@ -283,6 +284,8 @@ export async function tick(env, opts = {}) {
     if (!W["ex.paper"]) set("ex.paper", "idle", "no PASS this tick");
     // ---- never idle: shadow lane (paper probes on near misses, own ledger, never mixed into the real one)
     out.survival = sv;
+    // ---- helper lanes (second brains): judged by the same Council for the record, paper-tracked apart, never the real ledger
+    out.lanes = await lanesTick(env, { halted: dead || kill, nowSec, gap, feeSol, P, set, council: (v, c, reason, number, facts) => council(d, v, c, reason, number, facts) });
     out.shadow = dead ? { opened: null, closed: [] } : await shadowTick(env, { kill, entered: !!out.entered, near, solUsd, nowSec, set, P });
 
     // ---- Review + Learning: stats, tournament rules (recorded, never silent)
@@ -400,8 +403,10 @@ export async function helperMessage(env, b) {
   const channel = b?.channel === "x" || b?.source === "x" || /^(x|twitter)$/i.test(String(b?.channel || "")) ? "x" : null;
   // Social posts are CLAIMED, never VERIFIED (grok-desk shared rule 1).
   if (channel === "x") labels = labels.map((l) => (l === "VERIFIED" ? "CLAIMED" : l));
-  const r = await db(env).one(`INSERT INTO mob_aq_helpers (from_helper, role, dept, channel, text, labels) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, at`, [from, role, ROLE_DEPT[role], channel, text, JSON.stringify([...new Set(labels)])]);
-  return { message: { id: r.id, at: r.at, evidence: true, trigger: false } };
+  // evidence weight = the helper's own lane result at the time of posting (1 until its lane has 5 closed picks)
+  const weight = Number(((await db(env).one(`SELECT v FROM mob_aq_state WHERE k='helper_weights'`))?.v || {})[from] ?? 1);
+  const r = await db(env).one(`INSERT INTO mob_aq_helpers (from_helper, role, dept, channel, text, labels, weight) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, at`, [from, role, ROLE_DEPT[role], channel, text, JSON.stringify([...new Set(labels)]), weight]);
+  return { message: { id: r.id, at: r.at, evidence: true, trigger: false, weight } };
 }
 
 export async function briefing(env) {
@@ -439,7 +444,7 @@ export async function buildState(env) {
     d.q(`SELECT * FROM mob_aq_strategies ORDER BY id`),
     d.q(`SELECT * FROM mob_aq_tools ORDER BY name`),
     d.q(`SELECT from_helper, max(at) at FROM mob_aq_helpers GROUP BY from_helper`),
-    d.q(`SELECT at, dept, text, labels FROM mob_aq_helpers WHERE channel='x' AND from_helper='grok' ORDER BY id DESC LIMIT 30`),
+    d.q(`SELECT at, dept, text, labels, weight FROM mob_aq_helpers WHERE channel='x' AND from_helper='grok' ORDER BY id DESC LIMIT 30`),
     d.q(`SELECT k, data, ok FROM mob_aq_market WHERE k IN ('gt:trending','ds:boosts','cg:majors','fng')`),
   ]);
   const S = Object.fromEntries(st.map((r) => [r.k, r.v]));
@@ -482,9 +487,10 @@ export async function buildState(env) {
     replay: S.replay_R3 ? { trades: S.replay_R3.trades, expectancyPct: S.replay_R3.expectancyPct, ci95: S.replay_R3.ci95, costPct: S.replay_R3.costPct, evidence: S.replay_R3.evidence } : null,
     health: S.health || {},
     shadow: await shadowStats(d),
+    lanes: await laneStats(d, { n: s.n, winRate: s.winRate, expectancyPct: s.expectancyPct, open: pos.length }),
     survival: (() => { const sv = survival(equity, START_SOL); return { health: sv.health, stage: S.destroyed === true ? "destroyed" : sv.stage, sizeMult: S.destroyed === true ? 0 : sv.sizeMult, maxOpen: S.destroyed === true ? 0 : sv.maxOpen }; })(),
     helpers: { grok: conn("grok"), chatgpt: conn("chatgpt"), grokLastAt: hl.grok || null, chatgptLastAt: hl.chatgpt || null },
-    xfeed: xs.map((r) => ({ at: r.at, section: r.dept, text: r.text, label: (r.labels || [])[0] || "CLAIMED", source: "grok" })),
+    xfeed: xs.map((r) => ({ at: r.at, section: r.dept, text: r.text, label: (r.labels || [])[0] || "CLAIMED", source: "grok", weight: r.weight })),
   };
 }
 
