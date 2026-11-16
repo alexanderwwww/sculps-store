@@ -10,6 +10,7 @@ import { nansenTick, nansenSignals, nansenState } from "./nansen.mjs";
 import { councilTick, learnFromTrade, recomputeRules, costBook, ruleWeights, MIN_OWN_BARS } from "./council.mjs";
 import { R6_PARAMS, R7_PARAMS } from "./seed.mjs";
 import { COUNCIL, STRENGTH_BUCKETS } from "./logic.mjs";
+import { seatTick, seatStats, exitVotes, exitVoteRule, markHandled, impliedMid, warroom, chatFor, recentAlerts } from "./seat.mjs";
 import { START_SOL, reconcile, scaleOut, closePosition, resetLedger, walletBase, tickLock, tickUnlock } from "./ledger.mjs";
 export { START_SOL };
 
@@ -231,6 +232,9 @@ export async function tick(env, opts = {}) {
     if (open.length && !destroyed) {
       let mids = null;
       try { mids = await midPrices(open.map((p) => ({ mint: p.mint, pool: p.pool }))); health.position_prices = true; } catch (e) { health.position_prices = false; }
+      // Council seat: a helper's fresh EXIT vote is a warning. The position is checked now with a real sell quote and the
+      // exit-vote rule (seat.mjs: exitVoteRule) decides; the stop and the target never move on a vote.
+      const warned = await exitVotes(d);
       for (const p of open) {
         const mid = mids?.[p.mint] ?? null;
         if (mid == null) { set("ex.stops", "blocked", `${p.symbol}: no price, holding`); continue; }
@@ -254,15 +258,36 @@ export async function tick(env, opts = {}) {
             set("ex.stops", "busy", `${p.symbol}: half sold at +1R, stop moved to break-even plus cost`);
           }
         }
-        const why = m <= p.stop_price ? "stop" : m >= p.target_price ? "target" : nowSec * 1000 >= new Date(p.time_stop_at).getTime() ? "time stop" : null;
+        let why = m <= p.stop_price ? "stop" : m >= p.target_price ? "target" : nowSec * 1000 >= new Date(p.time_stop_at).getTime() ? "time stop" : null;
         const markSol = solExit ? (Number(p.tokens_raw) / 10 ** p.decimals) * mid / solExit : null;
         await d.q(`UPDATE mob_aq_positions SET last_price_usd=$2, last_value_sol=$3, last_at=now() WHERE id=$1`, [p.id, mid, markSol]);
-        if (!why) continue;
+        const xv = warned[p.id] || null;
+        if (!why && !xv) continue;
         if (out.exits.length) await sleep(gap);
         const q = await jupQuote(p.mint, SOL_MINT, p.tokens_raw);
-        if (!q || !feeExit) { set("ex.reconcile", "blocked", `${p.symbol}: ${why} hit but no ${q ? "SOL price ever seen" : "sell quote"}; retry next tick`); health.jupiter = !!q && health.jupiter !== false; continue; }
+        if (!q || !feeExit) { set("ex.reconcile", "blocked", `${p.symbol}: ${why ? `${why} hit` : `exit vote by ${xv.helper}`} but no ${q ? "SOL price ever seen" : "sell quote"}; retry next tick`); health.jupiter = !!q && health.jupiter !== false; continue; }
         health.jupiter = true;
         const gross = Number(q.outAmount) / 1e9;
+        // the label the trade is recorded with: a time stop that a helper's warning moved in says so
+        let label = why === "time stop" && p.seat_exit ? `council exit vote (${p.seat_exit})` : why;
+        if (!why) {
+          // "under entry" is read from the executable quote (the mid it implies), not from a mid that may be stale
+          const imp = impliedMid(p, gross) ?? m, entry = p.entry_mid_usd ?? p.entry_price_usd, rule = exitVoteRule(xv.eff, imp < entry);
+          const says = `${xv.helper} EXIT ${xv.confidence} x weight ${xv.mult} = ${xv.eff}; the sell quote implies $${round(imp, 10)} against $${round(entry, 10)} at entry`;
+          if (rule.act === "close") { why = "council exit"; label = `council exit vote (${xv.helper})`; }
+          else {
+            let did = "recorded only (confidence too low to act)";
+            if (rule.act === "shorten") {
+              const sh = await d.one(`UPDATE mob_aq_positions SET time_stop_at = to_timestamp($2::float8), seat_exit = $3 WHERE id=$1 AND time_stop_at > to_timestamp($2::float8) RETURNING time_stop_at`, [p.id, nowSec + rule.mins * 60, xv.helper]);
+              did = sh ? `time stop moved in to ${rule.mins} minutes from now` : `time stop already within ${rule.mins} minutes: nothing changed`;
+            }
+            await markHandled(d, xv.ids, `${did} (${says})`);
+            await brain(d, "council", "seat", `Exit warning on ${p.symbol}: ${says}. ${did}. The stop and the target did not move.`, { position: p.id, helper: xv.helper, eff: xv.eff, act: rule.act });
+            set("ex.stops", "busy", `${p.symbol}: exit warning by ${xv.helper}, ${did}`);
+            (out.warnings ||= []).push({ symbol: p.symbol, helper: xv.helper, eff: xv.eff, act: rule.act, mins: rule.mins ?? null });
+            continue;
+          }
+        }
         const exitPx = gross * solExit / (Number(p.tokens_raw) / 10 ** p.decimals);
         const slip = round((mid / exitPx - 1) * 100, 3);
         // a stop is confirmed against the executable quote before it fills. exit_k = what a sale fetched against the mid when the
@@ -280,14 +305,15 @@ export async function tick(env, opts = {}) {
         }
         // the claim: one statement deletes the position, writes the trade, credits cash and writes the flows (ledger.mjs).
         // null = another request (SELL ALL, an overlapping tick) closed it first; this tick writes nothing for it.
-        const t = await closePosition(d, p, { gross, feeSol: feeExit, exitPx, slip, why, gradePrefix: why === "time stop" ? "B" : "A", exitMid: mid });
+        const t = await closePosition(d, p, { gross, feeSol: feeExit, exitPx, slip, why: label, gradePrefix: why === "time stop" ? "B" : why === "council exit" ? "C" : "A", exitMid: mid });
         if (!t) { set("ex.stops", "busy", `${p.symbol}: already closed by another request`); continue; }
+        if (xv) await markHandled(d, xv.ids, why === "council exit" ? `sold at the live quote: ${round(t.pnl_pct, 2)}% net` : `the position closed on its own rule first (${label})`, t.id);
         const pnlPct = t.pnl_pct, grade = t.grade;
         // how far the mid had run past the stop level when it was seen: the Time Machine fills its stops this much lower
         if (why === "stop" && p.stop_price > 0) await d.q(`UPDATE mob_aq_trades SET overshoot_pct=$2 WHERE id=$1`, [t.id, round(((p.stop_price - m) / p.stop_price) * 100, 3)]);
-        await brain(d, "review", "lesson", `${p.symbol} ${p.strategy}: ${why} at ${round(pnlPct, 2)}% net (round trip at entry ${round(p.rt_pct, 2)}%, exit slippage ${slip ?? "unknown"}%). Process ${grade.split("/")[0]}: ${why === "time stop" ? "time stop is a plan exit but the setup did not move" : "plan followed"}.`, { trade: t.id, pnlPct: round(pnlPct, 3), why });
-        out.exits.push({ symbol: p.symbol, why, pnlPct: round(pnlPct, 3) });
-        set("ex.stops", "busy", `${p.symbol}: ${why}`);
+        await brain(d, "review", "lesson", `${p.symbol} ${p.strategy}: ${label} at ${round(pnlPct, 2)}% net (round trip at entry ${round(p.rt_pct, 2)}%, exit slippage ${slip ?? "unknown"}%). Process ${grade.split("/")[0]}: ${why === "council exit" ? `a helper's exit warning at ${xv.eff} effective confidence while the sell quote was under the entry` : label !== why ? "the time stop a helper's exit warning moved in" : why === "time stop" ? "time stop is a plan exit but the setup did not move" : "plan followed"}.`, { trade: t.id, pnlPct: round(pnlPct, 3), why: label });
+        out.exits.push({ symbol: p.symbol, why: label, pnlPct: round(pnlPct, 3) });
+        set("ex.stops", "busy", `${p.symbol}: ${label}`);
         set("rv.journal", "busy", `trade #${t.id} journaled`);
         set("rv.lesson", "busy", `lesson from ${p.symbol}`);
         await learnFromTrade(d, p, t.id, pnlPct);
@@ -391,6 +417,8 @@ export async function tick(env, opts = {}) {
     out.survival = sv;
     // ---- whales, all night: follow up on old signals, then mine swaps of today's runners into the book (budgeted)
     await followSignals(env, (m) => jp?.[m]?.price ?? null);
+    // ---- Council seat: grade the helpers' votes (15 minutes forward, or the trade a vote was part of) and refit their weights
+    try { out.seat = await seatTick(env); } catch (e) { out.seat = { error: String(e.message || e).slice(0, 120) }; }
     const runners = jtop.filter((p) => (p.liqUsd || 0) >= P.minLiqUsd && ((p.ch24 ?? 0) >= 50 || (p.ch1h ?? 0) >= 20)).map((p) => ({ mint: p.mint, symbol: p.symbol, why: `ran ${round(p.ch24 ?? 0, 0)}% in 24h, ${round(p.ch1h ?? 0, 0)}% in 1h` }));
     out.mining = await mineTick(env, { runners: runners.length ? runners : jtrade.slice(0, 6).map((p) => ({ mint: p.mint, symbol: p.symbol, why: "trending, tradable" })), set });
     // the rebuilt book: KOLscan seeds every six hours, a few candidates scored by Jupiter each tick (inside the call budget)
@@ -420,7 +448,7 @@ export async function tick(env, opts = {}) {
       await d.q(`UPDATE mob_aq_strategies SET stats=$2, alive=$3, status=$4 WHERE id=$1`, [sid, JSON.stringify(ss), alive, status]);
     }
     // ---- exit variants A/B per strategy: compared every 20 closed trades per variant; a clear leader becomes the default (step T4)
-    const vt = await d.q(`SELECT strategy, coalesce(variant,'A') v, pnl_pct FROM mob_aq_trades WHERE variant IS NOT NULL`);
+    const vt = await d.q(`SELECT strategy, coalesce(variant,'A') v, pnl_pct FROM mob_aq_trades WHERE variant IS NOT NULL AND reason NOT LIKE 'council exit vote%'`); // a trade a helper's warning cut short is not a clean sample of either arm
     const cmp = (await getState(d, "variant_cmp", {})) || {}, dflt = (await getState(d, "variant_default", {})) || {};
     for (const sid of ["R3", "R4", "R5", "R6", "R7"]) {
       const a = stats(vt.filter((t) => t.strategy === sid && t.v === "A").map((t) => t.pnl_pct)), b = stats(vt.filter((t) => t.strategy === sid && t.v === "B").map((t) => t.pnl_pct));
@@ -549,7 +577,7 @@ export async function helperMessage(env, b) {
   return { message: { id: r.id, at: r.at, evidence: true, trigger: false, weight } };
 }
 
-export async function briefing(env) {
+export async function briefing(env, caller = null) {
   await ensureSeed(env);
   const s = await buildState(env);
   const d = db(env);
@@ -557,6 +585,7 @@ export async function briefing(env) {
   const rts = await d.q(`SELECT symbol, (facts->>'rtPct')::float rt FROM mob_aq_council WHERE facts ? 'rtPct' AND at > now() - interval '1 day' ORDER BY id DESC LIMIT 5`);
   const y = await d.q(`SELECT text FROM mob_aq_brain WHERE dept='review' AND kind='lesson' AND at > now() - interval '2 days' ORDER BY id DESC LIMIT 3`);
   const t = s.trades, m = s.market;
+  const room = caller ? await chatFor(d, caller) : [];
   const f = (v, suf = "") => (v == null ? "unknown" : `${v}${suf}`);
   return [
     `AQUARIUS DESK BRIEFING ${new Date().toISOString().slice(0, 10)}`,
@@ -565,6 +594,7 @@ export async function briefing(env) {
     `- Measured costs today (Jupiter round trip): ${rts.length ? rts.map((r) => `${r.symbol} ${round(r.rt, 2)}%`).join(", ") : "none measured yet"}.`,
     `- Open positions: ${s.positions.length ? s.positions.map((p) => `${p.symbol} ${f(p.pnlPct, "%")}`).join(", ") : "none"}. Ledger: ${t.n} trades, win rate ${t.winRate == null ? "n/a" : round(t.winRate * 100, 1) + "%"}, expectancy ${f(t.expectancyPct, "%")}, 95% interval ${t.ci95 ? t.ci95.join(" to ") : "n/a"}: ${t.evidence}.`,
     `- Yesterday's journal and the one lesson: ${y.length ? y.map((r) => r.text).join(" | ") : "no closed trades yet"}.`,
+    ...(caller ? [`- War room, last messages to ${caller}: ${room.length ? "" : "none"}`, ...room.map((r) => `  [${new Date(r.at).toISOString().slice(11, 16)}Z] ${r.from}${r.to ? ` to ${r.to}` : " to all"}: ${r.text.replace(/\s+/g, " ")}`)] : []),
   ].join("\n");
 }
 
@@ -577,7 +607,7 @@ export async function buildState(env) {
     d.q(`SELECT * FROM mob_aq_positions ORDER BY id`),
     d.q(`SELECT * FROM mob_aq_trades ORDER BY id DESC`),
     d.q(`SELECT id, kind, sol, dept, label, at FROM mob_aq_flows ORDER BY id DESC LIMIT 40`),
-    d.q(`SELECT verdict, symbol, reason, number, at FROM mob_aq_council ORDER BY id DESC LIMIT 50`),
+    d.q(`SELECT verdict, symbol, reason, number, at, facts->'seat' seat FROM mob_aq_council ORDER BY id DESC LIMIT 50`),
     d.q(`SELECT * FROM mob_aq_depts`),
     d.q(`SELECT id, key, dept, name, job, status, note, skills, power, approved, created_by FROM mob_aq_bots WHERE approved=true ORDER BY id`),
     d.q(`SELECT at, dept, text FROM mob_aq_brain ORDER BY id DESC LIMIT 30`),
@@ -598,13 +628,15 @@ export async function buildState(env) {
   const realizedToday = trd.filter((t) => new Date(t.closed_at) >= startDay).reduce((a, t) => a + t.pnl_sol, 0);
   const unreal = pos.reduce((a, p) => a + ((p.last_value_sol ?? p.size_sol) + (p.realized_sol || 0) - p.size_sol - p.fee_sol), 0);
   const s = stats(trd.map((t) => t.pnl_pct));
-  const v = (r) => (r ? { verdict: r.verdict, symbol: r.symbol, reason: r.reason, number: r.number, at: r.at } : null);
+  const v = (r) => (r ? { verdict: r.verdict, symbol: r.symbol, reason: r.reason, number: r.number, at: r.at, ...(r.seat ? { seat: r.seat } : {}) } : null);
   const recent = [
     ...trd.slice(0, 20).map((t) => ({ id: `s${t.id}`, symbol: t.symbol, side: "sell", sizeSol: t.size_sol, pnlSol: round(t.pnl_sol, 9), reason: t.reason, at: t.closed_at })),
     ...trd.slice(0, 20).map((t) => ({ id: `b${t.position_id}`, symbol: t.symbol, side: "buy", sizeSol: t.size_sol, pnlSol: null, reason: t.strategy, at: t.opened_at })),
     ...pos.map((p) => ({ id: `b${p.id}`, symbol: p.symbol, side: "buy", sizeSol: p.size_sol, pnlSol: null, reason: p.strategy, at: p.opened_at })),
   ].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 20);
   const hl = Object.fromEntries(helpers.map((r) => [r.from_helper, r.at]));
+  const seatCut = (t) => /^council exit vote/.test(t.reason || "");
+  const [seats, room, alerts, liveVotes] = await Promise.all([seatStats(d), warroom(d), recentAlerts(d), d.q(`SELECT helper, mint, symbol, vote, confidence, reason, at, expires_at FROM mob_aq_votes WHERE live AND seat AND expires_at > now() ORDER BY id DESC LIMIT 30`)]);
   const conn = (k) => (hl[k] && Date.now() - new Date(hl[k]).getTime() < 86400000 ? "connected" : "not connected");
   return {
     build: AQ_BUILD, mode: S.mode === "LIVE" ? "LIVE" : "PAPER", killSwitch: S.kill === true, updatedAt: S.last_tick?.at || null,
@@ -617,7 +649,9 @@ export async function buildState(env) {
       pnlPct: p.last_value_sol == null ? null : round(((p.last_value_sol + (p.realized_sol || 0) - p.size_sol - p.fee_sol) / (p.size_sol + p.fee_sol)) * 100, 3), strategy: p.strategy })),
     recent,
     flows: flows.map((f) => ({ id: Number(f.id), kind: f.kind, sol: f.sol, dept: f.dept, label: f.label, at: f.at })),
-    council: { last: v(cn[0]), vetoes: cn.filter((r) => r.verdict === "BLOCK").slice(0, 10).map(v), recent: cn.slice(0, 20).map(v) },
+    council: { last: v(cn[0]), vetoes: cn.filter((r) => r.verdict === "BLOCK").slice(0, 10).map(v), recent: cn.slice(0, 20).map(v), seats,
+      votes: liveVotes.map((x) => ({ helper: x.helper, mint: x.mint, symbol: x.symbol, vote: x.vote, confidence: x.confidence, reason: x.reason, at: x.at, expiresAt: x.expires_at })) },
+    warroom: room, alerts,
     tape: S.tape || null,
     regime: S.regime || null,
     gta6: S.gta6_list ? { releaseDate: S.gta6_list.releaseDate, daysToRelease: S.gta6_list.daysToRelease, mainMint: S.gta6_list.mainMint, tokens: Object.values(S.gta6_list.tokens || {}) } : null,
@@ -633,12 +667,12 @@ export async function buildState(env) {
     brain: brainRows.map((r) => ({ at: r.at, dept: r.dept, text: r.text })),
     strategies: strat.map((r) => ({ id: r.id, name: r.name, trades: r.stats?.n ?? 0, pnlSol: r.stats?.pnlSol ?? 0, alive: r.alive, status: r.status, market: r.market, defaultVariant: S.variant_default?.[r.id] || null,
       byStrength: STRENGTH_BUCKETS.map(([lo, hi]) => { const xs = trd.filter((t) => t.strategy === r.id && t.strength != null && t.strength >= lo && t.strength < hi).map((t) => t.pnl_pct), st3 = stats(xs); return { from: lo, to: hi === 9 ? null : hi, n: st3.n, winRate: st3.winRate, expectancyPct: st3.expectancyPct }; }),
-      variants: ["A", "B"].map((v) => { const xs = trd.filter((t) => t.strategy === r.id && t.variant === v).map((t) => t.pnl_pct), w = xs.filter((p) => p > 0), l = xs.filter((p) => p <= 0), st2 = stats(xs);
+      variants: ["A", "B"].map((v) => { const xs = trd.filter((t) => t.strategy === r.id && t.variant === v && !seatCut(t)).map((t) => t.pnl_pct), w = xs.filter((p) => p > 0), l = xs.filter((p) => p <= 0), st2 = stats(xs);
         return { id: v, n: st2.n, winRate: st2.winRate, expectancyPct: st2.expectancyPct, avgWin: w.length ? round(w.reduce((a, c) => a + c, 0) / w.length, 2) : null, avgLoss: l.length ? round(l.reduce((a, c) => a + c, 0) / l.length, 2) : null }; }),
       // which book this strategy trades on now, and the evidence behind that
       ledger: S.modes?.[r.id] ? (S.modes[r.id].real ? "real" : "shadow") : "real", ledgerWhy: S.modes?.[r.id]?.why ?? null,
       replay: S.replays?.[r.id === "R4" ? "R3" : r.id] ? (({ trades, expectancyPct, ci95, costPct, overshootPct }) => ({ trades, expectancyPct, ci95, costPct, overshootPct }))(S.replays[r.id === "R4" ? "R3" : r.id]) : null,
-      timeArms: ["L", "S"].map((v) => { const st4 = stats(trd.filter((t) => t.strategy === r.id && t.tvar === v).map((t) => t.pnl_pct)); return { id: v, n: st4.n, winRate: st4.winRate, expectancyPct: st4.expectancyPct }; }) })),
+      timeArms: ["L", "S"].map((v) => { const st4 = stats(trd.filter((t) => t.strategy === r.id && t.tvar === v && !seatCut(t)).map((t) => t.pnl_pct)); return { id: v, n: st4.n, winRate: st4.winRate, expectancyPct: st4.expectancyPct }; }) })),
     tools: tools.map((t) => ({ name: t.name, licence: t.licence, verdict: t.verdict, status: t.status, usedBy: t.used_by, bestUse: t.best_use })),
     replay: S.replay_R3 ? { trades: S.replay_R3.trades, expectancyPct: S.replay_R3.expectancyPct, ci95: S.replay_R3.ci95, costPct: S.replay_R3.costPct, evidence: S.replay_R3.evidence } : null,
     health: { ...(S.health || {}), ledger: ledNow.ok, errors: mkt.filter((r) => !r.ok).slice(0, 12).map((r) => ({ feed: r.k, error: r.err, at: r.at })) },

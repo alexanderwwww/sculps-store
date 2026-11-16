@@ -5,6 +5,7 @@ import { AQ_PAGE, AQ_JS } from "../aq-bundle.mjs";
 import { buildState, createBot, helperMessage, briefing, ensureSeed, rebuild, sellAll } from "./engine.mjs";
 import { helperMcp, createTask } from "./mcp.mjs";
 import { diag } from "./diag.mjs";
+import { chatPost, chatRead, SEATS } from "./seat.mjs";
 import { safeEqual } from "../auth.mjs";
 
 const DROP_MAX = 95 * 1024 * 1024;
@@ -66,6 +67,22 @@ export async function aqApi(req, env, url, path, { json, apiErr, admin, bearer, 
     // Link + access code for ChatGPT / Codex / Grok. Unset secret or wrong key = 404 (nothing to discover).
     if (!env.AQ_HELPER_KEY || !safeEqual(hm[1], env.AQ_HELPER_KEY)) return new Response("Not found", { status: 404 });
     return helperMcp(req, env, { json });
+  }
+  // War room. Who is speaking comes from HOW the caller is signed in, never from the message: Alex's admin session = "alex";
+  // bearer MOB_API_TOKEN = "claude"; the helper access code (header x-aq-helper-key) = the helper it names, "claude" included
+  // (Claude's own sessions hold that code), never "alex".
+  if (path === "/api/aq/chat" || path === "/api/aq/chat/read") {
+    const b = M === "POST" ? await body() : null, hk = req.headers.get("x-aq-helper-key") || "";
+    const viaKey = !!env.AQ_HELPER_KEY && !!hk && safeEqual(hk, env.AQ_HELPER_KEY);
+    const named = String((M === "POST" ? b?.helper : url.searchParams.get("helper")) || "").toLowerCase();
+    if (!(admin || bearer || viaKey)) return apiErr(401, "unauthorized", "Admin session, bearer MOB_API_TOKEN or the helper access code required");
+    if (!admin && !bearer && !["claude", ...SEATS].includes(named)) return apiErr(403, "forbidden", `with the helper access code, helper must be one of claude, ${SEATS.join(", ")}`);
+    const who = admin ? "alex" : bearer ? "claude" : named;
+    await ensureSeed(env);
+    if (path === "/api/aq/chat" && M === "POST") { const r = await chatPost(env, who, { text: b?.text, to: b?.to }); return r.error ? apiErr(/^rate limit/.test(r.error) ? 429 : 400, /^rate limit/.test(r.error) ? "rate_limited" : "validation", r.error) : json(r, 201); }
+    if (path === "/api/aq/chat" && M === "GET") return json({ as: who, ...(await chatRead(env, who, { since: url.searchParams.get("since"), mark: url.searchParams.get("mark") === "1" })) });
+    if (path === "/api/aq/chat/read" && M === "POST") return json({ as: who, ...(await chatRead(env, who, { since: null, mark: true })) });
+    return apiErr(405, "method_not_allowed", "POST a message, GET the messages, or POST /api/aq/chat/read");
   }
   if ((path === "/api/aq/helper" || path === "/api/aq/briefing") && !(admin || bearer || keyOk)) return apiErr(401, "unauthorized", "Admin session, bearer MOB_API_TOKEN or AQUARIUS_KEY required");
   if (path === "/api/aq/helper" && M === "POST") { const r = await helperMessage(env, await body()); return r.error ? apiErr(400, "validation", r.error) : json(r, 201); }

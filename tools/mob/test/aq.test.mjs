@@ -367,7 +367,7 @@ test("helper MCP: link + access code, every tool, and no money control", async (
   assert.equal(init.status, 200); const sid = init.headers.get("mcp-session-id"); assert.ok(sid);
   assert.equal((await init.json()).result.serverInfo.name, "aquarius-helpers");
   const tools = (await (await mcp({ jsonrpc: "2.0", id: 2, method: "tools/list" })).json()).result.tools.map((t) => t.name);
-  assert.deepEqual(tools, ["aq_state", "aq_briefing", "aq_post_evidence", "aq_propose_bot", "aq_submit_pick", "aq_list_tasks", "aq_task_done"]);
+  assert.deepEqual(tools, ["aq_state", "aq_briefing", "aq_post_evidence", "aq_propose_bot", "aq_submit_pick", "aq_list_tasks", "aq_task_done", "aq_council_cases", "aq_council_vote", "aq_alert", "aq_chat_post", "aq_chat_read"]);
   for (const t of tools) assert.ok(!/kill|trade|buy|sell|limit|secret|approve/.test(t));
   const st = JSON.parse((await call("aq_state", {}, { "mcp-session-id": sid })).content[0].text); assert.equal(st.mode, "PAPER");
   assert.match((await call("aq_briefing", { helper: "grok" })).content[0].text, /- Mode: PAPER/);
@@ -1298,4 +1298,445 @@ test("CEO deposit: the wallet base steps up with cash in one statement, profit d
   const rc = await reconcile(d); assert.equal(rc.cashSol, 110.5); assert.equal(rc.ok, true);
   await d.q(`UPDATE mob_aq_state SET v='0.26' WHERE k='position_sol'`); await d.q(`DELETE FROM mob_aq_state WHERE k='ledger_base'`); await cleanBook(d);
   jupCharts = {}; backOf = {}; jupLists = () => ({ pools: [] });
+});
+
+// ================================================================ AQUARIUS ULTIMUM: Council seat, fast alerts, war room
+import * as SEAT from "../src/aq/seat.mjs";
+const B58 = (name) => { assert.ok(/^[1-9A-HJ-NP-Za-km-z]+$/.test(name), `${name} is not base58`); return (name + "1".repeat(44)).slice(0, 44); };
+const mcpCall = async (name, args) => (await (await R("POST", "/api/aq/helper/helperkey123/mcp", { body: { jsonrpc: "2.0", id: 7, method: "tools/call", params: { name, arguments: args } } })).json()).result;
+const mcpJson = async (name, args) => { const r = await mcpCall(name, args); assert.ok(!r.isError, `${name}: ${r.content[0].text}`); return JSON.parse(r.content[0].text); };
+const seatBars = () => {
+  const now = Date.now(), t0 = Math.floor(now / 60000) * 60 - 60, bar = (i, o, c2, w = 0.008) => ({ t: t0 - (44 - i) * 60, o, h: Math.max(o, c2) * (1 + w), l: Math.min(o, c2) * (1 - w), c: c2, v: 1 });
+  const flat = Array.from({ length: 44 }, (_, i) => bar(i, 1, 1 + (i % 2) * 0.001));
+  return { now, brk: [...flat, bar(44, 1.001, 1.03)], near: [...flat, bar(44, 1.001, 1.006, 0.001)] };
+};
+const jupCoin = (sym, mint, liq = 900000) => { const p = clone(FX6.jupTop.pools.find((q) => q.baseAsset.symbol === "Fartcoin")); Object.assign(p.baseAsset, { id: mint, symbol: sym, liquidity: liq, firstPool: { id: "x", createdAt: new Date(Date.now() - 40 * 86400000).toISOString() } }); p.id = `pool-${sym}`; return p; };
+const asJupBars = (cs) => ({ candles: cs.map((c2) => ({ time: c2.t, open: c2.o, high: c2.h, low: c2.l, close: c2.c, volume: 1 })) });
+const setRule = (name, w) => db(env).q(`INSERT INTO mob_aq_rules (name, weight) VALUES ($1,$2) ON CONFLICT (name) DO UPDATE SET weight=EXCLUDED.weight`, [name, w]);
+const ageVerdict = (sym, mins = 11) => db(env).q(`UPDATE mob_aq_council SET at = now() - make_interval(mins => $2::int) WHERE symbol=$1`, [sym, mins]);
+const moneyState = async (d) => JSON.stringify([await d.q(`SELECT k, v FROM mob_aq_state WHERE k IN ('cash_sol','kill','position_sol','mode','ledger_base','destroyed','variant_default') ORDER BY k`), await d.q(`SELECT id, params, status, alive FROM mob_aq_strategies ORDER BY id`),
+  await d.q(`SELECT name, weight FROM mob_aq_rules ORDER BY name`), await d.q(`SELECT id, tokens_raw, stop_price, target_price, time_stop_at, size_sol FROM mob_aq_positions ORDER BY id`), (await d.one(`SELECT count(*)::int n FROM mob_aq_trades`)).n, (await d.one(`SELECT count(*)::int n FROM mob_aq_flows`)).n]);
+// a clean desk for the seat tests: nothing open, an R6 that may trade for real, and one freshly opened holding so no EXPLORE is due
+async function seatDesk(d, { hold = true } = {}) {
+  await S(); // the desk is seeded (a state read does it) even when this test runs alone
+  await cleanBook(d);
+  for (const t of ["mob_aq_market", "mob_aq_watch", "mob_aq_prices", "mob_aq_council", "mob_aq_votes", "mob_aq_alerts", "mob_aq_rules"]) await d.q(`DELETE FROM ${t}`);
+  await d.q(`DELETE FROM mob_aq_state WHERE k IN ('helper_weights','seat_weights')`);
+  await d.q(`UPDATE mob_aq_trades SET opened_at = now() - interval '1 hour' WHERE opened_at > now() - interval '1 hour'`);
+  stubAll(); trendingPools = []; prices = {}; tradesFor = {}; sellOut = {}; backOf = {}; rugFor = {}; jupCharts = {}; jupLists = () => ({ pools: [] });
+  await replayState(R6_GOOD);
+  if (hold) { assert.ok(await openPosition(d, posRow("HOLD"), 5)); prices.HOLDmint = 1.1; }
+}
+const rehold = async (d) => { await cleanBook(d); assert.ok(await openPosition(d, posRow("HOLD"), 5)); };
+const vote = (helper, mint, v, confidence, extra = {}) => SEAT.castVote(env, helper, { mint, vote: v, confidence, reason: "test reason", labels: ["INFERRED"], ...extra });
+
+test("council seat: a helper vote is ONE soft rule; it adds, subtracts, lifts a partial setup and keeps the desk out, and never beats a hard block, the gates, cash, slots or the kill switch", async () => {
+  const d = db(env); await seatDesk(d);
+  const { brk, near } = seatBars();
+  const SOFT = B58("SeatSoftAA"), SUBT = B58("SeatSubtAA"), WEAK = B58("SeatWeakAA"), HARD = B58("SeatHardAA"), GATE = B58("SeatGateAA"), CASH = B58("SeatCashAA");
+  const list = (sym, mint, bars, px) => { jupLists = () => ({ pools: [jupCoin(sym, mint)] }); jupCharts = { [mint]: () => asJupBars(bars) }; prices[mint] = px; backOf[mint] ??= 0.998; return d.q(`DELETE FROM mob_aq_market WHERE k='jup:top'`); };
+  const verdict = (sym) => d.one(`SELECT verdict, reason, number, facts FROM mob_aq_council WHERE symbol=$1 ORDER BY id DESC LIMIT 1`, [sym]);
+  // ---- BUY adds. A tier A breakout whose soft score is 66 (fear weighs 3.4): under 70 and no explore is due -> BLOCK
+  await setRule("fear", 3.4); await list("SOFT", SOFT, brk, 1.03);
+  let t = await tick(env);
+  assert.equal(t.entered, null, JSON.stringify(t.evaluated)); let v = await verdict("SOFT");
+  assert.equal(v.facts.block, "soft"); assert.equal(v.number, 66); assert.match(v.reason, /^soft rules: score 66 under 70/); assert.ok(!/council seat/.test(v.reason));
+  assert.equal(typeof t.seat.graded, "number", "the tick grades votes");
+  // a helper reads the case, then votes
+  let cs = await mcpJson("aq_council_cases", { helper: "grok" });
+  const c0 = cs.cases.find((c) => c.mint === SOFT);
+  assert.deepEqual([c0.symbol, c0.tier, c0.strategy, c0.verdict, c0.blockKind, c0.hardBlocksClear, c0.score, c0.number], ["SOFT", "A", "R6", "BLOCK", "soft", true, 66, 66]);
+  assert.ok(c0.strength === 1 && c0.atr5Pct > 0 && c0.plan.stopPct > 0 && c0.plan.targetPct > c0.plan.stopPct && c0.softObjections.includes("fear")); assert.deepEqual(c0.canVote, ["BUY", "SKIP"]);
+  assert.ok(cs.positions.some((p) => p.symbol === "HOLD" && p.entryUsd === 1.1 && p.stopUsd === 1 && p.targetUsd === 2 && p.ageMin >= 0 && p.canVote[0] === "EXIT"));
+  // an expired vote does nothing
+  let r = await vote("grok", SOFT, "BUY", 0.8); assert.ok(r.vote && r.vote.worthPoints === 8 && r.vote.counts === true, JSON.stringify(r));
+  await d.q(`UPDATE mob_aq_votes SET expires_at = now() - interval '1 second' WHERE id=$1`, [r.vote.id]);
+  assert.deepEqual(await SEAT.seatEffects(d, [SOFT]), {}); await ageVerdict("SOFT");
+  t = await tick(env); assert.equal(t.entered, null); v = await verdict("SOFT"); assert.equal(v.number, 66); assert.ok(!/council seat/.test(v.reason), "expired: not in the score");
+  assert.equal((await d.one(`SELECT applied FROM mob_aq_votes WHERE id=$1`, [r.vote.id])).applied, null);
+  // a fresh BUY 0.8 = +8: 66 -> 74. The coin is judged again at once (no waiting for the cooldown) and passes, at the normal size
+  r = await vote("grok", SOFT, "BUY", 0.8);
+  t = await tick(env);
+  assert.equal(t.entered?.symbol, "SOFT", JSON.stringify(t.evaluated)); assert.equal(t.entered.tag, "PASS"); assert.equal(t.entered.sizeSol, 0.26); assert.equal(t.entered.score, 74);
+  v = await verdict("SOFT"); assert.equal(v.verdict, "PASS");
+  assert.match(v.reason, /hard blocks clear; 6x round trip .* score 74 \(soft: no_whale, fear\); council seat MOVED this \(BLOCK became PASS\): grok BUY 0\.8 x weight 1 = \+8; score 66 -> 74 against 70$/);
+  assert.deepEqual([v.facts.seat.delta, v.facts.seat.scoreBefore, v.facts.seat.scoreAfter, v.facts.seat.moved, v.facts.seat.votes[0].rule], [8, 66, 74, "BLOCK became PASS", "council_seat:grok"]);
+  const pS = await d.one(`SELECT * FROM mob_aq_positions WHERE symbol='SOFT'`);
+  let vr = await d.one(`SELECT * FROM mob_aq_votes WHERE id=$1`, [r.vote.id]); assert.equal(vr.position_id, pS.id); assert.equal(vr.applied.verdict, "PASS"); assert.equal(vr.applied.moved, "BLOCK became PASS"); assert.ok(vr.judged_at);
+  assert.ok(pS.target_pct >= 6 * pS.rt_pct, "the cost gate held for the voted entry too");
+  let s = await S(); const rec = s.council.recent.find((x) => x.symbol === "SOFT" && x.verdict === "PASS"); assert.equal(rec.seat.votes[0].helper, "grok"); assert.equal(rec.seat.delta, 8);
+  assert.ok(s.council.votes.some((x) => x.helper === "grok" && x.mint === SOFT && x.vote === "BUY"));
+  assert.equal((await reconcile(d)).ok, true);
+  // ---- SKIP subtracts. Score 75 would pass; SKIP 1.0 = -10 -> 65: BLOCK
+  await rehold(d); await setRule("fear", 3.4); await list("SUBT", SUBT, brk, 1.03);
+  t = await tick(env); assert.equal(t.entered, null); assert.equal((await verdict("SUBT")).number, 66);
+  await setRule("fear", 2.5); r = await vote("chatgpt", SUBT, "SKIP", 1); assert.equal(r.vote.worthPoints, -10); await ageVerdict("SUBT");
+  t = await tick(env); assert.equal(t.entered, null, JSON.stringify(t.evaluated)); v = await verdict("SUBT");
+  assert.match(v.reason, /^soft rules: score 65 under 70 .*council seat MOVED this \(PASS became BLOCK\): chatgpt SKIP 1 x weight 1 = -10; score 75 -> 65 against 70/); assert.equal(v.facts.block, "soft");
+  assert.equal((await d.one(`SELECT applied FROM mob_aq_votes WHERE id=$1`, [r.vote.id])).applied.verdict, "BLOCK");
+  // an explore is due: the same SKIP keeps the coin out of it; a faint SKIP (0.3 = -3) does not
+  await setRule("fear", 3.4); await d.q(`UPDATE mob_aq_positions SET opened_at = now() - interval '10 minutes'`); await ageVerdict("SUBT");
+  t = await tick(env); assert.equal(t.entered, null, JSON.stringify(t.evaluated)); v = await verdict("SUBT");
+  assert.match(v.reason, /council seat MOVED this \(EXPLORE became BLOCK\): chatgpt SKIP 1 x weight 1 = -10; score 66 -> 56 against 70; a net vote of -5 or lower keeps a coin out of EXPLORE/);
+  r = await vote("chatgpt", SUBT, "SKIP", 0.3); assert.ok(r.vote.replaced); await ageVerdict("SUBT");
+  t = await tick(env); assert.equal(t.entered?.symbol, "SUBT", JSON.stringify(t.evaluated)); assert.equal(t.entered.tag, "EXPLORE"); assert.equal(t.entered.sizeSol, 0.26);
+  assert.match((await verdict("SUBT")).reason, /^EXPLORE: .*council seat \(verdict unchanged\): chatgpt SKIP 0\.3 x weight 1 = -3; score 66 -> 63 against 70$/);
+  // ---- LIFT. A partial setup (no breakout yet) is "no signal" when no explore is due; a faint BUY does not change that; a strong BUY lifts it to a normal entry at the normal size
+  await rehold(d); await setRule("fear", 1); await list("WEAK", WEAK, near, 1.006);
+  t = await tick(env); assert.equal(t.entered, null, JSON.stringify(t.evaluated)); v = await verdict("WEAK");
+  assert.equal(v.facts.block, "signal"); const st = v.facts.strength; assert.ok(st > 0.3 && st < 0.95, String(st)); assert.equal(v.facts.score, 90);
+  r = await vote("grok", WEAK, "BUY", 0.05);
+  t = await tick(env); assert.equal(t.entered, null, JSON.stringify(t.evaluated)); v = await verdict("WEAK");
+  assert.match(v.reason, /^no signal \(strength 0\.\d+\).*council seat \(verdict unchanged\): grok BUY 0\.05 x weight 1 = \+0\.5; score 90 -> 90\.5 against 70$/);
+  r = await vote("grok", WEAK, "BUY", 0.9);
+  t = await tick(env);
+  assert.equal(t.entered?.symbol, "WEAK", JSON.stringify(t.evaluated)); assert.equal(t.entered.tag, "PASS"); assert.equal(t.entered.sizeSol, 0.26, "the normal size, not more"); assert.equal(t.entered.strength, st);
+  v = await verdict("WEAK"); assert.match(v.reason, new RegExp(`council seat MOVED this \\(lifted from EXPLORE-WEAK to a normal entry\\): grok BUY 0\\.9 x weight 1 = \\+9; score 90 -> 99 against 70; strength ${String(st).replace(".", "\\.")} \\+ 0\\.9 reaches 1$`));
+  assert.ok(t.entered.targetPct >= 6 * t.entered.rtPct && 3 * t.entered.atr5Pct >= 6 * t.entered.rtPct, "both cost gates held");
+  // the helper's lane weight scales the vote, never past the heaviest soft rule (3)
+  await d.q(`INSERT INTO mob_aq_state (k, v) VALUES ('helper_weights', '{"grok": 2, "codex": 0.25}') ON CONFLICT (k) DO UPDATE SET v=EXCLUDED.v`);
+  const fxw = await SEAT.seatEffects(d, [WEAK]); assert.deepEqual([fxw[WEAK].votes[0].mult, fxw[WEAK].delta], [2, 18]);
+  assert.equal(SEAT.seatMult(2, 2), 3); assert.equal(SEAT.seatMult(0.2, 0.25), 0.2);
+  await d.q(`DELETE FROM mob_aq_state WHERE k='helper_weights'`);
+  // ---- a hard block is never passed: mint authority. BUY 1.0 from every seat changes nothing, and the coin is not even re-opened
+  await rehold(d); rugFor[HARD] = () => ({ ...safeRug(), mintAuthority: "SomeAuthority1111111111111111111111111111111" }); await list("HARD", HARD, brk, 1.03);
+  t = await tick(env); v = await verdict("HARD"); assert.equal(v.verdict, "BLOCK"); assert.equal(v.reason, "safety: mint authority enabled"); assert.equal(v.facts.block, "authority");
+  for (const h of ["grok", "chatgpt", "codex"]) assert.ok((await vote(h, HARD, "BUY", 1)).vote);
+  cs = await SEAT.councilCases(env); assert.equal(cs.cases.find((c) => c.mint === HARD).hardBlocksClear, false); assert.equal(cs.cases.find((c) => c.mint === HARD).votes.length, 3);
+  assert.deepEqual(await SEAT.seatRequeue(d), [], "a vote does not re-open a hard-blocked coin");
+  const n0 = (await d.one(`SELECT count(*)::int n FROM mob_aq_council WHERE symbol='HARD'`)).n;
+  t = await tick(env); assert.equal(t.entered, null); assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_council WHERE symbol='HARD'`)).n, n0, "still resting");
+  await ageVerdict("HARD", 400); // even when it is judged again with three live BUY votes
+  await d.q(`UPDATE mob_aq_votes SET expires_at = now() + interval '5 minutes', at = now() WHERE mint=$1`, [HARD]);
+  t = await tick(env); assert.equal(t.entered, null); v = await verdict("HARD"); assert.equal(v.reason, "safety: mint authority enabled"); assert.ok(!v.facts.seat);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_positions WHERE symbol='HARD'`)).n, 0);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_votes WHERE mint=$1 AND applied IS NOT NULL`, [HARD])).n, 0);
+  // ---- the cost gate is never passed: a coin that loses 10% on a round trip. First sight: cost gate at the quote. With BUY votes: still out.
+  await rehold(d); backOf[GATE] = 0.9; await list("GATE", GATE, brk, 1.03);
+  t = await tick(env); v = await verdict("GATE"); assert.equal(v.verdict, "BLOCK"); assert.equal(v.reason, "cost gate");
+  for (const h of ["grok", "chatgpt", "codex"]) assert.ok((await vote(h, GATE, "BUY", 1)).vote);
+  await ageVerdict("GATE", 20);
+  t = await tick(env); assert.equal(t.entered, null, JSON.stringify(t.evaluated)); v = await verdict("GATE"); assert.equal(v.verdict, "BLOCK"); assert.match(v.reason, /^not tradable: 6x round trip/);
+  // and when the vote does reach the decision (score +30), the measured cost still refuses the trade and the vote is recorded as overruled
+  await d.q(`DELETE FROM mob_aq_council WHERE symbol='GATE'`); await d.q(`UPDATE mob_aq_votes SET expires_at = now() + interval '5 minutes' WHERE mint=$1`, [GATE]);
+  t = await tick(env); assert.equal(t.entered, null, JSON.stringify(t.evaluated)); v = await verdict("GATE"); assert.equal(v.reason, "cost gate"); assert.equal(v.facts.seat.delta, 30);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_votes WHERE mint=$1 AND applied->>'verdict'='BLOCK' AND applied->>'reason'='cost gate'`, [GATE])).n, 3);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_positions WHERE symbol='GATE'`)).n, 0);
+  // ---- cash, the kill switch and the slots are never passed
+  await rehold(d); await setRule("fear", 3.4); await list("CASH", CASH, brk, 1.03);
+  t = await tick(env); assert.equal((await verdict("CASH")).number, 66);
+  r = await vote("grok", CASH, "BUY", 0.8);
+  const cash0 = (await d.one(`SELECT v FROM mob_aq_state WHERE k='cash_sol'`)).v;
+  const base0 = (await d.one(`SELECT v FROM mob_aq_state WHERE k='ledger_base'`)).v; // (the wallet base shrinks with it, so this is a small wallet, not a destroyed island)
+  await d.q(`UPDATE mob_aq_state SET v='0.03' WHERE k='cash_sol'`); await d.q(`UPDATE mob_aq_state SET v = v || '{"cash": 0.08}' WHERE k='ledger_base'`);
+  t = await tick(env); assert.equal(t.entered, null, JSON.stringify(t.evaluated)); v = await verdict("CASH");
+  assert.match(v.reason, /^size: needs .* cash 0\.03 SOL and 1% of the pool allow 0\.0299\d* SOL$/); assert.equal((await d.one(`SELECT applied FROM mob_aq_votes WHERE id=$1`, [r.vote.id])).applied.verdict, "BLOCK");
+  await d.q(`UPDATE mob_aq_state SET v=$1 WHERE k='cash_sol'`, [JSON.stringify(cash0)]); await d.q(`UPDATE mob_aq_state SET v=$1 WHERE k='ledger_base'`, [JSON.stringify(base0)]);
+  r = await vote("grok", CASH, "BUY", 0.8); await d.q(`DELETE FROM mob_aq_council WHERE symbol='CASH'`);
+  assert.equal((await R("POST", "/api/aq/kill", { cookie, body: { on: true } })).status, 200);
+  t = await tick(env); assert.equal(t.entered, null); assert.equal((await d.one(`SELECT reason FROM mob_aq_council ORDER BY id DESC LIMIT 1`)).reason, "risk: kill switch on");
+  assert.equal((await R("POST", "/api/aq/kill", { cookie, body: { on: false } })).status, 200);
+  assert.ok(await openPosition(d, posRow("HOLDB"), 5)); assert.ok(await openPosition(d, posRow("HOLDC"), 5)); prices.HOLDBmint = 1.1; prices.HOLDCmint = 1.1;
+  t = await tick(env); assert.equal(t.entered, null); assert.equal((await d.one(`SELECT reason FROM mob_aq_council ORDER BY id DESC LIMIT 1`)).reason, "risk: max open positions");
+  assert.equal((await d.one(`SELECT applied FROM mob_aq_votes WHERE id=$1`, [r.vote.id])).applied, null, "the vote never reached a decision");
+  // the same vote, still live, with the limits out of the way: it was the limits that held, not a dead vote
+  await rehold(d);
+  t = await tick(env); assert.equal(t.entered?.symbol, "CASH", JSON.stringify(t.evaluated)); assert.equal(t.entered.score, 74); assert.equal(t.entered.sizeSol, 0.26);
+  assert.equal((await reconcile(d)).ok, true);
+  rugFor = {}; backOf = {}; jupCharts = {}; jupLists = () => ({ pools: [] });
+});
+
+test("council seat votes: validation, one live vote per helper per coin, replacement, expiry, the test identity, rate limit", async () => {
+  const d = db(env); await seatDesk(d);
+  const A = B58("VoteCaseAA"), U = B58("VoteUnknownAA");
+  await d.q(`INSERT INTO mob_aq_council (verdict, symbol, mint, reason, facts) VALUES ('BLOCK','VCASE',$1,'no signal: x','{"tier":"A","block":"signal"}')`, [A]);
+  prices[A] = 2;
+  for (const [args, re] of [[{ mint: "nope" }, /mint must be/], [{ vote: "HOLD" }, /vote must be BUY, SKIP or EXIT/], [{ confidence: 1.2 }, /confidence/], [{ confidence: "0.5" }, /confidence/], [{ confidence: -0.1 }, /confidence/], [{ reason: " " }, /reason is required/], [{ labels: ["SURE"] }, /labels must include/], [{ mint: U }, /not a case/], [{ vote: "EXIT" }, /EXIT is for an open position/], [{ mint: "HOLDmint" }, /mint must be/]])
+    assert.match((await SEAT.castVote(env, "grok", { mint: A, vote: "BUY", confidence: 0.5, reason: "r", labels: ["CLAIMED"], ...args })).error, re, JSON.stringify(args));
+  assert.match((await SEAT.castVote(env, "alex", { mint: A, vote: "BUY", confidence: 0.5, reason: "r", labels: ["CLAIMED"] })).error, /helper must be one of grok, chatgpt, codex/);
+  // through the link: a caller that does not say who it is cannot vote
+  assert.match((await mcpCall("aq_council_vote", { mint: A, vote: "BUY", confidence: 0.5, reason: "r", labels: ["CLAIMED"] })).content[0].text, /say who you are/);
+  assert.match((await mcpCall("aq_council_vote", { helper: "alex", mint: A, vote: "BUY", confidence: 0.5, reason: "r", labels: ["CLAIMED"] })).content[0].text, /say who you are/);
+  // a held coin: EXIT only
+  const HM = B58("VoteKeptAA"); assert.ok(await openPosition(d, posRow("VHELD", { mint: HM }), 5)); prices[HM] = 1.1;
+  assert.match((await vote("grok", HM, "BUY", 0.5)).error, /already held/);
+  const ex = await mcpJson("aq_council_vote", { helper: "grok", mint: HM, vote: "EXIT", confidence: 0.6, reason: "story is dying on X", labels: ["CLAIMED"] });
+  assert.match(ex.note, /a warning, not an order/); assert.equal(ex.worthPoints, 0);
+  // one live vote per helper per coin; the newer replaces the older; another helper's vote stands beside it
+  const v1 = (await vote("grok", A, "BUY", 0.4)).vote, v2 = (await vote("grok", A, "SKIP", 0.7)).vote, v3 = (await vote("chatgpt", A, "BUY", 0.5)).vote;
+  assert.equal(v1.replaced, null); assert.equal(v2.replaced, v1.id); assert.equal(v1.priceUsd, 2);
+  let rows = await d.q(`SELECT id, helper, vote, live, counted, replaced_at FROM mob_aq_votes WHERE mint=$1 ORDER BY id`, [A]);
+  assert.deepEqual(rows.map((r) => [r.helper, r.vote, r.live]), [["grok", "BUY", false], ["grok", "SKIP", true], ["chatgpt", "BUY", true]]); assert.ok(rows[0].replaced_at);
+  assert.deepEqual((await SEAT.seatEffects(d, [A]))[A].votes.map((x) => [x.helper, x.points]), [["grok", -7], ["chatgpt", 5]]); assert.equal((await SEAT.seatEffects(d, [A]))[A].delta, -2);
+  // four posts at the same instant: exactly one stays live
+  const burst = await Promise.all([0.1, 0.2, 0.3, 0.4].map((c) => vote("grok", A, "BUY", c)));
+  assert.ok(burst.some((b) => b.vote), JSON.stringify(burst));
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_votes WHERE mint=$1 AND helper='grok' AND live`, [A])).n, 1);
+  // repeating the same call inside 15 minutes is not a second result: only the first of a direction is counted; a change of mind is
+  rows = await d.q(`SELECT vote, counted FROM mob_aq_votes WHERE mint=$1 AND helper='grok' ORDER BY id`, [A]);
+  assert.deepEqual(rows.slice(0, 2).map((r) => [r.vote, r.counted]), [["BUY", true], ["SKIP", true]]); assert.ok(rows.slice(2).every((r) => r.vote === "BUY" && r.counted === false), JSON.stringify(rows));
+  // expiry: after five minutes a vote is in no score and in no case list
+  assert.equal(SEAT.VOTE_TTL_SEC, 300); const lv = await d.one(`SELECT extract(epoch FROM expires_at - at)::float8 ttl FROM mob_aq_votes WHERE id=$1`, [v3.id]); assert.ok(Math.abs(lv.ttl - 300) < 1);
+  await d.q(`UPDATE mob_aq_votes SET at = now() - interval '301 seconds', expires_at = now() - interval '1 second' WHERE mint=$1`, [A]);
+  assert.deepEqual(await SEAT.seatEffects(d, [A]), {}); assert.deepEqual((await SEAT.councilCases(env)).cases.find((c) => c.mint === A).votes, []); assert.deepEqual(await SEAT.seatRequeue(d), []);
+  assert.ok(!(await S()).council.votes.some((x) => x.mint === A));
+  // the test identity: stored and answered, never in a score, never graded, no seat
+  const tv = await mcpJson("aq_council_vote", { helper: "claude-test", mint: A, vote: "BUY", confidence: 1, reason: "wiring check", labels: ["INFERRED"] });
+  assert.equal(tv.counts, false); assert.equal(tv.worthPoints, 0); assert.match(tv.note, /engine ignores this vote/);
+  assert.deepEqual(await SEAT.seatEffects(d, [A]), {}); assert.deepEqual(await SEAT.seatRequeue(d), []);
+  assert.ok(!(await S()).council.seats.some((x) => x.helper === "claude-test"));
+  assert.match((await mcpCall("aq_post_evidence", { helper: "claude-test", role: "scout", text: "x", label: "CLAIMED" })).content[0].text, /say who you are/, "the test identity cannot post evidence");
+  // rate limit
+  await d.q(`INSERT INTO mob_aq_votes (helper, mint, vote, confidence, expires_at, live) SELECT 'codex', 'm' || i, 'BUY', 0.1, now(), false FROM generate_series(1, 20) i`);
+  assert.match((await vote("codex", A, "BUY", 0.5)).error, /rate limit: 20 votes a minute/);
+  await d.q(`DELETE FROM mob_aq_votes`); await cleanBook(d);
+});
+
+test("council seat grading: every vote is graded (15 minutes forward, or the trade it was part of) and a helper's weight follows its own record", async () => {
+  const d = db(env); await seatDesk(d, { hold: false });
+  assert.deepEqual([SEAT.seatWeight({ right: 9, wrong: 0 }), SEAT.seatWeight({ right: 5, wrong: 5 }), SEAT.seatWeight({ right: 10, wrong: 0 }), SEAT.seatWeight({ right: 0, wrong: 10 }), SEAT.seatWeight({ right: 9, wrong: 3 })], [1, 1, 2, 0.2, 1.5]);
+  const UP = B58("GradeUpAA"), DN = B58("GradeDownAA"), GONE = B58("GradeGoneAA");
+  prices[UP] = 1.02; prices[DN] = 0.97; // against a vote price of 1: +2% and -3%
+  const ins = (helper, mint, v, mins, o = {}) => d.one(`INSERT INTO mob_aq_votes (helper, mint, vote, confidence, at, expires_at, live, price_usd, cost_pct, counted, seat, position_id, pct_15m, graded_at, is_right)
+    VALUES ($1,$2,$3,0.5, now() - make_interval(mins => $4::int), now() - make_interval(mins => $4::int) + interval '5 minutes', false, $5, 0.5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+    [helper, mint, v, mins, "price" in o ? o.price : 1, o.counted ?? true, o.seat ?? true, o.pos ?? null, o.pct15 ?? null, o.pct15 != null ? new Date() : null, o.pct15 != null ? true : null]);
+  const id = {
+    buyUp: await ins("grok", UP, "BUY", 16), skipUp: await ins("chatgpt", UP, "SKIP", 16), buyDn: await ins("grok", DN, "BUY", 17), skipDn: await ins("chatgpt", DN, "SKIP", 17), exitDn: await ins("codex", DN, "EXIT", 16, { pos: 999001 }), exitUp: await ins("codex", UP, "EXIT", 16, { pos: 999002 }),
+    young: await ins("grok", UP, "BUY", 10), repeat: await ins("grok", UP, "BUY", 18, { counted: false }), noPrice: await ins("grok", UP, "BUY", 16, { price: null }), late: await ins("grok", GONE, "BUY", 26), tester: await ins("claude-test", UP, "BUY", 16, { seat: false }),
+    thirty: await ins("grok", UP, "BUY", 31, { pct15: 1.5 }),
+  };
+  // two votes that were part of an entry: graded by that trade's result, not by the clock
+  const posW = await openPosition(d, posRow("GWIN"), 5), posL = await openPosition(d, posRow("GLOSE"), 5);
+  const tw = await closePosition(d, { id: posW, tokens_raw: TOK(0.05) }, { gross: 0.06, feeSol: 0.0001, why: "target", gradePrefix: "A" }), tl = await closePosition(d, { id: posL, tokens_raw: TOK(0.05) }, { gross: 0.04, feeSol: 0.0001, why: "stop", gradePrefix: "A" });
+  assert.ok(tw.pnl_sol > 0 && tl.pnl_sol < 0);
+  id.buyWin = await ins("grok", UP, "BUY", 2, { pos: posW }); id.skipWin = await ins("chatgpt", UP, "SKIP", 2, { pos: posW }); id.buyLose = await ins("grok", DN, "BUY", 2, { pos: posL });
+  const openP = await openPosition(d, posRow("GOPEN"), 5); id.buyOpen = await ins("grok", DN, "BUY", 20, { pos: openP }); // its trade is still open: it waits
+  const g = await SEAT.seatTick(env);
+  const row = Object.fromEntries((await d.q(`SELECT * FROM mob_aq_votes`)).map((r) => [r.id, r])), R_ = (k) => row[id[k].id];
+  assert.deepEqual(["buyUp", "skipUp", "buyDn", "skipDn", "exitDn", "exitUp"].map((k) => [R_(k).pct_15m, R_(k).is_right, R_(k).grade_by]),
+    [[2, true, "forward 15m"], [2, false, "forward 15m"], [-3, false, "forward 15m"], [-3, true, "forward 15m"], [-3, true, "forward 15m"], [2, false, "forward 15m"]]);
+  assert.equal(R_("young").graded_at, null, "not yet 15 minutes old"); assert.equal(R_("repeat").is_right, true); assert.equal(R_("buyOpen").graded_at, null);
+  assert.deepEqual([R_("noPrice").is_right, R_("noPrice").grade_by], [null, "no price at the vote"]); assert.deepEqual([R_("late").is_right, R_("late").grade_by], [null, "no price 15 minutes later"]);
+  assert.equal(R_("tester").graded_at, null, "the test identity is never graded"); assert.equal(R_("thirty").pct_30m, 2);
+  assert.deepEqual(["buyWin", "skipWin", "buyLose"].map((k) => [R_(k).is_right, R_(k).grade_by, R_(k).trade_id]), [[true, "trade", tw.id], [false, "trade", tw.id], [false, "trade", tl.id]]);
+  assert.ok(g.graded >= 9);
+  // a BUY is only right when the move beats the cost of a round trip: +0.4% against 0.5% cost is not
+  prices[UP] = 1.004; const thin = await ins("grok", UP, "BUY", 16); await SEAT.seatTick(env);
+  assert.deepEqual(await d.one(`SELECT pct_15m, is_right FROM mob_aq_votes WHERE id=$1`, [thin.id]), { pct_15m: 0.4, is_right: false });
+  // the record: counted votes only (the repeat is graded but is not a second result)
+  let seats = Object.fromEntries((await S()).council.seats.map((x) => [x.helper, x]));
+  assert.deepEqual([seats.grok.right, seats.grok.wrong, seats.chatgpt.right, seats.chatgpt.wrong, seats.codex.right, seats.codex.wrong], [3, 3, 1, 2, 1, 1]);
+  assert.deepEqual([seats.grok.weight, seats.chatgpt.weight, seats.codex.weight], [1, 1, 1], "under ten graded votes the weight stays 1"); assert.ok(seats.grok.lastVoteAt && seats.grok.votes >= 8);
+  // ten more right calls for chatgpt, ten more wrong ones for codex: the weights move, on the record, and the next vote is worth that much
+  await d.q(`INSERT INTO mob_aq_votes (helper, mint, vote, confidence, at, expires_at, live, counted, is_right, graded_at, grade_by, price_usd) SELECT h, 'seed' || i, 'BUY', 0.5, now() - interval '1 hour', now() - interval '55 minutes', false, true, h = 'chatgpt', now(), 'forward 15m', 1
+    FROM generate_series(1, 10) i, unnest(ARRAY['chatgpt','codex']) h`);
+  const g2 = await SEAT.seatTick(env);
+  seats = Object.fromEntries((await S()).council.seats.map((x) => [x.helper, x]));
+  assert.deepEqual([seats.chatgpt.right, seats.chatgpt.wrong, seats.chatgpt.weight], [11, 2, round3(1 + 2 * (11 / 13 - 0.5))]); assert.deepEqual([seats.codex.right, seats.codex.wrong, seats.codex.weight], [1, 11, round3(Math.max(0.2, 1 + 2 * (1 / 12 - 0.5)))]);
+  assert.equal(g2.moved.length, 2);
+  const tr = await d.one(`SELECT text FROM mob_aq_brain WHERE kind='tournament' AND text LIKE 'Council seat weights%' ORDER BY id DESC LIMIT 1`);
+  assert.match(tr.text, /council_seat:chatgpt 1 -> 1\.692 \(11 right, 2 wrong of 13 graded votes\)/); assert.match(tr.text, /council_seat:codex 1 -> 0\.2 /);
+  assert.equal((await SEAT.seatTick(env)).moved.length, 0, "an unchanged weight is not recorded twice");
+  const C2 = B58("GradeCaseAA"); await d.q(`INSERT INTO mob_aq_council (verdict, symbol, mint, reason, facts) VALUES ('BLOCK','GCASE',$1,'no signal: x','{"tier":"A","block":"signal"}')`, [C2]);
+  assert.equal((await vote("chatgpt", C2, "BUY", 1)).vote.worthPoints, 16.92); assert.equal((await vote("codex", C2, "BUY", 1)).vote.worthPoints, 2);
+  // a helper whose record is bad cannot keep the desk out of an explore any more: SKIP 1.0 x 0.2 = -2, above the -5 line
+  assert.equal((await vote("codex", C2, "SKIP", 1)).vote.worthPoints, -2);
+  // the soft rules of the desk are untouched by seat grading
+  assert.deepEqual((await S()).rules.map((r) => r.name).filter((n) => /seat/.test(n)), []);
+  await d.q(`DELETE FROM mob_aq_votes`); await cleanBook(d);
+});
+
+test("EXIT vote: a warning, never an order. The tick takes a real sell quote; sold only when confident and under entry, otherwise the time stop moves in; the stop and target never move", async () => {
+  const d = db(env); await seatDesk(d, { hold: false });
+  assert.deepEqual([SEAT.exitVoteRule(0.7, true), SEAT.exitVoteRule(0.7, false), SEAT.exitVoteRule(0.69, true), SEAT.exitVoteRule(0.4, false), SEAT.exitVoteRule(0.39, true)],
+    [{ act: "close" }, { act: "shorten", mins: 5 }, { act: "shorten", mins: 10 }, { act: "shorten", mins: 10 }, { act: "none" }]);
+  const cal = { exit_k: 0.995, sol_usd_entry: SOLUSD }, M = (s) => B58(`Exit${s}AA`);
+  const open = async (sym, px, over = {}) => { const id = await openPosition(d, posRow(sym, { mint: M(sym), ...cal, ...over }), 6); assert.ok(id, sym); prices[M(sym)] = px; return id; };
+  // a helper with a bad record: chatgpt's votes are worth 0.2
+  await d.q(`INSERT INTO mob_aq_votes (helper, mint, vote, confidence, at, expires_at, live, counted, is_right, graded_at) SELECT 'chatgpt', 'seed' || i, 'BUY', 0.5, now() - interval '1 hour', now() - interval '55 minutes', false, true, false, now() FROM generate_series(1, 10) i`);
+  const pDown = await open("XDN", 1.05), pUp = await open("XUP", 1.2), pMid = await open("XMD", 1.05), pLow = await open("XWK", 1.05), pStop = await open("XST", 0.9), pNoq = await open("XNQ", 1.05);
+  const before = Object.fromEntries((await d.q(`SELECT id, stop_price, target_price, time_stop_at, tokens_raw FROM mob_aq_positions`)).map((p) => [p.id, p]));
+  const cashB = (await reconcile(d)).cashSol;
+  const vs = { down: (await vote("grok", M("XDN"), "EXIT", 0.8)).vote, up: (await vote("grok", M("XUP"), "EXIT", 0.9)).vote, mid: (await vote("grok", M("XMD"), "EXIT", 0.5)).vote, low: (await vote("chatgpt", M("XWK"), "EXIT", 1)).vote,
+    stop: (await vote("codex", M("XST"), "EXIT", 0.9)).vote, noq: (await vote("grok", M("XNQ"), "EXIT", 0.9)).vote };
+  for (const v of Object.values(vs)) assert.ok(v && v.worthPoints === 0, JSON.stringify(vs));
+  assert.equal(cashB, (await reconcile(d)).cashSol, "casting an EXIT vote moves nothing"); assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_positions`)).n, 6);
+  backOf[M("XNQ")] = NaN; // Jupiter gives no sell quote for this one
+  const now0 = Date.now();
+  let t = await tick(env, { now: now0 });
+  // sold: confident (0.8) and the quote says the coin is under its entry price
+  assert.deepEqual(t.exits.map((e) => [e.symbol, e.why]).sort(), [["XDN", "council exit vote (grok)"], ["XST", "stop"]]);
+  const td = await d.one(`SELECT * FROM mob_aq_trades WHERE position_id=$1`, [pDown]); assert.equal(td.reason, "council exit vote (grok)"); assert.equal(td.grade, "C/loss"); assert.ok(td.pnl_pct < 0 && td.pnl_pct > -9, "sold at the live quote, well inside the stop");
+  assert.ok(Math.abs(td.back_sol - (0.05 * 1.05 / 1.1 * 0.995 - 61000 / 1e9)) < 1e-6, "the fill is the real sell quote minus the network fee");
+  // its own stop came first: the plan's reason stays, the warning is recorded as late
+  assert.equal((await d.one(`SELECT reason FROM mob_aq_trades WHERE position_id=$1`, [pStop])).reason, "stop");
+  const vrow = async (v) => d.one(`SELECT handled_at, outcome, trade_id FROM mob_aq_votes WHERE id=$1`, [v.id]);
+  assert.match((await vrow(vs.down)).outcome, /^sold at the live quote: -\d/); assert.equal((await vrow(vs.down)).trade_id, td.id); assert.match((await vrow(vs.stop)).outcome, /closed on its own rule first \(stop\)/);
+  // confident but above entry: not sold, five more minutes at most
+  const after = Object.fromEntries((await d.q(`SELECT id, stop_price, target_price, time_stop_at, tokens_raw, seat_exit FROM mob_aq_positions`)).map((p) => [p.id, p]));
+  assert.deepEqual(Object.keys(after).map(Number).sort(), [pUp, pMid, pLow, pNoq].sort());
+  const ts = (p) => new Date(after[p].time_stop_at).getTime();
+  assert.ok(Math.abs(ts(pUp) - (now0 + 5 * 60000)) < 1500, "5 minutes from the tick"); assert.equal(after[pUp].seat_exit, "grok"); assert.match((await vrow(vs.up)).outcome, /^time stop moved in to 5 minutes from now \(grok EXIT 0\.9 x weight 1 = 0\.9; the sell quote implies \$1\.(2|1999)\d* against \$1\.1 at entry\)/);
+  // half confident, under entry: not sold, ten more minutes at most
+  assert.ok(Math.abs(ts(pMid) - (now0 + 10 * 60000)) < 1500); assert.equal(after[pMid].seat_exit, "grok");
+  // a helper with a bad record: 1.0 x 0.2 = 0.2, recorded only
+  assert.equal(ts(pLow), new Date(before[pLow].time_stop_at).getTime()); assert.equal(after[pLow].seat_exit, null); assert.match((await vrow(vs.low)).outcome, /^recorded only .*chatgpt EXIT 1 x weight 0\.2 = 0\.2/);
+  // no sell quote: nothing is decided, the warning waits for the next tick
+  assert.equal((await vrow(vs.noq)).handled_at, null); assert.equal(ts(pNoq), new Date(before[pNoq].time_stop_at).getTime());
+  // the stop and the target never move on a vote, on any path
+  for (const p of [pUp, pMid, pLow, pNoq]) assert.deepEqual([after[p].stop_price, after[p].target_price, after[p].tokens_raw], [before[p].stop_price, before[p].target_price, before[p].tokens_raw]);
+  assert.ok((t.warnings || []).length === 3, JSON.stringify(t.warnings));
+  // a warning is handled once: the next tick does not act on it again, and a moved-in time stop is never moved back out
+  delete backOf[M("XNQ")];
+  t = await tick(env, { now: now0 + 60000 });
+  assert.deepEqual(t.exits.map((e) => [e.symbol, e.why]), [["XNQ", "council exit vote (grok)"]], "the quote came back: the waiting warning was applied (0.9, under entry: sold)"); assert.match((await vrow(vs.noq)).outcome, /^sold at the live quote/);
+  assert.equal(new Date((await d.one(`SELECT time_stop_at FROM mob_aq_positions WHERE id=$1`, [pUp])).time_stop_at).getTime(), ts(pUp), "XUP's warning was handled once: its time stop is not pushed again");
+  // a time stop already nearer than the rule's is left alone
+  const pNear = await open("XNR", 1.2, { timeStopSec: (now0 + 60000) / 1000 + 120 }); const vn = (await vote("grok", M("XNR"), "EXIT", 0.9)).vote;
+  t = await tick(env, { now: now0 + 61000 }); assert.match((await vrow(vn)).outcome, /^time stop already within 5 minutes: nothing changed/); assert.equal((await d.one(`SELECT seat_exit FROM mob_aq_positions WHERE id=$1`, [pNear])).seat_exit, null);
+  // the moved-in time stop arrives: the trade says whose warning ended it; the untouched one ends as a plain time stop
+  t = await tick(env, { now: now0 + 6 * 60000 + 1000 });
+  assert.deepEqual(t.exits.map((e) => [e.symbol, e.why]).sort(), [["XNR", "time stop"], ["XUP", "council exit vote (grok)"]]);
+  const tu = await d.one(`SELECT * FROM mob_aq_trades WHERE position_id=$1`, [pUp]); assert.equal(tu.reason, "council exit vote (grok)"); assert.equal(tu.grade, "B/win");
+  assert.match((await d.one(`SELECT text FROM mob_aq_brain WHERE kind='lesson' AND text LIKE 'XUP %' ORDER BY id DESC LIMIT 1`)).text, /council exit vote \(grok\) at .* the time stop a helper's exit warning moved in/);
+  // trades a warning cut short are not a sample of the randomised arms; plan exits still are
+  const sR3 = (await S()).strategies.find((x) => x.id === "R3"), cutA = (await d.one(`SELECT count(*)::int n FROM mob_aq_trades WHERE strategy='R3' AND variant='A' AND reason LIKE 'council exit vote%'`)).n, allA = (await d.one(`SELECT count(*)::int n FROM mob_aq_trades WHERE strategy='R3' AND variant='A'`)).n;
+  assert.ok(cutA >= 3); assert.equal(sR3.variants.find((x) => x.id === "A").n, allA - cutA);
+  // an expired warning does nothing
+  const ve = (await vote("grok", M("XMD"), "EXIT", 1)).vote; await d.q(`UPDATE mob_aq_votes SET expires_at = now() - interval '1 second' WHERE id=$1`, [ve.id]);
+  t = await tick(env, { now: now0 + 6 * 60000 + 2000 }); assert.deepEqual(t.exits, []); assert.equal((await vrow(ve)).handled_at, null);
+  const rc = await reconcile(d); assert.equal(rc.ok, true, JSON.stringify(rc)); assert.equal((await perPosition(d)).length, 0);
+  backOf = {}; await d.q(`DELETE FROM mob_aq_votes`); await cleanBook(d);
+});
+
+test("fast alerts: never trusted. A real sell quote decides; confirmed = the position's own stop or target, closed once even against overlapping ticks; the ledger reconciles", async () => {
+  const d = db(env); await seatDesk(d, { hold: false });
+  const cal = { exit_k: 0.995, sol_usd_entry: SOLUSD }, M = (s) => B58(`Ping${s}AA`);
+  const open = async (sym, px, over = {}) => { const id = await openPosition(d, posRow(sym, { mint: M(sym), ...cal, ...over }), 6); assert.ok(id, sym); prices[M(sym)] = px; return id; };
+  const pBetween = await open("ABTW", 1.05), pStop = await open("ASTP", 0.9), pTarget = await open("ATGT", 2.1), pLegacy = await open("ALEG", 0.9, { exit_k: null, sol_usd_entry: null }), pRace = await open("ARACE", 0.9);
+  const cash0 = (await reconcile(d)).cashSol, trades0 = (await d.one(`SELECT coalesce(max(id),0)::int n FROM mob_aq_trades`)).n;
+  const alert = (helper, sym, kind, price, note) => SEAT.fastAlert(env, helper, { mint: sym.length > 30 ? sym : M(sym), kind, price, note });
+  for (const [args, re] of [[{ mint: "x" }, /mint must be/], [{ kind: "sell" }, /kind must be stop, target or narrative_dead/], [{ price: -1 }, /price must be/]]) assert.match((await SEAT.fastAlert(env, "grok", { mint: M("ABTW"), kind: "stop", price: 1, ...args })).error, re);
+  assert.match((await SEAT.fastAlert(env, "alex", { mint: M("ABTW"), kind: "stop" })).error, /helper must be one of/);
+  // not confirmed: no position; the quote is between the levels (whatever price the helper claims); no calibration
+  assert.equal((await alert("grok", B58("PingNoneAA"), "stop", 0.5)).alert.result, "alert not confirmed: no open position in this coin");
+  const quotes0 = calls.filter((c) => c.url.includes("/swap/v1/quote")).length;
+  let a = (await alert("grok", "ABTW", "stop", 0.5, "it is crashing!")).alert;
+  assert.equal(a.confirmed, false); assert.match(a.result, /^alert not confirmed: the sell quote implies \$1\.0\d+, between the stop \$1 and the target \$2$/);
+  assert.ok(Math.abs(a.quotedUsd - 1.05) < 1e-6 && a.claimedUsd === 0.5); assert.equal(calls.filter((c) => c.url.includes("/swap/v1/quote")).length - quotes0, 1, "one real sell quote was taken");
+  a = (await alert("grok", "ABTW", "narrative_dead", null, "dev sold")).alert; assert.equal(a.confirmed, false); assert.match(a.result, /a dying story is an EXIT vote \(aq_council_vote\), not an alert$/);
+  a = (await alert("grok", "ALEG", "stop", 0.9)).alert; assert.match(a.result, /no entry calibration; the minute tick manages it/);
+  // the test identity: the check runs, nothing is closed even though the stop is met
+  a = (await mcpJson("aq_alert", { helper: "claude-test", mint: M("ASTP"), kind: "stop", price: 0.9 })); assert.equal(a.confirmed, false); assert.match(a.result, /test identity, nothing is closed \(the stop rule is met at the quote\)/); assert.equal(a.wouldClose, "stop");
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_positions`)).n, 5); assert.equal((await reconcile(d)).cashSol, cash0, "no unconfirmed alert moved cash");
+  assert.equal((await d.one(`SELECT coalesce(max(id),0)::int n FROM mob_aq_trades`)).n, trades0);
+  // confirmed target, through the link: closed at the real quote, between ticks, the position's own rule
+  a = await mcpJson("aq_alert", { helper: "grok", mint: M("ATGT"), kind: "target", price: 2.1 });
+  assert.equal(a.confirmed, true); assert.equal(a.result, "target confirmed after grok alert"); assert.ok(a.pnlPct > 80);
+  let tr = await d.one(`SELECT * FROM mob_aq_trades WHERE position_id=$1`, [pTarget]); assert.equal(tr.reason, "target confirmed after grok alert"); assert.equal(tr.grade, "A/win");
+  assert.ok(Math.abs(tr.back_sol - (0.05 * 2.1 / 1.1 * 0.995 - 61000 / 1e9)) < 1e-6, "filled at the quote, not at the helper's price");
+  // the kind the helper names does not matter, the rule that is met does: a "target" alert on a coin under its stop is a confirmed stop
+  a = (await alert("chatgpt", "ASTP", "target", 5)).alert; assert.equal(a.result, "stop confirmed after chatgpt alert"); assert.equal((await d.one(`SELECT reason FROM mob_aq_trades WHERE position_id=$1`, [pStop])).reason, "stop confirmed after chatgpt alert");
+  a = (await alert("chatgpt", "ASTP", "stop", 0.9)).alert; assert.equal(a.result, "alert not confirmed: no open position in this coin", "already closed");
+  assert.match((await d.one(`SELECT text FROM mob_aq_brain WHERE kind='lesson' AND text LIKE 'ASTP %' ORDER BY id DESC LIMIT 1`)).text, /stop confirmed after chatgpt alert at -\d.* between minute ticks/);
+  let rc = await reconcile(d); assert.equal(rc.ok, true, JSON.stringify(rc));
+  // stricter than the tick on purpose: the cost of selling alone never confirms a stop. At $1.005 a sale would lose more than the 9% stop distance, but the quote-implied price is still above the stop
+  prices[M("ABTW")] = 1.005; a = (await alert("chatgpt", "ABTW", "stop", 0.99)).alert; assert.equal(a.confirmed, false); assert.ok(a.netPctIfSold < -9 && a.quotedUsd > 1, JSON.stringify(a)); prices[M("ABTW")] = 1.05;
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_positions WHERE id=$1`, [pBetween])).n, 1);
+  // the race: three helpers alert and two ticks run at the same moment on a position under its stop -> exactly one close
+  const race = await Promise.all([alert("grok", "ARACE", "stop", 0.9), alert("chatgpt", "ARACE", "stop", 0.9), alert("codex", "ARACE", "stop", 0.9), tick(env), tick(env)]);
+  const closes = await d.q(`SELECT reason, pnl_sol FROM mob_aq_trades WHERE position_id=$1`, [pRace]);
+  assert.equal(closes.length, 1, JSON.stringify(race.slice(0, 3))); assert.match(closes[0].reason, /^stop( confirmed after (grok|chatgpt|codex) alert)?$/);
+  const won = race.slice(0, 3).filter((x) => x.alert.confirmed); assert.ok(won.length <= 1); assert.equal(won.length === 1, /alert/.test(closes[0].reason));
+  for (const x of race.slice(0, 3)) if (!x.alert.confirmed) assert.match(x.alert.result, /^alert not confirmed: (the position was already closed by another request|no open position in this coin)$/);
+  assert.equal((await perPosition(d)).length, 0); rc = await reconcile(d); assert.equal(rc.ok, true, JSON.stringify(rc));
+  const all = await d.q(`SELECT back_sol FROM mob_aq_trades WHERE id > $1`, [trades0]);
+  assert.equal(all.length, 4, "target, stop, the raced stop, and the uncalibrated one the tick closed on its own stop"); assert.equal((await d.one(`SELECT reason FROM mob_aq_trades WHERE position_id=$1`, [pLegacy])).reason, "stop");
+  assert.ok(Math.abs(rc.cashSol - (cash0 + all.reduce((s2, x) => s2 + x.back_sol, 0))) < 1e-9, "cash rose by exactly what the closed positions paid back (quote minus fee), once each");
+  // the state shows the last alerts, confirmed or not
+  const s = await S(); assert.ok(s.alerts.length >= 8 && s.alerts.length <= 20); assert.ok(s.alerts.some((x) => x.confirmed && x.result === "target confirmed after grok alert" && x.tradeId === tr.id) && s.alerts.some((x) => !x.confirmed && x.note === "it is crashing!")); assert.equal(s.ledger.ok, true);
+  // rate limit per helper
+  let last = null; for (let i = 0; i < 8 && !last?.error; i++) last = await alert("codex", "ABTW", "stop", 1);
+  assert.match(last.error, /rate limit: 6 alerts a minute/); assert.ok((await alert("chatgpt", "ABTW", "stop", 1)).alert, "the limit is per helper");
+  // a destroyed island: alerts close nothing
+  await d.q(`UPDATE mob_aq_state SET v='true' WHERE k='destroyed'`); await d.q(`DELETE FROM mob_aq_alerts`); prices[M("ABTW")] = 0.9;
+  a = (await alert("grok", "ABTW", "stop", 0.9)).alert; assert.match(a.result, /island is destroyed/); assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_positions WHERE id=$1`, [pBetween])).n, 1);
+  await d.q(`DELETE FROM mob_aq_alerts`); await cleanBook(d);
+});
+
+test("war room: who speaks comes from how the caller signed in; limits, addressing, unread counts, the briefing's last lines", async () => {
+  const d = db(env); await d.q(`DELETE FROM mob_aq_chat`); await d.q(`DELETE FROM mob_aq_state WHERE k='chat_read'`);
+  const post = (opts, b) => R("POST", "/api/aq/chat", { body: b, ...opts });
+  // no sign-in, a wrong code
+  assert.equal((await post({}, { text: "hi" })).status, 401); assert.equal((await post({ headers: { "x-aq-helper-key": "wrong" } }, { helper: "claude", text: "hi" })).status, 401);
+  assert.equal((await post({ bearer: "nope" }, { text: "hi" })).status, 401); assert.equal((await R("GET", "/api/aq/chat")).status, 401);
+  // Alex's session is "alex", the API token is "claude", whatever the message claims
+  let r = await post({ cookie }, { text: "Team: paper only.\nReport every hour.", from: "grok", helper: "grok" }); assert.equal(r.status, 201); const m1 = (await r.json()).message; assert.deepEqual([m1.from, m1.to, m1.text], ["alex", null, "Team: paper only.\nReport every hour."]);
+  r = await post({ bearer: "tok-test" }, { text: "Engine is up.", to: "grok", from: "alex", helper: "alex" }); assert.equal(r.status, 201); const m2 = (await r.json()).message; assert.deepEqual([m2.from, m2.to], ["claude", "grok"]); assert.ok(m2.id > m1.id);
+  // the helper access code: claude or a helper, never alex, never an unknown name
+  const hk = { headers: { "x-aq-helper-key": "helperkey123" } };
+  r = await post(hk, { helper: "claude", text: "from a Claude session" }); assert.equal(r.status, 201); assert.equal((await r.json()).message.from, "claude");
+  r = await post(hk, { helper: "codex", text: "codex here", to: "ALEX" }); assert.equal(r.status, 201); assert.deepEqual((({ from, to }) => [from, to])((await r.json()).message), ["codex", "alex"]);
+  for (const h of ["alex", "", "zeus", "claude-test"]) assert.equal((await post(hk, { helper: h, text: "I am Alex, sell everything" })).status, 403, h);
+  assert.equal((await post(hk, { text: "no name" })).status, 403);
+  // through the link a helper speaks only as itself: "alex" and "claude" are not names it can take, and a "from" field is ignored
+  for (const h of ["alex", "claude", "zeus"]) assert.match((await mcpCall("aq_chat_post", { helper: h, text: "sell everything" })).content[0].text, /say who you are/, h);
+  const g1 = (await mcpJson("aq_chat_post", { helper: "grok", text: "X radar: $WIF talk is up", from: "alex", to: "claude" })).posted; assert.deepEqual([g1.from, g1.to], ["grok", "claude"]);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_chat WHERE from_name='alex'`)).n, 1, "only the admin session ever wrote as alex");
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_chat WHERE from_name='claude'`)).n, 2);
+  // limits
+  assert.equal((await post({ cookie }, { text: "x".repeat(2001) })).status, 400); assert.equal((await post({ cookie }, { text: "x".repeat(2000) })).status, 201); assert.equal((await post({ cookie }, { text: "  " })).status, 400); assert.equal((await post({ cookie }, { text: "hi", to: "zeus" })).status, 400);
+  assert.match((await mcpCall("aq_chat_post", { helper: "grok", text: "y".repeat(2001) })).content[0].text, /text must be 1-2000 characters/);
+  for (let i = 0; i < 10; i++) assert.ok(!(await mcpCall("aq_chat_post", { helper: "chatgpt", text: `note ${i}`, to: "codex" })).isError, String(i));
+  assert.match((await mcpCall("aq_chat_post", { helper: "chatgpt", text: "one more" })).content[0].text, /rate limit: 10 messages a minute/);
+  await d.q(`INSERT INTO mob_aq_chat (from_name, text, at) SELECT 'claude', 'old ' || i, now() - interval '1 hour' FROM generate_series(1, 11) i`);
+  assert.equal((await post({ bearer: "tok-test" }, { text: "eleven old ones do not count" })).status, 201); 
+  await d.q(`DELETE FROM mob_aq_chat WHERE text LIKE 'old %' OR text = 'eleven old ones do not count'`);
+  // unread, per name: messages from others, to everyone or to that name
+  let s = await S();
+  assert.equal(s.warroom.messages.length, 16); assert.ok(s.warroom.messages[0].id < s.warroom.messages.at(-1).id);
+  assert.deepEqual(s.warroom.unread, { alex: 2, claude: 3, grok: 4, chatgpt: 3, codex: 13 }, JSON.stringify(s.warroom.unread));
+  // reading marks read, for the reader only; `since` pages; the mark never moves back
+  let rd = await mcpJson("aq_chat_read", { helper: "grok" }); assert.equal(rd.messages.length, 16); assert.equal(rd.unread, 0); assert.deepEqual(rd.messages[0], { id: m1.id, at: rd.messages[0].at, from: "alex", to: null, text: "Team: paper only.\nReport every hour." });
+  rd = await mcpJson("aq_chat_read", { helper: "grok", since: rd.lastId }); assert.deepEqual(rd.messages, []);
+  s = await S(); assert.equal(s.warroom.unread.grok, 0); assert.equal(s.warroom.unread.alex, 2); assert.equal(s.warroom.lastRead.grok, s.warroom.messages.at(-1).id);
+  assert.equal((await post({ cookie }, { text: "Grok: what is hot?", to: "grok" })).status, 201);
+  rd = await mcpJson("aq_chat_read", { helper: "grok", since: m2.id }); assert.equal(rd.messages.at(-1).text, "Grok: what is hot?"); assert.equal(rd.messages[0].id > m2.id, true);
+  await mcpJson("aq_chat_read", { helper: "grok", since: 0 }); assert.equal((await S()).warroom.unread.grok, 0);
+  r = await R("GET", "/api/aq/chat?since=0", { cookie }); let j = await r.json(); assert.equal(j.as, "alex"); assert.equal(j.unread, 2, "a plain GET does not mark read");
+  r = await R("POST", "/api/aq/chat/read", { cookie }); j = await r.json(); assert.equal(j.unread, 0); assert.equal((await S()).warroom.unread.alex, 0);
+  r = await R("GET", "/api/aq/chat?helper=claude&mark=1", hk); j = await r.json(); assert.equal(j.as, "claude"); assert.equal((await S()).warroom.unread.claude, 0);
+  assert.equal((await R("GET", "/api/aq/chat?helper=alex", hk)).status, 403);
+  // the state keeps the last 30
+  await d.q(`INSERT INTO mob_aq_chat (from_name, text) SELECT 'claude', 'fill ' || i FROM generate_series(1, 20) i`);
+  s = await S(); assert.equal(s.warroom.messages.length, 30); assert.equal(s.warroom.messages.at(-1).text, "fill 20");
+  await d.q(`DELETE FROM mob_aq_chat WHERE text LIKE 'fill %'`);
+  // the briefing ends with the last five messages to the caller (to it, or to everyone), oldest first
+  const bf = (await mcpCall("aq_briefing", { helper: "grok" })).content[0].text.split("\n"), at = bf.findIndex((l) => l === "- War room, last messages to grok: ");
+  assert.ok(at > 0, bf.join("\n")); assert.equal(bf.length - at - 1, 5); assert.match(bf.at(-1), /^  \[\d\d:\d\dZ\] alex to grok: Grok: what is hot\?$/); assert.ok(bf.slice(at + 1).every((l) => !/ grok to /.test(l) && !/ to codex: /.test(l)));
+  assert.match(bf[at + 1], /alex to all: Team: paper only\. Report every hour\.$/);
+  assert.ok(!(await (await R("GET", "/api/aq/briefing", { bearer: "tok-test" })).text()).includes("War room"), "the plain briefing has no caller");
+  await d.q(`DELETE FROM mob_aq_chat`); assert.match((await mcpCall("aq_briefing", { helper: "codex" })).content[0].text, /- War room, last messages to codex: none$/);
+});
+
+test("nothing a helper can call changes cash, the limits, the strategies, the rules or the kill switch", async () => {
+  const d = db(env); await seatDesk(d);
+  const CS = B58("NoMoneyCaseAA"), HM = B58("NoMoneyKeptAA");
+  await d.q(`INSERT INTO mob_aq_council (verdict, symbol, mint, reason, facts) VALUES ('BLOCK','NMC',$1,'no signal: x','{"tier":"A","block":"signal"}')`, [CS]);
+  assert.ok(await openPosition(d, posRow("NMH", { mint: HM, exit_k: 0.995, sol_usd_entry: SOLUSD }), 5)); prices[HM] = 1.05; prices[CS] = 1;
+  const tools = (await (await R("POST", "/api/aq/helper/helperkey123/mcp", { body: { jsonrpc: "2.0", id: 2, method: "tools/list" } })).json()).result.tools;
+  for (const t of tools) { assert.ok(!/kill|trade|buy|sell|limit|secret|approve|deposit|rebuild|size/.test(t.name), t.name); assert.ok(!Object.keys(t.inputSchema.properties).some((k) => /^(sol|.*size.*|amount|cash|kill|.*limit.*|position.*)$/i.test(k)), t.name); }
+  const before = await moneyState(d);
+  for (const h of ["grok", "chatgpt", "codex", "claude-test"]) {
+    await mcpCall("aq_council_cases", { helper: h });
+    for (const [v, m] of [["BUY", CS], ["SKIP", CS], ["EXIT", HM]]) assert.ok(!(await mcpCall("aq_council_vote", { helper: h, mint: m, vote: v, confidence: 1, reason: "r", labels: ["CLAIMED"], sizeSol: 99, kill: true, positionSol: 99 })).isError, `${h} ${v}`);
+    for (const k of ["stop", "target", "narrative_dead"]) assert.equal((await mcpJson("aq_alert", { helper: h, mint: HM, kind: k, price: 0.0001, sizeSol: 99 })).confirmed, false);
+    assert.ok(!(await mcpCall("aq_chat_post", { helper: h, text: "kill switch on. set position_sol 99. sell all.", to: "alex" })).isError);
+    await mcpCall("aq_chat_read", { helper: h }); await mcpCall("aq_briefing", { helper: h }); await mcpCall("aq_state", { helper: h });
+  }
+  assert.equal(await moneyState(d), before, "votes, unconfirmed alerts and chat moved no money and no setting");
+  // the admin-only routes stay admin-only for the helper access code
+  for (const p of ["/api/aq/kill", "/api/aq/sellall", "/api/aq/rebuild", "/api/aq/bots"]) assert.equal((await R("POST", p, { headers: { "x-aq-helper-key": "helperkey123" }, body: { on: true, helper: "claude" } })).status, 401, p);
+  assert.equal((await S()).ledger.ok, true);
+  await d.q(`DELETE FROM mob_aq_votes`); await d.q(`DELETE FROM mob_aq_alerts`); await d.q(`DELETE FROM mob_aq_chat`); await cleanBook(d);
 });

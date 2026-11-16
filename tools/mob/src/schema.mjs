@@ -295,4 +295,9 @@ ALTER TABLE mob_aq_whales ADD COLUMN IF NOT EXISTS cand boolean NOT NULL DEFAULT
 ALTER TABLE mob_aq_whales ADD COLUMN IF NOT EXISTS jup jsonb;
 ALTER TABLE mob_aq_whales ADD COLUMN IF NOT EXISTS kol jsonb;
 ALTER TABLE mob_aq_whales ADD COLUMN IF NOT EXISTS scored_at timestamptz;
-CREATE TABLE IF NOT EXISTS mob_aq_pools (pool text PRIMARY KEY, mint text, symbol text, tier text, updated_at timestamptz NOT NULL DEFAULT now())`;
+CREATE TABLE IF NOT EXISTS mob_aq_pools (pool text PRIMARY KEY, mint text, symbol text, tier text, updated_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS mob_aq_votes (id serial PRIMARY KEY, helper text NOT NULL, mint text NOT NULL, symbol text, vote text NOT NULL, confidence double precision NOT NULL, reason text, labels jsonb NOT NULL DEFAULT '[]', at timestamptz NOT NULL DEFAULT now(), expires_at timestamptz NOT NULL, live boolean NOT NULL DEFAULT true, replaced_at timestamptz, seat boolean NOT NULL DEFAULT true, counted boolean NOT NULL DEFAULT true, position_id int, price_usd double precision, cost_pct double precision, judged_at timestamptz, applied jsonb, handled_at timestamptz, outcome text, pct_15m double precision, pct_30m double precision, trade_id int, trade_pnl_pct double precision, is_right boolean, grade_by text, graded_at timestamptz);
+CREATE UNIQUE INDEX IF NOT EXISTS aqx_votes_live ON mob_aq_votes (helper, mint) WHERE live;
+CREATE TABLE IF NOT EXISTS mob_aq_alerts (id serial PRIMARY KEY, helper text NOT NULL, mint text NOT NULL, symbol text, kind text NOT NULL, price double precision, note text, at timestamptz NOT NULL DEFAULT now(), position_id int, confirmed boolean NOT NULL DEFAULT false, result text, trade_id int, facts jsonb);
+CREATE TABLE IF NOT EXISTS mob_aq_chat (id bigserial PRIMARY KEY, at timestamptz NOT NULL DEFAULT now(), from_name text NOT NULL, to_name text, text text NOT NULL);
+ALTER TABLE mob_aq_positions ADD COLUMN IF NOT EXISTS seat_exit text`;

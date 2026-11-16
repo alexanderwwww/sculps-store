@@ -1,9 +1,12 @@
 // Aquarius helper MCP (JSON-RPC 2.0 over streamable HTTP): POST /api/aq/helper/<AQ_HELPER_KEY>/mcp
 // ChatGPT, Codex and Grok connect with this link. LABOR ONLY: read state, read the briefing, post evidence, propose a bot
-// (pending until the Council), work the task board. No tool can trade, change limits, touch the kill switch, read secrets
-// or create an approved bot. Every call is logged with the helper's name.
+// (pending until the Council), work the task board, sit on the Council (cases, votes), raise a fast alert and talk in the
+// war room (seat.mjs). No tool can trade, change limits, touch the kill switch, read secrets or create an approved bot: a
+// vote is one soft rule, an alert only makes the engine check a position's own stop/target at a real quote.
+// Every call is logged with the helper's name.
 import { db } from "../db.mjs";
 import { submitPick } from "./lanes.mjs";
+import { councilCases, castVote, fastAlert, chatPost, chatRead, SEATS, TESTERS, CHAT_MAX } from "./seat.mjs";
 import { buildState, briefing, helperMessage, proposeBot, ensureSeed, HELPERS, ROLE_DEPT } from "./engine.mjs";
 
 const S = (d, props = {}, req = []) => ({ type: "object", properties: { helper: { type: "string", enum: HELPERS, description: "who is calling" }, ...props }, required: req, additionalProperties: false, description: d });
@@ -18,7 +21,16 @@ export const HELPER_TOOLS = [
     inputSchema: S("", { symbol: { type: "string" }, mint: { type: "string", description: "Solana token address" }, entry: { type: "number", description: "your intended entry price in USD (recorded; the lane enters at the live price)" }, stopPct: { type: "number" }, targetPct: { type: "number" }, thesis: { type: "string" }, labels: { type: "array", items: { type: "string", enum: ["VERIFIED", "REPORTED", "CLAIMED", "INFERRED"] } } }, ["mint", "stopPct", "targetPct", "thesis", "labels"]) },
   { name: "aq_list_tasks", description: "Open tasks on the board (research, writing, code suggestions).", inputSchema: S("", { status: { type: "string", enum: ["open", "done"] } }) },
   { name: "aq_task_done", description: "Hand in a task result.", inputSchema: S("", { id: { type: "integer" }, result: { type: "string" } }, ["id", "result"]) },
+  { name: "aq_council_cases", description: "Your Council seat: the cases open for a vote right now. Every coin the Council judged in the last 10 minutes (tier, strategy, signal strength, measured round trip, ATR5, stop/target plan, soft score, verdict with its deciding number, whether the hard blocks are clear) and every open position (entry, now, stop, target, age). Read only.", inputSchema: S("") },
+  { name: "aq_council_vote", description: "Cast your Council vote on a case. BUY or SKIP on a judged coin: one soft rule in its score for 5 minutes (it can lift a partial setup to a normal entry or keep the desk out; it never passes a hard block, the cost gate, cash, slots or the kill switch and never changes the size). EXIT on an open position: a warning, the engine checks it with a real sell quote on its next tick and applies its own exit-vote rule. One live vote per coin (a newer one replaces it). Every vote is graded and your weight follows your record.",
+    inputSchema: S("", { mint: { type: "string", description: "Solana token address from aq_council_cases" }, vote: { type: "string", enum: ["BUY", "SKIP", "EXIT"] }, confidence: { type: "number", minimum: 0, maximum: 1 }, reason: { type: "string" }, labels: { type: "array", items: { type: "string", enum: ["VERIFIED", "REPORTED", "CLAIMED", "INFERRED"] } } }, ["mint", "vote", "confidence", "reason", "labels"]) },
+  { name: "aq_alert", description: "Fast alert on an OPEN position between minute ticks. It is not trusted: the engine takes a real sell quote at once and closes the position only if its own stop or target is truly met at that quote; otherwise it answers 'alert not confirmed'. For a dying story use aq_council_vote EXIT instead.",
+    inputSchema: S("", { mint: { type: "string" }, kind: { type: "string", enum: ["stop", "target", "narrative_dead"] }, price: { type: "number", description: "the USD price you saw" }, note: { type: "string" } }, ["mint", "kind"]) },
+  { name: "aq_chat_post", description: `War room: post a message to everyone or to one of alex, claude, grok, chatgpt, codex. ${CHAT_MAX} characters at most. Talk only: nothing here is an order to the engine.`,
+    inputSchema: S("", { text: { type: "string" }, to: { type: "string", enum: ["alex", "claude", "grok", "chatgpt", "codex"] } }, ["text"]) },
+  { name: "aq_chat_read", description: "War room: read messages (the last 30, or everything after message id `since`) and mark them read for you.", inputSchema: S("", { since: { type: "integer" } }) },
 ];
+const NAMED = ["aq_post_evidence", "aq_submit_pick", "aq_council_vote", "aq_alert", "aq_chat_post", "aq_chat_read"]; // tools that need to know who is calling
 // The bot a helper proposes through: the Learning dept's experiment scheduler (an approved seed bot).
 const PROPOSER = "ln.experiments";
 const text = (t) => [{ type: "text", text: typeof t === "string" ? t : JSON.stringify(t) }];
@@ -26,7 +38,13 @@ const text = (t) => [{ type: "text", text: typeof t === "string" ? t : JSON.stri
 async function callTool(env, name, a, helper) {
   const d = db(env);
   if (name === "aq_state") return text(await buildState(env));
-  if (name === "aq_briefing") return text(await briefing(env));
+  if (name === "aq_briefing") return text(await briefing(env, SEATS.includes(helper) || TESTERS.includes(helper) ? helper : null));
+  if (name === "aq_council_cases") return text(await councilCases(env));
+  if (name === "aq_council_vote") { const r = await castVote(env, helper, a); if (r.error) throw new Error(r.error); return text(r.vote); }
+  if (name === "aq_alert") { const r = await fastAlert(env, helper, a); if (r.error) throw new Error(r.error); return text(r.alert); }
+  // the sender is the caller's own name, never a field of the message: a helper cannot speak as alex or claude here
+  if (name === "aq_chat_post") { const r = await chatPost(env, helper, { text: a.text, to: a.to }); if (r.error) throw new Error(r.error); return text({ posted: r.message }); }
+  if (name === "aq_chat_read") { const r = await chatRead(env, helper, { since: a.since ?? null }); if (r.error) throw new Error(r.error); return text(r); }
   if (name === "aq_post_evidence") {
     const sec = String(a.section || "").toLowerCase();
     const r = await helperMessage(env, { from: helper, role: a.role, text: a.text, labels: [a.label], channel: sec === "x" || sec === "twitter" ? "x" : null });
@@ -74,12 +92,13 @@ async function rpc(env, b, session) {
   if (m === "tools/list") return reply({ tools: HELPER_TOOLS });
   if (m === "tools/call") {
     const name = String(b.params?.name || ""), a = b.params?.arguments || {};
-    let helper = HELPERS.includes(String(a.helper || "").toLowerCase()) ? String(a.helper).toLowerCase() : session.helper;
+    const said = String(a.helper || "").toLowerCase();
+    let helper = HELPERS.includes(said) || TESTERS.includes(said) ? said : session.helper;
     if (!helper && session.id) helper = (await d.one(`SELECT helper FROM mob_aq_helper_log WHERE session=$1 AND tool='initialize' ORDER BY id DESC LIMIT 1`, [session.id]))?.helper;
     helper ||= "unknown";
     const { helper: _h, ...logged } = a;
     try {
-      if ((name === "aq_post_evidence" || name === "aq_submit_pick") && !HELPERS.includes(helper)) throw new Error(`say who you are: helper must be one of ${HELPERS.join(", ")}`);
+      if (NAMED.includes(name) && !HELPERS.includes(helper) && !(TESTERS.includes(helper) && name !== "aq_post_evidence" && name !== "aq_submit_pick")) throw new Error(`say who you are: helper must be one of ${HELPERS.join(", ")}`);
       const content = await callTool(env, name, a, helper);
       await d.q(`INSERT INTO mob_aq_helper_log (helper, session, tool, args, ok) VALUES ($1,$2,$3,$4,true)`, [helper, session.id, name, JSON.stringify(logged)]);
       return reply({ content });

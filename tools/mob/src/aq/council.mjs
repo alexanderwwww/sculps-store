@@ -8,6 +8,7 @@ import { strengthOf, tradability, feeFloorSize, planFor, seed01, ruleWeight, vol
 import { atr5Pct, fibSetup, whaleSetup, momentumSetup, bounceSetup, hardSafety, softObjections, scoreOf, tierOf, sizeFor, roundTripPct, round, COUNCIL, SOFT_RULES } from "./logic.mjs";
 import { whaleSignal } from "./whales.mjs";
 import { openPosition } from "./ledger.mjs";
+import { seatEffects, seatText, markApplied, seatRequeue, markJudged, KEEP_OUT_POINTS, LIFT_AT } from "./seat.mjs";
 
 export const RUG_PER_TICK = 4;
 export const MAX_EVAL = 10, COOLDOWN_MIN = 10, RECHECK_MIN = 3, WHALE_CHECKS = 6, MIN_OWN_BARS = 30, KB_COST_PCT = 5, QUOTE_TRIES = 2;
@@ -73,6 +74,9 @@ export async function councilTick(env, x) {
   // a coin that only lacked a signal is looked at again after RECHECK_MIN; any other verdict rests for COOLDOWN_MIN
   const recent = new Set((await d.q(`SELECT DISTINCT mint FROM mob_aq_council WHERE mint IS NOT NULL AND at > now() - make_interval(mins => CASE facts->>'block' WHEN 'signal' THEN $2::int WHEN 'quiet' THEN $2::int WHEN 'authority' THEN $3::int WHEN 'untradable' THEN $4::int ELSE $1::int END)`, [COOLDOWN_MIN, RECHECK_MIN, AUTHORITY_RECHECK_MIN, UNTRADABLE_RECHECK_MIN])).map((r) => r.mint));
   const held = new Set(pos.map((p) => p.mint));
+  // Council seat: a fresh helper BUY vote on a coin that only lacked a signal or the score has it judged again now, once per vote
+  const voted = new Set(await seatRequeue(d));
+  for (const m of voted) recent.delete(m);
   const pool = cands.filter(tradable);
   // movers first: the ten slots go to the coins that are actually moving (5-minute and 1-hour change), where signals form
   const heat = (c) => Math.abs(c.ch5m ?? 0) * 3 + Math.abs(c.ch1h ?? 0);
@@ -80,7 +84,9 @@ export async function councilTick(env, x) {
   // established tier A and B coins are), so every strategy gets coins it can trade
   const free = pool.filter((c) => !recent.has(c.mint) && !held.has(c.mint));
   const hot = free.map((c, i) => ({ c, i })).sort((a, b) => heat(b.c) - heat(a.c) || a.i - b.i).slice(0, MAX_EVAL / 2).map((x2) => x2.c);
-  const queue = [...hot, ...free.filter((c) => !hot.includes(c))].slice(0, MAX_EVAL);
+  const first = free.filter((c) => voted.has(c.mint));
+  const queue = [...first, ...hot.filter((c) => !first.includes(c)), ...free.filter((c) => !hot.includes(c) && !first.includes(c))].slice(0, MAX_EVAL);
+  await markJudged(d, queue.map((c) => c.mint));
   out.funnel = { seen: cands.length, tradable: pool.length, inCooldown: pool.filter((c) => recent.has(c.mint)).length, judged: queue.length };
   const ready = [], weak = [], quiet = [];
   let rugCalls = 0, whaleCalls = 0;
@@ -196,11 +202,12 @@ export async function councilTick(env, x) {
       facts.strength = best.st;
       if (best.st < 0.1) { await block(`no signal: ${why}`.slice(0, 240), realTries[0][1].number, "signal"); continue; }
       const plan = planOf(c, best.id, best.t, pOf(best.id), atr);
-      Object.assign(facts, { strategy: best.id, plan });
+      const wsc = scoreOf(objections, weights, tier, false);
+      Object.assign(facts, { strategy: best.id, plan, soft: objections, score: wsc.score });
       if (plan.stopPct >= plan.targetPct) { await block(`no signal (strength ${best.st}): ${why}`.slice(0, 240), best.st, "signal", best.t, best.id); continue; }
       const pg = preGate(c, tier, atr, plan);
       if (pg) { quiet.push({ symbol: c.symbol, have: pg.have, need: pg.need }); await block(pg.reason, pg.number, "untradable", { ...best.t, ...plan }, best.id); continue; }
-      weak.push({ c, tier, atr, s: best.t, plan, sid: best.id, SP: pOf(best.id), objections, sc: scoreOf(objections, weights, tier, false), strength: best.st, facts, rg, wh, noteSignal, why,
+      weak.push({ c, tier, atr, s: best.t, plan, sid: best.id, SP: pOf(best.id), objections, sc: wsc, strength: best.st, facts, rg, wh, noteSignal, why,
         block: (r, n, k = "hard") => block(r, n, k, { ...best.t, ...plan }, best.id), tape: bars ? { c, src: oh.src, bars, fib, setup: best.t, verdict: "BLOCK" } : null });
       continue;
     }
@@ -228,24 +235,53 @@ export async function councilTick(env, x) {
   const lastOpen = await d.one(`SELECT greatest((SELECT max(opened_at) FROM mob_aq_positions), (SELECT max(opened_at) FROM mob_aq_trades)) t`);
   const sinceMin = lastOpen?.t ? (nowMs - new Date(lastOpen.t).getTime()) / 60000 : Infinity;
   const exploreDue = sinceMin >= C.exploreEveryMin;
+  // ---- the Council seat (seat.mjs): a fresh helper vote is ONE soft rule, "council_seat:<helper>". BUY adds and SKIP subtracts
+  // 10 x confidence x that helper's weight to the score. It is applied here, after every hard block of the loop above and
+  // before the size, the quote, the cost gate, the fill checks and the claim below, none of which reads it.
+  const passAt = C.passScore + throttle.score;
+  const fx = await seatEffects(d, [...ready, ...weak].map((g) => g.c.mint));
+  for (const g of [...ready, ...weak]) {
+    const e = fx[g.c.mint];
+    if (!e) continue;
+    g.seat = e; g.score0 = g.sc.score;
+    g.sc = { ...g.sc, score: round(g.sc.score + e.delta, 1) };
+    g.facts.seat = { votes: e.votes, delta: e.delta, scoreBefore: g.score0, scoreAfter: g.sc.score, moved: null };
+    g.facts.score = g.sc.score;
+    const blk = g.block;
+    g.block = async (reason, number, kind) => { await blk(reason, number, kind); await markApplied(d, e, { verdict: "BLOCK", reason: String(reason).slice(0, 200), delta: e.delta, scoreBefore: g.score0, scoreAfter: g.sc.score, moved: g.facts.seat.moved }); };
+  }
   ready.sort((a, b) => b.sc.score - a.sc.score);
   let tries = 0;
   // full signals first (best score), then, when an explore is due, the partial setups by strength (EXPLORE-WEAK, smallest size)
   weak.sort((a, b) => b.strength - a.strength || b.sc.score - a.sc.score);
-  for (const g of [...ready, ...weak.map((w) => ({ ...w, weak: true, strict: false }))]) {
+  // a partial setup is LIFTED to a normal entry when its own strength plus the helpers' net BUY (in soft-rule units) reaches a
+  // full signal's 1, the score passes, and it is not a tier C coin under the strict rules. Full position, like any PASS.
+  const strictOf = (w) => w.tier === "C" && w.objections.some((o) => ["lp_locked", "top10", "top_holder", "danger_risk", "copycat"].includes(o));
+  const lifted = (w) => !!w.seat && w.seat.units > 0 && w.strength + w.seat.units >= LIFT_AT && w.sc.score >= passAt && !strictOf(w);
+  for (const g of [...ready, ...weak.filter(lifted).map((w) => ({ ...w, lifted: true, weak: false, strict: false })), ...weak.filter((w) => !lifted(w)).map((w) => ({ ...w, weak: true, strict: false }))]) {
     const { c, sid, SP, tier, atr, plan } = g;
     // exit variant: a seeded coin flip per trade (not "every other trade"), unless the tournament already named a default.
     // It is independent of the time arm and it no longer changes the stop, so the two can be compared cleanly.
     const dfl = x.variantDefault?.[sid];
     const variant = dfl || arms?.[1] || (seed01(`${c.mint}|${minute}|exit`) < 0.5 ? "A" : "B");
     const s = { ...g.s, ...plan };
-    const normal = !g.weak && !g.strict && g.sc.score >= C.passScore + throttle.score;
-    const tag = normal ? "PASS" : exploreDue ? (g.weak ? "EXPLORE-WEAK" : "EXPLORE") : null;
-    if (g.weak && (out.entered || !tag || tries >= QUOTE_TRIES)) { await g.block(`no signal (strength ${g.strength}): ${g.why}`.slice(0, 240), g.strength, "signal"); continue; }
+    const normal = !g.weak && !g.strict && g.sc.score >= passAt;
+    // a net SKIP of half a soft rule or more keeps this coin out of an EXPLORE (a normal PASS is decided by the score alone)
+    const keptOut = !!g.seat && g.seat.delta <= KEEP_OUT_POINTS;
+    const tag = normal ? "PASS" : exploreDue && !keptOut ? (g.weak ? "EXPLORE-WEAK" : "EXPLORE") : null;
+    // did the vote change what happens to this coin? (what the same coin would have got without it, against what it gets)
+    let seatNote = "";
+    if (g.seat) {
+      const normal0 = !g.weak && !g.lifted && !g.strict && g.score0 >= passAt, tag0 = normal0 ? "PASS" : exploreDue ? (g.weak || g.lifted ? "EXPLORE-WEAK" : "EXPLORE") : null;
+      const moved = g.lifted ? "lifted from EXPLORE-WEAK to a normal entry" : tag === tag0 ? null : tag ? `${tag0 || "BLOCK"} became ${tag}` : `${tag0} became BLOCK`;
+      g.facts.seat.moved = moved;
+      seatNote = `council seat${moved ? ` MOVED this (${moved})` : " (verdict unchanged)"}: ${seatText(g.seat)}; score ${g.score0} -> ${g.sc.score} against ${passAt}${g.lifted ? `; strength ${g.strength} + ${g.seat.units} reaches ${LIFT_AT}` : ""}${keptOut && !normal ? `; a net vote of ${KEEP_OUT_POINTS} or lower keeps a coin out of EXPLORE` : ""}`;
+    }
+    if (g.weak && (out.entered || !tag || tries >= QUOTE_TRIES)) { await g.block(`no signal (strength ${g.strength}): ${g.why}`.slice(0, 240) + (seatNote ? `; ${seatNote}` : ""), g.strength, "signal"); continue; }
     if (out.entered || !tag || tries >= QUOTE_TRIES) {
       const why = out.entered ? "another candidate was taken this tick" : tries >= QUOTE_TRIES ? "quote budget used this tick" : null;
       if (why) { out.evaluated.push({ symbol: c.symbol, tier, verdict: "WAIT", reason: why, number: g.sc.score }); continue; }
-      await g.block(`soft rules: score ${g.sc.score} under ${C.passScore} (${g.objections.join(", ") || "none"})${g.strict ? ", tier C strict" : ""}; next explore in ${round(Math.max(0, C.exploreEveryMin - sinceMin), 1)} min`, g.sc.score, "soft");
+      await g.block(`soft rules: score ${g.sc.score} under ${C.passScore} (${g.objections.join(", ") || "none"})${g.strict ? ", tier C strict" : ""}; next explore in ${round(Math.max(0, C.exploreEveryMin - sinceMin), 1)} min${seatNote ? `; ${seatNote}` : ""}`, g.sc.score, "soft");
       continue;
     }
     if (!feeSol || !solUsd) { await g.block("missing data: SOL price", null); continue; }
@@ -321,7 +357,7 @@ export async function councilTick(env, x) {
     if (sizing.lossAtStopPctOfEquity > lossCap) { await g.block(`risk: a stop here costs ${sizing.lossAtStopPctOfEquity}% of the wallet (${size} SOL, stop ${stopPct}% from the fill, round trip ${rt}%); the limit is ${lossCap}%${g.weak ? " for EXPLORE-WEAK" : ""}`, sizing.lossAtStopPctOfEquity, "soft"); continue; }
     // what a sale fetches against the mid, measured now: the exit loop uses it to tell a real stop from a wrong mid
     const exitK = mid ? ((backSol * solUsd) / tokensUi) / mid : null;
-    const reason = `${tag !== "PASS" ? `${tag}: ` : ""}${sid} ${g.weak ? `strength ${g.strength} (${s.why})` : s.why}; hard blocks clear; 6x round trip ${rt}% = ${tb.needPct}% fits target ${targetPct}% and 3x ATR5 ${tb.havePct}%; score ${g.sc.score}${g.objections.length ? ` (soft: ${g.objections.join(", ")})` : ""}`;
+    const reason = `${tag !== "PASS" ? `${tag}: ` : ""}${sid} ${g.weak ? `strength ${g.strength} (${s.why})` : s.why}; hard blocks clear; 6x round trip ${rt}% = ${tb.needPct}% fits target ${targetPct}% and 3x ATR5 ${tb.havePct}%; score ${g.sc.score}${g.objections.length ? ` (soft: ${g.objections.join(", ")})` : ""}${seatNote ? `; ${seatNote}` : ""}`;
     // the claim (ledger.mjs): cash debit, slot, position row and flows in one statement; a lost claim writes nothing
     const pid = await openPosition(d, { strategy: sid, mint: c.mint, pool: c.pool, symbol: c.symbol, decimals: g.rg.data.decimals, tokens_raw: tokensRaw, size_sol: size, fee_sol: feeSol, entry_price_usd: entryPx, entry_mid_usd: mid,
       stop_price: plan.stopPrice, target_price: plan.targetPrice, stop_pct: stopPct, target_pct: targetPct, rt_pct: rt, buy_slip_pct: slip, last_price_usd: mid, last_value_sol: mid ? (tokensUi * mid) / solUsd : size, tier, tag, soft: g.objections, score: g.sc.score,
@@ -329,6 +365,7 @@ export async function councilTick(env, x) {
       Math.min(C.maxOpen, sv.maxOpen));
     if (pid == null) { await g.block("risk: no free slot, coin already held, or not enough cash at the moment of entry", null); continue; }
     const p = { id: pid };
+    if (g.seat) await markApplied(d, g.seat, { verdict: "PASS", tag, delta: g.seat.delta, scoreBefore: g.score0, scoreAfter: g.sc.score, moved: g.facts.seat.moved }, pid);
     await g.noteSignal("PASS", reason);
     await council("PASS", c, reason, x6, g.facts);
     if (sid === "R5") await brain(d, "whales", "entry", `R5 paper entry ${c.symbol}: ${g.ev === "N" ? `Nansen-labelled ${g.facts.nansen.traders.join(", ")} bought (REPORTED)` : `${g.wh.independent} independent winners bought in 15 min (funders ${g.wh.funders})`}; stop ${stopPct}% (${s.structure}), target ${targetPct}%, round trip ${rt}%, size ${size} SOL.`, { whale: g.wh, setup: s });
