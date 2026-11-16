@@ -90,3 +90,9 @@ Each CEO turn rotates to the business that has gone longest without a move.
 
 ## IDEA PARKED, NOT BUILT (Alex, 2026-11-16): the trading fund office
 A second "city", but not 3D: a trading FUND OFFICE with departments (research, risk, execution, review...) where Claude and a Grok bot work together, everything focused on trading, running 24/7 from Alex's old laptop. Alex: "don't build anything yet, we will figure it out." Rules until he says "build": plan only, one version, no 25 versions. Departments should map to the Desk roles in trading-lab (one executor, a skeptic with veto, hard risk limits). Open questions for Alex: what he means by "Brooke inside the PT" (likely a Grok bot), and which tools run on the laptop.
+
+## DECIDED (Alex, 2026-11-16): AQUARIUS = the living trading brain and its city
+- Name: **Aquarius** is the whole system (the genie is its mascot). Claude is the orchestrator; Grok Bot (live X) and ChatGPT are connected as helpers; Alex is the boss.
+- What it is: a LIVING, self-learning trading brain on our own website, liquid (strategies, limits, roles are data that changes while it runs, no "version 2, 3, 4"), shown as a small 3D city in real time: ancient Greece in the future, columns, a huge beautiful headquarters (Apple-HQ feel, Alex is the boss), about 144 worker agents, one big screen with the whole portfolio and every "neuron" (what it learned, which recipes work, what it killed).
+- Learning = memory plus a test loop judged by money results after real costs (models do not change their weights); it learns from trades, backtests and every link Alex sends (learn-links).
+- Process: Alex sends videos and pictures of what others built; Claude watches them automatically; ONE plan first, then build. Alex: "I don't want to say it more times and you do sloppy work." No building before the plan is agreed. Single source of truth for trading facts: trading-kb.
