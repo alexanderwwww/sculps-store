@@ -3,10 +3,12 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { makeEnv, dropEnv, reqOf, login, mock, resetMocks, res, calls } from "./helpers.mjs";
 import { db } from "../src/db.mjs";
-import { FX, FX2, FX3, FX4 } from "./aq-fixtures.mjs";
+import { FX, FX2, FX3, FX5 } from "./aq-fixtures.mjs";
 import { whaleSignal, slimTrades } from "../src/aq/whales.mjs";
-import { GT_GAP, GT_BACKOFF, bestPairs } from "../src/aq/feeds.mjs";
-GT_GAP.ms = 0; GT_BACKOFF.sec = 0;
+import { GT_GAP, GT_BACKOFF, DS_BACKOFF, bestPairs } from "../src/aq/feeds.mjs";
+GT_GAP.ms = 0; GT_BACKOFF.sec = 0; DS_BACKOFF.sec = 0;
+const JSOL = Object.values(FX5.jupPrice).find((x) => x.decimals === 9);
+const jupPx = (px) => (rec, u) => Object.fromEntries(u.searchParams.get("ids").split(",").filter((m) => m === SOL || px()[m] != null).map((m) => [m, m === SOL ? clone(JSOL) : { ...clone(Object.values(FX5.jupPrice).find((x) => x.decimals === 6)), usdPrice: px()[m], liquidity: 250000 }]));
 import { tick, proposeBot, _resetSeeded } from "../src/aq/engine.mjs";
 import { fibSetup, safety, slimRug, stats, replay, candlesFromGT } from "../src/aq/logic.mjs";
 import { R3_PARAMS, seedWorkers, DEPT_IDS } from "../src/aq/seed.mjs";
@@ -59,6 +61,7 @@ function stubAll() {
     const mints = rec.url.split("/").pop().split(",");
     return mints.filter((m) => prices[m] != null).map((m) => { const p = clone(FX.dsTokens[0]); p.baseToken.address = m; p.pairAddress = "x"; p.priceUsd = String(prices[m]); if (liqOf[m] != null) p.liquidity.usd = liqOf[m]; return p; });
   });
+  mock("GET", "https://lite-api.jup.ag/price/v3", jupPx(() => prices));
   mock("GET", "https://lite-api.jup.ag/swap/v1/quote", (rec, u) => {
     const q = clone(u.searchParams.get("inputMint") === SOL ? FX.jupBuy : FX.jupSell), amt = Number(u.searchParams.get("amount"));
     if (u.searchParams.get("inputMint") === SOL) { q.inAmount = String(amt); q.outAmount = String(Math.floor(amt * 1000)); return q; } // 1000 raw units per lamport
@@ -412,6 +415,9 @@ test("production path: GeckoTerminal refuses (429), DexScreener alone feeds cand
   await d.q(`DELETE FROM mob_aq_trades WHERE symbol IN ('L1','L2','L3')`); await d.q(`DELETE FROM mob_aq_council`);
   resetMocks();
   const GATO = FX3.dsBatch[0].baseToken.address;
+  let dsDown = false; const gatoPx = { [GATO]: 1.1 };
+  for (const m of FX3.dsBatch) gatoPx[m.baseToken.address] ??= Number(m.priceUsd);
+  mock("GET", "https://api.dexscreener.com/", () => (dsDown ? new Response("error code: 1015", { status: 429 }) : undefined));
   assert.equal(bestPairs(FX3.dsBatch).length, 5);
   mock("GET", /api\.geckoterminal\.com|api\.coingecko\.com\/api\/v3\/onchain/, () => res({ status: { error_code: 429, error_message: "Rate limit exceeded" } }, 429));
   mock("GET", "https://api.dexscreener.com/token-boosts/latest/v1", () => clone(FX3.dsBoostsLatest));
@@ -421,7 +427,7 @@ test("production path: GeckoTerminal refuses (429), DexScreener alone feeds cand
   mock("GET", "https://api.dexscreener.com/tokens/v1/solana/", (rec) => { const want = rec.url.split("/").pop().split(","); return clone(FX3.dsBatch).filter((p) => want.includes(p.baseToken.address)).map((p) => (p.baseToken.address === GATO ? { ...p, priceUsd: "1.1" } : p)); });
   // CoinGecko's price call is refused too (seen in production): SOL comes from DexScreener's SOL/USDC pair, BTC stays unknown
   mock("GET", "https://api.coingecko.com/api/v3/simple/price", () => res({ status: { error_code: 429, error_message: "Rate limit exceeded" } }, 429));
-  mock("GET", "https://api.dexscreener.com/token-pairs/v1/solana/", () => clone(FX4.dsSolPairs));
+  mock("GET", "https://lite-api.jup.ag/price/v3", jupPx(() => gatoPx));
   mock("GET", "https://api.alternative.me/fng/", () => clone(FX.fng));
   mock("GET", /rugcheck\.xyz\/v1\/tokens\/([^/]+)\/report$/, () => safeRug());
   mock("GET", "https://lite-api.jup.ag/swap/v1/quote", (rec, u) => {
@@ -432,7 +438,7 @@ test("production path: GeckoTerminal refuses (429), DexScreener alone feeds cand
   let s = await S();
   assert.equal(t.feeds.geckoterminal, false); assert.equal(t.feeds.dexscreener, true);
   assert.ok(s.market.trending.length >= 3, "trending comes from DexScreener");
-  assert.equal(s.market.sol.price, Number(FX4.dsSolPairs[0].priceUsd)); assert.equal(s.market.btc, null, "BTC unknown, never invented"); assert.equal(t.feeds.coingecko, false); assert.equal(t.feeds.sol_price, true); assert.ok(s.market.trending.some((x) => x.symbol === "GATO" && x.boosted === true));
+  assert.equal(s.market.sol.price, JSOL.usdPrice); assert.equal(s.market.btc, null, "BTC unknown, never invented"); assert.equal(t.feeds.coingecko, false); assert.equal(t.feeds.sol_price, true); assert.ok(s.market.trending.some((x) => x.symbol === "GATO" && x.boosted === true));
   assert.equal(s.departments.find((x) => x.id === "scouts_sol").live, true);
   assert.ok(s.health.errors.some((e) => e.feed === "gt:trending" && /HTTP 429 .*Rate limit/.test(e.error)), JSON.stringify(s.health.errors));
   assert.ok(s.history.priceSamples1h >= 3 && s.history.ready === 0);
@@ -448,4 +454,15 @@ test("production path: GeckoTerminal refuses (429), DexScreener alone feeds cand
   assert.equal(row.facts.candles.src, "own"); assert.ok(row.facts.candles.ownBars >= 30); assert.equal(row.facts.setup.signal, true);
   s = await S(); assert.ok(s.history.ready >= 1); assert.equal(s.positions[0].symbol, "GATO");
   assert.equal(s.departments.find((x) => x.id === "setups").live, true);
+  // DexScreener refuses too (HTTP 429 "error code: 1015", seen in production): Jupiter keeps the samples, the list and the exits alive
+  dsDown = true; await d.q(`UPDATE mob_aq_market SET at = now() - interval '10 minutes' WHERE k='ds:universe'`);
+  const n0 = (await d.one(`SELECT count(*)::int n FROM mob_aq_prices`)).n;
+  await d.q(`UPDATE mob_aq_prices SET at = at - interval '1 minute'`);
+  t = await tick(env); s = await S();
+  assert.equal(t.feeds.dexscreener, false); assert.equal(t.feeds.prices, true);
+  assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_prices`)).n > n0, "samples keep accumulating");
+  assert.ok(s.market.trending.length >= 3); assert.ok(s.market.trending.some((x) => x.symbol === "GATO" && x.boosted), "boost flag kept from the last good read");
+  assert.equal(s.departments.find((x) => x.id === "scouts_sol").live, true);
+  assert.ok(s.health.errors.some((e) => e.feed === "ds:universe" && /429 error code: 1015/.test(e.error)), JSON.stringify(s.health.errors));
+  assert.equal(s.positions[0].price, 1.1, "the open position is still priced");
 });

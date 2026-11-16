@@ -12,7 +12,7 @@ export const URLS = {
   dsBoosts: "https://api.dexscreener.com/token-boosts/latest/v1",
   dsBoostsTop: "https://api.dexscreener.com/token-boosts/top/v1",
   dsCto: "https://api.dexscreener.com/community-takeovers/latest/v1",
-  dsSolPairs: `https://api.dexscreener.com/token-pairs/v1/solana/${SOL_MINT}`,
+  jupPrice: (mints) => `https://lite-api.jup.ag/price/v3?ids=${mints.join(",")}`,
   dsProfiles: "https://api.dexscreener.com/token-profiles/latest/v1",
   dsTokens: (mints) => `https://api.dexscreener.com/tokens/v1/solana/${mints.join(",")}`,
   rug: (mint) => `https://api.rugcheck.xyz/v1/tokens/${mint}/report`,
@@ -59,7 +59,7 @@ export async function cached(env, key, ttlSec, fn, backoffSec = 0) {
   const row = await d.one(`SELECT data, ok, err, extract(epoch from now()-at)::float age FROM mob_aq_market WHERE k=$1`, [key]);
   if (row && row.ok && row.age < ttlSec) return { ok: true, data: row.data, cached: true };
   // a refused feed is not hammered: wait out the backoff before asking again
-  if (row && !row.ok && row.age < backoffSec) return { ok: false, data: null, err: row.err, backoff: true };
+  if (row && !row.ok && row.age < backoffSec) return { ok: false, data: null, stale: row.data, err: row.err, backoff: true };
   try {
     const data = await fn();
     await d.q(`INSERT INTO mob_aq_market (k, data, ok, err, at) VALUES ($1,$2,true,null,now()) ON CONFLICT (k) DO UPDATE SET data=EXCLUDED.data, ok=true, err=null, at=now()`, [key, JSON.stringify(data)]);
@@ -67,7 +67,7 @@ export async function cached(env, key, ttlSec, fn, backoffSec = 0) {
   } catch (e) {
     const err = String(e.message || e).slice(0, 200);
     await d.q(`INSERT INTO mob_aq_market (k, data, ok, err, at) VALUES ($1,'null',false,$2,now()) ON CONFLICT (k) DO UPDATE SET ok=false, err=EXCLUDED.err, at=now()`, [key, err]);
-    return { ok: false, data: null, err };
+    return { ok: false, data: null, stale: row?.data ?? null, err };
   }
 }
 
@@ -83,6 +83,7 @@ function pools(j) {
 }
 
 export const GT_BACKOFF = { sec: 300 };
+export const DS_BACKOFF = { sec: 240 };
 // DexScreener pair (tokens/v1 shape, read 2026-11-16) -> the same candidate shape as a GeckoTerminal pool.
 export function dsPool(p) {
   return { pool: p.pairAddress, name: `${p.baseToken?.symbol} / SOL`, symbol: String(p.baseToken?.symbol || "").trim(), mint: p.baseToken?.address, quoteMint: p.quoteToken?.address,
@@ -107,26 +108,29 @@ export async function dsTokens(mints) {
 // Candidates without GeckoTerminal: boosted (latest + top), fresh profiles and community takeovers name the mints;
 // tokens/v1 returns their pairs with price, liquidity and volume. At least one list must answer.
 async function dsUniverse() {
-  const lists = await Promise.all([URLS.dsBoosts, URLS.dsBoostsTop, URLS.dsProfiles, URLS.dsCto].map((u) => getJson(u).catch(() => null)));
-  if (lists.every((l) => !Array.isArray(l))) throw new Error("no DexScreener list answered");
-  const mints = [...new Set(lists.flatMap((l) => (Array.isArray(l) ? l : [])).filter((x) => x.chainId === "solana" && x.tokenAddress).map((x) => x.tokenAddress))].slice(0, 90);
-  return (await dsTokens(mints)).sort((a, b) => (b.liqUsd || 0) - (a.liqUsd || 0));
+  const errs = [];
+  const [bl, bt, pf, cto] = await Promise.all([URLS.dsBoosts, URLS.dsBoostsTop, URLS.dsProfiles, URLS.dsCto].map((u) => getJson(u).catch((e) => { errs.push(e.message); return null; })));
+  if ([bl, bt, pf, cto].every((l) => !Array.isArray(l))) throw new Error(`no DexScreener list answered: ${errs[0]}`);
+  const sol = (l) => (Array.isArray(l) ? l : []).filter((x) => x.chainId === "solana" && x.tokenAddress);
+  const mints = [...new Set([bl, bt, pf, cto].flatMap(sol).map((x) => x.tokenAddress))].slice(0, 90);
+  const pairs = (await dsTokens(mints)).sort((a, b) => (b.liqUsd || 0) - (a.liqUsd || 0));
+  return { pairs, boosted: [...new Set([...sol(bl), ...sol(bt)].map((x) => x.tokenAddress))],
+    profiles: Object.fromEntries([...sol(bl), ...sol(bt), ...sol(pf), ...sol(cto)].filter((x) => x.description).map((x) => [x.tokenAddress, String(x.description).slice(0, 300)])) };
 }
 
 export const feeds = {
   trending: (env) => cached(env, "gt:trending", 55, async () => pools(await gt(env, URLS.gtTrending)), GT_BACKOFF.sec),
   newPools: (env) => cached(env, "gt:new", 55, async () => pools(await gt(env, URLS.gtNew)), GT_BACKOFF.sec),
-  universe: (env) => cached(env, "ds:universe", 55, () => dsUniverse()),
-  boosts: (env) => cached(env, "ds:boosts", 55, async () => [...new Set((await getJson(URLS.dsBoosts)).filter((b) => b.chainId === "solana").map((b) => b.tokenAddress))]),
-  profiles: (env) => cached(env, "ds:profiles", 55, async () => Object.fromEntries((await getJson(URLS.dsProfiles)).filter((b) => b.chainId === "solana").map((b) => [b.tokenAddress, String(b.description || "").slice(0, 300)]))),
-  majors: (env) => cached(env, "cg:majors", 110, async () => {
+  // discovery only, every 3 minutes: DexScreener rate-limits Cloudflare egress (HTTP 429, error code 1015), so it is asked rarely
+  universe: (env) => cached(env, "ds:universe", 170, () => dsUniverse(), DS_BACKOFF.sec),
+  majors: (env) => cached(env, "cg:majors", 55, async () => {
     const m = (x) => (x && num(x.usd) != null ? { price: num(x.usd), ch24: num(x.usd_24h_change) } : null);
     try { const j = await getJson(URLS.cg); return { sol: m(j.solana), btc: m(j.bitcoin), src: "coingecko" }; }
     catch (e) {
-      // CoinGecko refused (429 seen from Cloudflare): SOL from the deepest SOL/USDC pair on DexScreener; BTC stays unknown.
-      const ps = (await getJson(URLS.dsSolPairs) || []).filter((p) => p.baseToken?.address === SOL_MINT && p.quoteToken?.symbol === "USDC" && num(p.priceUsd) != null).sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
-      if (!ps.length) throw new Error(`coingecko: ${e.message}; dexscreener: no SOL/USDC pair`);
-      return { sol: { price: num(ps[0].priceUsd), ch24: num(ps[0].priceChange?.h24) }, btc: null, src: "dexscreener", note: `coingecko: ${String(e.message).slice(0, 60)}` };
+      // CoinGecko refused (429 seen from Cloudflare): SOL from Jupiter's price API; BTC stays unknown.
+      const j = (await jupPrices([SOL_MINT]))[SOL_MINT];
+      if (!j) throw new Error(`coingecko: ${e.message}; jupiter: no SOL price`);
+      return { sol: { price: j.price, ch24: j.ch24 }, btc: null, src: "jupiter", note: `coingecko: ${String(e.message).slice(0, 60)}` };
     }
   }),
   fng: (env) => cached(env, "fng", 3600, async () => {
@@ -147,9 +151,20 @@ export const feeds = {
 };
 
 // Mid prices (USD) for held tokens, one DexScreener call; picks the pool we entered on, else the deepest.
+// Jupiter price v3 (shape read 2026-11-16: {mint: {usdPrice, liquidity, priceChange24h, decimals}}). One call, up to 50 mints.
+export async function jupPrices(mints) {
+  const ids = [...new Set(mints)].slice(0, 50);
+  if (!ids.length) return {};
+  const j = await getJson(URLS.jupPrice(ids));
+  const out = {};
+  for (const m of ids) if (j?.[m] && num(j[m].usdPrice) != null) out[m] = { price: num(j[m].usdPrice), liqUsd: num(j[m].liquidity), ch24: num(j[m].priceChange24h) };
+  return out;
+}
+// Mid prices (USD) for held tokens: Jupiter first (DexScreener refused Cloudflare egress with 429/1015 in production), DexScreener second.
 export async function midPrices(mintPools) {
   const mints = [...new Set(mintPools.map((x) => x.mint))];
   if (!mints.length) return {};
+  try { const j = await jupPrices(mints); if (Object.keys(j).length) return Object.fromEntries(mints.map((m) => [m, j[m]?.price ?? null])); } catch {}
   const list = await getJson(URLS.dsTokens(mints.slice(0, 30)));
   const out = {};
   for (const { mint, pool } of mintPools) {

@@ -2,7 +2,7 @@
 // Hermes paper fill -> Review -> Learning -> Ops. PAPER ONLY: no wallet, no keys, no orders. Missing data = NO trade.
 import { db } from "../db.mjs";
 import { DEPTS, seedWorkers, TOOLS, STRATEGIES, GTA6_DATE, GTA_RE, CEO } from "./seed.mjs";
-import { feeds, midPrices, jupQuote, SOL_MINT, dsTokens } from "./feeds.mjs";
+import { feeds, midPrices, jupQuote, SOL_MINT, jupPrices } from "./feeds.mjs";
 import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round, survival } from "./logic.mjs";
 import { whaleSignal, shadowTick, shadowStats } from "./whales.mjs";
 import { lanesTick, laneStats } from "./lanes.mjs";
@@ -75,15 +75,16 @@ export async function tick(env, opts = {}) {
     const P = strategies.R3?.params || STRATEGIES[2][4];
 
     // ---- feeds (cached, so most ticks read the database, not the internet)
-    const [tr, nw, bo, pr, mj, fg, un] = await Promise.all([feeds.trending(env), feeds.newPools(env), feeds.boosts(env), feeds.profiles(env), feeds.majors(env), feeds.fng(env), feeds.universe(env)]);
-    Object.assign(health, { geckoterminal: tr.ok && nw.ok, dexscreener: un.ok, coingecko: mj.ok && mj.data?.src !== "dexscreener", sol_price: !!mj.data?.sol, feargreed: fg.ok });
-    const solUsd = mj.data?.sol?.price ?? (tr.data || []).find((p) => p.solUsd)?.solUsd ?? null;
-    const feeSol = solUsd ? NET_FEE_USD / solUsd : null;
-    const boosted = new Set(bo.data || []);
-    const profiles = pr.data || {};
-    set("sol.new_pairs", un.ok || nw.ok ? "busy" : "blocked", `${un.ok ? `${un.data.length} DexScreener pairs` : `DexScreener failed: ${un.err}`}; ${nw.ok ? `${nw.data.length} new GeckoTerminal pools` : "GeckoTerminal not answering (bonus feed)"}`.slice(0, 190));
-    set("sol.boosted", bo.ok ? "busy" : "blocked", bo.ok ? `${boosted.size} paid boosts flagged` : `DexScreener failed: ${bo.err}`);
-    set("nw.tokens", pr.ok ? "busy" : "blocked", pr.ok ? `${Object.keys(profiles).length} token profiles read` : `DexScreener failed: ${pr.err}`);
+    const [tr, nw, mj, fg, un] = await Promise.all([feeds.trending(env), feeds.newPools(env), feeds.majors(env), feeds.fng(env), feeds.universe(env)]);
+    const uni = un.data || un.stale || null; // boost and profile flags may come from the last good read; candidates never do
+    Object.assign(health, { geckoterminal: tr.ok && nw.ok, dexscreener: un.ok, coingecko: mj.ok && mj.data?.src === "coingecko", sol_price: !!mj.data?.sol, feargreed: fg.ok });
+    let solUsd = mj.data?.sol?.price ?? (tr.data || []).find((p) => p.solUsd)?.solUsd ?? null;
+    let feeSol = solUsd ? NET_FEE_USD / solUsd : null;
+    const boosted = new Set(uni?.boosted || []);
+    const profiles = uni?.profiles || {};
+    set("sol.new_pairs", un.ok || nw.ok ? "busy" : "blocked", `${un.ok ? `${un.data.pairs.length} DexScreener pairs` : `DexScreener refused: ${un.err}`}; ${nw.ok ? `${nw.data.length} new GeckoTerminal pools` : "GeckoTerminal not answering (bonus feed)"}`.slice(0, 190));
+    set("sol.boosted", un.ok ? "busy" : "blocked", (un.ok ? `${boosted.size} paid boosts flagged` : `DexScreener refused (${un.err}); ${boosted.size} flags from the last good read`).slice(0, 190));
+    set("nw.tokens", un.ok ? "busy" : "blocked", (un.ok ? `${Object.keys(profiles).length} token profiles read` : `DexScreener refused (${un.err})`).slice(0, 190));
     set("stk.regime", mj.ok ? "busy" : "blocked", (mj.ok ? `SOL $${mj.data.sol?.price ?? "?"} BTC $${mj.data.btc?.price ?? "unknown"} (${mj.data.src})` : `price feeds failed: ${mj.err}`).slice(0, 190));
     set("nw.fng", fg.ok ? "busy" : "blocked", fg.ok ? `Fear and Greed ${fg.data.value} (${fg.data.label})` : `alternative.me failed: ${fg.err}`);
     const daysToGta = Math.ceil((Date.parse(GTA6_DATE + "T00:00:00Z") / 1000 - nowSec) / 86400);
@@ -92,25 +93,29 @@ export async function tick(env, opts = {}) {
     // ---- candidates: trending first, then new; copycats and narrative tags
     // ---- watchlist: every pair seen at or above the liquidity gate is tracked from then on; the top 15 get a price
     // sample every tick, which builds our own 1-minute candles (no dependence on GeckoTerminal for history)
-    const found = [...(tr.data || []).map((p) => ({ ...p, src: "trending" })), ...(un.data || []).map((p) => ({ ...p, src: "dexscreener" })), ...(nw.data || []).map((p) => ({ ...p, src: "new" }))];
+    const found = [...(tr.data || []).map((p) => ({ ...p, src: "trending" })), ...(un.data?.pairs || []).map((p) => ({ ...p, src: "dexscreener" })), ...(nw.data || []).map((p) => ({ ...p, src: "new" }))];
     const liquid = [...new Map(found.filter((p) => p.mint && (p.liqUsd || 0) >= P.minLiqUsd).map((p) => [p.mint, p])).values()]; // one row per mint
     if (liquid.length) await d.q(`INSERT INTO mob_aq_watch (mint, pool, symbol, liq_usd, vol_h1, ch1h, price_usd, src) SELECT * FROM unnest($1::text[],$2::text[],$3::text[],$4::float8[],$5::float8[],$6::float8[],$7::float8[],$8::text[])
       ON CONFLICT (mint) DO UPDATE SET liq_usd=EXCLUDED.liq_usd, vol_h1=EXCLUDED.vol_h1, ch1h=EXCLUDED.ch1h, price_usd=EXCLUDED.price_usd, last_seen=now()`,
       [liquid.map((p) => p.mint), liquid.map((p) => p.pool), liquid.map((p) => p.symbol), liquid.map((p) => p.liqUsd), liquid.map((p) => p.volH1), liquid.map((p) => p.ch1h), liquid.map((p) => p.priceUsd), liquid.map((p) => p.src)]);
     const watch = await d.q(`SELECT * FROM mob_aq_watch WHERE last_seen > now() - interval '1 day' AND liq_usd >= $1 ORDER BY liq_usd DESC LIMIT 15`, [P.minLiqUsd]);
-    let fresh = [];
+    // one Jupiter price call a tick samples every watched coin (and SOL); the samples become our own 1-minute candles
+    let jp = null;
     if (watch.length) {
-      try { fresh = await dsTokens(watch.map((w) => w.mint)); health.dexscreener_prices = true; } catch (e) { health.dexscreener_prices = false; }
-      const px = fresh.filter((p) => p.priceUsd != null);
+      try { jp = await jupPrices([SOL_MINT, ...watch.map((w) => w.mint)]); health.prices = Object.keys(jp).length > 0; } catch (e) { health.prices = false; health.prices_error = String(e.message || e).slice(0, 120); }
+      const px = watch.filter((w) => jp?.[w.mint]);
       if (px.length) {
-        await d.q(`INSERT INTO mob_aq_prices (mint, price) SELECT * FROM unnest($1::text[],$2::float8[]) ON CONFLICT DO NOTHING`, [px.map((p) => p.mint), px.map((p) => p.priceUsd)]);
-        await d.q(`UPDATE mob_aq_watch w SET liq_usd=x.l, vol_h1=x.v, ch1h=x.c, price_usd=x.p, pool=x.pool, last_seen=now() FROM unnest($1::text[],$2::float8[],$3::float8[],$4::float8[],$5::float8[],$6::text[]) x(m,l,v,c,p,pool) WHERE w.mint=x.m`,
-          [px.map((p) => p.mint), px.map((p) => p.liqUsd), px.map((p) => p.volH1), px.map((p) => p.ch1h), px.map((p) => p.priceUsd), px.map((p) => p.pool)]);
+        await d.q(`INSERT INTO mob_aq_prices (mint, price) SELECT * FROM unnest($1::text[],$2::float8[]) ON CONFLICT DO NOTHING`, [px.map((w) => w.mint), px.map((w) => jp[w.mint].price)]);
+        await d.q(`UPDATE mob_aq_watch w SET price_usd=x.p FROM unnest($1::text[],$2::float8[]) x(m,p) WHERE w.mint=x.m`, [px.map((w) => w.mint), px.map((w) => jp[w.mint].price)]);
       }
       await d.q(`DELETE FROM mob_aq_prices WHERE at < now() - interval '2 days'`);
     }
+    // liquidity: DexScreener's number while it is fresh (seen in the last 30 minutes), else Jupiter's own liquidity figure
+    const fresh = watch.filter((w) => jp?.[w.mint]).map((w) => ({ pool: w.pool, name: `${w.symbol} / SOL`, symbol: w.symbol || "", mint: w.mint, quoteMint: SOL_MINT, priceUsd: jp[w.mint].price, solUsd: null,
+      liqUsd: Date.now() - new Date(w.last_seen).getTime() < 1800000 ? w.liq_usd : jp[w.mint].liqUsd, createdAt: null, ch5m: null, ch1h: w.ch1h, volM5: null, volH1: w.vol_h1 }));
+    if (!solUsd && jp?.[SOL_MINT]) { solUsd = jp[SOL_MINT].price; feeSol = NET_FEE_USD / solUsd; health.sol_price = true; }
     const tracked = fresh.map((p) => ({ ...p, src: "watchlist" })).sort((a, b) => (b.volH1 || 0) - (a.volH1 || 0));
-    const trendingNow = (tracked.length ? tracked : liquid).slice(0, 12).map((p) => ({ symbol: p.symbol, mint: p.mint, ch1h: p.ch1h, liqUsd: p.liqUsd }));
+    const trendingNow = (tracked.length ? tracked : liquid).slice(0, 12).map((p) => ({ symbol: p.symbol, mint: p.mint, ch1h: p.ch1h, liqUsd: p.liqUsd, boosted: boosted.has(p.mint) }));
     await d.q(`INSERT INTO mob_aq_market (k, data, ok, at) VALUES ('trending', $1, true, now()) ON CONFLICT (k) DO UPDATE SET data=EXCLUDED.data, ok=true, err=null, at=now()`, [JSON.stringify(trendingNow)]);
     const bars = await d.one(`SELECT count(*)::int n, count(DISTINCT mint)::int m FROM mob_aq_prices WHERE at > now() - interval '1 hour'`);
     set("sol.trending", trendingNow.length ? "busy" : "blocked", trendingNow.length ? `${watch.length} liquid pairs on the watchlist; ${bars.n} price samples in the last hour (${bars.m} coins)` : "no liquid pair found this tick");
@@ -144,7 +149,7 @@ export async function tick(env, opts = {}) {
     const open = await d.q(`SELECT * FROM mob_aq_positions ORDER BY id`);
     if (open.length && !destroyed) {
       let mids = null;
-      try { mids = await midPrices(open.map((p) => ({ mint: p.mint, pool: p.pool }))); health.dexscreener_prices = true; } catch (e) { health.dexscreener_prices = false; }
+      try { mids = await midPrices(open.map((p) => ({ mint: p.mint, pool: p.pool }))); health.position_prices = true; } catch (e) { health.position_prices = false; }
       for (const p of open) {
         const mid = mids?.[p.mint] ?? null;
         if (mid == null) { set("ex.stops", "blocked", `${p.symbol}: no price, holding`); continue; }
@@ -371,9 +376,9 @@ export async function tick(env, opts = {}) {
 
     // department live flags: a department is live when every feed it needs answered this tick
     const live = {
-      scouts_sol: !!(health.dexscreener || health.geckoterminal) && trendingNow.length > 0, scouts_stocks: !!health.sol_price, news: !!health.feargreed,
+      scouts_sol: trendingNow.length > 0 && health.prices !== false, scouts_stocks: !!health.sol_price, news: !!health.feargreed,
       setups: bars.n > 0 || health.geckoterminal_ohlcv === true, costs: health.jupiter !== false, council: health.rugcheck !== false,
-      whales: health.whales_trades === true, risk: true, execution: health.dexscreener_prices !== false && health.jupiter !== false, review: true, learning: true, ops: true,
+      whales: health.whales_trades === true, risk: true, execution: health.position_prices !== false && health.jupiter !== false, review: true, learning: true, ops: true,
     };
     await d.q(`UPDATE mob_aq_depts d SET live=x.l, last_run_at=now() FROM unnest($1::text[], $2::bool[]) x(id, l) WHERE d.id=x.id`, [Object.keys(live), Object.values(live)]);
     const keys = Object.keys(W);
@@ -483,7 +488,7 @@ export async function buildState(env) {
     d.q(`SELECT * FROM mob_aq_tools ORDER BY name`),
     d.q(`SELECT from_helper, max(at) at FROM mob_aq_helpers GROUP BY from_helper`),
     d.q(`SELECT at, dept, text, labels, weight FROM mob_aq_helpers WHERE channel='x' AND from_helper='grok' ORDER BY id DESC LIMIT 30`),
-    d.q(`SELECT k, data, ok, err, at FROM mob_aq_market WHERE k IN ('trending','ds:boosts','cg:majors','fng') OR (ok=false AND at > now() - interval '1 hour')`),
+    d.q(`SELECT k, data, ok, err, at FROM mob_aq_market WHERE k IN ('trending','cg:majors','fng') OR (ok=false AND at > now() - interval '1 hour')`),
   ]);
   const S = Object.fromEntries(st.map((r) => [r.k, r.v]));
   const hist = await d.one(`SELECT coalesce(sum(n),0)::int n, count(*)::int m, count(*) FILTER (WHERE n >= $1)::int ready FROM (SELECT mint, count(DISTINCT date_trunc('minute', at))::int n FROM mob_aq_prices WHERE at > now() - interval '1 hour' GROUP BY mint) x`, [MIN_OWN_BARS]);
@@ -494,7 +499,6 @@ export async function buildState(env) {
   const realizedToday = trd.filter((t) => new Date(t.closed_at) >= startDay).reduce((a, t) => a + t.pnl_sol, 0);
   const unreal = pos.reduce((a, p) => a + ((p.last_value_sol ?? p.size_sol) - p.size_sol - p.fee_sol), 0);
   const s = stats(trd.map((t) => t.pnl_pct));
-  const boosted = new Set(M["ds:boosts"] || []);
   const v = (r) => (r ? { verdict: r.verdict, symbol: r.symbol, reason: r.reason, number: r.number, at: r.at } : null);
   const recent = [
     ...trd.slice(0, 20).map((t) => ({ id: `s${t.id}`, symbol: t.symbol, side: "sell", sizeSol: t.size_sol, pnlSol: round(t.pnl_sol, 9), reason: t.reason, at: t.closed_at })),
@@ -519,7 +523,7 @@ export async function buildState(env) {
     }),
     ceo: CEO,
     market: { sol: M["cg:majors"]?.sol ?? null, btc: M["cg:majors"]?.btc ?? null, fearGreed: M.fng ?? null,
-      trending: (M.trending || []).slice(0, 12).map((p) => ({ symbol: p.symbol, ch1h: p.ch1h, liqUsd: p.liqUsd, boosted: boosted.has(p.mint) })) },
+      trending: (M.trending || []).slice(0, 12).map((p) => ({ symbol: p.symbol, ch1h: p.ch1h, liqUsd: p.liqUsd, boosted: !!p.boosted })) },
     brain: brainRows.map((r) => ({ at: r.at, dept: r.dept, text: r.text })),
     strategies: strat.map((r) => ({ id: r.id, name: r.name, trades: r.stats?.n ?? 0, pnlSol: r.stats?.pnlSol ?? 0, alive: r.alive, status: r.status, market: r.market })),
     tools: tools.map((t) => ({ name: t.name, licence: t.licence, verdict: t.verdict, status: t.status, usedBy: t.used_by, bestUse: t.best_use })),

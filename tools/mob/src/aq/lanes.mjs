@@ -65,9 +65,10 @@ export async function lanesTick(env, { halted, nowSec, gap, feeSol, P, council, 
   if (q) {
     const tag = `LANE:${q.helper}`, c = { symbol: q.symbol || q.mint.slice(0, 6), mint: q.mint, strategy: tag };
     const reject = async (why) => { await d.q(`UPDATE mob_aq_picks SET status='rejected', verdict='BLOCK', verdict_reason=$2, closed_at=now() WHERE id=$1`, [q.id, why]); await council("BLOCK", c, `${tag}: ${why}`, null, { pick: q.id }); res.judged = { id: q.id, helper: q.helper, status: "rejected", reason: why }; };
-    let pair = null;
-    try { pair = (await getJson(URLS.dsTokens([q.mint])) || []).filter((p) => p.baseToken?.address === q.mint && p.quoteToken?.address === SOL_MINT && num(p.priceUsd) != null).sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0))[0]; } catch { pair = null; }
-    if (!pair) await reject("mint not found as a live SOL pair (missing data = NO)");
+    let pair = null, asked = true;
+    try { pair = (await getJson(URLS.dsTokens([q.mint])) || []).filter((p) => p.baseToken?.address === q.mint && p.quoteToken?.address === SOL_MINT && num(p.priceUsd) != null).sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0))[0]; } catch { asked = false; }
+    if (!asked) res.judged = { id: q.id, helper: q.helper, status: "queued", reason: "DexScreener did not answer; the pick waits for the next tick" };
+    else if (!pair) await reject("mint not found as a live SOL pair (missing data = NO)");
     else {
       const mid = num(pair.priceUsd), liq = num(pair.liquidity?.usd);
       c.symbol = q.symbol || pair.baseToken.symbol;
