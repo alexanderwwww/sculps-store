@@ -249,4 +249,7 @@ export const STRATEGIES = [
 ];
 
 export const GTA6_DATE = "2026-11-19";
+// The one GTA 6 coin with real depth on 2026-11-16 (trading-lab intel: $10.6M cap, about $320k of liquidity, +49% in 24h).
+// Everything else that matches the name is listed with its liquidity and age and flagged as a clone when a deeper namesake exists.
+export const GTA6_MINT = "4kjruqGHDsSqkMdFfCjV7Vb62HPFhtXyWc2t6JpQzDnz";
 export const GTA_RE = /\b(gta|gta ?6|gtavi|leonida|vice ?city|jason duval|lucia|rockstar)\b/i;

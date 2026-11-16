@@ -263,6 +263,7 @@ export async function councilTick(env, x) {
     const soft = hard;
     const sizing = { positionSol, weak: !!g.weak, survivalMult: sv.sizeMult, cashSol: round(cash, 6), equitySol: round(equity, 6), poolCapSol: Number.isFinite(poolCap) ? round(poolCap, 6) : null, limitedBy: hard.sizeSol < base - 1e-9 ? (cashCap <= poolCap ? "cash" : "1% of the pool") : sv.sizeMult < 1 ? "survival stage" : null,
       minSol: C.minSizeSol, feeFloorSol: floor == null ? null : round(floor, 6), stopPct: plan.stopPct, estRtPct: round(estRt, 3), lossAtStopPctOfEquity: riskPct };
+    if (x.regime) sizing.regime = { fearGreed: x.regime.fearGreed, label: x.regime.label, solCh24: x.regime.solCh24, btcCh24: x.regime.btcCh24 }; // stored on the trade row with the sizing inputs
     g.facts.sizing = sizing;
     if (floor == null || floor * FLOOR_MARGIN > hard.sizeSol || hard.sizeSol < C.minSizeSol) {
       // the 6x round trip this coin would pay at the largest size the limits allow, against the room it has

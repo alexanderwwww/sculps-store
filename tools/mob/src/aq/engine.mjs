@@ -1,7 +1,7 @@
 // Aquarius engine: the one-minute PAPER tick. Scouts -> Hecate safety -> Athena setup -> Costs -> Council -> Zeus risk ->
 // Hermes paper fill -> Review -> Learning -> Ops. PAPER ONLY: no wallet, no keys, no orders. Missing data = NO trade.
 import { db } from "../db.mjs";
-import { DEPTS, seedWorkers, TOOLS, STRATEGIES, GTA6_DATE, GTA_RE, CEO, R5_PARAMS } from "./seed.mjs";
+import { DEPTS, seedWorkers, TOOLS, STRATEGIES, GTA6_DATE, GTA_RE, GTA6_MINT, CEO, R5_PARAMS } from "./seed.mjs";
 import { feeds, midPrices, jupQuote, SOL_MINT, jupPrices, getJson, CALLS, CAPS, resetCalls } from "./feeds.mjs";
 import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round, survival, whaleSetup, replaySetup, momentumSetup, bounceSetup, planFor, atr5Pct, median } from "./logic.mjs";
 import { whaleSignal, shadowTick, shadowStats, mineTick, followSignals, whaleState, logSignal, signalEvidence, EVIDENCE_MIN, scoreTick, kolTick } from "./whales.mjs";
@@ -208,6 +208,20 @@ export async function tick(env, opts = {}) {
     }
     set("sol.copycat", cands.length ? "busy" : "idle", `${copies} copycat name(s) in ${cands.length} pools`);
     set("sol.narrative", cands.length ? "busy" : "idle", `${gta} GTA 6 tagged`);
+    // ---- the GTA 6 list for release day (2026-11-19): every coin seen under that name at or above the liquidity gate, with
+    // what the desk knows about it. A list to judge from, never a trigger: each coin still passes every gate like any other.
+    const gl = (await getState(d, "gta6_list", null)) || { tokens: {} };
+    for (const c of cands) if ((c.gta || c.mint === GTA6_MINT) && (c.liqUsd || 0) >= COUNCIL.hardMinLiq) {
+      const prev = gl.tokens[c.mint] || { firstSeen: new Date(nowSec * 1000).toISOString() };
+      gl.tokens[c.mint] = { ...prev, symbol: c.symbol, mint: c.mint, liqUsd: Math.round(c.liqUsd), priceUsd: c.priceUsd ?? null, ch1h: c.ch1h ?? null, createdAt: c.createdAt || prev.createdAt || null, clone: !!c.copycat, boosted: !!c.boosted, main: c.mint === GTA6_MINT, lastSeen: new Date(nowSec * 1000).toISOString() };
+    }
+    const glKeep = Object.values(gl.tokens).filter((t) => nowSec * 1000 - Date.parse(t.lastSeen) < 3 * 86400000).sort((a, b) => (b.main - a.main) || b.liqUsd - a.liqUsd).slice(0, 30);
+    await setState(d, "gta6_list", { releaseDate: GTA6_DATE, daysToRelease: daysToGta, mainMint: GTA6_MINT, tokens: Object.fromEntries(glKeep.map((t) => [t.mint, t])) });
+    // ---- regime: what the wider market is doing this minute. Stored with every entry so results can be read per regime later;
+    // it changes no decision yet (no rule is tuned on it until there is a sample to judge).
+    const regime = { fearGreed: fg.data?.value ?? null, solUsd: solUsd ?? null, solCh24: mj.data?.sol?.ch24 ?? null, btcUsd: mj.data?.btc?.price ?? null, btcCh24: mj.data?.btc?.ch24 ?? null,
+      label: fg.data?.value == null ? null : fg.data.value < 25 ? "extreme fear" : fg.data.value < 45 ? "fear" : fg.data.value < 55 ? "neutral" : fg.data.value < 75 ? "greed" : "extreme greed", at: new Date(nowSec * 1000).toISOString() };
+    await setState(d, "regime", regime);
     set("sol.gainers", cands.length ? "busy" : "idle", `${hot} pools over +100% in 1h (warning)`);
     set("sol.volume", cands.length ? "busy" : "idle", `${spikes} 5-minute volume spikes`);
     set("sol.liquidity", cands.length ? "busy" : "idle", `${cands.filter((c) => (c.liqUsd || 0) >= P.minLiqUsd).length} pools at or above $${P.minLiqUsd}`);
@@ -369,7 +383,7 @@ export async function tick(env, opts = {}) {
       set("cn.veto", "busy", `BLOCK: ${riskBlock[0]}`);
     } else {
       // ---- the Council (hard blocks, soft score, tiers, R3/R5/R6/R7, explore) lives in council.mjs
-      await councilTick(env, { nansen: nz, variantDefault: (await getState(d, "variant_default", {})) || {}, throttle, r6TimeStopMin: null, book, modes, replays, controls, positionSol: (() => { const v = Number(positionState); return Number.isFinite(v) && v > 0 ? v : COUNCIL.positionSol; })(), d, cands, tradable, strategies, pos, cash, equity, sv, solUsd, feeSol, nowSec, gap, health, set, out, near, rpl, fng: fg.data?.value ?? null, ownCandles, brain, flow, setState,
+      await councilTick(env, { nansen: nz, variantDefault: (await getState(d, "variant_default", {})) || {}, throttle, r6TimeStopMin: null, book, modes, replays, controls, regime, positionSol: (() => { const v = Number(positionState); return Number.isFinite(v) && v > 0 ? v : COUNCIL.positionSol; })(), d, cands, tradable, strategies, pos, cash, equity, sv, solUsd, feeSol, nowSec, gap, health, set, out, near, rpl, fng: fg.data?.value ?? null, ownCandles, brain, flow, setState,
         council: (v, c, reason, number, facts) => council(d, v, c, reason, number, facts) });
     }
     if (!W["ex.paper"]) set("ex.paper", "idle", "no PASS this tick");
@@ -605,6 +619,8 @@ export async function buildState(env) {
     flows: flows.map((f) => ({ id: Number(f.id), kind: f.kind, sol: f.sol, dept: f.dept, label: f.label, at: f.at })),
     council: { last: v(cn[0]), vetoes: cn.filter((r) => r.verdict === "BLOCK").slice(0, 10).map(v), recent: cn.slice(0, 20).map(v) },
     tape: S.tape || null,
+    regime: S.regime || null,
+    gta6: S.gta6_list ? { releaseDate: S.gta6_list.releaseDate, daysToRelease: S.gta6_list.daysToRelease, mainMint: S.gta6_list.mainMint, tokens: Object.values(S.gta6_list.tokens || {}) } : null,
     costs: (await d.q(`SELECT symbol, (facts->>'rtPct')::float rt, at FROM mob_aq_council WHERE facts ? 'rtPct' AND facts->>'rtPct' IS NOT NULL ORDER BY id DESC LIMIT 20`)).map((r) => ({ symbol: r.symbol, rtPct: r.rt, at: r.at })),
     departments: DEPTS.map(([id]) => {
       const x = depts.find((q) => q.id === id) || {};

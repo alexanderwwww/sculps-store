@@ -1262,7 +1262,10 @@ test("CEO deposit: the wallet base steps up with cash in one statement, profit d
   assert.equal(tk.entered?.symbol, "DEEP", JSON.stringify(tk.evaluated)); assert.equal(tk.entered.sizeSol, 2.6);
   assert.ok(calls.some((c) => c.url.includes("/swap/v1/quote") && c.url.includes(`inputMint=${SOL}`) && c.url.includes("amount=2600000000")), "the round trip is quoted at the real 2.6 SOL");
   let ps = await d.one(`SELECT * FROM mob_aq_positions WHERE symbol='DEEP'`);
-  assert.deepEqual([ps.sizing.positionSol, ps.sizing.limitedBy, ps.sizing.sizeSol], [2.6, null, 2.6]); assert.ok(ps.rt_pct > 0.2 && ps.rt_pct < 0.22, `fee share is tiny at this size: ${ps.rt_pct}`); assert.ok(ps.sizing.lossAtStopPctOfEquity > 0.5);
+  assert.deepEqual([ps.sizing.positionSol, ps.sizing.limitedBy, ps.sizing.sizeSol], [2.6, null, 2.6]);
+  // regime inputs ride on the trade row and in the state; the GTA 6 list is kept for release day
+  assert.equal(ps.sizing.regime.fearGreed, FX.fng.data ? Number(FX.fng.data[0].value) : ps.sizing.regime.fearGreed); assert.ok(["extreme fear", "fear", "neutral", "greed", "extreme greed"].includes(ps.sizing.regime.label));
+  s = await S(); assert.equal(s.regime.solUsd, SOLUSD); assert.equal(s.gta6.releaseDate, "2026-11-19"); assert.equal(s.gta6.mainMint, "4kjruqGHDsSqkMdFfCjV7Vb62HPFhtXyWc2t6JpQzDnz"); assert.ok(Array.isArray(s.gta6.tokens)); assert.ok(ps.rt_pct > 0.2 && ps.rt_pct < 0.22, `fee share is tiny at this size: ${ps.rt_pct}`); assert.ok(ps.sizing.lossAtStopPctOfEquity > 0.5);
   // the 1% cap: a $100,000 pool allows $1,000 = 13.88 SOL. With a 20 SOL position setting (and the cash for it) the pool decides the size.
   assert.equal((await deposit(d, { id: "big-1", sol: 100 })).applied, true);
   jupLists = () => ({ pools: [mk("THIN", THIN, 100000)] }); jupCharts[THIN] = () => asJup(brk);
