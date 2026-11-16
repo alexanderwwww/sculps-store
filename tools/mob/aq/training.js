@@ -16,28 +16,35 @@ const run = (prev, cur, f) => (num(cur) ? (num(prev) && prev <= cur ? prev + (cu
 
 // ---------- headline band (under the top bar, both states) ----------
 export function trainingHero() { const el = document.createElement("section"); el.id = "t-hero"; el.className = "hero"; el.hidden = true; setInterval(() => { try { paintHero(store.state); } catch (e) { console.error(e); } }, 250); return el; }
-let heroKey = "";
+let heroKey = "", lastWal = null, flashT = 0;
 function paintHero(s) {
   const el = document.getElementById("t-hero"); if (!el) return; el.hidden = !s; if (!s) return;
   const t = s.training || null, on = trainingOn(s), T = s.trades || {}, key = on ? "on" : "off";
   if (heroKey !== key) { heroKey = key; el.className = "hero " + key;
     el.innerHTML = on ? `<div class="hr-top"><b class="hr-tag">TRAINING MODE ON</b><span>training wallet, separate from the main paper book · virtual trades on real 1-minute candles · bad trades welcome</span><em id="h-age"></em></div>
       <div class="hr-big"><div class="hw"><small>TRAINING WALLET</small><b id="h-wal">${D}</b><i id="h-wsub"></i></div><div><small>TRADES</small><b id="h-n">${D}</b></div><div class="won"><small>WON</small><b id="h-w">${D}</b></div><div class="lost"><small>LOST</small><b id="h-l">${D}</b></div><div><small>WIN RATE</small><b id="h-wr">${D}</b></div><div><small>TRADES / MIN</small><b id="h-pm">${D}</b><i id="h-pmsub"></i></div></div>
-      <div class="hr-tape" id="h-tape"></div><div class="hr-main" id="h-main"></div>`
+      <svg class="hr-line" id="h-line" viewBox="0 0 600 60" preserveAspectRatio="none"><polyline id="h-poly" fill="none" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg><div class="hr-tape" id="h-tape"></div><div class="hr-main" id="h-main"></div>`
       : `<div class="hr-top"><b class="hr-tag main">PAPER BOOK</b><span>the main paper wallet</span></div>
       <div class="hr-big"><div class="hw"><small>WALLET</small><b id="h-wal">${D}</b><i id="h-wsub"></i></div><div><small>TRADES</small><b id="h-n">${D}</b></div><div class="won"><small>WON</small><b id="h-w">${D}</b></div><div class="lost"><small>LOST</small><b id="h-l">${D}</b></div><div><small>WIN RATE</small><b id="h-wr">${D}</b></div><div><small>OPEN NOW</small><b id="h-pm">${D}</b></div></div>`; }
   const set = (id, v, c) => { const e = document.getElementById(id); if (e && e.textContent !== v) e.textContent = v; if (e && c != null && e.className !== c) e.className = c; };
   const mainLine = `Main paper book: ${sol(s.equitySol, 3)} SOL · ${int(T.n)} trades · ${int(T.wins)} won · ${num(T.n) && num(T.wins) ? int(T.n - T.wins) : D} lost · ${Array.isArray(s.positions) ? s.positions.length : D} open`;
   if (!on) { set("h-wal", sol(s.equitySol, 3) + " SOL"); set("h-wsub", num(s.startSol) ? `started at ${sol(s.startSol, 0)} SOL` : ""); set("h-n", int(T.n)); set("h-w", int(T.wins)); set("h-l", num(T.n) && num(T.wins) ? int(T.n - T.wins) : D); set("h-wr", num(T.winRate) ? (T.winRate * 100).toFixed(1) + "%" : D); set("h-pm", Array.isArray(s.positions) ? String(s.positions.length) : D); return; }
-  const f = frac(t), n = run(t.prevTradesTotal, t.trades, f), w = run(t.prevWins, t.wins, f), wal = num(t.prevWalletSol) ? t.prevWalletSol + (t.walletSol - t.prevWalletSol) * f : t.walletSol;
-  set("h-wal", sol(wal, 2) + " SOL", cls(wal - (t.startSol || 1000))); set("h-wsub", `started at ${sol(t.startSol, 0)} SOL · ${t.sizeSol} SOL a trade`);
+  // the wallet steps through the batch the server resolved: walletPath is the real balance after each part of it, in order
+  const f = frac(t), n = run(t.prevTradesTotal, t.trades, f), w = run(t.prevWins, t.wins, f), P = Array.isArray(t.walletPath) ? t.walletPath : [], pi = Math.min(P.length, Math.floor(f * P.length));
+  const wal = P.length ? (pi === 0 ? (num(t.prevWalletSol) ? t.prevWalletSol : P[0]) : P[pi - 1]) : t.walletSol;
+  const we = document.getElementById("h-wal"), txt = sol(wal, 3) + " SOL";
+  if (we && we.textContent !== txt) { const up = num(lastWal) ? wal > lastWal : null; we.textContent = txt; if (up != null && wal !== lastWal) { we.className = up ? "fu" : "fd"; clearTimeout(flashT); flashT = setTimeout(() => { we.className = ""; }, 420); } lastWal = wal; }
+  set("h-wsub", `started at ${sol(t.startSol, 0)} SOL · ${Array.isArray(t.sizeRange) ? t.sizeRange.join(" to ") : t.sizeSol} SOL a trade · last minute ${num(t.batchPnlSol) ? (t.batchPnlSol > 0 ? "+" : "") + t.batchPnlSol.toFixed(3) + " SOL" : D}`);
+  // the equity line: one point a minute, then the minute now playing, point by point
+  { const pts = (Array.isArray(t.equityLine) ? t.equityLine.slice(0, -1).map((x) => x.w) : []).concat(num(t.prevWalletSol) ? [t.prevWalletSol] : [], P.slice(0, pi)).filter(num).slice(-240), poly = document.getElementById("h-poly");
+    if (poly && pts.length > 1) { const lo = Math.min(...pts), hi = Math.max(...pts), sp = hi - lo || 1, d = pts.map((v, i) => `${((i / (pts.length - 1)) * 600).toFixed(1)},${(56 - ((v - lo) / sp) * 52).toFixed(1)}`).join(" "); if (poly.getAttribute("points") !== d) { poly.setAttribute("points", d); poly.setAttribute("stroke", pts.at(-1) >= pts[0] ? "#4ade80" : "#f87171"); } } }
   set("h-n", int(n)); set("h-w", int(w)); set("h-l", num(n) && num(w) ? int(n - w) : D); set("h-wr", num(n) && n > 0 && num(w) ? ((w / n) * 100).toFixed(1) + "%" : D);
-  set("h-pm", int(t.perMin)); set("h-pmsub", num(t.perMinuteLive) ? `${int(t.perMinuteLive)} fresh · ${int(t.perMinuteReplay)} replay` : "");
+  set("h-pm", int(t.perMin)); set("h-pmsub", num(t.perMinuteLive) ? `${int(t.perMinuteLive)} fresh · ${int(t.perMinuteReplay)} replay${num(t.targetPerMin) ? ` · set to ${int(t.targetPerMin)}` : ""}` : "");
   set("h-age", t.lastTickAt ? `last batch ${ago(t.lastTickAt)} ago · ${int(t.coins)} coins · ${int(t.variants)} settings` : "waiting for the first batch");
   set("h-main", mainLine);
   // the tape: the last batch, one more trade every quarter second, newest on top
   const tape = Array.isArray(t.tape) ? t.tape : [], shown = tape.slice(0, Math.max(0, Math.min(tape.length, Math.ceil(f * tape.length)))).slice(-20).reverse();
-  const html = shown.length ? shown.map((x) => `<span class="${cls(x.pnlPct)}"><b>${esc(x.symbol)}</b> ${esc(String(x.variant).replace(/\|/g, " "))} <u>${pct(x.pnlPct)}</u></span>`).join("") : `<span class="mut">${esc(t.note || "waiting for the first batch")}</span>`;
+  const html = shown.length ? shown.map((x) => `<span class="${cls(x.pnlPct)}"><b>${esc(x.symbol)}</b> ${esc(String(x.variant).replace(/\|/g, " "))} <u>${pct(x.pnlPct)}${num(x.pnlSol) ? ` · ${x.pnlSol > 0 ? "+" : ""}${x.pnlSol.toFixed(4)} SOL` : ""}</u></span>`).join("") : `<span class="mut">${esc(t.note || "waiting for the first batch")}</span>`;
   const tp = document.getElementById("h-tape"); if (tp && tp.dataset.h !== html) { tp.innerHTML = html; tp.dataset.h = html; }
 }
 

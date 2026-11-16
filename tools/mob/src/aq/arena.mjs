@@ -20,7 +20,8 @@ import { R3_PARAMS, R6_PARAMS, R7_PARAMS } from "./seed.mjs";
 import { costBook, AUDIT_RT } from "./council.mjs";
 import { NET_FEE_SOL, AUDIT_OVERSHOOT_PCT } from "./engine.mjs";
 
-export const ARENA = { walletSol: 1000, sizeSol: 1, ring: 90, look: 25, holds: [2, 5, 10, 20, 45], stops: [1, 2, 3], rrs: [1.5, 3], randomP: 0.15, maxCoins: 150, minLiqUsd: 20000,
+// Alex, 2026-11-16 (final): 700 paper trades a minute, every minute, each 0.8 to 1 SOL, any coin, out of a 1,000 SOL paper wallet.
+export const ARENA = { walletSol: 1000, sizeSol: 1, sizeMin: 0.8, sizeMax: 1, perMinute: 700, ring: 90, look: 25, holds: [2, 5, 10, 20, 45], stops: [1, 2, 3], rrs: [1.5, 3], randomP: 0.15, maxCoins: 150, minLiqUsd: 20000,
   minTrades: 300, boardMin: 50, maxPicks: 20, z: 1.96, sampleSlots: 20, samplesPerTick: 40, costSizes: [1, 5], keepDays: 35 };
 // entry type -> the rule of the main book its result speaks to
 export const ENTRY_RULE = { random: "baseline (luck)", mom1: "R6 momentum, 1x ATR in 5 min", mom2: "R6 momentum, 2x ATR in 5 min", rev1: "R7 mean reversion, -1x ATR in 5 min", rev2: "R7 mean reversion, -2x ATR in 5 min",
@@ -125,8 +126,8 @@ export function aggregate(trades) {
   for (const t of trades) {
     const k = `${t.day}\t${t.variant}\t${t.tier}\t${t.tod}`;
     let a = m.get(k);
-    if (!a) m.set(k, (a = { day: t.day, variant: t.variant, tier: t.tier, tod: t.tod, n: 0, wins: 0, sum: 0, sumsq: 0, stop: 0, target: 0, time: 0 }));
-    a.n++; if (t.netPct > 0) a.wins++; a.sum += t.netPct; a.sumsq += t.netPct * t.netPct; a[t.why]++;
+    if (!a) m.set(k, (a = { day: t.day, variant: t.variant, tier: t.tier, tod: t.tod, n: 0, wins: 0, sum: 0, sumsq: 0, stop: 0, target: 0, time: 0, pnl: 0 }));
+    a.n++; if (t.netPct > 0) a.wins++; a.sum += t.netPct; a.sumsq += t.netPct * t.netPct; a[t.why]++; a.pnl += t.pnlSol ?? (t.netPct / 100) * ARENA.sizeSol;
   }
   return [...m.values()];
 }
@@ -171,13 +172,13 @@ export async function writeAggregates(d, table, regime, aggs) {
   if (!["mob_aq_arena_agg", "mob_aq_arena_replay"].includes(table)) throw new Error("unknown arena table");
   for (let i = 0; i < aggs.length; i += 4000) {
     const part = aggs.slice(i, i + 4000), col = (k) => part.map((a) => a[k]);
-    await d.q(`INSERT INTO ${table} AS g (day, variant, tier, tod, regime, n, wins, sum_pct, sumsq_pct, n_stop, n_target, n_time, cum_pct, peak_pct, maxdd_pct)
-      SELECT x.dy::date, x.v, x.t, x.td, $1::text, x.n, x.w, x.s, x.q, x.a, x.b, x.c, x.s, greatest(x.s, 0), greatest(-x.s, 0)
-      FROM unnest($2::text[], $3::text[], $4::text[], $5::int[], $6::int[], $7::int[], $8::float8[], $9::float8[], $10::int[], $11::int[], $12::int[]) x(dy, v, t, td, n, w, s, q, a, b, c)
+    await d.q(`INSERT INTO ${table} AS g (day, variant, tier, tod, regime, n, wins, sum_pct, sumsq_pct, n_stop, n_target, n_time, cum_pct, peak_pct, maxdd_pct, pnl_sol)
+      SELECT x.dy::date, x.v, x.t, x.td, $1::text, x.n, x.w, x.s, x.q, x.a, x.b, x.c, x.s, greatest(x.s, 0), greatest(-x.s, 0), x.p
+      FROM unnest($2::text[], $3::text[], $4::text[], $5::int[], $6::int[], $7::int[], $8::float8[], $9::float8[], $10::int[], $11::int[], $12::int[], $13::float8[]) x(dy, v, t, td, n, w, s, q, a, b, c, p)
       ON CONFLICT (day, variant, tier, tod, regime) DO UPDATE SET n = g.n + EXCLUDED.n, wins = g.wins + EXCLUDED.wins, sum_pct = g.sum_pct + EXCLUDED.sum_pct, sumsq_pct = g.sumsq_pct + EXCLUDED.sumsq_pct,
-        n_stop = g.n_stop + EXCLUDED.n_stop, n_target = g.n_target + EXCLUDED.n_target, n_time = g.n_time + EXCLUDED.n_time, cum_pct = g.cum_pct + EXCLUDED.sum_pct,
+        n_stop = g.n_stop + EXCLUDED.n_stop, n_target = g.n_target + EXCLUDED.n_target, n_time = g.n_time + EXCLUDED.n_time, pnl_sol = g.pnl_sol + EXCLUDED.pnl_sol, cum_pct = g.cum_pct + EXCLUDED.sum_pct,
         peak_pct = greatest(g.peak_pct, g.cum_pct + EXCLUDED.sum_pct), maxdd_pct = greatest(g.maxdd_pct, greatest(g.peak_pct, g.cum_pct + EXCLUDED.sum_pct) - (g.cum_pct + EXCLUDED.sum_pct))`,
-      [regime || "unknown", col("day"), col("variant"), col("tier"), col("tod"), col("n"), col("wins"), col("sum"), col("sumsq"), col("stop"), col("target"), col("time")]);
+      [regime || "unknown", col("day"), col("variant"), col("tier"), col("tod"), col("n"), col("wins"), col("sum"), col("sumsq"), col("stop"), col("target"), col("time"), col("pnl")]);
   }
   return aggs.length;
 }
@@ -209,7 +210,7 @@ export async function trainingState(d, S = null) {
   const grads = new Set((a.graduated ?? []).map((g) => `${g.variant}\t${g.tier}`));
   // (trades, perMin, variants, random and leaders[].name/expectancyPct/vsRandomPct are the names the panel reads)
   return { on, since: a.since ?? null, walletSol: a.walletSol ?? ARENA.walletSol, startSol: ARENA.walletSol, sizeSol: ARENA.sizeSol, virtualTradesTotal: a.virtualTradesTotal ?? 0, perMinute: a.perMinute ?? 0, trades: a.virtualTradesTotal ?? 0, perMin: a.perMinute ?? 0, variants: a.variantsTried ?? 0, random: a.random ?? { n: 0, expectancyPct: null, ci95: null }, tickMs: a.tickMs ?? null, coins: a.coins ?? 0, coinsReady: a.coinsReady ?? 0,
-    wins: a.wins ?? 0, losses: a.losses ?? 0, winRate: a.winRate ?? null, won: a.wins ?? 0, lost: a.losses ?? 0, liveTrades: a.liveTrades ?? 0, replayTrades: a.replayTrades ?? 0, prevTradesTotal: a.prevTradesTotal ?? 0, prevWins: a.prevWins ?? 0, prevWalletSol: a.prevWalletSol ?? ARENA.walletSol, coinsReadThisTick: a.coinsReadThisTick ?? 0, perMinuteLive: a.perMinuteLive ?? 0, perMinuteReplay: a.perMinuteReplay ?? 0, equitySol: a.walletSol ?? ARENA.walletSol, tape: a.tape ?? [], replay: a.replay ?? null,
+    wins: a.wins ?? 0, losses: a.losses ?? 0, winRate: a.winRate ?? null, won: a.wins ?? 0, lost: a.losses ?? 0, liveTrades: a.liveTrades ?? 0, replayTrades: a.replayTrades ?? 0, prevTradesTotal: a.prevTradesTotal ?? 0, prevWins: a.prevWins ?? 0, prevWalletSol: a.prevWalletSol ?? ARENA.walletSol, coinsReadThisTick: a.coinsReadThisTick ?? 0, perMinuteLive: a.perMinuteLive ?? 0, perMinuteReplay: a.perMinuteReplay ?? 0, equitySol: a.walletSol ?? ARENA.walletSol, tape: a.tape ?? [], walletPath: a.walletPath ?? [], equityLine: a.equityLine ?? [], batchPnlSol: a.batchPnlSol ?? 0, sizeRange: [ARENA.sizeMin, ARENA.sizeMax], targetPerMin: ARENA.perMinute, replay: a.replay ?? null,
     variantsTried: a.variantsTried ?? 0, leaders: (a.leaders ?? []).map((x) => ({ ...x, name: `${x.variant} tier ${x.tier}`, expectancyPct: x.meanPct, vsRandomPct: x.edgePct, graduated: grads.has(`${x.variant}\t${x.tier}`) })), laggards: a.laggards ?? [], graduated: a.graduated ?? [], pending: a.pending ?? [], grok: a.grok ?? [], costs: a.costs ?? null, lastTickAt: a.lastTickAt ?? null, resolution: "real 1-minute candles (open, high, low, close, volume) from Jupiter; inside a minute the low is checked before the high",
     note: a.note ?? (on ? "starting: the first candles are read on the next minute" : "off: turn it on in the panel") };
 }
@@ -220,8 +221,10 @@ export async function trainingState(d, S = null) {
 //   LIVE  : the minutes since training was switched on (entry minutes the arena had not seen), a coin at a time, round robin;
 //   REPLAY: the same coins' history before the switch, walking backwards 10 hours a visit, each minute used once (a cursor
 //           per coin in mob_aq_state 'arena_cur'), up to 30 days back or as far as the API has candles.
+// PACE: the minutes read each tick hold more candidate trades than 700; exactly ARENA.perMinute of them are taken, drawn at
+// random with a seed (an unbiased sample of every setting), each sized 0.8 to 1 SOL by its own seeded draw.
 // Live and replay are stored apart. Walk-forward graduation reads live days only.
-export const FEED = { livePerTick: 2, backPerTick: 3, chunkMin: 600, pad: 45, backDays: 30, tape: 60 };
+export const FEED = { livePerTick: 2, backPerTick: 2, chunkMin: 80, backChunkMin: 40, pad: 45, backDays: 30, tape: 60, path: 60, line: 180 };
 const chartUrl = (mint, toMin, n) => `https://datapi.jup.ag/v2/charts/${mint}?interval=1_MINUTE&to=${toMin * 60000}&candles=${n}&type=price&quote=usd`;
 async function candlesOf(mint, toMin, n) {
   const cs = (await getJson(chartUrl(mint, toMin, n), 12000))?.candles;
@@ -270,12 +273,12 @@ export async function arenaTick(env, opts = {}) {
     if (seen === coins.length - 1 || k === FEED.livePerTick) cur.li = (cur.li + seen + 1) % Math.max(1, coins.length);
   }
   for (let k = 0, seen = 0; seen < coins.length && k < FEED.backPerTick; seen++) {
-    const c = coins[(cur.bi + seen) % coins.length], to = cur.back[c.mint] ?? backStart, from = Math.max(oldest, to - FEED.chunkMin + 1);
+    const c = coins[(cur.bi + seen) % coins.length], to = cur.back[c.mint] ?? backStart, from = Math.max(oldest, to - FEED.backChunkMin + 1);
     if (to !== 0 && to >= from) { jobs.push({ kind: "replay", c, eFrom: from, eTo: to }); k++; }
     if (seen === coins.length - 1 || k === FEED.backPerTick) cur.bi = (cur.bi + seen + 1) % Math.max(1, coins.length);
   }
   // ---- fetch and resolve. A failed fetch leaves that coin's cursor where it was: the same minutes are tried again later.
-  const live = [], replay = [];
+  const cand = [];
   let skipped = 0, fetched = 0, failed = 0;
   const got = await Promise.all(jobs.map(async (j) => { try { const from = j.eFrom - FEED.pad, to = j.eTo + FEED.pad; return { j, from, to, cs: await candlesOf(j.c.mint, to + 1, to - from + 2) }; } catch (e) { return { j, err: String(e.message || e) }; } }));
   for (const g of got) {
@@ -286,15 +289,21 @@ export async function arenaTick(env, opts = {}) {
     if (cost == null) continue;
     const bars = minuteSeries(g.cs, g.from, g.to), r = resolveSeries(j.c, bars, g.from, j.eFrom, j.eTo, { cost, overshootPct: os, events });
     skipped += r.skipped;
-    for (const t of r.trades) (j.kind === "live" ? live : replay).push(t);
+    for (const t of r.trades) { t.src = j.kind; cand.push(t); }
     if (j.kind === "live") cur.live[j.c.mint] = j.eTo;
     // history is used up when the API has nothing before this chunk (or the 30-day line is reached)
     else cur.back[j.c.mint] = !g.cs.length || Math.floor(Math.min(...g.cs.map((c) => c.t)) / 60) > j.eFrom || j.eFrom <= oldest ? 0 : j.eFrom - 1;
   }
+  // the pace: ARENA.perMinute trades, a seeded random draw from the candidates (a partial Fisher-Yates shuffle), in that order
+  const take = Math.min(ARENA.perMinute, cand.length);
+  for (let i = 0; i < take; i++) { const k = i + Math.floor(seed01(`pace|${T}|${i}`) * (cand.length - i)); [cand[i], cand[k]] = [cand[k], cand[i]]; }
+  const all = cand.slice(0, take);
+  for (const t of all) { t.sizeSol = round(ARENA.sizeMin + (ARENA.sizeMax - ARENA.sizeMin) * seed01(`size|${t.mint}|${t.entryMin}|${t.variant}`), 3); t.pnlSol = (t.netPct / 100) * t.sizeSol; }
+  const live = all.filter((t) => t.src === "live"), replay = all.filter((t) => t.src === "replay");
   await writeAggregates(d, "mob_aq_arena_agg", regime, aggregate(live));
   await writeAggregates(d, "mob_aq_arena_replay", "replay", aggregate(replay));
   await setState(d, "arena_cur", cur);
-  const trades = live.length + replay.length, all = live.concat(replay);
+  const trades = all.length;
   // a small recent sample of individual trades per setting (a fixed number of slots, overwritten at random), and the tape
   const tape = [];
   if (all.length) {
@@ -305,20 +314,24 @@ export async function arenaTick(env, opts = {}) {
       SELECT * , now() FROM unnest($1::text[], $2::text[], $3::int[], $4::text[], $5::text[], $6::bigint[], $7::int[], $8::float8[], $9::float8[], $10::text[], $11::float8[], $12::float8[]) x
       ON CONFLICT (variant, tier, slot) DO UPDATE SET mint = EXCLUDED.mint, symbol = EXCLUDED.symbol, entry_min = EXCLUDED.entry_min, hold_min = EXCLUDED.hold_min, entry_px = EXCLUDED.entry_px, atr_pct = EXCLUDED.atr_pct, why = EXCLUDED.why, gross_pct = EXCLUDED.gross_pct, net_pct = EXCLUDED.net_pct, at = now()`,
       [ks.map((k) => k[0]), ks.map((k) => k[1]), ks.map((k) => Number(k[2])), vs.map((t) => t.mint), vs.map((t) => t.symbol), vs.map((t) => t.entryMin), vs.map((t) => t.hold), vs.map((t) => t.entryPx), vs.map((t) => t.atr), vs.map((t) => t.why), vs.map((t) => round(t.grossPct, 4)), vs.map((t) => round(t.netPct, 4))]);
-    for (let i = 0; i < FEED.tape; i++) { const k = Math.floor(seed01(`tape|${T}|${i}`) * all.length), t = all[k]; tape.push({ id: `${T}-${i}`, symbol: t.symbol, variant: t.variant, tier: t.tier, pnlPct: round(t.netPct, 3), exit: t.why, holdMin: t.hold, enteredAt: new Date(t.entryMin * 60000).toISOString(), src: k < live.length ? "live" : "replay" }); }
+    for (let i = 0; i < Math.min(FEED.tape, all.length); i++) { const t = all[Math.floor((i * all.length) / Math.min(FEED.tape, all.length))]; tape.push({ id: `${T}-${i}`, symbol: t.symbol, variant: t.variant, tier: t.tier, pnlPct: round(t.netPct, 3), pnlSol: round(t.pnlSol, 5), sizeSol: t.sizeSol, exit: t.why, holdMin: t.hold, enteredAt: new Date(t.entryMin * 60000).toISOString(), src: t.src }); }
   }
-  Object.assign(out, { coins: coins.length, jobs: jobs.length, fetched, failed, trades, live: live.length, replay: replay.length, skipped });
+  Object.assign(out, { coins: coins.length, jobs: jobs.length, fetched, failed, candidates: cand.length, trades, live: live.length, replay: replay.length, skipped });
   // ---- the scoreboard: live + replay together for the board (what the arena has seen), live alone for graduation
-  const board = await d.q(`SELECT variant, tier, sum(n)::float8 n, sum(wins)::float8 wins, sum(sum_pct)::float8 sum, sum(sumsq_pct)::float8 sumsq FROM (SELECT variant, tier, n, wins, sum_pct, sumsq_pct FROM mob_aq_arena_agg UNION ALL SELECT variant, tier, n, wins, sum_pct, sumsq_pct FROM mob_aq_arena_replay) u GROUP BY variant, tier`);
+  const board = await d.q(`SELECT variant, tier, sum(n)::float8 n, sum(wins)::float8 wins, sum(sum_pct)::float8 sum, sum(sumsq_pct)::float8 sumsq, sum(pnl_sol)::float8 pnl FROM (SELECT variant, tier, n, wins, sum_pct, sumsq_pct, pnl_sol FROM mob_aq_arena_agg UNION ALL SELECT variant, tier, n, wins, sum_pct, sumsq_pct, pnl_sol FROM mob_aq_arena_replay) u GROUP BY variant, tier`);
   const scored = scoreDay(board).filter((x) => x.edgeLo != null && x.n >= ARENA.boardMin && x.baseN >= ARENA.boardMin); // the board shows a setting from 50 trades; graduation still needs 300 on each of two live days
-  const tot = board.reduce((a, r) => ({ n: a.n + r.n, s: a.s + r.sum, w: a.w + r.wins }), { n: 0, s: 0, w: 0 });
+  const tot = board.reduce((a, r) => ({ n: a.n + r.n, s: a.s + r.sum, w: a.w + r.wins, p: a.p + r.pnl }), { n: 0, s: 0, w: 0, p: 0 });
+  // the wallet after each part of this batch, in the order the trades were counted: what the panel plays back between refreshes
+  const wallet = round(ARENA.walletSol + tot.p, 4), batchPnl = all.reduce((a, t) => a + t.pnlSol, 0), w0 = wallet - batchPnl, path = [];
+  { let cum = 0, next = 0; for (let i = 0; i < all.length; i++) { cum += all[i].pnlSol; if (i + 1 >= ((next + 1) * all.length) / FEED.path) { path.push(round(w0 + cum, 4)); next++; } } }
+  const line = [...(prev.equityLine || []), { t: T, w: wallet }].slice(-FEED.line);
   const liveTot = await d.one(`SELECT coalesce(sum(n),0)::float8 n, count(DISTINCT day)::int days FROM mob_aq_arena_agg`), repl = await d.one(`SELECT coalesce(sum(n),0)::float8 n, min(day) first, count(DISTINCT day)::int days FROM mob_aq_arena_replay`);
   const rb = board.filter((r) => r.variant.startsWith("random|")).reduce((a, r) => ({ n: a.n + r.n, wins: a.wins + r.wins, sum: a.sum + r.sum, sumsq: a.sumsq + r.sumsq }), { n: 0, wins: 0, sum: 0, sumsq: 0 }), rnd = statOf(rb);
   const show = (x) => ({ variant: x.variant, tier: x.tier, rule: ENTRY_RULE[x.variant.split("|")[0]] || null, n: x.n, meanPct: x.mean, ci95: [x.lo, x.hi], randomPct: x.base, edgePct: x.edge, edgeCi95: [x.edgeLo, x.edgeHi] });
   const gk = ["grok_pick", "grok_vote", "grok_skip", "grok_heat"].map((e) => ({ entry: e, ...board.filter((r) => r.variant.startsWith(`${e}|`)).reduce((a, r) => ({ n: a.n + r.n, wins: a.wins + r.wins, sum: a.sum + r.sum, sumsq: a.sumsq + r.sumsq }), { n: 0, wins: 0, sum: 0, sumsq: 0 }) })).filter((g) => g.n > 0);
   const picks = await d.q(`SELECT variant, tier, selected_day, status, confirm_day, sel, conf FROM mob_aq_arena_picks ORDER BY id DESC LIMIT 60`);
   const backDone = coins.filter((c) => cur.back[c.mint] === 0).length;
-  const state = { ...prev, on: true, since: prev.since ?? new Date().toISOString(), lastTickAt: new Date().toISOString(), walletSol: round(ARENA.walletSol + (tot.s / 100) * ARENA.sizeSol, 4), prevTradesTotal: prev.virtualTradesTotal ?? 0, prevWins: prev.wins ?? 0, prevWalletSol: prev.walletSol ?? ARENA.walletSol, virtualTradesTotal: tot.n, wins: tot.w, losses: tot.n - tot.w, winRate: tot.n ? round(tot.w / tot.n, 4) : null, liveTrades: liveTot.n, replayTrades: repl.n,
+  const state = { ...prev, on: true, since: prev.since ?? new Date().toISOString(), lastTickAt: new Date().toISOString(), walletSol: wallet, walletPath: path, equityLine: line, batchPnlSol: round(batchPnl, 4), prevTradesTotal: prev.virtualTradesTotal ?? 0, prevWins: prev.wins ?? 0, prevWalletSol: round(w0, 4), virtualTradesTotal: tot.n, wins: tot.w, losses: tot.n - tot.w, winRate: tot.n ? round(tot.w / tot.n, 4) : null, liveTrades: liveTot.n, replayTrades: repl.n,
     perMinute: trades, perMinuteLive: live.length, perMinuteReplay: replay.length, tickMs: Date.now() - t0, coins: coins.length, coinsReady: coins.length, coinsReadThisTick: fetched, fetchFailed: failed, variantsTried: board.length, costs: table, overshootPct: os,
     random: { n: rnd.n, expectancyPct: rnd.mean, ci95: rnd.mean == null ? null : [rnd.lo, rnd.hi] }, tape,
     replay: { trades: repl.n, days: repl.days, from: repl.first ? new Date(repl.first).toISOString().slice(0, 10) : null, coinsFinished: backDone },
@@ -328,8 +341,8 @@ export async function arenaTick(env, opts = {}) {
     grok: gk.map((g) => ({ input: g.entry, rule: ENTRY_RULE[g.entry], ...(({ n, mean, lo, hi }) => ({ n, meanPct: mean, ci95: [lo, hi] }))(statOf(g)) })),
     note: trades ? `${trades} virtual trades resolved this minute (${live.length} on fresh minutes, ${replay.length} replaying history) from the real 1-minute candles of ${fetched} coins; ${board.length} settings tried so far, so some lead by luck: only walk-forward graduates on fresh days count` : coins.length ? `no candles read this minute (${failed} of ${jobs.length} reads failed)` : "no tracked coin with liquidity yet" };
   await setState(d, "arena", state);
-  // ---- every ten minutes one lesson line from the batch just resolved: which entry family won and which lost, against luck in the same minutes
-  if (T % 10 === 0 && all.length) {
+  // ---- one lesson line from the batch just resolved: which entry family won and which lost, against luck in the same minutes
+  if (all.length) { // (every minute: Alex, 2026-11-16, "lessons into the brain each minute")
     const fam = new Map(); for (const t of all) { const f = fam.get(t.entry) || fam.set(t.entry, { n: 0, sum: 0, wins: 0 }).get(t.entry); f.n++; f.sum += t.netPct; if (t.netPct > 0) f.wins++; }
     const rows = [...fam.entries()].filter(([, f]) => f.n >= 30).map(([e, f]) => ({ e, n: f.n, mean: round(f.sum / f.n, 3), win: round((f.wins / f.n) * 100, 1) })).sort((a, b) => b.mean - a.mean), rd = rows.find((r) => r.e === "random");
     if (rows.length >= 2) await brain(d, "learning", "arena-lesson", `Arena batch at ${new Date(T * 60000).toISOString().slice(0, 16)}Z: ${all.length} virtual trades (${live.length} fresh, ${replay.length} replay) on ${fetched} coins. Random entries made ${rd ? `${rd.mean}%` : "n/a"} a trade after costs. Best: ${rows[0].e} [${ENTRY_RULE[rows[0].e]}] ${rows[0].mean}% over ${rows[0].n} (${rows[0].win}% won). Worst: ${rows.at(-1).e} [${ENTRY_RULE[rows.at(-1).e]}] ${rows.at(-1).mean}% over ${rows.at(-1).n} (${rows.at(-1).win}% won). One batch is not evidence: the hourly board and the fresh-day check decide.`, { rows });
