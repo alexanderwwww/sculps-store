@@ -61,6 +61,9 @@ async function linkState(d) {
 
 export async function nansenTick(env, { set = () => {}, nowMs = Date.now() } = {}) {
   const d = db(env);
+  // CEO switch (Alex, 2026-11-16: "stop opening that"): while mob_aq_state k='nansen_off' is true the reader never touches his browser.
+  const off = (await d.one(`SELECT v FROM mob_aq_state WHERE k='nansen_off'`))?.v;
+  if (off === true || off === "true" || off === 1) { set("nansen: switched off by Alex"); return { phase: "off" }; }
   const st = (await d.one(`SELECT v FROM mob_aq_state WHERE k='nansen'`))?.v || { phase: "idle" };
   const save = (v) => d.q(`INSERT INTO mob_aq_state (k, v, at) VALUES ('nansen',$1,now()) ON CONFLICT (k) DO UPDATE SET v=EXCLUDED.v, at=now()`, [JSON.stringify(v)]);
   const done = async (extra) => { const v = { ...st, phase: "idle", cmd: null, ...extra }; await save(v); return v; };
