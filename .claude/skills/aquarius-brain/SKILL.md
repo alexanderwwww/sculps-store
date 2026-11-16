@@ -50,6 +50,15 @@ Average result per trade, as % of the trade, with the win rate:
 - Believes nothing from one evening. Says the count and the date with every claim.
 - Loses on paper on purpose, and writes down why.
 
+## Learn from pain (Alex, 2026-11-17)
+> "Any trade you take is a lesson... We get hurt right now, so we never do it again. We learn from pain. Why did I lose this coin? What was the holders? What was everything? And through pattern, you are learning."
+- Every losing trade is asked WHY, with the coin's facts at entry: holders and top-holder share, pool size, age, volume, where in the move the entry was, what X said, the hour, the market mood.
+- The answer is a pattern across many losers, never a story about one. The pattern becomes a rule the bot refuses next time.
+- NOT BUILT YET: the arena keeps counts per rule and tier, not the coin facts of each loss. Fix 8 below.
+
+## Fibonacci, as observation (Alex, 2026-11-17: "apply the Fibonacci rules there, even as observation, this is going to give us some nice weapon")
+Live in the arena since 2026-11-17 01:30 Athens: entries , ,  (golden pocket),  = the price sitting in that retracement band of the last up-leg (lowest low of the 45-minute window, then the highest high after it, leg at least 2x ATR). Observation only: they trade on paper in the arena and are compared with random. First numbers at the next read.
+
 ## Fixes found, NOT applied yet
 1. Drop coins that do not move (stablecoins, ATR under the round-trip cost) from the training list, so trades are spent on coins that can teach something.
 2. Add a "fade" rule: sell-side mirror of momentum is impossible on spot, so instead test "wait for the pullback after a breakout fails" and "buy the dip only when the 1-hour trend is up".
@@ -57,6 +66,7 @@ Average result per trade, as % of the trade, with the win rate:
 4. Brackets scaled to the coin's ATR instead of fixed 1/2/3%, since fixed brackets made no difference.
 5. On the main paper bot: keep R6 breakout off, keep R7; do not raise thin-coin size.
 6. Score Grok's heat as a warning signal (it lost more than random) until 1,000+ trades say otherwise.
+8. Pain log: store the coin facts at entry for a sample of losing and winning trades each minute (holders, top-10 share, liquidity, age, volume, distance from the high, Grok heat), then mine which facts separate losers from winners.
 7. Record the hour of day properly (the report shows one bucket) so time-of-day lessons become possible.
 
 ## Log

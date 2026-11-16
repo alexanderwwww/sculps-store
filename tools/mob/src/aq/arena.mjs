@@ -23,9 +23,11 @@ import { NET_FEE_SOL, AUDIT_OVERSHOOT_PCT } from "./engine.mjs";
 // Alex, 2026-11-16 (final): 700 paper trades a minute, every minute, each 0.8 to 1 SOL, any coin, out of a 1,000 SOL paper wallet.
 export const ARENA = { walletSol: 1000, sizeSol: 1, sizeMin: 0.8, sizeMax: 1, perMinute: 700, ring: 90, look: 25, holds: [2, 5, 10, 20, 45], stops: [1, 2, 3], rrs: [1.5, 3], randomP: 0.15, maxCoins: 150, minLiqUsd: 20000,
   minTrades: 300, boardMin: 50, maxPicks: 20, z: 1.96, sampleSlots: 20, samplesPerTick: 40, costSizes: [1, 5], keepDays: 35 };
+// Fibonacci retracement bands of the last up-leg: [entry name, from, to) as a share of the leg given back
+export const FIB_BANDS = [["fib382", 0.33, 0.44], ["fib50", 0.44, 0.56], ["fib618", 0.56, 0.70], ["fib786", 0.70, 0.85]];
 // entry type -> the rule of the main book its result speaks to
 export const ENTRY_RULE = { random: "baseline (luck)", mom1: "R6 momentum, 1x ATR in 5 min", mom2: "R6 momentum, 2x ATR in 5 min", rev1: "R7 mean reversion, -1x ATR in 5 min", rev2: "R7 mean reversion, -2x ATR in 5 min",
-  brk: "R6 breakout over the 20-minute high (no margin, no volume rule)", brkpb: "breakout then pullback of half an ATR", volspike: "volume spike: a green minute on 3x the 20-minute volume", r3: "R3 Fibonacci pullback (recipe entry)", r6: "R6 breakout (recipe entry)", r7: "R7 oversold bounce (recipe entry)",
+  brk: "R6 breakout over the 20-minute high (no margin, no volume rule)", brkpb: "breakout then pullback of half an ATR", volspike: "volume spike: a green minute on 3x the 20-minute volume", r3: "R3 Fibonacci pullback (recipe entry)", fib382: "Fibonacci 38.2% pullback of the last up-leg (observation)", fib50: "Fibonacci 50% pullback (observation)", fib618: "Fibonacci 61.8% golden pocket (observation)", fib786: "Fibonacci 78.6% deep pullback (observation)", r6: "R6 breakout (recipe entry)", r7: "R7 oversold bounce (recipe entry)",
   whale: "R5 whale signal (own book)", nansen: "R5 Nansen-labelled buy", grok_trade: "Grok's own trade (his pick, his stop and target, 45 minutes)", grok_pick: "Grok pick", grok_vote: "Grok BUY vote", grok_skip: "Grok SKIP vote (should lose to random if he is right)", grok_heat: "Grok X narrative heat" };
 export const tierOfLiq = (liq) => (liq >= 500000 ? "A" : liq >= 100000 ? "B" : "C"); // by liquidity only: the arena has no age for every coin
 export const variantId = (entry, s, r, h) => `${entry}|s${s}|r${r}|h${h}`;
@@ -60,6 +62,16 @@ export function entriesAt(coin, e, minuteOfE, ev = {}) {
   if (coin.bars) { // a green minute on three times the volume of the twenty before it (needs real candles)
     let v = 0; for (let i = e - 20; i < e; i++) v += coin.bars[i].v || 0;
     if (v > 0 && coin.bars[e].v >= 3 * (v / 20) && coin.bars[e].c > coin.bars[e].o) out.push("volspike");
+  }
+  { // Fibonacci, as observation (Alex, 2026-11-17): the up-leg of the window (its lowest low, then the highest high after it), at least 2x ATR tall and
+    // finished at least a minute ago. Which retracement band the price sits in now names the entry: 38.2, 50, 61.8 (the golden pocket) or 78.6.
+    let li = 0; for (let i = 1; i < cs.length - 1; i++) if (cs[i].l < cs[li].l) li = i;
+    let hi = li; for (let i = li + 1; i < cs.length - 1; i++) if (cs[i].h > cs[hi].h) hi = i;
+    const L = cs[li].l, H = cs[hi].h;
+    if (hi > li && L > 0 && (H / L - 1) * 100 >= 2 * atr) {
+      const r = (H - P) / (H - L);
+      for (const [name, a, b] of FIB_BANDS) if (r >= a && r < b) out.push(name);
+    }
   }
   if (cs.length >= 45) {
     const now = minuteOfE * 60 + 60;
