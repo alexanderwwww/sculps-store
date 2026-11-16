@@ -6,6 +6,7 @@ import { buildState, createBot, helperMessage, briefing, ensureSeed, rebuild, se
 import { helperMcp, createTask } from "./mcp.mjs";
 import { diag } from "./diag.mjs";
 import { chatPost, chatRead, SEATS } from "./seat.mjs";
+import { setTraining, trainingState } from "./arena.mjs";
 import { safeEqual } from "../auth.mjs";
 
 const DROP_MAX = 95 * 1024 * 1024;
@@ -83,6 +84,18 @@ export async function aqApi(req, env, url, path, { json, apiErr, admin, bearer, 
     if (path === "/api/aq/chat" && M === "GET") return json({ as: who, ...(await chatRead(env, who, { since: url.searchParams.get("since"), mark: url.searchParams.get("mark") === "1" })) });
     if (path === "/api/aq/chat/read" && M === "POST") return json({ as: who, ...(await chatRead(env, who, { since: null, mark: true })) });
     return apiErr(405, "method_not_allowed", "POST a message, GET the messages, or POST /api/aq/chat/read");
+  }
+  // Training arena switch. Alex's admin session, or the helper access code naming "claude" (the coordinator flips it for him).
+  // It moves no money and never touches the main ledger: it only starts or stops the separate arena.
+  if (path === "/api/aq/training") {
+    const b = M === "POST" ? await body() : null, hk = req.headers.get("x-aq-helper-key") || "";
+    const viaClaude = !!env.AQ_HELPER_KEY && !!hk && safeEqual(hk, env.AQ_HELPER_KEY) && String((M === "POST" ? b?.helper : url.searchParams.get("helper")) || "").toLowerCase() === "claude";
+    if (!(admin || viaClaude)) return apiErr(admin || bearer || hk ? 403 : 401, admin || bearer || hk ? "forbidden" : "unauthorized", "Only Alex (admin session) switches training mode");
+    await ensureSeed(env);
+    if (M === "GET") return json({ training: await trainingState(db(env)) });
+    if (M !== "POST") return apiErr(405, "method_not_allowed", "POST {on:true|false}");
+    if (typeof b?.on !== "boolean") return apiErr(400, "validation", "on must be true or false");
+    return json({ training: await setTraining(env, b.on, admin ? "Alex" : "Claude for Alex") });
   }
   if ((path === "/api/aq/helper" || path === "/api/aq/briefing") && !(admin || bearer || keyOk)) return apiErr(401, "unauthorized", "Admin session, bearer MOB_API_TOKEN or AQUARIUS_KEY required");
   if (path === "/api/aq/helper" && M === "POST") { const r = await helperMessage(env, await body()); return r.error ? apiErr(400, "validation", r.error) : json(r, 201); }

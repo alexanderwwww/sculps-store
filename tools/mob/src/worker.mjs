@@ -13,6 +13,7 @@ import { uiData, uiAct } from "./uiapi.mjs";
 import { cityRoute, incomeApi, newsApi } from "./city.mjs";
 import { aqPage, aqApi } from "./aq/routes.mjs";
 import { tick as aqTick } from "./aq/engine.mjs";
+import { arenaTick } from "./aq/arena.mjs";
 
 export const BUILD = "mob-4";
 const json = (v, status = 200) => new Response(JSON.stringify(v), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
@@ -48,7 +49,9 @@ export default {
   },
   async scheduled(event, env, ctx) {
     // Aquarius paper tick runs every minute ("* * * * *"); mob's own tick keeps its */5 schedule.
-    if (event?.cron === "* * * * *") { ctx.waitUntil(C.ensureMigrated(env).then(() => aqTick(env)).then((r) => console.log("aq", JSON.stringify(r))).catch((e) => console.log("aq error", e.message || e))); return; }
+    if (event?.cron === "* * * * *") { ctx.waitUntil(C.ensureMigrated(env).then(() => aqTick(env)).then((r) => console.log("aq", JSON.stringify(r))).catch((e) => console.log("aq error", e.message || e))
+      // the training arena runs after the main tick, on its own tables; whatever happens in it, the main tick has already finished
+      .then(() => arenaTick(env)).then((r) => { if (!r.off) console.log("arena", JSON.stringify(r)); }).catch((e) => console.log("arena error", e.message || e))); return; }
     ctx.waitUntil(C.runTick(env).then((r) => console.log("tick", JSON.stringify(r))));
   },
 };

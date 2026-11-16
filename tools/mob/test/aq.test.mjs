@@ -1744,3 +1744,147 @@ test("nothing a helper can call changes cash, the limits, the strategies, the ru
   assert.equal((await S()).ledger.ok, true);
   await d.q(`DELETE FROM mob_aq_votes`); await d.q(`DELETE FROM mob_aq_alerts`); await d.q(`DELETE FROM mob_aq_chat`); await cleanBook(d);
 });
+
+// ================================================================ TRAINING ARENA
+import * as AR from "../src/aq/arena.mjs";
+// a deterministic walk: about 0.6% a minute, so every entry type has something to fire on
+const arenaWalk = (mint, n = 90, vol = 0.006) => { const px = [1]; for (let i = 1; i < n; i++) px.push(px[i - 1] * (1 + (AR_seed(`${mint}|${i}`) - 0.5) * 2 * vol)); return px; };
+const AR_seed = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); h ^= h >>> 15; return (h >>> 0) / 4294967296; };
+const arenaCoins = (k = 8) => Array.from({ length: k }, (_, i) => ({ mint: B58(`ArenaCoin${"ABCDEFGHJKLMNPQRSTUVWXYZ"[i]}A`), symbol: `AR${i}`, tier: "ABC"[i % 3], px: arenaWalk(`c${i}`) }));
+
+test("arena math: one trade by hand, no peeking past the entry minute, and the stored aggregates equal a brute-force count of the trades they replace", async () => {
+  const d = db(env); await S(); for (const t of ["mob_aq_arena_agg", "mob_aq_arena_px", "mob_aq_arena_samples", "mob_aq_arena_costs", "mob_aq_arena_picks"]) await d.q(`DELETE FROM ${t}`);
+  // one trade by hand: entry 100, ATR 2%, stop 1x (98), target 1.5x (103), cost 0.5%
+  const sim = (path, H = 3, os = 0) => AR.simulate([100, ...path], 0, H, 2, 1, 1.5, 0.5, os);
+  let r0 = sim([101, 102, 102.5]); assert.equal(r0.why, "time"); assert.ok(Math.abs(r0.grossPct - 2.5) < 1e-9 && Math.abs(r0.netPct - 2) < 1e-9);
+  let r = sim([101, 103.4, 90]); assert.equal(r.why, "target"); assert.ok(Math.abs(r.grossPct - 3) < 1e-9 && Math.abs(r.netPct - 2.5) < 1e-9, "a target fills at the target, not at the better sample");
+  r = sim([99, 97, 110]); assert.equal(r.why, "stop"); assert.ok(Math.abs(r.grossPct + 3) < 1e-9, "a stop fills at the sample that crossed it (97), worse than the level");
+  r = sim([99, 97.9, 110], 3, 0.69); assert.ok(Math.abs(r.grossPct - (98 * (1 - 0.0069) - 100)) < 1e-9, "and never better than the measured overshoot past the level");
+  assert.equal(sim([101, null, 102]), null, "a missing sample in the path: no trade, never a made-up price"); assert.equal(sim([101, 102], 3), null);
+  assert.equal(AR.variantId("mom1", 2, 3, 10), "mom1|s2|r3|h10"); assert.equal(AR.baselineOf("grok_pick|s2|r3|h10"), "random|s2|r3|h10"); assert.deepEqual([AR.tierOfLiq(600000), AR.tierOfLiq(150000), AR.tierOfLiq(30000)], ["A", "B", "C"]);
+  // no peeking: what fires at minute e reads samples up to e only
+  const coins = arenaCoins(24), T = 30000000, ev = { whale: { [coins[0].mint]: [T - 10] }, grok_heat: { ar1: [T - 30] }, grok_vote: { [coins[2].mint]: [T - 5 + 1] } };
+  for (const c of coins) for (const H of AR.ARENA.holds) {
+    const e = c.px.length - 1 - H, a = AR.entriesAt(c, e, T - H, ev), scr = { ...c, px: c.px.map((p, i) => (i > e ? p * 7 : p)) };
+    assert.deepEqual(AR.entriesAt(scr, e, T - H, ev), a, "the future does not change the entry");
+  }
+  assert.ok(AR.entriesAt(coins[0], coins[0].px.length - 11, T - 10, ev).fired.includes("whale")); assert.ok(!AR.entriesAt(coins[0], coins[0].px.length - 6, T - 5, ev).fired.includes("whale"), "a signal is an entry for 3 minutes, not for ever");
+  assert.ok(AR.entriesAt(coins[1], coins[1].px.length - 11, T - 10, ev).fired.includes("grok_heat"), "Grok's X post naming $AR1 half an hour ago");
+  assert.ok(!AR.entriesAt(coins[2], coins[2].px.length - 6, T - 5, ev).fired.includes("grok_vote"), "a vote cast a minute AFTER the entry minute is not an input to it");
+  assert.deepEqual(AR.entriesAt(coins[0], 10, T, ev).fired, [], "too little history: no entry");
+  // two minutes of the arena, written as aggregates in two statements
+  const costs = { A: 0.3, B: 0.8, C: 2 }, m1 = AR.resolveMinute(coins, T, { costs, events: ev, overshootPct: 0.69 });
+  const next = coins.map((c, i) => ({ ...c, px: [...c.px.slice(1), c.px.at(-1) * (1 + (AR_seed(`n${i}`) - 0.5) * 0.012)] })), m2 = AR.resolveMinute(next, T + 1, { costs, events: ev, overshootPct: 0.69 });
+  const all = [...m1.trades, ...m2.trades], kinds = new Set(all.map((t) => t.entry));
+  assert.ok(m1.trades.length > 100 && m2.trades.length > 100, `${m1.trades.length} ${m2.trades.length}`); for (const k of ["random", "mom1", "rev1", "brk", "whale", "grok_heat"]) assert.ok(kinds.has(k), `${k} fired: ${[...kinds]}`);
+  assert.ok(all.every((t) => Math.abs(t.grossPct - t.netPct - costs[t.tier]) < 1e-9), "every trade pays its tier's measured cost");
+  await AR.writeAggregates(d, "2026-01-05", "fear", AR.aggregate(m1.trades)); await AR.writeAggregates(d, "2026-01-05", "fear", AR.aggregate(m2.trades));
+  const rows = await d.q(`SELECT * FROM mob_aq_arena_agg WHERE day='2026-01-05'`), keys = new Set(all.map((t) => `${t.variant}|${t.tier}|${t.tod}`));
+  assert.equal(rows.length, keys.size); assert.equal(rows.reduce((a, x) => a + x.n, 0), all.length);
+  const near = (a, b) => Math.abs(a - b) < 1e-7;
+  for (const g of rows) {
+    const mine = (ts) => ts.filter((t) => t.variant === g.variant && t.tier === g.tier && t.tod === g.tod), ts = mine(all), s1 = mine(m1.trades).reduce((a, t) => a + t.netPct, 0), s2 = mine(m2.trades).reduce((a, t) => a + t.netPct, 0);
+    assert.deepEqual([g.n, g.wins, g.n_stop, g.n_target, g.n_time], [ts.length, ts.filter((t) => t.netPct > 0).length, ts.filter((t) => t.why === "stop").length, ts.filter((t) => t.why === "target").length, ts.filter((t) => t.why === "time").length], g.variant);
+    assert.ok(near(g.sum_pct, ts.reduce((a, t) => a + t.netPct, 0)) && near(g.sumsq_pct, ts.reduce((a, t) => a + t.netPct ** 2, 0)), g.variant);
+    // drawdown at the granularity it is kept at (one step per minute and setting): peak and worst fall of the running sum
+    const steps = [mine(m1.trades).length ? s1 : null, mine(m2.trades).length ? s2 : null].filter((x) => x != null); let cum = 0, peak = 0, dd = 0; for (const s of steps) { cum += s; peak = Math.max(peak, cum); dd = Math.max(dd, peak - cum); }
+    assert.ok(near(g.cum_pct, cum) && near(g.peak_pct, peak) && near(g.maxdd_pct, dd), `${g.variant}: ${g.cum_pct} ${g.peak_pct} ${g.maxdd_pct} vs ${cum} ${peak} ${dd}`);
+  }
+  // the interval of a setting and of its edge over random, against the textbook formulas on the raw trades
+  const day = await d.q(`SELECT variant, tier, sum(n)::int n, sum(wins)::int wins, sum(sum_pct)::float8 sum, sum(sumsq_pct)::float8 sumsq FROM mob_aq_arena_agg WHERE day='2026-01-05' GROUP BY variant, tier`);
+  const big = AR.scoreDay(day).filter((x) => x.n >= 3 && x.baseN >= 3).sort((a, b) => b.n - a.n)[0]; assert.ok(big, "a setting with a baseline");
+  const raw = (v, t) => all.filter((x) => x.variant === v && x.tier === t).map((x) => x.netPct), ms = (xs) => { const m = xs.reduce((a, b) => a + b, 0) / xs.length; return [m, xs.reduce((a, x) => a + (x - m) ** 2, 0) / (xs.length - 1) / xs.length]; };
+  const [mx, vx] = ms(raw(big.variant, big.tier)), [mb, vb] = ms(raw(AR.baselineOf(big.variant), big.tier));
+  assert.ok(Math.abs(big.mean - mx) < 1e-3 && Math.abs(big.base - mb) < 1e-3 && Math.abs(big.edge - (mx - mb)) < 1e-3 && Math.abs(big.edgeLo - (mx - mb - 1.96 * Math.sqrt(vx + vb))) < 1e-3 && Math.abs(big.hi - (mx + 1.96 * Math.sqrt(vx))) < 1e-3, JSON.stringify(big));
+  assert.ok(!AR.scoreDay(day).some((x) => x.variant.startsWith("random|")), "random is the yardstick, never a candidate");
+  await d.q(`DELETE FROM mob_aq_arena_agg`);
+});
+
+test("arena walk-forward: a setting graduates only on a later day than the one it was picked on; the running day is never read", async () => {
+  const d = db(env); await S(); for (const t of ["mob_aq_arena_agg", "mob_aq_arena_picks"]) await d.q(`DELETE FROM ${t}`);
+  // totals of n trades with mean m and standard deviation 2
+  const put = (day, variant, n, m) => d.q(`INSERT INTO mob_aq_arena_agg (day, variant, tier, tod, regime, n, wins, sum_pct, sumsq_pct) VALUES ($1::date,$2,'A',0,'fear',$3,$4,$5,$6)`, [day, variant, n, Math.floor(n / 2), n * m, (n - 1) * 4 + n * m * m]);
+  const D1 = "2026-02-01", D2 = "2026-02-02", D3 = "2026-02-03", D4 = "2026-02-04", V = (e) => `${e}|s2|r3|h10`;
+  for (const day of [D1, D2, D3]) await put(day, V("random"), 2000, -0.5);
+  await put(D1, V("mom1"), 1000, 0.6); await put(D2, V("mom1"), 1000, 0.5);   // good on both days
+  await put(D1, V("rev1"), 1000, 0.6); await put(D2, V("rev1"), 1000, -0.6);  // lucky on day 1 only
+  await put(D2, V("brk"), 1000, 0.7);                                         // first good on day 2
+  await put(D1, V("r7"), 1000, -0.2); await put(D2, V("r7"), 1000, -0.2);     // beats random on both days and still loses after costs
+  await put(D1, V("whale"), 40, 3); await put(D2, V("whale"), 40, 3);         // too few trades
+  await put(D1, V("mom2"), 1000, -0.5);                                       // no better than random
+  await put(D3, V("rev1"), 5000, 9); await put(D3, V("brk"), 1000, -3);       // what the RUNNING day says must not matter on D3
+  const sel = AR.wfSelect(await d.q(`SELECT variant, tier, n, wins, sum_pct sum, sumsq_pct sumsq FROM mob_aq_arena_agg WHERE day=$1::date`, [D1]));
+  assert.equal(sel.tried, 5); assert.deepEqual(sel.picks.map((p) => p.variant).sort(), [V("mom1"), V("rev1")].sort(), "picked on day 1: edge over random with the interval above zero, 300+ trades, and money made after costs");
+  const r7c = AR.wfConfirm({ variant: V("r7"), tier: "A" }, D1, D2, await d.q(`SELECT variant, tier, n, wins, sum_pct sum, sumsq_pct sumsq FROM mob_aq_arena_agg WHERE day=$1::date`, [D2])); assert.equal(r7c.graduated, false); assert.match(r7c.why, /beat random but still lost after costs/);
+  assert.throws(() => AR.wfConfirm(sel.picks[0], D1, D1, []), /must be after the day/); assert.throws(() => AR.wfConfirm(sel.picks[0], D2, D1, []), /must be after the day/);
+  // day 2 begins: day 1 is complete, picks are made; nothing can graduate yet
+  let w = await AR.walkForward(d, D2); assert.deepEqual([w.selected, w.confirmed.length, w.failed.length], [2, 0, 0]);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_arena_picks WHERE status='graduated'`)).n, 0);
+  w = await AR.walkForward(d, D2); assert.equal(w.selected, 0, "the same day is not picked twice"); assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_arena_picks`)).n, 2);
+  // day 3 begins: day-1 picks are judged on day 2 (complete, and not the day they were picked on); day 3's own rows are not read
+  w = await AR.walkForward(d, D3);
+  assert.deepEqual(w.confirmed.map((x) => x.variant), [V("mom1")]); assert.deepEqual(w.failed.map((x) => x.variant), [V("rev1")]);
+  assert.match(w.failed[0].why, /did not beat random on the fresh day/);
+  const picks = await d.q(`SELECT variant, to_char(selected_day,'YYYY-MM-DD') sel, to_char(confirm_day,'YYYY-MM-DD') conf, status FROM mob_aq_arena_picks ORDER BY id`);
+  assert.ok(picks.filter((p) => p.conf).every((p) => p.conf > p.sel)); assert.deepEqual(picks.filter((p) => p.status === "graduated").map((p) => [p.variant, p.sel, p.conf]), [[V("mom1"), D1, D2]]);
+  assert.deepEqual(picks.filter((p) => p.sel === D2).map((p) => [p.variant, p.status]).sort(), [[V("brk"), "selected"], [V("mom1"), "selected"]], "day 2's own winners wait for day 3 to finish: brk, first good on day 2, is not graduated on it");
+  const br = await d.one(`SELECT text FROM mob_aq_brain WHERE kind='tournament' AND text LIKE 'Arena challenger proposed%' ORDER BY id DESC LIMIT 1`);
+  assert.match(br.text, /mom1\|s2\|r3\|h10 on tier A coins \[R6 momentum, 1x ATR in 5 min\]\. Picked on 2026-02-01, then beat random on a day it was not picked on: edge 1% .* nothing in the main book changed/);
+  assert.match((await d.one(`SELECT text FROM mob_aq_brain WHERE kind='arena' AND text LIKE 'Arena walk-forward, 2026-02-02%' ORDER BY id DESC LIMIT 1`)).text, /settings tried, 2 beat their random baseline .* expected by luck/);
+  // day 4: brk's day 3 was bad -> failed, although its day 2 was the best of all
+  w = await AR.walkForward(d, D4); assert.ok(w.failed.some((x) => x.variant === V("brk"))); assert.ok(!w.confirmed.some((x) => x.variant === V("brk")));
+  const strat = JSON.stringify(await d.q(`SELECT id, params, status FROM mob_aq_strategies ORDER BY id`)); await AR.walkForward(d, D4);
+  assert.equal(JSON.stringify(await d.q(`SELECT id, params, status FROM mob_aq_strategies ORDER BY id`)), strat, "a graduate is a proposal: no strategy of the main book is changed");
+  for (const t of ["mob_aq_arena_agg", "mob_aq_arena_picks"]) await d.q(`DELETE FROM ${t}`);
+});
+
+test("training switch and arena tick: off by default, Alex only (or Claude for him), its own wallet and tables, and the main ledger never moves", async () => {
+  const d = db(env); await seatDesk(d);
+  for (const t of ["mob_aq_arena_agg", "mob_aq_arena_px", "mob_aq_arena_samples", "mob_aq_arena_costs", "mob_aq_arena_picks"]) await d.q(`DELETE FROM ${t}`);
+  await d.q(`DELETE FROM mob_aq_state WHERE k IN ('training_mode','arena','arena_min','arena_hour','arena_wf_day')`);
+  // off by default: nothing runs, nothing is written
+  assert.deepEqual(await AR.arenaTick(env), { off: true }); let s = await S(); assert.equal(s.training.on, false); assert.equal(s.training.walletSol, 1000); assert.equal(s.training.virtualTradesTotal, 0);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_arena_px`)).n, 0);
+  // the switch
+  const sw = (opts, b) => R("POST", "/api/aq/training", { body: b, ...opts }), hk = { headers: { "x-aq-helper-key": "helperkey123" } };
+  assert.equal((await sw({}, { on: true })).status, 401); assert.equal((await sw({ bearer: "tok-test" }, { on: true })).status, 403);
+  for (const h of ["grok", "chatgpt", "codex", "alex", ""]) assert.equal((await sw(hk, { on: true, helper: h })).status, 403, h);
+  assert.equal((await sw({ headers: { "x-aq-helper-key": "wrong" } }, { on: true, helper: "claude" })).status, 403);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_state WHERE k='training_mode'`)).n, 0, "nobody else switched it");
+  for (const n of ["aq_training", "aq_arena"]) assert.ok((await mcpCall(n, { helper: "grok", on: true })).isError, "no helper tool reaches the switch");
+  assert.equal((await sw({ cookie }, { on: "yes" })).status, 400);
+  let r = await sw({ cookie }, { on: true }); assert.equal(r.status, 200); assert.equal((await r.json()).training.on, true);
+  r = await sw({ cookie }, { on: false }); assert.equal((await r.json()).training.on, false); assert.deepEqual(await AR.arenaTick(env), { off: true });
+  r = await sw(hk, { on: true, helper: "claude" }); assert.equal(r.status, 200); const tr0 = (await r.json()).training; assert.equal(tr0.on, true); assert.ok(tr0.since);
+  assert.match((await d.one(`SELECT text FROM mob_aq_brain WHERE text LIKE 'Training arena turned ON%' ORDER BY id DESC LIMIT 1`)).text, /by Claude for Alex\. It is a separate 1000 SOL paper wallet/);
+  // a running arena: tracked coins with 89 minutes of samples already in their rings; this minute's sample arrives from Jupiter
+  const coins = arenaCoins(6), now = Date.now(), T = Math.floor(now / 60000);
+  for (const [i, c] of coins.entries()) { await d.q(`INSERT INTO mob_aq_watch (mint, pool, symbol, liq_usd) VALUES ($1,$2,$3,$4) ON CONFLICT (mint) DO UPDATE SET liq_usd=EXCLUDED.liq_usd, last_seen=now()`, [c.mint, `p${i}`, c.symbol, [900000, 200000, 40000][i % 3]]);
+    await d.q(`INSERT INTO mob_aq_arena_px (mint, symbol, tier, liq_usd, t_last, px) VALUES ($1,$2,$3,$4,$5,$6)`, [c.mint, c.symbol, c.tier, 1, T - 1, JSON.stringify(c.px.slice(0, 89))]); prices[c.mint] = c.px[89]; }
+  delete prices[coins[5].mint]; // Jupiter has no price for this one this minute
+  const thin = B58("ArenaThinAA"); await d.q(`INSERT INTO mob_aq_watch (mint, pool, symbol, liq_usd) VALUES ($1,'pt','THIN',5000)`, [thin]);
+  const money0 = await moneyState(d), rc0 = await reconcile(d), st0 = await S();
+  const a1 = await AR.arenaTick(env, { now });
+  assert.ok(a1.trades > 50, JSON.stringify(a1)); assert.equal(a1.coins, 6); assert.equal(a1.coinsLive, 5); assert.equal(a1.costQuote.ok, true);
+  assert.deepEqual(await AR.arenaTick(env, { now }), { skipped: "this minute is already done" }); assert.deepEqual(await AR.arenaTick(env, { now: now - 60000 }), { skipped: "this minute is already done" });
+  const ring = await d.one(`SELECT px, t_last FROM mob_aq_arena_px WHERE mint=$1`, [coins[0].mint]); assert.equal(ring.px.length, 90); assert.equal(Number(ring.t_last), T); assert.equal(ring.px.at(-1), coins[0].px[89]);
+  assert.equal((await d.one(`SELECT px FROM mob_aq_arena_px WHERE mint=$1`, [coins[5].mint])).px.at(-1), null, "a missing price is a gap, never invented"); assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_arena_px WHERE mint=$1`, [thin])).n, 0, "a pool under the liquidity floor is not in the arena");
+  const agg = await d.one(`SELECT sum(n)::int n, sum(sum_pct)::float8 s FROM mob_aq_arena_agg`); assert.equal(agg.n, a1.trades);
+  assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_arena_costs`)).n, 1); const smp = await d.q(`SELECT * FROM mob_aq_arena_samples`); assert.ok(smp.length > 0 && smp.length <= 40 && smp.every((x) => x.slot < 20 && x.net_pct != null));
+  s = await S(); const tr = s.training;
+  assert.deepEqual([tr.on, tr.perMinute, tr.virtualTradesTotal, tr.coins, tr.startSol, tr.sizeSol], [true, a1.trades, a1.trades, 6, 1000, 1]); assert.ok(Math.abs(tr.walletSol - (1000 + agg.s / 100)) < 1e-3); assert.ok(tr.variantsTried > 10 && tr.tickMs > 0 && tr.costs["A@1"].pct != null);
+  assert.match(tr.resolution, /one real price sample a minute/); assert.match(tr.note, /settings tried so far, so some lead by luck/);
+  // the next minute: only the trades whose hold ends now are added (nothing is counted twice)
+  for (const c of coins.slice(0, 5)) prices[c.mint] = c.px[89] * 1.004;
+  const a2 = await AR.arenaTick(env, { now: now + 60000 }); assert.ok(a2.trades > 0); assert.equal((await d.one(`SELECT sum(n)::int n FROM mob_aq_arena_agg`)).n, a1.trades + a2.trades);
+  // the main paper book did not move by one lamport or one row; its numbers in the state are the same
+  assert.equal(await moneyState(d), money0); const rc1 = await reconcile(d); assert.deepEqual([rc1.ok, rc1.cashSol, rc1.realizedSol, rc1.openCostSol], [true, rc0.cashSol, rc0.realizedSol, rc0.openCostSol]);
+  s = await S(); assert.deepEqual([s.cashSol, s.trades.n, s.positions.length, s.startSol, s.lanes.length], [st0.cashSol, st0.trades.n, st0.positions.length, st0.startSol, st0.lanes.length]); assert.equal(s.ledger.ok, true);
+  // the main tick runs the same with the arena on
+  const tk = await tick(env); assert.ok(!tk.skipped); assert.equal((await reconcile(d)).ok, true);
+  // off again: the arena stops, what it learned stays
+  assert.equal((await (await sw({ cookie }, { on: false })).json()).training.on, false); assert.deepEqual(await AR.arenaTick(env, { now: now + 120000 }), { off: true });
+  assert.equal((await S()).training.virtualTradesTotal, a1.trades + a2.trades);
+  for (const t of ["mob_aq_arena_agg", "mob_aq_arena_px", "mob_aq_arena_samples", "mob_aq_arena_costs"]) await d.q(`DELETE FROM ${t}`);
+  await d.q(`DELETE FROM mob_aq_watch WHERE symbol LIKE 'AR%' OR symbol='THIN'`); await d.q(`DELETE FROM mob_aq_state WHERE k IN ('training_mode','arena','arena_min','arena_hour','arena_wf_day')`); await cleanBook(d);
+});

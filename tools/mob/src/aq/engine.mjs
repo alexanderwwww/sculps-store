@@ -10,6 +10,7 @@ import { nansenTick, nansenSignals, nansenState } from "./nansen.mjs";
 import { councilTick, learnFromTrade, recomputeRules, costBook, ruleWeights, MIN_OWN_BARS } from "./council.mjs";
 import { R6_PARAMS, R7_PARAMS } from "./seed.mjs";
 import { COUNCIL, STRENGTH_BUCKETS } from "./logic.mjs";
+import { trainingState } from "./arena.mjs";
 import { seatTick, seatStats, exitVotes, exitVoteRule, markHandled, impliedMid, warroom, chatFor, recentAlerts } from "./seat.mjs";
 import { START_SOL, reconcile, scaleOut, closePosition, resetLedger, walletBase, tickLock, tickUnlock } from "./ledger.mjs";
 export { START_SOL };
@@ -652,6 +653,7 @@ export async function buildState(env) {
     council: { last: v(cn[0]), vetoes: cn.filter((r) => r.verdict === "BLOCK").slice(0, 10).map(v), recent: cn.slice(0, 20).map(v), seats,
       votes: liveVotes.map((x) => ({ helper: x.helper, mint: x.mint, symbol: x.symbol, vote: x.vote, confidence: x.confidence, reason: x.reason, at: x.at, expiresAt: x.expires_at })) },
     warroom: room, alerts,
+    training: await trainingState(d, S),
     tape: S.tape || null,
     regime: S.regime || null,
     gta6: S.gta6_list ? { releaseDate: S.gta6_list.releaseDate, daysToRelease: S.gta6_list.daysToRelease, mainMint: S.gta6_list.mainMint, tokens: Object.values(S.gta6_list.tokens || {}) } : null,

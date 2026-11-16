@@ -58,3 +58,13 @@ A switch Alex turns on (panel + state key `training_mode`). While on, a separate
 - What it learns: for every setting, the result after costs with its interval, against the random baseline. Every hour the brain writes which settings beat random and which rules cost money.
 - Honesty rule: with thousands of settings some win by luck. A setting only graduates to the main paper book after it also wins on FRESH data it was not picked on (walk-forward), and the brain says how many settings were tried.
 - Grok joins: his picks, votes and X narratives are inputs in the arena, scored the same way.
+
+### Training arena as built (2026-11-16; code `tools/mob/src/aq/arena.mjs`, tables `mob_aq_arena_*`)
+- Switch: state key `training_mode`; `POST /api/aq/training {on}` with Alex's admin session, or the helper access code (header `x-aq-helper-key`) with `helper:"claude"`. Nobody else, no helper tool. `state.training` shows it.
+- Runs after the main tick, outside its lock and its ledger. Up to 150 tracked coins, ONE real Jupiter price sample a minute each (no high/low inside the minute), 90-minute ring per coin. A coin needs 25 minutes of samples plus the hold before its first trade.
+- No open virtual trades are stored: at minute T every trade that entered at T-hold is resolved; the entry reads samples up to its minute only.
+- Grid: entry (random baseline, mom1/mom2, rev1/rev2, brk, brkpb, r3/r6/r7 recipe entries, whale, nansen, grok_pick, grok_vote, grok_skip, grok_heat) x stop 1/2/3 ATR5 x reward:risk 1.5/3 x hold 2/5/10/20/45 min, per liquidity tier (A/B/C by liquidity only), time-of-day and regime kept as buckets. 1 SOL a trade from a 1,000 SOL wallet. Volume-spike entries are NOT built: there is no per-minute volume in the free price feed.
+- Costs: one real Jupiter round trip a minute on a rotating coin (1 SOL and 5 SOL in turn) -> median per tier; stops fill at the crossing sample, never better than the measured overshoot.
+- Stored: totals per setting per day (35 days), 20 sample trades per setting, 7 days of cost quotes. Not one row per trade.
+- Honesty: hourly brain row (kind `arena`) with top and bottom against random and the count tried; walk-forward once a day: picked on day N (edge over random above zero, 300+ trades, positive after costs, 20 at most), graduated only if the same holds on day N+1. A graduate is a `tournament` row proposing a challenger; nothing in the main book switches by itself. Trades in the same minute move together, so the intervals are too narrow: only the fresh-day repeat counts.
+
