@@ -1887,7 +1887,7 @@ test("training switch and arena tick: off by default, Alex only (or Claude for h
   // fresh minutes are the ones since the switch (less the 45-minute lookback); history is everything before; nothing in both
   const sinceMin = T - 60, liveDays = await d.q(`SELECT DISTINCT to_char(day,'YYYY-MM-DD') d FROM mob_aq_arena_agg`);
   assert.ok(liveDays.every((x) => x.d >= new Date((sinceMin - 46) * 60000).toISOString().slice(0, 10)));
-  const cur = (await d.one(`SELECT v FROM mob_aq_state WHERE k='arena_cur'`)).v; for (const m of Object.keys(cur.live)) assert.equal(cur.live[m], T - 46, "live cursor: up to 45 minutes ago, so every hold has finished"); for (const m of Object.keys(cur.back)) assert.equal(cur.back[m], sinceMin - 46 - 40, "replay cursor: 40 minutes further back");
+  const cur = (await d.one(`SELECT v FROM mob_aq_state WHERE k='arena_cur'`)).v; for (const m of Object.keys(cur.live)) assert.equal(cur.live[m], T - 46, "live cursor: up to 45 minutes ago, so every hold has finished"); for (const m of Object.keys(cur.back)) assert.ok(cur.back[m] < sinceMin - 46 && (sinceMin - 46 - cur.back[m]) % 20 === 0, "replay cursor: whole 20-minute steps further back");
   assert.ok(!(coins[5].mint in cur.live) && !(coins[5].mint in cur.back) || a1.failed === 0, "a failed read leaves the cursor: those minutes are tried again"); assert.ok(a1.failed <= 2);
   assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_arena_costs`)).n, 1); const smp = await d.q(`SELECT * FROM mob_aq_arena_samples`); assert.ok(smp.length > 0 && smp.length <= 40 && smp.every((x) => x.slot < 20 && x.net_pct != null));
   s = await S(); let tr = s.training;

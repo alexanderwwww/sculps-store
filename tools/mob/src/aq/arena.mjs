@@ -26,7 +26,7 @@ export const ARENA = { walletSol: 1000, sizeSol: 1, sizeMin: 0.8, sizeMax: 1, pe
 // entry type -> the rule of the main book its result speaks to
 export const ENTRY_RULE = { random: "baseline (luck)", mom1: "R6 momentum, 1x ATR in 5 min", mom2: "R6 momentum, 2x ATR in 5 min", rev1: "R7 mean reversion, -1x ATR in 5 min", rev2: "R7 mean reversion, -2x ATR in 5 min",
   brk: "R6 breakout over the 20-minute high (no margin, no volume rule)", brkpb: "breakout then pullback of half an ATR", volspike: "volume spike: a green minute on 3x the 20-minute volume", r3: "R3 Fibonacci pullback (recipe entry)", r6: "R6 breakout (recipe entry)", r7: "R7 oversold bounce (recipe entry)",
-  whale: "R5 whale signal (own book)", nansen: "R5 Nansen-labelled buy", grok_pick: "Grok pick", grok_vote: "Grok BUY vote", grok_skip: "Grok SKIP vote (should lose to random if he is right)", grok_heat: "Grok X narrative heat" };
+  whale: "R5 whale signal (own book)", nansen: "R5 Nansen-labelled buy", grok_trade: "Grok's own trade (his pick, his stop and target, 45 minutes)", grok_pick: "Grok pick", grok_vote: "Grok BUY vote", grok_skip: "Grok SKIP vote (should lose to random if he is right)", grok_heat: "Grok X narrative heat" };
 export const tierOfLiq = (liq) => (liq >= 500000 ? "A" : liq >= 100000 ? "B" : "C"); // by liquidity only: the arena has no age for every coin
 export const variantId = (entry, s, r, h) => `${entry}|s${s}|r${r}|h${h}`;
 export const baselineOf = (variant) => variant.replace(/^[^|]+/, "random");
@@ -224,7 +224,7 @@ export async function trainingState(d, S = null) {
 // PACE: the minutes read each tick hold more candidate trades than 700; exactly ARENA.perMinute of them are taken, drawn at
 // random with a seed (an unbiased sample of every setting), each sized 0.8 to 1 SOL by its own seeded draw.
 // Live and replay are stored apart. Walk-forward graduation reads live days only.
-export const FEED = { livePerTick: 2, backPerTick: 2, chunkMin: 80, backChunkMin: 40, extraRounds: 3, pad: 45, backDays: 30, tape: 60, path: 60, line: 180 };
+export const FEED = { livePerTick: 2, backPerTick: 6, chunkMin: 80, backChunkMin: 20, grokPerTick: 3, extraRounds: 3, pad: 45, backDays: 30, tape: 60, path: 60, line: 180 };
 const chartUrl = (mint, toMin, n) => `https://datapi.jup.ag/v2/charts/${mint}?interval=1_MINUTE&to=${toMin * 60000}&candles=${n}&type=price&quote=usd`;
 async function candlesOf(mint, toMin, n) {
   const cs = (await getJson(chartUrl(mint, toMin, n), 12000))?.candles;
@@ -252,7 +252,9 @@ export async function arenaTick(env, opts = {}) {
   // liquidity, real candles, and not known unsellable (the cost sampler marks a coin with no sell route).
   const dead = new Set((await getState(d, "arena_dead", [])) || []);
   const coins = (await d.q(`SELECT mint, symbol, liq_usd FROM mob_aq_watch WHERE ((last_seen > now() - interval '1 day' AND liq_usd >= $1) OR mint = ANY($3::text[])) AND liq_usd >= $1 ORDER BY liq_usd DESC NULLS LAST LIMIT $2`, [ARENA.minLiqUsd, ARENA.maxCoins, named]))
-    .filter((w) => !dead.has(w.mint)).map((w) => ({ mint: w.mint, symbol: w.symbol || w.mint.slice(0, 6), tier: tierOfLiq(w.liq_usd) }));
+    .filter((w) => !dead.has(w.mint)).map((w) => ({ mint: w.mint, symbol: w.symbol || w.mint.slice(0, 6), tier: tierOfLiq(w.liq_usd) }))
+    // visited in a fixed mixed order, not by size: the biggest pools are stablecoins and wrapped majors that barely move
+    .sort((a, b) => seed01(a.mint) - seed01(b.mint));
   // ---- costs: one real round-trip quote a minute on a rotating coin, 1 SOL and 5 SOL in turn
   if (coins.length && opts.quote !== false) {
     const c = coins[Math.floor(seed01(`cost|${T}`) * coins.length)], size = ARENA.costSizes[T % ARENA.costSizes.length];
@@ -302,10 +304,25 @@ export async function arenaTick(env, opts = {}) {
   await run([...jobs, ...pickBack(FEED.backPerTick)]);
   // not enough for the pace (quiet coins, a failed read): read more history, at most three more rounds this minute
   for (let round = 0; round < FEED.extraRounds && cand.length < ARENA.perMinute * 1.2; round++) { const more = pickBack(FEED.backPerTick); if (!more.length) break; await run(more); }
+  // ---- Grok trades for himself: every pick he submits while training is on is one arena trade under his name, entered at
+  // the close of the minute he sent it, with HIS stop and target, 45 minutes at most, on the real candles after it.
+  const grokTrades = [];
+  try {
+    const lastPick = Number((await getState(d, "arena_grok_pick", 0)) || 0);
+    const due = await d.q(`SELECT id, mint, symbol, stop_pct, target_pct, created_at FROM mob_aq_picks WHERE helper = 'grok' AND id > $1 AND created_at >= to_timestamp($2::float8) AND created_at < now() - interval '47 minutes' ORDER BY id LIMIT $3`, [lastPick, sinceMin * 60, FEED.grokPerTick]);
+    for (const p of due) {
+      const m = Math.floor(new Date(p.created_at).getTime() / 60000), cs = await candlesOf(p.mint, m + 47, 80), bars = minuteSeries(cs, m - 5, m + 46), e = 5;
+      const w = coins.find((c) => c.mint === p.mint), tier = w?.tier || "C", cost = costs[tier];
+      const r = bars[e] && cost != null && p.stop_pct > 0 ? simulate(bars, e, 45, 1, p.stop_pct, p.target_pct / p.stop_pct, cost, os) : null;
+      if (r) grokTrades.push({ variant: "grok_trade|own levels", entry: "grok_trade", tier, tod: Math.floor((m % 1440) / 360), day: dayOf(m), mint: p.mint, symbol: p.symbol || w?.symbol || p.mint.slice(0, 6), entryMin: m, hold: 45, entryPx: bars[e].c, atr: null, why: r.why, netPct: r.netPct, grossPct: r.grossPct, src: "live", pick: p.id });
+      await setState(d, "arena_grok_pick", p.id); // a pick with no candles at its minute is recorded as not tradable, once
+      if (!r) await brain(d, "learning", "arena", `Grok pick #${p.id} (${p.symbol || p.mint.slice(0, 6)}) could not be traded in the arena: no real candle at the minute he sent it, or no cost for its tier.`);
+    }
+  } catch (e) { out.grokError = String(e.message || e).slice(0, 120); }
   // the pace: ARENA.perMinute trades, a seeded random draw from the candidates (a partial Fisher-Yates shuffle), in that order
   const take = Math.min(ARENA.perMinute, cand.length);
   for (let i = 0; i < take; i++) { const k = i + Math.floor(seed01(`pace|${T}|${i}`) * (cand.length - i)); [cand[i], cand[k]] = [cand[k], cand[i]]; }
-  const all = cand.slice(0, take);
+  const all = cand.slice(0, take).concat(grokTrades); // (his trades are his own, on top of the 700)
   for (const t of all) { t.sizeSol = round(ARENA.sizeMin + (ARENA.sizeMax - ARENA.sizeMin) * seed01(`size|${t.mint}|${t.entryMin}|${t.variant}`), 3); t.pnlSol = (t.netPct / 100) * t.sizeSol; }
   const live = all.filter((t) => t.src === "live"), replay = all.filter((t) => t.src === "replay");
   await writeAggregates(d, "mob_aq_arena_agg", regime, aggregate(live));
@@ -341,7 +358,7 @@ export async function arenaTick(env, opts = {}) {
   const liveTot = await d.one(`SELECT coalesce(sum(n),0)::float8 n, count(DISTINCT day)::int days FROM mob_aq_arena_agg`), repl = await d.one(`SELECT coalesce(sum(n),0)::float8 n, min(day) first, count(DISTINCT day)::int days FROM mob_aq_arena_replay`);
   const rb = board.filter((r) => r.variant.startsWith("random|")).reduce((a, r) => ({ n: a.n + r.n, wins: a.wins + r.wins, sum: a.sum + r.sum, sumsq: a.sumsq + r.sumsq }), { n: 0, wins: 0, sum: 0, sumsq: 0 }), rnd = statOf(rb);
   const show = (x) => ({ variant: x.variant, tier: x.tier, rule: ENTRY_RULE[x.variant.split("|")[0]] || null, n: x.n, meanPct: x.mean, ci95: [x.lo, x.hi], randomPct: x.base, edgePct: x.edge, edgeCi95: [x.edgeLo, x.edgeHi] });
-  const gk = ["grok_pick", "grok_vote", "grok_skip", "grok_heat"].map((e) => ({ entry: e, ...board.filter((r) => r.variant.startsWith(`${e}|`)).reduce((a, r) => ({ n: a.n + r.n, wins: a.wins + r.wins, sum: a.sum + r.sum, sumsq: a.sumsq + r.sumsq }), { n: 0, wins: 0, sum: 0, sumsq: 0 }) })).filter((g) => g.n > 0);
+  const gk = ["grok_trade", "grok_pick", "grok_vote", "grok_skip", "grok_heat"].map((e) => ({ entry: e, ...board.filter((r) => r.variant.startsWith(`${e}|`)).reduce((a, r) => ({ n: a.n + r.n, wins: a.wins + r.wins, sum: a.sum + r.sum, sumsq: a.sumsq + r.sumsq }), { n: 0, wins: 0, sum: 0, sumsq: 0 }) })).filter((g) => g.n > 0);
   const picks = await d.q(`SELECT variant, tier, selected_day, status, confirm_day, sel, conf FROM mob_aq_arena_picks ORDER BY id DESC LIMIT 60`);
   const backDone = coins.filter((c) => cur.back[c.mint] === 0).length;
   const state = { ...prev, on: true, since: prev.since ?? new Date().toISOString(), lastTickAt: new Date().toISOString(), walletSol: wallet, walletPath: path, equityLine: line, batchPnlSol: round(batchPnl, 4), prevTradesTotal: prev.virtualTradesTotal ?? 0, prevWins: prev.wins ?? 0, prevWalletSol: round(w0, 4), virtualTradesTotal: tot.n, wins: tot.w, losses: tot.n - tot.w, winRate: tot.n ? round(tot.w / tot.n, 4) : null, liveTrades: liveTot.n, replayTrades: repl.n,
@@ -351,7 +368,7 @@ export async function arenaTick(env, opts = {}) {
     boardOf: scored.length >= 5 ? "settings" : "entry families", leaders: rank.slice().sort((a, b) => b.edgeLo - a.edgeLo).slice(0, 5).map(show), laggards: rank.slice().sort((a, b) => a.edgeHi - b.edgeHi).slice(0, 5).map(show), families: fams.map(show),
     graduated: picks.filter((p) => p.status === "graduated").map((p) => ({ variant: p.variant, tier: p.tier, pickedOn: p.selected_day, confirmedOn: p.confirm_day, stats: p.conf })),
     pending: picks.filter((p) => p.status === "selected").map((p) => ({ variant: p.variant, tier: p.tier, pickedOn: p.selected_day })),
-    grok: gk.map((g) => ({ input: g.entry, rule: ENTRY_RULE[g.entry], ...(({ n, mean, lo, hi }) => ({ n, meanPct: mean, ci95: [lo, hi] }))(statOf(g)) })),
+    grok: gk.map((g) => ({ input: g.entry, rule: ENTRY_RULE[g.entry], trades: g.n, won: g.wins, lost: g.n - g.wins, ...(({ n, mean, lo, hi }) => ({ n, meanPct: mean ?? (g.n ? round(g.sum / g.n, 4) : null), ci95: [lo, hi] }))(statOf(g)) })),
     note: trades ? `${trades} virtual trades resolved this minute (${live.length} on fresh minutes, ${replay.length} replaying history) from the real 1-minute candles of ${fetched} coins; ${board.length} settings tried so far, so some lead by luck: only walk-forward graduates on fresh days count` : coins.length ? `no candles read this minute (${failed} of ${nJobs} reads failed)` : "no tracked coin with liquidity yet" };
   await setState(d, "arena", state);
   // ---- one lesson line from the batch just resolved: which entry family won and which lost, against luck in the same minutes
