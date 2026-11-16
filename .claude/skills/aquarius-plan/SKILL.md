@@ -63,3 +63,5 @@ Game design draft (Alex: "take your time"; build only on "build"):
 - Usage: Alex pays for NO extra usage. Smart bots run on Claude's own usage (the hourly runs) and free sources; most workers are free code jobs.
 - Risk per trade: Alex leaves it to us: use the recipe (Fibonacci, Time Machine, 6x-cost gate); ceiling 2% per trade, kill switch always.
 - Grok and ChatGPT connect later through his logged-in browser, the same way the city is set up.
+
+## ART RULES (Alex, 2026-11-16): nothing Roblox/blocky. Buildings, gods, trees, water, characters all get real hand-painted textures and vibrant World-of-Warcraft colours (not Blizzard production, but never trash). The CEO (Alex) is a nice animated 3D character he walks himself; workers share the body with different tunics. Characters from free CC0 packs (Quaternius), tested in-game before claiming they work. ChatGPT (Magic Wand) makes concept art and marble/stone textures only.
