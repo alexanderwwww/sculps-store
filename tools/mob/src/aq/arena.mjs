@@ -21,7 +21,7 @@ import { costBook, AUDIT_RT } from "./council.mjs";
 import { NET_FEE_SOL, AUDIT_OVERSHOOT_PCT } from "./engine.mjs";
 
 // Alex, 2026-11-16 (final): 700 paper trades a minute, every minute, each 0.8 to 1 SOL, any coin, out of a 1,000 SOL paper wallet.
-export const ARENA = { walletSol: 1000, sizeSol: 1, sizeMin: 0.8, sizeMax: 1, perMinute: 700, ring: 90, look: 25, holds: [2, 5, 10, 20, 45], stops: [1, 2, 3], rrs: [1.5, 3], randomP: 0.15, maxCoins: 150, minLiqUsd: 20000,
+export const ARENA = { walletSol: 1000, sizeSol: 1, sizeMin: 0.8, sizeMax: 1, perMinute: 700, ring: 90, look: 25, holds: [2, 5, 10, 20, 45], stops: [1, 2, 3], rrs: [1.5, 3], randomP: 0.15, minAtrPct: 0.5, maxCoins: 150, minLiqUsd: 20000,
   minTrades: 300, boardMin: 50, maxPicks: 20, z: 1.96, sampleSlots: 20, samplesPerTick: 40, costSizes: [1, 5], keepDays: 35 };
 // Fibonacci retracement bands of the last up-leg: [entry name, from, to) as a share of the leg given back
 export const FIB_BANDS = [["fib382", 0.33, 0.44], ["fib50", 0.44, 0.56], ["fib618", 0.56, 0.70], ["fib786", 0.70, 0.85]];
@@ -50,6 +50,8 @@ export function entriesAt(coin, e, minuteOfE, ev = {}) {
   }
   const atr = atr5Pct(cs.slice(-ARENA.look));
   if (atr == null || !(atr > 0)) return { fired: out, atr: null };
+  // brain fix 1 (2026-11-17): a coin that moves less than the round trip costs cannot teach anything; only 12.7% of trades won while stablecoins sat on the tape
+  if (atr < ARENA.minAtrPct) return { fired: out, atr };
   const P = px[e], ret5 = (P / px[e - 5] - 1) * 100, max = (a, b) => { let m = -Infinity; for (let i = a; i <= b; i++) if (px[i] > m) m = px[i]; return m; };
   if (seed01(`${coin.mint}|${minuteOfE}|arena`) < ARENA.randomP) out.push("random");
   if (ret5 >= atr) out.push("mom1");
