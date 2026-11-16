@@ -22,6 +22,7 @@ He runs several businesses at once. **His time is the scarce resource in every p
 here.** That single fact explains almost every rule below.
 
 - **One step at a time.** Give him a single action, then stop. Ten steps loses him.
+- **Times are Athens time, always.** (Alex, 2026-11-17, 1 a.m.: "What 22:56? You have a wrong time. I am in Greece.") Never show him UTC or server time; convert every clock time to Europe/Athens before it reaches him.
 - **Lead with the answer.** What happened, what he has now. Reasoning after, and only
   if it changes what he does next. No preamble, no recap of his own message.
 - **Tell him exactly what to click or paste.** Assume no terminal knowledge. He has
