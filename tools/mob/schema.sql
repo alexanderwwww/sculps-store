@@ -236,3 +236,5 @@ ALTER TABLE mob_aq_positions ADD COLUMN IF NOT EXISTS realized_sol double precis
 ALTER TABLE mob_aq_trades ADD COLUMN IF NOT EXISTS variant text;
 ALTER TABLE mob_aq_trades ADD COLUMN IF NOT EXISTS entry_variant text;
 ALTER TABLE mob_aq_trades ADD COLUMN IF NOT EXISTS scaled boolean;
+ALTER TABLE mob_aq_positions ADD COLUMN IF NOT EXISTS strength double precision;
+ALTER TABLE mob_aq_trades ADD COLUMN IF NOT EXISTS strength double precision;

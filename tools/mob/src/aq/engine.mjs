@@ -7,7 +7,7 @@ import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round, survival
 import { whaleSignal, shadowTick, shadowStats, mineTick, followSignals, whaleState } from "./whales.mjs";
 import { lanesTick, laneStats } from "./lanes.mjs";
 import { councilTick, learnFromTrade, ruleWeights, MIN_OWN_BARS } from "./council.mjs";
-import { COUNCIL } from "./logic.mjs";
+import { COUNCIL, STRENGTH_BUCKETS } from "./logic.mjs";
 
 export const AQ_BUILD = "aq-engine-1";
 export const START_SOL = 1;
@@ -212,7 +212,7 @@ export async function tick(env, opts = {}) {
         set("rv.journal", "busy", `trade #${t.id} journaled`);
         set("rv.lesson", "busy", `lesson from ${p.symbol}`);
         await learnFromTrade(d, p, t.id, pnlPct);
-        await d.q(`UPDATE mob_aq_trades SET variant=$2, entry_variant=$3, scaled=$4 WHERE id=$1`, [t.id, p.variant || "A", p.entry_variant || null, !!p.half_done]);
+        await d.q(`UPDATE mob_aq_trades SET variant=$2, entry_variant=$3, scaled=$4, strength=$5 WHERE id=$1`, [t.id, p.variant || "A", p.entry_variant || null, !!p.half_done, p.strength ?? null]);
       }
       if (!W["ex.stops"]) set("ex.stops", "busy", `${open.length} open position(s) checked`);
     } else set("ex.stops", "idle", "no open positions");
@@ -504,7 +504,7 @@ export async function buildState(env) {
     equitySol: round(equity, 9), startSol: START_SOL, pnlTodaySol: round(realizedToday + unreal, 9), pnlTotalSol: round(equity - START_SOL, 9),
     trades: { n: s.n, wins: s.wins, winRate: s.winRate, expectancyPct: s.expectancyPct, ci95: s.ci95, evidence: s.evidence },
     positions: pos.map((p) => ({ id: p.id, symbol: p.symbol, mint: p.mint, entryPrice: p.entry_price_usd, price: p.last_price_usd, stopPct: p.stop_pct, targetPct: p.target_pct,
-      sizeSol: p.size_sol, tier: p.tier || null, tag: p.tag || null, openedAt: p.opened_at, variant: p.variant || "A", scaledOut: !!p.half_done,
+      sizeSol: p.size_sol, tier: p.tier || null, tag: p.tag || null, openedAt: p.opened_at, variant: p.variant || "A", scaledOut: !!p.half_done, strength: p.strength ?? null,
       pnlPct: p.last_value_sol == null ? null : round(((p.last_value_sol + (p.realized_sol || 0) - p.size_sol - p.fee_sol) / (p.size_sol + p.fee_sol)) * 100, 3), strategy: p.strategy })),
     recent,
     flows: flows.map((f) => ({ id: Number(f.id), kind: f.kind, sol: f.sol, dept: f.dept, label: f.label, at: f.at })),
@@ -521,6 +521,7 @@ export async function buildState(env) {
       trending: (M.trending || []).slice(0, 12).map((p) => ({ symbol: p.symbol, ch1h: p.ch1h, liqUsd: p.liqUsd, boosted: !!p.boosted })) },
     brain: brainRows.map((r) => ({ at: r.at, dept: r.dept, text: r.text })),
     strategies: strat.map((r) => ({ id: r.id, name: r.name, trades: r.stats?.n ?? 0, pnlSol: r.stats?.pnlSol ?? 0, alive: r.alive, status: r.status, market: r.market, defaultVariant: S.variant_default?.[r.id] || null,
+      byStrength: STRENGTH_BUCKETS.map(([lo, hi]) => { const xs = trd.filter((t) => t.strategy === r.id && t.strength != null && t.strength >= lo && t.strength < hi).map((t) => t.pnl_pct), st3 = stats(xs); return { from: lo, to: hi === 9 ? null : hi, n: st3.n, winRate: st3.winRate, expectancyPct: st3.expectancyPct }; }),
       variants: ["A", "B"].map((v) => { const xs = trd.filter((t) => t.strategy === r.id && t.variant === v).map((t) => t.pnl_pct), w = xs.filter((p) => p > 0), l = xs.filter((p) => p <= 0), st2 = stats(xs);
         return { id: v, n: st2.n, winRate: st2.winRate, expectancyPct: st2.expectancyPct, avgWin: w.length ? round(w.reduce((a, c) => a + c, 0) / w.length, 2) : null, avgLoss: l.length ? round(l.reduce((a, c) => a + c, 0) / l.length, 2) : null }; }) })),
     tools: tools.map((t) => ({ name: t.name, licence: t.licence, verdict: t.verdict, status: t.status, usedBy: t.used_by, bestUse: t.best_use })),

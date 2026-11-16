@@ -234,6 +234,7 @@ export function momentumSetup(candles, p, nowSec) {
   const stopPct = Math.max(p.minStopPct, p.atrStop * atr), out = { staleSec, atrPct: atr, ...levels(P, stopPct, p.rr, {}) };
   let N = 0, hi = null;
   for (let k = p.maxN; k >= p.minN; k--) { const h = Math.max(...candles.slice(n - 1 - k, n - 1).map((c) => c.h)); if (hi == null) hi = h; if (P > h) { N = k; hi = h; break; } hi = h; }
+  out.marginAtr = round(((P / hi - 1) * 100) / atr, 3); // how far over (or under) the breakout level, in the coin's own ATR
   if (!N) return { ...out, signal: false, why: `no breakout (close under the ${p.minN}-bar high)`, number: round((P / hi - 1) * 100, 3) };
   if (!(last.c >= last.o)) return { ...out, signal: false, why: "breakout bar is red", number: 0 };
   // the first 9 paper R6 trades all bought closes 0.001-0.1% over the high on coins that then moved under 2% in 30 minutes:
@@ -261,10 +262,24 @@ export function bounceSetup(candles, p, nowSec) {
   for (const c of candles) H = Math.max(H, c.h);
   for (let k = 0; k < 5; k++) { const r = rsi(closes.slice(0, n - k)); if (r != null) minRsi = Math.min(minRsi, r); }
   const P = last.c, drop = ((H - P) / H) * 100, need = round(Math.max(p.minDropPct, p.dropAtr * atr), 2), stopPct = Math.max(p.minStopPct, p.atrStop * atr);
-  const out = { staleSec, atrPct: atr, ...levels(P, stopPct, p.rr, { dropPct: round(drop, 2), rsi: minRsi }) };
+  const out = { staleSec, atrPct: atr, ...levels(P, stopPct, p.rr, { dropPct: round(drop, 2), rsi: minRsi, needPct: need }) };
   if (drop < need) return { ...out, signal: false, why: `not oversold (down ${round(drop, 2)}% from the high, needs ${need}% = ${p.dropAtr}x ATR)`, number: round(drop, 2) };
   if (!(minRsi < p.rsiMax)) return { ...out, signal: false, why: `RSI ${minRsi} not under ${p.rsiMax}`, number: minRsi };
   if (!(last.c > last.o && last.c > prev.c)) return { ...out, signal: false, why: "oversold but no bounce bar yet", number: minRsi };
   if (stopPct > p.maxStopPct) return { ...out, signal: false, why: `bounce but the stop is wider than ${p.maxStopPct}%`, number: out.stopPct };
   return { ...out, signal: true, why: `oversold bounce (down ${round(drop, 2)}% = ${round(drop / atr, 1)}x ATR, RSI ${minRsi})`, number: minRsi };
 }
+
+// Continuous signal STRENGTH (0 = nothing there, 1 = the full rule is met). On paper EXPLORE ranks candidates by it instead
+// of waiting for pass/fail; it is stored on every trade so Review can chart result against strength and find the real cut-off.
+const c01 = (v) => Math.max(0, Math.min(1, v));
+export function strengthOf(sid, t, p, whale) {
+  if (!t || t.stopPrice == null || t.targetPrice == null || !(t.stopPct < t.targetPct)) return 0;
+  if (sid === "R5") return t.signal ? round(1 + Math.max(0, (whale?.independent || 2) - 2) * 0.25, 2) : 0;
+  if (t.signal) return 1;
+  if (sid === "R6") return t.marginAtr == null ? 0 : round(Math.min(0.95, c01((t.marginAtr + 1) / (p.minBreakAtr + 1))), 3);
+  if (sid === "R3" || sid === "R4") { if (t.retrace == null) return 0; const dz = t.retrace < p.zoneLo ? p.zoneLo - t.retrace : t.retrace > p.zoneHi ? t.retrace - p.zoneHi : 0; return round(c01(0.9 - dz / 0.382), 3); }
+  if (sid === "R7") return t.dropPct == null || t.rsi == null || !Number.isFinite(t.rsi) ? 0 : round(Math.min(0.95, 0.6 * c01(t.dropPct / t.needPct) + 0.4 * c01((60 - t.rsi) / 25)), 3);
+  return 0;
+}
+export const STRENGTH_BUCKETS = [[0, 0.25], [0.25, 0.5], [0.5, 0.75], [0.75, 1], [1, 9]];

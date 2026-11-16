@@ -668,3 +668,40 @@ test("variants: exits alternate A/B per strategy; B sells half at +1R and moves 
   assert.ok(typeof s.whales.signalsLastHour === "number" && "hitRate" in s.whales.r5 && typeof s.whales.fundersKnown === "number");
   assert.ok("variant" in (await S()).positions.concat([{ variant: "A" }])[0]);
 });
+
+test("paper explores by STRENGTH: a partial setup is taken as EXPLORE-WEAK at the smallest size; a dead market says why", async () => {
+  const d = db(env), L = await import("../src/aq/logic.mjs"), { R6_PARAMS } = await import("../src/aq/seed.mjs");
+  for (const t of ["mob_aq_market", "mob_aq_watch", "mob_aq_prices", "mob_aq_positions", "mob_aq_council", "mob_aq_trades"]) await d.q(`DELETE FROM ${t}`);
+  await d.q(`UPDATE mob_aq_state SET v='1' WHERE k='cash_sol'`);
+  stubAll(); trendingPools = []; prices = {}; tradesFor = {}; sellOut = {};
+  const now = Date.now(), t0 = Math.floor(now / 60000) * 60 - 60;
+  const bar = (i, o, c2, w) => ({ t: t0 - (44 - i) * 60, o, h: Math.max(o, c2) * (1 + w), l: Math.min(o, c2) * (1 - w), c: c2, v: 1 });
+  const choppy = Array.from({ length: 44 }, (_, i) => bar(i, 1, 1 + (i % 2) * 0.001, 0.008)), dead = Array.from({ length: 45 }, (_, i) => bar(i, 1, 1 + (i % 2) * 0.0002, 0.0003));
+  const near = [...choppy, bar(44, 1.001, 1.006, 0.001)]; // closes just under the 8-bar high: no breakout, but close
+  const m = L.momentumSetup(near, R6_PARAMS, now / 1000), st = L.strengthOf("R6", m, R6_PARAMS);
+  assert.equal(m.signal, false); assert.ok(st > 0.3 && st < 0.95, String(st)); assert.equal(L.strengthOf("R6", { ...m, signal: true }, R6_PARAMS), 1);
+  assert.equal(L.strengthOf("R6", { signal: false, why: "too few candles" }, R6_PARAMS), 0, "no levels = no strength");
+  const mk = (sym, mint) => { const p = clone(FX6.jupTop.pools.find((q) => q.baseAsset.symbol === "Fartcoin")); Object.assign(p.baseAsset, { id: mint, symbol: sym, liquidity: 900000, firstPool: { id: "x", createdAt: new Date(now - 40 * 86400000).toISOString() } }); p.id = `pool-${sym}`; return p; };
+  const asJup = (cs) => ({ candles: cs.map((c2) => ({ time: c2.t, open: c2.o, high: c2.h, low: c2.l, close: c2.c, volume: 1 })) });
+  const WK = "WeakSetupAA1111111111111111111111111111111", DD = "DeadCoinAAA1111111111111111111111111111111";
+  backOf = { [WK]: 0.998, [DD]: 0.998 };
+  jupLists = () => ({ pools: [mk("WEAK", WK)] }); jupCharts[WK] = () => asJup(near);
+  let t = await tick(env);
+  assert.equal(t.entered?.symbol, "WEAK", JSON.stringify(t.evaluated)); assert.equal(t.entered.tag, "EXPLORE-WEAK"); assert.ok(t.entered.strength > 0.3 && t.entered.strength < 0.95);
+  assert.ok(t.entered.sizeSol <= 0.05 * 0.6 + 1e-9, "the smallest size"); assert.ok(t.entered.targetPct >= 6 * t.entered.rtPct, "the cost gate still holds");
+  const cn = await d.one(`SELECT reason FROM mob_aq_council WHERE symbol='WEAK'`); assert.match(cn.reason, /^EXPLORE-WEAK: R6 strength 0\.\d+ \(no breakout/);
+  // close it and read the strength curve
+  const p = await d.one(`SELECT * FROM mob_aq_positions`); assert.ok(p.strength < 1);
+  prices[WK] = p.target_price * 1.01; sellOut = { [WK]: 1.06 };
+  t = await tick(env); assert.equal(t.exits[0].why, "target");
+  let s = await S();
+  const bucket = s.strategies.find((x) => x.id === "R6").byStrength.find((b) => p.strength >= b.from && (b.to == null || p.strength < b.to));
+  assert.equal(bucket.n, 1); assert.ok(bucket.expectancyPct > 0); assert.equal(s.strategies.find((x) => x.id === "R6").byStrength.length, 5);
+  // a dead market: the only coin's ATR target cannot clear 6x the cheapest cost -> one verdict that says so
+  await d.q(`UPDATE mob_aq_trades SET opened_at = now() - interval '10 minutes'`); await d.q(`DELETE FROM mob_aq_council`); await d.q(`DELETE FROM mob_aq_market WHERE k='jup:top'`);
+  jupLists = () => ({ pools: [mk("DEAD", DD)] }); jupCharts[DD] = () => asJup(dead);
+  t = await tick(env);
+  assert.equal(t.entered, null); assert.ok(t.quiet && t.quiet.coins === 1 && t.quiet.bestTarget < t.quiet.needed, JSON.stringify([t.quiet, t.evaluated]));
+  s = await S(); assert.match(s.council.recent.find((v) => v.symbol == null).reason, /^market too quiet: 1 coin\(s\), best target [\d.]+% vs needed [\d.]+%$/);
+  jupCharts = {}; backOf = {}; sellOut = {};
+});
