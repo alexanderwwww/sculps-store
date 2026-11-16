@@ -55,7 +55,7 @@ War room HTTP (the sender comes from the sign-in, never from the body):
 - GET  /api/aq/chat?since=<id>&mark=1   -> {as, messages, lastId, unread}; without `since` the last 30; mark=1 marks them read for the caller (with the helper code add &helper=<name>).
 - POST /api/aq/chat/read                -> marks everything read for the caller, {as, messages, lastId, unread}. The panel calls this when Alex opens the war room.
 Helper MCP tools added (every tool takes `helper`):
-- aq_council_cases {}                                   -> {cases:[{symbol, mint, tier, strategy, strength, roundTripPct, atr5Pct, plan:{stopPct,targetPct,holdMin,stopUsd,targetUsd}, softObjections, score, verdict, reason, number, blockKind, hardBlocksClear, seat, judgedAt, votes, canVote}], positions:[{id, symbol, mint, entryUsd, nowUsd, stopUsd, targetUsd, stopPct, targetPct, pnlPct, ageMin, openedAt, timeStopAt, exitWarningBy, votes, canVote:["EXIT"]}], voteTtlSec, how}
+- aq_council_cases {}                                   -> {cases:[{symbol, mint, tier, strategy, strength, roundTripPct, atr5Pct, plan:{stopPct,targetPct,holdMin,stopUsd,targetUsd}, softObjections, score, verdict, reason, number, blockKind, hardBlocksClear (true only when a vote can move it: a partial setup or the soft score), seat, judgedAt, votes, canVote}], positions:[{id, symbol, mint, entryUsd, nowUsd, stopUsd, targetUsd, stopPct, targetPct, pnlPct, ageMin, openedAt, timeStopAt, exitWarningBy, votes, canVote:["EXIT"]}], voteTtlSec, how}
 - aq_council_vote {mint, vote:"BUY"|"SKIP"|"EXIT", confidence 0..1, reason, labels[]}   BUY/SKIP: the coin must be a case (judged in the last 30 min, not held); EXIT: the coin must be an open position.
 - aq_alert {mint, kind:"stop"|"target"|"narrative_dead", price?, note?}                 -> {confirmed, closed, result, quotedUsd, stopUsd, targetUsd, netPctIfSold}
 - aq_chat_post {text, to?}   aq_chat_read {since?}
@@ -69,10 +69,10 @@ Rules the engine applies (so the panel can explain them):
 ## GROK DESK section (aq/grok.js): what it reads today, and the ENGINE WISHLIST
 Reads today: helpers.{grok,chatgpt,codex} + helpers.<k>LastAt (badge: green under 20 min, amber after, grey when "not connected"), xfeed (X radar text parsed into a table, raw text if the pattern changes),
 lanes (helper "grok" vs "aquarius"), brain rows starting "LANE:grok pick" (closed picks as the review desk logged them), marketFeed rows with source "grok".
-Draws the moment they appear (nothing to change in the client):
- warroom:[{at, from:"grok"|"claude"|"alex"|"chatgpt"|"codex", to, text}]  (last 30, any order)   + POST /api/aq/chat {text} -> 2xx (JSON {error} shows as the error; 404/405 shows "the engine has no chat yet")
- council.seats:[{helper, votes, right, wrong, weight, lastVoteAt}]
- alerts:[{at, text, kind|level ("info"|"warn"|"critical"|...), from}]   // shape assumed: the client also accepts message/title, severity/type, source, or a plain string
+Reads since engine commit 971984e1 (src/aq/seat.mjs), and shows an honest empty state on an engine without them:
+ warroom:{messages:[{id, at, from, to|null (= everyone), text}], unread, lastRead}  (a plain array of messages is accepted too)   + POST /api/aq/chat {text} -> 201; an error body's message is shown as is; 404/405 shows "the engine has no chat yet"
+ council.seats:[{helper, votes, right, wrong, weight, laneWeight, effective, lastVoteAt}]
+ alerts:[{id, at, helper, symbol, mint, kind, price, note, confirmed, result, tradeId}]
 ENGINE WISHLIST (not in buildState today, the section says so on screen instead of guessing):
  1. lanePicks:[{id, helper, symbol, mint, status:"queued"|"open"|"closed"|"rejected", verdict, verdictReason, thesis, labels, stopPct, targetPct, costPct, pnlPct, outcome, createdAt, openedAt, closedAt}]
     from mob_aq_picks (newest 20). Today only the lane summary is sent, so open and rejected picks cannot be listed.

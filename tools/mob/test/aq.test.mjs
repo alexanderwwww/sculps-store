@@ -1430,7 +1430,7 @@ test("council seat: a helper vote is ONE soft rule; it adds, subtracts, lifts a 
   const base0 = (await d.one(`SELECT v FROM mob_aq_state WHERE k='ledger_base'`)).v; // (the wallet base shrinks with it, so this is a small wallet, not a destroyed island)
   await d.q(`UPDATE mob_aq_state SET v='0.03' WHERE k='cash_sol'`); await d.q(`UPDATE mob_aq_state SET v = v || '{"cash": 0.08}' WHERE k='ledger_base'`);
   t = await tick(env); assert.equal(t.entered, null, JSON.stringify(t.evaluated)); v = await verdict("CASH");
-  assert.match(v.reason, /^size: needs .* cash 0\.03 SOL and 1% of the pool allow 0\.0299\d* SOL$/); assert.equal((await d.one(`SELECT applied FROM mob_aq_votes WHERE id=$1`, [r.vote.id])).applied.verdict, "BLOCK");
+  assert.match(v.reason, /^size: needs .* cash 0\.03 SOL and 1% of the pool allow 0\.0299\d* SOL$/); assert.ok(!v.facts.votable, "a size refusal is not a votable case"); assert.equal((await d.one(`SELECT applied FROM mob_aq_votes WHERE id=$1`, [r.vote.id])).applied.verdict, "BLOCK");
   await d.q(`UPDATE mob_aq_state SET v=$1 WHERE k='cash_sol'`, [JSON.stringify(cash0)]); await d.q(`UPDATE mob_aq_state SET v=$1 WHERE k='ledger_base'`, [JSON.stringify(base0)]);
   r = await vote("grok", CASH, "BUY", 0.8); await d.q(`DELETE FROM mob_aq_council WHERE symbol='CASH'`);
   assert.equal((await R("POST", "/api/aq/kill", { cookie, body: { on: true } })).status, 200);
@@ -1465,6 +1465,10 @@ test("council seat votes: validation, one live vote per helper per coin, replace
   // one live vote per helper per coin; the newer replaces the older; another helper's vote stands beside it
   const v1 = (await vote("grok", A, "BUY", 0.4)).vote, v2 = (await vote("grok", A, "SKIP", 0.7)).vote, v3 = (await vote("chatgpt", A, "BUY", 0.5)).vote;
   assert.equal(v1.replaced, null); assert.equal(v2.replaced, v1.id); assert.equal(v1.priceUsd, 2);
+  // only a verdict the Council marked votable (a partial setup's missing signal, or the soft score) is re-opened by a BUY; a "no setup at all" or a risk refusal is not
+  assert.deepEqual(await SEAT.seatRequeue(d), []); assert.equal((await SEAT.councilCases(env)).cases.find((c) => c.mint === A).hardBlocksClear, false);
+  await d.q(`UPDATE mob_aq_council SET facts = facts || '{"votable": true}' WHERE mint=$1`, [A]);
+  assert.deepEqual(await SEAT.seatRequeue(d), [A]); assert.equal((await SEAT.councilCases(env)).cases.find((c) => c.mint === A).hardBlocksClear, true);
   let rows = await d.q(`SELECT id, helper, vote, live, counted, replaced_at FROM mob_aq_votes WHERE mint=$1 ORDER BY id`, [A]);
   assert.deepEqual(rows.map((r) => [r.helper, r.vote, r.live]), [["grok", "BUY", false], ["grok", "SKIP", true], ["chatgpt", "BUY", true]]); assert.ok(rows[0].replaced_at);
   assert.deepEqual((await SEAT.seatEffects(d, [A]))[A].votes.map((x) => [x.helper, x.points]), [["grok", -7], ["chatgpt", 5]]); assert.equal((await SEAT.seatEffects(d, [A]))[A].delta, -2);

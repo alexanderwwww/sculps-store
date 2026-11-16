@@ -72,11 +72,12 @@ export async function seatEffects(d, mints) {
 }
 export const seatText = (e) => e.votes.map((v) => `${v.helper} ${v.vote} ${v.confidence} x weight ${v.mult} = ${v.points > 0 ? "+" : ""}${v.points}`).join(", ");
 export const markApplied = (d, e, applied, positionId = null) => d.q(`UPDATE mob_aq_votes SET applied=$2, position_id=coalesce($3::int, position_id) WHERE id = ANY($1::int[])`, [e.votes.map((v) => v.id), JSON.stringify({ at: new Date().toISOString(), ...applied }), positionId]);
-// Coins a fresh BUY vote wants looked at again before their cooldown ends: only those whose last verdict was a missing signal or
-// the soft score (a hard block, an authority or a coin that cannot pay its cost is not re-opened by a vote), once per vote.
+// Coins a fresh BUY vote wants looked at again before their cooldown ends: only those whose last verdict was a partial setup's
+// missing signal or the soft score (facts.votable; a hard block, an authority, a risk refusal, a losing replay or a coin that
+// cannot pay its cost is not re-opened by a vote), once per vote.
 export async function seatRequeue(d) {
   return (await d.q(`SELECT DISTINCT v.mint FROM mob_aq_votes v WHERE v.live AND v.seat AND v.vote='BUY' AND v.expires_at > now() AND v.judged_at IS NULL
-    AND (SELECT c.facts->>'block' FROM mob_aq_council c WHERE c.mint = v.mint ORDER BY c.id DESC LIMIT 1) IN ('signal','soft')`)).map((r) => r.mint);
+    AND (SELECT c.facts->>'votable' FROM mob_aq_council c WHERE c.mint = v.mint ORDER BY c.id DESC LIMIT 1) = 'true'`)).map((r) => r.mint);
 }
 export const markJudged = (d, mints) => (mints.length ? d.q(`UPDATE mob_aq_votes SET judged_at=now() WHERE live AND seat AND judged_at IS NULL AND mint = ANY($1::text[])`, [mints]) : null);
 
@@ -99,8 +100,8 @@ export async function councilCases(env) {
       return { symbol: r.symbol, mint: r.mint, tier: f.tier ?? null, strategy: f.strategy ?? r.strategy ?? null, strength: f.strength ?? null, roundTripPct: f.rtPct ?? null, atr5Pct: f.atr5Pct ?? null,
         plan: f.plan ? { stopPct: f.plan.stopPct, targetPct: f.plan.targetPct, holdMin: f.plan.holdMin, stopUsd: f.plan.stopPrice ?? null, targetUsd: f.plan.targetPrice ?? null } : null,
         softObjections: f.soft ?? null, score: f.score ?? null, verdict: r.verdict, reason: r.reason, number: r.number, blockKind: kind,
-        // true = only the missing signal or the soft score stands between this coin and an entry: the only cases a vote can move
-        hardBlocksClear: r.verdict === "PASS" || kind === "signal" || kind === "soft", seat: f.seat ?? null, judgedAt: r.at, votes: vOf(r.mint), canVote: ["BUY", "SKIP"] };
+        // true = only a partial setup's missing signal or the soft score stands between this coin and an entry: the only cases a vote can move
+        hardBlocksClear: r.verdict === "PASS" || f.votable === true, seat: f.seat ?? null, judgedAt: r.at, votes: vOf(r.mint), canVote: ["BUY", "SKIP"] };
     }),
     positions: pos.map((p) => ({ id: p.id, symbol: p.symbol, mint: p.mint, strategy: p.strategy, tier: p.tier, tag: p.tag, sizeSol: p.size_sol, entryUsd: p.entry_price_usd, nowUsd: p.last_price_usd, stopUsd: p.stop_price, targetUsd: p.target_price,
       stopPct: p.stop_pct, targetPct: p.target_pct, pnlPct: p.last_value_sol == null ? null : round(((p.last_value_sol + (p.realized_sol || 0) - p.size_sol - p.fee_sol) / (p.size_sol + p.fee_sol)) * 100, 3),

@@ -277,13 +277,17 @@ export async function councilTick(env, x) {
       g.facts.seat.moved = moved;
       seatNote = `council seat${moved ? ` MOVED this (${moved})` : " (verdict unchanged)"}: ${seatText(g.seat)}; score ${g.score0} -> ${g.sc.score} against ${passAt}${g.lifted ? `; strength ${g.strength} + ${g.seat.units} reaches ${LIFT_AT}` : ""}${keptOut && !normal ? `; a net vote of ${KEEP_OUT_POINTS} or lower keeps a coin out of EXPLORE` : ""}`;
     }
-    if (g.weak && (out.entered || !tag || tries >= QUOTE_TRIES)) { await g.block(`no signal (strength ${g.strength}): ${g.why}`.slice(0, 240) + (seatNote ? `; ${seatNote}` : ""), g.strength, "signal"); continue; }
+    // facts.votable: this verdict is only the missing signal or the soft score, the two things a helper's vote can move
+    // (a risk refusal, a losing replay or a gate carry the same "soft"/"signal" kinds for their cooldown and are not votable)
+    if (g.weak && (out.entered || !tag || tries >= QUOTE_TRIES)) { g.facts.votable = true; await g.block(`no signal (strength ${g.strength}): ${g.why}`.slice(0, 240) + (seatNote ? `; ${seatNote}` : ""), g.strength, "signal"); continue; }
     if (out.entered || !tag || tries >= QUOTE_TRIES) {
       const why = out.entered ? "another candidate was taken this tick" : tries >= QUOTE_TRIES ? "quote budget used this tick" : null;
       if (why) { out.evaluated.push({ symbol: c.symbol, tier, verdict: "WAIT", reason: why, number: g.sc.score }); continue; }
+      g.facts.votable = true;
       await g.block(`soft rules: score ${g.sc.score} under ${C.passScore} (${g.objections.join(", ") || "none"})${g.strict ? ", tier C strict" : ""}; next explore in ${round(Math.max(0, C.exploreEveryMin - sinceMin), 1)} min${seatNote ? `; ${seatNote}` : ""}`, g.sc.score, "soft");
       continue;
     }
+    delete g.facts.votable;
     if (!feeSol || !solUsd) { await g.block("missing data: SOL price", null); continue; }
     // ---- size. The network fee is a fixed amount, so there is a smallest size at which six round trips still fit under the
     // target and under 3x ATR5 (the fee floor). EXPLORE takes that smallest size; a PASS takes its risk size, never under the
