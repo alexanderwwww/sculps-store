@@ -6,5 +6,5 @@ Centre: one huge circular ring-shaped headquarters, glass and marble, with a gar
 Around the ring, 12 districts (research, news, strategy, risk, execution, review, memory...) each with small workers in tunics-with-visors at glowing desks, about 144 tiny workers in total, a few walking on marble paths.
 Next to the ring, a small golden chamber with a round table where several figures in laurel crowns sit: the Council of Olympus.
 In front of the ring, one enormous curved screen showing a glowing neural network of connected nodes and a portfolio chart (placeholder lines, no real numbers).
-Tall neon towers, one per trading strategy, each with a small bar showing its earnings. A floating small genie mascot in PS1 low-poly style hovers near the boss.
+Tall neon towers, one per trading strategy, each with a small bar showing its earnings.
 Clean, readable, game-UI feel, warm gold and cool cyan palette. No brand logos, no readable text except the word AQUARIUS on the ring.

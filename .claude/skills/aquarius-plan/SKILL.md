@@ -40,3 +40,9 @@ Small 3D town, ancient Greece in the future: columns, marble and glass, a huge h
 2. Where it runs: our server (24/7) with the old laptop as the second worker?
 3. Risk cap per memecoin trade: 2% / 4% / keep phi.
 4. Budget for live: how much SOL goes in after tests pass.
+
+## Concept image v1 feedback (Alex, 2026-11-16)
+Liked the place; said it "looks AI" and "doesn't make sense". Decisions:
+- NO genie in the city (deleted).
+- Must feel like playing a game, and be an ACTUAL DATA GAME we build: every building, worker and screen is driven by real data, nothing decorative. Style = in-engine low-poly, not polished AI art.
+- Statues required: Zeus, Athena, Apollo, Hermes (god of commerce), Dionysus, Hecate. Proposed roles (Alex to confirm): Zeus = hard limits and kill switch; Athena = strategy; Apollo = research and forecasts; Hermes = execution and trades; Dionysus = crowd sentiment and hype; Hecate = gatekeeper (rug and safety checks). They can be the Council of Olympus.
