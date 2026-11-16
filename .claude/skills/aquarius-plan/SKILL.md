@@ -65,3 +65,6 @@ Game design draft (Alex: "take your time"; build only on "build"):
 - Grok and ChatGPT connect later through his logged-in browser, the same way the city is set up.
 
 ## ART RULES (Alex, 2026-11-16): nothing Roblox/blocky. Buildings, gods, trees, water, characters all get real hand-painted textures and vibrant World-of-Warcraft colours (not Blizzard production, but never trash). The CEO (Alex) is a nice animated 3D character he walks himself; workers share the body with different tunics. Characters from free CC0 packs (Quaternius), tested in-game before claiming they work. ChatGPT (Magic Wand) makes concept art and marble/stone textures only.
+
+## BOT CREATOR + INVENTORY (Alex, 2026-11-16)
+Main menu has an Inventory page. From it Alex creates a bot (worker) with a prompt: name, job, rules, skills, and which brain powers it (Claude, Grok or ChatGPT). The new bot appears in the city at its department's building. Inventory also holds skills, recipes, strategies and bots. A bot made by Alex needs no vote (CEO); a bot made by another bot needs the Council. Grok/ChatGPT-powered bots run through his logged-in browser (no paid API); Claude-powered ones run on Claude's own usage. Every new bot starts on paper with a budget cap. Not built.
