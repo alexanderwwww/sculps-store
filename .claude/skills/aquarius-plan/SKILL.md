@@ -79,3 +79,6 @@ The island lives on the wallet: health = equity vs start. Thriving/healthy/hurt/
 ## TOOLS + GROK (Alex, 2026-11-16: "save this in your memory")
 - The five tools all get used, each at its time: Freqtrade first (backtests, run in hourly runs or on the second laptop, results written to the brain), skfolio (allocation once 2+ strategies survive), Hummingbot (live Jupiter execution), NautilusTrader (stocks later), Kronos research only. They are Python: never on the Worker.
 - Alex WANTS Grok Bot combined with Claude (live X + many bots). Plan: he subscribes (Premium, EUR 16 first month then 31), creates the 6 desk bots in one group chat, they connect through the helper link (/api/aq/helper/<key>/mcp) as workers: evidence, X feed, bot proposals; Council decides; never a trade trigger.
+
+## ORCHESTRATION + CLOTHES (Alex, 2026-11-16)
+Claude is the orchestrator: the brain writes the briefing and puts tasks on the task board; Grok bots (and ChatGPT/Codex) pull tasks through the helper link, do them, post results as evidence; the Council judges; Claude reviews every hourly run. Our bots wear WHITE ancient Greek clothes (dept-colour sash); Grok bots wear BLACK. ChatGPT/Codex colour not decided.
