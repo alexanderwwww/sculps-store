@@ -75,3 +75,7 @@ The island lives on the wallet: health = equity vs start. Thriving/healthy/hurt/
 ## BOT MODE LOOK (Alex, 2026-11-16, replaces Apple-style): like the ATS Matrix GROK DESK screen, even better: dark dense terminal, central agent reactor ring with handoff trails, tape, swarm PnL, trace, pricer, signal spectrogram. Real data only.
 
 ## CENTRE (Alex, 2026-11-16): the Aquarius Colosseum is his office. Inside: a giant amethyst crystal. On the ground: a pentagram inside a circle inside a triangle, in gold, with Olympian symbols around it. Bot-mode reactor = a sun with a face and the 12 departments as planets, helpers as moons. World scale and walking like World of Warcraft.
+
+## TOOLS + GROK (Alex, 2026-11-16: "save this in your memory")
+- The five tools all get used, each at its time: Freqtrade first (backtests, run in hourly runs or on the second laptop, results written to the brain), skfolio (allocation once 2+ strategies survive), Hummingbot (live Jupiter execution), NautilusTrader (stocks later), Kronos research only. They are Python: never on the Worker.
+- Alex WANTS Grok Bot combined with Claude (live X + many bots). Plan: he subscribes (Premium, EUR 16 first month then 31), creates the 6 desk bots in one group chat, they connect through the helper link (/api/aq/helper/<key>/mcp) as workers: evidence, X feed, bot proposals; Council decides; never a trade trigger.
