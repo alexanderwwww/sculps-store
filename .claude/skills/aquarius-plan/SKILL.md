@@ -26,6 +26,9 @@ description: DRAFT v0 plan (not agreed, nothing built) for Aquarius, Alex's livi
 11. **Learning (the neurons):** link watcher (reels); repo reader; paper-trader for new ideas; hypothesis registry (rules written before testing); recipe tournament scoreboard (R1-R5); guarded parameter refitter; knowledge-base curator; contradiction finder; idea killer (abandon rules); skill writer; experiment scheduler; memory compactor.
 12. **Ops and city:** data-source health; scheduler; secrets guard (nothing leaks); credit/LLM budget monitor; uptime watcher; backup to R2; deploy guard; city feed; big-screen aggregator; notifications to Alex; Grok/ChatGPT bridge; access and login guard.
 
+## City detail (Alex, 2026-11-16)
+The Council of Olympus (the Skeptics) has its own small GOLDEN building/chamber in the city: gold columns, a round council table, one seat per Skeptic, and a glowing verdict stone that shows the latest PASS/BLOCK with the deciding number. A BLOCK is visible and cannot be overridden.
+
 ## The big screen (portfolio + neurons)
 Portfolio: equity, open positions, paper vs live, P&L after costs, win rate, trade count, 95% interval, "NO EVIDENCE yet" under 100 trades. Neurons: each recipe's scoreboard (alive/killed), what each department learned today, the Skeptic's last 10 vetoes with reasons, worker health.
 
