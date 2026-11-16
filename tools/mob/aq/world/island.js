@@ -10,9 +10,9 @@ export const PLAZA = 46;
 
 export function sky(scene) {
   const g = new THREE.SphereGeometry(1400, 32, 16);
-  const m = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { t: { value: 0 } },
+  const m = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { t: { value: 0 }, dark: { value: 0 } },
     vertexShader: `varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`,
-    fragmentShader: `varying vec3 vP; uniform float t;
+    fragmentShader: `varying vec3 vP; uniform float t; uniform float dark;
       float h(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,45.164)))*43758.5453); }
       void main(){ float y = vP.y;
         vec3 top = vec3(0.07,0.10,0.28), mid = vec3(0.36,0.33,0.62), hor = vec3(1.0,0.62,0.38), low = vec3(0.95,0.45,0.35);
@@ -22,6 +22,7 @@ export function sky(scene) {
         // stars above
         vec3 q = floor(vP * 420.); float st = step(0.9965, h(q)) * smoothstep(0.18, 0.6, y) * (0.6 + 0.4*sin(t*2. + h(q)*40.));
         c += vec3(st);
+        c = mix(c, vec3(0.12,0.1,0.13) + c*0.25, dark);
         gl_FragColor = vec4(c, 1.); }` });
   const s = new THREE.Mesh(g, m); s.renderOrder = -1; scene.add(s); return s;
 }

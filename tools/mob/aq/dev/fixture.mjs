@@ -32,7 +32,7 @@ export function fixture() {
   const flows = []; const kinds = ["buy", "fee", "sell", "win", "loss", "fee"];
   for (let i = 0; i < 18; i++) { const k = kinds[(i + tick) % kinds.length]; flows.push({ id: flowId + tick * 2 - i, kind: k, sol: k === "fee" ? 0.0021 : k === "win" ? 0.0134 : k === "loss" ? -0.0087 : 0.05, dept: k === "fee" ? "costs" : k === "win" || k === "loss" ? "review" : "execution", label: k === "fee" ? "Jupiter round trip" : `${["BONK", "WIF", "POPCAT", "MEW"][i % 4]} ${k}`, at: ago(i * 41 + 3) }); }
   return {
-    build: "fixture-1", mode: "PAPER", killSwitch: false, updatedAt: ago(2),
+    build: "fixture-1", survival: { health: Number(process.env.HEALTH || 82), stage: process.env.STAGE || "thriving" }, mode: "PAPER", killSwitch: false, updatedAt: ago(2),
     equitySol: 1.0 + 0.0123 + Math.sin(tick / 3) * 0.002, startSol: 1.0, pnlTodaySol: 0.0081, pnlTotalSol: 0.0123,
     trades: { n: 23, wins: 13, winRate: 0.565, expectancyPct: 0.8, ci95: [-2.1, 3.4], evidence: "NO EVIDENCE yet" },
     positions: [

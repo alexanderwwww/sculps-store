@@ -1,5 +1,6 @@
 // Aquarius client. BOT MODE (default): a light dashboard, no three.js. WORLD MODE: lazy-loads /aq/assets/world.js.
 // Both read GET /api/aq/state every 3 s (tools/mob/aq/CONTRACT.md). Missing data shows "—", never invented.
+import { deskHTML, renderDesk, wakeReactor } from "./desk.js";
 export const BUILD = typeof __AQ_BUILD__ !== "undefined" ? __AQ_BUILD__ : "dev";
 
 export const DEPTS = [
@@ -17,7 +18,7 @@ const D = "—";
 const num = (v) => typeof v === "number" && isFinite(v);
 export const fSol = (v, sign = false) => (num(v) ? (sign && v > 0 ? "+" : "") + v.toFixed(Math.abs(v) < 10 ? 3 : 2) + " SOL" : D);
 export const fPct = (v, sign = true) => (num(v) ? (sign && v > 0 ? "+" : "") + v.toFixed(1) + "%" : D);
-export const fUsd = (v) => (num(v) ? "$" + (v >= 1000 ? v.toLocaleString("en-US", { maximumFractionDigits: 0 }) : v.toPrecision(4)) : D);
+export const fUsd = (v) => (num(v) ? "$" + (v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : v >= 1000 ? v.toLocaleString("en-US", { maximumFractionDigits: 0 }) : v < 0.001 ? v.toExponential(2) : v.toPrecision(4)) : D);
 export const fNum = (v) => (num(v) ? String(v) : D);
 export const ago = (t) => { if (!t) return D; const s = (Date.now() - new Date(t).getTime()) / 1000; if (!isFinite(s)) return D; return s < 60 ? Math.max(0, s | 0) + "s" : s < 3600 ? ((s / 60) | 0) + "m" : s < 86400 ? ((s / 3600) | 0) + "h" : ((s / 86400) | 0) + "d"; };
 export const esc = (s) => String(s ?? D).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -60,17 +61,20 @@ function topbar() {
       <div class="kpi"><small>Today</small><b id="k-today">—</b></div>
       <div class="kpi"><small>Total P&amp;L</small><b id="k-total">—</b></div>
       <div class="kpi"><small>Open</small><b id="k-open">—</b></div>
+      <div class="kpi hp"><small>Health <span id="k-stage">—</span></small><div class="hpbar"><i id="k-hp"></i></div></div>
       <div class="kpi wide"><small>Evidence</small><b id="k-ev">—</b></div>
       <div class="kpi wide"><small>Council</small><b id="k-council">—</b></div>
     </div>
+    <div class="kpi clock"><small>UTC</small><b id="k-utc">—</b></div><div class="kpi"><small>Agents live</small><b id="k-agents">—</b></div>
     <div class="right">
       <div class="seg" role="tablist"><button data-m="bot" class="on">Bot</button><button data-m="world">World</button></div>
+      <button id="sellall" class="kill">SELL ALL</button><button id="xfer" class="ghost">TRANSFER SOL</button>
       <button id="kill" class="kill">Kill switch</button>
       <button id="menu-btn" class="ghost" title="Menu (Esc)">☰</button>
     </div>
   </header>`);
   el.querySelectorAll(".seg button").forEach((b) => (b.onclick = () => setMode(b.dataset.m)));
-  el.querySelector("#kill").onclick = killDialog;
+  el.querySelector("#kill").onclick = killDialog; el.querySelector("#sellall").onclick = sellAllDialog; el.querySelector("#xfer").onclick = transferDialog;
   el.querySelector("#menu-btn").onclick = () => openMenu();
   return el;
 }
@@ -83,6 +87,12 @@ function renderTop(s) {
   set("k-open", Array.isArray(s.positions) ? String(s.positions.length) : D);
   const ev = s.trades && s.trades.evidence; set("k-ev", ev ? `${ev}${s.trades.n != null ? " · " + s.trades.n + "/100" : ""}` : D, ev === "EDGE" ? "up" : ev === "NO EDGE" ? "dn" : "muted");
   const lv = s.council && s.council.last; set("k-council", lv ? `${lv.verdict} ${lv.symbol || ""}` : D, lv ? (lv.verdict === "PASS" ? "up" : "dn") : "muted");
+  const sv = s.survival || null, hp = sv && typeof sv.health === "number" ? Math.max(0, Math.min(100, sv.health)) : null;
+  const hb = $("#k-hp"); if (hb) { hb.style.width = (hp ?? 0) + "%"; hb.className = "st-" + (sv ? sv.stage : "none"); }
+  const stg = $("#k-stage"); if (stg) stg.textContent = sv ? `${hp ?? "—"} · ${sv.stage || "—"}` : "—";
+  document.body.dataset.stage = sv ? sv.stage || "" : "";
+  let rb = $("#rebuild"); if (sv && sv.stage === "destroyed") { if (!rb) { rb = h(`<button id="rebuild" class="danger">Rebuild</button>`); rb.onclick = rebuildDialog; $("#top .right").prepend(rb); } } else if (rb) rb.remove();
+  const ag = (s.departments || []).flatMap((d) => d.workers || []); const ka = $("#k-agents"); if (ka) ka.textContent = ag.length ? `${ag.filter((w) => w.status === "busy").length}/${ag.length}` : D;
   const k = $("#kill"); if (k) { k.classList.toggle("on", !!s.killSwitch); k.textContent = s.killSwitch ? "Kill switch ON" : "Kill switch"; }
   const warn = $("#offline"); if (warn) warn.hidden = store.ok;
 }
@@ -107,6 +117,26 @@ function killDialog() {
     };
   });
 }
+export function sellAllDialog() {
+  const n = ((store.state && store.state.positions) || []).length;
+  dialog(`<h3>Sell everything?</h3><p>Closes ${n} open position${n === 1 ? "" : "s"} at market (${esc((store.state && store.state.mode) || D)}).</p><div class="row"><button class="ghost" data-x>Cancel</button><button class="danger" data-ok>SELL ALL</button></div><p class="msg"></p>`, (d, close) => {
+    d.querySelector("[data-x]").onclick = close;
+    d.querySelector("[data-ok]").onclick = async () => { const m = d.querySelector(".msg"); m.textContent = "Sending…";
+      try { const r = await fetch("/api/aq/sellall", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }); if (!r.ok) throw new Error("HTTP " + r.status); m.textContent = "Sent."; m.className = "msg ok"; setTimeout(close, 900); poll(); } catch (e) { m.textContent = "Not sent: " + e.message; m.className = "msg err"; } };
+  });
+}
+export function transferDialog() {
+  const live = store.state && store.state.mode === "LIVE";
+  dialog(`<h3>Transfer SOL</h3><form class="bf"><label>To address<input name="to" placeholder="Solana address" ${live ? "" : "disabled"}></label><label>Amount<input name="amt" value="all" ${live ? "" : "disabled"}></label>
+    <p class="note">Live only: signed in your Phantom wallet.</p><div class="row"><button class="ghost" type="button" data-x>Close</button><button class="primary" type="submit" disabled>Sign in Phantom</button></div></form>`, (d, close) => { d.querySelector("[data-x]").onclick = close; d.querySelector("form").onsubmit = (e) => e.preventDefault(); });
+}
+function rebuildDialog() {
+  dialog(`<h3>Rebuild Aquarius?</h3><p>The island was destroyed. Rebuild starts it again on paper.</p><div class="row"><button class="ghost" data-x>Cancel</button><button class="primary" data-ok>Rebuild</button></div><p class="msg"></p>`, (d, close) => {
+    d.querySelector("[data-x]").onclick = close;
+    d.querySelector("[data-ok]").onclick = async () => { const m = d.querySelector(".msg"); m.textContent = "Sending…";
+      try { const r = await fetch("/api/aq/rebuild", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }); if (!r.ok) throw new Error("HTTP " + r.status); close(); poll(); } catch (e) { m.textContent = "Not sent: " + e.message; } };
+  });
+}
 export function workerPanel(w, dept) {
   const sk = (w.skills && w.skills.length) ? w.skills.map((x) => `<span class="chip">${esc(x)}</span>`).join("") : D;
   dialog(`<div class="wp"><div class="wp-h"><span class="dot st-${esc(w.status)}"></span><div><h3>${esc(w.name)}</h3><small>${esc(deptName(dept))} · ${esc(w.job)}</small></div></div>
@@ -115,98 +145,22 @@ export function workerPanel(w, dept) {
     <div class="row"><button class="ghost" data-x>Close</button></div></div>`, (d, c) => (d.querySelector("[data-x]").onclick = c));
 }
 
-// ---------- BOT MODE dashboard ----------
+// ---------- BOT MODE: the desk (desk.js) ----------
 let dash;
-function buildDash() {
-  dash = h(`<main id="dash">
-    <section class="card hero"><div class="hero-l"><small>Wallet · equity</small><div class="big" id="d-eq">—</div>
-      <div class="sub"><span id="d-start">—</span></div>
-      <div class="trio"><div><small>Today</small><b id="d-today">—</b></div><div><small>Total</small><b id="d-total">—</b></div><div><small>Win rate</small><b id="d-wr">—</b></div><div><small>Trades</small><b id="d-n">—</b></div><div><small>Expectancy</small><b id="d-exp">—</b></div><div><small>95% interval</small><b id="d-ci">—</b></div></div></div>
-      <div class="hero-r"><canvas id="d-spark" width="420" height="140"></canvas><div class="evid" id="d-ev">—</div></div></section>
-    <section class="card flows"><h2>Money moving</h2><div id="d-flows" class="ticker"></div></section>
-    <section class="card"><h2>Open positions</h2><div id="d-pos"></div></section>
-    <section class="card"><h2>Council of Olympus</h2><div id="d-council"></div></section>
-    <section class="card"><h2>Strategies</h2><div id="d-strat"></div></section>
-    <section class="card"><h2>X · what the market is saying</h2><div id="d-x"></div></section>
-    <section class="card"><h2>Market</h2><div id="d-mkt"></div></section>
-    <section class="card span2"><h2>Departments <small id="d-wk"></small></h2><div id="d-depts" class="depts"></div></section>
-    <section class="card"><h2>Brain · lessons</h2><div id="d-brain" class="list"></div></section>
-    <section class="card"><h2>Helpers</h2><div id="d-help"></div></section>
-  </main>`);
-  return dash;
-}
-const equityHist = [];
-function spark(c, arr) {
-  const g = c.getContext("2d"), W = c.width, H = c.height; g.clearRect(0, 0, W, H);
-  if (arr.length < 2) { g.fillStyle = "#9aa3ad"; g.font = "13px -apple-system,Segoe UI,sans-serif"; g.fillText("Equity line builds while this page is open", 10, H / 2); return; }
-  const mn = Math.min(...arr), mx = Math.max(...arr), r = mx - mn || 1;
-  const up = arr[arr.length - 1] >= arr[0], col = up ? "#16a34a" : "#dc2626";
-  const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, up ? "rgba(22,163,74,.22)" : "rgba(220,38,38,.22)"); gr.addColorStop(1, "rgba(255,255,255,0)");
-  g.beginPath(); arr.forEach((v, i) => { const x = (i / (arr.length - 1)) * W, y = H - 8 - ((v - mn) / r) * (H - 16); i ? g.lineTo(x, y) : g.moveTo(x, y); });
-  g.strokeStyle = col; g.lineWidth = 2.5; g.stroke(); g.lineTo(W, H); g.lineTo(0, H); g.closePath(); g.fillStyle = gr; g.fill();
-}
+function buildDash() { dash = h(deskHTML()); return dash; }
+function renderDash(s) { if (dash && s) { try { renderDesk(dash, s); } catch (e) { console.error(e); } } }
 const flowIcon = { buy: "↗", sell: "↘", fee: "◎", win: "▲", loss: "▼" };
 export function flowRow(f) { return `<div class="flow f-${esc(f.kind)}"><span class="fi">${flowIcon[f.kind] || "•"}</span><b>${f.kind === "fee" || f.kind === "loss" ? "−" : f.kind === "win" ? "+" : ""}${num(f.sol) ? Math.abs(f.sol).toFixed(4) : D} SOL</b><span class="fl">${esc(f.label || f.kind)}</span><small>${esc(deptName(f.dept))} · ${ago(f.at)}</small></div>`; }
 function table(cols, rows, empty = "Nothing yet") {
   if (!rows || !rows.length) return `<p class="empty">${empty}</p>`;
   return `<div class="tbl-wrap"><table><thead><tr>${cols.map((c) => `<th>${c[0]}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${cols.map((c) => `<td class="${c[2] ? c[2](r) : ""}">${c[1](r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
-const posCols = [["Symbol", (p) => `<b>${esc(p.symbol)}</b>`], ["Strategy", (p) => esc(p.strategy)], ["Size", (p) => fSol(p.sizeSol)], ["Entry", (p) => fUsd(p.entryPrice)], ["Now", (p) => fUsd(p.price)], ["P&L", (p) => fPct(p.pnlPct), (p) => cls(p.pnlPct)], ["Stop / Target", (p) => `${fPct(p.stopPct, false)} / ${fPct(p.targetPct, false)}`], ["Open", (p) => ago(p.openedAt)]];
-const verdictRow = (v) => `<div class="verdict v-${esc(v.verdict)}"><span class="vb">${esc(v.verdict)}</span><b>${esc(v.symbol || D)}</b><span>${esc(v.reason || D)}</span><small>${v.number != null ? esc(v.number) + " · " : ""}${ago(v.at)}</small></div>`;
+const posCols = [["Symbol", (p) => `<b>${esc(p.symbol)}</b>`], ["Strategy", (p) => esc(p.strategy)], ["SOL", (p) => (num(p.sizeSol) ? p.sizeSol.toFixed(3) : D)], ["Entry", (p) => fUsd(p.entryPrice)], ["Now", (p) => fUsd(p.price)], ["P&L", (p) => fPct(p.pnlPct), (p) => cls(p.pnlPct)], ["Stop/Target", (p) => `${num(p.stopPct) ? p.stopPct.toFixed(1) : D}/${num(p.targetPct) ? p.targetPct.toFixed(1) : D}`], ["Open", (p) => ago(p.openedAt)]];
 export function stratRows(s) {
   const st = (s && s.strategies) || []; if (!st.length) return `<p class="empty">No strategies reported</p>`;
-  const mx = Math.max(0.0001, ...st.map((x) => Math.abs(num(x.pnlSol) ? x.pnlSol : 0)));
-  return st.map((x) => `<div class="strat ${x.alive === false ? "dead" : ""}"><b>${esc(x.id)}</b><span>${esc(x.name)}</span><small>${esc(x.status || (x.alive === false ? "killed" : x.alive ? "alive" : D))} · ${fNum(x.trades)} trades</small><div class="bar"><i class="${cls(x.pnlSol)}" style="width:${num(x.pnlSol) ? (Math.abs(x.pnlSol) / mx) * 100 : 0}%"></i></div><em class="${cls(x.pnlSol)}">${fSol(x.pnlSol, true)}</em></div>`).join("");
+  return st.map((x) => `<div class="sr ${x.alive === false ? "dead" : ""}"><b>${esc(x.id)}</b><span>${esc(x.name)}</span><small>${esc(x.status || (x.alive === false ? "killed" : x.alive ? "alive" : D))} · ${fNum(x.trades)} trades</small><em class="${cls(x.pnlSol)}">${x.pnlSol == null ? D : fSol(x.pnlSol, true)}</em></div>`).join("");
 }
-export function xRows(s, n = 8) {
-  const xf = xFeed(s); const g = s && s.helpers && s.helpers.grok;
-  if (!xf.length) return `<p class="empty">${helperConnected(g) ? "Grok connected · no X messages yet" : "Grok not connected"}</p>`;
-  return xf.slice(0, n).map((m) => `<div class="xm">${LBL(m.label)}<span>${esc(m.text)}</span><small>${m.dept ? esc(deptName(m.dept)) + " · " : ""}${ago(m.at)}</small></div>`).join("");
-}
-function mkt(s) {
-  const m = (s && s.market) || {};
-  const c = (n, o) => `<div class="mk"><small>${n}</small><b>${o ? fUsd(o.price) : D}</b><em class="${o ? cls(o.ch24) : ""}">${o ? fPct(o.ch24) : D}</em></div>`;
-  const fg = m.fearGreed;
-  return `<div class="mks">${c("SOL", m.sol)}${c("BTC", m.btc)}<div class="mk"><small>Fear &amp; Greed</small><b>${fg ? fNum(fg.value) : D}</b><em>${fg ? esc(fg.label) : D}</em></div></div>` +
-    table([["Trending", (t) => `<b>${esc(t.symbol)}</b>${t.boosted ? ' <span class="chip warn">boosted</span>' : ""}`], ["1h", (t) => fPct(t.ch1h), (t) => cls(t.ch1h)], ["Liquidity", (t) => fUsd(t.liqUsd)]], (m.trending || []).slice(0, 6), "No trending list");
-}
-function deptCards(s) {
-  const ds = (s && s.departments) || [];
-  return DEPTS.map(([id, nm, col]) => {
-    const d = ds.find((x) => x.id === id); const ws = (d && d.workers) || [];
-    const c = { busy: 0, idle: 0, blocked: 0 }; ws.forEach((w) => (c[w.status] = (c[w.status] || 0) + 1));
-    return `<details class="dept" style="--dc:${col}"><summary><span class="dc"></span><b>${esc(nm)}</b>${GODS[id] ? `<small class="god">${GODS[id]}</small>` : ""}<span class="live ${d && d.live ? "on" : ""}">${d ? (d.live ? "live" : "idle") : D}</span>
-      <span class="stbar"><i class="st-busy" style="flex:${c.busy}"></i><i class="st-idle" style="flex:${c.idle}"></i><i class="st-blocked" style="flex:${c.blocked}"></i></span><small>${ws.length ? `${c.busy} busy · ${c.blocked} blocked` : D}</small></summary>
-      <div class="wl">${ws.map((w) => `<button class="wk" data-d="${esc(id)}" data-w="${esc(w.id)}"><span class="dot st-${esc(w.status)}"></span><b>${esc(w.name)}</b><small>${esc(w.note || w.job)}</small></button>`).join("") || `<p class="empty">No workers reported</p>`}</div></details>`;
-  }).join("");
-}
-function renderDash(s) {
-  if (!dash) return;
-  const set = (id, html) => { const e = dash.querySelector("#" + id); if (e) e.innerHTML = html; };
-  if (!s) { set("d-eq", store.err ? "Offline" : D); return; }
-  if (num(s.equitySol) && equityHist[equityHist.length - 1] !== s.equitySol) { equityHist.push(s.equitySol); if (equityHist.length > 300) equityHist.shift(); }
-  set("d-eq", fSol(s.equitySol));
-  set("d-start", `Started with ${fSol(s.startSol)} · ${esc(s.mode || D)} · updated ${ago(s.updatedAt)} ago`);
-  const T = s.trades || {};
-  const sv = (id, v, c) => { const e = dash.querySelector("#" + id); e.textContent = v; e.className = c || ""; };
-  sv("d-today", fSol(s.pnlTodaySol, true), cls(s.pnlTodaySol)); sv("d-total", fSol(s.pnlTotalSol, true), cls(s.pnlTotalSol));
-  sv("d-wr", num(T.winRate) ? (T.winRate * (T.winRate <= 1 ? 100 : 1)).toFixed(0) + "%" : D); sv("d-n", fNum(T.n)); sv("d-exp", fPct(T.expectancyPct), cls(T.expectancyPct));
-  sv("d-ci", Array.isArray(T.ci95) && T.ci95.every(num) ? `${fPct(T.ci95[0])} … ${fPct(T.ci95[1])}` : D);
-  set("d-ev", T.evidence ? `<b class="${T.evidence === "EDGE" ? "up" : T.evidence === "NO EDGE" ? "dn" : ""}">${esc(T.evidence)}</b><small>${num(T.n) ? `${T.n} of 100 trades needed` : ""}</small>` : D);
-  spark(dash.querySelector("#d-spark"), equityHist);
-  set("d-flows", (s.flows || []).slice(0, 14).map(flowRow).join("") || `<p class="empty">No money moved yet</p>`);
-  set("d-pos", table(posCols, s.positions, "No open positions"));
-  const c = s.council || {};
-  set("d-council", (c.last ? `<div class="vstone v-${esc(c.last.verdict)}"><span>${esc(c.last.verdict)}</span><b>${esc(c.last.symbol || D)}</b><small>${esc(c.last.reason || D)}${c.last.number != null ? " · " + esc(c.last.number) : ""}</small></div>` : `<p class="empty">No verdict yet</p>`) + ((c.vetoes || []).slice(0, 5).map(verdictRow).join("")));
-  set("d-strat", stratRows(s)); set("d-x", xRows(s)); set("d-mkt", mkt(s));
-  const open = [...dash.querySelectorAll("details.dept[open]")].map((d) => d.querySelector(".wk")?.dataset.d);
-  set("d-depts", deptCards(s));
-  dash.querySelectorAll("details.dept").forEach((d) => { const id = d.querySelector(".wk")?.dataset.d; if (id && open.includes(id)) d.open = true; });
-  const all = (s.departments || []).flatMap((d) => d.workers || []);
-  set("d-wk", all.length ? `${all.length} workers · ${all.filter((w) => w.status === "busy").length} busy · ${all.filter((w) => w.status === "blocked").length} blocked` : "");
-  set("d-brain", (s.brain || []).slice(0, 10).map((b) => `<div class="li"><span class="dc" style="--dc:${deptCol(b.dept)}"></span><span>${esc(b.text)}</span><small>${esc(deptName(b.dept))} · ${ago(b.at)}</small></div>`).join("") || `<p class="empty">Nothing learned yet</p>`);
-  set("d-help", helpersHtml(s));
-}
+export function xRows() { return ""; }
 export function helpersHtml(s) {
   const hp = (s && s.helpers) || {};
   return ["grok", "chatgpt"].map((k) => { const o = helperOf(hp[k]); const on = helperConnected(hp[k]);
@@ -232,8 +186,10 @@ function showTab(t) {
     body.innerHTML = `<h2>Game</h2><div class="gm">
       <button class="tile" data-go="bot"><b>Bot mode</b><small>The dashboard. Light and fast.</small></button>
       <button class="tile" data-go="world"><b>World mode</b><small>Walk the island. WASD + mouse, Shift run, E enter, O overview.</small></button></div>
+      <h3>CEO actions</h3><div class="row" style="justify-content:flex-start"><button class="danger" data-sell>SELL ALL</button><button class="ghost" data-xfer>TRANSFER SOL</button></div>
       <h3>Controls</h3><ul class="keys"><li><kbd>W A S D</kbd> walk</li><li><kbd>Shift</kbd> run</li><li><kbd>Mouse drag</kbd> look · <kbd>wheel</kbd> zoom</li><li><kbd>E</kbd> enter / leave a building</li><li><kbd>O</kbd> overview camera</li><li><kbd>Click</kbd> a worker for his card</li><li><kbd>Esc</kbd> this menu</li></ul>
       <p class="muted">Build ${esc(BUILD)} · state ${store.ok ? "live, updated " + ago(s.updatedAt) + " ago" : "offline: " + esc(store.err || D)}</p>`;
+    body.querySelector("[data-sell]").onclick = sellAllDialog; body.querySelector("[data-xfer]").onclick = transferDialog;
     body.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { openMenu(); setMode(b.dataset.go); }));
   }
   if (t === "inv") {
@@ -313,13 +269,13 @@ export async function setMode(m) {
     const ld = h(`<div id="loading"><div class="spin"></div><p>Raising the island…</p></div>`); document.body.appendChild(ld);
     try {
       const mod = await import(/* @vite-ignore */ (window.AQ_WORLD_URL || "/aq/assets/world.js") + "?b=" + encodeURIComponent(BUILD));
-      world = await mod.start(document.getElementById("stage"), { store, onState, openWorker, openMenu, dialog, DEPTS, GODS, fmt: { fSol, fPct, fUsd, fNum, ago, esc }, xFeed, flowRow, stratRows, xRows, helpersHtml, BUILD, setMode });
+      world = await mod.start(document.getElementById("stage"), { store, onState, openWorker, sellAllDialog, transferDialog, openMenu, dialog, DEPTS, GODS, fmt: { fSol, fPct, fUsd, fNum, ago, esc }, xFeed, flowRow, stratRows, xRows, helpersHtml, BUILD, setMode });
     } catch (e) { console.error(e); dialog(`<h3>World did not load</h3><p>${esc(e.message)}</p><div class="row"><button class="primary" data-x>Back to bot mode</button></div>`, (d, c) => (d.querySelector("[data-x]").onclick = () => { c(); })); store.mode = "world"; worldBusy = false; ld.remove(); return setMode("bot"); }
     ld.remove(); worldBusy = false;
   } else {
     store.mode = "bot"; document.body.classList.remove("world");
     if (world) { try { world.dispose(); } catch (e) { console.error(e); } world = null; }
-    renderDash(store.state);
+    renderDash(store.state); wakeReactor();
   }
 }
 
@@ -328,6 +284,7 @@ function boot() {
   document.body.append(topbar(), h(`<div id="offline" hidden>Can't reach the engine. Showing the last data.</div>`), buildDash(), h(`<div id="stage"></div>`));
   onState((s) => { renderTop(s); if (store.mode === "bot") renderDash(s); });
   window.addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.querySelector(".dlg-bg")) openMenu(); else if (e.key === "Escape") document.querySelector(".dlg-bg").remove(); });
+  setInterval(() => { const e = document.getElementById("k-utc"); if (e) e.textContent = new Date().toISOString().slice(11, 19); }, 1000);
   poll(); setInterval(poll, 3000); setInterval(() => listeners.forEach((f) => store.state && f(store.state)), 1000 * 15);
   let m = "bot"; try { m = new URLSearchParams(location.search).get("mode") || "bot"; } catch {}
   if (m === "world") setMode("world");

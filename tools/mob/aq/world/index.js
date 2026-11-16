@@ -7,6 +7,7 @@ import { colosseum, district, statue, embassy, strategyTower, setClips, DR, angl
 import { buildRoom, embassyRoom, ROOM_Y } from "./interiors.js";
 import { drawWallet, drawX, drawNeurons, drawDept, drawData, drawTicker } from "./screens.js";
 import * as T from "../textures.js";
+import * as ST from "./statues.js"; // owned by the statue builder; build.mjs stubs it when absent
 
 const GOD_AT = { scouts_sol: "hecate", learning: "apollo", setups: "athena", risk: "zeus", execution: "hermes", news: "dionysus" };
 const GROK_DESK = ["Scout", "News", "Setup", "Skeptic", "Risk", "Reviewer"];
@@ -39,9 +40,9 @@ export async function start(stage, A) {
   const world = new THREE.Group(); scene.add(world);
   const island = islandMesh(world); const falls = waterfalls(world);
   const hq = colosseum(); world.add(hq);
-  const colliders = [{ x: 0, z: 0, r: hq.userData.r }];
+  const colliders = [{ x: 0, z: 0, r: 3.4 }, { x: 0, z: -9.1, r: 1.4 }, { x: -1.4, z: -8.6, r: 0.9 }, { x: 1.4, z: -8.6, r: 0.9 }]; // amethyst + CEO desk; the stadium ring is in blocked()
   const doors = []; // {id, kind, pos:Vector3, name}
-  doors.push({ id: "hq", kind: "hq", pos: hq.userData.door.clone(), name: "Aquarius HQ · the boss office" });
+  doors.push({ id: "hq", kind: "hq", pos: hq.userData.door.clone(), name: "the CEO desk · boss office" });
   const districts = {};
   A.DEPTS.forEach(([id, nm, col], i) => {
     const a = angleOf(i); const [x, z] = polar(DR, a);
@@ -57,8 +58,7 @@ export async function start(stage, A) {
   });
   // statues on the plaza, each facing its department
   const statues = [];
-  Object.entries(GOD_AT).forEach(([dept, god]) => { const i = A.DEPTS.findIndex((d) => d[0] === dept); const a = angleOf(i); const [x, z] = polar(36, a);
-    const s = statue(god); s.position.set(x, 0, z); s.rotation.y = -a + Math.PI; world.add(s); statues.push(s); colliders.push({ x, z, r: 2.4 }); });
+  Object.entries(GOD_AT).forEach(([dept]) => { const i = A.DEPTS.findIndex((d) => d[0] === dept); const [x, z] = polar(36, angleOf(i)); colliders.push({ x, z, r: 2.4 }); });
   // embassy
   const emb = embassy(); { const a = Math.PI * 1.08; const [x, z] = polar(74, a); emb.g.position.set(x, 0, z); emb.g.rotation.y = -a + Math.PI; world.add(emb.g); colliders.push({ x, z, r: emb.r });
     const dv = new THREE.Vector3(emb.door[0], 0, emb.door[1]).applyAxisAngle(new THREE.Vector3(0, 1, 0), emb.g.rotation.y).add(emb.g.position); doors.push({ id: "embassy", kind: "embassy", pos: dv, name: "Embassy · Grok and ChatGPT" }); }
@@ -90,10 +90,12 @@ export async function start(stage, A) {
   // ---------- characters ----------
   const { clips } = await loadPeople(); setClips(clips);
   // statues need clips: rebuild them now that the body is loaded
-  statues.forEach((s) => world.remove(s)); statues.length = 0;
-  Object.entries(GOD_AT).forEach(([dept, god]) => { const i = A.DEPTS.findIndex((d) => d[0] === dept); const a = angleOf(i); const [x, z] = polar(36, a); const s = statue(god); s.position.set(x, 0, z); s.rotation.y = -a + Math.PI; world.add(s); statues.push(s); });
+    Object.entries(GOD_AT).forEach(([dept, god]) => { const i = A.DEPTS.findIndex((d) => d[0] === dept); const a = angleOf(i); const [x, z] = polar(36, a); let s = null; try { s = ST.makeStatue ? ST.makeStatue(god, { scale: 1 }) : null; } catch (e) { console.warn("statue", god, e); } if (!s) s = statue(god); else s.scale.setScalar(1.25); s.position.set(x, 0, z); s.rotation.y = -a + Math.PI; world.add(s); statues.push(s);
+    // a second statue of the same god guards its district's door
+    let s2 = null; try { s2 = ST.makeStatue ? ST.makeStatue(god, { scale: 0.8 }) : null; } catch {} if (!s2) s2 = statue(god);
+    const dd = districts[dept]; const side = new THREE.Vector3(5.5, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), dd.g.rotation.y); s2.position.copy(dd.doorW).add(side); s2.rotation.y = dd.g.rotation.y; s2.scale.multiplyScalar(0.8); world.add(s2); statues.push(s2); colliders.push({ x: s2.position.x, z: s2.position.z, r: 2 }); });
   const ceo = new Person("#f4ecd8", { ceo: true }); scene.add(ceo.root); ceo.play("Idle_Loop");
-  const player = { pos: new THREE.Vector3(0, 0, 70), yaw: Math.PI, vel: 0, inside: null };
+  const player = { pos: new THREE.Vector3(0, 0, 36), yaw: Math.PI, vel: 0, inside: null };
   ceo.root.position.copy(player.pos);
 
   // ---------- HUD ----------
@@ -102,14 +104,14 @@ export async function start(stage, A) {
     <div id="strip" class="hud"></div><div id="agents" class="hud glass"><div class="ah">DEPARTMENTS</div><div id="ag-l"></div></div>
     <div id="minimap" class="hud glass"><canvas width="380" height="380"></canvas></div>
     <div id="prompt" class="hud glass"></div><div id="roomtitle" class="hud"></div>
-    <button id="exitbtn" class="hud glass">Leave · E</button><div id="fps" class="hud glass">—</div>
+    <button id="exitbtn" class="hud glass">Leave · E</button><div id="hqact" class="hud"><button class="danger" data-a="sell">SELL ALL</button><button class="glass" data-a="xfer">TRANSFER SOL</button></div><div id="fps" class="hud glass">—</div>
     <div id="joy" class="hud"><i></i></div><div id="tbtns" class="hud"><button data-k="o">O</button><button data-k="e">E</button><button data-k="m">☰</button></div><div id="tip" class="glass"></div>`;
   disposers.push(() => hud.remove());
   const $ = (s) => hud.querySelector(s);
   let miniCol = false; try { miniCol = localStorage.getItem("aq-mini") === "1"; } catch {}
   $("#mini").classList.toggle("col", miniCol);
   $("#mini .mh").onclick = () => { miniCol = !miniCol; $("#mini").classList.toggle("col", miniCol); $("#mini-t").textContent = miniCol ? "▸" : "▾"; try { localStorage.setItem("aq-mini", miniCol ? "1" : "0"); } catch {} };
-  $("#exitbtn").onclick = () => leave();
+  $("#exitbtn").onclick = () => leave(); $("#hqact [data-a=sell]").onclick = () => A.sellAllDialog(); $("#hqact [data-a=xfer]").onclick = () => A.transferDialog();
   hud.querySelectorAll("#tbtns button").forEach((b) => (b.onclick = () => { if (b.dataset.k === "e") act(); if (b.dataset.k === "o") toggleOverview(); if (b.dataset.k === "m") A.openMenu(); }));
   const mm = $("#minimap canvas"), mg = mm.getContext("2d");
 
@@ -126,10 +128,10 @@ export async function start(stage, A) {
     $("#mini-b").innerHTML = s ? `<div class="mrow"><span>Equity</span><b>${F.fSol(s.equitySol)}</b></div><div class="mrow"><span>Today</span><b class="${s.pnlTodaySol > 0 ? "up" : s.pnlTodaySol < 0 ? "dn" : ""}">${F.fSol(s.pnlTodaySol, true)}</b></div><div class="mrow"><span>Total</span><b class="${s.pnlTotalSol > 0 ? "up" : s.pnlTotalSol < 0 ? "dn" : ""}">${F.fSol(s.pnlTotalSol, true)}</b></div><div class="mrow"><span>Open trades</span><b>${(s.positions || []).length}</b></div><div class="mrow"><span>Council</span><b class="${L ? (L.verdict === "PASS" ? "up" : "dn") : ""}">${L ? F.esc(L.verdict + " " + (L.symbol || "")) : "—"}</b></div><div class="mrow"><span>Last flow</span><b>${s.flows && s.flows[0] ? F.esc(s.flows[0].kind) + " " + (typeof s.flows[0].sol === "number" ? Math.abs(s.flows[0].sol).toFixed(4) : "—") : "—"}</b></div><div class="mx">${xf.length ? F.esc((xf[0].label ? "[" + xf[0].label + "] " : "") + xf[0].text) : "X: Grok not connected"}</div>` : `<div class="mrow"><span>${A.store.err ? "Offline" : "Loading"}</span><b>—</b></div>`;
     // agents list
     $("#ag-l").innerHTML = A.DEPTS.map(([id, nm, col]) => { const d = deptState(s, id), ws = (d && d.workers) || []; const c = { busy: 0, idle: 0, blocked: 0 }; ws.forEach((w) => c[w.status]++);
-      return `<div class="ag" data-id="${id}"><span class="dc" style="--dc:${col}"></span><span>${F.esc(nm)}</span><small>${ws.length ? c.busy + "/" + ws.length : "—"}</small><span class="stbar"><i class="st-busy" style="flex:${c.busy}"></i><i class="st-idle" style="flex:${c.idle}"></i><i class="st-blocked" style="flex:${c.blocked}"></i></span></div>`; }).join("");
-    hud.querySelectorAll(".ag").forEach((e) => (e.onclick = () => enter(e.dataset.id)));
+      return `<div class="wag" data-id="${id}"><span class="dc" style="--dc:${col}"></span><span>${F.esc(nm)}</span><small>${ws.length ? c.busy + "/" + ws.length : "—"}</small><span class="stbar"><i class="st-busy" style="flex:${c.busy}"></i><i class="st-idle" style="flex:${c.idle}"></i><i class="st-blocked" style="flex:${c.blocked}"></i></span></div>`; }).join("");
+    hud.querySelectorAll(".wag").forEach((e) => (e.onclick = () => enter(e.dataset.id)));
     // building liveness, risk lever, council stone, towers, ticker, news screen
-    for (const [id, d] of Object.entries(districts)) { const ds = deptState(s, id); const live = !!(ds && ds.live); d.ring.material.color.set(live ? 0x5ef0ff : 0x55606e); d.ring.material.opacity = live ? 0.85 : 0.35; if (d.label) d.label.material.opacity = live ? 1 : 0.55; }
+    for (const [id, d] of Object.entries(districts)) { const ds = deptState(s, id); const live = !!(ds && ds.live); d.ring.material.color.set(live ? 0x5ef0ff : 0x55606e); d.ring.material.opacity = live ? 0.85 : 0.35; for (const st of statues) for (const f of (st.userData.flames || [])) f.visible = true; if (d.label) d.label.material.opacity = live ? 1 : 0.55; }
     const rk = districts.risk; rk.lever.rotation.z = s && s.killSwitch ? -0.5 : 0.5; rk.warn.intensity = s && s.killSwitch ? 120 : 0;
     const cn = districts.council; drawVerdict(cn.verdict, s); cn.glow.color.set(L ? (L.verdict === "PASS" ? 0x40ff80 : 0xff4030) : 0x888888);
     drawData(districts.news.screens.news, s, A, "news");
@@ -141,8 +143,23 @@ export async function start(stage, A) {
     const fl = (s && s.flows) || []; if (lastFlow == null) lastFlow = fl.length ? fl[0].id : 0;
     const fresh = fl.filter((f) => f.id > lastFlow).slice(0, 6).reverse(); if (fl.length) lastFlow = Math.max(lastFlow, ...fl.map((f) => f.id));
     for (const f of fresh) spawnFlight(f);
-    syncWalkers(s);
+    syncWalkers(s); applySurvival(s);
     if (room) fillRoom(room, s);
+  }
+  // ---------- survival: the island shows its health ----------
+  let stageNow = null; const fires = []; const fireTex = T.flame();
+  const cracks = (() => { const c = document.createElement("canvas"); c.width = c.height = 512; const g = c.getContext("2d"); g.strokeStyle = "rgba(40,25,10,.85)"; for (let k = 0; k < 40; k++) { let x = Math.random() * 512, y = Math.random() * 512, a = Math.random() * 6; g.lineWidth = 1 + Math.random() * 3; g.beginPath(); g.moveTo(x, y); for (let i = 0; i < 12; i++) { a += (Math.random() - 0.5) * 1.2; x += Math.cos(a) * 12; y += Math.sin(a) * 12; g.lineTo(x, y); } g.stroke(); } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(10, 10); return t; })();
+  const crackM = new THREE.Mesh(new THREE.CircleGeometry(R - 1, 64), new THREE.MeshBasicMaterial({ map: cracks, transparent: true, depthWrite: false, opacity: 0 })); crackM.rotation.x = -Math.PI / 2; crackM.position.y = 0.09; world.add(crackM);
+  function applySurvival(s) {
+    const sv = s && s.survival; const st = sv ? sv.stage : null; if (st === stageNow) return; stageNow = st;
+    const P = { thriving: [2.9, 1.3, 1.1, 0xb8a2c8, 0], hurt: [1.9, 0.95, 0.95, 0x9a8aa8, 0.35], critical: [1.0, 0.6, 0.8, 0x5a4a5a, 0.7], destroyed: [0.6, 0.45, 0.7, 0x3a3236, 0.9] }[st] || [2.6, 1.25, 1.05, 0xb8a2c8, 0];
+    sun.intensity = P[0]; hemi.intensity = P[1]; renderer.toneMappingExposure = P[2]; scene.fog.color.set(P[3]); crackM.material.opacity = P[4];
+    skyM.material.uniforms.dark = skyM.material.uniforms.dark || { value: 0 }; skyM.material.uniforms.dark.value = P[4];
+    falls.visible = st !== "critical" && st !== "destroyed";
+    for (const f of fires) { world.remove(f); f.material.dispose(); } fires.length = 0;
+    if (st === "critical" || st === "destroyed") Object.values(districts).forEach((d, i) => { if (st === "critical" && i % 3) return; for (let k = 0; k < 3; k++) { const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); f.scale.set(3, 5, 1); f.position.copy(d.g.position).add(new THREE.Vector3((k - 1) * 4, 2.5, 3)); f.userData.flame = true; world.add(f); fires.push(f); } });
+    // ruins: buildings sink and lean, HQ keeps standing (the CEO rebuilds from there)
+    Object.values(districts).forEach((d, i) => { const ruin = st === "destroyed"; d.g.rotation.x = ruin ? 0.08 * (i % 2 ? 1 : -1) : 0; d.g.rotation.z = ruin ? 0.06 * ((i % 3) - 1) : 0; d.g.position.y = ruin ? -2.5 : 0; d.g.scale.y = ruin ? 0.55 : 1; });
   }
   function drawVerdict(scr, s) { const L = s && s.council && s.council.last; scr.draw((g, W, H) => { const gr = g.createRadialGradient(W / 2, H / 2, 10, W / 2, H / 2, W * 0.7); const c = L ? (L.verdict === "PASS" ? ["#7dffb0", "#0b5a2c"] : ["#ff8a7a", "#6a0c0c"]) : ["#9aa3ad", "#2a2f36"]; gr.addColorStop(0, c[0]); gr.addColorStop(1, c[1]); g.fillStyle = gr; g.fillRect(0, 0, W, H);
     g.fillStyle = "#fff"; g.textAlign = "center"; g.font = `700 ${W * 0.2}px Cinzel, Georgia, serif`; g.fillText(L ? L.verdict : "—", W / 2, H * 0.42); g.font = `600 ${W * 0.08}px sans-serif`; g.fillText(L ? (L.symbol || "") : "no verdict", W / 2, H * 0.62); g.fillText(L && L.number != null ? String(L.number) : "", W / 2, H * 0.78); }); }
@@ -159,7 +176,7 @@ export async function start(stage, A) {
   const markTex = (() => { const c = document.createElement("canvas"); c.width = 64; c.height = 64; const g = c.getContext("2d"); g.fillStyle = "#ef4444"; g.beginPath(); g.arc(32, 32, 28, 0, 7); g.fill(); g.fillStyle = "#fff"; g.font = "bold 44px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("!", 32, 34); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
   const proxies = []; // raycast targets {mesh, dept, wid}
   function makePerson(dept, w, color) {
-    const p = new Person(color); p.dept = dept; p.wid = w.id; p.w = w;
+    const pw = w.power; const p = new Person(pw === "grok" ? "#19191d" : "#f2ede2", { trim: color || (pw === "grok" ? "#3a3a44" : "#c9a35a"), emblem: pw === "chatgpt" ? "#10a37f" : pw === "codex" ? "#7c8cff" : null }); p.dept = dept; p.wid = w.id; p.w = w;
     const proxy = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2, 6), new THREE.MeshBasicMaterial({ visible: false })); proxy.position.y = 1; p.root.add(proxy); proxy.userData = { dept, wid: w.id }; p.proxy = proxy; proxies.push(proxy);
     const mk = new THREE.Sprite(new THREE.SpriteMaterial({ map: markTex, depthWrite: false })); mk.scale.setScalar(0.6); mk.position.y = 2.3; mk.visible = false; p.root.add(mk); p.mark = mk;
     const ringM = new THREE.Mesh(new THREE.RingGeometry(0.45, 0.6, 24), new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.85, depthWrite: false })); ringM.rotation.x = -Math.PI / 2; ringM.position.y = 0.05; ringM.visible = false; p.root.add(ringM); p.ringM = ringM;
@@ -187,7 +204,7 @@ export async function start(stage, A) {
     // seat people
     let list = [];
     if (r.kind === "embassy") { const hp = (s && s.helpers) || {}; const gOn = hp.grok && (hp.grok === "connected" || hp.grok.status === "connected" || hp.grok.lastAt); const cOn = hp.chatgpt && (hp.chatgpt === "connected" || hp.chatgpt.status === "connected" || hp.chatgpt.lastAt);
-      list = GROK_DESK.map((n, i) => ({ id: "grok-" + i, name: "Grok · " + n, job: n + " desk bot (Grok)", status: gOn ? "busy" : "idle", note: gOn ? "reading live X" : "Grok not connected", skills: ["live X search"], power: "grok", _col: "#222" }));
+      list = GROK_DESK.map((n, i) => ({ id: "grok-" + i, name: "Grok · " + n, job: n + " desk bot (Grok)", status: gOn ? "busy" : "idle", note: gOn ? "reading live X" : "Grok not connected", skills: ["live X search"], power: "grok", _col: "#c9a35a" }));
       list.push({ id: "chatgpt-0", name: "ChatGPT", job: "second reader", status: cOn ? "busy" : "idle", note: cOn ? "connected" : "ChatGPT not connected", skills: ["second reading"], power: "chatgpt", _col: "#10a37f" }); }
     else if (r.kind === "council") list = ((deptState(s, "council") || {}).workers) || [];
     else if (r.kind !== "hq") list = ((deptState(s, r.kind) || {}).workers) || [];
@@ -228,17 +245,17 @@ export async function start(stage, A) {
     let r = roomCache[kind];
     if (!r) { r = kind === "embassy" ? embassyRoom() : buildRoom(kind, A); r.g.position.y = ROOM_Y; scene.add(r.g); roomCache[kind] = r; }
     r.g.visible = true; room = r; world.visible = false; player.inside = kind;
-    player.pos.copy(r.spawn).setY(ROOM_Y); player.yaw = Math.PI; cam.yaw = 0; cam.pitch = 0.32; cam.dist = 7.5; ceo.root.position.copy(player.pos);
+    player.pos.copy(r.spawn).setY(ROOM_Y); player.yaw = Math.PI; cam.yaw = 0; cam.pitch = 0.22; cam.dist = 6.5; ceo.root.position.copy(player.pos); cam.p = null; cam.snap = true;
     const d = doors.find((x) => x.kind === kind); $("#roomtitle").textContent = d ? d.name.toUpperCase() : kind; $("#roomtitle").style.display = "block"; setTimeout(() => ($("#roomtitle").style.display = "none"), 2600);
-    $("#exitbtn").style.display = "block"; scene.fog.near = 60; scene.fog.far = 200;
+    $("#exitbtn").style.display = "block"; $("#hqact").style.display = kind === "hq" ? "flex" : "none"; scene.fog.near = 60; scene.fog.far = 200;
     fillRoom(r, A.store.state); overview = false;
   }
   function leave() {
     if (!room) return; const kind = room.kind; room.g.visible = false; room = null; world.visible = true; player.inside = null;
     const d = doors.find((x) => x.kind === kind); const out = d.pos.clone(); const dir = out.clone().setY(0).normalize(); if (kind === "hq") dir.set(0, 0, 1);
     player.pos.copy(out).addScaledVector(kind === "hq" ? new THREE.Vector3(0, 0, 1) : dir.clone().negate(), -2.5); player.pos.y = 0;
-    if (kind !== "hq") player.pos.copy(out).add(out.clone().normalize().multiplyScalar(-2.5)); else player.pos.copy(out).add(new THREE.Vector3(0, 0, 2.5));
-    $("#exitbtn").style.display = "none"; scene.fog.near = 140; scene.fog.far = 620;
+    if (kind !== "hq") player.pos.copy(out).add(out.clone().normalize().multiplyScalar(-2.5)); else player.pos.set(0, 0, -5.2);
+    cam.p = null; cam.snap = true; $("#exitbtn").style.display = "none"; $("#hqact").style.display = "none"; scene.fog.near = 140; scene.fog.far = 620;
   }
   function nearestDoor() { let best = null, bd = 1e9; for (const d of doors) { const dd = Math.hypot(d.pos.x - player.pos.x, d.pos.z - player.pos.z); if (dd < bd) { bd = dd; best = d; } } return [best, bd]; }
   function act() { if (room) { const ex = room.exit; if (Math.hypot(player.pos.x - ex.x, player.pos.z - ex.z) < 5 || true) leave(); return; } const [d, dd] = nearestDoor(); if (d && dd < 6) enter(d.kind); }
@@ -276,6 +293,7 @@ export async function start(stage, A) {
     if (room) { const b = room.bounds; return b.type === "rect" ? Math.abs(x) > b.w / 2 || Math.abs(z) > b.d / 2 : Math.hypot(x, z) > b.r; }
     const r = Math.hypot(x, z); if (r > R - 1.5) return true;
     if (r > CANAL[0] - 0.3 && r < CANAL[1] + 0.3) { const a = Math.atan2(x, -z); if (!BRIDGES.some((b) => Math.abs(Math.sin(a - b)) * r < 2.0 && Math.cos(a - b) > 0)) return true; }
+    if (r > 11.6 && r < 27.2 && !(z > 0 && Math.abs(x) < 1.15 && r < 23.6) && !(z > 0 && Math.abs(x) < 3 && r >= 23.6)) return true; // colosseum: walls + stands, open at the south gate
     for (const c of colliders) if ((x - c.x) ** 2 + (z - c.z) ** 2 < c.r * c.r) return true;
     return false;
   }
@@ -308,7 +326,7 @@ export async function start(stage, A) {
     if (overview && !room) { ovA += dt * 0.05; pos = new THREE.Vector3(Math.sin(ovA) * 230, 170, Math.cos(ovA) * 230); tgt.set(0, 0, 0); }
     else { const d = cam.dist; pos = new THREE.Vector3(Math.sin(cam.yaw) * Math.cos(cam.pitch) * d, Math.sin(cam.pitch) * d, Math.cos(cam.yaw) * Math.cos(cam.pitch) * d).add(tgt);
       if (room) { const b = room.bounds; const lp = pos.clone(); lp.y -= ROOM_Y; if (b.type === "rect") { lp.x = Math.max(-b.w / 2, Math.min(b.w / 2, lp.x)); lp.z = Math.max(-b.d / 2, Math.min(b.d / 2 + 0.5, lp.z)); } else { const l = Math.hypot(lp.x, lp.z); if (l > b.r) { lp.x *= b.r / l; lp.z *= b.r / l; } } lp.y = Math.min(lp.y, 9); pos.set(lp.x, lp.y + ROOM_Y, lp.z); } }
-    const k = 1 - Math.exp(-dt * 8); cam.tgt.lerp(tgt, k); if (!cam.p) cam.p = pos.clone(); cam.p.lerp(pos, overview ? 1 - Math.exp(-dt * 2) : k);
+    const k = 1 - Math.exp(-dt * 8); if (cam.snap) { cam.tgt.copy(tgt); cam.snap = false; } cam.tgt.lerp(tgt, k); if (!cam.p) cam.p = pos.clone(); cam.p.lerp(pos, overview ? 1 - Math.exp(-dt * 2) : k);
     camera.position.copy(cam.p); camera.lookAt(overview && !room ? tgt : cam.tgt);
     // sun shadow follows the player
     const c = overview && !room ? new THREE.Vector3() : player.pos; sun.position.copy(c).addScaledVector(SUN, 200); sun.target.position.copy(c);
@@ -335,7 +353,10 @@ export async function start(stage, A) {
   function frame() {
     const dt = Math.min(0.05, clock.getDelta()); tAcc += dt; const t0 = performance.now();
     moveCEO(dt); ceo.update(dt); updateCamera(dt);
-    skyM.material.uniforms.t.value = tAcc; seaM.material.uniforms.t.value = tAcc; falls.userData.tex.offset.y -= dt * 0.9; if (island.userData.canal) island.userData.canal.map.offset.x += dt * 0.004;
+    skyM.material.uniforms.t.value = tAcc; for (const f of fires) f.scale.y = 5 + Math.sin(tAcc * 9 + f.position.x) * 0.6; seaM.material.uniforms.t.value = tAcc; falls.userData.tex.offset.y -= dt * 0.9; if (island.userData.canal) island.userData.canal.map.offset.x += dt * 0.004;
+    { const cr = hq.userData.crystal.userData; const hp = (A.store.state && A.store.state.survival && typeof A.store.state.survival.health === "number") ? A.store.state.survival.health / 100 : 0.6;
+      cr.inner.position.y = 0.6 + 0.35 + Math.sin(tAcc * 0.8) * 0.35; cr.inner.rotation.y += dt * 0.12; const pu = 0.85 + Math.sin(tAcc * 1.6) * 0.15;
+      cr.mat.emissiveIntensity = (0.25 + hp * 1.4) * pu; cr.light.intensity = (15 + hp * 90) * pu; cr.glow.material.opacity = 0.15 + hp * 0.5 * pu; }
     if (!room) {
       // flow dots along the path
       for (let i = 0; i < DOTS; i++) { const p = curve.getPointAt(((i / DOTS) + tAcc * 0.012) % 1); dotP[i * 3] = p.x; dotP[i * 3 + 1] = 0.5 + Math.sin(tAcc * 3 + i) * 0.1; dotP[i * 3 + 2] = p.z; } dotG.attributes.position.needsUpdate = true;
@@ -357,7 +378,7 @@ export async function start(stage, A) {
   const unsub = A.onState(applyState);
 
   // test hooks (dev loop + Alex's support): window.__aqWorld
-  window.__aqWorld = { get fps() { return fps; }, frameTimes, enter, leave, teleport: (x, z, yaw = Math.PI) => { if (room) leave(); player.pos.set(x, 0, z); player.yaw = yaw; cam.yaw = yaw + Math.PI; cam.p = null; }, cam, toggleOverview, get overview() { return overview; }, info: () => renderer.info, scene, camera };
+  window.__aqWorld = { get fps() { return fps; }, frameTimes, enter, leave, teleport: (x, z, yaw = Math.PI) => { if (room) leave(); player.pos.set(x, 0, z); player.yaw = yaw; cam.yaw = yaw + Math.PI; cam.p = null; cam.snap = true; }, cam, toggleOverview, get overview() { return overview; }, info: () => renderer.info, scene, camera };
 
   return {
     dispose() {

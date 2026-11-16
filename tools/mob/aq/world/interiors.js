@@ -18,7 +18,7 @@ function floorWalls(m, w, d, h, wallMat = M.marbleWarm, floor = M.paving) {
   box(m, wallMat, -w / 4 - 1.5, 0, d / 2, w / 2 - 3, h, 0.6, 0, 5); box(m, wallMat, w / 4 + 1.5, 0, d / 2, w / 2 - 3, h, 0.6, 0, 5); box(m, wallMat, 0, h - 1.5, d / 2, 6, 1.5, 0.6);
   // gold cornice + pilasters
   for (const [x, z, ww, dd] of [[0, -d / 2 + 0.35, w, 0.2], [-w / 2 + 0.35, 0, 0.2, d], [w / 2 - 0.35, 0, 0.2, d]]) box(m, M.gold, x, h - 0.6, z, ww, 0.3, dd);
-  for (let i = 0; i < Math.floor(w / 6); i++) { const x = -w / 2 + 3 + i * 6; column(m, x, -d / 2 + 0.9, h - 0.6, 0.35, M.marble, M.gold, "ionic"); }
+  for (let i = 0; i < Math.floor(w / 6); i++) { const x = -w / 2 + 3 + i * 6; if (Math.abs(x) < 13) continue; column(m, x, -d / 2 + 0.9, h - 0.6, 0.35, M.marble, M.gold, "ionic"); }
   for (let j = 0; j < Math.floor(d / 6); j++) { const z = -d / 2 + 3 + j * 6; column(m, -w / 2 + 0.9, z, h - 0.6, 0.35, M.marble, M.gold, "ionic"); column(m, w / 2 - 0.9, z, h - 0.6, 0.35, M.marble, M.gold, "ionic"); }
   // door frame
   for (const s of [-1, 1]) column(m, s * 3.2, d / 2 - 0.2, h - 1.5, 0.4, M.marble, M.gold, "ionic");
@@ -51,7 +51,7 @@ function deptRoom(kind) {
   const big = new Screen(16, 6.4, 1280); big.mesh.position.set(0, 4.6, -D / 2 + 0.45); g.add(big.mesh);
   const side = new Screen(9, 5.4, 1024); side.mesh.position.set(W / 2 - 0.45, 4.2, 2); side.mesh.rotation.y = -Math.PI / 2; g.add(side.mesh);
   addLights(g, W, D, H);
-  return { g, bounds: { type: "rect", w: W - 2.4, d: D - 1.6 }, spawn: new THREE.Vector3(0, 0, D / 2 - 2), exit: new THREE.Vector3(0, 0, D / 2 - 0.2), seats, screens: { big, side }, kind };
+  return { g, bounds: { type: "rect", w: W - 2.4, d: D - 1.6 }, spawn: new THREE.Vector3(0, 0, D / 2 - 7.5), exit: new THREE.Vector3(0, 0, D / 2 - 0.2), seats, screens: { big, side }, kind };
 }
 function councilRoom() {
   const g = new THREE.Group(), m = new Merger(); const R = 13, H = 9;
@@ -70,7 +70,7 @@ function councilRoom() {
   const vs = new Screen(3, 3, 512); vs.mesh.position.set(0, 3.2, 0); g.add(vs.mesh); vs.back();
   const vet = new Screen(14, 6, 1280); vet.mesh.position.set(0, 5, -R + 1.2); g.add(vet.mesh);
   addLights(g, R * 2, R * 2, H); const gl = new THREE.PointLight(0xffd070, 40, 20, 2); gl.position.set(0, 6, 0); g.add(gl);
-  return { g, bounds: { type: "circle", r: R - 1.6 }, spawn: new THREE.Vector3(0, 0, R - 2.5), exit: new THREE.Vector3(0, 0, R - 0.8), seats, screens: { verdict: vs, vetoes: vet }, kind: "council" };
+  return { g, bounds: { type: "circle", r: R - 1.6 }, spawn: new THREE.Vector3(0, 0, R - 6), exit: new THREE.Vector3(0, 0, R - 0.8), seats, screens: { verdict: vs, vetoes: vet }, kind: "council" };
 }
 function hqRoom() { // Alex's boss office at the top of the colosseum: wall of screens + panoramic window
   const g = new THREE.Group(), m = new Merger(); const W = 34, D = 26, H = 10;
@@ -87,7 +87,7 @@ function hqRoom() { // Alex's boss office at the top of the colosseum: wall of s
   const wal = new Screen(9, 5.4, 1024); wal.mesh.position.set(W / 2 - 0.45, 4.4, -5); wal.mesh.rotation.y = -Math.PI / 2; g.add(wal.mesh);
   const xs = new Screen(9, 5.4, 1024); xs.mesh.position.set(W / 2 - 0.45, 4.4, 5.5); xs.mesh.rotation.y = -Math.PI / 2; g.add(xs.mesh);
   addLights(g, W, D, H);
-  return { g, bounds: { type: "rect", w: W - 2.4, d: D - 1.6 }, spawn: new THREE.Vector3(0, 0, D / 2 - 2), exit: new THREE.Vector3(0, 0, D / 2 - 0.2), seats: [], screens: { neurons: neur, wallet: wal, x: xs }, kind: "hq" };
+  return { g, bounds: { type: "rect", w: W - 2.4, d: D - 1.6 }, spawn: new THREE.Vector3(0, 0, D / 2 - 7.5), exit: new THREE.Vector3(0, 0, D / 2 - 0.2), seats: [], screens: { neurons: neur, wallet: wal, x: xs }, kind: "hq" };
 }
 export function embassyRoom() {
   const r = deptRoom("embassy"); r.kind = "embassy"; return r;

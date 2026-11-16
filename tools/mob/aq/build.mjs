@@ -2,7 +2,7 @@
 //  - src/aq-bundle.mjs : AQ_BUILT_AT, AQ_JS (bot-mode app, no three.js), AQ_PAGE (HTML + CSS, loads /aq/app.js), AQ_WORLD_JS
 //  - aq/assets/world.js : the 3D world (three.js bundled), lazy-loaded from /aq/assets/world.js only in WORLD mode
 import { build } from "esbuild";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
@@ -10,7 +10,8 @@ const BUILT = new Date().toISOString(), BUILD = BUILT.slice(0, 16).replace(/[-:T
 const opt = { bundle: true, minify: true, format: "esm", write: false, target: "es2022", legalComments: "none", define: { "process.env.NODE_ENV": '"production"', __AQ_BUILD__: JSON.stringify(BUILD) } };
 const app = (await build({ ...opt, entryPoints: [join(here, "main.js")] })).outputFiles[0].text;
 if (/WebGLRenderer|three\.module/.test(app)) throw new Error("three.js leaked into the bot-mode bundle");
-const world = (await build({ ...opt, entryPoints: [join(here, "world/index.js")] })).outputFiles[0].text;
+const stub = { name: "statues-stub", setup(b) { b.onResolve({ filter: /\/statues\.js$/ }, (a) => { const f = join(a.resolveDir, a.path); return existsSync(f) ? { path: f } : { path: "statues-stub", namespace: "stub" }; }); b.onLoad({ filter: /.*/, namespace: "stub" }, () => ({ contents: "export const makeStatue = null;", loader: "js" })); } };
+const world = (await build({ ...opt, plugins: [stub], entryPoints: [join(here, "world/index.js")] })).outputFiles[0].text;
 writeFileSync(join(here, "assets/world.js"), world);
 const css = readFileSync(join(here, "style.css"), "utf8");
 const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f5f5f7"><title>Aquarius</title>

@@ -94,25 +94,30 @@ export function colosseum() {
   const g = new THREE.Group(); const R1 = 26, H = 17.4, N = 44;
   const at = archTex(); at.repeat.set(N, 1);
   const wm = new THREE.MeshStandardMaterial({ map: at, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.6 });
-  const outer = new THREE.Mesh(new THREE.CylinderGeometry(R1, R1, H, N * 4, 1, true), wm); outer.position.y = H / 2; outer.castShadow = outer.receiveShadow = true; g.add(outer);
-  const inner = new THREE.Mesh(new THREE.CylinderGeometry(R1 - 3.2, R1 - 3.2, H, N * 4, 1, true), wm.clone()); inner.material.map = at.clone(); inner.material.map.repeat.set(N - 6, 1); inner.material.map.needsUpdate = true; inner.position.y = H / 2; inner.castShadow = inner.receiveShadow = true; g.add(inner);
+  const outer = new THREE.Mesh(new THREE.CylinderGeometry(R1, R1, H, N * 4, 1, true), wm); outer.rotation.y = Math.PI / N; outer.position.y = H / 2; outer.castShadow = outer.receiveShadow = true; g.add(outer);
+  const inner = new THREE.Mesh(new THREE.CylinderGeometry(R1 - 3.2, R1 - 3.2, H, N * 4, 1, true), wm.clone()); inner.material.map = at.clone(); inner.material.map.repeat.set(N - 6, 1); inner.material.map.needsUpdate = true; inner.rotation.y = Math.PI / (N - 6); inner.position.y = H / 2; inner.castShadow = inner.receiveShadow = true; g.add(inner);
   const m = new Merger();
   // floors between the two walls (ambulatory) at each tier + top attic
   for (let t = 0; t <= 3; t++) { const rg = new THREE.RingGeometry(R1 - 3.2, R1 + 0.6, N * 2, 1); rg.rotateX(-Math.PI / 2); uv(rg, 4, 4); m.add(rg, t === 3 ? M.marble : M.paving, 0, t * (H / 3) + (t ? 0.02 : 0.04), 0);
     if (t) { m.add(new THREE.TorusGeometry(R1 + 0.35, 0.28, 6, N * 3), M.marbleWarm, 0, t * (H / 3) - 0.1, 0, 0, 1, 1, 1, Math.PI / 2); m.add(new THREE.TorusGeometry(R1 + 0.5, 0.12, 6, N * 3), M.gold, 0, t * (H / 3) + 0.25, 0, 0, 1, 1, 1, Math.PI / 2); } }
   // engaged columns between arches, three orders
-  for (let t = 0; t < 3; t++) for (let i = 0; i < N; i++) { const a = ((i + 0.5) / N) * Math.PI * 2; column(m, Math.sin(a) * (R1 + 0.35), Math.cos(a) * (R1 + 0.35), H / 3 - 0.5, 0.32, M.marble, t === 2 ? M.gold : M.marbleWarm, t ? "ionic" : "doric", t * (H / 3) + 0.1); }
+  for (let t = 0; t < 3; t++) for (let i = 0; i < N; i++) { const a = ((i + 0.5) / N) * Math.PI * 2 + Math.PI / N; column(m, Math.sin(a) * (R1 + 0.35), Math.cos(a) * (R1 + 0.35), H / 3 - 0.5, 0.32, M.marble, t === 2 ? M.gold : M.marbleWarm, t ? "ionic" : "doric", t * (H / 3) + 0.1); }
   // attic with gold crown + masts
   m.add(uv(new THREE.CylinderGeometry(R1 + 0.2, R1 + 0.2, 1.6, N * 3, 1, true), N, 0.5), M.marbleWarm, 0, H + 0.8, 0);
   m.add(new THREE.TorusGeometry(R1 + 0.25, 0.22, 6, N * 3), M.gold, 0, H + 1.6, 0, 0, 1, 1, 1, Math.PI / 2);
   for (let i = 0; i < 22; i++) { const a = (i / 22) * Math.PI * 2; m.add(new THREE.CylinderGeometry(0.08, 0.1, 4, 6), M.gold, Math.sin(a) * (R1 + 0.2), H + 3.6, Math.cos(a) * (R1 + 0.2)); }
   // seating cavea inside: stepped lathe
   const prof = [new THREE.Vector2(12, 0)]; for (let k = 0; k < 14; k++) { const r = 12 + k * 0.78, y = k * 1.0; prof.push(new THREE.Vector2(r, y + 1.0)); prof.push(new THREE.Vector2(r + 0.78, y + 1.0)); }
-  prof.push(new THREE.Vector2(R1 - 3.2, 14)); const cav = new THREE.LatheGeometry(prof, N * 2); uv(cav, 30, 6); m.add(cav, M.marbleWarm, 0, 0, 0);
+  prof.push(new THREE.Vector2(R1 - 3.2, 14)); const cav = new THREE.LatheGeometry(prof, N * 2, 0.13, Math.PI * 2 - 0.26); uv(cav, 30, 6); m.add(cav, M.marbleWarm, 0, 0, 0);
+  // gate passage walls through the cavea
+  for (const sx of [-1, 1]) m.add(uv(new THREE.BoxGeometry(0.4, 3.2, 11), 3, 1), M.marble, sx * 1.6, 1.6, 17.5);
   // arena: sand with gold ring and cyan rune circle
   const ar = new THREE.CircleGeometry(12, 48); ar.rotateX(-Math.PI / 2); uv(ar, 3, 3); m.add(ar, M.sand, 0, 0.06, 0);
   m.add(new THREE.TorusGeometry(12, 0.2, 6, 64), M.gold, 0, 0.9, 0, 0, 1, 1, 1, Math.PI / 2);
-  m.add(new THREE.TorusGeometry(6, 0.08, 6, 64), M.cyan, 0, 0.1, 0, 0, 1, 1, 1, Math.PI / 2);
+  // CEO desk on the north side of the arena, facing the gate
+  m.add(uv(new THREE.BoxGeometry(3.6, 0.95, 1.5), 1, 0.4), M.wood, 0, 0.55, -8.6); m.add(new THREE.BoxGeometry(3.7, 0.06, 1.6), M.gold, 0, 1.05, -8.6);
+  m.add(new THREE.BoxGeometry(1.0, 1.9, 0.2), new THREE.MeshStandardMaterial({ color: 0x7a1020, roughness: 0.6 }), 0, 1.0, -9.9); m.add(new THREE.BoxGeometry(0.9, 0.5, 0.9), M.gold, 0, 0.3, -9.6);
+  for (const sx of [-1, 1]) m.add(new THREE.BoxGeometry(1.2, 0.7, 0.05), M.cyan, sx * 0.9, 1.45, -8.9, sx * -0.25);
   // main gate (south): big arch frame + AQUARIUS sign
   for (const s of [-1, 1]) { column(m, s * 3.6, R1 + 1.4, 8.4, 0.55, M.marble, M.gold, "ionic"); }
   m.add(uv(new THREE.BoxGeometry(9.6, 1.6, 1.6), 3, 0.5), M.marbleWarm, 0, 9.2, R1 + 1.4);
@@ -137,7 +142,9 @@ export function colosseum() {
   // pylons holding them
   const pm = new Merger(); for (const sx of [-9.4, 9.4]) for (const d of [-6, 6]) { pm.add(new THREE.CylinderGeometry(0.35, 0.45, 10.2, 12), M.gold, sx + d * 0.98, 5.1, -4.4); }
   g.add(pm.build());
-  g.userData = { door: new THREE.Vector3(0, 0, R1 + 4), r: R1 + 1, top: H + 14, screens: { wallet, x } };
+  g.add(inlay());
+  const cr = amethyst(); g.add(cr);
+  g.userData = { door: new THREE.Vector3(0, 0, -6.6), r: R1 + 1, top: H + 14, screens: { wallet, x }, crystal: cr };
   return g;
 }
 
@@ -340,4 +347,49 @@ export function strategyTower() {
   const shaft = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.25, 1, 6), new THREE.MeshStandardMaterial({ color: 0x0b2a3a, emissive: 0x22e0ff, emissiveIntensity: 0.9, roughness: 0.2, metalness: 0.4 })); shaft.position.y = 0.6; shaft.castShadow = true; g.add(shaft);
   const cap = new THREE.Mesh(new THREE.OctahedronGeometry(0.9), M.gold); g.add(cap);
   return { g, shaft, cap };
+}
+
+// ---- arena floor: triangle > circle > pentagram in gold, twelve Olympian symbols round the ring ----
+function inlay() {
+  const S = 2048, c = document.createElement("canvas"); c.width = c.height = S; const g = c.getContext("2d"); const C = S / 2, R = S * 0.33;
+  g.strokeStyle = "#ffd76a"; g.lineWidth = 14; g.shadowColor = "#ffcf40"; g.shadowBlur = 30; g.lineJoin = "round";
+  const tri = [0, 1, 2].map((k) => [C + Math.sin((k / 3) * Math.PI * 2 + Math.PI) * R * 2, C - Math.cos((k / 3) * Math.PI * 2 + Math.PI) * R * 2]);
+  g.beginPath(); tri.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.stroke();
+  g.beginPath(); g.arc(C, C, R, 0, 7); g.stroke(); g.beginPath(); g.arc(C, C, R * 1.08, 0, 7); g.lineWidth = 6; g.stroke(); g.lineWidth = 14;
+  const st = [0, 2, 4, 1, 3].map((k) => [C + Math.sin((k / 5) * Math.PI * 2) * R, C - Math.cos((k / 5) * Math.PI * 2) * R]);
+  g.beginPath(); st.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.stroke();
+  const sym = [bolt, owl, lyre, caduceus, grapes, torch, trident, bow, hammer, peacock, wheat, dove];
+  g.lineWidth = 9; g.strokeStyle = "#bff6ff"; g.fillStyle = "#bff6ff"; g.shadowColor = "#5ef0ff";
+  sym.forEach((f, i) => { const a = (i / 12) * Math.PI * 2; const x = C + Math.sin(a) * R * 1.38, y = C - Math.cos(a) * R * 1.38; g.save(); g.translate(x, y); g.rotate(a); g.beginPath(); g.arc(0, 0, 62, 0, 7); g.lineWidth = 5; g.stroke(); g.lineWidth = 8; f(g); g.restore(); });
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(22, 22), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+  m.rotation.x = -Math.PI / 2; m.position.y = 0.09; m.renderOrder = 2; return m;
+}
+const P = (g, pts, close) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); if (close) g.closePath(); g.stroke(); };
+const bolt = (g) => { g.beginPath(); g.moveTo(10, -44); g.lineTo(-14, 2); g.lineTo(6, 2); g.lineTo(-10, 44); g.lineTo(18, -8); g.lineTo(-2, -8); g.lineTo(14, -44); g.closePath(); g.fill(); };
+const owl = (g) => { g.beginPath(); g.ellipse(0, 8, 26, 34, 0, 0, 7); g.stroke(); for (const s of [-1, 1]) { g.beginPath(); g.arc(s * 11, -6, 9, 0, 7); g.stroke(); P(g, [[s * 8, -30], [s * 22, -42], [s * 24, -24]]); } P(g, [[-4, 6], [0, 12], [4, 6]]); };
+const lyre = (g) => { P(g, [[-26, -36], [-30, 0], [-18, 34], [18, 34], [30, 0], [26, -36]]); P(g, [[-28, -30], [28, -30]]); for (let k = -2; k <= 2; k++) P(g, [[k * 8, -30], [k * 8, 32]]); };
+const caduceus = (g) => { P(g, [[0, -46], [0, 46]]); g.beginPath(); for (let y = -30; y <= 34; y += 2) g.lineTo(Math.sin(y * 0.15) * 16, y); g.stroke(); g.beginPath(); for (let y = -30; y <= 34; y += 2) g.lineTo(-Math.sin(y * 0.15) * 16, y); g.stroke(); P(g, [[-30, -40], [0, -32], [30, -40]]); };
+const grapes = (g) => { for (const [x, y] of [[-16, -14], [0, -14], [16, -14], [-8, 0], [8, 0], [0, 14], [-16, 0], [16, 0], [-8, 28 - 14], [8, 14], [0, 28]]) { g.beginPath(); g.arc(x, y, 7, 0, 7); g.fill(); } P(g, [[0, -24], [6, -40]]); };
+const torch = (g) => { for (const s of [-1, 1]) { P(g, [[s * 14, 40], [s * 14, -10]]); g.beginPath(); g.moveTo(s * 14, -40); g.quadraticCurveTo(s * 14 + 14, -20, s * 14, -12); g.quadraticCurveTo(s * 14 - 14, -20, s * 14, -40); g.fill(); } };
+const trident = (g) => { P(g, [[0, 46], [0, -40]]); P(g, [[-22, -40], [-22, -16], [22, -16], [22, -40]]); P(g, [[-28, -32], [-22, -42], [-16, -32]]); P(g, [[-6, -34], [0, -46], [6, -34]]); P(g, [[16, -32], [22, -42], [28, -32]]); };
+const bow = (g) => { g.beginPath(); g.arc(-30, 0, 46, -0.85, 0.85); g.stroke(); P(g, [[0, -34], [0, 34]]); P(g, [[-36, 0], [36, 0]]); P(g, [[26, -8], [36, 0], [26, 8]]); };
+const hammer = (g) => { P(g, [[0, 44], [0, -18]]); g.fillRect(-28, -40, 56, 22); };
+const peacock = (g) => { for (let k = -3; k <= 3; k++) { const a = k * 0.32 - Math.PI / 2; P(g, [[0, 30], [Math.cos(a) * 40, 30 + Math.sin(a) * 60 + 0]]); g.beginPath(); g.arc(Math.cos(a) * 42, 30 + Math.sin(a) * 62, 7, 0, 7); g.fill(); } };
+const wheat = (g) => { P(g, [[0, 46], [0, -44]]); for (let y = -36; y < 16; y += 13) for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * 9, y, 6, 11, s * 0.5, 0, 7); g.fill(); } };
+const dove = (g) => { g.beginPath(); g.ellipse(0, 6, 30, 14, -0.2, 0, 7); g.stroke(); g.beginPath(); g.moveTo(-6, 0); g.quadraticCurveTo(-20, -40, 14, -36); g.quadraticCurveTo(4, -14, 8, 0); g.stroke(); g.beginPath(); g.arc(26, -4, 7, 0, 7); g.fill(); P(g, [[-28, 10], [-44, 20], [-40, 4]]); };
+
+// ---- the amethyst: faceted purple crystal cluster with inner glow ----
+function amethyst() {
+  const grp = new THREE.Group();
+  const mat = new THREE.MeshPhysicalMaterial({ color: 0x9b4dff, emissive: 0x6a1fd0, emissiveIntensity: 1.2, roughness: 0.12, metalness: 0.1, transmission: 0, transparent: true, opacity: 0.88, flatShading: true, clearcoat: 1 });
+  const core = new THREE.MeshBasicMaterial({ color: 0xe0b8ff, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false });
+  const shard = (h, r) => { const g = new THREE.CylinderGeometry(r, r * 1.1, h, 6, 1); g.translate(0, h / 2, 0); const tip = new THREE.ConeGeometry(r, r * 1.8, 6); tip.translate(0, h + r * 0.9, 0); const m = new Merger(); m.add(g, mat); m.add(tip, mat); return m.build(true, false); };
+  const big = shard(6.5, 1.1); grp.add(big);
+  [[1.5, 0.2, 0.4, 0.6, 3.6], [-1.4, 0.1, -0.5, -0.55, 3.9], [0.4, -0.2, 1.4, 0.5, 2.8], [-0.6, 0, -1.5, -0.45, 3.0], [1.2, 0, -1.1, 0.7, 2.4], [-1.3, 0, 1.0, -0.7, 2.2]].forEach(([x, , z, tilt, h]) => { const s = shard(h, 0.55); s.position.set(x, 0, z); s.rotation.set(z * 0.25, 0, -tilt); grp.add(s); });
+  const glow = new THREE.Mesh(new THREE.SphereGeometry(1.6, 20, 14), core); glow.position.y = 3.6; glow.scale.set(1, 2.2, 1); grp.add(glow);
+  const base = new Merger(); base.add(new THREE.CylinderGeometry(3.2, 3.6, 0.6, 32), M.marble, 0, 0.3, 0); base.add(new THREE.TorusGeometry(3.25, 0.12, 6, 48), M.gold, 0, 0.6, 0, 0, 1, 1, 1, Math.PI / 2); const b = base.build(); grp.add(b);
+  const light = new THREE.PointLight(0xb070ff, 80, 34, 1.8); light.position.y = 5; grp.add(light);
+  const holder = new THREE.Group(); holder.add(grp); holder.userData = { inner: grp, mat, glow, light, base: b }; grp.position.y = 0.6;
+  return holder;
 }
