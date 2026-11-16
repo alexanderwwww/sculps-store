@@ -51,3 +51,6 @@ gamedev · threejs-* · camera-systems · game-feel · game-ui-ux · input-syste
 
 ## 🧪 THE RECIPE (recipe skill)
 recipe · trading-lab · trader-* · gmgn-fib — the master multi-recipe: candidates R1-R5, the gate, how a recipe becomes real.
+
+## 👁 WATCH VIDEOS
+watch (bradautomates/claude-video, MIT) · tools/reel-reader — Claude watches links Alex sends: YouTube/TikTok/X via `watch`, Instagram reels via reel-reader in Aquarius Chrome.
