@@ -340,3 +340,5 @@ goes into a skill file before the session ends.
 28. **Load `.claude/skills/never-again/SKILL.md` before any build, zip, deploy or "it works".** (Alex, 2026-11-13: "Save all this bullshit… make a skill not to do them again.") It lists every sloppy mistake already made — copied apps carrying old behavior, untested first launches, guessed links — and the rule for each.
 
 29. **Load `.claude/skills/lean/SKILL.md` in every session.** (Alex, 2026-11-14.) Token saving so his usage lasts: short replies, targeted reads, find/read_text over full snapshots, heavy jobs in one background agent.
+
+30. **Links Alex sends get watched automatically, no asking.** (Alex, 2026-11-16: "learn how to watch them automatically when I just send them and extract all the knowledge.") Follow `.claude/skills/learn-links/SKILL.md` the moment a reel/video link appears.

@@ -54,3 +54,6 @@ recipe · trading-lab · trader-* · gmgn-fib — the master multi-recipe: candi
 
 ## 👁 WATCH VIDEOS
 watch (bradautomates/claude-video, MIT) · tools/reel-reader — Claude watches links Alex sends: YouTube/TikTok/X via `watch`, Instagram reels via reel-reader in Aquarius Chrome.
+
+## 🔗 LEARN LINKS
+learn-links · watch · reel-reader — every link Alex sends is watched and its knowledge saved (trading-lab/reels).
