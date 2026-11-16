@@ -44,7 +44,7 @@ export async function gt(env, path) {
 }
 // Calls made in the running tick, by provider (shown in state.health.budget).
 export const CALLS = { helius: 0, jupiterData: 0, geckoterminal: 0, dexscreener: 0 };
-export const CAPS = { helius: 12, jupiterData: 20 };
+export const CAPS = { helius: 12, jupiterData: 36 };
 export const resetCalls = () => { for (const k of Object.keys(CALLS)) CALLS[k] = 0; };
 export async function getJson(url, ms = 8000, extra = {}) {
   if (url.startsWith("https://datapi.jup.ag/")) CALLS.jupiterData++;
@@ -100,7 +100,9 @@ export function jupPool(p) {
   return { pool: p.id, name: `${b.symbol} / ${p.quoteAsset === SOL_MINT ? "SOL" : "?"}`, symbol: String(b.symbol || "").trim(), mint: b.id, quoteMint: p.quoteAsset, priceUsd: num(b.usdPrice), solUsd: null,
     liqUsd: num(b.liquidity), createdAt: b.firstPool?.createdAt || b.createdAt || null, ch5m: num(m5.priceChange), ch1h: num(h.priceChange), ch24: num(b.stats24h?.priceChange),
     volM5: m5.buyVolume != null ? (num(m5.buyVolume) || 0) + (num(m5.sellVolume) || 0) : null, volH1: h.buyVolume != null ? (num(h.buyVolume) || 0) + (num(h.sellVolume) || 0) : null,
-    traders1h: num(h.numTraders), dev: b.dev || null, organic: num(b.organicScore) };
+    traders1h: num(h.numTraders), dev: b.dev || null, organic: num(b.organicScore),
+    // Jupiter's own audit of the token: enough for the hard safety check when RugCheck is rate limited
+    audit: b.audit ? { mintOff: b.audit.mintAuthorityDisabled === true, freezeOff: b.audit.freezeAuthorityDisabled === true, topHolders: num(b.audit.topHoldersPercentage), decimals: num(b.decimals) } : null };
 }
 // One page of a coin's swaps from Jupiter: who bought or sold, how much SOL, when. MEV trades are dropped.
 export async function jupTxs(mint, cur = null) {

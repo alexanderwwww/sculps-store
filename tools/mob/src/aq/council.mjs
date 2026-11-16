@@ -6,7 +6,8 @@ import { feeds, jupQuote, SOL_MINT, CALLS, CAPS } from "./feeds.mjs";
 import { fibSetup, whaleSetup, momentumSetup, bounceSetup, hardSafety, softObjections, scoreOf, tierOf, sizeFor, roundTripPct, round, COUNCIL, SOFT_RULES } from "./logic.mjs";
 import { whaleSignal } from "./whales.mjs";
 
-export const MAX_EVAL = 5, COOLDOWN_MIN = 10, MIN_OWN_BARS = 30, KB_COST_PCT = 5, QUOTE_TRIES = 2;
+export const RUG_PER_TICK = 4;
+export const MAX_EVAL = 10, COOLDOWN_MIN = 10, RECHECK_MIN = 3, WHALE_CHECKS = 6, MIN_OWN_BARS = 30, KB_COST_PCT = 5, QUOTE_TRIES = 2;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function ruleWeights(d) {
@@ -34,12 +35,14 @@ export async function councilTick(env, x) {
   const nowMs = nowSec * 1000, C = COUNCIL;
   const weights = await ruleWeights(d);
   const live = (id) => strategies[id]?.alive && strategies[id].status === "paper";
-  const recent = new Set((await d.q(`SELECT DISTINCT mint FROM mob_aq_council WHERE mint IS NOT NULL AND at > now() - make_interval(mins => $1)`, [COOLDOWN_MIN])).map((r) => r.mint));
+  // a coin that only lacked a signal is looked at again after RECHECK_MIN; any other verdict rests for COOLDOWN_MIN
+  const recent = new Set((await d.q(`SELECT DISTINCT mint FROM mob_aq_council WHERE mint IS NOT NULL AND at > now() - make_interval(mins => CASE WHEN facts->>'block' = 'signal' THEN $2::int ELSE $1::int END)`, [COOLDOWN_MIN, RECHECK_MIN])).map((r) => r.mint));
   const held = new Set(pos.map((p) => p.mint));
   const pool = cands.filter(tradable);
   const queue = pool.filter((c) => !recent.has(c.mint) && !held.has(c.mint)).slice(0, MAX_EVAL);
   out.funnel = { seen: cands.length, tradable: pool.length, inCooldown: pool.filter((c) => recent.has(c.mint)).length, judged: queue.length };
   const ready = [];
+  let rugCalls = 0, whaleCalls = 0;
   let tape = null; // the coin on the big screen: the one entered, else the last one judged with bars
   for (const c of queue) {
     const tier = tierOf(c.liqUsd || 0, c.createdAt, nowMs);
@@ -48,8 +51,13 @@ export async function councilTick(env, x) {
     const noteSignal = (verdict, reason) => (facts.whale?.signal ? d.q(`UPDATE mob_aq_signals SET verdict=$2, reason=$3 WHERE mint=$1 AND verdict IS NULL AND at > now() - interval '30 minutes'`, [c.mint, verdict, reason]) : null);
     const block = async (reason, number, kind = "hard") => { await noteSignal("BLOCK", reason); facts.block = kind; await council("BLOCK", c, reason, number, facts); out.evaluated.push({ symbol: c.symbol, tier, verdict: "BLOCK", kind, reason, number }); near.push({ c, reason, setup: s, rt: facts.rtPct ?? null }); };
     if (c.liqUsd == null || c.liqUsd < C.hardMinLiq) { await block("liquidity too low", c.liqUsd); continue; }
-    const rg = await feeds.rug(env, c.mint);
-    health.rugcheck = rg.ok;
+    // RugCheck when it answers (cached 30 min); when it is rate limited, Jupiter's own audit carries the hard check for a
+    // tier A coin (authorities off, decimals known). Tier B/C without a report stay a NO: missing data.
+    let rg = rugCalls < RUG_PER_TICK || !c.audit ? await feeds.rug(env, c.mint) : { ok: false, data: null, skipped: true };
+    if (!rg.cached && !rg.skipped) rugCalls++;
+    if (!rg.skipped) health.rugcheck = rg.ok || health.rugcheck === true;
+    if (!rg.ok && c.audit && tier === "A" && c.audit.decimals != null)
+      rg = { ok: true, data: { mintAuthority: c.audit.mintOff ? null : "active (Jupiter audit)", freezeAuthority: c.audit.freezeOff ? null : "active (Jupiter audit)", rugged: false, danger: [], topHolderPct: 0, top10Pct: c.audit.topHolders ?? 0, lpLockedPct: null, decimals: c.audit.decimals, creator: c.dev, insiders: [], source: "jupiter audit" } };
     const hs = hardSafety(rg.data);
     facts.safety = rg.data;
     set("cn.safety", rg.ok ? "busy" : "blocked", `${c.symbol} (tier ${tier}): ${hs.reason}`);
@@ -70,7 +78,7 @@ export async function councilTick(env, x) {
     const fib = bars ? fibSetup(bars, strategies.R3.params, nowSec) : null;
     if (bars) tape = { c, src: oh.src, bars, fib, setup: fib, verdict: "BLOCK" };
     s = fib;
-    const wh = hs.ok && CALLS.jupiterData < CAPS.jupiterData ? await whaleSignal(env, c, rg.data, set) : { ok: null, signal: false, reason: hs.ok ? "not read: call budget" : "not read: hard safety failed" };
+    const wh = hs.ok && whaleCalls < WHALE_CHECKS && CALLS.jupiterData < CAPS.jupiterData ? (whaleCalls++, await whaleSignal(env, c, rg.data, set)) : { ok: null, signal: false, reason: hs.ok ? "not read: call budget" : "not read: hard safety failed" };
     if (wh.ok != null) health.whales_trades = wh.ok;
     facts.whale = wh;
     if (!hs.ok) { await block(hs.reason, hs.number); continue; }

@@ -202,7 +202,7 @@ export function momentumSetup(candles, p, nowSec) {
   for (const c of candles.slice(-p.stopBars)) lo = Math.min(lo, c.l);
   const P = last.c, stopPct = clampStop(((P - lo * 0.998) / P) * 100, p), out = { staleSec, ...levels(P, stopPct, p.rr, { breakout: hi }) };
   if (!(P > hi)) return { ...out, signal: false, why: `no breakout (close under the ${p.lookback}-bar high)`, number: round((P / hi - 1) * 100, 3) };
-  if (!(last.c > last.o)) return { ...out, signal: false, why: "breakout bar is not green", number: 0 };
+  if (!(last.c >= last.o)) return { ...out, signal: false, why: "breakout bar is red", number: 0 };
   if (stopPct > p.maxStopPct) return { ...out, signal: false, why: `breakout but the stop is wider than ${p.maxStopPct}%`, number: out.stopPct };
   return { ...out, signal: true, why: `breakout above the ${p.lookback}-bar high`, number: round((P / hi - 1) * 100, 3) };
 }
