@@ -113,6 +113,28 @@ export function replay(candlesByPool, p, costPct) {
   return { ...stats(res), costPct, trades: res.length };
 }
 
+// Replay any setup function on stored candles: net result per signal and how many bars the winners needed to reach target.
+export function replaySetup(candlesByPool, setupFn, p, costPct, maxBars = 90) {
+  const res = [], toTarget = [];
+  for (const cs of Object.values(candlesByPool)) {
+    let i = 30;
+    while (i < cs.length - 1) {
+      const s = setupFn(cs.slice(Math.max(0, i - 59), i + 1), p, cs[i].t + 60);
+      if (!s.signal || s.stopPct >= s.targetPct) { i++; continue; }
+      let j = i + 1, exit = null, hit = false;
+      for (; j < cs.length && j <= i + maxBars; j++) {
+        if (cs[j].l <= s.stopPrice) { exit = s.stopPrice; break; }
+        if (cs[j].h >= s.targetPrice) { exit = s.targetPrice; hit = true; break; }
+      }
+      if (exit == null) { if (j > i + maxBars) { j = i + maxBars; exit = cs[j].c; } else break; }
+      if (hit) toTarget.push(j - i);
+      res.push(round(((exit - s.price) / s.price) * 100 - costPct, 3));
+      i = j + 1;
+    }
+  }
+  toTarget.sort((a, b) => a - b);
+  return { ...stats(res), costPct, trades: res.length, targetsHit: toTarget.length, medianBarsToTarget: toTarget.length ? toTarget[Math.floor(toTarget.length / 2)] : null };
+}
 export function round(x, d) { if (x == null || !Number.isFinite(x)) return null; const f = 10 ** d; return Math.round(x * f) / f; }
 
 // Survival: the island lives on the paper wallet. health = equity / start as 0-100.
@@ -192,19 +214,36 @@ export function scoreOf(objections, weights, tier, whale) {
 }
 const clampStop = (pct, p) => (pct < p.minStopPct ? p.minStopPct : pct);
 function levels(P, stopPct, rr, extra) { return { price: P, stopPct: round(stopPct, 3), targetPct: round(stopPct * rr, 3), stopPrice: P * (1 - stopPct / 100), targetPrice: P * (1 + (stopPct * rr) / 100), ...extra }; }
-// R6 momentum breakout (tier A/B): the last 1m bar closes green above the high of the previous p.lookback bars.
+// Volatility of THIS coin: average true range of 5-minute bars (built from the 1m bars), in % of price. Signals, stops and
+// targets are sized in these units, so a quiet coin and a wild coin are judged on their own scale.
+export function atr5Pct(candles) {
+  const five = [];
+  for (let i = candles.length % 5; i + 5 <= candles.length; i += 5) { const g = candles.slice(i, i + 5); five.push({ h: Math.max(...g.map((c) => c.h)), l: Math.min(...g.map((c) => c.l)), c: g[4].c }); }
+  if (five.length < 3) return null;
+  let sum = 0, n = 0;
+  for (let i = 1; i < five.length; i++) { sum += Math.max(five[i].h - five[i].l, Math.abs(five[i].h - five[i - 1].c), Math.abs(five[i].l - five[i - 1].c)); n++; }
+  const P = candles[candles.length - 1].c;
+  return P > 0 ? round((sum / n / P) * 100, 3) : null;
+}
+// R6 momentum breakout (tier A/B): the last bar closes above the high of the previous N bars (N adaptive, p.maxN down to
+// p.minN), not red, with volume at or above the recent average when volume is known. Stop p.atrStop x ATR5, target rr x stop.
 export function momentumSetup(candles, p, nowSec) {
-  const n = candles.length;
-  if (n < p.lookback + 2) return { signal: false, why: "too few candles", number: n };
-  const last = candles[n - 1], staleSec = Math.round(nowSec - (last.t + 60));
-  let hi = -Infinity, lo = Infinity;
-  for (const c of candles.slice(n - 1 - p.lookback, n - 1)) hi = Math.max(hi, c.h);
-  for (const c of candles.slice(-p.stopBars)) lo = Math.min(lo, c.l);
-  const P = last.c, stopPct = clampStop(((P - lo * 0.998) / P) * 100, p), out = { staleSec, ...levels(P, stopPct, p.rr, { breakout: hi }) };
-  if (!(P > hi)) return { ...out, signal: false, why: `no breakout (close under the ${p.lookback}-bar high)`, number: round((P / hi - 1) * 100, 3) };
+  const n = candles.length, atr = n >= 20 ? atr5Pct(candles) : null;
+  if (n < p.maxN + 2 || atr == null) return { signal: false, why: "too few candles", number: n };
+  const last = candles[n - 1], staleSec = Math.round(nowSec - (last.t + 60)), P = last.c;
+  const stopPct = Math.max(p.minStopPct, p.atrStop * atr), out = { staleSec, atrPct: atr, ...levels(P, stopPct, p.rr, {}) };
+  let N = 0, hi = null;
+  for (let k = p.maxN; k >= p.minN; k--) { const h = Math.max(...candles.slice(n - 1 - k, n - 1).map((c) => c.h)); if (hi == null) hi = h; if (P > h) { N = k; hi = h; break; } hi = h; }
+  if (!N) return { ...out, signal: false, why: `no breakout (close under the ${p.minN}-bar high)`, number: round((P / hi - 1) * 100, 3) };
   if (!(last.c >= last.o)) return { ...out, signal: false, why: "breakout bar is red", number: 0 };
+  // the first 9 paper R6 trades all bought closes 0.001-0.1% over the high on coins that then moved under 2% in 30 minutes:
+  // a breakout has to clear the high by a real fraction of the coin's own ATR, or it is noise
+  const margin = ((P / hi - 1) * 100) / atr;
+  if (margin < p.minBreakAtr) return { ...out, signal: false, why: `breakout too small (${round(margin, 2)}x ATR over the high, needs ${p.minBreakAtr}x)`, number: round(margin, 2) };
+  const vols = candles.slice(n - 1 - p.minN, n - 1).map((c) => c.v || 0), avg = vols.reduce((a, b) => a + b, 0) / vols.length;
+  if (avg > 0 && (last.v || 0) < avg) return { ...out, signal: false, why: "breakout without a volume uptick", number: round((last.v || 0) / avg, 2) };
   if (stopPct > p.maxStopPct) return { ...out, signal: false, why: `breakout but the stop is wider than ${p.maxStopPct}%`, number: out.stopPct };
-  return { ...out, signal: true, why: `breakout above the ${p.lookback}-bar high`, number: round((P / hi - 1) * 100, 3) };
+  return { ...out, signal: true, bars: N, why: `breakout above the ${N}-bar high (ATR ${atr}%)`, number: round((P / hi - 1) * 100, 3) };
 }
 export function rsi(closes, len = 14) {
   if (closes.length < len + 1) return null;
@@ -212,20 +251,20 @@ export function rsi(closes, len = 14) {
   for (let i = closes.length - len; i < closes.length; i++) { const ch = closes[i] - closes[i - 1]; if (ch > 0) g += ch; else l -= ch; }
   return l === 0 ? 100 : round(100 - 100 / (1 + g / l), 2);
 }
-// R7 oversold bounce (tier A): price fell p.minDropPct from the window high, RSI(14) went under p.rsiMax in the last 5 bars,
-// and the last bar is green and closes above the previous close.
+// R7 oversold bounce (tier A): price fell at least p.dropAtr x ATR5 from the window high, RSI(14) went under p.rsiMax in the
+// last 5 bars, and the last bar is green and closes above the previous close. Stop p.atrStop x ATR5, target rr x stop.
 export function bounceSetup(candles, p, nowSec) {
-  const n = candles.length;
-  if (n < 30) return { signal: false, why: "too few candles", number: n };
+  const n = candles.length, atr = n >= 30 ? atr5Pct(candles) : null;
+  if (n < 30 || atr == null) return { signal: false, why: "too few candles", number: n };
   const last = candles[n - 1], prev = candles[n - 2], staleSec = Math.round(nowSec - (last.t + 60)), closes = candles.map((c) => c.c);
-  let H = -Infinity, lo = Infinity, minRsi = Infinity;
+  let H = -Infinity, minRsi = Infinity;
   for (const c of candles) H = Math.max(H, c.h);
-  for (const c of candles.slice(-p.stopBars)) lo = Math.min(lo, c.l);
   for (let k = 0; k < 5; k++) { const r = rsi(closes.slice(0, n - k)); if (r != null) minRsi = Math.min(minRsi, r); }
-  const P = last.c, drop = ((H - P) / H) * 100, stopPct = clampStop(((P - lo * 0.998) / P) * 100, p), out = { staleSec, ...levels(P, stopPct, p.rr, { dropPct: round(drop, 2), rsi: minRsi }) };
-  if (drop < p.minDropPct) return { ...out, signal: false, why: `not oversold (down ${round(drop, 2)}% from the high, needs ${p.minDropPct}%)`, number: round(drop, 2) };
+  const P = last.c, drop = ((H - P) / H) * 100, need = round(Math.max(p.minDropPct, p.dropAtr * atr), 2), stopPct = Math.max(p.minStopPct, p.atrStop * atr);
+  const out = { staleSec, atrPct: atr, ...levels(P, stopPct, p.rr, { dropPct: round(drop, 2), rsi: minRsi }) };
+  if (drop < need) return { ...out, signal: false, why: `not oversold (down ${round(drop, 2)}% from the high, needs ${need}% = ${p.dropAtr}x ATR)`, number: round(drop, 2) };
   if (!(minRsi < p.rsiMax)) return { ...out, signal: false, why: `RSI ${minRsi} not under ${p.rsiMax}`, number: minRsi };
   if (!(last.c > last.o && last.c > prev.c)) return { ...out, signal: false, why: "oversold but no bounce bar yet", number: minRsi };
   if (stopPct > p.maxStopPct) return { ...out, signal: false, why: `bounce but the stop is wider than ${p.maxStopPct}%`, number: out.stopPct };
-  return { ...out, signal: true, why: `oversold bounce (down ${round(drop, 2)}%, RSI ${minRsi})`, number: minRsi };
+  return { ...out, signal: true, why: `oversold bounce (down ${round(drop, 2)}% = ${round(drop / atr, 1)}x ATR, RSI ${minRsi})`, number: minRsi };
 }

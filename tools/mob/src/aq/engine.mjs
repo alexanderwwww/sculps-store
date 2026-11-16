@@ -3,7 +3,7 @@
 import { db } from "../db.mjs";
 import { DEPTS, seedWorkers, TOOLS, STRATEGIES, GTA6_DATE, GTA_RE, CEO, R5_PARAMS } from "./seed.mjs";
 import { feeds, midPrices, jupQuote, SOL_MINT, jupPrices, CALLS, CAPS, resetCalls } from "./feeds.mjs";
-import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round, survival, whaleSetup } from "./logic.mjs";
+import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round, survival, whaleSetup, replaySetup, momentumSetup } from "./logic.mjs";
 import { whaleSignal, shadowTick, shadowStats, mineTick, followSignals, whaleState } from "./whales.mjs";
 import { lanesTick, laneStats } from "./lanes.mjs";
 import { councilTick, learnFromTrade, ruleWeights, MIN_OWN_BARS } from "./council.mjs";
@@ -41,6 +41,9 @@ export async function ensureSeed(env) {
   await d.q(`INSERT INTO mob_aq_state (k, v) VALUES ('cash_sol', $1), ('kill', 'false'), ('mode', '"PAPER"') ON CONFLICT (k) DO NOTHING`, [JSON.stringify(START_SOL)]);
   // R5 went from "not tested" to paper on Alex's word (2026-11-16, "whales first"). A recorded change, never a silent one.
   const r5 = await d.one(`UPDATE mob_aq_strategies SET status='paper', name=$1, params=$2 WHERE id='R5' AND status='not tested' RETURNING id`, [STRATEGIES[4][1], JSON.stringify(R5_PARAMS)]);
+  // recipe v3 (Alex, 2026-11-16): signals in units of each coin's own volatility. Stored params from before that are replaced, on the record.
+  const v3 = await d.q(`UPDATE mob_aq_strategies SET params = CASE id WHEN 'R6' THEN $1::jsonb ELSE $2::jsonb END WHERE id IN ('R6','R7') AND NOT (params ? 'atrStop') RETURNING id`, [JSON.stringify(STRATEGIES[5][4]), JSON.stringify(STRATEGIES[6][4])]);
+  if (v3.length) await brain(d, "learning", "tournament", `Recipe v3 adopted for ${v3.map((r) => r.id).join(", ")}: breakout, bounce, stops and targets are measured in the coin's own 5-minute ATR instead of fixed percentages; fib swings need 3x ATR instead of a fixed 8%.`);
   if (r5) await brain(d, "learning", "tournament", "R5 whale follow activated on PAPER by Alex (2026-11-16): entry = 2+ independent winning wallets buying a coin that passes safety and the cost gate; stop under the recent swing low (4-12%), target 2.5x the stop, 30 min time stop.");
   seeded.add(tag);
 }
@@ -212,6 +215,19 @@ export async function tick(env, opts = {}) {
       set("cn.timemachine", "busy", `replayed ${rp.trades} trades on ${v.pools} pools`);
     } else set("cn.timemachine", "idle", `last replay ${lastReplay.trades} trades, mean ${lastReplay.expectancyPct ?? "n/a"}%`);
     const rpl = await getState(d, "replay_R3", null);
+    // R6 replay on the same stored candles: how long winners really take to reach target sizes the R6 time stop
+    let r6rep = await getState(d, "replay_R6", null);
+    if (!r6rep || nowSec - r6rep.at > 1800) {
+      const rows = await d.q(`SELECT pool, t, o, h, l, c, v FROM mob_aq_candles WHERE t > $1 ORDER BY pool, t`, [Math.floor(nowSec) - 86400]);
+      const by = {};
+      for (const r of rows) (by[r.pool] ||= []).push({ t: Number(r.t), o: r.o, h: r.h, l: r.l, c: r.c, v: r.v });
+      const rp = replaySetup(by, momentumSetup, { ...STRATEGIES[5][4], ...(strategies.R6?.params || {}) }, 0.6);
+      // time stop = twice the median bars winners needed, between 15 and 90 minutes; under 20 targets hit there is no evidence and the default stays
+      const timeStopMin = rp.targetsHit >= 20 ? Math.max(15, Math.min(90, rp.medianBarsToTarget * 2)) : null;
+      r6rep = { at: nowSec, pools: Object.keys(by).length, candles: rows.length, ...rp, timeStopMin };
+      await setState(d, "replay_R6", r6rep);
+      if (rows.length) await brain(d, "council", "finding", `Time Machine R6 replay: ${rp.trades} signals on ${r6rep.pools} pools, mean ${rp.expectancyPct ?? "n/a"}% net of 0.6% cost, ${rp.targetsHit} reached target (median ${rp.medianBarsToTarget ?? "n/a"} min). R6 time stop: ${timeStopMin ? `${timeStopMin} min from the replay` : "default (under 20 targets, no evidence yet)"}.`, r6rep);
+    }
 
     // ---- Zeus: limits before any candidate is looked at
     const cash = Number(await getState(d, "cash_sol", START_SOL));
@@ -233,16 +249,21 @@ export async function tick(env, opts = {}) {
     const dead = destroyed || sv.stage === "destroyed";
     await setState(d, "survival", sv);
     set("rk.exposure", dead ? "blocked" : "busy", `health ${sv.health} (${sv.stage}): size x${sv.sizeMult}, max ${sv.maxOpen} open`);
+    const paperMode = (await getState(d, "mode", "PAPER")) !== "LIVE";
+    const runTrades = await d.q(`SELECT pnl_sol FROM mob_aq_trades ORDER BY id DESC LIMIT 10`);
     let riskBlock = null;
     if (dead) riskBlock = ["island destroyed: only Alex can rebuild", sv.health];
     else if (kill) riskBlock = ["kill switch on", 1];
     else if (pos.length >= Math.min(COUNCIL.maxOpen, sv.maxOpen)) riskBlock = [sv.maxOpen < COUNCIL.maxOpen ? `max open positions (${sv.stage})` : "max open positions", pos.length];
     else if (dayPct <= -P.dayStopPct) riskBlock = ["daily stop hit", round(dayPct, 2)];
-    else if (streak) riskBlock = ["loss-streak throttle", P.lossStreak];
+    // PAPER never halts on a losing streak (halting is for live): it trades smaller and asks for a stronger score instead
+    else if (streak && paperMode === false) riskBlock = ["loss-streak throttle", P.lossStreak];
+    const lossRun = (() => { let n = 0; for (const t of runTrades) { if (t.pnl_sol <= 0) n++; else break; } return n; })();
+    const throttle = lossRun >= 5 ? { size: 0.5, score: 10, losses: lossRun } : lossRun >= 3 ? { size: 0.75, score: 10, losses: lossRun } : { size: 1, score: 0, losses: lossRun };
     set("rk.kill", kill ? "blocked" : "busy", kill ? "KILL SWITCH ON: no new entries" : "kill switch off");
     set("rk.limits", "busy", `${pos.length}/${Math.min(COUNCIL.maxOpen, sv.maxOpen)} positions open, ${COUNCIL.riskPct}% risk each`);
     set("rk.day", dayPct <= -P.dayStopPct ? "blocked" : "busy", `today ${round(dayPct, 2)}% (stop -${P.dayStopPct}%)`);
-    set("rk.streak", streak ? "blocked" : "busy", streak ? `${P.lossStreak} losses in a row: paused` : "no loss streak");
+    set("rk.streak", "busy", throttle.size < 1 ? `${throttle.losses} losses in a row: size x${throttle.size}, score +${throttle.score} (paper never halts)` : "no loss streak");
     set("rk.dd", "busy", `equity ${round(equity, 4)} SOL vs start ${START_SOL}`);
     set("ex.balance", "busy", `cash ${round(cash, 4)} SOL`);
     set("ex.live", "blocked", "locked: PAPER only, no wallet");
@@ -252,7 +273,7 @@ export async function tick(env, opts = {}) {
       set("cn.veto", "busy", `BLOCK: ${riskBlock[0]}`);
     } else {
       // ---- the Council (hard blocks, soft score, tiers, R3/R5/R6/R7, explore) lives in council.mjs
-      await councilTick(env, { d, cands, tradable, strategies, pos, cash, equity, sv, solUsd, feeSol, nowSec, gap, health, set, out, near, rpl, fng: fg.data?.value ?? null, ownCandles, brain, flow, setState,
+      await councilTick(env, { throttle, r6TimeStopMin: r6rep?.timeStopMin ?? null, d, cands, tradable, strategies, pos, cash, equity, sv, solUsd, feeSol, nowSec, gap, health, set, out, near, rpl, fng: fg.data?.value ?? null, ownCandles, brain, flow, setState,
         council: (v, c, reason, number, facts) => council(d, v, c, reason, number, facts) });
     }
     if (!W["ex.paper"]) set("ex.paper", "idle", "no PASS this tick");

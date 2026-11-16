@@ -186,7 +186,7 @@ test("whales: 2+ independent winners buying = signal; creator excluded; bots not
   await d.q(`DELETE FROM mob_aq_funders`); delete env.HELIUS_API_KEY;
 });
 
-test("kill switch blocks every new entry; loss streak throttles", async () => {
+test("kill switch blocks every new entry; a loss streak throttles size on paper, never halts", async () => {
   await clearCache();
   trendingPools = [pool("FRESH", MINT.F, POOL.F, 300000)];
   assert.equal((await R("POST", "/api/aq/kill", { body: { on: true } })).status, 401);
@@ -198,10 +198,12 @@ test("kill switch blocks every new entry; loss streak throttles", async () => {
   await R("POST", "/api/aq/kill", { bearer: "tok-test", body: { on: false } });
   // three recent losses in a row
   await db(env).q(`INSERT INTO mob_aq_trades (strategy, symbol, pnl_sol, pnl_pct, reason) VALUES ('R3','L1',-0.001,-2,'stop'),('R3','L2',-0.001,-2,'stop'),('R3','L3',-0.001,-2,'stop')`);
+  // PAPER never halts on a losing streak: it enters smaller (x0.75 after 3 losses) and asks for 10 more score points
   const t2 = await tick(env);
-  assert.equal(t2.entered, null);
-  s = await S(); assert.equal(s.council.last.reason, "risk: loss-streak throttle");
-  assert.ok(!(await db(env).q(`SELECT 1 FROM mob_aq_positions WHERE mint=$1`, [MINT.F])).length);
+  assert.ok(t2.entered && t2.entered.symbol === "FRESH", JSON.stringify(t2.evaluated)); assert.ok(t2.entered.sizeSol <= 0.05 * 0.85 * 0.75 + 1e-9, String(t2.entered.sizeSol));
+  s = await S(); assert.ok(!s.council.vetoes.some((v) => /loss-streak/.test(v.reason)));
+  assert.match(s.departments.find((x) => x.id === "risk").workers.find((w) => w.job === "Loss-streak throttle").note, /3 losses in a row: size x0\.75, score \+10 \(paper never halts\)/);
+  await db(env).q(`DELETE FROM mob_aq_positions WHERE mint=$1`, [MINT.F]); await db(env).q(`UPDATE mob_aq_state SET v='1' WHERE k='cash_sol'`);
 });
 
 test("state JSON follows the contract", async () => {
@@ -216,7 +218,7 @@ test("state JSON follows the contract", async () => {
     assert.equal(dp.workers.length, 12, dp.id); assert.ok(dp.skills.length >= 2); assert.equal(typeof dp.live, "boolean");
     for (const w of dp.workers) { assert.ok(["idle", "busy", "blocked"].includes(w.status)); assert.ok(["code", "claude", "grok", "chatgpt"].includes(w.power)); assert.ok(w.skills.length); }
   }
-  assert.equal(s.departments.find((x) => x.id === "whales").live, false, "no whale feed = not live");
+  assert.equal(s.departments.find((x) => x.id === "scouts_stocks").live, true); // every department reports a real boolean; whales go live when swaps were read
   assert.ok(s.departments.find((x) => x.id === "scouts_sol").workers.find((w) => w.job === "Trending list").status === "busy");
   assert.ok(s.market.sol.price > 0 && s.market.fearGreed.value === 10);
   assert.ok(s.council.vetoes.length <= 10 && s.flows.length <= 40 && s.brain.length <= 30);
@@ -566,18 +568,22 @@ test("ALWAYS TRADING: hard vs soft, tiers, R6 and R7 entries, explore cadence, w
   const w1 = Object.fromEntries(L.SOFT_RULES.map((n) => [n, 1]));
   assert.equal(L.scoreOf([], w1, "A", false).score, 110); assert.equal(L.scoreOf(["lp_locked", "top10", "top_holder"], w1, "B", false).score, 75); assert.ok(L.scoreOf(["lp_locked", "top10", "top_holder", "young"], w1, "C", false).score < L.COUNCIL.passScore);
   assert.ok(L.scoreOf(["lp_locked"], { lp_locked: 0.2 }, "B", false).score > L.scoreOf(["lp_locked"], { lp_locked: 3 }, "B", false).score, "a rule's weight moves the score");
-  // R6: flat 40 bars then a green close above the 20-bar high; stop 2-4%, target 2x
-  const t0 = Math.floor(now / 60000) * 60 - 60, bar = (i, o, c2, n = 45) => ({ t: t0 - (n - 1 - i) * 60, o, h: Math.max(o, c2) * 1.0005, l: Math.min(o, c2) * 0.9995, c: c2, v: 1 });
+  // R6: 44 choppy bars (0.8% wicks) then a green close clearly above the 20-bar high; stop 1.5x ATR5, target 2x the stop
+  const t0 = Math.floor(now / 60000) * 60 - 60, bar = (i, o, c2, n = 45) => ({ t: t0 - (n - 1 - i) * 60, o, h: Math.max(o, c2) * 1.008, l: Math.min(o, c2) * 0.992, c: c2, v: 1 });
   const flat = Array.from({ length: 44 }, (_, i) => bar(i, 1, 1 + (i % 2) * 0.001));
-  const brk = L.momentumSetup([...flat, bar(44, 1.001, 1.012)], R6_PARAMS, now / 1000);
-  assert.equal(brk.signal, true, brk.why); assert.ok(brk.stopPct >= 2 && brk.stopPct <= 4); assert.equal(brk.targetPct, brk.stopPct * 2); assert.ok(brk.stopPct < brk.targetPct);
-  assert.equal(L.momentumSetup([...flat, bar(44, 1.001, 1.0005)], R6_PARAMS, now / 1000).signal, false, "no breakout, no trade");
-  assert.match(L.momentumSetup([...flat.slice(0, 43), bar(43, 1, 0.94), bar(44, 0.94, 1.02)], R6_PARAMS, now / 1000).why, /stop is wider/);
-  // R7: a 6% slide (RSI under 30) then a green bar closing above the previous close
-  const slide = Array.from({ length: 44 }, (_, i) => (i < 24 ? bar(i, 1, 1) : bar(i, 1 - (i - 24) * 0.003, 1 - (i - 23) * 0.003)));
-  const bounce = L.bounceSetup([...slide, bar(44, 0.94, 0.945)], R7_PARAMS, now / 1000);
-  assert.equal(bounce.signal, true, bounce.why); assert.ok(bounce.rsi < 30 && bounce.dropPct >= 4); assert.equal(bounce.targetPct, bounce.stopPct * 2);
-  assert.match(L.bounceSetup([...slide, bar(44, 0.94, 0.937)], R7_PARAMS, now / 1000).why, /no bounce bar/);
+  const BRK = bar(44, 1.001, 1.03);
+  const brk = L.momentumSetup([...flat, BRK], R6_PARAMS, now / 1000);
+  assert.equal(brk.signal, true, brk.why); assert.ok(brk.atrPct > 1); assert.ok(Math.abs(brk.stopPct - 1.5 * brk.atrPct) < 0.01, "stop in ATR units"); assert.ok(Math.abs(brk.targetPct - brk.stopPct * 2) < 0.01); assert.ok(brk.stopPct < brk.targetPct);
+  assert.match(L.momentumSetup([...flat, bar(44, 1.001, 1.0005)], R6_PARAMS, now / 1000).why, /no breakout/);
+  assert.match(L.momentumSetup([...flat, bar(44, 1.001, 1.0095)], R6_PARAMS, now / 1000).why, /breakout too small \(0\.\d+x ATR/, "a close a hair over the high is noise (the first 9 paper R6 trades)");
+  assert.match(L.momentumSetup([...flat, { ...BRK, v: 0.2 }], R6_PARAMS, now / 1000).why, /without a volume uptick/);
+  assert.equal(L.atr5Pct(flat.slice(0, 10)), null, "too few bars: unknown, never invented");
+  // R7: a 9% slide (RSI under 35, more than 2.5x ATR) then a green bar closing above the previous close
+  const slide = Array.from({ length: 44 }, (_, i) => (i < 24 ? bar(i, 1, 1) : bar(i, 1 - (i - 24) * 0.0045, 1 - (i - 23) * 0.0045)));
+  const BNC_BAR = bar(44, 0.91, 0.918);
+  const bounce = L.bounceSetup([...slide, BNC_BAR], R7_PARAMS, now / 1000);
+  assert.equal(bounce.signal, true, bounce.why); assert.ok(bounce.rsi < 35 && bounce.dropPct >= 2.5 * bounce.atrPct); assert.ok(Math.abs(bounce.targetPct - bounce.stopPct * 2) < 0.01);
+  assert.match(L.bounceSetup([...slide, bar(44, 0.91, 0.905)], R7_PARAMS, now / 1000).why, /no bounce bar/);
   assert.match(L.bounceSetup([...flat, bar(44, 1, 1.001)], R7_PARAMS, now / 1000).why, /not oversold/);
 
   // engine: an R6 breakout on a tier A coin and an R7 bounce on another; then explore cadence and learning
@@ -589,9 +595,9 @@ test("ALWAYS TRADING: hard vs soft, tiers, R6 and R7 entries, explore cadence, w
   const MOM = "MomentumAAAA1111111111111111111111111111111", BNC = "BounceAAAAA11111111111111111111111111111111", NEW = "NewLaunchCC11111111111111111111111111111111";
   backOf = { [MOM]: 0.998, [BNC]: 0.998 }; // liquid tier A coins: 0.2% pool cost, like the 0.09-0.25% measured live
   jupLists = () => ({ pools: [mk("MOMO", MOM, 900000, 40), mk("BNCE", BNC, 800000, 40), mk("NEWC", NEW, 60000, 0.5)] });
-  jupCharts[MOM] = () => asJup([...flat, bar(44, 1.001, 1.012)]); jupCharts[BNC] = () => asJup([...slide, bar(44, 0.94, 0.945)]); jupCharts[NEW] = () => asJup([...flat, bar(44, 1.001, 1.012)]);
+  jupCharts[MOM] = () => asJup([...flat, BRK]); jupCharts[BNC] = () => asJup([...slide, BNC_BAR]); jupCharts[NEW] = () => asJup([...flat, BRK]);
   let t = await tick(env);
-  assert.equal(t.entered?.strategy, "R6", JSON.stringify([t.evaluated, t.funnel, t.survival])); assert.equal(t.entered.tier, "A"); assert.equal(t.entered.tag, "PASS"); assert.ok(t.entered.targetPct >= 4 && t.entered.targetPct <= 8);
+  assert.equal(t.entered?.strategy, "R6", JSON.stringify([t.evaluated, t.funnel, t.survival])); assert.equal(t.entered.tier, "A"); assert.equal(t.entered.tag, "PASS"); assert.ok(t.entered.targetPct >= 3 && t.entered.targetPct <= 12, String(t.entered.targetPct));
   assert.equal(t.evaluated.find((e) => e.symbol === "BNCE").verdict, "WAIT");
   // tier C never gets R6/R7; its fib has no pullback -> a "signal" block, not a trade
   const nw = t.evaluated.find((e) => e.symbol === "NEWC"); assert.equal(nw.tier, "C"); assert.equal(nw.kind, "signal"); assert.match(nw.reason, /^no signal: R3 /);
@@ -601,7 +607,7 @@ test("ALWAYS TRADING: hard vs soft, tiers, R6 and R7 entries, explore cadence, w
   // explore cadence: a coin whose soft rules sink the score is refused while an entry is fresh, and taken as EXPLORE after 3 minutes
   const SOFT = "SoftCoinBB111111111111111111111111111111111";
   backOf[SOFT] = 0.998;
-  jupLists = () => ({ pools: [mk("SOFT", SOFT, 150000, 3)] }); jupCharts[SOFT] = () => asJup([...flat, bar(44, 1.001, 1.012)]);
+  jupLists = () => ({ pools: [mk("SOFT", SOFT, 150000, 3)] }); jupCharts[SOFT] = () => asJup([...flat, BRK]);
   rugFor[SOFT] = () => { const r = safeRug(); r.risks = [{ name: "Low Liquidity", level: "danger" }, { name: "x", level: "danger" }]; r.topHolders = r.topHolders.map((h) => ({ ...h, pct: h.pct * 8 })); return r; };
   await d.q(`UPDATE mob_aq_rules SET weight = 1.5 WHERE name IN ('danger_risk','top10','top_holder')`);
   await d.q(`DELETE FROM mob_aq_market WHERE k LIKE 'rug:%' OR k = 'jup:top'`);

@@ -230,9 +230,12 @@ export const R3_PARAMS = {
 // Stop 4-12% under the recent swing low, target 2.5x the stop (so 10-30%): the smallest target (10%) still clears the 6x
 // cost gate at a measured round trip up to 1.66%, and the stop is never larger than the target. No bars: fixed 8% / 20%.
 export const R5_PARAMS = { ...R3_PARAMS, stopLookback: 15, minStopPct: 4, maxStopPct: 12, rr: 2.5, fixedStopPct: 8, timeStopMin: 30 };
-// R6/R7 (ALWAYS TRADING): liquid coins cost 0.1-0.9% a round trip, so 4-8% targets clear the 6x gate. Stop 2-4%, target 2x the stop.
-export const R6_PARAMS = { lookback: 20, stopBars: 5, minStopPct: 2, maxStopPct: 4, rr: 2, timeStopMin: 30 };
-export const R7_PARAMS = { minDropPct: 4, rsiMax: 30, stopBars: 10, minStopPct: 2, maxStopPct: 4, rr: 2, timeStopMin: 45 };
+// R6/R7 (ALWAYS TRADING, ATR-relative since 2026-11-16): every threshold is in units of the coin's own 5-minute ATR.
+// A coin too quiet for a target of 6x the measured cost is simply not tradable, and the Council says so.
+export const R6_PARAMS = { minN: 8, maxN: 20, minBreakAtr: 0.25, atrStop: 1.5, minStopPct: 0.8, maxStopPct: 6, rr: 2, timeStopMin: 30 };
+export const R7_PARAMS = { dropAtr: 2.5, minDropPct: 2, rsiMax: 35, atrStop: 1.5, minStopPct: 0.8, maxStopPct: 6, rr: 2, timeStopMin: 45 };
+// R3 fib: the swing must be at least impulseAtr x ATR5 (never under minImpulseFloor %), instead of a fixed 8%.
+export const R3_ATR = { impulseAtr: 3, minImpulseFloor: 2 };
 export const STRATEGIES = [
   ["R1", "R1 US stocks ORB + Time Machine", "stocks", "not tested", {}],
   ["R2", "R2 crypto majors (Freqtrade)", "majors", "not tested", {}],

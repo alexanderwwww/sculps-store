@@ -3,7 +3,8 @@
 // (EXPLORE, small), and every closed trade moves the soft-rule weights through a recorded tournament step.
 import { db } from "../db.mjs";
 import { feeds, jupQuote, SOL_MINT, CALLS, CAPS } from "./feeds.mjs";
-import { fibSetup, whaleSetup, momentumSetup, bounceSetup, hardSafety, softObjections, scoreOf, tierOf, sizeFor, roundTripPct, round, COUNCIL, SOFT_RULES } from "./logic.mjs";
+import { R3_ATR, R6_PARAMS, R7_PARAMS } from "./seed.mjs";
+import { atr5Pct, fibSetup, whaleSetup, momentumSetup, bounceSetup, hardSafety, softObjections, scoreOf, tierOf, sizeFor, roundTripPct, round, COUNCIL, SOFT_RULES } from "./logic.mjs";
 import { whaleSignal } from "./whales.mjs";
 
 export const RUG_PER_TICK = 4;
@@ -31,15 +32,22 @@ export async function learnFromTrade(d, pos, tradeId, pnlPct) {
 }
 
 export async function councilTick(env, x) {
+  const throttle = x.throttle || { size: 1, score: 0 };
   const { d, cands, tradable, strategies, pos, cash, equity, sv, solUsd, feeSol, nowSec, gap, health, set, out, near, rpl, fng, council, brain, flow, setState } = x;
   const nowMs = nowSec * 1000, C = COUNCIL;
   const weights = await ruleWeights(d);
   const live = (id) => strategies[id]?.alive && strategies[id].status === "paper";
   // a coin that only lacked a signal is looked at again after RECHECK_MIN; any other verdict rests for COOLDOWN_MIN
-  const recent = new Set((await d.q(`SELECT DISTINCT mint FROM mob_aq_council WHERE mint IS NOT NULL AND at > now() - make_interval(mins => CASE WHEN facts->>'block' = 'signal' THEN $2::int ELSE $1::int END)`, [COOLDOWN_MIN, RECHECK_MIN])).map((r) => r.mint));
+  const recent = new Set((await d.q(`SELECT DISTINCT mint FROM mob_aq_council WHERE mint IS NOT NULL AND at > now() - make_interval(mins => CASE WHEN facts->>'block' IN ('signal','quiet') THEN $2::int ELSE $1::int END)`, [COOLDOWN_MIN, RECHECK_MIN])).map((r) => r.mint));
   const held = new Set(pos.map((p) => p.mint));
   const pool = cands.filter(tradable);
-  const queue = pool.filter((c) => !recent.has(c.mint) && !held.has(c.mint)).slice(0, MAX_EVAL);
+  // movers first: the ten slots go to the coins that are actually moving (5-minute and 1-hour change), where signals form
+  const heat = (c) => Math.abs(c.ch5m ?? 0) * 3 + Math.abs(c.ch1h ?? 0);
+  // half the slots to the hottest movers, half in list order (Jupiter's trending / most traded / organic lists, where the
+  // established tier A and B coins are), so every strategy gets coins it can trade
+  const free = pool.filter((c) => !recent.has(c.mint) && !held.has(c.mint));
+  const hot = free.map((c, i) => ({ c, i })).sort((a, b) => heat(b.c) - heat(a.c) || a.i - b.i).slice(0, MAX_EVAL / 2).map((x2) => x2.c);
+  const queue = [...hot, ...free.filter((c) => !hot.includes(c))].slice(0, MAX_EVAL);
   out.funnel = { seen: cands.length, tradable: pool.length, inCooldown: pool.filter((c) => recent.has(c.mint)).length, judged: queue.length };
   const ready = [];
   let rugCalls = 0, whaleCalls = 0;
@@ -75,7 +83,10 @@ export async function councilTick(env, x) {
     set("st.mtf", oh.ok ? "busy" : "blocked", `${c.symbol}: ${oh.data?.length || 0} one-minute bars from ${oh.src} on first sight`);
     health.candles = oh.ok || health.candles === true;
     const bars = oh.ok && oh.data?.length ? oh.data : null;
-    const fib = bars ? fibSetup(bars, strategies.R3.params, nowSec) : null;
+    const atr = bars ? atr5Pct(bars) : null;
+    facts.atr5Pct = atr;
+    const fib = bars ? fibSetup(bars, { ...strategies.R3.params, // adaptive only downward: a quiet coin needs a swing of 3x its ATR (never under 2%), a wild coin keeps the 8% rule
+      minImpulsePct: atr != null ? Math.min(strategies.R3.params.minImpulsePct, Math.max(R3_ATR.minImpulseFloor, round(R3_ATR.impulseAtr * atr, 2))) : strategies.R3.params.minImpulsePct }, nowSec) : null;
     if (bars) tape = { c, src: oh.src, bars, fib, setup: fib, verdict: "BLOCK" };
     s = fib;
     const wh = hs.ok && whaleCalls < WHALE_CHECKS && CALLS.jupiterData < CAPS.jupiterData ? (whaleCalls++, await whaleSignal(env, c, rg.data, set)) : { ok: null, signal: false, reason: hs.ok ? "not read: call budget" : "not read: hard safety failed" };
@@ -86,8 +97,8 @@ export async function councilTick(env, x) {
     const tries = [];
     if (wh.signal && live("R5")) tries.push(["R5", whaleSetup(bars || [], strategies.R5.params, nowSec, c.priceUsd)]);
     if (bars && live(c.gta ? "R4" : "R3")) tries.push([c.gta ? "R4" : "R3", fib]);
-    if (bars && tier !== "C" && live("R6")) tries.push(["R6", momentumSetup(bars, strategies.R6.params, nowSec)]);
-    if (bars && tier === "A" && live("R7")) tries.push(["R7", bounceSetup(bars, strategies.R7.params, nowSec)]);
+    if (bars && tier !== "C" && live("R6")) tries.push(["R6", momentumSetup(bars, { ...R6_PARAMS, ...strategies.R6.params }, nowSec)]);
+    if (bars && tier === "A" && live("R7")) tries.push(["R7", bounceSetup(bars, { ...R7_PARAMS, ...strategies.R7.params }, nowSec)]);
     facts.signals = Object.fromEntries(tries.map(([id, t]) => [id, t.signal ? "SIGNAL" : t.why]));
     if (!tries.length) { await block(bars ? "no strategy applies to this tier" : `missing data: candles (own history ${own.length}/${MIN_OWN_BARS} bars)`, own.length); continue; }
     const keep = !bars ? [] : oh.src === "own" ? bars.slice(0, -1) : bars;
@@ -103,6 +114,12 @@ export async function councilTick(env, x) {
     const SP = { ...strategies.R3.params, ...strategies[sid].params };
     set("st.stop", "busy", `${c.symbol}: stop ${s.stopPct}%`); set("st.target", "busy", `${c.symbol}: target ${s.targetPct}%`);
     if (s.stopPct >= s.targetPct) { await block("stop > target", round(s.stopPct / s.targetPct, 3)); continue; }
+    // too quiet: even the cheapest possible round trip (the fixed network fee at this tier's size, plus 0.1% of pool cost)
+    // times 6 is above the target this coin's own volatility gives. No quote is spent on it.
+    if (feeSol) {
+      const floorRt = ((2 * feeSol) / (C.maxSizeSol * C.tiers[tier].size * sv.sizeMult * throttle.size)) * 100 + 0.1, needs = round(C.costMultiple * floorRt, 2);
+      if (s.targetPct < needs) { await block(`too quiet: ${sid} target ${s.targetPct}% cannot clear 6x cost (needs >= ${needs}%)`, s.targetPct, "quiet"); continue; }
+    }
     if ((sid === "R3" || sid === "R4") && rpl && rpl.n >= 30 && rpl.ci95 && rpl.ci95[1] < 0) { await block("time machine: replay loses", rpl.expectancyPct, "soft"); continue; }
     const objections = softObjections({ tier, rug: rg.data, createdAt: c.createdAt, boosted: c.boosted, copycat: c.copycat, whale: wh.signal || wh.winners > 0, fng, nowMs });
     const sc = scoreOf(objections, weights, tier, !!wh.signal);
@@ -119,7 +136,7 @@ export async function councilTick(env, x) {
   let tries = 0;
   for (const g of ready) {
     const { c, s, sid, SP, tier } = g;
-    const normal = !g.strict && g.sc.score >= C.passScore;
+    const normal = !g.strict && g.sc.score >= C.passScore + throttle.score;
     const tag = normal ? "PASS" : exploreDue ? "EXPLORE" : null;
     if (out.entered || !tag || tries >= QUOTE_TRIES) {
       const why = out.entered ? "another candidate was taken this tick" : tries >= QUOTE_TRIES ? "quote budget used this tick" : null;
@@ -128,10 +145,10 @@ export async function councilTick(env, x) {
       continue;
     }
     if (!feeSol) { await g.block("missing data: SOL price", null); continue; }
-    const mult = C.tiers[tier].size * g.sc.sizeMult * (tag === "EXPLORE" ? C.exploreSize : 1) * sv.sizeMult;
+    const mult = C.tiers[tier].size * g.sc.sizeMult * (tag === "EXPLORE" ? C.exploreSize : 1) * sv.sizeMult * throttle.size;
     // soft rules and EXPLORE cut the RISK taken; the SOL cap only shrinks with the tier, because the network fee is a fixed
     // amount and a much smaller position could never clear the 6x cost gate
-    const SZ = { stressMult: C.stressMult, riskPct: C.riskPct * mult, maxSizeSol: C.maxSizeSol * C.tiers[tier].size * sv.sizeMult };
+    const SZ = { stressMult: C.stressMult, riskPct: C.riskPct * mult, maxSizeSol: C.maxSizeSol * C.tiers[tier].size * sv.sizeMult * throttle.size };
     const est = sizeFor(equity, cash, s.stopPct, KB_COST_PCT, SZ);
     set("st.stress", "busy", `${c.symbol}: stressed ${est.stressedPct}% -> ${est.sizeSol} SOL (tier ${tier}, x${round(mult, 2)})`);
     if (est.sizeSol < C.minSizeSol) { await g.block("size too small", est.sizeSol); continue; }
@@ -161,7 +178,7 @@ export async function councilTick(env, x) {
     await council("PASS", c, reason, x6, g.facts);
     const p = await d.one(`INSERT INTO mob_aq_positions (strategy, mint, pool, symbol, decimals, tokens_raw, size_sol, fee_sol, entry_price_usd, entry_mid_usd, stop_price, target_price, stop_pct, target_pct, rt_pct, buy_slip_pct, time_stop_at, last_price_usd, last_value_sol, tier, tag, soft, score)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16, to_timestamp($17), $10, $7, $18, $19, $20, $21) RETURNING id`,
-      [sid, c.mint, c.pool, c.symbol, g.rg.data.decimals, tokensRaw, size, feeSol, entryPx, c.priceUsd, s.stopPrice, s.targetPrice, s.stopPct, s.targetPct, rt, slip, nowSec + SP.timeStopMin * 60, tier, tag, JSON.stringify(g.objections), g.sc.score]);
+      [sid, c.mint, c.pool, c.symbol, g.rg.data.decimals, tokensRaw, size, feeSol, entryPx, c.priceUsd, s.stopPrice, s.targetPrice, s.stopPct, s.targetPct, rt, slip, nowSec + (sid === "R6" && x.r6TimeStopMin ? x.r6TimeStopMin : SP.timeStopMin) * 60, tier, tag, JSON.stringify(g.objections), g.sc.score]);
     if (sid === "R5") await brain(d, "whales", "entry", `R5 paper entry ${c.symbol}: ${g.wh.independent} independent winners bought in 15 min (funders ${g.wh.funders}); stop ${s.stopPct}% (${s.structure}), target ${s.targetPct}%, round trip ${rt}%, size ${size} SOL.`, { whale: g.wh, setup: s });
     await setState(d, "cash_sol", cash - size - feeSol);
     await flow(d, "buy", -size, "execution", `buy ${c.symbol} (${sid}${tag === "EXPLORE" ? ", explore" : ""})`);
