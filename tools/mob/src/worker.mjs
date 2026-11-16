@@ -50,9 +50,11 @@ export default {
   },
   async scheduled(event, env, ctx) {
     // Aquarius paper tick runs every minute ("* * * * *"); mob's own tick keeps its */5 schedule.
-    if (event?.cron === "* * * * *") { ctx.waitUntil(C.ensureMigrated(env).then(() => aqTick(env)).then((r) => console.log("aq", JSON.stringify(r))).catch((e) => console.log("aq error", e.message || e))
+    if (event?.cron === "* * * * *") {
+      // the training arena has its own clock: it starts with the minute, beside the main tick, so a slow main tick can never cost it a batch
+      ctx.waitUntil(C.ensureMigrated(env).then(() => arenaTick(env)).then((r) => { if (!r.off) console.log("arena", JSON.stringify(r)); }).catch((e) => console.log("arena error", e.message || e)));
+      ctx.waitUntil(C.ensureMigrated(env).then(() => aqTick(env)).then((r) => console.log("aq", JSON.stringify(r))).catch((e) => console.log("aq error", e.message || e))
       // the training arena runs after the main tick, on its own tables; whatever happens in it, the main tick has already finished
-      .then(() => arenaTick(env)).then((r) => { if (!r.off) console.log("arena", JSON.stringify(r)); }).catch((e) => console.log("arena error", e.message || e))
       // the keeper: rollups, the daily brain backup, the storage watchdog. Last, and never able to stop the two above.
       .then(() => keeperTick(env)).then((r) => { if (Object.keys(r).length) console.log("keeper", JSON.stringify(r)); }).catch((e) => console.log("keeper error", e.message || e))); return; }
     ctx.waitUntil(C.runTick(env).then((r) => console.log("tick", JSON.stringify(r))));

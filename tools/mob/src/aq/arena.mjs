@@ -224,7 +224,7 @@ export async function trainingState(d, S = null) {
 // PACE: the minutes read each tick hold more candidate trades than 700; exactly ARENA.perMinute of them are taken, drawn at
 // random with a seed (an unbiased sample of every setting), each sized 0.8 to 1 SOL by its own seeded draw.
 // Live and replay are stored apart. Walk-forward graduation reads live days only.
-export const FEED = { livePerTick: 2, backPerTick: 6, chunkMin: 80, backChunkMin: 20, grokPerTick: 3, extraRounds: 3, pad: 45, backDays: 30, tape: 60, path: 60, line: 180 };
+export const FEED = { livePerTick: 2, backPerTick: 6, chunkMin: 80, backChunkMin: 20, grokPerTick: 3, extraRounds: 3, pad: 45, backDays: 30, tape: 60, path: 700, line: 180 };
 const chartUrl = (mint, toMin, n) => `https://datapi.jup.ag/v2/charts/${mint}?interval=1_MINUTE&to=${toMin * 60000}&candles=${n}&type=price&quote=usd`;
 async function candlesOf(mint, toMin, n) {
   const cs = (await getJson(chartUrl(mint, toMin, n), 12000))?.candles;

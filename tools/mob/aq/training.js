@@ -15,7 +15,7 @@ const frac = (t) => { const a = t && t.lastTickAt ? (Date.now() - new Date(t.las
 const run = (prev, cur, f) => (num(cur) ? (num(prev) && prev <= cur ? prev + (cur - prev) * f : cur) : null);
 
 // ---------- headline band (under the top bar, both states) ----------
-export function trainingHero() { const el = document.createElement("section"); el.id = "t-hero"; el.className = "hero"; el.hidden = true; setInterval(() => { try { paintHero(store.state); } catch (e) { console.error(e); } }, 250); return el; }
+export function trainingHero() { const el = document.createElement("section"); el.id = "t-hero"; el.className = "hero"; el.hidden = true; setInterval(() => { try { paintHero(store.state); } catch (e) { console.error(e); } }, 70); return el; }
 let heroKey = "", lastWal = null, flashT = 0;
 function paintHero(s) {
   const el = document.getElementById("t-hero"); if (!el) return; el.hidden = !s; if (!s) return;
@@ -32,7 +32,7 @@ function paintHero(s) {
   // the wallet steps through the batch the server resolved: walletPath is the real balance after each part of it, in order
   const f = frac(t), n = run(t.prevTradesTotal, t.trades, f), w = run(t.prevWins, t.wins, f), P = Array.isArray(t.walletPath) ? t.walletPath : [], pi = Math.min(P.length, Math.floor(f * P.length));
   const wal = P.length ? (pi === 0 ? (num(t.prevWalletSol) ? t.prevWalletSol : P[0]) : P[pi - 1]) : t.walletSol;
-  const we = document.getElementById("h-wal"), txt = sol(wal, 3) + " SOL";
+  const we = document.getElementById("h-wal"), txt = sol(wal, 4) + " SOL";
   if (we && we.textContent !== txt) { const up = num(lastWal) ? wal > lastWal : null; we.textContent = txt; if (up != null && wal !== lastWal) { we.className = up ? "fu" : "fd"; clearTimeout(flashT); flashT = setTimeout(() => { we.className = ""; }, 420); } lastWal = wal; }
   set("h-wsub", `started at ${sol(t.startSol, 0)} SOL · ${Array.isArray(t.sizeRange) ? t.sizeRange.join(" to ") : t.sizeSol} SOL a trade · last minute ${num(t.batchPnlSol) ? (t.batchPnlSol > 0 ? "+" : "") + t.batchPnlSol.toFixed(3) + " SOL" : D}`);
   // the equity line: one point a minute, then the minute now playing, point by point
