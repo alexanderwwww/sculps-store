@@ -48,3 +48,6 @@ Each CEO run: pick the branch with the most money for the least of Alex's time �
 
 ## 🎮 GAME DEV (gamedev skill)
 gamedev · threejs-* · camera-systems · game-feel · game-ui-ux · input-systems · level-design · performance-optimization · prototype-fast — used for The City and any browser game.
+
+## 🧪 THE RECIPE (recipe skill)
+recipe · trading-lab · trader-* · gmgn-fib — the master multi-recipe: candidates R1-R5, the gate, how a recipe becomes real.
