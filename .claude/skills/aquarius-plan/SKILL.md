@@ -86,3 +86,6 @@ Claude is the orchestrator: the brain writes the briefing and puts tasks on the 
 ## DECISION (Alex, 2026-11-16): STOP THE ISLAND. First world pass rejected ("plain, blocky, no detail"). Build ONLY THE BOT (bot mode + brain) and make it perfect; the island comes later, rebuilt from a ChatGPT concept image Alex will send, only if the bot proves good. World mode stays in the code but gets no more work until he says so.
 
 ## WORLD HANDED TO CHATGPT (Alex, 2026-11-16): ChatGPT made the style image Alex likes (third-person, canal bridge toward the AQUARIUS dome, WoW HUD). ChatGPT builds only the world on branch aquarius-world-gpt from chatgpt-world-prompt.md; Claude keeps building the brain and the control panel and merges after checking.
+
+## IDEA (Alex, 2026-11-16, not built): AQUARIUS ULTIMUM = both machines as one bot
+One brain and one ledger on our server (the single source of truth, Council decides). Grok Desk on his xAI computer becomes the second engine inside it through the helper link: X narratives, his own picks in his lane, fast price watching, tasks, bot proposals. A shared WAR ROOM chat (new helper tools aq_chat_post / aq_chat_read, shown on the panel) where Claude and Grok plan and argue; Claude answers on its runs, not every second. Grok never gets Cloudflare, database or wallet access: the link is his door. Build only when Alex says build.
