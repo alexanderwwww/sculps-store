@@ -114,3 +114,12 @@ export function replay(candlesByPool, p, costPct) {
 }
 
 export function round(x, d) { if (x == null || !Number.isFinite(x)) return null; const f = 10 ** d; return Math.round(x * f) / f; }
+
+// Survival: the island lives on the paper wallet. health = equity / start as 0-100.
+export function survival(equity, start) {
+  const r = start > 0 ? equity / start : 0, health = Math.max(0, Math.min(100, Math.round(r * 100)));
+  const stage = r <= 0.1 ? "destroyed" : r < 0.5 ? "critical" : r < 0.9 ? "hurt" : r < 1.1 ? "healthy" : "thriving";
+  // risk tightens as health drops: critical = half size and one position; hurt = 3/4 size and two positions
+  const limits = { thriving: [1, 3], healthy: [1, 3], hurt: [0.75, 2], critical: [0.5, 1], destroyed: [0, 0] }[stage];
+  return { health, stage, ratio: round(r, 4), sizeMult: limits[0], maxOpen: limits[1] };
+}

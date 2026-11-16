@@ -5,6 +5,8 @@ import { makeEnv, dropEnv, reqOf, login, mock, resetMocks, res, calls } from "./
 import { db } from "../src/db.mjs";
 import { FX, FX2 } from "./aq-fixtures.mjs";
 import { whaleSignal, slimTrades } from "../src/aq/whales.mjs";
+import { GT_GAP } from "../src/aq/feeds.mjs";
+GT_GAP.ms = 0;
 import { tick, proposeBot, _resetSeeded } from "../src/aq/engine.mjs";
 import { fibSetup, safety, slimRug, stats, replay, candlesFromGT } from "../src/aq/logic.mjs";
 import { R3_PARAMS, seedWorkers, DEPT_IDS } from "../src/aq/seed.mjs";
@@ -302,4 +304,37 @@ test("helper MCP: link + access code, every tool, and no money control", async (
   assert.equal((await db(env).one(`SELECT v FROM mob_aq_state WHERE k='cash_sol'`)).v, cash0); assert.equal((await db(env).one(`SELECT v FROM mob_aq_state WHERE k='kill'`)).v, kill0);
   const log = await db(env).q(`SELECT helper, tool, ok FROM mob_aq_helper_log`);
   assert.ok(log.some((l) => l.helper === "codex" && l.tool === "aq_state") && log.some((l) => l.helper === "grok" && l.tool === "aq_kill" && l.ok === false));
+});
+
+test("survival: every stage, critical tightens risk, destroyed stops trading, only Alex rebuilds", async () => {
+  const { survival } = await import("../src/aq/logic.mjs");
+  assert.deepEqual([1.5, 1, 0.7, 0.3, 0.1, 0].map((e) => survival(e, 1).stage), ["thriving", "healthy", "hurt", "critical", "destroyed", "destroyed"]);
+  assert.equal(survival(0.3, 1).health, 30); assert.equal(survival(2, 1).health, 100);
+  assert.deepEqual([survival(0.3, 1).sizeMult, survival(0.3, 1).maxOpen], [0.5, 1]);
+  const d = db(env);
+  await d.q(`DELETE FROM mob_aq_positions`);
+  await d.q(`UPDATE mob_aq_state SET v='0.3' WHERE k='cash_sol'`);
+  await d.q(`INSERT INTO mob_aq_positions (strategy, mint, pool, symbol, decimals, tokens_raw, size_sol, fee_sol, entry_price_usd, stop_price, target_price, time_stop_at, last_value_sol)
+    VALUES ('R3','HOLDmint','x','HOLD',6,'1',0.01,0.0001,1,0.5,9,now() + interval '1 hour',0.01)`);
+  prices.HOLDmint = 1;
+  await tick(env);
+  let s = await S();
+  assert.equal(s.survival.stage, "critical"); assert.equal(s.survival.maxOpen, 1);
+  assert.ok(s.council.vetoes.some((v) => v.reason === "risk: max open positions (critical)"));
+  await d.q(`UPDATE mob_aq_state SET v='0.05' WHERE k='cash_sol'`);
+  const t = await tick(env);
+  assert.equal(t.entered, null); assert.equal(t.exits.length, 0);
+  s = await S();
+  assert.equal(s.survival.stage, "destroyed"); assert.equal(s.survival.health, 5); // the held position marks at ~0 SOL (1 raw unit)
+  assert.ok(s.council.vetoes.some((v) => /island destroyed/.test(v.reason)));
+  assert.ok(s.brain.some((b) => /^POST-MORTEM/.test(b.text)));
+  const brainN = (await d.one(`SELECT count(*)::int n FROM mob_aq_brain`)).n;
+  await d.q(`UPDATE mob_aq_state SET v='5' WHERE k='cash_sol'`); // even a bounce does not revive it
+  await tick(env); s = await S(); assert.equal(s.survival.stage, "destroyed");
+  assert.equal((await R("POST", "/api/aq/rebuild", { bearer: "tok-test" })).status, 403, "Claude cannot rebuild");
+  assert.equal((await R("POST", "/api/aq/rebuild")).status, 401);
+  assert.equal((await R("POST", "/api/aq/rebuild", { cookie })).status, 200);
+  s = await S();
+  assert.equal(s.survival.stage, "healthy"); assert.equal(s.equitySol, 1); assert.equal(s.positions.length, 0);
+  assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_brain`)).n > brainN, "brain memory kept and grows");
 });

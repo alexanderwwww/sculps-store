@@ -3,7 +3,7 @@
 import { db } from "../db.mjs";
 import { DEPTS, seedWorkers, TOOLS, STRATEGIES, GTA6_DATE, GTA_RE, CEO } from "./seed.mjs";
 import { feeds, midPrices, jupQuote, SOL_MINT } from "./feeds.mjs";
-import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round } from "./logic.mjs";
+import { fibSetup, safety, roundTripPct, sizeFor, stats, replay, round, survival } from "./logic.mjs";
 import { whaleSignal, shadowTick, shadowStats } from "./whales.mjs";
 
 export const AQ_BUILD = "aq-engine-1";
@@ -61,6 +61,7 @@ export async function tick(env, opts = {}) {
   const out = { evaluated: [], entered: null, exits: [], feeds: health };
   try {
     const kill = (await getState(d, "kill", false)) === true;
+    const destroyed = (await getState(d, "destroyed", false)) === true; // only Alex's rebuild clears it
     const strategies = Object.fromEntries((await d.q(`SELECT * FROM mob_aq_strategies`)).map((s) => [s.id, s]));
     const P = strategies.R3?.params || STRATEGIES[2][4];
 
@@ -108,7 +109,7 @@ export async function tick(env, opts = {}) {
 
     // ---- exits first (Hermes): real prices every tick, stops keep working even with the kill switch on
     const open = await d.q(`SELECT * FROM mob_aq_positions ORDER BY id`);
-    if (open.length) {
+    if (open.length && !destroyed) {
       let mids = null;
       try { mids = await midPrices(open.map((p) => ({ mint: p.mint, pool: p.pool }))); health.dexscreener_prices = true; } catch (e) { health.dexscreener_prices = false; }
       for (const p of open) {
@@ -172,9 +173,20 @@ export async function tick(env, opts = {}) {
     const dayPct = dayStartEq > 0 ? (today.s / dayStartEq) * 100 : 0;
     const lastTrades = await d.q(`SELECT pnl_sol, closed_at FROM mob_aq_trades ORDER BY id DESC LIMIT $1`, [P.lossStreak]);
     const streak = lastTrades.length >= P.lossStreak && lastTrades.every((t) => t.pnl_sol <= 0) && nowSec * 1000 - new Date(lastTrades[0].closed_at).getTime() < P.cooldownMin * 60000;
+    const sv = survival(equity, START_SOL);
+    if (sv.stage === "destroyed" && !destroyed) {
+      await setState(d, "destroyed", true);
+      const tl = await d.one(`SELECT count(*)::int n, coalesce(sum(pnl_sol),0)::float pnl, mode() WITHIN GROUP (ORDER BY reason) worst FROM mob_aq_trades`);
+      const rs = await d.q(`SELECT reason, count(*)::int n, round(avg(pnl_pct)::numeric,2)::float avg FROM mob_aq_trades GROUP BY reason ORDER BY n DESC LIMIT 3`);
+      await brain(d, "review", "post-mortem", `POST-MORTEM: the island was destroyed at ${round(equity, 4)} SOL (${sv.health}% of ${START_SOL}). ${tl.n} trades, ${round(tl.pnl, 4)} SOL realized. Exits: ${rs.map((x) => `${x.reason} x${x.n} avg ${x.avg}%`).join("; ") || "none"}. Trading stopped until Alex rebuilds.`, { sv, trades: tl.n });
+    }
+    const dead = destroyed || sv.stage === "destroyed";
+    await setState(d, "survival", sv);
+    set("rk.exposure", dead ? "blocked" : "busy", `health ${sv.health} (${sv.stage}): size x${sv.sizeMult}, max ${sv.maxOpen} open`);
     let riskBlock = null;
-    if (kill) riskBlock = ["kill switch on", 1];
-    else if (pos.length >= P.maxOpen) riskBlock = ["max open positions", pos.length];
+    if (dead) riskBlock = ["island destroyed: only Alex can rebuild", sv.health];
+    else if (kill) riskBlock = ["kill switch on", 1];
+    else if (pos.length >= Math.min(P.maxOpen, sv.maxOpen)) riskBlock = [sv.maxOpen < P.maxOpen ? `max open positions (${sv.stage})` : "max open positions", pos.length];
     else if (dayPct <= -P.dayStopPct) riskBlock = ["daily stop hit", round(dayPct, 2)];
     else if (streak) riskBlock = ["loss-streak throttle", P.lossStreak];
     set("rk.kill", kill ? "blocked" : "busy", kill ? "KILL SWITCH ON: no new entries" : "kill switch off");
@@ -210,8 +222,9 @@ export async function tick(env, opts = {}) {
         const oh = await feeds.ohlcv(env, c.pool);
         health.geckoterminal_ohlcv = oh.ok;
         if (oh.ok && oh.data?.length) s = fibSetup(oh.data, SP, nowSec);
-        const wh = await whaleSignal(env, c, rg.data, set);
-        health.whales_trades = wh.ok;
+        // whales only for coins that pass the gate (keeps GeckoTerminal calls inside its free rate limit)
+        const wh = sf.ok ? await whaleSignal(env, c, rg.data, set) : { ok: null, signal: false, reason: "not read: safety failed" };
+        if (wh.ok != null) health.whales_trades = wh.ok;
         facts.whale = wh;
         if (!sf.ok) { await block(sf.reason, sf.number); continue; }
         if (!oh.ok || !oh.data?.length) { await block("missing data: candles", null); continue; }
@@ -229,7 +242,7 @@ export async function tick(env, opts = {}) {
         if (!feeSol) { await block("missing data: SOL price", null); continue; }
         if (jupUsed) { out.evaluated.push({ symbol: c.symbol, verdict: "WAIT", reason: "one quote pair per tick" }); continue; }
         // size on a first stressed estimate with the KB cost, then measure the real round trip at that size
-        const est = sizeFor(equity, cash, s.stopPct, KB_COST_PCT, SP);
+        const est = sizeFor(equity, cash, s.stopPct, KB_COST_PCT, { ...SP, maxSizeSol: SP.maxSizeSol * sv.sizeMult, riskPct: SP.riskPct * sv.sizeMult });
         set("st.stress", "busy", `${c.symbol}: stressed ${est.stressedPct}% -> ${est.sizeSol} SOL`);
         if (est.sizeSol < SP.minSizeSol) { await block("size too small", est.sizeSol); continue; }
         jupUsed = true;
@@ -246,7 +259,7 @@ export async function tick(env, opts = {}) {
         set("co.gate", "busy", `${c.symbol}: target ${s.targetPct}% vs round trip ${rt}% = ${mult ?? "inf"}x`);
         set("co.breakeven", "busy", `${c.symbol}: break-even win rate ${round(((s.stopPct + rt) / (s.targetPct + s.stopPct)) * 100, 1)}%`);
         if (rt > 0 && s.targetPct < SP.costMultiple * rt) { await block("cost gate", mult); continue; }
-        const fin = sizeFor(equity, cash, s.stopPct, Math.max(rt, 0), SP);
+        const fin = sizeFor(equity, cash, s.stopPct, Math.max(rt, 0), { ...SP, maxSizeSol: SP.maxSizeSol * sv.sizeMult, riskPct: SP.riskPct * sv.sizeMult });
         const size = Math.min(fin.sizeSol, est.sizeSol); // never above the size we actually quoted
         // ---- PASS -> Hermes paper fill at the measured quote
         const tokensUi = Number(buy.outAmount) / 10 ** rg.data.decimals;
@@ -269,7 +282,8 @@ export async function tick(env, opts = {}) {
     }
     if (!W["ex.paper"]) set("ex.paper", "idle", "no PASS this tick");
     // ---- never idle: shadow lane (paper probes on near misses, own ledger, never mixed into the real one)
-    out.shadow = await shadowTick(env, { kill, entered: !!out.entered, near, solUsd, nowSec, set, P });
+    out.survival = sv;
+    out.shadow = dead ? { opened: null, closed: [] } : await shadowTick(env, { kill, entered: !!out.entered, near, solUsd, nowSec, set, P });
 
     // ---- Review + Learning: stats, tournament rules (recorded, never silent)
     const trades = await d.q(`SELECT strategy, pnl_pct, pnl_sol FROM mob_aq_trades`);
@@ -468,7 +482,20 @@ export async function buildState(env) {
     replay: S.replay_R3 ? { trades: S.replay_R3.trades, expectancyPct: S.replay_R3.expectancyPct, ci95: S.replay_R3.ci95, costPct: S.replay_R3.costPct, evidence: S.replay_R3.evidence } : null,
     health: S.health || {},
     shadow: await shadowStats(d),
+    survival: (() => { const sv = survival(equity, START_SOL); return { health: sv.health, stage: S.destroyed === true ? "destroyed" : sv.stage, sizeMult: S.destroyed === true ? 0 : sv.sizeMult, maxOpen: S.destroyed === true ? 0 : sv.maxOpen }; })(),
     helpers: { grok: conn("grok"), chatgpt: conn("chatgpt"), grokLastAt: hl.grok || null, chatgptLastAt: hl.chatgpt || null },
     xfeed: xs.map((r) => ({ at: r.at, section: r.dept, text: r.text, label: (r.labels || [])[0] || "CLAIMED", source: "grok" })),
   };
+}
+
+// Only Alex (admin session) rebuilds a destroyed island: new paper wallet, brain memory kept.
+export async function rebuild(env) {
+  await ensureSeed(env);
+  const d = db(env);
+  const n = (await d.one(`SELECT count(*)::int n FROM mob_aq_positions`)).n;
+  await d.q(`DELETE FROM mob_aq_positions`);
+  await setState(d, "cash_sol", START_SOL);
+  await setState(d, "destroyed", false);
+  await brain(d, "ops", "event", `Alex rebuilt the island: paper wallet reset to ${START_SOL} SOL (${n} open position(s) written off). The brain keeps everything it learned.`);
+  return { rebuilt: true, equitySol: START_SOL };
 }

@@ -17,7 +17,15 @@ export const URLS = {
   fng: "https://api.alternative.me/fng/?limit=1",
 };
 
+// GeckoTerminal's free API answers 429 to bursts (seen live 2026-11-16 with 8 calls in ~1 s): space its calls 2.1 s apart.
+export const GT_GAP = { ms: 2100 };
+let lastGt = 0;
 export async function getJson(url, ms = 8000) {
+  if (url.startsWith("https://api.geckoterminal.com/")) {
+    const wait = lastGt + GT_GAP.ms - Date.now();
+    lastGt = Math.max(Date.now(), lastGt + GT_GAP.ms);
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  }
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), ms);
   try {
