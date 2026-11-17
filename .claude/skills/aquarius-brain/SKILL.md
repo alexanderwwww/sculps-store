@@ -177,3 +177,12 @@ Fix list: 18. Test longer holds for dips in the arena: 60, 90 and 120 minutes (t
 - Dip 1x by hold: +0.21 (2 min), +0.33, +0.33, +0.44, +0.46 (45 min). By pool: +0.08 on $500K+ pools, +0.57 on $100K to $500K.
 - Nothing was profitable after costs. Best average: -0.09% a trade.
 - Still to study when Alex says: Grok's per-trade ledger (pair age, X facts at entry), the pain log, longer holds, a cheaper entry.
+
+### Study 2 (2026-11-17 20:50 Athens): the 13,511 individual sample trades, offline from the frozen export
+- **82% of trades end on the clock** (11,137 of 13,511), 13% on the stop, 5% on the target. A time exit averages -0.32% net; a stop -2.79%; a target +2.78%. Stops outnumber targets 2.8 to 1, so the bracket loses money on its own before any rule is applied.
+- **Average cost per trade: 0.47%.** Gross (before cost) the samples are about flat: the whole loss is the cost.
+- **How much the coin moves decides whether a dip pays.** Dip 1x by the coin's 5-minute ATR: under 1% -0.26% net (667 trades); 1 to 2% -0.22% (289); **2 to 4% +0.30% (141); 4 to 8% +2.25% (43)**. The coin flip on the same buckets: -0.37, -0.74, -0.62, -0.88. So the dip's edge grows with volatility, and above 2% ATR it was profitable after costs. HINT only: 184 trades in the two profitable buckets.
+- **Over half the samples (7,259) were on coins moving under 1% in 5 minutes**, where nothing can clear a 0.47% cost. Fix 1 cut the dead coins at 0.5%; the data says the cut should be nearer 2%.
+- **By coin (60+ samples):** best VTC +1.03%, BP +0.82%, GTA6 +0.75% (348 samples), BLOB +0.59%; worst ROCCO -6.47% (71), GATO -1.73%, WASTED -1.48%, MASK -1.39%, ZCAT -1.15%. 69 coins have 60+ samples out of 142.
+
+Fix list: 20. Next training run: trade only coins with 5-minute ATR of 2% and more, and give the dip rule most of the volume there, so the +0.30% and +2.25% cells get to 5,000 trades. 21. Replace fixed brackets with no stop inside the hold for dips (stops fire 2.8 times as often as targets) and test it against the bracket.
