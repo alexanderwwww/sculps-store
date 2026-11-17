@@ -108,3 +108,10 @@ Fix list changes: fix 11 (graduate Fibonacci) is WITHDRAWN. New:
 14. Cost is the wall (0.5% a round trip eats the whole rev1 edge): test rev1 with a limit-style entry (enter only if the next minute trades lower) to cut the entry cost.
 15. Report fresh and replay separately everywhere (panel and report), verdicts on fresh only.
 - 2026-11-17 04:20: read 3 written. Read 2's Fibonacci claim corrected.
+
+### Read 3b: 2026-11-17 04:50 Athens, fix 13 (mining the dip rule), fresh minutes only (56,604 fresh trades; rev1 7,771)
+- **The dip edge lives on the smaller pools with a 10 to 20 minute hold.** rev1 on tier B: -0.10% a trade at 10 min (975) and -0.12% at 20 min (1,000), where random on the same pools and holds loses -0.68% and -0.90%. That is an edge of 0.6 to 0.8 points over random. On tier A the edge is only 0.1 to 0.3 points (rev1 about -0.24 to -0.31, random -0.36 to -0.59).
+- **Still not profitable:** the best cell loses 0.10% a trade. The edge is real against random and still smaller than the round-trip cost.
+- **Brackets barely matter for the dip:** best is the wide stop with the near target (s3 r1.5, -0.13%, 1,306); worst the tight stop with the far target (s1 r3, -0.29%, 1,313).
+- **2 minutes is too short everywhere** (win rate 11 to 21%): a trade needs time to cover its cost. 45 minutes gives the edge back on thin pools.
+- Each cell is 500 to 1,000 trades: HINT. Next: a deeper dip between 1 and 2 ATR, the hour-trend filter, and the cheaper entry of fix 14, all on tier B at 10 to 20 minutes.
