@@ -147,3 +147,9 @@ Fix list: 16. Add rev15 and rev3 (1.5 and 3 ATR dips) and an hour-trend-up filte
 - **Order of the families is now steady:** dips > Fibonacci pullbacks and breakout-pullback (about -0.33 to -0.50) > random (-0.59) > recipe breakout, volume spike, bounce (-0.62 to -0.69) > breakout, momentum (-0.85 to -1.15).
 - **Nothing is profitable after costs.** The best rule still loses 0.2% a trade. The data so far says what NOT to do with high confidence (do not chase), and where to look next (dips on smaller pools, cheaper entries).
 - 2026-11-17 08:52: read 5 written.
+
+### Read 6: 2026-11-17 11:50 Athens, 151,290 fresh trades
+- **rev1 keeps its edge on 17,417 fresh trades:** tier B -0.20% (11,418) against random B -0.75% (19,266), edge 0.55 points; tier A -0.19% (5,999) against random A -0.33%, edge 0.14.
+- **First numbers on the new dip rules (two hours, all HINTS):** the dip taken while the 40-minute trend is up (revup) on thin pools is +0.20% a trade on 404 trades, the only positive cell in the fresh data. On deep pools -0.25% (240). The 1.5x dip is -0.49% on thin pools (500) and the 3x dip -1.14% (46): deeper is not better.
+- Remember read 2: a positive cell on a few hundred trades flipped. revup needs 5,000 before it is a lead.
+- 2026-11-17 11:50: read 6 written.
