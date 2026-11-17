@@ -66,3 +66,8 @@ Source: Aquarius 664,164 trades and Grok 202,395 trades, paper money on real Sol
 - **Trade approvals** is the autonomy switch: MCP account tab → the connected agent → Agent Settings → Safety Controls. For MCP accounts it is OFF by default, meaning the agent places trades without asking. ON = it can only propose and he places them in the app.
 - Not stated by Robinhood: fees and limits on these pages, how to disconnect in the app, eligibility outside the US.
 - Rule: real money. Trade only inside limits Alex states (amount funded, size per trade, daily loss). Never test with a real order to "see if it works". Say what was traded in one line after.
+
+## One machine (Alex, 2026-11-18): "We only trade from Aquarius now. Everything, crypto, stocks, everything from there." Never mention the cursor for trading (AGENTS.md rule 31).
+- Stocks and big crypto: Robinhood agent account, connected on the Aquarius panel (server holds the sign-in, encrypted; no order code until limits exist).
+- Solana coins: Aquarius's own trading wallet, CREATED ON THE SERVER so no seed phrase or private key is ever typed, pasted or shown; Alex only sends SOL to its address. Swaps through Jupiter. Limits on the panel, zero by default.
+- Grok: eyes and second opinion, never an executor.
