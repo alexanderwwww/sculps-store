@@ -8,6 +8,11 @@ Alex, 2026-11-17, once the arena reached 700 paper trades a minute: "Now we're g
 
 The law of training is in `aquarius-trader` (liquid like water, fix on the spot, 700 a minute, 0.8 to 1 SOL, 1,000 SOL paper). This skill is what that training has produced.
 
+## What the arena is for (Alex, 2026-11-17)
+> "It is meant to lose. We collect data. We are not trying to win. It is impossible to have all this SOL and be up if you trade so fast. Collecting data is a different type of process. You still try to win, but you get what I mean."
+- The training wallet falling is the price of the data, not a failure. Never report it to him as a problem.
+- What counts is what each rule did against a coin-flip entry, and what that teaches. Still raise the win rate where the data shows how.
+
 ## How to read the data (do this before writing any lesson)
 `DATABASE_URL=... node tools/mob/scripts/aq-brain-report.mjs` (read-only). It cuts every virtual trade by entry rule, tier, stop, target, hold, regime and day. Never write a lesson from memory or from the panel: run the report, copy the numbers, date them.
 
