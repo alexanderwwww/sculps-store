@@ -26,7 +26,7 @@ export const ARENA = { walletSol: 1000, sizeSol: 1, sizeMin: 0.8, sizeMax: 1, pe
 // Fibonacci retracement bands of the last up-leg: [entry name, from, to) as a share of the leg given back
 export const FIB_BANDS = [["fib382", 0.33, 0.44], ["fib50", 0.44, 0.56], ["fib618", 0.56, 0.70], ["fib786", 0.70, 0.85]];
 // entry type -> the rule of the main book its result speaks to
-export const ENTRY_RULE = { random: "baseline (luck)", mom1: "R6 momentum, 1x ATR in 5 min", mom2: "R6 momentum, 2x ATR in 5 min", rev1: "R7 mean reversion, -1x ATR in 5 min", rev2: "R7 mean reversion, -2x ATR in 5 min",
+export const ENTRY_RULE = { random: "baseline (luck)", mom1: "R6 momentum, 1x ATR in 5 min", mom2: "R6 momentum, 2x ATR in 5 min", rev1: "R7 mean reversion, -1x ATR in 5 min", rev2: "R7 mean reversion, -2x ATR in 5 min", rev15: "dip of 1.5x ATR in 5 min", rev3: "dip of 3x ATR in 5 min", revup: "dip of 1x ATR while the price is above where it was 40 minutes ago",
   brk: "R6 breakout over the 20-minute high (no margin, no volume rule)", brkpb: "breakout then pullback of half an ATR", volspike: "volume spike: a green minute on 3x the 20-minute volume", r3: "R3 Fibonacci pullback (recipe entry)", fib382: "Fibonacci 38.2% pullback of the last up-leg (observation)", fib50: "Fibonacci 50% pullback (observation)", fib618: "Fibonacci 61.8% golden pocket (observation)", fib786: "Fibonacci 78.6% deep pullback (observation)", r6: "R6 breakout (recipe entry)", r7: "R7 oversold bounce (recipe entry)",
   whale: "R5 whale signal (own book)", nansen: "R5 Nansen-labelled buy", grok_trade: "Grok's own trade (his pick, his stop and target, 45 minutes)", grok_pick: "Grok pick", grok_vote: "Grok BUY vote", grok_skip: "Grok SKIP vote (should lose to random if he is right)", grok_heat: "Grok X narrative heat" };
 export const tierOfLiq = (liq) => (liq >= 500000 ? "A" : liq >= 100000 ? "B" : "C"); // by liquidity only: the arena has no age for every coin
@@ -58,6 +58,10 @@ export function entriesAt(coin, e, minuteOfE, ev = {}) {
   if (ret5 >= 2 * atr) out.push("mom2");
   if (ret5 <= -atr) out.push("rev1");
   if (ret5 <= -2 * atr) out.push("rev2");
+  // brain fix 16 (2026-11-17): the dip family is the only one above random, so it gets more depths and a trend filter
+  if (ret5 <= -1.5 * atr) out.push("rev15");
+  if (ret5 <= -3 * atr) out.push("rev3");
+  if (ret5 <= -atr && e >= 40 && px[e - 40] != null && P > px[e - 40]) out.push("revup");
   if (P > max(e - 20, e - 1)) out.push("brk");
   const old = max(e - 25, e - 6), recent = max(e - 5, e - 1);
   if (recent > old && P > old && P <= recent * (1 - (0.5 * atr) / 100)) out.push("brkpb");
