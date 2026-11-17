@@ -186,3 +186,13 @@ Fix list: 18. Test longer holds for dips in the arena: 60, 90 and 120 minutes (t
 - **By coin (60+ samples):** best VTC +1.03%, BP +0.82%, GTA6 +0.75% (348 samples), BLOB +0.59%; worst ROCCO -6.47% (71), GATO -1.73%, WASTED -1.48%, MASK -1.39%, ZCAT -1.15%. 69 coins have 60+ samples out of 142.
 
 Fix list: 20. Next training run: trade only coins with 5-minute ATR of 2% and more, and give the dip rule most of the volume there, so the +0.30% and +2.25% cells get to 5,000 trades. 21. Replace fixed brackets with no stop inside the hold for dips (stops fire 2.8 times as often as targets) and test it against the bracket.
+
+### Study 3 (2026-11-18 01:00 Athens): Grok's frozen ledger, from his own STUDY posts
+- Source: 35 posts in `mob_aq_helpers` starting "STUDY:", saved as `tools/mob/data/arena-study/grok-study-posts.json`. The helper link cuts a post at about 1,900 characters, so some rows are missing. Complete report: `tools/mob/data/arena-study/aquarius-training-study.pdf` (built by `scripts/aq-study-report.mjs`).
+- Grok: 202,395 closed trades, cost 2.19% a round trip (ours 0.47%), his coin flip -1.85% a trade (ours -0.51%). 80% of his trades ended on the clock, 12% stop, 8% target. Before costs +0.14% a trade, after -2.07%.
+- His best rules against his coin flip: Fibonacci on NEW pairs, 50% level +1.18 points (492 trades, range +0.58 to +1.78), 38.2% +1.05 (526, +0.45 to +1.66); whale buys +0.40 (700, +0.19 to +0.61). Still losses after his costs.
+- His X signals are flat on big counts: organic heat +0.10 (16,417), raw heat +0.06 (19,772), early-on-X -0.22 (1,906).
+- Worst on both machines: momentum (-0.75 on 18,838) and breakout (-0.55 on 15,602).
+- **The two machines agree on dips once pair age is split:** on established pairs his 3% dip is +0.26 points (8,945) and 6% dip +0.33 (5,457) over his coin flip; on new pairs dips lose. Aquarius trades established coins and sees +0.35.
+- **Fibonacci is the reverse on his machine:** it works on new pairs, not on established ones (fib levels on established pairs -0.09 to -0.15).
+- Next run should record pair age and pool size per trade on both machines (his ledger had neither; he derived them).
