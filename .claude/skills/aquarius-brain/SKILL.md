@@ -120,3 +120,9 @@ Fix list changes: fix 11 (graduate Fibonacci) is WITHDRAWN. New:
 - **Brackets barely matter for the dip:** best is the wide stop with the near target (s3 r1.5, -0.13%, 1,306); worst the tight stop with the far target (s1 r3, -0.29%, 1,313).
 - **2 minutes is too short everywhere** (win rate 11 to 21%): a trade needs time to cover its cost. 45 minutes gives the edge back on thin pools.
 - Each cell is 500 to 1,000 trades: HINT. Next: a deeper dip between 1 and 2 ATR, the hour-trend filter, and the cheaper entry of fix 14, all on tier B at 10 to 20 minutes.
+
+## The study (Alex, 2026-11-17 05:50 Athens): WAIT FOR HIS WORD
+> "You have a lot of trades now. Tomorrow, when I will tell you, you will do one giant spectrogram of what happened exactly, and we're gonna measure it. But that is just one thing. You're gonna do a lot of things with the results. This is our study. Both you and Grok will study that at the end."
+- Do NOT build the spectrogram until he says so. When he does: one giant picture of the whole run (time across, rules and coins down, colour = result against random), built from the arena tables, then measured together.
+- It is the first of many studies on the same data. Grok studies it too, from his own arena and the X side.
+- Until then: keep the data flowing and intact (no table resets, no retention that drops per-rule, per-hour detail before the study).
