@@ -196,3 +196,9 @@ Fix list: 20. Next training run: trade only coins with 5-minute ATR of 2% and mo
 - **The two machines agree on dips once pair age is split:** on established pairs his 3% dip is +0.26 points (8,945) and 6% dip +0.33 (5,457) over his coin flip; on new pairs dips lose. Aquarius trades established coins and sees +0.35.
 - **Fibonacci is the reverse on his machine:** it works on new pairs, not on established ones (fib levels on established pairs -0.09 to -0.15).
 - Next run should record pair age and pool size per trade on both machines (his ledger had neither; he derived them).
+
+### Study 4 (2026-11-18): the clean chart and Fibonacci levels on both machines' result lines
+- Files: `tools/mob/data/arena-study/clean-chart.png`, `fib-chart.png`, built by `scripts/aq-clean-chart.mjs` (`clean` or `fib`).
+- Aquarius reached the Fibonacci levels of its whole loss at: 23.6% 04:38, 38.2% 07:02, 50% 08:52, 61.8% 10:47, 78.6% 13:16, 100% 18:16. Its loss rate was nearly constant, 198 to 238 SOL an hour, then 151 in the last five hours: a straight line, the cost of 700 trades a minute.
+- Grok reached them at: 23.6% 03:55, 38.2% 05:10, 50% 06:20, 61.8% 08:15, 78.6% 13:10, 100% 18:30. His rate fell from 518 SOL an hour to 129: half his loss came in his first four hours. Not shown to be learning: his machine paused between sweeps and traded less later.
+- **No retracement on either line.** Biggest bounce: Aquarius +53 SOL at 17:47 (1.5% of the drop to that point); Grok +13.7 SOL. Neither came near the first Fibonacci retracement (23.6%). A result line made of 700 small losing trades a minute has no swings for Fibonacci to measure; Fibonacci belongs on the coins' price charts, where the run already tested it (see reads 2 to 8 and study 3).
