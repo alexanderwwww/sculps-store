@@ -153,3 +153,9 @@ Fix list: 16. Add rev15 and rev3 (1.5 and 3 ATR dips) and an hour-trend-up filte
 - **First numbers on the new dip rules (two hours, all HINTS):** the dip taken while the 40-minute trend is up (revup) on thin pools is +0.20% a trade on 404 trades, the only positive cell in the fresh data. On deep pools -0.25% (240). The 1.5x dip is -0.49% on thin pools (500) and the 3x dip -1.14% (46): deeper is not better.
 - Remember read 2: a positive cell on a few hundred trades flipped. revup needs 5,000 before it is a lead.
 - 2026-11-17 11:50: read 6 written.
+
+### Read 7: 2026-11-17 13:50 Athens (fresh trades)
+- **The read-6 hint flipped, as warned:** revup on thin pools went from +0.20% (404 trades) to -0.41% (780). A dip in an up-trend is no better than a plain dip. Second time a positive cell on a few hundred trades reversed: the 5,000-trade bar stands.
+- **rev1 unchanged on 20,984 fresh trades:** tier B -0.21% (13,453) vs random B -0.79% (22,525), edge 0.58 points; tier A -0.17% (7,531) vs random A -0.29%, edge 0.12.
+- New small cell to watch, not to believe: 1.5x dip on deep pools +0.05% (608).
+- 2026-11-17 13:50: read 7 written.
