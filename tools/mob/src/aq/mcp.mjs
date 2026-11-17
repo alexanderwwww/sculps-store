@@ -47,7 +47,7 @@ async function callTool(env, name, a, helper) {
     const n = (v) => (Number.isFinite(Number(v)) && Number(v) >= 0 ? Number(v) : null), s = (v) => (typeof v === "string" ? v.slice(0, 300) : null);
     if (n(a.trades) == null || n(a.won) == null || n(a.lost) == null) throw new Error("trades, won and lost are needed, as numbers");
     const row = { trades: Math.floor(n(a.trades)), won: Math.floor(n(a.won)), lost: Math.floor(n(a.lost)), walletSol: n(a.walletSol), perMinute: n(a.perMinute), best: s(a.best), worst: s(a.worst), note: s(a.note), at: new Date().toISOString() };
-    const all = (await d.one(`SELECT v FROM mob_aq_state WHERE k='helper_training'`))?.v || {}; all[helper] = row;
+    const all = (await d.one(`SELECT v FROM mob_aq_state WHERE k='helper_training'`))?.v || {}; { const old = all[helper]; if (old && old.at) { row.prev = { trades: old.trades, won: old.won, lost: old.lost, walletSol: old.walletSol, at: old.at }; } row.line = [...((old && old.line) || []), ...(row.walletSol != null ? [{ t: row.at, w: row.walletSol }] : [])].slice(-240); } all[helper] = row;
     await d.q(`INSERT INTO mob_aq_state (k, v, at) VALUES ('helper_training', $1, now()) ON CONFLICT (k) DO UPDATE SET v=EXCLUDED.v, at=now()`, [JSON.stringify(all)]);
     return text({ saved: row, shown: "in the GROK window on the panel" });
   }
