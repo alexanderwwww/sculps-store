@@ -57,3 +57,12 @@ Source: Aquarius 664,164 trades and Grok 202,395 trades, paper money on real Sol
 - Stocks and big crypto, not small Solana coins. Our training lessons were on small Solana coins.
 - Alex's framing (2026-11-18): "We do not have a bot. We have me trading from my laptop. I'm just using you and Grok as fingers."
 - Not yet checked: which of these accept a Greek resident, the fees, and what each prop firm says about AI-placed orders.
+
+## Robinhood is the trading account (Alex, 2026-11-18: "Already got Robinhood, so probably that"). Read from Robinhood's own help pages the same day.
+- One link for every AI: `https://agent.robinhood.com/mcp/trading`. No API key: you add it as a custom connector and "authenticate"; during that Robinhood prompts you to open a dedicated **MCP account**.
+- Claude (app): Settings → Connectors → Add custom connector → paste the link. Grok: start a chat → + → Add connector → Custom → paste the link.
+- The agent can only TRADE with money in the MCP account, but it can READ all his Robinhood accounts (positions, balances, history). It cannot transfer, withdraw, stake or lend.
+- It trades stocks (market, limit, stop), single-leg options and the crypto pairs Robinhood offers. One account covers both halves.
+- **Trade approvals** is the autonomy switch: MCP account tab → the connected agent → Agent Settings → Safety Controls. For MCP accounts it is OFF by default, meaning the agent places trades without asking. ON = it can only propose and he places them in the app.
+- Not stated by Robinhood: fees and limits on these pages, how to disconnect in the app, eligibility outside the US.
+- Rule: real money. Trade only inside limits Alex states (amount funded, size per trade, daily loss). Never test with a real order to "see if it works". Say what was traded in one line after.
