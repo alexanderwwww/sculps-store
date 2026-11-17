@@ -93,3 +93,18 @@ New fixes found, not applied:
 12. Feed Grok's "organic authors only" heat into our arena as its own entry (xorg) instead of raw heat.
 
 - 2026-11-17 02:24: read 2 written. Grok's machine is live and reporting into the panel window.
+
+### Read 3: 2026-11-17 04:20 Athens, 136,502 trades (two calendar days in the data, but one continuous night: still not KNOWLEDGE)
+- **The Fibonacci lead from read 2 did NOT hold.** With 3 to 5 times the trades: fib786 -1.54% a trade (4,072; was +0.23% on 1,182), fib618 -0.52% (6,197; was +0.09%), recipe r3 -1.07% (1,184; was +0.51%). On fresh minutes only, the deep bands on thin pools are the least bad of the family (fib786 tier B -0.14% on 892, fib618 tier B -0.19% on 1,682) but they do not make money. Lesson about the brain itself: a result on about 1,000 trades in one hour flipped sign. The LEAD bar is raised to 5,000 trades.
+- **What held on both days, fresh minutes only:** buying a 1 ATR dip (rev1) beats random: -0.28% vs -0.72% on 11-16 (5,029 trades), +0.04% vs -0.53% on 11-17 (1,702). It is the only rule above random on both days. It breaks even at best: an edge over random of about 0.45 to 0.55 points, almost exactly the cost.
+- **What held, the other way:** breakout and momentum lose more than random on both days (brk -0.82 and -0.98; mom1 -0.69 and -0.84). Chasing strength is the most reliable loser in the data.
+- **Random is -0.51% a trade (31,326).** Overall win rate 23.0% (12.7% in read 1, 18.0% in read 2).
+- **Replay disagrees with fresh on Fibonacci** (replay fib786 -2.34%, fresh -0.30% blended): replay uses today's costs and liquidity tier on older minutes. Fresh is the one to trust; replay is for volume, not for verdicts.
+- **grok_pick: 50 trades, 84% wins, +1.49% a trade.** Far too few (HINT), but it is the only positive line and it is Grok's own picks: watch it.
+- **Grok heat improved to 37.6% wins but still -0.75% a trade (3,380).**
+
+Fix list changes: fix 11 (graduate Fibonacci) is WITHDRAWN. New:
+13. Mine rev1: it is the one rule that survives. Split it by dip depth, by tier, by hold, by whether the hour trend is up, to find the part that clears the cost.
+14. Cost is the wall (0.5% a round trip eats the whole rev1 edge): test rev1 with a limit-style entry (enter only if the next minute trades lower) to cut the entry cost.
+15. Report fresh and replay separately everywhere (panel and report), verdicts on fresh only.
+- 2026-11-17 04:20: read 3 written. Read 2's Fibonacci claim corrected.
