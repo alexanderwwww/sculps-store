@@ -139,3 +139,11 @@ Fix list changes: fix 11 (graduate Fibonacci) is WITHDRAWN. New:
 
 Fix list: 16. Add rev15 and rev3 (1.5 and 3 ATR dips) and an hour-trend-up filter to the arena, since the dip family is the only one that holds. 17. Grok's box needs a wake-up from outside to run between sweeps (a scheduled ping from his side, or Alex's bot settings); until then his panel block moves in bursts.
 - 2026-11-17 06:22: read 4 written.
+
+### Read 5: 2026-11-17 08:52 Athens, 112,329 fresh trades (verdicts on fresh only)
+- **Stable across three reads:** rev1 -0.22% a trade (13,307) against random -0.59% (25,340). Edge 0.37 points, unchanged from read 4. It holds in both time blocks of the data (edge 0.35 and 0.43 points).
+- **Where the dip edge is:** smaller pools, 0.54 points over random (rev1 B -0.25 vs random B -0.78, 8,793 trades). On deep pools only 0.15 points (rev1 A -0.17 vs random A -0.32, 4,514). Deep pools lose less in absolute terms; thin pools give the rule more to work with.
+- **rev2 (2 ATR dip) only works on thin pools:** B -0.13% (1,453), A -0.56% (356). HINT.
+- **Order of the families is now steady:** dips > Fibonacci pullbacks and breakout-pullback (about -0.33 to -0.50) > random (-0.59) > recipe breakout, volume spike, bounce (-0.62 to -0.69) > breakout, momentum (-0.85 to -1.15).
+- **Nothing is profitable after costs.** The best rule still loses 0.2% a trade. The data so far says what NOT to do with high confidence (do not chase), and where to look next (dips on smaller pools, cheaper entries).
+- 2026-11-17 08:52: read 5 written.
