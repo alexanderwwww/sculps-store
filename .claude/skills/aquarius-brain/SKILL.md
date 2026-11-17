@@ -126,3 +126,16 @@ Fix list changes: fix 11 (graduate Fibonacci) is WITHDRAWN. New:
 - Do NOT build the spectrogram until he says so. When he does: one giant picture of the whole run (time across, rules and coins down, colour = result against random), built from the arena tables, then measured together.
 - It is the first of many studies on the same data. Grok studies it too, from his own arena and the X side.
 - Until then: keep the data flowing and intact (no table resets, no retention that drops per-rule, per-hour detail before the study).
+
+### Read 4: 2026-11-17 06:22 Athens, 210,082 trades (78,225 on fresh minutes)
+- **The dip rule holds, and now on 10,000+ fresh trades:** rev1 -0.20% a trade (10,087) against random -0.59% (18,626). On 11-17 alone: -0.11% (4,991) against -0.48% (9,878). Edge about 0.37 to 0.39 points on both days. This is the first LEAD under the 5,000-trade bar. Still below cost.
+- **Deeper dips look better on the new day:** rev2 (2 ATR) -0.05% on 579 fresh trades of 11-17, win rate 39%. HINT.
+- **Best cell so far:** rev1, smaller pools, 10-minute hold: -0.09% (1,296) against random -0.72% on the same pools and hold. Edge 0.63 points.
+- **Chasing strength stays the worst on fresh minutes:** mom1 -0.82% (8,742), brk -0.84% (8,707), mom2 -1.01% (1,191). LEAD in the other direction: never buy the breakout.
+- **Fibonacci on fresh minutes sits between the dip and random** (fib618 -0.35% on 3,790, fib786 -0.40% on 2,538, random -0.59%). Better than random by about 0.2 points, worse than a plain dip. So read 2 overstated it and read 3 (which mixed replay in) understated it: verdicts on fresh only.
+- **grok_pick has no fresh trades yet**; its 50 trades were replay. Unproven.
+- **Grok's machine FREEZES between his sweeps** (his own finding, 06:16): every process on his xAI box goes silent at once and resumes when his next sweep wakes it. His arena and main lane only run while he is awake. No watchdog on the box can fix that. His totals stay cumulative (96,452 trades at 06:20). His xearly rule: +0.69 points over his random on 868 trades.
+- Overall fresh win rate 23.0%; random -0.59%.
+
+Fix list: 16. Add rev15 and rev3 (1.5 and 3 ATR dips) and an hour-trend-up filter to the arena, since the dip family is the only one that holds. 17. Grok's box needs a wake-up from outside to run between sweeps (a scheduled ping from his side, or Alex's bot settings); until then his panel block moves in bursts.
+- 2026-11-17 06:22: read 4 written.
