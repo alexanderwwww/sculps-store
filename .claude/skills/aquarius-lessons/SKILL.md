@@ -51,3 +51,9 @@ Source: Aquarius 664,164 trades and Grok 202,395 trades, paper money on real Sol
 - Before a rule change: find the lesson, quote its number and count, say which tier it is.
 - A PROVEN lesson is overturned only by a larger count. A LEAD is promoted only by 5,000 trades and a second day.
 - New runs append here: what held, what flipped, with counts and dates.
+
+## How people trade through Grok (researched 2026-11-18, web search; verify on the broker's own page before connecting anything)
+- Grok takes "connectors" to brokers. Found: Interactive Brokers (in Grok's connector directory; Grok drafts, the user confirms each order; eligible clients can add "IBKR Autonomous Trading" inside a separate AI partition), Robinhood (custom connector `https://agent.robinhood.com/mcp/trading`, a separate ring-fenced agent account, can trade without confirmation if told to), Public.com (connector or API key), Coinbase for Agents (crypto), Liquid (third party), MetaTrader 5 with xAI as the assistant.
+- Stocks and big crypto, not small Solana coins. Our training lessons were on small Solana coins.
+- Alex's framing (2026-11-18): "We do not have a bot. We have me trading from my laptop. I'm just using you and Grok as fingers."
+- Not yet checked: which of these accept a Greek resident, the fees, and what each prop firm says about AI-placed orders.
