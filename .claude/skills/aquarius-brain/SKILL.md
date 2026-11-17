@@ -73,3 +73,23 @@ Live in the arena since 2026-11-17 01:30 Athens: entries `fib382`, `fib50`, `fib
 - 2026-11-17 01:20: first read, 16,800 trades. Skill created.
 - 2026-11-17 01:50: FIX 1 APPLIED (Alex: "as you fix, try to raise your winning rate... observe and write and feed the brain"): coins whose 5-minute ATR is under 0.5% no longer trade in the arena. First three batches after it: 652 wins in 2,101 trades = 31.0% (was 12.7% before). HINT only: three minutes, one market hour. Still 700 a minute. Whether the average result per trade improved, not just the win rate, is for the next report read.
 - 2026-11-17 01:50: Grok asked (Alex's order) to run his own 700-a-minute paper data collection on his xAI machine and post aggregated lessons into the brain. He needs Alex's confirmation in his own chat.
+
+### Read 2: 2026-11-17 02:24 Athens, 58,802 trades (still one day: nothing here is KNOWLEDGE yet)
+- **Fibonacci pullbacks are the first rules in the green after costs.** fib786 +0.23% a trade (1,182, 30.1% wins), fib618 +0.09% (1,919), fib50 +0.03% (2,188), recipe r3 +0.51% (608, 52.3% wins). fib382 loses like random (-0.50%, 3,107): a shallow pullback is not a dip. The deeper the pullback, the better the result. LEAD (under an hour of data, one market mood).
+- **The Fibonacci edge is on the thinner pools (tier B):** r3 +0.91% (487), fib786 +0.65% (789), fib618 +0.36% (1,447), fib50 +0.28% (1,483). This contradicts read 1's "thin coins cost double" for this family: thin coins cost more AND move more, so a good entry is paid better there.
+- **Random is now -0.54% a trade (13,594)**, total win rate 18.0% (was 12.7%) after fix 1 dropped coins that do not move.
+- **Held from read 1:** momentum and breakouts are below random (mom1 -0.70, brk -0.75, mom2 -0.69). rev1 beats random (-0.30 vs -0.54) but does not make money.
+- **Flipped from read 1:** r7 was +0.51% on 107 trades and is -0.67% on 549. That is what a HINT is worth. brkpb went from worst (-1.16) to near flat (-0.22, 1,009).
+- **Stops:** wider is slightly better (s1 -0.55, s2 -0.48, s3 -0.47). Tight stops get hit by noise.
+- **Fresh minutes are worse than replay** (-0.73% in "extreme fear" on 17,789 fresh trades vs -0.40% on replay): tonight's market is harder than the last days, or replay flatters. Trust fresh.
+- **Grok heat still loses** (-1.19%, 1,205).
+- **Grok's own arena (his machine, reported 02:22, 4,429 trades):** his best is "xorg" = X heat from organic authors only, +0.72% above his random on 193 trades (HINT). His dips LOSE on new and thin pairs (newdip -3.98% a trade on 176). His costs run harsher (random -1.83%). His challenge: the dip edge is for established pools, not new pairs. Our Fibonacci result is on established 45-minute structure, so both can be true: test age as a split.
+- **Generic drainer spam** ("dev stream happening now… CA:") rides every active coin: weight zero, not a signal (Grok, corrected by himself).
+
+New fixes found, not applied:
+9. Split every result by coin age (new pair vs established) to settle Grok's challenge.
+10. Fibonacci variants to add: require the leg to be 3x and 4x ATR; require a green minute off the level (bounce confirmation); a 88.6% band.
+11. When Fibonacci holds on a second day: move fib618/fib786 on tier B into the main paper bot as the first graduated rule.
+12. Feed Grok's "organic authors only" heat into our arena as its own entry (xorg) instead of raw heat.
+
+- 2026-11-17 02:24: read 2 written. Grok's machine is live and reporting into the panel window.
