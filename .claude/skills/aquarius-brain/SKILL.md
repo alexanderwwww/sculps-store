@@ -168,3 +168,12 @@ Fix list: 16. Add rev15 and rev3 (1.5 and 3 ATR dips) and an hour-trend-up filte
 
 Fix list: 18. Test longer holds for dips in the arena: 60, 90 and 120 minutes (the trend from 2 to 45 minutes has not flattened). 19. Main paper bot: its time stop is the likely leak; when the 45-minute cell passes 5,000 trades and holds, lengthen the paper bot's time stop for R7 dips. NOT applied.
 - 2026-11-17 16:50: read 8 written.
+
+## The run is over (2026-11-17 18:17 Athens): final record
+- Alex stopped the training at 18:10 ("enough with the training trades... collect all the history"). Aquarius: 664,164 trades, 175,484 won (26.4%), wallet 8,485.84 of 12,000 SOL; 256,687 on live minutes, 407,477 replayed. Grok: 202,395 closed, 38,021 won (18.8%), frozen on his machine at state/archive/arena_final_20261117T1630Z/ (405,995 ledger rows, one row per trade, 1,200 left open).
+- Frozen export: `tools/mob/data/arena-study/aquarius-arena-2026-11-17.json.gz` (rebuild with `scripts/aq-arena-export.mjs`). We kept totals per rule plus 13,511 sample trades, not a row per trade. Next run: keep a row per trade like Grok does.
+- Study 1, the spectrogram (Alex said "Generate" at 18:30): `tools/mob/data/arena-study/spectrogram.png` and `.html`, built by `scripts/aq-spectrogram.mjs`.
+- Final table, live minutes only, edge over the coin flip in points of % per trade: dip in up-trend +0.42 (3,155), dip 1.5x +0.40 (3,709), dip 2x +0.36 (3,118), dip 1x +0.35 (28,519), fib 78.6 +0.23 (8,320), breakout pullback +0.19, fib 61.8 +0.16, fib 38.2 +0.14, fib 50 +0.06, recipe bounce +0.01, COIN FLIP -0.514% a trade (56,173), Grok heat -0.04, recipe breakout -0.06, volume spike -0.14, breakout -0.25 (32,074), momentum 1x -0.37 (30,574), momentum 2x -0.46, recipe Fibonacci -0.55.
+- Dip 1x by hold: +0.21 (2 min), +0.33, +0.33, +0.44, +0.46 (45 min). By pool: +0.08 on $500K+ pools, +0.57 on $100K to $500K.
+- Nothing was profitable after costs. Best average: -0.09% a trade.
+- Still to study when Alex says: Grok's per-trade ledger (pair age, X facts at entry), the pain log, longer holds, a cheaper entry.
