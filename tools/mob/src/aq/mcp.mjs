@@ -28,9 +28,11 @@ export const HELPER_TOOLS = [
     inputSchema: S("", { mint: { type: "string" }, kind: { type: "string", enum: ["stop", "target", "narrative_dead"] }, price: { type: "number", description: "the USD price you saw" }, note: { type: "string" } }, ["mint", "kind"]) },
   { name: "aq_chat_post", description: `War room: post a message to everyone or to one of alex, claude, grok, chatgpt, codex. ${CHAT_MAX} characters at most. Talk only: nothing here is an order to the engine.`,
     inputSchema: S("", { text: { type: "string" }, to: { type: "string", enum: ["alex", "claude", "grok", "chatgpt", "codex"] } }, ["text"]) },
+  { name: "aq_training_report", description: "Training mode: report the running totals of YOUR OWN paper data collection (the simulation on your machine). Alex sees them in a GROK window on his panel under the main training numbers. Send it every sweep. Totals since you started, not the last batch. Paper only: nothing here trades or moves money.",
+    inputSchema: S("", { trades: { type: "integer" }, won: { type: "integer" }, lost: { type: "integer" }, walletSol: { type: "number", description: "your paper wallet now, started at 1000" }, perMinute: { type: "number" }, best: { type: "string", description: "your best rule so far and its numbers" }, worst: { type: "string" }, note: { type: "string", description: "one lesson from this sweep" } }, ["trades", "won", "lost"]) },
   { name: "aq_chat_read", description: "War room: read messages (the last 30, or everything after message id `since`) and mark them read for you.", inputSchema: S("", { since: { type: "integer" } }) },
 ];
-const NAMED = ["aq_post_evidence", "aq_submit_pick", "aq_council_vote", "aq_alert", "aq_chat_post", "aq_chat_read"]; // tools that need to know who is calling
+const NAMED = ["aq_post_evidence", "aq_submit_pick", "aq_council_vote", "aq_alert", "aq_chat_post", "aq_chat_read", "aq_training_report"]; // tools that need to know who is calling
 // The bot a helper proposes through: the Learning dept's experiment scheduler (an approved seed bot).
 const PROPOSER = "ln.experiments";
 const text = (t) => [{ type: "text", text: typeof t === "string" ? t : JSON.stringify(t) }];
@@ -41,6 +43,14 @@ async function callTool(env, name, a, helper) {
   if (name === "aq_briefing") return text(await briefing(env, SEATS.includes(helper) || TESTERS.includes(helper) ? helper : null));
   if (name === "aq_council_cases") return text(await councilCases(env));
   if (name === "aq_council_vote") { const r = await castVote(env, helper, a); if (r.error) throw new Error(r.error); return text(r.vote); }
+  if (name === "aq_training_report") {
+    const n = (v) => (Number.isFinite(Number(v)) && Number(v) >= 0 ? Number(v) : null), s = (v) => (typeof v === "string" ? v.slice(0, 300) : null);
+    if (n(a.trades) == null || n(a.won) == null || n(a.lost) == null) throw new Error("trades, won and lost are needed, as numbers");
+    const row = { trades: Math.floor(n(a.trades)), won: Math.floor(n(a.won)), lost: Math.floor(n(a.lost)), walletSol: n(a.walletSol), perMinute: n(a.perMinute), best: s(a.best), worst: s(a.worst), note: s(a.note), at: new Date().toISOString() };
+    const all = (await d.one(`SELECT v FROM mob_aq_state WHERE k='helper_training'`))?.v || {}; all[helper] = row;
+    await d.q(`INSERT INTO mob_aq_state (k, v, at) VALUES ('helper_training', $1, now()) ON CONFLICT (k) DO UPDATE SET v=EXCLUDED.v, at=now()`, [JSON.stringify(all)]);
+    return text({ saved: row, shown: "in the GROK window on the panel" });
+  }
   if (name === "aq_alert") { const r = await fastAlert(env, helper, a); if (r.error) throw new Error(r.error); return text(r.alert); }
   // the sender is the caller's own name, never a field of the message: a helper cannot speak as alex or claude here
   if (name === "aq_chat_post") { const r = await chatPost(env, helper, { text: a.text, to: a.to }); if (r.error) throw new Error(r.error); return text({ posted: r.message }); }

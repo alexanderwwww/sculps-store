@@ -367,7 +367,7 @@ test("helper MCP: link + access code, every tool, and no money control", async (
   assert.equal(init.status, 200); const sid = init.headers.get("mcp-session-id"); assert.ok(sid);
   assert.equal((await init.json()).result.serverInfo.name, "aquarius-helpers");
   const tools = (await (await mcp({ jsonrpc: "2.0", id: 2, method: "tools/list" })).json()).result.tools.map((t) => t.name);
-  assert.deepEqual(tools, ["aq_state", "aq_briefing", "aq_post_evidence", "aq_propose_bot", "aq_submit_pick", "aq_list_tasks", "aq_task_done", "aq_council_cases", "aq_council_vote", "aq_alert", "aq_chat_post", "aq_chat_read"]);
+  assert.deepEqual(tools, ["aq_state", "aq_briefing", "aq_post_evidence", "aq_propose_bot", "aq_submit_pick", "aq_list_tasks", "aq_task_done", "aq_council_cases", "aq_council_vote", "aq_alert", "aq_chat_post", "aq_chat_read", "aq_training_report"]);
   for (const t of tools) assert.ok(!/kill|trade|buy|sell|limit|secret|approve/.test(t));
   const st = JSON.parse((await call("aq_state", {}, { "mcp-session-id": sid })).content[0].text); assert.equal(st.mode, "PAPER");
   assert.match((await call("aq_briefing", { helper: "grok" })).content[0].text, /- Mode: PAPER/);

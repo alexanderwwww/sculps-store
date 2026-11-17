@@ -64,7 +64,7 @@ function topbar() {
       <div class="kpi"><small>Evidence <span id="k-evn"></span></small><b id="k-ev">—</b></div>
       <div class="kpi wide"><small>Council</small><b id="k-council">—</b></div>
     </div>
-    <div class="kpi clock"><small>UTC</small><b id="k-utc">—</b></div><div class="kpi"><small>Agents live</small><b id="k-agents">—</b></div>
+    <div class="kpi clock"><small>Athens</small><b id="k-utc">—</b></div><div class="kpi"><small>Agents live</small><b id="k-agents">—</b></div>
     <div class="right">
       <div class="seg" role="tablist"><button data-m="bot" class="on">Bot</button><button data-m="world">World</button></div>
       <button id="sellall" class="kill">SELL ALL</button><button id="xfer" class="ghost">TRANSFER SOL</button>
@@ -287,7 +287,7 @@ function boot() {
   document.body.append(topbar(), trainingHero(), h(`<div id="offline" hidden>Can't reach the engine. Showing the last data.</div>`), buildDash(), h(`<div id="stage"></div>`));
   onState((s) => { renderTop(s); if (store.mode === "bot") renderDash(s); });
   window.addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.querySelector(".dlg-bg")) openMenu(); else if (e.key === "Escape") document.querySelector(".dlg-bg").remove(); });
-  setInterval(() => { const e = document.getElementById("k-utc"); if (e) e.textContent = new Date().toISOString().slice(11, 19); }, 1000);
+  setInterval(() => { const e = document.getElementById("k-utc"); if (e) e.textContent = new Date().toLocaleTimeString("en-GB", { timeZone: "Europe/Athens", hour12: false }); }, 1000);
   poll(); setInterval(poll, 3000); setInterval(() => listeners.forEach((f) => store.state && f(store.state)), 1000 * 15);
   let m = "bot"; try { m = new URLSearchParams(location.search).get("mode") || "bot"; } catch {}
   if (m === "world") setMode("world");
