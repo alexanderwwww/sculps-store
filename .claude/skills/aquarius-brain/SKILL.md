@@ -159,3 +159,12 @@ Fix list: 16. Add rev15 and rev3 (1.5 and 3 ATR dips) and an hour-trend-up filte
 - **rev1 unchanged on 20,984 fresh trades:** tier B -0.21% (13,453) vs random B -0.79% (22,525), edge 0.58 points; tier A -0.17% (7,531) vs random A -0.29%, edge 0.12.
 - New small cell to watch, not to believe: 1.5x dip on deep pools +0.05% (608).
 - 2026-11-17 13:50: read 7 written.
+
+### Read 8: 2026-11-17 16:50 Athens (fresh trades, about 230,000)
+- **The dip family is now flat across depths:** rev1 -0.16% (26,102), rev15 -0.16% (3,023), revup -0.17% (2,578), rev2 -0.23% (2,934), against random -0.53% (49,990). Depth and the up-trend filter add nothing over a plain 1 ATR dip.
+- **Hold time is the lever inside the dip rule (thin pools, each cell 3,200+ trades):** 2 min -0.31%, 5 min -0.18%, 10 min -0.13%, 20 min -0.11%, 45 min -0.05% with 42.4% wins. The longer the hold, the closer to break-even; random gets WORSE with a longer hold on the same pools (-0.64% to -0.83%). Edge over random at 45 minutes: 0.78 points. LEAD (cells are 3,000+, not yet 5,000).
+- **The main paper bot shows the same thing from the other side:** its last 10 closes were all time stops, -1.02 SOL together. It exits on the clock before a dip has time to pay.
+- Family order unchanged for the fifth read: dips > Fibonacci pullbacks > random > recipe breakout and volume spike > breakout and momentum (-0.78% to -0.96%).
+
+Fix list: 18. Test longer holds for dips in the arena: 60, 90 and 120 minutes (the trend from 2 to 45 minutes has not flattened). 19. Main paper bot: its time stop is the likely leak; when the 45-minute cell passes 5,000 trades and holds, lengthen the paper bot's time stop for R7 dips. NOT applied.
+- 2026-11-17 16:50: read 8 written.
