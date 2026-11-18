@@ -12,7 +12,7 @@ import { db } from "../db.mjs";
 import { unbase58, base58, proves, rpc } from "./wallet.mjs";
 import { LIVE, signTx, settle, upd, finish, takeLock, dropLock } from "./live.mjs";
 
-const VENUE = "solana", LOCK_MS = 24 * 3600000, SYSTEM = "11111111111111111111111111111111";
+const VENUE = "solana", LOCK_MS = 0, SYSTEM = "11111111111111111111111111111111"; // LOCK_MS 0: Alex 2026-11-18, no lock, any payout address he sets can receive right away
 // addresses that are programs or system accounts, never a person's wallet
 const NOT_A_WALLET = new Set([SYSTEM, "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb", "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL", "So11111111111111111111111111111111111111112",
   "ComputeBudget111111111111111111111111111111", "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4", "Stake11111111111111111111111111111111111111", "Vote111111111111111111111111111111111111111", "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
