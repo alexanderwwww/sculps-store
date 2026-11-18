@@ -918,6 +918,32 @@ export async function reconcileWallet(env, w) {
   if (list.length && key(prev?.list) !== key(list)) await brain(d, `LIVE WALLET CHECK: ${list.length} coin(s) in the Aquarius wallet with no open position: ${list.map((x) => `${x.mint} (${x.raw} raw; ${x.note})`).join("; ")}. Nothing is sold without a position record.`);
   return list;
 }
+// EMPTY ACCOUNTS A ROUTE LEFT BEHIND. Read from the chain on 2026-11-18 (order 9, a sale of USELESS routed coin -> USDC -> USDT ->
+// SOL): Jupiter created a USDC and a USDT account for the wallet (createIdempotent x2), 1,488,440 lamports of rent each, and
+// left both open and empty, so 0.00298 SOL of a 0.0126 SOL sale stayed parked in them. Every 5 minutes, an EMPTY token account
+// of the wallet whose coin never had a position here (a position's own coin is reclaimRent's job) is closed and its rent comes
+// back: SPL CloseAccount only, simulated first (SOL must come back, never more than the account holds), two a pass, never while an
+// order is on its way. The SOL returns to the wallet; it is reported, not booked onto a trade (that trade's result stays
+// understated by the rent rather than guessed).
+export async function sweepEmpty(env, w, max = 2) {
+  const d = db(env), out = []; let accts; try { accts = await tokenAccounts(env, w.address); } catch { return out; }
+  if ((await d.one(`SELECT count(*)::int n FROM mob_aq_live_orders WHERE venue = $1 AND status IN ('requested','sent')`, [VENUE])).n) return out;
+  const known = new Set((await d.q(`SELECT DISTINCT mint FROM mob_aq_live_positions WHERE venue = $1`, [VENUE])).map((r) => r.mint));
+  for (const a of accts.filter((x) => x.raw === "0" && x.mint !== SOL_MINT && !known.has(x.mint)).slice(0, max)) {
+    try {
+      const bh = (await solRpc(env, "getLatestBlockhash", [{ commitment: "confirmed" }])).value, tx = closeTx(w.address, a.address, a.program, bh.blockhash);
+      const pre = (await rpcRead(env, "getBalance", [w.address])).value;
+      const v = (await rpcRead(env, "simulateTransaction", [tx, { encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed", accounts: { encoding: "base64", addresses: [w.address] } }])).value;
+      const back = (v?.accounts?.[0]?.lamports ?? -1) - pre;
+      if (v?.err || !(back > 0) || back > a.lamports) continue; // it does not close cleanly (withheld fees, a frozen account): left alone
+      const signed = await signTx(env, w, tx);
+      try { await broadcast(env, signed.tx); } catch {} // not landed = still there on the next pass; landed twice is impossible (the account is gone)
+      await brain(d, `LIVE RENT SWEEP: an empty ${a.mint} account that a swap route left in the Aquarius wallet was closed, ${round(back / 1e9, 6)} SOL of rent back (${signed.signature}).`);
+      out.push({ mint: a.mint, account: a.address, backSol: round(back / 1e9, 6), signature: signed.signature });
+    } catch {}
+  }
+  return out;
+}
 async function exits(env, w, minute = Math.floor(Date.now() / 60000), renew = null) {
   const d = db(env), out = [], nowSec = Date.now() / 1000;
   let usd; const solUsd = async () => (usd !== undefined ? usd : (usd = await solUsdLive(env))); // once a tick, only when needed
@@ -1105,6 +1131,7 @@ export async function liveTick(env, { cron = null, minute = Math.floor(Date.now(
     if (w?.address && w.sealed && minute % 5 === 0 && (await renew())) { const rc = await recoverWrittenOff(env, w, minute); if (rc.length) out.recovered = rc; }
     if (w?.address && w.sealed && (await renew())) { const rr = await reclaimRent(env, w); if (rr.length) out.rent = rr; }
     if (w?.address && minute % 5 === 0) { try { const or = await reconcileWallet(env, w); if (or?.length) out.orphans = or.length; } catch (e) { out.orphansError = cut(e.message || e); } }
+    if (w?.address && w.sealed && minute % 5 === 0 && (await renew())) { try { const sw = await sweepEmpty(env, w); if (sw.length) out.swept = sw; } catch (e) { out.sweepError = cut(e.message || e); } }
     // 3. one new buy at most, behind every gate, and only while this run still holds the lease
     if (!(await renew())) { out.result = { skipped: "the money lease was lost: no buy this run" }; return out; }
     const g = await gates(env);

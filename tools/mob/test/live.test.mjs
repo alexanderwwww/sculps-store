@@ -71,7 +71,7 @@ function world() {
     if (m.method === "getMinimumBalanceForRentExemption") return ok(1488440);
     if (m.method === "simulateTransaction") {
       const ix = L.readIxs(m.params[0]), close = ix.ixs.length === 1 && ix.ixs[0].data[0] === 9;
-      if (close) { F.calls.push("simulateTransaction:close"); return ok({ context: { slot: 1 }, value: { err: null, accounts: [{ lamports: F.balance + 1488440 - 5000 }] } }); }
+      if (close) { F.calls.push("simulateTransaction:close"); return ok({ context: { slot: 1 }, value: { err: F.closeSimErr || null, accounts: [{ lamports: F.balance + 1488440 - 5000 }] } }); }
       if (F.swapBody.userPublicKey !== wallet.address) { F.calls.push("simulateTransaction:holder"); return ok({ context: { slot: 1 }, value: { err: F.holderSimErr, accounts: null, logs: [] } }); }
       F.calls.push("simulateTransaction");
       const q = F.swapBody.quoteResponse, coinAta = q.inputMint === SOL ? await L.ataOf(wallet.address, q.outputMint) : null;
@@ -786,6 +786,22 @@ test("G4) a manual sell does not die with one RPC: the simulation is asked again
   F.rpcDeaf = null; F.publicUp = true; F.simErr = { InstructionError: [1, "Custom"] }; await bump(); F.calls.length = 0; r = await sell(p); assert.match(r.failed, /the simulation failed/); assert.ok(!F.calls.some((c) => c.startsWith("public:")));
   // the automatic stop uses the same path
   F.simErr = null; await scenario((s) => [...flat(114.6, 5), ...flat(s.stop - 0.5, 5)]); F.rpcDeaf = { simulateTransaction: 1 }; await bump(); r = await L.liveTick(env, { minute: 9 }); assert.equal(r.exits?.[0]?.confirmed, true, JSON.stringify(r.exits)); assert.equal((await positions())[0].status, "closed");
+});
+
+test("G5) empty token accounts a swap route left in the wallet are closed and their rent comes back; nothing else is ever closed", async () => {
+  const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", USDT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", STRAY = "7deBYhKWNtXYL6brwF1DcWziqXqE2XLBUgkQq8SCpump", A = (address, mint, raw) => ({ address, mint, program: L.PROG.token, raw: String(raw), data: tokData(mint, wallet.address, raw) });
+  await L.liveTick(env, { minute: 1 }); const closes0 = F.closes || 0, sent0 = F.sent.length; // BONK is open
+  F.tokAccts = [A(await L.ataOf(wallet.address, MINT), MINT, 5000000), A(await L.ataOf(wallet.address, USDC), USDC, 0), A(await L.ataOf(wallet.address, USDT), USDT, 0), A(await L.ataOf(wallet.address, STRAY), STRAY, 777)];
+  let r = await L.liveTick(env, { minute: 2 }); assert.equal(r.swept, undefined, "only on the 5-minute pass"); assert.equal(F.closes || 0, closes0);
+  r = await L.liveTick(env, { minute: 5 }); assert.equal(r.swept?.length, 2, JSON.stringify(r)); assert.deepEqual(r.swept.map((x) => x.mint).sort(), [USDC, USDT].sort()); assert.ok(r.swept.every((x) => Math.abs(x.backSol - 0.00148344) < 1e-9));
+  assert.equal(F.closes, closes0 + 2, "two CloseAccount transactions, nothing else"); assert.equal(F.sent.length, sent0, "no swap was sent"); assert.equal((await positions())[0].status, "open"); assert.equal((await positions())[0].tokens_raw, "5000000");
+  assert.equal((await one(`SELECT count(*)::int n FROM mob_aq_brain WHERE text LIKE 'LIVE RENT SWEEP:%' AND at > now() - interval '1 minute'`)).n, 2); assert.equal(r.orphans, 1, "the stray coin with tokens in it is reported, not closed");
+  // never: an account with tokens in it, the open position's own account, a closed position's account (reclaimRent books that one), or while an order is on its way
+  F.tokAccts = [A(await L.ataOf(wallet.address, MINT), MINT, 0), A(await L.ataOf(wallet.address, STRAY), STRAY, 777)]; assert.deepEqual(await L.sweepEmpty(env, wallet), []);
+  F.tokAccts = [A(await L.ataOf(wallet.address, USDC), USDC, 0)]; await d.q(`INSERT INTO mob_aq_live_orders (venue, side, mint, symbol, claim, status) VALUES ('solana','sell','X','X','pending-claim','sent')`); assert.deepEqual(await L.sweepEmpty(env, wallet), []); await d.q(`DELETE FROM mob_aq_live_orders WHERE claim = 'pending-claim'`);
+  // a close that does not simulate cleanly is left alone; an unreadable wallet does nothing
+  F.closeSimErr = { InstructionError: [0, { Custom: 11 }] }; assert.deepEqual(await L.sweepEmpty(env, wallet), []); F.closeSimErr = null; F.tokFail = true; assert.deepEqual(await L.sweepEmpty(env, wallet), []); F.tokFail = false;
+  assert.equal((await L.sweepEmpty(env, wallet)).length, 1); assert.equal(F.closes, closes0 + 3);
 });
 
 const ixTx = (payer, program, data, other = "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1") => { const msg = Buffer.concat([Buffer.from([1, 0, 1, 3]), Buffer.from(W.unbase58(payer)), Buffer.from(W.unbase58(other)), Buffer.from(W.unbase58(program)), Buffer.alloc(32, 7), Buffer.from([1, 2, 3, 0, 1, 0, data.length]), Buffer.from(data)]);
