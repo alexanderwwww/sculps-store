@@ -31,6 +31,7 @@ export const LIVE = {
   minAgeDays: 1,          // 7: established pairs only; same age line as the Council's tier B
   // 1 PROVEN: never chase. The only entry is a pullback into 50-61.8% that closes back up (chart.mjs entrySetup).
   // ---- how it executes (safety, not lessons)
+  freshMaxRtPct: 3, freshMaxImpactPct: 1.5, // symbiote right calls (bonding-curve coins) only; see costGate
   slippageBps: 100, exitSlippageBps: 150, maxImpactPct: 1, reserveSol: 0.01, feeBudgetLamports: 3500000, priorityMaxLamports: 500000,
   candidatesPerTick: 4, paperCoinsPerTick: 8, paperOpenMax: 40, confirmPolls: 6, confirmGapMs: 2500, maxSellFails: 5,
   // a stop, invalidation, veto or liquidity exit that fails is retried with twice the slippage each time, never over 20%
@@ -409,7 +410,8 @@ async function execute(env, w, { side, c, positionId, inMint, outMint, amountRaw
   try {
     const qr = q0 || (await quote(env, inMint, outMint, amountRaw, slippageBps));
     if (!qr.ok) return fail(qr.error);
-    if (side === "buy" && qr.impactPct > LIVE.maxImpactPct) return fail(`price impact ${round(qr.impactPct, 2)}% is over the ${LIVE.maxImpactPct}% cap`);
+    const impCap = c?.fresh ? LIVE.freshMaxImpactPct : LIVE.maxImpactPct;
+    if (side === "buy" && qr.impactPct > impCap) return fail(`price impact ${round(qr.impactPct, 2)}% is over the ${impCap}% cap`);
     await upd(d, o.id, { quote_out: qr.q.outAmount, min_out: qr.q.otherAmountThreshold, impact_pct: qr.impactPct, quote: JSON.stringify({ route: (qr.q.routePlan || []).map((r) => r.swapInfo?.label).filter(Boolean) }) });
     const sw = await buildSwap(env, qr.q, w.address);
     if (!sw.ok) return fail(sw.error);
@@ -486,15 +488,42 @@ export async function freshRightCandidates(env, d, known = new Set()) {
   if (!rows.length) return [];
   let px = {}; try { px = await jupPrices([SOL_MINT, ...rows.map((r) => r.mint)]); } catch {}
   const solUsd = px[SOL_MINT]?.price ?? null;
-  return rows.map((r) => ({ mint: r.mint, symbol: r.symbol, quoteMint: SOL_MINT, fresh: true, liqUsd: Number.isFinite(px[r.mint]?.liqUsd) ? px[r.mint].liqUsd : solUsd && Number(r.real_sol) > 0 ? Number(r.real_sol) * 2 * solUsd : null }));
+  return rows.map((r) => { const j = Number.isFinite(px[r.mint]?.liqUsd); return { mint: r.mint, symbol: r.symbol, quoteMint: SOL_MINT, fresh: true, liqBasis: j ? "jupiter" : "curve", liqUsd: j ? px[r.mint].liqUsd : solUsd && Number(r.real_sol) > 0 ? Number(r.real_sol) * 2 * solUsd : null }; });
 }
 // One-minute candles: Jupiter's chart first; for a fresh coin Jupiter may have none, then symbiote's own bars built from the
 // curve's trade stream (mob_aq_sym_bars, the coin's price in SOL; the chart rules are ratios, so the unit does not matter).
-export async function candlesFor(env, d, mint) {
-  const cs = await feeds.jupCandles(env, mint); if (cs.ok) return cs;
-  const rows = await d.q(`SELECT t, o, h, l, c, v FROM mob_aq_sym_bars WHERE mint = $1 AND t > extract(epoch from now())::bigint - 21600 ORDER BY t`, [mint]).catch(() => []);
-  return rows.length ? { ok: true, src: "symbiote", data: rows.map((r) => ({ t: Number(r.t), o: Number(r.o), h: Number(r.h), l: Number(r.l), c: Number(r.c), v: Number(r.v) || 0 })) } : cs;
+export async function candlesFor(env, d, mint, prefer = "jupiter") {
+  const jup = async () => { const cs = await feeds.jupCandles(env, mint); return cs.ok ? { ...cs, src: "jupiter", unit: "USD" } : cs; };
+  const sym = async () => { const rows = await d.q(`SELECT t, o, h, l, c, v FROM mob_aq_sym_bars WHERE mint = $1 AND t > extract(epoch from now())::bigint - 21600 ORDER BY t`, [mint]).catch(() => []);
+    return rows.length ? { ok: true, src: "symbiote", unit: "SOL", data: rows.map((r) => ({ t: Number(r.t), o: Number(r.o), h: Number(r.h), l: Number(r.l), c: Number(r.c), v: Number(r.v) || 0 })) } : { ok: false }; };
+  const [a, b] = prefer === "symbiote" ? [sym, jup] : [jup, sym];
+  const first = await a(); if (first.ok) return first;
+  return b();
 }
+// 3) A live position's candles in ITS plan's unit. The plan's own source first; when that source is frozen (no closed 1-minute
+// bar for FIB.staleSec: migration, a pause, a restart) the other source is used, converted at the SOL price (USD <-> SOL),
+// never mixed silently. If neither gives a fresh bar, the caller falls back to the HARD STOP rule (see exits()).
+export async function positionCandles(env, d, p, nowSec) {
+  const unit = p.plan?.unit || "USD", fresh = (cs) => cs.ok && cs.data.some((c) => c.t + 60 <= nowSec && nowSec - (c.t + 60) <= FIB.staleSec);
+  let cs = await candlesFor(env, d, p.mint, p.plan?.src || "jupiter");
+  if (cs.ok && cs.unit !== unit) { const k = await solPerUsd(); cs = k ? { ...cs, unit, converted: true, data: cs.data.map((c) => conv(c, cs.unit === "USD" ? k : 1 / k)) } : { ok: false }; }
+  if (fresh(cs)) return cs;
+  const other = await candlesFor(env, d, p.mint, (p.plan?.src || "jupiter") === "symbiote" ? "jupiter" : "symbiote");
+  if (other.ok && other.unit !== unit) { const k = await solPerUsd(); if (!k) return { ok: false }; return { ...other, unit, converted: true, data: other.data.map((c) => conv(c, other.unit === "USD" ? k : 1 / k)) }; }
+  return other.ok && fresh(other) ? other : { ok: false, stale: true };
+}
+// the HARD STOP (no fresh candle from either source): sell when the spot price is at or under the live stop; sell when there is
+// no price at all (a stop that cannot be watched is not a stop). Otherwise null (manage() decides as usual).
+export function hardStop(plan, spot) {
+  const stop = plan.phase === 2 && plan.trailStop ? plan.trailStop : plan.stop;
+  if (spot == null || !Number.isFinite(spot)) return { action: "sell_all", reason: "hard stop: no price from any source, the stop cannot be watched" };
+  if (spot <= stop) return { action: "sell_all", reason: "hard stop: the spot price is at or under the stop while the candles are frozen" };
+  return null;
+}
+const conv = (c, k) => ({ ...c, o: c.o * k, h: c.h * k, l: c.l * k, c: c.c * k });
+async function solPerUsd() { try { const p = (await jupPrices([SOL_MINT]))[SOL_MINT]?.price; return p > 0 ? 1 / p : null; } catch { return null; } }
+// the spot price in the plan's unit from Jupiter's price API (USD, converted when the plan is in SOL)
+async function spotIn(unit, mint) { try { const px = await jupPrices([SOL_MINT, mint]), m = px[mint]?.price, s = px[SOL_MINT]?.price; if (!(m > 0)) return null; return unit === "SOL" ? (s > 0 ? m / s : null) : m; } catch { return null; } }
 export async function scanFib(env, venue, skip) {
   const d = db(env), est = await candidates(env), nowSec = Date.now() / 1000;
   // a right call that is also an established coin is taken from the established list (Jupiter's own pool and chart)
@@ -523,7 +552,7 @@ export async function scanFib(env, venue, skip) {
     if (!hs.ok) { last = await refuse(d, venue, "safety", hs.reason, c); continue; }
     const mc = await mintCheck(env, c.mint);
     if (!mc.ok) { last = await refuse(d, venue, "token_program", mc.reason, c); continue; }
-    return { c, s };
+    return { c, s, src: cs.src || "jupiter" };
   }
   return { refusal: last || await refuse(d, venue, inList ? "no_setup" : "no_right_call", inList ? "No right-call coin is in a Fibonacci pullback right now" : "No symbiote right call is among the candidates right now") };
 }
@@ -596,21 +625,24 @@ const legTaken = async (d, venue, mint, s) => !!(await d.one(`SELECT 1 FROM mob_
 export async function costGate(env, venue, c, s, sizeSol, { feeSide = LIVE.feePerSideFallbackLamports, owner = null } = {}) {
   const d = db(env), lamports = Math.round(sizeSol * 1e9), no = async (gate, why) => ({ ok: false, refusal: await refuse(d, venue, gate, why, c) });
   let ataNew = true; if (owner) { try { ataNew = !(await tokenAccounts(env, owner, c.mint)).length; } catch {} }
+  // a symbiote right call (a bonding-curve coin: pump fee about 1.25% a side) is held to 3% round trip and 1.5% impact; the
+  // reward to target 1 must still be 3x the true total cost (so about 8%+). Established coins keep 1% and 1% (Inspector 2026-11-18).
+  const maxRt = c.fresh ? LIVE.freshMaxRtPct : FIB.maxRtPct, maxImp = c.fresh ? LIVE.freshMaxImpactPct : LIVE.maxImpactPct;
   const fixed = 2 * feeSide + (ataNew ? LIVE.baseFeeLamports : 0), fixedPct = (fixed / lamports) * 100;
-  if (fixedPct >= FIB.maxRtPct) return no("cost", `The fixed SOL fees alone (${fixed} lamports) are ${round(fixedPct, 3)}% of ${sizeSol} SOL, over ${FIB.maxRtPct}%`);
+  if (fixedPct >= maxRt) return no("cost", `The fixed SOL fees alone (${fixed} lamports) are ${round(fixedPct, 3)}% of ${sizeSol} SOL, over ${maxRt}%`);
   const q = await quote(env, SOL_MINT, c.mint, lamports, LIVE.slippageBps);
   if (!q.ok) return no("no_quote", q.error);
-  if (q.impactPct > LIVE.maxImpactPct) return no("price_impact", `Price impact ${round(q.impactPct, 2)}% is over the ${LIVE.maxImpactPct}% cap`);
+  if (q.impactPct > maxImp) return no("price_impact", `Price impact ${round(q.impactPct, 2)}% is over the ${maxImp}% cap`);
   const back = await quote(env, c.mint, SOL_MINT, q.q.outAmount, LIVE.exitSlippageBps);
   if (!back.ok) return no("no_quote", `no sell quote: ${back.error}`);
   const quoteRtPct = round((1 - Number(back.q.outAmount) / lamports) * 100, 3), rtPct = round(quoteRtPct + fixedPct, 3), rewardPct = round(((s.t1 - s.entry) / s.entry) * 100, 3);
   const parts = `${quoteRtPct}% in the quotes + ${round(fixedPct, 3)}% fixed SOL fees at ${sizeSol} SOL`;
-  if (rtPct >= FIB.maxRtPct) return no("cost", `The round trip costs ${rtPct}% (${parts}), over ${FIB.maxRtPct}%`);
+  if (rtPct >= maxRt) return no("cost", `The round trip costs ${rtPct}% (${parts}), over ${maxRt}%`);
   if (rewardPct < FIB.minRewardRt * rtPct) return no("cost", `Target 1 is ${rewardPct}% away, under ${FIB.minRewardRt}x the ${rtPct}% round trip (${parts})`);
   const proof = await sellProof(env, c, q.q.outAmount, owner);
   if (!proof.ok) return no("honeypot", proof.reason);
   // room left for the buy's own network fee once Jupiter prices it (execute checks it before signing)
-  const room = (Math.min(FIB.maxRtPct - quoteRtPct, rewardPct / FIB.minRewardRt - quoteRtPct) / 100) * lamports - feeSide - (ataNew ? LIVE.baseFeeLamports : 0);
+  const room = (Math.min(maxRt - quoteRtPct, rewardPct / FIB.minRewardRt - quoteRtPct) / 100) * lamports - feeSide - (ataNew ? LIVE.baseFeeLamports : 0);
   let rent = 0; if (ataNew) { try { rent = await solRpc(env, "getMinimumBalanceForRentExemption", [165]); } catch {} if (!(rent > 0)) rent = LIVE.tokenAccountRentFallbackLamports; }
   return { ok: true, q, rtPct, quoteRtPct, fixedLamports: fixed, fixedPct: round(fixedPct, 3), rewardPct, maxBuyFeeLamports: Math.floor(room), rentFrontedLamports: rent };
 }
@@ -628,7 +660,7 @@ async function tryBuy(env, g, owner = null) {
   const cg = await costGate(env, VENUE, c, s, size, { feeSide: g.feeSide, owner: g.w.address }); if (!cg.ok) return cg.refusal;
   const { q, rtPct, rewardPct } = cg;
   if (!(bal >= lamports + LIVE.feeBudgetLamports + LIVE.reserveSol * 1e9 + cg.rentFrontedLamports)) return refuse(d, VENUE, "reserve", `The wallet holds ${round(bal / 1e9, 6)} SOL: not enough for a ${size} SOL trade, the ${round(cg.rentFrontedLamports / 1e9, 6)} SOL token-account rent (returned after the sale) and the ${LIVE.reserveSol} SOL kept for fees`);
-  const plan = planOf(s, Math.floor(Date.now() / 1000), { liq: c.liqUsd, rtPct, quoteRtPct: cg.quoteRtPct, fixedLamports: cg.fixedLamports, rewardPct, sizeSol: size, sizeCappedBy: cappedBy, ataNew: cg.rentFrontedLamports > 0, validations: { ...s.validations, notVetoed: true, safety: true, tokenProgram: true, sellProven: true, cost: true, impact: true } });
+  const plan = planOf(s, Math.floor(Date.now() / 1000), { src: found.src, unit: found.src === "symbiote" ? "SOL" : "USD", liqBasis: c.liqBasis || "jupiter", liq: c.liqUsd, rtPct, quoteRtPct: cg.quoteRtPct, fixedLamports: cg.fixedLamports, rewardPct, sizeSol: size, sizeCappedBy: cappedBy, ataNew: cg.rentFrontedLamports > 0, validations: { ...s.validations, notVetoed: true, safety: true, tokenProgram: true, sellProven: true, cost: true, impact: true } });
   // the claim: one statement takes the coin's only active slot, under the open-position limit. A second caller gets nothing.
   const p = await d.one(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, stop_pct, pool_liq_usd, plan)
     SELECT $1,$2,$3,'opening',$4,$5,$6 WHERE (SELECT count(*) FROM mob_aq_live_positions WHERE venue = $1 AND status IN ${ACTIVE}) < $7::int
@@ -662,8 +694,13 @@ async function exits(env, w, minute = Math.floor(Date.now() / 60000), renew = nu
     const q = await quote(env, p.mint, SOL_MINT, p.tokens_raw, LIVE.exitSlippageBps);
     if (q.ok) await d.q(`UPDATE mob_aq_live_positions SET last_value_sol = $2, last_value_at = now() WHERE id = $1`, [p.id, Number(q.q.outAmount) / 1e9]);
     if (!p.plan) continue; // a position without a chart plan (none is opened that way) waits for SELL ALL LIVE
-    const cs = await candlesFor(env, d, p.mint); // a fresh right call's exits run on symbiote's bars when Jupiter has no chart
-    const m = manage(p.plan, cs.ok ? cs.data : [], nowSec, { liqNow: await liqOf(env, p.mint), vetoed: await vetoed(d, p.mint) });
+    const cs = await positionCandles(env, d, p, nowSec);
+    // 4) the -30% liquidity exit compares like with like: Jupiter's figure only against a plan that was sized on Jupiter's figure
+    const liqNow = (p.plan?.liqBasis || "jupiter") === "jupiter" ? await liqOf(env, p.mint) : null;
+    let m = manage(p.plan, cs.ok ? cs.data : [], nowSec, { liqNow, vetoed: await vetoed(d, p.mint) });
+    // 3) HARD STOP, time-independent: with no fresh candle from either source, the spot price (Jupiter's price API, in the plan's
+    // unit) at or under the stop sells; with no price at all from any source, the position is sold (the stop must always fire)
+    if (!cs.ok && m.action === "hold") m = hardStop(p.plan, await spotIn(p.plan?.unit || "USD", p.mint)) || m;
     // the panel's sparkline: the last closed 1-minute price, once a minute, the last 90 kept (display only; manage() never reads it)
     const lastPx = cs.ok ? cs.data.filter((c) => c.t + 60 <= nowSec).slice(-1)[0]?.c : null;
     if (Number.isFinite(lastPx)) await d.q(`UPDATE mob_aq_live_positions SET alert_patch = jsonb_build_object('spark', (SELECT coalesce(jsonb_agg(x), '[]'::jsonb) FROM (SELECT x FROM jsonb_array_elements(coalesce(alert_patch->'spark', '[]'::jsonb)) x OFFSET greatest(0, jsonb_array_length(coalesce(alert_patch->'spark', '[]'::jsonb)) - 89)) z) || jsonb_build_array($2::float8)) WHERE id = $1`, [p.id, lastPx]);

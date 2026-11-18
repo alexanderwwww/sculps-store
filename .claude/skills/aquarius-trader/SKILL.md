@@ -152,3 +152,11 @@ Every mistake the trading machine makes (a losing trade, a stop-out, a fake pump
 - **SYMBIOTE never judges.** It paper-buys 100% of the coins it sees, in every lane, to scan the whole market and train the brain.
 - **JUDGING is the job of Aquarius (Claude) with Grok.** They read symbiote's data, run the health checks, and pick the RIGHT CALLS for real money.
 - The live trader buys only those right calls, through every gate.
+
+## Right call -> live path, as fixed 2026-11-18 (Inspector + Alex)
+- A symbiote right call is its OWN live candidate (fresh coins are never in the $100K/1-day list). Its candles: Jupiter's chart, else symbiote's 1-minute bars (`mob_aq_sym_bars`, price in SOL). The plan stores `src`, `unit` (USD/SOL) and `liqBasis` (jupiter/curve); a position never reads candles in another unit raw (converted at the SOL price), and the -30% liquidity exit runs only when the basis is the same.
+- HARD STOP (no fresh candle from either source): sell when the spot price is at or under the stop, and sell when there is no price from any source.
+- Cost for right calls (bonding-curve coins, pump fee about 1.25% a side): round trip under **3%**, impact under **1.5%**, target 1 at least **3x the true total cost** (so 8%+). Established coins keep 1% and 1%.
+- Upkeep: every **5 minutes** for **6 hours**; the stored SAMPLED buyer facts win over the curve stream (no wallets); liquidity floor **10 SOL** real in the curve (a coin that doubled from launch holds about 12); kept alive through MIGRATION (floor then from Jupiter pool liquidity); expired when quiet, failed, out of memory or past 6 h.
+- Judging: unknown is listed, not a fail, until more than **3** are unknown; real fails are measured values over limits, active authorities, RugCheck danger (e.g. "Creator history of rugged tokens"), no socials in the coin's own metadata, a non-SOL quote, a VETO, missing launch facts. Top-10 excludes the curve and every program-owned holder, as a share of the real supply. RPC and HTTP 429s are retried 3 times.
+- Thresholds are PROVISIONAL (unique buyers 20 from a 120-tx sample, size spread 0.5, same-size 0.7, sniper 15%, dev 5%, top-10 30%): the first 107 production checks were broken, so recalibrate after 24 h of clean checks against the market lane's after-flag results.

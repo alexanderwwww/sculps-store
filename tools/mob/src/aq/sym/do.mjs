@@ -212,10 +212,23 @@ export class Symbiote {
       let why = null;
       if (age > RIGHT_WATCH_H * 3600000) why = `watched ${RIGHT_WATCH_H} hours: the call expires`;
       else if (!c) why = "symbiote no longer holds this coin's live data (restart or released)";
-      else if (c.end) why = c.end === "migrated" ? "the curve completed (migration): symbiote has no price after it" : "the coin went quiet";
-      else if ((c.realSol || 0) < LIQ_FLOOR_SOL) why = `liquidity under the fresh-coin floor: ${(c.realSol || 0).toFixed(1)} SOL in the curve (floor ${LIQ_FLOOR_SOL})`;
-      else { const v = judgeHealth({ ...(r.checks || {}), ...this.eng.streamHealth(r.mint), launchComplete: r.checks?.launchComplete === true || c.launchComplete === true, vetoed: await vetoed(d, r.mint) });
-        if (!v.ok) why = v.failed.join("; "); }
+      else if (c.end === "quiet") why = "the coin went quiet";
+      else {
+        // liquidity: the curve's real SOL while on the curve; after MIGRATION the call stays alive (lower fees on the pool) and the
+        // floor is read from Jupiter's pool liquidity instead (same 10 SOL, at the SOL price, x2 for both sides)
+        let liqOk = (c.realSol || 0) >= LIQ_FLOOR_SOL, liqTxt = `${(c.realSol || 0).toFixed(1)} SOL in the curve`;
+        if (c.end === "migrated") { const j = await fetch(`https://lite-api.jup.ag/price/v3?ids=${r.mint},So11111111111111111111111111111111111111112`).then((x) => x.json()).catch(() => null);
+          const usd = j?.[r.mint]?.liquidity, sol = j?.So11111111111111111111111111111111111111112?.usdPrice;
+          liqOk = usd > 0 && sol > 0 && usd >= LIQ_FLOOR_SOL * 2 * sol; liqTxt = usd > 0 ? `$${Math.round(usd)} in the pool after migration` : "no pool liquidity read after migration"; }
+        if (!liqOk) why = `liquidity under the fresh-coin floor: ${liqTxt} (floor ${LIQ_FLOOR_SOL} SOL)`;
+        else {
+          // the stored, SAMPLED buyer facts win over the curve stream (which carries no wallets); only price and liquidity facts are
+          // refreshed from it (Inspector 2026-11-18: merging the empty stream values killed every call at its first recheck)
+          const sh = this.eng.streamHealth(r.mint) || {}, live = sh.walletsSeen ? sh : { realSol: sh.realSol, mcapSol: sh.mcapSol, quote: sh.quote };
+          const v = judgeHealth({ ...(r.checks || {}), ...live, ...(c.end === "migrated" ? { realSol: LIQ_FLOOR_SOL } : {}), launchComplete: r.checks?.launchComplete === true || c.launchComplete === true, vetoed: await vetoed(d, r.mint) });
+          if (!v.ok) why = v.failed.join("; ");
+        }
+      }
       if (why) await d.q(`UPDATE mob_aq_sym_right SET status = 'expired', checked_at = now(), checks = coalesce(checks, '{}'::jsonb) || jsonb_build_object('expired', $2::text) WHERE mint = $1`, [r.mint, why]);
       else await d.q(`UPDATE mob_aq_sym_right SET checked_at = now() WHERE mint = $1`, [r.mint]);
     }

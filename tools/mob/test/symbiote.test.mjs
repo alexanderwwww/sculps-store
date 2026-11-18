@@ -98,16 +98,22 @@ test("rules: a paper doubling is flagged once for the deep checks; stream health
   assert.equal(h.sniperWallets, 2); assert.ok(h.sniperShare > 0); assert.equal(h.devSold, true); assert.ok(h.uniqueBuyers >= 3);
 });
 
-test("health: a healthy coin passes, each failure is named, unknown is never a pass", () => {
-  const good = { top10Share: 0.18, devShare: 0.01, devSold: false, sniperShare: 0.05, sameFunderMax: 1, uniqueBuyers: 250, sizeCv: 1.4, sameSizeShare: 0.05, washShare: 0.04, liqToMcap: 0.2,
+test("health: a healthy coin passes, each failure is named; an unknown is listed, not a fail, until more than 3 are unknown", () => {
+  const good = { top10Share: 0.18, devShare: 0.01, devSold: false, sniperShare: 0.05, sameFunderMax: 1, uniqueBuyers: 250, sizeCv: 1.4, sameSizeShare: 0.05, washShare: 0.04, realSol: 25, quote: "SOL",
     mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 2, vetoed: false, launchComplete: true };
-  assert.deepEqual(R.judgeHealth(good), { ok: true, failed: [] });
+  assert.deepEqual(R.judgeHealth(good), { ok: true, failed: [], unknown: [] });
   const bad = R.judgeHealth({ ...good, sniperShare: 0.4, devSold: true, sameFunderMax: 7, washShare: 0.5, freezeAuthority: "X", vetoed: true });
   assert.equal(bad.ok, false);
   for (const w of ["sniper", "dev sold", "one source", "wash", "freeze", "VETO"]) assert.ok(bad.failed.some((f) => f.includes(w)), w);
   const noLaunch = R.judgeHealth({ ...good, launchComplete: false }); assert.equal(noLaunch.ok, false); assert.match(noLaunch.failed[0], /launch data .* can never be a right call/);
   const unk = R.judgeHealth({ ...good, top10Share: undefined, mintAuthority: undefined });
-  assert.equal(unk.ok, false); assert.ok(unk.failed.some((f) => /top-10.*unknown/.test(f))); assert.ok(unk.failed.some((f) => /mint authority.*unknown/.test(f)));
+  assert.equal(unk.ok, true, "two unknowns alone are not a fail"); assert.equal(unk.unknown.length, 2);
+  const many = R.judgeHealth({ ...good, top10Share: undefined, mintAuthority: undefined, socials: undefined, rugDanger: undefined });
+  assert.equal(many.ok, false); assert.match(many.failed[0], /too little known: 4/);
+  assert.match(R.judgeHealth({ ...good, socials: 0 }).failed[0], /no X, Telegram or website/);
+  assert.match(R.judgeHealth({ ...good, realSol: 4 }).failed[0], /SOL in the curve/);
+  assert.match(R.judgeHealth({ ...good, quote: "other" }).failed[0], /another token/);
+  assert.match(R.judgeHealth({ ...good, rugDanger: true, rugRisks: ["Creator history of rugged tokens (danger)"] }).failed[0], /Creator history/);
   assert.equal(isVeto("VETO " + MINT, MINT), true); assert.equal(isVeto("VETO lifted on " + MINT, MINT), false);
 });
 
@@ -180,19 +186,20 @@ test("store: one batch writes coins, trades, misses, GTA minutes, lessons and th
 
 test("right calls: a healthy explosion becomes 'candidate' (read by live.mjs rightCalls), a sick one 'fake_pump' + a lesson", async () => {
   resetMocks();
-  const big = [{ address: "A1", amount: "40000000000000" }, { address: "A2", amount: "30000000000000" }, { address: "CURVEACC", amount: "600000000000000" }];
+  const big = [{ address: "A1", amount: "40000000000000" }, { address: "A2", amount: "30000000000000" }, { address: "CURVEACC", amount: "600000000000000" }, { address: "VAULT", amount: "200000000000000" }]; // VAULT: a program-owned holder (excluded)
   let sick = false;
   mock("POST", "https://api.mainnet-beta.solana.com", (rq) => { const j = JSON.parse(rq.body);
     if (j.method === "getTokenLargestAccounts") return { result: { value: big } };
+    if (j.method === "getMultipleAccounts" && j.params[1]?.dataSlice) return { result: { value: j.params[0].map((o) => ({ owner: o === "ownVAULT" ? "pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA" : "11111111111111111111111111111111" })) } };
     if (j.method === "getMultipleAccounts") return { result: { value: j.params[0].map((a) => ({ data: { parsed: { info: { owner: a === "CURVEACC" ? "CURVE" : "own" + a } } } })) } };
-    if (j.method === "getAccountInfo") return { result: { value: { data: { parsed: { info: { mintAuthority: null, freezeAuthority: sick ? "FRZ" : null } } } } } };
+    if (j.method === "getAccountInfo") return { result: { value: { data: { parsed: { info: { mintAuthority: null, freezeAuthority: sick ? "FRZ" : null, supply: "1000000000000000" } } } } } };
     if (j.method === "getSignaturesForAddress") return { result: [{ signature: "s-" + j.params[0] }] };
     if (j.method === "getTransaction") return { result: { transaction: { message: { instructions: [{ program: "system", parsed: { type: "transfer", info: { source: sick ? "ONEFUNDER" : "f-" + j.params[0], destination: j.params[0].slice(2) } } }] } }, meta: { innerInstructions: [] } } };
     return { error: { message: "unmocked " + j.method } }; });
   mock("GET", /api\.rugcheck\.xyz/, () => ({ score: 1, risks: [] }));
   mock("GET", /gateway\.pinata\.cloud/, () => ({ twitter: "https://x.com/a", website: "" }));
   const stream = { uniqueBuyers: 300, buyShare: 0.6, sizeCv: 1.2, sameSizeShare: 0.04, washShare: 0.02, sniperWallets: 1, sniperShare: 0.02, devSold: false, devShare: 0.0,
-    launchComplete: true, earlyBuyers: ["e1", "e2", "e3", "e4"], firstBuyers: ["b1", "b2"], creator: "DEV", curve: "CURVE", uri: "https://ipfs.io/ipfs/bafkreiexample", realSol: 40, mcapSol: 150, liqToMcap: 0.27 };
+    launchComplete: true, earlyBuyers: ["e1", "e2", "e3", "e4"], firstBuyers: ["b1", "b2"], creator: "DEV", curve: "CURVE", uri: "https://ipfs.io/ipfs/bafkreiexample", realSol: 40, mcapSol: 150, quote: "SOL", walletsSeen: true };
   const ok = await deepCheck({}, d, "GOODMINT", stream);
   assert.equal(ok.verdict.ok, true, JSON.stringify(ok.verdict.failed)); assert.equal(ok.checks.top10Share, 0.07); assert.equal(ok.checks.socials, 1);
   assert.equal(await writeRight(d, { mint: "GOODMINT", symbol: "GOOD", lane: "aquarius", gainPct: 140 }, ok), "candidate");
@@ -332,10 +339,10 @@ test("retention: 7 days for coins, misses and trades; GTA coins and right calls 
 // ---------- the Inspector's eight (2dbe9b95) ----------
 test("right call upkeep: renewed while healthy, expired with the reason when it fails, goes quiet or passes 6 hours", async () => {
   const s = new Symbiote({ storage: { get: async () => null, put: async () => {}, getAlarm: async () => 1, setAlarm: async () => {} } }, env);
-  const healthy = { top10Share: 0.1, sameFunderMax: 1, mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 1, launchComplete: true };
+  const healthy = { top10Share: 0.1, sameFunderMax: 1, mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 1, launchComplete: true, uniqueBuyers: 250, sizeCv: 1.4, sameSizeShare: 0.05, washShare: 0.02, devShare: 0.01, devSold: false, sniperShare: 0.02, quote: "SOL" }; // as sampled at the call
   for (const m of ["RC1", "RC2", "RC3"]) { s.eng.onCreate({ mint: m, curve: "C" + m, src: "chain", ts: Date.now() / 1000 });
     s.eng.setLaunch(m, { complete: true, createSlot: 1, creator: "DEV", early: [] });
-    for (let i = 0; i < 120; i++) s.eng.onTrade({ mint: m, buy: i % 7 !== 0, sol: 0.02 * 1.08 ** ((i * 13) % 60), tokens: 1e12, user: "w" + i, ts: 1, px: P0 * (1 + i / 100), ...at(P0 * (1 + i / 100)), realSol: m === "RC2" ? 5 : 40, feeBps: 95, creatorFeeBps: 30, slot: 50 }, Date.now()); }
+    for (let i = 0; i < 120; i++) s.eng.onTrade({ mint: m, buy: i % 7 !== 0, sol: 0.02 * 1.08 ** ((i * 13) % 60), tokens: 1e12, user: null, ts: 1, px: P0 * (1 + i / 100), ...at(P0 * (1 + i / 100)), realSol: m === "RC2" ? 5 : 40, feeBps: 95, creatorFeeBps: 30, slot: 50 }, Date.now()); }
   await d.q(`DELETE FROM mob_aq_sym_right`);
   await d.q(`INSERT INTO mob_aq_sym_right (mint, symbol, status, flagged_at, checked_at, checks) VALUES ('RC1','A','candidate', now() - interval '20 minutes', now() - interval '20 minutes', $1::jsonb), ('RC2','B','candidate', now(), now(), $1::jsonb), ('RC3','C','candidate', now() - interval '7 hours', now(), $1::jsonb), ('GONE','D','candidate', now(), now(), $1::jsonb)`, [JSON.stringify(healthy)]);
   await s.recheckRights(d);
@@ -395,5 +402,37 @@ test("LIVE PATH: a fresh right call becomes its own candidate; its symbiote bars
   assert.equal((await L.scanFib(env, "live", async () => false)).refusal.refused, "veto"); await d.q(`DELETE FROM mob_aq_chat WHERE from_name = 'grok'`);
   await d.q(`UPDATE mob_aq_sym_right SET status = 'expired' WHERE mint = $1`, [RC]);
   const ex = await L.scanFib(env, "live", async () => false); assert.ok(!ex.c && ["no_candidate", "no_right_call"].includes(ex.refusal.refused));
+  resetMocks();
+});
+
+test("LIVE fresh caps: a curve coin may cost up to 3% round trip and 1.5% impact; an established coin keeps 1%; the hard stop always fires", async () => {
+  const L = await import("../src/aq/live.mjs");
+  assert.equal(L.LIVE.freshMaxRtPct, 3); assert.equal(L.LIVE.freshMaxImpactPct, 1.5);
+  resetMocks(); const SOLM = "So11111111111111111111111111111111111111112", M = "CurveCoin1111111111111111111111111111111111";
+  for (const host of ["https://api.jup.ag", "https://lite-api.jup.ag"]) mock("GET", `${host}/swap/v1/quote`, (c, u) => { const buy = u.searchParams.get("inputMint") === SOLM;
+    return { inputMint: u.searchParams.get("inputMint"), outputMint: u.searchParams.get("outputMint"), inAmount: u.searchParams.get("amount"), outAmount: buy ? "1000000000" : "48700000", otherAmountThreshold: "1", priceImpactPct: "0.0105", slippageBps: 100, routePlan: [] }; });
+  mock("POST", "https://api.mainnet-beta.solana.com", () => ({ jsonrpc: "2.0", id: 1, error: { message: "no simulation here" } }));
+  const s = { entry: 1, t1: 1.12 }; // target 1 is 12% away: over 3x a ~2.7% round trip
+  const est = await L.costGate(env, "test", { mint: M, symbol: "C" }, s, 0.05);
+  assert.equal(est.refusal.refused, "price_impact", "an established coin keeps the 1% impact cap");
+  const fr = await L.costGate(env, "test", { mint: M, symbol: "C", fresh: true }, s, 0.05);
+  assert.ok(!["price_impact", "cost"].includes(fr.refusal.refused), "the fresh coin passed the cost and impact gates and went on to the sell proof: " + JSON.stringify(fr.refusal));
+  const thin = await L.costGate(env, "test", { mint: M, symbol: "C", fresh: true }, { entry: 1, t1: 1.05 }, 0.05);
+  assert.equal(thin.refusal.refused, "cost", "target 1 must be 3x the true cost"); resetMocks();
+  // the hard stop: no fresh candles from either source
+  const plan = { phase: 0, stop: 0.9, entry: 1, unit: "SOL" };
+  assert.equal(L.hardStop(plan, null).action, "sell_all"); assert.equal(L.hardStop(plan, 0.85).action, "sell_all"); assert.equal(L.hardStop(plan, 0.95), null);
+});
+
+test("LIVE units: a SOL plan never reads USD candles raw; the other source is converted at the SOL price when its own is frozen", async () => {
+  const L = await import("../src/aq/live.mjs"); const SOLM = "So11111111111111111111111111111111111111112", M = "UnitCoin11111111111111111111111111111111111";
+  const now = Math.floor(Date.now() / 1000), t = Math.floor(now / 60) * 60 - 120;
+  resetMocks(); await d.q(`DELETE FROM mob_aq_market`); await d.q(`DELETE FROM mob_aq_sym_bars WHERE mint = $1`, [M]);
+  mock("GET", /^https:\/\/datapi\.jup\.ag\/v2\/charts\//, () => ({ candles: [{ time: t, open: 75, high: 75, low: 75, close: 75, volume: 1 }] })); // USD
+  mock("GET", /lite-api\.jup\.ag\/price\/v3/, () => ({ [SOLM]: { usdPrice: 75 } }));
+  // the SOL plan's own source (symbiote bars) is frozen: an hour old
+  await d.q(`INSERT INTO mob_aq_sym_bars (mint, t, o, h, l, c, v) VALUES ($1, $2, 1, 1, 1, 1, 1)`, [M, t - 3600]);
+  const cs = await L.positionCandles(env, d, { mint: M, plan: { src: "symbiote", unit: "SOL" } }, now);
+  assert.equal(cs.ok, true); assert.equal(cs.unit, "SOL"); assert.equal(cs.converted, true); assert.ok(Math.abs(cs.data.at(-1).c - 1) < 1e-9, "75 USD at 75 USD a SOL = 1 SOL");
   resetMocks();
 });

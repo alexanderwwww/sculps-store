@@ -232,8 +232,13 @@ export function createEngine({ isVetoed = () => false } = {}) {
 }
 
 // A right call: exploded on paper AND every health rule passed. Returns {ok, failed:[...], checks}. Thresholds stated here.
-export const HEALTH = { top10Max: 0.30, devShareMax: 0.05, devSold: false, sniperShareMax: 0.15, sameFunderMax: 3, uniqueBuyersMin: 60,
-  sizeCvMin: 0.6, sameSizeShareMax: 0.25, washShareMax: 0.25, realSolMin: 10 };
+// Thresholds. PROVISIONAL (2026-11-18): the first 107 checks in production were broken (429s, no sampling, the curve counted
+// as a holder), so there is no clean outcome data to calibrate on yet; recalibrate after 24 h of clean checks against the
+// market lane's after-flag results. Changed now on measurement grounds only: unique buyers are counted from a 120-transaction
+// sample (a lower bound; production samples showed 20-26), and pump.fun buyers use round SOL amounts (0.1, 0.5, 1), so a
+// same-size share of 0.57-0.9 was common on coins that kept rising.
+export const HEALTH = { top10Max: 0.30, devShareMax: 0.05, devSold: false, sniperShareMax: 0.15, sameFunderMax: 3, uniqueBuyersMin: 20,
+  sizeCvMin: 0.5, sameSizeShareMax: 0.7, washShareMax: 0.25, realSolMin: 10 };
 // Unknown is NOT a fail on its own (Alex via the coordinator, 2026-11-18: 106 of 106 calls failed on "unknown" because the
 // checks never got an answer). An unknown is listed; a call with more than MAX_UNKNOWN unknowns still fails ("too little known").
 // Only real danger fails: a measured value over its limit, an active authority, a danger-level RugCheck risk, a VETO,
