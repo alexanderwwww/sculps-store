@@ -300,9 +300,10 @@ export async function scanFib(env, venue, skip) {
   // Alex's hard rule (2026-11-18): only a coin symbiote flagged as a RIGHT CALL that passed its deep checks may be bought.
   const right = await rightCalls(d);
   if (!right.size) return { refusal: await refuse(d, venue, "no_right_call", "Symbiote has no right call that passed its deep checks: no live entry") };
-  let last = null, looked = 0;
+  let last = null, looked = 0, inList = 0;
   for (const c of list) {
     if (!right.has(c.mint)) continue;
+    inList++;
     if (looked >= LIVE.candidatesPerTick) break;
     if (await skip(c.mint, null)) continue;
     looked++;
@@ -316,7 +317,7 @@ export async function scanFib(env, venue, skip) {
     if (!hs.ok) { last = await refuse(d, venue, "safety", hs.reason, c); continue; }
     return { c, s };
   }
-  return { refusal: last || await refuse(d, venue, looked ? "no_setup" : "no_right_call", looked ? "No right-call coin is in a Fibonacci pullback right now" : "No symbiote right call is among the established coins right now") };
+  return { refusal: last || await refuse(d, venue, inList ? "no_setup" : "no_right_call", inList ? "No right-call coin is in a Fibonacci pullback right now" : "No symbiote right call is among the established coins right now") };
 }
 // The symbiote's right calls that passed the deep checks (status 'candidate'). A missing table or a failed read = none.
 export async function rightCalls(d) { try { return new Set((await d.q(`SELECT mint FROM mob_aq_sym_right WHERE status = 'candidate'`)).map((r) => r.mint)); } catch { return new Set(); } }
