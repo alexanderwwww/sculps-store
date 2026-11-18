@@ -59,7 +59,7 @@ const TAGS = { lesson: ["ENGINE", "PAPER_TRADE_EXEC"], sym_hour: ["ENGINE", "HOU
 function codeOf(r) {
   const [tag, ev] = TAGS[r.kind] || [String(r.dept || "BRAIN").toUpperCase(), String(r.kind || "RECORD").toUpperCase()];
   const k = (x) => `<span class="dk">${esc(x)}</span>`, val = (v) => (v === null || v === undefined ? `<span class="dc">null</span>` : typeof v === "number" ? `<span class="${/pct|Pct|gain/.test("") ? "" : v < 0 ? "dr" : "dg"}">${esc(+v.toFixed(4))}</span>` : typeof v === "boolean" ? `<span class="dp">${v}</span>` : typeof v === "string" ? `<span class="ds">"${esc(v.length > 60 ? v.slice(0, 60) + "…" : v)}"</span>` : Array.isArray(v) ? `<span class="ds">[${esc(v.length)}]</span>` : "{…}");
-  const data = r.data && typeof r.data === "object" ? `{${Object.entries(r.data).filter(([a, v]) => (typeof v !== "object" || v === null) && !["rtPct", "legPct", "gta"].includes(a)).slice(0, 6).map(([a, v]) => `${k(a === "mint" ? "token" : a)}:${a === "mint" ? `<span class="ds">"${esc(short(v))}"</span>` : val(typeof v === "number" ? +v.toFixed(2) : v)}`).join(", ")}}` : `<span class="ds">"${esc(String(r.text || "").slice(0, 120))}"</span>`;
+  const data = r.data && typeof r.data === "object" ? `{${Object.entries(r.data).filter(([a, v]) => (typeof v !== "object" || v === null) && !["rtPct", "legPct", "gta", "hourUtc"].includes(a)).slice(0, 6).map(([a, v]) => `${k(a === "mint" ? "token" : a)}:${a === "mint" ? `<span class="ds">"${esc(short(v))}"</span>` : val(typeof v === "number" ? +v.toFixed(2) : v)}`).join(", ")}}` : `<span class="ds">"${esc(String(r.text || "").slice(0, 120))}"</span>`;
   return `<div class="tl ${r.kind === "pain" || tag === "RISK" ? "pain" : ""}" title="${esc(r.text)}"><span class="dt">[${athens(r.at)}]</span> <span class="dtag ${tag === "RISK" ? "dr" : tag === "RIGHT" ? "dg" : "dp"}">[${esc(tag)}]</span> <span class="dev ${tag === "RISK" ? "dr" : "dp"}">${esc(ev)}</span> ${data}</div>`;
 }
 
@@ -94,7 +94,7 @@ const AW = 1586, AH = 992; // the art's own pixel size; every overlay below is p
 const box = (x, y, w, h) => `left:${(x / AW * 100).toFixed(3)}%;top:${(y / AH * 100).toFixed(3)}%;width:${(w / AW * 100).toFixed(3)}%;height:${(h / AH * 100).toFixed(3)}%`;
 const dot = (x, y, r, cls, i = 0) => `<i class="${cls}" style="${box(x - r, y - r, 2 * r, 2 * r)};animation-delay:${(i * 0.37).toFixed(2)}s"></i>`;
 const COUNTERS = [["sym-coins", 178], ["sym-cov", 455], ["sym-rc", 731], ["sym-fp", 1001]];
-const STATS = [["rs-n", 335], ["rs-wr", 420], ["rs-avg", 510], ["rs-tot", 600]];
+const STATS = [["rs-n", 330], ["rs-wr", 416], ["rs-avg", 504], ["rs-tot", 594]];
 const GEMS = [[1293, 332], [1180, 372], [1325, 410], [1157, 442], [1315, 495], [1178, 510]];
 export function symScreen() {
   const el = document.createElement("section"); el.id = "sym";
@@ -109,11 +109,10 @@ export function symScreen() {
     ${GEMS.map(([x, y], i) => dot(x, y, 26, "gem", i)).join("")}
     ${COUNTERS.map(([id, x]) => `<b class="cnt" id="${id}" style="${box(x, 129, 164, 40)}">—</b>`).join("")}
     <div class="rows" id="sym-rows" style="${box(32, 352, 448, 300)}"></div>
-    ${STATS.map(([id, y]) => `<b class="st" id="${id}" style="${box(1398, y, 154, 36)}">—</b>`).join("")}
+    ${STATS.map(([id, y]) => `<b class="st" id="${id}" style="${box(1392, y, 163, 46)}">—</b>`).join("")}
     <pre class="log" id="sym-code" style="${box(222, 768, 1300, 158)}"></pre>
-    <span class="pain" style="${box(560, 718, 474, 18)}">PAIN 24 H <b id="sym-pain">—</b></span>
   </div>
-  <p class="sym-status"><u class="sym-paper">PAPER</u> <em id="sym-up">—</em> · <span id="sym-market"></span> · <span id="sym-src"></span></p>
+  <p class="sym-status"><u class="sym-paper">PAPER</u> <em id="sym-up">—</em> · <span class="pain">PAIN 24 H <b id="sym-pain">—</b></span> · <span id="sym-market"></span> · <span id="sym-src"></span></p>
   <div class="sym-mobile" aria-hidden="false"><div class="mcnt"><div><small>COINS TRADED</small><b id="m-coins">—</b></div><div><small>COVERAGE</small><b id="m-cov">—</b></div><div><small>RIGHT CALLS</small><b id="m-rc">—</b></div><div><small>FAKE PUMPS</small><b id="m-fp">—</b></div></div>
     <h4>PAPER TRADES</h4><div class="rows" id="m-rows"></div><h4>RIGHT CALLS</h4><div class="mcnt" id="m-stats"></div><h4>ENGINE LOG</h4><pre class="log" id="m-code"></pre></div>
   <div class="sym-extra"><div><h4>GTA 6 WATCH <span>whole life</span></h4><div id="sym-gta"></div></div><div><h4>MISSED <span>with the reason</span></h4><div id="sym-miss"></div><h4>RIGHT CALLS NOW</h4><p class="sym-fp-list" id="sym-fruits"></p></div></div>`;
@@ -198,7 +197,7 @@ const CSS = `
 .sym-art>*{position:absolute}
 /* the fake numbers are covered by boxes painted in the art's own colours, then the real values are written on top */
 .sym-art .cnt{display:grid;place-items:center;background:linear-gradient(180deg,#121214,#202024);border-radius:.35cqw;font:600 2.25cqw/1 var(--mono);letter-spacing:.08em;color:#f2f2f2;cursor:pointer}
-.sym-art .rows{background:#020d06;display:flex;flex-direction:column}.sym-art .r{flex:1;display:grid;grid-template-columns:1.05fr 1.15fr .9fr 1fr;align-items:center;padding:0 .4cqw;border-bottom:1px solid rgba(60,255,122,.28);font:1.25cqw var(--mono);color:#3cff7a;white-space:nowrap;overflow:hidden}
+.sym-art .rows{background:#020d06;display:flex;flex-direction:column}.sym-art .r{flex:1;display:grid;grid-template-columns:27% 28.5% 26% 1fr;align-items:center;padding:0 .4cqw;border-bottom:1px solid rgba(60,255,122,.28);font:1.25cqw var(--mono);color:#3cff7a;white-space:nowrap;overflow:hidden}
 .sym-art .r span:last-child{text-align:right}.sym-art .r .sell{color:#f1fa8c}.sym-art .r .up{color:#3cff7a}.sym-art .r .dn{color:#ff5555}
 .sym-art .st{display:flex;align-items:center;padding-left:.6cqw;background:#0b0b0e;font:600 1.75cqw var(--mono);color:#fff}.sym-art .st.up{color:#3cff7a}.sym-art .st.dn{color:#ff5555}
 .sym-art .log{margin:0;background:#1f2030;padding:.3cqw .6cqw;font:.95cqw/1.6 var(--mono);color:#f8f8f2;overflow:hidden;white-space:nowrap}
@@ -217,6 +216,7 @@ const CSS = `
 @keyframes symSmoke{0%,100%{transform:translate(0,0) scale(1);opacity:.55}50%{transform:translate(.6cqw,-1.4cqw) scale(1.15);opacity:.9}}@keyframes symFlow{from{background-position:0 -40%}to{background-position:0 140%}}
 @keyframes symGem{0%,100%{transform:scale(.85)}50%{transform:scale(1.15)}}@keyframes symShimmer{0%,100%{background-position:-100% 0}50%{background-position:200% 0}}
 @keyframes symCrack{0%{stroke-dashoffset:400;stroke:#ff5555}8%{stroke-dashoffset:0}60%{stroke:#ff9b9b}100%{stroke-dashoffset:0;stroke:#e8ecf2;opacity:0;stroke-width:1}}@keyframes symIn{from{opacity:0}to{opacity:1}}
+.sym-status .pain{font:700 10px var(--mono);color:#ff5555}.sym-status .pain em{font-weight:400;color:#9a9ca6;font-style:normal}
 .sym-status{margin:8px 0;font:11px var(--mono);color:#9a9ca6}.sym-status b{color:#fff}.sym-status em{font-style:normal;color:#c9ccd4}
 .sym-paper{font:700 9px var(--mono);letter-spacing:.12em;text-decoration:none;color:#f5a524;border:1px solid rgba(245,165,36,.6);border-radius:4px;padding:1px 4px}
 .sym-mobile{display:none}.sym-extra{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;font:11px var(--mono)}#sym h4{margin:6px 0 4px;font:700 10px var(--mono);letter-spacing:.14em;color:#c9ccd4}#sym h4 span{font-weight:400;color:#6b7a90;letter-spacing:0;margin-left:6px}
