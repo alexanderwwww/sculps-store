@@ -817,12 +817,12 @@ test("RPC) every live call survives a deaf or rate-limited main RPC: retry, then
 
 test("G5) empty token accounts a swap route left in the wallet are closed and their rent comes back; nothing else is ever closed", async () => {
   const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", USDT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", STRAY = "7deBYhKWNtXYL6brwF1DcWziqXqE2XLBUgkQq8SCpump", A = (address, mint, raw) => ({ address, mint, program: L.PROG.token, raw: String(raw), data: tokData(mint, wallet.address, raw) });
-  await L.liveTick(env, { minute: 1 }); const closes0 = F.closes || 0, sent0 = F.sent.length; // BONK is open
+  await L.liveTick(env, { minute: 1 }); const closes0 = F.closes || 0, sent0 = F.sent.length, sweeps = async () => (await one(`SELECT count(*)::int n FROM mob_aq_brain WHERE text LIKE 'LIVE RENT SWEEP:%'`)).n, sw0 = await sweeps(); // BONK is open
   F.tokAccts = [A(await L.ataOf(wallet.address, MINT), MINT, 5000000), A(await L.ataOf(wallet.address, USDC), USDC, 0), A(await L.ataOf(wallet.address, USDT), USDT, 0), A(await L.ataOf(wallet.address, STRAY), STRAY, 777)];
   let r = await L.liveTick(env, { minute: 2 }); assert.equal(r.swept, undefined, "only on the 5-minute pass"); assert.equal(F.closes || 0, closes0);
   r = await L.liveTick(env, { minute: 5 }); assert.equal(r.swept?.length, 2, JSON.stringify(r)); assert.deepEqual(r.swept.map((x) => x.mint).sort(), [USDC, USDT].sort()); assert.ok(r.swept.every((x) => x.backSol === 0.001483), "1,483,440 lamports each (the rent less the close's fee)");
   assert.equal(F.closes, closes0 + 2, "two CloseAccount transactions, nothing else"); assert.equal(F.sent.length, sent0, "no swap was sent"); assert.equal((await positions())[0].status, "open"); assert.equal((await positions())[0].tokens_raw, "5000000");
-  assert.equal((await one(`SELECT count(*)::int n FROM mob_aq_brain WHERE text LIKE 'LIVE RENT SWEEP:%' AND at > now() - interval '1 minute'`)).n, 2); assert.equal(r.orphans, 1, "the stray coin with tokens in it is reported, not closed");
+  assert.equal((await sweeps()) - sw0, 2); assert.equal(r.orphans, 1, "the stray coin with tokens in it is reported, not closed");
   // never: an account with tokens in it, the open position's own account, a closed position's account (reclaimRent books that one), or while an order is on its way
   F.tokAccts = [A(await L.ataOf(wallet.address, MINT), MINT, 0), A(await L.ataOf(wallet.address, STRAY), STRAY, 777)]; assert.deepEqual(await L.sweepEmpty(env, wallet), []);
   F.tokAccts = [A(await L.ataOf(wallet.address, USDC), USDC, 0)]; await d.q(`INSERT INTO mob_aq_live_orders (venue, side, mint, symbol, claim, status) VALUES ('solana','sell','X','X','pending-claim','sent')`); assert.deepEqual(await L.sweepEmpty(env, wallet), []); await d.q(`DELETE FROM mob_aq_live_orders WHERE claim = 'pending-claim'`);
