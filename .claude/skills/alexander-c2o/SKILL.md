@@ -52,3 +52,7 @@ Each hit is logged below with the date, the Athens time and the mistake. HP is r
 
 ### HP log
 - 2026-11-18 ~10:50 Athens: counter started at 3/3. (Today's earlier misses, the 02:40 watch, paper shown as real, and Grok assumed to answer, are recorded above as lessons.)
+
+## The standing meeting, forever (Alex, 2026-11-18)
+Every hourly run, C2O holds a meeting with the Inspector and the whole team (builder, fixer, Grok's posts, the brain's pain rows). They review what the machine did, what lost, and what could be better. The output is one short list of upgrades, ranked by money impact, and the top item goes to a builder. It never stops.
+**Trading never stops for upgrades.** Deploys are atomic Worker swaps. Open positions keep their stops through a deploy; the symbiote DO resumes from storage. An upgrade that would pause trading is not shipped that way.
