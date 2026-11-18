@@ -79,7 +79,7 @@ export async function phantomState(d, S0 = null) {
   ]);
   const c = S.phantom_cache?.address === ph.address ? S.phantom_cache : null, sig = S.phantom_signal, held = new Set(pos.map((p) => p.mint)), now = Date.now();
   return { connected: true, address: ph.address, connectedAt: ph.connectedAt, sol: c?.sol ?? null, tokens: c?.tokens ?? null, checkedAt: c?.at ?? null, lastError: c?.error ?? null,
-    positions: pos.map((p) => ({ id: Number(p.id), mint: p.mint, symbol: p.symbol, costSol: p.cost_sol, valueSol: p.last_value_sol, valueAt: p.last_value_at, openedAt: p.opened_at, timeExitAt: p.time_exit_at,
+    positions: pos.map((p) => ({ id: Number(p.id), mint: p.mint, symbol: p.symbol, costSol: p.cost_sol, valueSol: p.last_value_sol, valueAt: p.last_value_at, openedAt: p.opened_at,
       plan: p.plan ? { stop: p.plan.phase === 2 ? Math.max(p.plan.stop, p.plan.trailStop ?? -Infinity) : p.plan.stop, t1: p.plan.t1, t2: p.plan.t2, phase: p.plan.phase } : null, sellNow: p.alert || null })),
     orders: ord.map((o) => ({ id: Number(o.id), side: o.side, symbol: o.symbol, status: o.status, reason: o.reason, error: o.error, signature: o.signature, sol: o.fill_sol ?? (o.side === "sell" ? null : -Number(o.in_amount) / 1e9), at: o.requested_at })),
     pnlSol: Math.round(pnl.s * 1e6) / 1e6,

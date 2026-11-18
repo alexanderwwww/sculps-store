@@ -38,7 +38,7 @@ const sgn = (v, d = 4) => (num(v) ? (v > 0 ? "+" : "") + v.toFixed(d) + " SOL" :
 function paintLive(el, lv, L) {
   const set = (id, v, c) => { const e = el.querySelector("#" + id); if (e && e.textContent !== v) e.textContent = v; if (e && c != null && e.className !== c) e.className = c; };
   const put = (id, html) => { const e = el.querySelector("#" + id); if (e && e.dataset.h !== html) { e.dataset.h = html; e.innerHTML = html; } };
-  set("wl-auto-n", L.autoTrade ? "trading real SOL inside these limits" : lv && lv.autoOff && lv.autoOff.why && Date.now() - new Date(lv.autoOff.at).getTime() < 86400000 ? lv.autoOff.why : "off: no new buys. Open live positions still exit on their stop and their clock.");
+  set("wl-auto-n", L.autoTrade ? "trading real SOL inside these limits" : lv && lv.autoOff && lv.autoOff.why && Date.now() - new Date(lv.autoOff.at).getTime() < 86400000 ? lv.autoOff.why : "off: no new buys. Open live positions still exit by the chart: stop, targets, invalidation.");
   if (!lv) { set("wl-rule", "the engine has not sent the live book yet"); return; }
   set("wl-rule", `${lv.rule} · NOT proven: never tested in the training arena, small size only`);
   const pp = lv.paper; set("wl-paper", pp ? (pp.closed || pp.open ? `Paper mirror (same logic on every coin): ${pp.closed} closed, ${pp.open} open${pp.closed ? ` · ${pp.wins} won · ${num(pp.avgNetPct) ? (pp.avgNetPct > 0 ? "+" : "") + pp.avgNetPct + "%" : D} a trade after costs` : ""}` : "Paper mirror (same logic on every coin): no setup seen yet.") : "");
