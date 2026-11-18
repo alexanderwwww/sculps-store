@@ -9,6 +9,7 @@ import { chatPost, chatRead, SEATS } from "./seat.mjs";
 import { setTraining, trainingState } from "./arena.mjs";
 import { safeEqual } from "../auth.mjs";
 import * as RH from "./robinhood.mjs";
+import { createWallet, walletStatus, saveWalletLimits } from "./wallet.mjs";
 
 const DROP_MAX = 95 * 1024 * 1024;
 const TYPES = { glb: "model/gltf-binary", gltf: "model/gltf+json", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", ktx2: "image/ktx2",
@@ -111,6 +112,16 @@ export async function aqApi(req, env, url, path, { json, apiErr, admin, bearer, 
     if (path === "/api/aq/rh/disconnect" && M === "POST") return json(await RH.disconnect(env));
     if (path === "/api/aq/rh/limits" && M === "POST") { const r = await RH.saveLimits(env, await body()); return r.error ? apiErr(400, "validation", r.error) : json(r); }
     return apiErr(404, "not_found", "No such Robinhood endpoint");
+  }
+  // The Aquarius Solana wallet: made on the server, read here, with its limits. Alex's admin session only. No route returns
+  // the secret key, and there is no swap or transfer route (src/aq/wallet.mjs).
+  if (path === "/api/aq/wallet" || path.startsWith("/api/aq/wallet/")) {
+    if (!admin) return apiErr(bearer ? 403 : 401, bearer ? "forbidden" : "unauthorized", "Only Alex (admin session) uses the Aquarius wallet");
+    await ensureSeed(env);
+    if (path === "/api/aq/wallet" && M === "GET") return json(await walletStatus(env, { fresh: url.searchParams.get("fresh") === "1" }));
+    if (path === "/api/aq/wallet/create" && M === "POST") { const r = await createWallet(env); return r.error ? apiErr(r.exists ? 409 : 500, r.exists ? "exists" : "failed", r.error) : json(r, 201); }
+    if (path === "/api/aq/wallet/limits" && M === "POST") { const r = await saveWalletLimits(env, await body()); return r.error ? apiErr(400, "validation", r.error) : json(r); }
+    return apiErr(404, "not_found", "No such wallet endpoint");
   }
   if ((path === "/api/aq/helper" || path === "/api/aq/briefing") && !(admin || bearer || keyOk)) return apiErr(401, "unauthorized", "Admin session, bearer MOB_API_TOKEN or AQUARIUS_KEY required");
   if (path === "/api/aq/helper" && M === "POST") { const r = await helperMessage(env, await body()); return r.error ? apiErr(400, "validation", r.error) : json(r, 201); }

@@ -86,3 +86,11 @@ ENGINE WISHLIST (not in buildState today, the section says so on screen instead 
  The engine had no state.training when this was built, so the client reads the first of these names that exists and shows "—" for the rest. Engine: send these (first name preferred):
  training:{ on:bool, since, walletSol (| wallet.sol | equitySol), startSol, trades (| tradesTotal | virtualTrades), perMin (| tradesPerMin), variants (| variantsTried | tried; number or array),
             graduated (number or array), random:{expectancyPct}, leaders:[{name (| label | id), n (| trades), expectancyPct, vsRandomPct (else expectancy minus random), graduated:bool}] (top 5 used) }
+
+## ROBINHOOD link and AQUARIUS WALLET (engine: src/aq/robinhood.mjs, src/aq/wallet.mjs; panel: aq/robinhood.js, aq/wallet.js; since 2026-11-18)
+Both are admin session only (no bearer, no helper code). Neither has an order, swap or transfer route: connection, read side and limits only.
+- GET /api/aq/rh/connect (302 to Robinhood's sign-in) · GET /api/aq/rh/callback (302 to /aq?rh=connected|error) · GET /api/aq/rh/status[?fresh=1] · POST /api/aq/rh/disconnect · POST /api/aq/rh/limits {maxPerTradeUsd, maxDailyLossUsd, maxOpenPositions, allowStocks, allowCrypto, autoTrade}
+- GET /api/aq/wallet[?fresh=1] · POST /api/aq/wallet/create (201 once, then 409) · POST /api/aq/wallet/limits {maxPerTradeSol, maxDailyLossSol, maxOpenPositions, autoTrade}
+ robinhood:{connected, since, tokenExpiresAt, checkedAt, account:{valueUsd, cashUsd, positions:[{symbol, quantity, valueUsd, avgCostUsd}]|null, fields}|null, tools:[names], readTools:[names], limits, lastError, clientRegistered, liveOrders:false}
+ solWallet:{exists, address, createdAt, sol, tokens:[{mint, amount, raw, decimals}]|null, checkedAt, source, limits, lastError, liveOrders:false}   // state.wallet is the PAPER wallet and is unchanged
+Limits are 0/false until Alex sets them; autoTrade is a stored flag only and is refused until every limit is above zero.
