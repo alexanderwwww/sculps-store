@@ -11,6 +11,7 @@ import { safeEqual } from "../auth.mjs";
 import * as RH from "./robinhood.mjs";
 import { createWallet, walletStatus, saveWalletLimits } from "./wallet.mjs";
 import { sellAllLive, liveState } from "./live.mjs";
+import { savePayout, withdraw, preview, restoreWallet } from "./payout.mjs";
 
 const DROP_MAX = 95 * 1024 * 1024;
 const TYPES = { glb: "model/gltf-binary", gltf: "model/gltf+json", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", ktx2: "image/ktx2",
@@ -125,6 +126,11 @@ export async function aqApi(req, env, url, path, { json, apiErr, admin, bearer, 
     // live orders: what is open and what was refused, and Alex's SELL ALL LIVE. There is no route that buys.
     if (path === "/api/aq/wallet/live" && M === "GET") return json(await liveState(db(env)));
     if (path === "/api/aq/wallet/sellall" && M === "POST") return json(await sellAllLive(env));
+    // the way out: SOL to the ONE saved payout address (never an address from the request), and the key's restore from its second copy
+    if (path === "/api/aq/wallet/payout-address" && M === "POST") { const r = await savePayout(env, await body()); return r.error ? apiErr(400, "validation", r.error) : json(r); }
+    if (path === "/api/aq/wallet/withdraw-preview" && M === "GET") { const q = url.searchParams.get("sol"); return json(await preview(env, q === "all" ? "all" : Number(q))); }
+    if (path === "/api/aq/wallet/withdraw" && M === "POST") { const r = await withdraw(env, await body()); return r.error ? apiErr(r.pending ? 409 : 400, r.pending ? "pending" : "refused", r.error) : json(r, r.confirmed ? 200 : 202); }
+    if (path === "/api/aq/wallet/restore" && M === "POST") { const r = await restoreWallet(env); return r.error ? apiErr(r.exists ? 409 : 400, r.exists ? "exists" : "refused", r.error) : json(r, 201); }
     return apiErr(404, "not_found", "No such wallet endpoint");
   }
   if ((path === "/api/aq/helper" || path === "/api/aq/briefing") && !(admin || bearer || keyOk)) return apiErr(401, "unauthorized", "Admin session, bearer MOB_API_TOKEN or AQUARIUS_KEY required");

@@ -125,7 +125,7 @@ export async function simulate(env, address, b64tx, { side, inLamports, minOutLa
 }
 
 // ---------------------------------------------------------------- one order, start to finish
-const upd = (d, id, f) => { const ks = Object.keys(f); return d.q(`UPDATE mob_aq_live_orders SET ${ks.map((k, i) => `${k} = $${i + 2}`).join(", ")}, updated_at = now() WHERE id = $1`, [id, ...ks.map((k) => f[k])]); };
+export const upd = (d, id, f) => { const ks = Object.keys(f); return d.q(`UPDATE mob_aq_live_orders SET ${ks.map((k, i) => `${k} = $${i + 2}`).join(", ")}, updated_at = now() WHERE id = $1`, [id, ...ks.map((k) => f[k])]); };
 // What actually happened, read from the confirmed transaction: SOL in or out of the wallet (fees included) and the tokens moved.
 function fillOf(tx, address, mint) {
   const m = tx?.meta, keys = tx?.transaction?.message?.accountKeys || [];
@@ -155,7 +155,7 @@ export async function settle(env, o, { polls = 1 } = {}) {
   return "pending";
 }
 // The order's end, and its position's, in one statement each way. A row that is already finished is never finished twice.
-async function finish(d, o, status, { error = null, fill = null } = {}) {
+export async function finish(d, o, status, { error = null, fill = null } = {}) {
   const won = await d.one(`UPDATE mob_aq_live_orders SET status = $2, error = coalesce($3, error), fill_sol = $4, fill_tokens = $5, fee_sol = $6, confirmed_at = CASE WHEN $2 = 'confirmed' THEN now() END, updated_at = now()
     WHERE id = $1 AND status IN ('requested','sent') RETURNING id`, [o.id, status, error, fill ? fill.solLamports / 1e9 : null, fill ? fill.tokens.toString() : null, fill ? fill.feeLamports / 1e9 : null]);
   if (!won || !o.position_id) return;

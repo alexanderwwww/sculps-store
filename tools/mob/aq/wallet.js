@@ -30,7 +30,7 @@ function paint(el, w) {
   const L = w.limits || {};
   if (!dirty && !el.contains(document.activeElement)) for (const [n] of NUMS) { const i = el.querySelector(`[name=${n}]`); if (i && i.value !== String(L[n] ?? 0)) i.value = String(L[n] ?? 0); }
   const at = el.querySelector("#wl-auto"); if (at) { at.classList.toggle("on", !!L.autoTrade); at.textContent = L.autoTrade ? "AUTO TRADE ON" : "AUTO TRADE OFF"; at.setAttribute("aria-pressed", L.autoTrade ? "true" : "false"); }
-  paintLive(el, w.live || null, L);
+  paintLive(el, w.live || null, L); paintPayout(el, w);
   if ((!w.checkedAt || Date.now() - new Date(w.checkedAt).getTime() > 120000) && Date.now() - lastAsk > 60000) { lastAsk = Date.now(); fetch("/api/aq/wallet", { credentials: "same-origin", cache: "no-store" }).then(() => poll()).catch(() => {}); }
 }
 const sgn = (v, d = 4) => (num(v) ? (v > 0 ? "+" : "") + v.toFixed(d) + " SOL" : D);
@@ -47,6 +47,34 @@ function paintLive(el, lv, L) {
   put("wl-lord", O.length ? O.map((o) => `<div class="o-${esc(o.status)}"><b>${esc(String(o.side).toUpperCase())} ${esc(o.symbol || "")}</b><span>${esc(o.status)}${num(o.sol) ? ` · ${sgn(o.sol)}` : ""}${o.error ? ` · ${esc(o.error)}` : o.reason ? ` · ${esc(o.reason)}` : ""}</span><em>${ago(o.at)} ago</em>${o.signature ? `<a href="https://solscan.io/tx/${encodeURIComponent(o.signature)}" target="_blank" rel="noopener noreferrer">Solscan</a>` : ""}</div>`).join("") : `<div><span>no live orders yet</span></div>`);
   const r = lv.lastRefusal; set("wl-ref", r ? `Last trade refused ${ago(r.at)} ago: ${r.reason}${r.symbol ? ` (${r.symbol})` : ""}` : "No trade has been refused yet.");
 }
+let poDirty = false;
+function paintPayout(el, w) {
+  const p = w.payout || null, a = el.querySelector("#wl-pof [name=address]");
+  if (a && !poDirty && document.activeElement !== a && a.value !== (p ? p.address : "")) a.value = p ? p.address : "";
+  const m = el.querySelector("#wl-pomsg");
+  if (m && !poDirty && !m.dataset.busy) { const t = !p ? "No payout address yet. Withdrawals only ever go to the address saved here." : p.lockedUntil ? `Address changed: withdrawals open again ${new Date(p.lockedUntil).toLocaleString("en-GB", { timeZone: "Europe/Athens", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} Athens time.` : "Saved. Changing it later locks withdrawals for 24 hours."; if (m.textContent !== t) { m.textContent = t; m.className = "msg" + (p && p.lockedUntil ? " err" : ""); } }
+  const bk = el.querySelector("#wl-bk"), bt = w.backup ? (w.backup.ok ? "wallet key: second copy checked" : `wallet key: ${w.backup.note}`) : ""; if (bk && bk.textContent !== bt) bk.textContent = bt;
+  const W2 = w.withdrawals || [], html = W2.length ? W2.map((o) => `<div class="o-${esc(o.status)}"><b>${esc(num(o.sol) ? o.sol.toFixed(6).replace(/0+$/, "").replace(/\.$/, "") : D)} SOL OUT</b><span>${esc(o.status === "confirmed" ? "arrived" : o.status === "sent" ? "sent, being confirmed" : o.status === "requested" ? "being prepared" : "not sent")}${o.error && o.status !== "confirmed" ? ` · ${esc(o.error)}` : ""} · to ${esc(short(o.destination))}</span><em>${ago(o.at)} ago</em>${o.signature ? `<a href="https://solscan.io/tx/${encodeURIComponent(o.signature)}" target="_blank" rel="noopener noreferrer">Solscan</a>` : ""}</div>`).join("") : `<div><span>no withdrawals yet</span></div>`;
+  const h = el.querySelector("#wl-wds"); if (h && h.dataset.h !== html) { h.dataset.h = html; h.innerHTML = html; }
+}
+function wirePayout(el) {
+  const pf = el.querySelector("#wl-pof"), wf = el.querySelector("#wl-wdf"); if (!pf || !wf) return;
+  const say = (id, t, c = "") => { const m = el.querySelector(id); m.textContent = t; m.className = "msg " + c; m.dataset.busy = t && c !== "ok" ? "1" : ""; };
+  pf.addEventListener("input", () => { poDirty = true; say("#wl-pomsg", ""); });
+  pf.onsubmit = async (e) => { e.preventDefault(); say("#wl-pomsg", "Checking the address…", "busy"); try { await post("/api/aq/wallet/payout-address", { address: pf.elements.address.value.trim() }); poDirty = false; say("#wl-pomsg", "", "ok"); await poll(); } catch (e2) { say("#wl-pomsg", e2.message, "err"); } };
+  const ask = async (sol) => { say("#wl-wdmsg", "Checking…", "busy");
+    let pv; try { const r = await fetch("/api/aq/wallet/withdraw-preview?sol=" + encodeURIComponent(sol), { credentials: "same-origin", cache: "no-store" }); pv = await r.json(); if (!r.ok) throw new Error((pv && pv.error && pv.error.message) || "HTTP " + r.status); } catch (e2) { return say("#wl-wdmsg", e2.message, "err"); }
+    if (!pv.ok) return say("#wl-wdmsg", pv.error || "Not possible right now", "err");
+    say("#wl-wdmsg", "");
+    dialog(`<h3>Send ${esc(pv.sol)} SOL out?</h3><p>From the Aquarius wallet to your payout address:</p><p class="po-d">${esc(pv.destination)}</p><p>Network fee ${esc(pv.feeSol)} SOL. ${pv.leavesSol > 0 ? `${esc(pv.leavesSol)} SOL stays in the wallet.` : "The wallet will be empty."} This is real money and cannot be undone.</p><div class="row"><button class="ghost" data-x>Cancel</button><button class="danger" data-ok>Send ${esc(pv.sol)} SOL</button></div><p class="msg"></p>`, (d, close) => {
+      d.querySelector("[data-x]").onclick = close;
+      d.querySelector("[data-ok]").onclick = async (ev) => { const b = ev.currentTarget, m = d.querySelector(".msg"); b.disabled = true; m.textContent = "Sending…";
+        try { const r = await post("/api/aq/wallet/withdraw", { sol: sol === "all" ? "all" : Number(sol) }); m.textContent = r.confirmed ? "Arrived." : "Sent. It is being confirmed: it shows below in a minute."; m.className = "msg ok"; wf.reset(); setTimeout(close, 1800); poll(); }
+        catch (e3) { m.textContent = e3.message; m.className = "msg err"; poll(); } };
+    }); };
+  wf.onsubmit = (e) => { e.preventDefault(); const v = wf.elements.sol.value.trim(); if (!(Number(v) > 0)) return say("#wl-wdmsg", "Type an amount in SOL, or press All", "err"); ask(v); };
+  el.querySelector("#wl-wdall").onclick = () => ask("all");
+}
 const offHTML = () => `<div class="rh-h"><b class="rh-tag">AQUARIUS WALLET</b><span>Solana · not created</span></div>
   <button type="button" class="rh-go wl-go" id="wl-create">CREATE WALLET</button>
   <p class="rh-n">Aquarius makes its own Solana wallet on the server and shows you its address. It trades only inside the limits you set.</p><p class="rh-e" id="wl-err"></p>`;
@@ -60,6 +88,10 @@ const onHTML = () => `<div class="rh-h"><b class="rh-tag on wl-t">AQUARIUS WALLE
       <button class="primary" type="submit">Save limits</button><span class="msg" id="wl-msg"></span>
     </form>
     <div class="rh-a"><button type="button" id="wl-auto" class="rh-sw" aria-pressed="false">AUTO TRADE OFF</button><i id="wl-auto-n"></i><button type="button" id="wl-sellall" class="kill">SELL ALL LIVE</button></div>
+    <div class="po"><div class="rh-h"><b class="po-t">TAKE MONEY OUT</b><span id="wl-bk"></span></div>
+      <form class="rh-f po-f" id="wl-pof"><label class="po-a">Payout address (your own wallet)<input name="address" type="text" autocomplete="off" spellcheck="false" placeholder="Solana address"></label><button class="primary" type="submit">Save address</button><span class="msg" id="wl-pomsg"></span></form>
+      <form class="rh-f po-f" id="wl-wdf"><label>Withdraw (SOL)<input name="sol" type="number" inputmode="decimal" min="0" step="any" placeholder="0.00"></label><button class="ghost" type="button" id="wl-wdall">All</button><button class="primary" type="submit">Withdraw</button><span class="msg" id="wl-wdmsg"></span></form>
+      <div class="lv-o" id="wl-wds"></div></div>
     <div class="lv"><div class="rh-h"><b class="lv-t">LIVE</b><span id="wl-rule"></span></div>
       <div class="rh-k"><div><small>LIVE P&amp;L TODAY</small><b id="wl-pnl">${D}</b></div><div><small>LIVE POSITIONS</small><b id="wl-ln">${D}</b></div></div>
       <div class="rh-pos" id="wl-lpos"></div><div class="lv-o" id="wl-lord"></div><p class="rh-n" id="wl-ref"></p></div>
@@ -68,6 +100,7 @@ function wire(el) {
   const c = el.querySelector("#wl-create");
   if (c) c.onclick = async () => { c.disabled = true; c.textContent = "CREATING…"; try { await post("/api/aq/wallet/create"); } catch (e) { const m = el.querySelector("#wl-err"); if (m) m.textContent = e.message; c.disabled = false; c.textContent = "CREATE WALLET"; } await poll(); };
   const f = el.querySelector("#wl-form"); if (!f) return;
+  poDirty = false; wirePayout(el);
   const msg = (t, cl = "") => { const m = el.querySelector("#wl-msg"); m.textContent = t; m.className = "msg " + cl; };
   el.querySelector("#wl-copy").onclick = async (e) => { const b = e.currentTarget, a = el.querySelector("#wl-addr").textContent;
     try { await navigator.clipboard.writeText(a); b.textContent = "Copied"; } catch { const r = document.createRange(); r.selectNodeContents(el.querySelector("#wl-addr")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected"; }

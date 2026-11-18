@@ -14,6 +14,7 @@ import { trainingState } from "./arena.mjs";
 import { publicState as rhPublic } from "./robinhood.mjs";
 import { walletPublic } from "./wallet.mjs";
 import { liveState } from "./live.mjs";
+import { publicPayout, withdrawals } from "./payout.mjs";
 import { watch } from "./keeper.mjs";
 import { seatTick, seatStats, exitVotes, exitVoteRule, markHandled, impliedMid, warroom, chatFor, recentAlerts } from "./seat.mjs";
 import { START_SOL, reconcile, scaleOut, closePosition, resetLedger, walletBase, tickLock, tickUnlock } from "./ledger.mjs";
@@ -695,7 +696,7 @@ export async function buildState(env) {
     helpers: { grok: conn("grok"), chatgpt: conn("chatgpt"), codex: conn("codex"), codexLastAt: hl.codex || null, grokLastAt: hl.grok || null, chatgptLastAt: hl.chatgpt || null },
     xfeed: xs.map((r) => ({ at: r.at, section: r.dept, text: r.text, label: (r.labels || [])[0] || "CLAIMED", source: "grok", weight: r.weight })),
     marketFeed: nzs.feed,
-    solWallet: { ...walletPublic(S), live: await liveState(d) }, // the Aquarius Solana wallet made on the server: public address, balances, limits. Never the key.
+    solWallet: { ...walletPublic(S), live: await liveState(d), payout: publicPayout(S.sol_payout), withdrawals: await withdrawals(d), backup: S.sol_wallet_backup ? { ok: S.sol_wallet_backup.ok, note: S.sol_wallet_backup.note, at: S.sol_wallet_backup.at } : null }, // the Aquarius Solana wallet made on the server: public address, balances, limits. Never the key.
     robinhood: rhPublic(S), // the Robinhood agent account link: connected or not, the last read, the limits. No token.
   };
 }

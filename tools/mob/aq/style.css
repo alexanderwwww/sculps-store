@@ -272,3 +272,6 @@ body.world .hero{display:none}
 .lv{display:grid;gap:8px;padding-top:10px;border-top:1px solid var(--line)}.lv-t{font:800 11px var(--mono);letter-spacing:.16em;color:#1a1300;background:var(--gold);padding:2px 8px;border-radius:3px}.lv .rh-h span{color:var(--gold)}
 .lv-o{display:grid;gap:3px;font:11px var(--mono);color:var(--mut)}.lv-o div{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.lv-o b{color:var(--ink)}.lv-o em{font-style:normal;margin-left:auto}.lv-o a{color:var(--cy)}.lv-o .o-failed span{color:var(--dn)}.lv-o .o-confirmed b{color:var(--up)}
 .rh-a .kill{margin-left:auto}.rh-k b.up{color:var(--up)}.rh-k b.dn{color:var(--dn)}
+/* TAKE MONEY OUT on the AQUARIUS WALLET card */
+.po{display:grid;gap:8px;padding-top:10px;border-top:1px solid var(--line)}.po-t{font:800 11px var(--mono);letter-spacing:.16em;color:#04121a;background:var(--cy);padding:2px 8px;border-radius:3px}.po-f{border-top:0;padding-top:0}
+.po-a{flex:1 1 320px}.rh-f .po-a input{width:100%;font:13px var(--mono);padding:7px 9px;border:1px solid #24304a;border-radius:6px;background:#070a12;color:#fff}.po-f .ghost{padding:8px 12px}.po-d{font:600 13px var(--mono);color:#fff;word-break:break-all;background:#070a12;border:1px solid #24304a;border-radius:6px;padding:8px 10px}

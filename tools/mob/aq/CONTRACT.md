@@ -99,3 +99,9 @@ LIVE (Solana only, engine src/aq/live.mjs, since 2026-11-18): GET /api/aq/wallet
    orders:[{id, side, symbol, status:"requested"|"sent"|"confirmed"|"failed", reason, error, signature, sol, at}] (newest 8), pnlTodaySol (Athens day), closedToday,
    lastRefusal:{gate, reason, symbol, times, at}|null, lastTickAt, autoOff:{why, at}|null, rule, proven:false}
  robinhood.liveOrders:false, robinhood.ordersNote, robinhood.toolsRead, robinhood.market:{open:true|false|null, note}
+TAKE MONEY OUT (engine src/aq/payout.mjs, since 2026-11-18; admin session only; SOL only):
+- POST /api/aq/wallet/payout-address {address} -> {payout}. One saved address; the first save has no lock, a change locks withdrawals for 24 hours.
+- GET  /api/aq/wallet/withdraw-preview?sol=<number|all> -> {ok, sol, destination, feeSol, leavesSol, keepSol, openPositions, balanceSol} or {error}. Sends nothing.
+- POST /api/aq/wallet/withdraw {sol: number | "all"} -> 200 {confirmed, signature, sol, destination} | 202 {pending,...} | 400 refused | 409 one is still being confirmed. Any other field (a destination) = 400.
+- POST /api/aq/wallet/restore -> 201 {restored, address} only when the wallet row is missing and the AQ_WALLET_BACKUP secret opens to the address it names; 409 when the wallet is there.
+ solWallet.payout:{address, setAt, lockedUntil|null}|null, solWallet.withdrawals:[{id, status, sol, destination, signature, error, at}] (newest 5), solWallet.backup:{ok, note, at}|null
