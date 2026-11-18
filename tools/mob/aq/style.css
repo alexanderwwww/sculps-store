@@ -145,7 +145,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:28;bac
 .tr{grid-template-columns:26px 5px 44px 8px 50px 36px minmax(0,1fr) auto;font-size:9px}.status{gap:6px 12px}.ph span{display:none}.ph em{font-size:8.5px}
 .menu-in{grid-template-columns:1fr;grid-template-rows:auto 1fr}.menu-in nav{flex-direction:row;overflow-x:auto;padding:8px;border-right:0;border-bottom:1px solid var(--line)}.mtitle{display:none}.menu-in nav .close{margin:0 0 0 auto}.mbody{padding:14px}.gm,.keys{grid-template-columns:1fr}
 #mini{width:auto;right:12px;top:auto;top:120px}#agents,#strip{display:none}#minimap{width:96px;height:96px;left:auto;right:16px;bottom:100px;top:auto}#mini .mx{display:none}#joy{display:block}#tbtns{display:flex}#fps{display:none}#exitbtn{bottom:100px}
-.pw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle;background:#f2ede2;border:1px solid #9aa3ad}.pw-grok{background:#111;border-color:#888}.pw-chatgpt{box-shadow:inset 0 0 0 2px #10a37f}.pw-codex{box-shadow:inset 0 0 0 2px #7c8cff}
+.pw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle;background:#f2ede2;border:1px solid #9aa3ad}.pw-grok{background:#111;border-color:#888}.pw-chatgpt{box-shadow:inset 0 0 0 2px #10a37f}.pw-codex{box-shadow:inset 0 0 0 2px #7c8cff}}
 /* ---------- helper connection badges (top bar + Grok section) ---------- */
 .hbs{display:flex;gap:6px;flex:none;cursor:pointer}
 .hb{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid #2a3142;background:#0a0a0c;font:700 9.5px var(--mono);letter-spacing:.1em;white-space:nowrap;color:#8a94a6}
