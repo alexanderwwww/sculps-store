@@ -21,6 +21,7 @@ import { decodeCurve } from "./decode.mjs";
 
 export const PUMPPORTAL_WSS = "wss://pumpportal.fun/api/data";
 export const CREDIT_CAP_DAY = 150000;
+const FRESH_VTOK = 1.0e15, RESOLVE_PER_TICK = 5; // 5 a tick, one after another = 1 call/s at most
 const CURVE_TTL_MS = 6 * 3600000, CHECKED_TTL_MS = 24 * 3600000;
 const FLUSH_MS = 5000, STALE_MS = 60000, FEED_MAX = 40;
 
@@ -128,7 +129,14 @@ export class Symbiote {
     let j; try { j = JSON.parse(raw); } catch { return; }
     const v = j.params?.result?.value; if (!v?.pubkey) return;
     const mint = this.curves.get(v.pubkey);
-    if (mint === undefined) { this.eng.stats.unknownCurves = (this.eng.stats.unknownCurves || 0) + 1; if (this.resolveQ.size < 5000) this.resolveQ.add(v.pubkey); return; }
+    if (mint === undefined) {
+      // only a curve that still holds nearly all its tokens can be a new launch (a fresh curve starts at 1,073,000,000 tokens
+      // minus the dev buy); older coins are ignored without spending a credit (production 2026-11-18: 5,748 unknown curves in
+      // 10 minutes, resolving them all hit Helius 429s)
+      const b0 = decodeCurve(v.account?.data?.[0] || ""); this.eng.stats.unknownCurves = (this.eng.stats.unknownCurves || 0) + 1;
+      if (b0 && b0.virtual_token_reserves >= FRESH_VTOK && this.resolveQ.size < 500) this.resolveQ.add(v.pubkey); else { this.curves.set(v.pubkey, null); this.curveAt.set(v.pubkey, now); }
+      return;
+    }
     if (mint === null) return; // a coin launched before symbiote started: not a launch we cover
     const bc = decodeCurve(v.account?.data?.[0] || ""); if (!bc) return;
     const c = this.eng.coins.get(mint); if (!c) return;
@@ -175,20 +183,21 @@ export class Symbiote {
   // "curve" source: PumpPortal's free feed carried only 17 of 98 launches seen on chain (3 minutes, 2026-11-18), so a curve
   // nobody announced is resolved from the chain: its 5 newest signatures, the oldest of them read and decoded. A CreateEvent
   // for this curve = a new launch (covered from now); only trades = an older coin (ignored). 2 Helius credits a curve, 40 a tick.
-  async resolveCurves(max = 40) {
+  async resolveCurves(max = RESOLVE_PER_TICK) {
     if (!this.resolveQ.size) return;
     const { rpcFor } = await import("./health.mjs"); const rpc = rpcFor(this.env);
-    const batch = [...this.resolveQ].slice(0, this.paused ? 0 : max); for (const k of batch) this.resolveQ.delete(k); this.credits(batch.length * 2);
-    await Promise.all(batch.map(async (curve) => {
+    const batch = [...this.resolveQ].slice(0, this.paused ? 0 : max); for (const k of batch) this.resolveQ.delete(k); 
+    for (const curve of batch) {
+      if (this.backoffUntil && Date.now() < this.backoffUntil) { this.resolveQ.add(curve); continue; }
       try {
-        const sigs = await rpc("getSignaturesForAddress", [curve, { limit: 5 }]); const old = sigs?.[sigs.length - 1]; if (!old) return;
+        this.credits(2); const sigs = await rpc("getSignaturesForAddress", [curve, { limit: 5 }]); const old = sigs?.[sigs.length - 1]; if (!old) return;
         const tx = await rpc("getTransaction", [old.signature, { encoding: "json", maxSupportedTransactionVersion: 1 }]);
         const ev = eventsFromLogs({ signature: old.signature, err: tx?.meta?.err ?? null, logs: tx?.meta?.logMessages || [] }, tx?.slot ?? null);
         const c = ev.creates.find((x) => x.curve === curve);
         if (c) { this.curves.set(curve, c.mint); this.curveAt.set(curve, Date.now()); const coin = this.eng.onCreate({ ...c, src: "chain" }); this.push({ at: Date.now(), k: "launch", mint: coin.mint, sym: coin.symbol, gta: coin.gta }); this.eng.stats.resolved = (this.eng.stats.resolved || 0) + 1; }
         else { this.curves.set(curve, null); this.curveAt.set(curve, Date.now()); }
-      } catch (e) { this.resolveQ.add(curve); throw e; }
-    }));
+      } catch (e) { this.resolveQ.add(curve); if (/429/.test(String(e.message))) { this.backoffUntil = Date.now() + 30000; this.err("resolve", "Helius 429: resolving paused 30 s"); } else this.err("resolve", e); }
+    }
   }
 
   // memory bounds (a Durable Object has 128 MB): curve->mint entries for coins no longer in memory expire after 6 h,
@@ -200,11 +209,13 @@ export class Symbiote {
   }
   // curve source: a coin that moves (+50% from launch or 20 trades) gets its launch facts read once, while it is young
   wantLaunch() { for (const c of this.eng.coins.values()) if (!c.done && !c.launchAsked && c.curve && c.px0 && (c.hi / c.px0 >= 1.5 || c.n >= 20)) { c.launchAsked = true; this.launchQ.add(c.mint); } }
-  async snapLaunches(max = 8) {
+  async snapLaunches(max = 2) { // one coin after another: launch reads never burst the shared Helius key
     if (this.paused || !this.launchQ.size) return;
     const { rpcFor, launchFacts } = await import("./health.mjs"); const rpc = rpcFor(this.env);
     const batch = [...this.launchQ].slice(0, max); for (const m of batch) this.launchQ.delete(m);
-    await Promise.all(batch.map(async (m) => { const c = this.eng.coins.get(m); if (!c) return; const f = await launchFacts(rpc, m, c.curve).catch((e) => ({ complete: false, why: String(e.message || e), calls: 1 })); this.credits(f.calls || 1); this.eng.setLaunch(m, f); }));
+    for (const m of batch) { const c = this.eng.coins.get(m); if (!c) continue; if (this.backoffUntil && Date.now() < this.backoffUntil) { this.launchQ.add(m); c.launchAsked = true; continue; }
+      const f = await launchFacts(rpc, m, c.curve).catch((e) => ({ complete: false, why: String(e.message || e), calls: 1, e429: /429/.test(String(e.message)) })); this.credits(f.calls || 1);
+      if (f.e429) { this.backoffUntil = Date.now() + 30000; this.launchQ.add(m); continue; } this.eng.setLaunch(m, f); }
   }
 
   // the main GTA 6 coin and GTA coins that left the curve keep a minute price from Jupiter for their whole life

@@ -237,9 +237,9 @@ test("Durable Object, curve source: reserve changes of a known curve become trad
   const s = new Symbiote(ctx, env); s.connect = async () => {};
   s.onPumpPortal(JSON.stringify({ txType: "create", mint: "CV1", name: "c", symbol: "C", traderPublicKey: "DEV", bondingCurveKey: "CURVE1", vSolInBondingCurve: 30, vTokensInBondingCurve: 1073000000 }));
   const note = (pk, vq, vt, done) => JSON.stringify({ jsonrpc: "2.0", method: "programNotification", params: { result: { context: { slot: 5 }, value: { pubkey: pk, account: { data: [curveB64(vq, vt, done), "base64"] } } } } });
-  s.onCurve(note("CURVE1", 31e9, Math.round(K / 31e9))); s.onCurve(note("CURVE1", 30.5e9, Math.round(K / 30.5e9))); s.onCurve(note("NOPE", 31e9, 1e15));
+  s.onCurve(note("CURVE1", 31e9, Math.round(K / 31e9))); s.onCurve(note("CURVE1", 30.5e9, Math.round(K / 30.5e9))); s.onCurve(note("NOPE", 31e9, 1.06e15)); s.onCurve(note("OLDCOIN", 80e9, 4e14)); assert.equal(s.resolveQ.has("OLDCOIN"), false, "a curve that sold most of its tokens is an old coin: no credit spent"); assert.equal(s.curves.get("OLDCOIN"), null);
   const c = s.eng.coins.get("CV1"); assert.equal(c.n, 2); assert.equal(c.buys, 1); assert.equal(c.sells, 1); assert.ok(Math.abs(c.last - 30.5 / (K / 30.5e9 / 1e6)) < 1e-12);
-  assert.equal(s.eng.stats.unknownCurves, 1);
+  assert.equal(s.eng.stats.unknownCurves, 2);
   resetMocks(); const create = FX[3]; let calls = 0;
   mock("POST", "https://api.mainnet-beta.solana.com", (rq) => { calls++; const j = JSON.parse(rq.body); return j.method === "getSignaturesForAddress" ? { result: [{ signature: create.signature }] } : { result: { slot: 9, meta: { err: null, logMessages: create.logs } } }; });
   s.resolveQ.add("973TwsVbrK17rfcwytYAa9TdFefRpZRKPeZCG8EfCCsG"); await s.resolveCurves();
