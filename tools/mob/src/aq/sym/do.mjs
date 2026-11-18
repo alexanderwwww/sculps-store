@@ -20,6 +20,7 @@ import { openWs, wsText, logsSub, programSub, heliusWss, PUBLIC_WSS } from "./pr
 import { decodeCurve } from "./decode.mjs";
 
 export const PUMPPORTAL_WSS = "wss://pumpportal.fun/api/data";
+export const CREDIT_CAP_DAY = 150000;
 const FLUSH_MS = 5000, STALE_MS = 60000, FEED_MAX = 40;
 
 export class Symbiote {
@@ -60,7 +61,12 @@ export class Symbiote {
     if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + FLUSH_MS);
   }
 
-  async source() { return (await this.ctx.storage.get("source")) || "off"; }
+  // Decision 2026-11-18 (coordinator for Alex): curve mode ON by default on the Developer plan (10M credits a month).
+  async source() { return (await this.ctx.storage.get("source")) || (this.env.HELIUS_API_KEY ? "curve" : "off"); }
+  // CREDIT GUARD: symbiote may spend at most CREDIT_CAP_DAY Helius credits a UTC day (stream at 20 credits per MB + 2 per
+  // resolved curve + the deep checks' calls). 150,000 a day = 4.5M a month = 45% of Developer, leaving over half for the live
+  // trader's sends. At the cap the chain stream closes until the next UTC day and a brain row says so.
+  credits(n) { const day = new Date().toISOString().slice(0, 10); if (this.cday !== day) { this.cday = day; this.cused = 0; this.paused = false; } this.cused += n; }
 
   async connect() {
     const now = Date.now();
@@ -75,7 +81,8 @@ export class Symbiote {
       } catch (e) { this.err("pumpportal", e); this.ws.pp = null; }
     }
     const src = await this.source();
-    if (src === "off") { try { this.ws.chain?.close(); } catch {} this.ws.chain = null; return; }
+    this.credits(0);
+    if (src === "off" || this.paused) { try { this.ws.chain?.close(); } catch {} this.ws.chain = null; return; }
     if (!this.ws.chain || now - this.lastMsg.chain > STALE_MS) {
       try { this.ws.chain?.close(); } catch {}
       if (src !== "public" && !this.env.HELIUS_API_KEY) { this.err("chain", "HELIUS_API_KEY is not set"); return; }
@@ -102,7 +109,7 @@ export class Symbiote {
   }
 
   onChain(raw) {
-    const now = Date.now(); this.lastMsg.chain = now; this.notes++; this.bytes += raw.length;
+    const now = Date.now(); this.lastMsg.chain = now; this.notes++; this.bytes += raw.length; this.credits(raw.length / 1e6 * 20);
     let j; try { j = JSON.parse(raw); } catch { return; }
     const r = j.params?.result; if (!r?.value) return;
     const e = eventsFromLogs(r.value, r.context?.slot ?? null);
@@ -114,7 +121,7 @@ export class Symbiote {
 
   // "curve" source: a bonding-curve account changed. The reserve change is the trade (no wallet in this source).
   onCurve(raw) {
-    const now = Date.now(); this.lastMsg.chain = now; this.notes++; this.bytes += raw.length;
+    const now = Date.now(); this.lastMsg.chain = now; this.notes++; this.bytes += raw.length; this.credits(raw.length / 1e6 * 20);
     let j; try { j = JSON.parse(raw); } catch { return; }
     const v = j.params?.result?.value; if (!v?.pubkey) return;
     const mint = this.curves.get(v.pubkey);
@@ -148,11 +155,13 @@ export class Symbiote {
     const b = this.eng.drain();
     for (const f of b.feed) this.push(f);
     for (const x of b.explode) if (!this.checked.has(x.mint)) { this.checked.add(x.mint); this.queue.push(x); }
-    const st = { ...this.status(), source: await this.source() };
+    const src0 = await this.source(); const st = { ...this.status(), source: src0, credits: { usedToday: Math.round(this.cused || 0), capPerDay: CREDIT_CAP_DAY, paused: !!this.paused } };
     try { await flush(d, b, st); await this.ctx.storage.put("stats", this.eng.stats); } catch (e) { this.err("flush", e); }
     await this.resolveCurves().catch((e) => this.err("resolve", e));
+    if (!this.paused && src0 !== "public" && this.cused >= CREDIT_CAP_DAY) { this.paused = true; try { this.ws.chain?.close(1000, "credit cap"); } catch {} this.ws.chain = null;
+      await d.q(`INSERT INTO mob_aq_brain (dept, kind, text, data) VALUES ('symbiote', 'pain', $1, $2::jsonb)`, [`PAIN symbiote stream paused: ${Math.round(this.cused)} Helius credits used today (cap ${CREDIT_CAP_DAY}). Launches after this are missed until 00:00 UTC (02:00 Athens).`, JSON.stringify({ used: Math.round(this.cused), cap: CREDIT_CAP_DAY, rule: "credit guard" })]).catch(() => {}); }
     const x = this.queue.shift();
-    if (x) { try { const res = await deepCheck(this.env, d, x.mint, this.eng.streamHealth(x.mint) || {}); await writeRight(d, x, res); } catch (e) { this.err("deep check", e); } }
+    if (x) { try { this.credits(140); const res = await deepCheck(this.env, d, x.mint, this.eng.streamHealth(x.mint) || {}); await writeRight(d, x, res); } catch (e) { this.err("deep check", e); } }
     await this.ctx.storage.setAlarm(Date.now() + FLUSH_MS);
   }
 
@@ -162,7 +171,7 @@ export class Symbiote {
   async resolveCurves(max = 40) {
     if (!this.resolveQ.size) return;
     const { rpcFor } = await import("./health.mjs"); const rpc = rpcFor(this.env);
-    const batch = [...this.resolveQ].slice(0, max); for (const k of batch) this.resolveQ.delete(k);
+    const batch = [...this.resolveQ].slice(0, this.paused ? 0 : max); for (const k of batch) this.resolveQ.delete(k); this.credits(batch.length * 2);
     await Promise.all(batch.map(async (curve) => {
       try {
         const sigs = await rpc("getSignaturesForAddress", [curve, { limit: 5 }]); const old = sigs?.[sigs.length - 1]; if (!old) return;

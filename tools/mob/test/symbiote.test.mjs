@@ -220,7 +220,7 @@ test("Durable Object: launches and trades in, a 5-second alarm writes the batch 
   await s.alarm();
   assert.deepEqual(s.errors, []);
   const st = (await d.one(`SELECT v FROM mob_aq_sym_stats WHERE k='live'`)).v;
-  assert.equal(st.source, "off", "the trade stream is off until a source is chosen"); assert.equal(st.coverage.launches, 2); assert.ok(st.feed.some((f) => f.k === "launch" && f.gta));
+  assert.equal(st.source, "off", "no Helius key in the test: off"); assert.equal(st.credits.capPerDay, 150000); assert.equal(st.coverage.launches, 2); assert.ok(st.feed.some((f) => f.k === "launch" && f.gta));
   assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_sym_coins WHERE mint IN ('DO1','71yNknjXX7bHjQofB7LRwp1iUj2wUhFh2YY2RVWhDHZM')`)).n === 2);
   assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_sym_gta WHERE mint=$1`, [R.GTA_MAIN])).n >= 1, "the main GTA coin gets a Jupiter minute");
   const s2 = new Symbiote(ctx, env); s2.connect = async () => {}; await s2.start();
@@ -244,6 +244,8 @@ test("Durable Object, curve source: reserve changes of a known curve become trad
   s.resolveQ.add("973TwsVbrK17rfcwytYAa9TdFefRpZRKPeZCG8EfCCsG"); await s.resolveCurves();
   assert.equal(s.curves.get("973TwsVbrK17rfcwytYAa9TdFefRpZRKPeZCG8EfCCsG"), "71yNknjXX7bHjQofB7LRwp1iUj2wUhFh2YY2RVWhDHZM", "an unannounced curve resolved to its launch from the chain");
   assert.equal(s.curves.get("NOPE"), null, "a curve whose oldest seen tx has no create is an older coin: ignored"); assert.equal(calls, 4); resetMocks();
+  assert.equal(await s.source(), "off"); s.env = { ...env, HELIUS_API_KEY: "k" }; assert.equal(await s.source(), "curve", "curve mode is the default with a Helius key");
+  s.credits(150001); await s.alarm(); assert.equal(s.paused, true, "the credit guard pauses the stream at the cap"); assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_brain WHERE text LIKE 'PAIN symbiote stream paused%'`)).n === 1); s.env = env;
   s.onCurve(note("CURVE1", 85e9, Math.round(K / 85e9), true)); assert.equal(c.end, "migrated");
 });
 
