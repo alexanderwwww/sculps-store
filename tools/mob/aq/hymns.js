@@ -38,7 +38,7 @@ export function hymnScreen() {
       <h3 class="hy-title"></h3><p class="hy-inc"></p><div class="hy-text"></div>
       ${pentagram}
       <div class="hy-orch" aria-label="The Council"></div>
-      <p class="hy-src">Text: <a href="${esc(data.source.url)}" target="_blank" rel="noopener">Wikisource</a>, CC BY-SA 4.0 · ed. Abel 1885</p></div>`;
+      <p class="hy-src">Text: Greek Wikisource, CC BY-SA 4.0; Abel 1885</p></div>`;
   const sel = el.querySelector("select"), orch = el.querySelector(".hy-orch");
   let i = Math.max(0, H.findIndex((x) => x.n === START));
   const show = () => { const x = H[i]; sel.value = x.n; el.querySelector(".hy-title").textContent = `${x.n} · ${x.title}`;
