@@ -40,6 +40,11 @@ function world() {
     if (m.method === "getTokenSupply") return val({ amount: "1", decimals: 6 });
     if (m.method === "getLatestBlockhash") return val({ blockhash: "CtZPwQCiDbsGsxevfnEksSK4nviBJD6vVZVAcR6Tw2z8", lastValidBlockHeight: 2000 });
     if (m.method === "getBlockHeight") return ok(F.height);
+    // the pre-buy checks of the signal (mint and a real holder's sale), see live.test.mjs "audit:"
+    if (m.method === "getAccountInfo" && m.params[1]?.encoding === "jsonParsed") return val({ owner: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", data: { parsed: { type: "mint", info: { freezeAuthority: null, mintAuthority: null } } } });
+    if (m.method === "getTokenLargestAccounts") return val([{ address: "HoLder1Acct", amount: "900000000", decimals: 6 }]);
+    if (m.method === "getMultipleAccounts") return val(m.params[0].map(() => (m.params[1].dataSlice ? { owner: "11111111111111111111111111111111", lamports: 1e9, data: ["", "base64"] } : { owner: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", data: { parsed: { info: { owner: "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1" } } } })));
+    if (m.method === "getMinimumBalanceForRentExemption") return ok(1488440);
     if (m.method === "simulateTransaction") return val({ err: F.simErr, logs: [], accounts: null });
     if (m.method === "getSignatureStatuses") return val(m.params[0].map((s) => F.status[s] ?? null));
     if (m.method === "getTransaction") return ok(F.txs[m.params[0]] ?? null);
@@ -149,7 +154,9 @@ test("signals: the chart trader's setup and SELL NOW, only while the page is ope
   await setPh({ ...ph, seenAt: new Date().toISOString() }); const w = await L.phantomWatch(env); assert.equal(w.signal, "BONK");
   let pub = (await buildState(env)).phantom; assert.equal(pub.signal.mint, MINT); assert.equal(pub.signal.symbol, "BONK"); assert.match(pub.signal.why, /golden pocket bounce/);
   assert.ok(pub.signal.zone[0] < pub.signal.zone[1] && pub.signal.stop < pub.signal.entry && pub.signal.entry >= pub.signal.zone[0] && pub.signal.t1 > pub.signal.zone[1] && pub.signal.t2 > pub.signal.t1, "the banner carries zone, stop and targets");
-  assert.ok(!F.calls.includes("sendTransaction") && !F.calls.includes("swap"), "a signal builds nothing and sends nothing");
+  assert.ok(!F.calls.includes("sendTransaction"), "a signal sends nothing");
+  // the only swap built is the honeypot proof: a real holder's sale, simulated, never for Alex's or Aquarius's wallet
+  assert.ok(!F.calls.includes("swap") || F.swapBody.userPublicKey === "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", "a signal builds nothing for Alex");
   // the same cost gate as the live trader: a 2% round trip means no signal
   await d.q(`DELETE FROM mob_aq_state WHERE k = 'phantom_signal'`); await d.q(`DELETE FROM mob_aq_market`); F.sellOut = "49000000"; assert.equal((await L.phantomWatch(env)).signal, null); assert.equal((await buildState(env)).phantom.signal, null); F.sellOut = "60000000";
   // he holds it with the signal's plan: no buy signal for it; no SELL NOW while the chart holds, however long; SELL NOW when a 5-minute close breaks the stop
