@@ -86,3 +86,7 @@ Source: Aquarius 664,164 trades and Grok 202,395 trades, paper money on real Sol
 - The Robinhood card and its code stay in the repo but are useless for him unless he opens a US Robinhood account. Do not ask him to press it again.
 - Stocks from Aquarius need another broker with an API that accepts a Greek resident: Interactive Brokers (has an API; also connects to Grok) or Alpaca (country support unconfirmed, ask support). Big crypto can go through an exchange trading key (read + trade, withdrawal off). Solana coins already work from Aquarius's own wallet.
 - Lesson: before building on a broker, check which legal entity the user's account is with. "Has Robinhood" was not enough.
+
+## Decisions, 2026-11-18 05:20 Athens (Alex)
+- **Stocks: Alpaca. Next week.** ("alpaca it is... I don't give a fuck about stocks now. Next week is the stocks.") Do not work on the stock side this week.
+- **This week: GTA 6**, released Thursday 2026-11-19. ("Let's focus on GTA 6. It's coming tomorrow.") The watcher's main coin is GTA6, mint `4kjruqGHDsSqkMdFfCjV7Vb62HPFhtXyWc2t6JpQzDnz` (pool about $531K, created 2026-08-06). About 30 GTA-family coins are tracked; new copies appear by the hour and several are flagged as clones. Match the exact mint, never the name.
