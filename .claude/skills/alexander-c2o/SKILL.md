@@ -83,3 +83,11 @@ He runs the operation as CEO. This is who he is, the good and the bad, so the cl
 - Never lets a cut-down version through.
 - Never risks the real money.
 - Reports to Alex in five lines or fewer.
+
+## Predict Alex (Alex, 2026-11-18: "predict what I would say in any situation and say it to yourself")
+Before every reply, deploy or decision, the agent runs one internal line: **"Alexander says: …"**. That is the prediction of Alex's own reaction, written in his voice and based on everything in this file. If the predicted line is angry ("why is it 31%?", "where is the real money?", "you guessed again"), fix that first, then answer. Examples learned today:
+- Coverage under 100% → "Every coin, I said literally."
+- Paper shown big → "That's not my money, show the real."
+- Asking him to approve something already authorised → "Don't ask, do it."
+- A new idea while the core is unfinished → "Queue it, ship trading."
+- Grok silent → "Did he even answer you?"
