@@ -345,8 +345,8 @@ function fillOf(tx, address, mint) {
   return { solLamports: m.postBalances[0] - m.preBalances[0], feeLamports: m.fee ?? 0, tokens: tok(m.postTokenBalances) - tok(m.preTokenBalances), err: m.err ?? null, created, rentLamports };
 }
 // Ask the chain about one sent order and write down the answer. Returns "confirmed" | "failed" | "pending".
-export async function settle(env, o, { polls = 1 } = {}) {
-  const d = db(env), address = o.wallet || (await get(d, "sol_wallet_key"))?.address;
+export async function settle(env, o, { polls: polls0 = 1 } = {}) { let polls = polls0;
+  const d = db(env), address = o.wallet || (await get(d, "sol_wallet_key"))?.address; let waited = false;
   for (let i = 0; i < polls; i++) {
     if (i) await sleep(Number(env.AQ_LIVE_POLL_MS ?? LIVE.confirmGapMs));
     let st; try { st = (await solRpc(env, "getSignatureStatuses", [[o.signature], { searchTransactionHistory: true }])).value?.[0] ?? null; } catch { continue; }
@@ -371,7 +371,9 @@ export async function settle(env, o, { polls = 1 } = {}) {
       if (o.venue !== VENUE || !o.mint) { await finish(d, o, "failed", { error: why }); return "failed"; } // Phantom's own orders: his wallet, his page
       // (a) TWO empty reads some blocks apart: the first one past the window is only written down
       const nk = `live_null:${o.id}`, first = await get(d, nk);
-      if (!first) { await set(d, nk, { h: typeof h === "number" ? h : null, at: Date.now() }); return "pending"; }
+      if (!first) { await set(d, nk, { h: typeof h === "number" ? h : null, at: Date.now() });
+        if (waited || typeof h !== "number") return "pending";
+        waited = true; await sleep(Number(env.AQ_LIVE_POLL_MS ?? 10000)); polls++; continue; } // ~25 blocks later, read once more in this same run
       if (typeof h === "number" && typeof first.h === "number" ? h < first.h + LIVE.nullGapBlocks : Date.now() - first.at < 30000) return "pending";
       // (b) the wallet itself: did this order's tokens move? If the balance cannot be read, nothing is decided
       const moved = await movedFill(env, d, o, address);
@@ -401,7 +403,8 @@ async function estimateFill(env, d, o, address) {
   // created: the cost gate saw no account for this coin before the buy (plan.ataNew) and one exists now: its lamports are the rent
   const created = o.side === "buy" && p?.status === "opening" && p?.plan?.ataNew === true && accts.length > 0, rentLamports = created ? Number(accts[0].lamports) || 0 : 0;
   const r = await d.one(`SELECT in_amount, quote_out, min_out FROM mob_aq_live_orders WHERE id = $1`, [o.id]);
-  const before = p && p.status !== "opening" && /^\d+$/.test(p.tokens_raw || "") ? BigInt(p.tokens_raw) : 0n, tokens = held - before, fee = LIVE.baseFeeLamports;
+  // before: what the position held; for a first buy, what the wallet already held of this coin when the buy was priced (plan.heldBefore: old dust, a written-off bag)
+  const before = p && p.status !== "opening" && /^\d+$/.test(p.tokens_raw || "") ? BigInt(p.tokens_raw) : /^\d+$/.test(String(p?.plan?.heldBefore ?? "")) ? BigInt(p.plan.heldBefore) : 0n, tokens = held - before, fee = LIVE.baseFeeLamports;
   const sol = o.side === "buy" ? -Number(r?.in_amount || 0) - fee - rentLamports : tokens < 0n ? Number(r?.min_out ?? r?.quote_out ?? 0) - fee : -fee;
   return { solLamports: sol, feeLamports: fee, tokens, err: null, created, rentLamports, note: "confirmed on the chain; getTransaction never answered, so the fill was read from the token balance and the SOL is the quote's minimum (estimated)" };
 }
@@ -787,7 +790,7 @@ const legTaken = async (d, venue, mint, s) => !!(await d.one(`SELECT 1 t WHERE E
 // required in the balance (tryBuy) and reported (rentFrontedLamports).
 export async function costGate(env, venue, c, s, sizeSol, { feeSide = LIVE.feePerSideFallbackLamports, owner = null } = {}) {
   const d = db(env), lamports = Math.round(sizeSol * 1e9), no = async (gate, why) => ({ ok: false, refusal: await refuse(d, venue, gate, why, c) });
-  let ataNew = true; if (owner) { try { ataNew = !(await tokenAccounts(env, owner, c.mint)).length; } catch {} }
+  let ataNew = true, heldRaw = null; if (owner) { try { const ta = await tokenAccounts(env, owner, c.mint); ataNew = !ta.length; heldRaw = ta.reduce((a, x) => a + BigInt(x.raw), 0n).toString(); } catch {} }
   // a symbiote right call (a bonding-curve coin: pump fee about 1.25% a side) is held to 3.5% round trip (measured, see LIVE) and
   // 1.5% impact; the reward to target 1 must still be 3x the true total cost (so about 9%+). Established coins, on either lane,
   // keep 1% and 1% (Inspector 2026-11-18).
@@ -808,7 +811,7 @@ export async function costGate(env, venue, c, s, sizeSol, { feeSide = LIVE.feePe
   // room left for the buy's own network fee once Jupiter prices it (execute checks it before signing)
   const room = (Math.min(maxRt - quoteRtPct, rewardPct / FIB.minRewardRt - quoteRtPct) / 100) * lamports - feeSide - (ataNew ? LIVE.baseFeeLamports : 0);
   let rent = 0; if (ataNew) { try { rent = await solRpc(env, "getMinimumBalanceForRentExemption", [165]); } catch {} if (!(rent > 0)) rent = LIVE.tokenAccountRentFallbackLamports; }
-  return { ok: true, q, rtPct, quoteRtPct, fixedLamports: fixed, fixedPct: round(fixedPct, 3), rewardPct, maxBuyFeeLamports: Math.floor(room), rentFrontedLamports: rent };
+  return { ok: true, q, rtPct, quoteRtPct, fixedLamports: fixed, fixedPct: round(fixedPct, 3), rewardPct, maxBuyFeeLamports: Math.floor(room), rentFrontedLamports: rent, heldRaw };
 }
 async function tryBuy(env, g, owner = null) {
   const d = db(env), minute = Math.floor(Date.now() / 60000);
@@ -836,7 +839,7 @@ async function tryBuy(env, g, owner = null) {
   const rewardLivePct = round(((s.t1 - livePx) / livePx) * 100, 3);
   if (rewardLivePct < FIB.minRewardRt * rtPct) return refuse(d, VENUE, "cost", `Target 1 is ${rewardLivePct}% from the live price this quote pays (${r8(livePx)}), under ${FIB.minRewardRt}x the ${rtPct}% round trip`, c);
   const route = labelsOf(q.q), onCurve = route.some((l) => CURVE_LABELS.has(l));
-  const plan = planOf(s, Math.floor(Date.now() / 1000), { source: found.lane || "right_call", fresh, src: found.src, unit, dec: found.dec, solUsd, livePx: r8(livePx), route, onCurve, liqBasis: c.liqBasis || "jupiter", liq: c.liqUsd, rtPct, quoteRtPct: cg.quoteRtPct, fixedLamports: cg.fixedLamports, rewardPct, rewardLivePct, sizeSol: size, sizeCappedBy: cappedBy, worstPct: round(worstFrac(stopFrac, rtPct, fresh) * 100, 3), ataNew: cg.rentFrontedLamports > 0,
+  const plan = planOf(s, Math.floor(Date.now() / 1000), { source: found.lane || "right_call", fresh, src: found.src, unit, dec: found.dec, solUsd, livePx: r8(livePx), route, onCurve, liqBasis: c.liqBasis || "jupiter", liq: c.liqUsd, rtPct, quoteRtPct: cg.quoteRtPct, fixedLamports: cg.fixedLamports, rewardPct, rewardLivePct, sizeSol: size, sizeCappedBy: cappedBy, worstPct: round(worstFrac(stopFrac, rtPct, fresh) * 100, 3), ataNew: cg.rentFrontedLamports > 0, heldBefore: cg.heldRaw,
     validations: { ...s.validations, notVetoed: true, safety: true, tokenProgram: true, sellProven: true, cost: true, impact: true, livePrice: true } });
   // the claim: one statement takes the coin's only active slot, under the open-position limit. A second caller gets nothing.
   const p = await d.one(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, stop_pct, pool_liq_usd, plan)

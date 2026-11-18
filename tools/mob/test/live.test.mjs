@@ -245,7 +245,7 @@ test("exits by the chart: half at target 1, the rest at the stop moved to entry;
   assert.equal((await one(`SELECT v FROM mob_aq_state WHERE k='sol_wallet_limits'`)).v.autoTrade, false); assert.match((await lastRef()).reason, /Auto trade is off|switched itself OFF/);
   assert.ok((await buildState(env)).solWallet.live.autoOff.why.includes("daily limit")); assert.ok((await buildState(env)).solWallet.live.pnlTodaySol < -0.01);
   // SELL ALL LIVE: Alex only
-  await wipe(); world(); await L.liveTick(env, { minute: 1 }); await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`);
+  await wipe(); world(); await L.liveTick(env, { minute: 1 }); await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z' || id WHERE claim NOT LIKE '%-z%'`);
   assert.equal((await R("POST", "/api/aq/wallet/sellall")).status, 401); assert.equal((await R("POST", "/api/aq/wallet/sellall", { bearer: env.MOB_API_TOKEN })).status, 403); assert.equal(F.sent.length, 1);
   const out = await (await R("POST", "/api/aq/wallet/sellall", { cookie, body: {} })).json(); assert.equal(out.sold.length, 1); assert.equal(out.sold[0].symbol, "BONK"); assert.equal((await positions())[0].status, "closed"); assert.equal((await positions())[0].exit_reason, "SELL ALL LIVE (Alex)");
   const live = await (await R("GET", "/api/aq/wallet/live", { cookie })).json(); assert.equal(live.positions.length, 0); assert.equal(live.orders.length, 2); assert.ok(!JSON.stringify(live).includes("sealed"));
@@ -597,16 +597,16 @@ test("B) the scan rotates: every candidate gets its turn across ticks, right cal
 test("C) a buy that failed before anything was sent does not burn the leg: retried with a fresh quote, three times at most; a sent buy does burn it", async () => {
   F.swapFail = true; let r = await L.liveTick(env, { minute: 1 }); assert.match(r.result.failed, /HTTP 500/); let ps = await positions(); assert.equal(ps[0].status, "failed"); assert.equal((await orders())[0].signature, null);
   // the next tick tries the SAME leg again, with a new quote, and buys
-  F.swapFail = false; F.calls.length = 0; await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`); r = await L.liveTick(env, { minute: 2 }); // (the order's one-time key holds the real clock minute: a tick a minute later, as in production) assert.equal(r.result.confirmed, true, JSON.stringify(r.result) + JSON.stringify(await lastRef())); assert.ok(F.calls.filter((x) => x === "quote").length >= 2, "fresh quotes");
+  F.swapFail = false; F.calls.length = 0; await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z' || id WHERE claim NOT LIKE '%-z%'`); r = await L.liveTick(env, { minute: 2 }); // (the order's one-time key holds the real clock minute: a tick a minute later, as in production) assert.equal(r.result.confirmed, true, JSON.stringify(r.result) + JSON.stringify(await lastRef())); assert.ok(F.calls.filter((x) => x === "quote").length >= 2, "fresh quotes");
   ps = await positions(); assert.equal(ps.length, 2); assert.equal(ps[1].status, "open"); assert.equal(ps[1].plan.leg.highT, ps[0].plan.leg.highT, "the same leg");
   // bounded: three failed tries, then the leg is left alone
   await wipe(); world(); F.jupSim = { error: "custom program error" };
-  for (const m of [1, 2, 3]) { await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`); r = await L.liveTick(env, { minute: m }); assert.match(r.result.failed || "", /Jupiter's own simulation failed/, JSON.stringify(r.result)); }
+  for (const m of [1, 2, 3]) { await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z' || id WHERE claim NOT LIKE '%-z%'`); r = await L.liveTick(env, { minute: m }); assert.match(r.result.failed || "", /Jupiter's own simulation failed/, JSON.stringify(r.result)); }
   r = await L.liveTick(env, { minute: 4 }); assert.equal(r.result.refused, "same_leg", JSON.stringify(r.result)); assert.match(r.result.reason, /its buy failed 3 times before anything was sent/); assert.equal((await positions()).length, 3); assert.equal(F.sent.length, 0);
   F.jupSim = null; r = await L.liveTick(env, { minute: 5 }); assert.equal(r.result.refused, "same_leg", "still refused once the three tries are used");
   // a buy that WAS signed and sent, and the chain rejected: that leg is burned at once
   await wipe(); world(); F.send = "throw"; await L.liveTick(env, { minute: 1 }); const [o] = await orders(); F.status[o.signature] = { confirmationStatus: "confirmed", err: { InstructionError: [2, "Custom"] } };
-  await L.liveTick(env, { minute: 2 }); assert.equal((await positions())[0].status, "failed"); F.send = "ok"; await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`); r = await L.liveTick(env, { minute: 3 }); assert.equal(r.result.refused, "same_leg"); assert.equal((await positions()).length, 1);
+  await L.liveTick(env, { minute: 2 }); assert.equal((await positions())[0].status, "failed"); F.send = "ok"; await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z' || id WHERE claim NOT LIKE '%-z%'`); r = await L.liveTick(env, { minute: 3 }); assert.equal(r.result.refused, "same_leg"); assert.equal((await positions()).length, 1);
   // a leg that was really traded (stopped out) is still traded once
   await wipe(); world(); await L.liveTick(env, { minute: 1 }); await d.q(`UPDATE mob_aq_live_positions SET status = 'closed', closed_at = now(), pnl_sol = -0.001`); r = await L.liveTick(env, { minute: 2 }); assert.equal(r.result.refused, "same_leg");
 });
@@ -674,6 +674,10 @@ test("G1) a sent buy that the RPC calls 'never landed' is NOT failed while its t
   // fewer tokens than the quote's minimum (dust from an older trade) is NOT this buy's fill: failed, nothing booked
   await wipe(); world(); F.send = "rpcerror"; await L.liveTick(env, { minute: 1 }); await acct(1000); F.height = F.lastValid + 50; await L.liveTick(env, { minute: 2 }); F.height += 40; await L.liveTick(env, { minute: 3 });
   [o] = await orders(); [p] = await positions(); assert.equal(o.status, "failed"); assert.match(o.error, /never reached the chain/); assert.equal(p.status, "failed");
+  // the wallet already held this coin before the buy (an old bag): only what is ABOVE that counts, so the old bag is not mistaken for a fill
+  await wipe(); world(); await acct(9000000); F.recvTokens = "14000000"; F.send = "rpcerror"; await L.liveTick(env, { minute: 1 }); assert.equal((await positions())[0].plan.heldBefore, "9000000"); assert.equal((await orders())[0].status, "sent"); F.height = F.lastValid + 50; await L.liveTick(env, { minute: 2 }); F.height += 40; await L.liveTick(env, { minute: 3 });
+  assert.equal((await orders())[0].status, "failed", "9,000,000 before and 9,000,000 after: nothing arrived"); await wipe(); world(); await acct(9000000); F.recvTokens = "14000000"; F.send = "rpcerror"; await L.liveTick(env, { minute: 1 }); await acct(14000000); F.height = F.lastValid + 50; await L.liveTick(env, { minute: 2 }); F.height += 40; await L.liveTick(env, { minute: 3 });
+  [o] = await orders(); [p] = await positions(); assert.equal(o.status, "confirmed"); assert.equal(o.fill_tokens, "5000000", "only the 5,000,000 that arrived are this position's"); assert.equal(p.tokens_raw, "5000000"); await acct(null);
   // the balance cannot be read: nothing is decided (the order stays pending and blocks new buys)
   await wipe(); world(); F.send = "rpcerror"; await L.liveTick(env, { minute: 1 }); F.height = F.lastValid + 50; await L.liveTick(env, { minute: 2 }); F.height += 40; F.tokFail = true;
   r = await L.liveTick(env, { minute: 3 }); assert.equal((await orders())[0].status, "sent"); assert.equal(r.result.refused, "order_pending"); F.tokFail = false;
@@ -685,7 +689,7 @@ test("G1) a sent buy that the RPC calls 'never landed' is NOT failed while its t
   assert.equal(so.status, "confirmed"); assert.match(so.error, /tokens left the wallet/); assert.equal(p.status, "closed"); assert.equal(p.tokens_raw, "0"); assert.equal(F.sent.length, 2, "the sale was not sent a second time");
   // the same lost sale with the tokens still there: it did not happen, the position is open again and the stop acts again
   await wipe(); world(); await L.liveTick(env, { minute: 1 }); await acct(5000000); await scenario((s) => [...flat(114.6, 5), ...flat(s.stop - 0.5, 5)]); F.send = "rpcerror"; await L.liveTick(env, { minute: 2 });
-  F.height = F.lastValid + 50; await L.liveTick(env, { minute: 3 }); F.height += 40; F.send = "ok"; F.lastValid = F.height + 1000; await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`); r = await L.liveTick(env, { minute: 5 });
+  F.height = F.lastValid + 50; await L.liveTick(env, { minute: 3 }); F.height += 40; F.send = "ok"; F.lastValid = F.height + 1000; await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z' || id WHERE claim NOT LIKE '%-z%'`); r = await L.liveTick(env, { minute: 5 });
   assert.equal((await orders()).filter((x) => x.side === "sell")[0].status, "failed"); assert.equal(r.exits?.[0]?.confirmed, true, "sold on the same tick it was found unsold: " + JSON.stringify(r.exits));
 });
 
@@ -844,7 +848,7 @@ test("audit: rent comes back after a full sale and is booked; the plan is rebase
   // fewer tokens than quoted: the entry is rebased by the same ratio
   F.landTokens = null; await L.liveTick(env, { minute: 1 }); let [p] = await positions(); assert.equal(p.plan.ataCreated, true); assert.equal(p.plan.chartEntry, 114.6); assert.equal(p.plan.fillRatio, 1);
   // full sale, then the empty token account is closed and its rent booked back into the trade
-  await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`); await R("POST", "/api/aq/wallet/sellall", { cookie, body: {} }); [p] = await positions(); assert.equal(p.status, "closed"); const pnl0 = p.pnl_sol;
+  await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z' || id WHERE claim NOT LIKE '%-z%'`); await R("POST", "/api/aq/wallet/sellall", { cookie, body: {} }); [p] = await positions(); assert.equal(p.status, "closed"); const pnl0 = p.pnl_sol;
   F.tokAccts = [{ address: "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", mint: MINT, program: L.PROG.token, raw: "0", data: tokData(MINT, wallet.address, 0) }];
   await limits({ autoTrade: false }); const r = await L.liveTick(env, { minute: 2 }); assert.equal(r.rent?.[0]?.booked, true, JSON.stringify(r) + JSON.stringify((await positions())[0].plan.rent));
   [p] = await positions(); assert.equal(p.plan.rent.state, "closed"); assert.ok(Math.abs(p.pnl_sol - (pnl0 + (1488440 - 5000) / 1e9)) < 1e-12); assert.ok(F.calls.includes("simulateTransaction:close"));
@@ -908,12 +912,12 @@ test("re-audit: rent is kept apart from the trade's cost; a token account outsid
   F.rentApart = true; await L.liveTick(env, { minute: 1 }); let [p] = await positions();
   assert.ok(Math.abs(p.cost_sol - (0.05205 - 0.00148844)) < 1e-12, "cost without the rent"); assert.equal(p.plan.rentSol, 0.00148844); assert.equal(p.plan.ataCreated, true);
   await d.q(`UPDATE mob_aq_live_positions SET last_value_sol = cost_sol`); assert.equal(await L.pnlToday(d), 0, "a flat mark is flat: the rent is not a loss");
-  await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`); await R("POST", "/api/aq/wallet/sellall", { cookie, body: {} }); [p] = await positions(); const pnl0 = p.pnl_sol;
+  await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z' || id WHERE claim NOT LIKE '%-z%'`); await R("POST", "/api/aq/wallet/sellall", { cookie, body: {} }); [p] = await positions(); const pnl0 = p.pnl_sol;
   F.tokAccts = [{ address: "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", mint: MINT, program: L.PROG.token, raw: "0", data: tokData(MINT, wallet.address, 0) }];
   await limits({ autoTrade: false }); await L.liveTick(env, { minute: 2 }); [p] = await positions();
   assert.ok(Math.abs(p.pnl_sol - (pnl0 - 0.000005)) < 1e-12, "rent back: only the close's fee touches the trade");
   // a close that can never happen (dust): the rent kept apart is booked as lost, once
-  await wipe(); world(); await limits(); F.rentApart = true; await L.liveTick(env, { minute: 1 }); await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`); await R("POST", "/api/aq/wallet/sellall", { cookie, body: {} });
+  await wipe(); world(); await limits(); F.rentApart = true; await L.liveTick(env, { minute: 1 }); await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z' || id WHERE claim NOT LIKE '%-z%'`); await R("POST", "/api/aq/wallet/sellall", { cookie, body: {} });
   [p] = await positions(); const pnl1 = p.pnl_sol; F.tokAccts = [{ address: "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", mint: MINT, program: L.PROG.token, raw: "7", data: tokData(MINT, wallet.address, 7) }];
   await limits({ autoTrade: false }); await L.liveTick(env, { minute: 2 }); await L.liveTick(env, { minute: 3 }); [p] = await positions();
   assert.equal(p.plan.rent.state, "dust"); assert.ok(Math.abs(p.pnl_sol - (pnl1 - 0.00148844)) < 1e-12); assert.equal(p.plan.rentLost, true);
