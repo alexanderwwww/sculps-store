@@ -139,6 +139,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
     if (c.vsol0 == null) { c.vsol0 = tr.vsol; c.vtok0 = tr.vtok; c.px0 = tr.px; }
     c.n++; c.last = tr.px; c.lastAt = at; c.vsol = tr.vsol; c.vtok = tr.vtok; c.realSol = tr.realSol ?? c.realSol;
     c.hi = c.hi == null ? tr.px : Math.max(c.hi, tr.px); c.lo = c.lo == null ? tr.px : Math.min(c.lo, tr.px);
+    if (tr.user) c.userTrades = (c.userTrades || 0) + 1;
     if (tr.buy) { c.buys++; if (tr.user && c.buyers.size < 5000) c.buyers.add(tr.user); if (tr.user && c.sizes.length < 400) c.sizes.push(tr.sol); } else { c.sells++; if (tr.user && c.sellers.size < 5000) c.sellers.add(tr.user); }
     c.volSol += tr.sol;
     if (tr.user && tr.user === c.creator) { if (tr.buy) { c.devBuy += tr.sol; c.devTok += tr.tokens; } else { c.devSell += tr.sol; c.devTok -= tr.tokens; } }
@@ -201,7 +202,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
     const sniperTok = [...c.early.values()].reduce((a, b) => a + b, 0);
     return { uniqueBuyers: c.buyers.size, buys: c.buys, sells: c.sells, buyShare: r6(c.buys / Math.max(1, c.buys + c.sells)), sizeCv: r6(mean ? sd / mean : 0), sameSizeShare: r6(topSame),
       washShare: r6(c.volSol ? washVol / c.volSol : 0), sniperWallets: c.early.size, sniperShare: r6(sniperTok / supply), devSold: c.devSell > 0, devShare: r6(Math.max(0, c.devTok) / supply),
-      launchComplete: !!c.launchComplete, createSlot: c.createSlot, devBuySol: r6(c.devBuy),
+      walletsSeen: (c.userTrades || 0) > 0, launchComplete: !!c.launchComplete, createSlot: c.createSlot, devBuySol: r6(c.devBuy),
       earlyBuyers: [...c.early.keys()].slice(0, 10), firstBuyers: [...c.buyers].slice(0, 12), creator: c.creator, curve: c.curve, uri: c.uri,
       realSol: c.realSol, mcapSol: r6(c.last ? c.last * 1e9 : null), liqToMcap: r6(c.last ? c.realSol / (c.last * 1e9) : null), quote: c.sol ? "SOL" : "other" };
   }
@@ -232,12 +233,17 @@ export function createEngine({ isVetoed = () => false } = {}) {
 
 // A right call: exploded on paper AND every health rule passed. Returns {ok, failed:[...], checks}. Thresholds stated here.
 export const HEALTH = { top10Max: 0.30, devShareMax: 0.05, devSold: false, sniperShareMax: 0.15, sameFunderMax: 3, uniqueBuyersMin: 60,
-  sizeCvMin: 0.6, sameSizeShareMax: 0.25, washShareMax: 0.25, liqToMcapMin: 0.05 };
+  sizeCvMin: 0.6, sameSizeShareMax: 0.25, washShareMax: 0.25, realSolMin: 10 };
+// Unknown is NOT a fail on its own (Alex via the coordinator, 2026-11-18: 106 of 106 calls failed on "unknown" because the
+// checks never got an answer). An unknown is listed; a call with more than MAX_UNKNOWN unknowns still fails ("too little known").
+// Only real danger fails: a measured value over its limit, an active authority, a danger-level RugCheck risk, a VETO,
+// or missing launch facts (the Inspector's fail-closed rule: without them snipers and the dev cannot be seen).
+export const MAX_UNKNOWN = 3;
 export function judgeHealth(h) {
-  const failed = [], has = (v) => v !== null && v !== undefined;
-  const need = (name, ok, v) => { if (!has(v)) failed.push(`${name}: unknown`); else if (!ok) failed.push(`${name}: ${typeof v === "number" ? Math.round(v * 1000) / 1000 : v}`); };
+  const failed = [], unknown = [], has = (v) => v !== null && v !== undefined && !(typeof v === "number" && !isFinite(v));
+  const need = (name, ok, v) => { if (!has(v)) unknown.push(name); else if (!ok) failed.push(`${name}: ${typeof v === "number" ? Math.round(v * 1000) / 1000 : v}`); };
   if (h.launchComplete !== true) failed.push("launch data (create slot, dev, first-block buyers): missing, so it can never be a right call");
-  need("top-10 holders excluding the curve", h.top10Share <= HEALTH.top10Max, h.top10Share);
+  need("top-10 holders excluding the curve and program accounts", h.top10Share <= HEALTH.top10Max, h.top10Share);
   need("dev share", h.devShare <= HEALTH.devShareMax, h.devShare);
   need("dev sold", h.devSold === false, h.devSold);
   need("sniper/bundle share in the first blocks", h.sniperShare <= HEALTH.sniperShareMax, h.sniperShare);
@@ -246,12 +252,14 @@ export function judgeHealth(h) {
   need("natural trade sizes (spread)", h.sizeCv >= HEALTH.sizeCvMin, h.sizeCv);
   need("same-size buys", h.sameSizeShare <= HEALTH.sameSizeShareMax, h.sameSizeShare);
   need("wash cycling", h.washShare <= HEALTH.washShareMax, h.washShare);
-  need("liquidity vs market cap", h.liqToMcap >= HEALTH.liqToMcapMin, h.liqToMcap);
-  const auth = (name, v) => { if (v === undefined) failed.push(`${name}: unknown`); else if (v !== null) failed.push(`${name}: still active`); };
+  need(`SOL in the curve (at least ${HEALTH.realSolMin})`, h.realSol >= HEALTH.realSolMin, h.realSol);
+  const auth = (name, v) => { if (v === undefined) unknown.push(name); else if (v !== null) failed.push(`${name}: still active`); };
   auth("mint authority revoked", h.mintAuthority);
   auth("freeze authority revoked", h.freezeAuthority);
-  need("RugCheck (no danger-level risk)", h.rugDanger === false, h.rugDanger === undefined ? undefined : h.rugDanger ? (h.rugRisks || []).join(", ") || "danger" : false);
-  need("socials", h.socials > 0, h.socials);
+  if (h.rugDanger === true) failed.push(`RugCheck danger: ${(h.rugRisks || []).filter((x) => /danger/.test(x)).join(", ") || "danger"}`); else if (h.rugDanger !== false) unknown.push("RugCheck");
+  if (h.socials === 0) failed.push("socials: the coin's own metadata lists no X, Telegram or website"); else if (!has(h.socials)) unknown.push("socials");
+  if (h.quote === "other") failed.push("quoted in another token, not SOL: the live trader buys with SOL only");
   if (h.vetoed) failed.push("Grok VETO");
-  return { ok: failed.length === 0, failed };
+  if (unknown.length > MAX_UNKNOWN) failed.push(`too little known: ${unknown.length} checks got no answer (${unknown.join(", ")})`);
+  return { ok: failed.length === 0, failed, unknown };
 }

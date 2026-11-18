@@ -13,14 +13,21 @@ export const isVeto = (text, mint) => new RegExp(`^[\\s>*_\`#~-]*VETO[\\s*_\`:~-
 
 export function rpcFor(env) {
   const url = env.HELIUS_API_KEY ? heliusUrl(env.HELIUS_API_KEY) : PUBLIC_RPC;
+  // a 429 (production 2026-11-18: most "unknown" answers were Helius 429s) is retried 3 times, 1.5 s, 3 s and 4.5 s apart
   return async (method, params) => {
-    const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
-    const j = await r.json().catch(() => null);
-    if (!j || j.error) throw new Error(`${method}: ${j?.error?.message || r.status}`);
-    return j.result;
+    for (let k = 0; ; k++) {
+      const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
+      const j = await r.json().catch(() => null);
+      const limited = r.status === 429 || j?.error?.code === 429 || /429|rate/i.test(String(j?.error?.message || ""));
+      if (limited && k < 3) { await new Promise((z) => setTimeout(z, 1500 * (k + 1))); continue; }
+      if (!j || j.error) throw new Error(`${method}: ${j?.error?.message || r.status}`);
+      return j.result;
+    }
   };
 }
 const cidOf = (uri) => { const m = String(uri || "").match(/\/ipfs\/([A-Za-z0-9]+)/); return m ? m[1] : null; };
+// a plain GET that retries a 429 three times (the IPFS gateway answered 429 for 83 of 106 calls on 2026-11-18)
+async function getJsonRetry(url) { for (let k = 0; ; k++) { const r = await fetch(url, { headers: { accept: "application/json" } }); if (r.status === 429 && k < 3) { await new Promise((z) => setTimeout(z, 1500 * (k + 1))); continue; } if (!r.ok) throw new Error(`${new URL(url).host} ${r.status}`); return r.json(); } }
 const safe = async (f) => { try { return await f(); } catch (e) { return { error: String(e.message || e) }; } };
 
 export async function vetoed(d, mint) {
@@ -71,19 +78,26 @@ export async function launchFacts(rpc, mint, curve) {
 // stream: rules.streamHealth(mint). Returns {checks, verdict}.
 export async function deepCheck(env, d, mint, stream, rpc0 = rpcFor(env)) {
   let calls = 0; const rpc = (m, p) => { calls++; return rpc0(m, p); };
-  if (!stream.uniqueBuyers) { const smp = await safe(() => sampleStream(rpc, mint, stream)); if (!smp.error) stream = smp; }
+  if (!stream.walletsSeen || !stream.uniqueBuyers) { const smp = await safe(() => sampleStream(rpc, mint, stream)); if (!smp.error) stream = smp; }
   const checks = { ...stream };
+  // the mint first: authorities and the real supply (the denominator of every share)
+  const mi = await safe(async () => (await rpc("getAccountInfo", [mint, { encoding: "jsonParsed" }]))?.value?.data?.parsed?.info);
+  if (mi && !mi.error) { checks.mintAuthority = mi.mintAuthority ?? null; checks.freezeAuthority = mi.freezeAuthority ?? null; checks.supply = Number(mi.supply) || null; } else checks.authError = mi?.error || "no account";
+  // top-10 holders: the largest token accounts, their owners, and each owner's own account. An owner that is not a plain
+  // wallet (its account belongs to a program: the bonding curve, a pool, a vault, Mayhem's) is excluded, then the share is of
+  // the real supply (production 2026-11-18: shares of 1.00-1.09 came from counting the curve's vault)
   const holders = await safe(async () => {
     const big = (await rpc("getTokenLargestAccounts", [mint]))?.value || [];
     const acc = big.length ? (await rpc("getMultipleAccounts", [big.map((b) => b.address), { encoding: "jsonParsed" }]))?.value || [] : [];
     const rows = big.map((b, i) => ({ owner: acc[i]?.data?.parsed?.info?.owner ?? null, amount: Number(b.amount) }));
-    const supply = 1e15, ex = new Set([stream.curve].filter(Boolean));
-    const top = rows.filter((r) => r.owner && !ex.has(r.owner)).slice(0, 10);
-    return { top10Share: top.reduce((a, r) => a + r.amount, 0) / supply, top: top.map((r) => r.owner), curveFound: rows.some((r) => ex.has(r.owner)) };
+    const owners = [...new Set(rows.map((r) => r.owner).filter(Boolean))];
+    const oa = owners.length ? (await rpc("getMultipleAccounts", [owners, { encoding: "base64", dataSlice: { offset: 0, length: 0 } }]))?.value || [] : [];
+    const SYS = "11111111111111111111111111111111", wallet = new Map(owners.map((o, i) => [o, !oa[i] || oa[i].owner === SYS]));
+    const supply = checks.supply || 1e15, ex = new Set([stream.curve].filter(Boolean));
+    const keep = (r) => r.owner && !ex.has(r.owner) && wallet.get(r.owner), top = rows.filter(keep).slice(0, 10);
+    return { top10Share: top.reduce((a, r) => a + r.amount, 0) / supply, top: top.map((r) => r.owner), excluded: rows.filter((r) => !keep(r)).length };
   });
-  if (!holders.error) { checks.top10Share = holders.top10Share; checks.topHolders = holders.top; } else checks.holdersError = holders.error;
-  const mi = await safe(async () => (await rpc("getAccountInfo", [mint, { encoding: "jsonParsed" }]))?.value?.data?.parsed?.info);
-  if (mi && !mi.error) { checks.mintAuthority = mi.mintAuthority ?? null; checks.freezeAuthority = mi.freezeAuthority ?? null; } else checks.authError = mi?.error || "no account";
+  if (!holders.error) { checks.top10Share = holders.top10Share; checks.topHolders = holders.top; checks.holdersExcluded = holders.excluded; } else checks.holdersError = holders.error;
   // funders: the earliest of each early wallet's last 25 transactions, the SOL transfer that reached it (a cheap proxy for "who funded it")
   const wallets = [...new Set([...(stream.earlyBuyers || []), ...(stream.firstBuyers || [])])].filter((w) => w && w !== stream.creator).slice(0, 8);
   const fund = await safe(async () => {
@@ -99,10 +113,11 @@ export async function deepCheck(env, d, mint, stream, rpc0 = rpcFor(env)) {
     return { sameFunderMax: by.size ? Math.max(...by.values()) : 0, checked: wallets.length };
   });
   if (!fund.error) { checks.sameFunderMax = fund.sameFunderMax; checks.fundersChecked = fund.checked; } else checks.fundError = fund.error;
-  const rug = await safe(async () => { const r = await fetch(`https://api.rugcheck.xyz/v1/tokens/${mint}/report/summary`); if (!r.ok) throw new Error("rugcheck " + r.status); return r.json(); });
+  const rug = await safe(() => getJsonRetry(`https://api.rugcheck.xyz/v1/tokens/${mint}/report/summary`));
   if (!rug.error) { const risks = Array.isArray(rug.risks) ? rug.risks : []; checks.rugScore = rug.score ?? null; checks.rugRisks = risks.map((x) => `${x.name} (${x.level})`); checks.rugDanger = risks.some((x) => x.level === "danger"); } else checks.rugError = rug.error;
-  const cid = cidOf(stream.uri);
-  const meta = cid ? await safe(async () => { const r = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`); if (!r.ok) throw new Error("metadata " + r.status); return r.json(); }) : { error: "no metadata uri" };
+  // the coin's own metadata: an IPFS path through the Pinata gateway (ipfs.io no longer serves JSON), any other https URI as is
+  const cid = cidOf(stream.uri), metaUrl = cid ? `https://gateway.pinata.cloud/ipfs/${cid}` : /^https:\/\//.test(String(stream.uri || "")) ? stream.uri : null;
+  const meta = metaUrl ? await safe(() => getJsonRetry(metaUrl)) : { error: "no metadata uri" };
   if (!meta.error) { const s = ["twitter", "telegram", "website"].filter((k) => typeof meta[k] === "string" && /^https?:\/\//.test(meta[k])); checks.socials = s.length; checks.socialLinks = s.map((k) => meta[k]); } else checks.metaError = meta.error;
   checks.vetoed = d ? await vetoed(d, mint) : false;
   return { checks, verdict: judgeHealth(checks), calls };

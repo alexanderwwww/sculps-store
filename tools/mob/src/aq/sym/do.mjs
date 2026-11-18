@@ -21,9 +21,10 @@ import { decodeCurve } from "./decode.mjs";
 
 export const PUMPPORTAL_WSS = "wss://pumpportal.fun/api/data";
 export const CREDIT_CAP_DAY = 150000;
-// a right call is re-judged every 5 minutes and watched for 6 hours; a fresh coin needs 20 SOL of real reserves in its curve
-// (about $1,500 at $75 a SOL: at the live cap of 0.05 SOL a trade that is under 0.3% of the pool, inside the 1% impact gate)
-export const RECHECK_MS = 5 * 60000, RIGHT_WATCH_H = 6, LIQ_FLOOR_SOL = 20;
+// a right call is re-judged every 5 minutes and watched for 6 hours; a fresh coin needs 10 SOL of real reserves in its curve
+// (a pump.fun curve starts at 30 virtual SOL, so a coin that doubled from launch holds about 12; at the live cap of 0.05 SOL a
+// trade that is about 0.1% of the curve, well inside the 1% impact gate)
+export const RECHECK_MS = 5 * 60000, RIGHT_WATCH_H = 6, LIQ_FLOOR_SOL = 10;
 const CURVE_TTL_MS = 6 * 3600000, CHECKED_TTL_MS = 24 * 3600000;
 const FLUSH_MS = 5000, STALE_MS = 60000, FEED_MAX = 40;
 
