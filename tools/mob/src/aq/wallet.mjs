@@ -121,6 +121,8 @@ export function validateWalletLimits(body, current = WALLET_LIMIT_DEFAULTS, caps
       const cur = { market: next.lanes?.market !== false, rightCall: next.lanes?.rightCall === true };
       for (const [lk, lv] of Object.entries(v)) { if (lk !== "market" && lk !== "rightCall") return { error: `${lk} is not a lane` }; if (typeof lv !== "boolean") return { error: `lane ${lk} must be on or off` }; cur[lk] = lv; }
       next.lanes = cur; continue; }
+    // the fast target (live.mjs LIVE.fastMinPct): sell half at a small gain, stop to entry, tight trail. On only when it is exactly true.
+    if (k === "fastTakeProfit") { if (typeof v !== "boolean") return { error: "fastTakeProfit must be on or off" }; next[k] = v; continue; }
     if (!(k in WALLET_LIMIT_DEFAULTS)) return { error: `${k} is not a limit` };
     if (k === "autoTrade") { if (typeof v !== "boolean") return { error: "autoTrade must be on or off" }; next[k] = v; continue; }
     if (typeof v !== "number" || !isFinite(v) || v < 0) return { error: `${k} must be a number, 0 or more` };

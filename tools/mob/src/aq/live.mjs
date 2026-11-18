@@ -52,6 +52,15 @@ export const LIVE = {
   recoverDays: 7,        // a written-off coin is still quoted every 5 minutes for 7 days: if a route returns, what is left is sold
   legBuyTries: 3,        // a buy that failed before anything was sent does not burn its leg: up to 3 tries per leg, each with a fresh quote
   deadAfterHours: 24,    // Jupiter answering "no route" for the position's sale for 24 hours in a row: written off as a total loss, once
+  // FAST TARGET (Alex, 2026-11-18: "small profits but fast"), a live setting (sol_wallet_limits.fastTakeProfit, OFF unless it is
+  // true): half is sold at +fastPct, the stop goes to the entry, the rest is trailed under each higher 5-minute low. fastPct for a
+  // trade = the larger of 1% and twice ITS measured round trip (rounded up to 0.1), so it is always above 2x the true cost: 1% for the
+  // 0.23% round trips measured on the first live trades, 2% at the 1% cost ceiling. Why 1%: replaying this exact code on 48 hours of
+  // 1-minute candles of the 23 candidate coins (27 trades, 2026-11-18), +1% was the best of the fast targets tried (1, 1.5, 2, 2.5,
+  // 3%) and it still averaged LESS than the current exits (-0.36% against -0.06% a trade after a 0.25% round trip), with more wins
+  // (37% against 26%), a smaller worst trade (-4.7% against -6.7%) and a shorter hold (28 against 40 minutes). 27 trades prove nothing
+  // either way (both intervals span zero): it is Alex's rule, measured from here on, not a result.
+  fastMinPct: 1,
   freshGapLossPct: 50,   // what a fresh curve coin can lose before any exit lands (a 50% dump inside one bar): its worst case in the daily budget
   slippageBps: 100, exitSlippageBps: 150, maxImpactPct: 1, reserveSol: 0.01, feeBudgetLamports: 3500000, priorityMaxLamports: 500000,
   candidatesPerTick: 4, paperCoinsPerTick: 8, paperOpenMax: 40, confirmPolls: 6, confirmGapMs: 2500, maxSellFails: 5,
@@ -528,7 +537,7 @@ export async function riskToday(d, feeSide = LIVE.feePerSideFallbackLamports) {
     if (p.cost_sol == null) { worst -= (p.plan?.sizeSol ?? 0) * (p.plan?.worstPct > 0 ? p.plan.worstPct / 100 : worstFrac((p.stop_pct ?? 100) / 100, fresh ? LIVE.freshMaxRtPct : FIB.maxRtPct, fresh)) + (2 * feeSide) / 1e9; continue; }
     const got = p.proceeds_sol || 0, now = p.last_value_sol ?? p.cost_sol - got, pl = p.plan;
     marked += Math.min(0, got + now - p.cost_sol);
-    const stop = pl ? (pl.phase === 2 ? Math.max(pl.stop, pl.trailStop ?? -Infinity) : pl.stop) : null, spark = p.alert_patch?.spark;
+    const stop = pl ? ((pl.phase === 2 || pl.phase === 3) ? Math.max(pl.stop, pl.trailStop ?? -Infinity) : pl.stop) : null, spark = p.alert_patch?.spark;
     const px = Array.isArray(spark) && spark.length ? spark[spark.length - 1] : pl?.chartEntry ?? pl?.entry;
     // the exit is not AT the stop: the stop waits for a 5-minute close and the fast exit acts disasterPct under it; a fresh curve
     // coin can fall freshGapLossPct inside one bar whatever the stop says
@@ -679,7 +688,7 @@ export async function positionCandles(env, d, p, nowSec) {
 // "no price from any source": exits() calls it that way only after LIVE.noPriceTicks misses in a row (each miss already being
 // two sources asked twice), because one missed price call must never dump a position. Otherwise null (manage() decides).
 export function hardStop(plan, spot) {
-  const stop = plan.phase === 2 && plan.trailStop ? plan.trailStop : plan.stop;
+  const stop = (plan.phase === 2 || plan.phase === 3) && plan.trailStop ? Math.max(plan.stop, plan.trailStop) : plan.stop;
   if (spot == null || !Number.isFinite(spot)) return { action: "sell_all", reason: "hard stop: no price from any source, the stop cannot be watched" };
   if (spot <= stop) return { action: "sell_all", reason: "hard stop: the spot price is at or under the stop while the candles are frozen" };
   return null;
@@ -869,7 +878,9 @@ async function tryBuy(env, g, owner = null) {
   const rewardLivePct = round(((s.t1 - livePx) / livePx) * 100, 3);
   if (rewardLivePct < FIB.minRewardRt * rtPct) return refuse(d, VENUE, "cost", `Target 1 is ${rewardLivePct}% from the live price this quote pays (${r8(livePx)}), under ${FIB.minRewardRt}x the ${rtPct}% round trip`, c);
   const route = labelsOf(q.q), onCurve = route.some((l) => CURVE_LABELS.has(l));
-  const plan = planOf(s, Math.floor(Date.now() / 1000), { source: found.lane || "right_call", fresh, src: found.src, unit, dec: found.dec, solUsd, livePx: r8(livePx), route, onCurve, liqBasis: c.liqBasis || "jupiter", liq: c.liqUsd, rtPct, quoteRtPct: cg.quoteRtPct, fixedLamports: cg.fixedLamports, rewardPct, rewardLivePct, sizeSol: size, sizeCappedBy: cappedBy, worstPct: round(worstFrac(stopFrac, rtPct, fresh) * 100, 3), ataNew: cg.rentFrontedLamports > 0, heldBefore: cg.heldRaw,
+  // the fast target, when the setting is on and it sits under target 1 as the live price sees it
+  const fastWant = g.lim.fastTakeProfit === true ? Math.max(LIVE.fastMinPct, Math.ceil(2 * rtPct * 10 - 1e-9) / 10) : null, fastPct = fastWant && fastWant < rewardLivePct ? fastWant : undefined;
+  const plan = planOf(s, Math.floor(Date.now() / 1000), { fastPct, source: found.lane || "right_call", fresh, src: found.src, unit, dec: found.dec, solUsd, livePx: r8(livePx), route, onCurve, liqBasis: c.liqBasis || "jupiter", liq: c.liqUsd, rtPct, quoteRtPct: cg.quoteRtPct, fixedLamports: cg.fixedLamports, rewardPct, rewardLivePct, sizeSol: size, sizeCappedBy: cappedBy, worstPct: round(worstFrac(stopFrac, rtPct, fresh) * 100, 3), ataNew: cg.rentFrontedLamports > 0, heldBefore: cg.heldRaw,
     validations: { ...s.validations, notVetoed: true, safety: true, tokenProgram: true, sellProven: true, cost: true, impact: true, livePrice: true } });
   // the claim: one statement takes the coin's only active slot, under the open-position limit. A second caller gets nothing.
   const p = await d.one(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, stop_pct, pool_liq_usd, plan)
@@ -1004,7 +1015,7 @@ async function exits(env, w, minute = Math.floor(Date.now() / 60000), renew = nu
     const cs = await positionCandles(env, d, p, nowSec);
     let m = manage(plan, cs.ok ? cs.data : [], nowSec, { liqNow, vetoed: await vetoed(d, p.mint) });
     if (m.action === "hold") {
-      const stopNow = plan.phase === 2 && plan.trailStop ? Math.max(plan.stop, plan.trailStop) : plan.stop;
+      const stopNow = (plan.phase === 2 || plan.phase === 3) && plan.trailStop ? Math.max(plan.stop, plan.trailStop) : plan.stop;
       // 4) DISASTER STOP: an unreadable tick neither counts nor clears the count
       if (exitPx != null) {
         if (exitPx <= stopNow * (1 - LIVE.disasterPct / 100)) { const n = (plan.dz || 0) + 1;
@@ -1026,7 +1037,7 @@ async function exits(env, w, minute = Math.floor(Date.now() / 60000), renew = nu
     if (Number.isFinite(lastPx)) await d.q(`UPDATE mob_aq_live_positions SET alert_patch = jsonb_build_object('spark', (SELECT coalesce(jsonb_agg(x), '[]'::jsonb) FROM (SELECT x FROM jsonb_array_elements(coalesce(alert_patch->'spark', '[]'::jsonb)) x OFFSET greatest(0, jsonb_array_length(coalesce(alert_patch->'spark', '[]'::jsonb)) - 89)) z) || jsonb_build_array($2::float8)) WHERE id = $1`, [p.id, lastPx]);
     const patch = { ...extra, ...(m.patch || {}) };
     if (m.action === "hold") { if (Object.keys(patch).length) await d.q(`UPDATE mob_aq_live_positions SET plan = plan || $2::jsonb WHERE id = $1 AND status IN ('open','stuck')`, [p.id, JSON.stringify(patch)]); continue; }
-    out.push(await sellPosition(env, w, p, m.reason, `${p.plan.phase ?? 0}-${minute}`, { size: m.action === "sell_half" ? (t) => (BigInt(t) / 2n).toString() : (t) => t, patch: m.action === "sell_half" ? patch : null, slippageBps: exitBps(p.plan?.slipFails ?? 0, !/^target/.test(m.reason)) }));
+    out.push(await sellPosition(env, w, p, m.reason, `${p.plan.phase ?? 0}-${minute}`, { size: m.action === "sell_half" ? (t) => (BigInt(t) / 2n).toString() : (t) => t, patch: m.action === "sell_half" ? patch : null, slippageBps: exitBps(p.plan?.slipFails ?? 0, !/^(fast )?target/.test(m.reason)) }));
   }
   return out;
 }
@@ -1232,7 +1243,7 @@ async function manualCheck(env, b) {
 async function addGate(env, k) {
   const { d, p, sol, lamports, w } = k, pl = p.plan;
   if (!pl?.kind || !(pl.stop > 0) || !Number.isInteger(pl.dec)) return { error: `${p.symbol} has no chart plan to check an add against: BUY MORE is refused` };
-  const stop = pl.phase === 2 && pl.trailStop ? Math.max(pl.stop, pl.trailStop) : pl.stop, target = pl.phase === 2 ? pl.t3 : pl.phase === 1 ? pl.t2 : pl.t1, unit = pl.unit || "USD";
+  const stop = (pl.phase === 2 || pl.phase === 3) && pl.trailStop ? Math.max(pl.stop, pl.trailStop) : pl.stop, target = (pl.phase === 2 || pl.phase === 3) ? pl.t3 : pl.phase === 1 ? pl.t2 : pl.t1, unit = pl.unit || "USD";
   const c = { mint: p.mint, symbol: p.symbol, fresh: pl.fresh === true }, s = { entry: pl.chartEntry ?? pl.entry, t1: target, stop };
   const cg = await costGate(env, VENUE, c, s, sol, { feeSide: await feePerSide(d), owner: w.address }); if (!cg.ok) return { error: `Cost: ${cg.refusal.reason}` };
   const livePx = pxOf(lamports, cg.q.q.outAmount, pl.dec, unit, unit === "USD" ? await solUsdLive(env) : null);
@@ -1302,12 +1313,12 @@ export async function liveState(d, venue = VENUE) {
     d.one(`SELECT coalesce(sum(pnl_sol), 0)::float8 s, count(*)::int n, count(*) FILTER (WHERE pnl_sol > 0)::int w, (SELECT coalesce(sum(fee_sol), 0)::float8 FROM mob_aq_live_orders WHERE venue = $1 AND status = 'confirmed') f FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed'`, [venue]),
   ]);
   const st = Object.fromEntries(S.map((r) => [r.k, r.v]));
-  const plan = (p) => (p.plan ? { source: p.plan.source || "right_call", stop: p.plan.phase === 2 ? Math.max(p.plan.stop, p.plan.trailStop ?? -Infinity) : p.plan.stop, t1: p.plan.t1, t2: p.plan.t2, t3: p.plan.t3, entry: p.plan.entry, phase: p.plan.phase, leg: p.plan.leg } : null);
+  const plan = (p) => (p.plan ? { source: p.plan.source || "right_call", fastPct: p.plan.fastPct ?? null, stop: (p.plan.phase === 2 || p.plan.phase === 3) ? Math.max(p.plan.stop, p.plan.trailStop ?? -Infinity) : p.plan.stop, t1: p.plan.t1, t2: p.plan.t2, t3: p.plan.t3, entry: p.plan.entry, phase: p.plan.phase, leg: p.plan.leg } : null);
   return { positions: pos.map((p) => ({ id: Number(p.id), symbol: p.symbol, mint: p.mint, source: p.plan ? p.plan.source || "right_call" : null, status: p.status, costSol: p.cost_sol, valueSol: p.last_value_sol, valueAt: p.last_value_at, openedAt: p.opened_at, plan: plan(p), spark: Array.isArray(p.alert_patch?.spark) ? p.alert_patch.spark : [], pnlPct: p.last_value_sol != null && p.cost_sol > 0 ? round((p.last_value_sol / p.cost_sol - 1) * 100, 2) : null, underwater: p.last_value_sol != null && p.last_value_sol < p.cost_sol })),
     orders: ord.map((o) => ({ id: Number(o.id), side: o.side, symbol: o.symbol, status: o.status, reason: o.reason, error: o.error, signature: o.signature, sol: o.fill_sol, at: o.requested_at })),
     manualPcts: MANUAL_PCTS, pnlTodaySol: round(pnl.s, 6), closedToday: pnl.n, pnlTotalSol: round(tot?.s ?? 0, 6), closedTotal: tot?.n ?? 0, winsTotal: tot?.w ?? 0, feesTotalSol: round(tot?.f ?? 0, 6), lastRefusal: ref ? { gate: ref.gate, reason: ref.reason, symbol: ref.symbol, times: ref.n, at: ref.at } : null,
     lastTickAt: st.live_tick?.at || null, autoOff: st.live_auto_off || null, paper: await paperStats(d),
-    lanes: lanesOf(st.sol_wallet_limits), dailyLoss: dailyLossNote(st.sol_wallet_limits),
+    lanes: lanesOf(st.sol_wallet_limits), fastTakeProfit: st.sol_wallet_limits?.fastTakeProfit === true, dailyLoss: dailyLossNote(st.sol_wallet_limits),
     // coins in the wallet that no open position accounts for (checked every 5 minutes; never sold automatically)
     orphans: st.live_orphans?.list || [], orphansAt: st.live_orphans?.at || null,
     rule: "chart trader: Fibonacci pullback, chart stop, chart targets", proven: false,

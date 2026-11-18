@@ -103,11 +103,22 @@ export function manage(plan, c1, nowSec, { liqNow = null, vetoed = false } = {})
   if (!last) return { action: "hold", reason: "no data: holding (data never forces an exit)" };
   // every 5-minute bar that ENDS after `since` counts (the bar the entry was made in included); lower lows from the minutes after the fill
   const b = bars5(done, nowSec), since = b.filter((x) => x.t + 300 > plan.since);
-  const stop = plan.phase === 2 ? Math.max(plan.stop, plan.trailStop ?? -Infinity) : plan.stop;
+  const stop = plan.phase === 2 || plan.phase === 3 ? Math.max(plan.stop, plan.trailStop ?? -Infinity) : plan.stop;
   const closeUnder = since.find((x) => x.c < stop);
-  if (closeUnder) return { action: "sell_all", reason: plan.phase === 0 ? "stop: a 5-minute close under the 78.6% stop" : plan.phase === 1 ? "stop at entry after target 1" : "trail: a higher low broke" };
+  if (closeUnder) return { action: "sell_all", reason: plan.phase === 0 ? "stop: a 5-minute close under the 78.6% stop" : plan.phase === 1 ? "stop at entry after target 1" : plan.phase === 3 && !(plan.trailStop > plan.stop) ? "stop at entry after the fast target" : "trail: a higher low broke" };
   // (no 1-minute wick rule: the stop already sits 0.25 ATR under the swing low and acts only on a 5-minute CLOSE)
   const px = last.c;
+  // FAST TARGET (Alex, 2026-11-18: "small profits but fast"): a plan that carries fastPct sells half the moment the last closed
+  // minute is that far over the entry, moves the stop to the entry, and trails the rest under each higher 5-minute low from then on
+  // (phase 3: no waiting for the leg's high or for 1.272). Checked before target 1, which is always further away.
+  if (plan.phase === 0 && plan.fastPct > 0 && px >= plan.entry * (1 + plan.fastPct / 100)) return { action: "sell_half", reason: `fast target: +${plan.fastPct}% (sold half, stop to entry, tight trail on the rest)`, patch: { phase: 3, stop: plan.entry, since: last.t - (last.t % 300) + 300, fastAt: last.t } };
+  if (plan.phase === 3) {
+    if (px >= plan.t3) return { action: "sell_all", reason: "target 3: the 1.618 extension" };
+    const lb = b[b.length - 1], pb = b[b.length - 2];
+    // the trail: the low of the last closed 5-minute bar, whenever it is a higher low, above the entry and above the trail so far
+    if (lb && pb && lb.t >= plan.since && lb.l > pb.l && lb.l > Math.max(plan.stop, plan.trailStop ?? -Infinity)) return { action: "hold", reason: "tight trail raised to the new higher low", patch: { trailStop: lb.l, since: lb.t + 300 } };
+    return { action: "hold", reason: "holding the rest after the fast target: no stop, trail or target" };
+  }
   if (plan.phase === 0 && px >= plan.t1) return { action: "sell_half", reason: "target 1: the leg's high (sold half, stop to entry)", patch: { phase: 1, stop: plan.entry, since: last.t - (last.t % 300) + 300, t1At: last.t } };
   // T2: the 1.272 touch is judged on the 5-minute bar it happens in. That bar closes above 1.272 on rising volume: trail toward
   // 1.618. Otherwise: sell the rest.

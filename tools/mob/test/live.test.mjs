@@ -815,6 +815,26 @@ test("RPC) every live call survives a deaf or rate-limited main RPC: retry, then
   env.SYMBIOTE = { idFromName: (n) => n, get: () => ({ fetch: async () => { throw new Error("object reset"); } }) }; [p] = await positions(); await bump(); r = await sell(p); assert.equal(r.confirmed, true, "a symbiote that throws does not stop a sale"); delete env.SYMBIOTE;
 });
 
+test("FAST) the fast target is a live setting, off by default: with it on, half is sold at +1% (or twice the cost), the stop goes to the real entry, the rest is trailed", async () => {
+  const V = W.validateWalletLimits; assert.equal(V({ fastTakeProfit: true }, {}).limits.fastTakeProfit, true); assert.match(V({ fastTakeProfit: "yes" }, {}).error, /must be on or off/); assert.equal(L.LIVE.fastMinPct, 1);
+  // default: no fast target on the plan, the current exits
+  await L.liveTick(env, { minute: 1 }); let [p] = await positions(); assert.equal(p.plan.fastPct, undefined); assert.equal((await L.liveState(d)).fastTakeProfit, false);
+  // on: the plan carries 1% (twice the 0.25% round trip would be less: the 1% floor), and the state says so
+  await wipe(); world(); await limits({ fastTakeProfit: true }); await L.liveTick(env, { minute: 1 }); [p] = await positions(); assert.equal(p.plan.fastPct, 1, JSON.stringify(p.plan.rtPct)); assert.equal((await L.liveState(d)).fastTakeProfit, true); assert.equal((await L.liveState(d)).positions[0].plan.fastPct, 1);
+  // a dearer round trip (0.7% in the quotes + 0.254% fixed = 0.954%): twice it, rounded up = 2%
+  await wipe(); world(); await limits({ fastTakeProfit: true }); F.sellOut = "49650000"; await L.liveTick(env, { minute: 1 }); [p] = await positions(); assert.equal(p.plan.rtPct, 0.954); assert.equal(p.plan.fastPct, 2, "above 2x the true cost");
+  // "truthy" is not on
+  await wipe(); world(); await limits({ fastTakeProfit: "true" }); await L.liveTick(env, { minute: 1 }); assert.equal((await positions())[0].plan.fastPct, undefined);
+  // the exit: +1.2% over the entry on a closed minute -> half sold now, phase 3, stop at the entry; then a close under the entry sells the rest
+  await wipe(); world(); await limits({ fastTakeProfit: true }); await L.liveTick(env, { minute: 1 }); let plan = await scenario((s) => [...flat(s.entry * 1.004, 4), [s.entry * 1.004, s.entry * 1.012, 9]]);
+  await d.q(`UPDATE mob_aq_live_positions SET plan = plan || '{"fastPct":1}'::jsonb`); let r = await L.liveTick(env, { minute: 2 }); assert.match(r.exits?.[0]?.reason || "", /^fast target: \+1%/, JSON.stringify(r)); assert.equal(r.exits[0].confirmed, true);
+  [p] = await positions(); assert.equal(p.status, "open"); assert.equal(p.tokens_raw, "2500000"); assert.equal(p.plan.phase, 3); assert.equal(p.plan.stop, plan.entry); assert.equal((await orders()).at(-1).slippage_bps, 150);
+  assert.equal((await L.liveState(d)).positions[0].plan.stop, plan.entry, "the panel shows the stop at the entry");
+  { const cut = Math.floor(Date.now() / 60000) * 60 - 600; F.candles = F.candles.filter((c) => c.time < cut); for (let k = 0; k < 10; k++) F.candles.push({ time: cut + k * 60, open: plan.entry * 0.99, high: plan.entry * 0.991, low: plan.entry * 0.989, close: plan.entry * 0.99, volume: 5 });
+    await d.q(`UPDATE mob_aq_live_positions SET plan = plan || jsonb_build_object('since', $1::bigint)`, [cut - (cut % 300)]); await d.q(`DELETE FROM mob_aq_market`); }
+  r = await L.liveTick(env, { minute: 3 }); assert.equal(r.exits?.[0]?.reason, "stop at entry after the fast target", JSON.stringify(r)); assert.equal((await positions())[0].status, "closed");
+});
+
 test("G5) empty token accounts a swap route left in the wallet are closed and their rent comes back; nothing else is ever closed", async () => {
   const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", USDT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", STRAY = "7deBYhKWNtXYL6brwF1DcWziqXqE2XLBUgkQq8SCpump", A = (address, mint, raw) => ({ address, mint, program: L.PROG.token, raw: String(raw), data: tokData(mint, wallet.address, raw) });
   await L.liveTick(env, { minute: 1 }); const closes0 = F.closes || 0, sent0 = F.sent.length, sweeps = async () => (await one(`SELECT count(*)::int n FROM mob_aq_brain WHERE text LIKE 'LIVE RENT SWEEP:%'`)).n, sw0 = await sweeps(); // BONK is open

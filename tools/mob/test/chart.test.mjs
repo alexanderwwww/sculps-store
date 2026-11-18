@@ -118,3 +118,26 @@ test("the leg must be at least 3x the 5-minute ATR: just under the line is refus
     C.FIB.minLegAtr = ratio * 0.99; assert.equal(C.findLeg(b).ok, true);
   } finally { C.FIB.minLegAtr = keep; }
 });
+
+test("fast target: half at +fastPct, stop to entry, the rest trailed under each higher 5-minute low; a plan without fastPct is unchanged", () => {
+  const start = NOW - 3600, base = chart(start), s0 = C.entrySetup(base, start); assert.equal(s0.signal, true, s0.why);
+  const after = (rows) => [...base, ...place(0, rows, Math.floor(start / 60) * 60)], end = (rows) => Math.floor(start / 60) * 60 + rows.length * 60;
+  const flat = (p, k) => Array.from({ length: k }, () => [p, p, 5]), E = s0.entry, plan = C.planOf(s0, start, { fastPct: 1 });
+  // under +1%: nothing; a plan with no fastPct never takes the fast target
+  let rows = flat(E * 1.009, 3); assert.equal(C.manage(plan, after(rows), end(rows)).action, "hold");
+  rows = [...flat(E * 1.004, 2), [E * 1.004, E * 1.012, 9]]; assert.equal(C.manage(C.planOf(s0, start), after(rows), end(rows)).action, "hold", "no fastPct on the plan: the current exits, untouched");
+  // the minute that closes 1.2% up: half is sold at once (no 5-minute close awaited), the stop goes to the entry, phase 3
+  let m = C.manage(plan, after(rows), end(rows)); assert.equal(m.action, "sell_half"); assert.match(m.reason, /^fast target: \+1% \(sold half, stop to entry, tight trail on the rest\)/); assert.equal(m.patch.phase, 3); assert.equal(m.patch.stop, E);
+  const p3 = { ...plan, ...m.patch };
+  // the rest: a 5-minute close back under the entry sells it at the entry stop
+  let r2 = [...rows, ...flat(E * 0.995, 12)]; m = C.manage(p3, after(r2), end(r2)); assert.equal(m.action, "sell_all"); assert.equal(m.reason, "stop at entry after the fast target");
+  // or it climbs: each higher 5-minute low raises the trail, and a 5-minute close under the trail sells
+  r2 = [...rows, ...flat(E * 1.02, 7), ...flat(E * 1.03, 5), ...flat(E * 1.04, 5)]; let p = p3, raised = 0;
+  for (let k = rows.length + 1; k <= r2.length; k++) { const x = C.manage(p, after(r2.slice(0, k)), end(r2.slice(0, k))); assert.equal(x.action, "hold", x.reason); if (x.patch) { p = { ...p, ...x.patch }; raised++; } }
+  assert.ok(raised >= 2 && p.trailStop > E * 1.025, "the trail followed the higher lows: " + p.trailStop); assert.ok(p.trailStop < E * 1.04);
+  const r3 = [...r2, ...flat(E * 1.022, 10)]; m = C.manage(p, after(r3), end(r3)); assert.equal(m.action, "sell_all"); assert.equal(m.reason, "trail: a higher low broke");
+  // target 3 still takes the rest
+  const r4 = [...rows, [E * 1.02, s0.t3 * 1.001, 9]]; m = C.manage(p3, after(r4), end(r4)); assert.equal(m.action, "sell_all"); assert.match(m.reason, /^target 3/);
+  // before the fast target the normal stop is still the stop
+  const r5 = flat(s0.stop * 0.99, 12); assert.match(C.manage(plan, after(r5), end(r5)).reason, /^stop: a 5-minute close under the 78.6% stop/);
+});
