@@ -228,8 +228,9 @@ export class Symbiote {
     for (const [k, v] of this.pending) if (now - v.at > 120000) this.pending.delete(k);
     if (this.launchQ.size > 2000) this.launchQ = new Set([...this.launchQ].slice(-2000));
   }
-  // curve source: a coin that moves (+50% from launch or 20 trades) gets its launch facts read once, while it is young
-  wantLaunch() { for (const c of this.eng.coins.values()) if (!c.done && !c.launchAsked && c.curve && c.px0 && (c.hi / c.px0 >= 1.5 || c.n >= 20)) { c.launchAsked = true; this.launchQ.add(c.mint); } }
+  // curve source: a coin that rises 80% from launch gets its launch facts read once, while it is young (production
+  // 2026-11-18: reading every coin with 20 trades spent ~156,000 credits a day, over the cap; only risers can become right calls)
+  wantLaunch() { for (const c of this.eng.coins.values()) if (!c.done && !c.launchAsked && c.curve && c.px0 && c.hi / c.px0 >= 1.8) { c.launchAsked = true; this.launchQ.add(c.mint); } }
   async snapLaunches(max = 2) { // one coin after another: launch reads never burst the shared Helius key
     if (this.paused || !this.launchQ.size) return;
     const { rpcFor, launchFacts } = await import("./health.mjs"); const rpc = rpcFor(this.env);
