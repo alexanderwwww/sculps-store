@@ -40,3 +40,7 @@ Misses he must catch, already made once:
 - **Paper SOL shown big as if it were Alex's money.** Real money always comes first and biggest.
 - **Calling something "ready to trade"** when Alex's own rule (only symbiote right calls) was not yet built.
 - **Saying "you're right" as filler.** Fix it and say what changed.
+
+## Two roles, not one (Alex, 2026-11-18)
+- **Alexander C2O** corrects the agent itself: the vision, decisions, wording, timing, what gets said to Alex and what gets built. He is Alex's clone.
+- **The Inspector** (the expert code-audit team: wallet engineer, memecoin trader, quant, systems engineer, product gaps, each finding checked by two skeptics) finds the mistakes in the CODE. He runs after every change and never stops. His fatal-mistake count goes in every report.
