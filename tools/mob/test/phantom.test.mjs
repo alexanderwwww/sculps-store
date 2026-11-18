@@ -9,6 +9,8 @@ import * as PH from "../src/aq/phantom.mjs";
 import * as W from "../src/aq/wallet.mjs";
 import * as L from "../src/aq/live.mjs";
 import { buildState, _resetSeeded } from "../src/aq/engine.mjs";
+import * as C from "../src/aq/chart.mjs";
+import { chart, asJup } from "./fib-fixture.mjs";
 import { AQ_JS, AQ_PHANTOM_JS } from "../src/aq-bundle.mjs";
 
 const SOL = "So11111111111111111111111111111111111111112", MINT = "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263", THIN = "ThinPoo1Coin1111111111111111111111111111111", GTA = "4kjruqGHDsSqkMdFfCjV7Vb62HPFhtXyWc2t6JpQzDnz";
@@ -19,13 +21,14 @@ const post = async (path, body) => J(await R("POST", "/api/aq/phantom" + path, {
 const orders = () => d.q(`SELECT * FROM mob_aq_live_orders WHERE venue = 'phantom' ORDER BY id`), positions = () => d.q(`SELECT * FROM mob_aq_live_positions WHERE venue = 'phantom' ORDER BY id`);
 const sigOf = (n) => W.base58(new Uint8Array(64).fill(n));
 const fakeTx = (payer) => { const b = new Uint8Array(1 + 64 + 4 + 1 + 64 + 32 + 1); b[0] = 1; let p = 65; b[p++] = 0x80; b[p++] = 1; b[p++] = 0; b[p++] = 1; b[p++] = 2; b.set(W.unbase58(payer), p); return Buffer.from(b).toString("base64"); };
-const dipCandles = () => { const now = Math.floor(Date.now() / 60000) * 60, cs = []; for (let i = 39; i >= 0; i--) { const c = i < 5 ? 100 * (1 - (0.045 * (5 - i)) / 5) : 100; cs.push({ time: now - i * 60, open: c, high: c * 1.012, low: c * 0.988, close: c, volume: 10 }); } return cs; };
+// the chart trader's picture (test/fib-fixture.mjs): a golden-pocket bounce that closed a minute ago, unless a test sets F.candles
+const nowCandles = () => asJup(chart(Date.now() / 1000)).candles;
 function world() {
   resetMocks();
-  Object.assign(F, { balance: 3_000_000_000, tokens: { [MINT]: "8000000" }, impact: "0.001", jupSim: null, payer: null, tokensOut: "5000000", sellOut: "60000000", status: {}, txs: {}, height: 1000, simErr: null, calls: [], swapBody: null, rug: { mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 5 } },
+  Object.assign(F, { candles: null, balance: 3_000_000_000, tokens: { [MINT]: "8000000" }, impact: "0.001", jupSim: null, payer: null, tokensOut: "5000000", sellOut: "60000000", status: {}, txs: {}, height: 1000, simErr: null, calls: [], swapBody: null, rug: { mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 5 } },
     pools: [{ id: "p1", quoteAsset: SOL, baseAsset: { id: MINT, symbol: "BONK", liquidity: 250000, decimals: 5, firstPool: { createdAt: "2024-01-01T00:00:00Z" }, stats5m: { priceChange: -4 }, audit: { mintAuthorityDisabled: true, freezeAuthorityDisabled: true } } },
       { id: "p2", quoteAsset: SOL, baseAsset: { id: THIN, symbol: "THIN", liquidity: 30000, decimals: 6, firstPool: { createdAt: "2024-01-01T00:00:00Z" }, stats5m: { priceChange: 3 } } }] });
-  mock("GET", /^https:\/\/datapi\.jup\.ag\/v1\/pools\//, () => ({ pools: F.pools })); mock("GET", /^https:\/\/datapi\.jup\.ag\/v2\/charts\//, () => ({ candles: dipCandles() })); mock("GET", /^https:\/\/api\.rugcheck\.xyz\//, () => F.rug);
+  mock("GET", /^https:\/\/datapi\.jup\.ag\/v1\/pools\//, () => ({ pools: F.pools })); mock("GET", /^https:\/\/datapi\.jup\.ag\/v2\/charts\//, () => ({ candles: F.candles || nowCandles() })); mock("GET", /^https:\/\/api\.rugcheck\.xyz\//, () => F.rug);
   for (const host of ["https://api.jup.ag", "https://lite-api.jup.ag"]) {
     mock("GET", `${host}/swap/v1/quote`, (c, u) => { F.calls.push("quote"); const buy = u.searchParams.get("inputMint") === SOL, out = buy ? F.tokensOut : F.sellOut;
       return { inputMint: u.searchParams.get("inputMint"), outputMint: u.searchParams.get("outputMint"), inAmount: u.searchParams.get("amount"), outAmount: out, otherAmountThreshold: String(Math.floor(Number(out) * 0.99)), priceImpactPct: F.impact, slippageBps: Number(u.searchParams.get("slippageBps")), routePlan: [{ swapInfo: { label: "Meteora" } }] }; });
@@ -139,18 +142,27 @@ test("the signature he reports: unknown to the chain = nothing recorded; real = 
   assert.ok((await orders()).filter((x) => x.error === "not approved in Phantom").length >= 1); assert.equal((await orders()).filter((x) => x.status === "requested").length, 0);
 });
 
-test("signals: the dip rule's coin and SELL NOW, only while the page is open; FUND AQUARIUS WALLET goes to the Aquarius address only", async () => {
-  await d.q(`DELETE FROM mob_aq_live_positions`); await d.q(`DELETE FROM mob_aq_state WHERE k = 'phantom_signal'`); await d.q(`DELETE FROM mob_aq_market WHERE k LIKE 'rug:%'`);
+test("signals: the chart trader's setup and SELL NOW, only while the page is open; FUND AQUARIUS WALLET goes to the Aquarius address only", async () => {
+  await d.q(`DELETE FROM mob_aq_live_positions`); await d.q(`DELETE FROM mob_aq_state WHERE k = 'phantom_signal'`); await d.q(`DELETE FROM mob_aq_market`);
   const ph = await st("phantom"), setPh = (v) => d.q(`UPDATE mob_aq_state SET v = $1 WHERE k = 'phantom'`, [JSON.stringify(v)]);
   await setPh({ ...ph, seenAt: new Date(Date.now() - 10 * 60000).toISOString() }); assert.equal(await L.phantomWatch(env), null); assert.equal((await buildState(env)).phantom.signal, null, "page closed: nothing is looked for");
   await setPh({ ...ph, seenAt: new Date().toISOString() }); const w = await L.phantomWatch(env); assert.equal(w.signal, "BONK");
-  let pub = (await buildState(env)).phantom; assert.equal(pub.signal.mint, MINT); assert.equal(pub.signal.symbol, "BONK"); assert.match(pub.signal.why, /fell 4\.5% in 5 minutes/);
+  let pub = (await buildState(env)).phantom; assert.equal(pub.signal.mint, MINT); assert.equal(pub.signal.symbol, "BONK"); assert.match(pub.signal.why, /golden pocket bounce/);
+  assert.ok(pub.signal.zone[0] < pub.signal.zone[1] && pub.signal.stop < pub.signal.zone[0] && pub.signal.t1 > pub.signal.zone[1] && pub.signal.t2 > pub.signal.t1, "the banner carries zone, stop and targets");
   assert.ok(!F.calls.includes("sendTransaction") && !F.calls.includes("swap"), "a signal builds nothing and sends nothing");
-  // he holds it: no buy signal for it; 20 minutes later, and under the stop, the card says SELL NOW
-  await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, stop_pct, opened_at, time_exit_at) VALUES ('phantom',$1,'BONK','open','5000000',0.1,10, now(), now() + interval '20 minutes')`, [MINT]);
-  pub = (await buildState(env)).phantom; assert.equal(pub.signal, null); assert.equal(pub.positions[0].sellNow, null);
-  F.sellOut = "80000000"; await L.phantomWatch(env); pub = (await buildState(env)).phantom; assert.equal(pub.positions[0].valueSol, 0.08); assert.match(pub.positions[0].sellNow, /10% under what you paid/);
-  await d.q(`UPDATE mob_aq_live_positions SET time_exit_at = now() - interval '1 minute', last_value_sol = 0.11`); assert.match((await buildState(env)).phantom.positions[0].sellNow, /20 minutes are up/);
+  // the same cost gate as the live trader: a 2% round trip means no signal
+  await d.q(`DELETE FROM mob_aq_state WHERE k = 'phantom_signal'`); await d.q(`DELETE FROM mob_aq_market`); F.sellOut = "49000000"; assert.equal((await L.phantomWatch(env)).signal, null); assert.equal((await buildState(env)).phantom.signal, null); F.sellOut = "60000000";
+  // he holds it with the signal's plan: no buy signal for it; no SELL NOW while the chart holds, however long; SELL NOW when a 5-minute close breaks the stop
+  const n = Math.floor(Date.now() / 1000), start = Math.floor(n / 60) * 60 - 20 * 60, base = chart(start), s = C.entrySetup(base, start); assert.equal(s.signal, true);
+  const plan = C.planOf(s, start, { liq: 250000 }), rows = (p, k) => Array.from({ length: k }, () => [p, p, 5]);
+  const put = (rs) => { F.candles = asJup([...base, ...rs.map(([o, c, v], k) => ({ t: start + k * 60, o, h: Math.max(o, c) * 1.001, l: Math.min(o, c) * 0.999, c, v }))]).candles; return d.q(`DELETE FROM mob_aq_market`); };
+  await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, stop_pct, opened_at, plan) VALUES ('phantom',$1,'BONK','open','5000000',0.1,10, now() - interval '3 days', $2)`, [MINT, JSON.stringify(plan)]);
+  await put(rows(116, 20)); await L.phantomWatch(env); pub = (await buildState(env)).phantom; assert.equal(pub.signal, null); assert.equal(pub.positions[0].sellNow, null, "three days in, the chart holds: no timer"); assert.equal(pub.positions[0].valueSol, 0.06);
+  assert.ok(pub.positions[0].plan && pub.positions[0].plan.stop === plan.stop);
+  await put([...rows(114.6, 5), ...rows(plan.stop - 0.5, 15)]); await L.phantomWatch(env); pub = (await buildState(env)).phantom; assert.match(pub.positions[0].sellNow, /^stop: a 5-minute close/);
+  // a minute with no candles leaves the SELL NOW up
+  F.candles = []; await d.q(`DELETE FROM mob_aq_market`); mock("GET", /^https:\/\/datapi\.jup\.ag\/v2\/charts\//, () => new Response("{}", { status: 500 })); await L.phantomWatch(env);
+  assert.match((await buildState(env)).phantom.positions[0].sellNow, /^stop/); F.candles = null; world();
   assert.equal((await positions())[0].status, "open", "Aquarius never sells a Phantom position: it only says so");
   // funding the Aquarius wallet
   assert.match((await post("/fund", { sol: 0.5 })).error.message, /Create the Aquarius wallet first/);

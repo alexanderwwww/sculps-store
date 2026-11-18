@@ -9,7 +9,7 @@ import * as L from "../src/aq/live.mjs";
 import * as W from "../src/aq/wallet.mjs";
 import { usMarket } from "../src/aq/robinhood.mjs";
 import * as C from "../src/aq/chart.mjs";
-import { chart, asJup } from "./fib-fixture.mjs";
+import { chart, asJup, rise } from "./fib-fixture.mjs";
 import { buildState, _resetSeeded } from "../src/aq/engine.mjs";
 
 const SOL = "So11111111111111111111111111111111111111112", MINT = "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263", NEWMINT = "NewPair1111111111111111111111111111111111111";
@@ -28,6 +28,7 @@ async function scenario(rowsOf) {
   const rows = [...rows0, ...Array(5).fill([rows0[rows0.length - 1][1], rows0[rows0.length - 1][1], 5])];
   const start = Math.floor(n / 60) * 60 - rows.length * 60, base = chart(start), s = C.entrySetup(base, start); assert.equal(s.signal, true, s.why);
   const plan = C.planOf(s, start, { liq: 250000 });
+  await d.q(`DELETE FROM mob_aq_market`); // the chart cache: this scenario is a new picture
   F.candles = [...base, ...rows.map(([o, c, v], k) => ({ t: start + k * 60, o, h: Math.max(o, c) * 1.001, l: Math.min(o, c) * 0.999, c, v }))].map((c) => ({ time: c.t, open: c.o, high: c.h, low: c.l, close: c.c, volume: c.v }));
   await d.q(`UPDATE mob_aq_live_positions SET plan = $1 WHERE status IN ('open','stuck')`, [JSON.stringify(plan)]);
   return plan;
@@ -101,7 +102,13 @@ test("every gate refuses, in order, and says why", async () => {
   await d.q(`INSERT INTO mob_aq_chat (from_name, text) VALUES ('grok', $1), ('chatgpt', $2)`, [`I like ${MINT}`, `VETO ${MINT}`]); await wipe(); world(); assert.notEqual(await gate(), "veto", "only Grok, only a message that starts with VETO"); await d.q(`DELETE FROM mob_aq_chat`);
   // cost first: the measured round trip under 1%, and target 1 at least 3x it
   await wipe(); world(); F.sellOut = "49000000"; assert.equal(await gate(), "cost"); assert.match((await lastRef()).reason, /round trip costs 2%, over 1%/);
-  await wipe(); world(); F.sellOut = "49700000"; F.candles = fibCandles({ legTo: 3, tail: [] }); assert.notEqual(await gate(), undefined);
+  // a short leg: target 1 is 2.26% away. A 0.9% round trip needs 2.7%: refused for cost, by name
+  await wipe(); world(); F.sellOut = "49550000"; F.candles = fibCandles({ legTo: 4, pull: 2, tail: rise(101.45, 101.8) }); assert.equal(await gate(), "cost"); assert.match((await lastRef()).reason, /^Target 1 is 2\.\d+% away, under 3x the 0\.9% round trip/);
+  await wipe(); world(); F.sellOut = "49800000"; F.candles = fibCandles({ legTo: 4, pull: 2, tail: rise(101.45, 101.8) }); assert.equal((await L.liveTick(env, { minute: 1 })).result.confirmed, true, "a 0.4% round trip clears 3x on the same chart"); await wipe(); world();
+  // the veto window is the last hour: 61 minutes old does not block, 59 minutes old does; "VETO lifted on <mint>" is not a veto
+  await d.q(`INSERT INTO mob_aq_chat (from_name, text, at) VALUES ('grok', $1, now() - interval '61 minutes')`, [`VETO ${MINT}`]); assert.notEqual(await gate(), "veto"); await wipe(); world();
+  await d.q(`INSERT INTO mob_aq_chat (from_name, text) VALUES ('grok', $1)`, [`VETO lifted on ${MINT}`]); assert.notEqual(await gate(), "veto"); await wipe(); world();
+  await d.q(`INSERT INTO mob_aq_chat (from_name, text, at) VALUES ('grok', $1, now() - interval '59 minutes')`, [`**VETO** ${MINT}: paid wave`]); assert.equal(await gate(), "veto"); await d.q(`DELETE FROM mob_aq_chat`);
   await wipe(); world(); F.quoteFail = true; assert.equal(await gate(), "no_quote");
   assert.equal(F.sent.length, 0); assert.equal((await orders()).length, 0); assert.equal((await positions()).length, 0, "a refused trade leaves no order and no position");
   // max open and the daily loss
@@ -210,6 +217,31 @@ test("exits by the chart: half at target 1, the rest at the stop moved to entry;
   const out = await (await R("POST", "/api/aq/wallet/sellall", { cookie, body: {} })).json(); assert.equal(out.sold.length, 1); assert.equal(out.sold[0].symbol, "BONK"); assert.equal((await positions())[0].status, "closed"); assert.equal((await positions())[0].exit_reason, "SELL ALL LIVE (Alex)");
   const live = await (await R("GET", "/api/aq/wallet/live", { cookie })).json(); assert.equal(live.positions.length, 0); assert.equal(live.orders.length, 2); assert.ok(!JSON.stringify(live).includes("sealed"));
   for (const path of ["/api/aq/wallet/buy", "/api/aq/wallet/order", "/api/aq/wallet/tick"]) assert.equal((await R("POST", path, { cookie, body: {} })).status, 404, "there is no route that buys");
+});
+
+test("hardening: a stuck coin is still managed and counts toward the daily loss, orphans heal, an exit is not blocked by impact, an unknown sell is never sent twice", async () => {
+  // a sell over 1% impact still goes out when the chart says sell (the simulation still checks what comes back)
+  await L.liveTick(env, { minute: 1 }); let plan = await scenario((s) => [...flat(114.6, 5), ...flat(s.stop - 0.5, 5)]); F.impact = "0.03";
+  let r = await L.liveTick(env, { minute: 2 }); assert.equal(r.exits[0].confirmed, true, JSON.stringify(r.exits)); assert.equal((await positions())[0].status, "closed");
+  // stuck: 5 failed sells; it is still managed every minute, its marked loss counts toward the daily limit, a success clears the count
+  await wipe(); world(); await L.liveTick(env, { minute: 1 }); await scenario((s) => [...flat(114.6, 5), ...flat(s.stop - 0.5, 5)]);
+  await d.q(`UPDATE mob_aq_live_positions SET status = 'stuck', sell_fails = 5, last_value_sol = 0.01`);
+  assert.ok((await L.pnlToday(d)) < -0.04, "the stuck coin's marked loss is in today's result");
+  F.sellOut = "30000000"; r = await L.liveTick(env, { minute: 3 }); assert.equal(r.exits[0].confirmed, true, "the chart stop sells a stuck position"); let [p] = await positions(); assert.equal(p.status, "closed"); assert.equal(p.sell_fails, 0);
+  // an order row that could not be written: the claim is put back, nothing is sent; an orphan 'closing' row heals after 2 minutes
+  await wipe(); world(); await L.liveTick(env, { minute: 1 }); [p] = await positions(); const n0 = F.sent.length;
+  await d.q(`UPDATE mob_aq_live_positions SET status = 'closing'`); await L.liveTick(env, { minute: 4 }); assert.equal((await positions())[0].status, "closing", "a young closing row is left alone");
+  await d.q(`UPDATE mob_aq_live_orders SET requested_at = now() - interval '5 minutes'`); r = await L.liveTick(env, { minute: 5 }); assert.equal(r.healed, 1); assert.equal((await positions())[0].status, "open"); assert.equal(F.sent.length, n0);
+  await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, created_at) VALUES ('solana','Orphan1111','ORPH','opening', now() - interval '5 minutes')`);
+  await L.liveTick(env, { minute: 6 }); assert.equal((await one(`SELECT status FROM mob_aq_live_positions WHERE mint = 'Orphan1111'`)).status, "failed");
+  // a half sale whose send outcome is unknown: reconciled from the chain, never sent again, the size comes from the claimed row
+  await wipe(); world(); await L.liveTick(env, { minute: 1 }); plan = await scenario((s) => [...flat(118, 10), [118, s.t1 + 0.2, 9]]);
+  F.send = "throw"; r = await L.liveTick(env, { minute: 7 }); const sells = () => all(`SELECT * FROM mob_aq_live_orders WHERE side = 'sell'`);
+  let [o] = await sells(); assert.equal(o.status, "sent"); assert.equal(o.in_amount, "2500000"); assert.equal((await positions())[0].status, "closing"); const sentN = F.sent.length;
+  r = await L.liveTick(env, { minute: 8 }); assert.equal((await sells()).length, 1, "pending on the chain: no second sell"); assert.equal(F.sent.length, sentN);
+  F.status[o.signature] = { confirmationStatus: "confirmed", err: null }; F.txs[o.signature] = landed(false, { inputMint: MINT, outputMint: SOL, inAmount: "2500000", outAmount: F.sellOut });
+  r = await L.liveTick(env, { minute: 9 }); [o] = await sells(); assert.equal(o.status, "confirmed"); [p] = await positions(); assert.equal(p.status, "open"); assert.equal(p.tokens_raw, "2500000"); assert.equal(p.plan.phase, 1);
+  assert.equal(F.sent.length, sentN, "found on the chain, not sent again"); F.send = "ok";
 });
 
 test("Alex's manual orders: SELL 25% / ALL through the ledger, BUY MORE adds to the cost, one order per double click, the kill switch and rule 10", async () => {
