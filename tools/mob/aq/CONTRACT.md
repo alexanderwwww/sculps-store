@@ -112,3 +112,13 @@ PHANTOM (engine src/aq/phantom.mjs, page aq/phantom.js + aq/phantom-tx.js, since
  phantom:{connected, address, sol, tokens, checkedAt, positions:[{id, mint, symbol, costSol, valueSol, openedAt, timeExitAt, sellNow:string|null}], orders:[{id, side:"buy"|"sell"|"fund", symbol, status, reason, error, signature, sol, at}],
    pnlSol, signal:{mint, symbol, atr, ret5, at, why}|null (only while the page was open in the last 3 minutes), coins:[{mint, symbol, from}], aquariusAddress, sellPcts, note, rule}
  Ledger: mob_aq_live_orders / mob_aq_live_positions with venue 'phantom' (column `wallet` = his address). Aquarius never sells a Phantom position: it only shows SELL NOW.
+
+## CHART TRADER + MANUAL ORDERS + WALLETS DOCK (since 2026-11-18, engine src/aq/chart.mjs + src/aq/live.mjs; page aq/wallets.js + aq/livepos.js)
+World mode is removed (no /aq/assets/*, no world chunk). The page is the bot dashboard: reactor first, wallets docked at the bottom.
+solWallet.live gains: positions[].plan {stop, t1, t2, t3, entry, phase 0|1|2, leg}, positions[].spark (last <= 90 one-minute closes), positions[].pnlPct, positions[].underwater,
+ orders (newest 20), manualPcts [25,50,100], paper {closed, open, wins, avgNetPct, avgGrossPct, byOutcome[]} (mob_aq_chart_paper), rule, proven:false, note. No time_exit_at / timeExitAt anywhere: no clock exits.
+phantom.signal: {mint, symbol, at, why, zone:[z618, z50], entry, stop, t1, t2} (it passed the same cost and impact gates as a live buy); phantom.positions[].plan, .sellNow = the chart's reason.
+Admin session only (bearer 403, none 401):
+- POST /api/aq/wallet/manual/preview {positionId, side:"sell", pct:25|50|100} | {positionId, side:"buy", sol} -> {symbol, mint, tokensIn|sol, expectOut, expectSol, impactPct, overImpact, underwater, warning}. Sends nothing.
+- POST /api/aq/wallet/manual {same, force?:true} -> the order result ({confirmed|pending|failed, orderId, signature}); 400 {error, underwater} (BUY MORE under water without force, kill switch, limits); 409 busy (another run holds the lock).
+  Same order/ledger/reconcile path as the trader, reason "manual: Alex". Skips the entry signal, never the kill switch, simulation, impact cap (buys), balance + fee reserve, daily loss, per-trade limit.
