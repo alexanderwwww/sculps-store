@@ -202,3 +202,11 @@ Fix list: 20. Next training run: trade only coins with 5-minute ATR of 2% and mo
 - Aquarius reached the Fibonacci levels of its whole loss at: 23.6% 04:38, 38.2% 07:02, 50% 08:52, 61.8% 10:47, 78.6% 13:16, 100% 18:16. Its loss rate was nearly constant, 198 to 238 SOL an hour, then 151 in the last five hours: a straight line, the cost of 700 trades a minute.
 - Grok reached them at: 23.6% 03:55, 38.2% 05:10, 50% 06:20, 61.8% 08:15, 78.6% 13:10, 100% 18:30. His rate fell from 518 SOL an hour to 129: half his loss came in his first four hours. Not shown to be learning: his machine paused between sweeps and traded less later.
 - **No retracement on either line.** Biggest bounce: Aquarius +53 SOL at 17:47 (1.5% of the drop to that point); Grok +13.7 SOL. Neither came near the first Fibonacci retracement (23.6%). A result line made of 700 small losing trades a minute has no swings for Fibonacci to measure; Fibonacci belongs on the coins' price charts, where the run already tested it (see reads 2 to 8 and study 3).
+
+### Study 5 (2026-11-18 05:50 Athens): the main GTA6 coin in the training samples (mint 4kjruq…, 348 sample trades, 17 Nov)
+- It moves enough: median 5-minute ATR 3.93%, so it clears the 2% bar of lesson 13.
+- Even the coin flip made money on it that day: random +1.68% a trade (22 trades), so the coin itself was rising and every rule looks good. Read the rules against random, not against zero.
+- Dip 1x: 10 trades, 9 won, +5.39% a trade. Fib 38.2%: 31 trades, +2.18%. Breakout +0.68% (39). Momentum 1x -1.19% (9), 2x -1.68% (3). All HINTS: tiny counts on one rising day.
+- By hold: 2 and 5 minutes about zero (71 trades each); 10 minutes +1.77% (81); 20 minutes +0.63% (61); 45 minutes +1.17% (64). The same "give it time" pattern as the whole run.
+- 296 of 348 ended on the clock, 35 on the stop, 17 on the target.
+- Nothing here says how it behaves on release day itself.
