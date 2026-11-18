@@ -3,7 +3,7 @@
 const SHOW_MS = 20000;
 export function tv(screens) {
   const el = document.createElement("section"); el.id = "tv";
-  el.innerHTML = `<style>#tv{position:relative;display:grid}#tv>.tv-s{grid-area:1/1;transition:opacity 1.2s ease;opacity:0;pointer-events:none;min-width:0}#tv>.tv-s.on{opacity:1;pointer-events:auto}</style>`;
+  el.innerHTML = `<style>#tv{position:relative;display:grid}#tv>.tv-s{grid-area:1/1;transition:opacity 1.2s ease;opacity:0;pointer-events:none;min-width:0}#tv>.tv-s.on{opacity:1;pointer-events:auto}#tv>.tv-s{align-self:center}@media (max-width:820px){#tv{display:block}#tv>.tv-s{position:absolute;left:0;right:0;top:0}#tv>.tv-s.on{position:relative}}</style>`;
   const slides = screens.map((s) => { const w = document.createElement("div"); w.className = "tv-s"; w.append(s); el.append(w); return w; });
   let i = 0, paused = false;
   const show = (k) => { slides.forEach((w, j) => w.classList.toggle("on", j === k)); };

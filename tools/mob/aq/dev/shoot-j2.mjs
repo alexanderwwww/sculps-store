@@ -10,11 +10,11 @@ for (const [w, h, mobile] of [[1440, 1000, false], [390, 844, true]]) {
   await p.goto(URL); await p.waitForTimeout(8000);
   console.log(w, "overflow px:", await p.evaluate(() => document.documentElement.scrollWidth - innerWidth), "reactor", JSON.stringify(await p.evaluate(() => window.__aq?.reactorInfo?.())));
   const box = async (sel) => p.evaluate((q) => { const r = document.querySelector(q).getBoundingClientRect(); return { x: r.x, y: r.y + scrollY, width: r.width, height: r.height }; }, sel);
-  await p.screenshot({ timeout: 240000, fullPage: true, clip: await box("#d-rx"), path: `${out}/reactor-${w}.png` });
+  if (!process.env.TV_ONLY) await p.screenshot({ timeout: 240000, fullPage: true, clip: await box("#d-rx"), path: `${out}/reactor-${w}.png` });
   await p.screenshot({ timeout: 240000, fullPage: true, clip: await box("#tv"), path: `${out}/tv-a-${w}.png` });
   console.log(w, "tv screens:", await p.evaluate(() => [...document.querySelectorAll("#tv>.tv-s")].map((s) => (s.firstElementChild?.id || s.firstElementChild?.className) + (s.classList.contains("on") ? "*" : ""))));
-  for (let k = 1; k <= 3; k++) { await p.waitForTimeout(20500); await p.screenshot({ timeout: 240000, fullPage: true, clip: await box("#tv"), path: `${out}/tv-${"bcd"[k - 1]}-${w}.png` }); }
-  await p.screenshot({ timeout: 240000, fullPage: true, animations: "disabled", path: `${out}/full-${w}.png` }).catch(() => {});
+  for (let k = 1; k <= 2; k++) { await p.waitForTimeout(16000); await p.waitForFunction((want) => { const s = [...document.querySelectorAll("#tv>.tv-s")], o = s.map((x) => +getComputedStyle(x).opacity); return s.findIndex((x) => x.classList.contains("on")) !== want && o.every((v) => v === 0 || v === 1); }, await p.evaluate(() => [...document.querySelectorAll("#tv>.tv-s")].findIndex((x) => x.classList.contains("on"))), { timeout: 60000 }); // the next screen, fully faded in
+    await p.screenshot({ timeout: 240000, fullPage: true, clip: await box("#tv"), path: `${out}/tv-${"bcd"[k - 1]}-${w}.png` }); }
   await ctx.close();
 }
 console.log("console errors:", errors.length); for (const e of errors.slice(0, 10)) console.log("  ", e);

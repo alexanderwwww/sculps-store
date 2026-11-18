@@ -20,6 +20,7 @@ const CSS = `
 #hymn .bolt{opacity:0;background:radial-gradient(ellipse,rgba(190,225,255,.75),rgba(160,200,255,0) 70%);mix-blend-mode:screen;animation:hyBolt 7s infinite}
 #hymn .shine{inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,230,160,.18) 50%,transparent 65%) -150% 0/300% 100% no-repeat;mix-blend-mode:screen;pointer-events:none;animation:hyShine 11s ease-in-out infinite;
   -webkit-mask-image:linear-gradient(#000,#000),linear-gradient(#000,#000);-webkit-mask-composite:xor;mask-composite:exclude}
+@media (max-width:820px){#hymn .hy-h h3{font-size:3.6cqw}#hymn .hy-h .inc{font-size:2cqw}#hymn .hy-h p{font-size:2.5cqw;padding:0 1cqw}}
 #hymn .hy-credit{margin:6px 0 0;text-align:center;font:11px var(--mono);color:#8a7a52}
 @keyframes hyRoll{from{transform:translateY(var(--from))}to{transform:translateY(var(--to))}}
 @keyframes hyBolt{0%,88%,100%{opacity:0}89%{opacity:1}90%{opacity:.2}91.5%{opacity:.9}93%{opacity:0}}
