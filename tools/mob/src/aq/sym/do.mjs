@@ -212,7 +212,10 @@ export class Symbiote {
     const [x] = this.queue.splice(i, 1), c = this.eng.coins.get(x.mint);
     if (src === "curve" && c && c.curve && !c.launchDone && (x.waits || 0) < FACTS_WAIT) { x.waits = (x.waits || 0) + 1; c.launchAsked = true; this.launchQ.add(x.mint); this.queue.push(x); return "waiting for launch facts"; }
     try {
-      const res = await check(this.env, d, x.mint, this.eng.streamHealth(x.mint) || {}); this.credits(res.calls || 0);
+      // curve source: the stream never carries wallets beyond the create transaction (production 2026-11-18: a bundle of 2 trades, both from
+      // the launch logs, read as "wallets seen" and skipped the buyer sample), so the buyers are always sampled from the chain
+      const sh = this.eng.streamHealth(x.mint) || {}; if (src === "curve") sh.walletsSeen = false;
+      const res = await check(this.env, d, x.mint, sh); this.credits(res.calls || 0);
       if (res.verdict.retry && (x.tries || 0) < RETRY_MAX) { x.tries = (x.tries || 0) + 1; x.after = now + RETRY_GAP_MS; this.queue.push(x); return "asked again later"; }
       if (x.tries) res.checks.tries = x.tries + 1;
       return await writeRight(d, x, res);

@@ -405,9 +405,9 @@ test("LIVE PATH: a fresh right call becomes its own candidate; its symbiote bars
   resetMocks();
 });
 
-test("LIVE fresh caps: a curve coin may cost up to 3% round trip and 1.5% impact; an established coin keeps 1%; the hard stop always fires", async () => {
+test("LIVE fresh caps: a curve coin may cost up to 3.5% round trip and 1.5% impact; an established coin keeps 1%; the hard stop always fires", async () => {
   const L = await import("../src/aq/live.mjs");
-  assert.equal(L.LIVE.freshMaxRtPct, 3); assert.equal(L.LIVE.freshMaxImpactPct, 1.5);
+  assert.equal(L.LIVE.freshMaxRtPct, 3.5); assert.equal(L.LIVE.freshMaxImpactPct, 1.5); // 3.5 since the live quotes of 2026-11-18 (live.mjs LIVE)
   resetMocks(); const SOLM = "So11111111111111111111111111111111111111112", M = "CurveCoin1111111111111111111111111111111111";
   for (const host of ["https://api.jup.ag", "https://lite-api.jup.ag"]) mock("GET", `${host}/swap/v1/quote`, (c, u) => { const buy = u.searchParams.get("inputMint") === SOLM;
     return { inputMint: u.searchParams.get("inputMint"), outputMint: u.searchParams.get("outputMint"), inAmount: u.searchParams.get("amount"), outAmount: buy ? "1000000000" : "48700000", otherAmountThreshold: "1", priceImpactPct: "0.0105", slippageBps: 100, routePlan: [] }; });
@@ -554,7 +554,7 @@ test("Inspector d: a deep check waits for the launch facts, and a verdict that o
   const s = new Symbiote({ storage: { get: async () => null, put: async () => {}, getAlarm: async () => 1, setAlarm: async () => {} } }, env);
   await d.q(`DELETE FROM mob_aq_sym_right WHERE mint IN ('RACE','BLIND')`);
   s.eng.onCreate({ mint: "RACE", curve: "CRACE", src: "chain", ts: 1 }); s.queue.push({ mint: "RACE", symbol: "R", lane: "aquarius", gainPct: 120 });
-  let ran = 0; const check = async (env_, d_, mint, stream) => { ran++; return { checks: { ...stream }, calls: 1, verdict: R.judgeHealth({ ...stream, ...goodStream, launchComplete: stream.launchComplete, top10Share: 0.1, sameFunderMax: 1, mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 1, uniqueBuyers: 300, sniperShare: 0.01, devSold: false, devShare: 0, quote: "SOL", realSol: 40 }) }; };
+  let ran = 0; const check = async (env_, d_, mint, stream) => { ran++; assert.equal(stream.walletsSeen, false, "curve source: the buyers are always sampled"); return { checks: { ...stream }, calls: 1, verdict: R.judgeHealth({ ...stream, ...goodStream, launchComplete: stream.launchComplete, top10Share: 0.1, sameFunderMax: 1, mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 1, uniqueBuyers: 300, sniperShare: 0.01, devSold: false, devShare: 0, quote: "SOL", realSol: 40 }) }; };
   assert.equal(await s.checkNext(d, "curve", 1000, check), "waiting for launch facts"); assert.equal(ran, 0); assert.equal(s.launchQ.has("RACE"), true, "the facts are asked for");
   assert.equal(s.queue.length, 1); assert.equal((await d.q(`SELECT 1 FROM mob_aq_sym_right WHERE mint='RACE'`)).length, 0, "nothing written, nothing blocked");
   s.eng.setLaunch("RACE", { complete: true, createSlot: 1, creator: "DEV", early: [] });
