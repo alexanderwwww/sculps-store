@@ -4,6 +4,38 @@ description: The one skill that runs Aquarius's trading: whale following, market
 ---
 # aquarius-trader (Alex, 2026-11-16: "one skill to manage all of them, but never stuck without trades, always slurping opportunities")
 
+## RULEBOOK v2 (2026-11-18). Alex: "remake clean rules because your old rules suck... you and Grok together."
+This replaces every older rule in this file where they disagree (R3 to R7, tiers, EXPLORE, the always-trading recipe). Each rule carries the lesson that backs it (`aquarius-lessons`). Status: written by Claude from 866,559 paper trades; sent to Grok to challenge; NOT yet applied to the paper engine's code.
+
+**WHAT TO BUY**
+1. **Buy weakness only.** Entry = a drop of 1 ATR or more in 5 minutes. No breakout, no momentum, no volume-spike entry, ever. (Lesson 1: worst rules on both machines, 100,000 trades. Lesson 7: the dip is the only rule that beat the coin flip all day.)
+2. **Only coins that can pay.** Pool $100K or more, pair older than a day, 5-minute ATR 2% or more, safety report clean. A coin moving under 2% cannot clear the cost. (Lessons 3, 5, 9, 13.)
+3. **The exact mint, never the name.** Copies share names; drainers ride every active coin. (Lesson 12.)
+4. **New pairs are a separate, small lane.** No dips on pairs younger than a day (they lose on both machines). The only entries there are a Fibonacci pullback to the 38.2% or 50% level, or a whale buy, at observation size until 5,000 trades confirm them. (Lessons 14, 15; Grok's ledger.)
+5. **X is a veto, not a trigger.** Heat on X did not pay on 36,000 trades. Grok's read can stop a trade (paid wave, clone, drainer, dying story); it never starts one. (Lesson 11.)
+
+**THE COST**
+6. **Cost first.** Before any entry, the measured round trip must be under 1% and the coin's ATR at least 4 times the round trip. Otherwise skip. (Lesson 2: before costs both machines were flat; after costs they lost.)
+
+**WHEN TO SELL**
+7. **Give it time.** Planned hold 45 minutes. No voluntary exit before 10 minutes. (Lesson 8: the edge grew at every step from 2 to 45 minutes; 2-minute holds lost everywhere.)
+8. **One wide stop, no tight bracket.** Stop at 3 ATR under entry, between 6% and 15%. No profit target inside the hold. (Lesson 4: stops fired 2.8 times as often as targets; brackets changed nothing.)
+9. **A dead story is an exit.** If Grok shows the narrative died or the coin is a paid wave, sell at the next tick.
+
+**HOW MUCH**
+10. **One size, three positions, one per coin.** Size is the limit Alex sets. Never add to a loser.
+11. **The daily loss limit switches trading off** and it stays off until Alex turns it on.
+
+**WHAT COUNTS AS TRUE**
+12. **Everything is measured against a coin-flip entry** on the same coins in the same minutes. A rule that merely loses less is not a rule.
+13. **5,000 trades and a second day** before anything is called a lead; a second machine agreeing before it is called proven. Three "wins" on a few hundred trades reversed in one day. (Lesson 6.)
+14. **Every trade is recorded with its facts:** pair age, pool, ATR, holders, what X said, why it was taken, how it ended. A loss with no facts teaches nothing.
+15. **Nothing has made money after costs yet.** Real money stays small until rule 13 is met by a rule that is positive after costs. (Lesson 17.)
+
+**EVENT DAYS (GTA 6, 19 Nov)**
+16. On a release or news day: the main coin by exact mint only, no copies, no buying the spike, dips only, half size, because no data covers event days.
+
+
 ## The loop (every tick, never idle)
 1. **Read the market** (news dept, market square): SOL/BTC trend, Fear and Greed, trending lists (paid boosts = warning), X talk from Grok when connected.
 2. **Follow the whales** (always): smart wallets that win steadily (Hyperliquid leaderboard, GMGN smart money, Solana wallets via Helius once the key is in). A buy by 2+ independent winning wallets is the strongest signal. Exclude the coin's creator and insiders (Ultra lesson). Funder clustering: two wallets with one funder count as one.
