@@ -339,4 +339,5 @@ CREATE INDEX IF NOT EXISTS aqx_brain_kind_at ON mob_aq_brain (kind, at);
 CREATE INDEX IF NOT EXISTS aqx_brain_dept ON mob_aq_brain (dept);
 CREATE INDEX IF NOT EXISTS aqx_sym_trades_at ON mob_aq_sym_trades (at);
 CREATE INDEX IF NOT EXISTS aqx_sym_missed_at ON mob_aq_sym_missed (at);
-CREATE INDEX IF NOT EXISTS aqx_sym_right_status ON mob_aq_sym_right (status)`;
+CREATE INDEX IF NOT EXISTS aqx_sym_right_status ON mob_aq_sym_right (status);
+CREATE TABLE IF NOT EXISTS mob_aq_sym_bars (mint text NOT NULL, t bigint NOT NULL, o double precision, h double precision, l double precision, c double precision, v double precision, PRIMARY KEY (mint, t))`;

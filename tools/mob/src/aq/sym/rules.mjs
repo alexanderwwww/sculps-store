@@ -17,6 +17,7 @@
 export const LANES = { aquarius: { stop: -0.5, t1: 2, give: 0.382, t3: null }, grok: { stop: -0.6, t1: 2, give: 0.618, t3: 5 } };
 export const SIZE_SOL = 1, WALLET_SOL = 100000, NET_FEE_SOL = 0.000061, LEG_X_COST = 4, EXPLODE_PCT = 100;
 export const STOP_FIB = 0.786, T2_EXT = 1.272, T3_EXT = 1.618;
+export const GTA_KEEP_MS = 3 * 86400000, WATCH_MS = 6 * 3600000, BAR_KEEP = 360;
 export const QUIET_MS = 20 * 60 * 1000, DEFAULT_FEE_BPS = 125, REF_CURVE_SOL = 30;
 export const GTA_MAIN = "4kjruqGHDsSqkMdFfCjV7Vb62HPFhtXyWc2t6JpQzDnz";
 const GTA_RE = /(gta|grand\s*theft|\bvi\b|rockstar|vice\s*city|leonida|lucia|jason)/i;
@@ -44,7 +45,7 @@ const pxOf = (vsol, vtok) => (vtok > 0 ? (vsol / 1e9) / (vtok / 1e6) : 0);
 
 export function createEngine({ isVetoed = () => false } = {}) {
   const coins = new Map();
-  const out = { coins: new Map(), trades: [], missed: [], lessons: [], gta: [], explode: [], feed: [] };
+  const out = { bars: new Map(), hours: new Map(), coins: new Map(), trades: [], missed: [], lessons: [], gta: [], explode: [], feed: [] };
   const stats = { launches: 0, seen: 0, traded: 0, decided: 0, missed: 0, events: 0, trades: 0, failed: 0, lastAt: 0, fruits: 0 };
   const wallet = Object.fromEntries(Object.keys(LANES).map((l) => [l, { sol: WALLET_SOL, n: 0, wins: 0, open: 0 }]));
   const touch = (c) => out.coins.set(c.mint, c);
@@ -73,20 +74,22 @@ export function createEngine({ isVetoed = () => false } = {}) {
     return c;
   }
 
-  function lessonFor(c, lane, t) {
-    const why = t.exit === "stop" ? `it fell to the ${LANES[lane].stop * 100}% stop` : t.exit === "t3" ? `it reached ${LANES[lane].t3}x` : t.exit === "trail" ? `it gave back ${LANES[lane].give * 100}% of the gain after 2x` : t.exit === "migrated" ? "the curve completed (migration)" : "it went quiet (no trades for 20 minutes)";
-    return { dept: "symbiote", kind: "lesson", text: `${c.symbol || c.mint.slice(0, 6)} ${lane}: ${t.netPct >= 0 ? "won" : "lost"} ${t.netPct.toFixed(1)}% after costs; bought at first sight, peak +${t.legPct.toFixed(0)}%, out because ${why}${t.half ? ", half sold at the leg high" : ""}. Control (bought at first trade) ${c.ctrl?.netPct != null ? c.ctrl.netPct.toFixed(1) + "%" : "open"}.`,
-      data: { mint: c.mint, lane, netPct: r6(t.netPct), peakPct: r6(t.peakPct), exit: t.exit, legPct: r6(t.legPct), rtPct: r6(t.rtPct * 100), gta: c.gta, ctrlPct: c.ctrl?.netPct ?? null } };
+  // 4) the brain gets ONE summary row per lane per hour, not a row per trade; a PAIN row only for a rule-level pattern
+  // (an hour where the lane lost on 80%+ of 20+ trades), with the numbers
+  function addHour(lane, t, at) {
+    const h = Math.floor(at / 3600000), k = lane + ":" + h, a = out.hours.get(k) || { lane, h, n: 0, wins: 0, sum: 0, exits: {}, best: null, worst: null };
+    a.n++; if (t.netPct > 0) a.wins++; a.sum += t.netPct; a.exits[t.exit] = (a.exits[t.exit] || 0) + 1;
+    if (!a.best || t.netPct > a.best.pct) a.best = { sym: t.symbol, pct: r6(t.netPct) }; if (!a.worst || t.netPct < a.worst.pct) a.worst = { sym: t.symbol, pct: r6(t.netPct) };
+    out.hours.set(k, a);
   }
-
-  // PAIN (aquarius-trader, "Machine mistakes become pain"): every losing paper trade, with the numbers and the rule that should
-  // have caught it, so the instinct layer never takes the same pain twice
-  function painFor(c, lane, t) {
-    const rule = t.exit === "stop" ? (t.legPct < 10 ? "exit: it never rose 10% after the first-sight buy; the judging step should learn which launches die at once" : "exit: the stop let a risen coin fall back to a loss")
-      : t.exit === "quiet" ? "liquidity: no exit rule fired before the coin went quiet; a volume-drop invalidation should have sold earlier"
-      : t.exit === "migrated" ? "migration: the curve completed under the entry; no rule exits before migration" : t.exit === "trail" ? "trail: gave back from 1.272 to a loss" : "exit rules";
-    return { dept: "symbiote", kind: "pain", text: `PAIN ${c.symbol || c.mint.slice(0, 6)} ${lane}: ${t.netPct.toFixed(1)}% after costs (${t.exit}, peak ${t.peakPct.toFixed(1)}%, peak +${t.legPct.toFixed(0)}%, round trip ${(t.rtPct * 100).toFixed(1)}%). Should have caught it: ${rule}.`,
-      data: { mint: c.mint, lane, netPct: r6(t.netPct), peakPct: r6(t.peakPct), exit: t.exit, legPct: r6(t.legPct), rtPct: r6(t.rtPct * 100), rule, gta: c.gta } };
+  function hourRows(now) {
+    const rows = [], cur = Math.floor(now / 3600000);
+    for (const [k, a] of out.hours) { if (a.h >= cur) continue; out.hours.delete(k);
+      const at = new Date(a.h * 3600000).toISOString(), avg = a.sum / a.n;
+      rows.push({ dept: "symbiote", kind: "sym_hour", text: `${a.lane} lane, hour from ${at.slice(11, 16)} UTC: ${a.n} paper trades closed, ${a.wins} won (${(a.wins / a.n * 100).toFixed(1)}%), average ${avg.toFixed(2)}% after costs. Exits: ${Object.entries(a.exits).map(([x, n]) => `${x} ${n}`).join(", ")}. Best ${a.best.sym} ${a.best.pct}%, worst ${a.worst.sym} ${a.worst.pct}%.`, data: { lane: a.lane, hourUtc: at, n: a.n, wins: a.wins, avgPct: r6(avg), exits: a.exits } });
+      if (a.n >= 20 && a.wins / a.n <= 0.2) rows.push({ dept: "symbiote", kind: "pain", text: `PAIN pattern ${a.lane}: ${a.n - a.wins} of ${a.n} first-sight buys lost in one hour (average ${avg.toFixed(2)}%). Should have caught it: the ${a.lane} exit style (${LANES[a.lane].stop * 100}% stop, half at ${LANES[a.lane].t1}x) does not survive this hour's launches.`, data: { lane: a.lane, hourUtc: at, n: a.n, wins: a.wins, avgPct: r6(avg), rule: "exit style" } });
+    }
+    return rows;
   }
 
   function closeLane(c, lane, s, exit, price, vsol, vtok, at) {
@@ -97,15 +100,14 @@ export function createEngine({ isVetoed = () => false } = {}) {
     const t = { mint: c.mint, symbol: c.symbol, lane, entryAt: s.at, exitAt: at, entryPx: s.px, exitPx: price, cost: s.cost, proceeds: s.proceeds, netPct, peakPct: s.peak, legPct: s.legPct, rtPct: s.rt, exit, half: s.half, gta: c.gta };
     s.st = "done"; s.tokens = 0; s.result = { netPct, exit };
     const w = wallet[lane]; w.n++; if (netPct > 0) w.wins++; w.open--; w.sol += (s.proceeds - s.cost) / s.cost * SIZE_SOL; // the result as a share of what it cost, on a 1 SOL ticket (non-SOL coins too)
-    out.trades.push(t); out.lessons.push(lessonFor(c, lane, t));
-    if (netPct < 0) out.lessons.push(painFor(c, lane, t)); out.feed.push({ at, k: "exit", mint: c.mint, sym: c.symbol, lane, pct: r6(netPct), exit });
+    out.trades.push(t); addHour(lane, t, at); out.feed.push({ at, k: "exit", mint: c.mint, sym: c.symbol, lane, pct: r6(netPct), exit });
   }
 
   function markLane(c, lane, s, vsol, vtok) {
     const val = s.proceeds + sellFill(vsol, vtok, s.tokens, fee(c)) - NET_FEE_SOL * (c.sol ? 1 : s.size);
     const pct = (val - s.cost) / s.cost * 100;
     if (pct > s.peak) s.peak = pct;
-    if (!s.exploded && s.peak >= EXPLODE_PCT) { s.exploded = true; out.explode.push({ mint: c.mint, symbol: c.symbol, lane, gainPct: r6(s.peak), at: Date.now() }); stats.fruits++; }
+    if (!s.exploded && s.peak >= EXPLODE_PCT) { s.exploded = true; out.explode.push({ mint: c.mint, symbol: c.symbol, lane, gainPct: r6(s.peak), at: Date.now(), px: c.last }); stats.fruits++; c.watch = true; }
   }
 
   function stepLane(c, lane, s, tr, at) {
@@ -137,7 +139,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
     if (c.vsol0 == null) { c.vsol0 = tr.vsol; c.vtok0 = tr.vtok; c.px0 = tr.px; }
     c.n++; c.last = tr.px; c.lastAt = at; c.vsol = tr.vsol; c.vtok = tr.vtok; c.realSol = tr.realSol ?? c.realSol;
     c.hi = c.hi == null ? tr.px : Math.max(c.hi, tr.px); c.lo = c.lo == null ? tr.px : Math.min(c.lo, tr.px);
-    if (tr.buy) { c.buys++; if (tr.user) c.buyers.add(tr.user); if (tr.user && c.sizes.length < 400) c.sizes.push(tr.sol); } else { c.sells++; if (tr.user) c.sellers.add(tr.user); }
+    if (tr.buy) { c.buys++; if (tr.user && c.buyers.size < 5000) c.buyers.add(tr.user); if (tr.user && c.sizes.length < 400) c.sizes.push(tr.sol); } else { c.sells++; if (tr.user && c.sellers.size < 5000) c.sellers.add(tr.user); }
     c.volSol += tr.sol;
     if (tr.user && tr.user === c.creator) { if (tr.buy) { c.devBuy += tr.sol; c.devTok += tr.tokens; } else { c.devSell += tr.sol; c.devTok -= tr.tokens; } }
     if (tr.user && tr.buy && c.createSlot != null && tr.slot != null && tr.slot - c.createSlot <= 2 && tr.user !== c.creator) c.early.set(tr.user, (c.early.get(tr.user) || 0) + tr.tokens);
@@ -148,6 +150,9 @@ export function createEngine({ isVetoed = () => false } = {}) {
     const m = c.ctrl; if (m) { if (!m.peak || tr.px > m.peak) { m.peak = tr.px; m.peakAt = at; m.trough = tr.px; } else if (tr.px < m.trough) m.trough = tr.px; m.at0 = m.at0 || at; }
     for (const lane of Object.keys(LANES)) stepLane(c, lane, c.lanes[lane], tr, at);
     if (c.gta) gtaTick(c, at);
+    if (c.watch) { const m = Math.floor(at / 60000) * 60, b = c.bars || (c.bars = []), k = b[b.length - 1];
+      if (k && k.t === m) { k.h = Math.max(k.h, tr.px); k.l = Math.min(k.l, tr.px); k.c = tr.px; k.v += tr.sol; } else { b.push({ t: m, o: tr.px, h: tr.px, l: tr.px, c: tr.px, v: tr.sol }); if (b.length > BAR_KEEP) b.shift(); }
+      out.bars.set(c.mint, b[b.length - 1]); }
     touch(c);
     return c;
   }
@@ -180,7 +185,8 @@ export function createEngine({ isVetoed = () => false } = {}) {
     for (const c of coins.values()) {
       const quietFrom = c.lastAt || c.firstAt || c.createdAt;
       if (!c.done && now - quietFrom > QUIET_MS) finish(c, "quiet", now);
-      if (c.done && !c.gta && !out.coins.has(c.mint) && now - (c.lastAt || c.createdAt) > QUIET_MS) coins.delete(c.mint);
+      const age = now - (c.lastAt || c.createdAt);
+      if (c.done && !out.coins.has(c.mint) && (c.gta ? age > GTA_KEEP_MS : age > QUIET_MS && !c.watch || age > WATCH_MS)) coins.delete(c.mint); // GTA coins stay 3 days after their last trade (the DB keeps them for life)
     }
   }
 
@@ -208,11 +214,12 @@ export function createEngine({ isVetoed = () => false } = {}) {
     c.launchAsked = true;
   }
   // hands the accumulated changes to the writer and starts a new batch
-  function drain() {
+  function drain(now = Date.now()) {
     const coinsOut = [...out.coins.values()].map((c) => ({ mint: c.mint, symbol: c.symbol, name: c.name, gta: c.gta, sol: c.sol, created_at: new Date(c.createdAt).toISOString(),
       n: c.n, buyers: c.buyers.size, px0: c.px0, last: c.last, hi: c.hi, end: c.end, done: c.done, pp: !!c.pp, chain: !!c.chain,
       lanes: { ...Object.fromEntries(Object.entries(c.lanes).map(([l, s]) => [l, s.result || { st: s.st, peakPct: s.peak ?? null }])), market: c.ctrl ? { bought: true, peakX: r6(c.ctrl.peak / c.ctrl.px), toPeakS: c.ctrl.peakAt ? Math.round((c.ctrl.peakAt - c.ctrl.at0) / 1000) : null, ddFromPeakPct: r6((c.ctrl.trough / c.ctrl.peak - 1) * 100), netPct: c.ctrl.netPct, end: c.end } : { bought: false } }, ctrl: c.ctrl?.netPct ?? null }));
-    const b = { coins: coinsOut, trades: out.trades.splice(0), missed: out.missed.splice(0), lessons: out.lessons.splice(0), gta: out.gta.splice(0), explode: out.explode.splice(0), feed: out.feed.splice(0) };
+    const bars = [...out.bars].map(([mint, k]) => ({ mint, ...k })); out.bars.clear();
+    const b = { bars, coins: coinsOut, trades: out.trades.splice(0), missed: out.missed.splice(0), lessons: [...out.lessons.splice(0), ...hourRows(now)], gta: out.gta.splice(0), explode: out.explode.splice(0), feed: out.feed.splice(0) };
     out.coins.clear();
     return b;
   }
@@ -220,7 +227,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
   // QUIET_MS with no trade yet is pending, not missed)
   const coverage = () => { let pending = 0; for (const c of coins.values()) if (!c.done && !c.n) pending++;
     const base = stats.launches - pending; return { ...stats, pending, live: coins.size, pct: base > 0 ? r6(Math.min(100, (base - stats.missed) / base * 100)) : null, wallet }; };
-  return { onCreate, onTrade, onComplete, sweep, drain, streamHealth, setLaunch, coverage, coins, stats, wallet, gtaTick };
+  return { flushHours: () => hourRows(Infinity), onCreate, onTrade, onComplete, sweep, drain, streamHealth, setLaunch, coverage, coins, stats, wallet, gtaTick };
 }
 
 // A right call: exploded on paper AND every health rule passed. Returns {ok, failed:[...], checks}. Thresholds stated here.

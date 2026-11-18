@@ -478,10 +478,28 @@ export async function candidates(env) {
 }
 // Look for the setup among those coins. Returns {c, s} (the coin and the chart setup) for the first coin that passes every
 // validation, or the last refusal (each written down under `venue`). `skip(mint, s)` = coins or legs not to take again.
+// A symbiote RIGHT CALL is its own candidate (Inspector 2026-11-18: right calls are fresh launches, never in the established
+// list above). The pool floor for these fresh coins is symbiote's: 20 SOL of real reserves in the curve, re-checked every
+// 5 minutes (sym/do.mjs LIQ_FLOOR_SOL); liqUsd here is Jupiter's figure for the coin, else those reserves x2 at the SOL price.
+export async function freshRightCandidates(env, d) {
+  const rows = await d.q(`SELECT r.mint, r.symbol, r.checks->>'realSol' real_sol FROM mob_aq_sym_right r WHERE r.status = 'candidate' AND coalesce(r.checked_at, r.flagged_at) > now() - $1::float8 * interval '1 minute'`, [await rightCallTtlMin(d)]).catch(() => []);
+  if (!rows.length) return [];
+  let px = {}; try { px = await jupPrices([SOL_MINT, ...rows.map((r) => r.mint)]); } catch {}
+  const solUsd = px[SOL_MINT]?.price ?? null;
+  return rows.map((r) => ({ mint: r.mint, symbol: r.symbol, quoteMint: SOL_MINT, fresh: true, liqUsd: Number.isFinite(px[r.mint]?.liqUsd) ? px[r.mint].liqUsd : solUsd && Number(r.real_sol) > 0 ? Number(r.real_sol) * 2 * solUsd : null }));
+}
+// One-minute candles: Jupiter's chart first; for a fresh coin Jupiter may have none, then symbiote's own bars built from the
+// curve's trade stream (mob_aq_sym_bars, the coin's price in SOL; the chart rules are ratios, so the unit does not matter).
+export async function candlesFor(env, d, mint) {
+  const cs = await feeds.jupCandles(env, mint); if (cs.ok) return cs;
+  const rows = await d.q(`SELECT t, o, h, l, c, v FROM mob_aq_sym_bars WHERE mint = $1 AND t > extract(epoch from now())::bigint - 21600 ORDER BY t`, [mint]).catch(() => []);
+  return rows.length ? { ok: true, src: "symbiote", data: rows.map((r) => ({ t: Number(r.t), o: Number(r.o), h: Number(r.h), l: Number(r.l), c: Number(r.c), v: Number(r.v) || 0 })) } : cs;
+}
 export async function scanFib(env, venue, skip) {
-  const d = db(env), list = await candidates(env), nowSec = Date.now() / 1000;
-  if (!list) return { refusal: await refuse(d, venue, "no_market_data", "Jupiter's coin lists did not answer") };
-  if (!list.length) return { refusal: await refuse(d, venue, "no_candidate", "No established coin with a pool of $100K or more right now") };
+  const d = db(env), est = await candidates(env), nowSec = Date.now() / 1000, fresh = await freshRightCandidates(env, d);
+  const list = [...fresh, ...(est || []).filter((c) => !fresh.some((f) => f.mint === c.mint))];
+  if (!est && !fresh.length) return { refusal: await refuse(d, venue, "no_market_data", "Jupiter's coin lists did not answer") };
+  if (!list.length) return { refusal: await refuse(d, venue, "no_candidate", "No established coin with a pool of $100K or more, and no fresh right call, right now") };
   // Alex's hard rule (2026-11-18): only a coin symbiote flagged as a RIGHT CALL that passed its deep checks may be bought.
   const right = await rightCalls(d);
   if (!right.size) return { refusal: await refuse(d, venue, "no_right_call", `Symbiote has no fresh right call (checked in the last ${await rightCallTtlMin(d)} minutes) that passed its deep checks: no live entry`) };
@@ -492,7 +510,8 @@ export async function scanFib(env, venue, skip) {
     if (looked >= LIVE.candidatesPerTick) break;
     if (await skip(c.mint, null)) continue;
     looked++;
-    const cs = await feeds.jupCandles(env, c.mint);
+    if (c.fresh && !(c.liqUsd > 0)) { last = await refuse(d, venue, "pool", "No liquidity figure for this fresh right call", c); continue; }
+    const cs = await candlesFor(env, d, c.mint);
     if (!cs.ok) { last = await refuse(d, venue, "no_candles", "No one-minute candles for this coin", c); continue; }
     const s = entrySetup(cs.data, nowSec);
     if (!s.signal) { last = await refuse(d, venue, s.stale ? "stale_data" : "no_setup", s.why, c); continue; }
@@ -504,7 +523,7 @@ export async function scanFib(env, venue, skip) {
     if (!mc.ok) { last = await refuse(d, venue, "token_program", mc.reason, c); continue; }
     return { c, s };
   }
-  return { refusal: last || await refuse(d, venue, inList ? "no_setup" : "no_right_call", inList ? "No right-call coin is in a Fibonacci pullback right now" : "No symbiote right call is among the established coins right now") };
+  return { refusal: last || await refuse(d, venue, inList ? "no_setup" : "no_right_call", inList ? "No right-call coin is in a Fibonacci pullback right now" : "No symbiote right call is among the candidates right now") };
 }
 // The symbiote's right calls that passed the deep checks (status 'candidate') and are FRESH: checked (or flagged) inside the
 // TTL. No symbiote data exists yet to measure how long a call stays good, so the TTL is 30 minutes until 'right_call_ttl_min'
@@ -641,7 +660,7 @@ async function exits(env, w, minute = Math.floor(Date.now() / 60000), renew = nu
     const q = await quote(env, p.mint, SOL_MINT, p.tokens_raw, LIVE.exitSlippageBps);
     if (q.ok) await d.q(`UPDATE mob_aq_live_positions SET last_value_sol = $2, last_value_at = now() WHERE id = $1`, [p.id, Number(q.q.outAmount) / 1e9]);
     if (!p.plan) continue; // a position without a chart plan (none is opened that way) waits for SELL ALL LIVE
-    const cs = await feeds.jupCandles(env, p.mint);
+    const cs = await candlesFor(env, d, p.mint); // a fresh right call's exits run on symbiote's bars when Jupiter has no chart
     const m = manage(p.plan, cs.ok ? cs.data : [], nowSec, { liqNow: await liqOf(env, p.mint), vetoed: await vetoed(d, p.mint) });
     // the panel's sparkline: the last closed 1-minute price, once a minute, the last 90 kept (display only; manage() never reads it)
     const lastPx = cs.ok ? cs.data.filter((c) => c.t + 60 <= nowSec).slice(-1)[0]?.c : null;
@@ -927,7 +946,7 @@ export async function phantomWatch(env, g = null) {
     const q = await quote(env, p.mint, SOL_MINT, p.tokens_raw, LIVE.exitSlippageBps);
     if (q.ok) await d.q(`UPDATE mob_aq_live_positions SET last_value_sol = $2, last_value_at = now() WHERE id = $1`, [p.id, Number(q.q.outAmount) / 1e9]);
     if (!p.plan) continue;
-    const cs = await feeds.jupCandles(env, p.mint);
+    const cs = await candlesFor(env, d, p.mint);
     const m = manage(p.plan, cs.ok ? cs.data : [], nowSec, { liqNow: await liqOf(env, p.mint), vetoed: await vetoed(d, p.mint) });
     if (m.action === "hold" && !cs.ok) continue; // no candles this minute: a standing SELL NOW stays up (missing data never clears it)
     // he sells, never Aquarius: a trail update is applied, a sale is only told to him (SELL NOW), and the half sale's next step waits for his sale

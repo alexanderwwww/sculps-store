@@ -96,7 +96,7 @@ export async function measure(env) {
 }
 // what the state shows: storage, plus how old the last tick and the last brain row are, read live
 export async function watch(d, S) {
-  const a = await d.one(`SELECT extract(epoch FROM now() - (SELECT max(at) FROM mob_aq_brain))::float8 brain_age, extract(epoch FROM now() - (SELECT at FROM mob_aq_state WHERE k='last_tick'))::float8 tick_age,
+  const a = await d.one(`SELECT extract(epoch FROM now() - (SELECT max(at) FROM mob_aq_brain WHERE dept <> 'symbiote'))::float8 brain_age, extract(epoch FROM now() - (SELECT at FROM mob_aq_state WHERE k='last_tick'))::float8 tick_age,
     extract(epoch FROM now() - least((SELECT min(at) FROM mob_aq_brain), (SELECT min(opened_at) FROM mob_aq_trades)))::float8 / 86400 days`);
   const st = S.storage || null, bk = S.backup || null;
   return { dbMb: st?.dbMb ?? null, limitMb: st?.limitMb ?? null, pctOfLimit: st?.pct ?? null, retention: st?.mode ?? null, measuredAt: st?.at ?? null, tables: st?.tables ?? [],

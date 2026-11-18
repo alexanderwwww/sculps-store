@@ -21,7 +21,9 @@ import { decodeCurve } from "./decode.mjs";
 
 export const PUMPPORTAL_WSS = "wss://pumpportal.fun/api/data";
 export const CREDIT_CAP_DAY = 150000;
-const FRESH_VTOK = 0.8e15, RESOLVE_PER_TICK = 5; // 5 a tick, one after another = 1 call/s at most
+// a right call is re-judged every 5 minutes and watched for 6 hours; a fresh coin needs 20 SOL of real reserves in its curve
+// (about $1,500 at $75 a SOL: at the live cap of 0.05 SOL a trade that is under 0.3% of the pool, inside the 1% impact gate)
+export const RECHECK_MS = 5 * 60000, RIGHT_WATCH_H = 6, LIQ_FLOOR_SOL = 20;
 const CURVE_TTL_MS = 6 * 3600000, CHECKED_TTL_MS = 24 * 3600000;
 const FLUSH_MS = 5000, STALE_MS = 60000, FEED_MAX = 40;
 
@@ -31,7 +33,7 @@ export class Symbiote {
     this.eng = createEngine({ isVetoed: (m) => this.vetoes.has(m) });
     this.ws = { pp: null, chain: null, launch: null }; this.lastMsg = { pp: 0, chain: 0, launch: 0 }; this.reconnects = { pp: 0, chain: 0, launch: 0 }; this.pending = new Map();
     this.win = []; this.notes = 0; this.bytes = 0; this.feed = []; this.queue = []; this.checked = new Map();
-    this.started = 0; this.lastVeto = 0; this.curves = new Map(); this.curveAt = new Map(); this.resolveQ = new Set(); this.launchQ = new Set(); this.lastPrune = 0; this.lastGta = 0; this.errors = [];
+    this.started = 0; this.lastVeto = 0; this.curves = new Map(); this.curveAt = new Map(); this.launchQ = new Set(); this.lastPrune = 0; this.lastGta = 0; this.errors = [];
   }
   d() { return db(this.env); }
   err(where, e) { this.errors.unshift({ at: new Date().toISOString(), where, msg: String(e?.message || e).slice(0, 200) }); this.errors.length = Math.min(this.errors.length, 8); }
@@ -41,7 +43,7 @@ export class Symbiote {
     if (u.pathname === "/config" && req.method === "POST") {
       const b = await req.json().catch(() => ({}));
       if (!["public", "helius", "curve", "off"].includes(b.source)) return Response.json({ error: "source must be helius, curve, public or off" }, { status: 400 });
-      await this.ctx.storage.put("source", b.source); try { this.ws.chain?.close(1000, "source changed"); } catch {} this.ws.chain = null;
+      await this.ctx.storage.put("source", b.source); this.closeChain("source changed");
     }
     await this.start();
     return Response.json(this.status());
@@ -86,13 +88,13 @@ export class Symbiote {
     }
     const src = await this.source();
     this.credits(0);
-    if (src === "off" || this.paused) { try { this.ws.chain?.close(); } catch {} this.ws.chain = null; return; }
+    if (src === "off" || this.paused) { this.closeChain(this.paused ? "credit cap" : "off"); return; }
     if (!this.ws.chain || now - this.lastMsg.chain > STALE_MS) {
       try { this.ws.chain?.close(); } catch {}
       if (src !== "public" && !this.env.HELIUS_API_KEY) { this.err("chain", "HELIUS_API_KEY is not set"); return; }
       try {
         const ws = await openWs(src === "public" ? PUBLIC_WSS : heliusWss(this.env.HELIUS_API_KEY)); this.ws.chain = ws; this.lastMsg.chain = now; this.reconnects.chain++;
-        ws.addEventListener("message", (m) => (src === "curve" ? this.onCurve(wsText(m.data)) : this.onChain(wsText(m.data))));
+        ws.addEventListener("message", (m) => { this.lastMsg.chain = Date.now(); src === "curve" ? this.onCurve(wsText(m.data)) : this.onChain(wsText(m.data)); });
         ws.addEventListener("close", () => { if (this.ws.chain === ws) this.ws.chain = null; });
         ws.addEventListener("error", () => { if (this.ws.chain === ws) this.ws.chain = null; });
         ws.send(src === "curve" ? programSub() : logsSub());
@@ -113,6 +115,9 @@ export class Symbiote {
     }
   }
 
+  // 2) both Helius sockets close together (the trade stream and the launch stream), at the cap, on "off" and on a source change
+  closeChain(why) { for (const k of ["chain", "launch"]) { try { this.ws[k]?.close(1000, why); } catch {} this.ws[k] = null; } }
+
   push(item) { this.feed.unshift(item); if (this.feed.length > FEED_MAX) this.feed.length = FEED_MAX; }
 
   onPumpPortal(raw) {
@@ -126,7 +131,7 @@ export class Symbiote {
   }
 
   onChain(raw) {
-    const now = Date.now(); this.lastMsg.chain = now; this.notes++; this.bytes += raw.length; this.credits(raw.length / 1e6 * 20);
+    const now = Date.now(); this.notes++; this.bytes += raw.length; this.credits(raw.length / 1e6 * 20);
     let j; try { j = JSON.parse(raw); } catch { return; }
     const r = j.params?.result; if (!r?.value) return;
     const e = eventsFromLogs(r.value, r.context?.slot ?? null);
@@ -138,7 +143,7 @@ export class Symbiote {
 
   // "curve" source: a bonding-curve account changed. The reserve change is the trade (no wallet in this source).
   onCurve(raw) {
-    const now = Date.now(); this.lastMsg.chain = now; this.notes++; this.bytes += raw.length; this.credits(raw.length / 1e6 * 20);
+    const now = Date.now(); this.notes++; this.bytes += raw.length; this.credits(raw.length / 1e6 * 20);
     let j; try { j = JSON.parse(raw); } catch { return; }
     const v = j.params?.result?.value; if (!v?.pubkey) return;
     const mint = this.curves.get(v.pubkey);
@@ -168,8 +173,8 @@ export class Symbiote {
   status() {
     const cov = this.eng.coverage();
     return { on: true, source: null, startedAt: new Date(this.started).toISOString(), coverage: cov, perSec: this.rate(), mbStreamed: +(this.bytes / 1e6).toFixed(1),
-      sockets: { pumpportal: !!this.ws.pp, chain: !!this.ws.chain, launch: !!this.ws.launch }, pendingCurves: this.pending.size, lastMsg: { pumpportal: this.lastMsg.pp ? new Date(this.lastMsg.pp).toISOString() : null, chain: this.lastMsg.chain ? new Date(this.lastMsg.chain).toISOString() : null },
-      reconnects: this.reconnects, queue: this.queue.length, resolveQueue: this.resolveQ.size, launchQueue: this.launchQ.size, feed: this.feed.slice(0, FEED_MAX), errors: this.errors };
+      sockets: { pumpportal: !!this.ws.pp, chain: !!this.ws.chain, launch: !!this.ws.launch }, pendingCurves: this.pending.size, lastMsg: Object.fromEntries(Object.entries(this.lastMsg).map(([k, t]) => [k, t ? new Date(t).toISOString() : null])),
+      reconnects: this.reconnects, queue: this.queue.length, launchQueue: this.launchQ.size, feed: this.feed.slice(0, FEED_MAX), errors: this.errors };
   }
 
   async alarm() {
@@ -185,8 +190,9 @@ export class Symbiote {
     const src0 = await this.source(); const st = { ...this.status(), source: src0, credits: { usedToday: Math.round(this.cused || 0), capPerDay: CREDIT_CAP_DAY, paused: !!this.paused } };
     if (src0 === "curve") { this.wantLaunch(); await this.snapLaunches().catch((e) => this.err("launch facts", e)); }
     try { await flush(d, b, st); await this.ctx.storage.put("stats", this.eng.stats); } catch (e) { this.err("flush", e); }
-    if (!this.paused && src0 !== "public" && this.cused >= CREDIT_CAP_DAY) { this.paused = true; try { this.ws.chain?.close(1000, "credit cap"); } catch {} this.ws.chain = null;
+    if (!this.paused && src0 !== "public" && this.cused >= CREDIT_CAP_DAY) { this.paused = true; this.closeChain("credit cap");
       await d.q(`INSERT INTO mob_aq_brain (dept, kind, text, data) VALUES ('symbiote', 'pain', $1, $2::jsonb)`, [`PAIN symbiote stream paused: ${Math.round(this.cused)} Helius credits used today (cap ${CREDIT_CAP_DAY}). Launches after this are missed until 00:00 UTC (02:00 Athens).`, JSON.stringify({ used: Math.round(this.cused), cap: CREDIT_CAP_DAY, rule: "credit guard" })]).catch(() => {}); }
+    if (now - (this.lastRecheck || 0) > RECHECK_MS) { this.lastRecheck = now; await this.recheckRights(d).catch((e) => this.err("recheck", e)); }
     const x = this.queue.shift();
     if (x) { try { const res = await deepCheck(this.env, d, x.mint, this.eng.streamHealth(x.mint) || {}); this.credits(res.calls || 0); await writeRight(d, x, res); } catch (e) { this.err("deep check", e); } }
     await this.saveGuard().catch(() => {});
@@ -194,23 +200,23 @@ export class Symbiote {
     await this.ctx.storage.setAlarm(Date.now() + FLUSH_MS);
   }
 
-  // "curve" source: PumpPortal's free feed carried only 17 of 98 launches seen on chain (3 minutes, 2026-11-18), so a curve
-  // nobody announced is resolved from the chain: its 5 newest signatures, the oldest of them read and decoded. A CreateEvent
-  // for this curve = a new launch (covered from now); only trades = an older coin (ignored). 2 Helius credits a curve, 40 a tick.
-  async resolveCurves(max = RESOLVE_PER_TICK) {
-    if (!this.resolveQ.size) return;
-    const { rpcFor } = await import("./health.mjs"); const rpc = rpcFor(this.env);
-    const batch = [...this.resolveQ].slice(0, this.paused ? 0 : max); for (const k of batch) this.resolveQ.delete(k); 
-    for (const curve of batch) {
-      if (this.backoffUntil && Date.now() < this.backoffUntil) { this.resolveQ.add(curve); continue; }
-      try {
-        this.credits(2); const sigs = await rpc("getSignaturesForAddress", [curve, { limit: 5 }]); const old = sigs?.[sigs.length - 1]; if (!old) return;
-        const tx = await rpc("getTransaction", [old.signature, { encoding: "json", maxSupportedTransactionVersion: 1 }]);
-        const ev = eventsFromLogs({ signature: old.signature, err: tx?.meta?.err ?? null, logs: tx?.meta?.logMessages || [] }, tx?.slot ?? null);
-        const c = ev.creates.find((x) => x.curve === curve);
-        if (c) { this.curves.set(curve, c.mint); this.curveAt.set(curve, Date.now()); const coin = this.eng.onCreate({ ...c, src: "chain" }); this.push({ at: Date.now(), k: "launch", mint: coin.mint, sym: coin.symbol, gta: coin.gta }); this.eng.stats.resolved = (this.eng.stats.resolved || 0) + 1; }
-        else { this.curves.set(curve, null); this.curveAt.set(curve, Date.now()); }
-      } catch (e) { this.resolveQ.add(curve); if (/429/.test(String(e.message))) { this.backoffUntil = Date.now() + 30000; this.err("resolve", "Helius 429: resolving paused 30 s"); } else this.err("resolve", e); }
+  // RIGHT CALL upkeep: every 5 minutes each candidate is re-judged with the cheap checks (the deep facts recorded at the call
+  // plus the stream's live facts, Grok's VETO and the fresh-coin liquidity floor). Healthy = checked_at renewed (so the live
+  // trader's 30-minute freshness holds); failed, out of memory, or older than RIGHT_WATCH_H = 'expired' with the reason.
+  async recheckRights(d) {
+    const rows = await d.q(`SELECT mint, symbol, flagged_at, checks FROM mob_aq_sym_right WHERE status = 'candidate'`);
+    const { judgeHealth } = await import("./rules.mjs"); const { vetoed } = await import("./health.mjs");
+    for (const r of rows) {
+      const c = this.eng.coins.get(r.mint), age = Date.now() - new Date(r.flagged_at).getTime();
+      let why = null;
+      if (age > RIGHT_WATCH_H * 3600000) why = `watched ${RIGHT_WATCH_H} hours: the call expires`;
+      else if (!c) why = "symbiote no longer holds this coin's live data (restart or released)";
+      else if (c.end) why = c.end === "migrated" ? "the curve completed (migration): symbiote has no price after it" : "the coin went quiet";
+      else if ((c.realSol || 0) < LIQ_FLOOR_SOL) why = `liquidity under the fresh-coin floor: ${(c.realSol || 0).toFixed(1)} SOL in the curve (floor ${LIQ_FLOOR_SOL})`;
+      else { const v = judgeHealth({ ...(r.checks || {}), ...this.eng.streamHealth(r.mint), launchComplete: r.checks?.launchComplete === true || c.launchComplete === true, vetoed: await vetoed(d, r.mint) });
+        if (!v.ok) why = v.failed.join("; "); }
+      if (why) await d.q(`UPDATE mob_aq_sym_right SET status = 'expired', checked_at = now(), checks = coalesce(checks, '{}'::jsonb) || jsonb_build_object('expired', $2::text) WHERE mint = $1`, [r.mint, why]);
+      else await d.q(`UPDATE mob_aq_sym_right SET checked_at = now() WHERE mint = $1`, [r.mint]);
     }
   }
 

@@ -57,16 +57,17 @@ test("rules: every lane buys every coin at first sight (no judging); exits diffe
   feed(e, "M1", [[5.1, true]]); assert.equal(gk.result.exit, "t3");
   const b = e.drain(); const t = b.trades.find((x) => x.lane === "aquarius");
   assert.ok(t.netPct > 60 && t.netPct < 120, "half near 2x and half near 2.2x after the real curve costs: " + t.netPct);
-  assert.equal(b.lessons.filter((l) => l.kind === "lesson").length, 2); assert.match(b.lessons[0].text, /bought at first sight/);
+  assert.equal(b.lessons.length, 0, "no brain row per trade (the Inspector's flood)");
+  const hr = e.flushHours(); assert.equal(hr.filter((l) => l.kind === "sym_hour").length, 2, "one summary row per lane per hour"); assert.match(hr[0].text, /paper trades closed/);
   assert.equal(e.wallet.aquarius.n, 1); assert.ok(e.wallet.aquarius.sol > R.WALLET_SOL);
 });
 
-test("rules: a coin that only falls is stopped at -50% / -60% and written as PAIN with the rule", () => {
-  const e = R.createEngine(); launch(e, "M2");
-  feed(e, "M2", [[1.0, true], [0.8, false], [0.45, false], [0.35, false]]);
+test("rules: falling coins are stopped at -50% / -60%; a lane losing on 80%+ of 20+ trades in an hour is ONE PAIN pattern row", () => {
+  const e = R.createEngine();
+  for (let i = 0; i < 22; i++) { launch(e, "F" + i); feed(e, "F" + i, [[1.0, true], [0.8, false], [0.45, false], [0.35, false]]); }
   const b = e.drain(); const a = b.trades.find((x) => x.lane === "aquarius"), g = b.trades.find((x) => x.lane === "grok");
   assert.equal(a.exit, "stop"); assert.equal(g.exit, "stop"); assert.ok(a.netPct < -40);
-  const pain = b.lessons.filter((l) => l.kind === "pain"); assert.equal(pain.length, 2); assert.match(pain[0].text, /^PAIN .*Should have caught it: /); assert.ok(pain[0].data.rule);
+  const pain = e.flushHours().filter((l) => l.kind === "pain"); assert.equal(pain.length, 2, "one pattern row per lane, not 44"); assert.match(pain[0].text, /^PAIN pattern .*Should have caught it: /); assert.ok(pain[0].data.rule);
 });
 
 test("rules: quiet coins end; a launch with no trade is a logged miss; GTA gets minute candles", () => {
@@ -165,12 +166,13 @@ test("store: one batch writes coins, trades, misses, GTA minutes, lessons and th
   const e = R.createEngine(); launch(e, "W1"); launch(e, "W2"); launch(e, "GTAw", { symbol: "GTA6" });
   feed(e, "W1", [[1.0, true], [2.0, true], [1.45, false], [1.47, true], [2.7, true]]); feed(e, "GTAw", [[1, true]]);
   clock += R.QUIET_MS + 60000; e.sweep(clock);
-  const r = await flush(d, e.drain(), { coverage: e.coverage() });
+  const bt = e.drain(); bt.lessons.push(...e.flushHours()); const r = await flush(d, bt, { coverage: e.coverage() });
   assert.equal(r.coins, 3); assert.equal(r.missed, 1);
   const mk = (await d.one(`SELECT lanes FROM mob_aq_sym_coins WHERE mint='W1'`)).lanes.market; assert.equal(mk.bought, true); assert.ok(mk.peakX >= 2.6 && mk.toPeakS > 0, JSON.stringify(mk)); assert.equal((await d.one(`SELECT lanes FROM mob_aq_sym_coins WHERE mint='W2'`)).lanes.market.bought, false); assert.ok(r.trades >= 1); assert.ok(r.lessons >= 1); assert.ok(r.gta >= 1);
   assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_sym_coins`)).n, 3);
   assert.equal((await d.one(`SELECT reason FROM mob_aq_sym_missed WHERE mint='W2'`)).reason, "no trade seen on the stream after launch");
-  assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_brain WHERE dept='symbiote' AND kind='lesson'`)).n >= 1);
+  assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_brain WHERE dept='symbiote' AND kind='sym_hour'`)).n >= 1);
+  const w = (await d.one(`SELECT v FROM mob_aq_sym_stats WHERE k='wallet:aquarius'`)).v; assert.ok(w.n >= 1, "the lane wallet is a running total");
   assert.equal((await d.one(`SELECT v FROM mob_aq_sym_stats WHERE k='live'`)).v.coverage.launches, 3);
   await flush(d, { coins: [], trades: [], missed: [{ mint: "W2", symbol: "x", reason: "again", at: clock }], lessons: [], gta: [] }, null);
   assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_sym_missed`)).n, 1, "a miss is logged once");
@@ -263,8 +265,8 @@ test("routes: admin-only state with real counts and sources, the brain terminal 
   const s = await (await req("GET", "/api/aq/sym/state", { cookie })).json();
   assert.equal(s.paper, true); assert.ok(s.lanes.aquarius.trades >= 1); assert.ok(s.market.total >= 1 && s.market.bought >= 1); assert.equal(s.lanes.grok.walletSol != null, true);
   const src = Object.fromEntries(s.sources.map((x) => [x.label, x]));
-  assert.equal(src["right calls"].n, 1); assert.equal(src["fake pumps"].n, 1); assert.ok(src["brain records (all)"].n >= 3); assert.equal(src["brain records (all)"].table, "mob_aq_brain");
-  assert.ok(s.right.some((r) => r.mint === "GOODMINT" && r.status === "candidate"));
+  assert.equal(src["right calls"].n, (await d.one(`SELECT count(*)::int n FROM mob_aq_sym_right WHERE status = 'candidate'`)).n); assert.equal(src["fake pumps"].n, 1); assert.ok(src["brain records (all)"].n >= 3); assert.equal(src["brain records (all)"].table, "mob_aq_brain");
+  assert.ok(s.right.some((r) => r.mint === "GOODMINT"), "the right call is listed (the DO test's upkeep may have expired it)");
   const b1 = await (await req("GET", "/api/aq/sym/brain", { bearer: "tok-test" })).json();
   assert.ok(b1.rows.length >= 1); const last = b1.rows.at(-1).id;
   await d.q(`INSERT INTO mob_aq_brain (dept, kind, text) VALUES ('symbiote','lesson','new one')`);
@@ -325,4 +327,73 @@ test("retention: 7 days for coins, misses and trades; GTA coins and right calls 
   assert.ok(r.coins >= 1 && r.missed >= 1 && r.trades >= 1);
   const left = (await d.q(`SELECT mint FROM mob_aq_sym_coins WHERE mint IN ('OLDC','OLDG','GOODMINT')`)).map((x) => x.mint).sort();
   assert.deepEqual(left, ["GOODMINT", "OLDG"]);
+});
+
+// ---------- the Inspector's eight (2dbe9b95) ----------
+test("right call upkeep: renewed while healthy, expired with the reason when it fails, goes quiet or passes 6 hours", async () => {
+  const s = new Symbiote({ storage: { get: async () => null, put: async () => {}, getAlarm: async () => 1, setAlarm: async () => {} } }, env);
+  const healthy = { top10Share: 0.1, sameFunderMax: 1, mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 1, launchComplete: true };
+  for (const m of ["RC1", "RC2", "RC3"]) { s.eng.onCreate({ mint: m, curve: "C" + m, src: "chain", ts: Date.now() / 1000 });
+    s.eng.setLaunch(m, { complete: true, createSlot: 1, creator: "DEV", early: [] });
+    for (let i = 0; i < 120; i++) s.eng.onTrade({ mint: m, buy: i % 7 !== 0, sol: 0.02 * 1.08 ** ((i * 13) % 60), tokens: 1e12, user: "w" + i, ts: 1, px: P0 * (1 + i / 100), ...at(P0 * (1 + i / 100)), realSol: m === "RC2" ? 5 : 40, feeBps: 95, creatorFeeBps: 30, slot: 50 }, Date.now()); }
+  await d.q(`DELETE FROM mob_aq_sym_right`);
+  await d.q(`INSERT INTO mob_aq_sym_right (mint, symbol, status, flagged_at, checked_at, checks) VALUES ('RC1','A','candidate', now() - interval '20 minutes', now() - interval '20 minutes', $1::jsonb), ('RC2','B','candidate', now(), now(), $1::jsonb), ('RC3','C','candidate', now() - interval '7 hours', now(), $1::jsonb), ('GONE','D','candidate', now(), now(), $1::jsonb)`, [JSON.stringify(healthy)]);
+  await s.recheckRights(d);
+  const r = Object.fromEntries((await d.q(`SELECT mint, status, checks->>'expired' why, checked_at > now() - interval '1 minute' fresh FROM mob_aq_sym_right`)).map((x) => [x.mint, x]));
+  assert.equal(r.RC1.status, "candidate", r.RC1.why); assert.equal(r.RC1.fresh, true, "renewed");
+  assert.equal(r.RC2.status, "expired"); assert.match(r.RC2.why, /liquidity under the fresh-coin floor/);
+  assert.equal(r.RC3.status, "expired"); assert.match(r.RC3.why, /6 hours/);
+  assert.equal(r.GONE.status, "expired"); assert.match(r.GONE.why, /no longer holds/);
+});
+
+test("sockets: 'off' and the cap close the launch stream too; a busy launch stream never hides a silent trade stream", async () => {
+  const s = new Symbiote({ storage: { get: async () => null, put: async () => {}, getAlarm: async () => 1, setAlarm: async () => {} } }, env);
+  let closed = []; const fake = (k) => ({ close: () => closed.push(k) });
+  s.ws.chain = fake("chain"); s.ws.launch = fake("launch"); s.closeChain("off");
+  assert.deepEqual(closed.sort(), ["chain", "launch"]); assert.equal(s.ws.launch, null);
+  s.lastMsg.chain = 1; s.onChain(JSON.stringify({ jsonrpc: "2.0", method: "logsNotification", params: { result: { context: { slot: 1 }, value: FX[3] } } }));
+  assert.equal(s.lastMsg.chain, 1, "a launch message does not refresh the trade stream's clock");
+});
+
+test("memory: a GTA coin is released 3 days after its last trade; watched coins keep 1-minute bars and they are written", async () => {
+  const e = R.createEngine(); const t0 = Date.now();
+  e.onCreate({ mint: "GTAold", name: "GTA thing", src: "chain", ts: t0 / 1000 }); e.onTrade({ mint: "GTAold", buy: true, sol: 1, tokens: 1, user: "u", px: P0, ...at(P0), realSol: 1 }, t0);
+  e.sweep(t0 + R.QUIET_MS + 1000); e.drain(); e.sweep(t0 + R.QUIET_MS + 2000); assert.equal(e.coins.has("GTAold"), true);
+  e.sweep(t0 + R.GTA_KEEP_MS + 5000); assert.equal(e.coins.has("GTAold"), false);
+  launch(e, "W9"); e.coins.get("W9").watch = true; feed(e, "W9", [[1.0, true], [1.1, true]]);
+  const b = e.drain(); assert.equal(b.bars.length, 1); await flush(d, b, null);
+  assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_sym_bars WHERE mint='W9'`)).n === 1);
+});
+
+test("right-call stats measure what happened AFTER the call (flag price -> latest price)", async () => {
+  await d.q(`DELETE FROM mob_aq_sym_right`);
+  await d.q(`INSERT INTO mob_aq_sym_coins (mint, last) VALUES ('UP1', 3), ('DN1', 0.5) ON CONFLICT (mint) DO UPDATE SET last = EXCLUDED.last`);
+  await d.q(`INSERT INTO mob_aq_sym_right (mint, status, checks) VALUES ('UP1', 'candidate', '{"flagPx": 2}'), ('DN1', 'expired', '{"flagPx": 1}')`);
+  const st = await (await reqOf(env)("GET", "/api/aq/sym/state", { bearer: "tok-test" })).json();
+  assert.equal(st.rightStats.trades, 2); assert.equal(st.rightStats.winRate, 50); assert.equal(st.rightStats.avgPct, 0); assert.equal(st.rightStats.totalPct, 0);
+});
+
+test("LIVE PATH: a fresh right call becomes its own candidate; its symbiote bars give the Fibonacci setup; every gate still runs", async () => {
+  const L = await import("../src/aq/live.mjs"); const { chart } = await import("./fib-fixture.mjs");
+  const RC = "RightCa11111111111111111111111111111111111", SOLM = "So11111111111111111111111111111111111111112";
+  resetMocks();
+  mock("GET", /^https:\/\/datapi\.jup\.ag\/v1\/pools\//, () => ({ pools: [] }));            // no established candidate at all
+  mock("GET", /^https:\/\/datapi\.jup\.ag\/v2\/charts\//, () => res({ error: "no chart" }, 404)); // Jupiter has no chart for a fresh coin
+  mock("GET", /lite-api\.jup\.ag\/price\/v3/, () => ({ [SOLM]: { usdPrice: 75 }, [RC]: { usdPrice: 0.0001, liquidity: 18000 } }));
+  mock("GET", /^https:\/\/api\.rugcheck\.xyz\//, () => ({ mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 6 } }));
+  mock("POST", "https://api.mainnet-beta.solana.com", (rq) => { const m = JSON.parse(rq.body); return m.method === "getAccountInfo" ? { jsonrpc: "2.0", id: 1, result: { context: { slot: 1 }, value: { owner: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb", data: { parsed: { type: "mint", info: { freezeAuthority: null, mintAuthority: null, decimals: 6, extensions: [] } } } } } } : { jsonrpc: "2.0", id: 1, error: { message: "unmocked" } }; });
+  await d.q(`DELETE FROM mob_aq_market`); await d.q(`DELETE FROM mob_aq_sym_right`); await d.q(`DELETE FROM mob_aq_sym_bars WHERE mint = $1`, [RC]);
+  const none = await L.scanFib(env, "live", async () => false);
+  assert.ok(!none.c && ["no_candidate", "no_right_call"].includes(none.refusal.gate), "no right call: still refused " + JSON.stringify(none.refusal));
+  await d.q(`INSERT INTO mob_aq_sym_right (mint, symbol, status, checked_at, checks) VALUES ($1, 'RC', 'candidate', now(), '{"realSol": 40}')`, [RC]);
+  const bars = chart(Date.now() / 1000);
+  await d.q(`INSERT INTO mob_aq_sym_bars (mint, t, o, h, l, c, v) SELECT $1, t, o, h, l, c, v FROM json_to_recordset($2::json) AS x(t bigint, o float8, h float8, l float8, c float8, v float8)`, [RC, JSON.stringify(bars)]);
+  const got = await L.scanFib(env, "live", async () => false);
+  assert.ok(got.c, JSON.stringify(got.refusal)); assert.equal(got.c.mint, RC); assert.equal(got.c.fresh, true); assert.equal(got.c.liqUsd, 18000); assert.equal(got.s.signal, true, "the chart setup came from symbiote's bars");
+  // the veto still stops it, and an expired call is not a candidate
+  await d.q(`INSERT INTO mob_aq_chat (from_name, text) VALUES ('grok', $1)`, ["VETO " + RC]);
+  assert.equal((await L.scanFib(env, "live", async () => false)).refusal.gate, "veto"); await d.q(`DELETE FROM mob_aq_chat WHERE from_name = 'grok'`);
+  await d.q(`UPDATE mob_aq_sym_right SET status = 'expired' WHERE mint = $1`, [RC]);
+  const ex = await L.scanFib(env, "live", async () => false); assert.ok(!ex.c && ["no_candidate", "no_right_call"].includes(ex.refusal.gate));
+  resetMocks();
 });

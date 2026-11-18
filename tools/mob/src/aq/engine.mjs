@@ -617,7 +617,7 @@ export async function buildState(env) {
     d.q(`SELECT verdict, symbol, reason, number, at, facts->'seat' seat FROM mob_aq_council ORDER BY id DESC LIMIT 50`),
     d.q(`SELECT * FROM mob_aq_depts`),
     d.q(`SELECT id, key, dept, name, job, status, note, skills, power, approved, created_by FROM mob_aq_bots WHERE approved=true ORDER BY id`),
-    d.q(`SELECT at, dept, text FROM mob_aq_brain ORDER BY id DESC LIMIT 30`),
+    d.q(`SELECT at, dept, text FROM mob_aq_brain WHERE dept <> 'symbiote' ORDER BY id DESC LIMIT 30`), // symbiote has its own screen and log
     d.q(`SELECT * FROM mob_aq_strategies ORDER BY id`),
     d.q(`SELECT * FROM mob_aq_tools ORDER BY name`),
     d.q(`SELECT from_helper, max(at) at FROM mob_aq_helpers GROUP BY from_helper`),
