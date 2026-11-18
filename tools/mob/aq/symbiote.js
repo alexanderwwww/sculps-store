@@ -54,32 +54,55 @@ function chipSvg() {
 }
 
 // ---------- the brain terminal: each new record as pretty code, Dracula colours ----------
+// one brain row as an ENGINE LOG line, Dracula colours: [time] [TAG] EVENT {data}
+const TAGS = { lesson: ["ENGINE", "PAPER_TRADE_EXEC"], pain: ["RISK", "PAIN"], fake_pump: ["RISK", "FAKE_PUMP_DETECTED"], right_call: ["RIGHT", "RIGHT_CALL"] };
 function codeOf(r) {
-  const k = (s) => `<span class="dk">${esc(s)}</span>`, str = (s) => `<span class="ds">"${esc(s)}"</span>`, n = (v) => `<span class="dn">${esc(v)}</span>`;
-  const val = (v, depth = 0) => (v === null || v === undefined ? `<span class="dc">null</span>` : typeof v === "number" ? n(+v.toFixed(4)) : typeof v === "boolean" ? `<span class="dp">${v}</span>` : typeof v === "string" ? str(v.length > 140 ? v.slice(0, 140) + "…" : v)
-    : Array.isArray(v) ? `[${v.slice(0, 6).map((x) => val(x, depth + 1)).join(", ")}${v.length > 6 ? ", …" : ""}]` : depth > 1 ? `{…}` : `{ ${Object.entries(v).slice(0, 8).map(([a, b]) => `${k(a)}: ${val(b, depth + 1)}`).join(", ")} }`);
-  return `<div class="tl${r.kind === "pain" ? " pain" : ""}"><span class="dc">// ${athens(r.at)} Athens · #${esc(r.id)}</span>\n<span class="dp">brain</span>.<span class="df">record</span>({ ${k("dept")}: ${str(r.dept)}, ${k("kind")}: ${str(r.kind)},\n  ${k("text")}: ${str(r.text)}${r.data ? `,\n  ${k("data")}: ${val(r.data)}` : ""} })</div>`;
+  const [tag, ev] = TAGS[r.kind] || [String(r.dept || "BRAIN").toUpperCase(), String(r.kind || "RECORD").toUpperCase()];
+  const k = (x) => `<span class="dk">${esc(x)}</span>`, val = (v) => (v === null || v === undefined ? `<span class="dc">null</span>` : typeof v === "number" ? `<span class="${/pct|Pct|gain/.test("") ? "" : v < 0 ? "dr" : "dg"}">${esc(+v.toFixed(4))}</span>` : typeof v === "boolean" ? `<span class="dp">${v}</span>` : typeof v === "string" ? `<span class="ds">"${esc(v.length > 60 ? v.slice(0, 60) + "…" : v)}"</span>` : Array.isArray(v) ? `<span class="ds">[${esc(v.length)}]</span>` : "{…}");
+  const data = r.data && typeof r.data === "object" ? `{${Object.entries(r.data).filter(([, v]) => typeof v !== "object" || v === null).slice(0, 7).map(([a, v]) => `${k(a)}:${val(v)}`).join(", ")}}` : `<span class="ds">"${esc(String(r.text || "").slice(0, 120))}"</span>`;
+  return `<div class="tl ${r.kind === "pain" || tag === "RISK" ? "pain" : ""}" title="${esc(r.text)}"><span class="dt">[${athens(r.at)}]</span> <span class="dtag ${tag === "RISK" ? "dr" : tag === "RIGHT" ? "dg" : "dp"}">[${esc(tag)}]</span> <span class="dev ${tag === "RISK" ? "dr" : "dp"}">${esc(ev)}</span> ${data}</div>`;
 }
 
 // ---------- the screen ----------
+const brassCounter = (id, label) => `<button class="sym-brass" data-src="${id}"><span class="lau l">${LAUREL}</span><small>${label}</small><b id="${id}">${D}</b><span class="lau r">${LAUREL}</span></button>`;
+const LAUREL = `<svg viewBox="0 0 20 40" aria-hidden="true">${Array.from({ length: 5 }, (_, i) => `<ellipse cx="${9 - i * 0.6}" cy="${6 + i * 7}" rx="2.4" ry="5" transform="rotate(${-35 + i * 4} ${9 - i * 0.6} ${6 + i * 7})"/>`).join("")}<path d="M12 2 Q4 20 12 38" fill="none" stroke-width="1.2"/></svg>`;
+const ORN = `<svg viewBox="0 0 60 14" class="orn" aria-hidden="true"><path d="M2 7 H40 M40 7 l6 -5 l6 5 l-6 5 z M52 7 h6" fill="none"/><circle cx="46" cy="7" r="1.6"/></svg>`;
+function windowSvg() { // the red-planet arch window
+  return `<svg class="sym-window" viewBox="0 0 300 150" aria-hidden="true"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a0608"/><stop offset=".55" stop-color="#a3241a"/><stop offset="1" stop-color="#e0573a"/></linearGradient>
+    <radialGradient id="pl" cx="40%" cy="35%"><stop offset="0" stop-color="#ff9a7a"/><stop offset=".6" stop-color="#c0392b"/><stop offset="1" stop-color="#5a0d0a"/></radialGradient><clipPath id="arches"><path d="M10 150 V60 Q10 15 52 10 Q94 15 94 60 V150 Z M104 150 V60 Q104 15 150 8 Q196 15 196 60 V150 Z M206 150 V60 Q206 15 248 10 Q290 15 290 60 V150 Z"/></clipPath></defs>
+    <rect width="300" height="150" fill="#0b0b0e"/><g clip-path="url(#arches)"><rect width="300" height="150" fill="url(#sky)"/><circle cx="240" cy="48" r="34" fill="url(#pl)"/><path d="M0 120 L30 95 L55 110 L80 85 L110 105 L140 92 L170 112 L205 88 L235 104 L265 90 L300 108 V150 H0 Z" fill="#4a0f0b"/><path d="M0 135 L40 118 L90 130 L150 115 L210 132 L260 120 L300 128 V150 H0 Z" fill="#2a0806"/></g>
+    <g fill="none" stroke="#8b8f98" stroke-width="5"><path d="M10 150 V60 Q10 15 52 10 Q94 15 94 60 V150 M104 150 V60 Q104 15 150 8 Q196 15 196 60 V150 M206 150 V60 Q206 15 248 10 Q290 15 290 60 V150"/></g></svg>`;
+}
+function treeSvg() { // the silver circuit tree; fruits are added by paint() from the real right calls
+  return `<svg class="sym-tree" viewBox="0 0 260 260" aria-hidden="true"><defs><linearGradient id="silv" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6f7480"/><stop offset=".5" stop-color="#e8ecf2"/><stop offset="1" stop-color="#7a808c"/></linearGradient></defs>
+    <g stroke="url(#silv)" fill="none" stroke-linecap="round"><path d="M130 250 C128 200 136 170 128 140 C120 110 132 90 130 60" stroke-width="10"/><path d="M128 150 C100 130 80 120 52 96 M132 130 C160 112 186 104 214 80 M130 100 C110 80 96 60 86 38 M131 95 C150 74 166 58 176 34 M129 175 C104 166 78 170 50 150 M131 170 C160 160 186 166 214 146" stroke-width="4"/>
+    <path d="M52 96 L36 84 M52 96 L40 108 M214 80 L230 70 M214 80 L226 94 M86 38 L76 26 M176 34 L188 22 M50 150 L34 142 M214 146 L232 140" stroke-width="2"/></g>
+    <g stroke="#9d4edd" stroke-width="1.6" fill="none" opacity=".85">${Array.from({ length: 9 }, (_, i) => { const x = 130 + (i - 4) * 14; return `<path d="M130 246 L${x} 252 L${x} 258"/>`; }).join("")}<path d="M100 252 H40 V258 M160 252 H220 V258"/></g>
+    <g fill="#c9ccd4" opacity=".75">${[[60,90],[96,46],[170,44],[200,86],[60,148],[200,150],[110,72],[150,70]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="7" ry="3" transform="rotate(-25 ${x} ${y})"/>`).join("")}</g><g id="sym-gems"></g></svg>`;
+}
+const GEM_AT = [[52, 104], [214, 88], [86, 46], [176, 42], [50, 158], [214, 154], [118, 112], [146, 106], [100, 136]];
+function cathedral(inner) { // the iron/silver gothic frame around the chip
+  return `<div class="sym-cath"><svg class="sym-cath-svg" viewBox="0 0 400 420" aria-hidden="true" preserveAspectRatio="none"><defs><linearGradient id="iron" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a2c33"/><stop offset=".5" stop-color="#8f949e"/><stop offset="1" stop-color="#2a2c33"/></linearGradient><linearGradient id="brs" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5b3a14"/><stop offset=".5" stop-color="#e2b06a"/><stop offset="1" stop-color="#5b3a14"/></linearGradient></defs>
+    <path d="M20 420 V120 Q20 30 120 12 L200 0 L280 12 Q380 30 380 120 V420" fill="none" stroke="url(#iron)" stroke-width="10"/><path d="M60 420 V140 Q60 60 200 34 Q340 60 340 140 V420" fill="none" stroke="url(#iron)" stroke-width="4" opacity=".8"/>
+    ${[46, 70, 330, 354].map((x) => `<rect x="${x - 4}" y="60" width="8" height="360" fill="url(#brs)" opacity=".85"/>`).join("")}<path d="M90 30 Q200 -4 310 30" fill="none" stroke="url(#brs)" stroke-width="6"/>
+    <g class="sym-red">${[[33, 110], [367, 110], [33, 300], [367, 300]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5"/>`).join("")}</g>
+    <g fill="#5a1828" stroke="#8f949e" stroke-width="2"><path d="M8 150 h22 v120 l-11 14 l-11 -14 z"/><path d="M370 150 h22 v120 l-11 14 l-11 -14 z"/></g><g fill="#b98a9a" font-size="13" font-family="Georgia" text-anchor="middle">${"ᛟᚨᛉ".split("").map((r, i) => `<text x="19" y="${182 + i * 28}">${r}</text><text x="381" y="${182 + i * 28}">${r}</text>`).join("")}</g></svg>${inner}</div>`;
+}
+
 export function symScreen() {
   const el = document.createElement("section"); el.id = "sym";
-  el.innerHTML = `<style>${CSS}</style>
-  <div class="sym-head">${logoSvg(26)}<b>SYMBIOTE</b><u class="sym-paper">PAPER</u><span class="sym-sub">every pump.fun launch, paper-traded in two lanes · no real money</span><em id="sym-up">${D}</em></div>
+  el.innerHTML = `<style>${CSS}</style><div class="sym-pipes"><i class="p1"></i><i class="p2"></i><i class="p3"></i><i class="p4"></i><b class="led a"></b><b class="led b"></b><b class="led c"></b><b class="led d"></b></div>
+  <header class="sym-top"><div class="sym-titlebar"><h2 class="sym-title">SYMBIOTE</h2><span class="sym-plaque">PAPER</span><p class="sym-sub">A LIVING PAPER-TRADING ENGINE<br>FOR NEWLY LAUNCHED MEMECOINS</p><span class="sym-glyphs">ᛟ ᚦ ᛏ ᛉ ᛜ</span></div>
+    <div class="sym-counters">${brassCounter("sym-coins", "COINS TRADED")}${brassCounter("sym-cov", "COVERAGE")}${brassCounter("sym-rc", "RIGHT CALLS")}${brassCounter("sym-fp", "FAKE PUMPS")}</div>${windowSvg()}</header>
+  <p class="sym-status"><em id="sym-up">${D}</em> · <span id="sym-market"></span> · <span id="sym-src"></span></p>
   <div class="sym-grid">
-    <div class="sym-left">
-      <button class="sym-counts" id="sym-counts" title="Show every source"><small>BRAIN RECORDS · ALL SOURCES</small><b id="sym-total">${D}</b><span id="sym-mini"></span><span class="sym-pain">PAIN 24 H <b id="sym-pain">${D}</b></span><i>tap for the sources</i></button>
-      <div class="sym-chip" id="sym-chip">${chipSvg()}<div class="sym-name">ASTRA ULTIMUM</div></div>
-      <div class="sym-term" id="sym-term"><div class="sym-term-h"><span></span><span></span><span></span><em>brain · live</em></div><pre id="sym-code"></pre></div>
-    </div>
-    <div class="sym-right">
-      <div class="sym-kpis"><div><small>COINS SEEN</small><b id="sym-coins">${D}</b></div><div><small>COVERAGE</small><b id="sym-cov">${D}</b><i id="sym-covsub"></i></div><div><small>STREAM</small><b id="sym-rate">${D}</b><i id="sym-src"></i></div><div><small>RIGHT CALLS</small><b id="sym-rc">${D}</b><i id="sym-fp"></i></div></div>
-      <div class="sym-market" id="sym-market"></div><div class="sym-lanes" id="sym-lanes"></div>
-      <div class="sym-tree"><h4>FRUITS <span>right calls rise, fake pumps wither</span></h4><div class="sym-fruits" id="sym-fruits"></div></div>
-      <div class="sym-two"><div><h4>THE STREAM</h4><div class="sym-feed" id="sym-feed"></div></div><div><h4>GTA 6 WATCH <span>whole life</span></h4><div class="sym-gta" id="sym-gta"></div><h4>MISSED <span>with the reason</span></h4><div class="sym-miss" id="sym-miss"></div></div></div>
-    </div>
-  </div>`;
-  el.querySelector("#sym-counts").addEventListener("click", () => openSources());
+    <section class="sym-panel sym-trades"><h3>${ORN}<span>PAPER TRADES</span>${ORN}</h3><table><thead><tr><th>TIME</th><th>TOKEN</th><th>ACTION</th><th>P&amp;L</th></tr></thead><tbody id="sym-rows"></tbody></table><div class="sym-lanes" id="sym-lanes"></div></section>
+    <section class="sym-mid">${cathedral(`<div class="sym-chip" id="sym-chip">${chipSvg()}</div>`)}<div class="sym-banner">ASTRA ULTIMUM</div><div class="sym-pain">PAIN 24 H <b id="sym-pain">${D}</b></div></section>
+    <section class="sym-panel sym-right"><h3>${ORN}<span>RIGHT CALLS</span>${ORN}</h3><div class="sym-rc-body">${treeSvg()}<div class="sym-stats"><div><small>RIGHT CALLS</small><b id="rs-n">${D}</b></div><div><small>WIN RATE</small><b id="rs-wr">${D}</b></div><div><small>AVG P&amp;L</small><b id="rs-avg">${D}</b></div><div><small>TOTAL P&amp;L</small><b id="rs-tot">${D}</b></div></div></div><p class="sym-fp-list" id="sym-fruits"></p></section>
+  </div>
+  <section class="sym-log"><h3>ENGINE<br>LOG</h3><pre id="sym-code"></pre></section>
+  <div class="sym-extra"><div><h4>GTA 6 WATCH <span>whole life</span></h4><div id="sym-gta"></div></div><div><h4>MISSED <span>with the reason</span></h4><div id="sym-miss"></div></div></div>`;
+  el.querySelectorAll(".sym-brass").forEach((b) => b.addEventListener("click", () => openSources()));
   setTimeout(() => { pollState(); pollBrain(); }, 50);
   setInterval(pollState, 4000); setInterval(pollBrain, 3000);
   return el;
@@ -115,27 +138,29 @@ function lightRune() { const rs = document.querySelectorAll("#sym-chip .rune"); 
 
 function paint(s) {
   const $ = (id) => document.getElementById(id), set = (id, v) => { const e = $(id); if (e && e.innerHTML !== v) e.innerHTML = v; };
-  const v = s.live || {}, cov = v.coverage || {}, src = Object.fromEntries((s.sources || []).map((x) => [x.label, x]));
+  const v = s.live || {}, cov = v.coverage || {}, src = Object.fromEntries((s.sources || []).map((x) => [x.label, x])), mk = s.market || {};
   set("sym-up", s.running ? `live · ${athens(s.updatedAt)} Athens` : s.updatedAt ? `stopped · last ${athens(s.updatedAt)} Athens` : "not started yet");
-  set("sym-total", int(src["brain records (all)"]?.n));
-  set("sym-mini", ["launches seen", "symbiote paper trades", "symbiote lessons", "right calls"].map((k) => `<span><b>${int(src[k]?.n)}</b> ${esc(k)}</span>`).join(""));
-  set("sym-coins", int(src["launches seen"]?.n ?? cov.launches));
+  set("sym-coins", int(mk.boughtAll ?? mk.bought));
   set("sym-cov", num(cov.pct) ? cov.pct.toFixed(1) + "%" : D);
+  set("sym-rc", int(src["right calls"]?.n)); set("sym-fp", int(src["fake pumps"]?.n));
+  set("sym-market", `bought <b>${int(mk.bought)}</b> of <b>${int(mk.total)}</b> coins in 24 h = <b>${mk.total ? ((mk.bought / mk.total) * 100).toFixed(1) + "%" : D}</b>`);
+  set("sym-src", `stream ${num(v.perSec) ? v.perSec.toFixed(1) + "/s" : D} · ${esc(v.source || D)} · credits ${int(v.credits?.usedToday)} of ${int(v.credits?.capPerDay)}`);
   set("sym-pain", `${int(src["pain (24 h)"]?.n)} <em>/ ${int(src["pain (total)"]?.n)} total · ${int(src["scars (lessons that changed a rule)"]?.n)} scars</em>`);
   scars(src["scars (lessons that changed a rule)"]?.n);
-  set("sym-covsub", `${int(cov.missed)} missed · ${int(cov.pending)} waiting for a first trade`);
-  set("sym-rate", num(v.perSec) ? v.perSec.toFixed(1) + "/s" : D);
-  set("sym-src", `source: ${esc(v.source || "—")}${v.sockets ? ` · launches ${v.sockets.pumpportal ? "on" : "off"} · trades ${v.sockets.chain ? "on" : "off"}` : ""}`);
-  const rights = (s.right || []).filter((r) => r.status === "candidate"), fakes = (s.right || []).filter((r) => r.status === "fake_pump");
-  set("sym-rc", int(src["right calls"]?.n ?? rights.length)); set("sym-fp", `${int(src["fake pumps"]?.n ?? fakes.length)} fake pumps`);
-  const mk = s.market; set("sym-market", mk ? `<b>MARKET LANE</b> <u class="sym-paper">PAPER</u> bought <b>${int(mk.bought)}</b> of <b>${int(mk.total)}</b> coins = <b>${mk.total ? ((mk.bought / mk.total) * 100).toFixed(1) : "—"}%</b> <i>(24 h, 1 paper SOL each at the first price, held for life · avg peak ${num(mk.avgPeakX) ? mk.avgPeakX.toFixed(2) + "x" : "—"} · avg end ${pct(mk.avgNetPct)})</i>` : "");
-  set("sym-lanes", Object.entries(s.lanes || {}).map(([l, x]) => `<div class="lane"><small><u class="sym-paper">PAPER</u> ${esc(l.toUpperCase())} LANE</small><b>${num(x.walletSol) ? x.walletSol.toLocaleString("en-US", { maximumFractionDigits: 2 }) : D} <em>SOL</em></b><i>${int(x.trades)} trades · ${int(x.wins)} won · avg ${pct(x.avgPct)}</i></div>`).join(""));
-  set("sym-fruits", (s.right || []).slice(0, 18).map((r, i) => `<div class="fruit ${r.status === "candidate" ? "ripe" : "dead"}" style="--i:${i}" title="${esc(r.status === "candidate" ? "right call" : "fake pump: " + (r.failed || []).join("; "))}"><span class="orb"></span><b>${esc(r.symbol || short(r.mint))}</b><i>${pct(r.gain_pct, 0)} · ${esc(r.lane || "")}</i></div>`).join("") || `<p class="sym-empty">No coin has doubled on paper and passed the checks yet.</p>`);
-  const feed = v.feed || [];
-  set("sym-feed", feed.slice(0, 16).map((f) => `<div class="fi ${esc(f.k)}"><time>${athens(f.at)}</time><b>${f.k === "launch" ? "LAUNCH" : f.k === "entry" ? "BUY" : "SELL"}</b><span>${esc(f.sym || short(f.mint))}${f.gta ? ' <u class="gta">GTA</u>' : ""}</span><i>${f.lane ? esc(f.lane) : ""}${num(f.pct) ? " " + pct(f.pct) : ""}${f.exit ? " · " + esc(f.exit) : ""}</i></div>`).join("") || `<p class="sym-empty">Waiting for the first launch.</p>`);
-  set("sym-gta", (s.gta || []).slice(0, 8).map((g) => `<div class="g"><b>${esc(g.symbol || short(g.mint))}</b><span>${esc(g.name || "")}</span><i>${g.px0 && g.last ? pct((g.last / g.px0 - 1) * 100, 0) : D} · ${int(Number(g.minutes))} min tracked</i></div>`).join("") || `<p class="sym-empty">No GTA launch yet. The main coin 4kjr…zDnz is priced every minute.</p>`);
+  // PAPER TRADES: every buy and sell of the lanes, newest first (paper long only)
+  const rows = [];
+  for (const t of s.recent || []) { rows.push({ at: t.exit_at, tok: t.symbol || short(t.mint), act: "SELL", pnl: t.net_pct, lane: t.lane }); rows.push({ at: t.entry_at, tok: t.symbol || short(t.mint), act: "BUY", pnl: null, lane: t.lane }); }
+  rows.sort((a, b) => new Date(b.at) - new Date(a.at));
+  set("sym-rows", rows.slice(0, 9).map((r) => `<tr><td>${athens(r.at)}</td><td>${esc(String(r.tok).slice(0, 10))}</td><td class="${r.act === "BUY" ? "buy" : "sell"}">${r.act}</td><td class="${num(r.pnl) ? (r.pnl >= 0 ? "up" : "dn") : ""}">${num(r.pnl) ? pct(r.pnl, 2) : "·"}</td></tr>`).join("") || `<tr><td colspan="4" class="sym-empty">Waiting for the first paper trade.</td></tr>`);
+  set("sym-lanes", Object.entries(s.lanes || {}).map(([l, x]) => `<span><u class="sym-paper">PAPER</u> ${esc(l)} <b>${num(x.walletSol) ? x.walletSol.toLocaleString("en-US", { maximumFractionDigits: 1 }) : D}</b> SOL · ${int(x.trades)} trades · ${int(x.wins)} won</span>`).join(""));
+  // RIGHT CALLS: the real stats of the coins that passed, amethyst gems on the tree (one per right call, up to 9)
+  const rs = s.rightStats || {}; set("rs-n", int(src["right calls"]?.n)); set("rs-wr", num(rs.winRate) ? rs.winRate.toFixed(1) + "%" : D); set("rs-avg", pct(rs.avgPct, 2)); set("rs-tot", pct(rs.totalPct, 2));
+  for (const id of ["rs-avg", "rs-tot"]) { const e = $(id), x = id === "rs-avg" ? rs.avgPct : rs.totalPct; if (e) e.className = num(x) ? (x >= 0 ? "up" : "dn") : ""; }
+  const ripe = (s.right || []).filter((r) => r.status === "candidate");
+  set("sym-gems", ripe.slice(0, 9).map((r, i) => { const [x, y] = GEM_AT[i]; return `<g class="gem" style="--i:${i}"><title>${esc(r.symbol || r.mint)} ${pct(r.gain_pct, 0)}</title><polygon points="${P(hexPts(x, y, 9))}"/><polygon class="hi" points="${P(hexPts(x - 2, y - 2, 4))}"/></g>`; }).join(""));
+  set("sym-fruits", ripe.length ? ripe.slice(0, 6).map((r) => `<span class="ripe">${esc(r.symbol || short(r.mint))} ${pct(r.gain_pct, 0)}</span>`).join(" ") : `<span class="sym-empty">No coin has doubled on paper and passed every health check yet.</span>`);
+  set("sym-gta", (s.gta || []).slice(0, 6).map((g) => `<div class="g"><b>${esc(g.symbol || short(g.mint))}</b><span>${esc(g.name || "")}</span><i>${g.px0 && g.last ? pct((g.last / g.px0 - 1) * 100, 0) : D} · ${int(Number(g.minutes))} min</i></div>`).join("") || `<p class="sym-empty">No GTA launch yet. The main coin 4kjr…zDnz is priced every minute.</p>`);
   set("sym-miss", (s.missedReasons || []).map((m) => `<div class="m"><b>${int(m.n)}</b><span>${esc(m.reason)}</span></div>`).join("") || `<p class="sym-empty">Nothing missed.</p>`);
-  // breathing follows the real notification rate: faster feed, faster breath (1.4 s to 6 s)
   const chip = $("sym-chip"); if (chip) { const r = num(v.perSec) ? v.perSec : 0, dur = Math.max(1.4, 6 - Math.log10(1 + r) * 1.9); chip.style.setProperty("--breath", dur.toFixed(2) + "s"); chip.classList.toggle("idle", !s.running); }
 }
 
@@ -147,47 +172,56 @@ function openSources() {
 }
 
 const CSS = `
-#sym{margin:14px 12px;padding:14px;border:1px solid rgba(199,125,255,.28);border-radius:14px;background:linear-gradient(180deg,rgba(26,5,51,.55),rgba(10,14,24,.9));box-shadow:0 0 40px rgba(157,78,221,.08) inset}
-#sym h4{margin:12px 0 6px;font:700 10px var(--mono);letter-spacing:.14em;color:#d9c2ff}#sym h4 span{font-weight:400;color:var(--mut);letter-spacing:0;margin-left:6px}
-.sym-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.sym-head b{font:700 16px var(--serif);letter-spacing:.2em;color:#fff}.sym-head em{margin-left:auto;font:11px var(--mono);color:var(--mut);font-style:normal}
-.sym-sub{color:var(--mut);font-size:11px}.sym-paper{font:700 9px var(--mono);letter-spacing:.12em;text-decoration:none;color:#f5a524;border:1px solid rgba(245,165,36,.6);border-radius:4px;padding:2px 5px}
-.sym-grid{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:18px;margin-top:12px}.sym-left{display:flex;flex-direction:column;gap:10px;min-width:0}.sym-right{min-width:0}
-.sym-counts{display:flex;flex-direction:column;align-items:center;gap:2px;background:rgba(20,4,42,.7);border:1px solid rgba(217,222,230,.25);border-radius:10px;padding:8px 10px}
-.sym-counts small{font:700 9px var(--mono);letter-spacing:.14em;color:#cfc4e6}.sym-counts b{font:700 28px var(--mono);color:#fff;text-shadow:0 0 18px rgba(199,125,255,.6)}.sym-counts i{font:10px var(--mono);color:var(--mut)}
-#sym-mini{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;font:10px var(--mono);color:#b9b2c9}#sym-mini b{font-size:11px;color:#fff;text-shadow:none}
-.sym-chip{position:relative;--breath:4s;display:grid;place-items:center}.sym-chip-svg{width:100%;max-width:380px;height:auto;overflow:visible}
-.sym-chip .gear{fill:#1b1426;stroke:#aab2bf;stroke-width:1.2;transform-origin:200px 200px;animation:symSpin 120s linear infinite}
-.sym-chip .breath{transform-origin:200px 200px;animation:symBreath var(--breath) ease-in-out infinite}
+#sym{position:relative;margin:14px 12px;padding:16px 18px 14px;border-radius:6px;color:#d9dbe2;font-family:var(--sf);
+  background:radial-gradient(900px 400px at 50% 40%,rgba(80,40,120,.18),transparent 70%),repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 34px),repeating-linear-gradient(90deg,rgba(0,0,0,.25) 0 2px,transparent 2px 68px),linear-gradient(180deg,#16161a,#0c0c0f);
+  border:6px solid transparent;border-image:linear-gradient(180deg,#9aa0aa,#3b3e45 40%,#a9afb9 60%,#2e3036) 1;box-shadow:inset 0 0 0 2px #050507,inset 0 0 40px rgba(0,0,0,.8)}
+#sym h3,#sym h4{margin:0}.sym-pipes i{position:absolute;background:linear-gradient(90deg,#4a2f10,#e2b06a 45%,#7a5220);border-radius:6px;opacity:.9}
+.sym-pipes .p1{left:4px;top:30px;width:10px;height:140px}.sym-pipes .p2{left:4px;top:30px;width:90px;height:10px;background:linear-gradient(180deg,#4a2f10,#e2b06a 45%,#7a5220)}.sym-pipes .p3{right:4px;top:20px;width:10px;height:180px}.sym-pipes .p4{right:4px;top:200px;width:60px;height:10px;background:linear-gradient(180deg,#4a2f10,#e2b06a 45%,#7a5220)}
+.led{position:absolute;width:8px;height:8px;border-radius:50%;background:#ff2a2a;box-shadow:0 0 8px #ff2a2a,0 0 18px rgba(255,40,40,.6);animation:symLed 2.4s ease-in-out infinite}.led.a{left:16px;top:20px}.led.b{left:40%;top:8px;animation-delay:.7s}.led.c{right:30%;top:8px;animation-delay:1.3s}.led.d{right:16px;top:230px;animation-delay:.3s}
+@keyframes symLed{0%,100%{opacity:1}50%{opacity:.35}}.sym-red circle{fill:#ff2a2a;filter:drop-shadow(0 0 4px #ff2a2a);animation:symLed 2.4s infinite}
+.sym-top{display:grid;grid-template-columns:1fr 300px;gap:10px 16px;align-items:start}.sym-titlebar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;grid-column:1}
+.sym-title{font:700 42px/1 var(--serif);letter-spacing:.06em;background:linear-gradient(180deg,#fff,#b9bec8 45%,#6e737d 55%,#e6e9ee);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 #000)}
+.sym-plaque{font:700 20px var(--serif);letter-spacing:.06em;color:#2a1a05;padding:6px 16px;border-radius:6px;background:linear-gradient(180deg,#fbe3a0,#d8a548 45%,#9c6b20 55%,#e9c06a);border:2px solid #5b3a14;box-shadow:0 0 0 2px #e2b06a,0 4px 10px rgba(0,0,0,.6)}
+.sym-sub{margin:0;padding-left:14px;border-left:1px solid #555;font:600 11px/1.5 var(--serif);letter-spacing:.24em;color:#c9ccd4}.sym-glyphs{color:#8f949e;letter-spacing:.3em;font-size:16px}
+.sym-counters{grid-column:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.sym-brass{position:relative;display:flex;flex-direction:column;align-items:center;padding:8px 30px 10px;border-radius:10px;cursor:pointer;background:linear-gradient(180deg,#f3d08a,#c08a38 40%,#8a5a1c 60%,#d8a556);border:2px solid #4a2f10;box-shadow:inset 0 1px 0 #fff3c8,0 4px 12px rgba(0,0,0,.6)}
+.sym-brass small{font:700 13px var(--serif);letter-spacing:.06em;color:#2a1a05}.sym-brass b{margin-top:4px;min-width:80%;text-align:center;font:600 26px var(--mono);letter-spacing:.06em;color:#f2f2f2;background:linear-gradient(180deg,#121214,#26262b);border:2px solid #3a2a12;border-radius:5px;padding:2px 10px;box-shadow:inset 0 2px 6px #000}
+.sym-brass .lau{position:absolute;top:22px;width:16px;height:34px}.sym-brass .lau.l{left:7px}.sym-brass .lau.r{right:7px;transform:scaleX(-1)}.lau svg{width:100%;height:100%;fill:#5b3a14;stroke:#5b3a14}
+.sym-window{grid-column:2;grid-row:1/3;width:100%;height:auto;border:3px solid #4b4e56;border-radius:4px;box-shadow:inset 0 0 20px #000}
+.sym-status{margin:8px 0 10px;font:11px var(--mono);color:#9a9ca6}.sym-status b{color:#fff}.sym-status em{font-style:normal;color:#c9ccd4}
+.sym-grid{display:grid;grid-template-columns:1fr 1.05fr 1fr;gap:14px}
+.sym-panel{position:relative;padding:12px 14px;border:4px solid transparent;border-image:linear-gradient(180deg,#8f949e,#2e3036 50%,#8f949e) 1;background:linear-gradient(180deg,rgba(20,20,24,.95),rgba(10,10,12,.95));box-shadow:inset 0 0 24px #000}
+.sym-panel h3{display:flex;align-items:center;justify-content:center;gap:10px;font:700 22px var(--serif);letter-spacing:.08em;color:#e9ebef;margin-bottom:10px}.orn{width:60px;height:14px;stroke:#b9bec8;fill:#b9bec8;stroke-width:1.4}.sym-panel h3 .orn:last-child{transform:scaleX(-1)}
+.sym-trades table{width:100%;border-collapse:collapse;font:14px var(--mono);color:#3cff7a;background:linear-gradient(180deg,#04140a,#020a05);border:1px solid #1a4a2a;box-shadow:inset 0 0 20px rgba(60,255,122,.08)}
+.sym-trades th{text-align:left;padding:8px 8px 6px;font-weight:500;border-bottom:1px solid #2a7a44}.sym-trades td{padding:7px 8px;border-bottom:1px solid rgba(60,255,122,.18);white-space:nowrap}.sym-trades td.buy{color:#3cff7a}.sym-trades td.sell{color:#f1fa8c}.sym-trades td.up{color:#3cff7a}.sym-trades td.dn{color:#ff5555}
+.sym-lanes{display:flex;flex-direction:column;gap:3px;margin-top:8px;font:10px var(--mono);color:#9a9ca6}.sym-lanes b{color:#f5a524}.sym-paper{font:700 9px var(--mono);letter-spacing:.12em;text-decoration:none;color:#f5a524;border:1px solid rgba(245,165,36,.6);border-radius:4px;padding:1px 4px}
+.sym-mid{display:flex;flex-direction:column;align-items:center}.sym-cath{position:relative;width:100%;max-width:420px;aspect-ratio:400/420;display:grid;place-items:center}.sym-cath-svg{position:absolute;inset:0;width:100%;height:100%}
+.sym-banner{margin-top:-28px;position:relative;font:700 20px var(--serif);letter-spacing:.24em;color:#e9ebef;padding:8px 28px;background:linear-gradient(180deg,#3a3c43,#151518);border:2px solid #8f949e;clip-path:polygon(6% 0,94% 0,100% 50%,94% 100%,6% 100%,0 50%)}
+.sym-pain{margin-top:6px;font:700 10px var(--mono);letter-spacing:.1em;color:#ff5555}.sym-pain em{font-style:normal;font-weight:400;color:#9a9ca6;letter-spacing:0}
+.sym-chip{position:relative;--breath:4s;width:78%;display:grid;place-items:center}.sym-chip-svg{width:100%;height:auto;overflow:visible}
+.sym-chip .gear{fill:#1b1426;stroke:#aab2bf;stroke-width:1.2;transform-origin:200px 200px;animation:symSpin 120s linear infinite}.sym-chip .breath{transform-origin:200px 200px;animation:symBreath var(--breath) ease-in-out infinite}
 .sym-chip .fil{fill:none;stroke:#dfe5ee;stroke-width:1.3;opacity:.85}.sym-chip .trace{fill:none;stroke:#c3cad5;stroke-width:1.6;opacity:.55}
 .sym-chip .vein{fill:none;stroke:#f3e6ff;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:14 240;animation:symPulse calc(var(--breath) * .9) linear infinite}
-.sym-chip .rune{font:15px Georgia,serif;fill:#8f86a6;text-anchor:middle;dominant-baseline:middle;transition:fill .4s}.sym-chip .rune.lit{animation:symRune 2.6s ease-out}
-.sym-chip .star{fill:#d8b4fe;stroke:#fff;stroke-width:1.2;transform-origin:200px 200px;animation:symStar calc(var(--breath) * 2) ease-in-out infinite}
-.sym-chip.idle .vein{animation-play-state:paused;opacity:.2}.sym-chip.idle .breath{animation-duration:9s}
-.sym-name{font:700 13px var(--serif);letter-spacing:.42em;color:#eef1f6;text-shadow:0 0 12px rgba(199,125,255,.8);margin-top:-6px}
+.sym-chip .rune{font:15px Georgia,serif;fill:#8f86a6;text-anchor:middle;dominant-baseline:middle}.sym-chip .rune.lit{animation:symRune 2.6s ease-out}
+.sym-chip .star{fill:#d8b4fe;stroke:#fff;stroke-width:1.2;transform-origin:200px 200px;animation:symStar calc(var(--breath) * 2) ease-in-out infinite}.sym-chip.idle .vein{animation-play-state:paused;opacity:.2}
+.sym-chip .crack{fill:none;stroke:#ff5555;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:400;animation:symCrack 12s ease-out forwards}.sym-chip .scar{fill:none;stroke:#dfe5ee;stroke-width:1.1;opacity:.55;stroke-linecap:round}
 @keyframes symSpin{to{transform:rotate(360deg)}}@keyframes symBreath{0%,100%{transform:scale(.985);filter:drop-shadow(0 0 6px rgba(157,78,221,.35))}50%{transform:scale(1.015);filter:drop-shadow(0 0 22px rgba(199,125,255,.75))}}
-@keyframes symPulse{from{stroke-dashoffset:254}to{stroke-dashoffset:0}}@keyframes symRune{0%{fill:#fff;filter:drop-shadow(0 0 6px #e0b3ff)}100%{fill:#8f86a6}}@keyframes symStar{0%,100%{opacity:.85}50%{opacity:1}}
-.sym-term{background:#282a36;border:1px solid #44475a;border-radius:10px;overflow:hidden}.sym-term-h{display:flex;gap:6px;align-items:center;padding:6px 10px;background:#21222c}
-.sym-term-h span{width:9px;height:9px;border-radius:50%;background:#ff5555}.sym-term-h span:nth-child(2){background:#f1fa8c}.sym-term-h span:nth-child(3){background:#50fa7b}.sym-term-h em{margin-left:auto;font:10px var(--mono);color:#6272a4;font-style:normal}
-#sym-code{margin:0;padding:10px;height:260px;overflow:auto;font:11px/1.45 var(--mono);color:#f8f8f2;white-space:pre-wrap;word-break:break-word}
-#sym-code .tl{margin-bottom:8px;animation:symIn .5s ease-out}#sym-code .tl.pain,#sym-code .tl.pain .ds{color:#ff5555}
-.sym-chip .crack{fill:none;stroke:#ff5555;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:400;animation:symCrack 12s ease-out forwards;filter:drop-shadow(0 0 4px #ff5555)}
-.sym-chip .scar{fill:none;stroke:#dfe5ee;stroke-width:1;opacity:.45;stroke-linecap:round}
-@keyframes symCrack{0%{stroke-dashoffset:400;stroke:#ff5555}8%{stroke-dashoffset:0;stroke:#ff5555}60%{stroke:#ff9b9b;opacity:1}100%{stroke-dashoffset:0;stroke:#dfe5ee;opacity:0;stroke-width:1}}
-.sym-pain{font:700 9px var(--mono);letter-spacing:.1em;color:#ff5555}.sym-pain b{font-size:12px;color:#ff5555;text-shadow:none}.sym-pain em{font-style:normal;font-weight:400;color:var(--mut);letter-spacing:0}#sym-code .dk{color:#8be9fd}#sym-code .ds{color:#f1fa8c}#sym-code .dn{color:#bd93f9}#sym-code .dp{color:#ff79c6}#sym-code .df{color:#50fa7b}#sym-code .dc{color:#6272a4}
+@keyframes symPulse{from{stroke-dashoffset:254}to{stroke-dashoffset:0}}@keyframes symRune{0%{fill:#fff}100%{fill:#8f86a6}}@keyframes symStar{0%,100%{opacity:.85}50%{opacity:1}}
+@keyframes symCrack{0%{stroke-dashoffset:400;stroke:#ff5555}8%{stroke-dashoffset:0}60%{stroke:#ff9b9b}100%{stroke-dashoffset:0;stroke:#dfe5ee;opacity:0;stroke-width:1}}
+.sym-rc-body{display:grid;grid-template-columns:1fr 140px;gap:10px;align-items:center}.sym-tree{width:100%;height:auto}
+.sym-tree .gem polygon{fill:#9d4edd;stroke:#e0b3ff;stroke-width:1.2;filter:drop-shadow(0 0 6px #b44dff)}.sym-tree .gem .hi{fill:#f0d6ff;stroke:none;filter:none;opacity:.7}.sym-tree .gem{animation:symRise 1.2s both;animation-delay:calc(var(--i) * 80ms)}
+@keyframes symRise{from{opacity:0;transform:translateY(14px)}to{opacity:1}}
+.sym-stats{display:flex;flex-direction:column;gap:8px}.sym-stats div{border:2px solid #8f949e;background:#0b0b0e;padding:6px 10px;border-radius:3px}.sym-stats small{display:block;font:600 10px var(--serif);letter-spacing:.12em;color:#c9ccd4}.sym-stats b{font:600 20px var(--mono);color:#fff}.sym-stats b.up{color:#3cff7a}.sym-stats b.dn{color:#ff5555}
+.sym-fp-list{margin:8px 0 0;font:11px var(--mono)}.sym-fp-list .ripe{color:#e0b3ff;margin-right:8px}
+.sym-log{display:grid;grid-template-columns:120px 1fr;gap:14px;margin-top:14px;padding:12px 16px;border:4px solid transparent;border-image:linear-gradient(180deg,#8f949e,#2e3036 50%,#8f949e) 1;background:#1b1c26}
+.sym-log h3{font:700 22px/1.15 var(--serif);letter-spacing:.06em;color:#e9ebef;align-self:center;border-right:1px solid #44475a;padding-right:12px}
+#sym-code{margin:0;height:150px;overflow:auto;font:12px/1.55 var(--mono);color:#f8f8f2;white-space:pre-wrap;word-break:break-word}#sym-code .tl{animation:symIn .5s ease-out}
+#sym-code .dt{color:#f8f8f2}#sym-code .dk{color:#8be9fd}#sym-code .ds{color:#f1fa8c}#sym-code .dp{color:#ff79c6}#sym-code .dg{color:#50fa7b}#sym-code .dr{color:#ff5555}#sym-code .dc{color:#6272a4}#sym-code .dev.dp{color:#ff79c6}#sym-code .dtag.dp{color:#bd93f9}
 @keyframes symIn{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
-.sym-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.sym-kpis>div,.sym-lanes .lane{background:rgba(13,18,32,.85);border:1px solid var(--line);border-radius:9px;padding:8px 10px;min-width:0}
-.sym-kpis small,.sym-lanes small{display:block;font:700 9px var(--mono);letter-spacing:.12em;color:var(--mut)}.sym-kpis b{font:700 20px var(--mono);color:#fff}.sym-kpis i,.sym-lanes i{display:block;font:10px var(--mono);color:var(--mut);font-style:normal;overflow:hidden;text-overflow:ellipsis}
-.sym-market{margin-top:8px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:rgba(13,18,32,.85);font:11px var(--mono);color:#ccc}.sym-market b{color:#fff}.sym-market i{color:var(--mut);font-style:normal}
-.sym-lanes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.sym-lanes b{font:700 15px var(--mono);color:#f5a524}.sym-lanes b em{font-size:10px;font-style:normal;color:var(--mut)}
-.sym-fruits{position:relative;display:flex;flex-wrap:wrap;gap:8px;min-height:84px;padding:10px;border-radius:10px;background:radial-gradient(400px 120px at 50% 100%,rgba(80,250,123,.08),transparent),rgba(13,18,32,.6);border:1px solid var(--line)}
-.fruit{display:flex;flex-direction:column;align-items:center;gap:2px;font:10px var(--mono);animation:symRise 1.2s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i) * 60ms)}
-.fruit .orb{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#50fa7b 45%,#0b6b2e);box-shadow:0 0 14px rgba(80,250,123,.6)}.fruit b{color:#fff}.fruit i{color:var(--mut);font-style:normal}
-.fruit.dead .orb{background:radial-gradient(circle at 35% 30%,#bbb,#6b6b6b 50%,#2b2b2b);box-shadow:none}.fruit.dead b{color:#8a8a8a;text-decoration:line-through}
-@keyframes symRise{from{opacity:0;transform:translateY(26px) scale(.6)}to{opacity:1;transform:none}}
-.sym-two{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}.sym-feed,.sym-gta,.sym-miss{font:11px var(--mono)}
-.fi{display:grid;grid-template-columns:62px 46px minmax(0,1fr) auto;gap:6px;padding:3px 0;border-bottom:1px solid rgba(26,34,51,.7)}.fi time{color:var(--mut)}.fi b{color:#8be9fd}.fi.entry b{color:#50fa7b}.fi.exit b{color:#ffb86c}.fi span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}.fi i{color:var(--mut);font-style:normal}
-u.gta{font:700 8px var(--mono);text-decoration:none;color:#ff79c6;border:1px solid #ff79c6;border-radius:3px;padding:0 3px}
-.g,.m{display:flex;gap:8px;padding:3px 0;border-bottom:1px solid rgba(26,34,51,.7);align-items:baseline}.g b{color:#ff79c6}.g span{color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.g i{color:var(--mut);font-style:normal}.m b{color:#ffb86c;min-width:40px}.m span{color:#ccc}
-.sym-empty{color:var(--mut);font:11px var(--mono);margin:4px 0}table.sym-src{width:100%;border-collapse:collapse;font:11px var(--mono)}table.sym-src td{padding:4px 6px;border-bottom:1px solid var(--line)}table.sym-src td:last-child{text-align:right;color:#fff}
-@media (max-width:820px){.sym-grid{grid-template-columns:1fr}.sym-kpis{grid-template-columns:1fr 1fr}.sym-two{grid-template-columns:1fr}#sym{margin:12px 8px;padding:10px}.sym-chip-svg{max-width:300px}}
+.sym-extra{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;font:11px var(--mono)}.sym-extra h4{font:700 10px var(--mono);letter-spacing:.14em;color:#c9ccd4;margin-bottom:4px}.sym-extra h4 span{font-weight:400;color:#6b7a90;letter-spacing:0;margin-left:6px}
+.g,.m{display:flex;gap:8px;padding:3px 0;border-bottom:1px solid rgba(80,80,90,.35);align-items:baseline}.g b{color:#ff79c6}.g span{color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.g i{color:#888;font-style:normal}.m b{color:#ffb86c;min-width:40px}.m span{color:#ccc}
+.sym-empty{color:#7a7f8a;font:11px var(--mono)}table.sym-src{width:100%;border-collapse:collapse;font:11px var(--mono)}table.sym-src td{padding:4px 6px;border-bottom:1px solid var(--line)}table.sym-src td:last-child{text-align:right;color:#fff}
+@media (max-width:1100px){.sym-grid{grid-template-columns:1fr 1fr}.sym-mid{grid-column:1/3;grid-row:1}}
+@media (max-width:820px){#sym{margin:10px 6px;padding:12px 10px}.sym-top{grid-template-columns:1fr}.sym-window{grid-column:1;grid-row:auto;max-height:120px;object-fit:cover}.sym-counters{grid-template-columns:1fr 1fr}.sym-title{font-size:32px}.sym-sub{border:0;padding:0}
+  .sym-grid{grid-template-columns:1fr}.sym-mid{grid-column:1;grid-row:auto}.sym-log{grid-template-columns:1fr}.sym-log h3{border:0;padding:0}.sym-extra{grid-template-columns:1fr}.sym-rc-body{grid-template-columns:1fr 120px}.sym-brass b{font-size:20px}}
 `;

@@ -9,9 +9,9 @@ for (const [w, h, mobile] of [[1440, 1000, false], [390, 844, true]]) {
   p.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); }); p.on("pageerror", (e) => errors.push("pageerror: " + e.message));
   await p.goto(URL); await p.waitForTimeout(9000);
   console.log(w, "overflow px:", await p.evaluate(() => document.documentElement.scrollWidth - innerWidth));
-  const el = await p.$("#sym"); await el.scrollIntoViewIfNeeded(); await p.waitForTimeout(800);
-  await el.screenshot({ path: `${out}/sym-${w}.png` });
-  const chip = await p.$("#sym-chip"); await chip.screenshot({ path: `${out}/chip-${w}.png` });
+  const box = async (sel) => p.evaluate((q) => { const r = document.querySelector(q).getBoundingClientRect(); return { x: r.x, y: r.y + scrollY, width: r.width, height: r.height }; }, sel);
+  await p.screenshot({ timeout: 240000, fullPage: true, animations: "disabled", path: `${out}/full-${w}.png` }).catch(() => {});
+  await p.screenshot({ timeout: 240000, clip: await box("#sym"), path: `${out}/sym-${w}.png` });
   if (w === 1440) { await p.click("#sym-counts"); await p.waitForTimeout(400); await p.screenshot({ path: `${out}/sources-${w}.png` }); }
   await ctx.close();
 }
