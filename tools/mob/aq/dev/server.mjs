@@ -14,6 +14,8 @@ http.createServer(async (req, res) => {
   if (u.pathname === "/aq" || u.pathname === "/") { res.writeHead(200, { "content-type": "text/html" }); return res.end(B.AQ_PAGE); }
   if (u.pathname === "/aq/app.js") { res.writeHead(200, { "content-type": "text/javascript" }); return res.end(B.AQ_JS); }
   if (u.pathname.startsWith("/aq/assets/")) { const f = join(aq, "assets", u.pathname.slice(11)); if (existsSync(f)) { res.writeHead(200, { "content-type": types[extname(f)] || "application/octet-stream" }); return res.end(readFileSync(f)); } res.writeHead(404); return res.end(); }
+  if (u.pathname.startsWith("/aq/brand/")) { const { AQ_BRAND } = await import(join(aq, "../src/aq-brand.mjs")); const f = AQ_BRAND[u.pathname.slice(10)]; if (!f) { res.writeHead(404); return res.end(); }
+    res.writeHead(200, { "content-type": u.pathname.endsWith(".webp") ? "image/webp" : u.pathname.endsWith(".svg") ? "image/svg+xml" : "image/png" }); return res.end(Buffer.from(f, "base64")); }
   if (u.pathname === "/api/aq/sym/state" || u.pathname === "/api/aq/sym/brain") { const { symFixture } = await import("./sym-fixture.mjs"); const f = symFixture(); const after = Number(u.searchParams.get("after") || 0);
     res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(u.pathname.endsWith("state") ? f.state : { rows: after ? f.brain.filter((r) => r.id > after).slice(0, 2) : f.brain.slice(0, 12) })); }
   if (u.pathname === "/api/aq/state" && process.env.STATE_FILE) { res.writeHead(200, { "content-type": "application/json" }); return res.end(readFileSync(process.env.STATE_FILE)); }

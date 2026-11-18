@@ -89,20 +89,35 @@ function cathedral(inner) { // the iron/silver gothic frame around the chip
     <g fill="#5a1828" stroke="#8f949e" stroke-width="2"><path d="M8 150 h22 v120 l-11 14 l-11 -14 z"/><path d="M370 150 h22 v120 l-11 14 l-11 -14 z"/></g><g fill="#b98a9a" font-size="13" font-family="Georgia" text-anchor="middle">${"ᛟᚨᛉ".split("").map((r, i) => `<text x="19" y="${182 + i * 28}">${r}</text><text x="381" y="${182 + i * 28}">${r}</text>`).join("")}</g></svg>${inner}</div>`;
 }
 
+// ---------- the screen: the approved art (served from our origin) with the REAL numbers laid over its blanked boxes ----------
+const AW = 1586, AH = 992; // the art's own pixel size; every overlay below is placed in those pixels
+const box = (x, y, w, h) => `left:${(x / AW * 100).toFixed(3)}%;top:${(y / AH * 100).toFixed(3)}%;width:${(w / AW * 100).toFixed(3)}%;height:${(h / AH * 100).toFixed(3)}%`;
+const dot = (x, y, r, cls, i = 0) => `<i class="${cls}" style="${box(x - r, y - r, 2 * r, 2 * r)};animation-delay:${(i * 0.37).toFixed(2)}s"></i>`;
+const COUNTERS = [["sym-coins", 178], ["sym-cov", 455], ["sym-rc", 731], ["sym-fp", 1001]];
+const STATS = [["rs-n", 335], ["rs-wr", 420], ["rs-avg", 510], ["rs-tot", 600]];
+const GEMS = [[1293, 332], [1180, 372], [1325, 410], [1157, 442], [1315, 495], [1178, 510]];
 export function symScreen() {
   const el = document.createElement("section"); el.id = "sym";
-  el.innerHTML = `<style>${CSS}</style><div class="sym-pipes"><i class="p1"></i><i class="p2"></i><i class="p3"></i><i class="p4"></i><b class="led a"></b><b class="led b"></b><b class="led c"></b><b class="led d"></b></div>
-  <header class="sym-top"><div class="sym-titlebar"><h2 class="sym-title">SYMBIOTE</h2><span class="sym-plaque">PAPER</span><p class="sym-sub">A LIVING PAPER-TRADING ENGINE<br>FOR NEWLY LAUNCHED MEMECOINS</p><span class="sym-glyphs">ᛟ ᚦ ᛏ ᛉ ᛜ</span></div>
-    <div class="sym-counters">${brassCounter("sym-coins", "COINS TRADED")}${brassCounter("sym-cov", "COVERAGE")}${brassCounter("sym-rc", "RIGHT CALLS")}${brassCounter("sym-fp", "FAKE PUMPS")}</div>${windowSvg()}</header>
-  <p class="sym-status"><em id="sym-up">${D}</em> · <span id="sym-market"></span> · <span id="sym-src"></span></p>
-  <div class="sym-grid">
-    <section class="sym-panel sym-trades"><h3>${ORN}<span>PAPER TRADES</span>${ORN}</h3><table><thead><tr><th>TIME</th><th>TOKEN</th><th>ACTION</th><th>P&amp;L</th></tr></thead><tbody id="sym-rows"></tbody></table><div class="sym-lanes" id="sym-lanes"></div></section>
-    <section class="sym-mid">${cathedral(`<div class="sym-chip" id="sym-chip">${chipSvg()}</div>`)}<div class="sym-banner">ASTRA ULTIMUM</div><div class="sym-pain">PAIN 24 H <b id="sym-pain">${D}</b></div></section>
-    <section class="sym-panel sym-right"><h3>${ORN}<span>RIGHT CALLS</span>${ORN}</h3><div class="sym-rc-body">${treeSvg()}<div class="sym-stats"><div><small>RIGHT CALLS</small><b id="rs-n">${D}</b></div><div><small>WIN RATE</small><b id="rs-wr">${D}</b></div><div><small>AVG P&amp;L</small><b id="rs-avg">${D}</b></div><div><small>TOTAL P&amp;L</small><b id="rs-tot">${D}</b></div></div></div><p class="sym-fp-list" id="sym-fruits"></p></section>
+  el.innerHTML = `<style>${CSS}</style><div class="sym-art">
+    <img src="/aq/brand/symbiote-art.webp" alt="" draggable="false">
+    <div class="win" style="${box(1226, 2, 358, 186)}"></div>
+    ${[[38, 52], [397, 86], [675, 86], [943, 86], [543, 310], [1052, 312], [1545, 183]].map(([x, y], i) => dot(x, y, 9, "led", i)).join("")}
+    <i class="crys" style="${box(640, 235, 314, 330)}"></i>
+    <svg class="cracks" style="${box(647, 245, 300, 300)}" viewBox="0 0 400 400"><g id="sym-scars"></g><g id="sym-cracks"></g></svg>
+    ${[[560, 640], [1030, 640]].map(([x, y], i) => `<i class="smoke" style="${box(x - 60, y - 110, 120, 170)};animation-delay:${i * 3}s"></i>`).join("")}
+    ${[[592, 460, 10, 230], [1000, 460, 10, 230], [16, 40, 10, 150], [1566, 60, 10, 130]].map(([x, y, w, h], i) => `<i class="pipe" style="${box(x, y, w, h)};animation-delay:${i * 0.8}s"></i>`).join("")}
+    ${GEMS.map(([x, y], i) => dot(x, y, 26, "gem", i)).join("")}
+    ${COUNTERS.map(([id, x]) => `<b class="cnt" id="${id}" style="${box(x, 129, 164, 40)}">—</b>`).join("")}
+    <div class="rows" id="sym-rows" style="${box(32, 352, 448, 300)}"></div>
+    ${STATS.map(([id, y]) => `<b class="st" id="${id}" style="${box(1398, y, 154, 36)}">—</b>`).join("")}
+    <pre class="log" id="sym-code" style="${box(222, 768, 1300, 158)}"></pre>
+    <span class="pain" style="${box(560, 718, 474, 18)}">PAIN 24 H <b id="sym-pain">—</b></span>
   </div>
-  <section class="sym-log"><h3>ENGINE<br>LOG</h3><pre id="sym-code"></pre></section>
-  <div class="sym-extra"><div><h4>GTA 6 WATCH <span>whole life</span></h4><div id="sym-gta"></div></div><div><h4>MISSED <span>with the reason</span></h4><div id="sym-miss"></div></div></div>`;
-  el.querySelectorAll(".sym-brass").forEach((b) => b.addEventListener("click", () => openSources()));
+  <p class="sym-status"><u class="sym-paper">PAPER</u> <em id="sym-up">—</em> · <span id="sym-market"></span> · <span id="sym-src"></span></p>
+  <div class="sym-mobile" aria-hidden="false"><div class="mcnt"><div><small>COINS TRADED</small><b id="m-coins">—</b></div><div><small>COVERAGE</small><b id="m-cov">—</b></div><div><small>RIGHT CALLS</small><b id="m-rc">—</b></div><div><small>FAKE PUMPS</small><b id="m-fp">—</b></div></div>
+    <h4>PAPER TRADES</h4><div class="rows" id="m-rows"></div><h4>RIGHT CALLS</h4><div class="mcnt" id="m-stats"></div><h4>ENGINE LOG</h4><pre class="log" id="m-code"></pre></div>
+  <div class="sym-extra"><div><h4>GTA 6 WATCH <span>whole life</span></h4><div id="sym-gta"></div></div><div><h4>MISSED <span>with the reason</span></h4><div id="sym-miss"></div><h4>RIGHT CALLS NOW</h4><p class="sym-fp-list" id="sym-fruits"></p></div></div>`;
+  el.querySelectorAll(".cnt").forEach((b) => b.addEventListener("click", () => openSources()));
   setTimeout(() => { pollState(); pollBrain(); }, 50);
   setInterval(pollState, 4000); setInterval(pollBrain, 3000);
   return el;
@@ -128,13 +143,14 @@ async function pollBrain() {
     const r = await fetch("/api/aq/sym/brain" + (lastBrain ? "?after=" + lastBrain : ""), { credentials: "same-origin", cache: "no-store" }); if (!r.ok) return;
     const { rows } = await r.json(); if (!rows || !rows.length) return;
     const pre = document.getElementById("sym-code"); if (!pre) return;
-    for (const row of rows) { lastBrain = Math.max(lastBrain, row.id); pre.insertAdjacentHTML("beforeend", codeOf(row)); if (row.dept === "symbiote") lightRune(); if (row.kind === "pain" && lastBrainSeeded) crack(row.id); }
+    const mob = document.getElementById("m-code");
+    for (const row of rows) { lastBrain = Math.max(lastBrain, row.id); pre.insertAdjacentHTML("beforeend", codeOf(row)); mob?.insertAdjacentHTML("beforeend", codeOf(row)); while (mob && mob.children.length > 8) mob.firstElementChild.remove(); if (row.dept === "symbiote") lightRune(); if (row.kind === "pain" && lastBrainSeeded) crack(row.id); }
     lastBrainSeeded = true;
-    while (pre.children.length > 30) pre.firstElementChild.remove();
+    while (pre.children.length > 6) pre.firstElementChild.remove();
     pre.scrollTop = pre.scrollHeight;
   } catch {}
 }
-function lightRune() { const rs = document.querySelectorAll("#sym-chip .rune"); if (!rs.length) return; const e = rs[lit++ % rs.length]; e.classList.remove("lit"); void e.getBoundingClientRect(); e.classList.add("lit"); }
+function lightRune() { const c = document.querySelector("#sym .crys"); if (c) { c.classList.remove("flash"); void c.offsetWidth; c.classList.add("flash"); } const rs = document.querySelectorAll("#sym-chip .rune"); if (!rs.length) return; const e = rs[lit++ % rs.length]; e.classList.remove("lit"); void e.getBoundingClientRect(); e.classList.add("lit"); }
 
 function paint(s) {
   const $ = (id) => document.getElementById(id), set = (id, v) => { const e = $(id); if (e && e.innerHTML !== v) e.innerHTML = v; };
@@ -151,17 +167,21 @@ function paint(s) {
   const rows = [];
   for (const t of s.recent || []) { rows.push({ at: t.exit_at, tok: t.symbol || short(t.mint), act: "SELL", pnl: t.net_pct, lane: t.lane }); rows.push({ at: t.entry_at, tok: t.symbol || short(t.mint), act: "BUY", pnl: null, lane: t.lane }); }
   rows.sort((a, b) => new Date(b.at) - new Date(a.at));
-  set("sym-rows", rows.slice(0, 9).map((r) => `<tr><td>${athens(r.at)}</td><td>${esc(String(r.tok).slice(0, 10))}</td><td class="${r.act === "BUY" ? "buy" : "sell"}">${r.act}</td><td class="${num(r.pnl) ? (r.pnl >= 0 ? "up" : "dn") : ""}">${num(r.pnl) ? pct(r.pnl, 2) : "·"}</td></tr>`).join("") || `<tr><td colspan="4" class="sym-empty">Waiting for the first paper trade.</td></tr>`);
-  set("sym-lanes", Object.entries(s.lanes || {}).map(([l, x]) => `<span><u class="sym-paper">PAPER</u> ${esc(l)} <b>${num(x.walletSol) ? x.walletSol.toLocaleString("en-US", { maximumFractionDigits: 1 }) : D}</b> SOL · ${int(x.trades)} trades · ${int(x.wins)} won</span>`).join(""));
+  const rowHtml = rows.slice(0, 6).map((r) => `<div class="r"><span>${athens(r.at)}</span><span>${esc(String(r.tok).slice(0, 10))}</span><span class="${r.act === "BUY" ? "buy" : "sell"}">${r.act}</span><span class="${num(r.pnl) ? (r.pnl >= 0 ? "up" : "dn") : ""}">${num(r.pnl) ? pct(r.pnl, 2) : "·"}</span></div>`).join("") || `<div class="r"><span class="sym-empty">Waiting for the first paper trade.</span></div>`;
+  set("sym-rows", rowHtml); set("m-rows", rowHtml);
+  for (const [a, b] of [["m-coins", "sym-coins"], ["m-cov", "sym-cov"], ["m-rc", "sym-rc"], ["m-fp", "sym-fp"]]) set(a, $(b)?.innerHTML || D);
+  void Object.entries(s.lanes || {}).map(([l, x]) => `<span><u class="sym-paper">PAPER</u> ${esc(l)} <b>${num(x.walletSol) ? x.walletSol.toLocaleString("en-US", { maximumFractionDigits: 1 }) : D}</b> SOL · ${int(x.trades)} trades · ${int(x.wins)} won</span>`).join("");
   // RIGHT CALLS: the real stats of the coins that passed, amethyst gems on the tree (one per right call, up to 9)
   const rs = s.rightStats || {}; set("rs-n", int(src["right calls"]?.n)); set("rs-wr", num(rs.winRate) ? rs.winRate.toFixed(1) + "%" : D); set("rs-avg", pct(rs.avgPct, 2)); set("rs-tot", pct(rs.totalPct, 2));
   for (const id of ["rs-avg", "rs-tot"]) { const e = $(id), x = id === "rs-avg" ? rs.avgPct : rs.totalPct; if (e) e.className = num(x) ? (x >= 0 ? "up" : "dn") : ""; }
   const ripe = (s.right || []).filter((r) => r.status === "candidate");
-  set("sym-gems", ripe.slice(0, 9).map((r, i) => { const [x, y] = GEM_AT[i]; return `<g class="gem" style="--i:${i}"><title>${esc(r.symbol || r.mint)} ${pct(r.gain_pct, 0)}</title><polygon points="${P(hexPts(x, y, 9))}"/><polygon class="hi" points="${P(hexPts(x - 2, y - 2, 4))}"/></g>`; }).join(""));
+  document.querySelectorAll("#sym .gem").forEach((g, i) => g.classList.toggle("ripe", i < ripe.length)); // a fruit glows for each live right call
+  set("m-stats", ["rs-n", "rs-wr", "rs-avg", "rs-tot"].map((id, i) => `<div><small>${["RIGHT CALLS", "WIN RATE", "AVG P&amp;L", "TOTAL P&amp;L"][i]}</small><b class="${$(id)?.className || ""}">${$(id)?.innerHTML || D}</b></div>`).join(""));
   set("sym-fruits", ripe.length ? ripe.slice(0, 6).map((r) => `<span class="ripe">${esc(r.symbol || short(r.mint))} ${pct(r.gain_pct, 0)}</span>`).join(" ") : `<span class="sym-empty">No coin has doubled on paper and passed every health check yet.</span>`);
   set("sym-gta", (s.gta || []).slice(0, 6).map((g) => `<div class="g"><b>${esc(g.symbol || short(g.mint))}</b><span>${esc(g.name || "")}</span><i>${g.px0 && g.last ? pct((g.last / g.px0 - 1) * 100, 0) : D} · ${int(Number(g.minutes))} min</i></div>`).join("") || `<p class="sym-empty">No GTA launch yet. The main coin 4kjr…zDnz is priced every minute.</p>`);
   set("sym-miss", (s.missedReasons || []).map((m) => `<div class="m"><b>${int(m.n)}</b><span>${esc(m.reason)}</span></div>`).join("") || `<p class="sym-empty">Nothing missed.</p>`);
-  const chip = $("sym-chip"); if (chip) { const r = num(v.perSec) ? v.perSec : 0, dur = Math.max(1.4, 6 - Math.log10(1 + r) * 1.9); chip.style.setProperty("--breath", dur.toFixed(2) + "s"); chip.classList.toggle("idle", !s.running); }
+  // the crystal breathes with the real feed rate (1.4 s to 6 s a breath); idle when the engine is not running
+  const art = document.querySelector("#sym .sym-art"); if (art) { const r = num(v.perSec) ? v.perSec : 0; art.style.setProperty("--breath", Math.max(1.4, 6 - Math.log10(1 + r) * 1.9).toFixed(2) + "s"); art.classList.toggle("idle", !s.running); }
 }
 
 function openSources() {
@@ -172,56 +192,39 @@ function openSources() {
 }
 
 const CSS = `
-#sym{position:relative;margin:14px 12px;padding:16px 18px 14px;border-radius:6px;color:#d9dbe2;font-family:var(--sf);
-  background:radial-gradient(900px 400px at 50% 40%,rgba(80,40,120,.18),transparent 70%),repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 34px),repeating-linear-gradient(90deg,rgba(0,0,0,.25) 0 2px,transparent 2px 68px),linear-gradient(180deg,#16161a,#0c0c0f);
-  border:6px solid transparent;border-image:linear-gradient(180deg,#9aa0aa,#3b3e45 40%,#a9afb9 60%,#2e3036) 1;box-shadow:inset 0 0 0 2px #050507,inset 0 0 40px rgba(0,0,0,.8)}
-#sym h3,#sym h4{margin:0}.sym-pipes i{position:absolute;background:linear-gradient(90deg,#4a2f10,#e2b06a 45%,#7a5220);border-radius:6px;opacity:.9}
-.sym-pipes .p1{left:4px;top:30px;width:10px;height:140px}.sym-pipes .p2{left:4px;top:30px;width:90px;height:10px;background:linear-gradient(180deg,#4a2f10,#e2b06a 45%,#7a5220)}.sym-pipes .p3{right:4px;top:20px;width:10px;height:180px}.sym-pipes .p4{right:4px;top:200px;width:60px;height:10px;background:linear-gradient(180deg,#4a2f10,#e2b06a 45%,#7a5220)}
-.led{position:absolute;width:8px;height:8px;border-radius:50%;background:#ff2a2a;box-shadow:0 0 8px #ff2a2a,0 0 18px rgba(255,40,40,.6);animation:symLed 2.4s ease-in-out infinite}.led.a{left:16px;top:20px}.led.b{left:40%;top:8px;animation-delay:.7s}.led.c{right:30%;top:8px;animation-delay:1.3s}.led.d{right:16px;top:230px;animation-delay:.3s}
-@keyframes symLed{0%,100%{opacity:1}50%{opacity:.35}}.sym-red circle{fill:#ff2a2a;filter:drop-shadow(0 0 4px #ff2a2a);animation:symLed 2.4s infinite}
-.sym-top{display:grid;grid-template-columns:1fr 300px;gap:10px 16px;align-items:start}.sym-titlebar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;grid-column:1}
-.sym-title{font:700 42px/1 var(--serif);letter-spacing:.06em;background:linear-gradient(180deg,#fff,#b9bec8 45%,#6e737d 55%,#e6e9ee);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 #000)}
-.sym-plaque{font:700 20px var(--serif);letter-spacing:.06em;color:#2a1a05;padding:6px 16px;border-radius:6px;background:linear-gradient(180deg,#fbe3a0,#d8a548 45%,#9c6b20 55%,#e9c06a);border:2px solid #5b3a14;box-shadow:0 0 0 2px #e2b06a,0 4px 10px rgba(0,0,0,.6)}
-.sym-sub{margin:0;padding-left:14px;border-left:1px solid #555;font:600 11px/1.5 var(--serif);letter-spacing:.24em;color:#c9ccd4}.sym-glyphs{color:#8f949e;letter-spacing:.3em;font-size:16px}
-.sym-counters{grid-column:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.sym-brass{position:relative;display:flex;flex-direction:column;align-items:center;padding:8px 30px 10px;border-radius:10px;cursor:pointer;background:linear-gradient(180deg,#f3d08a,#c08a38 40%,#8a5a1c 60%,#d8a556);border:2px solid #4a2f10;box-shadow:inset 0 1px 0 #fff3c8,0 4px 12px rgba(0,0,0,.6)}
-.sym-brass small{font:700 13px var(--serif);letter-spacing:.06em;color:#2a1a05}.sym-brass b{margin-top:4px;min-width:80%;text-align:center;font:600 26px var(--mono);letter-spacing:.06em;color:#f2f2f2;background:linear-gradient(180deg,#121214,#26262b);border:2px solid #3a2a12;border-radius:5px;padding:2px 10px;box-shadow:inset 0 2px 6px #000}
-.sym-brass .lau{position:absolute;top:22px;width:16px;height:34px}.sym-brass .lau.l{left:7px}.sym-brass .lau.r{right:7px;transform:scaleX(-1)}.lau svg{width:100%;height:100%;fill:#5b3a14;stroke:#5b3a14}
-.sym-window{grid-column:2;grid-row:1/3;width:100%;height:auto;border:3px solid #4b4e56;border-radius:4px;box-shadow:inset 0 0 20px #000}
-.sym-status{margin:8px 0 10px;font:11px var(--mono);color:#9a9ca6}.sym-status b{color:#fff}.sym-status em{font-style:normal;color:#c9ccd4}
-.sym-grid{display:grid;grid-template-columns:1fr 1.05fr 1fr;gap:14px}
-.sym-panel{position:relative;padding:12px 14px;border:4px solid transparent;border-image:linear-gradient(180deg,#8f949e,#2e3036 50%,#8f949e) 1;background:linear-gradient(180deg,rgba(20,20,24,.95),rgba(10,10,12,.95));box-shadow:inset 0 0 24px #000}
-.sym-panel h3{display:flex;align-items:center;justify-content:center;gap:10px;font:700 22px var(--serif);letter-spacing:.08em;color:#e9ebef;margin-bottom:10px}.orn{width:60px;height:14px;stroke:#b9bec8;fill:#b9bec8;stroke-width:1.4}.sym-panel h3 .orn:last-child{transform:scaleX(-1)}
-.sym-trades table{width:100%;border-collapse:collapse;font:14px var(--mono);color:#3cff7a;background:linear-gradient(180deg,#04140a,#020a05);border:1px solid #1a4a2a;box-shadow:inset 0 0 20px rgba(60,255,122,.08)}
-.sym-trades th{text-align:left;padding:8px 8px 6px;font-weight:500;border-bottom:1px solid #2a7a44}.sym-trades td{padding:7px 8px;border-bottom:1px solid rgba(60,255,122,.18);white-space:nowrap}.sym-trades td.buy{color:#3cff7a}.sym-trades td.sell{color:#f1fa8c}.sym-trades td.up{color:#3cff7a}.sym-trades td.dn{color:#ff5555}
-.sym-lanes{display:flex;flex-direction:column;gap:3px;margin-top:8px;font:10px var(--mono);color:#9a9ca6}.sym-lanes b{color:#f5a524}.sym-paper{font:700 9px var(--mono);letter-spacing:.12em;text-decoration:none;color:#f5a524;border:1px solid rgba(245,165,36,.6);border-radius:4px;padding:1px 4px}
-.sym-mid{display:flex;flex-direction:column;align-items:center}.sym-cath{position:relative;width:100%;max-width:420px;aspect-ratio:400/420;display:grid;place-items:center}.sym-cath-svg{position:absolute;inset:0;width:100%;height:100%}
-.sym-banner{margin-top:-28px;position:relative;font:700 20px var(--serif);letter-spacing:.24em;color:#e9ebef;padding:8px 28px;background:linear-gradient(180deg,#3a3c43,#151518);border:2px solid #8f949e;clip-path:polygon(6% 0,94% 0,100% 50%,94% 100%,6% 100%,0 50%)}
-.sym-pain{margin-top:6px;font:700 10px var(--mono);letter-spacing:.1em;color:#ff5555}.sym-pain em{font-style:normal;font-weight:400;color:#9a9ca6;letter-spacing:0}
-.sym-chip{position:relative;--breath:4s;width:56%;display:grid;place-items:center}.sym-chip-svg{width:100%;height:auto;overflow:visible}
-.sym-chip .gear{fill:#1b1426;stroke:#aab2bf;stroke-width:1.2;transform-origin:200px 200px;animation:symSpin 120s linear infinite}.sym-chip .breath{transform-origin:200px 200px;animation:symBreath var(--breath) ease-in-out infinite}
-.sym-chip .fil{fill:none;stroke:#dfe5ee;stroke-width:1.3;opacity:.85}.sym-chip .trace{fill:none;stroke:#c3cad5;stroke-width:1.6;opacity:.55}
-.sym-chip .vein{fill:none;stroke:#f3e6ff;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:14 240;animation:symPulse calc(var(--breath) * .9) linear infinite}
-.sym-chip .rune{font:15px Georgia,serif;fill:#8f86a6;text-anchor:middle;dominant-baseline:middle}.sym-chip .rune.lit{animation:symRune 2.6s ease-out}
-.sym-chip .star{fill:#d8b4fe;stroke:#fff;stroke-width:1.2;transform-origin:200px 200px;animation:symStar calc(var(--breath) * 2) ease-in-out infinite}.sym-chip.idle .vein{animation-play-state:paused;opacity:.2}
-.sym-chip .crack{fill:none;stroke:#ff5555;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:400;animation:symCrack 12s ease-out forwards}.sym-chip .scar{fill:none;stroke:#dfe5ee;stroke-width:1.1;opacity:.55;stroke-linecap:round}
-@keyframes symSpin{to{transform:rotate(360deg)}}@keyframes symBreath{0%,100%{transform:scale(.985);filter:drop-shadow(0 0 6px rgba(157,78,221,.35))}50%{transform:scale(1.015);filter:drop-shadow(0 0 22px rgba(199,125,255,.75))}}
-@keyframes symPulse{from{stroke-dashoffset:254}to{stroke-dashoffset:0}}@keyframes symRune{0%{fill:#fff}100%{fill:#8f86a6}}@keyframes symStar{0%,100%{opacity:.85}50%{opacity:1}}
-@keyframes symCrack{0%{stroke-dashoffset:400;stroke:#ff5555}8%{stroke-dashoffset:0}60%{stroke:#ff9b9b}100%{stroke-dashoffset:0;stroke:#dfe5ee;opacity:0;stroke-width:1}}
-.sym-rc-body{display:grid;grid-template-columns:1fr 140px;gap:10px;align-items:center}.sym-tree{width:100%;height:auto}
-.sym-tree .gem polygon{fill:#9d4edd;stroke:#e0b3ff;stroke-width:1.2;filter:drop-shadow(0 0 6px #b44dff)}.sym-tree .gem .hi{fill:#f0d6ff;stroke:none;filter:none;opacity:.7}.sym-tree .gem{animation:symRise 1.2s both;animation-delay:calc(var(--i) * 80ms)}
-@keyframes symRise{from{opacity:0;transform:translateY(14px)}to{opacity:1}}
-.sym-stats{display:flex;flex-direction:column;gap:8px}.sym-stats div{border:2px solid #8f949e;background:#0b0b0e;padding:6px 10px;border-radius:3px}.sym-stats small{display:block;font:600 10px var(--serif);letter-spacing:.12em;color:#c9ccd4}.sym-stats b{font:600 20px var(--mono);color:#fff}.sym-stats b.up{color:#3cff7a}.sym-stats b.dn{color:#ff5555}
-.sym-fp-list{margin:8px 0 0;font:11px var(--mono)}.sym-fp-list .ripe{color:#e0b3ff;margin-right:8px}
-.sym-log{display:grid;grid-template-columns:120px 1fr;gap:14px;margin-top:14px;padding:12px 16px;border:4px solid transparent;border-image:linear-gradient(180deg,#8f949e,#2e3036 50%,#8f949e) 1;background:#1b1c26}
-.sym-log h3{font:700 22px/1.15 var(--serif);letter-spacing:.06em;color:#e9ebef;align-self:center;border-right:1px solid #44475a;padding-right:12px}
-#sym-code{margin:0;height:150px;overflow:auto;font:12px/1.55 var(--mono);color:#f8f8f2;white-space:pre-wrap;word-break:break-word}#sym-code .tl{display:block;white-space:normal;animation:symIn .5s ease-out}#sym-code .tl>span{display:inline}
-#sym-code .dt{color:#f8f8f2}#sym-code .dk{color:#8be9fd}#sym-code .ds{color:#f1fa8c}#sym-code .dp{color:#ff79c6}#sym-code .dg{color:#50fa7b}#sym-code .dr{color:#ff5555}#sym-code .dc{color:#6272a4}#sym-code .dev.dp{color:#ff79c6}#sym-code .dtag.dp{color:#bd93f9}
-@keyframes symIn{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
-.sym-extra{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;font:11px var(--mono)}.sym-extra h4{font:700 10px var(--mono);letter-spacing:.14em;color:#c9ccd4;margin-bottom:4px}.sym-extra h4 span{font-weight:400;color:#6b7a90;letter-spacing:0;margin-left:6px}
+#sym{margin:14px 12px;color:#d9dbe2;font-family:var(--sf)}
+.sym-art{position:relative;width:100%;aspect-ratio:${AW}/${AH};container-type:inline-size;--breath:4s;border-radius:6px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+.sym-art img{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none}
+.sym-art>*{position:absolute}
+/* the fake numbers are covered by boxes painted in the art's own colours, then the real values are written on top */
+.sym-art .cnt{display:grid;place-items:center;background:linear-gradient(180deg,#121214,#202024);border-radius:.35cqw;font:600 2.25cqw/1 var(--mono);letter-spacing:.08em;color:#f2f2f2;cursor:pointer}
+.sym-art .rows{background:#020d06;display:flex;flex-direction:column}.sym-art .r{flex:1;display:grid;grid-template-columns:1.05fr 1.15fr .9fr 1fr;align-items:center;padding:0 .4cqw;border-bottom:1px solid rgba(60,255,122,.28);font:1.25cqw var(--mono);color:#3cff7a;white-space:nowrap;overflow:hidden}
+.sym-art .r span:last-child{text-align:right}.sym-art .r .sell{color:#f1fa8c}.sym-art .r .up{color:#3cff7a}.sym-art .r .dn{color:#ff5555}
+.sym-art .st{display:flex;align-items:center;padding-left:.6cqw;background:#0b0b0e;font:600 1.75cqw var(--mono);color:#fff}.sym-art .st.up{color:#3cff7a}.sym-art .st.dn{color:#ff5555}
+.sym-art .log{margin:0;background:#1f2030;padding:.3cqw .6cqw;font:.95cqw/1.6 var(--mono);color:#f8f8f2;overflow:hidden;white-space:nowrap}
+.sym-art .pain{font:700 .8cqw var(--mono);letter-spacing:.1em;color:#ff5555;text-align:center;text-shadow:0 0 4px #000}.sym-art .pain em{font-style:normal;font-weight:400;color:#c9ccd4}
+.log .tl{display:block;overflow:hidden;text-overflow:ellipsis}.log .tl>span{display:inline}.log .dt{color:#f8f8f2}.log .dk{color:#8be9fd}.log .ds{color:#f1fa8c}.log .dp{color:#ff79c6}.log .dtag.dp{color:#bd93f9}.log .dg{color:#50fa7b}.log .dr{color:#ff5555}.log .dc{color:#6272a4}.log .tl{animation:symIn .5s ease-out}
+/* the living layer */
+.sym-art .led{border-radius:50%;background:radial-gradient(circle,#ff6a6a 0,#ff1a1a 35%,rgba(255,0,0,0) 70%);mix-blend-mode:screen;animation:symLed 2.2s ease-in-out infinite}
+.sym-art .crys{border-radius:50%;background:radial-gradient(circle,rgba(220,160,255,.55) 0,rgba(157,78,221,.35) 35%,rgba(90,24,154,0) 70%);mix-blend-mode:screen;animation:symBreath var(--breath) ease-in-out infinite}
+.sym-art .crys.flash{animation:symFlash 1.4s ease-out,symBreath var(--breath) ease-in-out infinite}.sym-art.idle .crys{animation-duration:9s;opacity:.5}
+.sym-art .cracks{overflow:visible;pointer-events:none}.cracks .crack{fill:none;stroke:#ff5555;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:400;animation:symCrack 12s ease-out forwards}.cracks .scar{fill:none;stroke:#e8ecf2;stroke-width:1.1;opacity:.5}
+.sym-art .smoke{border-radius:50%;background:radial-gradient(ellipse,rgba(180,90,255,.45),rgba(120,40,200,0) 70%);filter:blur(.8cqw);mix-blend-mode:screen;animation:symSmoke 7s ease-in-out infinite}
+.sym-art .pipe{background:linear-gradient(180deg,rgba(255,220,140,0) 0,rgba(255,226,150,.85) 50%,rgba(255,220,140,0) 100%) 0 0/100% 40% no-repeat;mix-blend-mode:screen;animation:symFlow 3.2s linear infinite}
+.sym-art .gem{border-radius:50%;background:radial-gradient(circle,rgba(230,170,255,.5),rgba(160,70,255,0) 70%);mix-blend-mode:screen;opacity:.25;animation:symGem 3s ease-in-out infinite}.sym-art .gem.ripe{opacity:1}
+.sym-art .win{background:linear-gradient(110deg,rgba(255,120,80,0) 30%,rgba(255,170,120,.28) 50%,rgba(255,120,80,0) 70%) -100% 0/250% 100% no-repeat;mix-blend-mode:screen;animation:symShimmer 9s ease-in-out infinite}
+@keyframes symLed{0%,100%{opacity:1}50%{opacity:.25}}@keyframes symBreath{0%,100%{opacity:.55;transform:scale(.96)}50%{opacity:1;transform:scale(1.04)}}@keyframes symFlash{0%{filter:brightness(2.2)}100%{filter:none}}
+@keyframes symSmoke{0%,100%{transform:translate(0,0) scale(1);opacity:.55}50%{transform:translate(.6cqw,-1.4cqw) scale(1.15);opacity:.9}}@keyframes symFlow{from{background-position:0 -40%}to{background-position:0 140%}}
+@keyframes symGem{0%,100%{transform:scale(.85)}50%{transform:scale(1.15)}}@keyframes symShimmer{0%,100%{background-position:-100% 0}50%{background-position:200% 0}}
+@keyframes symCrack{0%{stroke-dashoffset:400;stroke:#ff5555}8%{stroke-dashoffset:0}60%{stroke:#ff9b9b}100%{stroke-dashoffset:0;stroke:#e8ecf2;opacity:0;stroke-width:1}}@keyframes symIn{from{opacity:0}to{opacity:1}}
+.sym-status{margin:8px 0;font:11px var(--mono);color:#9a9ca6}.sym-status b{color:#fff}.sym-status em{font-style:normal;color:#c9ccd4}
+.sym-paper{font:700 9px var(--mono);letter-spacing:.12em;text-decoration:none;color:#f5a524;border:1px solid rgba(245,165,36,.6);border-radius:4px;padding:1px 4px}
+.sym-mobile{display:none}.sym-extra{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;font:11px var(--mono)}#sym h4{margin:6px 0 4px;font:700 10px var(--mono);letter-spacing:.14em;color:#c9ccd4}#sym h4 span{font-weight:400;color:#6b7a90;letter-spacing:0;margin-left:6px}
 .g,.m{display:flex;gap:8px;padding:3px 0;border-bottom:1px solid rgba(80,80,90,.35);align-items:baseline}.g b{color:#ff79c6}.g span{color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.g i{color:#888;font-style:normal}.m b{color:#ffb86c;min-width:40px}.m span{color:#ccc}
-.sym-empty{color:#7a7f8a;font:11px var(--mono)}table.sym-src{width:100%;border-collapse:collapse;font:11px var(--mono)}table.sym-src td{padding:4px 6px;border-bottom:1px solid var(--line)}table.sym-src td:last-child{text-align:right;color:#fff}
-@media (max-width:1100px){.sym-grid{grid-template-columns:1fr 1fr}.sym-mid{grid-column:1/3;grid-row:1}}
-@media (max-width:820px){#sym{margin:10px 6px;padding:12px 10px}.sym-top{grid-template-columns:1fr}.sym-window{grid-column:1;grid-row:auto;max-height:120px;object-fit:cover}.sym-counters{grid-template-columns:1fr 1fr}.sym-title{font-size:32px}.sym-sub{border:0;padding:0}
-  .sym-grid{grid-template-columns:1fr}.sym-mid{grid-column:1;grid-row:auto}.sym-log{grid-template-columns:1fr}.sym-log h3{border:0;padding:0}.sym-extra{grid-template-columns:1fr}.sym-rc-body{grid-template-columns:1fr 120px}.sym-brass b{font-size:20px}}
+.sym-fp-list{margin:0;font:11px var(--mono)}.sym-fp-list .ripe{color:#e0b3ff;margin-right:8px}.sym-empty{color:#7a7f8a;font:11px var(--mono)}
+table.sym-src{width:100%;border-collapse:collapse;font:11px var(--mono)}table.sym-src td{padding:4px 6px;border-bottom:1px solid var(--line)}table.sym-src td:last-child{text-align:right;color:#fff}
+@media (max-width:820px){#sym{margin:10px 6px}.sym-art .cnt,.sym-art .rows,.sym-art .st,.sym-art .log,.sym-art .pain{visibility:hidden}
+  .sym-mobile{display:block;padding:10px;background:#0c0c0f;border:2px solid #4b4e56;margin-top:8px}.mcnt{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mcnt div{background:linear-gradient(180deg,#f3d08a,#a8762e);border-radius:6px;padding:4px 8px;text-align:center}.mcnt small{display:block;font:700 9px var(--serif);color:#2a1a05}.mcnt b{display:block;font:600 16px var(--mono);color:#fff;background:#141417;border-radius:4px;margin:2px 0}.mcnt b.up{color:#3cff7a}.mcnt b.dn{color:#ff5555}
+  .sym-mobile .rows{background:#020d06;border:1px solid #1a4a2a}.sym-mobile .r{display:grid;grid-template-columns:64px 1fr 44px 70px;padding:5px 6px;border-bottom:1px solid rgba(60,255,122,.2);font:12px var(--mono);color:#3cff7a}.sym-mobile .r span:last-child{text-align:right}.sym-mobile .r .sell{color:#f1fa8c}.sym-mobile .r .dn{color:#ff5555}
+  .sym-mobile .log{margin:0;background:#1f2030;padding:6px;font:11px/1.5 var(--mono);color:#f8f8f2;white-space:pre-wrap;word-break:break-word}.sym-extra{grid-template-columns:1fr}}
 `;
