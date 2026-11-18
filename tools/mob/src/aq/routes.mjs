@@ -8,6 +8,7 @@ import { diag } from "./diag.mjs";
 import { chatPost, chatRead, SEATS } from "./seat.mjs";
 import { setTraining, trainingState } from "./arena.mjs";
 import { safeEqual } from "../auth.mjs";
+import * as RH from "./robinhood.mjs";
 
 const DROP_MAX = 95 * 1024 * 1024;
 const TYPES = { glb: "model/gltf-binary", gltf: "model/gltf+json", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", ktx2: "image/ktx2",
@@ -96,6 +97,20 @@ export async function aqApi(req, env, url, path, { json, apiErr, admin, bearer, 
     if (M !== "POST") return apiErr(405, "method_not_allowed", "POST {on:true|false}");
     if (typeof b?.on !== "boolean") return apiErr(400, "validation", "on must be true or false");
     return json({ training: await setTraining(env, b.on, admin ? "Alex" : "Claude for Alex") });
+  }
+  // Robinhood agent account: sign-in, read-only status, limits. Alex's admin session only (not the bearer, not a helper code).
+  // Nothing under here can place, change or cancel an order (src/aq/robinhood.mjs).
+  if (path.startsWith("/api/aq/rh/")) {
+    const go = (to) => new Response(null, { status: 302, headers: { location: to, "cache-control": "no-store", "referrer-policy": "no-referrer" } });
+    const nav = M === "GET" && (path === "/api/aq/rh/connect" || path === "/api/aq/rh/callback");
+    if (!admin) return nav ? go("/login") : apiErr(bearer ? 403 : 401, bearer ? "forbidden" : "unauthorized", "Only Alex (admin session) uses the Robinhood link");
+    await ensureSeed(env);
+    if (path === "/api/aq/rh/connect" && M === "GET") { try { return go(await RH.connectUrl(env)); } catch (e) { const m = String(e.message || e).slice(0, 300); await db(env).q(`INSERT INTO mob_aq_state (k, v, at) VALUES ('rh_status', $1, now()) ON CONFLICT (k) DO UPDATE SET v=EXCLUDED.v, at=now()`, [JSON.stringify({ lastError: m, at: new Date().toISOString() })]); return go("/aq?rh=error"); } }
+    if (path === "/api/aq/rh/callback" && M === "GET") { const r = await RH.finishConnect(env, url.searchParams); return go(r.ok ? "/aq?rh=connected" : "/aq?rh=error"); }
+    if (path === "/api/aq/rh/status" && M === "GET") return json(await RH.status(env, { fresh: url.searchParams.get("fresh") === "1" }));
+    if (path === "/api/aq/rh/disconnect" && M === "POST") return json(await RH.disconnect(env));
+    if (path === "/api/aq/rh/limits" && M === "POST") { const r = await RH.saveLimits(env, await body()); return r.error ? apiErr(400, "validation", r.error) : json(r); }
+    return apiErr(404, "not_found", "No such Robinhood endpoint");
   }
   if ((path === "/api/aq/helper" || path === "/api/aq/briefing") && !(admin || bearer || keyOk)) return apiErr(401, "unauthorized", "Admin session, bearer MOB_API_TOKEN or AQUARIUS_KEY required");
   if (path === "/api/aq/helper" && M === "POST") { const r = await helperMessage(env, await body()); return r.error ? apiErr(400, "validation", r.error) : json(r, 201); }

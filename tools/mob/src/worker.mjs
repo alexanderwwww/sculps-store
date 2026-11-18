@@ -12,6 +12,7 @@ import * as S from "./stats.mjs";
 import { uiData, uiAct } from "./uiapi.mjs";
 import { cityRoute, incomeApi, newsApi } from "./city.mjs";
 import { aqPage, aqApi } from "./aq/routes.mjs";
+import { rhWarm } from "./aq/robinhood.mjs";
 import { tick as aqTick } from "./aq/engine.mjs";
 import { arenaTick } from "./aq/arena.mjs";
 import { keeperTick, watchTicks } from "./aq/keeper.mjs";
@@ -58,6 +59,8 @@ export default {
       // the keeper: rollups, the daily brain backup, the storage watchdog. Last, and never able to stop the two above.
       .then(() => keeperTick(env)).then((r) => { if (Object.keys(r).length) console.log("keeper", JSON.stringify(r)); }).catch((e) => console.log("keeper error", e.message || e))); return; }
     ctx.waitUntil(C.runTick(env).then((r) => console.log("tick", JSON.stringify(r))));
+    // Robinhood link: register the client once, keep a connected sign-in renewed. Read-only; logs only the outcome words.
+    ctx.waitUntil(C.ensureMigrated(env).then(() => rhWarm(env)).then((r) => { if (r.registered != null || r.ok === false) console.log("rh", JSON.stringify(r)); }).catch(() => {}));
     // a second timer watching the first: if the minute tick has stopped, this one says so in the brain
     ctx.waitUntil(C.ensureMigrated(env).then(() => watchTicks(env)).then((r) => { if (!r.ok) console.log("aq watchdog", JSON.stringify(r)); }).catch((e) => console.log("aq watchdog error", e.message || e)));
   },

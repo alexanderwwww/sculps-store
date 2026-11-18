@@ -11,6 +11,7 @@ import { councilTick, learnFromTrade, recomputeRules, costBook, ruleWeights, MIN
 import { R6_PARAMS, R7_PARAMS } from "./seed.mjs";
 import { COUNCIL, STRENGTH_BUCKETS } from "./logic.mjs";
 import { trainingState } from "./arena.mjs";
+import { publicState as rhPublic } from "./robinhood.mjs";
 import { watch } from "./keeper.mjs";
 import { seatTick, seatStats, exitVotes, exitVoteRule, markHandled, impliedMid, warroom, chatFor, recentAlerts } from "./seat.mjs";
 import { START_SOL, reconcile, scaleOut, closePosition, resetLedger, walletBase, tickLock, tickUnlock } from "./ledger.mjs";
@@ -692,6 +693,7 @@ export async function buildState(env) {
     helpers: { grok: conn("grok"), chatgpt: conn("chatgpt"), codex: conn("codex"), codexLastAt: hl.codex || null, grokLastAt: hl.grok || null, chatgptLastAt: hl.chatgpt || null },
     xfeed: xs.map((r) => ({ at: r.at, section: r.dept, text: r.text, label: (r.labels || [])[0] || "CLAIMED", source: "grok", weight: r.weight })),
     marketFeed: nzs.feed,
+    robinhood: rhPublic(S), // the Robinhood agent account link: connected or not, the last read, the limits. No token.
   };
 }
 

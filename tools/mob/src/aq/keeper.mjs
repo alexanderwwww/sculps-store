@@ -117,7 +117,7 @@ export const gunzip = async (bytes) => new Response(new Blob([bytes]).stream().p
 export async function backup(env, { day = new Date().toISOString().slice(0, 10) } = {}) {
   if (!env.MEDIA) return { ok: false, error: "no R2 bucket bound" };
   const d = db(env), tables = {};
-  for (const t of BACKUP_TABLES) tables[t] = t === "mob_aq_state" ? await d.q(`SELECT * FROM mob_aq_state WHERE k NOT IN ('tape','health','tick_lock','arena','storage','gta6_list') AND k NOT LIKE '%\\_min'`) : await d.q(`SELECT * FROM ${t}`);
+  for (const t of BACKUP_TABLES) tables[t] = t === "mob_aq_state" ? await d.q(`SELECT * FROM mob_aq_state WHERE k NOT IN ('tape','health','tick_lock','arena','storage','gta6_list','rh_tokens','rh_oauth','rh_refresh_lock') AND k NOT LIKE '%\\_min'`) : await d.q(`SELECT * FROM ${t}`);
   // the whale book's pairs: kept for the wallets that matter (the rest are in their fold totals)
   tables.mob_aq_wroll = await d.q(`SELECT r.* FROM mob_aq_wroll r JOIN mob_aq_whales w ON w.wallet = r.wallet WHERE w.cand OR w.winner OR w.source = 'kolscan'`);
   const body = JSON.stringify({ kind: "aquarius-brain-backup", version: 1, day, at: new Date().toISOString(), counts: Object.fromEntries(Object.entries(tables).map(([k, v]) => [k, v.length])), tables });

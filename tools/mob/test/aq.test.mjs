@@ -367,7 +367,7 @@ test("helper MCP: link + access code, every tool, and no money control", async (
   assert.equal(init.status, 200); const sid = init.headers.get("mcp-session-id"); assert.ok(sid);
   assert.equal((await init.json()).result.serverInfo.name, "aquarius-helpers");
   const tools = (await (await mcp({ jsonrpc: "2.0", id: 2, method: "tools/list" })).json()).result.tools.map((t) => t.name);
-  assert.deepEqual(tools, ["aq_state", "aq_briefing", "aq_post_evidence", "aq_propose_bot", "aq_submit_pick", "aq_list_tasks", "aq_task_done", "aq_council_cases", "aq_council_vote", "aq_alert", "aq_chat_post", "aq_chat_read", "aq_training_report"]);
+  assert.deepEqual(tools, ["aq_state", "aq_briefing", "aq_post_evidence", "aq_propose_bot", "aq_submit_pick", "aq_list_tasks", "aq_task_done", "aq_council_cases", "aq_council_vote", "aq_alert", "aq_chat_post", "aq_training_report", "aq_chat_read"]);
   for (const t of tools) assert.ok(!/kill|trade|buy|sell|limit|secret|approve/.test(t));
   const st = JSON.parse((await call("aq_state", {}, { "mcp-session-id": sid })).content[0].text); assert.equal(st.mode, "PAPER");
   assert.match((await call("aq_briefing", { helper: "grok" })).content[0].text, /- Mode: PAPER/);
@@ -2039,7 +2039,7 @@ test("brain backup to R2 and restore: a gzip a day, 60 days kept; the dry run ch
   assert.ok(data.tables.mob_aq_trades.length >= 2 && data.tables.mob_aq_brain.length >= 2); assert.ok(!JSON.stringify(data).includes(env.DATABASE_URL) && !JSON.stringify(data).includes("helperkey123"));
   assert.equal((await d.one(`SELECT v FROM mob_aq_state WHERE k='backup'`)).v.key, b.key);
   // the list and the download
-  assert.equal((await R("GET", "/api/aq/backup")).status, 401); const ls = await (await R("GET", "/api/aq/backup", { bearer: "tok-test" })).json(); assert.deepEqual(ls.backups.map((x) => x.day).filter((x) => /^\d/.test(x)), ["2026-10-20", "2026-11-16"]);
+  assert.equal((await R("GET", "/api/aq/backup")).status, 401); const ls = await (await R("GET", "/api/aq/backup", { bearer: "tok-test" })).json(); assert.deepEqual(ls.backups.map((x) => x.day).filter((x) => /^\d/.test(x) && x <= "2026-11-16"), ["2026-10-20", "2026-11-16"]); // earlier tests in this file may have written today's own backup
   const dl = await R("GET", "/api/aq/backup/2026-11-16", { cookie }); assert.equal(dl.status, 200); assert.equal(new Uint8Array(await dl.arrayBuffer()).length, bytes.length); assert.equal((await R("GET", "/api/aq/backup/2026-11-15", { cookie })).status, 404);
   // nothing missing: the dry run says so
   const lines = []; let r = await restoreFile(d, bytes, { log: (x) => lines.push(x) });
