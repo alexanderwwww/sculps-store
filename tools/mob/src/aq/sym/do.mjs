@@ -21,7 +21,7 @@ import { decodeCurve } from "./decode.mjs";
 
 export const PUMPPORTAL_WSS = "wss://pumpportal.fun/api/data";
 export const CREDIT_CAP_DAY = 150000;
-const FRESH_VTOK = 1.0e15, RESOLVE_PER_TICK = 5; // 5 a tick, one after another = 1 call/s at most
+const FRESH_VTOK = 0.8e15, RESOLVE_PER_TICK = 5; // 5 a tick, one after another = 1 call/s at most
 const CURVE_TTL_MS = 6 * 3600000, CHECKED_TTL_MS = 24 * 3600000;
 const FLUSH_MS = 5000, STALE_MS = 60000, FEED_MAX = 40;
 
