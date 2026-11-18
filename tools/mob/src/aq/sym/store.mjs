@@ -34,5 +34,6 @@ export async function writeRight(d, x, res) {
     ? `RIGHT CALL ${x.symbol || x.mint.slice(0, 6)} (${x.mint}): +${Math.round(x.gainPct)}% on paper in the ${x.lane} lane and every health check passed. It may now be considered by the live chart trader.`
     : `FAKE PUMP ${x.symbol || x.mint.slice(0, 6)} (${x.mint}): +${Math.round(x.gainPct)}% on paper in the ${x.lane} lane, but it failed: ${res.verdict.failed.join("; ")}.`;
   await d.q(`INSERT INTO mob_aq_brain (dept, kind, text, data) VALUES ('symbiote', $1, $2, $3::jsonb)`, [res.verdict.ok ? "right_call" : "fake_pump", text, J({ mint: x.mint, lane: x.lane, gainPct: x.gainPct, failed: res.verdict.failed })]);
+  if (!res.verdict.ok) await d.q(`INSERT INTO mob_aq_brain (dept, kind, text, data) VALUES ('symbiote', 'pain', $1, $2::jsonb)`, [`PAIN fake pump ${x.symbol || x.mint.slice(0, 6)}: the ${x.lane} lane rode it to +${Math.round(x.gainPct)}% on paper, but it was not healthy. Should have caught it: ${res.verdict.failed.join("; ")}.`, J({ mint: x.mint, lane: x.lane, gainPct: x.gainPct, rule: res.verdict.failed })]);
   return status;
 }

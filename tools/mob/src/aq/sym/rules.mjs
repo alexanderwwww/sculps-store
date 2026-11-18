@@ -86,6 +86,16 @@ export function createEngine({ isVetoed = () => false } = {}) {
       data: { mint: c.mint, lane, netPct: r6(t.netPct), peakPct: r6(t.peakPct), exit: t.exit, legPct: r6(t.legPct), rtPct: r6(t.rtPct * 100), gta: c.gta, ctrlPct: c.ctrl?.netPct ?? null } };
   }
 
+  // PAIN (aquarius-trader, "Machine mistakes become pain"): every losing paper trade, with the numbers and the rule that should
+  // have caught it, so the instinct layer never takes the same pain twice
+  function painFor(c, lane, t) {
+    const rule = t.exit === "stop" ? (t.legPct < 8 * t.rtPct * 100 ? "leg size: the leg was under 8x the round trip; LEG_X_COST 4 let it in" : "entry: the bounce buy in the zone was not confirmed by a second buy")
+      : t.exit === "quiet" ? "liquidity: no exit rule fired before the coin went quiet; a volume-drop invalidation should have sold earlier"
+      : t.exit === "migrated" ? "migration: the curve completed under the entry; no rule exits before migration" : t.exit === "trail" ? "trail: gave back from 1.272 to a loss" : "exit rules";
+    return { dept: "symbiote", kind: "pain", text: `PAIN ${c.symbol || c.mint.slice(0, 6)} ${lane}: ${t.netPct.toFixed(1)}% after costs (${t.exit}, peak ${t.peakPct.toFixed(1)}%, leg +${t.legPct.toFixed(0)}%, round trip ${(t.rtPct * 100).toFixed(1)}%). Should have caught it: ${rule}.`,
+      data: { mint: c.mint, lane, netPct: r6(t.netPct), peakPct: r6(t.peakPct), exit: t.exit, legPct: r6(t.legPct), rtPct: r6(t.rtPct * 100), rule, gta: c.gta } };
+  }
+
   function closeLane(c, lane, s, exit, price, vsol, vtok, at) {
     const f = fee(c);
     const back = vsol && vtok ? sellFill(vsol, vtok, s.tokens, f) : s.tokens / 1e6 * price * (1 - f / 10000);
@@ -94,7 +104,8 @@ export function createEngine({ isVetoed = () => false } = {}) {
     const t = { mint: c.mint, symbol: c.symbol, lane, entryAt: s.at, exitAt: at, entryPx: s.px, exitPx: price, cost: s.cost, proceeds: s.proceeds, netPct, peakPct: s.peak, legPct: s.legPct, rtPct: s.rt, exit, half: s.half, gta: c.gta };
     s.st = "done"; s.tokens = 0; s.result = { netPct, exit };
     const w = wallet[lane]; w.n++; if (netPct > 0) w.wins++; w.open--; w.sol += (s.proceeds - s.cost) * (c.sol ? 1 : SIZE_SOL / s.size);
-    out.trades.push(t); out.lessons.push(lessonFor(c, lane, t)); out.feed.push({ at, k: "exit", mint: c.mint, sym: c.symbol, lane, pct: r6(netPct), exit });
+    out.trades.push(t); out.lessons.push(lessonFor(c, lane, t));
+    if (netPct < 0) out.lessons.push(painFor(c, lane, t)); out.feed.push({ at, k: "exit", mint: c.mint, sym: c.symbol, lane, pct: r6(netPct), exit });
   }
 
   function markLane(c, lane, s, vsol, vtok) {

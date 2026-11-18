@@ -70,6 +70,7 @@ test("rules: stop under 78.6%, small legs never trade, a leg broken before entry
   feed(e, "M2", [[1.6, false], [1.65, true], [1.2, false]]);              // enter at 1.65 (50% of 0.909..2.4 is ~1.65), then under 78.6%
   const b = e.drain(); const t = b.trades.find((x) => x.lane === "aquarius");
   assert.equal(t.exit, "stop"); assert.ok(t.netPct < -20);
+  const pain = b.lessons.filter((l) => l.kind === "pain"); assert.ok(pain.length >= 1); assert.match(pain[0].text, /^PAIN .*Should have caught it: /); assert.ok(pain[0].data.rule);
 });
 
 test("rules: Grok VETO blocks the grok lane only; quiet coins end; a launch with no trade is a logged miss; GTA gets minute candles", () => {
@@ -204,6 +205,7 @@ test("right calls: a healthy explosion becomes 'candidate' (read by live.mjs rig
   const row = await d.one(`SELECT lane, status, gain_pct, checks, flagged_at, checked_at FROM mob_aq_sym_right WHERE mint='GOODMINT'`);
   assert.equal(row.lane, "aquarius"); assert.equal(row.gain_pct, 140); assert.ok(row.flagged_at && row.checked_at); assert.deepEqual(row.checks.failed, []);
   assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_brain WHERE dept='symbiote' AND kind='fake_pump'`)).n, 1);
+  assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_brain WHERE dept='symbiote' AND kind='pain' AND text LIKE 'PAIN fake pump%'`)).n === 1);
   resetMocks();
 });
 
