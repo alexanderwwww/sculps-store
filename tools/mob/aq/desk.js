@@ -7,6 +7,7 @@ import { feedReactor, wakeReactor as wake, wireReactor, reactorMood, SHORT, NEON
 import { sample, series, lastOf, specPush, spec } from "./hist.js";
 import { grokHTML, renderGrok } from "./grok.js";
 import { trainingHTML, renderTraining } from "./training.js";
+import { realNumbers } from "./real.js";
 export const wakeReactor = wake;
 
 const D = "—", num = (v) => typeof v === "number" && isFinite(v), MONO = 'ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace';
@@ -22,6 +23,20 @@ const span = (ms) => (ms < 6e4 ? Math.round(ms / 1e3) + "s" : ms < 36e5 ? Math.r
 function openDept(id) { const s = store.state || {}; const d = (s.departments || []).find((x) => x.id === id); const nm = (DEPTS.find((x) => x[0] === id) || [0, id])[1]; const ws = (d && d.workers) || [];
   dialog(`<h3>${esc(nm)}</h3><p class="muted">${d ? (d.live ? "live" : "idle") + " · last run " + ago(d.lastRunAt) + " ago" : "—"}${GODS[id] ? " · " + GODS[id] : ""}</p>${d && d.skills && d.skills.length ? `<p>${d.skills.map((k) => `<span class="chip">${esc(k)}</span>`).join("")}</p>` : ""}<div class="wl" style="max-height:50vh;overflow:auto">${ws.map((w) => `<button class="wk" data-w="${esc(w.id)}"><u class="s-${esc(w.status)}"></u><b>${esc(w.name)}</b><small>${esc(w.note || w.job)}</small></button>`).join("") || "<p class=empty>—</p>"}</div><div class="row"><button class="ghost" data-x>Close</button></div>`, (el, close) => { el.querySelector("[data-x]").onclick = close; el.querySelectorAll("[data-w]").forEach((b) => (b.onclick = () => { close(); openWorker(id, b.dataset.w); })); }); }
 
+// the control stack is REAL money only (Alex, 2026-11-18): the Aquarius wallet's live ledger, nothing from paper
+function realStack(s) {
+  const w = s.solWallet || {}, L = w.live || {}, lim = w.limits || {}, r = realNumbers(s), P = (L.positions || []).filter((p) => p.status === "open" || p.status === "stuck");
+  const mark = P.reduce((a, p) => a + (num(p.valueSol) && num(p.costSol) ? p.valueSol - p.costSol : 0), 0), dayLoss = Math.max(0, -((num(L.pnlTodaySol) ? L.pnlTodaySol : 0) + mark));
+  const maxL = num(lim.maxDailyLossSol) ? lim.maxDailyLossSol : 0, used = maxL > 0 ? Math.min(100, (dayLoss / maxL) * 100) : 0, slots = num(lim.maxOpenPositions) ? lim.maxOpenPositions : 0;
+  const wr = num(L.closedTotal) && L.closedTotal > 0 ? ((L.winsTotal || 0) / L.closedTotal) * 100 : null, sg = (v) => (num(v) ? (v > 0 ? "+" : "") + v.toFixed(4) + " SOL" : D);
+  const at = (t) => (t ? new Date(t).toLocaleTimeString("en-GB", { timeZone: "Europe/Athens", hour12: false, hour: "2-digit", minute: "2-digit" }) : D);
+  const O = (L.orders || []).filter((o) => o.status === "confirmed").slice(0, 6);
+  return `<div class="ctl-h">REAL BALANCE</div><div class="rs-b">${r.any ? (num(r.balance) ? r.balance.toFixed(4) : D) + " SOL" + (r.known ? "" : " +?") : "no wallet yet"}</div>
+    <div class="rs-g"><div><small>TODAY</small><b class="${cls(r.today)}">${sg(r.today)}</b></div><div><small>TOTAL</small><b class="${cls(r.total)}">${sg(r.total)}</b></div><div><small>WIN RATE</small><b>${wr == null ? D : wr.toFixed(0) + "%"}</b><i>${num(L.closedTotal) ? L.closedTotal : 0} closed</i></div><div><small>FEES PAID</small><b>${num(L.feesTotalSol) ? L.feesTotalSol.toFixed(5) + " SOL" : D}</b></div></div>
+    <div class="ctl-h">DAILY LOSS USED</div><div class="sv"><div><b>${dayLoss.toFixed(4)}</b><span>${maxL > 0 ? "of " + maxL + " SOL" : "no limit set"}</span></div><i><u style="width:${used}%;${used > 70 ? "background:var(--dn);box-shadow:none" : ""}"></u></i></div>
+    <div class="ctl-h">SLOTS · AUTO TRADE</div><div class="feeds"><span class="${P.length ? "ok" : "off"}">${P.length} of ${slots || 3} open</span><span class="${lim.autoTrade ? "ok" : "off"}">auto trade ${lim.autoTrade ? "ON" : "OFF"}</span>${s.killSwitch ? `<span class="bad">kill switch ON</span>` : ""}</div>
+    <div class="ctl-h">REAL TRADES · ATHENS</div>${O.length ? O.map((o) => `<div class="tk"><b>${esc(o.symbol || D)}</b><span class="${o.side === "buy" ? "up" : "dn"}">${esc(String(o.side).toUpperCase())}</span><em>${num(o.sol) ? (o.sol > 0 ? "+" : "") + o.sol.toFixed(4) : D}</em><small>${at(o.at)}${o.reason ? " · " + esc(String(o.reason).slice(0, 40)) : ""}</small></div>`).join("") : `<p class="empty">no real trade yet</p>`}`;
+}
 export function deskHTML() {
   return `<main id="dash" class="desk">
   <section class="p reactor-row">
@@ -32,14 +47,15 @@ export function deskHTML() {
         <div class="rx-k"><div><small><u class="ppt">PAPER</u> EQUITY</small><b id="d-rx-eq" class="ppv">—</b><i id="d-rx-pl"></i></div><div class="r"><small>CORE</small><b id="d-rx-mood">—</b><i id="d-rx-hp"></i></div></div>
         <div class="rx-cards l" id="d-cards-l"></div><div class="rx-cards r" id="d-cards-r"></div>
         <div class="rx-f" id="d-rx-f"></div></div></div>
-    <div class="col-r"><div class="ph"><b>CONTROL STACK</b><em id="d-ctl-m"></em></div><div id="d-ctl"></div></div>
+    <div class="col-r"><div class="ph"><b>CONTROL STACK · <span class="up">REAL MONEY</span></b><em id="d-ctl-m"></em></div><div id="d-ctl"></div></div>
   </section>
   <div id="d-hero-slot"></div>
+  <section class="p paperctl"><div class="ph"><b><u class="ppt">PAPER</u> CONTROL</b><span>paper book · council verdicts · survival · feeds</span><em id="d-ctlp-m"></em></div><div id="d-ctlp"></div></section>
   <div class="wire"><b>LIVE WIRE</b><div class="wire-c"><div class="wire-in" id="d-wire"></div></div></div>
   <div class="strip" id="d-strip"></div>
   ${grokHTML()}
   ${trainingHTML()}
-  <section class="p pnl"><div class="ph"><b>SWARM PNL</b><span>paper · after costs</span><em id="d-pnl-ev"></em></div><div id="d-pnl"></div><canvas id="d-eqc"></canvas><div id="d-lanes"></div></section>
+  <section class="p pnl"><div class="ph"><b><u class="ppt">PAPER</u> SWARM PNL</b><span>paper · after costs</span><em id="d-pnl-ev"></em></div><div id="d-pnl"></div><canvas id="d-eqc"></canvas><div id="d-lanes"></div></section>
   <section class="p tape"><div class="ph"><b>THE TAPE</b><span id="d-tape-s">—</span><em id="d-tape-r"></em></div><div class="tape-in"><canvas id="d-tape"></canvas><div id="d-book" class="scroll"></div></div></section>
   <section class="p trace"><div class="ph"><b>THE TRACE</b><span>every pipeline step · dept → dept · verdict</span><em id="d-trace-n"></em></div><div id="d-trace-k"></div><div id="d-trace" class="scroll"></div></section>
   <section class="p pricer"><div class="ph"><b>THE PRICER</b><span>cost gate · round trip vs target vs 6×</span></div><canvas id="d-gauge"></canvas><div id="d-price"></div></section>
@@ -180,8 +196,8 @@ export function renderDesk(root, s) {
   { const le = Math.max(...ST.filter((x) => x.k !== "run").map((x) => +new Date(x.at) || 0), 0); set("d-rx-f", `<span>tickets fly on real verdicts and flows only</span><span>last pipeline event ${le ? ago(le) + " ago" : D}</span>`); }
   // ---- control stack
   const blocks = ((s.council && s.council.vetoes) || []).length, hl = Object.entries(feedsNow);
-  set("d-ctl-m", esc(s.mode || D));
-  set("d-ctl", `<div class="ctl-h">COUNCIL · LAST VERDICT</div>${L ? `<div class="vd ${L.verdict === "PASS" ? "pass" : "block"}"><b>${esc(L.verdict)}</b><span>${esc(L.symbol || D)}</span><p>${esc(L.reason || D)}</p><small>${L.number != null ? "number " + esc(num(L.number) ? +Number(L.number).toPrecision(5) : L.number) + " · " : ""}${ago(L.at)} ago · ${blocks} blocks on record</small></div>` : `<p class="empty">no verdict yet</p>`}
+  set("d-ctl-m", "on-chain"); set("d-ctl", realStack(s)); set("d-ctlp-m", esc(s.mode || D));
+  set("d-ctlp", `<div class="ctl-h">COUNCIL · LAST VERDICT</div>${L ? `<div class="vd ${L.verdict === "PASS" ? "pass" : "block"}"><b>${esc(L.verdict)}</b><span>${esc(L.symbol || D)}</span><p>${esc(L.reason || D)}</p><small>${L.number != null ? "number " + esc(num(L.number) ? +Number(L.number).toPrecision(5) : L.number) + " · " : ""}${ago(L.at)} ago · ${blocks} blocks on record</small></div>` : `<p class="empty">no verdict yet</p>`}
     <div class="ctl-h">LIVE TICKETS</div>${P.length ? P.slice(0, 4).map((p) => `<div class="tk"><b>${esc(p.symbol)}</b><span>${esc(p.strategy || D)}</span><em class="${cls(p.pnlPct)}">${fPct(p.pnlPct)}</em><small>${num(p.sizeSol) ? p.sizeSol.toFixed(3) : D} SOL · ${ago(p.openedAt)}</small></div>`).join("") : `<p class="empty">no open positions</p>`}
     <div class="ctl-h">SURVIVAL</div><div class="sv st-${esc((sv && sv.stage) || "none")}"><div><b>${sv && num(sv.health) ? sv.health : D}</b><span>${esc((sv && sv.stage) || D).toUpperCase()}</span></div><i><u style="width:${sv && num(sv.health) ? Math.max(0, Math.min(100, sv.health)) : 0}%"></u></i><small>size ×${sv && num(sv.sizeMult) ? sv.sizeMult : D} · max open ${sv && num(sv.maxOpen) ? sv.maxOpen : D}</small></div>
     <div class="ctl-h">DATA FEEDS</div><div class="feeds">${hl.length ? hl.map(([k, v]) => `<span class="${v ? "ok" : "bad"}">${esc(k.replace(/_/g, " "))}</span>`).join("") : `<span class="muted">not reported</span>`}</div>

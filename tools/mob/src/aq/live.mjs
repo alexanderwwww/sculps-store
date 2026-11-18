@@ -539,13 +539,13 @@ export async function liveState(d, venue = VENUE) {
     d.one(`SELECT gate, reason, symbol, n, at FROM mob_aq_live_refusals WHERE venue = $1 ORDER BY at DESC LIMIT 1`, [venue]),
     d.one(`SELECT coalesce(sum(pnl_sol), 0)::float8 s, count(*)::int n FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed' AND closed_at >= ${TODAY}`, [venue]),
     d.q(`SELECT k, v FROM mob_aq_state WHERE k IN ('live_tick','live_auto_off')`),
-    d.one(`SELECT coalesce(sum(pnl_sol), 0)::float8 s, count(*)::int n FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed'`, [venue]),
+    d.one(`SELECT coalesce(sum(pnl_sol), 0)::float8 s, count(*)::int n, count(*) FILTER (WHERE pnl_sol > 0)::int w, (SELECT coalesce(sum(fee_sol), 0)::float8 FROM mob_aq_live_orders WHERE venue = $1 AND status = 'confirmed') f FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed'`, [venue]),
   ]);
   const st = Object.fromEntries(S.map((r) => [r.k, r.v]));
   const plan = (p) => (p.plan ? { stop: p.plan.phase === 2 ? Math.max(p.plan.stop, p.plan.trailStop ?? -Infinity) : p.plan.stop, t1: p.plan.t1, t2: p.plan.t2, t3: p.plan.t3, entry: p.plan.entry, phase: p.plan.phase, leg: p.plan.leg } : null);
   return { positions: pos.map((p) => ({ id: Number(p.id), symbol: p.symbol, mint: p.mint, status: p.status, costSol: p.cost_sol, valueSol: p.last_value_sol, valueAt: p.last_value_at, openedAt: p.opened_at, plan: plan(p), spark: Array.isArray(p.alert_patch?.spark) ? p.alert_patch.spark : [], pnlPct: p.last_value_sol != null && p.cost_sol > 0 ? round((p.last_value_sol / p.cost_sol - 1) * 100, 2) : null, underwater: p.last_value_sol != null && p.last_value_sol < p.cost_sol })),
     orders: ord.map((o) => ({ id: Number(o.id), side: o.side, symbol: o.symbol, status: o.status, reason: o.reason, error: o.error, signature: o.signature, sol: o.fill_sol, at: o.requested_at })),
-    manualPcts: MANUAL_PCTS, pnlTodaySol: round(pnl.s, 6), closedToday: pnl.n, pnlTotalSol: round(tot?.s ?? 0, 6), closedTotal: tot?.n ?? 0, lastRefusal: ref ? { gate: ref.gate, reason: ref.reason, symbol: ref.symbol, times: ref.n, at: ref.at } : null,
+    manualPcts: MANUAL_PCTS, pnlTodaySol: round(pnl.s, 6), closedToday: pnl.n, pnlTotalSol: round(tot?.s ?? 0, 6), closedTotal: tot?.n ?? 0, winsTotal: tot?.w ?? 0, feesTotalSol: round(tot?.f ?? 0, 6), lastRefusal: ref ? { gate: ref.gate, reason: ref.reason, symbol: ref.symbol, times: ref.n, at: ref.at } : null,
     lastTickAt: st.live_tick?.at || null, autoOff: st.live_auto_off || null, paper: await paperStats(d),
     rule: "chart trader: Fibonacci pullback, chart stop, chart targets", proven: false,
     note: "Never tested in the training arena (it tested fixed holds): it starts unproven. The paper mirror below measures it on every coin." };
