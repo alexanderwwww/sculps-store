@@ -1,7 +1,9 @@
 // The way OUT of the Aquarius wallet: SOL to ONE saved address, chosen by Alex. And the way BACK for the key: a restore
 // from the second sealed copy. SOL only: coins are sold with SELL ALL LIVE first.
 //  - The destination is never taken from a withdrawal request. It is the saved payout address, and changing that address
-//    locks withdrawals for 24 hours (a stolen session cannot point it somewhere else and empty the wallet at once).
+//    used to lock withdrawals for 24 hours (so a stolen session could not point it somewhere else and empty the wallet at once).
+//    Alex removed that lock on 2026-11-18 (LOCK_MS = 0: he moves between GMGN and two Phantoms): a changed address can be paid
+//    to right away. What still stands between a stolen admin session and the wallet: nothing but the session itself.
 //  - The transfer is one System Program instruction built here byte by byte, simulated on the chain first (the wallet must
 //    lose exactly the amount plus the fee, the destination must gain exactly the amount), signed by live.mjs's signer (one
 //    signature, paid by the Aquarius wallet, nothing else), recorded with its signature BEFORE it is sent, and an unknown

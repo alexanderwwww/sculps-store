@@ -211,3 +211,5 @@ Switched on by the agent, on Alex's standing authorisation, after the Inspector'
 DacityCoin, mint 9hjBLBrc7WZW2H8UQvBAvG5WiTZotXUv2Bdcn4f4pump, on PumpSwap, about $13.9M MC. Alex holds a position in it via GMGN. The old GTA6 mint 4kjru... is no longer the main coin.
 ## Payout: no lock (Alex, 2026-11-18)
 Any payout address Alex sets can receive right away. He switches between GMGN and two Phantoms. Never add a waiting lock again.
+- **No payout lock** (Alex, 2026-11-18): `LOCK_MS = 0` in `src/aq/payout.mjs`; a changed payout address can receive SOL right away (he moves between GMGN and two Phantoms). The 24-hour lock was the guard against a stolen admin session; it is gone by his order.
+- **The GTA coin is DCTY** (DacityCoin, mint `9hjBLBrc7WZW2H8UQvBAvG5WiTZotXUv2Bdcn4f4pump`), Alex 2026-11-18, not the old GTA6 mint.
