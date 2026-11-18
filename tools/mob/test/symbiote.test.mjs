@@ -45,38 +45,34 @@ function feed(e, mint, path, opts = {}) {
 }
 const launch = (e, mint, extra = {}) => e.onCreate({ mint, name: "Test", symbol: "TST", creator: "DEV", curve: "CURVE", ts: clock / 1000, vsol: 30e9, vtok: 1.073e15, sol: true, slot: 100, src: "chain", ...extra });
 
-test("rules: 50%/38.2% pullback entry on a bounce, T1 half, T2 trail, T3 exit, with fees and curve impact", () => {
+test("rules: every lane buys every coin at first sight (no judging); exits differ: aquarius 38.2% giveback, grok 5x or 61.8% giveback", () => {
   const e = R.createEngine(); launch(e, "M1");
-  // leg 1.0 -> 2.0 (+100%), pull back to 1.45 (55% retrace): aquarius (50%) arms; the buy in the zone enters
-  feed(e, "M1", [[1.0, true], [1.5, true], [2.0, true], [1.8, false], [1.6, false], [1.45, false], [1.47, true]]);
-  const aq = e.coins.get("M1").lanes.aquarius, gk = e.coins.get("M1").lanes.grok;
-  assert.equal(aq.st, "open"); assert.equal(gk.st, "open", "38.2% zone was crossed too, so grok entered on the same bounce");
-  assert.ok(Math.abs(aq.stop - (P0 * 2 - 0.786 * P0)) < 1e-15); assert.ok(Math.abs(aq.t2 - (P0 * 2 + 0.272 * P0)) < 1e-15);
-  assert.ok(aq.rt > 0.07 && aq.rt < 0.1, "round trip of 1 SOL on a ~40 SOL curve is about 8%: " + aq.rt);
-  feed(e, "M1", [[2.05, true], [2.3, true], [2.65, true]]);
-  assert.equal(aq.half, true); assert.equal(aq.trail, true); assert.equal(aq.st, "done");
+  feed(e, "M1", [[1.0, true]]);
+  const c = e.coins.get("M1"), aq = c.lanes.aquarius, gk = c.lanes.grok;
+  assert.equal(aq.st, "open"); assert.equal(gk.st, "open"); assert.ok(aq.rt > 0.07 && aq.rt < 0.1, "1 SOL on a ~30 SOL curve costs about 8.5%: " + aq.rt);
+  feed(e, "M1", [[1.5, true], [2.05, true], [3.0, true], [2.5, false]]);  // 2x: half sold; gain 1.0->3.0, 38.2% giveback = 2.236
+  assert.equal(aq.half, true); assert.equal(aq.st, "open");
+  feed(e, "M1", [[2.2, false]]);
+  assert.equal(aq.st, "done"); assert.equal(aq.result.exit, "trail"); assert.equal(gk.st, "open", "grok's 61.8% giveback (1.764) not hit");
+  feed(e, "M1", [[5.1, true]]); assert.equal(gk.result.exit, "t3");
   const b = e.drain(); const t = b.trades.find((x) => x.lane === "aquarius");
-  assert.equal(t.exit, "t3"); assert.ok(t.netPct > 30 && t.netPct < 70, "half at 2.0 and half at 2.65 from 1.47, after costs: " + t.netPct);
-  assert.equal(b.lessons.length, 2); assert.equal(b.lessons[0].dept, "symbiote"); assert.match(b.lessons[0].text, /after costs/);
+  assert.ok(t.netPct > 60 && t.netPct < 120, "half near 2x and half near 2.2x after the real curve costs: " + t.netPct);
+  assert.equal(b.lessons.filter((l) => l.kind === "lesson").length, 2); assert.match(b.lessons[0].text, /bought at first sight/);
   assert.equal(e.wallet.aquarius.n, 1); assert.ok(e.wallet.aquarius.sol > R.WALLET_SOL);
 });
 
-test("rules: stop under 78.6%, small legs never trade, a leg broken before entry restarts, chasing never enters", () => {
+test("rules: a coin that only falls is stopped at -50% / -60% and written as PAIN with the rule", () => {
   const e = R.createEngine(); launch(e, "M2");
-  feed(e, "M2", [[1.0, true], [1.2, true], [1.1, false], [1.09, true]]);   // +20% leg: below 4x the ~8.5% round trip
-  assert.equal(e.coins.get("M2").lanes.aquarius.st, "wait");
-  feed(e, "M2", [[2.0, true], [2.2, true], [2.4, true]]);                // straight up: no pullback, no entry
-  assert.equal(e.coins.get("M2").lanes.aquarius.st, "wait");
-  feed(e, "M2", [[1.6, false], [1.65, true], [1.2, false]]);              // enter at 1.65 (50% of 0.909..2.4 is ~1.65), then under 78.6%
-  const b = e.drain(); const t = b.trades.find((x) => x.lane === "aquarius");
-  assert.equal(t.exit, "stop"); assert.ok(t.netPct < -20);
-  const pain = b.lessons.filter((l) => l.kind === "pain"); assert.ok(pain.length >= 1); assert.match(pain[0].text, /^PAIN .*Should have caught it: /); assert.ok(pain[0].data.rule);
+  feed(e, "M2", [[1.0, true], [0.8, false], [0.45, false], [0.35, false]]);
+  const b = e.drain(); const a = b.trades.find((x) => x.lane === "aquarius"), g = b.trades.find((x) => x.lane === "grok");
+  assert.equal(a.exit, "stop"); assert.equal(g.exit, "stop"); assert.ok(a.netPct < -40);
+  const pain = b.lessons.filter((l) => l.kind === "pain"); assert.equal(pain.length, 2); assert.match(pain[0].text, /^PAIN .*Should have caught it: /); assert.ok(pain[0].data.rule);
 });
 
-test("rules: Grok VETO blocks the grok lane only; quiet coins end; a launch with no trade is a logged miss; GTA gets minute candles", () => {
-  const e = R.createEngine({ isVetoed: (m) => m === "M3" }); launch(e, "M3");
-  feed(e, "M3", [[1.0, true], [2.0, true], [1.4, false], [1.45, true]]);
-  assert.equal(e.coins.get("M3").lanes.grok.result.exit, "veto"); assert.equal(e.coins.get("M3").lanes.aquarius.st, "open");
+test("rules: quiet coins end; a launch with no trade is a logged miss; GTA gets minute candles", () => {
+  const e = R.createEngine(); launch(e, "M3");
+  feed(e, "M3", [[1.0, true], [1.3, true], [1.2, false]]);
+  assert.equal(e.coins.get("M3").lanes.grok.st, "open"); assert.equal(e.coins.get("M3").lanes.aquarius.st, "open");
   launch(e, "M4"); launch(e, "GTAx", { name: "Vice City Coin", symbol: "VICE" });
   assert.equal(e.coins.get("GTAx").gta, true); assert.equal(R.isGta({ mint: R.GTA_MAIN }), true); assert.equal(R.isGta({ name: "Victory", symbol: "VIC" }), false);
   feed(e, "GTAx", [[1.0, true], [1.1, true]]);
@@ -93,7 +89,7 @@ test("rules: a paper doubling is flagged once for the deep checks; stream health
   const e = R.createEngine(); launch(e, "M5");
   feed(e, "M5", [[1.0, true, "DEV"]], { slot: 100 });
   feed(e, "M5", [[1.05, true, "sniper1"], [1.1, true, "sniper2"]], { slot: 101 });
-  feed(e, "M5", [[2.0, true], [1.45, false], [1.47, true], [3.5, true], [3.6, true]], { slot: 500 });
+  feed(e, "M5", [[1.6, true], [2.6, true], [3.0, true]], { slot: 500 });
   feed(e, "M5", [[3.5, false, "DEV"]], { slot: 501 });
   const b = e.drain();
   assert.deepEqual([...new Set(b.explode.map((x) => x.mint))], ["M5"], "flagged per lane; the object checks each mint once"); assert.ok(b.explode[0].gainPct >= 100);
