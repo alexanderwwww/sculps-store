@@ -77,6 +77,8 @@ export function walletsDock() {
   bar.addEventListener("keydown", (e) => { const c = e.target.closest && e.target.closest("[data-pos]"); if (c && e.key === "Enter") c.click(); });
   bar.addEventListener("click", (e) => { const b = e.target.closest("[data-go]"); if (!b) return; openDrawer("phantom"); setTimeout(() => { const t = drawer.querySelector(b.dataset.go); if (t) t.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" }); }, 280); });
   onState((s) => { try { paint(bar, s); } catch (err) { console.error(err); } });
+  // the page always ends above the bar, whatever the bar holds (a signal banner, chips): padding follows its real height
+  if (typeof ResizeObserver === "function") new ResizeObserver(() => { document.body.style.paddingBottom = Math.ceil(bar.getBoundingClientRect().height + 24) + "px"; }).observe(bar);
   const wrap = document.createElement("div"); wrap.append(bar, drawer); return wrap;
 }
 function paint(bar, s) {
