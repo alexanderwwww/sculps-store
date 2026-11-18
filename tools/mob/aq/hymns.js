@@ -1,10 +1,10 @@
 // HYMN screen: the 88 Orphic hymns (Greek, from aq/data/orphic-hymns.json, Wikisource CC BY-SA), framed by gold Doric columns,
 // the Delphic E above, a pentagram below, lightning behind, and the Council as an orchestra: one musician per department,
 // glowing when any of its workers is busy. Opens on hymn 15 (Zeus). Styles live in style.css under #hymn.
-import data from "./data/orphic-hymns.json";
+import { hymns } from "./data/orphic-hymns.json";
 import { esc, onState } from "./main.js";
 
-const H = data.hymns, START = 15;
+const H = hymns, START = 15;
 const at = (n) => H.find((x) => x.n === n) || H[0];
 
 const column = (side) => `<svg class="hy-col hy-${side}" viewBox="0 0 40 300" preserveAspectRatio="none" aria-hidden="true">
