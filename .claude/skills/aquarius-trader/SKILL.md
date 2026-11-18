@@ -17,6 +17,8 @@ This replaces every older rule in this file where they disagree (R3 to R7, tiers
 **THE COST**
 6. **Cost first.** Before any entry, the measured round trip must be under 1% and the coin's ATR at least 4 times the round trip. Otherwise skip. (Lesson 2: before costs both machines were flat; after costs they lost.)
 
+**HOW IT TRADES (Alex, 2026-11-18, overrides rules 7 and 8 below):** "Don't hard code 20 minutes or 10 minutes. You are a replica simulation of a real life human trader, you trade as them just with no emotion. You trade the chart, you Fibonacci it, with validations and data." No clock decides an entry or an exit. Entry: the 50 to 61.8% pullback of a validated up-leg, after a bounce candle. Stop: a 5-minute close below 78.6% (or the swing low). Targets: the leg high (sell half, stop to entry), then 1.272, trail to 1.618. Invalidation: a lower low, a liquidity drop, a Grok veto. Every trade recorded with its leg, levels and how it ended. Untested in the arena (it used fixed holds): it is measured live and on a paper mirror.
+
 **WHEN TO SELL**
 7. **Give it time.** Planned hold 45 minutes. No voluntary exit before 10 minutes. (Lesson 8: the edge grew at every step from 2 to 45 minutes; 2-minute holds lost everywhere.)
 8. **One wide stop, no tight bracket.** Stop at 3 ATR under entry, between 6% and 15%. No profit target inside the hold. (Lesson 4: stops fired 2.8 times as often as targets; brackets changed nothing.)
