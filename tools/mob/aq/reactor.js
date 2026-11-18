@@ -80,13 +80,40 @@ function background(G) {
 // ---------- the NEURON nebula (2026-11-18, Alex: "a brain in space"): glowing somas on the ring, branching dendrites,
 // axons linking them. Ambient: a slow drift and a breathing glow only. Spikes travel along axons ONLY when a real event
 // fires (a verdict ticket, a flow, a department run, a brain record): fire(deptId) starts them near that department.
-const NV = (typeof location !== "undefined" && /[?&]nv=([abc])/.exec(location.search) || [])[1] || "a";
-const NCFG = { a: { n: 54, deg: 2, den: 4, soma: 2.4 }, b: { n: 84, deg: 3, den: 3, soma: 1.8 }, c: { n: 36, deg: 2, den: 6, soma: 3.2 } }[NV];
+const NV = "g"; // the neuron lines are Hermes' caduceus (Alex, 2026-11-18); the a/b/c nebula variants were retired
+const NCFG = { soma: 2.0 };
 const NR = rng(2718);
-const somas = Array.from({ length: NCFG.n }, (_, i) => { const th = ((i + NR() * 0.8) / NCFG.n) * TAU; return { th, ps: NR() * TAU, ar: 0.25 + NR() * 0.95, df: 0.05 + NR() * 0.12, dp: NR() * TAU, sz: 0.6 + NR() * 0.9,
-  den: Array.from({ length: NCFG.den }, () => { const a = NR() * TAU, l = 7 + NR() * 13; return { a, l, f: (NR() - 0.5) * 1.3, l2: l * (0.4 + NR() * 0.4) }; }) }; });
-const axons = []; { const seen = new Set(); somas.forEach((s, i) => { const near = somas.map((o, j) => [j, Math.min(Math.abs(o.th - s.th), TAU - Math.abs(o.th - s.th)) + Math.abs(o.ps - s.ps) * 0.04]).filter(([j]) => j !== i).sort((a, b) => a[1] - b[1]).slice(0, NCFG.deg);
-  for (const [j] of near) { const k = i < j ? i + "-" + j : j + "-" + i; if (seen.has(k)) continue; seen.add(k); axons.push({ a: i, b: j, bend: (NR() - 0.5) * 0.9 }); } }); }
+// SACRED GEOMETRY (2026-11-18): the somas sit on the figure and the axons ARE its lines.
+// (th, ps) are the torus angles (around the ring, around the tube); ar is the distance from the tube's centre line.
+const PHI = (1 + Math.sqrt(5)) / 2, GA = TAU / (PHI * PHI); // the golden angle
+const node = (th, ps, ar, sz = 1) => ({ th, ps, ar, df: 0.06, dp: 0, sz, den: [] });
+function sacred(v) {
+  const S = [], E = []; const link = (a, b, bend = 0) => E.push({ a, b, bend });
+  { // CADUCEUS of Hermes: two serpent strands wind as a double helix around the staff of light (the tube's centre line);
+    // nodes at golden-ratio spacing; the strands cross at phi intervals and every crossing is a synapse joining both
+    const N = 89, turns = 8; for (const off of [0, Math.PI]) for (let i = 0; i < N; i++) { const u = (i / N); S.push(node(u * TAU, u * turns * TAU + off, 1.05, 0.7 + 0.5 * ((i % 5) === 0))); }
+    for (const b of [0, N]) for (let i = 0; i < N; i++) link(b + i, b + ((i + 1) % N), 0.18);
+    for (let k = 1; k <= 34; k++) { const i = Math.round((k * N / PHI) % N); link(i, N + i, 0.5); }
+  }
+  return { S, E };
+}
+const somas = []; const axons = [];
+if (NCFG.n) {
+  somas.push(...Array.from({ length: NCFG.n }, (_, i) => { const th = ((i + NR() * 0.8) / NCFG.n) * TAU; return { th, ps: NR() * TAU, ar: 0.25 + NR() * 0.95, df: 0.05 + NR() * 0.12, dp: NR() * TAU, sz: 0.6 + NR() * 0.9,
+    den: Array.from({ length: NCFG.den }, () => { const a = NR() * TAU, l = 7 + NR() * 13; return { a, l, f: (NR() - 0.5) * 1.3, l2: l * (0.4 + NR() * 0.4) }; }) }; }));
+  const seen = new Set(); somas.forEach((s, i) => { const near = somas.map((o, j) => [j, Math.min(Math.abs(o.th - s.th), TAU - Math.abs(o.th - s.th)) + Math.abs(o.ps - s.ps) * 0.04]).filter(([j]) => j !== i).sort((a, b) => a[1] - b[1]).slice(0, NCFG.deg);
+    for (const [j] of near) { const k = i < j ? i + "-" + j : j + "-" + i; if (seen.has(k)) continue; seen.add(k); axons.push({ a: i, b: j, bend: (NR() - 0.5) * 0.9 }); } });
+} else { const g = sacred(NV); somas.push(...g.S); axons.push(...g.E); }
+// Caduceus only: the staff of light along the tube's centre line and two wings rising at the top of the ring
+function drawStaff(o, G, t, rot, breath) {
+  if (NV !== "g") return; const d = G.d; o.lineCap = "round";
+  for (const [w, a] of [[7, 0.06], [3, 0.16], [1.2, 0.6]]) { o.strokeStyle = `rgba(255,236,190,${a * (0.8 + 0.2 * breath)})`; o.lineWidth = w * d; o.beginPath(); for (let k = 0; k <= 96; k++) { const p = torus(G, (k / 96) * TAU + rot, 0, 0); k ? o.lineTo(p.x, p.y) : o.moveTo(p.x, p.y); } o.stroke(); }
+  const top = torus(G, -Math.PI / 2, 0, 0); // the back of the ring, highest on screen
+  for (const side of [-1, 1]) for (let f = 0; f < 7; f++) { const len = (G.R * 0.42) * (1 - f * 0.11), a0 = -Math.PI / 2 + side * (0.35 + f * 0.17) + Math.sin(t * 0.8) * 0.04 * side;
+    o.strokeStyle = `rgba(${230 - f * 8},${225 - f * 6},255,${0.55 - f * 0.05})`; o.lineWidth = (2.2 - f * 0.2) * d; o.beginPath(); o.moveTo(top.x, top.y);
+    o.quadraticCurveTo(top.x + Math.cos(a0 - side * 0.5) * len * 0.6, top.y + Math.sin(a0 - side * 0.5) * len * 0.6 - 10 * d, top.x + Math.cos(a0) * len * (side > 0 ? 1 : 1), top.y + Math.sin(a0) * len * 0.55); o.stroke(); }
+  const gl = o.createRadialGradient(top.x, top.y, 0, top.x, top.y, 22 * d); gl.addColorStop(0, "rgba(255,245,210,.95)"); gl.addColorStop(1, "rgba(255,220,160,0)"); o.fillStyle = gl; o.fillRect(top.x - 22 * d, top.y - 22 * d, 44 * d, 44 * d);
+}
 const spikes = []; const flashes = [];
 const hueAt = (th) => { const u = (((th / TAU) % 1) + 1) % 1; return HUE[Math.floor(u * NS) % NS]; };
 export function fire(id, n = 3) { const i = DEPTS.findIndex((d) => d[0] === id), th0 = i < 0 ? Math.random() * TAU : (i / 12) * TAU;
@@ -94,6 +121,7 @@ export function fire(id, n = 3) { const i = DEPTS.findIndex((d) => d[0] === id),
   for (let q = 0; q < n && cand.length; q++) { const [k] = cand.splice((Math.random() * cand.length) | 0, 1)[0]; if (spikes.length < 40) spikes.push({ k, t0: st.t + q * 0.12, dir: Math.random() < 0.5 ? 1 : -1, hop: 2 }); } }
 function drawNeurons(o, G, t, rot, breath) {
   const d = G.d, A = G.a, P = somas.map((s) => { const p = torus(G, s.th + rot + Math.sin(t * s.df + s.dp) * 0.02, s.ps + t * s.df * 0.6, A * s.ar * (1.25 + 0.06 * Math.sin(t * 0.4 + s.dp))); p.depth = (p.z / (G.R + A * 1.6) + 1) / 2; return p; });
+  drawStaff(o, G, t, rot, breath);
   o.lineCap = "round";
   // axons: fine curved fibres, brighter in front (depth), one stroke per axon
   for (const x of axons) { const p = P[x.a], q = P[x.b], h = hueAt(somas[x.a].th), dep = (p.depth + q.depth) / 2, mx = (p.x + q.x) / 2 - (q.y - p.y) * x.bend * 0.35, my = (p.y + q.y) / 2 + (q.x - p.x) * x.bend * 0.35;
