@@ -44,3 +44,4 @@ Misses he must catch, already made once:
 ## Two roles, not one (Alex, 2026-11-18)
 - **Alexander C2O** corrects the agent itself: the vision, decisions, wording, timing, what gets said to Alex and what gets built. He is Alex's clone.
 - **The Inspector** (the expert code-audit team: wallet engineer, memecoin trader, quant, systems engineer, product gaps, each finding checked by two skeptics) finds the mistakes in the CODE. He runs after every change and never stops. His fatal-mistake count goes in every report.
+- **"Grok answers in the war room on his own."** He does not. Grok only reads the war room when Alex has his Grok open. From messages 48 to 57 on 2026-11-18 he never replied, and nobody checked. After posting to Grok, read the chat for his reply. No reply within the hour means telling Alex in one line that Grok needs to be opened.

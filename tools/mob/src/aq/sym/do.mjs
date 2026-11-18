@@ -2,14 +2,22 @@
 // each launch in two lanes (rules.mjs) and writes batches into mob_aq_sym_* every FLUSH_MS. PAPER ONLY: this file and every
 // file it imports never import the wallet, the signer, live orders, payouts or Phantom (test/symbiote.test.mjs proves it).
 //  Launches: PumpPortal wss://pumpportal.fun/api/data {"method":"subscribeNewToken"} (free, no key; read live 2026-11-18).
-//  Trades:   logsSubscribe on the pump program, decoded with pump.fun's own IDL. Source in storage key "source":
-//            "public" (free public node, default), "helius" (HELIUS_API_KEY, billed per MB: see probe.mjs) or "off".
+//  Trades, storage key "source" (POST /api/aq/sym/source), measured by the probe from Cloudflare on 2026-11-18:
+//   "helius" logsSubscribe on the pump program, every trade with its wallet, decoded with pump.fun's own IDL:
+//            234 notifications/s, ~41 GB/day = ~825,000 Helius credits/day (25M a month: the Business plan).
+//   "curve"  programSubscribe on the pump program's bonding-curve accounts (Helius): the reserves after every trade, so
+//            the price of every coin, but no wallet: 38/s, ~1.9 GB/day = ~38,000 credits/day (1.15M a month: Developer plan).
+//            Coins are matched by their curve address from the launch (PumpPortal's bondingCurveKey).
+//   "public" the free public node: it refused Cloudflare (HTTP 403) on 2026-11-18, kept only for completeness.
+//   "off"    (the default) launches only; every launch is then logged as missed with that reason. Helius credits are shared
+//            with the live trader's sends, so the stream is switched on only by a decision, never by default.
 import { db } from "../../db.mjs";
 import { eventsFromLogs } from "./decode.mjs";
 import { createEngine, GTA_MAIN } from "./rules.mjs";
 import { deepCheck } from "./health.mjs";
 import { flush, writeRight } from "./store.mjs";
-import { openWs, wsText, logsSub, heliusWss, PUBLIC_WSS } from "./probe.mjs";
+import { openWs, wsText, logsSub, programSub, heliusWss, PUBLIC_WSS } from "./probe.mjs";
+import { decodeCurve } from "./decode.mjs";
 
 export const PUMPPORTAL_WSS = "wss://pumpportal.fun/api/data";
 const FLUSH_MS = 5000, STALE_MS = 60000, FEED_MAX = 40;
@@ -20,7 +28,7 @@ export class Symbiote {
     this.eng = createEngine({ isVetoed: (m) => this.vetoes.has(m) });
     this.ws = { pp: null, chain: null }; this.lastMsg = { pp: 0, chain: 0 }; this.reconnects = { pp: 0, chain: 0 };
     this.win = []; this.notes = 0; this.bytes = 0; this.feed = []; this.queue = []; this.checked = new Set();
-    this.started = 0; this.lastVeto = 0; this.lastGta = 0; this.errors = [];
+    this.started = 0; this.lastVeto = 0; this.curves = new Map(); this.lastGta = 0; this.errors = [];
   }
   d() { return db(this.env); }
   err(where, e) { this.errors.unshift({ at: new Date().toISOString(), where, msg: String(e?.message || e).slice(0, 200) }); this.errors.length = Math.min(this.errors.length, 8); }
@@ -29,7 +37,7 @@ export class Symbiote {
     const u = new URL(req.url);
     if (u.pathname === "/config" && req.method === "POST") {
       const b = await req.json().catch(() => ({}));
-      if (!["public", "helius", "off"].includes(b.source)) return Response.json({ error: "source must be public, helius or off" }, { status: 400 });
+      if (!["public", "helius", "curve", "off"].includes(b.source)) return Response.json({ error: "source must be helius, curve, public or off" }, { status: 400 });
       await this.ctx.storage.put("source", b.source); try { this.ws.chain?.close(1000, "source changed"); } catch {} this.ws.chain = null;
     }
     await this.start();
@@ -45,14 +53,14 @@ export class Symbiote {
         const lost = await this.d().q(`UPDATE mob_aq_sym_coins SET done = true, end_reason = 'restart', updated_at = now() WHERE NOT done RETURNING mint, symbol, n`);
         const never = lost.filter((c) => !c.n);
         if (lost.length) await this.d().q(`INSERT INTO mob_aq_sym_missed (mint, symbol, reason) SELECT mint, symbol, 'symbiote restarted while the coin was live' FROM json_to_recordset($1::json) AS x(mint text, symbol text) ON CONFLICT (mint) DO NOTHING`, [JSON.stringify(lost)]);
-        this.eng.stats.missed += never.length; this.eng.stats.restarts = (this.eng.stats.restarts || 0) + 1; this.eng.stats.lostAtRestart = (this.eng.stats.lostAtRestart || 0) + lost.length;
+        this.eng.stats.missed += never.length; if (saved) this.eng.stats.restarts = (this.eng.stats.restarts || 0) + 1; this.eng.stats.lostAtRestart = (this.eng.stats.lostAtRestart || 0) + lost.length;
       } catch (e) { this.err("restart", e); }
     }
     await this.connect();
     if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + FLUSH_MS);
   }
 
-  async source() { return (await this.ctx.storage.get("source")) || "public"; }
+  async source() { return (await this.ctx.storage.get("source")) || "off"; }
 
   async connect() {
     const now = Date.now();
@@ -70,13 +78,13 @@ export class Symbiote {
     if (src === "off") { try { this.ws.chain?.close(); } catch {} this.ws.chain = null; return; }
     if (!this.ws.chain || now - this.lastMsg.chain > STALE_MS) {
       try { this.ws.chain?.close(); } catch {}
-      if (src === "helius" && !this.env.HELIUS_API_KEY) { this.err("chain", "HELIUS_API_KEY is not set"); return; }
+      if (src !== "public" && !this.env.HELIUS_API_KEY) { this.err("chain", "HELIUS_API_KEY is not set"); return; }
       try {
-        const ws = await openWs(src === "helius" ? heliusWss(this.env.HELIUS_API_KEY) : PUBLIC_WSS); this.ws.chain = ws; this.lastMsg.chain = now; this.reconnects.chain++;
-        ws.addEventListener("message", (m) => this.onChain(wsText(m.data)));
+        const ws = await openWs(src === "public" ? PUBLIC_WSS : heliusWss(this.env.HELIUS_API_KEY)); this.ws.chain = ws; this.lastMsg.chain = now; this.reconnects.chain++;
+        ws.addEventListener("message", (m) => (src === "curve" ? this.onCurve(wsText(m.data)) : this.onChain(wsText(m.data))));
         ws.addEventListener("close", () => { if (this.ws.chain === ws) this.ws.chain = null; });
         ws.addEventListener("error", () => { if (this.ws.chain === ws) this.ws.chain = null; });
-        ws.send(logsSub());
+        ws.send(src === "curve" ? programSub() : logsSub());
       } catch (e) { this.err("chain", e); this.ws.chain = null; }
     }
   }
@@ -88,6 +96,7 @@ export class Symbiote {
     let j; try { j = JSON.parse(raw); } catch { return; }
     if (j.txType !== "create" || !j.mint) return;
     const c = this.eng.onCreate({ mint: j.mint, name: j.name, symbol: j.symbol, uri: j.uri, creator: j.traderPublicKey, curve: j.bondingCurveKey, src: "pumpportal" });
+    if (j.bondingCurveKey) this.curves.set(j.bondingCurveKey, j.mint);
     if (c.n === 0 && !c.chain) this.push({ at: Date.now(), k: "launch", mint: c.mint, sym: c.symbol, gta: c.gta });
   }
 
@@ -97,9 +106,25 @@ export class Symbiote {
     const r = j.params?.result; if (!r?.value) return;
     const e = eventsFromLogs(r.value, r.context?.slot ?? null);
     if (e.failed) { this.eng.stats.failed++; return; }
-    for (const c of e.creates) { const had = this.eng.coins.has(c.mint); const coin = this.eng.onCreate({ ...c, src: "chain" }); if (!had) this.push({ at: now, k: "launch", mint: coin.mint, sym: coin.symbol, gta: coin.gta }); }
+    for (const c of e.creates) { if (c.curve) this.curves.set(c.curve, c.mint); const had = this.eng.coins.has(c.mint); const coin = this.eng.onCreate({ ...c, src: "chain" }); if (!had) this.push({ at: now, k: "launch", mint: coin.mint, sym: coin.symbol, gta: coin.gta }); }
     for (const t of e.trades) this.eng.onTrade(t, now);
     for (const x of e.completes) this.eng.onComplete(x, now);
+  }
+
+  // "curve" source: a bonding-curve account changed. The reserve change is the trade (no wallet in this source).
+  onCurve(raw) {
+    const now = Date.now(); this.lastMsg.chain = now; this.notes++; this.bytes += raw.length;
+    let j; try { j = JSON.parse(raw); } catch { return; }
+    const v = j.params?.result?.value; if (!v?.pubkey) return;
+    const mint = this.curves.get(v.pubkey); if (!mint) { this.eng.stats.unknownCurves = (this.eng.stats.unknownCurves || 0) + 1; return; }
+    const bc = decodeCurve(v.account?.data?.[0] || ""); if (!bc) return;
+    const c = this.eng.coins.get(mint); if (!c) return;
+    const vq = bc.virtual_quote_reserves, vt = bc.virtual_token_reserves, pq = c.vsol ?? c.vsol0, pt = c.vtok ?? c.vtok0;
+    if (bc.complete) { this.eng.onComplete({ mint }, now); return; }
+    if (!(vq > 0 && vt > 0) || (vq === pq && vt === pt)) return;
+    const buy = pq == null ? true : vq > pq;
+    this.eng.onTrade({ mint, buy, sol: pq == null ? 0 : Math.abs(vq - pq) / 1e9, tokens: pt == null ? 0 : Math.abs(vt - pt), user: null, ts: Math.floor(now / 1000),
+      vsol: vq, vtok: vt, realSol: (bc.real_quote_reserves || 0) / 1e9, px: (vq / 1e9) / (vt / 1e6), slot: j.params.result.context?.slot ?? null }, now);
   }
 
   rate() { const now = Date.now(); this.win.push([now, this.notes]); while (this.win.length && now - this.win[0][0] > 60000) this.win.shift(); const a = this.win[0]; return a && now > a[0] ? +((this.notes - a[1]) / ((now - a[0]) / 1000)).toFixed(1) : 0; }

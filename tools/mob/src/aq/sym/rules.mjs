@@ -146,11 +146,11 @@ export function createEngine({ isVetoed = () => false } = {}) {
     if (c.vsol0 == null) { c.vsol0 = tr.vsol; c.vtok0 = tr.vtok; c.px0 = tr.px; }
     c.n++; c.last = tr.px; c.lastAt = at; c.vsol = tr.vsol; c.vtok = tr.vtok; c.realSol = tr.realSol ?? c.realSol;
     c.hi = c.hi == null ? tr.px : Math.max(c.hi, tr.px); c.lo = c.lo == null ? tr.px : Math.min(c.lo, tr.px);
-    if (tr.buy) { c.buys++; c.buyers.add(tr.user); if (c.sizes.length < 400) c.sizes.push(tr.sol); } else { c.sells++; c.sellers.add(tr.user); }
+    if (tr.buy) { c.buys++; if (tr.user) c.buyers.add(tr.user); if (tr.user && c.sizes.length < 400) c.sizes.push(tr.sol); } else { c.sells++; if (tr.user) c.sellers.add(tr.user); }
     c.volSol += tr.sol;
     if (tr.user && tr.user === c.creator) { if (tr.buy) { c.devBuy += tr.sol; c.devTok += tr.tokens; } else { c.devSell += tr.sol; c.devTok -= tr.tokens; } }
-    if (tr.buy && c.createSlot != null && tr.slot != null && tr.slot - c.createSlot <= 2 && tr.user !== c.creator) c.early.set(tr.user, (c.early.get(tr.user) || 0) + tr.tokens);
-    const cy = c.cycles.get(tr.user) || { b: 0, s: 0, sol: 0 }; tr.buy ? cy.b++ : cy.s++; cy.sol += tr.sol; if (c.cycles.size < 3000) c.cycles.set(tr.user, cy);
+    if (tr.user && tr.buy && c.createSlot != null && tr.slot != null && tr.slot - c.createSlot <= 2 && tr.user !== c.creator) c.early.set(tr.user, (c.early.get(tr.user) || 0) + tr.tokens);
+    if (tr.user) { const cy = c.cycles.get(tr.user) || { b: 0, s: 0, sol: 0 }; tr.buy ? cy.b++ : cy.s++; cy.sol += tr.sol; if (c.cycles.size < 3000) c.cycles.set(tr.user, cy); }
     if (!c.ctrl) { const size = sizeFor(c), fill = buyFill(tr.vsol, tr.vtok, size, fee(c)); c.ctrl = { size, cost: size + NET_FEE_SOL * (c.sol ? 1 : size), tokens: fill.tokens, px: tr.px, netPct: null }; }
     for (const lane of Object.keys(LANES)) stepLane(c, lane, c.lanes[lane], tr, at);
     if (c.gta) gtaTick(c, at);
