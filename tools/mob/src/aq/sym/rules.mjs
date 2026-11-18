@@ -14,8 +14,17 @@
 //           virtual reserves, network fee 61,000 lamports a side (measured 2026-11-16). Non-SOL-quoted coins are bought at the
 //           same share of their starting curve as 1 SOL of a 30 SOL curve.
 //  EXPLODED a lane whose marked value after costs reached +100% (doubled): it goes to the health checks (the judging step).
+//  REAL MOVES ONLY (production 2026-11-18: 206 flags, 0 right calls). Read from the chain for all 206: 124 were Mayhem-mode
+//           coins (pump.fun's agent moves the VIRTUAL reserves about 135x the SOL it trades, so the price triples on 0.2 real
+//           SOL), 40 were quoted in another token, 42 were plain SOL coins. On every plain coin virtual - real reserves is
+//           exactly the starting 30 SOL; on no Mayhem coin is it. So: (1) a paper sale can never take out more than the real
+//           SOL in the curve plus what the paper buy itself put in; (2) a doubling is flagged only on a SOL-quoted coin, not
+//           in Mayhem mode, whose price is backed (virtual - real = the starting virtual reserves) and whose curve holds
+//           FLAG_REAL_SOL_MIN real SOL (a true doubling from a 30 SOL curve needs 12.4). Everything else is logged with its
+//           reason (lanes.market.noFlag, stats.noFlag) and never reaches the health checks.
 export const LANES = { aquarius: { stop: -0.5, t1: 2, give: 0.382, t3: null }, grok: { stop: -0.6, t1: 2, give: 0.618, t3: 5 } };
 export const SIZE_SOL = 1, WALLET_SOL = 100000, NET_FEE_SOL = 0.000061, LEG_X_COST = 4, EXPLODE_PCT = 100;
+export const FLAG_REAL_SOL_MIN = 10, BACKED_TOL = 0.02;
 export const STOP_FIB = 0.786, T2_EXT = 1.272, T3_EXT = 1.618;
 export const GTA_KEEP_MS = 3 * 86400000, WATCH_MS = 6 * 3600000, BAR_KEEP = 360;
 export const QUIET_MS = 20 * 60 * 1000, DEFAULT_FEE_BPS = 125, REF_CURVE_SOL = 30;
@@ -46,10 +55,22 @@ const pxOf = (vsol, vtok) => (vtok > 0 ? (vsol / 1e9) / (vtok / 1e6) : 0);
 export function createEngine({ isVetoed = () => false } = {}) {
   const coins = new Map();
   const out = { bars: new Map(), hours: new Map(), coins: new Map(), trades: [], missed: [], lessons: [], gta: [], explode: [], feed: [] };
-  const stats = { launches: 0, seen: 0, traded: 0, decided: 0, missed: 0, events: 0, trades: 0, failed: 0, lastAt: 0, fruits: 0 };
+  const stats = { launches: 0, seen: 0, traded: 0, decided: 0, missed: 0, events: 0, trades: 0, failed: 0, lastAt: 0, fruits: 0, noFlag: { non_sol: 0, mayhem: 0, unbacked: 0, thin: 0 } };
   const wallet = Object.fromEntries(Object.keys(LANES).map((l) => [l, { sol: WALLET_SOL, n: 0, wins: 0, open: 0 }]));
   const touch = (c) => out.coins.set(c.mint, c);
   const fee = (c) => c.feeBps ?? DEFAULT_FEE_BPS;
+  // the SOL a paper sale can really take out: the curve's real reserves plus what this paper position itself put in
+  const cap = (c, s, v) => (c.realKnown ? Math.max(0, Math.min(v, (c.realSol || 0) + (s.inCurve || 0))) : v);
+  const took = (s, v, f) => { s.inCurve = Math.max(0, (s.inCurve || 0) - v / (1 - f / 10000)); };
+  // why a doubling on this coin is NOT a real move (null = it is one)
+  function flagBlock(c) {
+    if (c.sol === false) return ["non_sol", "quoted in another token, not SOL: the live trader buys with SOL only"];
+    if (c.mayhem === true) return ["mayhem", "Mayhem mode: pump.fun's agent moves the price without real SOL"];
+    const start = c.ivq ?? c.vsol0;
+    if (c.realKnown && start > 0 && Math.abs(c.vsol - c.realSol * 1e9 - start) > start * BACKED_TOL) return ["unbacked", `price not backed: virtual reserves ${(c.vsol / 1e9).toFixed(2)} against ${c.realSol.toFixed(3)} real SOL (a real curve keeps virtual - real at ${(start / 1e9).toFixed(0)})`];
+    if (!((c.realSol || 0) >= FLAG_REAL_SOL_MIN)) return ["thin", `${(c.realSol || 0).toFixed(3)} real SOL in the curve, under ${FLAG_REAL_SOL_MIN}`];
+    return null;
+  }
   const sizeFor = (c) => (c.sol ? SIZE_SOL : (c.vsol0 / 1e9) * SIZE_SOL / REF_CURVE_SOL);
 
   function newCoin(x, src) {
@@ -57,7 +78,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
       createdAt: x.ts ? x.ts * 1000 : Date.now(), createSlot: x.slot ?? null, sol: x.sol !== false, src, vsol0: x.vsol ?? null, vtok0: x.vtok ?? null,
       px0: x.vsol && x.vtok ? pxOf(x.vsol, x.vtok) : null, last: null, lastAt: null, hi: null, lo: null, n: 0, buys: 0, sells: 0, volSol: 0,
       buyers: new Set(), sellers: new Set(), sizes: [], early: new Map(), devBuy: 0, devSell: 0, devTok: 0, cycles: new Map(), feeBps: null,
-      vsol: x.vsol ?? null, vtok: x.vtok ?? null, realSol: 0, gta: false, done: false, migrated: false, end: null, ctrl: null, firstAt: null,
+      vsol: x.vsol ?? null, vtok: x.vtok ?? null, realSol: 0, realKnown: false, mayhem: x.mayhem ?? null, ivq: x.vsol ?? null, noFlag: null, gta: false, done: false, migrated: false, end: null, ctrl: null, firstAt: null,
       lanes: Object.fromEntries(Object.keys(LANES).map((l) => [l, { st: "wait", L: null, H: null, armed: false }])), minute: null };
     c.gta = isGta(c);
     coins.set(c.mint, c); touch(c);
@@ -68,7 +89,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
     stats.events++;
     let c = coins.get(x.mint);
     if (!c) { c = newCoin(x, x.src || "chain"); stats.launches++; }
-    else { for (const k of ["name", "symbol", "uri", "creator", "curve"]) if (x[k] && !c[k]) c[k] = x[k]; if (x.sol === false) c.sol = false; c.gta = isGta(c); if (!c.px0 && x.vsol && x.vtok) { c.vsol0 = x.vsol; c.vtok0 = x.vtok; c.px0 = pxOf(x.vsol, x.vtok); } touch(c); }
+    else { for (const k of ["name", "symbol", "uri", "creator", "curve"]) if (x[k] && !c[k]) c[k] = x[k]; if (x.sol === false) c.sol = false; if (x.mayhem != null) c.mayhem = x.mayhem; c.gta = isGta(c); if (!c.px0 && x.vsol && x.vtok) { c.vsol0 = x.vsol; c.vtok0 = x.vtok; c.px0 = pxOf(x.vsol, x.vtok); } touch(c); }
     if (x.src === "pumpportal") c.pp = true; else c.chain = true;
     if (x.src === "chain" && x.slot != null && c.n === 0) { c.createSlot = x.slot; c.launchComplete = !!x.live; }
     return c;
@@ -94,7 +115,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
 
   function closeLane(c, lane, s, exit, price, vsol, vtok, at) {
     const f = fee(c);
-    const back = vsol && vtok ? sellFill(vsol, vtok, s.tokens, f) : s.tokens / 1e6 * price * (1 - f / 10000);
+    const back = cap(c, s, vsol && vtok ? sellFill(vsol, vtok, s.tokens, f) : s.tokens / 1e6 * price * (1 - f / 10000));
     s.proceeds += back - NET_FEE_SOL * (c.sol ? 1 : s.size);
     const netPct = (s.proceeds - s.cost) / s.cost * 100;
     const t = { mint: c.mint, symbol: c.symbol, lane, entryAt: s.at, exitAt: at, entryPx: s.px, exitPx: price, cost: s.cost, proceeds: s.proceeds, netPct, peakPct: s.peak, legPct: s.legPct, rtPct: s.rt, exit, half: s.half, gta: c.gta };
@@ -104,10 +125,14 @@ export function createEngine({ isVetoed = () => false } = {}) {
   }
 
   function markLane(c, lane, s, vsol, vtok) {
-    const val = s.proceeds + sellFill(vsol, vtok, s.tokens, fee(c)) - NET_FEE_SOL * (c.sol ? 1 : s.size);
-    const pct = (val - s.cost) / s.cost * 100;
+    const raw = sellFill(vsol, vtok, s.tokens, fee(c)), net = NET_FEE_SOL * (c.sol ? 1 : s.size);
+    const pct = (s.proceeds + cap(c, s, raw) - net - s.cost) / s.cost * 100, onPaper = (s.proceeds + raw - net - s.cost) / s.cost * 100;
     if (pct > s.peak) s.peak = pct;
-    if (!s.exploded && s.peak >= EXPLODE_PCT) { s.exploded = true; out.explode.push({ mint: c.mint, symbol: c.symbol, lane, gainPct: r6(s.peak), at: Date.now(), px: c.last }); stats.fruits++; c.watch = true; }
+    if (s.exploded || onPaper < EXPLODE_PCT) return;   // judged on the value NOW, never on an old peak
+    // doubled by the curve's price: a real move only if nothing blocks it AND the real reserves could pay the sale
+    const why = flagBlock(c) || (pct < EXPLODE_PCT ? ["thin", `the curve's real SOL (${(c.realSol || 0).toFixed(3)}) cannot pay the doubled position`] : null);
+    if (why) { if (!c.noFlag) { c.noFlag = why[0]; c.noFlagWhy = why[1]; stats.noFlag[why[0]]++; out.feed.push({ at: Date.now(), k: "noflag", mint: c.mint, sym: c.symbol, lane, why: why[0] }); touch(c); } return; }
+    { s.exploded = true; c.noFlag = null; out.explode.push({ mint: c.mint, symbol: c.symbol, lane, gainPct: r6(s.peak), at: Date.now(), px: c.last }); stats.fruits++; c.watch = true; }
   }
 
   function stepLane(c, lane, s, tr, at) {
@@ -116,7 +141,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
     if (s.st === "wait") { // buy at first sight: no judging
       const size = sizeFor(c), fill = buyFill(tr.vsol, tr.vtok, size, f);
       Object.assign(s, { st: "open", at, size, cost: size + NET_FEE_SOL * (c.sol ? 1 : size), tokens: fill.tokens, px: p, proceeds: 0, peak: -100, H: p, legPct: 0,
-        rt: roundTrip(tr.vsol, tr.vtok, size, f), stop: p * (1 + cfg.stop), half: false, trail: false });
+        rt: roundTrip(tr.vsol, tr.vtok, size, f), stop: p * (1 + cfg.stop), half: false, trail: false, inCurve: size * 10000 / (10000 + f) });
       wallet[lane].open++; stats.traded++; out.feed.push({ at, k: "entry", mint: c.mint, sym: c.symbol, lane, px: p });
       return;
     }
@@ -124,7 +149,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
     if (p > s.H) s.H = p; s.legPct = (s.H / s.px - 1) * 100;
     if (s.half) s.stop = Math.max(s.px, s.H - cfg.give * (s.H - s.px));
     if (p <= s.stop) return closeLane(c, lane, s, s.half ? "trail" : "stop", p, tr.vsol, tr.vtok, at);
-    if (!s.half && p >= s.px * cfg.t1) { const half = s.tokens / 2; s.proceeds += sellFill(tr.vsol, tr.vtok, half, f) - NET_FEE_SOL * (c.sol ? 1 : s.size); s.tokens -= half; s.half = true; s.stop = s.px; }
+    if (!s.half && p >= s.px * cfg.t1) { const half = s.tokens / 2, got = cap(c, s, sellFill(tr.vsol, tr.vtok, half, f)); took(s, got, f); s.proceeds += got - NET_FEE_SOL * (c.sol ? 1 : s.size); s.tokens -= half; s.half = true; s.stop = s.px; }
     if (cfg.t3 && p >= s.px * cfg.t3) return closeLane(c, lane, s, "t3", p, tr.vsol, tr.vtok, at);
   }
 
@@ -135,6 +160,9 @@ export function createEngine({ isVetoed = () => false } = {}) {
     if (c.done) return c;
     if (tr.quoteSol === false) c.sol = false;
     if (tr.feeBps != null) c.feeBps = tr.feeBps + (tr.creatorFeeBps || 0);
+    if (tr.mayhem != null) c.mayhem = tr.mayhem;
+    if (tr.ivq > 0) c.ivq = tr.ivq;
+    if (Number.isFinite(tr.realSol)) c.realKnown = true;
     if (!c.firstAt) { c.firstAt = at; stats.seen++; }
     if (c.vsol0 == null) { c.vsol0 = tr.vsol; c.vtok0 = tr.vtok; c.px0 = tr.px; }
     c.n++; c.last = tr.px; c.lastAt = at; c.vsol = tr.vsol; c.vtok = tr.vtok; c.realSol = tr.realSol ?? c.realSol;
@@ -145,7 +173,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
     if (tr.user && tr.user === c.creator) { if (tr.buy) { c.devBuy += tr.sol; c.devTok += tr.tokens; } else { c.devSell += tr.sol; c.devTok -= tr.tokens; } }
     if (tr.user && tr.buy && c.createSlot != null && tr.slot != null && tr.slot - c.createSlot <= 2 && tr.user !== c.creator) c.early.set(tr.user, (c.early.get(tr.user) || 0) + tr.tokens);
     if (tr.user) { const cy = c.cycles.get(tr.user) || { b: 0, s: 0, sol: 0 }; tr.buy ? cy.b++ : cy.s++; cy.sol += tr.sol; if (c.cycles.size < 3000) c.cycles.set(tr.user, cy); }
-    if (!c.ctrl) { const size = sizeFor(c), fill = buyFill(tr.vsol, tr.vtok, size, fee(c)); c.ctrl = { size, cost: size + NET_FEE_SOL * (c.sol ? 1 : size), tokens: fill.tokens, px: tr.px, netPct: null }; }
+    if (!c.ctrl) { const size = sizeFor(c), fill = buyFill(tr.vsol, tr.vtok, size, fee(c)); c.ctrl = { size, cost: size + NET_FEE_SOL * (c.sol ? 1 : size), tokens: fill.tokens, px: tr.px, netPct: null, inCurve: size * 10000 / (10000 + fee(c)) }; }
     // MARKET lane (Alex, 2026-11-18: "symbiote buys 100% of the coins it sees"): the first-trade buy (c.ctrl) is held for the
     // coin's whole life; peak multiple, time to peak and the drawdown from the peak are its training data
     const m = c.ctrl; if (m) { if (!m.peak || tr.px > m.peak) { m.peak = tr.px; m.peakAt = at; m.trough = tr.px; } else if (tr.px < m.trough) m.trough = tr.px; m.at0 = m.at0 || at; }
@@ -173,7 +201,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
       if (s.st === "open") closeLane(c, lane, s, why, c.last, c.vsol, c.vtok, at);
       else if (s.st === "wait") { s.st = "done"; s.result = { netPct: 0, exit: c.n ? "no_setup" : "no_trades" }; }
     }
-    if (c.ctrl && c.n) { const back = sellFill(c.vsol, c.vtok, c.ctrl.tokens, fee(c)) - NET_FEE_SOL * (c.sol ? 1 : c.ctrl.size); c.ctrl.netPct = r6((back - c.ctrl.cost) / c.ctrl.cost * 100); }
+    if (c.ctrl && c.n) { const back = cap(c, c.ctrl, sellFill(c.vsol, c.vtok, c.ctrl.tokens, fee(c))) - NET_FEE_SOL * (c.sol ? 1 : c.ctrl.size); c.ctrl.netPct = r6((back - c.ctrl.cost) / c.ctrl.cost * 100); }
     if (!c.n) { stats.missed++; out.missed.push({ mint: c.mint, symbol: c.symbol, reason: c.chain ? "no trade seen on the stream after launch" : "launch seen only on PumpPortal, never on the chain stream", at }); }
     if (c.minute) { out.gta.push({ ...c.minute, mint: c.mint }); c.minute = null; }
     touch(c);
@@ -201,8 +229,8 @@ export function createEngine({ isVetoed = () => false } = {}) {
     let washVol = 0; for (const v of c.cycles.values()) if (v.b >= 3 && v.s >= 3) washVol += v.sol;
     const sniperTok = [...c.early.values()].reduce((a, b) => a + b, 0);
     return { uniqueBuyers: c.buyers.size, buys: c.buys, sells: c.sells, buyShare: r6(c.buys / Math.max(1, c.buys + c.sells)), sizeCv: r6(mean ? sd / mean : 0), sameSizeShare: r6(topSame),
-      washShare: r6(c.volSol ? washVol / c.volSol : 0), sniperWallets: c.early.size, sniperShare: r6(sniperTok / supply), devSold: c.devSell > 0, devShare: r6(Math.max(0, c.devTok) / supply),
-      walletsSeen: (c.userTrades || 0) > 0, launchComplete: !!c.launchComplete, createSlot: c.createSlot, devBuySol: r6(c.devBuy),
+      washShare: r6(c.volSol ? washVol / c.volSol : 0), sniperWallets: c.early.size, sniperShare: r6(sniperTok / supply), devSold: c.devSell > 0, devShare: r6(Math.max(0, c.devTok) / supply), devTok: Math.max(0, c.devTok),
+      walletsSeen: c.n > 0 && (c.userTrades || 0) >= c.n * 0.9, mayhem: c.mayhem, launchComplete: !!c.launchComplete, createSlot: c.createSlot, devBuySol: r6(c.devBuy),
       earlyBuyers: [...c.early.keys()].slice(0, 10), firstBuyers: [...c.buyers].slice(0, 12), creator: c.creator, curve: c.curve, uri: c.uri,
       realSol: c.realSol, mcapSol: r6(c.last ? c.last * 1e9 : null), liqToMcap: r6(c.last ? c.realSol / (c.last * 1e9) : null), quote: c.sol ? "SOL" : "other" };
   }
@@ -212,13 +240,13 @@ export function createEngine({ isVetoed = () => false } = {}) {
     const c = coins.get(mint); if (!c) return;
     c.launchComplete = !!f.complete; c.createSlot = f.createSlot ?? c.createSlot; if (f.creator) c.creator = f.creator;
     c.early = new Map(f.early || []); if (f.devTok != null) c.devTok = Math.max(c.devTok, f.devTok); if (f.devBuy) c.devBuy = Math.max(c.devBuy, f.devBuy); if (f.devSold) c.devSell = Math.max(c.devSell, 1e-9);
-    c.launchAsked = true;
+    c.launchAsked = true; c.launchDone = true;
   }
   // hands the accumulated changes to the writer and starts a new batch
   function drain(now = Date.now()) {
     const coinsOut = [...out.coins.values()].map((c) => ({ mint: c.mint, symbol: c.symbol, name: c.name, gta: c.gta, sol: c.sol, created_at: new Date(c.createdAt).toISOString(),
       n: c.n, buyers: c.buyers.size, px0: c.px0, last: c.last, hi: c.hi, end: c.end, done: c.done, pp: !!c.pp, chain: !!c.chain,
-      lanes: { ...Object.fromEntries(Object.entries(c.lanes).map(([l, s]) => [l, s.result || { st: s.st, peakPct: s.peak ?? null }])), market: c.ctrl ? { bought: true, peakX: r6(c.ctrl.peak / c.ctrl.px), toPeakS: c.ctrl.peakAt ? Math.round((c.ctrl.peakAt - c.ctrl.at0) / 1000) : null, ddFromPeakPct: r6((c.ctrl.trough / c.ctrl.peak - 1) * 100), netPct: c.ctrl.netPct, end: c.end } : { bought: false } }, ctrl: c.ctrl?.netPct ?? null }));
+      lanes: { ...Object.fromEntries(Object.entries(c.lanes).map(([l, s]) => [l, s.result || { st: s.st, peakPct: s.peak ?? null }])), market: c.ctrl ? { bought: true, peakX: r6(c.ctrl.peak / c.ctrl.px), toPeakS: c.ctrl.peakAt ? Math.round((c.ctrl.peakAt - c.ctrl.at0) / 1000) : null, ddFromPeakPct: r6((c.ctrl.trough / c.ctrl.peak - 1) * 100), netPct: c.ctrl.netPct, end: c.end, ...(c.noFlag ? { noFlag: c.noFlag, noFlagWhy: c.noFlagWhy } : {}) } : { bought: false } }, ctrl: c.ctrl?.netPct ?? null }));
     const bars = [...out.bars].map(([mint, k]) => ({ mint, ...k })); out.bars.clear();
     const b = { bars, coins: coinsOut, trades: out.trades.splice(0), missed: out.missed.splice(0), lessons: [...out.lessons.splice(0), ...hourRows(now)], gta: out.gta.splice(0), explode: out.explode.splice(0), feed: out.feed.splice(0) };
     out.coins.clear();
@@ -228,7 +256,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
   // QUIET_MS with no trade yet is pending, not missed)
   const coverage = () => { let pending = 0; for (const c of coins.values()) if (!c.done && !c.n) pending++;
     const base = stats.launches - pending; return { ...stats, pending, live: coins.size, pct: base > 0 ? r6(Math.min(100, (base - stats.missed) / base * 100)) : null, wallet }; };
-  return { flushHours: () => hourRows(Infinity), onCreate, onTrade, onComplete, sweep, drain, streamHealth, setLaunch, coverage, coins, stats, wallet, gtaTick };
+  return { flagBlock, flushHours: () => hourRows(Infinity), onCreate, onTrade, onComplete, sweep, drain, streamHealth, setLaunch, coverage, coins, stats, wallet, gtaTick };
 }
 
 // A right call: exploded on paper AND every health rule passed. Returns {ok, failed:[...], checks}. Thresholds stated here.
@@ -244,6 +272,10 @@ export const HEALTH = { top10Max: 0.30, devShareMax: 0.05, devSold: false, snipe
 // Only real danger fails: a measured value over its limit, an active authority, a danger-level RugCheck risk, a VETO,
 // or missing launch facts (the Inspector's fail-closed rule: without them snipers and the dev cannot be seen).
 export const MAX_UNKNOWN = 3;
+// The CONCENTRATION checks (top-10 holders, same funder, sniper share) may NEVER be unknown for a candidate (Inspector
+// 2026-11-18: with 3 unknowns allowed, a bundled coin passed when Helius answered 429 on all three). Unknown there = not a
+// right call; `retry` says the only thing wrong is a missing answer, so the caller asks again later before it fails closed.
+export const CONCENTRATION = ["top-10 holders excluding the curve and program accounts", "early wallets funded from one source", "sniper/bundle share in the first blocks"];
 export function judgeHealth(h) {
   const failed = [], unknown = [], has = (v) => v !== null && v !== undefined && !(typeof v === "number" && !isFinite(v));
   const need = (name, ok, v) => { if (!has(v)) unknown.push(name); else if (!ok) failed.push(`${name}: ${typeof v === "number" ? Math.round(v * 1000) / 1000 : v}`); };
@@ -263,8 +295,11 @@ export function judgeHealth(h) {
   auth("freeze authority revoked", h.freezeAuthority);
   if (h.rugDanger === true) failed.push(`RugCheck danger: ${(h.rugRisks || []).filter((x) => /danger/.test(x)).join(", ") || "danger"}`); else if (h.rugDanger !== false) unknown.push("RugCheck");
   if (h.socials === 0) failed.push("socials: the coin's own metadata lists no X, Telegram or website"); else if (!has(h.socials)) unknown.push("socials");
+  if (h.mayhem === true) failed.push("Mayhem mode: pump.fun's agent moves the price without real SOL");
   if (h.quote === "other") failed.push("quoted in another token, not SOL: the live trader buys with SOL only");
   if (h.vetoed) failed.push("Grok VETO");
   if (unknown.length > MAX_UNKNOWN) failed.push(`too little known: ${unknown.length} checks got no answer (${unknown.join(", ")})`);
-  return { ok: failed.length === 0, failed, unknown };
+  const real = failed.length, blind = unknown.filter((u) => CONCENTRATION.includes(u));
+  for (const u of blind) failed.push(`${u}: no answer (a concentration check must be known)`);
+  return { ok: failed.length === 0, failed, unknown, retry: real === 0 && blind.length > 0 };
 }

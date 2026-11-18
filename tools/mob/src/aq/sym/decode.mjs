@@ -27,7 +27,9 @@ const FIELDS = {
     ["creator_fee_bps", "u64"], ["is_holder_reward", "bool"], ["depth", "u8"]],
   CompleteEvent: [["user", "pubkey"], ["mint", "pubkey"], ["bonding_curve", "pubkey"], ["timestamp", "i64"], ["quote_mint", "pubkey"]],
   BondingCurve: [["virtual_token_reserves", "u64"], ["virtual_quote_reserves", "u64"], ["real_token_reserves", "u64"], ["real_quote_reserves", "u64"],
-    ["token_total_supply", "u64"], ["complete", "bool"], ["creator", "pubkey"]],
+    ["token_total_supply", "u64"], ["complete", "bool"], ["creator", "pubkey"], ["is_mayhem_mode", "bool"], ["is_cashback_coin", "bool"], ["quote_mint", "pubkey"],
+    ["creator_fee_bps", "u64"], ["can_edit_creator_fee", "bool"], ["is_holder_reward", "bool"], ["creator_fee", "u64"], ["protocol_fees", "u64"], ["depth", "u8"],
+    ["initial_virtual_quote_reserves", "u64"]], // the tail was read from the IDL again on 2026-11-18 (166-byte accounts on chain)
 };
 // The fields every consumer needs; an event shorter than this (an older program version) is refused, longer tails are optional.
 const REQUIRED = { TradeEvent: "virtual_token_reserves", CreateEvent: "timestamp", CompleteEvent: "timestamp", BondingCurve: "complete" };
@@ -107,10 +109,10 @@ export function eventsFromLogs(value, slot = null) {
       const sol = isSolQuote(ev.quote_mint), vq = sol ? ev.virtual_sol_reserves : ev.virtual_quote_reserves ?? 0;
       out.trades.push({ mint: ev.mint, buy: ev.is_buy, sol: (sol ? ev.sol_amount : ev.quote_amount ?? 0) / 1e9, tokens: ev.token_amount, user: ev.user, ts: ev.timestamp,
         quoteSol: sol, vsol: vq, vtok: ev.virtual_token_reserves, realSol: (sol ? ev.real_sol_reserves : ev.real_quote_reserves ?? 0) / 1e9, feeBps: ev.fee_basis_points ?? null,
-        creatorFeeBps: ev.creator_fee_basis_points ?? null, creator: ev.creator ?? null, ix: ev.ix_name ?? null, sig: out.sig, slot, px: priceSol(vq, ev.virtual_token_reserves) });
+        creatorFeeBps: ev.creator_fee_basis_points ?? null, creator: ev.creator ?? null, ix: ev.ix_name ?? null, sig: out.sig, slot, px: priceSol(vq, ev.virtual_token_reserves), mayhem: ev.mayhem_mode ?? null });
     } else if (ev.kind === "CreateEvent") {
       out.creates.push({ mint: ev.mint, name: ev.name, symbol: ev.symbol, uri: ev.uri, curve: ev.bonding_curve, creator: ev.creator || ev.user, ts: ev.timestamp,
-        vsol: isSolQuote(ev.quote_mint) ? ev.virtual_sol_reserves : ev.virtual_quote_reserves, vtok: ev.virtual_token_reserves, supply: ev.token_total_supply, sol: isSolQuote(ev.quote_mint), quote: ev.quote_mint ?? null, slot });
+        vsol: isSolQuote(ev.quote_mint) ? ev.virtual_sol_reserves : ev.virtual_quote_reserves, vtok: ev.virtual_token_reserves, supply: ev.token_total_supply, sol: isSolQuote(ev.quote_mint), quote: ev.quote_mint ?? null, slot, mayhem: ev.is_mayhem_mode ?? null });
     } else out.completes.push({ mint: ev.mint, ts: ev.timestamp });
   }
   return out;

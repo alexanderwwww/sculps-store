@@ -41,7 +41,7 @@ const K = 30e9 * 1.073e15, at = (p) => { const r = p * 1e3; return { vsol: Math.
 const P0 = 30 / 1.073e9;
 let clock = 1_800_000_000_000;
 function feed(e, mint, path, opts = {}) {
-  for (const [mult, buy, user] of path) { clock += 1000; const p = P0 * mult; e.onTrade({ mint, buy, sol: opts.sol ?? 0.3 + (clock % 7) / 10, tokens: 1e12, user: user || "u" + (clock % 97), ts: clock / 1000, px: p, ...at(p), realSol: 5, feeBps: 95, creatorFeeBps: 30, slot: opts.slot }, clock); }
+  for (const [mult, buy, user] of path) { clock += 1000; const p = P0 * mult; e.onTrade({ mint, buy, sol: opts.sol ?? 0.3 + (clock % 7) / 10, tokens: 1e12, user: user || "u" + (clock % 97), ts: clock / 1000, px: p, ...at(p), realSol: opts.realSol ?? at(p).vsol / 1e9 - 30, feeBps: 95, creatorFeeBps: 30, slot: opts.slot, mayhem: opts.mayhem }, clock); } // a real curve: real SOL = virtual - 30 (read from the chain 2026-11-18)
 }
 const launch = (e, mint, extra = {}) => e.onCreate({ mint, name: "Test", symbol: "TST", creator: "DEV", curve: "CURVE", ts: clock / 1000, vsol: 30e9, vtok: 1.073e15, sol: true, slot: 100, src: "chain", ...extra });
 
@@ -101,14 +101,14 @@ test("rules: a paper doubling is flagged once for the deep checks; stream health
 test("health: a healthy coin passes, each failure is named; an unknown is listed, not a fail, until more than 3 are unknown", () => {
   const good = { top10Share: 0.18, devShare: 0.01, devSold: false, sniperShare: 0.05, sameFunderMax: 1, uniqueBuyers: 250, sizeCv: 1.4, sameSizeShare: 0.05, washShare: 0.04, realSol: 25, quote: "SOL",
     mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 2, vetoed: false, launchComplete: true };
-  assert.deepEqual(R.judgeHealth(good), { ok: true, failed: [], unknown: [] });
+  assert.deepEqual(R.judgeHealth(good), { ok: true, failed: [], unknown: [], retry: false });
   const bad = R.judgeHealth({ ...good, sniperShare: 0.4, devSold: true, sameFunderMax: 7, washShare: 0.5, freezeAuthority: "X", vetoed: true });
   assert.equal(bad.ok, false);
   for (const w of ["sniper", "dev sold", "one source", "wash", "freeze", "VETO"]) assert.ok(bad.failed.some((f) => f.includes(w)), w);
   const noLaunch = R.judgeHealth({ ...good, launchComplete: false }); assert.equal(noLaunch.ok, false); assert.match(noLaunch.failed[0], /launch data .* can never be a right call/);
-  const unk = R.judgeHealth({ ...good, top10Share: undefined, mintAuthority: undefined });
+  const unk = R.judgeHealth({ ...good, socials: undefined, mintAuthority: undefined }); // (a concentration check may never be unknown: tested with the Inspector's five)
   assert.equal(unk.ok, true, "two unknowns alone are not a fail"); assert.equal(unk.unknown.length, 2);
-  const many = R.judgeHealth({ ...good, top10Share: undefined, mintAuthority: undefined, socials: undefined, rugDanger: undefined });
+  const many = R.judgeHealth({ ...good, freezeAuthority: undefined, mintAuthority: undefined, socials: undefined, rugDanger: undefined });
   assert.equal(many.ok, false); assert.match(many.failed[0], /too little known: 4/);
   assert.match(R.judgeHealth({ ...good, socials: 0 }).failed[0], /no X, Telegram or website/);
   assert.match(R.judgeHealth({ ...good, realSol: 4 }).failed[0], /SOL in the curve/);
@@ -434,5 +434,160 @@ test("LIVE units: a SOL plan never reads USD candles raw; the other source is co
   await d.q(`INSERT INTO mob_aq_sym_bars (mint, t, o, h, l, c, v) VALUES ($1, $2, 1, 1, 1, 1, 1)`, [M, t - 3600]);
   const cs = await L.positionCandles(env, d, { mint: M, plan: { src: "symbiote", unit: "SOL" } }, now);
   assert.equal(cs.ok, true); assert.equal(cs.unit, "SOL"); assert.equal(cs.converted, true); assert.ok(Math.abs(cs.data.at(-1).c - 1) < 1e-9, "75 USD at 75 USD a SOL = 1 SOL");
+  resetMocks();
+});
+
+// ---------- real moves only (production 2026-11-18: 206 flags, 0 right calls; 124 Mayhem, 40 non-SOL, 42 plain) ----------
+const REAL = JSON.parse(readFileSync(join(here, "sym-real-coins.json"), "utf8")).coins;
+function replayReal(key, { curveMode = false } = {}) {
+  const k = REAL[key], e = R.createEngine(), flags = []; let n = 0, prev = null;
+  for (const t of k.txs) { const ev = D.eventsFromLogs({ signature: "s", err: null, logs: t.logs }, t.slot);
+    for (const c of ev.creates) if (c.mint === k.mint) e.onCreate({ ...c, src: "chain" });
+    for (const x of ev.trades) if (x.mint === k.mint) { n++;
+      // curve mode sees only the account: reserves, real reserves, the Mayhem flag and the quote mint, never a wallet
+      e.onTrade(curveMode ? { mint: x.mint, buy: prev == null ? true : x.vsol > prev, sol: x.sol, tokens: x.tokens, user: null, vsol: x.vsol, vtok: x.vtok, realSol: x.realSol, px: x.px, slot: x.slot, mayhem: x.mayhem, ...(x.quoteSol === false ? { quoteSol: false } : {}) } : x, t.t * 1000);
+      prev = x.vsol; const c = e.coins.get(k.mint); for (const f of e.drain().explode) flags.push({ ...f, n, realSol: c.realSol, gap: c.vsol / 1e9 - c.realSol }); } }
+  return { e, c: e.coins.get(k.mint), flags, n };
+}
+test("real coins: a Mayhem coin whose price tripled on 0.2 real SOL is never flagged, and its paper gain is capped by the real reserves", () => {
+  for (const curveMode of [false, true]) {
+    const { c, flags, n } = replayReal("LEV", { curveMode });
+    assert.equal(n, 21); assert.equal(c.mayhem, true); assert.equal(c.sol, true);
+    assert.ok(c.hi / c.ctrl.px > 2.8, "the curve's price really did go up 2.8x: " + c.hi / c.ctrl.px);
+    assert.ok(c.realSol < 0.4, "with under 0.4 SOL of real money in it");
+    assert.deepEqual(flags, [], "no flag");
+    assert.equal(c.noFlag, "mayhem"); assert.match(c.noFlagWhy, /Mayhem/);
+    for (const s of Object.values(c.lanes)) assert.ok(s.peak < 100 && s.peak > 0, "paper peak capped by real SOL: " + s.peak);
+  }
+});
+test("real coins: a plain SOL coin that doubled with 16 real SOL in its curve is flagged, in both sources", () => {
+  for (const curveMode of [false, true]) {
+    const { c, flags } = replayReal("GTA6M", { curveMode });
+    assert.equal(c.mayhem, false); assert.equal(c.noFlag, null);
+    assert.ok(flags.length >= 1, "flagged"); assert.ok(flags[0].gainPct >= 100);
+    assert.ok(flags[0].realSol >= R.FLAG_REAL_SOL_MIN, "real SOL at the flag: " + flags[0].realSol);
+    assert.ok(Math.abs(flags[0].gap - 30) < 1e-6, "a real curve keeps virtual - real at the starting 30 SOL: " + flags[0].gap);
+  }
+});
+test("real coins: the curve account carries Mayhem mode, the quote mint and the starting virtual reserves (IDL tail)", () => {
+  const lev = D.decodeCurve(REAL.LEV.curve), w = D.decodeCurve(REAL.WGMI.curve), g = D.decodeCurve(REAL.GTA6M.curve);
+  assert.equal(lev.is_mayhem_mode, true); assert.equal(lev.initial_virtual_quote_reserves, 30e9); assert.equal(D.isSolQuote(lev.quote_mint), true);
+  assert.notEqual(lev.virtual_quote_reserves - lev.real_quote_reserves, 30e9, "Mayhem: the virtual reserves were moved without real SOL");
+  assert.equal(g.is_mayhem_mode, false); assert.equal(g.virtual_quote_reserves - g.real_quote_reserves, g.initial_virtual_quote_reserves);
+  assert.equal(D.isSolQuote(w.quote_mint), false); assert.equal(w.quote_mint, "SPCXxcqXj6e5dJDVNovHN8744zkbhM2bYudU45BimGb"); assert.equal(w.initial_virtual_quote_reserves, 23036773);
+  const { c } = replayReal("WGMI"); assert.equal(c.sol, false);
+});
+test("real moves only: non-SOL, unbacked and thin doublings are logged with a reason and never flagged; a backed one is", () => {
+  const run = (extra, opts) => { const e = R.createEngine(); launch(e, "X", extra); feed(e, "X", [[1.0, true], [1.5, true], [2.6, true], [3.0, true]], opts); const b = e.drain(); return { c: e.coins.get("X"), b, e }; };
+  let r = run({}, {}); assert.equal(r.b.explode.length >= 1, true); assert.equal(r.c.noFlag, null);
+  r = run({ sol: false }, {}); assert.deepEqual(r.b.explode, []); assert.equal(r.c.noFlag, "non_sol"); assert.equal(r.e.stats.noFlag.non_sol, 1);
+  r = run({}, { realSol: 25 }); assert.deepEqual(r.b.explode, []); assert.equal(r.c.noFlag, "unbacked", "25 real SOL but the virtual reserves do not match: moved by something else"); assert.match(r.c.noFlagWhy, /not backed/);
+  r = run({}, { realSol: 0.2 }); assert.deepEqual(r.b.explode, []); assert.ok(["unbacked", "thin"].includes(r.c.noFlag));
+  r = run({}, { mayhem: true }); assert.deepEqual(r.b.explode, []); assert.equal(r.c.noFlag, "mayhem");
+  assert.ok(r.b.coins[0].lanes.market.noFlag === "mayhem", "the reason is written with the coin");
+  assert.ok(r.b.feed.some((f) => f.k === "noflag" && f.why === "mayhem"));
+  // thin: a backed curve that doubled from a late, cheap entry cannot happen under 10 SOL; the floor itself
+  const e = R.createEngine(); e.onCreate({ mint: "T", vsol: 8e9, vtok: 1.073e15, sol: true, src: "chain", curve: "C" });
+  for (const m of [1, 1.4, 1.8, 2.1]) { const vs = 8e9 * m, vt = 8e9 * 1.073e15 / vs; e.onTrade({ mint: "T", buy: true, sol: 0.1, tokens: 1, user: "u", vsol: vs, vtok: vt, realSol: vs / 1e9 - 8, px: (vs / 1e9) / (vt / 1e6), feeBps: 95 }, 1); }
+  assert.deepEqual(e.drain().explode, []); assert.equal(e.coins.get("T").noFlag, "thin");
+  assert.match(R.judgeHealth({ launchComplete: true, mayhem: true }).failed.join(";"), /Mayhem/);
+});
+
+// ---------- the buyer sample and the Inspector's five (2026-11-18) ----------
+const okRpc = (over = {}) => async (m, p) => {
+  if (over[m]) { const v = await over[m](p); if (v !== undefined) return v; }
+  if (m === "getAccountInfo") return { value: { data: { parsed: { info: { mintAuthority: null, freezeAuthority: null, supply: "1000000000000000" } } } } };
+  if (m === "getTokenLargestAccounts") return { value: [{ address: "A1", amount: "40000000000000" }] };
+  if (m === "getMultipleAccounts") return { value: p[0].map((a) => (p[1]?.dataSlice ? { owner: "11111111111111111111111111111111" } : { data: { parsed: { info: { owner: "own" + a } } } })) };
+  if (m === "getSignaturesForAddress") return [{ signature: "s-" + p[0] }];
+  if (m === "getTransaction") return { slot: 1, blockTime: 1, meta: { logMessages: [], innerInstructions: [] }, transaction: { message: { instructions: [{ program: "system", parsed: { type: "transfer", info: { source: "f-" + p[0], destination: p[0].slice(2) } } }] } } };
+  if (m === "getTokenAccountsByOwner") return { value: [{ account: { data: { parsed: { info: { tokenAmount: { amount: "0" } } } } } }] };
+  throw new Error("unmocked " + m);
+};
+const goodStream = { uniqueBuyers: 300, sizeCv: 1.2, sameSizeShare: 0.04, washShare: 0.02, sniperWallets: 1, sniperShare: 0.02, devSold: false, devShare: 0, devTok: 0, launchComplete: true,
+  earlyBuyers: ["e1", "e2"], firstBuyers: ["b1"], creator: "DEV", curve: "CURVE", uri: "https://ipfs.io/ipfs/bafkreiexample", realSol: 40, quote: "SOL", walletsSeen: true };
+const webOk = () => { resetMocks(); mock("GET", /api\.rugcheck\.xyz/, () => ({ score: 1, risks: [] })); mock("GET", /gateway\.pinata\.cloud/, () => ({ twitter: "https://x.com/a" })); };
+
+test("buyer facts: the dev's own buy in the create transaction does not make the stream 'carry wallets'; the sample runs", async () => {
+  webOk();
+  const e = R.createEngine(); launch(e, "CM"); feed(e, "CM", [[1.0, true, "DEV"]], { slot: 100 });       // the create transaction's buy, from the launch logs
+  for (let i = 1; i <= 40; i++) { const p = P0 * (1 + i / 20); e.onTrade({ mint: "CM", buy: true, sol: 0.5, tokens: 1e12, user: null, px: p, ...at(p), realSol: at(p).vsol / 1e9 - 30 }, clock + i); } // curve updates: no wallet
+  const sh = e.streamHealth("CM"); assert.equal(sh.uniqueBuyers, 1); assert.equal(sh.walletsSeen, false, "1 wallet on 41 trades is not a stream with wallets");
+  let sampled = 0; const rpc = okRpc({ getSignaturesForAddress: (p) => { if (p[0] === REAL.GTA6M.mint) { sampled++; return REAL.GTA6M.txs.map((t, i) => ({ signature: "g" + i })).reverse(); } },
+    getTransaction: (p) => { const m = /^g(\d+)$/.exec(p[0]); if (m) { const t = REAL.GTA6M.txs[+m[1]]; return { slot: t.slot, blockTime: t.t, meta: { logMessages: t.logs } }; } } });
+  const res = await deepCheck({}, null, REAL.GTA6M.mint, { ...sh, launchComplete: true }, rpc);
+  assert.ok(res.checks.sampledTx >= 60, "sampled: " + res.checks.sampledTx); assert.ok(res.checks.uniqueBuyers >= 15, "real buyers counted from the coin's own transactions: " + res.checks.uniqueBuyers);
+  const bad = await deepCheck({}, null, "CM", { ...sh, launchComplete: true }, okRpc({ getSignaturesForAddress: (p) => { if (p[0] === "CM") throw new Error("429 Too Many Requests"); } }));
+  assert.match(bad.checks.sampleError, /429/, "a failed sample is written down, not hidden");
+  resetMocks();
+});
+test("Inspector a+b: a concentration check with no answer is never a pass; no funder found is unknown, not 0", async () => {
+  webOk();
+  const all = await deepCheck({}, null, "M", goodStream, okRpc());
+  assert.equal(all.verdict.ok, true, JSON.stringify(all.verdict.failed)); assert.equal(all.checks.sameFunderMax, 1);
+  // (b) the wallets' oldest transactions show no SOL transfer in: nobody's funder is known
+  const noFund = await deepCheck({}, null, "M", goodStream, okRpc({ getTransaction: () => ({ slot: 1, meta: { innerInstructions: [] }, transaction: { message: { instructions: [] } } }) }));
+  assert.equal(noFund.checks.sameFunderMax, null); assert.equal(noFund.verdict.ok, false); assert.equal(noFund.verdict.retry, true);
+  assert.ok(noFund.verdict.failed.some((f) => /one source: no answer/.test(f)));
+  // (a) 429 on the holders: 1 unknown is inside MAX_UNKNOWN, but top-10 is a concentration check
+  const noTop = await deepCheck({}, null, "M", goodStream, okRpc({ getTokenLargestAccounts: () => { throw new Error("429"); } }));
+  assert.equal(noTop.verdict.ok, false); assert.equal(noTop.verdict.retry, true); assert.ok(noTop.verdict.failed.some((f) => /top-10.*no answer/.test(f)));
+  const j = R.judgeHealth({ ...goodStream, top10Share: 0.1, sameFunderMax: 1, sniperShare: undefined, mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 1 });
+  assert.equal(j.ok, false); assert.equal(j.retry, true);
+  const real = R.judgeHealth({ ...goodStream, top10Share: 0.9, sameFunderMax: null, mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 1 });
+  assert.equal(real.retry, false, "a real fail is final: no retry");
+  resetMocks();
+});
+test("Inspector c: the dev wallet's current balance of the coin decides 'dev sold', beyond the first slots and the sample", async () => {
+  webOk();
+  const bought = { ...goodStream, devTok: 50e12, devShare: 0.05 };
+  const held = await deepCheck({}, null, "M", bought, okRpc({ getTokenAccountsByOwner: (p) => { assert.equal(p[0], "DEV"); assert.deepEqual(p[1], { mint: "M" }); return { value: [{ account: { data: { parsed: { info: { tokenAmount: { amount: "50000000000000" } } } } } }] }; } }));
+  assert.equal(held.checks.devSold, false); assert.equal(held.checks.devBalance, 50e12); assert.equal(held.verdict.ok, true, JSON.stringify(held.verdict.failed));
+  const sold = await deepCheck({}, null, "M", bought, okRpc({ getTokenAccountsByOwner: () => ({ value: [] }) }));
+  assert.equal(sold.checks.devSold, true); assert.equal(sold.checks.devSoldBy, "balance"); assert.ok(sold.verdict.failed.some((f) => /dev sold/.test(f)));
+  const blind = await deepCheck({}, null, "M", bought, okRpc({ getTokenAccountsByOwner: () => { throw new Error("429"); } }));
+  assert.equal(blind.checks.devSold, null, "no answer = unknown, not 'did not sell'"); assert.ok(blind.verdict.unknown.includes("dev sold"));
+  resetMocks();
+});
+test("Inspector d: a deep check waits for the launch facts, and a verdict that only lacks a concentration answer is asked again before it fails closed", async () => {
+  const { FACTS_WAIT, RETRY_MAX, RETRY_GAP_MS } = await import("../src/aq/sym/do.mjs");
+  const s = new Symbiote({ storage: { get: async () => null, put: async () => {}, getAlarm: async () => 1, setAlarm: async () => {} } }, env);
+  await d.q(`DELETE FROM mob_aq_sym_right WHERE mint IN ('RACE','BLIND')`);
+  s.eng.onCreate({ mint: "RACE", curve: "CRACE", src: "chain", ts: 1 }); s.queue.push({ mint: "RACE", symbol: "R", lane: "aquarius", gainPct: 120 });
+  let ran = 0; const check = async (env_, d_, mint, stream) => { ran++; return { checks: { ...stream }, calls: 1, verdict: R.judgeHealth({ ...stream, ...goodStream, launchComplete: stream.launchComplete, top10Share: 0.1, sameFunderMax: 1, mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 1, uniqueBuyers: 300, sniperShare: 0.01, devSold: false, devShare: 0, quote: "SOL", realSol: 40 }) }; };
+  assert.equal(await s.checkNext(d, "curve", 1000, check), "waiting for launch facts"); assert.equal(ran, 0); assert.equal(s.launchQ.has("RACE"), true, "the facts are asked for");
+  assert.equal(s.queue.length, 1); assert.equal((await d.q(`SELECT 1 FROM mob_aq_sym_right WHERE mint='RACE'`)).length, 0, "nothing written, nothing blocked");
+  s.eng.setLaunch("RACE", { complete: true, createSlot: 1, creator: "DEV", early: [] });
+  assert.equal(await s.checkNext(d, "curve", 2000, check), "candidate"); assert.equal(ran, 1);
+  // the facts never land: after FACTS_WAIT alarms it is judged anyway (and fails closed on the missing launch data)
+  s.eng.onCreate({ mint: "NOFACT", curve: "CNF", src: "chain", ts: 1 }); s.queue.push({ mint: "NOFACT", symbol: "N", lane: "grok", gainPct: 101 });
+  for (let i = 0; i < FACTS_WAIT; i++) assert.equal(await s.checkNext(d, "curve", 3000 + i, check), "waiting for launch facts");
+  assert.equal(await s.checkNext(d, "curve", 9000, check), "fake_pump");
+  // retry: only a concentration answer is missing
+  s.eng.onCreate({ mint: "BLIND", curve: "CB", src: "chain", ts: 1 }); s.eng.setLaunch("BLIND", { complete: true, createSlot: 1, creator: "DEV", early: [] });
+  s.queue.push({ mint: "BLIND", symbol: "B", lane: "aquarius", gainPct: 150 }); let blindRuns = 0;
+  const blind = async () => { blindRuns++; return { checks: {}, calls: 1, verdict: R.judgeHealth({ ...goodStream, top10Share: undefined, sameFunderMax: 1, mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 1 }) }; };
+  let now = 10000;
+  assert.equal(await s.checkNext(d, "curve", now, blind), "asked again later");
+  assert.equal(await s.checkNext(d, "curve", now + 5000, blind), null, "not before the gap"); assert.equal(blindRuns, 1);
+  for (let i = 1; i < RETRY_MAX; i++) { now += RETRY_GAP_MS + 1; assert.equal(await s.checkNext(d, "curve", now, blind), "asked again later"); }
+  now += RETRY_GAP_MS + 1; assert.equal(await s.checkNext(d, "curve", now, blind), "fake_pump", "still unknown after the retries: fails closed");
+  const row = await d.one(`SELECT status, checks FROM mob_aq_sym_right WHERE mint='BLIND'`); assert.equal(row.status, "fake_pump"); assert.equal(row.checks.tries, RETRY_MAX + 1); assert.ok(row.checks.failed.some((f) => /top-10.*no answer/.test(f)));
+});
+test("Inspector e: one failed or empty price read does not expire a migrated right call; three in a row do", async () => {
+  const { LIQ_FAILS } = await import("../src/aq/sym/do.mjs");
+  const s = new Symbiote({ storage: { get: async () => null, put: async () => {}, getAlarm: async () => 1, setAlarm: async () => {} } }, env);
+  const healthy = { top10Share: 0.1, sameFunderMax: 1, mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 1, launchComplete: true, uniqueBuyers: 250, sizeCv: 1.4, sameSizeShare: 0.05, washShare: 0.02, devShare: 0.01, devSold: false, sniperShare: 0.02, quote: "SOL" };
+  s.eng.onCreate({ mint: "MIG", curve: "CMIG", src: "chain", ts: Date.now() / 1000 }); s.eng.setLaunch("MIG", { complete: true, createSlot: 1, creator: "DEV", early: [] });
+  s.eng.onTrade({ mint: "MIG", buy: true, sol: 1, tokens: 1e12, user: null, px: P0 * 3, ...at(P0 * 3), realSol: 80 }, Date.now()); s.eng.onComplete({ mint: "MIG" });
+  await d.q(`DELETE FROM mob_aq_sym_right`); await d.q(`INSERT INTO mob_aq_sym_right (mint, symbol, status, flagged_at, checked_at, checks) VALUES ('MIG','M','candidate', now(), now() - interval '10 minutes', $1::jsonb)`, [JSON.stringify(healthy)]);
+  const SOLM = "So11111111111111111111111111111111111111112"; let answer = () => ({});
+  resetMocks(); mock("GET", /lite-api\.jup\.ag\/price/, () => answer());
+  const st = async () => d.one(`SELECT status, checks->>'expired' why, checked_at > now() - interval '1 minute' fresh FROM mob_aq_sym_right WHERE mint='MIG'`);
+  for (let i = 1; i < LIQ_FAILS; i++) { await s.recheckRights(d); const r = await st(); assert.equal(r.status, "candidate", "empty read " + i + " does not expire it"); assert.equal(r.fresh, false, "and does not renew it either"); }
+  answer = () => ({ MIG: { liquidity: 90000 }, [SOLM]: { usdPrice: 150 } }); await s.recheckRights(d);
+  let r = await st(); assert.equal(r.status, "candidate"); assert.equal(r.fresh, true, "a good read renews it and clears the count");
+  answer = () => ({}); for (let i = 0; i < LIQ_FAILS; i++) await s.recheckRights(d);
+  r = await st(); assert.equal(r.status, "expired"); assert.match(r.why, /no pool liquidity read/);
   resetMocks();
 });

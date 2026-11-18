@@ -17,7 +17,7 @@ import { createEngine, GTA_MAIN } from "./rules.mjs";
 import { deepCheck } from "./health.mjs";
 import { flush, writeRight, retention } from "./store.mjs";
 import { openWs, wsText, logsSub, programSub, launchSub, heliusWss, PUBLIC_WSS } from "./probe.mjs";
-import { decodeCurve } from "./decode.mjs";
+import { decodeCurve, isSolQuote } from "./decode.mjs";
 
 export const PUMPPORTAL_WSS = "wss://pumpportal.fun/api/data";
 export const CREDIT_CAP_DAY = 150000;
@@ -25,6 +25,10 @@ export const CREDIT_CAP_DAY = 150000;
 // (a pump.fun curve starts at 30 virtual SOL, so a coin that doubled from launch holds about 12; at the live cap of 0.05 SOL a
 // trade that is about 0.1% of the curve, well inside the 1% impact gate)
 export const RECHECK_MS = 5 * 60000, RIGHT_WATCH_H = 6, LIQ_FLOOR_SOL = 10;
+// a deep check waits for the coin's launch facts (up to FACTS_WAIT alarms of 5 s); a verdict whose only fault is an unanswered
+// concentration check is asked again RETRY_GAP_MS later, RETRY_MAX times, then fails closed; a right call is expired for
+// liquidity only after LIQ_FAILS empty price reads in a row
+export const FACTS_WAIT = 24, RETRY_MAX = 3, RETRY_GAP_MS = 60000, LIQ_FAILS = 3;
 const CURVE_TTL_MS = 6 * 3600000, CHECKED_TTL_MS = 24 * 3600000;
 const FLUSH_MS = 5000, STALE_MS = 60000, FEED_MAX = 40;
 
@@ -166,7 +170,7 @@ export class Symbiote {
     if (!(vq > 0 && vt > 0) || (vq === pq && vt === pt)) return;
     const buy = pq == null ? true : vq > pq;
     this.eng.onTrade({ mint, buy, sol: pq == null ? 0 : Math.abs(vq - pq) / 1e9, tokens: pt == null ? 0 : Math.abs(vt - pt), user: null, ts: Math.floor(now / 1000),
-      vsol: vq, vtok: vt, realSol: (bc.real_quote_reserves || 0) / 1e9, px: (vq / 1e9) / (vt / 1e6), slot: j.params.result.context?.slot ?? null }, now);
+      vsol: vq, vtok: vt, realSol: (bc.real_quote_reserves || 0) / 1e9, mayhem: bc.is_mayhem_mode ?? null, ivq: bc.initial_virtual_quote_reserves ?? null, ...(bc.quote_mint && !isSolQuote(bc.quote_mint) ? { quoteSol: false } : {}), px: (vq / 1e9) / (vt / 1e6), slot: j.params.result.context?.slot ?? null }, now);
   }
 
   rate() { const now = Date.now(); this.win.push([now, this.notes]); while (this.win.length && now - this.win[0][0] > 60000) this.win.shift(); const a = this.win[0]; return a && now > a[0] ? +((this.notes - a[1]) / ((now - a[0]) / 1000)).toFixed(1) : 0; }
@@ -194,11 +198,25 @@ export class Symbiote {
     if (!this.paused && src0 !== "public" && this.cused >= CREDIT_CAP_DAY) { this.paused = true; this.closeChain("credit cap");
       await d.q(`INSERT INTO mob_aq_brain (dept, kind, text, data) VALUES ('symbiote', 'pain', $1, $2::jsonb)`, [`PAIN symbiote stream paused: ${Math.round(this.cused)} Helius credits used today (cap ${CREDIT_CAP_DAY}). Launches after this are missed until 00:00 UTC (02:00 Athens).`, JSON.stringify({ used: Math.round(this.cused), cap: CREDIT_CAP_DAY, rule: "credit guard" })]).catch(() => {}); }
     if (now - (this.lastRecheck || 0) > RECHECK_MS) { this.lastRecheck = now; await this.recheckRights(d).catch((e) => this.err("recheck", e)); }
-    const x = this.queue.shift();
-    if (x) { try { const res = await deepCheck(this.env, d, x.mint, this.eng.streamHealth(x.mint) || {}); this.credits(res.calls || 0); await writeRight(d, x, res); } catch (e) { this.err("deep check", e); } }
+    await this.checkNext(d, src0, now);
     await this.saveGuard().catch(() => {});
     if (now - this.lastPrune > 3600000) { this.lastPrune = now; await retention(d).catch((e) => this.err("retention", e)); }
     await this.ctx.storage.setAlarm(Date.now() + FLUSH_MS);
+  }
+
+  // one deep check per alarm. (d) curve source: the launch facts must have landed first (asked now, waited for up to FACTS_WAIT
+  // alarms), or a healthy coin is written off as "launch data missing" and blocked for 24 h. (a) a verdict that only lacks a
+  // concentration answer is not written: it goes back in the queue and is asked again.
+  async checkNext(d, src, now = Date.now(), check = deepCheck) {
+    const i = this.queue.findIndex((q) => !(q.after > now)); if (i < 0) return null;
+    const [x] = this.queue.splice(i, 1), c = this.eng.coins.get(x.mint);
+    if (src === "curve" && c && c.curve && !c.launchDone && (x.waits || 0) < FACTS_WAIT) { x.waits = (x.waits || 0) + 1; c.launchAsked = true; this.launchQ.add(x.mint); this.queue.push(x); return "waiting for launch facts"; }
+    try {
+      const res = await check(this.env, d, x.mint, this.eng.streamHealth(x.mint) || {}); this.credits(res.calls || 0);
+      if (res.verdict.retry && (x.tries || 0) < RETRY_MAX) { x.tries = (x.tries || 0) + 1; x.after = now + RETRY_GAP_MS; this.queue.push(x); return "asked again later"; }
+      if (x.tries) res.checks.tries = x.tries + 1;
+      return await writeRight(d, x, res);
+    } catch (e) { this.err("deep check", e); return null; }
   }
 
   // RIGHT CALL upkeep: every 5 minutes each candidate is re-judged with the cheap checks (the deep facts recorded at the call
@@ -219,6 +237,9 @@ export class Symbiote {
         let liqOk = (c.realSol || 0) >= LIQ_FLOOR_SOL, liqTxt = `${(c.realSol || 0).toFixed(1)} SOL in the curve`;
         if (c.end === "migrated") { const j = await fetch(`https://lite-api.jup.ag/price/v3?ids=${r.mint},So11111111111111111111111111111111111111112`).then((x) => x.json()).catch(() => null);
           const usd = j?.[r.mint]?.liquidity, sol = j?.So11111111111111111111111111111111111111112?.usdPrice;
+          // (e) one failed or empty price read never expires a call: LIQ_FAILS in a row do
+          const fails = this.liqFails || (this.liqFails = new Map());
+          if (!(usd > 0 && sol > 0)) { const n = (fails.get(r.mint) || 0) + 1; fails.set(r.mint, n); if (n < LIQ_FAILS) continue; } else fails.delete(r.mint);
           liqOk = usd > 0 && sol > 0 && usd >= LIQ_FLOOR_SOL * 2 * sol; liqTxt = usd > 0 ? `$${Math.round(usd)} in the pool after migration` : "no pool liquidity read after migration"; }
         if (!liqOk) why = `liquidity under the fresh-coin floor: ${liqTxt} (floor ${LIQ_FLOOR_SOL} SOL)`;
         else {
@@ -244,7 +265,7 @@ export class Symbiote {
   }
   // curve source: a coin that rises 80% from launch gets its launch facts read once, while it is young (production
   // 2026-11-18: reading every coin with 20 trades spent ~156,000 credits a day, over the cap; only risers can become right calls)
-  wantLaunch() { for (const c of this.eng.coins.values()) if (!c.done && !c.launchAsked && c.curve && c.px0 && c.hi / c.px0 >= 1.8) { c.launchAsked = true; this.launchQ.add(c.mint); } }
+  wantLaunch() { for (const c of this.eng.coins.values()) if (!c.done && !c.launchAsked && c.curve && c.px0 && c.hi / c.px0 >= 1.8 && c.sol !== false && c.mayhem !== true && (c.realSol || 0) >= 5) { c.launchAsked = true; this.launchQ.add(c.mint); } }
   async snapLaunches(max = 2) { // one coin after another: launch reads never burst the shared Helius key
     if (this.paused || !this.launchQ.size) return;
     const { rpcFor, launchFacts } = await import("./health.mjs"); const rpc = rpcFor(this.env);

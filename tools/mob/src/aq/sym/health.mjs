@@ -78,8 +78,11 @@ export async function launchFacts(rpc, mint, curve) {
 // stream: rules.streamHealth(mint). Returns {checks, verdict}.
 export async function deepCheck(env, d, mint, stream, rpc0 = rpcFor(env)) {
   let calls = 0; const rpc = (m, p) => { calls++; return rpc0(m, p); };
-  if (!stream.walletsSeen || !stream.uniqueBuyers) { const smp = await safe(() => sampleStream(rpc, mint, stream)); if (!smp.error) stream = smp; }
-  const checks = { ...stream };
+  // the sample runs whenever the stream did not carry a wallet on (nearly) every trade. Production 2026-11-18: in curve mode the
+  // only wallet ever seen was the dev's own buy inside the create transaction, which made 36 real movers read "unique buyers: 1"
+  let sampleError = null;
+  if (!stream.walletsSeen) { const smp = await safe(() => sampleStream(rpc, mint, stream)); if (!smp.error) stream = smp; else sampleError = smp.error; }
+  const checks = { ...stream }; if (sampleError) checks.sampleError = sampleError;
   // the mint first: authorities and the real supply (the denominator of every share)
   const mi = await safe(async () => (await rpc("getAccountInfo", [mint, { encoding: "jsonParsed" }]))?.value?.data?.parsed?.info);
   if (mi && !mi.error) { checks.mintAuthority = mi.mintAuthority ?? null; checks.freezeAuthority = mi.freezeAuthority ?? null; checks.supply = Number(mi.supply) || null; } else checks.authError = mi?.error || "no account";
@@ -110,9 +113,18 @@ export async function deepCheck(env, d, mint, stream, rpc0 = rpcFor(env)) {
       const t = ins.find((i) => i?.program === "system" && i?.parsed?.type === "transfer" && i.parsed.info?.destination === w);
       if (t) { const s = t.parsed.info.source; by.set(s, (by.get(s) || 0) + 1); }
     }
-    return { sameFunderMax: by.size ? Math.max(...by.values()) : 0, checked: wallets.length };
+    // no funder found for any wallet = UNKNOWN (null), never a pass (Inspector 2026-11-18)
+    return { sameFunderMax: by.size ? Math.max(...by.values()) : null, checked: wallets.length, found: [...by.values()].reduce((a, b) => a + b, 0) };
   });
-  if (!fund.error) { checks.sameFunderMax = fund.sameFunderMax; checks.fundersChecked = fund.checked; } else checks.fundError = fund.error;
+  if (!fund.error) { checks.sameFunderMax = fund.sameFunderMax; checks.fundersChecked = fund.checked; checks.fundersFound = fund.found; } else checks.fundError = fund.error;
+  // dev sold: the stream and the sample only see the first slots and 120 transactions, so the dev wallet's CURRENT balance of
+  // the coin is read directly. Less than it bought at launch = it sold (or moved the coins out, which is the same warning).
+  if (stream.creator) {
+    const bal = await safe(async () => ((await rpc("getTokenAccountsByOwner", [stream.creator, { mint }, { encoding: "jsonParsed" }]))?.value || []).reduce((a, x) => a + Number(x.account?.data?.parsed?.info?.tokenAmount?.amount || 0), 0));
+    if (typeof bal === "number") { checks.devBalance = bal; checks.devShare = bal / (checks.supply || 1e15);
+      if (stream.launchComplete && stream.devTok > 0 && bal < stream.devTok * 0.99) { checks.devSold = true; checks.devSoldBy = "balance"; } }
+    else { checks.devBalanceError = bal.error; checks.devSold = checks.devSold === true ? true : null; }
+  }
   const rug = await safe(() => getJsonRetry(`https://api.rugcheck.xyz/v1/tokens/${mint}/report/summary`));
   if (!rug.error) { const risks = Array.isArray(rug.risks) ? rug.risks : []; checks.rugScore = rug.score ?? null; checks.rugRisks = risks.map((x) => `${x.name} (${x.level})`); checks.rugDanger = risks.some((x) => x.level === "danger"); } else checks.rugError = rug.error;
   // the coin's own metadata: an IPFS path through the Pinata gateway (ipfs.io no longer serves JSON), any other https URI as is
