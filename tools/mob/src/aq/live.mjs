@@ -17,8 +17,8 @@
 // sent. A send whose outcome is unknown is never sent again: the next tick asks the chain for that signature first.
 import { db } from "../db.mjs";
 import { unseal } from "../auth.mjs";
-import { base58, unbase58, rpc as solRpc } from "./wallet.mjs";
-import { feeds, SOL_MINT } from "./feeds.mjs";
+import { base58, unbase58, rpc as solRpc, clampLimits } from "./wallet.mjs";
+import { feeds, SOL_MINT, jupPrices } from "./feeds.mjs";
 import { hardSafety, round } from "./logic.mjs";
 import { FIB, entrySetup, manage, planOf } from "./chart.mjs";
 import { AUDIT_RT } from "./council.mjs";
@@ -33,6 +33,18 @@ export const LIVE = {
   // ---- how it executes (safety, not lessons)
   slippageBps: 100, exitSlippageBps: 150, maxImpactPct: 1, reserveSol: 0.01, feeBudgetLamports: 3500000, priorityMaxLamports: 500000,
   candidatesPerTick: 4, paperCoinsPerTick: 8, paperOpenMax: 40, confirmPolls: 6, confirmGapMs: 2500, maxSellFails: 5,
+  // a stop, invalidation, veto or liquidity exit that fails is retried with twice the slippage each time, never over 20%
+  exitSlippageMaxBps: 2000,
+  // fixed SOL costs of a round trip: 5,000 lamports a signature (Solana's base fee; getFeeForMessage gave 5,000 for one
+  // signature, payout.mjs); the network fee per side from our own last confirmed orders, else 61,000 lamports measured on
+  // 2026-11-16 (trading-kb/fee-2026-11-16.md). A coin's token account rent is read from the chain
+  // (getMinimumBalanceForRentExemption(165) answered 1,488,440 lamports on 2026-11-18; 2,039,280 is only the fallback): it is
+  // fronted on the first buy and RETURNED by closeAccount after the full sale (reclaimRent), so it is capital, not cost.
+  baseFeeLamports: 5000, feePerSideFallbackLamports: 61000, tokenAccountRentFallbackLamports: 2039280,
+  rightCallTtlMin: 30,   // a symbiote right call is good for 30 minutes after its last check ('right_call_ttl_min' in mob_aq_state overrides)
+  tickBudgetMs: 60000,   // past 60 s a tick does no optional work (paper mirror, Phantom); the money lease is renewed between steps
+  unreadableMin: 3,      // confirmed on the chain, details unreadable for 3 minutes: settled from the token balance (marked estimated)
+  sentStaleMin: 10,      // a signature the chain still does not know 10 minutes after sending is far past its ~150-block window
 };
 const VENUE = "solana", ACTIVE = `('opening','open','closing','stuck')`;
 const JUP_HOSTS = ["https://api.jup.ag", "https://lite-api.jup.ag"];
@@ -98,6 +110,49 @@ export function readTx(b64tx) {
   if (!(nacc >= 1) || a0 + 32 > bytes.length) throw new Error("transaction too short");
   return { bytes, nsig, sigStart, msgStart, required, payer: base58(bytes.subarray(a0, a0 + 32)) };
 }
+// The instructions of a message: [{program, acc (key indexes), data}]. Legacy and v0 share this part of the layout; a program
+// id is always one of the message's own keys (it cannot come from a lookup table), so the program is always known.
+export function readIxs(b64tx) {
+  const t = readTx(b64tx), b = t.bytes; let p = t.msgStart; if (b[p] & 0x80) p++; p += 3;
+  let n; [n, p] = shortvec(b, p); const keys = []; for (let i = 0; i < n; i++) { keys.push(base58(b.subarray(p, p + 32))); p += 32; }
+  p += 32; let ni; [ni, p] = shortvec(b, p); const ixs = [];
+  for (let i = 0; i < ni; i++) { const pi = b[p++]; let na; [na, p] = shortvec(b, p); const acc = [...b.subarray(p, p + na)]; p += na; let nd; [nd, p] = shortvec(b, p); ixs.push({ program: keys[pi] ?? null, acc, data: b.slice(p, p + nd) }); p += nd; }
+  if (p > b.length) throw new Error("transaction too short");
+  return { keys, ixs };
+}
+export const PROG = { system: "11111111111111111111111111111111", token: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", token22: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  ata: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL", budget: "ComputeBudget111111111111111111111111111111", jup: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4" };
+// What a swap may contain. Read from a real Jupiter swap on 2026-11-18 (/swap/v1/swap, wrapAndUnwrapSol): compute budget x2,
+// System transfer from the wallet (wrap), Token SyncNative (17), the Jupiter route, Token CloseAccount (9) of the wrapped SOL
+// to the wallet; plus Associated Token create (0) / create-idempotent (1). SPL instruction numbers read from
+// solana-program/token interface/src/instruction.rs. Anything else (a token Transfer, Approve, SetAuthority, another program)
+// is refused before signing.
+export function checkIxs(b64tx, wallet) {
+  const { keys, ixs } = readIxs(b64tx);
+  for (const [i, x] of ixs.entries()) {
+    const no = (w) => `instruction ${i} (${x.program || "a program from a lookup table"}) ${w}; not signed`;
+    if (x.program === PROG.budget || x.program === PROG.jup) continue;
+    if (x.program === PROG.ata) { if (x.data.length === 0 || x.data[0] === 0 || x.data[0] === 1) continue; return no("is not a token-account creation"); }
+    if (x.program === PROG.system) { if (x.data.length === 12 && x.data[0] === 2 && !x.data[1] && !x.data[2] && !x.data[3] && keys[x.acc[0]] === wallet) continue; return no("is a System instruction other than a transfer from the wallet"); }
+    if (x.program === PROG.token || x.program === PROG.token22) {
+      if (x.data.length === 1 && x.data[0] === 17) continue;                          // SyncNative
+      if (x.data.length === 1 && x.data[0] === 9 && keys[x.acc[1]] === wallet) continue; // CloseAccount, its SOL back to the wallet
+      return no(`is token instruction ${x.data[0]}, which could move or hand over tokens`);
+    }
+    return no("calls a program outside Jupiter, System, Token, Token-2022, Associated Token and Compute Budget");
+  }
+  return null;
+}
+// The wallet's token accounts (both token programs), or those of one mint: address, mint, program, raw amount, lamports.
+export async function tokenAccounts(env, owner, mint = null) {
+  const out = [];
+  for (const filter of mint ? [{ mint }] : [{ programId: PROG.token }, { programId: PROG.token22 }])
+    for (const a of (await solRpc(env, "getTokenAccountsByOwner", [owner, filter, { encoding: "jsonParsed", commitment: "confirmed" }])).value || []) {
+      const i = a?.account?.data?.parsed?.info; if (a?.pubkey && i?.mint) out.push({ address: a.pubkey, mint: i.mint, program: a.account.owner, raw: String(i.tokenAmount?.amount ?? "0"), lamports: a.account.lamports });
+    }
+  return out;
+}
+const broadcast = (env, tx) => solRpc(env, "sendTransaction", [tx, { encoding: "base64", skipPreflight: false, preflightCommitment: "confirmed", maxRetries: 5 }]);
 // The ONLY place a transaction is signed. It signs only a transaction that needs exactly one signature and is paid by the
 // Aquarius wallet itself. The key is opened here, used once and dropped; it is never returned, stored or logged.
 export async function signTx(env, wallet, b64tx) {
@@ -110,15 +165,32 @@ export async function signTx(env, wallet, b64tx) {
 }
 // Before signing: run it on the chain's own simulator and look at what it does to the wallet's SOL. A buy may take the
 // size plus a small fee budget and nothing more; a sell must bring back at least the quoted minimum less that budget.
-export async function simulate(env, address, b64tx, { side, inLamports, minOutLamports }) {
+// Then every token account of the wallet: untouched, except this trade's coin (its amount moves the right way and, on a sale,
+// by no more than is sold; owner, delegate and state unchanged) and wrapped SOL. SPL account layout (state.rs): mint 0-32,
+// owner 32-64, amount u64 64-72, then delegate, state, is_native, delegated amount, close authority.
+export async function simulate(env, address, b64tx, { side, inLamports, minOutLamports, mint = null, inTokens = "0" }) {
+  const bad = checkIxs(b64tx, address); if (bad) return { ok: false, error: bad };
   const pre = (await solRpc(env, "getBalance", [address])).value;
-  const v = (await solRpc(env, "simulateTransaction", [b64tx, { encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed", accounts: { encoding: "base64", addresses: [address] } }])).value;
+  const accts = (await tokenAccounts(env, address)).slice(0, 24);
+  const preData = accts.length ? (await solRpc(env, "getMultipleAccounts", [accts.map((a) => a.address), { encoding: "base64", commitment: "confirmed" }])).value || [] : [];
+  const v = (await solRpc(env, "simulateTransaction", [b64tx, { encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed", accounts: { encoding: "base64", addresses: [address, ...accts.map((a) => a.address)] } }])).value;
   if (v?.err) return { ok: false, error: `the simulation failed (${cut(JSON.stringify(v.err), 140)})` };
   const post = v?.accounts?.[0]?.lamports;
   if (typeof pre !== "number" || typeof post !== "number") return { ok: false, error: "the simulation did not show the wallet's balance" };
   const delta = post - pre;
   if (side === "buy" && -delta > inLamports + LIVE.feeBudgetLamports) return { ok: false, error: `the transaction would take ${round(-delta / 1e9, 6)} SOL, more than the ${round(inLamports / 1e9, 6)} SOL trade plus fees; not signed` };
   if (side === "sell" && delta < minOutLamports - LIVE.feeBudgetLamports) return { ok: false, error: `the transaction would bring back ${round(delta / 1e9, 6)} SOL, less than the quoted minimum; not signed` };
+  const same = (x, y) => x.length === y.length && x.every((b, i) => b === y[i]), amt = (u) => new DataView(u.buffer, u.byteOffset, u.byteLength).getBigUint64(64, true);
+  for (const [i, a] of accts.entries()) {
+    if (a.mint === SOL_MINT) continue;
+    const before = preData[i]?.data?.[0] ?? null, after = v?.accounts?.[i + 1]?.data?.[0] ?? null;
+    if (a.mint !== mint) { if (before !== after) return { ok: false, error: `the transaction would change the wallet's ${a.mint} token account, which this trade does not touch; not signed` }; continue; }
+    if (!before || !after) { if (side === "sell" && before && !after) continue; return { ok: false, error: "the simulation did not show the coin's token account; not signed" }; }
+    const x = unb64(before), y = unb64(after);
+    if (x.length !== y.length || !same(x.subarray(0, 64), y.subarray(0, 64)) || !same(x.subarray(72), y.subarray(72))) return { ok: false, error: "the transaction would change the owner, delegate or state of the coin's token account; not signed" };
+    const dt = amt(y) - amt(x);
+    if (side === "buy" ? dt < 0n : dt > 0n || -dt > BigInt(inTokens)) return { ok: false, error: `the transaction would move ${dt} of the coin's tokens, not what this ${side} says; not signed` };
+  }
   return { ok: true, pre, delta };
 }
 
@@ -128,8 +200,9 @@ export const upd = (d, id, f) => { const ks = Object.keys(f); return d.q(`UPDATE
 function fillOf(tx, address, mint) {
   const m = tx?.meta, keys = tx?.transaction?.message?.accountKeys || [];
   if (!m || !Array.isArray(m.preBalances) || (keys[0]?.pubkey ?? keys[0]) !== address) return null;
-  const tok = (list) => (list || []).filter((b) => b.owner === address && b.mint === mint).reduce((a, b) => a + BigInt(b.uiTokenAmount?.amount || "0"), 0n);
-  return { solLamports: m.postBalances[0] - m.preBalances[0], feeLamports: m.fee ?? 0, tokens: tok(m.postTokenBalances) - tok(m.preTokenBalances), err: m.err ?? null };
+  const mine = (list) => (list || []).filter((b) => b.owner === address && b.mint === mint), tok = (list) => mine(list).reduce((a, b) => a + BigInt(b.uiTokenAmount?.amount || "0"), 0n);
+  // created: the wallet had no account for this coin before and has one after (this buy paid its rent)
+  return { solLamports: m.postBalances[0] - m.preBalances[0], feeLamports: m.fee ?? 0, tokens: tok(m.postTokenBalances) - tok(m.preTokenBalances), err: m.err ?? null, created: !mine(m.preTokenBalances).length && mine(m.postTokenBalances).length > 0 };
 }
 // Ask the chain about one sent order and write down the answer. Returns "confirmed" | "failed" | "pending".
 export async function settle(env, o, { polls = 1 } = {}) {
@@ -143,16 +216,31 @@ export async function settle(env, o, { polls = 1 } = {}) {
       const payer = tx?.transaction?.message?.accountKeys?.[0];
       if (tx?.meta && payer && (payer.pubkey ?? payer) !== address) { await finish(d, o, "failed", { error: "that signature belongs to a different transaction, not to this order" }); return "failed"; }
       const f = fillOf(tx, address, o.mint);
-      if (!f) continue; // confirmed, but the details are not readable yet: asked again, never assumed
+      if (!f) { // confirmed, but the details are not readable yet: asked again; after 3 minutes, read from the token balance
+        if (o.venue === VENUE && o.mint && ageMin(o) >= LIVE.unreadableMin) { const est = await estimateFill(env, db(env), o, address); if (est) { await finish(db(env), o, "confirmed", { fill: est, error: est.note }); return "confirmed"; } }
+        continue;
+      }
       if (f.err) { await finish(d, o, "failed", { error: "the chain rejected it" }); return "failed"; }
       await finish(d, o, "confirmed", { fill: f }); return "confirmed";
     }
     if (!st) { // not on chain. Only once its blockhash has expired is it certain it never will be.
       let h = null; try { h = await solRpc(env, "getBlockHeight", [{ commitment: "confirmed" }]); } catch {}
       if (typeof h === "number" && o.last_valid_height && h > Number(o.last_valid_height) + 5) { await finish(d, o, "failed", { error: "it never reached the chain (its time window passed); nothing was spent" }); return "failed"; }
+      if (typeof h !== "number" && ageMin(o) >= LIVE.sentStaleMin) { await finish(d, o, "failed", { error: `the chain never saw it in ${LIVE.sentStaleMin} minutes (far past a blockhash's ~150-block window); nothing was spent` }); return "failed"; }
     }
   }
   return "pending";
+}
+const ageMin = (o) => (o.sent_at ? (Date.now() - new Date(o.sent_at).getTime()) / 60000 : 0);
+// A confirmed swap whose transaction the RPC will not return: the coin's token balance now, against what the position held
+// before, says how many tokens moved; the SOL is the quote's minimum (a sale) or the amount in (a buy). Marked as estimated.
+async function estimateFill(env, d, o, address) {
+  let held; try { held = (await tokenAccounts(env, address, o.mint)).reduce((a, x) => a + BigInt(x.raw), 0n); } catch { return null; }
+  const p = o.position_id ? await d.one(`SELECT tokens_raw, status FROM mob_aq_live_positions WHERE id = $1`, [o.position_id]) : null;
+  const r = await d.one(`SELECT in_amount, quote_out, min_out FROM mob_aq_live_orders WHERE id = $1`, [o.id]);
+  const before = p && p.status !== "opening" && /^\d+$/.test(p.tokens_raw || "") ? BigInt(p.tokens_raw) : 0n, tokens = held - before, fee = LIVE.baseFeeLamports;
+  const sol = o.side === "buy" ? -Number(r?.in_amount || 0) - fee : tokens < 0n ? Number(r?.min_out ?? r?.quote_out ?? 0) - fee : -fee;
+  return { solLamports: sol, feeLamports: fee, tokens, err: null, created: false, note: "confirmed on the chain; getTransaction never answered, so the fill was read from the token balance and the SOL is the quote's minimum (estimated)" };
 }
 // The order's end, and its position's, in one statement each way. A row that is already finished is never finished twice.
 export async function finish(d, o, status, { error = null, fill = null } = {}) {
@@ -169,8 +257,14 @@ export async function finish(d, o, status, { error = null, fill = null } = {}) {
     return;
   }
   if (o.side === "buy") {
-    if (status === "confirmed" && fill.tokens > 0n) await d.q(`UPDATE mob_aq_live_positions SET status = 'open', tokens_raw = $2, cost_sol = $3, fees_sol = fees_sol + $4, opened_at = now() WHERE id = $1 AND status = 'opening'`,
-      [o.position_id, fill.tokens.toString(), -fill.solLamports / 1e9, fill.feeLamports / 1e9]);
+    // the plan is rebased on the real fill: the quote promised quote_out tokens for the SOL; fewer tokens = a worse price by the
+    // same ratio. entry becomes the fill price (so "stop to entry" after target 1 is the real breakeven); chartEntry keeps the chart's.
+    if (status === "confirmed" && fill.tokens > 0n) {
+      const qo = Number((await d.one(`SELECT quote_out FROM mob_aq_live_orders WHERE id = $1`, [o.id]))?.quote_out), ratio = qo > 0 ? qo / Number(fill.tokens) : 1;
+      await d.q(`UPDATE mob_aq_live_positions SET status = 'open', tokens_raw = $2, cost_sol = $3, fees_sol = fees_sol + $4, opened_at = now(),
+        plan = CASE WHEN plan IS NULL THEN NULL ELSE plan || jsonb_build_object('chartEntry', plan->'entry', 'entry', (plan->>'entry')::float8 * $5::float8, 'fillRatio', $5::float8, 'ataCreated', $6::boolean) END
+        WHERE id = $1 AND status = 'opening'`, [o.position_id, fill.tokens.toString(), -fill.solLamports / 1e9, fill.feeLamports / 1e9, ratio, !!fill.created]);
+    }
     else await d.q(`UPDATE mob_aq_live_positions SET status = 'failed', closed_at = now(), exit_reason = $2 WHERE id = $1 AND status = 'opening'`, [o.position_id, cut(error || "the buy brought no tokens")]);
     if (status === "confirmed") await brain(d, `LIVE BUY ${o.symbol}: ${round(-fill.solLamports / 1e9, 6)} SOL from the Aquarius wallet (${o.signature}). Chart plan: stop ${o.plan_patch?.stop ?? "?"}, targets ${o.plan_patch?.t1 ?? "?"} / ${o.plan_patch?.t2 ?? "?"}.`);
     return;
@@ -209,9 +303,31 @@ async function phantomApply(d, o, fill) {
     await brain(d, `PHANTOM SELL ${o.symbol} by Alex (${o.reason}): ${round(fill.solLamports / 1e9, 6)} SOL back to his Phantom wallet (${o.signature}).`);
   }
 }
-// today's realized result, plus the marked loss of any 'stuck' position (a coin that cannot be sold still counts toward the daily limit)
+// today's realized result plus the marked loss of every position still held (open, closing, stuck): a loss on screen counts
 export async function pnlToday(d) { return (await d.one(`SELECT (coalesce(sum(pnl_sol) FILTER (WHERE status = 'closed' AND closed_at >= ${TODAY}), 0)
-  + coalesce(sum(least(0, coalesce(proceeds_sol, 0) + coalesce(last_value_sol, 0) - cost_sol)) FILTER (WHERE status = 'stuck' AND cost_sol IS NOT NULL), 0))::float8 s FROM mob_aq_live_positions WHERE venue = $1`, [VENUE])).s; }
+  + coalesce(sum(least(0, coalesce(proceeds_sol, 0) + coalesce(last_value_sol, cost_sol - coalesce(proceeds_sol, 0)) - cost_sol)) FILTER (WHERE status IN ('open','closing','stuck') AND cost_sol IS NOT NULL), 0))::float8 s FROM mob_aq_live_positions WHERE venue = $1`, [VENUE])).s; }
+// The day's risk: realized + marked (pnl), and what it becomes if every open position is sold at its stop (committed): value
+// at the stop = marked value x stop / last price, less the exit slippage and one network fee. A buy still on its way counts its
+// size times its stop distance. New buys are refused, and sized, against the committed number.
+export async function riskToday(d, feeSide = LIVE.feePerSideFallbackLamports) {
+  const realized = (await d.one(`SELECT coalesce(sum(pnl_sol), 0)::float8 s FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed' AND closed_at >= ${TODAY}`, [VENUE])).s;
+  let marked = 0, worst = 0; const slip = 1 - LIVE.exitSlippageBps / 1e4;
+  for (const p of await d.q(`SELECT cost_sol, proceeds_sol, last_value_sol, stop_pct, plan, alert_patch FROM mob_aq_live_positions WHERE venue = $1 AND status IN ${ACTIVE}`, [VENUE])) {
+    if (p.cost_sol == null) { worst -= (p.plan?.sizeSol ?? 0) * ((p.stop_pct ?? 100) / 100 + LIVE.exitSlippageBps / 1e4) + (2 * feeSide) / 1e9; continue; }
+    const got = p.proceeds_sol || 0, now = p.last_value_sol ?? p.cost_sol - got, pl = p.plan;
+    marked += Math.min(0, got + now - p.cost_sol);
+    const stop = pl ? (pl.phase === 2 ? Math.max(pl.stop, pl.trailStop ?? -Infinity) : pl.stop) : null, spark = p.alert_patch?.spark;
+    const px = Array.isArray(spark) && spark.length ? spark[spark.length - 1] : pl?.chartEntry ?? pl?.entry;
+    const atStop = stop > 0 && px > 0 ? now * Math.min(1, stop / px) : now * Math.max(0, 1 - (p.stop_pct ?? 100) / 100);
+    worst += Math.min(0, got + atStop * slip - p.cost_sol) - feeSide / 1e9;
+  }
+  return { realized, marked, worst, pnl: realized + marked, committed: realized + worst };
+}
+// The network fee of one side, from our own last confirmed swaps (median of up to 20, at least 3), else the measured 61,000.
+export async function feePerSide(d) {
+  const r = await d.one(`SELECT count(*)::int n, percentile_cont(0.5) WITHIN GROUP (ORDER BY fee_sol)::float8 m FROM (SELECT fee_sol FROM mob_aq_live_orders WHERE venue = $1 AND side IN ('buy','sell') AND status = 'confirmed' AND fee_sol IS NOT NULL ORDER BY id DESC LIMIT 20) x`, [VENUE]);
+  return r.n >= 3 && r.m > 0 ? Math.round(r.m * 1e9) : LIVE.feePerSideFallbackLamports;
+}
 // The daily loss limit: when today's realized loss reaches it, auto trade switches itself OFF and says why.
 async function dailyLossCheck(d) {
   const lim = await get(d, "sol_wallet_limits", {}), pnl = await pnlToday(d);
@@ -222,7 +338,7 @@ async function dailyLossCheck(d) {
   return true;
 }
 // Build, check, sign, record, send, confirm. `claim` is the order's one-time key; the caller already holds the position row.
-async function execute(env, w, { side, c, positionId, inMint, outMint, amountRaw, slippageBps, reason, claim, q0 = null, patch = null }) {
+async function execute(env, w, { side, c, positionId, inMint, outMint, amountRaw, slippageBps, reason, claim, q0 = null, patch = null, maxBuyFeeLamports = null }) {
   const d = db(env);
   let o;
   try { o = await d.one(`INSERT INTO mob_aq_live_orders (venue, side, mint, symbol, position_id, claim, reason, in_amount, slippage_bps, plan_patch) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`, [VENUE, side, c.mint, c.symbol, positionId, claim, reason, String(amountRaw), slippageBps, patch ? JSON.stringify(patch) : null]); }
@@ -235,13 +351,15 @@ async function execute(env, w, { side, c, positionId, inMint, outMint, amountRaw
     await upd(d, o.id, { quote_out: qr.q.outAmount, min_out: qr.q.otherAmountThreshold, impact_pct: qr.impactPct, quote: JSON.stringify({ route: (qr.q.routePlan || []).map((r) => r.swapInfo?.label).filter(Boolean) }) });
     const sw = await buildSwap(env, qr.q, w.address);
     if (!sw.ok) return fail(sw.error);
-    const sim = await simulate(env, w.address, sw.tx, { side, inLamports: side === "buy" ? Number(amountRaw) : 0, minOutLamports: side === "sell" ? Number(qr.q.otherAmountThreshold) : 0 });
+    // the buy's own network fee, now that Jupiter has priced it: it must still fit the cost gate's room
+    if (side === "buy" && maxBuyFeeLamports != null && LIVE.baseFeeLamports + sw.priorityLamports > maxBuyFeeLamports) return fail(`the network fee (${LIVE.baseFeeLamports + sw.priorityLamports} lamports) is over the ${Math.max(0, maxBuyFeeLamports)} lamports the cost gate leaves for it`);
+    const sim = await simulate(env, w.address, sw.tx, { side, inLamports: side === "buy" ? Number(amountRaw) : 0, minOutLamports: side === "sell" ? Number(qr.q.otherAmountThreshold) : 0, mint: c.mint, inTokens: side === "sell" ? String(amountRaw) : "0" });
     if (!sim.ok) return fail(sim.error);
     const signed = await signTx(env, w, sw.tx);
     // the signature is on record BEFORE the send: whatever happens next, the chain can be asked about this exact transaction
     await upd(d, o.id, { status: "sent", signature: signed.signature, last_valid_height: sw.lastValidBlockHeight, sent_at: new Date().toISOString() });
-    o = { ...o, status: "sent", signature: signed.signature, last_valid_height: sw.lastValidBlockHeight };
-    try { await solRpc(env, "sendTransaction", [signed.tx, { encoding: "base64", skipPreflight: false, preflightCommitment: "confirmed", maxRetries: 5 }]); }
+    o = { ...o, status: "sent", signature: signed.signature, last_valid_height: sw.lastValidBlockHeight, sent_at: new Date().toISOString(), quote_out: qr.q.outAmount };
+    try { await broadcast(env, signed.tx); }
     catch (e) { await upd(d, o.id, { error: cut(`send: ${e.message || e}`) }); } // unknown outcome: NOT failed, NOT sent again. The chain decides.
     const end = await settle(env, o, { polls: LIVE.confirmPolls });
     return { [end]: true, orderId: o.id, signature: o.signature };
