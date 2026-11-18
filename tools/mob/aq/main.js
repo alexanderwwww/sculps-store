@@ -7,6 +7,7 @@ import { trainingButton, renderTrainingButton, trainingHero } from "./training.j
 import { walletsDock } from "./wallets.js";
 import { realBar, tradeScreens } from "./real.js";
 import { symScreen } from "./symbiote.js";
+import { AQ_GLYPH } from "./brand/glyph.js";
 export const BUILD = typeof __AQ_BUILD__ !== "undefined" ? __AQ_BUILD__ : "dev";
 
 import { DEPTS, GODS } from "./depts.js";
@@ -56,7 +57,7 @@ const h = (html) => { const t = document.createElement("template"); t.innerHTML 
 // ---------- top bar (both modes) ----------
 function topbar() {
   const el = h(`<header id="top">
-    <div class="brand"><span class="logo">♒</span><b>AQUARIUS</b><span id="mode-badge" class="badge">—</span></div>
+    <div class="brand"><span class="logo" style="background:none;box-shadow:none">${AQ_GLYPH.replace("<svg ", '<svg width="24" height="24" ')}</span><b>AQUARIUS</b><span id="mode-badge" class="badge">—</span></div>
     <div id="hbadges" class="hbs"></div>
     <div class="kpis">
       <div class="kpi pp"><small><u>PAPER</u> equity</small><b id="k-eq">—</b></div>

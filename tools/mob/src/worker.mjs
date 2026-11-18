@@ -20,6 +20,7 @@ import { tick as aqTick } from "./aq/engine.mjs";
 import { arenaTick } from "./aq/arena.mjs";
 import { keeperTick, watchTicks } from "./aq/keeper.mjs";
 import { symWake } from "./aq/sym/routes.mjs";
+import { AQ_BRAND } from "./aq-brand.mjs";
 export { Symbiote } from "./aq/sym/do.mjs";
 
 export const BUILD = "mob-4";
@@ -110,6 +111,9 @@ async function route(req, env) {
     await d.q(`DELETE FROM mob_login_fail WHERE ip=$1`, [ip]);
     return redirect("/", { "set-cookie": await makeSessionCookie(env) });
   }
+  // AQUARIUS ULTIMUM brand files (favicon, icons, og:image) are public so browsers and link previews can fetch them
+  const bm = path.match(/^\/aq\/brand\/(favicon\.svg|icon-(?:32|180|512)\.png|og\.png)$/);
+  if (bm) return new Response(Uint8Array.from(atob(AQ_BRAND[bm[1]]), (c) => c.charCodeAt(0)), { headers: { "content-type": bm[1].endsWith(".svg") ? "image/svg+xml" : "image/png", "cache-control": "public, max-age=86400" } });
   if (!(await isAdmin(req, env))) return redirect("/login");
   if (path === "/logout") return redirect("/login", { "set-cookie": "mob_session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" });
 
