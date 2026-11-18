@@ -16,7 +16,8 @@ const SOL = "So11111111111111111111111111111111111111112", MINT = "DezXAZ8z7Pnrn
 let env, R, cookie, d, wallet;
 const one = (q, p) => d.one(q, p), all = (q, p) => d.q(q, p);
 const setS = (k, v) => d.q(`INSERT INTO mob_aq_state (k, v, at) VALUES ($1,$2,now()) ON CONFLICT (k) DO UPDATE SET v=EXCLUDED.v, at=now()`, [k, JSON.stringify(v)]);
-const limits = (o = {}) => setS("sol_wallet_limits", { maxPerTradeSol: 0.05, maxDailyLossSol: 0.2, maxOpenPositions: 2, autoTrade: true, ...o });
+// both lanes ON unless a test says otherwise (the server's own default is market ON, right call OFF: test "A)")
+const limits = (o = {}) => setS("sol_wallet_limits", { maxPerTradeSol: 0.05, maxDailyLossSol: 0.2, maxOpenPositions: 2, autoTrade: true, lanes: { market: true, rightCall: true }, ...o });
 // the fake world
 const F = {};
 // a v0 transaction: keys [payer, a random one, and `extra` (the coin's token account on a buy)], no instructions, no lookup tables
@@ -38,7 +39,7 @@ const flat = (p, k, v = 5) => Array.from({ length: k }, () => [p, p, v]);
 function world() {
   resetMocks();
   Object.assign(F, { payer: null, nsig: 1, swapBody: null, balance: 1_000_000_000, quoteFail: false, swapFail: false, jupSim: null, impact: "0.001", simTake: null, simErr: null, send: "ok", sent: [], status: {}, txs: {}, height: 1000, lastValid: 2000, tokensOut: "5000000", sellOut: "60000000", candles: fibCandles(), tokAccts: [], tokPost: {}, mint: { owner: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", data: { parsed: { type: "mint", info: { freezeAuthority: null, mintAuthority: null, decimals: 5 } } } },
-    solUsd: null, priceFail: false, noChart: new Set(), quoteFailIf: null, route: "Meteora", holderSimErr: null, recvTokens: null, ataOwner: null, txExtra: [], rentApart: false, holderOwner: "11111111111111111111111111111111", prices: null, rug: { mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 5 } }, calls: [], rowAtSend: null,
+    solUsd: null, priceFail: false, quoteDown: false, quoteDownIf: null, noChart: new Set(), quoteFailIf: null, route: "Meteora", holderSimErr: null, recvTokens: null, ataOwner: null, txExtra: [], rentApart: false, holderOwner: "11111111111111111111111111111111", prices: null, rug: { mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 5 } }, calls: [], rowAtSend: null,
     pools: [{ id: "pool1", quoteAsset: SOL, baseAsset: { id: MINT, symbol: "BONK", usdPrice: 0.00002, liquidity: 250000, decimals: 5, firstPool: { createdAt: "2024-01-01T00:00:00Z" }, stats5m: { priceChange: -4 }, audit: { mintAuthorityDisabled: true, freezeAuthorityDisabled: true } } },
       { id: "pool2", quoteAsset: SOL, baseAsset: { id: NEWMINT, symbol: "NEWP", usdPrice: 1, liquidity: 900000, decimals: 6, firstPool: { createdAt: new Date(Date.now() - 3600e3).toISOString() }, stats5m: { priceChange: -9 } } }] });
   mock("GET", /^https:\/\/datapi\.jup\.ag\/v1\/pools\//, () => ({ pools: F.pools }));
@@ -47,7 +48,7 @@ function world() {
   for (const host of ["https://api.jup.ag", "https://lite-api.jup.ag"]) {
     // price/v3: SOL at a price that makes the fake quotes agree with the fake chart (0.05 SOL buys 50 tokens = 0.001 SOL each = 114.6 "USD")
     mock("GET", `${host}/price/v3`, (c, u) => { F.calls.push("price"); if (F.priceFail) return new Response("{}", { status: 503 }); const all = { [SOL]: { usdPrice: F.solUsd ?? F.candles.at(-1).close * 1000, decimals: 9 }, ...(F.prices || {}) }; return Object.fromEntries(u.searchParams.get("ids").split(",").filter((m) => all[m]).map((m) => [m, all[m]])); });
-    mock("GET", `${host}/swap/v1/quote`, (c, u) => { F.calls.push("quote"); if (F.quoteFail || F.quoteFailIf?.(u)) return new Response(JSON.stringify({ error: "Could not find any route" }), { status: 400 });
+    mock("GET", `${host}/swap/v1/quote`, (c, u) => { F.calls.push("quote"); if (F.quoteDown || F.quoteDownIf?.(u)) return new Response("{}", { status: 503 }); if (F.quoteFail || F.quoteFailIf?.(u)) return new Response(JSON.stringify({ error: "Could not find any route" }), { status: 400 });
       const buy = u.searchParams.get("inputMint") === SOL, usdc = u.searchParams.get("outputMint").startsWith("EPjFWdd5"), out = usdc ? String(Math.round((F.solUsd ?? F.candles.at(-1).close * 1000) * (Number(u.searchParams.get("amount")) / 1e9) * 1e6)) : buy ? String(Math.round((Number(F.tokensOut) * Number(u.searchParams.get("amount"))) / 5e7)) : F.sellOut;
       return { inputMint: u.searchParams.get("inputMint"), outputMint: u.searchParams.get("outputMint"), inAmount: u.searchParams.get("amount"), outAmount: out, otherAmountThreshold: String(Math.floor(Number(out) * 0.99)), priceImpactPct: F.impact, slippageBps: Number(u.searchParams.get("slippageBps")), routePlan: [{ swapInfo: { label: F.route } }] }; });
     mock("POST", `${host}/swap/v1/swap`, async (c) => { F.calls.push("swap"); const b = JSON.parse(c.body); F.swapBody = b; const ours = b.userPublicKey === wallet?.address; if (F.swapFail && ours) return new Response("{}", { status: 500 });
@@ -492,7 +493,7 @@ test("4) the daily budget is honest: the worst case of a position is what its ex
   assert.ok(Math.abs(rk.committed - (0.05 * 0.92 * 0.95 * 0.985 - 0.05 - 0.000061)) < 1e-9, "value at (stop less 5%) less 1.5% slippage: " + rk.committed);
   // the third curve buy is sized to what is left: about 0.0195 SOL, not 0.05
   await wipe(); world(); await limits({ maxDailyLossSol: 0.06, maxOpenPositions: 3 }); await curveWorld(); await open("CurveA", curvePlan); await open("CurveB", curvePlan);
-  F.quoteFailIf = (u) => /^Curve/.test(u.searchParams.get("inputMint")); F.noChart.add("CurveA"); F.noChart.add("CurveB"); // the two stand-in positions have no market and no chart: their marks stay where they are
+  F.quoteDownIf = (u) => /^Curve/.test(u.searchParams.get("inputMint")); F.noChart.add("CurveA"); F.noChart.add("CurveB"); // the two stand-in positions have no market and no chart: their marks stay where they are
   const r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.confirmed, true, JSON.stringify(r.result) + JSON.stringify(await lastRef()));
   const p = (await positions()).find((x) => x.mint === CURVEMINT); assert.ok(Math.abs(p.plan.sizeSol - (0.009878 - 2 * 61000 / 1e9) / 0.5) < 2e-6, "sized to the budget left after its own two network fees, 0.019512 SOL: " + p.plan.sizeSol); assert.match(p.plan.sizeCappedBy, /daily loss budget/); assert.equal(p.plan.worstPct, 50);
   // and with three open, the committed loss is inside the daily limit
@@ -537,6 +538,120 @@ test("7) a Phantom signal's plan carries its lane, candle source, unit and liqui
   F.noChart.clear(); F.candles = [{ time: Math.floor(Date.now() / 60000) * 60 - 120, open: 75, high: 75, low: 75, close: 75, volume: 1 }]; await d.q(`DELETE FROM mob_aq_market`); // a USD chart appears, at 75 "USD" = 1 SOL: 870x the SOL levels
   await L.phantomWatch(env); const pp = await one(`SELECT alert, alert_action FROM mob_aq_live_positions WHERE venue = 'phantom'`); assert.equal(pp.alert, null, "no false SELL NOW / target from a chart in another unit: " + pp.alert);
   await d.q(`DELETE FROM mob_aq_state WHERE k IN ('phantom','phantom_signal')`);
+});
+
+test("A) lane switches in the live settings: default market ON / right call OFF; with right call off a fresh coin is never bought and the refusal says so", async () => {
+  assert.deepEqual(L.lanesOf({}), { market: true, rightCall: false }); assert.deepEqual(L.lanesOf(null), { market: true, rightCall: false }); assert.deepEqual(L.lanesOf({ lanes: { market: false, rightCall: true } }), { market: false, rightCall: true });
+  // the settings route's validator: lanes are booleans, only these two, a lane left out keeps its setting
+  const V = W.validateWalletLimits; assert.deepEqual(V({ lanes: { rightCall: true } }, { maxPerTradeSol: 0.05 }).limits.lanes, { market: true, rightCall: true });
+  assert.deepEqual(V({ lanes: { market: false } }, { lanes: { market: true, rightCall: true } }).limits.lanes, { market: false, rightCall: true }); assert.equal(V({ maxPerTradeSol: 0.01 }, { lanes: { market: false, rightCall: true } }).limits.lanes.market, false, "untouched by other edits");
+  assert.match(V({ lanes: { market: "yes" } }).error, /must be on or off/); assert.match(V({ lanes: { curve: true } }).error, /is not a lane/); assert.match(V({ lanes: true }).error, /lanes must be/);
+  const r0 = await (await R("POST", "/api/aq/wallet/limits", { cookie, body: { lanes: { rightCall: false } } })).json(); assert.equal(r0.limits.lanes.rightCall, false); assert.equal((await R("POST", "/api/aq/wallet/limits", { bearer: env.MOB_API_TOKEN, body: { lanes: { rightCall: true } } })).status, 403, "Alex only");
+  // DEFAULT (no lanes stored): a fresh right call with a perfect setup is NOT bought; the refusal says the lane is off
+  const dflt = () => setS("sol_wallet_limits", { maxPerTradeSol: 0.05, maxDailyLossSol: 0.2, maxOpenPositions: 2, autoTrade: true });
+  await wipe(); world(); await dflt(); await curveWorld(); let r = await L.liveTick(env, { minute: 1 });
+  assert.equal(r.result.refused, "lane_off", JSON.stringify(r.result)); assert.match(r.result.reason, /right-call lane is OFF in the live settings: 1 fresh right call\(s\) from symbiote were not looked at, a fresh coin is never bought while it is off/);
+  assert.equal((await lastRef()).gate, "lane_off"); assert.equal((await orders()).length, 0); assert.equal((await positions()).length, 0); assert.deepEqual((await L.liveState(d)).lanes, { market: true, rightCall: false });
+  // default, both kinds present: the established coin is bought on the market lane, the fresh one is left, and that is on record
+  await wipe(); world(); await dflt(); await curveWorld({ keepPools: true }); F.sellOut = "60000000"; F.tokensOut = "5000000"; F.route = "Meteora"; F.solUsd = null; r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.buy, "BONK", JSON.stringify(r.result)); assert.equal(r.result.source, "market");
+  assert.ok(await one(`SELECT 1 FROM mob_aq_live_refusals WHERE gate = 'lane_off' AND venue = 'solana'`), "the skipped fresh right call is written down");
+  // default: an established coin that ALSO has a right call is a market coin under the 1% rules
+  await wipe(); world(); await dflt(); r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.source, "market"); assert.equal((await positions())[0].plan.source, "market");
+  // the same world with the lane ON buys the fresh coin
+  await wipe(); world(); await curveWorld(); r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.buy, "NEWP", JSON.stringify(r.result)); assert.equal(r.result.source, "right_call");
+  // market OFF, right call ON: an established coin with no right call is not bought
+  await wipe(); world(); await limits({ lanes: { market: false, rightCall: true } }); await d.q(`DELETE FROM mob_aq_sym_right`); r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.refused, "no_right_call"); assert.match(r.result.reason, /market lane is OFF/); assert.equal((await orders()).length, 0);
+  // both OFF
+  await wipe(); world(); await limits({ lanes: { market: false, rightCall: false } }); r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.refused, "lanes_off"); assert.equal((await orders()).length, 0);
+  // the Phantom signal obeys the same switches
+  await wipe(); world(); await dflt(); await curveWorld(); await setS("phantom", { address: wallet.address, seenAt: new Date().toISOString() }); await d.q(`DELETE FROM mob_aq_state WHERE k = 'phantom_signal'`);
+  assert.equal((await L.phantomWatch(env)).signal, null); assert.equal((await lastRef("phantom")).gate, "lane_off"); await d.q(`DELETE FROM mob_aq_state WHERE k IN ('phantom','phantom_signal')`);
+});
+
+test("B) the scan rotates: every candidate gets its turn across ticks, right calls first when that lane is on", async () => {
+  const many = () => { F.pools = Array.from({ length: 10 }, (_, i) => ({ id: `pool${i}`, quoteAsset: SOL, baseAsset: { id: `Est${i}`, symbol: `E${i}`, usdPrice: 1, liquidity: 250000 - i, decimals: 5, firstPool: { createdAt: "2024-01-01T00:00:00Z" }, audit: { mintAuthorityDisabled: true, freezeAuthorityDisabled: true } } })); };
+  const look = async (venue = "solana") => { const seen = []; const r = await L.scanFib(env, venue, async (mint, s) => { if (!s) { seen.push(mint); return false; } return true; }); assert.ok(!r.c); return seen; }; // every leg "taken": nothing is ever returned
+  await wipe(); world(); many(); await d.q(`DELETE FROM mob_aq_sym_right`); await d.q(`DELETE FROM mob_aq_state WHERE k LIKE 'live_scan_cursor%'`);
+  const t1 = await look(), t2 = await look(), t3 = await look(), t4 = await look();
+  assert.deepEqual(t1, ["Est0", "Est1", "Est2", "Est3"]); assert.deepEqual(t2, ["Est4", "Est5", "Est6", "Est7"], "the second tick goes on where the first stopped"); assert.deepEqual(t3, ["Est8", "Est9", "Est0", "Est1"], "and wraps"); assert.deepEqual(t4, ["Est2", "Est3", "Est4", "Est5"]);
+  assert.equal(new Set([...t1, ...t2, ...t3]).size, 10, "all ten candidates were looked at inside three ticks");
+  assert.deepEqual(await look("phantom"), ["Est0", "Est1", "Est2", "Est3"], "each venue keeps its own place");
+  // a coin that left the lists does not stall the scan: it starts again from the top
+  await setS("live_scan_cursor:solana", { mk: "Gone" }); assert.deepEqual(await look(), ["Est0", "Est1", "Est2", "Est3"]);
+  // right calls first: two right calls are looked at every tick, the market coins rotate behind them
+  await d.q(`DELETE FROM mob_aq_state WHERE k LIKE 'live_scan_cursor%'`); for (const m of ["Est7", "Est8"]) await d.q(`INSERT INTO mob_aq_sym_right (mint, symbol, status) VALUES ($1, 'T', 'candidate')`, [m]);
+  const a = await look(), b = await look(); assert.deepEqual(a.slice(0, 2).sort(), ["Est7", "Est8"]); assert.deepEqual(a.slice(2), ["Est0", "Est1"]); assert.deepEqual(b.slice(0, 2).sort(), ["Est7", "Est8"]); assert.deepEqual(b.slice(2), ["Est2", "Est3"]);
+  // five right calls: three looks for them (rotating), one always kept for the market lane
+  for (const m of ["Est0", "Est1", "Est2"]) await d.q(`INSERT INTO mob_aq_sym_right (mint, symbol, status) VALUES ($1, 'T', 'candidate')`, [m]); await d.q(`DELETE FROM mob_aq_state WHERE k LIKE 'live_scan_cursor%'`);
+  const c = await look(), e = await look(); assert.deepEqual(c, ["Est0", "Est1", "Est2", "Est3"]); assert.deepEqual(e, ["Est7", "Est8", "Est0", "Est4"], "right calls rotate among themselves; the market lane moved on to its next coin");
+  // with the right-call lane OFF the same coins are all market coins, in the list's own order
+  await limits({ lanes: { market: true, rightCall: false } }); await d.q(`DELETE FROM mob_aq_state WHERE k LIKE 'live_scan_cursor%'`); assert.deepEqual(await look(), ["Est0", "Est1", "Est2", "Est3"]);
+});
+
+test("C) a buy that failed before anything was sent does not burn the leg: retried with a fresh quote, three times at most; a sent buy does burn it", async () => {
+  F.swapFail = true; let r = await L.liveTick(env, { minute: 1 }); assert.match(r.result.failed, /HTTP 500/); let ps = await positions(); assert.equal(ps[0].status, "failed"); assert.equal((await orders())[0].signature, null);
+  // the next tick tries the SAME leg again, with a new quote, and buys
+  F.swapFail = false; F.calls.length = 0; await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`); r = await L.liveTick(env, { minute: 2 }); // (the order's one-time key holds the real clock minute: a tick a minute later, as in production) assert.equal(r.result.confirmed, true, JSON.stringify(r.result) + JSON.stringify(await lastRef())); assert.ok(F.calls.filter((x) => x === "quote").length >= 2, "fresh quotes");
+  ps = await positions(); assert.equal(ps.length, 2); assert.equal(ps[1].status, "open"); assert.equal(ps[1].plan.leg.highT, ps[0].plan.leg.highT, "the same leg");
+  // bounded: three failed tries, then the leg is left alone
+  await wipe(); world(); F.jupSim = { error: "custom program error" };
+  for (const m of [1, 2, 3]) { await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`); r = await L.liveTick(env, { minute: m }); assert.match(r.result.failed || "", /Jupiter's own simulation failed/, JSON.stringify(r.result)); }
+  r = await L.liveTick(env, { minute: 4 }); assert.equal(r.result.refused, "same_leg", JSON.stringify(r.result)); assert.match(r.result.reason, /its buy failed 3 times before anything was sent/); assert.equal((await positions()).length, 3); assert.equal(F.sent.length, 0);
+  F.jupSim = null; r = await L.liveTick(env, { minute: 5 }); assert.equal(r.result.refused, "same_leg", "still refused once the three tries are used");
+  // a buy that WAS signed and sent, and the chain rejected: that leg is burned at once
+  await wipe(); world(); F.send = "throw"; await L.liveTick(env, { minute: 1 }); const [o] = await orders(); F.status[o.signature] = { confirmationStatus: "confirmed", err: { InstructionError: [2, "Custom"] } };
+  await L.liveTick(env, { minute: 2 }); assert.equal((await positions())[0].status, "failed"); F.send = "ok"; await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`); r = await L.liveTick(env, { minute: 3 }); assert.equal(r.result.refused, "same_leg"); assert.equal((await positions()).length, 1);
+  // a leg that was really traded (stopped out) is still traded once
+  await wipe(); world(); await L.liveTick(env, { minute: 1 }); await d.q(`UPDATE mob_aq_live_positions SET status = 'closed', closed_at = now(), pnl_sol = -0.001`); r = await L.liveTick(env, { minute: 2 }); assert.equal(r.result.refused, "same_leg");
+});
+
+test("D) a dead position: no sell route marks it at 0 at once, and 24 hours of that writes it off once, on that day, and frees the slot", async () => {
+  assert.equal(L.LIVE.deadAfterHours, 24); await limits({ maxOpenPositions: 1, maxDailyLossSol: 0.2 });
+  await L.liveTick(env, { minute: 1 }); let [p] = await positions(); const cost = p.cost_sol; assert.equal(p.status, "open");
+  // an OUTAGE (Jupiter does not answer) leaves the mark alone
+  await L.liveTick(env, { minute: 2 }); assert.ok(Math.abs((await positions())[0].last_value_sol - 0.06) < 1e-9);
+  F.quoteDown = true; await L.liveTick(env, { minute: 3 }); [p] = await positions(); assert.ok(Math.abs(p.last_value_sol - 0.06) < 1e-9, "no answer is not 'worth nothing'"); assert.ok(!p.plan.noRouteSince); F.quoteDown = false;
+  // Jupiter ANSWERS "no route": worth 0 now, so the loss is not understated; not written off yet
+  F.quoteFail = true; let r = await L.liveTick(env, { minute: 4 }); [p] = await positions(); assert.equal(p.status, "open"); assert.equal(p.last_value_sol, 0); assert.ok(p.plan.noRouteSince > 0);
+  assert.ok(Math.abs((await L.pnlToday(d)) + cost) < 1e-9, "today's loss counts the whole position"); assert.equal(r.result.refused, "max_open", "its slot is still taken");
+  // the route comes back: marked again, the clock is cleared
+  F.quoteFail = false; await L.liveTick(env, { minute: 5 }); [p] = await positions(); assert.ok(p.last_value_sol > 0); assert.equal(p.plan.noRouteSince, undefined);
+  // 23 hours without a route: still open. 25 hours: written off
+  F.quoteFail = true; await L.liveTick(env, { minute: 6 }); await d.q(`UPDATE mob_aq_live_positions SET plan = plan || jsonb_build_object('noRouteSince', extract(epoch from now())::bigint - 23 * 3600)`);
+  await L.liveTick(env, { minute: 7 }); assert.equal((await positions())[0].status, "open");
+  await d.q(`UPDATE mob_aq_live_positions SET plan = plan || jsonb_build_object('noRouteSince', extract(epoch from now())::bigint - 25 * 3600)`);
+  r = await L.liveTick(env, { minute: 8 }); assert.equal(r.exits[0].writtenOff, "BONK", JSON.stringify(r)); [p] = await positions();
+  assert.equal(p.status, "closed"); assert.ok(Math.abs(p.pnl_sol + cost) < 1e-12, "a total loss: " + p.pnl_sol); assert.match(p.exit_reason, /^written off: no sell route for 24 hours/); assert.equal(p.plan.writtenOff, true); assert.equal(p.last_value_sol, 0);
+  assert.ok(new Date(p.closed_at).getTime() > Date.now() - 60000, "booked on the day it is written off"); assert.ok(Math.abs((await L.pnlToday(d)) + cost) < 1e-9, "counted once: realized now, no longer marked");
+  assert.ok(await one(`SELECT 1 FROM mob_aq_brain WHERE kind = 'pain' AND text LIKE 'PAIN: LIVE BONK%written off%'`), "a PAIN row for the brain"); assert.equal((await orders()).filter((o) => o.side === "sell").length, 0, "nothing was sent for it");
+  // once: later ticks do not book it again, and the slot is free (the scan runs again instead of max_open)
+  const st = (await L.liveState(d)); assert.equal(st.positions.length, 0); assert.ok(Math.abs(st.pnlTodaySol + cost) < 1e-6); assert.equal(st.closedToday, 1);
+  r = await L.liveTick(env, { minute: 9 }); assert.equal(r.exits, undefined); assert.notEqual(r.result.refused, "max_open"); assert.ok(Math.abs((await one(`SELECT sum(pnl_sol)::float8 s FROM mob_aq_live_positions WHERE status = 'closed'`)).s + cost) < 1e-9);
+  // CURVE: the same for a curve coin whose route vanished, plan in SOL
+  await wipe(); world(); await curveWorld(); await L.liveTick(env, { minute: 1 }); F.quoteFail = true; await L.liveTick(env, { minute: 2 }); [p] = await positions(); assert.equal(p.last_value_sol, 0); assert.equal(p.status, "open");
+  await d.q(`UPDATE mob_aq_live_positions SET plan = plan || jsonb_build_object('noRouteSince', extract(epoch from now())::bigint - 25 * 3600)`); r = await L.liveTick(env, { minute: 3 }); [p] = await positions(); assert.equal(p.status, "closed"); assert.ok(Math.abs(p.pnl_sol + p.cost_sol) < 1e-12);
+});
+
+test("E) target 1 must be 3x the cost from the quote's REAL price, checked again before signing (USD and CURVE)", async () => {
+  // the short leg: target 1 is 2.26% from the candle entry and the round trip is 0.654%, so 3x needs 1.96%: it passes AT the entry...
+  const short = () => { F.sellOut = "49800000"; F.candles = fibCandles({ legTo: 4, pull: 2, tail: rise(101.45, 101.8) }); };
+  short(); let r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.confirmed, true, JSON.stringify(r.result)); let [p] = await positions(); assert.ok(p.plan.rewardLivePct >= 3 * p.plan.rtPct); assert.ok(Math.abs(p.plan.rewardLivePct - p.plan.rewardPct) < 0.01);
+  // ...but the quote pays 1.4% over the entry (inside the 1.5% tolerance): from THAT price target 1 is 0.85% away, under 3x: refused, nothing signed
+  await wipe(); world(); short(); F.tokensOut = String(Math.round(5000000 / 1.014)); r = await L.liveTick(env, { minute: 1 });
+  assert.equal(r.result.refused, "cost", JSON.stringify(r.result)); assert.match(r.result.reason, /^Target 1 is 0\.8\d*% from the live price this quote pays \(.+\), under 3x the 0\.654% round trip/); assert.equal((await orders()).length, 0); assert.equal(F.sent.length, 0);
+  // CURVE: 13.4% from the entry clears 3 x 3.044% = 9.13%; a quote 2.9% over the entry (inside the 3% tolerance) leaves 10.2%: still bought; a leg whose target is 11% away does not survive it
+  await wipe(); world(); await curveWorld(); F.tokensOut = String(Math.round(4363002 / 1.029)); r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.confirmed, true, JSON.stringify(r.result) + JSON.stringify(await lastRef())); [p] = await positions(); assert.ok(p.plan.rewardLivePct < p.plan.rewardPct - 2.5 && p.plan.rewardLivePct >= 9.13);
+  await wipe(); world(); await curveWorld(); await symBars(chart(Date.now() / 1000, { legTo: 24, pull: 13, tail: rise(110.6, 111.2) })); const sx = C.entrySetup(chart(Date.now() / 1000, { legTo: 24, pull: 13, tail: rise(110.6, 111.2) }), Date.now() / 1000);
+  assert.equal(sx.signal, true, sx.why); const rw = (sx.t1 / sx.entry - 1) * 100; assert.ok(rw > 9.2 && rw < 12, "target 1 is " + rw + "% from the entry: passes the candle check");
+  F.tokensOut = String(Math.round(((0.05 / (sx.entry * 1e-5)) * 1e5) / 1.029)); r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.refused, "cost", JSON.stringify(r.result)); assert.match(r.result.reason, /from the live price this quote pays .* under 3x the 3\.044% round trip/);
+});
+
+test("F) the daily number is called what it is: a budget; the hard ceiling is every open position going to zero", async () => {
+  await limits({ maxPerTradeSol: 0.05, maxDailyLossSol: 0.06, maxOpenPositions: 3 });
+  const n = (await L.liveState(d)).dailyLoss; assert.equal(n.budgetSol, 0.06); assert.equal(n.hardCeilingSol, 0.15); assert.match(n.note, /0\.06 SOL a day is a budget, not a ceiling/); assert.match(n.note, /3 x 0\.05 = 0\.15 SOL/);
+  assert.equal(L.dailyLossNote({ maxPerTradeSol: 5, maxOpenPositions: 9, maxDailyLossSol: 0.06 }).hardCeilingSol, 0.15, "from the server's hard caps, not a stored number above them");
+  await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, last_value_sol, stop_pct) VALUES ('solana','OpenC','C','open','1',0.05,0.04,100)`); await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, last_value_sol, stop_pct) VALUES ('solana','OpenD','D','open','1',0.05,0.04,100)`);
+  const g = await L.gates(env); assert.equal(g.gate, "daily_loss_risk"); assert.match(g.reason, /no room in the 0\.06 SOL daily budget/);
 });
 
 const ixTx = (payer, program, data, other = "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1") => { const msg = Buffer.concat([Buffer.from([1, 0, 1, 3]), Buffer.from(W.unbase58(payer)), Buffer.from(W.unbase58(other)), Buffer.from(W.unbase58(program)), Buffer.alloc(32, 7), Buffer.from([1, 2, 3, 0, 1, 0, data.length]), Buffer.from(data)]);

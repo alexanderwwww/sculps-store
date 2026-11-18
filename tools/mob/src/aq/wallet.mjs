@@ -116,6 +116,11 @@ export function validateWalletLimits(body, current = WALLET_LIMIT_DEFAULTS, caps
   if (!body || typeof body !== "object" || Array.isArray(body)) return { error: "Send the limits as fields" };
   const next = { ...WALLET_LIMIT_DEFAULTS, ...current };
   for (const [k, v] of Object.entries(body)) {
+    // the entry lanes (live.mjs lanesOf): {market, rightCall}, each on or off; a lane left out keeps its setting
+    if (k === "lanes") { if (!v || typeof v !== "object" || Array.isArray(v)) return { error: "lanes must be {market, rightCall}" };
+      const cur = { market: next.lanes?.market !== false, rightCall: next.lanes?.rightCall === true };
+      for (const [lk, lv] of Object.entries(v)) { if (lk !== "market" && lk !== "rightCall") return { error: `${lk} is not a lane` }; if (typeof lv !== "boolean") return { error: `lane ${lk} must be on or off` }; cur[lk] = lv; }
+      next.lanes = cur; continue; }
     if (!(k in WALLET_LIMIT_DEFAULTS)) return { error: `${k} is not a limit` };
     if (k === "autoTrade") { if (typeof v !== "boolean") return { error: "autoTrade must be on or off" }; next[k] = v; continue; }
     if (typeof v !== "number" || !isFinite(v) || v < 0) return { error: `${k} must be a number, 0 or more` };
@@ -132,7 +137,7 @@ export async function saveWalletLimits(env, body) {
   if (r.error) return r;
   if (r.limits.autoTrade && !(await get(d, "sol_wallet_key"))?.address) return { error: "Create the wallet first" };
   await set(d, "sol_wallet_limits", r.limits);
-  if (JSON.stringify(cur) !== JSON.stringify(r.limits)) await brain(d, `Aquarius wallet limits set by Alex: ${r.limits.maxPerTradeSol} SOL a trade, ${r.limits.maxDailyLossSol} SOL daily loss, ${r.limits.maxOpenPositions} open, auto trade ${r.limits.autoTrade ? "ON (flag only: live orders are not built)" : "off"}.`);
+  if (JSON.stringify(cur) !== JSON.stringify(r.limits)) await brain(d, `Aquarius wallet limits set by Alex: ${r.limits.maxPerTradeSol} SOL a trade, ${r.limits.maxDailyLossSol} SOL daily loss, ${r.limits.maxOpenPositions} open, auto trade ${r.limits.autoTrade ? "ON" : "off"}; lanes: market ${r.limits.lanes?.market !== false ? "ON" : "off"}, right call ${r.limits.lanes?.rightCall === true ? "ON" : "off"}.`);
   return r;
 }
 
