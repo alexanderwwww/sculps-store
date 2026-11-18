@@ -19,7 +19,8 @@ const setS = (k, v) => d.q(`INSERT INTO mob_aq_state (k, v, at) VALUES ($1,$2,no
 const limits = (o = {}) => setS("sol_wallet_limits", { maxPerTradeSol: 0.05, maxDailyLossSol: 0.2, maxOpenPositions: 2, autoTrade: true, ...o });
 // the fake world
 const F = {};
-const fakeTx = (payer, nsig = 1) => { const b = new Uint8Array(1 + 64 * nsig + 4 + 1 + 64 + 32 + 1); b[0] = nsig; let p = 1 + 64 * nsig; b[p++] = 0x80; b[p++] = nsig; b[p++] = 0; b[p++] = 1; b[p++] = 2; b.set(W.unbase58(payer), p); b.set(crypto.getRandomValues(new Uint8Array(32)), p + 64); return Buffer.from(b).toString("base64"); };
+// a v0 transaction: keys [payer, a random one, and `extra` (the coin's token account on a buy)], no instructions, no lookup tables
+const fakeTx = (payer, nsig = 1, extra = null) => { const ex = [extra, ...(F.txExtra || [])].filter(Boolean); const nk = 2 + ex.length, b = new Uint8Array(1 + 64 * nsig + 4 + 1 + 32 * nk + 32 + 1 + 1); b[0] = nsig; let p = 1 + 64 * nsig; b[p++] = 0x80; b[p++] = nsig; b[p++] = 0; b[p++] = 1; b[p++] = nk; b.set(W.unbase58(payer), p); b.set(crypto.getRandomValues(new Uint8Array(32)), p + 32); ex.forEach((k, i) => b.set(W.unbase58(k), p + 64 + 32 * i)); return Buffer.from(b).toString("base64"); };
 const fibCandles = (opts) => asJup(chart(Date.now() / 1000, opts)).candles; // a golden-pocket bounce that closed a minute ago
 // After a buy: the same leg placed `rows.length` minutes ago, then those minutes (built from the plan's own levels), so the
 // position's plan is exactly the one entrySetup made at that moment. Five flat minutes at the end close the last 5-minute bar.
@@ -37,7 +38,7 @@ const flat = (p, k, v = 5) => Array.from({ length: k }, () => [p, p, v]);
 function world() {
   resetMocks();
   Object.assign(F, { payer: null, nsig: 1, swapBody: null, balance: 1_000_000_000, quoteFail: false, swapFail: false, jupSim: null, impact: "0.001", simTake: null, simErr: null, send: "ok", sent: [], status: {}, txs: {}, height: 1000, lastValid: 2000, tokensOut: "5000000", sellOut: "60000000", candles: fibCandles(), tokAccts: [], tokPost: {}, mint: { owner: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", data: { parsed: { type: "mint", info: { freezeAuthority: null, mintAuthority: null, decimals: 5 } } } },
-    holderSimErr: null, holderOwner: "11111111111111111111111111111111", prices: null, rug: { mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 5 } }, calls: [], rowAtSend: null,
+    holderSimErr: null, recvTokens: null, ataOwner: null, txExtra: [], rentApart: false, holderOwner: "11111111111111111111111111111111", prices: null, rug: { mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 5 } }, calls: [], rowAtSend: null,
     pools: [{ id: "pool1", quoteAsset: SOL, baseAsset: { id: MINT, symbol: "BONK", usdPrice: 0.00002, liquidity: 250000, decimals: 5, firstPool: { createdAt: "2024-01-01T00:00:00Z" }, stats5m: { priceChange: -4 }, audit: { mintAuthorityDisabled: true, freezeAuthorityDisabled: true } } },
       { id: "pool2", quoteAsset: SOL, baseAsset: { id: NEWMINT, symbol: "NEWP", usdPrice: 1, liquidity: 900000, decimals: 6, firstPool: { createdAt: new Date(Date.now() - 3600e3).toISOString() }, stats5m: { priceChange: -9 } } }] });
   mock("GET", /^https:\/\/datapi\.jup\.ag\/v1\/pools\//, () => ({ pools: F.pools }));
@@ -47,8 +48,8 @@ function world() {
     mock("GET", `${host}/swap/v1/quote`, (c, u) => { F.calls.push("quote"); if (F.quoteFail) return new Response(JSON.stringify({ error: "Could not find any route" }), { status: 400 });
       const buy = u.searchParams.get("inputMint") === SOL, out = buy ? F.tokensOut : F.sellOut;
       return { inputMint: u.searchParams.get("inputMint"), outputMint: u.searchParams.get("outputMint"), inAmount: u.searchParams.get("amount"), outAmount: out, otherAmountThreshold: String(Math.floor(Number(out) * 0.99)), priceImpactPct: F.impact, slippageBps: Number(u.searchParams.get("slippageBps")), routePlan: [{ swapInfo: { label: "Meteora" } }] }; });
-    mock("POST", `${host}/swap/v1/swap`, (c) => { F.calls.push("swap"); const b = JSON.parse(c.body); F.swapBody = b; const ours = b.userPublicKey === wallet?.address; if (F.swapFail && ours) return new Response("{}", { status: 500 });
-      return { swapTransaction: fakeTx(F.payer || b.userPublicKey, F.nsig || 1), lastValidBlockHeight: F.lastValid, prioritizationFeeLamports: 9555, simulationError: ours ? F.jupSim : null }; });
+    mock("POST", `${host}/swap/v1/swap`, async (c) => { F.calls.push("swap"); const b = JSON.parse(c.body); F.swapBody = b; const ours = b.userPublicKey === wallet?.address; if (F.swapFail && ours) return new Response("{}", { status: 500 });
+      return { swapTransaction: fakeTx(F.payer || b.userPublicKey, F.nsig || 1, ours && b.quoteResponse.inputMint === SOL ? await L.ataOf(b.userPublicKey, b.quoteResponse.outputMint) : null), lastValidBlockHeight: F.lastValid, prioritizationFeeLamports: 9555, simulationError: ours ? F.jupSim : null }; });
   }
   mock("POST", "https://mainnet.helius-rpc.com/", async (c) => { const m = JSON.parse(c.body), ok = (result) => ({ jsonrpc: "2.0", id: 1, result }); if (m.method !== "simulateTransaction") F.calls.push(m.method);
     if (m.method === "getBalance") return ok({ context: { slot: 1 }, value: F.balance });
@@ -67,7 +68,8 @@ function world() {
       if (close) { F.calls.push("simulateTransaction:close"); return ok({ context: { slot: 1 }, value: { err: null, accounts: [{ lamports: F.balance + 1488440 - 5000 }] } }); }
       if (F.swapBody.userPublicKey !== wallet.address) { F.calls.push("simulateTransaction:holder"); return ok({ context: { slot: 1 }, value: { err: F.holderSimErr, accounts: null, logs: [] } }); }
       F.calls.push("simulateTransaction");
-      const extra = (m.params[1].accounts.addresses || []).slice(1).map((a) => { const t = F.tokAccts.find((x) => x.address === a); const post = F.tokPost[a] !== undefined ? F.tokPost[a] : t?.data; return post == null ? null : { owner: t.program, lamports: 2039280, data: [post, "base64"] }; });
+      const q = F.swapBody.quoteResponse, coinAta = q.inputMint === SOL ? await L.ataOf(wallet.address, q.outputMint) : null;
+      const extra = (m.params[1].accounts.addresses || []).slice(1).map((a) => { if (a === coinAta) return { owner: L.PROG.token, lamports: 1488440, data: [tokData(q.outputMint, F.ataOwner || wallet.address, F.recvTokens ?? q.outAmount), "base64"] }; const t = F.tokAccts.find((x) => x.address === a); const post = F.tokPost[a] !== undefined ? F.tokPost[a] : t?.data; return post == null ? null : { owner: t.program, lamports: 2039280, data: [post, "base64"] }; });
       return ok({ context: { slot: 1 }, value: { err: F.simErr, accounts: [{ lamports: F.balance - (F.simTake ?? (F.swapBody.quoteResponse.inputMint === SOL ? Number(F.swapBody.quoteResponse.inAmount) + 2_050_000 : -Number(F.swapBody.quoteResponse.otherAmountThreshold))) }, ...extra], logs: [] } }); }
     if (m.method === "sendTransaction" && L.readIxs(m.params[0]).ixs[0]?.data[0] === 9) { const sig = W.base58(Buffer.from(m.params[0], "base64").subarray(1, 65)); F.closes = (F.closes || 0) + 1; F.status[sig] = { confirmationStatus: "confirmed", err: null }; return ok(sig); }
     if (m.method === "sendTransaction") { F.sent.push(m.params[0]); F.rowAtSend = await one(`SELECT status, signature FROM mob_aq_live_orders ORDER BY id DESC LIMIT 1`);
@@ -79,7 +81,9 @@ function world() {
     if (m.method === "getTransaction") return ok(F.txs[m.params[0]] ?? null);
     return { jsonrpc: "2.0", id: 1, error: { code: -32601, message: "Method not found" } }; });
 }
-const landed = (buy, q, err = null) => ({ slot: 5, meta: { err, fee: 14556, preBalances: [F.balance], postBalances: [buy ? F.balance - Number(q.inAmount) - 2_050_000 : F.balance + Number(q.outAmount) - 14556],
+function tokData(mint, owner, amount, extra = 0) { const b = Buffer.alloc(165 + extra); b.set(W.unbase58(mint), 0); b.set(W.unbase58(owner), 32); b.writeBigUInt64LE(BigInt(amount), 64); return b.toString("base64"); }
+const landed = (buy, q, err = null) => { const t = landed0(buy, q, err); if (buy && F.rentApart) { t.meta.preBalances.push(0); t.meta.postBalances.push(1488440); t.meta.postTokenBalances[0].accountIndex = 1; } return t; };
+const landed0 = (buy, q, err = null) => ({ slot: 5, meta: { err, fee: 14556, preBalances: [F.balance], postBalances: [buy ? F.balance - Number(q.inAmount) - 2_050_000 : F.balance + Number(q.outAmount) - 14556],
   preTokenBalances: buy ? [] : [{ owner: wallet.address, mint: q.inputMint, uiTokenAmount: { amount: q.inAmount } }], postTokenBalances: buy ? [{ owner: wallet.address, mint: q.outputMint, uiTokenAmount: { amount: q.outAmount } }, { owner: "someone-else", mint: q.outputMint, uiTokenAmount: { amount: "999" } }] : [] }, transaction: { message: { accountKeys: [wallet.address, "x"] }, signatures: ["s"] } });
 const wipe = async () => { await d.q(`DELETE FROM mob_aq_live_orders`); await d.q(`DELETE FROM mob_aq_live_positions`); await d.q(`DELETE FROM mob_aq_live_refusals`); await d.q(`DELETE FROM mob_aq_market`); await d.q(`DELETE FROM mob_aq_state WHERE k IN ('live_auto_off','live_tick','live_tick_lock')`); await setS("kill", false); await limits(); await rightAll(); };
 // symbiote right calls (Alex's rule): the test coins are flagged and checked unless a test says otherwise
@@ -337,9 +341,8 @@ test("RIGHT CALL rule: no symbiote right call = no live entry, a flagged-but-unc
 });
 
 // ---------------------------------------------------------------- the 2026-11-18 audit fixes
-const tokData = (mint, owner, amount, extra = 0) => { const b = Buffer.alloc(165 + extra); b.set(W.unbase58(mint), 0); b.set(W.unbase58(owner), 32); b.writeBigUInt64LE(BigInt(amount), 64); return b.toString("base64"); };
 // a legacy one-instruction transaction from the wallet: [wallet, other, program], the instruction's accounts [0,1,0]
-const ixTx = (payer, program, data) => { const msg = Buffer.concat([Buffer.from([1, 0, 1, 3]), Buffer.from(W.unbase58(payer)), Buffer.from(W.unbase58("5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1")), Buffer.from(W.unbase58(program)), Buffer.alloc(32, 7), Buffer.from([1, 2, 3, 0, 1, 0, data.length]), Buffer.from(data)]);
+const ixTx = (payer, program, data, other = "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1") => { const msg = Buffer.concat([Buffer.from([1, 0, 1, 3]), Buffer.from(W.unbase58(payer)), Buffer.from(W.unbase58(other)), Buffer.from(W.unbase58(program)), Buffer.alloc(32, 7), Buffer.from([1, 2, 3, 0, 1, 0, data.length]), Buffer.from(data)]);
   return Buffer.concat([Buffer.from([1]), Buffer.alloc(64), msg]).toString("base64"); };
 
 test("audit: pre-sign checks refuse foreign programs and token instructions, and any change to another token account", async () => {
@@ -353,7 +356,7 @@ test("audit: pre-sign checks refuse foreign programs and token instructions, and
   // another position's token account changes in the simulation: not signed, nothing sent
   const other = "So1idAcct1111111111111111111111111111111111";
   F.tokAccts = [{ address: "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", mint: NEWMINT, program: T, raw: "100", data: tokData(NEWMINT, wallet.address, 100) }];
-  F.tokPost = { "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1": tokData(NEWMINT, wallet.address, 0) }; void other;
+  F.tokPost = { "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1": tokData(NEWMINT, wallet.address, 0) }; void other; F.txExtra = ["5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1"];
   await L.liveTick(env, { minute: 1 }); const [o] = await orders(); assert.equal(o.status, "failed"); assert.match(o.error, /change the wallet's .* token account, which this trade does not touch/); assert.equal(F.sent.length, 0);
   // untouched: the buy goes through
   await wipe(); world(); F.tokAccts = [{ address: "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", mint: NEWMINT, program: T, raw: "100", data: tokData(NEWMINT, wallet.address, 100) }];
@@ -444,4 +447,36 @@ test("audit: BUY MORE goes through the right-call, veto and safety gates", async
   await d.q(`INSERT INTO mob_aq_chat (from_name, text) VALUES ('grok', $1)`, [`VETO ${MINT}`]); r = await M({ positionId: p.id, side: "buy", sol: 0.01 }); assert.match((await r.json()).error.message, /vetoed/); await d.q(`DELETE FROM mob_aq_chat`);
   F.rug = { ...F.rug, freezeAuthority: "Fz" }; await d.q(`DELETE FROM mob_aq_market`); r = await M({ positionId: p.id, side: "buy", sol: 0.01 }); assert.match((await r.json()).error.message, /Safety/);
   world(); await d.q(`DELETE FROM mob_aq_market`); r = await M({ positionId: p.id, side: "buy", sol: 0.01 }); assert.equal(r.status, 200, await r.clone().text());
+});
+
+test("re-audit: SOL may only go to the wallet's own wrapped-SOL account; the buy's tokens must arrive in OUR new account, at least the quote's minimum", async () => {
+  const wsol = await L.ataOf(wallet.address, SOL), xfer = [2, 0, 0, 0, 0x80, 0xf0, 0xfa, 0x02, 0, 0, 0, 0];
+  assert.match(L.checkIxs(ixTx(wallet.address, L.PROG.system, xfer), wallet.address, wsol), /System instruction other than a transfer from the wallet to its own wrapped-SOL account/, "a transfer to anyone else is refused");
+  assert.equal(L.checkIxs(ixTx(wallet.address, L.PROG.system, xfer, wsol), wallet.address, wsol), null, "the wrap into its own wSOL account is allowed");
+  assert.match(L.checkIxs(ixTx(wallet.address, L.PROG.system, xfer, wsol), wallet.address, null), /System instruction/, "no wSOL address known: refused");
+  F.recvTokens = "100"; await L.liveTick(env, { minute: 1 }); let [o] = await orders(); assert.equal(o.status, "failed"); assert.match(o.error, /100 of the coin's tokens arriving.*under the quote's minimum of 4950000/); assert.equal(F.sent.length, 0);
+  await wipe(); world(); F.ataOwner = "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1"; await L.liveTick(env, { minute: 1 }); [o] = await orders(); assert.match(o.error, /would not belong to the wallet/); assert.equal(F.sent.length, 0);
+  // the derived address is the chain's: checked against a real Jupiter swap (wallet 5Q54... wraps into qx84...)
+  assert.equal(await L.ataOf("5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", SOL), "qx84tiXFKS93Md34ENxNBNu33vPsEJ4BU1o7KYHm6pV");
+});
+
+test("re-audit: rent is kept apart from the trade's cost; a token account outside the transaction is not a reason to refuse; an estimated fill books the rent", async () => {
+  F.rentApart = true; await L.liveTick(env, { minute: 1 }); let [p] = await positions();
+  assert.ok(Math.abs(p.cost_sol - (0.05205 - 0.00148844)) < 1e-12, "cost without the rent"); assert.equal(p.plan.rentSol, 0.00148844); assert.equal(p.plan.ataCreated, true);
+  await d.q(`UPDATE mob_aq_live_positions SET last_value_sol = cost_sol`); assert.equal(await L.pnlToday(d), 0, "a flat mark is flat: the rent is not a loss");
+  await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`); await R("POST", "/api/aq/wallet/sellall", { cookie, body: {} }); [p] = await positions(); const pnl0 = p.pnl_sol;
+  F.tokAccts = [{ address: "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", mint: MINT, program: L.PROG.token, raw: "0", data: tokData(MINT, wallet.address, 0) }];
+  await limits({ autoTrade: false }); await L.liveTick(env, { minute: 2 }); [p] = await positions();
+  assert.ok(Math.abs(p.pnl_sol - (pnl0 - 0.000005)) < 1e-12, "rent back: only the close's fee touches the trade");
+  // a close that can never happen (dust): the rent kept apart is booked as lost, once
+  await wipe(); world(); await limits(); F.rentApart = true; await L.liveTick(env, { minute: 1 }); await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`); await R("POST", "/api/aq/wallet/sellall", { cookie, body: {} });
+  [p] = await positions(); const pnl1 = p.pnl_sol; F.tokAccts = [{ address: "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", mint: MINT, program: L.PROG.token, raw: "7", data: tokData(MINT, wallet.address, 7) }];
+  await limits({ autoTrade: false }); await L.liveTick(env, { minute: 2 }); await L.liveTick(env, { minute: 3 }); [p] = await positions();
+  assert.equal(p.plan.rent.state, "dust"); assert.ok(Math.abs(p.pnl_sol - (pnl1 - 0.00148844)) < 1e-12); assert.equal(p.plan.rentLost, true);
+  // a buy confirmed but unreadable: settled from the token balance, the new account's lamports are its rent, kept apart
+  await wipe(); world(); await limits(); F.send = "throw"; await L.liveTick(env, { minute: 1 }); let o = (await orders()).at(-1); F.status[o.signature] = { confirmationStatus: "confirmed", err: null };
+  F.tokAccts = [{ address: await L.ataOf(wallet.address, MINT), mint: MINT, program: L.PROG.token, raw: "5000000", data: tokData(MINT, wallet.address, 5000000) }];
+  await d.q(`UPDATE mob_aq_live_orders SET sent_at = now() - interval '4 minutes'`); await limits({ autoTrade: false }); await L.liveTick(env, { minute: 2 });
+  [p] = await positions(); o = (await orders())[0]; assert.equal(o.status, "confirmed"); assert.equal(p.status, "open"); assert.equal(p.plan.ataCreated, true); assert.equal(p.plan.rentSol, 0.00203928);
+  assert.ok(Math.abs(p.cost_sol - 0.050005) < 1e-12, "the swap and its fee; the rent apart");
 });

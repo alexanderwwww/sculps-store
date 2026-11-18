@@ -117,8 +117,45 @@ export function readIxs(b64tx) {
   let n; [n, p] = shortvec(b, p); const keys = []; for (let i = 0; i < n; i++) { keys.push(base58(b.subarray(p, p + 32))); p += 32; }
   p += 32; let ni; [ni, p] = shortvec(b, p); const ixs = [];
   for (let i = 0; i < ni; i++) { const pi = b[p++]; let na; [na, p] = shortvec(b, p); const acc = [...b.subarray(p, p + na)]; p += na; let nd; [nd, p] = shortvec(b, p); ixs.push({ program: keys[pi] ?? null, acc, data: b.slice(p, p + nd) }); p += nd; }
+  const lookups = [];
+  if (b[t.msgStart] & 0x80) { let nl; [nl, p] = shortvec(b, p); for (let i = 0; i < nl; i++) { const table = base58(b.subarray(p, p + 32)); p += 32; let nw; [nw, p] = shortvec(b, p); const w = [...b.subarray(p, p + nw)]; p += nw; let nr; [nr, p] = shortvec(b, p); const r = [...b.subarray(p, p + nr)]; p += nr; lookups.push({ table, w, r }); } }
   if (p > b.length) throw new Error("transaction too short");
-  return { keys, ixs };
+  return { keys, ixs, lookups };
+}
+// Every account a transaction can touch: its own keys plus the ones it loads from lookup tables (a table's data holds its
+// addresses from byte 56, 32 bytes each: LOOKUP_TABLE_META_SIZE in solana-sdk address-lookup-table-interface state.rs).
+// An account that is not in this set cannot be changed by the transaction.
+export async function txKeys(env, b64tx) {
+  const { keys, lookups } = readIxs(b64tx), out = new Set(keys);
+  if (!lookups.length) return out;
+  const tabs = await multi(env, lookups.map((l) => l.table), { encoding: "base64" });
+  for (const [i, l] of lookups.entries()) {
+    const data = tabs[i]?.data?.[0]; if (!data) throw new Error("a lookup table of the transaction could not be read");
+    const u = unb64(data); for (const k of [...l.w, ...l.r]) { const o = 56 + 32 * k; if (o + 32 > u.length) throw new Error("a lookup table index is out of range"); out.add(base58(u.subarray(o, o + 32))); }
+  }
+  return out;
+}
+// getMultipleAccounts takes at most 100 addresses (MAX_MULTIPLE_ACCOUNTS, agave rpc-client-types): asked in batches of 100
+async function multi(env, addrs, cfg) { const out = []; for (let i = 0; i < addrs.length; i += 100) out.push(...((await solRpc(env, "getMultipleAccounts", [addrs.slice(i, i + 100), { ...cfg, commitment: "confirmed" }])).value || [])); return out; }
+// ---- the associated token account address, derived exactly as the chain does: sha256(owner, token program, mint, bump,
+// ATA program, "ProgramDerivedAddress") with the highest bump whose hash is NOT a point on ed25519 (checked against a real
+// Jupiter swap on 2026-11-18: the derived wSOL account of the wallet is the one the swap wraps into).
+const EP = 2n ** 255n - 19n, emod = (a) => ((a % EP) + EP) % EP, epow = (b, e) => { let r = 1n; b = emod(b); while (e > 0n) { if (e & 1n) r = (r * b) % EP; b = (b * b) % EP; e >>= 1n; } return r; };
+const ED = emod(-121665n * epow(121666n, EP - 2n));
+export function onCurve(k) {
+  let y = 0n; for (let i = 31; i >= 0; i--) y = (y << 8n) | BigInt(k[i]);
+  const sign = y >> 255n; y &= (1n << 255n) - 1n; if (y >= EP) return false;
+  const y2 = (y * y) % EP, u = emod(y2 - 1n), v = emod(ED * y2 + 1n), x = (((u * epow(v, 3n)) % EP) * epow(u * epow(v, 7n), (EP - 5n) / 8n)) % EP, vx2 = (((v * x) % EP) * x) % EP;
+  if (vx2 !== u && vx2 !== emod(-u)) return false;
+  return !(x === 0n && sign);
+}
+export async function ataOf(owner, mint, program = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA") {
+  const parts = [unbase58(owner), unbase58(program), unbase58(mint)], tail = new TextEncoder().encode("ProgramDerivedAddress"), prog = unbase58("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+  for (let bump = 255; bump >= 0; bump--) {
+    const buf = new Uint8Array(96 + 1 + 32 + tail.length); buf.set(parts[0], 0); buf.set(parts[1], 32); buf.set(parts[2], 64); buf[96] = bump; buf.set(prog, 97); buf.set(tail, 129);
+    const h = new Uint8Array(await crypto.subtle.digest("SHA-256", buf)); if (!onCurve(h)) return base58(h);
+  }
+  throw new Error("no associated token address");
 }
 export const PROG = { system: "11111111111111111111111111111111", token: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", token22: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
   ata: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL", budget: "ComputeBudget111111111111111111111111111111", jup: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4" };
@@ -127,13 +164,14 @@ export const PROG = { system: "11111111111111111111111111111111", token: "Tokenk
 // to the wallet; plus Associated Token create (0) / create-idempotent (1). SPL instruction numbers read from
 // solana-program/token interface/src/instruction.rs. Anything else (a token Transfer, Approve, SetAuthority, another program)
 // is refused before signing.
-export function checkIxs(b64tx, wallet) {
+export function checkIxs(b64tx, wallet, wsolAta = null) {
   const { keys, ixs } = readIxs(b64tx);
   for (const [i, x] of ixs.entries()) {
     const no = (w) => `instruction ${i} (${x.program || "a program from a lookup table"}) ${w}; not signed`;
     if (x.program === PROG.budget || x.program === PROG.jup) continue;
     if (x.program === PROG.ata) { if (x.data.length === 0 || x.data[0] === 0 || x.data[0] === 1) continue; return no("is not a token-account creation"); }
-    if (x.program === PROG.system) { if (x.data.length === 12 && x.data[0] === 2 && !x.data[1] && !x.data[2] && !x.data[3] && keys[x.acc[0]] === wallet) continue; return no("is a System instruction other than a transfer from the wallet"); }
+    // the only SOL a swap may move by itself: from the wallet into the wallet's OWN wrapped-SOL account (the wrap)
+    if (x.program === PROG.system) { if (x.data.length === 12 && x.data[0] === 2 && !x.data[1] && !x.data[2] && !x.data[3] && keys[x.acc[0]] === wallet && wsolAta && keys[x.acc[1]] === wsolAta) continue; return no("is a System instruction other than a transfer from the wallet to its own wrapped-SOL account"); }
     if (x.program === PROG.token || x.program === PROG.token22) {
       if (x.data.length === 1 && x.data[0] === 17) continue;                          // SyncNative
       if (x.data.length === 1 && x.data[0] === 9 && keys[x.acc[1]] === wallet) continue; // CloseAccount, its SOL back to the wallet
@@ -168,11 +206,14 @@ export async function signTx(env, wallet, b64tx) {
 // Then every token account of the wallet: untouched, except this trade's coin (its amount moves the right way and, on a sale,
 // by no more than is sold; owner, delegate and state unchanged) and wrapped SOL. SPL account layout (state.rs): mint 0-32,
 // owner 32-64, amount u64 64-72, then delegate, state, is_native, delegated amount, close authority.
-export async function simulate(env, address, b64tx, { side, inLamports, minOutLamports, mint = null, inTokens = "0" }) {
-  const bad = checkIxs(b64tx, address); if (bad) return { ok: false, error: bad };
-  const pre = (await solRpc(env, "getBalance", [address])).value;
-  const accts = (await tokenAccounts(env, address)).slice(0, 24);
-  const preData = accts.length ? (await solRpc(env, "getMultipleAccounts", [accts.map((a) => a.address), { encoding: "base64", commitment: "confirmed" }])).value || [] : [];
+// Every token account of the wallet that the transaction can touch is checked (one it does not list cannot change); a buy's
+// coin account is watched even before it exists, and the tokens it receives must reach the quote's minimum.
+export async function simulate(env, address, b64tx, { side, inLamports, minOutLamports, mint = null, inTokens = "0", minOutTokens = "0" }) {
+  const bad = checkIxs(b64tx, address, await ataOf(address, SOL_MINT)); if (bad) return { ok: false, error: bad };
+  const pre = (await solRpc(env, "getBalance", [address])).value, keys = await txKeys(env, b64tx), mine = await tokenAccounts(env, address);
+  const accts = mine.filter((a) => keys.has(a.address));
+  if (side === "buy" && mint) for (const prog of [PROG.token, PROG.token22]) { const a = await ataOf(address, mint, prog); if (keys.has(a) && !accts.some((x) => x.address === a)) accts.push({ address: a, mint, program: prog, absent: true }); }
+  const preData = accts.length ? await multi(env, accts.map((a) => a.address), { encoding: "base64" }) : [];
   const v = (await solRpc(env, "simulateTransaction", [b64tx, { encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed", accounts: { encoding: "base64", addresses: [address, ...accts.map((a) => a.address)] } }])).value;
   if (v?.err) return { ok: false, error: `the simulation failed (${cut(JSON.stringify(v.err), 140)})` };
   const post = v?.accounts?.[0]?.lamports;
@@ -181,16 +222,24 @@ export async function simulate(env, address, b64tx, { side, inLamports, minOutLa
   if (side === "buy" && -delta > inLamports + LIVE.feeBudgetLamports) return { ok: false, error: `the transaction would take ${round(-delta / 1e9, 6)} SOL, more than the ${round(inLamports / 1e9, 6)} SOL trade plus fees; not signed` };
   if (side === "sell" && delta < minOutLamports - LIVE.feeBudgetLamports) return { ok: false, error: `the transaction would bring back ${round(delta / 1e9, 6)} SOL, less than the quoted minimum; not signed` };
   const same = (x, y) => x.length === y.length && x.every((b, i) => b === y[i]), amt = (u) => new DataView(u.buffer, u.byteOffset, u.byteLength).getBigUint64(64, true);
+  let received = 0n;
   for (const [i, a] of accts.entries()) {
     if (a.mint === SOL_MINT) continue;
     const before = preData[i]?.data?.[0] ?? null, after = v?.accounts?.[i + 1]?.data?.[0] ?? null;
     if (a.mint !== mint) { if (before !== after) return { ok: false, error: `the transaction would change the wallet's ${a.mint} token account, which this trade does not touch; not signed` }; continue; }
+    if (a.absent && !before) { // the buy creates the coin's account: it must be ours, for this mint, and hold what was bought
+      if (!after) continue;
+      const y = unb64(after); if (y.length < 72 || base58(y.subarray(0, 32)) !== mint || base58(y.subarray(32, 64)) !== address) return { ok: false, error: "the coin's new token account would not belong to the wallet; not signed" };
+      received += amt(y); continue;
+    }
     if (!before || !after) { if (side === "sell" && before && !after) continue; return { ok: false, error: "the simulation did not show the coin's token account; not signed" }; }
     const x = unb64(before), y = unb64(after);
     if (x.length !== y.length || !same(x.subarray(0, 64), y.subarray(0, 64)) || !same(x.subarray(72), y.subarray(72))) return { ok: false, error: "the transaction would change the owner, delegate or state of the coin's token account; not signed" };
     const dt = amt(y) - amt(x);
     if (side === "buy" ? dt < 0n : dt > 0n || -dt > BigInt(inTokens)) return { ok: false, error: `the transaction would move ${dt} of the coin's tokens, not what this ${side} says; not signed` };
+    received += dt;
   }
+  if (side === "buy" && mint && received < BigInt(minOutTokens || "0")) return { ok: false, error: `the simulation shows ${received} of the coin's tokens arriving in the wallet, under the quote's minimum of ${minOutTokens}; not signed` };
   return { ok: true, pre, delta };
 }
 
@@ -202,7 +251,10 @@ function fillOf(tx, address, mint) {
   if (!m || !Array.isArray(m.preBalances) || (keys[0]?.pubkey ?? keys[0]) !== address) return null;
   const mine = (list) => (list || []).filter((b) => b.owner === address && b.mint === mint), tok = (list) => mine(list).reduce((a, b) => a + BigInt(b.uiTokenAmount?.amount || "0"), 0n);
   // created: the wallet had no account for this coin before and has one after (this buy paid its rent)
-  return { solLamports: m.postBalances[0] - m.preBalances[0], feeLamports: m.fee ?? 0, tokens: tok(m.postTokenBalances) - tok(m.preTokenBalances), err: m.err ?? null, created: !mine(m.preTokenBalances).length && mine(m.postTokenBalances).length > 0 };
+  const created = !mine(m.preTokenBalances).length && mine(m.postTokenBalances).length > 0, idx = created ? mine(m.postTokenBalances)[0].accountIndex : null;
+  // the rent the new account took: its own balance before and after (it is 0 before; index into the full account list)
+  const rentLamports = created && Number.isInteger(idx) && m.postBalances[idx] > 0 ? m.postBalances[idx] - (m.preBalances[idx] || 0) : 0;
+  return { solLamports: m.postBalances[0] - m.preBalances[0], feeLamports: m.fee ?? 0, tokens: tok(m.postTokenBalances) - tok(m.preTokenBalances), err: m.err ?? null, created, rentLamports };
 }
 // Ask the chain about one sent order and write down the answer. Returns "confirmed" | "failed" | "pending".
 export async function settle(env, o, { polls = 1 } = {}) {
@@ -235,12 +287,15 @@ const ageMin = (o) => (o.sent_at ? (Date.now() - new Date(o.sent_at).getTime()) 
 // A confirmed swap whose transaction the RPC will not return: the coin's token balance now, against what the position held
 // before, says how many tokens moved; the SOL is the quote's minimum (a sale) or the amount in (a buy). Marked as estimated.
 async function estimateFill(env, d, o, address) {
-  let held; try { held = (await tokenAccounts(env, address, o.mint)).reduce((a, x) => a + BigInt(x.raw), 0n); } catch { return null; }
-  const p = o.position_id ? await d.one(`SELECT tokens_raw, status FROM mob_aq_live_positions WHERE id = $1`, [o.position_id]) : null;
+  let accts; try { accts = await tokenAccounts(env, address, o.mint); } catch { return null; }
+  const held = accts.reduce((a, x) => a + BigInt(x.raw), 0n);
+  const p = o.position_id ? await d.one(`SELECT tokens_raw, status, plan FROM mob_aq_live_positions WHERE id = $1`, [o.position_id]) : null;
+  // created: the cost gate saw no account for this coin before the buy (plan.ataNew) and one exists now: its lamports are the rent
+  const created = o.side === "buy" && p?.status === "opening" && p?.plan?.ataNew === true && accts.length > 0, rentLamports = created ? Number(accts[0].lamports) || 0 : 0;
   const r = await d.one(`SELECT in_amount, quote_out, min_out FROM mob_aq_live_orders WHERE id = $1`, [o.id]);
   const before = p && p.status !== "opening" && /^\d+$/.test(p.tokens_raw || "") ? BigInt(p.tokens_raw) : 0n, tokens = held - before, fee = LIVE.baseFeeLamports;
-  const sol = o.side === "buy" ? -Number(r?.in_amount || 0) - fee : tokens < 0n ? Number(r?.min_out ?? r?.quote_out ?? 0) - fee : -fee;
-  return { solLamports: sol, feeLamports: fee, tokens, err: null, created: false, note: "confirmed on the chain; getTransaction never answered, so the fill was read from the token balance and the SOL is the quote's minimum (estimated)" };
+  const sol = o.side === "buy" ? -Number(r?.in_amount || 0) - fee - rentLamports : tokens < 0n ? Number(r?.min_out ?? r?.quote_out ?? 0) - fee : -fee;
+  return { solLamports: sol, feeLamports: fee, tokens, err: null, created, rentLamports, note: "confirmed on the chain; getTransaction never answered, so the fill was read from the token balance and the SOL is the quote's minimum (estimated)" };
 }
 // The order's end, and its position's, in one statement each way. A row that is already finished is never finished twice.
 export async function finish(d, o, status, { error = null, fill = null } = {}) {
@@ -261,9 +316,12 @@ export async function finish(d, o, status, { error = null, fill = null } = {}) {
     // same ratio. entry becomes the fill price (so "stop to entry" after target 1 is the real breakeven); chartEntry keeps the chart's.
     if (status === "confirmed" && fill.tokens > 0n) {
       const qo = Number((await d.one(`SELECT quote_out FROM mob_aq_live_orders WHERE id = $1`, [o.id]))?.quote_out), ratio = qo > 0 ? qo / Number(fill.tokens) : 1;
+      // the rent of a new token account is NOT trade cost: it is kept apart (plan.rentSol), comes back by closeAccount, and is
+      // booked as a loss only if it never does. Marks, the daily budget and the loss check never see it.
+      const rent = fill.created ? Math.max(0, fill.rentLamports || 0) : 0;
       await d.q(`UPDATE mob_aq_live_positions SET status = 'open', tokens_raw = $2, cost_sol = $3, fees_sol = fees_sol + $4, opened_at = now(),
-        plan = CASE WHEN plan IS NULL THEN NULL ELSE plan || jsonb_build_object('chartEntry', plan->'entry', 'entry', (plan->>'entry')::float8 * $5::float8, 'fillRatio', $5::float8, 'ataCreated', $6::boolean) END
-        WHERE id = $1 AND status = 'opening'`, [o.position_id, fill.tokens.toString(), -fill.solLamports / 1e9, fill.feeLamports / 1e9, ratio, !!fill.created]);
+        plan = CASE WHEN plan IS NULL THEN NULL ELSE plan || jsonb_build_object('chartEntry', plan->'entry', 'entry', (plan->>'entry')::float8 * $5::float8, 'fillRatio', $5::float8, 'ataCreated', $6::boolean, 'rentSol', $7::float8) END
+        WHERE id = $1 AND status = 'opening'`, [o.position_id, fill.tokens.toString(), (-fill.solLamports - rent) / 1e9, fill.feeLamports / 1e9, ratio, !!fill.created, rent / 1e9]);
     }
     else await d.q(`UPDATE mob_aq_live_positions SET status = 'failed', closed_at = now(), exit_reason = $2 WHERE id = $1 AND status = 'opening'`, [o.position_id, cut(error || "the buy brought no tokens")]);
     if (status === "confirmed") await brain(d, `LIVE BUY ${o.symbol}: ${round(-fill.solLamports / 1e9, 6)} SOL from the Aquarius wallet (${o.signature}). Chart plan: stop ${o.plan_patch?.stop ?? "?"}, targets ${o.plan_patch?.t1 ?? "?"} / ${o.plan_patch?.t2 ?? "?"}.`);
@@ -353,7 +411,7 @@ async function execute(env, w, { side, c, positionId, inMint, outMint, amountRaw
     if (!sw.ok) return fail(sw.error);
     // the buy's own network fee, now that Jupiter has priced it: it must still fit the cost gate's room
     if (side === "buy" && maxBuyFeeLamports != null && LIVE.baseFeeLamports + sw.priorityLamports > maxBuyFeeLamports) return fail(`the network fee (${LIVE.baseFeeLamports + sw.priorityLamports} lamports) is over the ${Math.max(0, maxBuyFeeLamports)} lamports the cost gate leaves for it`);
-    const sim = await simulate(env, w.address, sw.tx, { side, inLamports: side === "buy" ? Number(amountRaw) : 0, minOutLamports: side === "sell" ? Number(qr.q.otherAmountThreshold) : 0, mint: c.mint, inTokens: side === "sell" ? String(amountRaw) : "0" });
+    const sim = await simulate(env, w.address, sw.tx, { side, inLamports: side === "buy" ? Number(amountRaw) : 0, minOutLamports: side === "sell" ? Number(qr.q.otherAmountThreshold) : 0, mint: c.mint, inTokens: side === "sell" ? String(amountRaw) : "0", minOutTokens: side === "buy" ? String(qr.q.otherAmountThreshold) : "0" });
     if (!sim.ok) return fail(sim.error);
     const signed = await signTx(env, w, sw.tx);
     // the signature is on record BEFORE the send: whatever happens next, the chain can be asked about this exact transaction
@@ -545,7 +603,7 @@ async function tryBuy(env, g, owner = null) {
   const cg = await costGate(env, VENUE, c, s, size, { feeSide: g.feeSide, owner: g.w.address }); if (!cg.ok) return cg.refusal;
   const { q, rtPct, rewardPct } = cg;
   if (!(bal >= lamports + LIVE.feeBudgetLamports + LIVE.reserveSol * 1e9 + cg.rentFrontedLamports)) return refuse(d, VENUE, "reserve", `The wallet holds ${round(bal / 1e9, 6)} SOL: not enough for a ${size} SOL trade, the ${round(cg.rentFrontedLamports / 1e9, 6)} SOL token-account rent (returned after the sale) and the ${LIVE.reserveSol} SOL kept for fees`);
-  const plan = planOf(s, Math.floor(Date.now() / 1000), { liq: c.liqUsd, rtPct, quoteRtPct: cg.quoteRtPct, fixedLamports: cg.fixedLamports, rewardPct, sizeSol: size, sizeCappedBy: cappedBy, validations: { ...s.validations, notVetoed: true, safety: true, tokenProgram: true, sellProven: true, cost: true, impact: true } });
+  const plan = planOf(s, Math.floor(Date.now() / 1000), { liq: c.liqUsd, rtPct, quoteRtPct: cg.quoteRtPct, fixedLamports: cg.fixedLamports, rewardPct, sizeSol: size, sizeCappedBy: cappedBy, ataNew: cg.rentFrontedLamports > 0, validations: { ...s.validations, notVetoed: true, safety: true, tokenProgram: true, sellProven: true, cost: true, impact: true } });
   // the claim: one statement takes the coin's only active slot, under the open-position limit. A second caller gets nothing.
   const p = await d.one(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, stop_pct, pool_liq_usd, plan)
     SELECT $1,$2,$3,'opening',$4,$5,$6 WHERE (SELECT count(*) FROM mob_aq_live_positions WHERE venue = $1 AND status IN ${ACTIVE}) < $7::int
@@ -661,7 +719,10 @@ export async function reclaimRent(env, w) {
   const d = db(env), out = [];
   for (const p of await d.q(`SELECT id, mint, symbol, plan FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed' AND plan IS NOT NULL AND closed_at > now() - interval '3 days'
       AND (NOT (plan ? 'rent') OR (plan->'rent'->>'state' = 'sent') OR (plan->'rent'->>'state' = 'failed' AND coalesce((plan->'rent'->>'tries')::int, 0) < 3)) ORDER BY id LIMIT 3`, [VENUE])) {
-    const mark = (r) => d.q(`UPDATE mob_aq_live_positions SET plan = plan || jsonb_build_object('rent', $2::jsonb) WHERE id = $1`, [p.id, JSON.stringify(r)]);
+    // a terminal end (dust left, or 3 failed closes): the rent kept apart at the buy is lost, and only then booked as a loss
+    const lost = (r) => (r.state === "dust" || (r.state === "failed" && (r.tries || 0) >= 3)) && p.plan.rentSol > 0 && !p.plan.rentLost;
+    const mark = async (r) => { const L = lost(r) ? p.plan.rentSol : 0;
+      await d.q(`UPDATE mob_aq_live_positions SET plan = plan || jsonb_build_object('rent', $2::jsonb) || CASE WHEN $3::float8 > 0 THEN jsonb_build_object('rentLost', true) ELSE '{}'::jsonb END, pnl_sol = pnl_sol - $3::float8 WHERE id = $1`, [p.id, JSON.stringify(r), L]); };
     const r0 = p.plan.rent || {}, tries = (r0.tries || 0) + (r0.state === "sent" ? 0 : 1);
     try {
       if (r0.state === "sent") { // a close whose outcome is not known yet: the chain is asked, never sent again
@@ -691,9 +752,11 @@ export async function reclaimRent(env, w) {
   return out;
 }
 async function bookRent(d, p, r) {
-  const sol = r.lamports / 1e9, booked = p.plan.ataCreated === true;
+  // rent kept apart at the buy (plan.rentSol): only the difference (the close's fee) touches the trade. An older position whose
+  // cost included the rent (ataCreated, no rentSol) gets all of it back into the trade.
+  const sol = r.lamports / 1e9, apart = p.plan.rentSol > 0, booked = apart || p.plan.ataCreated === true, delta = apart ? sol - p.plan.rentSol : booked ? sol : 0;
   await d.q(`UPDATE mob_aq_live_positions SET plan = plan || jsonb_build_object('rent', $2::jsonb), proceeds_sol = coalesce(proceeds_sol, 0) + $3, pnl_sol = pnl_sol + $3 WHERE id = $1 AND plan->'rent'->>'state' IS DISTINCT FROM 'closed'`,
-    [p.id, JSON.stringify({ ...r, state: "closed", sol, booked }), booked ? sol : 0]);
+    [p.id, JSON.stringify({ ...r, state: "closed", sol, booked }), delta]);
   await brain(d, `LIVE RENT BACK ${p.symbol}: the empty token account was closed, ${round(sol, 6)} SOL back to the Aquarius wallet${booked ? " and booked to the trade (its buy paid it)" : ""} (${r.signature}).`);
   return { symbol: p.symbol, rentBackSol: round(sol, 6), booked };
 }
