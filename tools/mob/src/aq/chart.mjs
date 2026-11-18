@@ -8,7 +8,8 @@
 // Fibonacci pullbacks were a LEAD on new pairs (lesson 14) and weak on established coins on 1-minute data; this trades the
 // 5-minute leg on established coins, which nobody has measured yet. The paper mirror (live.mjs paperTick) measures it.
 export const FIB = {
-  legBars: 36,       // the leg is looked for in the last 3 hours of 5-minute bars
+  legBars: 36,       // the leg is looked for in the last 3 hours of 5-minute bars (by the clock: 36 x 300 s, gaps included)
+  minLegBars: 20,    // at least 20 real 5-minute bars inside that window, or the coin is too thin to read
   minLegAtr: 3,      // a leg at least 3x the 5-minute ATR tall
   atrBars: 14,       // ATR over the last 14 five-minute bars
   zoneHi: 0.5, zoneLo: 0.618, // the golden pocket: 50% to 61.8% of the leg given back (38.2 is too shallow)
@@ -32,9 +33,11 @@ export function bars5(c1, nowSec) {
     if (c.t > b.last) { b.c = c.c; b.last = c.t; } if (c.t < b.first) { b.o = c.o; b.first = c.t; } }
   return [...by.values()].sort((a, b) => a.t - b.t).filter((b) => b.t + 300 <= nowSec).map(({ t, o, h, l, c, v }) => ({ t, o, h, l, c, v }));
 }
+// ATR over the last 14 bars. A bar whose previous bar is not the 5 minutes right before it (a thin coin with empty buckets)
+// uses its own range only: a "previous close" from 20 minutes earlier is not a gap the market made in 5 minutes.
 export function atrAbs(b) {
   const xs = b.slice(-FIB.atrBars - 1), tr = [];
-  for (let i = 1; i < xs.length; i++) tr.push(Math.max(xs[i].h - xs[i].l, Math.abs(xs[i].h - xs[i - 1].c), Math.abs(xs[i].l - xs[i - 1].c)));
+  for (let i = 1; i < xs.length; i++) tr.push(xs[i].t - xs[i - 1].t > 300 ? xs[i].h - xs[i].l : Math.max(xs[i].h - xs[i].l, Math.abs(xs[i].h - xs[i - 1].c), Math.abs(xs[i].l - xs[i - 1].c)));
   return tr.length >= 5 ? mean(tr) : null;
 }
 export const levels = (L, H, atr) => { const R = H - L, at = (x) => H - x * R, ext = (x) => L + x * R;
@@ -43,9 +46,11 @@ export const levels = (L, H, atr) => { const R = H - L, at = (x) => H - x * R, e
 // 1. THE LEG: the highest high of the window (with at least one bar after it), the lowest low before it; tall enough,
 // the high made on rising volume, and no 5-minute close since then under 78.6%.
 export function findLeg(b) {
-  if (b.length < 20) return { ok: false, why: `only ${b.length} five-minute bars` };
+  if (b.length < FIB.minLegBars) return { ok: false, why: `only ${b.length} five-minute bars` };
   const atr = atrAbs(b); if (!(atr > 0)) return { ok: false, why: "no ATR" };
-  const w = b.slice(-FIB.legBars), off = b.length - w.length;
+  // the window is 3 hours of the clock, not "the last 36 bars": on a thin coin 36 bars can reach back many hours
+  const from = b[b.length - 1].t - (FIB.legBars - 1) * 300, w = b.filter((x) => x.t >= from), off = b.length - w.length;
+  if (w.length < FIB.minLegBars) return { ok: false, why: `only ${w.length} five-minute bars in the last 3 hours: too thin to read` };
   let iH = 0; for (let i = 1; i < w.length - 1; i++) if (w[i].h > w[iH].h) iH = i;
   if (iH === 0) return { ok: false, why: "no up-leg: the high is the first bar of the window" };
   let iL = 0; for (let i = 1; i < iH; i++) if (w[i].l < w[iL].l) iL = i;
@@ -97,11 +102,11 @@ export function manage(plan, c1, nowSec, { liqNow = null, vetoed = false } = {})
   const done = c1.filter((c) => c.t + 60 <= nowSec), last = done[done.length - 1];
   if (!last) return { action: "hold", reason: "no data: holding (data never forces an exit)" };
   // every 5-minute bar that ENDS after `since` counts (the bar the entry was made in included); lower lows from the minutes after the fill
-  const b = bars5(done, nowSec), since = b.filter((x) => x.t + 300 > plan.since), afterFill = done.filter((c) => c.t >= plan.entryT);
+  const b = bars5(done, nowSec), since = b.filter((x) => x.t + 300 > plan.since);
   const stop = plan.phase === 2 ? Math.max(plan.stop, plan.trailStop ?? -Infinity) : plan.stop;
   const closeUnder = since.find((x) => x.c < stop);
   if (closeUnder) return { action: "sell_all", reason: plan.phase === 0 ? "stop: a 5-minute close under the 78.6% stop" : plan.phase === 1 ? "stop at entry after target 1" : "trail: a higher low broke" };
-  if (plan.phase === 0 && afterFill.some((x) => x.l < plan.pullLow)) return { action: "sell_all", reason: "invalidation: a lower low after entry" };
+  // (no 1-minute wick rule: the stop already sits 0.25 ATR under the swing low and acts only on a 5-minute CLOSE)
   const px = last.c;
   if (plan.phase === 0 && px >= plan.t1) return { action: "sell_half", reason: "target 1: the leg's high (sold half, stop to entry)", patch: { phase: 1, stop: plan.entry, since: last.t - (last.t % 300) + 300, t1At: last.t } };
   // T2: the 1.272 touch is judged on the 5-minute bar it happens in. That bar closes above 1.272 on rising volume: trail toward

@@ -14,7 +14,7 @@ export const URLS = {
   dsCto: "https://api.dexscreener.com/community-takeovers/latest/v1",
   // datapi.jup.ag is what jup.ag's own pages read (shapes read 2026-11-16; proven to answer from the deployed Worker by /diag)
   jupTop: (kind) => `https://datapi.jup.ag/v1/pools/${kind}/1h?limit=50`,
-  jupChart: (mint, nowMs) => `https://datapi.jup.ag/v2/charts/${mint}?interval=1_MINUTE&to=${nowMs}&candles=120&type=price&quote=usd`,
+  jupChart: (mint, nowMs) => `https://datapi.jup.ag/v2/charts/${mint}?interval=1_MINUTE&to=${nowMs}&candles=240&type=price&quote=usd`,
   jupTxs: (mint, cur) => `https://datapi.jup.ag/v1/txs/${mint}?limit=30${cur ? `&offset=${cur.offset}&offsetTs=${encodeURIComponent(cur.ts)}` : ""}`,
   // wallet scorecard and the KOL board (shapes read 2026-11-16 from the sandbox; Worker egress is read by /diag, never assumed)
   jupPnl: (wallet) => `https://datapi.jup.ag/v1/pnl?addresses=${wallet}`,
@@ -164,7 +164,8 @@ export const feeds = {
     for (const l of lists) for (const p of l.pools || []) { const c = jupPool(p); if (c && !seen.has(c.mint)) { seen.add(c.mint); out.push(c); } }
     return out;
   }, 120),
-  // the last two hours of 1-minute candles in one call: a new coin has history on first sight
+  // the last four hours of 1-minute candles in one call (240 = the 3-hour leg window of 36 five-minute bars, the 14-bar ATR
+  // before it and room for empty minutes; candles=240 read live 2026-11-18: 240 candles answered)
   jupCandles: (env, mint) => cached(env, `jup:chart:${mint}`, 50, async () => {
     const cs = (await getJson(URLS.jupChart(mint, Date.now())))?.candles;
     if (!Array.isArray(cs) || !cs.length) throw new Error("no candles");
