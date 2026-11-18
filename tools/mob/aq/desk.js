@@ -47,7 +47,7 @@ export function deskHTML() {
         <div class="rx-k"><div><small><u class="ppt">PAPER</u> EQUITY</small><b id="d-rx-eq" class="ppv">—</b><i id="d-rx-pl"></i></div><div class="r"><small>CORE</small><b id="d-rx-mood">—</b><i id="d-rx-hp"></i></div></div>
         <div class="rx-cards l" id="d-cards-l"></div><div class="rx-cards r" id="d-cards-r"></div>
         <div class="rx-f" id="d-rx-f"></div></div></div>
-    <div class="col-r"><div class="ph"><b>CONTROL STACK · <span class="up">REAL MONEY</span></b><em id="d-ctl-m"></em></div><div id="d-ctl"></div></div>
+    <div class="col-r"><div class="ph"><b class="up">REAL MONEY · CONTROL STACK</b><em id="d-ctl-m"></em></div><div id="d-ctl"></div></div>
   </section>
   <div id="d-hero-slot"></div>
   <section class="p paperctl"><div class="ph"><b><u class="ppt">PAPER</u> CONTROL</b><span>paper book · council verdicts · survival · feeds</span><em id="d-ctlp-m"></em></div><div id="d-ctlp"></div></section>
