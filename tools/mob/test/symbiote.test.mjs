@@ -129,7 +129,7 @@ test("replay: a real recorded pump.fun stream through the rules; every launch is
   const cov = e.coverage();
   assert.ok(cov.launches > 0); assert.equal(cov.pending, 0); assert.equal(cov.decided, cov.launches);
   const lanes = Object.fromEntries(Object.keys(R.LANES).map((l) => { const t = all.trades.filter((x) => x.lane === l); return [l, { n: t.length, wins: t.filter((x) => x.netPct > 0).length, avg: t.length ? +(t.reduce((a, x) => a + x.netPct, 0) / t.length).toFixed(2) : null }]; }));
-  for (const l of Object.keys(R.LANES)) { const w = e.wallet[l]; const sum = all.trades.filter((x) => x.lane === l).reduce((a, x) => a + (x.proceeds - x.cost) / x.cost, 0); assert.ok(Math.abs(w.sol - R.WALLET_SOL - sum) < 1e-6, "wallet = 100,000 + every trade"); assert.equal(w.open, 0); }
+  for (const l of Object.keys(R.LANES)) { const w = e.wallet[l]; const sum = all.trades.filter((x) => x.lane === l).reduce((a, x) => a + (x.proceeds - x.cost) / x.cost * R.SIZE_SOL, 0); assert.ok(Math.abs(w.sol - R.WALLET_SOL - sum) < 1e-6, "wallet = 100,000 + every trade"); assert.equal(w.open, 0); }
   console.log("# replay", JSON.stringify({ secs: rec.secs, msgs: rec.msgs, mbPerDay: Math.round(rec.bytes / rec.secs * 86400 / 1e6), launches: cov.launches, coveragePct: cov.pct, missed: cov.missed, lanes, exploded: b.explode.length }));
 });
 
@@ -218,12 +218,13 @@ test("Durable Object: launches and trades in, a 5-second alarm writes the batch 
   s.onPumpPortal(JSON.stringify({ txType: "create", mint: "DO1", name: "Leonida", symbol: "LEO", traderPublicKey: "DEV", bondingCurveKey: "C" }));
   for (const v of FX) s.onChain(JSON.stringify({ jsonrpc: "2.0", method: "logsNotification", params: { result: { context: { slot: 9 }, value: v } } }));
   await s.alarm();
+  assert.deepEqual(s.errors, []);
   const st = (await d.one(`SELECT v FROM mob_aq_sym_stats WHERE k='live'`)).v;
   assert.equal(st.source, "off", "the trade stream is off until a source is chosen"); assert.equal(st.coverage.launches, 2); assert.ok(st.feed.some((f) => f.k === "launch" && f.gta));
   assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_sym_coins WHERE mint IN ('DO1','71yNknjXX7bHjQofB7LRwp1iUj2wUhFh2YY2RVWhDHZM')`)).n === 2);
   assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_sym_gta WHERE mint=$1`, [R.GTA_MAIN])).n >= 1, "the main GTA coin gets a Jupiter minute");
   const s2 = new Symbiote(ctx, env); s2.connect = async () => {}; await s2.start();
-  assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_sym_missed WHERE reason LIKE 'symbiote restarted%'`)).n >= 2);
+  assert.equal((await d.one(`SELECT reason FROM mob_aq_sym_missed WHERE mint = 'DO1'`)).reason, "symbiote restarted while the coin was live");
   assert.equal(s2.eng.stats.restarts, 1, "counters survive the restart");
   resetMocks();
 });

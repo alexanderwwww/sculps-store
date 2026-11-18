@@ -107,6 +107,13 @@ test("\"All\" and the amounts that are refused: fee, dust, open live positions, 
   await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, stop_pct, time_exit_at) VALUES ('solana','SomeMint','SOME','open','1',0.05,10, now() + interval '1 hour')`);
   a = await pv("all"); assert.equal(a.ok, true); assert.equal(a.keepSol, 0.0135); assert.equal(a.sol, 1.986495); assert.equal(a.leavesSol, 0.0135); assert.equal(a.openPositions, 1);
   assert.match((await pv(1.99)).error, /too little to sell the 1 open live position\(s\)\. 0\.0135 SOL must stay: the most you can withdraw now is 1\.986495 SOL, or press SELL ALL LIVE first/);
+  // the reserve scales with the open positions: two open keep twice as much
+  await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, stop_pct) VALUES ('solana','SomeMint2','SOM2','open','1',0.05,10)`);
+  a = await pv("all"); assert.equal(a.keepSol, 0.027); assert.equal(a.openPositions, 2); await d.q(`DELETE FROM mob_aq_live_positions WHERE mint = 'SomeMint2'`);
+  // a withdrawal takes the money lease: while the trader's run holds it, nothing is sent
+  await d.q(`INSERT INTO mob_aq_state (k, v, at) VALUES ('live_tick_lock', '{"owner":"tick"}'::jsonb, now()) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v, at = now()`);
+  { const r = await post("/api/aq/wallet/withdraw", { sol: 0.1 }); assert.equal(r.status, 409); assert.match(r.error.message, /middle of a run/); assert.equal(F.sent.length, 0); }
+  await d.q(`UPDATE mob_aq_state SET v = 'false'::jsonb WHERE k = 'live_tick_lock'`);
   F.balance = 10_000_000; assert.match((await pv("all")).error, /nothing to withdraw: 0\.0135 SOL stays/);
   const r = await post("/api/aq/wallet/withdraw", { sol: "all" }); assert.equal(r.status, 400); assert.equal(F.sent.length, 0);
   // and the real thing for "all" with nothing open: the wallet is emptied to exactly zero

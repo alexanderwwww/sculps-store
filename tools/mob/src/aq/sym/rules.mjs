@@ -103,7 +103,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
     const netPct = (s.proceeds - s.cost) / s.cost * 100;
     const t = { mint: c.mint, symbol: c.symbol, lane, entryAt: s.at, exitAt: at, entryPx: s.px, exitPx: price, cost: s.cost, proceeds: s.proceeds, netPct, peakPct: s.peak, legPct: s.legPct, rtPct: s.rt, exit, half: s.half, gta: c.gta };
     s.st = "done"; s.tokens = 0; s.result = { netPct, exit };
-    const w = wallet[lane]; w.n++; if (netPct > 0) w.wins++; w.open--; w.sol += (s.proceeds - s.cost) * (c.sol ? 1 : SIZE_SOL / s.size);
+    const w = wallet[lane]; w.n++; if (netPct > 0) w.wins++; w.open--; w.sol += (s.proceeds - s.cost) / s.cost * SIZE_SOL; // the result as a share of what it cost, on a 1 SOL ticket (non-SOL coins too)
     out.trades.push(t); out.lessons.push(lessonFor(c, lane, t));
     if (netPct < 0) out.lessons.push(painFor(c, lane, t)); out.feed.push({ at, k: "exit", mint: c.mint, sym: c.symbol, lane, pct: r6(netPct), exit });
   }

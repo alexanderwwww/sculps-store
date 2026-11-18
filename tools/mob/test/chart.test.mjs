@@ -55,7 +55,17 @@ test("the stop: a 5-minute CLOSE under the 78.6% stop sells; a wick under it doe
   t = trade([...flatAt(120, 5), [120, plan.entry - 1, 5], [plan.entry - 1, 118, 5], ...flatAt(118, 3)]); // a dip under the stop inside a 5-minute bar that closes above
   assert.equal(C.manage(p1, t.cs, t.now).action, "hold");
   t = trade([...flatAt(120, 5), ...flatAt(plan.entry - 1, 5)]); assert.match(C.manage(p1, t.cs, t.now).reason, /stop at entry/);
-  t = trade([...flatAt(114.6, 5), ...flatAt(plan.pullLow - 0.4, 5)]); assert.ok(plan.pullLow - 0.4 > plan.stop); assert.match(C.manage(t.plan, t.cs, t.now).reason, /invalidation: a lower low/);
+  // under the swing low but above the stop: no 1-minute wick rule any more. Holds; a 5-minute CLOSE under the stop sells
+  t = trade([...flatAt(114.6, 5), ...flatAt(plan.pullLow - 0.4, 5)]); assert.ok(plan.pullLow - 0.4 > plan.stop); assert.equal(C.manage(t.plan, t.cs, t.now).action, "hold");
+  t = trade([...flatAt(114.6, 5), [114.6, 114.6, 5], [114.6, plan.stop - 1, 5], [plan.stop - 1, 114.6, 5], ...flatAt(114.6, 2)]); assert.equal(C.manage(t.plan, t.cs, t.now).action, "hold", "a wick under the stop inside a bar that closes above it");
+});
+test("thin coins: the leg window is 3 hours of the clock, and ATR does not bridge empty 5-minute buckets", () => {
+  const cs = chart(NOW, { flat: 240 }), full = C.bars5(cs, NOW), leg = C.findLeg(full); assert.equal(leg.ok, true); assert.ok(full.length >= 40);
+  // remove every other 5-minute bucket: 36 bars would now reach back 6 hours; the window stays 3 hours and has too few bars
+  const thin = full.filter((b, i) => i % 2 === 0); assert.match(C.findLeg(thin).why, /five-minute bars in the last 3 hours: too thin/);
+  // ATR across a 20-minute gap uses the bar's own range, not the jump from a close 20 minutes earlier
+  const gap = [{ t: 0, o: 100, h: 101, l: 99, c: 100 }, ...Array.from({ length: 6 }, (_, i) => ({ t: 1200 + i * 300, o: 150, h: 151, l: 149, c: 150 }))];
+  assert.equal(C.atrAbs(gap), 2);
 });
 
 test("the targets: half at target 1 with the stop to entry, then 1.272 judged on its 5-minute close, a trail to 1.618 only on strength", () => {

@@ -373,7 +373,8 @@ async function execute(env, w, { side, c, positionId, inMint, outMint, amountRaw
 export async function gates(env) {
   const d = db(env);
   const S = Object.fromEntries((await d.q(`SELECT k, v FROM mob_aq_state WHERE k IN ('sol_wallet_key','sol_wallet_limits','kill')`)).map((r) => [r.k, r.v]));
-  const w = S.sol_wallet_key, lim = { maxPerTradeSol: 0, maxDailyLossSol: 0, maxOpenPositions: 0, autoTrade: false, ...(S.sol_wallet_limits || {}) };
+  // the panel's limits, never above the server's hard caps (wallet.mjs HARD_CAPS)
+  const w = S.sol_wallet_key, lim = clampLimits({ maxPerTradeSol: 0, maxDailyLossSol: 0, maxOpenPositions: 0, autoTrade: false, ...(S.sol_wallet_limits || {}) }, env);
   const no = (gate, reason) => ({ ok: false, gate, reason, w, lim });
   if (!w?.address || !w.sealed) return no("no_wallet", "The Aquarius wallet has not been created");
   if (!lim.autoTrade) return no("auto_trade_off", "Auto trade is off");
@@ -381,12 +382,14 @@ export async function gates(env) {
   if (!(lim.maxPerTradeSol > 0)) return no("limit_per_trade", "Most per trade is zero");
   if (!(lim.maxDailyLossSol > 0)) return no("limit_daily_loss", "Most lost in a day is zero");
   if (!(lim.maxOpenPositions > 0)) return no("limit_open", "Open positions at once is zero");
-  const pnl = await pnlToday(d);
-  if (-pnl >= lim.maxDailyLossSol) { await dailyLossCheck(d); return no("daily_loss", `Today's live loss is ${round(-pnl, 6)} SOL, at the daily limit of ${lim.maxDailyLossSol} SOL`); }
+  const feeSide = await feePerSide(d), rk = await riskToday(d, feeSide);
+  if (-rk.pnl >= lim.maxDailyLossSol) { await dailyLossCheck(d); return no("daily_loss", `Today's live loss is ${round(-rk.pnl, 6)} SOL (realized and marked), at the daily limit of ${lim.maxDailyLossSol} SOL`); }
+  const budgetLeft = lim.maxDailyLossSol + rk.committed;
+  if (!(budgetLeft > 0)) return no("daily_loss_risk", `Today's loss plus what the open positions lose if every stop is hit is ${round(-rk.committed, 6)} SOL: no room under the ${lim.maxDailyLossSol} SOL daily limit for a new trade`);
   const open = (await d.one(`SELECT count(*)::int n FROM mob_aq_live_positions WHERE venue = $1 AND status IN ${ACTIVE}`, [VENUE])).n;
   if (open >= lim.maxOpenPositions) return no("max_open", `${open} live position(s) open, the limit is ${lim.maxOpenPositions}`);
   if ((await d.one(`SELECT count(*)::int n FROM mob_aq_live_orders WHERE venue = $1 AND status IN ('requested','sent')`, [VENUE])).n) return no("order_pending", "An earlier order is still being confirmed on the chain");
-  return { ok: true, w, lim, open };
+  return { ok: true, w, lim, open, budgetLeft, feeSide, risk: rk };
 }
 // A Grok VETO: a war-room message or an evidence post from Grok in the last hour whose text is "VETO <exact mint>" (markup,
 // quote marks and a colon allowed around the word). "VETO lifted on <mint>" or a mint named later in the text is not a veto.
@@ -396,11 +399,13 @@ export async function vetoed(d, mint) {
     UNION ALL SELECT text FROM mob_aq_helpers WHERE from_helper = 'grok' AND at > now() - interval '1 hour' AND strpos(text, $1) > 0`, [mint]);
   return rows.some((r) => isVeto(r.text, mint));
 }
-// The pool's liquidity by exact mint, from Jupiter's lists WITHOUT the $100K entry filter, so a draining pool is still seen.
-// Null when the coin is in none of the lists (the -30% exit then cannot be judged that minute; the chart stop still runs).
+// The coin's liquidity by exact mint: Jupiter's lists first, and when a draining coin has fallen off them (exactly when it
+// matters), its own number from Jupiter's price API by mint (price/v3 "liquidity": read live 2026-11-18, the same figure as the
+// lists' baseAsset.liquidity for the same 8 coins). Null only when neither answers; the chart stop still runs.
 export async function liqOf(env, mint) {
   const top = await feeds.jupTop(env); const c = top.ok && Array.isArray(top.data) ? top.data.find((x) => x.mint === mint) : null;
-  return c && Number.isFinite(c.liqUsd) ? c.liqUsd : null;
+  if (c && Number.isFinite(c.liqUsd)) return c.liqUsd;
+  try { const p = (await jupPrices([mint]))[mint]; return p && Number.isFinite(p.liqUsd) ? p.liqUsd : null; } catch { return null; }
 }
 // The coins the chart trader may look at: established pairs with a deep enough pool, mid-size pools first.
 export async function candidates(env) {
@@ -417,7 +422,7 @@ export async function scanFib(env, venue, skip) {
   if (!list.length) return { refusal: await refuse(d, venue, "no_candidate", "No established coin with a pool of $100K or more right now") };
   // Alex's hard rule (2026-11-18): only a coin symbiote flagged as a RIGHT CALL that passed its deep checks may be bought.
   const right = await rightCalls(d);
-  if (!right.size) return { refusal: await refuse(d, venue, "no_right_call", "Symbiote has no right call that passed its deep checks: no live entry") };
+  if (!right.size) return { refusal: await refuse(d, venue, "no_right_call", `Symbiote has no fresh right call (checked in the last ${await rightCallTtlMin(d)} minutes) that passed its deep checks: no live entry`) };
   let last = null, looked = 0, inList = 0;
   for (const c of list) {
     if (!right.has(c.mint)) continue;
@@ -433,12 +438,66 @@ export async function scanFib(env, venue, skip) {
     if (await vetoed(d, c.mint)) { last = await refuse(d, venue, "veto", "Grok vetoed this coin in the last hour", c); continue; }
     const hs = await safetyOf(env, c);
     if (!hs.ok) { last = await refuse(d, venue, "safety", hs.reason, c); continue; }
+    const mc = await mintCheck(env, c.mint);
+    if (!mc.ok) { last = await refuse(d, venue, "token_program", mc.reason, c); continue; }
     return { c, s };
   }
   return { refusal: last || await refuse(d, venue, inList ? "no_setup" : "no_right_call", inList ? "No right-call coin is in a Fibonacci pullback right now" : "No symbiote right call is among the established coins right now") };
 }
-// The symbiote's right calls that passed the deep checks (status 'candidate'). A missing table or a failed read = none.
-export async function rightCalls(d) { try { return new Set((await d.q(`SELECT mint FROM mob_aq_sym_right WHERE status = 'candidate'`)).map((r) => r.mint)); } catch { return new Set(); } }
+// The symbiote's right calls that passed the deep checks (status 'candidate') and are FRESH: checked (or flagged) inside the
+// TTL. No symbiote data exists yet to measure how long a call stays good, so the TTL is 30 minutes until 'right_call_ttl_min'
+// is set from that data. A missing table or a failed read = none.
+export async function rightCallTtlMin(d) { const v = Number(await get(d, "right_call_ttl_min")); return v > 0 ? v : LIVE.rightCallTtlMin; }
+export async function rightCalls(d) {
+  try { const ttl = await rightCallTtlMin(d); return new Set((await d.q(`SELECT mint FROM mob_aq_sym_right WHERE status = 'candidate' AND coalesce(checked_at, flagged_at) > now() - $1::float8 * interval '1 minute'`, [ttl])).map((r) => r.mint)); }
+  catch { return new Set(); }
+}
+// The mint itself, read from the chain (getAccountInfo jsonParsed; extension names read live 2026-11-18 and from agave's
+// parse_token_extension.rs): a token program we know, no freeze authority, and no Token-2022 extension that can tax, block,
+// freeze or take a holder's tokens. Pump's Token-2022 coins carry metadata and an EMPTY transfer-hook slot: those pass (the sell
+// simulation would run a hook if one were ever set).
+const BAD_EXT = { transferFeeConfig: "a transfer fee", transferHook: "a transfer hook program", permanentDelegate: "a permanent delegate", nonTransferable: "a non-transferable flag", defaultAccountState: "new accounts frozen by default", pausableConfig: "a pause switch" };
+export async function mintCheck(env, mint) {
+  let v; try { v = (await solRpc(env, "getAccountInfo", [mint, { encoding: "jsonParsed", commitment: "confirmed" }])).value; } catch (e) { return { ok: false, reason: `the coin's mint could not be read (${cut(e.message, 80)})` }; }
+  const info = v?.data?.parsed?.info;
+  if (!info || v.data.parsed.type !== "mint") return { ok: false, reason: "the address is not a token mint" };
+  if (v.owner !== PROG.token && v.owner !== PROG.token22) return { ok: false, reason: `the mint belongs to an unknown program (${v.owner})` };
+  if (info.freezeAuthority) return { ok: false, reason: "freeze authority is set: the issuer can freeze any holder's tokens" };
+  for (const e of info.extensions || []) {
+    const st = e.state || {};
+    if (e.extension === "transferHook" && !st.programId) continue;
+    if (e.extension === "permanentDelegate" && !st.delegate) continue;
+    if (e.extension === "defaultAccountState" && st.accountState !== "frozen") continue;
+    if (e.extension === "pausableConfig" && !st.authority && !st.paused) continue;
+    if (BAD_EXT[e.extension]) return { ok: false, reason: `Token-2022 ${BAD_EXT[e.extension]} (${e.extension}): refused` };
+  }
+  return { ok: true, program: v.owner };
+}
+// The honeypot test before any buy: a REAL holder's sale of this coin, built by Jupiter for that holder and run in the chain's
+// simulator (sigVerify off: nothing is signed or sent). A coin whose holders cannot sell, or whose transfer hook blocks a sale,
+// fails here. The holder is the first plain wallet (an account owned by the System program) among the 20 largest token accounts.
+export async function sellProof(env, c, tokensRaw, self = null) {
+  const no = (reason) => ({ ok: false, reason });
+  let big, info, kind;
+  try {
+    big = ((await solRpc(env, "getTokenLargestAccounts", [c.mint, { commitment: "confirmed" }])).value || []).filter((a) => a?.address && /^\d+$/.test(String(a.amount)) && a.amount !== "0").slice(0, 20);
+    if (!big.length) return no("no holder of this coin was found: its sale cannot be proven");
+    info = (await solRpc(env, "getMultipleAccounts", [big.map((a) => a.address), { encoding: "jsonParsed", commitment: "confirmed" }])).value || [];
+    const owners = info.map((x) => x?.data?.parsed?.info?.owner || null);
+    const uniq = [...new Set(owners.filter((o) => o && o !== self))];
+    kind = uniq.length ? (await solRpc(env, "getMultipleAccounts", [uniq, { encoding: "base64", dataSlice: { offset: 0, length: 0 }, commitment: "confirmed" }])).value || [] : [];
+    const holder = uniq.find((o, i) => kind[i]?.owner === PROG.system);
+    if (!holder) return no("no plain wallet among the coin's 20 largest holders: its sale cannot be proven");
+    const held = BigInt(big[owners.indexOf(holder)].amount), want = BigInt(tokensRaw || "0"), amount = want > 0n && want < held ? want : held;
+    const q = await quote(env, c.mint, SOL_MINT, amount.toString(), LIVE.exitSlippageBps);
+    if (!q.ok) return no(`no sell route for this coin: ${q.error}`);
+    const sw = await buildSwap(env, q.q, holder);
+    if (!sw.ok) return no(`a holder's sale does not build: ${sw.error}`);
+    const v = (await solRpc(env, "simulateTransaction", [sw.tx, { encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed" }])).value;
+    if (v?.err) return no(`a real holder's sale fails in the chain's simulator (${cut(JSON.stringify(v.err), 100)}): honeypot or transfer block`);
+    return { ok: true, holder };
+  } catch (e) { return no(`the sale could not be proven (${cut(e.message, 100)})`); }
+}
 // The hard safety check: RugCheck's report, or Jupiter's own audit when RugCheck does not answer. Unknown = not safe.
 export async function safetyOf(env, c) {
   const rg = await feeds.rug(env, c.mint);
@@ -448,53 +507,75 @@ export async function safetyOf(env, c) {
 const legTaken = async (d, venue, mint, s) => !!(await d.one(`SELECT 1 FROM mob_aq_live_positions WHERE venue = $1 AND mint = $2 AND (status IN ${ACTIVE} OR ($3::bigint IS NOT NULL AND (plan->'leg'->>'highT')::bigint = $3::bigint)) LIMIT 1`, [venue, mint, s ? s.leg.highT : null]));
 // Cost first, at the real size: price impact under 1%, the measured round trip (buy this size, sell what it buys) under 1%,
 // and the way to target 1 at least 3x it. Used by the live buy AND by the Phantom signal.
-async function costGate(env, venue, c, s, sizeSol) {
+// The fixed SOL costs count too, as a % of the size: the network fee of both sides and, for a coin with no token account yet,
+// the closeAccount that returns the rent after the sale. The rent itself is fronted capital that comes back, not a cost: it is
+// required in the balance (tryBuy) and reported (rentFrontedLamports).
+export async function costGate(env, venue, c, s, sizeSol, { feeSide = LIVE.feePerSideFallbackLamports, owner = null } = {}) {
   const d = db(env), lamports = Math.round(sizeSol * 1e9), no = async (gate, why) => ({ ok: false, refusal: await refuse(d, venue, gate, why, c) });
+  let ataNew = true; if (owner) { try { ataNew = !(await tokenAccounts(env, owner, c.mint)).length; } catch {} }
+  const fixed = 2 * feeSide + (ataNew ? LIVE.baseFeeLamports : 0), fixedPct = (fixed / lamports) * 100;
+  if (fixedPct >= FIB.maxRtPct) return no("cost", `The fixed SOL fees alone (${fixed} lamports) are ${round(fixedPct, 3)}% of ${sizeSol} SOL, over ${FIB.maxRtPct}%`);
   const q = await quote(env, SOL_MINT, c.mint, lamports, LIVE.slippageBps);
   if (!q.ok) return no("no_quote", q.error);
   if (q.impactPct > LIVE.maxImpactPct) return no("price_impact", `Price impact ${round(q.impactPct, 2)}% is over the ${LIVE.maxImpactPct}% cap`);
   const back = await quote(env, c.mint, SOL_MINT, q.q.outAmount, LIVE.exitSlippageBps);
   if (!back.ok) return no("no_quote", `no sell quote: ${back.error}`);
-  const rtPct = round((1 - Number(back.q.outAmount) / lamports) * 100, 3), rewardPct = round(((s.t1 - s.entry) / s.entry) * 100, 3);
-  if (rtPct >= FIB.maxRtPct) return no("cost", `The round trip costs ${rtPct}%, over ${FIB.maxRtPct}%`);
-  if (rewardPct < FIB.minRewardRt * rtPct) return no("cost", `Target 1 is ${rewardPct}% away, under ${FIB.minRewardRt}x the ${rtPct}% round trip`);
-  return { ok: true, q, rtPct, rewardPct };
+  const quoteRtPct = round((1 - Number(back.q.outAmount) / lamports) * 100, 3), rtPct = round(quoteRtPct + fixedPct, 3), rewardPct = round(((s.t1 - s.entry) / s.entry) * 100, 3);
+  const parts = `${quoteRtPct}% in the quotes + ${round(fixedPct, 3)}% fixed SOL fees at ${sizeSol} SOL`;
+  if (rtPct >= FIB.maxRtPct) return no("cost", `The round trip costs ${rtPct}% (${parts}), over ${FIB.maxRtPct}%`);
+  if (rewardPct < FIB.minRewardRt * rtPct) return no("cost", `Target 1 is ${rewardPct}% away, under ${FIB.minRewardRt}x the ${rtPct}% round trip (${parts})`);
+  const proof = await sellProof(env, c, q.q.outAmount, owner);
+  if (!proof.ok) return no("honeypot", proof.reason);
+  // room left for the buy's own network fee once Jupiter prices it (execute checks it before signing)
+  const room = (Math.min(FIB.maxRtPct - quoteRtPct, rewardPct / FIB.minRewardRt - quoteRtPct) / 100) * lamports - feeSide - (ataNew ? LIVE.baseFeeLamports : 0);
+  let rent = 0; if (ataNew) { try { rent = await solRpc(env, "getMinimumBalanceForRentExemption", [165]); } catch {} if (!(rent > 0)) rent = LIVE.tokenAccountRentFallbackLamports; }
+  return { ok: true, q, rtPct, quoteRtPct, fixedLamports: fixed, fixedPct: round(fixedPct, 3), rewardPct, maxBuyFeeLamports: Math.floor(room), rentFrontedLamports: rent };
 }
-async function tryBuy(env, g) {
+async function tryBuy(env, g, owner = null) {
   const d = db(env), minute = Math.floor(Date.now() / 60000);
   const found = await scanFib(env, VENUE, (mint, s) => legTaken(d, VENUE, mint, s));
   if (!found.c) return found.refusal;
-  const { c, s } = found, size = g.lim.maxPerTradeSol, lamports = Math.round(size * 1e9);
+  // size: the limit, cut to what the day's loss budget can still lose if this trade's stop is hit (stop distance + exit
+  // slippage + the 1% round-trip ceiling)
+  const { c, s } = found, perSol = (s.entry - s.stop) / s.entry + LIVE.exitSlippageBps / 1e4 + FIB.maxRtPct / 100;
+  const size = round(Math.min(g.lim.maxPerTradeSol, g.budgetLeft != null ? g.budgetLeft / perSol : Infinity), 6), lamports = Math.round(size * 1e9);
+  const cappedBy = size < g.lim.maxPerTradeSol ? `daily loss budget: ${round(g.budgetLeft, 6)} SOL left` : null;
   let bal; try { bal = (await solRpc(env, "getBalance", [g.w.address])).value; } catch (e) { return refuse(d, VENUE, "no_balance", cut(e.message)); }
   if (!(bal >= lamports + LIVE.feeBudgetLamports + LIVE.reserveSol * 1e9)) return refuse(d, VENUE, "reserve", `The wallet holds ${round(bal / 1e9, 6)} SOL: not enough for a ${size} SOL trade and the ${LIVE.reserveSol} SOL kept for fees`);
-  const cg = await costGate(env, VENUE, c, s, size); if (!cg.ok) return cg.refusal;
+  const cg = await costGate(env, VENUE, c, s, size, { feeSide: g.feeSide, owner: g.w.address }); if (!cg.ok) return cg.refusal;
   const { q, rtPct, rewardPct } = cg;
-  const plan = planOf(s, Math.floor(Date.now() / 1000), { liq: c.liqUsd, rtPct, rewardPct, sizeSol: size, validations: { ...s.validations, notVetoed: true, safety: true, cost: true, impact: true } });
+  if (!(bal >= lamports + LIVE.feeBudgetLamports + LIVE.reserveSol * 1e9 + cg.rentFrontedLamports)) return refuse(d, VENUE, "reserve", `The wallet holds ${round(bal / 1e9, 6)} SOL: not enough for a ${size} SOL trade, the ${round(cg.rentFrontedLamports / 1e9, 6)} SOL token-account rent (returned after the sale) and the ${LIVE.reserveSol} SOL kept for fees`);
+  const plan = planOf(s, Math.floor(Date.now() / 1000), { liq: c.liqUsd, rtPct, quoteRtPct: cg.quoteRtPct, fixedLamports: cg.fixedLamports, rewardPct, sizeSol: size, sizeCappedBy: cappedBy, validations: { ...s.validations, notVetoed: true, safety: true, tokenProgram: true, sellProven: true, cost: true, impact: true } });
   // the claim: one statement takes the coin's only active slot, under the open-position limit. A second caller gets nothing.
   const p = await d.one(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, stop_pct, pool_liq_usd, plan)
-    SELECT $1,$2,$3,'opening',$4,$5,$6 WHERE (SELECT count(*) FROM mob_aq_live_positions WHERE venue = $1 AND status IN ${ACTIVE}) < $7::int ON CONFLICT DO NOTHING RETURNING id`,
-    [VENUE, c.mint, c.symbol, round(((s.entry - s.stop) / s.entry) * 100, 3), c.liqUsd, JSON.stringify(plan), g.lim.maxOpenPositions]);
+    SELECT $1,$2,$3,'opening',$4,$5,$6 WHERE (SELECT count(*) FROM mob_aq_live_positions WHERE venue = $1 AND status IN ${ACTIVE}) < $7::int
+      AND ($8::text IS NULL OR EXISTS (SELECT 1 FROM mob_aq_state WHERE k = 'live_tick_lock' AND v = $8::jsonb)) ON CONFLICT DO NOTHING RETURNING id`,
+    [VENUE, c.mint, c.symbol, round(((s.entry - s.stop) / s.entry) * 100, 3), c.liqUsd, JSON.stringify(plan), g.lim.maxOpenPositions, owner ? JSON.stringify({ owner }) : null]);
   if (!p) return refuse(d, VENUE, "claim_lost", "This coin or the last free slot was taken by another run", c);
-  const r = await execute(env, g.w, { side: "buy", c, positionId: p.id, inMint: SOL_MINT, outMint: c.mint, amountRaw: lamports, slippageBps: LIVE.slippageBps, reason: s.why, claim: `${VENUE}|${c.mint}|buy|${minute}`, q0: q, patch: { stop: s.stop, t1: s.t1, t2: s.t2 } });
+  const r = await execute(env, g.w, { side: "buy", c, positionId: p.id, inMint: SOL_MINT, outMint: c.mint, amountRaw: lamports, slippageBps: LIVE.slippageBps, reason: s.why, claim: `${VENUE}|${c.mint}|buy|${minute}`, q0: q, patch: { stop: s.stop, t1: s.t1, t2: s.t2 }, maxBuyFeeLamports: cg.maxBuyFeeLamports });
   if (r.skipped) await d.q(`UPDATE mob_aq_live_positions SET status = 'failed', closed_at = now(), exit_reason = $2 WHERE id = $1 AND status = 'opening'`, [p.id, r.noOrder ? cut(r.skipped) : "duplicate order"]);
   return { buy: c.symbol, ...r };
 }
 // Exits run whenever a live position is open, with auto trade on or off and with the kill switch on: a position is never left alone.
 // `size(tokensRaw)` turns the tokens held AT THE CLAIM into the amount to sell (default: all of them), never a stale read.
-async function sellPosition(env, w, p, reason, claimKey, { size = (t) => t, patch = null } = {}) {
+// An urgent exit (stop, invalidation, veto, liquidity, Alex's SELL ALL) that has failed before is sent with twice the slippage per
+// failure, never over 20%: a rug must not hold the bag because the price ran past 1.5%. The order row keeps the bps used.
+export const exitBps = (fails, urgent = true) => (urgent ? Math.min(LIVE.exitSlippageMaxBps, LIVE.exitSlippageBps * 2 ** Math.max(0, Number(fails) || 0)) : LIVE.exitSlippageBps);
+async function sellPosition(env, w, p, reason, claimKey, { size = (t) => t, patch = null, slippageBps = LIVE.exitSlippageBps } = {}) {
   const d = db(env);
   const took = await d.one(`UPDATE mob_aq_live_positions SET status = 'closing' WHERE id = $1 AND status IN ('open','stuck') RETURNING id, status, tokens_raw`, [p.id]);
   if (!took) return { skipped: "already being sold" };
   let amountRaw = String(size(took.tokens_raw)); if (!/^\d+$/.test(amountRaw) || amountRaw === "0") amountRaw = took.tokens_raw;
-  const r = await execute(env, w, { side: "sell", c: { mint: p.mint, symbol: p.symbol }, positionId: p.id, inMint: p.mint, outMint: SOL_MINT, amountRaw, slippageBps: LIVE.exitSlippageBps, reason, claim: `${VENUE}|${p.mint}|sell|${claimKey}`, patch });
+  const r = await execute(env, w, { side: "sell", c: { mint: p.mint, symbol: p.symbol }, positionId: p.id, inMint: p.mint, outMint: SOL_MINT, amountRaw, slippageBps, reason: slippageBps > LIVE.exitSlippageBps ? `${reason} [sell slippage ${slippageBps} bps after ${p.sell_fails} failed sell(s)]` : reason, claim: `${VENUE}|${p.mint}|sell|${claimKey}`, patch });
   if (r.skipped) await d.q(`UPDATE mob_aq_live_positions SET status = CASE WHEN sell_fails >= $2 THEN 'stuck' ELSE 'open' END WHERE id = $1 AND status = 'closing'`, [p.id, LIVE.maxSellFails]);
   return { sell: p.symbol, reason, ...r };
 }
 // The chart decides every exit (chart.mjs manage). No data this minute = hold: missing data never forces a sale.
-async function exits(env, w, minute = Math.floor(Date.now() / 60000)) {
+async function exits(env, w, minute = Math.floor(Date.now() / 60000), renew = null) {
   const d = db(env), out = [], nowSec = Date.now() / 1000;
   // a 'stuck' position (5 failed sells in a row) is still managed and retried every minute: a coin is never left alone
   for (const p of await d.q(`SELECT * FROM mob_aq_live_positions WHERE venue = $1 AND status IN ('open','stuck') ORDER BY id`, [VENUE])) {
+    if (renew && !(await renew())) { out.push({ stopped: "the money lease was lost: no further orders this run" }); break; }
     const q = await quote(env, p.mint, SOL_MINT, p.tokens_raw, LIVE.exitSlippageBps);
     if (q.ok) await d.q(`UPDATE mob_aq_live_positions SET last_value_sol = $2, last_value_at = now() WHERE id = $1`, [p.id, Number(q.q.outAmount) / 1e9]);
     if (!p.plan) continue; // a position without a chart plan (none is opened that way) waits for SELL ALL LIVE
@@ -504,7 +585,7 @@ async function exits(env, w, minute = Math.floor(Date.now() / 60000)) {
     const lastPx = cs.ok ? cs.data.filter((c) => c.t + 60 <= nowSec).slice(-1)[0]?.c : null;
     if (Number.isFinite(lastPx)) await d.q(`UPDATE mob_aq_live_positions SET alert_patch = jsonb_build_object('spark', (SELECT coalesce(jsonb_agg(x), '[]'::jsonb) FROM (SELECT x FROM jsonb_array_elements(coalesce(alert_patch->'spark', '[]'::jsonb)) x OFFSET greatest(0, jsonb_array_length(coalesce(alert_patch->'spark', '[]'::jsonb)) - 89)) z) || jsonb_build_array($2::float8)) WHERE id = $1`, [p.id, lastPx]);
     if (m.action === "hold") { if (m.patch) await d.q(`UPDATE mob_aq_live_positions SET plan = plan || $2::jsonb WHERE id = $1 AND status = 'open'`, [p.id, JSON.stringify(m.patch)]); continue; }
-    out.push(await sellPosition(env, w, p, m.reason, `${p.plan.phase ?? 0}-${minute}`, { size: m.action === "sell_half" ? (t) => (BigInt(t) / 2n).toString() : (t) => t, patch: m.action === "sell_half" ? m.patch : null }));
+    out.push(await sellPosition(env, w, p, m.reason, `${p.plan.phase ?? 0}-${minute}`, { size: m.action === "sell_half" ? (t) => (BigInt(t) / 2n).toString() : (t) => t, patch: m.action === "sell_half" ? m.patch : null, slippageBps: exitBps(p.sell_fails, !/^target/.test(m.reason)) }));
   }
   return out;
 }
@@ -512,10 +593,11 @@ async function exits(env, w, minute = Math.floor(Date.now() / 60000)) {
 // Not only the live slots: every established coin the scan can read, on paper, entry at the bounce close, exits by manage(),
 // cost = the measured round trip of its liquidity tier. So the brain gets a large sample of this exact logic quickly.
 const tierCost = (liq) => AUDIT_RT[liq >= 500000 ? "A" : liq >= 100000 ? "B" : "C"];
-export async function paperTick(env) {
-  const d = db(env), list = await candidates(env), nowSec = Date.now() / 1000, out = { opened: 0, closed: 0, halves: 0 };
+export async function paperTick(env, t0 = Date.now()) {
+  const d = db(env), list = await candidates(env), nowSec = Date.now() / 1000, out = { opened: 0, closed: 0, halves: 0 }, late = () => Date.now() - t0 > LIVE.tickBudgetMs + 20000;
   if (!list) return out;
   for (const t of await d.q(`SELECT * FROM mob_aq_chart_paper WHERE closed_at IS NULL ORDER BY id LIMIT $1`, [LIVE.paperOpenMax])) {
+    if (late()) return out;
     const cs = await feeds.jupCandles(env, t.mint); if (!cs.ok) continue;
     const m = manage(t.plan, cs.data, nowSec, { liqNow: await liqOf(env, t.mint), vetoed: await vetoed(d, t.mint) });
     const px = cs.data.filter((c) => c.t + 60 <= nowSec).slice(-1)[0]?.c;
@@ -527,6 +609,7 @@ export async function paperTick(env) {
   }
   const open = new Set((await d.q(`SELECT mint FROM mob_aq_chart_paper WHERE closed_at IS NULL`)).map((r) => r.mint));
   for (const c of list.slice(0, LIVE.paperCoinsPerTick)) {
+    if (late()) return out;
     if (open.has(c.mint)) continue;
     const cs = await feeds.jupCandles(env, c.mint); if (!cs.ok) continue;
     const s = entrySetup(cs.data, nowSec); if (!s.signal) continue;
@@ -549,7 +632,11 @@ async function takeLock(d) { const owner = crypto.randomUUID();
   const ok = await d.one(`INSERT INTO mob_aq_state (k, v, at) VALUES ('live_tick_lock', $1::jsonb, now()) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v, at = now()
     WHERE mob_aq_state.v = 'false'::jsonb OR mob_aq_state.at < now() - interval '100 seconds' RETURNING k`, [JSON.stringify({ owner })]);
   return ok ? owner : null; }
-const dropLock = (d, owner) => d.q(`UPDATE mob_aq_state SET v = 'false'::jsonb, at = now() WHERE k = 'live_tick_lock' AND v = $1::jsonb`, [JSON.stringify({ owner })]);
+export { takeLock };
+export const dropLock = (d, owner) => d.q(`UPDATE mob_aq_state SET v = 'false'::jsonb, at = now() WHERE k = 'live_tick_lock' AND v = $1::jsonb`, [JSON.stringify({ owner })]);
+// The lease is renewed between the steps of a run (each step is far under 100 s: one order is at most ~6 polls of 2.5 s plus
+// a few 12-s-capped calls); a run that finds it lost stops ordering. The buy's claim also checks it in the same statement.
+export const renewLock = async (d, owner) => !!(await d.one(`UPDATE mob_aq_state SET at = now() WHERE k = 'live_tick_lock' AND v = $1::jsonb RETURNING k`, [JSON.stringify({ owner })]));
 // A position left 'closing' or 'opening' with no order on its way (the run died between the claim and the order row): healed
 // after 2 minutes. 'closing' goes back to 'open' (or 'stuck'), 'opening' with no order that could still land becomes 'failed'.
 async function healOrphans(d) {
@@ -558,10 +645,62 @@ async function healOrphans(d) {
   const b = await d.q(`UPDATE mob_aq_live_positions p SET status = 'failed', closed_at = now(), exit_reason = 'no order was made for this buy; nothing was spent' WHERE p.venue = $1 AND p.status = 'opening' AND p.created_at < now() - interval '2 minutes' AND NOT ${live} RETURNING id`, [VENUE]);
   return a.length + b.length;
 }
+// After a full sale the coin's token account is empty but still holds its rent. SPL CloseAccount (instruction 9; accounts: the
+// account, the destination, the owner as signer; solana-program/token instruction.rs) sends that rent back to the wallet.
+// A legacy transaction: header [1 signer, 0, 1 read-only], keys [wallet, token account, token program], one instruction.
+export function closeTx(wallet, account, program, blockhash) {
+  const msg = new Uint8Array(3 + 1 + 96 + 32 + 1 + 1 + 1 + 3 + 1 + 1);
+  msg.set([1, 0, 1, 3], 0); msg.set(unbase58(wallet), 4); msg.set(unbase58(account), 36); msg.set(unbase58(program), 68); msg.set(unbase58(blockhash), 100);
+  msg.set([1, 2, 3, 1, 0, 0, 1, 9], 132);
+  const tx = new Uint8Array(1 + 64 + msg.length); tx[0] = 1; tx.set(msg, 65);
+  return b64(tx);
+}
+// One closed position at a time: its empty token account is closed, the rent comes back, and when this trade's buy paid that
+// rent (plan.ataCreated) it is booked back into the trade's proceeds and P&L. A token account with dust in it is left (and noted).
+export async function reclaimRent(env, w) {
+  const d = db(env), out = [];
+  for (const p of await d.q(`SELECT id, mint, symbol, plan FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed' AND plan IS NOT NULL AND closed_at > now() - interval '3 days'
+      AND (NOT (plan ? 'rent') OR (plan->'rent'->>'state' = 'sent') OR (plan->'rent'->>'state' = 'failed' AND coalesce((plan->'rent'->>'tries')::int, 0) < 3)) ORDER BY id LIMIT 3`, [VENUE])) {
+    const mark = (r) => d.q(`UPDATE mob_aq_live_positions SET plan = plan || jsonb_build_object('rent', $2::jsonb) WHERE id = $1`, [p.id, JSON.stringify(r)]);
+    const r0 = p.plan.rent || {}, tries = (r0.tries || 0) + (r0.state === "sent" ? 0 : 1);
+    try {
+      if (r0.state === "sent") { // a close whose outcome is not known yet: the chain is asked, never sent again
+        const st = (await solRpc(env, "getSignatureStatuses", [[r0.signature], { searchTransactionHistory: true }])).value?.[0] ?? null;
+        if (st && !st.err && (st.confirmationStatus === "confirmed" || st.confirmationStatus === "finalized")) { out.push(await bookRent(d, p, r0)); continue; }
+        if (st?.err || (Date.now() - new Date(r0.at).getTime()) / 60000 >= LIVE.sentStaleMin) await mark({ ...r0, state: "failed", error: st?.err ? "the chain rejected the close" : "the close never reached the chain" });
+        continue;
+      }
+      const accts = await tokenAccounts(env, w.address, p.mint);
+      if (!accts.length) { await mark({ state: "none", note: "no token account left for this coin" }); continue; }
+      const a = accts[0];
+      if (a.raw !== "0") { await mark({ state: "dust", amount: a.raw, account: a.address, note: "the account still holds tokens: it cannot be closed" }); continue; }
+      const bh = (await solRpc(env, "getLatestBlockhash", [{ commitment: "confirmed" }])).value;
+      const tx = closeTx(w.address, a.address, a.program, bh.blockhash);
+      const pre = (await solRpc(env, "getBalance", [w.address])).value;
+      const v = (await solRpc(env, "simulateTransaction", [tx, { encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed", accounts: { encoding: "base64", addresses: [w.address] } }])).value;
+      const back = (v?.accounts?.[0]?.lamports ?? -1) - pre;
+      if (v?.err || !(back > 0) || back > a.lamports) { await mark({ state: "failed", tries, error: v?.err ? `the close does not simulate (${cut(JSON.stringify(v.err), 100)})` : "the simulation did not show the rent coming back" }); continue; }
+      const signed = await signTx(env, w, tx), r = { state: "sent", tries, signature: signed.signature, account: a.address, lamports: back, at: new Date().toISOString() };
+      await mark(r);
+      try { await broadcast(env, signed.tx); } catch {} // unknown outcome: the next tick asks the chain
+      let st = null;
+      for (let i = 0; i < LIVE.confirmPolls && !st; i++) { if (i) await sleep(Number(env.AQ_LIVE_POLL_MS ?? LIVE.confirmGapMs)); try { const x = (await solRpc(env, "getSignatureStatuses", [[r.signature], { searchTransactionHistory: true }])).value?.[0]; if (x && (x.err || x.confirmationStatus === "confirmed" || x.confirmationStatus === "finalized")) st = x; } catch {} }
+      if (st && !st.err) out.push(await bookRent(d, p, r)); else if (st?.err) await mark({ ...r, state: "failed", error: "the chain rejected the close" }); else out.push({ symbol: p.symbol, rent: "sent, being confirmed" });
+    } catch (e) { await mark({ ...r0, state: "failed", tries, error: cut(e.message || e, 160) }); }
+  }
+  return out;
+}
+async function bookRent(d, p, r) {
+  const sol = r.lamports / 1e9, booked = p.plan.ataCreated === true;
+  await d.q(`UPDATE mob_aq_live_positions SET plan = plan || jsonb_build_object('rent', $2::jsonb), proceeds_sol = coalesce(proceeds_sol, 0) + $3, pnl_sol = pnl_sol + $3 WHERE id = $1 AND plan->'rent'->>'state' IS DISTINCT FROM 'closed'`,
+    [p.id, JSON.stringify({ ...r, state: "closed", sol, booked }), booked ? sol : 0]);
+  await brain(d, `LIVE RENT BACK ${p.symbol}: the empty token account was closed, ${round(sol, 6)} SOL back to the Aquarius wallet${booked ? " and booked to the trade (its buy paid it)" : ""} (${r.signature}).`);
+  return { symbol: p.symbol, rentBackSol: round(sol, 6), booked };
+}
 export async function liveTick(env, { cron = null, minute = Math.floor(Date.now() / 60000) } = {}) {
-  const d = db(env), owner = await takeLock(d);
+  const d = db(env), owner = await takeLock(d), t0 = Date.now();
   if (!owner) return { skipped: "another live tick is running" };
-  const out = { at: new Date().toISOString(), cron };
+  const out = { at: new Date().toISOString(), cron }, renew = () => renewLock(d, owner);
   try {
     const w = await get(d, "sol_wallet_key");
     // 1. anything sent and not yet known: ask the chain first
@@ -569,14 +708,20 @@ export async function liveTick(env, { cron = null, minute = Math.floor(Date.now(
     // an order row that never got as far as a signature (the run died first): nothing was signed, so nothing was spent
     for (const o of await d.q(`SELECT * FROM mob_aq_live_orders WHERE venue = $1 AND status = 'requested' AND requested_at < now() - interval '3 minutes'`, [VENUE])) await finish(d, o, "failed", { error: "the run stopped before signing; nothing was sent" });
     { const healed = await healOrphans(d); if (healed) out.healed = healed; }
-    // 2. exits for what is open
-    if (w?.address) { const ex = await exits(env, w, minute); if (ex.length) out.exits = ex; }
-    // 3. one new buy at most, behind every gate
+    // 2. exits for what is open, then the rent of fully sold coins comes back
+    if (w?.address) { const ex = await exits(env, w, minute, renew); if (ex.length) out.exits = ex; }
+    if (w?.address && w.sealed && (await renew())) { const rr = await reclaimRent(env, w); if (rr.length) out.rent = rr; }
+    // 3. one new buy at most, behind every gate, and only while this run still holds the lease
+    if (!(await renew())) { out.result = { skipped: "the money lease was lost: no buy this run" }; return out; }
     const g = await gates(env);
-    out.result = g.ok ? await tryBuy(env, g) : await refuse(d, VENUE, g.gate, g.reason);
+    out.result = g.ok ? await tryBuy(env, g, owner) : await refuse(d, VENUE, g.gate, g.reason);
     if (minute % 5 === 0) out.robinhood = await rhGate(env);
-    try { const ph = await phantomWatch(env, g); if (ph) out.phantom = ph; } catch (e) { out.phantomError = cut(e.message || e); }
-    try { const pp = await paperTick(env); if (pp.opened || pp.closed || pp.halves) out.paper = pp; } catch (e) { out.paperError = cut(e.message || e); }
+    // optional work only inside the time budget, so a run never outlives its lease
+    if (Date.now() - t0 > LIVE.tickBudgetMs) out.deferred = "paper mirror and Phantom signal skipped: the run is past its time budget";
+    else {
+      await renew(); try { const ph = await phantomWatch(env, g); if (ph) out.phantom = ph; } catch (e) { out.phantomError = cut(e.message || e); }
+      await renew(); try { const pp = await paperTick(env, t0); if (pp.opened || pp.closed || pp.halves) out.paper = pp; } catch (e) { out.paperError = cut(e.message || e); }
+    }
     // twice an hour, a read-only question to each Jupiter host from this Worker, so "does Jupiter answer from production" is on record
     if (minute % 30 === 0) { const hosts = {}; for (const h of JUP_HOSTS) { try { const r = await fetch(`${h}/swap/v1/quote?inputMint=${SOL_MINT}&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=10000000&slippageBps=50`, { signal: AbortSignal.timeout(8000) }); hosts[h] = r.status; await r.body?.cancel(); } catch { hosts[h] = "no answer"; } } await set(d, "live_probe", { at: out.at, hosts }); }
   } catch (e) { out.error = cut(e.message || e); }
@@ -594,7 +739,7 @@ export const MANUAL_PCTS = [25, 50, 100];
 async function manualCheck(env, b) {
   b = b && typeof b === "object" ? b : {};
   const d = db(env), S = Object.fromEntries((await d.q(`SELECT k, v FROM mob_aq_state WHERE k IN ('sol_wallet_key','sol_wallet_limits','kill')`)).map((r) => [r.k, r.v]));
-  const w = S.sol_wallet_key, lim = { maxPerTradeSol: 0, maxDailyLossSol: 0, maxOpenPositions: 0, ...(S.sol_wallet_limits || {}) };
+  const w = S.sol_wallet_key, lim = clampLimits({ maxPerTradeSol: 0, maxDailyLossSol: 0, maxOpenPositions: 0, ...(S.sol_wallet_limits || {}) }, env);
   if (!w?.address || !w.sealed) return { error: "The Aquarius wallet has not been created" };
   if (S.kill === true) return { error: "The kill switch is on: no order, manual or automatic" };
   const p = await d.one(`SELECT * FROM mob_aq_live_positions WHERE id = $1 AND venue = $2`, [Number(b?.positionId) || 0, VENUE]);
@@ -608,9 +753,15 @@ async function manualCheck(env, b) {
   if (b.side !== "buy") return { error: "side must be buy or sell" };
   const sol = Number(b.sol ?? lim.maxPerTradeSol);
   if (!(sol > 0)) return { error: "Amount must be above zero" };
-  if (lim.maxPerTradeSol > 0 && sol > lim.maxPerTradeSol) return { error: `${sol} SOL is over the ${lim.maxPerTradeSol} SOL per-trade limit` };
-  const pnl = await pnlToday(d);
-  if (lim.maxDailyLossSol > 0 && -pnl >= lim.maxDailyLossSol) return { error: `Today's live loss is ${round(-pnl, 6)} SOL, at the daily limit: no buying today` };
+  if (!(lim.maxPerTradeSol > 0) || sol > lim.maxPerTradeSol) return { error: `${sol} SOL is over the ${lim.maxPerTradeSol} SOL per-trade limit` };
+  // BUY MORE is a buy: the same right-call, veto and safety gates as the trader's own entries, and the same daily loss budget
+  if (!(await rightCalls(d)).has(p.mint)) return { error: `No fresh symbiote right call on ${p.symbol}: BUY MORE is refused (Alex's right-call rule)` };
+  if (await vetoed(d, p.mint)) return { error: `Grok vetoed ${p.symbol} in the last hour: BUY MORE is refused` };
+  const hs = await safetyOf(env, { mint: p.mint, audit: null }); if (!hs.ok) return { error: `Safety: ${hs.reason}` };
+  const mc = await mintCheck(env, p.mint); if (!mc.ok) return { error: `Token: ${mc.reason}` };
+  const rk = await riskToday(d, await feePerSide(d)), stopFrac = (p.stop_pct ?? 100) / 100 + LIVE.exitSlippageBps / 1e4;
+  if (lim.maxDailyLossSol > 0 && -rk.pnl >= lim.maxDailyLossSol) return { error: `Today's live loss is ${round(-rk.pnl, 6)} SOL, at the daily limit: no buying today` };
+  if (!(lim.maxDailyLossSol > 0) || sol * stopFrac > lim.maxDailyLossSol + rk.committed) return { error: `Adding ${sol} SOL could lose ${round(sol * stopFrac, 6)} SOL at the stop; today's loss budget left is ${round(Math.max(0, lim.maxDailyLossSol + rk.committed), 6)} SOL` };
   const open = (await d.one(`SELECT count(*)::int n FROM mob_aq_live_positions WHERE venue = $1 AND status IN ${ACTIVE}`, [VENUE])).n;
   if (lim.maxOpenPositions > 0 && open > lim.maxOpenPositions) return { error: `${open} positions open, over the limit of ${lim.maxOpenPositions}` };
   const lamports = Math.round(sol * 1e9); let bal;
@@ -636,7 +787,7 @@ export async function manualOrder(env, b) {
   if (!owner) return { error: "Another order is being made right now: try again in a few seconds", busy: true };
   try {
     if ((await d.one(`SELECT count(*)::int n FROM mob_aq_live_orders WHERE venue = $1 AND status IN ('requested','sent')`, [VENUE])).n) return { error: "An earlier order is still being confirmed on the chain", busy: true };
-    if (b.side === "sell") return await sellPosition(env, w, p, `manual: Alex (sell ${b.pct}%)`, `manual-${b.pct}-${minute}`, { size: (t) => (Number(b.pct) === 100 ? t : ((BigInt(t) * BigInt(b.pct)) / 100n).toString()) });
+    if (b.side === "sell") return await sellPosition(env, w, p, `manual: Alex (sell ${b.pct}%)`, `manual-${b.pct}-${minute}`, { size: (t) => (Number(b.pct) === 100 ? t : ((BigInt(t) * BigInt(b.pct)) / 100n).toString()), slippageBps: exitBps(p.sell_fails) });
     const q = await quote(env, SOL_MINT, p.mint, k.lamports, LIVE.slippageBps);
     if (!q.ok) return { error: q.error };
     if (q.impactPct > LIVE.maxImpactPct) return { error: `Price impact ${round(q.impactPct, 2)}% is over the ${LIVE.maxImpactPct}% cap` };
@@ -651,7 +802,8 @@ export async function sellAllLive(env) {
   let owner = null; for (let i = 0; i < 8 && !(owner = await takeLock(d)); i++) await sleep(Number(env.AQ_LIVE_POLL_MS ?? 2500));
   if (!owner) return { ...out, busy: "the trader is in the middle of a run: press again in a few seconds" };
   try { for (const p of await d.q(`SELECT * FROM mob_aq_live_positions WHERE venue = $1 AND status IN ('open','stuck') ORDER BY id`, [VENUE])) {
-    const r = await sellPosition(env, w, p, "SELL ALL LIVE (Alex)", `all-${Math.floor(Date.now() / 60000)}`);
+    if (!(await renewLock(d, owner))) break;
+    const r = await sellPosition(env, w, p, "SELL ALL LIVE (Alex)", `all-${Math.floor(Date.now() / 60000)}`, { slippageBps: exitBps(p.sell_fails) });
     (r.confirmed ? out.sold : out.kept).push({ symbol: p.symbol, signature: r.signature || null, state: r.confirmed ? "sold" : r.pending ? "sent, being confirmed" : r.failed || r.skipped || "not sold" });
   } } finally { await dropLock(d, owner); }
   await brain(d, `SELL ALL LIVE by Alex: ${out.sold.length} sold, ${out.kept.length} not yet.`);
@@ -716,7 +868,7 @@ export async function phantomWatch(env, g = null) {
     else await d.q(`UPDATE mob_aq_live_positions SET alert = $2, alert_action = $3, alert_patch = $4 WHERE id = $1`, [p.id, m.action === "sell_half" ? "target 1 reached: sell half (then the stop moves to your entry)" : m.reason, m.action, m.patch ? JSON.stringify(m.patch) : null]);
   }
   let found = await scanFib(env, "phantom", async (mint) => open.some((p) => p.mint === mint));
-  if (found.c) { const lim = await get(d, "sol_wallet_limits", {}), cc = await costGate(env, "phantom", found.c, found.s, lim.maxPerTradeSol > 0 ? lim.maxPerTradeSol : 0.05); if (!cc.ok) found = { refusal: cc.refusal }; }
+  if (found.c) { const lim = await get(d, "sol_wallet_limits", {}), cl = clampLimits(lim, env), cc = await costGate(env, "phantom", found.c, found.s, cl.maxPerTradeSol > 0 ? cl.maxPerTradeSol : 0.05, { feeSide: await feePerSide(d), owner: ph.address }); if (!cc.ok) found = { refusal: cc.refusal }; }
   if (found.c) { const s = found.s; await set(d, "phantom_signal", { mint: found.c.mint, symbol: found.c.symbol, at: new Date().toISOString(), why: s.why, zone: [s.levels.z618, s.levels.z50], entry: s.entry, stop: s.stop, t1: s.t1, t2: s.t2, t3: s.t3, liqUsd: found.c.liqUsd, plan: planOf(s, Math.floor(nowSec), { liq: found.c.liqUsd }) }); }
   return { marked: open.length, signal: found.c ? found.c.symbol : null };
 }

@@ -36,7 +36,8 @@ async function scenario(rowsOf) {
 const flat = (p, k, v = 5) => Array.from({ length: k }, () => [p, p, v]);
 function world() {
   resetMocks();
-  Object.assign(F, { payer: null, nsig: 1, swapBody: null, balance: 1_000_000_000, quoteFail: false, swapFail: false, jupSim: null, impact: "0.001", simTake: null, simErr: null, send: "ok", sent: [], status: {}, txs: {}, height: 1000, lastValid: 2000, tokensOut: "5000000", sellOut: "60000000", candles: fibCandles(), rug: { mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 5 } }, calls: [], rowAtSend: null,
+  Object.assign(F, { payer: null, nsig: 1, swapBody: null, balance: 1_000_000_000, quoteFail: false, swapFail: false, jupSim: null, impact: "0.001", simTake: null, simErr: null, send: "ok", sent: [], status: {}, txs: {}, height: 1000, lastValid: 2000, tokensOut: "5000000", sellOut: "60000000", candles: fibCandles(), tokAccts: [], tokPost: {}, mint: { owner: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", data: { parsed: { type: "mint", info: { freezeAuthority: null, mintAuthority: null, decimals: 5 } } } },
+    holderSimErr: null, holderOwner: "11111111111111111111111111111111", prices: null, rug: { mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 5 } }, calls: [], rowAtSend: null,
     pools: [{ id: "pool1", quoteAsset: SOL, baseAsset: { id: MINT, symbol: "BONK", usdPrice: 0.00002, liquidity: 250000, decimals: 5, firstPool: { createdAt: "2024-01-01T00:00:00Z" }, stats5m: { priceChange: -4 }, audit: { mintAuthorityDisabled: true, freezeAuthorityDisabled: true } } },
       { id: "pool2", quoteAsset: SOL, baseAsset: { id: NEWMINT, symbol: "NEWP", usdPrice: 1, liquidity: 900000, decimals: 6, firstPool: { createdAt: new Date(Date.now() - 3600e3).toISOString() }, stats5m: { priceChange: -9 } } }] });
   mock("GET", /^https:\/\/datapi\.jup\.ag\/v1\/pools\//, () => ({ pools: F.pools }));
@@ -46,14 +47,28 @@ function world() {
     mock("GET", `${host}/swap/v1/quote`, (c, u) => { F.calls.push("quote"); if (F.quoteFail) return new Response(JSON.stringify({ error: "Could not find any route" }), { status: 400 });
       const buy = u.searchParams.get("inputMint") === SOL, out = buy ? F.tokensOut : F.sellOut;
       return { inputMint: u.searchParams.get("inputMint"), outputMint: u.searchParams.get("outputMint"), inAmount: u.searchParams.get("amount"), outAmount: out, otherAmountThreshold: String(Math.floor(Number(out) * 0.99)), priceImpactPct: F.impact, slippageBps: Number(u.searchParams.get("slippageBps")), routePlan: [{ swapInfo: { label: "Meteora" } }] }; });
-    mock("POST", `${host}/swap/v1/swap`, (c) => { F.calls.push("swap"); const b = JSON.parse(c.body); F.swapBody = b; if (F.swapFail) return new Response("{}", { status: 500 });
-      return { swapTransaction: fakeTx(F.payer || b.userPublicKey, F.nsig || 1), lastValidBlockHeight: F.lastValid, prioritizationFeeLamports: 9555, simulationError: F.jupSim }; });
+    mock("POST", `${host}/swap/v1/swap`, (c) => { F.calls.push("swap"); const b = JSON.parse(c.body); F.swapBody = b; const ours = b.userPublicKey === wallet?.address; if (F.swapFail && ours) return new Response("{}", { status: 500 });
+      return { swapTransaction: fakeTx(F.payer || b.userPublicKey, F.nsig || 1), lastValidBlockHeight: F.lastValid, prioritizationFeeLamports: 9555, simulationError: ours ? F.jupSim : null }; });
   }
-  mock("POST", "https://mainnet.helius-rpc.com/", async (c) => { const m = JSON.parse(c.body), ok = (result) => ({ jsonrpc: "2.0", id: 1, result }); F.calls.push(m.method);
+  mock("POST", "https://mainnet.helius-rpc.com/", async (c) => { const m = JSON.parse(c.body), ok = (result) => ({ jsonrpc: "2.0", id: 1, result }); if (m.method !== "simulateTransaction") F.calls.push(m.method);
     if (m.method === "getBalance") return ok({ context: { slot: 1 }, value: F.balance });
-    if (m.method === "getTokenAccountsByOwner") return ok({ context: { slot: 1 }, value: [] });
+    if (m.method === "getTokenAccountsByOwner") { const f = m.params[1]; return ok({ context: { slot: 1 }, value: F.tokAccts.filter((t) => (f.mint ? t.mint === f.mint : t.program === f.programId)).map((t) => ({ pubkey: t.address, account: { owner: t.program, lamports: 2039280, data: { parsed: { info: { mint: t.mint, tokenAmount: { amount: t.raw ?? "0", decimals: 5 } } } } } })) }); }
     if (m.method === "getBlockHeight") return ok(F.height);
-    if (m.method === "simulateTransaction") return ok({ context: { slot: 1 }, value: { err: F.simErr, accounts: [{ lamports: F.balance - (F.simTake ?? (F.swapBody.quoteResponse.inputMint === SOL ? Number(F.swapBody.quoteResponse.inAmount) + 2_050_000 : -Number(F.swapBody.quoteResponse.otherAmountThreshold))) }], logs: [] } });
+    if (m.method === "getTokenLargestAccounts") return ok({ context: { slot: 1 }, value: [{ address: "HolderAcct1111111111111111111111111111111111", amount: "900000000", decimals: 5, uiAmount: 9000, uiAmountString: "9000" }] });
+    if (m.method === "getMultipleAccounts") { const [addrs, cfg] = m.params;
+      if (cfg.encoding === "jsonParsed") return ok({ context: { slot: 1 }, value: addrs.map(() => ({ owner: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", lamports: 2039280, data: { parsed: { type: "account", info: { owner: "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", mint: MINT } } } })) });
+      if (cfg.dataSlice) return ok({ context: { slot: 1 }, value: addrs.map(() => ({ owner: F.holderOwner, lamports: 1e9, data: ["", "base64"] })) });
+      return ok({ context: { slot: 1 }, value: addrs.map((a) => { const t = F.tokAccts.find((x) => x.address === a); return t ? { owner: t.program, lamports: 2039280, data: [t.data, "base64"] } : null; }) }); }
+    if (m.method === "getAccountInfo") return ok({ context: { slot: 1 }, value: F.mint });
+    if (m.method === "getLatestBlockhash") return ok({ context: { slot: 1 }, value: { blockhash: W.base58(new Uint8Array(32).fill(7)), lastValidBlockHeight: 3000 } });
+    if (m.method === "getMinimumBalanceForRentExemption") return ok(1488440);
+    if (m.method === "simulateTransaction") {
+      const ix = L.readIxs(m.params[0]), close = ix.ixs.length === 1 && ix.ixs[0].data[0] === 9;
+      if (close) { F.calls.push("simulateTransaction:close"); return ok({ context: { slot: 1 }, value: { err: null, accounts: [{ lamports: F.balance + 1488440 - 5000 }] } }); }
+      if (F.swapBody.userPublicKey !== wallet.address) { F.calls.push("simulateTransaction:holder"); return ok({ context: { slot: 1 }, value: { err: F.holderSimErr, accounts: null, logs: [] } }); }
+      F.calls.push("simulateTransaction");
+      const extra = (m.params[1].accounts.addresses || []).slice(1).map((a) => { const t = F.tokAccts.find((x) => x.address === a); const post = F.tokPost[a] !== undefined ? F.tokPost[a] : t?.data; return post == null ? null : { owner: t.program, lamports: 2039280, data: [post, "base64"] }; });
+      return ok({ context: { slot: 1 }, value: { err: F.simErr, accounts: [{ lamports: F.balance - (F.simTake ?? (F.swapBody.quoteResponse.inputMint === SOL ? Number(F.swapBody.quoteResponse.inAmount) + 2_050_000 : -Number(F.swapBody.quoteResponse.otherAmountThreshold))) }, ...extra], logs: [] } }); }
     if (m.method === "sendTransaction") { F.sent.push(m.params[0]); F.rowAtSend = await one(`SELECT status, signature FROM mob_aq_live_orders ORDER BY id DESC LIMIT 1`);
       if (F.send === "throw") throw new Error("socket hang up"); if (F.send === "rpcerror") return { jsonrpc: "2.0", id: 1, error: { code: -32002, message: "Transaction simulation failed: Blockhash not found" } };
       const sig = F.rowAtSend.signature, q = F.swapBody.quoteResponse, buy = q.inputMint === SOL; // it lands, exactly as quoted
@@ -103,10 +118,12 @@ test("every gate refuses, in order, and says why", async () => {
   await wipe(); world(); await d.q(`INSERT INTO mob_aq_chat (from_name, text) VALUES ('grok', $1)`, [`VETO ${MINT}: dev wallet is selling`]); assert.equal(await gate(), "veto"); await d.q(`DELETE FROM mob_aq_chat`);
   await d.q(`INSERT INTO mob_aq_chat (from_name, text) VALUES ('grok', $1), ('chatgpt', $2)`, [`I like ${MINT}`, `VETO ${MINT}`]); await wipe(); world(); assert.notEqual(await gate(), "veto", "only Grok, only a message that starts with VETO"); await d.q(`DELETE FROM mob_aq_chat`);
   // cost first: the measured round trip under 1%, and target 1 at least 3x it
-  await wipe(); world(); F.sellOut = "49000000"; assert.equal(await gate(), "cost"); assert.match((await lastRef()).reason, /round trip costs 2%, over 1%/);
-  // a short leg: target 1 is 2.26% away. A 0.9% round trip needs 2.7%: refused for cost, by name
-  await wipe(); world(); F.sellOut = "49550000"; F.candles = fibCandles({ legTo: 4, pull: 2, tail: rise(101.45, 101.8) }); assert.equal(await gate(), "cost"); assert.match((await lastRef()).reason, /^Target 1 is 2\.\d+% away, under 3x the 0\.9% round trip/);
-  await wipe(); world(); F.sellOut = "49800000"; F.candles = fibCandles({ legTo: 4, pull: 2, tail: rise(101.45, 101.8) }); assert.equal((await L.liveTick(env, { minute: 1 })).result.confirmed, true, "a 0.4% round trip clears 3x on the same chart"); await wipe(); world();
+  await wipe(); world(); F.sellOut = "49000000"; assert.equal(await gate(), "cost"); assert.match((await lastRef()).reason, /round trip costs 2\.254% \(2% in the quotes \+ 0\.254% fixed SOL fees at 0\.05 SOL\), over 1%/, "61,000 lamports a side x2 + a 5,000-lamport close = 0.254% of 0.05 SOL");
+  // a short leg: target 1 is 2.26% away. 0.7% in the quotes + 0.254% fixed fees = 0.954% needs 2.86%: refused for cost, by name
+  await wipe(); world(); F.sellOut = "49650000"; F.candles = fibCandles({ legTo: 4, pull: 2, tail: rise(101.45, 101.8) }); assert.equal(await gate(), "cost"); assert.match((await lastRef()).reason, /^Target 1 is 2\.\d+% away, under 3x the 0\.954% round trip \(0\.7% in the quotes/);
+  // 0.9% in the quotes alone used to pass the 1% gate; with the fixed fees it is 1.154%: refused
+  await wipe(); world(); F.sellOut = "49550000"; F.candles = fibCandles({ legTo: 4, pull: 2, tail: rise(101.45, 101.8) }); assert.equal(await gate(), "cost"); assert.match((await lastRef()).reason, /costs 1\.154%/);
+  await wipe(); world(); F.sellOut = "49800000"; F.candles = fibCandles({ legTo: 4, pull: 2, tail: rise(101.45, 101.8) }); assert.equal((await L.liveTick(env, { minute: 1 })).result.confirmed, true, "0.4% + 0.254% clears 3x on the same chart"); await wipe(); world();
   // the veto window is the last hour: 61 minutes old does not block, 59 minutes old does; "VETO lifted on <mint>" is not a veto
   await d.q(`INSERT INTO mob_aq_chat (from_name, text, at) VALUES ('grok', $1, now() - interval '61 minutes')`, [`VETO ${MINT}`]); assert.notEqual(await gate(), "veto"); await wipe(); world();
   await d.q(`INSERT INTO mob_aq_chat (from_name, text) VALUES ('grok', $1)`, [`VETO lifted on ${MINT}`]); assert.notEqual(await gate(), "veto"); await wipe(); world();

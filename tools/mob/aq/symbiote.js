@@ -46,6 +46,7 @@ function chipSvg() {
   <g class="veins" filter="url(#glw)">${veins.map((d, i) => `<path class="vein" style="animation-delay:${(i * 0.37).toFixed(2)}s" d="${d}"/>`).join("")}</g>
   <g class="runes">${runes}</g>
   <polygon points="${P(core)}" fill="#14042a" stroke="url(#agG)" stroke-width="3"/>
+  <g id="sym-scars"></g><g id="sym-cracks"></g>
   <path class="star" d="${star8(C, C, 46, 18)}" filter="url(#glw)"/>
   <circle cx="${C}" cy="${C}" r="7" fill="#fff" filter="url(#glw)"/></g>
   <path id="arcTop" d="M${C - 150},${C - 6} A150,150 0 0 1 ${C + 150},${C - 6}" fill="none"/>
@@ -57,7 +58,7 @@ function codeOf(r) {
   const k = (s) => `<span class="dk">${esc(s)}</span>`, str = (s) => `<span class="ds">"${esc(s)}"</span>`, n = (v) => `<span class="dn">${esc(v)}</span>`;
   const val = (v, depth = 0) => (v === null || v === undefined ? `<span class="dc">null</span>` : typeof v === "number" ? n(+v.toFixed(4)) : typeof v === "boolean" ? `<span class="dp">${v}</span>` : typeof v === "string" ? str(v.length > 140 ? v.slice(0, 140) + "…" : v)
     : Array.isArray(v) ? `[${v.slice(0, 6).map((x) => val(x, depth + 1)).join(", ")}${v.length > 6 ? ", …" : ""}]` : depth > 1 ? `{…}` : `{ ${Object.entries(v).slice(0, 8).map(([a, b]) => `${k(a)}: ${val(b, depth + 1)}`).join(", ")} }`);
-  return `<div class="tl"><span class="dc">// ${athens(r.at)} Athens · #${esc(r.id)}</span>\n<span class="dp">brain</span>.<span class="df">record</span>({ ${k("dept")}: ${str(r.dept)}, ${k("kind")}: ${str(r.kind)},\n  ${k("text")}: ${str(r.text)}${r.data ? `,\n  ${k("data")}: ${val(r.data)}` : ""} })</div>`;
+  return `<div class="tl${r.kind === "pain" ? " pain" : ""}"><span class="dc">// ${athens(r.at)} Athens · #${esc(r.id)}</span>\n<span class="dp">brain</span>.<span class="df">record</span>({ ${k("dept")}: ${str(r.dept)}, ${k("kind")}: ${str(r.kind)},\n  ${k("text")}: ${str(r.text)}${r.data ? `,\n  ${k("data")}: ${val(r.data)}` : ""} })</div>`;
 }
 
 // ---------- the screen ----------
@@ -67,7 +68,7 @@ export function symScreen() {
   <div class="sym-head">${logoSvg(26)}<b>SYMBIOTE</b><u class="sym-paper">PAPER</u><span class="sym-sub">every pump.fun launch, paper-traded in two lanes · no real money</span><em id="sym-up">${D}</em></div>
   <div class="sym-grid">
     <div class="sym-left">
-      <button class="sym-counts" id="sym-counts" title="Show every source"><small>BRAIN RECORDS · ALL SOURCES</small><b id="sym-total">${D}</b><span id="sym-mini"></span><i>tap for the sources</i></button>
+      <button class="sym-counts" id="sym-counts" title="Show every source"><small>BRAIN RECORDS · ALL SOURCES</small><b id="sym-total">${D}</b><span id="sym-mini"></span><span class="sym-pain">PAIN 24 H <b id="sym-pain">${D}</b></span><i>tap for the sources</i></button>
       <div class="sym-chip" id="sym-chip">${chipSvg()}<div class="sym-name">ASTRA ULTIMUM</div></div>
       <div class="sym-term" id="sym-term"><div class="sym-term-h"><span></span><span></span><span></span><em>brain · live</em></div><pre id="sym-code"></pre></div>
     </div>
@@ -84,7 +85,17 @@ export function symScreen() {
   return el;
 }
 
-let last = null, lastBrain = 0, lit = 0;
+let last = null, lastBrain = 0, lit = 0, lastBrainSeeded = false, scarsDrawn = 0;
+// a jagged line through the amethyst, placed by a number (a row id or a scar index), so the same row always cracks the same way
+function fracture(seed) {
+  let x = seed * 9301 + 49297; const rnd = () => ((x = (x * 9301 + 49297) % 233280) / 233280);
+  const a = rnd() * Math.PI * 2, r0 = 70 + rnd() * 20, r1 = 150 + rnd() * 18; let px = 200 + r0 * Math.cos(a), py = 200 + r0 * Math.sin(a), d = `M${px.toFixed(1)},${py.toFixed(1)}`;
+  for (let i = 1; i <= 5; i++) { const rr = r0 + (r1 - r0) * i / 5, aa = a + (rnd() - 0.5) * 0.35; px = 200 + rr * Math.cos(aa); py = 200 + rr * Math.sin(aa); d += ` L${px.toFixed(1)},${py.toFixed(1)}`; }
+  return d;
+}
+// a fresh PAIN row: a red fracture that heals to silver over 12 s and fades (only rule changes leave a permanent scar)
+function crack(id) { const g = document.getElementById("sym-cracks"); if (!g) return; const ns = "http://www.w3.org/2000/svg", p = document.createElementNS(ns, "path"); p.setAttribute("d", fracture(id)); p.setAttribute("class", "crack"); g.appendChild(p); setTimeout(() => p.remove(), 12500); while (g.children.length > 6) g.firstChild.remove(); }
+function scars(n) { const g = document.getElementById("sym-scars"); if (!g || !num(n)) return; const want = Math.min(n, 36); if (want === scarsDrawn) return; g.innerHTML = Array.from({ length: want }, (_, i) => `<path class="scar" d="${fracture(7 + i * 13)}"/>`).join(""); scarsDrawn = want; }
 async function pollState() {
   try { const r = await fetch("/api/aq/sym/state", { credentials: "same-origin", cache: "no-store" }); if (!r.ok) throw new Error("HTTP " + r.status); last = await r.json(); paint(last); }
   catch (e) { const u = document.getElementById("sym-up"); if (u) u.textContent = "can't reach symbiote: " + e.message; }
@@ -94,7 +105,8 @@ async function pollBrain() {
     const r = await fetch("/api/aq/sym/brain" + (lastBrain ? "?after=" + lastBrain : ""), { credentials: "same-origin", cache: "no-store" }); if (!r.ok) return;
     const { rows } = await r.json(); if (!rows || !rows.length) return;
     const pre = document.getElementById("sym-code"); if (!pre) return;
-    for (const row of rows) { lastBrain = Math.max(lastBrain, row.id); pre.insertAdjacentHTML("beforeend", codeOf(row)); if (row.dept === "symbiote") lightRune(); }
+    for (const row of rows) { lastBrain = Math.max(lastBrain, row.id); pre.insertAdjacentHTML("beforeend", codeOf(row)); if (row.dept === "symbiote") lightRune(); if (row.kind === "pain" && lastBrainSeeded) crack(row.id); }
+    lastBrainSeeded = true;
     while (pre.children.length > 30) pre.firstElementChild.remove();
     pre.scrollTop = pre.scrollHeight;
   } catch {}
@@ -109,6 +121,8 @@ function paint(s) {
   set("sym-mini", ["launches seen", "symbiote paper trades", "symbiote lessons", "right calls"].map((k) => `<span><b>${int(src[k]?.n)}</b> ${esc(k)}</span>`).join(""));
   set("sym-coins", int(src["launches seen"]?.n ?? cov.launches));
   set("sym-cov", num(cov.pct) ? cov.pct.toFixed(1) + "%" : D);
+  set("sym-pain", `${int(src["pain (24 h)"]?.n)} <em>/ ${int(src["pain (total)"]?.n)} total · ${int(src["scars (lessons that changed a rule)"]?.n)} scars</em>`);
+  scars(src["scars (lessons that changed a rule)"]?.n);
   set("sym-covsub", `${int(cov.missed)} missed · ${int(cov.pending)} waiting for a first trade`);
   set("sym-rate", num(v.perSec) ? v.perSec.toFixed(1) + "/s" : D);
   set("sym-src", `source: ${esc(v.source || "—")}${v.sockets ? ` · launches ${v.sockets.pumpportal ? "on" : "off"} · trades ${v.sockets.chain ? "on" : "off"}` : ""}`);
@@ -154,7 +168,11 @@ const CSS = `
 .sym-term{background:#282a36;border:1px solid #44475a;border-radius:10px;overflow:hidden}.sym-term-h{display:flex;gap:6px;align-items:center;padding:6px 10px;background:#21222c}
 .sym-term-h span{width:9px;height:9px;border-radius:50%;background:#ff5555}.sym-term-h span:nth-child(2){background:#f1fa8c}.sym-term-h span:nth-child(3){background:#50fa7b}.sym-term-h em{margin-left:auto;font:10px var(--mono);color:#6272a4;font-style:normal}
 #sym-code{margin:0;padding:10px;height:260px;overflow:auto;font:11px/1.45 var(--mono);color:#f8f8f2;white-space:pre-wrap;word-break:break-word}
-#sym-code .tl{margin-bottom:8px;animation:symIn .5s ease-out}#sym-code .dk{color:#8be9fd}#sym-code .ds{color:#f1fa8c}#sym-code .dn{color:#bd93f9}#sym-code .dp{color:#ff79c6}#sym-code .df{color:#50fa7b}#sym-code .dc{color:#6272a4}
+#sym-code .tl{margin-bottom:8px;animation:symIn .5s ease-out}#sym-code .tl.pain,#sym-code .tl.pain .ds{color:#ff5555}
+.sym-chip .crack{fill:none;stroke:#ff5555;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:400;animation:symCrack 12s ease-out forwards;filter:drop-shadow(0 0 4px #ff5555)}
+.sym-chip .scar{fill:none;stroke:#dfe5ee;stroke-width:1;opacity:.45;stroke-linecap:round}
+@keyframes symCrack{0%{stroke-dashoffset:400;stroke:#ff5555}8%{stroke-dashoffset:0;stroke:#ff5555}60%{stroke:#ff9b9b;opacity:1}100%{stroke-dashoffset:0;stroke:#dfe5ee;opacity:0;stroke-width:1}}
+.sym-pain{font:700 9px var(--mono);letter-spacing:.1em;color:#ff5555}.sym-pain b{font-size:12px;color:#ff5555;text-shadow:none}.sym-pain em{font-style:normal;font-weight:400;color:var(--mut);letter-spacing:0}#sym-code .dk{color:#8be9fd}#sym-code .ds{color:#f1fa8c}#sym-code .dn{color:#bd93f9}#sym-code .dp{color:#ff79c6}#sym-code .df{color:#50fa7b}#sym-code .dc{color:#6272a4}
 @keyframes symIn{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
 .sym-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.sym-kpis>div,.sym-lanes .lane{background:rgba(13,18,32,.85);border:1px solid var(--line);border-radius:9px;padding:8px 10px;min-width:0}
 .sym-kpis small,.sym-lanes small{display:block;font:700 9px var(--mono);letter-spacing:.12em;color:var(--mut)}.sym-kpis b{font:700 20px var(--mono);color:#fff}.sym-kpis i,.sym-lanes i{display:block;font:10px var(--mono);color:var(--mut);font-style:normal;overflow:hidden;text-overflow:ellipsis}

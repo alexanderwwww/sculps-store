@@ -15,6 +15,9 @@ export async function sources(d) {
   return Promise.all([
     one("brain records (all)", "mob_aq_brain", `SELECT count(*) n FROM mob_aq_brain`),
     one("symbiote lessons", "mob_aq_brain", `SELECT count(*) n FROM mob_aq_brain WHERE dept = 'symbiote'`),
+    one("pain (24 h)", "mob_aq_brain", `SELECT count(*) n FROM mob_aq_brain WHERE kind = 'pain' AND at > now() - interval '24 hours'`),
+    one("pain (total)", "mob_aq_brain", `SELECT count(*) n FROM mob_aq_brain WHERE kind = 'pain'`),
+    one("scars (lessons that changed a rule)", "mob_aq_brain", `SELECT count(*) n FROM mob_aq_brain WHERE kind = 'tournament'`),
     one("launches seen", "mob_aq_sym_coins", `SELECT count(*) n FROM mob_aq_sym_coins`),
     one("symbiote paper trades", "mob_aq_sym_trades", `SELECT count(*) n FROM mob_aq_sym_trades`),
     one("missed coins (with reason)", "mob_aq_sym_missed", `SELECT count(*) n FROM mob_aq_sym_missed`),

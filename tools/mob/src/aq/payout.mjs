@@ -10,7 +10,7 @@
 // value (lamports); getMinimumBalanceForRentExemption(0) -> number; getAccountInfo -> value null | {owner, lamports}.
 import { db } from "../db.mjs";
 import { unbase58, base58, proves, rpc } from "./wallet.mjs";
-import { LIVE, signTx, settle, upd, finish } from "./live.mjs";
+import { LIVE, signTx, settle, upd, finish, takeLock, dropLock } from "./live.mjs";
 
 const VENUE = "solana", LOCK_MS = 24 * 3600000, SYSTEM = "11111111111111111111111111111111";
 // addresses that are programs or system accounts, never a person's wallet
@@ -84,8 +84,8 @@ export async function plan(env, sol) {
   if (typeof bal !== "number" || typeof rentMin !== "number" || !bh?.blockhash || !(bh.lastValidBlockHeight > 0)) return { error: "The chain did not answer in the expected shape. Nothing was sent" };
   const fee = (await rpc(env, "getFeeForMessage", [transferTx(w.address, p.address, 1, bh.blockhash).message, { commitment: "confirmed" }])).value;
   if (typeof fee !== "number") return { error: "The chain did not give the fee. Nothing was sent" };
-  // open live positions need SOL to be sold later: their reserve stays in the wallet
-  const keep = open ? Math.round(LIVE.reserveSol * 1e9) + LIVE.feeBudgetLamports : 0;
+  // open live positions need SOL to be sold later: each one's reserve stays in the wallet (a sale and its retries per position)
+  const keep = open * (Math.round(LIVE.reserveSol * 1e9) + LIVE.feeBudgetLamports);
   const lamports = sol === "all" ? bal - fee - keep : Math.round(sol * 1e9), left = bal - fee - lamports;
   const base = { destination: p.address, balanceSol: solOf(bal), feeSol: solOf(fee), keepSol: solOf(keep), openPositions: open };
   if (!(lamports > 0)) return { ...base, error: open ? `There is nothing to withdraw: ${solOf(keep)} SOL stays in the wallet to sell the ${open} open live position(s)` : "There is no SOL to withdraw" };
@@ -106,6 +106,12 @@ export async function withdraw(env, body) {
   if (!body || typeof body !== "object" || Array.isArray(body)) return { error: "Send the amount" };
   // the destination is the saved payout address and nothing else: a request that tries to name one is refused outright
   if (Object.keys(body).some((k) => k !== "sol")) return { error: "A withdrawal takes only the amount. It always goes to the saved payout address" };
+  // one money run at a time: a withdrawal never runs beside the trader's tick, a manual order or SELL ALL LIVE
+  const owner = await takeLock(d);
+  if (!owner) return { error: "The trader is in the middle of a run. Try again in a few seconds", pending: true };
+  try { return await withdrawLocked(env, d, body); } finally { await dropLock(d, owner); }
+}
+async function withdrawLocked(env, d, body) {
   // an earlier withdrawal or order whose outcome is not known yet: the chain is asked first, nothing new is sent meanwhile
   for (const o of await d.q(`SELECT * FROM mob_aq_live_orders WHERE venue = $1 AND side = 'withdraw' AND status = 'sent' ORDER BY id`, [VENUE])) await settle(env, o, { polls: 2 });
   if ((await d.one(`SELECT count(*)::int n FROM mob_aq_live_orders WHERE venue = $1 AND status IN ('requested','sent')`, [VENUE])).n) return { error: "An earlier withdrawal or trade is still being confirmed on the chain. Try again in a minute", pending: true };

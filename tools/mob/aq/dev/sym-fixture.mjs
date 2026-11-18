@@ -25,7 +25,7 @@ export function symFixture() {
   cached = { state: { paper: true, running: true, updatedAt: new Date(now).toISOString(), lanes, right, gta, recent: [], health: HEALTH, missedReasons: Object.entries(reasons).map(([reason, n]) => ({ reason, n })),
     live: { source: "curve", perSec: 37.9, coverage: cov, sockets: { pumpportal: true, chain: true }, feed: feed.sort((a, b) => b.at - a.at).slice(0, 40) },
     sources: [["brain records (all)", "mob_aq_brain", 52000 + brain.length], ["symbiote lessons", "mob_aq_brain", brain.length], ["launches seen", "mob_aq_sym_coins", cov.launches], ["symbiote paper trades", "mob_aq_sym_trades", trades.length],
-      ["missed coins (with reason)", "mob_aq_sym_missed", missed.length], ["right calls", "mob_aq_sym_right", right.filter((r) => r.status === "candidate").length], ["fake pumps", "mob_aq_sym_right", right.filter((r) => r.status === "fake_pump").length]].map(([label, table, n]) => ({ label, table, n })) },
+      ["pain (24 h)", "mob_aq_brain", brain.filter((b) => b.kind === "pain").length], ["pain (total)", "mob_aq_brain", brain.filter((b) => b.kind === "pain").length + 212], ["scars (lessons that changed a rule)", "mob_aq_brain", 14], ["missed coins (with reason)", "mob_aq_sym_missed", missed.length], ["right calls", "mob_aq_sym_right", right.filter((r) => r.status === "candidate").length], ["fake pumps", "mob_aq_sym_right", right.filter((r) => r.status === "fake_pump").length]].map(([label, table, n]) => ({ label, table, n })) },
     brain };
   return cached;
 }
