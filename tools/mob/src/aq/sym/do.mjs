@@ -50,14 +50,14 @@ export class Symbiote {
   async start() {
     if (!this.started) {
       this.started = Date.now();
-      const saved = await this.ctx.storage.get("stats"); if (saved) Object.assign(this.eng.stats, saved);
+      const saved = await this.ctx.storage.get("stats"); if (saved) { this.eng.stats.restarts = saved.restarts || 0; this.eng.stats.lostAtRestart = saved.lostAtRestart || 0; } // coverage counts THIS run only (production 2026-11-18: mixing runs gave -4.8%)
       const g = await this.ctx.storage.get("guard"); if (g) { this.cday = g.day; this.cused = g.used || 0; this.paused = !!g.paused; } // the guard survives a restart
       // coins that were live when the object last stopped cannot be measured any more: logged as missed, never silently dropped
       try {
         const lost = await this.d().q(`UPDATE mob_aq_sym_coins SET done = true, end_reason = 'restart', updated_at = now() WHERE NOT done RETURNING mint, symbol, n`);
         const never = lost.filter((c) => !c.n);
         if (lost.length) await this.d().q(`INSERT INTO mob_aq_sym_missed (mint, symbol, reason) SELECT mint, symbol, 'symbiote restarted while the coin was live' FROM json_to_recordset($1::json) AS x(mint text, symbol text) ON CONFLICT (mint) DO NOTHING`, [JSON.stringify(lost)]);
-        this.eng.stats.missed += never.length; if (saved) this.eng.stats.restarts = (this.eng.stats.restarts || 0) + 1; this.eng.stats.lostAtRestart = (this.eng.stats.lostAtRestart || 0) + lost.length;
+        void never; if (saved) this.eng.stats.restarts = (this.eng.stats.restarts || 0) + 1; this.eng.stats.lostAtRestart = (this.eng.stats.lostAtRestart || 0) + lost.length;
       } catch (e) { this.err("restart", e); }
     }
     await this.connect();
@@ -154,7 +154,7 @@ export class Symbiote {
     const cov = this.eng.coverage();
     return { on: true, source: null, startedAt: new Date(this.started).toISOString(), coverage: cov, perSec: this.rate(), mbStreamed: +(this.bytes / 1e6).toFixed(1),
       sockets: { pumpportal: !!this.ws.pp, chain: !!this.ws.chain }, lastMsg: { pumpportal: this.lastMsg.pp ? new Date(this.lastMsg.pp).toISOString() : null, chain: this.lastMsg.chain ? new Date(this.lastMsg.chain).toISOString() : null },
-      reconnects: this.reconnects, queue: this.queue.length, feed: this.feed.slice(0, FEED_MAX), errors: this.errors };
+      reconnects: this.reconnects, queue: this.queue.length, resolveQueue: this.resolveQ.size, launchQueue: this.launchQ.size, feed: this.feed.slice(0, FEED_MAX), errors: this.errors };
   }
 
   async alarm() {
