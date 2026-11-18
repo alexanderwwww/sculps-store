@@ -55,7 +55,7 @@ function chipSvg() {
 
 // ---------- the brain terminal: each new record as pretty code, Dracula colours ----------
 // one brain row as an ENGINE LOG line, Dracula colours: [time] [TAG] EVENT {data}
-const TAGS = { lesson: ["ENGINE", "PAPER_TRADE_EXEC"], pain: ["RISK", "PAIN"], fake_pump: ["RISK", "FAKE_PUMP_DETECTED"], right_call: ["RIGHT", "RIGHT_CALL"] };
+const TAGS = { lesson: ["ENGINE", "PAPER_TRADE_EXEC"], sym_hour: ["ENGINE", "HOURLY_SUMMARY"], pain: ["RISK", "PAIN"], fake_pump: ["RISK", "FAKE_PUMP_DETECTED"], right_call: ["RIGHT", "RIGHT_CALL"] };
 function codeOf(r) {
   const [tag, ev] = TAGS[r.kind] || [String(r.dept || "BRAIN").toUpperCase(), String(r.kind || "RECORD").toUpperCase()];
   const k = (x) => `<span class="dk">${esc(x)}</span>`, val = (v) => (v === null || v === undefined ? `<span class="dc">null</span>` : typeof v === "number" ? `<span class="${/pct|Pct|gain/.test("") ? "" : v < 0 ? "dr" : "dg"}">${esc(+v.toFixed(4))}</span>` : typeof v === "boolean" ? `<span class="dp">${v}</span>` : typeof v === "string" ? `<span class="ds">"${esc(v.length > 60 ? v.slice(0, 60) + "…" : v)}"</span>` : Array.isArray(v) ? `<span class="ds">[${esc(v.length)}]</span>` : "{…}");

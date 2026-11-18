@@ -384,7 +384,7 @@ test("LIVE PATH: a fresh right call becomes its own candidate; its symbiote bars
   mock("POST", "https://api.mainnet-beta.solana.com", (rq) => { const m = JSON.parse(rq.body); return m.method === "getAccountInfo" ? { jsonrpc: "2.0", id: 1, result: { context: { slot: 1 }, value: { owner: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb", data: { parsed: { type: "mint", info: { freezeAuthority: null, mintAuthority: null, decimals: 6, extensions: [] } } } } } } : { jsonrpc: "2.0", id: 1, error: { message: "unmocked" } }; });
   await d.q(`DELETE FROM mob_aq_market`); await d.q(`DELETE FROM mob_aq_sym_right`); await d.q(`DELETE FROM mob_aq_sym_bars WHERE mint = $1`, [RC]);
   const none = await L.scanFib(env, "live", async () => false);
-  assert.ok(!none.c && ["no_candidate", "no_right_call"].includes(none.refusal.gate), "no right call: still refused " + JSON.stringify(none.refusal));
+  assert.ok(!none.c && ["no_candidate", "no_right_call"].includes(none.refusal.refused), "no right call: still refused " + JSON.stringify(none.refusal));
   await d.q(`INSERT INTO mob_aq_sym_right (mint, symbol, status, checked_at, checks) VALUES ($1, 'RC', 'candidate', now(), '{"realSol": 40}')`, [RC]);
   const bars = chart(Date.now() / 1000);
   await d.q(`INSERT INTO mob_aq_sym_bars (mint, t, o, h, l, c, v) SELECT $1, t, o, h, l, c, v FROM json_to_recordset($2::json) AS x(t bigint, o float8, h float8, l float8, c float8, v float8)`, [RC, JSON.stringify(bars)]);
@@ -392,8 +392,8 @@ test("LIVE PATH: a fresh right call becomes its own candidate; its symbiote bars
   assert.ok(got.c, JSON.stringify(got.refusal)); assert.equal(got.c.mint, RC); assert.equal(got.c.fresh, true); assert.equal(got.c.liqUsd, 18000); assert.equal(got.s.signal, true, "the chart setup came from symbiote's bars");
   // the veto still stops it, and an expired call is not a candidate
   await d.q(`INSERT INTO mob_aq_chat (from_name, text) VALUES ('grok', $1)`, ["VETO " + RC]);
-  assert.equal((await L.scanFib(env, "live", async () => false)).refusal.gate, "veto"); await d.q(`DELETE FROM mob_aq_chat WHERE from_name = 'grok'`);
+  assert.equal((await L.scanFib(env, "live", async () => false)).refusal.refused, "veto"); await d.q(`DELETE FROM mob_aq_chat WHERE from_name = 'grok'`);
   await d.q(`UPDATE mob_aq_sym_right SET status = 'expired' WHERE mint = $1`, [RC]);
-  const ex = await L.scanFib(env, "live", async () => false); assert.ok(!ex.c && ["no_candidate", "no_right_call"].includes(ex.refusal.gate));
+  const ex = await L.scanFib(env, "live", async () => false); assert.ok(!ex.c && ["no_candidate", "no_right_call"].includes(ex.refusal.refused));
   resetMocks();
 });
