@@ -164,6 +164,9 @@ export function createEngine({ isVetoed = () => false } = {}) {
     if (tr.user && tr.buy && c.createSlot != null && tr.slot != null && tr.slot - c.createSlot <= 2 && tr.user !== c.creator) c.early.set(tr.user, (c.early.get(tr.user) || 0) + tr.tokens);
     if (tr.user) { const cy = c.cycles.get(tr.user) || { b: 0, s: 0, sol: 0 }; tr.buy ? cy.b++ : cy.s++; cy.sol += tr.sol; if (c.cycles.size < 3000) c.cycles.set(tr.user, cy); }
     if (!c.ctrl) { const size = sizeFor(c), fill = buyFill(tr.vsol, tr.vtok, size, fee(c)); c.ctrl = { size, cost: size + NET_FEE_SOL * (c.sol ? 1 : size), tokens: fill.tokens, px: tr.px, netPct: null }; }
+    // MARKET lane (Alex, 2026-11-18: "symbiote buys 100% of the coins it sees"): the first-trade buy (c.ctrl) is held for the
+    // coin's whole life; peak multiple, time to peak and the drawdown from the peak are its training data
+    const m = c.ctrl; if (m) { if (!m.peak || tr.px > m.peak) { m.peak = tr.px; m.peakAt = at; m.trough = tr.px; } else if (tr.px < m.trough) m.trough = tr.px; m.at0 = m.at0 || at; }
     for (const lane of Object.keys(LANES)) stepLane(c, lane, c.lanes[lane], tr, at);
     if (c.gta) gtaTick(c, at);
     touch(c);
@@ -229,7 +232,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
   function drain() {
     const coinsOut = [...out.coins.values()].map((c) => ({ mint: c.mint, symbol: c.symbol, name: c.name, gta: c.gta, sol: c.sol, created_at: new Date(c.createdAt).toISOString(),
       n: c.n, buyers: c.buyers.size, px0: c.px0, last: c.last, hi: c.hi, end: c.end, done: c.done, pp: !!c.pp, chain: !!c.chain,
-      lanes: Object.fromEntries(Object.entries(c.lanes).map(([l, s]) => [l, s.result || { st: s.st, peakPct: s.peak ?? null }])), ctrl: c.ctrl?.netPct ?? null }));
+      lanes: { ...Object.fromEntries(Object.entries(c.lanes).map(([l, s]) => [l, s.result || { st: s.st, peakPct: s.peak ?? null }])), market: c.ctrl ? { bought: true, peakX: r6(c.ctrl.peak / c.ctrl.px), toPeakS: c.ctrl.peakAt ? Math.round((c.ctrl.peakAt - c.ctrl.at0) / 1000) : null, ddFromPeakPct: r6((c.ctrl.trough / c.ctrl.peak - 1) * 100), netPct: c.ctrl.netPct, end: c.end } : { bought: false } }, ctrl: c.ctrl?.netPct ?? null }));
     const b = { coins: coinsOut, trades: out.trades.splice(0), missed: out.missed.splice(0), lessons: out.lessons.splice(0), gta: out.gta.splice(0), explode: out.explode.splice(0), feed: out.feed.splice(0) };
     out.coins.clear();
     return b;

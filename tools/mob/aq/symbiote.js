@@ -74,7 +74,7 @@ export function symScreen() {
     </div>
     <div class="sym-right">
       <div class="sym-kpis"><div><small>COINS SEEN</small><b id="sym-coins">${D}</b></div><div><small>COVERAGE</small><b id="sym-cov">${D}</b><i id="sym-covsub"></i></div><div><small>STREAM</small><b id="sym-rate">${D}</b><i id="sym-src"></i></div><div><small>RIGHT CALLS</small><b id="sym-rc">${D}</b><i id="sym-fp"></i></div></div>
-      <div class="sym-lanes" id="sym-lanes"></div>
+      <div class="sym-market" id="sym-market"></div><div class="sym-lanes" id="sym-lanes"></div>
       <div class="sym-tree"><h4>FRUITS <span>right calls rise, fake pumps wither</span></h4><div class="sym-fruits" id="sym-fruits"></div></div>
       <div class="sym-two"><div><h4>THE STREAM</h4><div class="sym-feed" id="sym-feed"></div></div><div><h4>GTA 6 WATCH <span>whole life</span></h4><div class="sym-gta" id="sym-gta"></div><h4>MISSED <span>with the reason</span></h4><div class="sym-miss" id="sym-miss"></div></div></div>
     </div>
@@ -128,6 +128,7 @@ function paint(s) {
   set("sym-src", `source: ${esc(v.source || "—")}${v.sockets ? ` · launches ${v.sockets.pumpportal ? "on" : "off"} · trades ${v.sockets.chain ? "on" : "off"}` : ""}`);
   const rights = (s.right || []).filter((r) => r.status === "candidate"), fakes = (s.right || []).filter((r) => r.status === "fake_pump");
   set("sym-rc", int(src["right calls"]?.n ?? rights.length)); set("sym-fp", `${int(src["fake pumps"]?.n ?? fakes.length)} fake pumps`);
+  const mk = s.market; set("sym-market", mk ? `<b>MARKET LANE</b> <u class="sym-paper">PAPER</u> bought <b>${int(mk.bought)}</b> of <b>${int(mk.total)}</b> coins = <b>${mk.total ? ((mk.bought / mk.total) * 100).toFixed(1) : "—"}%</b> <i>(24 h, 1 paper SOL each at the first price, held for life · avg peak ${num(mk.avgPeakX) ? mk.avgPeakX.toFixed(2) + "x" : "—"} · avg end ${pct(mk.avgNetPct)})</i>` : "");
   set("sym-lanes", Object.entries(s.lanes || {}).map(([l, x]) => `<div class="lane"><small><u class="sym-paper">PAPER</u> ${esc(l.toUpperCase())} LANE</small><b>${num(x.walletSol) ? x.walletSol.toLocaleString("en-US", { maximumFractionDigits: 2 }) : D} <em>SOL</em></b><i>${int(x.trades)} trades · ${int(x.wins)} won · avg ${pct(x.avgPct)}</i></div>`).join(""));
   set("sym-fruits", (s.right || []).slice(0, 18).map((r, i) => `<div class="fruit ${r.status === "candidate" ? "ripe" : "dead"}" style="--i:${i}" title="${esc(r.status === "candidate" ? "right call" : "fake pump: " + (r.failed || []).join("; "))}"><span class="orb"></span><b>${esc(r.symbol || short(r.mint))}</b><i>${pct(r.gain_pct, 0)} · ${esc(r.lane || "")}</i></div>`).join("") || `<p class="sym-empty">No coin has doubled on paper and passed the checks yet.</p>`);
   const feed = v.feed || [];
@@ -176,6 +177,7 @@ const CSS = `
 @keyframes symIn{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
 .sym-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.sym-kpis>div,.sym-lanes .lane{background:rgba(13,18,32,.85);border:1px solid var(--line);border-radius:9px;padding:8px 10px;min-width:0}
 .sym-kpis small,.sym-lanes small{display:block;font:700 9px var(--mono);letter-spacing:.12em;color:var(--mut)}.sym-kpis b{font:700 20px var(--mono);color:#fff}.sym-kpis i,.sym-lanes i{display:block;font:10px var(--mono);color:var(--mut);font-style:normal;overflow:hidden;text-overflow:ellipsis}
+.sym-market{margin-top:8px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:rgba(13,18,32,.85);font:11px var(--mono);color:#ccc}.sym-market b{color:#fff}.sym-market i{color:var(--mut);font-style:normal}
 .sym-lanes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.sym-lanes b{font:700 15px var(--mono);color:#f5a524}.sym-lanes b em{font-size:10px;font-style:normal;color:var(--mut)}
 .sym-fruits{position:relative;display:flex;flex-wrap:wrap;gap:8px;min-height:84px;padding:10px;border-radius:10px;background:radial-gradient(400px 120px at 50% 100%,rgba(80,250,123,.08),transparent),rgba(13,18,32,.6);border:1px solid var(--line)}
 .fruit{display:flex;flex-direction:column;align-items:center;gap:2px;font:10px var(--mono);animation:symRise 1.2s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i) * 60ms)}

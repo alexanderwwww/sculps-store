@@ -34,9 +34,10 @@ export async function sources(d) {
 
 export async function symState(env) {
   const d = db(env);
-  const [live, lanes, missed, right, gta, recent, src] = await Promise.all([
+  const [live, lanes, market, missed, right, gta, recent, src] = await Promise.all([
     d.one(`SELECT v, at FROM mob_aq_sym_stats WHERE k = 'live'`).catch(() => null),
     d.q(`SELECT lane, count(*) n, count(*) FILTER (WHERE net_pct > 0) wins, COALESCE(sum((proceeds_sol - cost_sol) * CASE WHEN cost_sol > 0 THEN 1 / cost_sol ELSE 0 END), 0) pnl_sol, avg(net_pct) avg_pct FROM mob_aq_sym_trades GROUP BY lane`).catch(() => []),
+    d.one(`SELECT count(*) FILTER (WHERE (lanes->'market'->>'bought')::boolean) bought, count(*) total, avg(((lanes->'market'->>'peakX')::float8)) FILTER (WHERE done) peak_x, avg(ctrl_pct) FILTER (WHERE done) net FROM mob_aq_sym_coins WHERE created_at > now() - interval '24 hours'`).catch(() => null),
     d.q(`SELECT reason, count(*) n FROM mob_aq_sym_missed GROUP BY reason ORDER BY n DESC LIMIT 6`).catch(() => []),
     d.q(`SELECT mint, symbol, lane, status, gain_pct, flagged_at, checks->'failed' failed FROM mob_aq_sym_right ORDER BY flagged_at DESC LIMIT 30`).catch(() => []),
     d.q(`SELECT c.mint, c.symbol, c.name, c.created_at, c.last, c.hi, c.px0, c.done, c.end_reason, (SELECT count(*) FROM mob_aq_sym_gta g WHERE g.mint = c.mint) minutes FROM mob_aq_sym_coins c WHERE c.gta ORDER BY c.created_at DESC LIMIT 40`).catch(() => []),
@@ -45,7 +46,7 @@ export async function symState(env) {
   ]);
   const L = Object.fromEntries(Object.keys(LANES).map((l) => { const r = lanes.find((x) => x.lane === l); return [l, { walletSol: WALLET_SOL + (r ? n(r.pnl_sol) : 0), trades: r ? n(r.n) : 0, wins: r ? n(r.wins) : 0, avgPct: r ? n(r.avg_pct) : null }]; }));
   const v = live?.v || null, ageS = live ? (Date.now() - new Date(live.at).getTime()) / 1000 : null;
-  return { paper: true, running: ageS != null && ageS < 30, updatedAt: live?.at || null, live: v, lanes: L, missedReasons: missed.map((r) => ({ reason: r.reason, n: n(r.n) })),
+  return { market: market && { bought: n(market.bought), total: n(market.total), avgPeakX: n(market.peak_x), avgNetPct: n(market.net) }, paper: true, running: ageS != null && ageS < 30, updatedAt: live?.at || null, live: v, lanes: L, missedReasons: missed.map((r) => ({ reason: r.reason, n: n(r.n) })),
     right: right.map((r) => ({ ...r, gain_pct: n(r.gain_pct) })), gta, recent, sources: src, health: HEALTH };
 }
 

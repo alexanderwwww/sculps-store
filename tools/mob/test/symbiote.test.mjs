@@ -170,7 +170,8 @@ test("store: one batch writes coins, trades, misses, GTA minutes, lessons and th
   feed(e, "W1", [[1.0, true], [2.0, true], [1.45, false], [1.47, true], [2.7, true]]); feed(e, "GTAw", [[1, true]]);
   clock += R.QUIET_MS + 60000; e.sweep(clock);
   const r = await flush(d, e.drain(), { coverage: e.coverage() });
-  assert.equal(r.coins, 3); assert.equal(r.missed, 1); assert.ok(r.trades >= 1); assert.ok(r.lessons >= 1); assert.ok(r.gta >= 1);
+  assert.equal(r.coins, 3); assert.equal(r.missed, 1);
+  const mk = (await d.one(`SELECT lanes FROM mob_aq_sym_coins WHERE mint='W1'`)).lanes.market; assert.equal(mk.bought, true); assert.ok(mk.peakX >= 2.6 && mk.toPeakS > 0, JSON.stringify(mk)); assert.equal((await d.one(`SELECT lanes FROM mob_aq_sym_coins WHERE mint='W2'`)).lanes.market.bought, false); assert.ok(r.trades >= 1); assert.ok(r.lessons >= 1); assert.ok(r.gta >= 1);
   assert.equal((await d.one(`SELECT count(*)::int n FROM mob_aq_sym_coins`)).n, 3);
   assert.equal((await d.one(`SELECT reason FROM mob_aq_sym_missed WHERE mint='W2'`)).reason, "no trade seen on the stream after launch");
   assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_brain WHERE dept='symbiote' AND kind='lesson'`)).n >= 1);
@@ -264,7 +265,7 @@ test("routes: admin-only state with real counts and sources, the brain terminal 
   assert.equal((await req("GET", "/api/aq/sym/state")).status, 401);
   assert.equal((await req("GET", "/api/aq/sym/probe?secs=5")).status, 401);
   const s = await (await req("GET", "/api/aq/sym/state", { cookie })).json();
-  assert.equal(s.paper, true); assert.ok(s.lanes.aquarius.trades >= 1); assert.equal(s.lanes.grok.walletSol != null, true);
+  assert.equal(s.paper, true); assert.ok(s.lanes.aquarius.trades >= 1); assert.ok(s.market.total >= 1 && s.market.bought >= 1); assert.equal(s.lanes.grok.walletSol != null, true);
   const src = Object.fromEntries(s.sources.map((x) => [x.label, x]));
   assert.equal(src["right calls"].n, 1); assert.equal(src["fake pumps"].n, 1); assert.ok(src["brain records (all)"].n >= 3); assert.equal(src["brain records (all)"].table, "mob_aq_brain");
   assert.ok(s.right.some((r) => r.mint === "GOODMINT" && r.status === "candidate"));
