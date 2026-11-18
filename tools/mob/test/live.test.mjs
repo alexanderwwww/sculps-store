@@ -392,7 +392,7 @@ test("audit: daily loss counts marked and stop-risk of open positions, and sizes
   // a small budget left: the buy is sized down to it
   await wipe(); world(); await limits({ maxDailyLossSol: 0.05, maxOpenPositions: 3 });
   await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, cost_sol, proceeds_sol, pnl_sol, closed_at) VALUES ('solana','L9','L9','closed',0.05,0.0115,-0.0485, now())`);
-  await L.liveTick(env, { minute: 1 }); const [p] = await positions(); assert.ok(p.plan.sizeSol < 0.05, JSON.stringify(p.plan)); assert.match(p.plan.sizeCappedBy, /daily loss budget/);
+  await L.liveTick(env, { minute: 1 }); const p = (await positions()).find((x) => x.mint === MINT); assert.ok(p.plan.sizeSol < 0.05, JSON.stringify(p.plan)); assert.match(p.plan.sizeCappedBy, /daily loss budget/);
 });
 
 test("audit: rent comes back after a full sale and is booked; the plan is rebased on the fill; a rug exit escalates slippage", async () => {
