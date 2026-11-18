@@ -481,8 +481,8 @@ export async function candidates(env) {
 // A symbiote RIGHT CALL is its own candidate (Inspector 2026-11-18: right calls are fresh launches, never in the established
 // list above). The pool floor for these fresh coins is symbiote's: 20 SOL of real reserves in the curve, re-checked every
 // 5 minutes (sym/do.mjs LIQ_FLOOR_SOL); liqUsd here is Jupiter's figure for the coin, else those reserves x2 at the SOL price.
-export async function freshRightCandidates(env, d) {
-  const rows = await d.q(`SELECT r.mint, r.symbol, r.checks->>'realSol' real_sol FROM mob_aq_sym_right r WHERE r.status = 'candidate' AND coalesce(r.checked_at, r.flagged_at) > now() - $1::float8 * interval '1 minute'`, [await rightCallTtlMin(d)]).catch(() => []);
+export async function freshRightCandidates(env, d, known = new Set()) {
+  const rows = (await d.q(`SELECT r.mint, r.symbol, r.checks->>'realSol' real_sol FROM mob_aq_sym_right r WHERE r.status = 'candidate' AND coalesce(r.checked_at, r.flagged_at) > now() - $1::float8 * interval '1 minute'`, [await rightCallTtlMin(d)]).catch(() => [])).filter((r) => !known.has(r.mint));
   if (!rows.length) return [];
   let px = {}; try { px = await jupPrices([SOL_MINT, ...rows.map((r) => r.mint)]); } catch {}
   const solUsd = px[SOL_MINT]?.price ?? null;
@@ -496,8 +496,10 @@ export async function candlesFor(env, d, mint) {
   return rows.length ? { ok: true, src: "symbiote", data: rows.map((r) => ({ t: Number(r.t), o: Number(r.o), h: Number(r.h), l: Number(r.l), c: Number(r.c), v: Number(r.v) || 0 })) } : cs;
 }
 export async function scanFib(env, venue, skip) {
-  const d = db(env), est = await candidates(env), nowSec = Date.now() / 1000, fresh = await freshRightCandidates(env, d);
-  const list = [...fresh, ...(est || []).filter((c) => !fresh.some((f) => f.mint === c.mint))];
+  const d = db(env), est = await candidates(env), nowSec = Date.now() / 1000;
+  // a right call that is also an established coin is taken from the established list (Jupiter's own pool and chart)
+  const fresh = await freshRightCandidates(env, d, new Set((est || []).map((c) => c.mint)));
+  const list = [...(est || []), ...fresh];
   if (!est && !fresh.length) return { refusal: await refuse(d, venue, "no_market_data", "Jupiter's coin lists did not answer") };
   if (!list.length) return { refusal: await refuse(d, venue, "no_candidate", "No established coin with a pool of $100K or more, and no fresh right call, right now") };
   // Alex's hard rule (2026-11-18): only a coin symbiote flagged as a RIGHT CALL that passed its deep checks may be bought.
