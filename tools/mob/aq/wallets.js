@@ -79,6 +79,7 @@ export function walletsDock() {
   onState((s) => { try { paint(bar, s); } catch (err) { console.error(err); } });
   // the page always ends above the bar, whatever the bar holds (a signal banner, chips): padding follows its real height
   if (typeof ResizeObserver === "function") new ResizeObserver(() => { document.body.style.paddingBottom = Math.ceil(bar.getBoundingClientRect().height + 24) + "px"; }).observe(bar);
+  if (typeof window !== "undefined") { window.__aq = window.__aq || {}; window.__aq.openDrawer = openDrawer; } // the dev flow scripts open a tab
   const wrap = document.createElement("div"); wrap.append(bar, drawer); return wrap;
 }
 function paint(bar, s) {

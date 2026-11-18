@@ -269,6 +269,6 @@ function boot() {
   window.addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.querySelector(".dlg-bg")) openMenu(); else if (e.key === "Escape") document.querySelector(".dlg-bg").remove(); });
   setInterval(() => { const e = document.getElementById("k-utc"); if (e) e.textContent = new Date().toLocaleTimeString("en-GB", { timeZone: "Europe/Athens", hour12: false }); }, 1000);
   poll(); setInterval(poll, 3000); setInterval(() => listeners.forEach((f) => store.state && f(store.state)), 1000 * 15);
-  window.__aq = { store, setMode, openMenu, poll, reactorInfo };
+  window.__aq = Object.assign(window.__aq || {}, { store, setMode, openMenu, poll, reactorInfo });
 }
 if (typeof document !== "undefined") boot();

@@ -6,12 +6,19 @@ import http from "node:http";
 import { makeEnv, dropEnv, mock, resetMocks } from "./helpers.mjs";
 import { db } from "../src/db.mjs";
 import * as W from "../src/aq/wallet.mjs";
+import * as L from "../src/aq/live.mjs";
 import { feeds } from "../src/aq/feeds.mjs";
 import { _resetSeeded } from "../src/aq/engine.mjs";
+import * as C from "../src/aq/chart.mjs";
+import { chart, asJup } from "./fib-fixture.mjs";
 const port = Number(process.argv[2] || 8790), SOL = "So11111111111111111111111111111111111111112", MINT = "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263";
 const env = await makeEnv({ HELIUS_API_KEY: "hk", AQ_JUP_GAP_MS: "0", AQ_LIVE_POLL_MS: "0" }); _resetSeeded();
 const d = db(env), ME = (await W.makeKey(env)).address, F = { balance: 3_000_000_000, tokens: {}, status: {}, txs: {}, built: null, sent: [] };
-const dip = () => { const now = Math.floor(Date.now() / 60000) * 60, cs = []; for (let i = 39; i >= 0; i--) { const c = i < 5 ? 100 * (1 - (0.045 * (5 - i)) / 5) : 100; cs.push({ time: now - i * 60, open: c, high: c * 1.012, low: c * 0.988, close: c, volume: 10 }); } return cs; };
+// the chart trader's picture (test/fib-fixture.mjs): a golden-pocket bounce now; after /__fake/age, the same leg 15 minutes ago
+// followed by 15 minutes of 5-minute closes under its stop (what makes the chart say SELL NOW)
+const dip = () => { const n = Date.now() / 1000; if (F.mode !== "stop") return asJup(chart(n)).candles;
+  const t0 = Math.floor(n / 60) * 60 - 900, base = chart(t0), s = C.entrySetup(base, t0), px = s.stop - 0.5;
+  return asJup([...base, ...Array.from({ length: 15 }, (_, k) => ({ t: t0 + k * 60, o: px, h: px * 1.001, l: px * 0.999, c: px, v: 5 }))]).candles; };
 const fakeTx = (payer) => { const b = new Uint8Array(1 + 64 + 4 + 1 + 64 + 32 + 1 + 1); b[0] = 1; let p = 65; b[p++] = 0x80; b[p++] = 1; b[p++] = 0; b[p++] = 1; b[p++] = 2; b.set(W.unbase58(payer), p); b.set(crypto.getRandomValues(new Uint8Array(32)), p + 64); return Buffer.from(b).toString("base64"); };
 resetMocks();
 mock("GET", /^https:\/\/datapi\.jup\.ag\/v1\/pools\//, () => ({ pools: [{ id: "p1", quoteAsset: SOL, baseAsset: { id: MINT, symbol: "BONK", liquidity: 250000, decimals: 5, firstPool: { createdAt: "2024-01-01T00:00:00Z" }, stats5m: { priceChange: -4 }, audit: { mintAuthorityDisabled: true, freezeAuthorityDisabled: true } } }] }));
@@ -33,13 +40,16 @@ mock("POST", "https://mainnet.helius-rpc.com/", (c) => { const m = JSON.parse(c.
   if (m.method === "getSignatureStatuses") return val(m.params[0].map((s) => F.status[s] ?? null));
   if (m.method === "getTransaction") return ok(F.txs[m.params[0]] ?? null);
   return { jsonrpc: "2.0", id: 1, error: { code: -32601, message: "Method not found" } }; });
-await feeds.jupTop(env); await W.createWallet(env); const L = await import("../src/aq/live.mjs");
+await feeds.jupTop(env); await W.createWallet(env);
 const { default: worker } = await import("../src/worker.mjs");
 http.createServer(async (req, res) => {
   try {
     const chunks = []; for await (const c of req) chunks.push(c); const body = Buffer.concat(chunks);
     if (req.url === "/__fake/tick") { const r = await L.phantomWatch(env); res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(r)); } // what the minute timer does
-    if (req.url === "/__fake/age") { await d.q(`UPDATE mob_aq_live_positions SET time_exit_at = now() - interval '1 minute' WHERE venue = 'phantom'`); res.writeHead(200); return res.end("{}"); }
+    if (req.url === "/__fake/age") { // the chart breaks the stop after the buy (no clock is involved): entry moved 15 minutes back, then the minute timer runs
+      const t = Math.floor(Date.now() / 60000) * 60 - 900; F.mode = "stop"; await d.q(`DELETE FROM mob_aq_market`);
+      await d.q(`UPDATE mob_aq_live_positions SET plan = plan || jsonb_build_object('entryT', $1::bigint, 'since', $1::bigint) WHERE venue = 'phantom' AND plan IS NOT NULL`, [t]);
+      const r = await L.phantomWatch(env); F.mode = null; await d.q(`DELETE FROM mob_aq_market`); res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(r)); }
     if (req.url === "/__fake/me") { res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify({ address: ME, sent: F.sent })); }
     if (req.url === "/__fake/send") { // the fake Phantom "sent" what the page handed it: it must be, byte for byte, the transaction the server built
       const got = body.toString(), same = F.built && got === F.built.tx, sig = W.base58(crypto.getRandomValues(new Uint8Array(64))); F.sent.push({ same, kind: req.headers["x-kind"] || "" });
