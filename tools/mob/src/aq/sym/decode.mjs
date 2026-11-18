@@ -96,7 +96,7 @@ export const isSolQuote = (q) => !q || q === SYSTEM || q === WSOL;
 export const priceSol = (vsol, vtok) => (vtok > 0 ? (vsol / 1e9) / (vtok / 1e6) : 0);
 
 // A whole logsNotification (Solana's {value:{signature, err, logs}}) -> normalised events for symbiote.
-export function eventsFromLogs(value) {
+export function eventsFromLogs(value, slot = null) {
   const out = { sig: value?.signature || null, failed: !!value?.err, trades: [], creates: [], completes: [] };
   if (out.failed || !Array.isArray(value?.logs)) return out;
   for (const l of value.logs) {
@@ -106,10 +106,10 @@ export function eventsFromLogs(value) {
       if (!isSolQuote(ev.quote_mint)) continue;
       out.trades.push({ mint: ev.mint, buy: ev.is_buy, sol: ev.sol_amount / 1e9, tokens: ev.token_amount, user: ev.user, ts: ev.timestamp,
         vsol: ev.virtual_sol_reserves, vtok: ev.virtual_token_reserves, realSol: ev.real_sol_reserves / 1e9, feeBps: ev.fee_basis_points ?? null,
-        creatorFeeBps: ev.creator_fee_basis_points ?? null, creator: ev.creator ?? null, ix: ev.ix_name ?? null, sig: out.sig, px: priceSol(ev.virtual_sol_reserves, ev.virtual_token_reserves) });
+        creatorFeeBps: ev.creator_fee_basis_points ?? null, creator: ev.creator ?? null, ix: ev.ix_name ?? null, sig: out.sig, slot, px: priceSol(ev.virtual_sol_reserves, ev.virtual_token_reserves) });
     } else if (ev.kind === "CreateEvent") {
       out.creates.push({ mint: ev.mint, name: ev.name, symbol: ev.symbol, uri: ev.uri, curve: ev.bonding_curve, creator: ev.creator || ev.user, ts: ev.timestamp,
-        vsol: ev.virtual_sol_reserves, vtok: ev.virtual_token_reserves, supply: ev.token_total_supply, sol: isSolQuote(ev.quote_mint) });
+        vsol: ev.virtual_sol_reserves, vtok: ev.virtual_token_reserves, supply: ev.token_total_supply, sol: isSolQuote(ev.quote_mint), quote: ev.quote_mint ?? null, slot });
     } else out.completes.push({ mint: ev.mint, ts: ev.timestamp });
   }
   return out;
