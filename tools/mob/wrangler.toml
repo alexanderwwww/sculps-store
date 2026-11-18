@@ -12,3 +12,12 @@ bucket_name = "gardenbuddy-media"
 
 [triggers]
 crons = ["*/5 * * * *", "* * * * *"]
+
+# SYMBIOTE: one Durable Object that paper-trades every pump.fun launch (src/aq/sym/do.mjs). Paper only.
+[[durable_objects.bindings]]
+name = "SYMBIOTE"
+class_name = "Symbiote"
+
+[[migrations]]
+tag = "sym-v1"
+new_sqlite_classes = ["Symbiote"]

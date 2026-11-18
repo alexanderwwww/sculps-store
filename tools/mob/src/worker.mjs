@@ -19,6 +19,8 @@ import { backupCheck } from "./aq/payout.mjs";
 import { tick as aqTick } from "./aq/engine.mjs";
 import { arenaTick } from "./aq/arena.mjs";
 import { keeperTick, watchTicks } from "./aq/keeper.mjs";
+import { symWake } from "./aq/sym/routes.mjs";
+export { Symbiote } from "./aq/sym/do.mjs";
 
 export const BUILD = "mob-4";
 const json = (v, status = 200) => new Response(JSON.stringify(v), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
@@ -59,6 +61,8 @@ export default {
       // cannot delay a real exit. (A third timer "*/1 * * * *" was tried on 2026-11-18: it first fired about 7 minutes after the
       // deploy, with event.cron "*/1 * * * *". Running here, in the timer that is already proven, was kept instead.)
       ctx.waitUntil(C.ensureMigrated(env).then(() => liveTick(env, { cron: event.cron })).then((r) => { if ((r.result && !r.result.refused) || r.exits || r.reconciled || r.error) console.log("live", JSON.stringify(r)); }).catch((e) => console.log("live error", String(e.message || e).slice(0, 200))));
+      // SYMBIOTE (paper only): wake the Durable Object; it keeps its own sockets and 5-second alarm
+      ctx.waitUntil(C.ensureMigrated(env).then(() => symWake(env)).catch((e) => console.log("symbiote error", String(e.message || e).slice(0, 200))));
       // the training arena has its own clock: it starts with the minute, beside the main tick, so a slow main tick can never cost it a batch
       ctx.waitUntil(C.ensureMigrated(env).then(() => arenaTick(env)).then((r) => { if (!r.off) console.log("arena", JSON.stringify(r)); }).catch((e) => console.log("arena error", e.message || e)));
       ctx.waitUntil(C.ensureMigrated(env).then(() => aqTick(env)).then((r) => console.log("aq", JSON.stringify(r))).catch((e) => console.log("aq error", e.message || e))

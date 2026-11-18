@@ -40,10 +40,11 @@ export function sellFill(vsol, vtok, tokens, feeBps) {
   const gross = vsol * tokens / (vtok + tokens);
   return gross * (1 - feeBps / 10000) / 1e9;
 }
-// round trip of `size` right now, as a fraction (buy then sell at the same reserves, both network fees)
+// round trip of `size` against the CURRENT price, as a fraction: our buy's impact, our sell's impact (both measured from the
+// reserves as they are now, since the levels are drawn on that price), both fees and both network fees
 export function roundTrip(vsol, vtok, size, feeBps) {
   const { tokens } = buyFill(vsol, vtok, size, feeBps);
-  const back = sellFill(vsol + size * 1e9 * 10000 / (10000 + feeBps), vtok - tokens, tokens, feeBps);
+  const back = sellFill(vsol, vtok, tokens, feeBps);
   return (size - back + 2 * NET_FEE_SOL) / size;
 }
 const r6 = (v) => (Number.isFinite(v) ? Math.round(v * 1e6) / 1e6 : null);
@@ -139,6 +140,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
     let c = coins.get(tr.mint);
     if (!c) return null;                       // a coin launched before we started: not ours to cover
     if (c.done) return c;
+    if (tr.quoteSol === false) c.sol = false;
     if (tr.feeBps != null) c.feeBps = tr.feeBps + (tr.creatorFeeBps || 0);
     if (!c.firstAt) { c.firstAt = at; stats.seen++; }
     if (c.vsol0 == null) { c.vsol0 = tr.vsol; c.vtok0 = tr.vtok; c.px0 = tr.px; }

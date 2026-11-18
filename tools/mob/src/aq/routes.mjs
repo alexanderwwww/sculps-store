@@ -14,6 +14,7 @@ import { sellAllLive, liveState, manualPreview, manualOrder } from "./live.mjs";
 import { savePayout, withdraw, preview, restoreWallet } from "./payout.mjs";
 import * as PH from "./phantom.mjs";
 import { AQ_PHANTOM_JS } from "../aq-bundle.mjs";
+import { symApi } from "./sym/routes.mjs";
 
 const DROP_MAX = 95 * 1024 * 1024;
 const TYPES = { glb: "model/gltf-binary", gltf: "model/gltf+json", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", ktx2: "image/ktx2",
@@ -31,6 +32,7 @@ export async function aqPage(req, env, path, { json, html }) {
 export async function aqApi(req, env, url, path, { json, apiErr, admin, bearer, keyOk }) {
   const M = req.method;
   const body = async () => { try { return await req.json(); } catch { return null; } };
+  if (path.startsWith("/api/aq/sym/")) return symApi(req, env, url, path, { json, apiErr, admin, bearer }); // SYMBIOTE (paper only)
   // File drop-off (ChatGPT has no GitHub): PUT a .zip with the access code, list, read back. Nothing else.
   const dm = path.match(/^\/api\/aq\/drop\/([^/]+)(?:\/([^/]+))?$/);
   if (dm) {

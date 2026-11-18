@@ -91,7 +91,7 @@ export function decodeLogLine(line) {
   return null;
 }
 
-// SOL coins only (quote mint absent, the system id, or wrapped SOL). Price in SOL per whole token (6 decimals).
+// SOL coins: quote mint absent, the system id, or wrapped SOL. Price per whole token (6 decimals) in the quote's units.
 export const isSolQuote = (q) => !q || q === SYSTEM || q === WSOL;
 export const priceSol = (vsol, vtok) => (vtok > 0 ? (vsol / 1e9) / (vtok / 1e6) : 0);
 
@@ -103,13 +103,14 @@ export function eventsFromLogs(value, slot = null) {
     const ev = decodeLogLine(l);
     if (!ev) continue;
     if (ev.kind === "TradeEvent") {
-      if (!isSolQuote(ev.quote_mint)) continue;
-      out.trades.push({ mint: ev.mint, buy: ev.is_buy, sol: ev.sol_amount / 1e9, tokens: ev.token_amount, user: ev.user, ts: ev.timestamp,
-        vsol: ev.virtual_sol_reserves, vtok: ev.virtual_token_reserves, realSol: ev.real_sol_reserves / 1e9, feeBps: ev.fee_basis_points ?? null,
-        creatorFeeBps: ev.creator_fee_basis_points ?? null, creator: ev.creator ?? null, ix: ev.ix_name ?? null, sig: out.sig, slot, px: priceSol(ev.virtual_sol_reserves, ev.virtual_token_reserves) });
+      // a coin quoted in another token (pump.fun now has them) carries its reserves in the quote fields; prices stay in its own units
+      const sol = isSolQuote(ev.quote_mint), vq = sol ? ev.virtual_sol_reserves : ev.virtual_quote_reserves ?? 0;
+      out.trades.push({ mint: ev.mint, buy: ev.is_buy, sol: (sol ? ev.sol_amount : ev.quote_amount ?? 0) / 1e9, tokens: ev.token_amount, user: ev.user, ts: ev.timestamp,
+        quoteSol: sol, vsol: vq, vtok: ev.virtual_token_reserves, realSol: (sol ? ev.real_sol_reserves : ev.real_quote_reserves ?? 0) / 1e9, feeBps: ev.fee_basis_points ?? null,
+        creatorFeeBps: ev.creator_fee_basis_points ?? null, creator: ev.creator ?? null, ix: ev.ix_name ?? null, sig: out.sig, slot, px: priceSol(vq, ev.virtual_token_reserves) });
     } else if (ev.kind === "CreateEvent") {
       out.creates.push({ mint: ev.mint, name: ev.name, symbol: ev.symbol, uri: ev.uri, curve: ev.bonding_curve, creator: ev.creator || ev.user, ts: ev.timestamp,
-        vsol: ev.virtual_sol_reserves, vtok: ev.virtual_token_reserves, supply: ev.token_total_supply, sol: isSolQuote(ev.quote_mint), quote: ev.quote_mint ?? null, slot });
+        vsol: isSolQuote(ev.quote_mint) ? ev.virtual_sol_reserves : ev.virtual_quote_reserves, vtok: ev.virtual_token_reserves, supply: ev.token_total_supply, sol: isSolQuote(ev.quote_mint), quote: ev.quote_mint ?? null, slot });
     } else out.completes.push({ mint: ev.mint, ts: ev.timestamp });
   }
   return out;
