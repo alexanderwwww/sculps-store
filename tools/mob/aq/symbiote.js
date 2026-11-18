@@ -59,7 +59,7 @@ const TAGS = { lesson: ["ENGINE", "PAPER_TRADE_EXEC"], pain: ["RISK", "PAIN"], f
 function codeOf(r) {
   const [tag, ev] = TAGS[r.kind] || [String(r.dept || "BRAIN").toUpperCase(), String(r.kind || "RECORD").toUpperCase()];
   const k = (x) => `<span class="dk">${esc(x)}</span>`, val = (v) => (v === null || v === undefined ? `<span class="dc">null</span>` : typeof v === "number" ? `<span class="${/pct|Pct|gain/.test("") ? "" : v < 0 ? "dr" : "dg"}">${esc(+v.toFixed(4))}</span>` : typeof v === "boolean" ? `<span class="dp">${v}</span>` : typeof v === "string" ? `<span class="ds">"${esc(v.length > 60 ? v.slice(0, 60) + "…" : v)}"</span>` : Array.isArray(v) ? `<span class="ds">[${esc(v.length)}]</span>` : "{…}");
-  const data = r.data && typeof r.data === "object" ? `{${Object.entries(r.data).filter(([, v]) => typeof v !== "object" || v === null).slice(0, 7).map(([a, v]) => `${k(a)}:${val(v)}`).join(", ")}}` : `<span class="ds">"${esc(String(r.text || "").slice(0, 120))}"</span>`;
+  const data = r.data && typeof r.data === "object" ? `{${Object.entries(r.data).filter(([a, v]) => (typeof v !== "object" || v === null) && !["rtPct", "legPct", "gta"].includes(a)).slice(0, 6).map(([a, v]) => `${k(a === "mint" ? "token" : a)}:${a === "mint" ? `<span class="ds">"${esc(short(v))}"</span>` : val(typeof v === "number" ? +v.toFixed(2) : v)}`).join(", ")}}` : `<span class="ds">"${esc(String(r.text || "").slice(0, 120))}"</span>`;
   return `<div class="tl ${r.kind === "pain" || tag === "RISK" ? "pain" : ""}" title="${esc(r.text)}"><span class="dt">[${athens(r.at)}]</span> <span class="dtag ${tag === "RISK" ? "dr" : tag === "RIGHT" ? "dg" : "dp"}">[${esc(tag)}]</span> <span class="dev ${tag === "RISK" ? "dr" : "dp"}">${esc(ev)}</span> ${data}</div>`;
 }
 
@@ -215,7 +215,7 @@ const CSS = `
 .sym-fp-list{margin:8px 0 0;font:11px var(--mono)}.sym-fp-list .ripe{color:#e0b3ff;margin-right:8px}
 .sym-log{display:grid;grid-template-columns:120px 1fr;gap:14px;margin-top:14px;padding:12px 16px;border:4px solid transparent;border-image:linear-gradient(180deg,#8f949e,#2e3036 50%,#8f949e) 1;background:#1b1c26}
 .sym-log h3{font:700 22px/1.15 var(--serif);letter-spacing:.06em;color:#e9ebef;align-self:center;border-right:1px solid #44475a;padding-right:12px}
-#sym-code{margin:0;height:150px;overflow:auto;font:12px/1.55 var(--mono);color:#f8f8f2;white-space:pre-wrap;word-break:break-word}#sym-code .tl{animation:symIn .5s ease-out}
+#sym-code{margin:0;height:150px;overflow:auto;font:12px/1.55 var(--mono);color:#f8f8f2;white-space:pre-wrap;word-break:break-word}#sym-code .tl{display:block;white-space:normal;animation:symIn .5s ease-out}#sym-code .tl>span{display:inline}
 #sym-code .dt{color:#f8f8f2}#sym-code .dk{color:#8be9fd}#sym-code .ds{color:#f1fa8c}#sym-code .dp{color:#ff79c6}#sym-code .dg{color:#50fa7b}#sym-code .dr{color:#ff5555}#sym-code .dc{color:#6272a4}#sym-code .dev.dp{color:#ff79c6}#sym-code .dtag.dp{color:#bd93f9}
 @keyframes symIn{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
 .sym-extra{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;font:11px var(--mono)}.sym-extra h4{font:700 10px var(--mono);letter-spacing:.14em;color:#c9ccd4;margin-bottom:4px}.sym-extra h4 span{font-weight:400;color:#6b7a90;letter-spacing:0;margin-left:6px}
