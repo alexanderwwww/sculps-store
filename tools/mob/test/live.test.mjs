@@ -300,7 +300,7 @@ test("Alex's manual orders: SELL 25% / ALL through the ledger, BUY MORE adds to 
   assert.equal((await M({ positionId: p.id, side: "sell", pct: 50 })).status, 400, "a closed position takes no order");
   // with force, BUY MORE on a loser goes through (fresh position)
   await wipe(); world(); await L.liveTick(env, { minute: 9 }); [p] = await positions(); await d.q(`UPDATE mob_aq_live_positions SET last_value_sol = 0.01`);
-  r = await M({ positionId: p.id, side: "buy", sol: 0.01, force: true }); assert.equal(r.status, 200, await r.clone().text()); assert.equal((await positions())[0].tokens_raw, "10000000");
+  r = await M({ positionId: p.id, side: "buy", sol: 0.01, force: true }); assert.equal(r.status, 200, await r.clone().text()); assert.equal((await positions())[0].tokens_raw, "6000000");
   const live = await (await R("GET", "/api/aq/wallet/live", { cookie })).json(); assert.deepEqual(live.manualPcts, [25, 50, 100]); assert.equal(typeof live.positions[0].pnlPct, "number"); assert.ok(Array.isArray(live.positions[0].spark));
 });
 
@@ -490,23 +490,23 @@ test("4) the daily budget is honest: the worst case of a position is what its ex
   // an established position commits its stop + margin, not a gap
   await d.q(`DELETE FROM mob_aq_live_positions`); await open("EstA", { ...curvePlan, fresh: false, stop: 0.92 }); rk = await L.riskToday(d, 61000);
   assert.ok(Math.abs(rk.committed - (0.05 * 0.92 * 0.95 * 0.985 - 0.05 - 0.000061)) < 1e-9, "value at (stop less 5%) less 1.5% slippage: " + rk.committed);
-  // the third curve buy is sized to what is left: about 0.0198 SOL, not 0.05
+  // the third curve buy is sized to what is left: about 0.0195 SOL, not 0.05
   await wipe(); world(); await limits({ maxDailyLossSol: 0.06, maxOpenPositions: 3 }); await curveWorld(); await open("CurveA", curvePlan); await open("CurveB", curvePlan);
-  F.quoteFailIf = (u) => /^Curve/.test(u.searchParams.get("inputMint")); // the two stand-in positions have no market: their marks stay where they are
+  F.quoteFailIf = (u) => /^Curve/.test(u.searchParams.get("inputMint")); F.noChart.add("CurveA"); F.noChart.add("CurveB"); // the two stand-in positions have no market and no chart: their marks stay where they are
   const r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.confirmed, true, JSON.stringify(r.result) + JSON.stringify(await lastRef()));
-  const p = (await positions()).find((x) => x.mint === CURVEMINT); assert.ok(Math.abs(p.plan.sizeSol - 0.019756) < 1e-6, "sized to the budget: " + p.plan.sizeSol); assert.match(p.plan.sizeCappedBy, /daily loss budget/); assert.equal(p.plan.worstPct, 50);
+  const p = (await positions()).find((x) => x.mint === CURVEMINT); assert.ok(Math.abs(p.plan.sizeSol - (0.009878 - 2 * 61000 / 1e9) / 0.5) < 2e-6, "sized to the budget left after its own two network fees, 0.019512 SOL: " + p.plan.sizeSol); assert.match(p.plan.sizeCappedBy, /daily loss budget/); assert.equal(p.plan.worstPct, 50);
   // and with three open, the committed loss is inside the daily limit
-  rk = await L.riskToday(d, 61000); assert.ok(-rk.committed <= 0.06 + 1e-9, "worst case of everything open: " + rk.committed);
+  rk = await L.riskToday(d, 61000); assert.ok(-rk.committed <= 0.06 + 0.00205 + 1e-9, "worst case of everything open is the daily limit (plus the 2,050,000 lamports this fake chain charges a buy; a real one is inside the fee allowance): " + rk.committed);
 });
 
-test("5) CURVE cost gate: the measured 2.79% + 0.264% fixed fees (3.05%) is bought under the 3.5% cap; target 1 must still be 3x the true cost", async () => {
+test("5) CURVE cost gate: the measured 2.79% + 0.254% fixed fees (3.04%) is bought under the 3.5% cap; target 1 must still be 3x the true cost", async () => {
   assert.equal(L.LIVE.freshMaxRtPct, 3.5);
   await curveWorld(); let r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.confirmed, true, JSON.stringify(r.result) + JSON.stringify(await lastRef()));
-  let [p] = await positions(); assert.equal(p.plan.quoteRtPct, 2.79); assert.equal(p.plan.rtPct, 3.054); assert.ok(p.plan.rewardPct >= 3 * p.plan.rtPct); assert.equal(p.plan.onCurve, true); assert.deepEqual(p.plan.route, ["Pump.fun"]);
-  await wipe(); world(); await curveWorld(); F.sellOut = "48300000"; r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.refused, "cost"); assert.match((await lastRef()).reason, /costs 3\.664% .* over 3\.5%/);
+  let [p] = await positions(); assert.equal(p.plan.quoteRtPct, 2.79); assert.equal(p.plan.rtPct, 3.044); assert.ok(p.plan.rewardPct >= 3 * p.plan.rtPct); assert.equal(p.plan.onCurve, true); assert.deepEqual(p.plan.route, ["Pump.fun"]);
+  await wipe(); world(); await curveWorld(); F.sellOut = "48300000"; r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.refused, "cost"); assert.match((await lastRef()).reason, /costs 3\.654% .* over 3\.5%/);
   // a shallow leg: target 1 is under 3x the 3.05% cost -> refused by the same T1 rule
-  await wipe(); world(); await curveWorld(); await symBars(chart(Date.now() / 1000, { legTo: 8, pull: 4, tail: rise(103.4, 103.9) })); F.tokensOut = String(Math.round((0.05 / 0.001039) * 1e5));
-  r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.refused, "cost", JSON.stringify(r.result) + JSON.stringify(await lastRef())); assert.match((await lastRef()).reason, /^Target 1 is .*under 3x the 3\.054% round trip/);
+  await wipe(); world(); await curveWorld(); await symBars(chart(Date.now() / 1000, { legTo: 4, pull: 2, tail: rise(101.45, 101.8) })); F.tokensOut = String(Math.round((0.05 / 0.001018) * 1e5));
+  r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.refused, "cost", JSON.stringify(r.result) + JSON.stringify(await lastRef())); assert.match((await lastRef()).reason, /^Target 1 is .*under 3x the 3\.044% round trip/);
 });
 
 test("6) migration: a curve liquidity figure is never compared with the pool's; the plan is re-based on the pool the tick the route leaves the curve", async () => {

@@ -40,8 +40,8 @@ export const LIVE = {
   // ---- how it executes (safety, not lessons)
   // symbiote right calls (bonding-curve coins) only; see costGate. MEASURED 2026-11-18 on live curve coins at 0.05 SOL
   // (api.jup.ag quotes, buy then sell what it buys): 2.724, 2.754, 2.788, 2.788, 2.789, 2.789% in the quotes (pump's fee of
-  // about 1.25% a side plus the curve's own impact), plus 0.264% fixed SOL fees (2 x 61,000 + 5,000 lamports) = 2.99-3.05%.
-  // A 3% cap refused nearly every curve buy; the cap is 3.5% (the highest measured total, 3.05%, plus room for the curve
+  // about 1.25% a side plus the curve's own impact), plus 0.254% fixed SOL fees (2 x 61,000 + 5,000 lamports) = 2.98-3.04%.
+  // A ">= 3%" refusal turned away every one of them but the two cheapest; the cap is 3.5% (the highest measured total, 3.04%, plus room for the curve
   // moving between the two quotes). Target 1 must still be 3x the true total, so about 9-10.5% away.
   freshMaxRtPct: 3.5, freshMaxImpactPct: 1.5,
   // ---- the live price and the stops that do not wait for a candle
@@ -442,7 +442,7 @@ export async function pnlToday(d) { return (await d.one(`SELECT (coalesce(sum(pn
 // case. New buys are refused, and sized, against the committed number.
 // THE NUMBERS (limits read from production 2026-11-18: 0.05 SOL a trade, 3 open, 0.06 SOL a day): a fresh curve position of
 // 0.05 SOL commits 0.025 SOL, so three of them (0.075) do NOT fit in 0.06: two full positions commit 0.05, and the third is
-// sized to what is left (about 0.0198 SOL), i.e. at most about 0.12 SOL of curve coins open, not 0.15. An established coin
+// sized to what is left (0.06 - 2 x 0.025061 = 0.009878, less its own fees, / 0.5 = about 0.0195 SOL), i.e. at most about 0.12 SOL of curve coins open, not 0.15. An established coin
 // with an 8% stop commits about 15.5% (8 + 5 + 1.5 + 1) = 0.0078 SOL, so three fit (0.023).
 export async function riskToday(d, feeSide = LIVE.feePerSideFallbackLamports) {
   const realized = (await d.one(`SELECT coalesce(sum(pnl_sol), 0)::float8 s FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed' AND closed_at >= ${TODAY}`, [VENUE])).s;
@@ -714,8 +714,9 @@ const legTaken = async (d, venue, mint, s) => !!(await d.one(`SELECT 1 FROM mob_
 export async function costGate(env, venue, c, s, sizeSol, { feeSide = LIVE.feePerSideFallbackLamports, owner = null } = {}) {
   const d = db(env), lamports = Math.round(sizeSol * 1e9), no = async (gate, why) => ({ ok: false, refusal: await refuse(d, venue, gate, why, c) });
   let ataNew = true; if (owner) { try { ataNew = !(await tokenAccounts(env, owner, c.mint)).length; } catch {} }
-  // a symbiote right call (a bonding-curve coin: pump fee about 1.25% a side) is held to 3% round trip and 1.5% impact; the
-  // reward to target 1 must still be 3x the true total cost (so about 8%+). Established coins keep 1% and 1% (Inspector 2026-11-18).
+  // a symbiote right call (a bonding-curve coin: pump fee about 1.25% a side) is held to 3.5% round trip (measured, see LIVE) and
+  // 1.5% impact; the reward to target 1 must still be 3x the true total cost (so about 9%+). Established coins, on either lane,
+  // keep 1% and 1% (Inspector 2026-11-18).
   const maxRt = c.fresh ? LIVE.freshMaxRtPct : FIB.maxRtPct, maxImp = c.fresh ? LIVE.freshMaxImpactPct : LIVE.maxImpactPct;
   const fixed = 2 * feeSide + (ataNew ? LIVE.baseFeeLamports : 0), fixedPct = (fixed / lamports) * 100;
   if (fixedPct >= maxRt) return no("cost", `The fixed SOL fees alone (${fixed} lamports) are ${round(fixedPct, 3)}% of ${sizeSol} SOL, over ${maxRt}%`);
@@ -744,8 +745,10 @@ async function tryBuy(env, g, owner = null) {
   // here is the lane's own ceiling (3.5% fresh, 1% established), which the cost gate below enforces at this exact size, so the
   // true cost is never above what the size assumed; the plan then records the worst case at the TRUE measured cost.
   const { c, s } = found, fresh = !!c.fresh, stopFrac = (s.entry - s.stop) / s.entry, perSol = worstFrac(stopFrac, fresh ? LIVE.freshMaxRtPct : FIB.maxRtPct, fresh);
-  const size = round(Math.min(g.lim.maxPerTradeSol, g.budgetLeft != null ? g.budgetLeft / perSol : Infinity), 6), lamports = Math.round(size * 1e9);
+  // (the budget also has to carry this trade's own two network fees, which riskToday counts)
+  const size = round(Math.min(g.lim.maxPerTradeSol, g.budgetLeft != null ? Math.max(0, g.budgetLeft - (2 * (g.feeSide ?? LIVE.feePerSideFallbackLamports)) / 1e9) / perSol : Infinity), 6), lamports = Math.round(size * 1e9);
   const cappedBy = size < g.lim.maxPerTradeSol ? `daily loss budget: ${round(g.budgetLeft, 6)} SOL left` : null;
+  if (!(size > 0)) return refuse(d, VENUE, "daily_loss_risk", `The daily loss budget left (${round(g.budgetLeft, 6)} SOL) does not cover even this trade's network fees`, c);
   let bal; try { bal = (await solRpc(env, "getBalance", [g.w.address])).value; } catch (e) { return refuse(d, VENUE, "no_balance", cut(e.message)); }
   if (!(bal >= lamports + LIVE.feeBudgetLamports + LIVE.reserveSol * 1e9)) return refuse(d, VENUE, "reserve", `The wallet holds ${round(bal / 1e9, 6)} SOL: not enough for a ${size} SOL trade and the ${LIVE.reserveSol} SOL kept for fees`);
   const cg = await costGate(env, VENUE, c, s, size, { feeSide: g.feeSide, owner: g.w.address }); if (!cg.ok) return cg.refusal;

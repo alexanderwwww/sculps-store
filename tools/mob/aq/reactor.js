@@ -80,47 +80,26 @@ function background(G) {
 // ---------- the NEURON nebula (2026-11-18, Alex: "a brain in space"): glowing somas on the ring, branching dendrites,
 // axons linking them. Ambient: a slow drift and a breathing glow only. Spikes travel along axons ONLY when a real event
 // fires (a verdict ticket, a flow, a department run, a brain record): fire(deptId) starts them near that department.
-const NV = "g"; // the neuron lines are Hermes' caduceus (Alex, 2026-11-18); the a/b/c nebula variants were retired
-const NCFG = { soma: 2.0 };
+// 2026-11-18 (Alex): the caduceus is gone completely (no staff, no serpent strands, no wings). The nebula is richer instead:
+// OUTER neurons woven through the tube of the ring, and INNER neurons in the plane of the hole, so the inside of the ring
+// carries the full rainbow (the hue of a neuron is its place around the ring, 360 degrees, the same palette as the lights).
+const NCFG = { soma: 2.0, outer: 233, inner: 144, den: 3, deg: 3 };
 const NR = rng(2718);
-// SACRED GEOMETRY (2026-11-18): the somas sit on the figure and the axons ARE its lines.
-// (th, ps) are the torus angles (around the ring, around the tube); ar is the distance from the tube's centre line.
-const PHI = (1 + Math.sqrt(5)) / 2, GA = TAU / (PHI * PHI); // the golden angle
-const CAD_TURNS = 13; // a Fibonacci number of turns
-const node = (th, ps, ar, sz = 1) => ({ th, ps, ar, df: 0.06, dp: 0, sz, den: [] });
-function sacred(v) {
-  const S = [], E = []; const link = (a, b, bend = 0) => E.push({ a, b, bend });
-  { // CADUCEUS of Hermes: two serpent strands wind as a double helix around the staff of light (the tube's centre line);
-    // nodes at golden-ratio spacing; the strands cross at phi intervals and every crossing is a synapse joining both
-    const N = 89, turns = CAD_TURNS; for (const off of [0, Math.PI]) for (let i = 0; i < N; i++) { const u = (i / N); S.push(node(u * TAU, u * turns * TAU + off, 1.05, 0.7 + 0.5 * ((i % 5) === 0))); }
-    for (const b of [0, N]) for (let i = 0; i < N; i++) link(b + i, b + ((i + 1) % N), 0.18);
-    for (let k = 1; k <= 34; k++) { const i = Math.round((k * N / PHI) % N); link(i, N + i, 0.5); }
-  }
-  return { S, E };
-}
 const somas = []; const axons = [];
-if (NCFG.n) {
-  somas.push(...Array.from({ length: NCFG.n }, (_, i) => { const th = ((i + NR() * 0.8) / NCFG.n) * TAU; return { th, ps: NR() * TAU, ar: 0.25 + NR() * 0.95, df: 0.05 + NR() * 0.12, dp: NR() * TAU, sz: 0.6 + NR() * 0.9,
-    den: Array.from({ length: NCFG.den }, () => { const a = NR() * TAU, l = 7 + NR() * 13; return { a, l, f: (NR() - 0.5) * 1.3, l2: l * (0.4 + NR() * 0.4) }; }) }; }));
-  const seen = new Set(); somas.forEach((s, i) => { const near = somas.map((o, j) => [j, Math.min(Math.abs(o.th - s.th), TAU - Math.abs(o.th - s.th)) + Math.abs(o.ps - s.ps) * 0.04]).filter(([j]) => j !== i).sort((a, b) => a[1] - b[1]).slice(0, NCFG.deg);
+{
+  const dens = () => Array.from({ length: NCFG.den }, () => { const a = NR() * TAU, l = 7 + NR() * 13; return { a, l, f: (NR() - 0.5) * 1.3, l2: l * (0.4 + NR() * 0.4) }; });
+  for (let i = 0; i < NCFG.outer; i++) somas.push({ th: ((i + NR() * 0.8) / NCFG.outer) * TAU, ps: NR() * TAU, ar: 0.25 + NR() * 0.95, df: 0.05 + NR() * 0.12, dp: NR() * TAU, sz: 0.6 + NR() * 0.9, den: dens() });
+  // inner: the plane of the hole, from just outside the core to the inner wall of the tube; denser toward the tube
+  for (let i = 0; i < NCFG.inner; i++) somas.push({ inn: 1, th: ((i + NR() * 0.9) / NCFG.inner) * TAU, r: 0.34 + 0.5 * Math.sqrt(NR()), y: (NR() - 0.5) * 0.5, df: 0.04 + NR() * 0.1, dp: NR() * TAU, sz: 0.45 + NR() * 0.75, den: dens() });
+  const ang = (a, b) => Math.min(Math.abs(a - b), TAU - Math.abs(a - b)), seen = new Set();
+  const dist = (s, o) => (s.inn && o.inn ? ang(s.th, o.th) + Math.abs(s.r - o.r) * 1.6 : !s.inn && !o.inn ? ang(s.th, o.th) + Math.abs(o.ps - s.ps) * 0.04 : ang(s.th, o.th) * 2.2 + 0.5 - (s.inn ? s.r : o.r) * 0.5);
+  somas.forEach((s, i) => { const near = somas.map((o, j) => [j, dist(s, o)]).filter(([j]) => j !== i).sort((a, b) => a[1] - b[1]).slice(0, NCFG.deg);
     for (const [j] of near) { const k = i < j ? i + "-" + j : j + "-" + i; if (seen.has(k)) continue; seen.add(k); axons.push({ a: i, b: j, bend: (NR() - 0.5) * 0.9 }); } });
-} else { const g = sacred(NV); somas.push(...g.S); axons.push(...g.E); }
-// Caduceus only: the staff of light along the tube's centre line and two wings rising at the top of the ring
-function drawStaff(o, G, t, rot, breath) {
-  if (NV !== "g") return; const d = G.d, A = G.a; o.lineCap = "round";
-  // the staff of light: the tube's centre line
-  for (const [w, a] of [[9, 0.05], [3.5, 0.14], [1.3, 0.55]]) { o.strokeStyle = `rgba(255,236,190,${a * (0.8 + 0.2 * breath)})`; o.lineWidth = w * d; o.beginPath(); for (let k = 0; k <= 120; k++) { const p = torus(G, (k / 120) * TAU + rot, 0, 0); k ? o.lineTo(p.x, p.y) : o.moveTo(p.x, p.y); } o.stroke(); }
-  // the two serpents: continuous strands, brighter and thicker in front
-  for (const [off, hue] of [[0, 275], [Math.PI, 175]]) { let prev = null;
-    for (let k = 0; k <= 420; k++) { const u = k / 420, p = torus(G, u * TAU + rot, u * CAD_TURNS * TAU + off + t * 0.036, A * 1.05 * 1.25), dep = (p.z / (G.R + A * 1.6) + 1) / 2;
-      if (prev) { o.strokeStyle = `hsla(${hue},95%,${55 + 20 * dep}%,${0.18 + 0.6 * dep})`; o.lineWidth = (0.8 + 2.6 * dep) * d; o.beginPath(); o.moveTo(prev.x, prev.y); o.lineTo(p.x, p.y); o.stroke(); } prev = p; } }
-  // wings at the top of the staff: three rows of feathers each side, gold to white
-  const top = torus(G, -Math.PI / 2 + rot * 0, 0, 0), span = G.R * 0.5;
-  for (const side of [-1, 1]) for (let row = 0; row < 3; row++) for (let f = 0; f < 9; f++) {
-    const a = -Math.PI / 2 + side * (0.22 + f * 0.13 + row * 0.05) + Math.sin(t * 0.9) * 0.03 * side, len = span * (0.55 + 0.45 * Math.sin((f + 1) / 10 * Math.PI)) * (1 - row * 0.28);
-    const ex = top.x + Math.cos(a) * len * 1.25, ey = top.y + Math.sin(a) * len * 0.62, cx = top.x + Math.cos(a - side * 0.35) * len * 0.7, cy = top.y + Math.sin(a - side * 0.35) * len * 0.42 - 6 * d;
-    o.strokeStyle = `rgba(${255},${228 + row * 9},${170 + row * 30},${0.5 - row * 0.12})`; o.lineWidth = (2.6 - row * 0.6 - f * 0.12) * d; o.beginPath(); o.moveTo(top.x, top.y); o.quadraticCurveTo(cx, cy, ex, ey); o.stroke(); }
-  const gl = o.createRadialGradient(top.x, top.y, 0, top.x, top.y, 26 * d); gl.addColorStop(0, "rgba(255,245,210,.95)"); gl.addColorStop(1, "rgba(255,220,160,0)"); o.fillStyle = gl; o.fillRect(top.x - 26 * d, top.y - 26 * d, 52 * d, 52 * d);
+}
+// the rainbow haze inside the ring: soft clouds in the plane of the hole, one hue per place around the ring
+function drawRainbow(o, G, t, rot, breath) {
+  const n = 36; for (let k = 0; k < n; k++) { const th0 = (k / n) * TAU, h = hueAt(th0), th = th0 + rot, rr = G.R * (0.66 + 0.1 * Math.sin(t * 0.21 + k * 1.7)), p = proj(G, Math.cos(th) * rr, 0, Math.sin(th) * rr), rad = G.R * 0.26 * p.k;
+    const gl = o.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad); gl.addColorStop(0, `hsla(${h[0]},100%,${h[2] + 6}%,${0.085 + 0.03 * breath})`); gl.addColorStop(0.5, `hsla(${h[0]},100%,${h[2]}%,.035)`); gl.addColorStop(1, `hsla(${h[0]},100%,50%,0)`); o.fillStyle = gl; o.fillRect(p.x - rad, p.y - rad, rad * 2, rad * 2); }
 }
 const spikes = []; const flashes = [];
 const hueAt = (th) => { const u = (((th / TAU) % 1) + 1) % 1; return HUE[Math.floor(u * NS) % NS]; };
@@ -128,8 +107,9 @@ export function fire(id, n = 3) { const i = DEPTS.findIndex((d) => d[0] === id),
   const cand = axons.map((x, k) => [k, Math.min(Math.abs(somas[x.a].th - th0), TAU - Math.abs(somas[x.a].th - th0))]).sort((a, b) => a[1] - b[1]).slice(0, n * 2);
   for (let q = 0; q < n && cand.length; q++) { const [k] = cand.splice((Math.random() * cand.length) | 0, 1)[0]; if (spikes.length < 40) spikes.push({ k, t0: st.t + q * 0.12, dir: Math.random() < 0.5 ? 1 : -1, hop: 2 }); } }
 function drawNeurons(o, G, t, rot, breath) {
-  const d = G.d, A = G.a, P = somas.map((s) => { const p = torus(G, s.th + rot + Math.sin(t * s.df + s.dp) * 0.02, s.ps + t * s.df * 0.6, A * s.ar * (1.25 + 0.06 * Math.sin(t * 0.4 + s.dp))); p.depth = (p.z / (G.R + A * 1.6) + 1) / 2; return p; });
-  drawStaff(o, G, t, rot, breath);
+  const d = G.d, A = G.a, P = somas.map((s) => { const w = s.th + rot + Math.sin(t * s.df + s.dp) * 0.02, rr = s.inn ? G.R * (s.r + 0.012 * Math.sin(t * s.df * 2 + s.dp)) : 0;
+    const p = s.inn ? proj(G, Math.cos(w) * rr, A * s.y * Math.sin(t * s.df + s.dp), Math.sin(w) * rr) : torus(G, w, s.ps + t * s.df * 0.6, A * s.ar * (1.25 + 0.06 * Math.sin(t * 0.4 + s.dp))); p.depth = (p.z / (G.R + A * 1.6) + 1) / 2; return p; });
+  drawRainbow(o, G, t, rot, breath);
   o.lineCap = "round";
   // axons: fine curved fibres, brighter in front (depth), one stroke per axon
   for (const x of axons) { const p = P[x.a], q = P[x.b], h = hueAt(somas[x.a].th), dep = (p.depth + q.depth) / 2, mx = (p.x + q.x) / 2 - (q.y - p.y) * x.bend * 0.35, my = (p.y + q.y) / 2 + (q.x - p.x) * x.bend * 0.35;
