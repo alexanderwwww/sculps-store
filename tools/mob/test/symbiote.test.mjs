@@ -237,14 +237,15 @@ test("Durable Object, curve source: reserve changes of a known curve become trad
   const s = new Symbiote(ctx, env); s.connect = async () => {};
   s.onPumpPortal(JSON.stringify({ txType: "create", mint: "CV1", name: "c", symbol: "C", traderPublicKey: "DEV", bondingCurveKey: "CURVE1", vSolInBondingCurve: 30, vTokensInBondingCurve: 1073000000 }));
   const note = (pk, vq, vt, done) => JSON.stringify({ jsonrpc: "2.0", method: "programNotification", params: { result: { context: { slot: 5 }, value: { pubkey: pk, account: { data: [curveB64(vq, vt, done), "base64"] } } } } });
-  s.onCurve(note("CURVE1", 31e9, Math.round(K / 31e9))); s.onCurve(note("CURVE1", 30.5e9, Math.round(K / 30.5e9))); s.onCurve(note("NOPE", 31e9, 1.06e15)); s.onCurve(note("OLDCOIN", 80e9, 4e14)); assert.equal(s.resolveQ.has("OLDCOIN"), false, "a curve that sold most of its tokens is an old coin: no credit spent"); assert.equal(s.curves.get("OLDCOIN"), null);
+  s.onCurve(note("CURVE1", 31e9, Math.round(K / 31e9))); s.onCurve(note("CURVE1", 30.5e9, Math.round(K / 30.5e9))); s.onCurve(note("NOPE", 31e9, 1.06e15)); assert.equal(s.pending.has("NOPE"), true, "an unknown curve is held, not resolved (no credit)");
   const c = s.eng.coins.get("CV1"); assert.equal(c.n, 2); assert.equal(c.buys, 1); assert.equal(c.sells, 1); assert.ok(Math.abs(c.last - 30.5 / (K / 30.5e9 / 1e6)) < 1e-12);
-  assert.equal(s.eng.stats.unknownCurves, 2);
-  resetMocks(); const create = FX[3]; let calls = 0;
-  mock("POST", "https://api.mainnet-beta.solana.com", (rq) => { calls++; const j = JSON.parse(rq.body); return j.method === "getSignaturesForAddress" ? { result: [{ signature: create.signature }] } : { result: { slot: 9, meta: { err: null, logMessages: create.logs } } }; });
-  s.resolveQ.add("973TwsVbrK17rfcwytYAa9TdFefRpZRKPeZCG8EfCCsG"); await s.resolveCurves();
-  assert.equal(s.curves.get("973TwsVbrK17rfcwytYAa9TdFefRpZRKPeZCG8EfCCsG"), "71yNknjXX7bHjQofB7LRwp1iUj2wUhFh2YY2RVWhDHZM", "an unannounced curve resolved to its launch from the chain");
-  assert.equal(s.curves.get("NOPE"), null, "a curve whose oldest seen tx has no create is an older coin: ignored"); assert.equal(calls, 4); resetMocks();
+  assert.equal(s.eng.stats.unknownCurves, 1);
+  // its create arrives a moment later on the launch subscription: the held update is replayed as the coin's first trade
+  s.pending.set("973TwsVbrK17rfcwytYAa9TdFefRpZRKPeZCG8EfCCsG", { raw: note("973TwsVbrK17rfcwytYAa9TdFefRpZRKPeZCG8EfCCsG", 24e9, 1.05e15), at: Date.now() });
+  s.onChain(JSON.stringify({ jsonrpc: "2.0", method: "logsNotification", params: { result: { context: { slot: 9 }, value: FX[3] } } }));
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(s.eng.coins.get("71yNknjXX7bHjQofB7LRwp1iUj2wUhFh2YY2RVWhDHZM").n, 1); assert.equal(s.pending.size, 1);
+  s.pending.get("NOPE").at = Date.now() - 200000; s.prune(); assert.equal(s.pending.size, 0, "held updates age out after 2 minutes");
   assert.equal(await s.source(), "off"); s.env = { ...env, HELIUS_API_KEY: "k" }; assert.equal(await s.source(), "curve", "curve mode is the default with a Helius key");
   s.credits(150001); await s.alarm(); assert.equal(s.paused, true, "the credit guard pauses the stream at the cap"); assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_brain WHERE text LIKE 'PAIN symbiote stream paused%'`)).n === 1); s.env = env;
   s.onCurve(note("CURVE1", 85e9, Math.round(K / 85e9), true)); assert.equal(c.end, "migrated");
