@@ -52,7 +52,7 @@ const land = (sig, { payer = ME, sol, mint = MINT, tokens = "0" }) => { F.status
 before(async () => { env = await makeEnv({ HELIUS_API_KEY: "hk", AQ_JUP_GAP_MS: "0", AQ_LIVE_POLL_MS: "0" }); _resetSeeded(); R = reqOf(env); cookie = await login(env); d = db(env); world(); await buildState(env);
   ME = (await W.makeKey(env)).address; OTHER = (await W.makeKey(env)).address; });
 after(async () => { await dropEnv(env); });
-beforeEach(() => world());
+beforeEach(async () => { world(); await d.q(`DELETE FROM mob_aq_sym_right`); for (const m of [MINT, THIN, GTA]) await d.q(`INSERT INTO mob_aq_sym_right (mint, symbol, status) VALUES ($1, 'T', 'candidate') ON CONFLICT DO NOTHING`, [m]); });
 
 test("Alex only; a private key or a recovery phrase is refused, never stored, never echoed", async () => {
   for (const p of ["/connect", "/disconnect", "/trade", "/fund", "/sent"]) { assert.equal((await R("POST", "/api/aq/phantom" + p, { body: {} })).status, 401); assert.equal((await R("POST", "/api/aq/phantom" + p, { bearer: env.MOB_API_TOKEN, body: {} })).status, 403); }

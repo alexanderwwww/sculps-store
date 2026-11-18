@@ -65,7 +65,9 @@ function world() {
 }
 const landed = (buy, q, err = null) => ({ slot: 5, meta: { err, fee: 14556, preBalances: [F.balance], postBalances: [buy ? F.balance - Number(q.inAmount) - 2_050_000 : F.balance + Number(q.outAmount) - 14556],
   preTokenBalances: buy ? [] : [{ owner: wallet.address, mint: q.inputMint, uiTokenAmount: { amount: q.inAmount } }], postTokenBalances: buy ? [{ owner: wallet.address, mint: q.outputMint, uiTokenAmount: { amount: q.outAmount } }, { owner: "someone-else", mint: q.outputMint, uiTokenAmount: { amount: "999" } }] : [] }, transaction: { message: { accountKeys: [wallet.address, "x"] }, signatures: ["s"] } });
-const wipe = async () => { await d.q(`DELETE FROM mob_aq_live_orders`); await d.q(`DELETE FROM mob_aq_live_positions`); await d.q(`DELETE FROM mob_aq_live_refusals`); await d.q(`DELETE FROM mob_aq_market`); await d.q(`DELETE FROM mob_aq_state WHERE k IN ('live_auto_off','live_tick','live_tick_lock')`); await setS("kill", false); await limits(); };
+const wipe = async () => { await d.q(`DELETE FROM mob_aq_live_orders`); await d.q(`DELETE FROM mob_aq_live_positions`); await d.q(`DELETE FROM mob_aq_live_refusals`); await d.q(`DELETE FROM mob_aq_market`); await d.q(`DELETE FROM mob_aq_state WHERE k IN ('live_auto_off','live_tick','live_tick_lock')`); await setS("kill", false); await limits(); await rightAll(); };
+// symbiote right calls (Alex's rule): the test coins are flagged and checked unless a test says otherwise
+const rightAll = async () => { await d.q(`DELETE FROM mob_aq_sym_right`); for (const m of [MINT, NEWMINT]) await d.q(`INSERT INTO mob_aq_sym_right (mint, symbol, status) VALUES ($1, 'T', 'candidate')`, [m]); };
 const lastRef = async (venue = "solana") => one(`SELECT gate, reason, symbol, n FROM mob_aq_live_refusals WHERE venue = $1 ORDER BY at DESC, id DESC LIMIT 1`, [venue]);
 const orders = () => all(`SELECT * FROM mob_aq_live_orders ORDER BY id`), positions = () => all(`SELECT * FROM mob_aq_live_positions ORDER BY id`);
 
@@ -302,4 +304,16 @@ test("Robinhood: the same gates in USD, the order call is not built, and the US 
   assert.match(usMarket(new Date("2026-11-21T16:00:00Z")).note, /weekend/); assert.match(usMarket(new Date("2026-11-26T16:00:00Z")).note, /holiday/);
   assert.equal(usMarket(new Date("2026-11-27T17:59:00Z")).open, true); assert.equal(usMarket(new Date("2026-11-27T18:00:00Z")).open, false, "1:00 p.m. early close");
   assert.equal(usMarket(new Date("2026-07-01T13:30:00Z")).open, true, "summer time: 9:30 New York is 13:30 UTC");
+});
+
+test("RIGHT CALL rule: no symbiote right call = no live entry, a flagged-but-unchecked call is not enough", async () => {
+  for (const venue of ["solana", "phantom"]) {
+    await wipe(); world(); F.candles = fibCandles(); await d.q(`DELETE FROM mob_aq_sym_right`);
+    const none = await L.scanFib(env, venue, async () => false); assert.ok(!none.c); assert.equal((await lastRef(venue)).gate, "no_right_call");
+    await d.q(`INSERT INTO mob_aq_sym_right (mint, symbol, status) VALUES ($1, 'BONK', 'flagged')`, [MINT]);
+    const fl = await L.scanFib(env, venue, async () => false); assert.ok(!fl.c, "flagged but not deep-checked must not be bought"); assert.equal((await lastRef(venue)).gate, "no_right_call");
+    await d.q(`UPDATE mob_aq_sym_right SET status = 'candidate' WHERE mint = $1`, [MINT]);
+    const ok = await L.scanFib(env, venue, async () => false); assert.ok(ok.c ? ok.c.mint === MINT : (await lastRef(venue)).gate !== "no_right_call", "a checked right call goes on to the chart gates");
+  }
+  const t = await L.liveTick(env, { minute: 5 }); void t;
 });
