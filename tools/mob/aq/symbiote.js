@@ -198,7 +198,7 @@ const CSS = `
 .sym-mid{display:flex;flex-direction:column;align-items:center}.sym-cath{position:relative;width:100%;max-width:420px;aspect-ratio:400/420;display:grid;place-items:center}.sym-cath-svg{position:absolute;inset:0;width:100%;height:100%}
 .sym-banner{margin-top:-28px;position:relative;font:700 20px var(--serif);letter-spacing:.24em;color:#e9ebef;padding:8px 28px;background:linear-gradient(180deg,#3a3c43,#151518);border:2px solid #8f949e;clip-path:polygon(6% 0,94% 0,100% 50%,94% 100%,6% 100%,0 50%)}
 .sym-pain{margin-top:6px;font:700 10px var(--mono);letter-spacing:.1em;color:#ff5555}.sym-pain em{font-style:normal;font-weight:400;color:#9a9ca6;letter-spacing:0}
-.sym-chip{position:relative;--breath:4s;width:78%;display:grid;place-items:center}.sym-chip-svg{width:100%;height:auto;overflow:visible}
+.sym-chip{position:relative;--breath:4s;width:56%;display:grid;place-items:center}.sym-chip-svg{width:100%;height:auto;overflow:visible}
 .sym-chip .gear{fill:#1b1426;stroke:#aab2bf;stroke-width:1.2;transform-origin:200px 200px;animation:symSpin 120s linear infinite}.sym-chip .breath{transform-origin:200px 200px;animation:symBreath var(--breath) ease-in-out infinite}
 .sym-chip .fil{fill:none;stroke:#dfe5ee;stroke-width:1.3;opacity:.85}.sym-chip .trace{fill:none;stroke:#c3cad5;stroke-width:1.6;opacity:.55}
 .sym-chip .vein{fill:none;stroke:#f3e6ff;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:14 240;animation:symPulse calc(var(--breath) * .9) linear infinite}

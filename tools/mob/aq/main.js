@@ -8,6 +8,7 @@ import { walletsDock } from "./wallets.js";
 import { realBar, tradeScreens } from "./real.js";
 import { symScreen } from "./symbiote.js";
 import { hymnScreen } from "./hymns.js";
+import { tv } from "./tv.js";
 import { AQ_GLYPH } from "./brand/glyph.js";
 export const BUILD = typeof __AQ_BUILD__ !== "undefined" ? __AQ_BUILD__ : "dev";
 
@@ -268,7 +269,7 @@ export async function setMode() { store.mode = "bot"; renderDash(store.state); w
 function boot() {
   // the reactor (the solar system) is the main screen: first under the top bar; the training hero and the rest come below it
   const d0 = buildDash(), hs = d0.querySelector("#d-hero-slot"); d0.querySelector(".reactor-row").after(tradeScreens()); hs.className = "hero-slot"; hs.append(trainingHero());
-  document.body.append(topbar(), h(`<div id="offline" hidden>Can't reach the engine. Showing the last data.</div>`), realBar(), d0, symScreen(), hymnScreen(), walletsDock());
+  document.body.append(topbar(), h(`<div id="offline" hidden>Can't reach the engine. Showing the last data.</div>`), realBar(), d0, tv([symScreen(), hymnScreen()]), walletsDock());
   onState((s) => { renderTop(s); if (store.mode === "bot") renderDash(s); });
   window.addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.querySelector(".dlg-bg")) openMenu(); else if (e.key === "Escape") document.querySelector(".dlg-bg").remove(); });
   setInterval(() => { const e = document.getElementById("k-utc"); if (e) e.textContent = new Date().toLocaleTimeString("en-GB", { timeZone: "Europe/Athens", hour12: false }); }, 1000);
