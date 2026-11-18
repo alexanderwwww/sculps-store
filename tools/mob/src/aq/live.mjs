@@ -206,8 +206,25 @@ export async function txKeys(env, b64tx) {
   }
   return out;
 }
+// (4) THE READS BEFORE SIGNING DO NOT DIE WITH ONE RPC (order 4 on 2026-11-18, a manual sell, failed with "Helius did not answer
+// simulateTransaction"). A read that got no answer (a timeout, a dropped connection, HTTP 429/5xx) is asked again once on the
+// same RPC, then on another one: the SOLANA_RPC_FALLBACK_URL secret when it is set, then the public Solana node. Only reads
+// (balances, accounts, the simulation): a transaction is never SENT twice, and an RPC that ANSWERED with an error is believed.
+// (Measured earlier the same day: the public node answered Cloudflare with 403, so in production the second RPC is real only
+// once SOLANA_RPC_FALLBACK_URL holds one.)
+const noAnswer = (e) => /did not answer|\(HTTP (429|5\d\d)\)/.test(String(e?.message || e));
+export async function rpcRead(env, method, params) {
+  for (let i = 0; i < 2; i++) { if (i) await sleep(Number(env.AQ_LIVE_POLL_MS ?? 400)); try { return await solRpc(env, method, params); } catch (e) { if (!noAnswer(e)) throw e; } }
+  for (const url of [env.SOLANA_RPC_FALLBACK_URL, "https://api.mainnet-beta.solana.com"].filter(Boolean)) {
+    try { const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(15000) }), j = await r.json();
+      if (r.ok && !j?.error && j?.result != null) return j.result;
+      if (r.ok && j?.error) throw Object.assign(new Error(`the second RPC refused ${method} (${cut(j.error.message, 120)})`), { answered: true });
+    } catch (e) { if (e?.answered) throw e; } // the URL may carry a key: its raw error is never passed on
+  }
+  throw new Error(`no RPC answered ${method} (the main one twice, then the second one); nothing was signed`);
+}
 // getMultipleAccounts takes at most 100 addresses (MAX_MULTIPLE_ACCOUNTS, agave rpc-client-types): asked in batches of 100
-async function multi(env, addrs, cfg) { const out = []; for (let i = 0; i < addrs.length; i += 100) out.push(...((await solRpc(env, "getMultipleAccounts", [addrs.slice(i, i + 100), { ...cfg, commitment: "confirmed" }])).value || [])); return out; }
+async function multi(env, addrs, cfg) { const out = []; for (let i = 0; i < addrs.length; i += 100) out.push(...((await rpcRead(env, "getMultipleAccounts", [addrs.slice(i, i + 100), { ...cfg, commitment: "confirmed" }])).value || [])); return out; }
 // ---- the associated token account address, derived exactly as the chain does: sha256(owner, token program, mint, bump,
 // ATA program, "ProgramDerivedAddress") with the highest bump whose hash is NOT a point on ed25519 (checked against a real
 // Jupiter swap on 2026-11-18: the derived wSOL account of the wallet is the one the swap wraps into).
@@ -256,7 +273,7 @@ export function checkIxs(b64tx, wallet, wsolAta = null) {
 export async function tokenAccounts(env, owner, mint = null) {
   const out = [];
   for (const filter of mint ? [{ mint }] : [{ programId: PROG.token }, { programId: PROG.token22 }])
-    for (const a of (await solRpc(env, "getTokenAccountsByOwner", [owner, filter, { encoding: "jsonParsed", commitment: "confirmed" }])).value || []) {
+    for (const a of (await rpcRead(env, "getTokenAccountsByOwner", [owner, filter, { encoding: "jsonParsed", commitment: "confirmed" }])).value || []) {
       const i = a?.account?.data?.parsed?.info; if (a?.pubkey && i?.mint) out.push({ address: a.pubkey, mint: i.mint, program: a.account.owner, raw: String(i.tokenAmount?.amount ?? "0"), lamports: a.account.lamports });
     }
   return out;
@@ -281,11 +298,11 @@ export async function signTx(env, wallet, b64tx) {
 // coin account is watched even before it exists, and the tokens it receives must reach the quote's minimum.
 export async function simulate(env, address, b64tx, { side, inLamports, minOutLamports, mint = null, inTokens = "0", minOutTokens = "0" }) {
   const bad = checkIxs(b64tx, address, await ataOf(address, SOL_MINT)); if (bad) return { ok: false, error: bad };
-  const pre = (await solRpc(env, "getBalance", [address])).value, keys = await txKeys(env, b64tx), mine = await tokenAccounts(env, address);
+  const pre = (await rpcRead(env, "getBalance", [address])).value, keys = await txKeys(env, b64tx), mine = await tokenAccounts(env, address);
   const accts = mine.filter((a) => keys.has(a.address));
   if (side === "buy" && mint) for (const prog of [PROG.token, PROG.token22]) { const a = await ataOf(address, mint, prog); if (keys.has(a) && !accts.some((x) => x.address === a)) accts.push({ address: a, mint, program: prog, absent: true }); }
   const preData = accts.length ? await multi(env, accts.map((a) => a.address), { encoding: "base64" }) : [];
-  const v = (await solRpc(env, "simulateTransaction", [b64tx, { encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed", accounts: { encoding: "base64", addresses: [address, ...accts.map((a) => a.address)] } }])).value;
+  const v = (await rpcRead(env, "simulateTransaction", [b64tx, { encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed", accounts: { encoding: "base64", addresses: [address, ...accts.map((a) => a.address)] } }])).value;
   if (v?.err) return { ok: false, error: `the simulation failed (${cut(JSON.stringify(v.err), 140)})` };
   const post = v?.accounts?.[0]?.lamports;
   if (typeof pre !== "number" || typeof post !== "number") return { ok: false, error: "the simulation did not show the wallet's balance" };
@@ -1025,7 +1042,7 @@ export function closeTx(wallet, account, program, blockhash) {
 export async function reclaimRent(env, w) {
   const d = db(env), out = [];
   for (const p of await d.q(`SELECT id, mint, symbol, plan FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed' AND plan IS NOT NULL AND (closed_at > now() - interval '3 days' OR (plan->>'recoveredAt')::timestamptz > now() - interval '3 days')
-      AND NOT (plan->>'writtenOff' = 'true' AND NOT (plan ? 'recovered'))
+      AND NOT (coalesce(plan->>'writtenOff', '') = 'true' AND NOT (plan ? 'recovered'))
       AND (NOT (plan ? 'rent') OR (plan->'rent'->>'state' = 'sent') OR (plan->'rent'->>'state' = 'failed' AND coalesce((plan->'rent'->>'tries')::int, 0) < 3)) ORDER BY id LIMIT 3`, [VENUE])) {
     // a terminal end (dust left, or 3 failed closes): the rent kept apart at the buy is lost, and only then booked as a loss
     const lost = (r) => (r.state === "dust" || (r.state === "failed" && (r.tries || 0) >= 3)) && p.plan.rentSol > 0 && !p.plan.rentLost;
