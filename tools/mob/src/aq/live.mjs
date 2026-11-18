@@ -9,6 +9,13 @@
 //    requests a second) and still on lite-api.jup.ag (docs: being phased out). Quote: inAmount, outAmount,
 //    otherAmountThreshold, priceImpactPct (string), routePlan. Swap: swapTransaction (base64, version 0),
 //    lastValidBlockHeight, prioritizationFeeLamports, simulationError. An optional JUP_API_KEY secret is sent as x-api-key.
+//    Re-read 2026-11-18 (developers.jup.ag/docs/portal/migration.md): "lite-api.jup.ag will be phased out ... The rate limit
+//    will be reduced progressively until it is fully retired. All endpoints remain the same. Only the base URL changes."
+//    So api.jup.ag is asked FIRST for quotes, swaps and prices (GET /price/v3?ids= -> {mint:{usdPrice, liquidity, decimals}},
+//    answered keyless on both hosts today); lite-api is only the second try. Swap API V2 (/swap/v2/order, /build) is the
+//    recommended API now; V1 /quote and /swap still answer on api.jup.ag and are what the pre-sign checks were read against.
+//  - Venue labels (GET api.jup.ag/swap/v1/program-id-to-label, read 2026-11-18): the pump bonding curve is "Pump.fun", the
+//    pool a coin migrates to is "Pump.fun Amm". A quote's routePlan[].swapInfo.label says which one the coin trades on now.
 //  - RPC: simulateTransaction {sigVerify:false, replaceRecentBlockhash:true, accounts:{addresses}} -> value.err,
 //    value.accounts[0].lamports; getSignatureStatuses -> value[i] null | {confirmationStatus, err}; getBlockHeight -> number.
 //  - getTransaction (meta.preBalances/postBalances/fee/pre+postTokenBalances) is the standard shape; the public RPC rate
@@ -18,7 +25,7 @@
 import { db } from "../db.mjs";
 import { unseal } from "../auth.mjs";
 import { base58, unbase58, rpc as solRpc, clampLimits } from "./wallet.mjs";
-import { feeds, SOL_MINT, jupPrices } from "./feeds.mjs";
+import { feeds, SOL_MINT } from "./feeds.mjs";
 import { hardSafety, round } from "./logic.mjs";
 import { FIB, entrySetup, manage, planOf } from "./chart.mjs";
 import { AUDIT_RT } from "./council.mjs";
@@ -31,7 +38,17 @@ export const LIVE = {
   minAgeDays: 1,          // 7: established pairs only; same age line as the Council's tier B
   // 1 PROVEN: never chase. The only entry is a pullback into 50-61.8% that closes back up (chart.mjs entrySetup).
   // ---- how it executes (safety, not lessons)
-  freshMaxRtPct: 3, freshMaxImpactPct: 1.5, // symbiote right calls (bonding-curve coins) only; see costGate
+  // symbiote right calls (bonding-curve coins) only; see costGate. MEASURED 2026-11-18 on live curve coins at 0.05 SOL
+  // (api.jup.ag quotes, buy then sell what it buys): 2.724, 2.754, 2.788, 2.788, 2.789, 2.789% in the quotes (pump's fee of
+  // about 1.25% a side plus the curve's own impact), plus 0.264% fixed SOL fees (2 x 61,000 + 5,000 lamports) = 2.99-3.05%.
+  // A 3% cap refused nearly every curve buy; the cap is 3.5% (the highest measured total, 3.05%, plus room for the curve
+  // moving between the two quotes). Target 1 must still be 3x the true total, so about 9-10.5% away.
+  freshMaxRtPct: 3.5, freshMaxImpactPct: 1.5,
+  // ---- the live price and the stops that do not wait for a candle
+  entryTolPct: 1.5, freshEntryTolPct: 3, // the buy quote's own price must be within this of the candle entry (a curve buy pays ~1.25% fee inside its price)
+  noPriceTicks: 3,       // candles frozen AND no price from any source for 3 ticks in a row: sold. One or two misses never sell.
+  disasterPct: 5, disasterTicks: 2, // the live exit quote 5% or more UNDER the stop on 2 ticks in a row: sold now, no 5-minute close awaited
+  freshGapLossPct: 50,   // what a fresh curve coin can lose before any exit lands (a 50% dump inside one bar): its worst case in the daily budget
   slippageBps: 100, exitSlippageBps: 150, maxImpactPct: 1, reserveSol: 0.01, feeBudgetLamports: 3500000, priorityMaxLamports: 500000,
   candidatesPerTick: 4, paperCoinsPerTick: 8, paperOpenMax: 40, confirmPolls: 6, confirmGapMs: 2500, maxSellFails: 5,
   // a stop, invalidation, veto or liquidity exit that fails is retried with twice the slippage each time, never over 20%
@@ -48,7 +65,10 @@ export const LIVE = {
   sentStaleMin: 10,      // a signature the chain still does not know 10 minutes after sending is far past its ~150-block window
 };
 const VENUE = "solana", ACTIVE = `('opening','open','closing','stuck')`;
-const JUP_HOSTS = ["https://api.jup.ag", "https://lite-api.jup.ag"];
+const JUP_HOSTS = ["https://api.jup.ag", "https://lite-api.jup.ag"]; // api.jup.ag first: lite-api is being retired
+const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", CURVE_LABELS = new Set(["Pump.fun"]);
+const labelsOf = (q) => (q?.routePlan || []).map((r) => r.swapInfo?.label).filter(Boolean);
+const r8 = (x) => (Number.isFinite(x) ? Number(x.toPrecision(8)) : x);
 const enc = new TextEncoder();
 const get = async (d, k, dflt = null) => (await d.one(`SELECT v FROM mob_aq_state WHERE k=$1`, [k]))?.v ?? dflt;
 const set = (d, k, v) => d.q(`INSERT INTO mob_aq_state (k, v, at) VALUES ($1,$2,now()) ON CONFLICT (k) DO UPDATE SET v=EXCLUDED.v, at=now()`, [k, JSON.stringify(v)]);
@@ -97,6 +117,50 @@ export async function buildSwap(env, q, address) {
   if (r.j.simulationError) return { ok: false, error: `Jupiter's own simulation failed (${cut(JSON.stringify(r.j.simulationError), 160)})` };
   return { ok: true, tx: r.j.swapTransaction, lastValidBlockHeight: Number(r.j.lastValidBlockHeight), priorityLamports: Number(r.j.prioritizationFeeLamports) || 0 };
 }
+// ---- live prices. Two independent sources, each asked twice before it counts as a miss:
+//  (1) a Jupiter QUOTE for a real amount (the buy's own quote, or the position's own tokens -> SOL, which is the true exit value);
+//  (2) Jupiter's price API (price/v3: the last on-chain swap, USD).
+// The price of one whole token in the plan's unit, from an amount of lamports and an amount of raw tokens.
+export const pxOf = (lamports, raw, dec, unit, solUsd = null) => {
+  const tokens = Number(raw) / 10 ** dec, sol = Number(lamports) / 1e9 / tokens;
+  if (!Number.isInteger(dec) || !(tokens > 0) || !(sol > 0)) return null;
+  return unit === "SOL" ? sol : solUsd > 0 ? sol * solUsd : null;
+};
+// price/v3 rows by mint ({usdPrice, liquidity, decimals}), api.jup.ag first, asked twice; null when it never answers
+async function priceRows(env, mints) {
+  for (let i = 0; i < 2; i++) { const r = await jup(env, `/price/v3?ids=${[...new Set(mints)].slice(0, 50).join(",")}`); if (r.ok) return r.j; }
+  return null;
+}
+async function priceApi(env, mints) { const j = await priceRows(env, mints); return j ? Object.fromEntries(mints.map((m) => [m, Number(j[m]?.usdPrice) > 0 ? Number(j[m].usdPrice) : null])) : null; }
+const liqIn = (j, m) => (j?.[m] && j[m].liquidity != null && Number.isFinite(Number(j[m].liquidity)) ? Number(j[m].liquidity) : null);
+// SOL in USD: the price API, else a quote of 1 SOL -> USDC (6 decimals). Null only when both fail.
+export async function solUsdLive(env) {
+  const p = await priceApi(env, [SOL_MINT]); if (p?.[SOL_MINT]) return p[SOL_MINT];
+  const q = await quote(env, SOL_MINT, USDC_MINT, 1000000000, 50); return q.ok && Number(q.q.outAmount) > 0 ? Number(q.q.outAmount) / 1e6 : null;
+}
+// the coin's price from the price API, in the plan's unit
+async function apiSpot(env, mint, unit, solUsd) {
+  const p = await priceApi(env, [mint]), usd = p?.[mint]; if (!(usd > 0)) return null;
+  if (unit !== "SOL") return usd;
+  const s = await solUsd(); return s > 0 ? usd / s : null;
+}
+// The buy is checked against the LIVE price before anything is signed: the price the buy quote itself pays (SOL in / tokens
+// out, in the plan's unit) must be above the stop, under target 1 and within `tolPct` of the candle entry. Null = fine.
+export function entryCheck(s, livePx, tolPct) {
+  if (!(livePx > 0)) return "The live price could not be read from the buy quote: no buy without it";
+  if (livePx <= s.stop) return `The live price ${r8(livePx)} is at or under the stop ${s.stop}: the setup is already broken`;
+  if (livePx >= s.t1) return `The live price ${r8(livePx)} is at or over target 1 ${s.t1}: nothing left to earn`;
+  const off = (livePx / s.entry - 1) * 100;
+  if (Math.abs(off) > tolPct) return `The live price ${r8(livePx)} is ${round(off, 2)}% from the candle entry ${s.entry}, over the ${tolPct}% tolerance`;
+  return null;
+}
+// What one position can lose, as a share of its size, when its exit really runs: the stop distance, the disaster margin under
+// the stop (the price can fall that far before the fast exit acts), the exit slippage and the round trip. A fresh curve coin can
+// gap further than any stop inside one bar: its worst case is never under freshGapLossPct.
+export const worstFrac = (stopFrac, rtPct, fresh) => Math.min(1, Math.max(stopFrac + LIVE.disasterPct / 100 + LIVE.exitSlippageBps / 1e4 + rtPct / 100, fresh ? LIVE.freshGapLossPct / 100 : 0));
+// A failed sell raises the next sell's slippage only when the chain or its simulator refused the swap itself (the price ran
+// past the minimum). A quote, RPC or Jupiter outage, or a send that never landed, says nothing about slippage.
+export const isChainFail = (error) => /chain rejected|simulation failed|less than the quoted minimum/i.test(String(error || ""));
 
 // ---------------------------------------------------------------- the transaction: read it, check it, sign it
 const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0)), b64 = (u8) => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s); };
@@ -316,13 +380,18 @@ export async function finish(d, o, status, { error = null, fill = null } = {}) {
     // the plan is rebased on the real fill: the quote promised quote_out tokens for the SOL; fewer tokens = a worse price by the
     // same ratio. entry becomes the fill price (so "stop to entry" after target 1 is the real breakeven); chartEntry keeps the chart's.
     if (status === "confirmed" && fill.tokens > 0n) {
-      const qo = Number((await d.one(`SELECT quote_out FROM mob_aq_live_orders WHERE id = $1`, [o.id]))?.quote_out), ratio = qo > 0 ? qo / Number(fill.tokens) : 1;
+      const row = await d.one(`SELECT o.quote_out, p.plan FROM mob_aq_live_orders o LEFT JOIN mob_aq_live_positions p ON p.id = o.position_id WHERE o.id = $1`, [o.id]);
+      const qo = Number(row?.quote_out), ratio = qo > 0 ? qo / Number(fill.tokens) : 1, pl = row?.plan;
       // the rent of a new token account is NOT trade cost: it is kept apart (plan.rentSol), comes back by closeAccount, and is
       // booked as a loss only if it never does. Marks, the daily budget and the loss check never see it.
       const rent = fill.created ? Math.max(0, fill.rentLamports || 0) : 0;
+      // THE REAL FILL PRICE: the SOL this buy cost (fees in, rent out) over the tokens that arrived, in the plan's unit (USD at
+      // the SOL price the buy was checked at). Only a plan without the coin's decimals (none is made that way now) falls back
+      // to the old ratio of quoted to received tokens.
+      const real = pl ? pxOf(-fill.solLamports - rent, fill.tokens, pl.dec, pl.unit || "USD", pl.solUsd) : null, entry = real ?? (pl ? pl.entry * ratio : null);
       await d.q(`UPDATE mob_aq_live_positions SET status = 'open', tokens_raw = $2, cost_sol = $3, fees_sol = fees_sol + $4, opened_at = now(),
-        plan = CASE WHEN plan IS NULL THEN NULL ELSE plan || jsonb_build_object('chartEntry', plan->'entry', 'entry', (plan->>'entry')::float8 * $5::float8, 'fillRatio', $5::float8, 'ataCreated', $6::boolean, 'rentSol', $7::float8) END
-        WHERE id = $1 AND status = 'opening'`, [o.position_id, fill.tokens.toString(), (-fill.solLamports - rent) / 1e9, fill.feeLamports / 1e9, ratio, !!fill.created, rent / 1e9]);
+        plan = CASE WHEN plan IS NULL THEN NULL ELSE plan || jsonb_build_object('chartEntry', plan->'entry', 'entry', $8::float8, 'entryFrom', $9::text, 'fillRatio', $5::float8, 'ataCreated', $6::boolean, 'rentSol', $7::float8) END
+        WHERE id = $1 AND status = 'opening'`, [o.position_id, fill.tokens.toString(), (-fill.solLamports - rent) / 1e9, fill.feeLamports / 1e9, ratio, !!fill.created, rent / 1e9, entry, real ? "fill" : "ratio"]);
     }
     else await d.q(`UPDATE mob_aq_live_positions SET status = 'failed', closed_at = now(), exit_reason = $2 WHERE id = $1 AND status = 'opening'`, [o.position_id, cut(error || "the buy brought no tokens")]);
     if (status === "confirmed") await brain(d, `LIVE BUY ${o.symbol}: ${round(-fill.solLamports / 1e9, 6)} SOL from the Aquarius wallet (${o.signature}). Chart plan: stop ${o.plan_patch?.stop ?? "?"}, targets ${o.plan_patch?.t1 ?? "?"} / ${o.plan_patch?.t2 ?? "?"}.`);
@@ -333,10 +402,12 @@ export async function finish(d, o, status, { error = null, fill = null } = {}) {
     const p = await d.one(`UPDATE mob_aq_live_positions SET tokens_raw = greatest(0, tokens_raw::numeric - $5::numeric)::text, proceeds_sol = coalesce(proceeds_sol, 0) + $2, fees_sol = fees_sol + $3,
         status = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN 'closed' ELSE 'open' END, sell_fails = 0, closed_at = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN now() END,
         pnl_sol = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN coalesce(proceeds_sol, 0) + $2 - cost_sol END, exit_reason = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN $4 ELSE exit_reason END,
-        plan = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN coalesce(plan, '{}'::jsonb) || jsonb_build_object('outcome', $4::text, 'closedAt', now()) ELSE coalesce(plan, '{}'::jsonb) || coalesce($6::jsonb, '{}'::jsonb) END
+        plan = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN coalesce(plan, '{}'::jsonb) || jsonb_build_object('outcome', $4::text, 'closedAt', now()) WHEN plan IS NULL THEN NULL ELSE plan || coalesce($6::jsonb, '{}'::jsonb) || '{"slipFails":0}'::jsonb END
       WHERE id = $1 AND status = 'closing' RETURNING status, pnl_sol`, [o.position_id, fill.solLamports / 1e9, fill.feeLamports / 1e9, o.reason, (-fill.tokens).toString(), o.plan_patch ? JSON.stringify(o.plan_patch) : null]);
     if (p) { await brain(d, `LIVE SELL ${o.symbol} (${o.reason}): ${round(fill.solLamports / 1e9, 6)} SOL back${p.status === "closed" ? `, ${p.pnl_sol >= 0 ? "+" : ""}${round(p.pnl_sol, 6)} SOL on the trade` : ", the rest stays open"} (${o.signature}).`); if (p.status === "closed") await dailyLossCheck(d); }
-  } else await d.q(`UPDATE mob_aq_live_positions SET status = CASE WHEN sell_fails + 1 >= $2 THEN 'stuck' ELSE 'open' END, sell_fails = sell_fails + 1 WHERE id = $1 AND status = 'closing'`, [o.position_id, LIVE.maxSellFails]);
+  } else await d.q(`UPDATE mob_aq_live_positions SET status = CASE WHEN sell_fails + 1 >= $2 THEN 'stuck' ELSE 'open' END, sell_fails = sell_fails + 1,
+      plan = CASE WHEN $3::boolean AND plan IS NOT NULL THEN plan || jsonb_build_object('slipFails', coalesce((plan->>'slipFails')::int, 0) + 1) ELSE plan END
+    WHERE id = $1 AND status = 'closing'`, [o.position_id, LIVE.maxSellFails, isChainFail(error)]); // every failure counts toward 'stuck'; only a chain/simulator refusal widens the slippage
 }
 // A confirmed trade Alex approved in Phantom: his position in that coin is opened, added to, reduced or closed. Runs once
 // per order (only the caller that moved the order to "confirmed" gets here). Phantom positions are his own: Aquarius
@@ -365,20 +436,29 @@ async function phantomApply(d, o, fill) {
 // today's realized result plus the marked loss of every position still held (open, closing, stuck): a loss on screen counts
 export async function pnlToday(d) { return (await d.one(`SELECT (coalesce(sum(pnl_sol) FILTER (WHERE status = 'closed' AND closed_at >= ${TODAY}), 0)
   + coalesce(sum(least(0, coalesce(proceeds_sol, 0) + coalesce(last_value_sol, cost_sol - coalesce(proceeds_sol, 0)) - cost_sol)) FILTER (WHERE status IN ('open','closing','stuck') AND cost_sol IS NOT NULL), 0))::float8 s FROM mob_aq_live_positions WHERE venue = $1`, [VENUE])).s; }
-// The day's risk: realized + marked (pnl), and what it becomes if every open position is sold at its stop (committed): value
-// at the stop = marked value x stop / last price, less the exit slippage and one network fee. A buy still on its way counts its
-// size times its stop distance. New buys are refused, and sized, against the committed number.
+// The day's risk: realized + marked (pnl), and what it becomes if every open position's exit runs as badly as it really can
+// (committed): value = marked value x (stop less the 5% disaster margin) / last price, less the exit slippage and one network
+// fee; a fresh curve coin never counts for less than a 50% fall. A buy still on its way counts its size times its plan's worst
+// case. New buys are refused, and sized, against the committed number.
+// THE NUMBERS (limits read from production 2026-11-18: 0.05 SOL a trade, 3 open, 0.06 SOL a day): a fresh curve position of
+// 0.05 SOL commits 0.025 SOL, so three of them (0.075) do NOT fit in 0.06: two full positions commit 0.05, and the third is
+// sized to what is left (about 0.0198 SOL), i.e. at most about 0.12 SOL of curve coins open, not 0.15. An established coin
+// with an 8% stop commits about 15.5% (8 + 5 + 1.5 + 1) = 0.0078 SOL, so three fit (0.023).
 export async function riskToday(d, feeSide = LIVE.feePerSideFallbackLamports) {
   const realized = (await d.one(`SELECT coalesce(sum(pnl_sol), 0)::float8 s FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed' AND closed_at >= ${TODAY}`, [VENUE])).s;
   let marked = 0, worst = 0; const slip = 1 - LIVE.exitSlippageBps / 1e4;
   for (const p of await d.q(`SELECT cost_sol, proceeds_sol, last_value_sol, stop_pct, plan, alert_patch FROM mob_aq_live_positions WHERE venue = $1 AND status IN ${ACTIVE}`, [VENUE])) {
-    if (p.cost_sol == null) { worst -= (p.plan?.sizeSol ?? 0) * ((p.stop_pct ?? 100) / 100 + LIVE.exitSlippageBps / 1e4) + (2 * feeSide) / 1e9; continue; }
+    const fresh = p.plan?.fresh === true, gap = 1 - LIVE.freshGapLossPct / 100, dz = 1 - LIVE.disasterPct / 100;
+    if (p.cost_sol == null) { worst -= (p.plan?.sizeSol ?? 0) * (p.plan?.worstPct > 0 ? p.plan.worstPct / 100 : worstFrac((p.stop_pct ?? 100) / 100, fresh ? LIVE.freshMaxRtPct : FIB.maxRtPct, fresh)) + (2 * feeSide) / 1e9; continue; }
     const got = p.proceeds_sol || 0, now = p.last_value_sol ?? p.cost_sol - got, pl = p.plan;
     marked += Math.min(0, got + now - p.cost_sol);
     const stop = pl ? (pl.phase === 2 ? Math.max(pl.stop, pl.trailStop ?? -Infinity) : pl.stop) : null, spark = p.alert_patch?.spark;
     const px = Array.isArray(spark) && spark.length ? spark[spark.length - 1] : pl?.chartEntry ?? pl?.entry;
-    const atStop = stop > 0 && px > 0 ? now * Math.min(1, stop / px) : now * Math.max(0, 1 - (p.stop_pct ?? 100) / 100);
-    worst += Math.min(0, got + atStop * slip - p.cost_sol) - feeSide / 1e9;
+    // the exit is not AT the stop: the stop waits for a 5-minute close and the fast exit acts disasterPct under it; a fresh curve
+    // coin can fall freshGapLossPct inside one bar whatever the stop says
+    const atStop = stop > 0 && px > 0 ? now * Math.min(1, (stop * dz) / px) : now * Math.max(0, 1 - (p.stop_pct ?? 100) / 100 - LIVE.disasterPct / 100);
+    let atExit = atStop * slip; if (fresh) atExit = Math.min(atExit, now * gap); // the same worst case the buy was sized with (worstFrac)
+    worst += Math.min(0, got + atExit - p.cost_sol) - feeSide / 1e9;
   }
   return { realized, marked, worst, pnl: realized + marked, committed: realized + worst };
 }
@@ -469,7 +549,7 @@ export async function vetoed(d, mint) {
 export async function liqOf(env, mint) {
   const top = await feeds.jupTop(env); const c = top.ok && Array.isArray(top.data) ? top.data.find((x) => x.mint === mint) : null;
   if (c && Number.isFinite(c.liqUsd)) return c.liqUsd;
-  try { const p = (await jupPrices([mint]))[mint]; return p && Number.isFinite(p.liqUsd) ? p.liqUsd : null; } catch { return null; }
+  return liqIn(await priceRows(env, [mint]), mint);
 }
 // The coins the chart trader may look at: established pairs with a deep enough pool, mid-size pools first.
 export async function candidates(env) {
@@ -481,14 +561,15 @@ export async function candidates(env) {
 // Look for the setup among those coins. Returns {c, s} (the coin and the chart setup) for the first coin that passes every
 // validation, or the last refusal (each written down under `venue`). `skip(mint, s)` = coins or legs not to take again.
 // A symbiote RIGHT CALL is its own candidate (Inspector 2026-11-18: right calls are fresh launches, never in the established
-// list above). The pool floor for these fresh coins is symbiote's: 20 SOL of real reserves in the curve, re-checked every
+// list above). The pool floor for these fresh coins is symbiote's: 10 SOL of real reserves in the curve, re-checked every
 // 5 minutes (sym/do.mjs LIQ_FLOOR_SOL); liqUsd here is Jupiter's figure for the coin, else those reserves x2 at the SOL price.
 export async function freshRightCandidates(env, d, known = new Set()) {
   const rows = (await d.q(`SELECT r.mint, r.symbol, r.checks->>'realSol' real_sol FROM mob_aq_sym_right r WHERE r.status = 'candidate' AND coalesce(r.checked_at, r.flagged_at) > now() - $1::float8 * interval '1 minute'`, [await rightCallTtlMin(d)]).catch(() => [])).filter((r) => !known.has(r.mint));
   if (!rows.length) return [];
-  let px = {}; try { px = await jupPrices([SOL_MINT, ...rows.map((r) => r.mint)]); } catch {}
-  const solUsd = px[SOL_MINT]?.price ?? null;
-  return rows.map((r) => { const j = Number.isFinite(px[r.mint]?.liqUsd); return { mint: r.mint, symbol: r.symbol, quoteMint: SOL_MINT, fresh: true, liqBasis: j ? "jupiter" : "curve", liqUsd: j ? px[r.mint].liqUsd : solUsd && Number(r.real_sol) > 0 ? Number(r.real_sol) * 2 * solUsd : null }; });
+  // Jupiter's price API carries a "liquidity" figure for coins still ON the curve too (read 2026-11-18: $2.2K-$5.9K on seven
+  // live curve coins): whether a figure is a curve's or a pool's is decided by the quote's route at the buy (plan.onCurve).
+  const px = (await priceRows(env, [SOL_MINT, ...rows.map((r) => r.mint)])) || {}, solUsd = Number(px[SOL_MINT]?.usdPrice) > 0 ? Number(px[SOL_MINT].usdPrice) : null;
+  return rows.map((r) => { const l = liqIn(px, r.mint), j = l != null; return { mint: r.mint, symbol: r.symbol, quoteMint: SOL_MINT, fresh: true, liqBasis: j ? "jupiter" : "curve", liqUsd: j ? l : solUsd && Number(r.real_sol) > 0 ? Number(r.real_sol) * 2 * solUsd : null }; });
 }
 // One-minute candles: Jupiter's chart first; for a fresh coin Jupiter may have none, then symbiote's own bars built from the
 // curve's trade stream (mob_aq_sym_bars, the coin's price in SOL; the chart rules are ratios, so the unit does not matter).
@@ -496,24 +577,30 @@ export async function candlesFor(env, d, mint, prefer = "jupiter") {
   const jup = async () => { const cs = await feeds.jupCandles(env, mint); return cs.ok ? { ...cs, src: "jupiter", unit: "USD" } : cs; };
   const sym = async () => { const rows = await d.q(`SELECT t, o, h, l, c, v FROM mob_aq_sym_bars WHERE mint = $1 AND t > extract(epoch from now())::bigint - 21600 ORDER BY t`, [mint]).catch(() => []);
     return rows.length ? { ok: true, src: "symbiote", unit: "SOL", data: rows.map((r) => ({ t: Number(r.t), o: Number(r.o), h: Number(r.h), l: Number(r.l), c: Number(r.c), v: Number(r.v) || 0 })) } : { ok: false }; };
+  if (prefer === "only:jupiter") return jup();
+  if (prefer === "only:symbiote") return sym();
   const [a, b] = prefer === "symbiote" ? [sym, jup] : [jup, sym];
   const first = await a(); if (first.ok) return first;
   return b();
 }
-// 3) A live position's candles in ITS plan's unit. The plan's own source first; when that source is frozen (no closed 1-minute
-// bar for FIB.staleSec: migration, a pause, a restart) the other source is used, converted at the SOL price (USD <-> SOL),
-// never mixed silently. If neither gives a fresh bar, the caller falls back to the HARD STOP rule (see exits()).
+// 3) A live position's candles in ITS plan's unit. The plan's own source first, then the other one, converted at the SOL price
+// (USD <-> SOL), never mixed silently. EVERY source must pass the same freshness test (a closed 1-minute bar inside
+// FIB.staleSec), converted or not: a frozen source (migration, a pause, a restart) is never "good data". If neither is fresh
+// the answer is {ok:false, stale:true} and the caller's live-price rules decide (see exits()).
 export async function positionCandles(env, d, p, nowSec) {
-  const unit = p.plan?.unit || "USD", fresh = (cs) => cs.ok && cs.data.some((c) => c.t + 60 <= nowSec && nowSec - (c.t + 60) <= FIB.staleSec);
-  let cs = await candlesFor(env, d, p.mint, p.plan?.src || "jupiter");
-  if (cs.ok && cs.unit !== unit) { const k = await solPerUsd(); cs = k ? { ...cs, unit, converted: true, data: cs.data.map((c) => conv(c, cs.unit === "USD" ? k : 1 / k)) } : { ok: false }; }
-  if (fresh(cs)) return cs;
-  const other = await candlesFor(env, d, p.mint, (p.plan?.src || "jupiter") === "symbiote" ? "jupiter" : "symbiote");
-  if (other.ok && other.unit !== unit) { const k = await solPerUsd(); if (!k) return { ok: false }; return { ...other, unit, converted: true, data: other.data.map((c) => conv(c, other.unit === "USD" ? k : 1 / k)) }; }
-  return other.ok && fresh(other) ? other : { ok: false, stale: true };
+  const unit = p.plan?.unit || "USD", own = p.plan?.src === "symbiote" ? "symbiote" : "jupiter", fresh = (cs) => cs.ok && cs.data.some((c) => c.t + 60 <= nowSec && nowSec - (c.t + 60) <= FIB.staleSec);
+  let k; const perUsd = async () => { if (k === undefined) { const u = await solUsdLive(env); k = u > 0 ? 1 / u : null; } return k; };
+  for (const src of [own, own === "symbiote" ? "jupiter" : "symbiote"]) {
+    let cs = await candlesFor(env, d, p.mint, `only:${src}`);
+    if (!fresh(cs)) continue; // judged on its timestamps before any conversion
+    if (cs.unit !== unit) { const r = await perUsd(); if (!r) continue; cs = { ...cs, unit, converted: true, data: cs.data.map((c) => conv(c, cs.unit === "USD" ? r : 1 / r)) }; }
+    return cs;
+  }
+  return { ok: false, stale: true };
 }
-// the HARD STOP (no fresh candle from either source): sell when the spot price is at or under the live stop; sell when there is
-// no price at all (a stop that cannot be watched is not a stop). Otherwise null (manage() decides as usual).
+// the HARD STOP (no fresh candle from either source): sell when the live price is at or under the live stop. `spot` null means
+// "no price from any source": exits() calls it that way only after LIVE.noPriceTicks misses in a row (each miss already being
+// two sources asked twice), because one missed price call must never dump a position. Otherwise null (manage() decides).
 export function hardStop(plan, spot) {
   const stop = plan.phase === 2 && plan.trailStop ? plan.trailStop : plan.stop;
   if (spot == null || !Number.isFinite(spot)) return { action: "sell_all", reason: "hard stop: no price from any source, the stop cannot be watched" };
@@ -521,9 +608,6 @@ export function hardStop(plan, spot) {
   return null;
 }
 const conv = (c, k) => ({ ...c, o: c.o * k, h: c.h * k, l: c.l * k, c: c.c * k });
-async function solPerUsd() { try { const p = (await jupPrices([SOL_MINT]))[SOL_MINT]?.price; return p > 0 ? 1 / p : null; } catch { return null; } }
-// the spot price in the plan's unit from Jupiter's price API (USD, converted when the plan is in SOL)
-async function spotIn(unit, mint) { try { const px = await jupPrices([SOL_MINT, mint]), m = px[mint]?.price, s = px[SOL_MINT]?.price; if (!(m > 0)) return null; return unit === "SOL" ? (s > 0 ? m / s : null) : m; } catch { return null; } }
 export async function scanFib(env, venue, skip) {
   const d = db(env), est = await candidates(env), nowSec = Date.now() / 1000;
   // a right call that is also an established coin is taken from the established list (Jupiter's own pool and chart)
@@ -531,12 +615,17 @@ export async function scanFib(env, venue, skip) {
   const list = [...(est || []), ...fresh];
   if (!est && !fresh.length) return { refusal: await refuse(d, venue, "no_market_data", "Jupiter's coin lists did not answer") };
   if (!list.length) return { refusal: await refuse(d, venue, "no_candidate", "No established coin with a pool of $100K or more, and no fresh right call, right now") };
-  // Alex's hard rule (2026-11-18): only a coin symbiote flagged as a RIGHT CALL that passed its deep checks may be bought.
+  // TWO LANES (Alex via the coordinator, 2026-11-18: "trading is MAINLY from symbiote right calls, but Aquarius and Grok also
+  // trade the market on their own judgement"):
+  //  right_call: a coin symbiote flagged as a RIGHT CALL that passed its deep checks (fresh curve coins keep their own cost rules);
+  //  market:     an ESTABLISHED coin (over a day old, pool of $100K or more: candidates()) with a valid chart setup, no right call
+  //              needed, under the established rules (1% round trip, 1% impact) and every other gate.
+  // Right calls are looked at first. A fresh coin is never bought without a right call.
   const right = await rightCalls(d);
-  if (!right.size) return { refusal: await refuse(d, venue, "no_right_call", `Symbiote has no fresh right call (checked in the last ${await rightCallTtlMin(d)} minutes) that passed its deep checks: no live entry`) };
+  const laned = [...list.filter((c) => right.has(c.mint)).map((c) => ({ ...c, lane: "right_call" })), ...list.filter((c) => !right.has(c.mint) && !c.fresh).map((c) => ({ ...c, lane: "market" }))];
+  if (!laned.length) return { refusal: await refuse(d, venue, "no_right_call", `Symbiote has no fresh right call (checked in the last ${await rightCallTtlMin(d)} minutes) that passed its deep checks, and no established coin is on the lists: no live entry`) };
   let last = null, looked = 0, inList = 0;
-  for (const c of list) {
-    if (!right.has(c.mint)) continue;
+  for (const c of laned) {
     inList++;
     if (looked >= LIVE.candidatesPerTick) break;
     if (await skip(c.mint, null)) continue;
@@ -552,9 +641,9 @@ export async function scanFib(env, venue, skip) {
     if (!hs.ok) { last = await refuse(d, venue, "safety", hs.reason, c); continue; }
     const mc = await mintCheck(env, c.mint);
     if (!mc.ok) { last = await refuse(d, venue, "token_program", mc.reason, c); continue; }
-    return { c, s, src: cs.src || "jupiter" };
+    return { c, s, src: cs.src || "jupiter", unit: cs.unit || "USD", lane: c.lane, dec: mc.decimals };
   }
-  return { refusal: last || await refuse(d, venue, inList ? "no_setup" : "no_right_call", inList ? "No right-call coin is in a Fibonacci pullback right now" : "No symbiote right call is among the candidates right now") };
+  return { refusal: last || await refuse(d, venue, "no_setup", "No right-call coin and no established coin is in a Fibonacci pullback right now") };
 }
 // The symbiote's right calls that passed the deep checks (status 'candidate') and are FRESH: checked (or flagged) inside the
 // TTL. No symbiote data exists yet to measure how long a call stays good, so the TTL is 30 minutes until 'right_call_ttl_min'
@@ -583,7 +672,7 @@ export async function mintCheck(env, mint) {
     if (e.extension === "pausableConfig" && !st.authority && !st.paused) continue;
     if (BAD_EXT[e.extension]) return { ok: false, reason: `Token-2022 ${BAD_EXT[e.extension]} (${e.extension}): refused` };
   }
-  return { ok: true, program: v.owner };
+  return { ok: true, program: v.owner, decimals: Number.isInteger(info.decimals) ? info.decimals : null };
 }
 // The honeypot test before any buy: a REAL holder's sale of this coin, built by Jupiter for that holder and run in the chain's
 // simulator (sigVerify off: nothing is signed or sent). A coin whose holders cannot sell, or whose transfer hook blocks a sale,
@@ -650,9 +739,11 @@ async function tryBuy(env, g, owner = null) {
   const d = db(env), minute = Math.floor(Date.now() / 60000);
   const found = await scanFib(env, VENUE, (mint, s) => legTaken(d, VENUE, mint, s));
   if (!found.c) return found.refusal;
-  // size: the limit, cut to what the day's loss budget can still lose if this trade's stop is hit (stop distance + exit
-  // slippage + the 1% round-trip ceiling)
-  const { c, s } = found, perSol = (s.entry - s.stop) / s.entry + LIVE.exitSlippageBps / 1e4 + FIB.maxRtPct / 100;
+  // size: the limit, cut to what the day's loss budget can still lose in this trade's real worst case (worstFrac: stop distance
+  // + the 5% disaster margin + exit slippage + the round trip, and never under 50% for a fresh curve coin). The round trip used
+  // here is the lane's own ceiling (3.5% fresh, 1% established), which the cost gate below enforces at this exact size, so the
+  // true cost is never above what the size assumed; the plan then records the worst case at the TRUE measured cost.
+  const { c, s } = found, fresh = !!c.fresh, stopFrac = (s.entry - s.stop) / s.entry, perSol = worstFrac(stopFrac, fresh ? LIVE.freshMaxRtPct : FIB.maxRtPct, fresh);
   const size = round(Math.min(g.lim.maxPerTradeSol, g.budgetLeft != null ? g.budgetLeft / perSol : Infinity), 6), lamports = Math.round(size * 1e9);
   const cappedBy = size < g.lim.maxPerTradeSol ? `daily loss budget: ${round(g.budgetLeft, 6)} SOL left` : null;
   let bal; try { bal = (await solRpc(env, "getBalance", [g.w.address])).value; } catch (e) { return refuse(d, VENUE, "no_balance", cut(e.message)); }
@@ -660,52 +751,94 @@ async function tryBuy(env, g, owner = null) {
   const cg = await costGate(env, VENUE, c, s, size, { feeSide: g.feeSide, owner: g.w.address }); if (!cg.ok) return cg.refusal;
   const { q, rtPct, rewardPct } = cg;
   if (!(bal >= lamports + LIVE.feeBudgetLamports + LIVE.reserveSol * 1e9 + cg.rentFrontedLamports)) return refuse(d, VENUE, "reserve", `The wallet holds ${round(bal / 1e9, 6)} SOL: not enough for a ${size} SOL trade, the ${round(cg.rentFrontedLamports / 1e9, 6)} SOL token-account rent (returned after the sale) and the ${LIVE.reserveSol} SOL kept for fees`);
-  const plan = planOf(s, Math.floor(Date.now() / 1000), { src: found.src, unit: found.src === "symbiote" ? "SOL" : "USD", liqBasis: c.liqBasis || "jupiter", liq: c.liqUsd, rtPct, quoteRtPct: cg.quoteRtPct, fixedLamports: cg.fixedLamports, rewardPct, sizeSol: size, sizeCappedBy: cappedBy, ataNew: cg.rentFrontedLamports > 0, validations: { ...s.validations, notVetoed: true, safety: true, tokenProgram: true, sellProven: true, cost: true, impact: true } });
+  // THE LIVE PRICE, before anything is signed: what this very quote pays per token, in the plan's unit, against the plan's levels
+  const unit = found.unit || (found.src === "symbiote" ? "SOL" : "USD"), solUsd = unit === "USD" ? await solUsdLive(env) : null;
+  const livePx = pxOf(lamports, q.q.outAmount, found.dec, unit, solUsd), tolPct = fresh ? LIVE.freshEntryTolPct : LIVE.entryTolPct, off = entryCheck(s, livePx, tolPct);
+  if (off) return refuse(d, VENUE, "entry_price", off, c);
+  const route = labelsOf(q.q), onCurve = route.some((l) => CURVE_LABELS.has(l));
+  const plan = planOf(s, Math.floor(Date.now() / 1000), { source: found.lane || "right_call", fresh, src: found.src, unit, dec: found.dec, solUsd, livePx: r8(livePx), route, onCurve, liqBasis: c.liqBasis || "jupiter", liq: c.liqUsd, rtPct, quoteRtPct: cg.quoteRtPct, fixedLamports: cg.fixedLamports, rewardPct, sizeSol: size, sizeCappedBy: cappedBy, worstPct: round(worstFrac(stopFrac, rtPct, fresh) * 100, 3), ataNew: cg.rentFrontedLamports > 0,
+    validations: { ...s.validations, notVetoed: true, safety: true, tokenProgram: true, sellProven: true, cost: true, impact: true, livePrice: true } });
   // the claim: one statement takes the coin's only active slot, under the open-position limit. A second caller gets nothing.
   const p = await d.one(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, stop_pct, pool_liq_usd, plan)
     SELECT $1,$2,$3,'opening',$4,$5,$6 WHERE (SELECT count(*) FROM mob_aq_live_positions WHERE venue = $1 AND status IN ${ACTIVE}) < $7::int
       AND ($8::text IS NULL OR EXISTS (SELECT 1 FROM mob_aq_state WHERE k = 'live_tick_lock' AND v = $8::jsonb)) ON CONFLICT DO NOTHING RETURNING id`,
     [VENUE, c.mint, c.symbol, round(((s.entry - s.stop) / s.entry) * 100, 3), c.liqUsd, JSON.stringify(plan), g.lim.maxOpenPositions, owner ? JSON.stringify({ owner }) : null]);
   if (!p) return refuse(d, VENUE, "claim_lost", "This coin or the last free slot was taken by another run", c);
-  const r = await execute(env, g.w, { side: "buy", c, positionId: p.id, inMint: SOL_MINT, outMint: c.mint, amountRaw: lamports, slippageBps: LIVE.slippageBps, reason: s.why, claim: `${VENUE}|${c.mint}|buy|${minute}`, q0: q, patch: { stop: s.stop, t1: s.t1, t2: s.t2 }, maxBuyFeeLamports: cg.maxBuyFeeLamports });
+  const r = await execute(env, g.w, { side: "buy", c, positionId: p.id, inMint: SOL_MINT, outMint: c.mint, amountRaw: lamports, slippageBps: LIVE.slippageBps, reason: `[${plan.source === "market" ? "market" : "right call"}] ${s.why}`, claim: `${VENUE}|${c.mint}|buy|${minute}`, q0: q, patch: { stop: s.stop, t1: s.t1, t2: s.t2 }, maxBuyFeeLamports: cg.maxBuyFeeLamports });
   if (r.skipped) await d.q(`UPDATE mob_aq_live_positions SET status = 'failed', closed_at = now(), exit_reason = $2 WHERE id = $1 AND status = 'opening'`, [p.id, r.noOrder ? cut(r.skipped) : "duplicate order"]);
-  return { buy: c.symbol, ...r };
+  return { buy: c.symbol, source: plan.source, ...r };
 }
 // Exits run whenever a live position is open, with auto trade on or off and with the kill switch on: a position is never left alone.
 // `size(tokensRaw)` turns the tokens held AT THE CLAIM into the amount to sell (default: all of them), never a stale read.
-// An urgent exit (stop, invalidation, veto, liquidity, Alex's SELL ALL) that has failed before is sent with twice the slippage per
-// failure, never over 20%: a rug must not hold the bag because the price ran past 1.5%. The order row keeps the bps used.
+// An urgent exit (stop, invalidation, veto, liquidity, Alex's SELL ALL) that the CHAIN refused before (plan.slipFails: a rejected
+// or failed-simulation swap, isChainFail) is sent with twice the slippage per such refusal, never over 20%: a rug must not hold
+// the bag because the price ran past 1.5%. A sell that failed because Jupiter or the RPC did not answer does NOT widen it: in a
+// data outage the price has not moved, only the data has. The order row keeps the bps used.
 export const exitBps = (fails, urgent = true) => (urgent ? Math.min(LIVE.exitSlippageMaxBps, LIVE.exitSlippageBps * 2 ** Math.max(0, Number(fails) || 0)) : LIVE.exitSlippageBps);
 async function sellPosition(env, w, p, reason, claimKey, { size = (t) => t, patch = null, slippageBps = LIVE.exitSlippageBps } = {}) {
   const d = db(env);
   const took = await d.one(`UPDATE mob_aq_live_positions SET status = 'closing' WHERE id = $1 AND status IN ('open','stuck') RETURNING id, status, tokens_raw`, [p.id]);
   if (!took) return { skipped: "already being sold" };
   let amountRaw = String(size(took.tokens_raw)); if (!/^\d+$/.test(amountRaw) || amountRaw === "0") amountRaw = took.tokens_raw;
-  const r = await execute(env, w, { side: "sell", c: { mint: p.mint, symbol: p.symbol }, positionId: p.id, inMint: p.mint, outMint: SOL_MINT, amountRaw, slippageBps, reason: slippageBps > LIVE.exitSlippageBps ? `${reason} [sell slippage ${slippageBps} bps after ${p.sell_fails} failed sell(s)]` : reason, claim: `${VENUE}|${p.mint}|sell|${claimKey}`, patch });
+  const r = await execute(env, w, { side: "sell", c: { mint: p.mint, symbol: p.symbol }, positionId: p.id, inMint: p.mint, outMint: SOL_MINT, amountRaw, slippageBps, reason: slippageBps > LIVE.exitSlippageBps ? `${reason} [sell slippage ${slippageBps} bps after ${p.plan?.slipFails ?? 0} sell(s) the chain refused]` : reason, claim: `${VENUE}|${p.mint}|sell|${claimKey}`, patch });
   if (r.skipped) await d.q(`UPDATE mob_aq_live_positions SET status = CASE WHEN sell_fails >= $2 THEN 'stuck' ELSE 'open' END WHERE id = $1 AND status = 'closing'`, [p.id, LIVE.maxSellFails]);
   return { sell: p.symbol, reason, ...r };
 }
-// The chart decides every exit (chart.mjs manage). No data this minute = hold: missing data never forces a sale.
+// The chart decides every exit (chart.mjs manage) on 5-minute closes. Beside it, three rules read the LIVE price so a position is
+// never blind and never dumped on one bad read:
+//  - the exit quote for the position's own tokens (asked twice before it counts as missing) is its true value and its live price;
+//  - DISASTER STOP: that live price disasterPct (5%) or more under the stop on disasterTicks (2) ticks in a row sells now, so a
+//    dump inside one 5-minute bar is out in about 2 minutes instead of waiting for the close;
+//  - HARD STOP, only when no candle source is fresh: the live price (the price API, else the exit quote) at or under the stop
+//    sells; no price from either source for noPriceTicks (3) ticks in a row sells. One or two misses hold.
+//  - MIGRATION: a plan made on the bonding curve is re-based the first tick its quote no longer routes through the curve: the
+//    pool's own liquidity becomes the new base, so the -30% liquidity exit never compares a curve figure with a pool figure.
 async function exits(env, w, minute = Math.floor(Date.now() / 60000), renew = null) {
   const d = db(env), out = [], nowSec = Date.now() / 1000;
+  let usd; const solUsd = async () => (usd !== undefined ? usd : (usd = await solUsdLive(env))); // once a tick, only when needed
   // a 'stuck' position (5 failed sells in a row) is still managed and retried every minute: a coin is never left alone
   for (const p of await d.q(`SELECT * FROM mob_aq_live_positions WHERE venue = $1 AND status IN ('open','stuck') ORDER BY id`, [VENUE])) {
     if (renew && !(await renew())) { out.push({ stopped: "the money lease was lost: no further orders this run" }); break; }
-    const q = await quote(env, p.mint, SOL_MINT, p.tokens_raw, LIVE.exitSlippageBps);
+    let q = await quote(env, p.mint, SOL_MINT, p.tokens_raw, LIVE.exitSlippageBps);
+    if (!q.ok) q = await quote(env, p.mint, SOL_MINT, p.tokens_raw, LIVE.exitSlippageBps); // one missed call is not "no price"
     if (q.ok) await d.q(`UPDATE mob_aq_live_positions SET last_value_sol = $2, last_value_at = now() WHERE id = $1`, [p.id, Number(q.q.outAmount) / 1e9]);
     if (!p.plan) continue; // a position without a chart plan (none is opened that way) waits for SELL ALL LIVE
+    const plan = { ...p.plan }, unit = plan.unit || "USD", extra = {};
+    const exitPx = q.ok && Number.isInteger(plan.dec) ? pxOf(q.q.outAmount, p.tokens_raw, plan.dec, unit, unit === "USD" ? await solUsd() : null) : null;
+    // 6) migration: bought on the curve, and the quote no longer routes through it -> the pool's liquidity is the new base
+    const route = q.ok ? labelsOf(q.q) : [];
+    if (plan.onCurve && route.length && !route.some((l) => CURVE_LABELS.has(l))) Object.assign(extra, { onCurve: false, liqBasis: "jupiter", liq: (await liqOf(env, p.mint)) ?? null, liqAtEntry: plan.liq ?? null, migratedAt: Math.floor(nowSec), route });
+    Object.assign(plan, extra);
+    // the -30% liquidity exit compares like with like: Jupiter's pool figure against a base that is also a pool figure. A coin
+    // still on the curve has no pool: its liquidity is the curve's reserves, which move with every trade (the stop covers it).
+    const liqNow = !plan.onCurve && (plan.liqBasis || "jupiter") === "jupiter" ? await liqOf(env, p.mint) : null;
+    if (plan.migratedAt && !(plan.liq > 0) && liqNow > 0) { extra.liq = liqNow; plan.liq = liqNow; } // migrated before the pool had a figure: the first one is the base
     const cs = await positionCandles(env, d, p, nowSec);
-    // 4) the -30% liquidity exit compares like with like: Jupiter's figure only against a plan that was sized on Jupiter's figure
-    const liqNow = (p.plan?.liqBasis || "jupiter") === "jupiter" ? await liqOf(env, p.mint) : null;
-    let m = manage(p.plan, cs.ok ? cs.data : [], nowSec, { liqNow, vetoed: await vetoed(d, p.mint) });
-    // 3) HARD STOP, time-independent: with no fresh candle from either source, the spot price (Jupiter's price API, in the plan's
-    // unit) at or under the stop sells; with no price at all from any source, the position is sold (the stop must always fire)
-    if (!cs.ok && m.action === "hold") m = hardStop(p.plan, await spotIn(p.plan?.unit || "USD", p.mint)) || m;
+    let m = manage(plan, cs.ok ? cs.data : [], nowSec, { liqNow, vetoed: await vetoed(d, p.mint) });
+    if (m.action === "hold") {
+      const stopNow = plan.phase === 2 && plan.trailStop ? Math.max(plan.stop, plan.trailStop) : plan.stop;
+      // 4) DISASTER STOP: an unreadable tick neither counts nor clears the count
+      if (exitPx != null) {
+        if (exitPx <= stopNow * (1 - LIVE.disasterPct / 100)) { const n = (plan.dz || 0) + 1;
+          if (n >= LIVE.disasterTicks) m = { action: "sell_all", reason: `disaster stop: the live exit quote (${r8(exitPx)}) is ${LIVE.disasterPct}% or more under the stop (${r8(stopNow)}) on ${n} ticks in a row` }; else extra.dz = n; }
+        else if (plan.dz) extra.dz = 0;
+      }
+      // 1) + 2) HARD STOP: no fresh candle from any source
+      if (m.action === "hold" && !cs.ok) {
+        // the price API first (the last swap: the same kind of price as a candle close); else the exit quote, lifted by the sell
+        // side's own cost (half the round trip measured at the buy), so a curve coin's 1.25% fee is not read as a fall
+        const spot = (await apiSpot(env, p.mint, unit, solUsd)) ?? (exitPx != null ? exitPx / (1 - (plan.quoteRtPct > 0 ? plan.quoteRtPct : 0) / 200) : null);
+        if (spot == null) { const n = (plan.noPx || 0) + 1;
+          if (n >= LIVE.noPriceTicks) m = { ...hardStop(plan, null), reason: `hard stop: no fresh candles and no price from any source for ${n} ticks in a row, the stop cannot be watched` }; else extra.noPx = n; }
+        else { if (plan.noPx) extra.noPx = 0; m = hardStop(plan, spot) || m; }
+      } else if (cs.ok && plan.noPx) extra.noPx = 0;
+    }
     // the panel's sparkline: the last closed 1-minute price, once a minute, the last 90 kept (display only; manage() never reads it)
     const lastPx = cs.ok ? cs.data.filter((c) => c.t + 60 <= nowSec).slice(-1)[0]?.c : null;
     if (Number.isFinite(lastPx)) await d.q(`UPDATE mob_aq_live_positions SET alert_patch = jsonb_build_object('spark', (SELECT coalesce(jsonb_agg(x), '[]'::jsonb) FROM (SELECT x FROM jsonb_array_elements(coalesce(alert_patch->'spark', '[]'::jsonb)) x OFFSET greatest(0, jsonb_array_length(coalesce(alert_patch->'spark', '[]'::jsonb)) - 89)) z) || jsonb_build_array($2::float8)) WHERE id = $1`, [p.id, lastPx]);
-    if (m.action === "hold") { if (m.patch) await d.q(`UPDATE mob_aq_live_positions SET plan = plan || $2::jsonb WHERE id = $1 AND status = 'open'`, [p.id, JSON.stringify(m.patch)]); continue; }
-    out.push(await sellPosition(env, w, p, m.reason, `${p.plan.phase ?? 0}-${minute}`, { size: m.action === "sell_half" ? (t) => (BigInt(t) / 2n).toString() : (t) => t, patch: m.action === "sell_half" ? m.patch : null, slippageBps: exitBps(p.sell_fails, !/^target/.test(m.reason)) }));
+    const patch = { ...extra, ...(m.patch || {}) };
+    if (m.action === "hold") { if (Object.keys(patch).length) await d.q(`UPDATE mob_aq_live_positions SET plan = plan || $2::jsonb WHERE id = $1 AND status IN ('open','stuck')`, [p.id, JSON.stringify(patch)]); continue; }
+    out.push(await sellPosition(env, w, p, m.reason, `${p.plan.phase ?? 0}-${minute}`, { size: m.action === "sell_half" ? (t) => (BigInt(t) / 2n).toString() : (t) => t, patch: m.action === "sell_half" ? patch : null, slippageBps: exitBps(p.plan?.slipFails ?? 0, !/^target/.test(m.reason)) }));
   }
   return out;
 }
@@ -880,13 +1013,13 @@ async function manualCheck(env, b) {
   if (!(sol > 0)) return { error: "Amount must be above zero" };
   if (!(lim.maxPerTradeSol > 0) || sol > lim.maxPerTradeSol) return { error: `${sol} SOL is over the ${lim.maxPerTradeSol} SOL per-trade limit` };
   // BUY MORE is a buy: the same right-call, veto and safety gates as the trader's own entries, and the same daily loss budget
-  if (!(await rightCalls(d)).has(p.mint)) return { error: `No fresh symbiote right call on ${p.symbol}: BUY MORE is refused (Alex's right-call rule)` };
+  if (p.plan?.source !== "market" && !(await rightCalls(d)).has(p.mint)) return { error: `No fresh symbiote right call on ${p.symbol}: BUY MORE is refused (Alex's right-call rule)` };
   if (await vetoed(d, p.mint)) return { error: `Grok vetoed ${p.symbol} in the last hour: BUY MORE is refused` };
   const hs = await safetyOf(env, { mint: p.mint, audit: null }); if (!hs.ok) return { error: `Safety: ${hs.reason}` };
   const mc = await mintCheck(env, p.mint); if (!mc.ok) return { error: `Token: ${mc.reason}` };
-  const rk = await riskToday(d, await feePerSide(d)), stopFrac = (p.stop_pct ?? 100) / 100 + LIVE.exitSlippageBps / 1e4;
+  const fresh = p.plan?.fresh === true, rk = await riskToday(d, await feePerSide(d)), stopFrac = worstFrac((p.stop_pct ?? 100) / 100, fresh ? LIVE.freshMaxRtPct : FIB.maxRtPct, fresh);
   if (lim.maxDailyLossSol > 0 && -rk.pnl >= lim.maxDailyLossSol) return { error: `Today's live loss is ${round(-rk.pnl, 6)} SOL, at the daily limit: no buying today` };
-  if (!(lim.maxDailyLossSol > 0) || sol * stopFrac > lim.maxDailyLossSol + rk.committed) return { error: `Adding ${sol} SOL could lose ${round(sol * stopFrac, 6)} SOL at the stop; today's loss budget left is ${round(Math.max(0, lim.maxDailyLossSol + rk.committed), 6)} SOL` };
+  if (!(lim.maxDailyLossSol > 0) || sol * stopFrac > lim.maxDailyLossSol + rk.committed) return { error: `Adding ${sol} SOL could lose ${round(sol * stopFrac, 6)} SOL in its worst case; today's loss budget left is ${round(Math.max(0, lim.maxDailyLossSol + rk.committed), 6)} SOL` };
   const open = (await d.one(`SELECT count(*)::int n FROM mob_aq_live_positions WHERE venue = $1 AND status IN ${ACTIVE}`, [VENUE])).n;
   if (lim.maxOpenPositions > 0 && open > lim.maxOpenPositions) return { error: `${open} positions open, over the limit of ${lim.maxOpenPositions}` };
   const lamports = Math.round(sol * 1e9); let bal;
@@ -912,7 +1045,7 @@ export async function manualOrder(env, b) {
   if (!owner) return { error: "Another order is being made right now: try again in a few seconds", busy: true };
   try {
     if ((await d.one(`SELECT count(*)::int n FROM mob_aq_live_orders WHERE venue = $1 AND status IN ('requested','sent')`, [VENUE])).n) return { error: "An earlier order is still being confirmed on the chain", busy: true };
-    if (b.side === "sell") return await sellPosition(env, w, p, `manual: Alex (sell ${b.pct}%)`, `manual-${b.pct}-${minute}`, { size: (t) => (Number(b.pct) === 100 ? t : ((BigInt(t) * BigInt(b.pct)) / 100n).toString()), slippageBps: exitBps(p.sell_fails) });
+    if (b.side === "sell") return await sellPosition(env, w, p, `manual: Alex (sell ${b.pct}%)`, `manual-${b.pct}-${minute}`, { size: (t) => (Number(b.pct) === 100 ? t : ((BigInt(t) * BigInt(b.pct)) / 100n).toString()), slippageBps: exitBps(p.plan?.slipFails ?? 0) });
     const q = await quote(env, SOL_MINT, p.mint, k.lamports, LIVE.slippageBps);
     if (!q.ok) return { error: q.error };
     if (q.impactPct > LIVE.maxImpactPct) return { error: `Price impact ${round(q.impactPct, 2)}% is over the ${LIVE.maxImpactPct}% cap` };
@@ -928,7 +1061,7 @@ export async function sellAllLive(env) {
   if (!owner) return { ...out, busy: "the trader is in the middle of a run: press again in a few seconds" };
   try { for (const p of await d.q(`SELECT * FROM mob_aq_live_positions WHERE venue = $1 AND status IN ('open','stuck') ORDER BY id`, [VENUE])) {
     if (!(await renewLock(d, owner))) break;
-    const r = await sellPosition(env, w, p, "SELL ALL LIVE (Alex)", `all-${Math.floor(Date.now() / 60000)}`, { slippageBps: exitBps(p.sell_fails) });
+    const r = await sellPosition(env, w, p, "SELL ALL LIVE (Alex)", `all-${Math.floor(Date.now() / 60000)}`, { slippageBps: exitBps(p.plan?.slipFails ?? 0) });
     (r.confirmed ? out.sold : out.kept).push({ symbol: p.symbol, signature: r.signature || null, state: r.confirmed ? "sold" : r.pending ? "sent, being confirmed" : r.failed || r.skipped || "not sold" });
   } } finally { await dropLock(d, owner); }
   await brain(d, `SELL ALL LIVE by Alex: ${out.sold.length} sold, ${out.kept.length} not yet.`);
@@ -944,8 +1077,8 @@ export async function liveState(d, venue = VENUE) {
     d.one(`SELECT coalesce(sum(pnl_sol), 0)::float8 s, count(*)::int n, count(*) FILTER (WHERE pnl_sol > 0)::int w, (SELECT coalesce(sum(fee_sol), 0)::float8 FROM mob_aq_live_orders WHERE venue = $1 AND status = 'confirmed') f FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed'`, [venue]),
   ]);
   const st = Object.fromEntries(S.map((r) => [r.k, r.v]));
-  const plan = (p) => (p.plan ? { stop: p.plan.phase === 2 ? Math.max(p.plan.stop, p.plan.trailStop ?? -Infinity) : p.plan.stop, t1: p.plan.t1, t2: p.plan.t2, t3: p.plan.t3, entry: p.plan.entry, phase: p.plan.phase, leg: p.plan.leg } : null);
-  return { positions: pos.map((p) => ({ id: Number(p.id), symbol: p.symbol, mint: p.mint, status: p.status, costSol: p.cost_sol, valueSol: p.last_value_sol, valueAt: p.last_value_at, openedAt: p.opened_at, plan: plan(p), spark: Array.isArray(p.alert_patch?.spark) ? p.alert_patch.spark : [], pnlPct: p.last_value_sol != null && p.cost_sol > 0 ? round((p.last_value_sol / p.cost_sol - 1) * 100, 2) : null, underwater: p.last_value_sol != null && p.last_value_sol < p.cost_sol })),
+  const plan = (p) => (p.plan ? { source: p.plan.source || "right_call", stop: p.plan.phase === 2 ? Math.max(p.plan.stop, p.plan.trailStop ?? -Infinity) : p.plan.stop, t1: p.plan.t1, t2: p.plan.t2, t3: p.plan.t3, entry: p.plan.entry, phase: p.plan.phase, leg: p.plan.leg } : null);
+  return { positions: pos.map((p) => ({ id: Number(p.id), symbol: p.symbol, mint: p.mint, source: p.plan ? p.plan.source || "right_call" : null, status: p.status, costSol: p.cost_sol, valueSol: p.last_value_sol, valueAt: p.last_value_at, openedAt: p.opened_at, plan: plan(p), spark: Array.isArray(p.alert_patch?.spark) ? p.alert_patch.spark : [], pnlPct: p.last_value_sol != null && p.cost_sol > 0 ? round((p.last_value_sol / p.cost_sol - 1) * 100, 2) : null, underwater: p.last_value_sol != null && p.last_value_sol < p.cost_sol })),
     orders: ord.map((o) => ({ id: Number(o.id), side: o.side, symbol: o.symbol, status: o.status, reason: o.reason, error: o.error, signature: o.signature, sol: o.fill_sol, at: o.requested_at })),
     manualPcts: MANUAL_PCTS, pnlTodaySol: round(pnl.s, 6), closedToday: pnl.n, pnlTotalSol: round(tot?.s ?? 0, 6), closedTotal: tot?.n ?? 0, winsTotal: tot?.w ?? 0, feesTotalSol: round(tot?.f ?? 0, 6), lastRefusal: ref ? { gate: ref.gate, reason: ref.reason, symbol: ref.symbol, times: ref.n, at: ref.at } : null,
     lastTickAt: st.live_tick?.at || null, autoOff: st.live_auto_off || null, paper: await paperStats(d),
@@ -985,15 +1118,21 @@ export async function phantomWatch(env, g = null) {
     const q = await quote(env, p.mint, SOL_MINT, p.tokens_raw, LIVE.exitSlippageBps);
     if (q.ok) await d.q(`UPDATE mob_aq_live_positions SET last_value_sol = $2, last_value_at = now() WHERE id = $1`, [p.id, Number(q.q.outAmount) / 1e9]);
     if (!p.plan) continue;
-    const cs = await candlesFor(env, d, p.mint);
-    const m = manage(p.plan, cs.ok ? cs.data : [], nowSec, { liqNow: await liqOf(env, p.mint), vetoed: await vetoed(d, p.mint) });
+    // the same unit and liquidity-basis rules as a live position: candles in the plan's unit from a FRESH source only, and the
+    // -30% liquidity exit only against a pool figure (never a curve figure against a pool's)
+    const cs = await positionCandles(env, d, p, nowSec);
+    const m = manage(p.plan, cs.ok ? cs.data : [], nowSec, { liqNow: !p.plan.onCurve && (p.plan.liqBasis || "jupiter") === "jupiter" ? await liqOf(env, p.mint) : null, vetoed: await vetoed(d, p.mint) });
     if (m.action === "hold" && !cs.ok) continue; // no candles this minute: a standing SELL NOW stays up (missing data never clears it)
     // he sells, never Aquarius: a trail update is applied, a sale is only told to him (SELL NOW), and the half sale's next step waits for his sale
     if (m.action === "hold") await d.q(`UPDATE mob_aq_live_positions SET plan = plan || coalesce($2::jsonb, '{}'::jsonb), alert = NULL, alert_action = NULL, alert_patch = NULL WHERE id = $1`, [p.id, m.patch ? JSON.stringify(m.patch) : null]);
     else await d.q(`UPDATE mob_aq_live_positions SET alert = $2, alert_action = $3, alert_patch = $4 WHERE id = $1`, [p.id, m.action === "sell_half" ? "target 1 reached: sell half (then the stop moves to your entry)" : m.reason, m.action, m.patch ? JSON.stringify(m.patch) : null]);
   }
   let found = await scanFib(env, "phantom", async (mint) => open.some((p) => p.mint === mint));
-  if (found.c) { const lim = await get(d, "sol_wallet_limits", {}), cl = clampLimits(lim, env), cc = await costGate(env, "phantom", found.c, found.s, cl.maxPerTradeSol > 0 ? cl.maxPerTradeSol : 0.05, { feeSide: await feePerSide(d), owner: ph.address }); if (!cc.ok) found = { refusal: cc.refusal }; }
-  if (found.c) { const s = found.s; await set(d, "phantom_signal", { mint: found.c.mint, symbol: found.c.symbol, at: new Date().toISOString(), why: s.why, zone: [s.levels.z618, s.levels.z50], entry: s.entry, stop: s.stop, t1: s.t1, t2: s.t2, t3: s.t3, liqUsd: found.c.liqUsd, plan: planOf(s, Math.floor(nowSec), { liq: found.c.liqUsd }) }); }
+  let cc = null;
+  if (found.c) { const lim = await get(d, "sol_wallet_limits", {}), cl = clampLimits(lim, env); cc = await costGate(env, "phantom", found.c, found.s, cl.maxPerTradeSol > 0 ? cl.maxPerTradeSol : 0.05, { feeSide: await feePerSide(d), owner: ph.address }); if (!cc.ok) found = { refusal: cc.refusal }; }
+  if (found.c) { const s = found.s; await set(d, "phantom_signal", { mint: found.c.mint, symbol: found.c.symbol, at: new Date().toISOString(), why: s.why, zone: [s.levels.z618, s.levels.z50], entry: s.entry, stop: s.stop, t1: s.t1, t2: s.t2, t3: s.t3, liqUsd: found.c.liqUsd, source: found.lane,
+    // 7) the signal's plan says where its numbers come from, like a live plan: lane, candle source, unit, liquidity basis. Whether the
+    // coin is still on the bonding curve comes from the route of the cost gate's own buy quote.
+    plan: planOf(s, Math.floor(nowSec), { source: found.lane || "right_call", fresh: !!found.c.fresh, src: found.src, unit: found.unit || (found.src === "symbiote" ? "SOL" : "USD"), dec: found.dec, liqBasis: found.c.liqBasis || "jupiter", onCurve: labelsOf(cc?.q?.q).some((l) => CURVE_LABELS.has(l)), liq: found.c.liqUsd }) }); }
   return { marked: open.length, signal: found.c ? found.c.symbol : null };
 }

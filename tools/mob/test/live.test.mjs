@@ -38,16 +38,18 @@ const flat = (p, k, v = 5) => Array.from({ length: k }, () => [p, p, v]);
 function world() {
   resetMocks();
   Object.assign(F, { payer: null, nsig: 1, swapBody: null, balance: 1_000_000_000, quoteFail: false, swapFail: false, jupSim: null, impact: "0.001", simTake: null, simErr: null, send: "ok", sent: [], status: {}, txs: {}, height: 1000, lastValid: 2000, tokensOut: "5000000", sellOut: "60000000", candles: fibCandles(), tokAccts: [], tokPost: {}, mint: { owner: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", data: { parsed: { type: "mint", info: { freezeAuthority: null, mintAuthority: null, decimals: 5 } } } },
-    holderSimErr: null, recvTokens: null, ataOwner: null, txExtra: [], rentApart: false, holderOwner: "11111111111111111111111111111111", prices: null, rug: { mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 5 } }, calls: [], rowAtSend: null,
+    solUsd: null, priceFail: false, noChart: new Set(), quoteFailIf: null, route: "Meteora", holderSimErr: null, recvTokens: null, ataOwner: null, txExtra: [], rentApart: false, holderOwner: "11111111111111111111111111111111", prices: null, rug: { mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 5 } }, calls: [], rowAtSend: null,
     pools: [{ id: "pool1", quoteAsset: SOL, baseAsset: { id: MINT, symbol: "BONK", usdPrice: 0.00002, liquidity: 250000, decimals: 5, firstPool: { createdAt: "2024-01-01T00:00:00Z" }, stats5m: { priceChange: -4 }, audit: { mintAuthorityDisabled: true, freezeAuthorityDisabled: true } } },
       { id: "pool2", quoteAsset: SOL, baseAsset: { id: NEWMINT, symbol: "NEWP", usdPrice: 1, liquidity: 900000, decimals: 6, firstPool: { createdAt: new Date(Date.now() - 3600e3).toISOString() }, stats5m: { priceChange: -9 } } }] });
   mock("GET", /^https:\/\/datapi\.jup\.ag\/v1\/pools\//, () => ({ pools: F.pools }));
-  mock("GET", /^https:\/\/datapi\.jup\.ag\/v2\/charts\//, () => ({ candles: F.candles }));
+  mock("GET", /^https:\/\/datapi\.jup\.ag\/v2\/charts\//, (c, u) => ([...F.noChart].some((m) => u.pathname.includes(m)) ? new Response("{}", { status: 404 }) : { candles: F.candles }));
   mock("GET", /^https:\/\/api\.rugcheck\.xyz\//, () => F.rug);
   for (const host of ["https://api.jup.ag", "https://lite-api.jup.ag"]) {
-    mock("GET", `${host}/swap/v1/quote`, (c, u) => { F.calls.push("quote"); if (F.quoteFail) return new Response(JSON.stringify({ error: "Could not find any route" }), { status: 400 });
-      const buy = u.searchParams.get("inputMint") === SOL, out = buy ? F.tokensOut : F.sellOut;
-      return { inputMint: u.searchParams.get("inputMint"), outputMint: u.searchParams.get("outputMint"), inAmount: u.searchParams.get("amount"), outAmount: out, otherAmountThreshold: String(Math.floor(Number(out) * 0.99)), priceImpactPct: F.impact, slippageBps: Number(u.searchParams.get("slippageBps")), routePlan: [{ swapInfo: { label: "Meteora" } }] }; });
+    // price/v3: SOL at a price that makes the fake quotes agree with the fake chart (0.05 SOL buys 50 tokens = 0.001 SOL each = 114.6 "USD")
+    mock("GET", `${host}/price/v3`, (c, u) => { F.calls.push("price"); if (F.priceFail) return new Response("{}", { status: 503 }); const all = { [SOL]: { usdPrice: F.solUsd ?? F.candles.at(-1).close * 1000, decimals: 9 }, ...(F.prices || {}) }; return Object.fromEntries(u.searchParams.get("ids").split(",").filter((m) => all[m]).map((m) => [m, all[m]])); });
+    mock("GET", `${host}/swap/v1/quote`, (c, u) => { F.calls.push("quote"); if (F.quoteFail || F.quoteFailIf?.(u)) return new Response(JSON.stringify({ error: "Could not find any route" }), { status: 400 });
+      const buy = u.searchParams.get("inputMint") === SOL, usdc = u.searchParams.get("outputMint").startsWith("EPjFWdd5"), out = usdc ? String(Math.round((F.solUsd ?? F.candles.at(-1).close * 1000) * (Number(u.searchParams.get("amount")) / 1e9) * 1e6)) : buy ? String(Math.round((Number(F.tokensOut) * Number(u.searchParams.get("amount"))) / 5e7)) : F.sellOut;
+      return { inputMint: u.searchParams.get("inputMint"), outputMint: u.searchParams.get("outputMint"), inAmount: u.searchParams.get("amount"), outAmount: out, otherAmountThreshold: String(Math.floor(Number(out) * 0.99)), priceImpactPct: F.impact, slippageBps: Number(u.searchParams.get("slippageBps")), routePlan: [{ swapInfo: { label: F.route } }] }; });
     mock("POST", `${host}/swap/v1/swap`, async (c) => { F.calls.push("swap"); const b = JSON.parse(c.body); F.swapBody = b; const ours = b.userPublicKey === wallet?.address; if (F.swapFail && ours) return new Response("{}", { status: 500 });
       return { swapTransaction: fakeTx(F.payer || b.userPublicKey, F.nsig || 1, ours && b.quoteResponse.inputMint === SOL ? await L.ataOf(b.userPublicKey, b.quoteResponse.outputMint) : null), lastValidBlockHeight: F.lastValid, prioritizationFeeLamports: 9555, simulationError: ours ? F.jupSim : null }; });
   }
@@ -155,7 +157,8 @@ test("a buy: the row is written before the send, the signature is ours, the fill
   assert.equal(F.swapBody.userPublicKey, wallet.address); assert.equal(F.swapBody.wrapAndUnwrapSol, true); assert.equal(F.swapBody.quoteResponse.inAmount, "50000000");
   assert.equal(o.status, "confirmed"); assert.equal(o.side, "buy"); assert.equal(o.in_amount, "50000000"); assert.equal(o.quote_out, "5000000"); assert.equal(o.fill_tokens, "5000000"); assert.ok(Math.abs(o.fill_sol + 0.05205) < 1e-9); assert.ok(Math.abs(o.fee_sol - 0.000014556) < 1e-12);
   assert.equal(p.status, "open"); assert.equal(p.tokens_raw, "5000000"); assert.ok(Math.abs(p.cost_sol - 0.05205) < 1e-9); assert.equal(p.time_exit_at, null, "no clock");
-  assert.equal(p.plan.kind, "fib"); assert.equal(p.plan.entry, 114.6); assert.ok(Math.abs(p.plan.stop - (Math.max(p.plan.levels.z786, p.plan.pullLow) - 0.25 * p.plan.leg.atr)) < 1e-4 && p.plan.t1 > 129); assert.equal(p.plan.phase, 0);
+  assert.equal(p.plan.kind, "fib"); assert.equal(p.plan.chartEntry, 114.6); assert.equal(p.plan.entryFrom, "fill"); assert.ok(Math.abs(p.plan.entry - (0.05205 / 50) * 114600) < 1e-6, "entry = the SOL the buy really cost / the tokens that arrived, in the plan's unit");
+  assert.equal(p.plan.source, "right_call"); assert.equal(p.plan.unit, "USD"); assert.equal(p.plan.dec, 5); assert.equal(p.plan.onCurve, false); assert.equal(p.plan.validations.livePrice, true); assert.match(o.reason, /^\[right call\] /); assert.ok(Math.abs(p.plan.stop - (Math.max(p.plan.levels.z786, p.plan.pullLow) - 0.25 * p.plan.leg.atr)) < 1e-4 && p.plan.t1 > 129); assert.equal(p.plan.phase, 0);
   for (const k of ["leg", "pocket", "bounceClose", "pullbackVolumeLower", "notVetoed", "safety", "cost", "impact"]) assert.equal(p.plan.validations[k], true, k);
   assert.ok(p.plan.rtPct < 1 && p.plan.rewardPct > 3 * p.plan.rtPct); assert.match(o.reason, /golden pocket bounce/);
   assert.deepEqual(F.calls.filter((c) => ["simulateTransaction", "sendTransaction"].includes(c)), ["simulateTransaction", "sendTransaction"], "simulated before it was signed and sent");
@@ -283,7 +286,7 @@ test("Alex's manual orders: SELL 25% / ALL through the ledger, BUY MORE adds to 
   // BUY MORE: average cost = cost and tokens added together; the chart plan stays the original leg's
   const plan0 = p.plan, cost0 = p.cost_sol;
   r = await M({ positionId: p.id, side: "buy", sol: 0.02 }); assert.equal(r.status, 200, await r.clone().text()); [p] = await positions();
-  assert.equal(p.tokens_raw, "8750000"); assert.ok(Math.abs(p.cost_sol - (cost0 + 0.02 + 0.00205)) < 1e-9); assert.deepEqual(p.plan.levels, plan0.levels); assert.equal(p.status, "open");
+  assert.equal(p.tokens_raw, "5750000"); assert.ok(Math.abs(p.cost_sol - (cost0 + 0.02 + 0.00205)) < 1e-9); assert.deepEqual(p.plan.levels, plan0.levels); assert.equal(p.status, "open");
   assert.match((await orders()).at(-1).reason, /manual: Alex \(buy more\)/); assert.equal((await positions()).length, 1, "it adds, it never opens a second position");
   assert.equal((await M({ positionId: p.id, side: "buy", sol: 1 })).status, 400, "over the per-trade limit");
   // rule 10: under water, BUY MORE asks first; with "buy anyway" it goes
@@ -328,20 +331,214 @@ test("Robinhood: the same gates in USD, the order call is not built, and the US 
   assert.equal(usMarket(new Date("2026-07-01T13:30:00Z")).open, true, "summer time: 9:30 New York is 13:30 UTC");
 });
 
-test("RIGHT CALL rule: no symbiote right call = no live entry, a flagged-but-unchecked call is not enough", async () => {
+const CURVEMINT = "7deBYhKWNtXYL6brwF1DcWziqXqE2XLBUgkQq8SCpump"; // a valid 32-byte address, used only as a name inside the fake world
+// CURVE MODE: a fresh pump coin still on its bonding curve. Jupiter has no chart for it; symbiote's bars are its candles (in SOL);
+// every quote routes through "Pump.fun"; a round trip costs what was measured live on 2026-11-18 (2.79% in the quotes).
+const CURVE_TOKENS = 43.63002; // what 0.05 SOL buys at 0.001146 SOL a token (5 decimals)
+const symBars = async (cs) => { await d.q(`DELETE FROM mob_aq_sym_bars WHERE mint = $1`, [CURVEMINT]);
+  await d.q(`INSERT INTO mob_aq_sym_bars (mint, t, o, h, l, c, v) SELECT $1, t, o, h, l, c, v FROM json_to_recordset($2::json) AS x(t bigint, o float8, h float8, l float8, c float8, v float8)`, [CURVEMINT, JSON.stringify(cs.map((c) => ({ ...c, o: c.o * 1e-5, h: c.h * 1e-5, l: c.l * 1e-5, c: c.c * 1e-5 })))]); };
+async function curveWorld({ right = true, keepPools = false } = {}) {
+  if (!keepPools) F.pools = []; F.noChart.add(CURVEMINT); F.route = "Pump.fun"; F.tokensOut = "4363002"; F.sellOut = "48605000"; F.solUsd = 75;
+  F.prices = { [CURVEMINT]: { usdPrice: 0.001146 * 75, liquidity: 3000, decimals: 5 } };
+  await d.q(`DELETE FROM mob_aq_sym_right`); await d.q(`DELETE FROM mob_aq_market`);
+  if (right) await d.q(`INSERT INTO mob_aq_sym_right (mint, symbol, status, checked_at, checks) VALUES ($1, 'NEWP', 'candidate', now(), '{"realSol": 40}')`, [CURVEMINT]);
+  await symBars(chart(Date.now() / 1000));
+}
+const curveOut = (px) => String(Math.round(px * CURVE_TOKENS * 1e9)); // the exit quote (lamports) that prices the curve position at px SOL a token
+const usdOut = (px) => String(Math.round((px / 114600) * 50 * 1e9));   // the same for the standard USD position (50 tokens, SOL at 114,600)
+const planNow = async () => (await one(`SELECT plan FROM mob_aq_live_positions WHERE status IN ('open','stuck','closing') ORDER BY id DESC LIMIT 1`)).plan;
+const freeze = async () => { F.candles = asJup(chart(Date.now() / 1000 - 900)).candles; await d.q(`DELETE FROM mob_aq_market`); }; // every source's last bar is 15 minutes old
+
+test("8) two lanes: right calls first, and an established coin may be bought on the market lane without one; a fresh coin never", async () => {
   for (const venue of ["solana", "phantom"]) {
-    await wipe(); world(); F.candles = fibCandles(); await d.q(`DELETE FROM mob_aq_sym_right`);
-    const none = await L.scanFib(env, venue, async () => false); assert.ok(!none.c); assert.equal((await lastRef(venue)).gate, "no_right_call");
+    await wipe(); world(); await d.q(`DELETE FROM mob_aq_sym_right`);
+    const mk = await L.scanFib(env, venue, async () => false); assert.equal(mk.c?.mint, MINT, JSON.stringify(mk.refusal)); assert.equal(mk.lane, "market", "no right call: the established coin is a market-lane candidate");
     await d.q(`INSERT INTO mob_aq_sym_right (mint, symbol, status) VALUES ($1, 'BONK', 'flagged')`, [MINT]);
-    const fl = await L.scanFib(env, venue, async () => false); assert.ok(!fl.c, "flagged but not deep-checked must not be bought"); assert.equal((await lastRef(venue)).gate, "no_right_call");
+    assert.equal((await L.scanFib(env, venue, async () => false)).lane, "market", "flagged but not deep-checked is not a right call");
     await d.q(`UPDATE mob_aq_sym_right SET status = 'candidate' WHERE mint = $1`, [MINT]);
-    const ok = await L.scanFib(env, venue, async () => false); assert.ok(ok.c ? ok.c.mint === MINT : (await lastRef(venue)).gate !== "no_right_call", "a checked right call goes on to the chart gates");
+    const rc = await L.scanFib(env, venue, async () => false); assert.equal(rc.c.mint, MINT); assert.equal(rc.lane, "right_call");
   }
-  const t = await L.liveTick(env, { minute: 5 }); void t;
+  // the market lane buys, tagged, under the established 1% rules and every gate
+  await wipe(); world(); await d.q(`DELETE FROM mob_aq_sym_right`);
+  let r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.buy, "BONK"); assert.equal(r.result.confirmed, true, JSON.stringify(r.result)); assert.equal(r.result.source, "market");
+  let [p] = await positions(), [o] = await orders(); assert.equal(p.plan.source, "market"); assert.equal(p.plan.fresh, false); assert.match(o.reason, /^\[market\] golden pocket bounce/);
+  assert.equal((await L.liveState(d)).positions[0].source, "market", "the ledger shows the lane"); assert.equal((await L.liveState(d)).positions[0].plan.source, "market");
+  await wipe(); world(); await d.q(`DELETE FROM mob_aq_sym_right`); F.sellOut = "49000000"; r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.refused, "cost"); assert.match((await lastRef()).reason, /over 1%/, "market lane: the 1% round-trip rule");
+  await wipe(); world(); await d.q(`DELETE FROM mob_aq_sym_right`); await d.q(`INSERT INTO mob_aq_chat (from_name, text) VALUES ('grok', $1)`, [`VETO ${MINT}`]); assert.equal((await L.liveTick(env, { minute: 1 })).result.refused, "veto", "market lane: Grok's veto"); await d.q(`DELETE FROM mob_aq_chat`);
+  await wipe(); world(); await d.q(`DELETE FROM mob_aq_sym_right`); F.holderSimErr = { InstructionError: [4, { Custom: 6022 }] }; assert.equal((await L.liveTick(env, { minute: 1 })).result.refused, "honeypot", "market lane: the honeypot test");
+  // CURVE: a fresh coin with no right call is never a candidate, on any lane
+  await wipe(); world(); await curveWorld({ right: false }); r = await L.liveTick(env, { minute: 1 }); assert.ok(["no_candidate", "no_right_call"].includes(r.result.refused), JSON.stringify(r.result)); assert.equal((await orders()).length, 0);
+  // both lanes have a setup: the right call is taken first, with its own (curve) rules
+  await wipe(); world(); await curveWorld({ keepPools: true }); r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.buy, "NEWP", JSON.stringify(r.result) + JSON.stringify(await lastRef())); assert.equal(r.result.source, "right_call");
+  [p] = await positions(); assert.equal(p.plan.source, "right_call"); assert.equal(p.plan.fresh, true); assert.match((await orders())[0].reason, /^\[right call\] /);
+  // BUY MORE on a market-lane position does not need a right call (it still needs every other gate)
+  await wipe(); world(); await d.q(`DELETE FROM mob_aq_sym_right`); await L.liveTick(env, { minute: 1 }); [p] = await positions();
+  const pv = await L.manualPreview(env, { side: "buy", positionId: Number(p.id), sol: 0.01 }); assert.ok(!/right call/.test(pv.error || ""), JSON.stringify(pv));
 });
 
-// ---------------------------------------------------------------- the 2026-11-18 audit fixes
-// a legacy one-instruction transaction from the wallet: [wallet, other, program], the instruction's accounts [0,1,0]
+test("1) the stop cannot go blind: every candle source must be fresh, converted or not; a frozen one is never good data (USD and CURVE)", async () => {
+  const now = Math.floor(Date.now() / 1000), t = Math.floor(now / 60) * 60 - 120, old = t - 3600;
+  const jupAt = (time, px) => { F.candles = [{ time, open: px, high: px, low: px, close: px, volume: 1 }]; return d.q(`DELETE FROM mob_aq_market`); };
+  const symAt = async (time) => { await d.q(`DELETE FROM mob_aq_sym_bars WHERE mint = $1`, [CURVEMINT]); if (time) await d.q(`INSERT INTO mob_aq_sym_bars (mint, t, o, h, l, c, v) VALUES ($1, $2, 1, 1, 1, 1, 1)`, [CURVEMINT, time]); };
+  const pc = (plan) => L.positionCandles(env, d, { mint: CURVEMINT, plan }, now); F.solUsd = 75;
+  // CURVE plan (symbiote, SOL): its own bars frozen AND Jupiter's (the other unit) frozen -> NOT ok. This was returned as good data before.
+  await symAt(old); await jupAt(old, 75); let cs = await pc({ src: "symbiote", unit: "SOL" }); assert.equal(cs.ok, false); assert.equal(cs.stale, true);
+  // USD plan (Jupiter): Jupiter frozen and symbiote's SOL bars frozen -> NOT ok either
+  cs = await pc({ src: "jupiter", unit: "USD" }); assert.equal(cs.ok, false); assert.equal(cs.stale, true);
+  // the other source is fresh: used, converted at the SOL price
+  await jupAt(t, 75); cs = await pc({ src: "symbiote", unit: "SOL" }); assert.equal(cs.ok, true); assert.equal(cs.converted, true); assert.equal(cs.src, "jupiter"); assert.ok(Math.abs(cs.data.at(-1).c - 1) < 1e-9);
+  await jupAt(old, 75); await symAt(t); cs = await pc({ src: "jupiter", unit: "USD" }); assert.equal(cs.ok, true); assert.equal(cs.src, "symbiote"); assert.ok(Math.abs(cs.data.at(-1).c - 75) < 1e-9, "1 SOL at 75 USD");
+  // its own source fresh: used as it is
+  cs = await pc({ src: "symbiote", unit: "SOL" }); assert.equal(cs.ok, true); assert.equal(cs.converted, undefined); assert.equal(cs.data.at(-1).c, 1);
+  // the other source is fresh but there is no SOL price to convert it with: not usable, never mixed raw
+  await symAt(old); await jupAt(t, 75); F.priceFail = true; F.quoteFail = true; cs = await pc({ src: "symbiote", unit: "SOL" }); assert.equal(cs.ok, false);
+});
+
+test("2) one missed price never sells: frozen candles + no price holds for two ticks and sells on the third; a data outage never widens the slippage", async () => {
+  await L.liveTick(env, { minute: 1 }); let [p] = await positions(); assert.equal(p.status, "open"); const n0 = (await orders()).length;
+  await freeze();
+  // candles frozen, prices fine and above the stop: held, nothing counted
+  let r = await L.liveTick(env, { minute: 2 }); [p] = await positions(); assert.equal(p.status, "open"); assert.ok(!p.plan.noPx); assert.equal((await orders()).length, n0);
+  // OUTAGE (no candle, no quote, no price API): the exit quote is asked twice, then the price API; one miss holds
+  F.quoteFail = true; F.priceFail = true; F.calls.length = 0; r = await L.liveTick(env, { minute: 3 }); [p] = await positions();
+  assert.equal(p.status, "open", JSON.stringify(r.exits)); assert.equal(p.plan.noPx, 1); assert.ok(F.calls.filter((c) => c === "quote").length >= 2, "the quote was retried"); assert.ok(F.calls.includes("price"), "the second source was asked"); assert.equal((await orders()).length, n0, "ONE missed price call sells nothing");
+  // the price comes back: the count is cleared
+  F.quoteFail = false; F.priceFail = false; await L.liveTick(env, { minute: 4 }); [p] = await positions(); assert.equal(p.status, "open"); assert.equal(p.plan.noPx, 0);
+  // only the price API is down: the exit quote is the second source, still no miss
+  F.priceFail = true; await L.liveTick(env, { minute: 5 }); [p] = await positions(); assert.equal(p.status, "open"); assert.ok(!p.plan.noPx, "the quote for the position's own tokens priced it");
+  // three ticks in a row with nothing: the third sells (it cannot land in the outage, and that does NOT widen the slippage)
+  F.quoteFail = true;
+  await L.liveTick(env, { minute: 6 }); assert.equal((await positions())[0].plan.noPx, 1); await L.liveTick(env, { minute: 7 }); assert.equal((await positions())[0].plan.noPx, 2); assert.equal((await orders()).length, n0);
+  r = await L.liveTick(env, { minute: 8 }); assert.match(r.exits[0].reason, /hard stop: no fresh candles and no price from any source for 3 ticks in a row/, JSON.stringify(r.exits));
+  [p] = await positions(); let so = (await orders()).at(-1); assert.equal(so.side, "sell"); assert.equal(so.status, "failed"); assert.equal(so.slippage_bps, 150); assert.equal(p.status, "open"); assert.equal(p.sell_fails, 1); assert.ok(!p.plan.slipFails, "an outage is not a slippage failure");
+  r = await L.liveTick(env, { minute: 9 }); so = (await orders()).at(-1); assert.equal(so.slippage_bps, 150, "still 1.5% after two failed sells in the outage"); assert.equal((await positions())[0].sell_fails, 2); assert.ok(!(await positions())[0].plan.slipFails);
+  // data back, price above the stop: no sale, the count is cleared
+  F.quoteFail = false; F.priceFail = false; const n1 = (await orders()).length; await L.liveTick(env, { minute: 10 }); [p] = await positions(); assert.equal(p.status, "open"); assert.equal(p.plan.noPx, 0); assert.equal((await orders()).length, n1);
+  // candles still frozen, the live price under the stop: the HARD STOP sells at once. The chain refuses it (simulation): THAT widens the next try
+  F.prices = { [MINT]: { usdPrice: p.plan.stop * 0.99, decimals: 5 } }; F.sellOut = usdOut(p.plan.stop * 0.97); F.simErr = { InstructionError: [3, { Custom: 6001 }] };
+  r = await L.liveTick(env, { minute: 11 }); assert.match(r.exits[0].reason, /^hard stop: the spot price is at or under the stop/); assert.match(r.exits[0].failed, /simulation failed/);
+  [p] = await positions(); assert.equal(p.plan.slipFails, 1); so = (await orders()).at(-1); assert.equal(so.slippage_bps, 150);
+  F.simErr = null; r = await L.liveTick(env, { minute: 12 }); so = (await orders()).at(-1); assert.equal(so.slippage_bps, 300, "a real chain/simulator refusal doubles the slippage"); assert.equal(r.exits[0].confirmed, true); assert.equal((await positions())[0].status, "closed");
+  assert.equal(L.isChainFail("the chain rejected it (x)"), true); assert.equal(L.isChainFail("the simulation failed (y)"), true); assert.equal(L.isChainFail("the transaction would bring back 0.01 SOL, less than the quoted minimum; not signed"), true);
+  for (const e of ["Jupiter did not answer", "Jupiter answered HTTP 503", "Jupiter answered HTTP 400 (Could not find any route)", "it never reached the chain (its time window passed); nothing was spent", "busy"]) assert.equal(L.isChainFail(e), false, e);
+  assert.equal(L.LIVE.noPriceTicks, 3);
+});
+
+test("2) CURVE: frozen bars on a curve coin: the exit quote's own fee is not read as a fall; a real fall under the stop sells; no price for 3 ticks sells", async () => {
+  await curveWorld(); let r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.confirmed, true, JSON.stringify(r.result) + JSON.stringify(await lastRef())); let plan = await planNow(); assert.equal(plan.unit, "SOL");
+  await d.q(`UPDATE mob_aq_sym_bars SET t = t - 3600 WHERE mint = $1`, [CURVEMINT]); // symbiote's stream froze an hour ago; Jupiter has no chart
+  // the price API is down; the exit quote is the only source. It sits 1.4% under the mid (pump's fee): lifted by half the round trip, it is above the stop
+  F.priceFail = true; F.sellOut = curveOut(plan.stop * 1.002); assert.ok(plan.quoteRtPct > 2.7); r = await L.liveTick(env, { minute: 2 }); assert.equal((await positions())[0].status, "open", JSON.stringify(r.exits));
+  F.quoteFail = true; await L.liveTick(env, { minute: 3 }); await L.liveTick(env, { minute: 4 }); assert.equal((await positions())[0].plan.noPx, 2); assert.equal((await orders()).length, 1);
+  F.quoteFail = false; F.sellOut = curveOut(plan.stop * 0.97); r = await L.liveTick(env, { minute: 5 }); assert.match(r.exits[0].reason, /^hard stop: the spot price is at or under the stop/, JSON.stringify(r.exits)); assert.equal((await positions())[0].status, "closed");
+});
+
+test("3) the buy is checked against the LIVE price before signing, and the plan's entry is the real fill price (USD and CURVE)", async () => {
+  const s = { entry: 100, stop: 92, t1: 112 };
+  assert.equal(L.entryCheck(s, 100.9, 1.5), null); assert.match(L.entryCheck(s, null, 1.5), /could not be read/); assert.match(L.entryCheck(s, 91.9, 50), /at or under the stop/); assert.match(L.entryCheck(s, 112, 50), /at or over target 1/);
+  assert.match(L.entryCheck(s, 101.6, 1.5), /1\.6% from the candle entry 100, over the 1\.5% tolerance/); assert.match(L.entryCheck(s, 98.4, 1.5), /-1\.6% from/); assert.equal(L.entryCheck(s, 102.9, 3), null);
+  assert.equal(L.pxOf(50000000, "5000000", 5, "SOL"), 0.001); assert.ok(Math.abs(L.pxOf(50000000, "5000000", 5, "USD", 114600) - 114.6) < 1e-9); assert.equal(L.pxOf(50000000, "5000000", 5, "USD", null), null); assert.equal(L.pxOf(5, "0", 5, "SOL"), null); assert.equal(L.pxOf(5, "5", undefined, "SOL"), null);
+  assert.deepEqual([L.LIVE.entryTolPct, L.LIVE.freshEntryTolPct], [1.5, 3]);
+  const refused = async (prep, re) => { await wipe(); world(); await prep(); const r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.refused, "entry_price", JSON.stringify(r.result)); assert.match((await lastRef()).reason, re); assert.equal((await orders()).length, 0, "refused before any order row"); assert.equal(F.sent.length, 0); assert.equal((await positions()).length, 0); };
+  // USD: the quote pays 2% over the candle entry (the price ran while the bar closed): over the 1.5% tolerance
+  await refused(() => { F.tokensOut = String(Math.round(5000000 / 1.02)); }, /is 2% from the candle entry 114\.6, over the 1\.5% tolerance/);
+  await refused(() => { F.tokensOut = "6000000"; }, /at or under the stop/);       // the quote's price is 16.7% under: below the stop
+  await refused(() => { F.tokensOut = "4000000"; }, /at or over target 1/);        // 25% over: above target 1
+  await refused(() => { F.priceFail = true; F.quoteFailIf = (u) => u.searchParams.get("outputMint").startsWith("EPj"); }, /could not be read/); // no SOL price from the API or a USDC quote: no USD price, no buy
+  // the SOL price API is down but a SOL->USDC quote answers: the second source prices it and the buy goes through
+  await wipe(); world(); F.priceFail = true; { const r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.confirmed, true, JSON.stringify(r.result)); assert.equal((await positions())[0].plan.solUsd, 114600, "SOL priced by a 1 SOL -> USDC quote"); }
+  // 1.4% over the entry is inside the tolerance: bought, and the entry becomes the REAL fill price
+  await wipe(); world(); F.tokensOut = String(Math.round(5000000 / 1.014)); let r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.confirmed, true, JSON.stringify(r.result));
+  let [p] = await positions(); const real = (p.cost_sol / (Number(p.tokens_raw) / 1e5)) * 114600;
+  assert.ok(Math.abs(p.plan.entry - real) < 1e-6, `entry ${p.plan.entry} is SOL paid / tokens received (${real})`); assert.ok(p.plan.entry > 114.6 * 1.014); assert.equal(p.plan.chartEntry, 114.6); assert.equal(p.plan.entryFrom, "fill"); assert.ok(Math.abs(p.plan.livePx - 114.6 * 1.014) < 0.01);
+  // breakeven after target 1 is that real fill price
+  const fillEntry = p.plan.entry; F.candles = [...F.candles.slice(0, -1), { ...F.candles.at(-1), close: p.plan.t1 + 0.2, high: p.plan.t1 + 0.3 }]; F.solUsd = 114600; await d.q(`DELETE FROM mob_aq_market`);
+  r = await L.liveTick(env, { minute: 2 }); assert.match(r.exits?.[0]?.reason || "", /^target 1/, JSON.stringify(r)); [p] = await positions(); assert.equal(p.plan.phase, 1); assert.equal(p.plan.stop, fillEntry, "stop to entry = the real fill price");
+  // CURVE (SOL plan, 3% tolerance: the curve's 1.25% fee is inside the quote's price)
+  await wipe(); world(); await curveWorld(); F.tokensOut = String(Math.round(4363002 / 1.035)); r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.refused, "entry_price", JSON.stringify(r.result)); assert.match((await lastRef()).reason, /over the 3% tolerance/);
+  await wipe(); world(); await curveWorld(); F.tokensOut = String(Math.round(4363002 / 1.02)); r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.confirmed, true, JSON.stringify(r.result) + JSON.stringify(await lastRef()));
+  [p] = await positions(); assert.equal(p.plan.unit, "SOL"); assert.equal(p.plan.src, "symbiote"); assert.equal(p.plan.solUsd, null);
+  assert.ok(Math.abs(p.plan.entry - p.cost_sol / (Number(p.tokens_raw) / 1e5)) < 1e-12, "CURVE entry = SOL paid / tokens received, in SOL"); assert.ok(p.plan.entry > 0.001146 * 1.02 && p.plan.entry < 0.00125); assert.ok(Math.abs(p.plan.chartEntry - 0.001146) < 1e-9);
+});
+
+test("4) disaster stop: the live exit quote 5% under the stop on two ticks in a row sells without waiting for the 5-minute close (USD and CURVE)", async () => {
+  assert.deepEqual([L.LIVE.disasterPct, L.LIVE.disasterTicks], [5, 2]);
+  await L.liveTick(env, { minute: 1 }); let plan = await planNow(), n0 = (await orders()).length; // candles stay fresh and above the stop: the chart itself says hold
+  F.sellOut = usdOut(plan.stop * 0.96); await L.liveTick(env, { minute: 2 }); let [p] = await positions(); assert.equal(p.status, "open"); assert.ok(!p.plan.dz, "4% under the stop is the normal stop's business (a 5-minute close)");
+  F.sellOut = usdOut(plan.stop * 0.94); await L.liveTick(env, { minute: 3 }); [p] = await positions(); assert.equal(p.status, "open"); assert.equal(p.plan.dz, 1, "one tick is not enough"); assert.equal((await orders()).length, n0);
+  F.sellOut = usdOut(plan.stop * 1.05); await L.liveTick(env, { minute: 4 }); assert.equal((await positions())[0].plan.dz, 0, "it came back: the count is cleared");
+  F.sellOut = usdOut(plan.stop * 0.5); await L.liveTick(env, { minute: 5 }); assert.equal((await positions())[0].plan.dz, 1);
+  F.quoteFail = true; await L.liveTick(env, { minute: 6 }); assert.equal((await positions())[0].plan.dz, 1, "an unreadable tick neither counts nor clears"); assert.equal((await positions())[0].status, "open"); F.quoteFail = false;
+  const r = await L.liveTick(env, { minute: 7 }); assert.match(r.exits[0].reason, /^disaster stop: the live exit quote \(.+\) is 5% or more under the stop \(.+\) on 2 ticks in a row/, JSON.stringify(r.exits)); assert.equal(r.exits[0].confirmed, true);
+  [p] = await positions(); assert.equal(p.status, "closed"); assert.match(p.exit_reason, /^disaster stop/);
+  // CURVE: a 50% dump inside one bar on a curve coin (bars still say hold): out on the second tick
+  await wipe(); world(); await curveWorld(); let t = await L.liveTick(env, { minute: 1 }); assert.equal(t.result.confirmed, true, JSON.stringify(t.result)); plan = await planNow(); assert.equal(plan.onCurve, true);
+  F.sellOut = curveOut(plan.entry * 0.5); t = await L.liveTick(env, { minute: 2 }); assert.equal((await positions())[0].status, "open"); assert.equal((await positions())[0].plan.dz, 1);
+  t = await L.liveTick(env, { minute: 3 }); assert.match(t.exits[0].reason, /^disaster stop/); [p] = await positions(); assert.equal(p.status, "closed"); assert.ok(p.pnl_sol < -0.02 && p.pnl_sol > -0.03, "sold about 50% down, two ticks after the dump: " + p.pnl_sol);
+});
+
+test("4) the daily budget is honest: the worst case of a position is what its exit can really do; three curve positions do not fit in 0.06 SOL", async () => {
+  // established: 8% stop + 5% disaster margin + 1.5% exit slippage + 1% round trip = 15.5%; a fresh curve coin: never under 50%
+  assert.ok(Math.abs(L.worstFrac(0.08, 1, false) - 0.155) < 1e-12); assert.equal(L.worstFrac(0.01, 3.05, true), 0.5); assert.ok(Math.abs(L.worstFrac(0.6, 3.05, true) - 0.6955) < 1e-12); assert.equal(L.worstFrac(0.99, 3, true), 1);
+  assert.equal(L.LIVE.freshGapLossPct, 50); assert.ok(3 * 0.05 * 0.5 > 0.06, "3 x 0.05 SOL of curve coins can lose 0.075 SOL: over the 0.06 daily limit");
+  await limits({ maxDailyLossSol: 0.06, maxOpenPositions: 3 });
+  const open = (mint, plan) => d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, last_value_sol, stop_pct, plan) VALUES ('solana',$1,$1,'open','1000',0.05,0.05,1,$2)`, [mint, JSON.stringify(plan)]);
+  const curvePlan = { kind: "fib", fresh: true, source: "right_call", entry: 1, chartEntry: 1, stop: 0.99, t1: 1.2, t2: 1.3, t3: 1.4, phase: 0, since: 0 };
+  await open("CurveA", curvePlan); let rk = await L.riskToday(d, 61000); assert.ok(Math.abs(rk.committed + 0.025061) < 1e-9, "one 0.05 SOL curve position commits 0.025 SOL + a fee, whatever its 1% stop says: " + rk.committed);
+  await open("CurveB", curvePlan); rk = await L.riskToday(d, 61000); assert.ok(Math.abs(rk.committed + 0.050122) < 1e-9);
+  let g = await L.gates(env); assert.equal(g.ok, true); assert.ok(Math.abs(g.budgetLeft - 0.009878) < 1e-9, "0.06 - 2 x 0.025061 = 0.009878 SOL left");
+  // an established position commits its stop + margin, not a gap
+  await d.q(`DELETE FROM mob_aq_live_positions`); await open("EstA", { ...curvePlan, fresh: false, stop: 0.92 }); rk = await L.riskToday(d, 61000);
+  assert.ok(Math.abs(rk.committed - (0.05 * 0.92 * 0.95 * 0.985 - 0.05 - 0.000061)) < 1e-9, "value at (stop less 5%) less 1.5% slippage: " + rk.committed);
+  // the third curve buy is sized to what is left: about 0.0198 SOL, not 0.05
+  await wipe(); world(); await limits({ maxDailyLossSol: 0.06, maxOpenPositions: 3 }); await curveWorld(); await open("CurveA", curvePlan); await open("CurveB", curvePlan);
+  F.quoteFailIf = (u) => /^Curve/.test(u.searchParams.get("inputMint")); // the two stand-in positions have no market: their marks stay where they are
+  const r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.confirmed, true, JSON.stringify(r.result) + JSON.stringify(await lastRef()));
+  const p = (await positions()).find((x) => x.mint === CURVEMINT); assert.ok(Math.abs(p.plan.sizeSol - 0.019756) < 1e-6, "sized to the budget: " + p.plan.sizeSol); assert.match(p.plan.sizeCappedBy, /daily loss budget/); assert.equal(p.plan.worstPct, 50);
+  // and with three open, the committed loss is inside the daily limit
+  rk = await L.riskToday(d, 61000); assert.ok(-rk.committed <= 0.06 + 1e-9, "worst case of everything open: " + rk.committed);
+});
+
+test("5) CURVE cost gate: the measured 2.79% + 0.264% fixed fees (3.05%) is bought under the 3.5% cap; target 1 must still be 3x the true cost", async () => {
+  assert.equal(L.LIVE.freshMaxRtPct, 3.5);
+  await curveWorld(); let r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.confirmed, true, JSON.stringify(r.result) + JSON.stringify(await lastRef()));
+  let [p] = await positions(); assert.equal(p.plan.quoteRtPct, 2.79); assert.equal(p.plan.rtPct, 3.054); assert.ok(p.plan.rewardPct >= 3 * p.plan.rtPct); assert.equal(p.plan.onCurve, true); assert.deepEqual(p.plan.route, ["Pump.fun"]);
+  await wipe(); world(); await curveWorld(); F.sellOut = "48300000"; r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.refused, "cost"); assert.match((await lastRef()).reason, /costs 3\.664% .* over 3\.5%/);
+  // a shallow leg: target 1 is under 3x the 3.05% cost -> refused by the same T1 rule
+  await wipe(); world(); await curveWorld(); await symBars(chart(Date.now() / 1000, { legTo: 8, pull: 4, tail: rise(103.4, 103.9) })); F.tokensOut = String(Math.round((0.05 / 0.001039) * 1e5));
+  r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.refused, "cost", JSON.stringify(r.result) + JSON.stringify(await lastRef())); assert.match((await lastRef()).reason, /^Target 1 is .*under 3x the 3\.054% round trip/);
+});
+
+test("6) migration: a curve liquidity figure is never compared with the pool's; the plan is re-based on the pool the tick the route leaves the curve", async () => {
+  await curveWorld(); const r0 = await L.liveTick(env, { minute: 1 }); assert.equal(r0.result.confirmed, true, JSON.stringify(r0.result)); let plan = await planNow();
+  assert.equal(plan.onCurve, true); assert.equal(plan.liq, 3000, "Jupiter's price API gives a figure on the curve too"); F.sellOut = curveOut(plan.entry);
+  const liq = (v) => { F.prices = { [CURVEMINT]: { usdPrice: 0.001146 * 75, liquidity: v, decimals: 5 } }; };
+  // on the curve the figure halves (it is the curve's reserves): NOT the pool-drain exit
+  liq(1500); let r = await L.liveTick(env, { minute: 2 }); assert.equal((await positions())[0].status, "open", JSON.stringify(r.exits)); assert.equal((await planNow()).liq, 3000);
+  // migration: the quote now routes through the pool. Its figure (far from the curve's, either way) becomes the base, no exit
+  for (const [first, v] of [[800, 800]]) { F.route = "Pump.fun Amm"; liq(first); r = await L.liveTick(env, { minute: 3 }); plan = await planNow();
+    assert.equal((await positions())[0].status, "open", "800 against the curve's 3000 would have been a false -73% exit: " + JSON.stringify(r.exits)); assert.equal(plan.onCurve, false); assert.equal(plan.liq, v); assert.equal(plan.liqAtEntry, 3000); assert.equal(plan.liqBasis, "jupiter"); assert.ok(plan.migratedAt > 0); assert.deepEqual(plan.route, ["Pump.fun Amm"]); }
+  liq(700); await L.liveTick(env, { minute: 4 }); assert.equal((await positions())[0].status, "open", "-12.5% of the pool: held");
+  liq(500); r = await L.liveTick(env, { minute: 5 }); assert.match(r.exits[0].reason, /lost 30% of its liquidity/, "-37.5% of the POOL's own base: out"); assert.equal((await positions())[0].status, "closed");
+  // migrated before the pool has a figure: nothing to compare until the first one arrives, which becomes the base
+  await wipe(); world(); await curveWorld(); await L.liveTick(env, { minute: 1 }); plan = await planNow(); F.sellOut = curveOut(plan.entry); F.route = "Pump.fun Amm"; F.prices = { [CURVEMINT]: { usdPrice: 0.001146 * 75, decimals: 5 } };
+  await L.liveTick(env, { minute: 2 }); plan = await planNow(); assert.equal(plan.onCurve, false); assert.equal(plan.liq, null); assert.equal((await positions())[0].status, "open");
+  liq(900); await L.liveTick(env, { minute: 3 }); assert.equal((await planNow()).liq, 900); liq(600); r = await L.liveTick(env, { minute: 4 }); assert.match(r.exits[0].reason, /lost 30% of its liquidity/);
+});
+
+test("7) a Phantom signal's plan carries its lane, candle source, unit and liquidity basis (USD and CURVE)", async () => {
+  const sig = async () => { await setS("phantom", { address: wallet.address, seenAt: new Date().toISOString() }); const r = await L.phantomWatch(env); return { r, s: (await one(`SELECT v FROM mob_aq_state WHERE k='phantom_signal'`))?.v }; };
+  await d.q(`DELETE FROM mob_aq_state WHERE k = 'phantom_signal'`); let { r, s } = await sig(); assert.equal(r.signal, "BONK", JSON.stringify(r) + JSON.stringify(await lastRef("phantom")));
+  assert.equal(s.plan.unit, "USD"); assert.equal(s.plan.src, "jupiter"); assert.equal(s.plan.source, "right_call"); assert.equal(s.source, "right_call"); assert.equal(s.plan.liqBasis, "jupiter"); assert.equal(s.plan.onCurve, false); assert.equal(s.plan.fresh, false); assert.equal(s.plan.dec, 5);
+  await wipe(); world(); await curveWorld(); await d.q(`DELETE FROM mob_aq_state WHERE k = 'phantom_signal'`); ({ r, s } = await sig()); assert.equal(r.signal, "NEWP", JSON.stringify(r) + JSON.stringify(await lastRef("phantom")));
+  assert.equal(s.plan.unit, "SOL"); assert.equal(s.plan.src, "symbiote"); assert.equal(s.plan.fresh, true); assert.equal(s.plan.onCurve, true); assert.equal(s.plan.liqBasis, "jupiter"); assert.ok(Math.abs(s.plan.entry - 0.001146) < 1e-9, "levels in SOL, as symbiote's bars are");
+  // a Phantom position bought on that signal reads candles in ITS unit: Jupiter's USD chart is never read raw against SOL levels
+  await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, plan, opened_at) VALUES ('phantom',$1,'NEWP','open','4363002',0.05,$2, now())`, [CURVEMINT, JSON.stringify(s.plan)]);
+  F.noChart.clear(); F.candles = [{ time: Math.floor(Date.now() / 60000) * 60 - 120, open: 75, high: 75, low: 75, close: 75, volume: 1 }]; await d.q(`DELETE FROM mob_aq_market`); // a USD chart appears, at 75 "USD" = 1 SOL: 870x the SOL levels
+  await L.phantomWatch(env); const pp = await one(`SELECT alert, alert_action FROM mob_aq_live_positions WHERE venue = 'phantom'`); assert.equal(pp.alert, null, "no false SELL NOW / target from a chart in another unit: " + pp.alert);
+  await d.q(`DELETE FROM mob_aq_state WHERE k IN ('phantom','phantom_signal')`);
+});
+
 const ixTx = (payer, program, data, other = "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1") => { const msg = Buffer.concat([Buffer.from([1, 0, 1, 3]), Buffer.from(W.unbase58(payer)), Buffer.from(W.unbase58(other)), Buffer.from(W.unbase58(program)), Buffer.alloc(32, 7), Buffer.from([1, 2, 3, 0, 1, 0, data.length]), Buffer.from(data)]);
   return Buffer.concat([Buffer.from([1]), Buffer.alloc(64), msg]).toString("base64"); };
 
@@ -367,13 +564,13 @@ test("audit: honeypot and Token-2022 checks before a buy; a fresh right call onl
   const gate = async () => (await L.liveTick(env, { minute: 1 })).result.refused;
   F.holderSimErr = { InstructionError: [4, { Custom: 6022 }] }; assert.equal(await gate(), "honeypot"); assert.match((await lastRef()).reason, /real holder's sale fails/); assert.equal((await orders()).length, 0);
   await wipe(); world(); F.holderOwner = L.PROG.token; assert.equal(await gate(), "honeypot"); assert.match((await lastRef()).reason, /no plain wallet/);
-  await wipe(); world(); F.mint = { owner: L.PROG.token22, data: { parsed: { type: "mint", info: { freezeAuthority: null, extensions: [{ extension: "transferFeeConfig", state: {} }] } } } }; assert.equal(await gate(), "token_program"); assert.match((await lastRef()).reason, /transfer fee/);
+  await wipe(); world(); F.mint = { owner: L.PROG.token22, data: { parsed: { type: "mint", info: { decimals: 5, freezeAuthority: null, extensions: [{ extension: "transferFeeConfig", state: {} }] } } } }; assert.equal(await gate(), "token_program"); assert.match((await lastRef()).reason, /transfer fee/);
   await wipe(); world(); F.mint = { owner: L.PROG.token22, data: { parsed: { type: "mint", info: { freezeAuthority: "Fz11", extensions: [] } } } }; assert.equal(await gate(), "token_program"); assert.match((await lastRef()).reason, /freeze authority/);
-  await wipe(); world(); F.mint = { owner: L.PROG.token22, data: { parsed: { type: "mint", info: { freezeAuthority: null, extensions: [{ extension: "transferHook", state: { authority: "A1", programId: null } }, { extension: "metadataPointer", state: {} }] } } } };
+  await wipe(); world(); F.mint = { owner: L.PROG.token22, data: { parsed: { type: "mint", info: { decimals: 5, freezeAuthority: null, extensions: [{ extension: "transferHook", state: { authority: "A1", programId: null } }, { extension: "metadataPointer", state: {} }] } } } };
   assert.equal((await L.liveTick(env, { minute: 1 })).result.confirmed, true, "pump-style Token-2022 with an empty hook slot passes");
   // right calls expire: 31 minutes since the check is stale (default TTL 30), a state key changes it
-  await wipe(); world(); await d.q(`UPDATE mob_aq_sym_right SET checked_at = now() - interval '31 minutes'`); assert.equal(await gate(), "no_right_call"); assert.match((await lastRef()).reason, /fresh right call \(checked in the last 30 minutes\)/);
-  await setS("right_call_ttl_min", 60); await wipe(); world(); assert.notEqual(await gate(), "no_right_call"); await d.q(`DELETE FROM mob_aq_state WHERE k = 'right_call_ttl_min'`); await rightAll();
+  await wipe(); world(); await d.q(`UPDATE mob_aq_sym_right SET checked_at = now() - interval '31 minutes'`); assert.equal((await L.rightCalls(d)).size, 0, "expired after 30 minutes"); assert.equal((await L.scanFib(env, "solana", async () => false)).lane, "market", "an expired right call is no longer the right-call lane");
+  await setS("right_call_ttl_min", 60); await wipe(); world(); await d.q(`UPDATE mob_aq_sym_right SET checked_at = now() - interval '31 minutes'`); assert.equal((await L.rightCalls(d)).has(MINT), true); assert.equal((await L.scanFib(env, "solana", async () => false)).lane, "right_call"); await d.q(`DELETE FROM mob_aq_state WHERE k = 'right_call_ttl_min'`); await rightAll();
   // a panel value above the hard cap (stored before the cap existed) is clamped: the order is 0.05 SOL, not 5
   await wipe(); world(); await limits({ maxPerTradeSol: 5, maxOpenPositions: 9 }); await L.liveTick(env, { minute: 1 }); assert.equal((await orders())[0].in_amount, "50000000"); await limits();
 });
@@ -409,8 +606,8 @@ test("audit: rent comes back after a full sale and is booked; the plan is rebase
   const again = await L.liveTick(env, { minute: 3 }); assert.equal(again.rent, undefined, "booked once");
   // a stop that failed twice is retried at 4x the slippage, recorded on the order
   await wipe(); world(); await limits(); await L.liveTick(env, { minute: 1 }); await scenario((s) => [...flat(114.6, 5), ...flat(s.stop - 0.5, 5)]);
-  await d.q(`UPDATE mob_aq_live_positions SET sell_fails = 2`); const t = await L.liveTick(env, { minute: 4 });
-  const so = (await orders()).at(-1); assert.equal(so.side, "sell"); assert.equal(so.slippage_bps, 600); assert.match(so.reason, /sell slippage 600 bps after 2 failed/, JSON.stringify(t.exits));
+  await d.q(`UPDATE mob_aq_live_positions SET sell_fails = 2, plan = plan || '{"slipFails":2}'::jsonb`); const t = await L.liveTick(env, { minute: 4 });
+  const so = (await orders()).at(-1); assert.equal(so.side, "sell"); assert.equal(so.slippage_bps, 600); assert.match(so.reason, /sell slippage 600 bps after 2 sell\(s\) the chain refused/, JSON.stringify(t.exits));
   assert.equal(L.exitBps(9), 2000, "capped at 20%"); assert.equal(L.exitBps(3, false), 150, "a target sale never escalates");
 });
 
@@ -430,7 +627,7 @@ test("audit: a sell confirmed but unreadable is settled from the token balance; 
 
 test("audit: liquidity drain is seen when the coin falls off the lists; the tick lease is renewed and a lost lease stops the buy", async () => {
   await L.liveTick(env, { minute: 1 });
-  mock("GET", /^https:\/\/lite-api\.jup\.ag\/price\/v3/, () => ({ [MINT]: { usdPrice: 0.00002, liquidity: 100000, decimals: 5 } }));
+  F.prices = { [MINT]: { usdPrice: 114.6, liquidity: 100000, decimals: 5 } };
   F.pools = F.pools.filter((p) => p.baseAsset.id !== MINT); await d.q(`DELETE FROM mob_aq_market`);
   assert.equal(await L.liqOf(env, MINT), 100000);
   const r = await L.liveTick(env, { minute: 2 }); assert.match(r.exits?.[0]?.reason || "", /lost 30% of its liquidity/, JSON.stringify(r));
