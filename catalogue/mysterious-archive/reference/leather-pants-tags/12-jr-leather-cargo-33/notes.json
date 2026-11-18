@@ -1,0 +1,44 @@
+{
+ "name": "Chrome Hearts Leather Cargo Pants",
+ "url": "https://justinreed.com/products/chrome-hearts-leather-cargo-pants-56258562147452",
+ "date": "listing published 2026-02-13",
+ "price": "asking $8,760",
+ "basis_of_authenticity": "Dealer listing: sold as authentic by Justin Reed. No outside legit check; the basis is the dealer only.",
+ "quotes": "",
+ "model": "Black cowhide cargo pants, button fly.",
+ "size": "33 (size tag)",
+ "what_the_tags_read": [
+  "Composition tag: same layout as the other cow leather pairs (\"BODY: LEATHER: COW / LINING: 100% COTTON\", French, Japanese, Korean, Chinese, \"MADE IN U.S.A.\"); photographed at an angle, small lines not fully legible.",
+  "Size tag: CHROME HEARTS scroll, \"RN # 97729\", second scroll, \"33\", then a \"175 / ...\" line whose last characters are not sharp.",
+  "The leather waistband label is not shown in the listing photos.",
+  "Lining: black fabric with tone-on-tone Chrome Hearts emblems."
+ ],
+ "notes": "",
+ "photos": [
+  {
+   "file": "01-tag.jpg",
+   "role": "tag photo",
+   "shows": "Composition tag"
+  },
+  {
+   "file": "02-tag.jpg",
+   "role": "tag photo",
+   "shows": "Size tag"
+  },
+  {
+   "file": "03-tag.jpg",
+   "role": "tag photo",
+   "shows": "Fly open: buttons and lining"
+  },
+  {
+   "file": "04-ctx.jpg",
+   "role": "context photo",
+   "shows": "Front"
+  },
+  {
+   "file": "05-ctx.jpg",
+   "role": "context photo",
+   "shows": "Back"
+  }
+ ]
+}
