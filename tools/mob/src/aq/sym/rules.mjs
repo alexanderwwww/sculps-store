@@ -2,27 +2,19 @@
 // Fed with decoded events (decode.mjs), it keeps every live coin in memory, paper-trades it in two lanes and hands back
 // batches for the Durable Object to write. Nothing here can move money: it has no key, no RPC, no imports beyond decode.mjs.
 //
-// THE RULES (stated; tested in test/symbiote.test.mjs on a recorded real stream):
-//  Data behind them (aquarius-lessons): new pairs lose on dips and on momentum (lessons 1, 7); the only thing that paid on NEW
-//  pairs was a Fibonacci pullback, 50% level +1.18 edge (492 trades) and 38.2% +1.05 (526) (lesson 14); new coins cost about
-//  4x established ones (lesson 3), so the leg must be big against the real round trip (rulebook rule 6: room >= 4x the cost);
-//  no clock decides an entry or exit (HOW IT TRADES, 2026-11-18).
-//  LEG     low L = the lowest curve price since launch before the high; high H = the running high. A leg counts when
-//          H/L - 1 >= 4 x the round trip of our size on this curve right now (fees from the event + curve impact + network fee).
-//  ENTRY   lane "aquarius": price pulls back to the 50% level (<= H - 0.5(H-L)); lane "grok": the 38.2% level. Entry on the
-//          first BUY trade inside the zone (the bounce), never below 78.6%. A Grok "VETO <mint>" stops the grok lane's entry.
-//  STOP    a trade printing under the 78.6% level sells all. Before entry, a break of 78.6% resets the leg from that low.
-//  T1      the leg high: sell half, stop to the entry price.
-//  T2      the 1.272 extension: the stop moves up to 1.272 (a print back under it sells the rest).
-//  T3      the 1.618 extension: sell the rest.
-//  END     the curve completes (migration) or the coin goes quiet for QUIET_MS (no trade: no liquidity): the rest is sold at
-//          the last curve price. A coin that never forms a leg is "no_setup" for that lane (decided, 0 SOL).
-//  CONTROL every coin is also bought at its first seen trade and sold at its end: the coin-flip baseline (rulebook rule 12).
-//  COSTS   1 SOL a trade (100,000 paper SOL a lane); pump fee + creator fee from the event itself, constant-product impact on
-//          the virtual reserves, network fee 61,000 lamports a side (measured 2026-11-16, trading-kb). Non-SOL-quoted coins
-//          are traded in % at the same share of their starting curve as 1 SOL of a 30 SOL curve.
-//  EXPLODED a lane trade whose marked value after costs reached +100% (doubled). It then goes to the deep health checks.
-export const LANES = { aquarius: { retrace: 0.5 }, grok: { retrace: 0.382, veto: true } };
+// SYMBIOTE DOES NOT JUDGE (Alex, 2026-11-18): every lane BUYS EVERY COIN at its first seen trade. No entry rule.
+// The lanes differ only in how they exit, so the brain learns which exit style keeps more of a launch's life. Judging a coin
+// (the health checks -> RIGHT CALL) is a separate step that reads these results.
+//  MARKET   1 paper SOL at the first price, held for the coin's whole life: peak multiple, time to peak, drawdown from the
+//           peak, and the end (death = quiet 20 min, or migration). The full-market scan.
+//  AQUARIUS stop at -50%; at 2x sell half and move the stop to the entry; then sell the rest on a 38.2% giveback of the gain.
+//  GROK     stop at -60%; at 2x sell half and move the stop to the entry; then the rest at 5x or on a 61.8% giveback.
+//  END      migration or quiet for QUIET_MS: whatever is held is sold at the last curve price.
+//  COSTS    1 SOL a buy (100,000 paper SOL a lane); pump fee + creator fee from the event, constant-product impact on the
+//           virtual reserves, network fee 61,000 lamports a side (measured 2026-11-16). Non-SOL-quoted coins are bought at the
+//           same share of their starting curve as 1 SOL of a 30 SOL curve.
+//  EXPLODED a lane whose marked value after costs reached +100% (doubled): it goes to the health checks (the judging step).
+export const LANES = { aquarius: { stop: -0.5, t1: 2, give: 0.382, t3: null }, grok: { stop: -0.6, t1: 2, give: 0.618, t3: 5 } };
 export const SIZE_SOL = 1, WALLET_SOL = 100000, NET_FEE_SOL = 0.000061, LEG_X_COST = 4, EXPLODE_PCT = 100;
 export const STOP_FIB = 0.786, T2_EXT = 1.272, T3_EXT = 1.618;
 export const QUIET_MS = 20 * 60 * 1000, DEFAULT_FEE_BPS = 125, REF_CURVE_SOL = 30;
@@ -82,18 +74,18 @@ export function createEngine({ isVetoed = () => false } = {}) {
   }
 
   function lessonFor(c, lane, t) {
-    const why = t.exit === "stop" ? "the 78.6% level broke" : t.exit === "t3" ? "it ran to the 1.618 extension" : t.exit === "trail" ? "it fell back under 1.272 after reaching it" : t.exit === "migrated" ? "the curve completed (migration)" : "it went quiet (no trades for 20 minutes)";
-    return { dept: "symbiote", kind: "lesson", text: `${c.symbol || c.mint.slice(0, 6)} ${lane}: ${t.netPct >= 0 ? "won" : "lost"} ${t.netPct.toFixed(1)}% after costs; entry at the ${LANES[lane].retrace * 100}% pullback of a +${t.legPct.toFixed(0)}% leg, out because ${why}${t.half ? ", half sold at the leg high" : ""}. Control (bought at first trade) ${c.ctrl?.netPct != null ? c.ctrl.netPct.toFixed(1) + "%" : "open"}.`,
+    const why = t.exit === "stop" ? `it fell to the ${LANES[lane].stop * 100}% stop` : t.exit === "t3" ? `it reached ${LANES[lane].t3}x` : t.exit === "trail" ? `it gave back ${LANES[lane].give * 100}% of the gain after 2x` : t.exit === "migrated" ? "the curve completed (migration)" : "it went quiet (no trades for 20 minutes)";
+    return { dept: "symbiote", kind: "lesson", text: `${c.symbol || c.mint.slice(0, 6)} ${lane}: ${t.netPct >= 0 ? "won" : "lost"} ${t.netPct.toFixed(1)}% after costs; bought at first sight, peak +${t.legPct.toFixed(0)}%, out because ${why}${t.half ? ", half sold at the leg high" : ""}. Control (bought at first trade) ${c.ctrl?.netPct != null ? c.ctrl.netPct.toFixed(1) + "%" : "open"}.`,
       data: { mint: c.mint, lane, netPct: r6(t.netPct), peakPct: r6(t.peakPct), exit: t.exit, legPct: r6(t.legPct), rtPct: r6(t.rtPct * 100), gta: c.gta, ctrlPct: c.ctrl?.netPct ?? null } };
   }
 
   // PAIN (aquarius-trader, "Machine mistakes become pain"): every losing paper trade, with the numbers and the rule that should
   // have caught it, so the instinct layer never takes the same pain twice
   function painFor(c, lane, t) {
-    const rule = t.exit === "stop" ? (t.legPct < 8 * t.rtPct * 100 ? "leg size: the leg was under 8x the round trip; LEG_X_COST 4 let it in" : "entry: the bounce buy in the zone was not confirmed by a second buy")
+    const rule = t.exit === "stop" ? (t.legPct < 10 ? "exit: it never rose 10% after the first-sight buy; the judging step should learn which launches die at once" : "exit: the stop let a risen coin fall back to a loss")
       : t.exit === "quiet" ? "liquidity: no exit rule fired before the coin went quiet; a volume-drop invalidation should have sold earlier"
       : t.exit === "migrated" ? "migration: the curve completed under the entry; no rule exits before migration" : t.exit === "trail" ? "trail: gave back from 1.272 to a loss" : "exit rules";
-    return { dept: "symbiote", kind: "pain", text: `PAIN ${c.symbol || c.mint.slice(0, 6)} ${lane}: ${t.netPct.toFixed(1)}% after costs (${t.exit}, peak ${t.peakPct.toFixed(1)}%, leg +${t.legPct.toFixed(0)}%, round trip ${(t.rtPct * 100).toFixed(1)}%). Should have caught it: ${rule}.`,
+    return { dept: "symbiote", kind: "pain", text: `PAIN ${c.symbol || c.mint.slice(0, 6)} ${lane}: ${t.netPct.toFixed(1)}% after costs (${t.exit}, peak ${t.peakPct.toFixed(1)}%, peak +${t.legPct.toFixed(0)}%, round trip ${(t.rtPct * 100).toFixed(1)}%). Should have caught it: ${rule}.`,
       data: { mint: c.mint, lane, netPct: r6(t.netPct), peakPct: r6(t.peakPct), exit: t.exit, legPct: r6(t.legPct), rtPct: r6(t.rtPct * 100), rule, gta: c.gta } };
   }
 
@@ -119,32 +111,19 @@ export function createEngine({ isVetoed = () => false } = {}) {
   function stepLane(c, lane, s, tr, at) {
     const p = tr.px, cfg = LANES[lane], f = fee(c);
     if (s.st === "done") return;
-    if (s.st === "wait") {
-      if (s.L == null) s.L = Math.min(c.px0 ?? p, p);
-      if (p < s.L) { s.L = p; s.H = p; s.armed = false; return; }
-      if (s.H == null || p > s.H) { s.H = p; s.armed = false; }
-      if (s.H <= s.L) return;
-      const range = s.H - s.L, stopLvl = s.H - STOP_FIB * range, zone = s.H - cfg.retrace * range;
-      const rt = roundTrip(tr.vsol, tr.vtok, sizeFor(c), f), legPct = (s.H / s.L - 1) * 100;
-      if (p < stopLvl) { s.L = p; s.H = p; s.armed = false; return; }          // leg broken before entry: a new leg from this low
-      if (legPct < LEG_X_COST * rt * 100) return;                              // not enough room for the real round trip
-      if (p <= zone) s.armed = true;
-      if (s.armed && tr.buy && p <= zone && p >= stopLvl) {
-        if (cfg.veto && isVetoed(c.mint)) { s.st = "done"; s.result = { netPct: 0, exit: "veto" }; return; }
-        const size = sizeFor(c), fill = buyFill(tr.vsol, tr.vtok, size, f);
-        Object.assign(s, { st: "open", at, size, cost: size + NET_FEE_SOL * (c.sol ? 1 : size), tokens: fill.tokens, px: p, proceeds: 0, peak: -100, legPct, rt,
-          stop: stopLvl, t1: s.H, t2: s.H + (T2_EXT - 1) * range, t3: s.H + (T3_EXT - 1) * range, half: false, trail: false });
-        wallet[lane].open++; stats.traded++;
-        out.feed.push({ at, k: "entry", mint: c.mint, sym: c.symbol, lane, px: p });
-      }
+    if (s.st === "wait") { // buy at first sight: no judging
+      const size = sizeFor(c), fill = buyFill(tr.vsol, tr.vtok, size, f);
+      Object.assign(s, { st: "open", at, size, cost: size + NET_FEE_SOL * (c.sol ? 1 : size), tokens: fill.tokens, px: p, proceeds: 0, peak: -100, H: p, legPct: 0,
+        rt: roundTrip(tr.vsol, tr.vtok, size, f), stop: p * (1 + cfg.stop), half: false, trail: false });
+      wallet[lane].open++; stats.traded++; out.feed.push({ at, k: "entry", mint: c.mint, sym: c.symbol, lane, px: p });
       return;
     }
-    // open
     markLane(c, lane, s, tr.vsol, tr.vtok);
-    if (p <= s.stop) return closeLane(c, lane, s, s.trail ? "trail" : "stop", p, tr.vsol, tr.vtok, at);
-    if (!s.half && p >= s.t1) { const half = s.tokens / 2; s.proceeds += sellFill(tr.vsol, tr.vtok, half, f) - NET_FEE_SOL * (c.sol ? 1 : s.size); s.tokens -= half; s.half = true; s.stop = s.px; }
-    if (!s.trail && p >= s.t2) { s.trail = true; s.stop = s.t2; }
-    if (p >= s.t3) return closeLane(c, lane, s, "t3", p, tr.vsol, tr.vtok, at);
+    if (p > s.H) s.H = p; s.legPct = (s.H / s.px - 1) * 100;
+    if (s.half) s.stop = Math.max(s.px, s.H - cfg.give * (s.H - s.px));
+    if (p <= s.stop) return closeLane(c, lane, s, s.half ? "trail" : "stop", p, tr.vsol, tr.vtok, at);
+    if (!s.half && p >= s.px * cfg.t1) { const half = s.tokens / 2; s.proceeds += sellFill(tr.vsol, tr.vtok, half, f) - NET_FEE_SOL * (c.sol ? 1 : s.size); s.tokens -= half; s.half = true; s.stop = s.px; }
+    if (cfg.t3 && p >= s.px * cfg.t3) return closeLane(c, lane, s, "t3", p, tr.vsol, tr.vtok, at);
   }
 
   function onTrade(tr, at = Date.now()) {

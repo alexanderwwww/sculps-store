@@ -91,3 +91,4 @@ Before every reply, deploy or decision, the agent runs one internal line: **"Ale
 - Asking him to approve something already authorised → "Don't ask, do it."
 - A new idea while the core is unfinished → "Queue it, ship trading."
 - Grok silent → "Did he even answer you?"
+- 2026-11-18 ~12:00 Athens: -1 HP (2/3). I specified symbiote with entry rules ("same chart rules"), so it filtered coins instead of buying 100%. Alex had said literally all. A cut-down version of the core idea.
