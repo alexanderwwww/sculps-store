@@ -40,7 +40,7 @@ const FCOL = { buy: [64, 232, 255], sell: [64, 232, 255], fee: [255, 204, 51], w
 const isDept = (id) => DEPTS.some((d) => d[0] === id);
 // where a verdict was decided, read from its own reason text; unknown reasons stay at the council
 function stopDept(reason) { const r = String(reason || "").toLowerCase(); if (/liquidity|volume|too new|age/.test(r)) return "scouts_sol"; if (/candle|signal|impulse|pullback|fib|setup/.test(r)) return "setups"; if (/cost|round trip|fee|slippage/.test(r)) return "costs"; if (/risk|limit|drawdown|max open|kill/.test(r)) return "risk"; return "council"; }
-function ticket(steps, c, label, delay = 0) { const path = steps.filter((x, i) => (x.id === "core" || isDept(x.id)) && !(i && steps[i - 1].id === x.id)); if (path.length < 2) return; if (st.comets.length > 14) st.comets.shift(); st.comets.push({ path, c, label, t: -delay, trail: [], seg: -1, done: 0 }); st.lastEvent = Date.now(); }
+function ticket(steps, c, label, delay = 0) { const path = steps.filter((x, i) => (x.id === "core" || isDept(x.id)) && !(i && steps[i - 1].id === x.id)); if (path.length < 2) return; path.forEach((x) => isDept(x.id) && fire(x.id, 2)); if (st.comets.length > 14) st.comets.shift(); st.comets.push({ path, c, label, t: -delay, trail: [], seg: -1, done: 0 }); st.lastEvent = Date.now(); }
 function activate(id, text, c) { if (!isDept(id)) return; st.pulses[id] = st.t; st.active[id] = { until: st.t + 4.2, text: String(text || "").slice(0, 90), c }; st.look = id; st.lookAt = st.t; }
 export function feedReactor(s) {
   st.state = s; if (!s) return;
@@ -54,7 +54,7 @@ export function feedReactor(s) {
       const steps = pass ? [{ id: "scouts_sol", text: `candidate ${sym}` }, { id: "setups", text: `setup ${sym}` }, { id: "costs", text: `costs ${sym}` }, { id: "council", text: why }, { id: "risk", text: `sizing ${sym}` }, { id: "execution", text: `order ${sym}` }, { id: "core" }]
         : [{ id: "scouts_sol", text: at === "scouts_sol" ? why : `candidate ${sym}` }, ...(at !== "scouts_sol" && at !== "council" ? [{ id: at, text: why }] : []), { id: "council", text: why }, { id: "core" }];
       ticket(steps, pass ? [34, 255, 136] : [255, 77, 77], `${v.verdict} ${sym}`.slice(0, 18), i * 0.7); }); seen.verdict = mx; }
-  for (const d of s.departments || []) { const at = d.lastRunAt || null; if (d.id in seen.runs && at && at !== seen.runs[d.id]) { st.pulses[d.id] = st.t; st.lastEvent = Date.now(); } seen.runs[d.id] = at; }
+  for (const d of s.departments || []) { const at = d.lastRunAt || null; if (d.id in seen.runs && at && at !== seen.runs[d.id]) { st.pulses[d.id] = st.t; st.lastEvent = Date.now(); fire(d.id, 2); } seen.runs[d.id] = at; }
   wakeReactor();
 }
 export function wakeReactor() { if (!st.raf && typeof requestAnimationFrame !== "undefined") { st.last = performance.now(); st.raf = requestAnimationFrame(loop); } }
@@ -73,8 +73,45 @@ function background(G) {
   const c = (st.bg = document.createElement("canvas")); c.width = G.W; c.height = G.H; const x = c.getContext("2d"), r = rng(7);
   const neb = (px, py, rad, cl) => { const gr = x.createRadialGradient(px, py, 0, px, py, rad); gr.addColorStop(0, cl); gr.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = gr; x.fillRect(0, 0, G.W, G.H); };
   neb(G.cx, G.cy, G.R * 1.8, "rgba(20,30,84,.42)"); neb(G.cx - G.R * 0.9, G.cy + G.R * 0.35, G.R * 0.9, "rgba(190,40,170,.07)"); neb(G.cx + G.R * 0.95, G.cy + G.R * 0.1, G.R * 0.9, "rgba(40,200,150,.05)"); neb(G.cx + G.R * 0.1, G.cy - G.R * 0.7, G.R * 0.8, "rgba(70,90,255,.08)");
+  x.globalCompositeOperation = "lighter"; for (let i = 0; i < 46; i++) { const a = r() * TAU, rr = G.R * (0.2 + r() * 1.25), px = G.cx + Math.cos(a) * rr * 1.25, py = G.cy + Math.sin(a) * rr * 0.62, h = [265, 290, 220, 315, 190][i % 5]; neb(px, py, G.R * (0.18 + r() * 0.45), `hsla(${h},80%,${45 + r() * 15}%,${0.025 + r() * 0.04})`); } x.globalCompositeOperation = "source-over";
   for (let i = 0; i < 240; i++) { const a = r(); x.fillStyle = `rgba(${200 + r() * 55},${210 + r() * 45},255,${0.12 + a * a * 0.7})`; const s = (a > 0.93 ? 1.6 : 0.9) * G.d; x.fillRect(r() * G.W, r() * G.H, s, s); }
   return c;
+}
+// ---------- the NEURON nebula (2026-11-18, Alex: "a brain in space"): glowing somas on the ring, branching dendrites,
+// axons linking them. Ambient: a slow drift and a breathing glow only. Spikes travel along axons ONLY when a real event
+// fires (a verdict ticket, a flow, a department run, a brain record): fire(deptId) starts them near that department.
+const NV = (typeof location !== "undefined" && /[?&]nv=([abc])/.exec(location.search) || [])[1] || "a";
+const NCFG = { a: { n: 54, deg: 2, den: 4, soma: 2.4 }, b: { n: 84, deg: 3, den: 3, soma: 1.8 }, c: { n: 36, deg: 2, den: 6, soma: 3.2 } }[NV];
+const NR = rng(2718);
+const somas = Array.from({ length: NCFG.n }, (_, i) => { const th = ((i + NR() * 0.8) / NCFG.n) * TAU; return { th, ps: NR() * TAU, ar: 0.25 + NR() * 0.95, df: 0.05 + NR() * 0.12, dp: NR() * TAU, sz: 0.6 + NR() * 0.9,
+  den: Array.from({ length: NCFG.den }, () => { const a = NR() * TAU, l = 7 + NR() * 13; return { a, l, f: (NR() - 0.5) * 1.3, l2: l * (0.4 + NR() * 0.4) }; }) }; });
+const axons = []; { const seen = new Set(); somas.forEach((s, i) => { const near = somas.map((o, j) => [j, Math.min(Math.abs(o.th - s.th), TAU - Math.abs(o.th - s.th)) + Math.abs(o.ps - s.ps) * 0.04]).filter(([j]) => j !== i).sort((a, b) => a[1] - b[1]).slice(0, NCFG.deg);
+  for (const [j] of near) { const k = i < j ? i + "-" + j : j + "-" + i; if (seen.has(k)) continue; seen.add(k); axons.push({ a: i, b: j, bend: (NR() - 0.5) * 0.9 }); } }); }
+const spikes = []; const flashes = [];
+const hueAt = (th) => { const u = (((th / TAU) % 1) + 1) % 1; return HUE[Math.floor(u * NS) % NS]; };
+export function fire(id, n = 3) { const i = DEPTS.findIndex((d) => d[0] === id), th0 = i < 0 ? Math.random() * TAU : (i / 12) * TAU;
+  const cand = axons.map((x, k) => [k, Math.min(Math.abs(somas[x.a].th - th0), TAU - Math.abs(somas[x.a].th - th0))]).sort((a, b) => a[1] - b[1]).slice(0, n * 2);
+  for (let q = 0; q < n && cand.length; q++) { const [k] = cand.splice((Math.random() * cand.length) | 0, 1)[0]; if (spikes.length < 40) spikes.push({ k, t0: st.t + q * 0.12, dir: Math.random() < 0.5 ? 1 : -1, hop: 2 }); } }
+function drawNeurons(o, G, t, rot, breath) {
+  const d = G.d, A = G.a, P = somas.map((s) => { const p = torus(G, s.th + rot + Math.sin(t * s.df + s.dp) * 0.02, s.ps + t * s.df * 0.6, A * s.ar * (1.25 + 0.06 * Math.sin(t * 0.4 + s.dp))); p.depth = (p.z / (G.R + A * 1.6) + 1) / 2; return p; });
+  o.lineCap = "round";
+  // axons: fine curved fibres, brighter in front (depth), one stroke per axon
+  for (const x of axons) { const p = P[x.a], q = P[x.b], h = hueAt(somas[x.a].th), dep = (p.depth + q.depth) / 2, mx = (p.x + q.x) / 2 - (q.y - p.y) * x.bend * 0.35, my = (p.y + q.y) / 2 + (q.x - p.x) * x.bend * 0.35;
+    x.p = p; x.q = q; x.mx = mx; x.my = my; o.strokeStyle = `hsla(${h[0]},90%,${h[2] + 8}%,${(0.1 + 0.28 * dep) * (0.85 + breath * 0.15)})`; o.lineWidth = (0.5 + 0.7 * dep) * d; o.beginPath(); o.moveTo(p.x, p.y); o.quadraticCurveTo(mx, my, q.x, q.y); o.stroke(); }
+  // dendrites: short forked branches around each soma
+  somas.forEach((s, i) => { const p = P[i], h = hueAt(s.th), k = p.k * d * (0.7 + 0.5 * p.depth); o.strokeStyle = `hsla(${h[0]},85%,${h[2] + 12}%,${0.14 + 0.3 * p.depth})`; o.lineWidth = 0.6 * d; o.beginPath();
+    for (const b of s.den) { const a = b.a + Math.sin(t * 0.3 + s.dp) * 0.08, ex = p.x + Math.cos(a) * b.l * k, ey = p.y + Math.sin(a) * b.l * k; o.moveTo(p.x, p.y); o.lineTo(ex, ey); for (const f of [-1, 1]) { const a2 = a + f * (0.45 + b.f * 0.3); o.moveTo(ex, ey); o.lineTo(ex + Math.cos(a2) * b.l2 * k, ey + Math.sin(a2) * b.l2 * k); } }
+    o.stroke(); });
+  // somas: soft glow + bright nucleus, size and light by depth
+  somas.forEach((s, i) => { const p = P[i], h = hueAt(s.th), r = (NCFG.soma * s.sz * (0.6 + 0.7 * p.depth) + breath * 0.3) * d * 3.2, gl = o.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+    gl.addColorStop(0, `hsla(${h[0]},100%,88%,${0.55 + 0.4 * p.depth})`); gl.addColorStop(0.25, `hsla(${h[0]},100%,${h[2] + 10}%,${0.25 + 0.3 * p.depth})`); gl.addColorStop(1, `hsla(${h[0]},100%,50%,0)`); o.fillStyle = gl; o.fillRect(p.x - r, p.y - r, r * 2, r * 2); });
+  // spikes: travel along an axon in 0.9 s, flash the synapse on arrival, sometimes hop on
+  for (let i = spikes.length - 1; i >= 0; i--) { const sp = spikes[i], x = axons[sp.k], u = (t - sp.t0) / 0.9; if (u < 0) continue; if (u >= 1 || !x.p) { spikes.splice(i, 1); const end = sp.dir > 0 ? x.b : x.a; if (x.p) flashes.push({ s: end, t0: t });
+      if (sp.hop > 0 && spikes.length < 40) { const nx = axons.findIndex((y, k) => k !== sp.k && (y.a === end || y.b === end)); if (nx >= 0) spikes.push({ k: nx, t0: t, dir: axons[nx].a === end ? 1 : -1, hop: sp.hop - 1 }); } continue; }
+    const v = sp.dir > 0 ? u : 1 - u, w = 1 - v, bx = w * w * x.p.x + 2 * w * v * x.mx + v * v * x.q.x, by = w * w * x.p.y + 2 * w * v * x.my + v * v * x.q.y, r = 7 * d, gl = o.createRadialGradient(bx, by, 0, bx, by, r);
+    gl.addColorStop(0, "rgba(255,255,255,.95)"); gl.addColorStop(0.3, "rgba(170,240,255,.55)"); gl.addColorStop(1, "rgba(120,200,255,0)"); o.fillStyle = gl; o.fillRect(bx - r, by - r, r * 2, r * 2); }
+  for (let i = flashes.length - 1; i >= 0; i--) { const f = flashes[i], k = 1 - (t - f.t0) / 0.6; if (k <= 0) { flashes.splice(i, 1); continue; } const p = P[f.s], r = (6 + (1 - k) * 18) * d, gl = o.createRadialGradient(p.x, p.y, 0, p.x, p.y, r); gl.addColorStop(0, `rgba(255,255,255,${0.9 * k})`); gl.addColorStop(1, "rgba(255,255,255,0)"); o.fillStyle = gl; o.fillRect(p.x - r, p.y - r, r * 2, r * 2); }
+  o.lineCap = "butt";
 }
 function layer(k, w, h) { let c = st[k]; if (!c) c = st[k] = document.createElement("canvas"); if (c.width !== w || c.height !== h) { c.width = w; c.height = h; } return c; }
 
@@ -102,12 +139,7 @@ function loop(now) {
   drawCoils(g, G, riders, t, false);
   // strands -> offscreen, then composite sharp + blurred (bloom)
   const off = layer("off", W, H), o = off.getContext("2d"); o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = "source-over"; o.clearRect(0, 0, W, H); o.globalCompositeOperation = "lighter"; o.lineWidth = 1 * d; o.lineJoin = "round";
-  const ns = Math.max(48, Math.round(N_STR * st.q)), dth = TAU / NK, cT = new Float32Array(NK + 1), sT = new Float32Array(NK + 1); for (let k = 0; k <= NK; k++) { cT[k] = Math.cos(k * dth + rot); sT[k] = Math.sin(k * dth + rot); }
-  const Rr = G.R, A = G.a, kz = 1 / (Rr * 7), aBoost = Math.min(1.3, N_STR / ns) * (0.9 + breath * 0.12);
-  for (let sec = 0; sec < NS; sec++) { const zm = sT[sec * SUB + 1], H0 = HUE[sec]; o.strokeStyle = `hsla(${H0[0]},${H0[1]}%,${H0[2]}%,${(0.42 + 0.3 * (zm + 1) / 2) * aBoost})`; o.beginPath(); const k0 = sec * SUB;
-    for (let j = 0; j < ns; j++) { const S = strands[j]; for (let q = 0; q <= SUB; q++) { const k = k0 + q, th = k * dth, ps = S.w * th + S.ph + t * S.f, a1 = A * S.ar * (1 + S.wob * Math.sin(S.wn * th + S.wp + t * S.wf)), rr = Rr + a1 * Math.cos(ps), X = rr * cT[k], Z = rr * sT[k], Y = a1 * Math.sin(ps), kk = 1 + (Z * COS + Y * SIN) * kz, x0 = X * kk, y0 = (Z * SIN - Y * COS) * kk, x = G.cx + x0 * CR - y0 * SR, y = G.cy + x0 * SR + y0 * CR; q ? o.lineTo(x, y) : o.moveTo(x, y); } }
-    o.stroke(); }
-  for (const p of sparks) { const th = p.th + rot + t * p.sp * 0.2, q = torus(G, th, p.ps + t * 0.4, A * p.ar), tw = Math.pow(Math.abs(Math.sin(t * 1.4 + p.tw)), 6); if (tw < 0.05) continue; const r = (2 + p.s * 3) * d * tw, gl = o.createRadialGradient(q.x, q.y, 0, q.x, q.y, r); gl.addColorStop(0, `rgba(255,255,255,${tw})`); gl.addColorStop(1, "rgba(255,255,255,0)"); o.fillStyle = gl; o.fillRect(q.x - r, q.y - r, r * 2, r * 2); }
+  drawNeurons(o, G, t, rot, breath);
   const sw = Math.max(8, W >> 3), sh = Math.max(8, H >> 3), sm = layer("small", sw, sh), m = sm.getContext("2d"); m.globalCompositeOperation = "copy"; m.imageSmoothingEnabled = true; m.drawImage(off, 0, 0, sw, sh);
   g.globalCompositeOperation = "lighter"; g.imageSmoothingEnabled = true; g.globalAlpha = 0.3; g.drawImage(sm, 0, 0, W, H); g.globalAlpha = 1; g.drawImage(off, 0, 0); g.globalCompositeOperation = "source-over";
   drawCoils(g, G, riders, t, true);
@@ -234,3 +266,4 @@ export function wireReactor(c, onRider) {
   c.addEventListener("mouseleave", () => { st.hover = null; });
 }
 export const hoverRider = (id) => { st.hover = id; };
+if (typeof window !== "undefined") (window.__aq = window.__aq || {}).fire = fire;
