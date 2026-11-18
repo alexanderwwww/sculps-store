@@ -73,18 +73,18 @@ export async function phantomState(d, S0 = null) {
   const ph = S.phantom || null, honest = "Trades from Phantom need your approval in Phantom each time and only happen while this page is open. Fully automatic trading while you are away only works from the Aquarius wallet.";
   if (!ph?.address) return { connected: false, note: honest };
   const [pos, ord, pnl] = await Promise.all([
-    d.q(`SELECT id, mint, symbol, status, tokens_raw, cost_sol, stop_pct, last_value_sol, last_value_at, opened_at, time_exit_at FROM mob_aq_live_positions WHERE venue = 'phantom' AND status IN ('open','stuck') ORDER BY id`),
+    d.q(`SELECT id, mint, symbol, status, tokens_raw, cost_sol, stop_pct, last_value_sol, last_value_at, opened_at, plan, alert FROM mob_aq_live_positions WHERE venue = 'phantom' AND status IN ('open','stuck') ORDER BY id`),
     d.q(`SELECT id, side, symbol, mint, status, reason, error, signature, fill_sol, in_amount, requested_at FROM mob_aq_live_orders WHERE venue = 'phantom' ORDER BY id DESC LIMIT 8`),
     d.one(`SELECT coalesce(sum(pnl_sol), 0)::float8 s FROM mob_aq_live_positions WHERE venue = 'phantom' AND pnl_sol IS NOT NULL AND (status IN ('open','stuck') OR closed_at >= (date_trunc('day', now() AT TIME ZONE 'Europe/Athens') AT TIME ZONE 'Europe/Athens'))`),
   ]);
   const c = S.phantom_cache?.address === ph.address ? S.phantom_cache : null, sig = S.phantom_signal, held = new Set(pos.map((p) => p.mint)), now = Date.now();
   return { connected: true, address: ph.address, connectedAt: ph.connectedAt, sol: c?.sol ?? null, tokens: c?.tokens ?? null, checkedAt: c?.at ?? null, lastError: c?.error ?? null,
     positions: pos.map((p) => ({ id: Number(p.id), mint: p.mint, symbol: p.symbol, costSol: p.cost_sol, valueSol: p.last_value_sol, valueAt: p.last_value_at, openedAt: p.opened_at, timeExitAt: p.time_exit_at,
-      sellNow: p.time_exit_at && new Date(p.time_exit_at).getTime() <= now ? `the ${LIVE.holdMin} minutes are up` : p.last_value_sol != null && p.last_value_sol <= p.cost_sol * (1 - p.stop_pct / 100) ? `it is ${p.stop_pct}% under what you paid` : null })),
+      plan: p.plan ? { stop: p.plan.phase === 2 ? Math.max(p.plan.stop, p.plan.trailStop ?? -Infinity) : p.plan.stop, t1: p.plan.t1, t2: p.plan.t2, phase: p.plan.phase } : null, sellNow: p.alert || null })),
     orders: ord.map((o) => ({ id: Number(o.id), side: o.side, symbol: o.symbol, status: o.status, reason: o.reason, error: o.error, signature: o.signature, sol: o.fill_sol ?? (o.side === "sell" ? null : -Number(o.in_amount) / 1e9), at: o.requested_at })),
     pnlSol: Math.round(pnl.s * 1e6) / 1e6,
-    signal: sig && now - new Date(sig.at).getTime() < 180000 && !held.has(sig.mint) ? { mint: sig.mint, symbol: sig.symbol, atr: sig.atr, ret5: sig.ret5, at: sig.at, why: `fell ${Math.abs(sig.ret5)}% in 5 minutes against a usual ${sig.atr}%` } : null,
-    coins: await coins(d, S), aquariusAddress: S.sol_wallet_key?.address || null, sellPcts: SELL_PCTS, note: honest, rule: "the dip rule is not proven after costs: small size only" };
+    signal: sig && now - new Date(sig.at).getTime() < 180000 && !held.has(sig.mint) ? { mint: sig.mint, symbol: sig.symbol, at: sig.at, why: sig.why, zone: sig.zone, entry: sig.entry, stop: sig.stop, t1: sig.t1, t2: sig.t2 } : null,
+    coins: await coins(d, S), aquariusAddress: S.sol_wallet_key?.address || null, sellPcts: SELL_PCTS, note: honest, rule: "chart trader: Fibonacci pullback, chart stop, chart targets. Unproven: small size only" };
 }
 // The card's own poll: marks the page as open (signals are only looked for then), refreshes the balances twice a minute,
 // closes orders he never approved, and asks the chain about any he did.

@@ -24,8 +24,6 @@ function openDept(id) { const s = store.state || {}; const d = (s.departments ||
 
 export function deskHTML() {
   return `<main id="dash" class="desk">
-  <div class="wire"><b>LIVE WIRE</b><div class="wire-c"><div class="wire-in" id="d-wire"></div></div></div>
-  <div class="strip" id="d-strip"></div>
   <section class="p reactor-row">
     <div class="col-l" id="d-minis"></div>
     <div class="reactor"><div class="ph"><b>THE REACTOR</b><span>twelve coils hold the ring · one ticket rides the current · Aquarius in the core</span><em id="d-rx-r"></em></div>
@@ -36,6 +34,9 @@ export function deskHTML() {
         <div class="rx-f" id="d-rx-f"></div></div></div>
     <div class="col-r"><div class="ph"><b>CONTROL STACK</b><em id="d-ctl-m"></em></div><div id="d-ctl"></div></div>
   </section>
+  <div id="d-hero-slot"></div>
+  <div class="wire"><b>LIVE WIRE</b><div class="wire-c"><div class="wire-in" id="d-wire"></div></div></div>
+  <div class="strip" id="d-strip"></div>
   ${grokHTML()}
   ${trainingHTML()}
   <section class="p pnl"><div class="ph"><b>SWARM PNL</b><span>paper · after costs</span><em id="d-pnl-ev"></em></div><div id="d-pnl"></div><canvas id="d-eqc"></canvas><div id="d-lanes"></div></section>

@@ -146,11 +146,11 @@ test("signals: the dip rule's coin and SELL NOW, only while the page is open; FU
   await setPh({ ...ph, seenAt: new Date().toISOString() }); const w = await L.phantomWatch(env); assert.equal(w.signal, "BONK");
   let pub = (await buildState(env)).phantom; assert.equal(pub.signal.mint, MINT); assert.equal(pub.signal.symbol, "BONK"); assert.match(pub.signal.why, /fell 4\.5% in 5 minutes/);
   assert.ok(!F.calls.includes("sendTransaction") && !F.calls.includes("swap"), "a signal builds nothing and sends nothing");
-  // he holds it: no buy signal for it; 45 minutes later, and under the stop, the card says SELL NOW
-  await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, stop_pct, opened_at, time_exit_at) VALUES ('phantom',$1,'BONK','open','5000000',0.1,10, now(), now() + interval '45 minutes')`, [MINT]);
+  // he holds it: no buy signal for it; 20 minutes later, and under the stop, the card says SELL NOW
+  await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, stop_pct, opened_at, time_exit_at) VALUES ('phantom',$1,'BONK','open','5000000',0.1,10, now(), now() + interval '20 minutes')`, [MINT]);
   pub = (await buildState(env)).phantom; assert.equal(pub.signal, null); assert.equal(pub.positions[0].sellNow, null);
   F.sellOut = "80000000"; await L.phantomWatch(env); pub = (await buildState(env)).phantom; assert.equal(pub.positions[0].valueSol, 0.08); assert.match(pub.positions[0].sellNow, /10% under what you paid/);
-  await d.q(`UPDATE mob_aq_live_positions SET time_exit_at = now() - interval '1 minute', last_value_sol = 0.11`); assert.match((await buildState(env)).phantom.positions[0].sellNow, /45 minutes are up/);
+  await d.q(`UPDATE mob_aq_live_positions SET time_exit_at = now() - interval '1 minute', last_value_sol = 0.11`); assert.match((await buildState(env)).phantom.positions[0].sellNow, /20 minutes are up/);
   assert.equal((await positions())[0].status, "open", "Aquarius never sells a Phantom position: it only says so");
   // funding the Aquarius wallet
   assert.match((await post("/fund", { sol: 0.5 })).error.message, /Create the Aquarius wallet first/);

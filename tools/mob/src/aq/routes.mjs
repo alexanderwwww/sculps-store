@@ -10,7 +10,7 @@ import { setTraining, trainingState } from "./arena.mjs";
 import { safeEqual } from "../auth.mjs";
 import * as RH from "./robinhood.mjs";
 import { createWallet, walletStatus, saveWalletLimits } from "./wallet.mjs";
-import { sellAllLive, liveState } from "./live.mjs";
+import { sellAllLive, liveState, manualPreview, manualOrder } from "./live.mjs";
 import { savePayout, withdraw, preview, restoreWallet } from "./payout.mjs";
 import * as PH from "./phantom.mjs";
 import { AQ_PHANTOM_JS } from "../aq-bundle.mjs";
@@ -24,13 +24,7 @@ export async function aqPage(req, env, path, { json, html }) {
   if (path === "/aq") return html(AQ_PAGE, 200, { "content-security-policy": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' blob: data:; worker-src 'self' blob:", "x-robots-tag": "noindex" });
   if (path === "/aq/phantom-tx.js") return new Response(AQ_PHANTOM_JS, { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" } });
   if (path === "/aq/app.js") return new Response(AQ_JS, { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" } });
-  const m = path.match(/^\/aq\/assets\/([A-Za-z0-9._\/-]+)$/);
-  if (m && !m[1].split("/").includes("..")) {
-    const o = env.MEDIA && (await env.MEDIA.get(`aq/${m[1]}`));
-    if (!o) return new Response("not found", { status: 404 });
-    const ext = m[1].split(".").pop().toLowerCase();
-    return new Response(o.body, { headers: { "content-type": TYPES[ext] || "application/octet-stream", "cache-control": "private, max-age=604800, immutable" } });
-  }
+  // /aq/assets/* (the 3D world's models) is no longer served: World mode was removed 2026-11-18
   return json({ error: { message: "not found" } }, 404);
 }
 
@@ -145,6 +139,9 @@ export async function aqApi(req, env, url, path, { json, apiErr, admin, bearer, 
     // live orders: what is open and what was refused, and Alex's SELL ALL LIVE. There is no route that buys.
     if (path === "/api/aq/wallet/live" && M === "GET") return json(await liveState(db(env)));
     if (path === "/api/aq/wallet/sellall" && M === "POST") return json(await sellAllLive(env));
+    // Alex's own orders on a live position: preview (sends nothing), then the order. Same safety as the trader.
+    if (path === "/api/aq/wallet/manual/preview" && M === "POST") { const r = await manualPreview(env, await body()); return r.error ? json({ error: { message: r.error }, underwater: !!r.underwater }, 400) : json(r); }
+    if (path === "/api/aq/wallet/manual" && M === "POST") { const r = await manualOrder(env, await body()); return r.error ? json({ error: { message: r.error }, underwater: !!r.underwater, busy: !!r.busy }, r.busy ? 409 : 400) : json(r); }
     // the way out: SOL to the ONE saved payout address (never an address from the request), and the key's restore from its second copy
     if (path === "/api/aq/wallet/payout-address" && M === "POST") { const r = await savePayout(env, await body()); return r.error ? apiErr(400, "validation", r.error) : json(r); }
     if (path === "/api/aq/wallet/withdraw-preview" && M === "GET") { const q = url.searchParams.get("sol"); return json(await preview(env, q === "all" ? "all" : Number(q))); }

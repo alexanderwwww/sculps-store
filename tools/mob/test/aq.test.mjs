@@ -336,13 +336,14 @@ test("helper inbox is evidence only; xfeed and briefing", async () => {
   for (const k of ["- Mode: PAPER", "Kill switch:", "Free market context: Fear and Greed 10", "Measured costs today", "Open positions:", "Yesterday's journal"]) assert.ok(txt.includes(k), k);
 });
 
-test("page, bundle and R2 assets behind the admin session", async () => {
+test("page and bundle behind the admin session; the removed World's assets are not served", async () => {
   env.MEDIA.store.set("aq/hero.glb", new Uint8Array([1, 2, 3]));
   for (const p of ["/aq", "/aq/app.js", "/aq/assets/hero.glb"]) assert.equal((await R("GET", p)).status, 302, p);
   assert.equal((await R("GET", "/aq", { bearer: "tok-test" })).status, 302);
   const pg = await R("GET", "/aq", { cookie }); assert.equal(pg.status, 200); assert.ok((await pg.text()).includes("/aq/app.js"));
   assert.match((await R("GET", "/aq/app.js", { cookie })).headers.get("content-type"), /javascript/);
-  const a = await R("GET", "/aq/assets/hero.glb", { cookie }); assert.equal(a.status, 200); assert.equal(a.headers.get("content-type"), "model/gltf-binary");
+  assert.equal((await R("GET", "/aq/assets/hero.glb", { cookie })).status, 404, "World mode was removed: no model is served");
+  assert.ok(!/WebGLRenderer|world\.js/.test((await (await R("GET", "/aq/app.js", { cookie })).text())), "no world code in the app");
   assert.equal((await R("GET", "/aq/assets/none.png", { cookie })).status, 404);
   assert.equal((await R("GET", "/aq/assets/../secret", { cookie })).status, 404);
 });

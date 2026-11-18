@@ -320,3 +320,9 @@ CREATE TABLE IF NOT EXISTS mob_aq_live_refusals (id bigserial PRIMARY KEY, venue
 ALTER TABLE mob_aq_live_orders ADD COLUMN IF NOT EXISTS dest text;
 CREATE UNIQUE INDEX IF NOT EXISTS aqx_live_withdraw_pending ON mob_aq_live_orders (venue) WHERE side = 'withdraw' AND status IN ('requested','sent');
 ALTER TABLE mob_aq_live_orders ADD COLUMN IF NOT EXISTS wallet text;
+ALTER TABLE mob_aq_live_positions ADD COLUMN IF NOT EXISTS plan jsonb;
+ALTER TABLE mob_aq_live_positions ADD COLUMN IF NOT EXISTS alert text;
+ALTER TABLE mob_aq_live_positions ADD COLUMN IF NOT EXISTS alert_action text;
+ALTER TABLE mob_aq_live_positions ADD COLUMN IF NOT EXISTS alert_patch jsonb;
+ALTER TABLE mob_aq_live_orders ADD COLUMN IF NOT EXISTS plan_patch jsonb;
+CREATE TABLE IF NOT EXISTS mob_aq_chart_paper (id bigserial PRIMARY KEY, mint text NOT NULL, symbol text, leg_high_t bigint NOT NULL, entry_px double precision NOT NULL, cost_pct double precision, liq_usd double precision, plan jsonb NOT NULL, half_pct double precision, exit_px double precision, gross_pct double precision, net_pct double precision, outcome text, opened_at timestamptz NOT NULL DEFAULT now(), closed_at timestamptz, UNIQUE (mint, leg_high_t));

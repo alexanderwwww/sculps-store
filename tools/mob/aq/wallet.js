@@ -33,16 +33,18 @@ function paint(el, w) {
   paintLive(el, w.live || null, L); paintPayout(el, w);
   if ((!w.checkedAt || Date.now() - new Date(w.checkedAt).getTime() > 120000) && Date.now() - lastAsk > 60000) { lastAsk = Date.now(); fetch("/api/aq/wallet", { credentials: "same-origin", cache: "no-store" }).then(() => poll()).catch(() => {}); }
 }
+const px = (v) => (num(v) ? "$" + (v >= 1 ? v.toFixed(4) : v.toPrecision(4)) : D);
 const sgn = (v, d = 4) => (num(v) ? (v > 0 ? "+" : "") + v.toFixed(d) + " SOL" : D);
 function paintLive(el, lv, L) {
   const set = (id, v, c) => { const e = el.querySelector("#" + id); if (e && e.textContent !== v) e.textContent = v; if (e && c != null && e.className !== c) e.className = c; };
   const put = (id, html) => { const e = el.querySelector("#" + id); if (e && e.dataset.h !== html) { e.dataset.h = html; e.innerHTML = html; } };
   set("wl-auto-n", L.autoTrade ? "trading real SOL inside these limits" : lv && lv.autoOff && lv.autoOff.why && Date.now() - new Date(lv.autoOff.at).getTime() < 86400000 ? lv.autoOff.why : "off: no new buys. Open live positions still exit on their stop and their clock.");
   if (!lv) { set("wl-rule", "the engine has not sent the live book yet"); return; }
-  set("wl-rule", `${lv.rule} · this rule is NOT proven after costs: small size only`);
+  set("wl-rule", `${lv.rule} · NOT proven: never tested in the training arena, small size only`);
+  const pp = lv.paper; set("wl-paper", pp ? (pp.closed || pp.open ? `Paper mirror (same logic on every coin): ${pp.closed} closed, ${pp.open} open${pp.closed ? ` · ${pp.wins} won · ${num(pp.avgNetPct) ? (pp.avgNetPct > 0 ? "+" : "") + pp.avgNetPct + "%" : D} a trade after costs` : ""}` : "Paper mirror (same logic on every coin): no setup seen yet.") : "");
   set("wl-pnl", sgn(lv.pnlTodaySol), num(lv.pnlTodaySol) ? (lv.pnlTodaySol > 0 ? "up" : lv.pnlTodaySol < 0 ? "dn" : "") : "");
   const P = lv.positions || []; set("wl-ln", String(P.length));
-  put("wl-lpos", P.length ? P.map((p) => `<span><b>${esc(p.symbol || short(p.mint))}</b> ${p.status === "open" ? `${num(p.costSol) ? p.costSol.toFixed(4) : D} SOL in${num(p.valueSol) ? ` · now ${p.valueSol.toFixed(4)}` : ""}${p.timeExitAt ? ` · sells ${new Date(p.timeExitAt).toLocaleTimeString("en-GB", { timeZone: "Europe/Athens", hour: "2-digit", minute: "2-digit" })}` : ""}` : esc(p.status === "opening" ? "buying…" : p.status === "closing" ? "selling…" : "could not be sold: press SELL ALL LIVE")}</span>`).join("") : `<i>no live positions</i>`);
+  put("wl-lpos", P.length ? P.map((p) => `<span><b>${esc(p.symbol || short(p.mint))}</b> ${p.status === "open" ? `${num(p.costSol) ? p.costSol.toFixed(4) : D} SOL in${num(p.valueSol) ? ` · now ${p.valueSol.toFixed(4)}` : ""}${p.plan ? ` · stop ${px(p.plan.stop)} · ${p.plan.phase === 0 ? `target ${px(p.plan.t1)}` : p.plan.phase === 1 ? `half sold, next ${px(p.plan.t2)}` : "trailing"}` : ""}` : esc(p.status === "opening" ? "buying…" : p.status === "closing" ? "selling…" : "could not be sold: press SELL ALL LIVE")}</span>`).join("") : `<i>no live positions</i>`);
   const O = lv.orders || [];
   put("wl-lord", O.length ? O.map((o) => `<div class="o-${esc(o.status)}"><b>${esc(String(o.side).toUpperCase())} ${esc(o.symbol || "")}</b><span>${esc(o.status)}${num(o.sol) ? ` · ${sgn(o.sol)}` : ""}${o.error ? ` · ${esc(o.error)}` : o.reason ? ` · ${esc(o.reason)}` : ""}</span><em>${ago(o.at)} ago</em>${o.signature ? `<a href="https://solscan.io/tx/${encodeURIComponent(o.signature)}" target="_blank" rel="noopener noreferrer">Solscan</a>` : ""}</div>`).join("") : `<div><span>no live orders yet</span></div>`);
   const r = lv.lastRefusal; set("wl-ref", r ? `Last trade refused ${ago(r.at)} ago: ${r.reason}${r.symbol ? ` (${r.symbol})` : ""}` : "No trade has been refused yet.");
@@ -96,7 +98,7 @@ const onHTML = () => `<div class="rh-h"><b class="rh-tag on wl-t">AQUARIUS WALLE
       <div class="lv-o" id="wl-wds"></div></div>
     <div class="lv"><div class="rh-h"><b class="lv-t">LIVE</b><span id="wl-rule"></span></div>
       <div class="rh-k"><div><small>LIVE P&amp;L TODAY</small><b id="wl-pnl">${D}</b></div><div><small>LIVE POSITIONS</small><b id="wl-ln">${D}</b></div></div>
-      <div class="rh-pos" id="wl-lpos"></div><div class="lv-o" id="wl-lord"></div><p class="rh-n" id="wl-ref"></p></div>
+      <div class="rh-pos" id="wl-lpos"></div><div class="lv-o" id="wl-lord"></div><p class="rh-n" id="wl-ref"></p><p class="rh-n" id="wl-paper"></p></div>
   </div><p class="rh-e" id="wl-err"></p>`;
 function wire(el) {
   const c = el.querySelector("#wl-create");

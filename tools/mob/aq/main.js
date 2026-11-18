@@ -1,12 +1,10 @@
-// Aquarius client. BOT MODE (default): a light dashboard, no three.js. WORLD MODE: lazy-loads /aq/assets/world.js.
+// Aquarius client. one light dashboard, no three.js (World mode was removed 2026-11-18: Alex, "make the app lighter").
 // Both read GET /api/aq/state every 3 s (tools/mob/aq/CONTRACT.md). Missing data shows "—", never invented.
 import { deskHTML, renderDesk, wakeReactor } from "./desk.js";
 import { reactorInfo } from "./reactor.js";
 import { helperBadges } from "./grok.js";
 import { trainingButton, renderTrainingButton, trainingHero } from "./training.js";
-import { robinhoodCard } from "./robinhood.js";
-import { walletCard } from "./wallet.js";
-import { phantomCard } from "./phantom.js";
+import { walletsDock } from "./wallets.js";
 export const BUILD = typeof __AQ_BUILD__ !== "undefined" ? __AQ_BUILD__ : "dev";
 
 import { DEPTS, GODS } from "./depts.js";
@@ -69,13 +67,11 @@ function topbar() {
     </div>
     <div class="kpi clock"><small>Athens</small><b id="k-utc">—</b></div><div class="kpi"><small>Agents live</small><b id="k-agents">—</b></div>
     <div class="right">
-      <div class="seg" role="tablist"><button data-m="bot" class="on">Bot</button><button data-m="world">World</button></div>
       <button id="sellall" class="kill">SELL ALL</button><button id="xfer" class="ghost">TRANSFER SOL</button>
       <button id="kill" class="kill">Kill switch</button>
       <button id="menu-btn" class="ghost" title="Menu (Esc)">☰</button>
     </div>
   </header>`);
-  el.querySelectorAll(".seg button").forEach((b) => (b.onclick = () => setMode(b.dataset.m)));
   el.querySelector("#kill").onclick = killDialog; el.querySelector("#sellall").onclick = sellAllDialog; el.querySelector("#xfer").onclick = transferDialog;
   el.querySelector("#menu-btn").onclick = () => openMenu();
   el.querySelector("#sellall").before(trainingButton());
@@ -189,14 +185,11 @@ function showTab(t) {
   menuEl.querySelectorAll("nav [data-t]").forEach((b) => b.classList.toggle("on", b.dataset.t === t));
   const body = menuEl.querySelector(".mbody"), s = store.state || {};
   if (t === "game") {
-    body.innerHTML = `<h2>Game</h2><div class="gm">
-      <button class="tile" data-go="bot"><b>Bot mode</b><small>The dashboard. Light and fast.</small></button>
-      <button class="tile" data-go="world"><b>World mode</b><small>Walk the island. WASD + mouse, Shift run, E enter, O overview.</small></button></div>
+    body.innerHTML = `<h2>Game</h2>
       <h3>CEO actions</h3><div class="row" style="justify-content:flex-start"><button class="danger" data-sell>SELL ALL</button><button class="ghost" data-xfer>TRANSFER SOL</button></div>
-      <h3>Controls</h3><ul class="keys"><li><kbd>W A S D</kbd> walk</li><li><kbd>Shift</kbd> run</li><li><kbd>Mouse drag</kbd> look · <kbd>wheel</kbd> zoom</li><li><kbd>E</kbd> enter / leave a building</li><li><kbd>O</kbd> overview camera</li><li><kbd>Click</kbd> a worker for his card</li><li><kbd>Esc</kbd> this menu</li></ul>
+      <h3>Keys</h3><ul class="keys"><li><kbd>Esc</kbd> this menu</li></ul>
       <p class="muted">Build ${esc(BUILD)} · state ${store.ok ? "live, updated " + ago(s.updatedAt) + " ago" : "offline: " + esc(store.err || D)}</p>`;
     body.querySelector("[data-sell]").onclick = sellAllDialog; body.querySelector("[data-xfer]").onclick = transferDialog;
-    body.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { openMenu(); setMode(b.dataset.go); }));
   }
   if (t === "inv") {
     const ds = s.departments || [];
@@ -264,37 +257,18 @@ function dbTab(body, s) {
   body.querySelectorAll("[data-w]").forEach((b) => (b.onclick = () => openWorker(b.dataset.d, b.dataset.w)));
 }
 
-// ---------- mode switching ----------
-let world = null, worldBusy = false;
-export async function setMode(m) {
-  if (worldBusy || m === store.mode) return;
-  document.querySelectorAll(".seg button").forEach((b) => b.classList.toggle("on", b.dataset.m === m));
-  try { localStorage.setItem("aq-mode", m); } catch {}
-  if (m === "world") {
-    worldBusy = true; store.mode = "world"; document.body.classList.add("world");
-    const ld = h(`<div id="loading"><div class="spin"></div><p>Raising the island…</p></div>`); document.body.appendChild(ld);
-    try {
-      const mod = await import(/* @vite-ignore */ (window.AQ_WORLD_URL || "/aq/assets/world.js") + "?b=" + encodeURIComponent(BUILD));
-      world = await mod.start(document.getElementById("stage"), { store, onState, openWorker, sellAllDialog, transferDialog, openMenu, dialog, DEPTS, GODS, fmt: { fSol, fPct, fUsd, fNum, ago, esc }, xFeed, flowRow, stratRows, xRows, helpersHtml, BUILD, setMode });
-    } catch (e) { console.error(e); dialog(`<h3>World did not load</h3><p>${esc(e.message)}</p><div class="row"><button class="primary" data-x>Back to bot mode</button></div>`, (d, c) => (d.querySelector("[data-x]").onclick = () => { c(); })); store.mode = "world"; worldBusy = false; ld.remove(); return setMode("bot"); }
-    ld.remove(); worldBusy = false;
-  } else {
-    store.mode = "bot"; document.body.classList.remove("world");
-    if (world) { try { world.dispose(); } catch (e) { console.error(e); } world = null; }
-    renderDash(store.state); wakeReactor();
-  }
-}
+// ---------- mode: only the bot dashboard exists now
+export async function setMode() { store.mode = "bot"; renderDash(store.state); wakeReactor(); }
 
 // ---------- boot ----------
 function boot() {
-  const links = h(`<div class="lk"></div>`); links.append(phantomCard(), walletCard(), robinhoodCard());
-  document.body.append(topbar(), links, trainingHero(), h(`<div id="offline" hidden>Can't reach the engine. Showing the last data.</div>`), buildDash(), h(`<div id="stage"></div>`));
+  // the reactor (the solar system) is the main screen: first under the top bar; the training hero and the rest come below it
+  const d0 = buildDash(); d0.querySelector("#d-hero-slot").replaceWith(trainingHero());
+  document.body.append(topbar(), h(`<div id="offline" hidden>Can't reach the engine. Showing the last data.</div>`), d0, walletsDock());
   onState((s) => { renderTop(s); if (store.mode === "bot") renderDash(s); });
   window.addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.querySelector(".dlg-bg")) openMenu(); else if (e.key === "Escape") document.querySelector(".dlg-bg").remove(); });
   setInterval(() => { const e = document.getElementById("k-utc"); if (e) e.textContent = new Date().toLocaleTimeString("en-GB", { timeZone: "Europe/Athens", hour12: false }); }, 1000);
   poll(); setInterval(poll, 3000); setInterval(() => listeners.forEach((f) => store.state && f(store.state)), 1000 * 15);
-  let m = "bot"; try { m = new URLSearchParams(location.search).get("mode") || "bot"; } catch {}
-  if (m === "world") setMode("world");
   window.__aq = { store, setMode, openMenu, poll, reactorInfo };
 }
 if (typeof document !== "undefined") boot();

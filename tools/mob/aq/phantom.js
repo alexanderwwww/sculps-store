@@ -6,17 +6,19 @@ import { esc, ago, poll, onState, dialog, store, BUILD } from "./main.js";
 const D = "—", num = (v) => typeof v === "number" && isFinite(v);
 const sol = (v, d = 4) => (num(v) ? v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }) + " SOL" : D);
 const amt = (v) => (num(v) ? v.toLocaleString("en-US", { maximumFractionDigits: v < 1 ? 6 : 2 }) : D);
+const px = (v) => (num(v) ? "$" + (v >= 1 ? v.toFixed(4) : v.toPrecision(4)) : D);
 const short = (m) => (m && m.length > 12 ? m.slice(0, 4) + "…" + m.slice(-4) : m || D);
 const provider = () => { const p = typeof window !== "undefined" && window.phantom && window.phantom.solana; return p && p.isPhantom ? p : null; };
 const api = async (path, body) => { const r = await fetch("/api/aq/phantom" + path, { method: body === undefined ? "GET" : "POST", credentials: "same-origin", cache: "no-store", headers: body === undefined ? {} : { "content-type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) }); const j = await r.json().catch(() => null); if (!r.ok) throw new Error((j && j.error && j.error.message) || "HTTP " + r.status); return { ...j, httpStatus: r.status }; };
 let key = "", lastSeen = 0, busy = false, hooked = false;
 
+export const phantomConnect = (el) => connect(el); // the dock's Connect button runs the very same connect
 export function phantomCard() {
   const el = document.createElement("section"); el.id = "ph"; el.className = "rh phm"; el.hidden = true;
   onState((s) => { try { paint(el, s && s.phantom); } catch (e) { console.error(e); } });
   return el;
 }
-const say = (el, t, c = "") => { const m = el.querySelector("#ph-msg"); if (m) { m.textContent = t; m.className = "msg " + c; } };
+const say = (el, t, c = "") => { const m = el.querySelector("#ph-msg, [data-msg]"); if (m) { m.textContent = t; m.className = (m.hasAttribute("data-msg") ? "dk-msg " : "") + "msg " + c; } };
 function hook() { // Phantom tells the page when he switches account or disconnects there: the server follows, public address only
   const p = provider(); if (!p || hooked || typeof p.on !== "function") return; hooked = true;
   p.on("accountChanged", (pk) => { (pk ? api("/connect", { address: pk.toString() }) : api("/disconnect", {})).then(() => poll()).catch(() => {}); });
@@ -79,7 +81,7 @@ function paint(el, ph) {
   set("ph-n", String(rows.length));
   put("ph-pos", rows.length ? rows.map((r) => `<div class="ph-row${r.p && r.p.sellNow ? " now" : ""}"><b title="${esc(r.mint)}">${esc(r.symbol || short(r.mint))}</b><span>${r.p ? `${num(r.p.costSol) ? r.p.costSol.toFixed(4) : D} SOL in${num(r.p.valueSol) ? ` · now ${r.p.valueSol.toFixed(4)}` : ""}` : `${amt(r.t.amount)} in your wallet`}</span>${(ph.sellPcts || [25, 50, 100]).map((x) => `<button type="button" class="ghost" data-sell="${esc(r.mint)}" data-pct="${x}">Sell ${x}%</button>`).join("")}</div>`).join("") : `<i>no coins in your Phantom</i>`);
   const sells = P.filter((p) => p.sellNow), sg = ph.signal;
-  put("ph-ban", (sg ? `<div class="ph-b buy"><b>SIGNAL: buy ${esc(sg.symbol)}</b><span>${esc(sg.why)} · ${ago(sg.at)} ago · not proven after costs: small size</span><button type="button" class="primary" data-sig="${esc(sg.mint)}">Buy ${esc(sg.symbol)}</button></div>` : "")
+  put("ph-ban", (sg ? `<div class="ph-b buy"><b>SIGNAL: buy ${esc(sg.symbol)}</b><span>${esc(sg.why)} · buy zone ${esc(px(sg.zone && sg.zone[0]))}–${esc(px(sg.zone && sg.zone[1]))} · stop ${esc(px(sg.stop))} · targets ${esc(px(sg.t1))} / ${esc(px(sg.t2))} · ${ago(sg.at)} ago · unproven: small size</span><button type="button" class="primary" data-sig="${esc(sg.mint)}">Buy ${esc(sg.symbol)}</button></div>` : "")
     + sells.map((p) => `<div class="ph-b sell"><b>SELL NOW: ${esc(p.symbol)}</b><span>${esc(p.sellNow)}</span><button type="button" class="danger" data-sell="${esc(p.mint)}" data-pct="100">Sell ${esc(p.symbol)}</button></div>`).join(""));
   const sel = el.querySelector("#ph-coin"), opts = (ph.coins || []).map((c) => `<option value="${esc(c.mint)}">${esc(c.symbol)} · ${esc(c.from)}</option>`).join("") + `<option value="">Another coin (paste its address)</option>`;
   if (sel && sel.dataset.h !== opts && document.activeElement !== sel) { const v = sel.value; sel.dataset.h = opts; sel.innerHTML = opts; if (v && [...sel.options].some((o) => o.value === v)) sel.value = v; el.querySelector("#ph-mint").hidden = sel.value !== ""; }

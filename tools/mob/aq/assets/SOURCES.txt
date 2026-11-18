@@ -1,4 +1,0 @@
-All character files are CC0 1.0 (public domain) by Quaternius, downloaded 2026-11-16 from quaternius.com -> itch.io:
-- body.glb: Universal Base Characters [Standard] (https://quaternius.com/packs/universalbasecharacters.html, https://quaternius.itch.io/universal-base-characters), Superhero_Male_FullBody, Light skin texture, textures resized to 512 webp, normal/roughness maps dropped.
-- anims.glb: Universal Animation Library [Standard] (https://quaternius.com/packs/universalanimationlibrary.html), UAL1_Standard.glb, mesh removed, kept clips Idle_Loop, Walk_Loop, Jog_Fwd_Loop, Sprint_Loop, Sitting_Idle_Loop, Sitting_Talking_Loop, Interact, Idle_Talking_Loop, Fixing_Kneeling.
-Licence texts: LICENSE-UAL.txt, LICENSE-UBC.txt (CC0 1.0 Universal).

@@ -80,7 +80,7 @@ function layer(k, w, h) { let c = st[k]; if (!c) c = st[k] = document.createElem
 
 // ---------- frame ----------
 function loop(now) {
-  const c = document.getElementById("d-rx"); if (!c || document.hidden || document.body.classList.contains("world")) { st.raf = 0; return; }
+  const c = document.getElementById("d-rx"); if (!c || document.hidden) { st.raf = 0; return; }
   const js0 = performance.now(), raw = (now - st.last) / 1000; st.last = now; const dt = Math.min(0.05, raw > 0 ? raw : 0.016); st.t += dt;
   st.fps += (1 / Math.max(raw, 0.001) - st.fps) * 0.05; if (raw > 0.024) st.slow++; else st.slow = Math.max(0, st.slow - 0.25); if (st.slow > 40 && st.q > 0.35) { st.q = Math.max(0.35, st.q - 0.15); st.slow = 0; } else if (st.slow === 0 && st.q < 1 && st.fps > 57) st.q = Math.min(1, st.q + 0.002);
   const rc = c.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1), W = Math.max(10, Math.round(rc.width * d)), H = Math.max(10, Math.round(rc.height * d));
