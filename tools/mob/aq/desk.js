@@ -29,7 +29,7 @@ export function deskHTML() {
     <div class="reactor"><div class="ph"><b>THE REACTOR</b><span>twelve coils hold the ring · one ticket rides the current · Aquarius in the core</span><em id="d-rx-r"></em></div>
       <div class="rx-t" id="d-ticket"></div>
       <div class="rx-stage"><canvas id="d-rx"></canvas>
-        <div class="rx-k"><div><small>EQUITY</small><b id="d-rx-eq">—</b><i id="d-rx-pl"></i></div><div class="r"><small>CORE</small><b id="d-rx-mood">—</b><i id="d-rx-hp"></i></div></div>
+        <div class="rx-k"><div><small><u class="ppt">PAPER</u> EQUITY</small><b id="d-rx-eq" class="ppv">—</b><i id="d-rx-pl"></i></div><div class="r"><small>CORE</small><b id="d-rx-mood">—</b><i id="d-rx-hp"></i></div></div>
         <div class="rx-cards l" id="d-cards-l"></div><div class="rx-cards r" id="d-cards-r"></div>
         <div class="rx-f" id="d-rx-f"></div></div></div>
     <div class="col-r"><div class="ph"><b>CONTROL STACK</b><em id="d-ctl-m"></em></div><div id="d-ctl"></div></div>

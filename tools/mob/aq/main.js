@@ -5,6 +5,7 @@ import { reactorInfo } from "./reactor.js";
 import { helperBadges } from "./grok.js";
 import { trainingButton, renderTrainingButton, trainingHero } from "./training.js";
 import { walletsDock } from "./wallets.js";
+import { realBar, tradeScreens } from "./real.js";
 export const BUILD = typeof __AQ_BUILD__ !== "undefined" ? __AQ_BUILD__ : "dev";
 
 import { DEPTS, GODS } from "./depts.js";
@@ -57,10 +58,10 @@ function topbar() {
     <div class="brand"><span class="logo">♒</span><b>AQUARIUS</b><span id="mode-badge" class="badge">—</span></div>
     <div id="hbadges" class="hbs"></div>
     <div class="kpis">
-      <div class="kpi"><small>Equity</small><b id="k-eq">—</b></div>
-      <div class="kpi"><small>Today</small><b id="k-today">—</b></div>
-      <div class="kpi"><small>Total P&amp;L</small><b id="k-total">—</b></div>
-      <div class="kpi"><small>Open</small><b id="k-open">—</b></div>
+      <div class="kpi pp"><small><u>PAPER</u> equity</small><b id="k-eq">—</b></div>
+      <div class="kpi pp"><small><u>PAPER</u> today</small><b id="k-today">—</b></div>
+      <div class="kpi pp"><small><u>PAPER</u> total</small><b id="k-total">—</b></div>
+      <div class="kpi pp"><small><u>PAPER</u> open</small><b id="k-open">—</b></div>
       <div class="kpi hp"><small>Health <span id="k-stage">—</span></small><div class="hpbar"><i id="k-hp"></i></div></div>
       <div class="kpi"><small>Evidence <span id="k-evn"></span></small><b id="k-ev">—</b></div>
       <div class="kpi wide"><small>Council</small><b id="k-council">—</b></div>
@@ -263,8 +264,8 @@ export async function setMode() { store.mode = "bot"; renderDash(store.state); w
 // ---------- boot ----------
 function boot() {
   // the reactor (the solar system) is the main screen: first under the top bar; the training hero and the rest come below it
-  const d0 = buildDash(), hs = d0.querySelector("#d-hero-slot"); hs.className = "hero-slot"; hs.append(trainingHero());
-  document.body.append(topbar(), h(`<div id="offline" hidden>Can't reach the engine. Showing the last data.</div>`), d0, walletsDock());
+  const d0 = buildDash(), hs = d0.querySelector("#d-hero-slot"); d0.querySelector(".reactor-row").after(tradeScreens()); hs.className = "hero-slot"; hs.append(trainingHero());
+  document.body.append(topbar(), h(`<div id="offline" hidden>Can't reach the engine. Showing the last data.</div>`), realBar(), d0, walletsDock());
   onState((s) => { renderTop(s); if (store.mode === "bot") renderDash(s); });
   window.addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.querySelector(".dlg-bg")) openMenu(); else if (e.key === "Escape") document.querySelector(".dlg-bg").remove(); });
   setInterval(() => { const e = document.getElementById("k-utc"); if (e) e.textContent = new Date().toLocaleTimeString("en-GB", { timeZone: "Europe/Athens", hour12: false }); }, 1000);
