@@ -15,12 +15,13 @@ import { db } from "../../db.mjs";
 import { eventsFromLogs } from "./decode.mjs";
 import { createEngine, GTA_MAIN } from "./rules.mjs";
 import { deepCheck } from "./health.mjs";
-import { flush, writeRight } from "./store.mjs";
+import { flush, writeRight, retention } from "./store.mjs";
 import { openWs, wsText, logsSub, programSub, heliusWss, PUBLIC_WSS } from "./probe.mjs";
 import { decodeCurve } from "./decode.mjs";
 
 export const PUMPPORTAL_WSS = "wss://pumpportal.fun/api/data";
 export const CREDIT_CAP_DAY = 150000;
+const CURVE_TTL_MS = 6 * 3600000, CHECKED_TTL_MS = 24 * 3600000;
 const FLUSH_MS = 5000, STALE_MS = 60000, FEED_MAX = 40;
 
 export class Symbiote {
@@ -28,8 +29,8 @@ export class Symbiote {
     this.ctx = ctx; this.env = env; this.vetoes = new Set();
     this.eng = createEngine({ isVetoed: (m) => this.vetoes.has(m) });
     this.ws = { pp: null, chain: null }; this.lastMsg = { pp: 0, chain: 0 }; this.reconnects = { pp: 0, chain: 0 };
-    this.win = []; this.notes = 0; this.bytes = 0; this.feed = []; this.queue = []; this.checked = new Set();
-    this.started = 0; this.lastVeto = 0; this.curves = new Map(); this.resolveQ = new Set(); this.lastGta = 0; this.errors = [];
+    this.win = []; this.notes = 0; this.bytes = 0; this.feed = []; this.queue = []; this.checked = new Map();
+    this.started = 0; this.lastVeto = 0; this.curves = new Map(); this.curveAt = new Map(); this.resolveQ = new Set(); this.launchQ = new Set(); this.lastPrune = 0; this.lastGta = 0; this.errors = [];
   }
   d() { return db(this.env); }
   err(where, e) { this.errors.unshift({ at: new Date().toISOString(), where, msg: String(e?.message || e).slice(0, 200) }); this.errors.length = Math.min(this.errors.length, 8); }
@@ -49,6 +50,7 @@ export class Symbiote {
     if (!this.started) {
       this.started = Date.now();
       const saved = await this.ctx.storage.get("stats"); if (saved) Object.assign(this.eng.stats, saved);
+      const g = await this.ctx.storage.get("guard"); if (g) { this.cday = g.day; this.cused = g.used || 0; this.paused = !!g.paused; } // the guard survives a restart
       // coins that were live when the object last stopped cannot be measured any more: logged as missed, never silently dropped
       try {
         const lost = await this.d().q(`UPDATE mob_aq_sym_coins SET done = true, end_reason = 'restart', updated_at = now() WHERE NOT done RETURNING mint, symbol, n`);
@@ -67,6 +69,7 @@ export class Symbiote {
   // resolved curve + the deep checks' calls). 150,000 a day = 4.5M a month = 45% of Developer, leaving over half for the live
   // trader's sends. At the cap the chain stream closes until the next UTC day and a brain row says so.
   credits(n) { const day = new Date().toISOString().slice(0, 10); if (this.cday !== day) { this.cday = day; this.cused = 0; this.paused = false; } this.cused += n; }
+  async saveGuard() { await this.ctx.storage.put("guard", { day: this.cday, used: this.cused, paused: !!this.paused }); }
 
   async connect() {
     const now = Date.now();
@@ -104,7 +107,7 @@ export class Symbiote {
     if (j.txType !== "create" || !j.mint) return;
     const c = this.eng.onCreate({ mint: j.mint, name: j.name, symbol: j.symbol, uri: j.uri, creator: j.traderPublicKey, curve: j.bondingCurveKey, src: "pumpportal",
       vsol: Number.isFinite(j.vSolInBondingCurve) ? j.vSolInBondingCurve * 1e9 : null, vtok: Number.isFinite(j.vTokensInBondingCurve) ? j.vTokensInBondingCurve * 1e6 : null });
-    if (j.bondingCurveKey) this.curves.set(j.bondingCurveKey, j.mint);
+    if (j.bondingCurveKey) { this.curves.set(j.bondingCurveKey, j.mint); this.curveAt.set(j.bondingCurveKey, Date.now()); }
     if (c.n === 0 && !c.chain) this.push({ at: Date.now(), k: "launch", mint: c.mint, sym: c.symbol, gta: c.gta });
   }
 
@@ -114,7 +117,7 @@ export class Symbiote {
     const r = j.params?.result; if (!r?.value) return;
     const e = eventsFromLogs(r.value, r.context?.slot ?? null);
     if (e.failed) { this.eng.stats.failed++; return; }
-    for (const c of e.creates) { if (c.curve) this.curves.set(c.curve, c.mint); const had = this.eng.coins.has(c.mint); const coin = this.eng.onCreate({ ...c, src: "chain" }); if (!had) this.push({ at: now, k: "launch", mint: coin.mint, sym: coin.symbol, gta: coin.gta }); }
+    for (const c of e.creates) { if (c.curve) { this.curves.set(c.curve, c.mint); this.curveAt.set(c.curve, now); } const had = this.eng.coins.has(c.mint); const coin = this.eng.onCreate({ ...c, src: "chain" }); if (!had) this.push({ at: now, k: "launch", mint: coin.mint, sym: coin.symbol, gta: coin.gta }); }
     for (const t of e.trades) this.eng.onTrade(t, now);
     for (const x of e.completes) this.eng.onComplete(x, now);
   }
@@ -154,14 +157,18 @@ export class Symbiote {
     if (now - this.lastGta > 60000) { this.lastGta = now; await this.gtaOffCurve(now).catch((e) => this.err("gta", e)); }
     const b = this.eng.drain();
     for (const f of b.feed) this.push(f);
-    for (const x of b.explode) if (!this.checked.has(x.mint)) { this.checked.add(x.mint); this.queue.push(x); }
+    for (const x of b.explode) if (!this.checked.has(x.mint)) { this.checked.set(x.mint, now); this.queue.push(x); }
+    this.prune(now);
     const src0 = await this.source(); const st = { ...this.status(), source: src0, credits: { usedToday: Math.round(this.cused || 0), capPerDay: CREDIT_CAP_DAY, paused: !!this.paused } };
+    if (src0 === "curve") { this.wantLaunch(); await this.snapLaunches().catch((e) => this.err("launch facts", e)); }
     try { await flush(d, b, st); await this.ctx.storage.put("stats", this.eng.stats); } catch (e) { this.err("flush", e); }
     await this.resolveCurves().catch((e) => this.err("resolve", e));
     if (!this.paused && src0 !== "public" && this.cused >= CREDIT_CAP_DAY) { this.paused = true; try { this.ws.chain?.close(1000, "credit cap"); } catch {} this.ws.chain = null;
       await d.q(`INSERT INTO mob_aq_brain (dept, kind, text, data) VALUES ('symbiote', 'pain', $1, $2::jsonb)`, [`PAIN symbiote stream paused: ${Math.round(this.cused)} Helius credits used today (cap ${CREDIT_CAP_DAY}). Launches after this are missed until 00:00 UTC (02:00 Athens).`, JSON.stringify({ used: Math.round(this.cused), cap: CREDIT_CAP_DAY, rule: "credit guard" })]).catch(() => {}); }
     const x = this.queue.shift();
-    if (x) { try { this.credits(140); const res = await deepCheck(this.env, d, x.mint, this.eng.streamHealth(x.mint) || {}); await writeRight(d, x, res); } catch (e) { this.err("deep check", e); } }
+    if (x) { try { const res = await deepCheck(this.env, d, x.mint, this.eng.streamHealth(x.mint) || {}); this.credits(res.calls || 0); await writeRight(d, x, res); } catch (e) { this.err("deep check", e); } }
+    await this.saveGuard().catch(() => {});
+    if (now - this.lastPrune > 3600000) { this.lastPrune = now; await retention(d).catch((e) => this.err("retention", e)); }
     await this.ctx.storage.setAlarm(Date.now() + FLUSH_MS);
   }
 
@@ -178,10 +185,26 @@ export class Symbiote {
         const tx = await rpc("getTransaction", [old.signature, { encoding: "json", maxSupportedTransactionVersion: 1 }]);
         const ev = eventsFromLogs({ signature: old.signature, err: tx?.meta?.err ?? null, logs: tx?.meta?.logMessages || [] }, tx?.slot ?? null);
         const c = ev.creates.find((x) => x.curve === curve);
-        if (c) { this.curves.set(curve, c.mint); const coin = this.eng.onCreate({ ...c, src: "chain" }); this.push({ at: Date.now(), k: "launch", mint: coin.mint, sym: coin.symbol, gta: coin.gta }); this.eng.stats.resolved = (this.eng.stats.resolved || 0) + 1; }
-        else this.curves.set(curve, null);
+        if (c) { this.curves.set(curve, c.mint); this.curveAt.set(curve, Date.now()); const coin = this.eng.onCreate({ ...c, src: "chain" }); this.push({ at: Date.now(), k: "launch", mint: coin.mint, sym: coin.symbol, gta: coin.gta }); this.eng.stats.resolved = (this.eng.stats.resolved || 0) + 1; }
+        else { this.curves.set(curve, null); this.curveAt.set(curve, Date.now()); }
       } catch (e) { this.resolveQ.add(curve); throw e; }
     }));
+  }
+
+  // memory bounds (a Durable Object has 128 MB): curve->mint entries for coins no longer in memory expire after 6 h,
+  // checked mints after 24 h, the queues are capped
+  prune(now = Date.now()) {
+    for (const [k, v] of this.curves) if (!(v && this.eng.coins.has(v)) && now - (this.curveAt.get(k) ?? 0) > CURVE_TTL_MS) { this.curves.delete(k); this.curveAt.delete(k); }
+    for (const [k, t] of this.checked) if (now - t > CHECKED_TTL_MS) this.checked.delete(k);
+    if (this.launchQ.size > 2000) this.launchQ = new Set([...this.launchQ].slice(-2000));
+  }
+  // curve source: a coin that moves (+50% from launch or 20 trades) gets its launch facts read once, while it is young
+  wantLaunch() { for (const c of this.eng.coins.values()) if (!c.done && !c.launchAsked && c.curve && c.px0 && (c.hi / c.px0 >= 1.5 || c.n >= 20)) { c.launchAsked = true; this.launchQ.add(c.mint); } }
+  async snapLaunches(max = 8) {
+    if (this.paused || !this.launchQ.size) return;
+    const { rpcFor, launchFacts } = await import("./health.mjs"); const rpc = rpcFor(this.env);
+    const batch = [...this.launchQ].slice(0, max); for (const m of batch) this.launchQ.delete(m);
+    await Promise.all(batch.map(async (m) => { const c = this.eng.coins.get(m); if (!c) return; const f = await launchFacts(rpc, m, c.curve).catch((e) => ({ complete: false, why: String(e.message || e), calls: 1 })); this.credits(f.calls || 1); this.eng.setLaunch(m, f); }));
   }
 
   // the main GTA 6 coin and GTA coins that left the curve keep a minute price from Jupiter for their whole life

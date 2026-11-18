@@ -77,6 +77,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
     if (!c) { c = newCoin(x, x.src || "chain"); stats.launches++; }
     else { for (const k of ["name", "symbol", "uri", "creator", "curve"]) if (x[k] && !c[k]) c[k] = x[k]; if (x.sol === false) c.sol = false; c.gta = isGta(c); if (!c.px0 && x.vsol && x.vtok) { c.vsol0 = x.vsol; c.vtok0 = x.vtok; c.px0 = pxOf(x.vsol, x.vtok); } touch(c); }
     if (x.src === "pumpportal") c.pp = true; else c.chain = true;
+    if (x.src === "chain" && x.slot != null && c.n === 0) { c.createSlot = x.slot; c.launchComplete = !!x.live; }
     return c;
   }
 
@@ -212,10 +213,18 @@ export function createEngine({ isVetoed = () => false } = {}) {
     const sniperTok = [...c.early.values()].reduce((a, b) => a + b, 0);
     return { uniqueBuyers: c.buyers.size, buys: c.buys, sells: c.sells, buyShare: r6(c.buys / Math.max(1, c.buys + c.sells)), sizeCv: r6(mean ? sd / mean : 0), sameSizeShare: r6(topSame),
       washShare: r6(c.volSol ? washVol / c.volSol : 0), sniperWallets: c.early.size, sniperShare: r6(sniperTok / supply), devSold: c.devSell > 0, devShare: r6(Math.max(0, c.devTok) / supply),
+      launchComplete: !!c.launchComplete, createSlot: c.createSlot, devBuySol: r6(c.devBuy),
       earlyBuyers: [...c.early.keys()].slice(0, 10), firstBuyers: [...c.buyers].slice(0, 12), creator: c.creator, curve: c.curve, uri: c.uri,
       realSol: c.realSol, mcapSol: r6(c.last ? c.last * 1e9 : null), liqToMcap: r6(c.last ? c.realSol / (c.last * 1e9) : null), quote: c.sol ? "SOL" : "other" };
   }
 
+  // launch facts read from the chain shortly after launch (curve source): create slot, dev, first-block buyers. Kept for life.
+  function setLaunch(mint, f) {
+    const c = coins.get(mint); if (!c) return;
+    c.launchComplete = !!f.complete; c.createSlot = f.createSlot ?? c.createSlot; if (f.creator) c.creator = f.creator;
+    c.early = new Map(f.early || []); if (f.devTok != null) c.devTok = Math.max(c.devTok, f.devTok); if (f.devBuy) c.devBuy = Math.max(c.devBuy, f.devBuy); if (f.devSold) c.devSell = Math.max(c.devSell, 1e-9);
+    c.launchAsked = true;
+  }
   // hands the accumulated changes to the writer and starts a new batch
   function drain() {
     const coinsOut = [...out.coins.values()].map((c) => ({ mint: c.mint, symbol: c.symbol, name: c.name, gta: c.gta, sol: c.sol, created_at: new Date(c.createdAt).toISOString(),
@@ -229,7 +238,7 @@ export function createEngine({ isVetoed = () => false } = {}) {
   // QUIET_MS with no trade yet is pending, not missed)
   const coverage = () => { let pending = 0; for (const c of coins.values()) if (!c.done && !c.n) pending++;
     const base = stats.launches - pending; return { ...stats, pending, live: coins.size, pct: base > 0 ? r6(Math.min(100, (base - stats.missed) / base * 100)) : null, wallet }; };
-  return { onCreate, onTrade, onComplete, sweep, drain, streamHealth, coverage, coins, stats, wallet, gtaTick };
+  return { onCreate, onTrade, onComplete, sweep, drain, streamHealth, setLaunch, coverage, coins, stats, wallet, gtaTick };
 }
 
 // A right call: exploded on paper AND every health rule passed. Returns {ok, failed:[...], checks}. Thresholds stated here.
@@ -238,6 +247,7 @@ export const HEALTH = { top10Max: 0.30, devShareMax: 0.05, devSold: false, snipe
 export function judgeHealth(h) {
   const failed = [], has = (v) => v !== null && v !== undefined;
   const need = (name, ok, v) => { if (!has(v)) failed.push(`${name}: unknown`); else if (!ok) failed.push(`${name}: ${typeof v === "number" ? Math.round(v * 1000) / 1000 : v}`); };
+  if (h.launchComplete !== true) failed.push("launch data (create slot, dev, first-block buyers): missing, so it can never be a right call");
   need("top-10 holders excluding the curve", h.top10Share <= HEALTH.top10Max, h.top10Share);
   need("dev share", h.devShare <= HEALTH.devShareMax, h.devShare);
   need("dev sold", h.devSold === false, h.devSold);

@@ -46,11 +46,31 @@ export async function sampleStream(rpc, mint, base = {}) {
     for (const x of ev.trades) if (x.mint === mint) e.onTrade(x, (t.blockTime || 0) * 1000);
   }
   const h = e.streamHealth(mint) || {};
-  return { ...base, ...h, curve: base.curve || h.curve, uri: base.uri || h.uri, creator: base.creator || h.creator, sampledTx: ok.length, totalTx: sigs.length };
+  // the launch facts recorded at launch win; the sample never claims them (its oldest 20 are not the launch when there are 1000+)
+  const keep = base.launchComplete ? { launchComplete: true, earlyBuyers: base.earlyBuyers, sniperWallets: base.sniperWallets, sniperShare: base.sniperShare, devShare: Math.max(base.devShare || 0, h.devShare || 0), devSold: !!(base.devSold || h.devSold), createSlot: base.createSlot } : { launchComplete: false };
+  return { ...base, ...h, ...keep, curve: base.curve || h.curve, uri: base.uri || h.uri, creator: base.creator || h.creator, sampledTx: ok.length, totalTx: sigs.length };
+}
+
+// LAUNCH FACTS (curve source): the curve's signatures, oldest first. Complete only when the page reaches the create itself
+// (fewer than 1000 signatures and the oldest carries this coin's CreateEvent); then the dev and every buyer in the create slot
+// and the next 2 slots are read (up to 25 transactions). Incomplete = the coin can never be a right call (fail closed).
+export async function launchFacts(rpc, mint, curve) {
+  const sigs = ((await rpc("getSignaturesForAddress", [curve, { limit: 1000 }])) || []);
+  if (!sigs.length || sigs.length >= 1000) return { complete: false, why: sigs.length ? "over 1000 transactions: the launch is out of reach" : "no transactions", calls: 1 };
+  const oldest = sigs[sigs.length - 1], first = await rpc("getTransaction", [oldest.signature, { encoding: "json", maxSupportedTransactionVersion: 1 }]);
+  const ev0 = eventsFromLogs({ signature: oldest.signature, err: first?.meta?.err ?? null, logs: first?.meta?.logMessages || [] }, first?.slot ?? oldest.slot);
+  const cr = ev0.creates.find((c) => c.mint === mint); if (!cr) return { complete: false, why: "the oldest transaction is not this coin's create", calls: 2 };
+  const slot = first?.slot ?? oldest.slot, creator = cr.creator, early = new Map(); let devTok = 0, devBuy = 0, devSold = false, calls = 2;
+  const take = (ev) => { for (const t of ev.trades) if (t.mint === mint) { if (t.user === creator) { if (t.buy) { devTok += t.tokens; devBuy += t.sol; } else { devTok -= t.tokens; devSold = true; } } else if (t.buy && t.slot - slot <= 2) early.set(t.user, (early.get(t.user) || 0) + t.tokens); } };
+  take(ev0);
+  const near = sigs.filter((x) => x.slot <= slot + 2 && x.signature !== oldest.signature && !x.err).slice(-25);
+  for (const x of near) { const tx = await rpc("getTransaction", [x.signature, { encoding: "json", maxSupportedTransactionVersion: 1 }]).catch(() => null); calls++; if (tx) take(eventsFromLogs({ signature: x.signature, err: tx.meta?.err ?? null, logs: tx.meta?.logMessages || [] }, tx.slot)); }
+  return { complete: true, createSlot: slot, creator, early: [...early], devTok, devBuy, devSold, calls };
 }
 
 // stream: rules.streamHealth(mint). Returns {checks, verdict}.
-export async function deepCheck(env, d, mint, stream, rpc = rpcFor(env)) {
+export async function deepCheck(env, d, mint, stream, rpc0 = rpcFor(env)) {
+  let calls = 0; const rpc = (m, p) => { calls++; return rpc0(m, p); };
   if (!stream.uniqueBuyers) { const smp = await safe(() => sampleStream(rpc, mint, stream)); if (!smp.error) stream = smp; }
   const checks = { ...stream };
   const holders = await safe(async () => {
@@ -85,5 +105,5 @@ export async function deepCheck(env, d, mint, stream, rpc = rpcFor(env)) {
   const meta = cid ? await safe(async () => { const r = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`); if (!r.ok) throw new Error("metadata " + r.status); return r.json(); }) : { error: "no metadata uri" };
   if (!meta.error) { const s = ["twitter", "telegram", "website"].filter((k) => typeof meta[k] === "string" && /^https?:\/\//.test(meta[k])); checks.socials = s.length; checks.socialLinks = s.map((k) => meta[k]); } else checks.metaError = meta.error;
   checks.vetoed = d ? await vetoed(d, mint) : false;
-  return { checks, verdict: judgeHealth(checks) };
+  return { checks, verdict: judgeHealth(checks), calls };
 }

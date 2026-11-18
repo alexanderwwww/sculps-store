@@ -333,3 +333,8 @@ CREATE TABLE IF NOT EXISTS mob_aq_sym_trades (id bigserial PRIMARY KEY, mint tex
 CREATE TABLE IF NOT EXISTS mob_aq_sym_missed (mint text PRIMARY KEY, symbol text, reason text NOT NULL, at timestamptz NOT NULL DEFAULT now());
 CREATE TABLE IF NOT EXISTS mob_aq_sym_gta (mint text NOT NULL, m bigint NOT NULL, o double precision, h double precision, l double precision, c double precision, n int NOT NULL DEFAULT 0, src text, PRIMARY KEY (mint, m));
 CREATE TABLE IF NOT EXISTS mob_aq_sym_stats (k text PRIMARY KEY, v jsonb, at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS aqx_brain_kind_at ON mob_aq_brain (kind, at);
+CREATE INDEX IF NOT EXISTS aqx_brain_dept ON mob_aq_brain (dept);
+CREATE INDEX IF NOT EXISTS aqx_sym_trades_at ON mob_aq_sym_trades (at);
+CREATE INDEX IF NOT EXISTS aqx_sym_missed_at ON mob_aq_sym_missed (at);
+CREATE INDEX IF NOT EXISTS aqx_sym_right_status ON mob_aq_sym_right (status);

@@ -37,3 +37,15 @@ export async function writeRight(d, x, res) {
   if (!res.verdict.ok) await d.q(`INSERT INTO mob_aq_brain (dept, kind, text, data) VALUES ('symbiote', 'pain', $1, $2::jsonb)`, [`PAIN fake pump ${x.symbol || x.mint.slice(0, 6)}: the ${x.lane} lane rode it to +${Math.round(x.gainPct)}% on paper, but it was not healthy. Should have caught it: ${res.verdict.failed.join("; ")}.`, J({ mint: x.mint, lane: x.lane, gainPct: x.gainPct, rule: res.verdict.failed })]);
   return status;
 }
+
+// RETENTION (hourly): coins, misses and paper trades older than 7 days go (their lessons and PAIN rows stay in the brain);
+// GTA coins, right calls and fake pumps are kept for life. Returns the rows removed per table.
+export const KEEP_DAYS = 7;
+export async function retention(d, days = KEEP_DAYS) {
+  const [c, m, t] = await Promise.all([
+    d.q(`DELETE FROM mob_aq_sym_coins c WHERE c.created_at < now() - $1::int * interval '1 day' AND NOT c.gta AND NOT EXISTS (SELECT 1 FROM mob_aq_sym_right r WHERE r.mint = c.mint) RETURNING 1`, [days]),
+    d.q(`DELETE FROM mob_aq_sym_missed WHERE at < now() - $1::int * interval '1 day' RETURNING 1`, [days]),
+    d.q(`DELETE FROM mob_aq_sym_trades WHERE at < now() - $1::int * interval '1 day' AND NOT gta RETURNING 1`, [days]),
+  ]);
+  return { coins: c.length, missed: m.length, trades: t.length };
+}
