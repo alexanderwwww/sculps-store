@@ -202,7 +202,7 @@ test("exits by the chart: half at target 1, the rest at the stop moved to entry;
   plan = await scenario((s) => [...flat(114.6, 5), ...flat(s.stop - 0.5, 5)]);
   F.sellOut = "40000000"; F.simErr = { InstructionError: [1, "Custom"] }; let t = await L.liveTick(env, { minute: 5 }); assert.match(t.exits[0].failed, /simulation failed/);
   [p] = await positions(); assert.equal(p.status, "open"); assert.equal(p.sell_fails, 1); assert.equal(F.sent.length, 1);
-  F.simErr = null; t = await L.liveTick(env, { minute: 6 }); assert.match(t.exits[0].reason, /^stop: a 5-minute close under the 78.6% stop|^invalidation: a lower low/); assert.equal(t.result.refused, "auto_trade_off");
+  F.simErr = null; t = await L.liveTick(env, { minute: 6 }); assert.match(t.exits[0].reason, /^stop: a 5-minute close under the 78.6% stop|^invalidation: a lower low/); assert.equal(t.result.refused, "auto_trade_off"); assert.equal(t.exits[0].confirmed, true, JSON.stringify(t.exits));
   [p] = await positions(); assert.equal(p.status, "closed"); assert.ok(p.pnl_sol < -0.012);
   // a veto on a held coin sells it
   await wipe(); world(); await setS("kill", false); await L.liveTick(env, { minute: 1 }); await d.q(`INSERT INTO mob_aq_chat (from_name, text) VALUES ('grok', $1)`, [`VETO ${MINT}`]);

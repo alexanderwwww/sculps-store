@@ -366,8 +366,8 @@ async function sellPosition(env, w, p, reason, claimKey, { size = (t) => t, patc
   return { sell: p.symbol, reason, ...r };
 }
 // The chart decides every exit (chart.mjs manage). No data this minute = hold: missing data never forces a sale.
-async function exits(env, w) {
-  const d = db(env), out = [], minute = Math.floor(Date.now() / 60000), nowSec = Date.now() / 1000;
+async function exits(env, w, minute = Math.floor(Date.now() / 60000)) {
+  const d = db(env), out = [], nowSec = Date.now() / 1000;
   // a 'stuck' position (5 failed sells in a row) is still managed and retried every minute: a coin is never left alone
   for (const p of await d.q(`SELECT * FROM mob_aq_live_positions WHERE venue = $1 AND status IN ('open','stuck') ORDER BY id`, [VENUE])) {
     const q = await quote(env, p.mint, SOL_MINT, p.tokens_raw, LIVE.exitSlippageBps);
@@ -445,7 +445,7 @@ export async function liveTick(env, { cron = null, minute = Math.floor(Date.now(
     for (const o of await d.q(`SELECT * FROM mob_aq_live_orders WHERE venue = $1 AND status = 'requested' AND requested_at < now() - interval '3 minutes'`, [VENUE])) await finish(d, o, "failed", { error: "the run stopped before signing; nothing was sent" });
     { const healed = await healOrphans(d); if (healed) out.healed = healed; }
     // 2. exits for what is open
-    if (w?.address) { const ex = await exits(env, w); if (ex.length) out.exits = ex; }
+    if (w?.address) { const ex = await exits(env, w, minute); if (ex.length) out.exits = ex; }
     // 3. one new buy at most, behind every gate
     const g = await gates(env);
     out.result = g.ok ? await tryBuy(env, g) : await refuse(d, VENUE, g.gate, g.reason);
