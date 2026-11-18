@@ -178,7 +178,7 @@ export async function finish(d, o, status, { error = null, fill = null } = {}) {
   if (status === "confirmed") {
     // a partial sale (target 1: half) keeps the position open with the plan's next step; selling what is left closes it
     const p = await d.one(`UPDATE mob_aq_live_positions SET tokens_raw = greatest(0, tokens_raw::numeric - $5::numeric)::text, proceeds_sol = coalesce(proceeds_sol, 0) + $2, fees_sol = fees_sol + $3,
-        status = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN 'closed' ELSE 'open' END, closed_at = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN now() END,
+        status = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN 'closed' ELSE 'open' END, sell_fails = 0, closed_at = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN now() END,
         pnl_sol = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN coalesce(proceeds_sol, 0) + $2 - cost_sol END, exit_reason = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN $4 ELSE exit_reason END,
         plan = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN coalesce(plan, '{}'::jsonb) || jsonb_build_object('outcome', $4::text, 'closedAt', now()) ELSE coalesce(plan, '{}'::jsonb) || coalesce($6::jsonb, '{}'::jsonb) END
       WHERE id = $1 AND status = 'closing' RETURNING status, pnl_sol`, [o.position_id, fill.solLamports / 1e9, fill.feeLamports / 1e9, o.reason, (-fill.tokens).toString(), o.plan_patch ? JSON.stringify(o.plan_patch) : null]);
@@ -209,7 +209,9 @@ async function phantomApply(d, o, fill) {
     await brain(d, `PHANTOM SELL ${o.symbol} by Alex (${o.reason}): ${round(fill.solLamports / 1e9, 6)} SOL back to his Phantom wallet (${o.signature}).`);
   }
 }
-export async function pnlToday(d) { return (await d.one(`SELECT coalesce(sum(pnl_sol), 0)::float8 s FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed' AND closed_at >= ${TODAY}`, [VENUE])).s; }
+// today's realized result, plus the marked loss of any 'stuck' position (a coin that cannot be sold still counts toward the daily limit)
+export async function pnlToday(d) { return (await d.one(`SELECT (coalesce(sum(pnl_sol) FILTER (WHERE status = 'closed' AND closed_at >= ${TODAY}), 0)
+  + coalesce(sum(least(0, coalesce(proceeds_sol, 0) + coalesce(last_value_sol, 0) - cost_sol)) FILTER (WHERE status = 'stuck' AND cost_sol IS NOT NULL), 0))::float8 s FROM mob_aq_live_positions WHERE venue = $1`, [VENUE])).s; }
 // The daily loss limit: when today's realized loss reaches it, auto trade switches itself OFF and says why.
 async function dailyLossCheck(d) {
   const lim = await get(d, "sol_wallet_limits", {}), pnl = await pnlToday(d);
@@ -224,12 +226,12 @@ async function execute(env, w, { side, c, positionId, inMint, outMint, amountRaw
   const d = db(env);
   let o;
   try { o = await d.one(`INSERT INTO mob_aq_live_orders (venue, side, mint, symbol, position_id, claim, reason, in_amount, slippage_bps, plan_patch) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`, [VENUE, side, c.mint, c.symbol, positionId, claim, reason, String(amountRaw), slippageBps, patch ? JSON.stringify(patch) : null]); }
-  catch (e) { if (/duplicate key|unique constraint/i.test(String(e.message || e))) return { skipped: "this order was already made in this minute" }; throw e; }
+  catch (e) { if (/duplicate key|unique constraint/i.test(String(e.message || e))) return { skipped: "this order was already made in this minute" }; return { skipped: `the order could not be written down (${cut(e.message || e, 120)}); nothing was sent`, noOrder: true }; }
   const fail = async (error) => { await finish(d, o, "failed", { error }); return { failed: error, orderId: o.id }; };
   try {
     const qr = q0 || (await quote(env, inMint, outMint, amountRaw, slippageBps));
     if (!qr.ok) return fail(qr.error);
-    if (qr.impactPct > LIVE.maxImpactPct) return fail(`price impact ${round(qr.impactPct, 2)}% is over the ${LIVE.maxImpactPct}% cap`);
+    if (side === "buy" && qr.impactPct > LIVE.maxImpactPct) return fail(`price impact ${round(qr.impactPct, 2)}% is over the ${LIVE.maxImpactPct}% cap`);
     await upd(d, o.id, { quote_out: qr.q.outAmount, min_out: qr.q.otherAmountThreshold, impact_pct: qr.impactPct, quote: JSON.stringify({ route: (qr.q.routePlan || []).map((r) => r.swapInfo?.label).filter(Boolean) }) });
     const sw = await buildSwap(env, qr.q, w.address);
     if (!sw.ok) return fail(sw.error);
@@ -268,10 +270,19 @@ export async function gates(env) {
   if ((await d.one(`SELECT count(*)::int n FROM mob_aq_live_orders WHERE venue = $1 AND status IN ('requested','sent')`, [VENUE])).n) return no("order_pending", "An earlier order is still being confirmed on the chain");
   return { ok: true, w, lim, open };
 }
-// A Grok VETO: a war-room message or an evidence post from Grok in the last hour that starts with VETO and names the exact mint.
+// A Grok VETO: a war-room message or an evidence post from Grok in the last hour whose text is "VETO <exact mint>" (markup,
+// quote marks and a colon allowed around the word). "VETO lifted on <mint>" or a mint named later in the text is not a veto.
+export const isVeto = (text, mint) => new RegExp(`^[\\s>*_\`#~-]*VETO[\\s*_\`:~-]+${mint}(?![1-9A-HJ-NP-Za-km-z])`, "i").test(String(text || ""));
 export async function vetoed(d, mint) {
-  return !!(await d.one(`SELECT 1 FROM mob_aq_chat WHERE from_name = 'grok' AND at > now() - interval '1 hour' AND upper(ltrim(text)) LIKE 'VETO%' AND strpos(text, $1) > 0
-    UNION ALL SELECT 1 FROM mob_aq_helpers WHERE from_helper = 'grok' AND at > now() - interval '1 hour' AND upper(ltrim(text)) LIKE 'VETO%' AND strpos(text, $1) > 0 LIMIT 1`, [mint]));
+  const rows = await d.q(`SELECT text FROM mob_aq_chat WHERE from_name = 'grok' AND at > now() - interval '1 hour' AND strpos(text, $1) > 0
+    UNION ALL SELECT text FROM mob_aq_helpers WHERE from_helper = 'grok' AND at > now() - interval '1 hour' AND strpos(text, $1) > 0`, [mint]);
+  return rows.some((r) => isVeto(r.text, mint));
+}
+// The pool's liquidity by exact mint, from Jupiter's lists WITHOUT the $100K entry filter, so a draining pool is still seen.
+// Null when the coin is in none of the lists (the -30% exit then cannot be judged that minute; the chart stop still runs).
+export async function liqOf(env, mint) {
+  const top = await feeds.jupTop(env); const c = top.ok && Array.isArray(top.data) ? top.data.find((x) => x.mint === mint) : null;
+  return c && Number.isFinite(c.liqUsd) ? c.liqUsd : null;
 }
 // The coins the chart trader may look at: established pairs with a deep enough pool, mid-size pools first.
 export async function candidates(env) {
@@ -333,33 +344,35 @@ async function tryBuy(env, g) {
     [VENUE, c.mint, c.symbol, round(((s.entry - s.stop) / s.entry) * 100, 3), c.liqUsd, JSON.stringify(plan), g.lim.maxOpenPositions]);
   if (!p) return refuse(d, VENUE, "claim_lost", "This coin or the last free slot was taken by another run", c);
   const r = await execute(env, g.w, { side: "buy", c, positionId: p.id, inMint: SOL_MINT, outMint: c.mint, amountRaw: lamports, slippageBps: LIVE.slippageBps, reason: s.why, claim: `${VENUE}|${c.mint}|buy|${minute}`, q0: q, patch: { stop: s.stop, t1: s.t1, t2: s.t2 } });
-  if (r.skipped) await d.q(`UPDATE mob_aq_live_positions SET status = 'failed', closed_at = now(), exit_reason = 'duplicate order' WHERE id = $1 AND status = 'opening'`, [p.id]);
+  if (r.skipped) await d.q(`UPDATE mob_aq_live_positions SET status = 'failed', closed_at = now(), exit_reason = $2 WHERE id = $1 AND status = 'opening'`, [p.id, r.noOrder ? cut(r.skipped) : "duplicate order"]);
   return { buy: c.symbol, ...r };
 }
 // Exits run whenever a live position is open, with auto trade on or off and with the kill switch on: a position is never left alone.
-async function sellPosition(env, w, p, reason, claimKey, { amountRaw = p.tokens_raw, patch = null } = {}) {
+// `size(tokensRaw)` turns the tokens held AT THE CLAIM into the amount to sell (default: all of them), never a stale read.
+async function sellPosition(env, w, p, reason, claimKey, { size = (t) => t, patch = null } = {}) {
   const d = db(env);
-  const took = await d.one(`UPDATE mob_aq_live_positions SET status = 'closing' WHERE id = $1 AND status IN ('open','stuck') RETURNING id`, [p.id]);
+  const took = await d.one(`UPDATE mob_aq_live_positions SET status = 'closing' WHERE id = $1 AND status IN ('open','stuck') RETURNING id, status, tokens_raw`, [p.id]);
   if (!took) return { skipped: "already being sold" };
+  let amountRaw = String(size(took.tokens_raw)); if (!/^\d+$/.test(amountRaw) || amountRaw === "0") amountRaw = took.tokens_raw;
   const r = await execute(env, w, { side: "sell", c: { mint: p.mint, symbol: p.symbol }, positionId: p.id, inMint: p.mint, outMint: SOL_MINT, amountRaw, slippageBps: LIVE.exitSlippageBps, reason, claim: `${VENUE}|${p.mint}|sell|${claimKey}`, patch });
-  if (r.skipped) await d.q(`UPDATE mob_aq_live_positions SET status = 'open' WHERE id = $1 AND status = 'closing'`, [p.id]);
+  if (r.skipped) await d.q(`UPDATE mob_aq_live_positions SET status = CASE WHEN sell_fails >= $2 THEN 'stuck' ELSE 'open' END WHERE id = $1 AND status = 'closing'`, [p.id, LIVE.maxSellFails]);
   return { sell: p.symbol, reason, ...r };
 }
 // The chart decides every exit (chart.mjs manage). No data this minute = hold: missing data never forces a sale.
 async function exits(env, w) {
-  const d = db(env), out = [], minute = Math.floor(Date.now() / 60000), list = (await candidates(env)) || [], nowSec = Date.now() / 1000;
-  for (const p of await d.q(`SELECT * FROM mob_aq_live_positions WHERE venue = $1 AND status = 'open' ORDER BY id`, [VENUE])) {
+  const d = db(env), out = [], minute = Math.floor(Date.now() / 60000), nowSec = Date.now() / 1000;
+  // a 'stuck' position (5 failed sells in a row) is still managed and retried every minute: a coin is never left alone
+  for (const p of await d.q(`SELECT * FROM mob_aq_live_positions WHERE venue = $1 AND status IN ('open','stuck') ORDER BY id`, [VENUE])) {
     const q = await quote(env, p.mint, SOL_MINT, p.tokens_raw, LIVE.exitSlippageBps);
     if (q.ok) await d.q(`UPDATE mob_aq_live_positions SET last_value_sol = $2, last_value_at = now() WHERE id = $1`, [p.id, Number(q.q.outAmount) / 1e9]);
     if (!p.plan) continue; // a position without a chart plan (none is opened that way) waits for SELL ALL LIVE
-    const cs = await feeds.jupCandles(env, p.mint), coin = list.find((c) => c.mint === p.mint);
-    const m = manage(p.plan, cs.ok ? cs.data : [], nowSec, { liqNow: coin ? coin.liqUsd : null, vetoed: await vetoed(d, p.mint) });
+    const cs = await feeds.jupCandles(env, p.mint);
+    const m = manage(p.plan, cs.ok ? cs.data : [], nowSec, { liqNow: await liqOf(env, p.mint), vetoed: await vetoed(d, p.mint) });
     // the panel's sparkline: the last closed 1-minute price, once a minute, the last 90 kept (display only; manage() never reads it)
     const lastPx = cs.ok ? cs.data.filter((c) => c.t + 60 <= nowSec).slice(-1)[0]?.c : null;
     if (Number.isFinite(lastPx)) await d.q(`UPDATE mob_aq_live_positions SET alert_patch = jsonb_build_object('spark', (SELECT coalesce(jsonb_agg(x), '[]'::jsonb) FROM (SELECT x FROM jsonb_array_elements(coalesce(alert_patch->'spark', '[]'::jsonb)) x OFFSET greatest(0, jsonb_array_length(coalesce(alert_patch->'spark', '[]'::jsonb)) - 89)) z) || jsonb_build_array($2::float8)) WHERE id = $1`, [p.id, lastPx]);
     if (m.action === "hold") { if (m.patch) await d.q(`UPDATE mob_aq_live_positions SET plan = plan || $2::jsonb WHERE id = $1 AND status = 'open'`, [p.id, JSON.stringify(m.patch)]); continue; }
-    const half = m.action === "sell_half" ? (BigInt(p.tokens_raw) / 2n).toString() : p.tokens_raw;
-    out.push(await sellPosition(env, w, p, m.reason, `${p.plan.phase ?? 0}-${minute}`, { amountRaw: half === "0" ? p.tokens_raw : half, patch: m.action === "sell_half" ? m.patch : null }));
+    out.push(await sellPosition(env, w, p, m.reason, `${p.plan.phase ?? 0}-${minute}`, { size: m.action === "sell_half" ? (t) => (BigInt(t) / 2n).toString() : (t) => t, patch: m.action === "sell_half" ? m.patch : null }));
   }
   return out;
 }
@@ -372,7 +385,7 @@ export async function paperTick(env) {
   if (!list) return out;
   for (const t of await d.q(`SELECT * FROM mob_aq_chart_paper WHERE closed_at IS NULL ORDER BY id LIMIT $1`, [LIVE.paperOpenMax])) {
     const cs = await feeds.jupCandles(env, t.mint); if (!cs.ok) continue;
-    const coin = list.find((c) => c.mint === t.mint), m = manage(t.plan, cs.data, nowSec, { liqNow: coin ? coin.liqUsd : null, vetoed: await vetoed(d, t.mint) });
+    const m = manage(t.plan, cs.data, nowSec, { liqNow: await liqOf(env, t.mint), vetoed: await vetoed(d, t.mint) });
     const px = cs.data.filter((c) => c.t + 60 <= nowSec).slice(-1)[0]?.c;
     if (m.action === "hold") { if (m.patch) await d.q(`UPDATE mob_aq_chart_paper SET plan = plan || $2::jsonb WHERE id = $1`, [t.id, JSON.stringify(m.patch)]); continue; }
     const legPct = ((px - t.entry_px) / t.entry_px) * 100;

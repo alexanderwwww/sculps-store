@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as C from "../src/aq/chart.mjs";
-import { chart, place } from "./fib-fixture.mjs";
+import { chart, place, rise } from "./fib-fixture.mjs";
 const NOW = 1_800_000_000; // a fixed clock: every test says exactly which moment it is
 
 test("the leg: a clear one is found, flat or small charts have none, a 5-minute close under 78.6% breaks it", () => {
@@ -12,7 +12,7 @@ test("the leg: a clear one is found, flat or small charts have none, a 5-minute 
   assert.ok(Math.abs(leg.levels.t2 - (leg.low + 1.272 * (leg.high - leg.low))) < 1e-4 && Math.abs(leg.levels.t3 - (leg.low + 1.618 * (leg.high - leg.low))) < 1e-4);
   const flat = place(NOW, Array.from({ length: 200 }, (_, i) => [100 + Math.sin(i) * 0.3, 100 + Math.sin(i + 1) * 0.3, 10]));
   assert.equal(C.findLeg(C.bars5(flat, NOW)).ok, false);
-  assert.match(C.findLeg(C.bars5(chart(NOW, { legTo: 2, pull: 1 }), NOW)).why, /leg too small/);
+  assert.match(C.findLeg(C.bars5(chart(NOW, { legTo: 2, pull: 1, tail: [] }), NOW)).why, /leg too small/);
   assert.match(C.findLeg(C.bars5(chart(NOW, { legVol: -0.3 }), NOW)).why, /rising volume/);
   const broken = chart(NOW, { tail: [...Array(10).fill([106, 104, 8]), [104, 114.6, 9]] }); // closes under 78.6% (~106.4), then back up
   const b = C.findLeg(C.bars5(broken, NOW)); assert.equal(b.ok, false); assert.equal(b.broken, true);
@@ -45,7 +45,10 @@ function trade(after, { phase = 0, patch = {} } = {}) {
 const flatAt = (p, n, v = 5) => Array.from({ length: n }, () => [p, p, v]);
 
 test("the stop: a 5-minute CLOSE under the 78.6% stop sells; a wick under it does not; a lower low invalidates", () => {
-  const { plan, s } = trade([]); assert.ok(plan.stop < s.levels.z786);
+  const { plan, s } = trade([]);
+  // the stop's formula, to the number: the closer of 78.6% and the pullback's swing low, minus 0.25 ATR
+  assert.ok(Math.abs(plan.stop - (Math.max(s.levels.z786, s.pullLow) - 0.25 * s.leg.atr)) < 1e-4); assert.equal(s.stopFrom, s.pullLow > s.levels.z786 ? "swing low" : "78.6%");
+  { const deep = C.entrySetup(chart(NOW, { pull: 20, tail: rise(111.6, 112.4) }), NOW); if (deep.signal) assert.ok(Math.abs(deep.stop - (Math.max(deep.levels.z786, deep.pullLow) - 0.25 * deep.leg.atr)) < 1e-4); }
   let t = trade([...flatAt(114.6, 5), ...flatAt(plan.stop - 0.5, 5)]); assert.deepEqual(C.manage(t.plan, t.cs, t.now).action, "sell_all"); assert.match(C.manage(t.plan, t.cs, t.now).reason, /^stop: a 5-minute close under/);
   // in phase 0 any low under the pullback low is a lower low, which comes before the stop; the wick rule is shown with the stop at entry
   const p1 = { ...plan, phase: 1, stop: plan.entry, since: plan.since };
@@ -55,7 +58,7 @@ test("the stop: a 5-minute CLOSE under the 78.6% stop sells; a wick under it doe
   t = trade([...flatAt(114.6, 5), ...flatAt(plan.pullLow - 0.4, 5)]); assert.ok(plan.pullLow - 0.4 > plan.stop); assert.match(C.manage(t.plan, t.cs, t.now).reason, /invalidation: a lower low/);
 });
 
-test("the targets: half at target 1 with the stop to entry, then 1.272, or a trail to 1.618 when momentum is strong", () => {
+test("the targets: half at target 1 with the stop to entry, then 1.272 judged on its 5-minute close, a trail to 1.618 only on strength", () => {
   const { plan } = trade([]);
   let t = trade([...flatAt(120, 5), [120, plan.t1 + 0.1, 5]]), m = C.manage(t.plan, t.cs, t.now);
   assert.equal(m.action, "sell_half"); assert.equal(m.patch.phase, 1); assert.equal(m.patch.stop, plan.entry); assert.match(m.reason, /target 1/);
@@ -63,17 +66,25 @@ test("the targets: half at target 1 with the stop to entry, then 1.272, or a tra
   const p1 = { ...t.plan, ...m.patch };
   let t2 = trade([...flatAt(120, 5), [120, plan.t1 + 0.1, 5], ...flatAt(plan.t1, 4), ...flatAt(plan.entry - 1, 10)]); assert.match(C.manage(p1, t2.cs, t2.now).reason, /stop at entry after target 1/);
   t2 = trade([...flatAt(120, 5), [120, plan.t1 + 0.1, 5], ...flatAt(plan.t1 + 1, 4)]); assert.equal(C.manage(p1, t2.cs, t2.now).action, "hold");
-  // 1.272 on weak volume: sell the rest
-  t2 = trade([...flatAt(plan.t1, 10, 9), ...flatAt(plan.t1 + 2, 5, 5), [plan.t1 + 2, plan.t2 + 0.2, 4]]); assert.match(C.manage(p1, t2.cs, t2.now).reason, /target 2/);
-  // 1.272 with bars closing above it on rising volume: trail
-  t2 = trade([...flatAt(plan.t1, 10, 5), ...flatAt(plan.t2 + 0.5, 5, 6), ...flatAt(plan.t2 + 1, 5, 20), [plan.t2 + 1, plan.t2 + 1.2, 20]]);
-  m = C.manage(p1, t2.cs, t2.now); assert.equal(m.action, "hold"); assert.equal(m.patch.phase, 2); assert.ok(m.patch.trailStop > plan.entry);
-  const p2 = { ...p1, ...m.patch };
-  let t3 = trade([...flatAt(plan.t1, 10, 5), ...flatAt(plan.t2 + 0.5, 5, 6), ...flatAt(plan.t2 + 1, 5, 20), ...flatAt(plan.t3 + 0.2, 2, 20)]); assert.match(C.manage(p2, t3.cs, t3.now).reason, /target 3: the 1.618/);
-  t3 = trade([...flatAt(plan.t1, 10, 5), ...flatAt(plan.t2 + 0.5, 5, 6), ...flatAt(plan.t2 + 1, 5, 20), ...flatAt(p2.trailStop - 1, 10, 8)]); assert.match(C.manage(p2, t3.cs, t3.now).reason, /trail: a higher low broke/);
-  // a new higher low raises the trail
-  t3 = trade([...flatAt(plan.t1, 10, 5), ...flatAt(plan.t2 + 0.5, 5, 6), ...flatAt(plan.t2 + 1, 5, 20), ...flatAt(plan.t2 + 2, 5, 20), ...flatAt(plan.t2 + 3, 5, 20)]);
-  m = C.manage(p2, t3.cs, t3.now); assert.equal(m.action, "hold"); assert.ok(m.patch && m.patch.trailStop > p2.trailStop, JSON.stringify(m));
+  // 1.272 touched by one minute: wait for that 5-minute bar to close; weak volume -> sell the rest
+  const weak = [...flatAt(plan.t1, 10, 9), ...flatAt(plan.t1 + 2, 5, 5), [plan.t1 + 2, plan.t2 + 0.2, 4]];
+  t2 = trade(weak); m = C.manage(p1, t2.cs, t2.now); assert.equal(m.action, "hold"); assert.match(m.reason, /waiting for the 5-minute close/); assert.ok(m.patch.t2At > 0);
+  const pw = { ...p1, ...m.patch }; t2 = trade([...weak, ...flatAt(plan.t2 + 0.2, 4, 4)]); assert.match(C.manage(pw, t2.cs, t2.now).reason, /^target 2/);
+  // that bar closes above 1.272 on rising volume: trail
+  const up = [...flatAt(plan.t1, 10, 5), [plan.t1, plan.t2 + 0.5, 20]];
+  t2 = trade(up); m = C.manage(p1, t2.cs, t2.now); assert.equal(m.action, "hold"); const pu = { ...p1, ...m.patch };
+  const strong = [...up, ...flatAt(plan.t2 + 0.5, 4, 20)];
+  t2 = trade(strong); m = C.manage(pu, t2.cs, t2.now); assert.equal(m.action, "hold", m.reason); assert.equal(m.patch.phase, 2); assert.ok(m.patch.trailStop > plan.entry);
+  const p2 = { ...pu, ...m.patch };
+  let t3 = trade([...strong, ...flatAt(plan.t3 + 0.2, 2, 20)]); assert.match(C.manage(p2, t3.cs, t3.now).reason, /target 3: the 1.618/);
+  t3 = trade([...strong, ...flatAt(p2.trailStop - 1, 10, 8)]); assert.match(C.manage(p2, t3.cs, t3.now).reason, /trail: a higher low broke/);
+  // a 5-minute close back under 1.272 (still above the trail) sells: the trail runs only while closes stay above 1.272
+  t3 = trade([...strong, ...flatAt(plan.t2 - 0.1, 5, 8)]); assert.ok(plan.t2 - 0.1 > p2.trailStop); assert.match(C.manage(p2, t3.cs, t3.now).reason, /fell back under 1.272/);
+  // a new higher low raises the trail, and moves `since` with it
+  t3 = trade([...strong, ...flatAt(plan.t2 + 2, 5, 20), ...flatAt(plan.t2 + 3, 5, 20)]);
+  m = C.manage(p2, t3.cs, t3.now); assert.equal(m.action, "hold"); assert.ok(m.patch && m.patch.trailStop > p2.trailStop, JSON.stringify(m)); assert.ok(m.patch.since > p2.since);
+  // the raise is not retroactive: an older bar that closed under the new trail does not sell
+  const p3 = { ...p2, ...m.patch }; assert.equal(C.manage(p3, t3.cs, t3.now).action, "hold");
 });
 
 test("veto and liquidity sell; time alone never does; missing data holds", async () => {
@@ -87,4 +98,13 @@ test("veto and liquidity sell; time alone never does; missing data holds", async
   assert.equal(C.manage(long.plan, [], long.now).action, "hold");
   const src = (await import("node:fs")).readFileSync(new URL("../src/aq/chart.mjs", import.meta.url), "utf8").replace(/^\s*\/\/.*$/gm, "");
   assert.ok(!/Date\.now|holdMin|minutes|timeStop/.test(src), "the chart trader reads no clock");
+});
+
+test("the leg must be at least 3x the 5-minute ATR: just under the line is refused, just over it is accepted", () => {
+  assert.equal(C.FIB.minLegAtr, 3);
+  const b = C.bars5(chart(NOW), NOW), leg = C.findLeg(b), ratio = (leg.high - leg.low) / leg.atr, keep = C.FIB.minLegAtr;
+  try {
+    C.FIB.minLegAtr = ratio * 1.01; assert.match(C.findLeg(b).why, /leg too small/);
+    C.FIB.minLegAtr = ratio * 0.99; assert.equal(C.findLeg(b).ok, true);
+  } finally { C.FIB.minLegAtr = keep; }
 });
