@@ -28,7 +28,7 @@ export class Symbiote {
     this.eng = createEngine({ isVetoed: (m) => this.vetoes.has(m) });
     this.ws = { pp: null, chain: null }; this.lastMsg = { pp: 0, chain: 0 }; this.reconnects = { pp: 0, chain: 0 };
     this.win = []; this.notes = 0; this.bytes = 0; this.feed = []; this.queue = []; this.checked = new Set();
-    this.started = 0; this.lastVeto = 0; this.curves = new Map(); this.lastGta = 0; this.errors = [];
+    this.started = 0; this.lastVeto = 0; this.curves = new Map(); this.resolveQ = new Set(); this.lastGta = 0; this.errors = [];
   }
   d() { return db(this.env); }
   err(where, e) { this.errors.unshift({ at: new Date().toISOString(), where, msg: String(e?.message || e).slice(0, 200) }); this.errors.length = Math.min(this.errors.length, 8); }
@@ -117,7 +117,9 @@ export class Symbiote {
     const now = Date.now(); this.lastMsg.chain = now; this.notes++; this.bytes += raw.length;
     let j; try { j = JSON.parse(raw); } catch { return; }
     const v = j.params?.result?.value; if (!v?.pubkey) return;
-    const mint = this.curves.get(v.pubkey); if (!mint) { this.eng.stats.unknownCurves = (this.eng.stats.unknownCurves || 0) + 1; return; }
+    const mint = this.curves.get(v.pubkey);
+    if (mint === undefined) { this.eng.stats.unknownCurves = (this.eng.stats.unknownCurves || 0) + 1; if (this.resolveQ.size < 5000) this.resolveQ.add(v.pubkey); return; }
+    if (mint === null) return; // a coin launched before symbiote started: not a launch we cover
     const bc = decodeCurve(v.account?.data?.[0] || ""); if (!bc) return;
     const c = this.eng.coins.get(mint); if (!c) return;
     const vq = bc.virtual_quote_reserves, vt = bc.virtual_token_reserves, pq = c.vsol ?? c.vsol0, pt = c.vtok ?? c.vtok0;
@@ -148,9 +150,29 @@ export class Symbiote {
     for (const x of b.explode) if (!this.checked.has(x.mint)) { this.checked.add(x.mint); this.queue.push(x); }
     const st = { ...this.status(), source: await this.source() };
     try { await flush(d, b, st); await this.ctx.storage.put("stats", this.eng.stats); } catch (e) { this.err("flush", e); }
+    await this.resolveCurves().catch((e) => this.err("resolve", e));
     const x = this.queue.shift();
     if (x) { try { const res = await deepCheck(this.env, d, x.mint, this.eng.streamHealth(x.mint) || {}); await writeRight(d, x, res); } catch (e) { this.err("deep check", e); } }
     await this.ctx.storage.setAlarm(Date.now() + FLUSH_MS);
+  }
+
+  // "curve" source: PumpPortal's free feed carried only 17 of 98 launches seen on chain (3 minutes, 2026-11-18), so a curve
+  // nobody announced is resolved from the chain: its 5 newest signatures, the oldest of them read and decoded. A CreateEvent
+  // for this curve = a new launch (covered from now); only trades = an older coin (ignored). 2 Helius credits a curve, 40 a tick.
+  async resolveCurves(max = 40) {
+    if (!this.resolveQ.size) return;
+    const { rpcFor } = await import("./health.mjs"); const rpc = rpcFor(this.env);
+    const batch = [...this.resolveQ].slice(0, max); for (const k of batch) this.resolveQ.delete(k);
+    await Promise.all(batch.map(async (curve) => {
+      try {
+        const sigs = await rpc("getSignaturesForAddress", [curve, { limit: 5 }]); const old = sigs?.[sigs.length - 1]; if (!old) return;
+        const tx = await rpc("getTransaction", [old.signature, { encoding: "json", maxSupportedTransactionVersion: 1 }]);
+        const ev = eventsFromLogs({ signature: old.signature, err: tx?.meta?.err ?? null, logs: tx?.meta?.logMessages || [] }, tx?.slot ?? null);
+        const c = ev.creates.find((x) => x.curve === curve);
+        if (c) { this.curves.set(curve, c.mint); const coin = this.eng.onCreate({ ...c, src: "chain" }); this.push({ at: Date.now(), k: "launch", mint: coin.mint, sym: coin.symbol, gta: coin.gta }); this.eng.stats.resolved = (this.eng.stats.resolved || 0) + 1; }
+        else this.curves.set(curve, null);
+      } catch (e) { this.resolveQ.add(curve); throw e; }
+    }));
   }
 
   // the main GTA 6 coin and GTA coins that left the curve keep a minute price from Jupiter for their whole life

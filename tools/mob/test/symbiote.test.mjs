@@ -239,6 +239,11 @@ test("Durable Object, curve source: reserve changes of a known curve become trad
   s.onCurve(note("CURVE1", 31e9, Math.round(K / 31e9))); s.onCurve(note("CURVE1", 30.5e9, Math.round(K / 30.5e9))); s.onCurve(note("NOPE", 31e9, 1e15));
   const c = s.eng.coins.get("CV1"); assert.equal(c.n, 2); assert.equal(c.buys, 1); assert.equal(c.sells, 1); assert.ok(Math.abs(c.last - 30.5 / (K / 30.5e9 / 1e6)) < 1e-12);
   assert.equal(s.eng.stats.unknownCurves, 1);
+  resetMocks(); const create = FX[3]; let calls = 0;
+  mock("POST", "https://api.mainnet-beta.solana.com", (rq) => { calls++; const j = JSON.parse(rq.body); return j.method === "getSignaturesForAddress" ? { result: [{ signature: create.signature }] } : { result: { slot: 9, meta: { err: null, logMessages: create.logs } } }; });
+  s.resolveQ.add("973TwsVbrK17rfcwytYAa9TdFefRpZRKPeZCG8EfCCsG"); await s.resolveCurves();
+  assert.equal(s.curves.get("973TwsVbrK17rfcwytYAa9TdFefRpZRKPeZCG8EfCCsG"), "71yNknjXX7bHjQofB7LRwp1iUj2wUhFh2YY2RVWhDHZM", "an unannounced curve resolved to its launch from the chain");
+  assert.equal(s.curves.get("NOPE"), null, "a curve whose oldest seen tx has no create is an older coin: ignored"); assert.equal(calls, 4); resetMocks();
   s.onCurve(note("CURVE1", 85e9, Math.round(K / 85e9), true)); assert.equal(c.end, "migrated");
 });
 
