@@ -363,3 +363,24 @@ em.up,b.up,.sp.up{color:var(--up)}em.dn,b.dn,.sp.dn{color:var(--dn)}
 .rs-b{font:800 24px var(--mono);color:#fff;text-shadow:0 0 14px rgba(34,255,136,.3);font-variant-numeric:tabular-nums}
 .rs-g{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:6px}.rs-g small{display:block;font:8.5px var(--mono);letter-spacing:.12em;color:var(--mut)}.rs-g b{display:block;font:700 13px var(--mono);color:#fff}.rs-g i{display:block;font:normal 8.5px var(--mono);color:var(--mut)}
 .desk>.slots{grid-column:1/-1;margin:0;min-width:0}
+/* HYMN screen (hymns.js) */
+#hymn{position:relative;overflow:hidden;margin:14px auto;max-width:760px;padding:22px 64px 16px;border:1px solid rgba(243,210,122,.22);border-radius:6px;background:radial-gradient(ellipse at 50% 0,#14182a,transparent 70%),var(--pan);color:var(--ink)}
+#hymn .hy-sky{position:absolute;inset:0;pointer-events:none}#hymn .hy-bolt{position:absolute;top:0;width:90px;height:60%;fill:#cfe8ff;opacity:0;filter:drop-shadow(0 0 12px #8fd0ff);animation:hyFl 7s infinite}
+#hymn .hy-bolt:first-child{left:16%}#hymn .hy-bolt:last-child{right:14%;transform:scaleX(-1);animation-delay:3.4s}
+@keyframes hyFl{0%,86%,100%{opacity:0}87%{opacity:.35}88%{opacity:.05}89.5%{opacity:.22}92%{opacity:0}}
+#hymn .hy-col{position:absolute;top:16px;bottom:16px;width:38px;height:calc(100% - 32px)}#hymn .hy-l{left:12px}#hymn .hy-r{right:12px}
+#hymn .hy-col .g,#hymn .hy-col .sh{fill:var(--gold);opacity:.85}#hymn .hy-col .sh{opacity:.22}#hymn .hy-col .fl{fill:var(--gold);opacity:.55}
+#hymn .hy-mid{position:relative;text-align:center}
+#hymn .hy-e{width:46px;height:46px;display:block;margin:0 auto 6px}#hymn .hy-e path{fill:none;stroke:var(--gold);stroke-width:1.5}#hymn .hy-e text{fill:var(--gold);font:700 28px 'GFS Didot',serif;filter:drop-shadow(0 0 6px rgba(243,210,122,.6))}
+#hymn .hy-nav{display:flex;justify-content:center;gap:8px;margin-bottom:10px}#hymn .hy-nav button,#hymn select{background:transparent;border:1px solid rgba(243,210,122,.35);border-radius:4px;color:var(--gold);padding:3px 10px;font:14px 'GFS Didot','Noto Serif',serif}
+#hymn select{max-width:220px}#hymn select option{background:#0a0e18}
+#hymn .hy-title{margin:4px 0 2px;color:var(--gold);font:400 22px 'GFS Didot','Noto Serif',serif;letter-spacing:.06em}#hymn .hy-inc{margin:0 0 12px;color:var(--mut);font:italic 13px 'Noto Serif',serif}
+#hymn .hy-text p{margin:0;font:17px/1.6 'GFS Didot','Noto Serif',serif;color:#efe6cf}
+#hymn .hy-penta{width:40px;height:40px;margin:16px auto 4px;display:block}#hymn .hy-penta *{fill:none;stroke:var(--gold);stroke-width:1.3;opacity:.8}
+#hymn .hy-orch{position:relative;height:150px;margin:0 auto;max-width:520px}
+#hymn .hy-mus{position:absolute;transform:translate(-50%,-50%);width:58px;text-align:center;opacity:.45;transition:opacity .6s,filter .6s}
+#hymn .hy-mus svg{width:22px;height:28px;fill:#56607a}#hymn .hy-mus .ly{fill:none;stroke:#8b7a50;stroke-width:1.4}#hymn .hy-mus small{display:block;font:9px var(--sf);color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#hymn .hy-mus.on{opacity:1;filter:drop-shadow(0 0 8px rgba(243,210,122,.75))}#hymn .hy-mus.on svg{fill:var(--gold)}#hymn .hy-mus.on .ly{stroke:#fff6dc}#hymn .hy-mus.on small{color:var(--gold)}
+#hymn .hy-src{margin:6px 0 0;font:9px var(--sf);color:var(--mut)}#hymn .hy-src a{color:var(--mut)}
+@media (max-width:600px){#hymn{margin:12px;padding:16px 40px 12px}#hymn .hy-col{width:22px}#hymn .hy-l{left:6px}#hymn .hy-r{right:6px}#hymn .hy-text p{font-size:15px}#hymn .hy-orch{height:130px}#hymn .hy-mus{width:44px}#hymn .hy-mus small{font-size:8px}}
+@media (prefers-reduced-motion:reduce){#hymn .hy-bolt{animation:none}}

@@ -396,6 +396,10 @@ async function dailyLossCheck(d) {
   return true;
 }
 // Build, check, sign, record, send, confirm. `claim` is the order's one-time key; the caller already holds the position row.
+// ORPHIC HYMN 15, Διός (Wikisource, CC BY-SA 4.0), first lines:
+//   Ζεῦ πολυτίμητε, Ζεῦ ἄφθιτε, τήνδε τοι ἡμεῖς,
+//   μαρτυρίην τιθέμεσθα λυτήριον ἠδὲ πρόσευξιν.
+//   ὦ βασιλεῦ, διὰ σὴν κεφαλὴν ἐφάνη τάδε ῥεῖα,
 async function execute(env, w, { side, c, positionId, inMint, outMint, amountRaw, slippageBps, reason, claim, q0 = null, patch = null, maxBuyFeeLamports = null }) {
   const d = db(env);
   let o;
