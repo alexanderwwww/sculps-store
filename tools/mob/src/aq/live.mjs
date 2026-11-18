@@ -48,6 +48,8 @@ export const LIVE = {
   entryTolPct: 1.5, freshEntryTolPct: 3, // the buy quote's own price must be within this of the candle entry (a curve buy pays ~1.25% fee inside its price)
   noPriceTicks: 3,       // candles frozen AND no price from any source for 3 ticks in a row: sold. One or two misses never sell.
   disasterPct: 5, disasterTicks: 2, // the live exit quote 5% or more UNDER the stop on 2 ticks in a row: sold now, no 5-minute close awaited
+  nullGapBlocks: 20,     // a sent order is "never landed" only after TWO empty status reads at least 20 blocks apart, past its window, AND no tokens moved
+  recoverDays: 7,        // a written-off coin is still quoted every 5 minutes for 7 days: if a route returns, what is left is sold
   legBuyTries: 3,        // a buy that failed before anything was sent does not burn its leg: up to 3 tries per leg, each with a fresh quote
   deadAfterHours: 24,    // Jupiter answering "no route" for the position's sale for 24 hours in a row: written off as a total loss, once
   freshGapLossPct: 50,   // what a fresh curve coin can lose before any exit lands (a 50% dump inside one bar): its worst case in the daily budget
@@ -344,13 +346,33 @@ export async function settle(env, o, { polls = 1 } = {}) {
       if (f.err) { await finish(d, o, "failed", { error: "the chain rejected it" }); return "failed"; }
       await finish(d, o, "confirmed", { fill: f }); return "confirmed";
     }
-    if (!st) { // not on chain. Only once its blockhash has expired is it certain it never will be.
+    if (!st) { // not on chain, says this RPC node. Only once its blockhash has expired can that be final, and one node's "null" is not proof.
       let h = null; try { h = await solRpc(env, "getBlockHeight", [{ commitment: "confirmed" }]); } catch {}
-      if (typeof h === "number" && o.last_valid_height && h > Number(o.last_valid_height) + 5) { await finish(d, o, "failed", { error: "it never reached the chain (its time window passed); nothing was spent" }); return "failed"; }
-      if (typeof h !== "number" && ageMin(o) >= LIVE.sentStaleMin) { await finish(d, o, "failed", { error: `the chain never saw it in ${LIVE.sentStaleMin} minutes (far past a blockhash's ~150-block window); nothing was spent` }); return "failed"; }
+      const expired = typeof h === "number" && o.last_valid_height && h > Number(o.last_valid_height) + 5, stale = typeof h !== "number" && ageMin(o) >= LIVE.sentStaleMin;
+      if (!expired && !stale) continue;
+      const why = expired ? "it never reached the chain (its time window passed); nothing was spent" : `the chain never saw it in ${LIVE.sentStaleMin} minutes (far past a blockhash's ~150-block window); nothing was spent`;
+      if (o.venue !== VENUE || !o.mint) { await finish(d, o, "failed", { error: why }); return "failed"; } // Phantom's own orders: his wallet, his page
+      // (a) TWO empty reads some blocks apart: the first one past the window is only written down
+      const nk = `live_null:${o.id}`, first = await get(d, nk);
+      if (!first) { await set(d, nk, { h: typeof h === "number" ? h : null, at: Date.now() }); return "pending"; }
+      if (typeof h === "number" && typeof first.h === "number" ? h < first.h + LIVE.nullGapBlocks : Date.now() - first.at < 30000) return "pending";
+      // (b) the wallet itself: did this order's tokens move? If the balance cannot be read, nothing is decided
+      const moved = await movedFill(env, d, o, address);
+      if (moved === null) return "pending";
+      await d.q(`DELETE FROM mob_aq_state WHERE k = $1`, [nk]);
+      if (moved) { await finish(d, o, "confirmed", { fill: moved, error: moved.note }); await brain(d, `LIVE ${String(o.side).toUpperCase()} ${o.symbol}: the RPC said this order never landed, but its tokens moved in the wallet. Booked from the token balance (estimated), not as failed (${o.signature}).`); return "confirmed"; }
+      await finish(d, o, "failed", { error: why }); return "failed";
     }
   }
   return "pending";
+}
+// Did a sent order's tokens really move? A buy: the wallet holds at least the quote's minimum more of the coin than its position
+// had before. A sale: it holds at least the amount sold less. Returns the estimated fill, false (nothing moved), or null (unreadable).
+async function movedFill(env, d, o, address) {
+  const est = await estimateFill(env, d, o, address); if (!est) return null;
+  const r = await d.one(`SELECT in_amount, min_out FROM mob_aq_live_orders WHERE id = $1`, [o.id]);
+  if (o.side === "buy") { const min = /^\d+$/.test(String(r?.min_out || "")) ? BigInt(r.min_out) : null; return min !== null && min > 0n && est.tokens >= min ? { ...est, note: "the RPC reported it as never landed, but the tokens are in the wallet: booked from the token balance (estimated)" } : false; }
+  const sold = /^\d+$/.test(String(r?.in_amount || "")) ? BigInt(r.in_amount) : null; return sold !== null && sold > 0n && -est.tokens >= sold ? { ...est, note: "the RPC reported it as never landed, but the tokens left the wallet: booked from the token balance (estimated)" } : false;
 }
 const ageMin = (o) => (o.sent_at ? (Date.now() - new Date(o.sent_at).getTime()) / 60000 : 0);
 // A confirmed swap whose transaction the RPC will not return: the coin's token balance now, against what the position held
@@ -371,6 +393,7 @@ export async function finish(d, o, status, { error = null, fill = null } = {}) {
   const won = await d.one(`UPDATE mob_aq_live_orders SET status = $2, error = coalesce($3, error), fill_sol = $4, fill_tokens = $5, fee_sol = $6, confirmed_at = CASE WHEN $2 = 'confirmed' THEN now() END, updated_at = now()
     WHERE id = $1 AND status IN ('requested','sent') RETURNING id`, [o.id, status, error, fill ? fill.solLamports / 1e9 : null, fill ? fill.tokens.toString() : null, fill ? fill.feeLamports / 1e9 : null]);
   if (!won) return;
+  await d.q(`DELETE FROM mob_aq_state WHERE k = $1`, [`live_null:${o.id}`]); // the "first empty read" note of settle(), if there was one
   if (o.venue === "phantom") { if (status === "confirmed") await phantomApply(d, o, fill); return; }
   if (!o.position_id) return;
   if (o.side === "buy" && /\|add\|/.test(o.claim || "")) { // Alex's BUY MORE on an open position: tokens and cost add up (average cost), the plan stays
@@ -404,12 +427,12 @@ export async function finish(d, o, status, { error = null, fill = null } = {}) {
   if (status === "confirmed") {
     // a partial sale (target 1: half) keeps the position open with the plan's next step; selling what is left closes it
     const p = await d.one(`UPDATE mob_aq_live_positions SET tokens_raw = greatest(0, tokens_raw::numeric - $5::numeric)::text, proceeds_sol = coalesce(proceeds_sol, 0) + $2, fees_sol = fees_sol + $3,
-        status = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN 'closed' ELSE 'open' END, sell_fails = 0, closed_at = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN now() END,
-        pnl_sol = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN coalesce(proceeds_sol, 0) + $2 - cost_sol END, exit_reason = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN $4 ELSE exit_reason END,
-        plan = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 THEN coalesce(plan, '{}'::jsonb) || jsonb_build_object('outcome', $4::text, 'closedAt', now()) WHEN plan IS NULL THEN NULL ELSE plan || coalesce($6::jsonb, '{}'::jsonb) || '{"slipFails":0}'::jsonb END
+        status = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 OR plan->>'writtenOff' = 'true' THEN 'closed' ELSE 'open' END, sell_fails = 0, closed_at = CASE WHEN tokens_raw::numeric - $5::numeric <= 0 OR plan->>'writtenOff' = 'true' THEN coalesce(closed_at, now()) END,
+        pnl_sol = CASE WHEN plan->>'writtenOff' = 'true' THEN pnl_sol + $2 WHEN tokens_raw::numeric - $5::numeric <= 0 THEN coalesce(proceeds_sol, 0) + $2 - cost_sol END, exit_reason = CASE WHEN plan->>'writtenOff' = 'true' THEN exit_reason WHEN tokens_raw::numeric - $5::numeric <= 0 THEN $4 ELSE exit_reason END,
+        plan = CASE WHEN plan->>'writtenOff' = 'true' THEN plan || jsonb_build_object('recovered', true, 'recoveredAt', now(), 'recoveredSol', $2::float8) WHEN tokens_raw::numeric - $5::numeric <= 0 THEN coalesce(plan, '{}'::jsonb) || jsonb_build_object('outcome', $4::text, 'closedAt', now()) WHEN plan IS NULL THEN NULL ELSE plan || coalesce($6::jsonb, '{}'::jsonb) || '{"slipFails":0}'::jsonb END
       WHERE id = $1 AND status = 'closing' RETURNING status, pnl_sol`, [o.position_id, fill.solLamports / 1e9, fill.feeLamports / 1e9, o.reason, (-fill.tokens).toString(), o.plan_patch ? JSON.stringify(o.plan_patch) : null]);
     if (p) { await brain(d, `LIVE SELL ${o.symbol} (${o.reason}): ${round(fill.solLamports / 1e9, 6)} SOL back${p.status === "closed" ? `, ${p.pnl_sol >= 0 ? "+" : ""}${round(p.pnl_sol, 6)} SOL on the trade` : ", the rest stays open"} (${o.signature}).`); if (p.status === "closed") await dailyLossCheck(d); }
-  } else await d.q(`UPDATE mob_aq_live_positions SET status = CASE WHEN sell_fails + 1 >= $2 THEN 'stuck' ELSE 'open' END, sell_fails = sell_fails + 1,
+  } else await d.q(`UPDATE mob_aq_live_positions SET status = CASE WHEN plan->>'writtenOff' = 'true' THEN 'closed' WHEN sell_fails + 1 >= $2 THEN 'stuck' ELSE 'open' END, sell_fails = sell_fails + 1,
       plan = CASE WHEN $3::boolean AND plan IS NOT NULL THEN plan || jsonb_build_object('slipFails', coalesce((plan->>'slipFails')::int, 0) + 1) ELSE plan END
     WHERE id = $1 AND status = 'closing'`, [o.position_id, LIVE.maxSellFails, isChainFail(error)]); // every failure counts toward 'stuck'; only a chain/simulator refusal widens the slippage
 }
@@ -614,7 +637,12 @@ export function hardStop(plan, spot) {
 const conv = (c, k) => ({ ...c, o: c.o * k, h: c.h * k, l: c.l * k, c: c.c * k });
 // A) THE LANE SWITCHES, in the live settings (sol_wallet_limits.lanes), enforced here on the server for the live trader and
 // the Phantom signal alike. Default: market ON, right call OFF (the Inspector passed the market lane only, 2026-11-18).
-export const lanesOf = (lim) => ({ market: lim?.lanes?.market !== false, rightCall: lim?.lanes?.rightCall === true });
+// A lane is ON only on a clean value. Nothing stored at all = the default (market on, right call off). Anything malformed (lanes
+// that is not a plain object, a switch that is not true/false) fails CLOSED: that lane is off.
+export const lanesOf = (lim) => { const l = lim?.lanes;
+  if (l === undefined || l === null) return { market: true, rightCall: false };
+  if (typeof l !== "object" || Array.isArray(l)) return { market: false, rightCall: false };
+  return { market: l.market === undefined ? true : l.market === true, rightCall: l.rightCall === true }; };
 export async function scanFib(env, venue, skip) {
   const d = db(env), est = await candidates(env), nowSec = Date.now() / 1000;
   // a right call that is also an established coin is taken from the established list (Jupiter's own pool and chart)
@@ -816,7 +844,7 @@ async function sellPosition(env, w, p, reason, claimKey, { size = (t) => t, patc
   if (!took) return { skipped: "already being sold" };
   let amountRaw = String(size(took.tokens_raw)); if (!/^\d+$/.test(amountRaw) || amountRaw === "0") amountRaw = took.tokens_raw;
   const r = await execute(env, w, { side: "sell", c: { mint: p.mint, symbol: p.symbol }, positionId: p.id, inMint: p.mint, outMint: SOL_MINT, amountRaw, slippageBps, reason: slippageBps > LIVE.exitSlippageBps ? `${reason} [sell slippage ${slippageBps} bps after ${p.plan?.slipFails ?? 0} sell(s) the chain refused]` : reason, claim: `${VENUE}|${p.mint}|sell|${claimKey}`, patch });
-  if (r.skipped) await d.q(`UPDATE mob_aq_live_positions SET status = CASE WHEN sell_fails >= $2 THEN 'stuck' ELSE 'open' END WHERE id = $1 AND status = 'closing'`, [p.id, LIVE.maxSellFails]);
+  if (r.skipped) await d.q(`UPDATE mob_aq_live_positions SET status = CASE WHEN plan->>'writtenOff' = 'true' THEN 'closed' WHEN sell_fails >= $2 THEN 'stuck' ELSE 'open' END WHERE id = $1 AND status = 'closing'`, [p.id, LIVE.maxSellFails]);
   return { sell: p.symbol, reason, ...r };
 }
 // The chart decides every exit (chart.mjs manage) on 5-minute closes. Beside it, three rules read the LIVE price so a position is
@@ -832,13 +860,43 @@ async function sellPosition(env, w, p, reason, claimKey, { size = (t) => t, patc
 // day it is written off (it was already counted as a marked loss every tick since the route vanished), and the slot is free.
 async function writeOff(d, p, since) {
   const why = `written off: no sell route for ${LIVE.deadAfterHours} hours, value 0`;
-  const r = await d.one(`UPDATE mob_aq_live_positions SET status = 'closed', closed_at = now(), last_value_sol = 0, last_value_at = now(), pnl_sol = coalesce(proceeds_sol, 0) - cost_sol, exit_reason = $2,
-      plan = coalesce(plan, '{}'::jsonb) || jsonb_build_object('outcome', $2::text, 'writtenOff', true, 'closedAt', now())
+  const r = await d.one(`UPDATE mob_aq_live_positions SET status = 'closed', closed_at = now(), last_value_sol = 0, last_value_at = now(), pnl_sol = coalesce(proceeds_sol, 0) - cost_sol - coalesce((plan->>'rentSol')::float8, 0), exit_reason = $2,
+      plan = coalesce(plan, '{}'::jsonb) || jsonb_build_object('outcome', $2::text, 'writtenOff', true, 'closedAt', now(), 'rentLost', coalesce((plan->>'rentSol')::float8, 0) > 0)
     WHERE id = $1 AND status IN ('open','stuck') AND cost_sol IS NOT NULL RETURNING pnl_sol`, [p.id, why]);
   if (!r) return null;
   await d.q(`INSERT INTO mob_aq_brain (dept, kind, text) VALUES ('execution','pain',$1)`, [`PAIN: LIVE ${p.symbol} (${p.mint}) written off. Jupiter had no route to sell it for ${round((Date.now() / 1000 - since) / 3600, 1)} hours; ${round(-r.pnl_sol, 6)} SOL lost. The honeypot test and the liquidity exit should have caught a coin that can stop being sellable.`]);
   await dailyLossCheck(d);
   return { writtenOff: p.symbol, pnlSol: round(r.pnl_sol, 6), reason: why };
+}
+// A written-off coin is not forgotten: for LIVE.recoverDays its sale is quoted every 5 minutes (3 coins a pass). If a route is
+// back, what is left is sold through the normal order path. The position stays closed on the day it was written off; the SOL that
+// comes back is added to that trade's result, and once the account is empty its rent is reclaimed (reclaimRent).
+async function recoverWrittenOff(env, w, minute) {
+  const d = db(env), out = [];
+  for (const p of await d.q(`SELECT * FROM mob_aq_live_positions p WHERE venue = $1 AND status = 'closed' AND plan->>'writtenOff' = 'true' AND NOT (plan ? 'recovered') AND tokens_raw ~ '^[0-9]+$' AND tokens_raw <> '0'
+      AND closed_at > now() - $2::int * interval '1 day' AND NOT EXISTS (SELECT 1 FROM mob_aq_live_positions a WHERE a.venue = p.venue AND a.mint = p.mint AND a.status IN ${ACTIVE}) ORDER BY id LIMIT 3`, [VENUE, LIVE.recoverDays])) {
+    const q = await quote(env, p.mint, SOL_MINT, p.tokens_raw, LIVE.exitSlippageBps); if (!q.ok) continue;
+    const took = await d.one(`UPDATE mob_aq_live_positions SET status = 'closing' WHERE id = $1 AND status = 'closed' AND plan->>'writtenOff' = 'true' RETURNING id`, [p.id]); if (!took) continue;
+    const r = await execute(env, w, { side: "sell", c: { mint: p.mint, symbol: p.symbol }, positionId: p.id, inMint: p.mint, outMint: SOL_MINT, amountRaw: p.tokens_raw, slippageBps: exitBps(p.plan?.slipFails ?? 0), reason: "recovery: a sell route returned for a written-off coin", claim: `${VENUE}|${p.mint}|sell|recover-${minute}`, q0: q });
+    if (r.skipped) await d.q(`UPDATE mob_aq_live_positions SET status = 'closed' WHERE id = $1 AND status = 'closing'`, [p.id]);
+    out.push({ recover: p.symbol, ...r });
+  }
+  return out;
+}
+// THE WALLET AGAINST THE BOOK: any coin the wallet holds that no active position and no order on its way accounts for is written
+// down (state key live_orphans, shown in liveState().orphans) and reported once. Nothing here ever sells: a coin without a
+// position record has no stop, no cost and no reason on record, so it is Alex's call.
+export async function reconcileWallet(env, w) {
+  const d = db(env); let accts; try { accts = await tokenAccounts(env, w.address); } catch { return null; }
+  const held = accts.filter((a) => a.mint !== SOL_MINT && /^\d+$/.test(a.raw) && a.raw !== "0");
+  const rows = await d.q(`SELECT mint, status, plan->>'writtenOff' wo, closed_at FROM mob_aq_live_positions WHERE venue = $1 ORDER BY id`, [VENUE]), busy = new Set((await d.q(`SELECT mint FROM mob_aq_live_orders WHERE venue = $1 AND status IN ('requested','sent')`, [VENUE])).map((r) => r.mint));
+  const active = new Set(rows.filter((r) => ["opening", "open", "closing", "stuck"].includes(r.status)).map((r) => r.mint));
+  const list = held.filter((a) => !active.has(a.mint) && !busy.has(a.mint)).map((a) => { const last = rows.filter((r) => r.mint === a.mint).pop();
+    return { mint: a.mint, account: a.address, raw: a.raw, note: !last ? "no position was ever recorded for this coin" : last.wo === "true" ? "left from a written-off position (still quoted for a route)" : `left after a ${last.status} position` }; });
+  const prev = await get(d, "live_orphans"), key = (l) => JSON.stringify((l || []).map((x) => [x.mint, x.raw]).sort());
+  await set(d, "live_orphans", { at: new Date().toISOString(), list });
+  if (list.length && key(prev?.list) !== key(list)) await brain(d, `LIVE WALLET CHECK: ${list.length} coin(s) in the Aquarius wallet with no open position: ${list.map((x) => `${x.mint} (${x.raw} raw; ${x.note})`).join("; ")}. Nothing is sold without a position record.`);
+  return list;
 }
 async function exits(env, w, minute = Math.floor(Date.now() / 60000), renew = null) {
   const d = db(env), out = [], nowSec = Date.now() / 1000;
@@ -948,7 +1006,7 @@ export const renewLock = async (d, owner) => !!(await d.one(`UPDATE mob_aq_state
 // after 2 minutes. 'closing' goes back to 'open' (or 'stuck'), 'opening' with no order that could still land becomes 'failed'.
 async function healOrphans(d) {
   const live = `EXISTS (SELECT 1 FROM mob_aq_live_orders o WHERE o.position_id = p.id AND (o.status IN ('requested','sent') OR o.requested_at > now() - interval '2 minutes'))`;
-  const a = await d.q(`UPDATE mob_aq_live_positions p SET status = CASE WHEN sell_fails >= $2 THEN 'stuck' ELSE 'open' END WHERE p.venue = $1 AND p.status = 'closing' AND NOT ${live} RETURNING id`, [VENUE, LIVE.maxSellFails]);
+  const a = await d.q(`UPDATE mob_aq_live_positions p SET status = CASE WHEN p.plan->>'writtenOff' = 'true' THEN 'closed' WHEN sell_fails >= $2 THEN 'stuck' ELSE 'open' END WHERE p.venue = $1 AND p.status = 'closing' AND NOT ${live} RETURNING id`, [VENUE, LIVE.maxSellFails]);
   const b = await d.q(`UPDATE mob_aq_live_positions p SET status = 'failed', closed_at = now(), exit_reason = 'no order was made for this buy; nothing was spent' WHERE p.venue = $1 AND p.status = 'opening' AND p.created_at < now() - interval '2 minutes' AND NOT ${live} RETURNING id`, [VENUE]);
   return a.length + b.length;
 }
@@ -966,7 +1024,8 @@ export function closeTx(wallet, account, program, blockhash) {
 // rent (plan.ataCreated) it is booked back into the trade's proceeds and P&L. A token account with dust in it is left (and noted).
 export async function reclaimRent(env, w) {
   const d = db(env), out = [];
-  for (const p of await d.q(`SELECT id, mint, symbol, plan FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed' AND plan IS NOT NULL AND closed_at > now() - interval '3 days'
+  for (const p of await d.q(`SELECT id, mint, symbol, plan FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed' AND plan IS NOT NULL AND (closed_at > now() - interval '3 days' OR (plan->>'recoveredAt')::timestamptz > now() - interval '3 days')
+      AND NOT (plan->>'writtenOff' = 'true' AND NOT (plan ? 'recovered'))
       AND (NOT (plan ? 'rent') OR (plan->'rent'->>'state' = 'sent') OR (plan->'rent'->>'state' = 'failed' AND coalesce((plan->'rent'->>'tries')::int, 0) < 3)) ORDER BY id LIMIT 3`, [VENUE])) {
     // a terminal end (dust left, or 3 failed closes): the rent kept apart at the buy is lost, and only then booked as a loss
     const lost = (r) => (r.state === "dust" || (r.state === "failed" && (r.tries || 0) >= 3)) && p.plan.rentSol > 0 && !p.plan.rentLost;
@@ -1003,7 +1062,8 @@ export async function reclaimRent(env, w) {
 async function bookRent(d, p, r) {
   // rent kept apart at the buy (plan.rentSol): only the difference (the close's fee) touches the trade. An older position whose
   // cost included the rent (ataCreated, no rentSol) gets all of it back into the trade.
-  const sol = r.lamports / 1e9, apart = p.plan.rentSol > 0, booked = apart || p.plan.ataCreated === true, delta = apart ? sol - p.plan.rentSol : booked ? sol : 0;
+  // (a written-off position already booked its rent as lost: when it comes back after a recovery sale, all of it is added back)
+  const sol = r.lamports / 1e9, apart = p.plan.rentSol > 0, booked = apart || p.plan.ataCreated === true, delta = p.plan.rentLost === true ? sol : apart ? sol - p.plan.rentSol : booked ? sol : 0;
   await d.q(`UPDATE mob_aq_live_positions SET plan = plan || jsonb_build_object('rent', $2::jsonb), proceeds_sol = coalesce(proceeds_sol, 0) + $3, pnl_sol = pnl_sol + $3 WHERE id = $1 AND plan->'rent'->>'state' IS DISTINCT FROM 'closed'`,
     [p.id, JSON.stringify({ ...r, state: "closed", sol, booked }), delta]);
   await brain(d, `LIVE RENT BACK ${p.symbol}: the empty token account was closed, ${round(sol, 6)} SOL back to the Aquarius wallet${booked ? " and booked to the trade (its buy paid it)" : ""} (${r.signature}).`);
@@ -1022,7 +1082,9 @@ export async function liveTick(env, { cron = null, minute = Math.floor(Date.now(
     { const healed = await healOrphans(d); if (healed) out.healed = healed; }
     // 2. exits for what is open, then the rent of fully sold coins comes back
     if (w?.address) { const ex = await exits(env, w, minute, renew); if (ex.length) out.exits = ex; }
+    if (w?.address && w.sealed && minute % 5 === 0 && (await renew())) { const rc = await recoverWrittenOff(env, w, minute); if (rc.length) out.recovered = rc; }
     if (w?.address && w.sealed && (await renew())) { const rr = await reclaimRent(env, w); if (rr.length) out.rent = rr; }
+    if (w?.address && minute % 5 === 0) { try { const or = await reconcileWallet(env, w); if (or?.length) out.orphans = or.length; } catch (e) { out.orphansError = cut(e.message || e); } }
     // 3. one new buy at most, behind every gate, and only while this run still holds the lease
     if (!(await renew())) { out.result = { skipped: "the money lease was lost: no buy this run" }; return out; }
     const g = await gates(env);
@@ -1066,7 +1128,12 @@ async function manualCheck(env, b) {
   const sol = Number(b.sol ?? lim.maxPerTradeSol);
   if (!(sol > 0)) return { error: "Amount must be above zero" };
   if (!(lim.maxPerTradeSol > 0) || sol > lim.maxPerTradeSol) return { error: `${sol} SOL is over the ${lim.maxPerTradeSol} SOL per-trade limit` };
-  // BUY MORE is a buy: the same right-call, veto and safety gates as the trader's own entries, and the same daily loss budget
+  // BUY MORE is a buy: the same lane switches, right-call, veto and safety gates as the trader's own entries, the same daily loss
+  // budget, and the hard ceiling on everything open (open positions x size: an add counts toward it)
+  const lanes = lanesOf(S.sol_wallet_limits), lane = p.plan?.source === "market" ? "market" : "right_call";
+  if (lane === "market" ? !lanes.market || p.plan?.fresh === true : !lanes.rightCall) return { error: `The ${lane === "market" ? "market" : "right-call"} lane is OFF in the live settings: BUY MORE on ${p.symbol} is refused` };
+  const ceiling = round(lim.maxPerTradeSol * lim.maxOpenPositions, 6), exposure = (await d.one(`SELECT coalesce(sum(coalesce(cost_sol, (plan->>'sizeSol')::float8, 0)), 0)::float8 s FROM mob_aq_live_positions WHERE venue = $1 AND status IN ${ACTIVE}`, [VENUE])).s;
+  if (exposure + sol > ceiling + 1e-9) return { error: `Adding ${sol} SOL would put ${round(exposure + sol, 6)} SOL into open positions, over the hard ceiling of ${lim.maxOpenPositions} x ${lim.maxPerTradeSol} = ${ceiling} SOL` };
   if (p.plan?.source !== "market" && !(await rightCalls(d)).has(p.mint)) return { error: `No fresh symbiote right call on ${p.symbol}: BUY MORE is refused (Alex's right-call rule)` };
   if (await vetoed(d, p.mint)) return { error: `Grok vetoed ${p.symbol} in the last hour: BUY MORE is refused` };
   const hs = await safetyOf(env, { mint: p.mint, audit: null }); if (!hs.ok) return { error: `Safety: ${hs.reason}` };
@@ -1081,11 +1148,30 @@ async function manualCheck(env, b) {
   if (!(bal >= lamports + LIVE.feeBudgetLamports + LIVE.reserveSol * 1e9)) return { error: `The wallet holds ${round(bal / 1e9, 6)} SOL: not enough for ${sol} SOL and the ${LIVE.reserveSol} SOL kept for fees` };
   return { d, w, lim, p, sol, lamports, underwater: p.last_value_sol != null && p.last_value_sol < p.cost_sol };
 }
+// The add's own cost gate, at its real size, against the position's NEXT target: round trip and impact under the lane's caps, the
+// honeypot test, the buy's fee room; then check E on the price this quote really pays (above the stop, under the target, and the
+// target at least 3x the round trip away). Returns the quote to execute, or the reason it is refused.
+async function addGate(env, k) {
+  const { d, p, sol, lamports, w } = k, pl = p.plan;
+  if (!pl?.kind || !(pl.stop > 0) || !Number.isInteger(pl.dec)) return { error: `${p.symbol} has no chart plan to check an add against: BUY MORE is refused` };
+  const stop = pl.phase === 2 && pl.trailStop ? Math.max(pl.stop, pl.trailStop) : pl.stop, target = pl.phase === 2 ? pl.t3 : pl.phase === 1 ? pl.t2 : pl.t1, unit = pl.unit || "USD";
+  const c = { mint: p.mint, symbol: p.symbol, fresh: pl.fresh === true }, s = { entry: pl.chartEntry ?? pl.entry, t1: target, stop };
+  const cg = await costGate(env, VENUE, c, s, sol, { feeSide: await feePerSide(d), owner: w.address }); if (!cg.ok) return { error: `Cost: ${cg.refusal.reason}` };
+  const livePx = pxOf(lamports, cg.q.q.outAmount, pl.dec, unit, unit === "USD" ? await solUsdLive(env) : null);
+  if (!(livePx > 0)) return { error: "The live price could not be read from the buy quote: no add without it" };
+  if (livePx <= stop) return { error: `The live price ${r8(livePx)} is at or under the stop ${r8(stop)}: no add` };
+  if (livePx >= target) return { error: `The live price ${r8(livePx)} is at or over the next target ${r8(target)}: nothing left to earn on an add` };
+  const rewardLivePct = round(((target - livePx) / livePx) * 100, 3);
+  if (rewardLivePct < FIB.minRewardRt * cg.rtPct) return { error: `The next target is ${rewardLivePct}% from the live price this quote pays, under ${FIB.minRewardRt}x the ${cg.rtPct}% round trip` };
+  return { cg, livePx, rewardLivePct };
+}
 // What the order would do, for the confirm dialog. Sends nothing.
 export async function manualPreview(env, b) {
   b = b && typeof b === "object" ? b : {};
   const k = await manualCheck(env, b); if (k.error) return k;
-  const { p } = k, q = b.side === "sell" ? await quote(env, p.mint, SOL_MINT, k.amount, LIVE.exitSlippageBps) : await quote(env, SOL_MINT, p.mint, k.lamports, LIVE.slippageBps);
+  const { p } = k; let q;
+  if (b.side === "sell") q = await quote(env, p.mint, SOL_MINT, k.amount, LIVE.exitSlippageBps);
+  else { const a = await addGate(env, k); if (a.error) return a; q = a.cg.q; } // the dialog shows what the order would really be told
   if (!q.ok) return { error: q.error };
   return { side: b.side, positionId: Number(p.id), symbol: p.symbol, mint: p.mint, pct: b.side === "sell" ? Number(b.pct) : null, sol: b.side === "buy" ? k.sol : null, tokensIn: b.side === "sell" ? k.amount : null,
     expectOut: q.q.outAmount, minOut: q.q.otherAmountThreshold, expectSol: b.side === "sell" ? Number(q.q.outAmount) / 1e9 : null, impactPct: round(q.impactPct, 3), overImpact: q.impactPct > LIVE.maxImpactPct,
@@ -1100,10 +1186,9 @@ export async function manualOrder(env, b) {
   try {
     if ((await d.one(`SELECT count(*)::int n FROM mob_aq_live_orders WHERE venue = $1 AND status IN ('requested','sent')`, [VENUE])).n) return { error: "An earlier order is still being confirmed on the chain", busy: true };
     if (b.side === "sell") return await sellPosition(env, w, p, `manual: Alex (sell ${b.pct}%)`, `manual-${b.pct}-${minute}`, { size: (t) => (Number(b.pct) === 100 ? t : ((BigInt(t) * BigInt(b.pct)) / 100n).toString()), slippageBps: exitBps(p.plan?.slipFails ?? 0) });
-    const q = await quote(env, SOL_MINT, p.mint, k.lamports, LIVE.slippageBps);
-    if (!q.ok) return { error: q.error };
-    if (q.impactPct > LIVE.maxImpactPct) return { error: `Price impact ${round(q.impactPct, 2)}% is over the ${LIVE.maxImpactPct}% cap` };
-    const r = await execute(env, w, { side: "buy", c: { mint: p.mint, symbol: p.symbol }, positionId: p.id, inMint: SOL_MINT, outMint: p.mint, amountRaw: k.lamports, slippageBps: LIVE.slippageBps, reason: "manual: Alex (buy more)", claim: `${VENUE}|${p.mint}|add|${minute}`, q0: q });
+    const a = await addGate(env, k); if (a.error) return a;
+    const q = a.cg.q;
+    const r = await execute(env, w, { side: "buy", c: { mint: p.mint, symbol: p.symbol, fresh: p.plan?.fresh === true }, maxBuyFeeLamports: a.cg.maxBuyFeeLamports, positionId: p.id, inMint: SOL_MINT, outMint: p.mint, amountRaw: k.lamports, slippageBps: LIVE.slippageBps, reason: "manual: Alex (buy more)", claim: `${VENUE}|${p.mint}|add|${minute}`, q0: q });
     return { buyMore: p.symbol, ...r };
   } finally { await dropLock(d, owner); }
 }
@@ -1135,7 +1220,7 @@ export async function liveState(d, venue = VENUE) {
     d.q(`SELECT id, side, symbol, mint, status, reason, error, signature, fill_sol, fee_sol, requested_at FROM mob_aq_live_orders WHERE venue = $1 ORDER BY id DESC LIMIT 20`, [venue]),
     d.one(`SELECT gate, reason, symbol, n, at FROM mob_aq_live_refusals WHERE venue = $1 ORDER BY at DESC LIMIT 1`, [venue]),
     d.one(`SELECT coalesce(sum(pnl_sol), 0)::float8 s, count(*)::int n FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed' AND closed_at >= ${TODAY}`, [venue]),
-    d.q(`SELECT k, v FROM mob_aq_state WHERE k IN ('live_tick','live_auto_off','sol_wallet_limits')`),
+    d.q(`SELECT k, v FROM mob_aq_state WHERE k IN ('live_tick','live_auto_off','sol_wallet_limits','live_orphans')`),
     d.one(`SELECT coalesce(sum(pnl_sol), 0)::float8 s, count(*)::int n, count(*) FILTER (WHERE pnl_sol > 0)::int w, (SELECT coalesce(sum(fee_sol), 0)::float8 FROM mob_aq_live_orders WHERE venue = $1 AND status = 'confirmed') f FROM mob_aq_live_positions WHERE venue = $1 AND status = 'closed'`, [venue]),
   ]);
   const st = Object.fromEntries(S.map((r) => [r.k, r.v]));
@@ -1145,6 +1230,8 @@ export async function liveState(d, venue = VENUE) {
     manualPcts: MANUAL_PCTS, pnlTodaySol: round(pnl.s, 6), closedToday: pnl.n, pnlTotalSol: round(tot?.s ?? 0, 6), closedTotal: tot?.n ?? 0, winsTotal: tot?.w ?? 0, feesTotalSol: round(tot?.f ?? 0, 6), lastRefusal: ref ? { gate: ref.gate, reason: ref.reason, symbol: ref.symbol, times: ref.n, at: ref.at } : null,
     lastTickAt: st.live_tick?.at || null, autoOff: st.live_auto_off || null, paper: await paperStats(d),
     lanes: lanesOf(st.sol_wallet_limits), dailyLoss: dailyLossNote(st.sol_wallet_limits),
+    // coins in the wallet that no open position accounts for (checked every 5 minutes; never sold automatically)
+    orphans: st.live_orphans?.list || [], orphansAt: st.live_orphans?.at || null,
     rule: "chart trader: Fibonacci pullback, chart stop, chart targets", proven: false,
     note: "Never tested in the training arena (it tested fixed holds): it starts unproven. The paper mirror below measures it on every coin." };
 }
