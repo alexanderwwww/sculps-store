@@ -86,12 +86,13 @@ const NR = rng(2718);
 // SACRED GEOMETRY (2026-11-18): the somas sit on the figure and the axons ARE its lines.
 // (th, ps) are the torus angles (around the ring, around the tube); ar is the distance from the tube's centre line.
 const PHI = (1 + Math.sqrt(5)) / 2, GA = TAU / (PHI * PHI); // the golden angle
+const CAD_TURNS = 13; // a Fibonacci number of turns
 const node = (th, ps, ar, sz = 1) => ({ th, ps, ar, df: 0.06, dp: 0, sz, den: [] });
 function sacred(v) {
   const S = [], E = []; const link = (a, b, bend = 0) => E.push({ a, b, bend });
   { // CADUCEUS of Hermes: two serpent strands wind as a double helix around the staff of light (the tube's centre line);
     // nodes at golden-ratio spacing; the strands cross at phi intervals and every crossing is a synapse joining both
-    const N = 89, turns = 8; for (const off of [0, Math.PI]) for (let i = 0; i < N; i++) { const u = (i / N); S.push(node(u * TAU, u * turns * TAU + off, 1.05, 0.7 + 0.5 * ((i % 5) === 0))); }
+    const N = 89, turns = CAD_TURNS; for (const off of [0, Math.PI]) for (let i = 0; i < N; i++) { const u = (i / N); S.push(node(u * TAU, u * turns * TAU + off, 1.05, 0.7 + 0.5 * ((i % 5) === 0))); }
     for (const b of [0, N]) for (let i = 0; i < N; i++) link(b + i, b + ((i + 1) % N), 0.18);
     for (let k = 1; k <= 34; k++) { const i = Math.round((k * N / PHI) % N); link(i, N + i, 0.5); }
   }
@@ -106,13 +107,20 @@ if (NCFG.n) {
 } else { const g = sacred(NV); somas.push(...g.S); axons.push(...g.E); }
 // Caduceus only: the staff of light along the tube's centre line and two wings rising at the top of the ring
 function drawStaff(o, G, t, rot, breath) {
-  if (NV !== "g") return; const d = G.d; o.lineCap = "round";
-  for (const [w, a] of [[7, 0.06], [3, 0.16], [1.2, 0.6]]) { o.strokeStyle = `rgba(255,236,190,${a * (0.8 + 0.2 * breath)})`; o.lineWidth = w * d; o.beginPath(); for (let k = 0; k <= 96; k++) { const p = torus(G, (k / 96) * TAU + rot, 0, 0); k ? o.lineTo(p.x, p.y) : o.moveTo(p.x, p.y); } o.stroke(); }
-  const top = torus(G, -Math.PI / 2, 0, 0); // the back of the ring, highest on screen
-  for (const side of [-1, 1]) for (let f = 0; f < 7; f++) { const len = (G.R * 0.42) * (1 - f * 0.11), a0 = -Math.PI / 2 + side * (0.35 + f * 0.17) + Math.sin(t * 0.8) * 0.04 * side;
-    o.strokeStyle = `rgba(${230 - f * 8},${225 - f * 6},255,${0.55 - f * 0.05})`; o.lineWidth = (2.2 - f * 0.2) * d; o.beginPath(); o.moveTo(top.x, top.y);
-    o.quadraticCurveTo(top.x + Math.cos(a0 - side * 0.5) * len * 0.6, top.y + Math.sin(a0 - side * 0.5) * len * 0.6 - 10 * d, top.x + Math.cos(a0) * len * (side > 0 ? 1 : 1), top.y + Math.sin(a0) * len * 0.55); o.stroke(); }
-  const gl = o.createRadialGradient(top.x, top.y, 0, top.x, top.y, 22 * d); gl.addColorStop(0, "rgba(255,245,210,.95)"); gl.addColorStop(1, "rgba(255,220,160,0)"); o.fillStyle = gl; o.fillRect(top.x - 22 * d, top.y - 22 * d, 44 * d, 44 * d);
+  if (NV !== "g") return; const d = G.d, A = G.a; o.lineCap = "round";
+  // the staff of light: the tube's centre line
+  for (const [w, a] of [[9, 0.05], [3.5, 0.14], [1.3, 0.55]]) { o.strokeStyle = `rgba(255,236,190,${a * (0.8 + 0.2 * breath)})`; o.lineWidth = w * d; o.beginPath(); for (let k = 0; k <= 120; k++) { const p = torus(G, (k / 120) * TAU + rot, 0, 0); k ? o.lineTo(p.x, p.y) : o.moveTo(p.x, p.y); } o.stroke(); }
+  // the two serpents: continuous strands, brighter and thicker in front
+  for (const [off, hue] of [[0, 275], [Math.PI, 175]]) { let prev = null;
+    for (let k = 0; k <= 420; k++) { const u = k / 420, p = torus(G, u * TAU + rot, u * CAD_TURNS * TAU + off + t * 0.036, A * 1.05 * 1.25), dep = (p.z / (G.R + A * 1.6) + 1) / 2;
+      if (prev) { o.strokeStyle = `hsla(${hue},95%,${55 + 20 * dep}%,${0.18 + 0.6 * dep})`; o.lineWidth = (0.8 + 2.6 * dep) * d; o.beginPath(); o.moveTo(prev.x, prev.y); o.lineTo(p.x, p.y); o.stroke(); } prev = p; } }
+  // wings at the top of the staff: three rows of feathers each side, gold to white
+  const top = torus(G, -Math.PI / 2 + rot * 0, 0, 0), span = G.R * 0.5;
+  for (const side of [-1, 1]) for (let row = 0; row < 3; row++) for (let f = 0; f < 9; f++) {
+    const a = -Math.PI / 2 + side * (0.22 + f * 0.13 + row * 0.05) + Math.sin(t * 0.9) * 0.03 * side, len = span * (0.55 + 0.45 * Math.sin((f + 1) / 10 * Math.PI)) * (1 - row * 0.28);
+    const ex = top.x + Math.cos(a) * len * 1.25, ey = top.y + Math.sin(a) * len * 0.62, cx = top.x + Math.cos(a - side * 0.35) * len * 0.7, cy = top.y + Math.sin(a - side * 0.35) * len * 0.42 - 6 * d;
+    o.strokeStyle = `rgba(${255},${228 + row * 9},${170 + row * 30},${0.5 - row * 0.12})`; o.lineWidth = (2.6 - row * 0.6 - f * 0.12) * d; o.beginPath(); o.moveTo(top.x, top.y); o.quadraticCurveTo(cx, cy, ex, ey); o.stroke(); }
+  const gl = o.createRadialGradient(top.x, top.y, 0, top.x, top.y, 26 * d); gl.addColorStop(0, "rgba(255,245,210,.95)"); gl.addColorStop(1, "rgba(255,220,160,0)"); o.fillStyle = gl; o.fillRect(top.x - 26 * d, top.y - 26 * d, 52 * d, 52 * d);
 }
 const spikes = []; const flashes = [];
 const hueAt = (th) => { const u = (((th / TAU) % 1) + 1) % 1; return HUE[Math.floor(u * NS) % NS]; };
