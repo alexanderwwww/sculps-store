@@ -102,7 +102,17 @@ export async function refresh(env) {
 
 // ---------------------------------------------------------------- limits (nothing can trade until Alex sets them)
 export const WALLET_LIMIT_DEFAULTS = Object.freeze({ maxPerTradeSol: 0, maxDailyLossSol: 0, maxOpenPositions: 0, autoTrade: false });
-export function validateWalletLimits(body, current = WALLET_LIMIT_DEFAULTS) {
+// The server's own ceiling: the panel can set less, never more. 0.05 SOL a trade is Alex's per-click cap (AGENTS rule 26),
+// 3 open is Rulebook v2 rule 10 ("one size, three positions"). Raising them is a deploy (env AQ_HARD_MAX_TRADE_SOL /
+// AQ_HARD_MAX_OPEN), never a panel click. Every order path (tick, BUY MORE, Phantom signal) clamps to these again.
+export const HARD_CAPS = Object.freeze({ maxPerTradeSol: 0.05, maxOpenPositions: 3 });
+export function hardCaps(env = {}) {
+  const t = Number(env.AQ_HARD_MAX_TRADE_SOL), o = Number(env.AQ_HARD_MAX_OPEN);
+  return { maxPerTradeSol: t > 0 ? t : HARD_CAPS.maxPerTradeSol, maxOpenPositions: Number.isInteger(o) && o > 0 ? o : HARD_CAPS.maxOpenPositions };
+}
+// the limits as the server applies them: the panel's numbers, never above the hard caps
+export const clampLimits = (lim, env = {}) => { const h = hardCaps(env); return { ...lim, maxPerTradeSol: Math.min(Number(lim.maxPerTradeSol) || 0, h.maxPerTradeSol), maxOpenPositions: Math.min(Number(lim.maxOpenPositions) || 0, h.maxOpenPositions) }; };
+export function validateWalletLimits(body, current = WALLET_LIMIT_DEFAULTS, caps = HARD_CAPS) {
   if (!body || typeof body !== "object" || Array.isArray(body)) return { error: "Send the limits as fields" };
   const next = { ...WALLET_LIMIT_DEFAULTS, ...current };
   for (const [k, v] of Object.entries(body)) {
@@ -111,13 +121,14 @@ export function validateWalletLimits(body, current = WALLET_LIMIT_DEFAULTS) {
     if (typeof v !== "number" || !isFinite(v) || v < 0) return { error: `${k} must be a number, 0 or more` };
     if (v > 1e6) return { error: `${k} is too large` };
     if (k === "maxOpenPositions" && !Number.isInteger(v)) return { error: "maxOpenPositions must be a whole number" };
+    if (k in caps && v > caps[k]) return { error: `${k} ${v} is over the server's hard cap of ${caps[k]}${k === "maxPerTradeSol" ? " SOL a trade" : " open positions"}` };
     next[k] = k === "maxOpenPositions" ? v : Math.round(v * 1e6) / 1e6;
   }
   if (next.autoTrade && !(next.maxPerTradeSol > 0 && next.maxDailyLossSol > 0 && next.maxOpenPositions > 0)) return { error: "Auto trade needs every limit above zero first" };
   return { limits: next };
 }
 export async function saveWalletLimits(env, body) {
-  const d = db(env), cur = { ...WALLET_LIMIT_DEFAULTS, ...((await get(d, "sol_wallet_limits")) || {}) }, r = validateWalletLimits(body, cur);
+  const d = db(env), cur = { ...WALLET_LIMIT_DEFAULTS, ...((await get(d, "sol_wallet_limits")) || {}) }, r = validateWalletLimits(body, cur, hardCaps(env));
   if (r.error) return r;
   if (r.limits.autoTrade && !(await get(d, "sol_wallet_key"))?.address) return { error: "Create the wallet first" };
   await set(d, "sol_wallet_limits", r.limits);

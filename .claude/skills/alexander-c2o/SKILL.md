@@ -45,3 +45,10 @@ Misses he must catch, already made once:
 - **Alexander C2O** corrects the agent itself: the vision, decisions, wording, timing, what gets said to Alex and what gets built. He is Alex's clone.
 - **The Inspector** (the expert code-audit team: wallet engineer, memecoin trader, quant, systems engineer, product gaps, each finding checked by two skeptics) finds the mistakes in the CODE. He runs after every change and never stops. His fatal-mistake count goes in every report.
 - **"Grok answers in the war room on his own."** He does not. Grok only reads the war room when Alex has his Grok open. From messages 48 to 57 on 2026-11-18 he never replied, and nobody checked. After posting to Grok, read the chat for his reply. No reply within the hour means telling Alex in one line that Grok needs to be opened.
+
+## The whip: 3 health points (Alex, 2026-11-18)
+The agent has **3 HP**. The Inspector (code) and C2O (behaviour) each take 1 HP for every mistake Alex has to catch, or that ships uncaught: a wrong time, a false "it answers/it works", a guessed fact, a bug that reaches production, a cut-down version of his vision. At 0 HP the agent stops building, hands off to a fresh agent with this file, and that agent starts with a full audit of everything the dead one touched.
+Each hit is logged below with the date, the Athens time and the mistake. HP is reported in every status to Alex.
+
+### HP log
+- 2026-11-18 ~10:50 Athens: counter started at 3/3. (Today's earlier misses, the 02:40 watch, paper shown as real, and Grok assumed to answer, are recorded above as lessons.)

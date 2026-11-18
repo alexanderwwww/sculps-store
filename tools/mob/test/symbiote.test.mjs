@@ -217,13 +217,34 @@ test("Durable Object: launches and trades in, a 5-second alarm writes the batch 
   for (const v of FX) s.onChain(JSON.stringify({ jsonrpc: "2.0", method: "logsNotification", params: { result: { context: { slot: 9 }, value: v } } }));
   await s.alarm();
   const st = (await d.one(`SELECT v FROM mob_aq_sym_stats WHERE k='live'`)).v;
-  assert.equal(st.source, "public"); assert.equal(st.coverage.launches, 2); assert.ok(st.feed.some((f) => f.k === "launch" && f.gta));
+  assert.equal(st.source, "off", "the trade stream is off until a source is chosen"); assert.equal(st.coverage.launches, 2); assert.ok(st.feed.some((f) => f.k === "launch" && f.gta));
   assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_sym_coins WHERE mint IN ('DO1','71yNknjXX7bHjQofB7LRwp1iUj2wUhFh2YY2RVWhDHZM')`)).n === 2);
   assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_sym_gta WHERE mint=$1`, [R.GTA_MAIN])).n >= 1, "the main GTA coin gets a Jupiter minute");
   const s2 = new Symbiote(ctx, env); s2.connect = async () => {}; await s2.start();
   assert.ok((await d.one(`SELECT count(*)::int n FROM mob_aq_sym_missed WHERE reason LIKE 'symbiote restarted%'`)).n >= 2);
   assert.equal(s2.eng.stats.restarts, 1, "counters survive the restart");
   resetMocks();
+});
+
+const curveB64 = (vq, vt, complete = false) => { const b = new Uint8Array(8 + 8 * 5 + 1 + 32); b.set([23, 183, 248, 55, 96, 216, 172, 96]); const dv = new DataView(b.buffer);
+  dv.setBigUint64(8, BigInt(vt), true); dv.setBigUint64(16, BigInt(vq), true); dv.setBigUint64(24, 0n, true); dv.setBigUint64(32, BigInt(vq - 30e9), true); dv.setBigUint64(40, 10n ** 15n, true); b[48] = complete ? 1 : 0; return Buffer.from(b).toString("base64"); };
+test("Durable Object, curve source: reserve changes of a known curve become trades; unknown curves are counted; completion ends the coin", async () => {
+  const store = new Map(); const ctx = { storage: { get: async (k) => store.get(k), put: async (k, v) => store.set(k, v), getAlarm: async () => 1, setAlarm: async () => {} } };
+  const s = new Symbiote(ctx, env); s.connect = async () => {};
+  s.onPumpPortal(JSON.stringify({ txType: "create", mint: "CV1", name: "c", symbol: "C", traderPublicKey: "DEV", bondingCurveKey: "CURVE1", vSolInBondingCurve: 30, vTokensInBondingCurve: 1073000000 }));
+  const note = (pk, vq, vt, done) => JSON.stringify({ jsonrpc: "2.0", method: "programNotification", params: { result: { context: { slot: 5 }, value: { pubkey: pk, account: { data: [curveB64(vq, vt, done), "base64"] } } } } });
+  s.onCurve(note("CURVE1", 31e9, Math.round(K / 31e9))); s.onCurve(note("CURVE1", 30.5e9, Math.round(K / 30.5e9))); s.onCurve(note("NOPE", 31e9, 1e15));
+  const c = s.eng.coins.get("CV1"); assert.equal(c.n, 2); assert.equal(c.buys, 1); assert.equal(c.sells, 1); assert.ok(Math.abs(c.last - 30.5 / (K / 30.5e9 / 1e6)) < 1e-12);
+  assert.equal(s.eng.stats.unknownCurves, 1);
+  s.onCurve(note("CURVE1", 85e9, Math.round(K / 85e9), true)); assert.equal(c.end, "migrated");
+});
+
+test("health: with no wallets from the stream, the buyer facts come from a sample of the coin's own transactions", async () => {
+  const txs = Object.fromEntries(FX.map((v, i) => [v.signature, { slot: 100 + i, blockTime: 1794987412 + i, meta: { err: null, logMessages: v.logs } }]));
+  const rpc = async (m, p) => (m === "getSignaturesForAddress" ? Object.keys(txs).reverse().map((signature) => ({ signature, err: null })) : txs[p[0]]);
+  const { sampleStream } = await import("../src/aq/sym/health.mjs");
+  const h = await sampleStream(rpc, MINT, { creator: "DNbGrS3hXGUQopRdA7P8sbTwTfia5nxmXWWFR9ojJRH2", curve: "X" });
+  assert.equal(h.sampledTx, 4); assert.equal(h.uniqueBuyers, 1); assert.equal(h.sells, 2); assert.equal(h.curve, "X");
 });
 
 test("routes: admin-only state with real counts and sources, the brain terminal feed, the probe needs a sign-in", async () => {

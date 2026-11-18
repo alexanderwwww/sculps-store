@@ -95,7 +95,8 @@ export class Symbiote {
     this.lastMsg.pp = Date.now();
     let j; try { j = JSON.parse(raw); } catch { return; }
     if (j.txType !== "create" || !j.mint) return;
-    const c = this.eng.onCreate({ mint: j.mint, name: j.name, symbol: j.symbol, uri: j.uri, creator: j.traderPublicKey, curve: j.bondingCurveKey, src: "pumpportal" });
+    const c = this.eng.onCreate({ mint: j.mint, name: j.name, symbol: j.symbol, uri: j.uri, creator: j.traderPublicKey, curve: j.bondingCurveKey, src: "pumpportal",
+      vsol: Number.isFinite(j.vSolInBondingCurve) ? j.vSolInBondingCurve * 1e9 : null, vtok: Number.isFinite(j.vTokensInBondingCurve) ? j.vTokensInBondingCurve * 1e6 : null });
     if (j.bondingCurveKey) this.curves.set(j.bondingCurveKey, j.mint);
     if (c.n === 0 && !c.chain) this.push({ at: Date.now(), k: "launch", mint: c.mint, sym: c.symbol, gta: c.gta });
   }

@@ -88,6 +88,9 @@ test("limits: zero and off by default, numbers 0 or more, auto trade is only a s
   for (const bad of [{ maxPerTradeSol: -0.1 }, { maxPerTradeSol: "1" }, { maxDailyLossSol: null }, { maxOpenPositions: 2.5 }, { autoTrade: "on" }, { maxPerTradeUsd: 5 }, { maxPerTradeSol: 1e9 }, { autoTrade: true }])
     { const r = await L(bad); assert.equal(r.status, 400, JSON.stringify(bad)); await J(r); }
   assert.equal(await st("sol_wallet_limits"), null);
+  // the server's hard caps: the panel cannot go above 0.05 SOL a trade or 3 open positions
+  for (const over of [{ maxPerTradeSol: 0.06 }, { maxPerTradeSol: 5 }, { maxOpenPositions: 4 }]) { const r = await L(over); assert.equal(r.status, 400, JSON.stringify(over)); assert.match((await J(r)).error.message, /hard cap/); }
+  assert.deepEqual(W.clampLimits({ maxPerTradeSol: 5, maxOpenPositions: 9, maxDailyLossSol: 1 }), { maxPerTradeSol: 0.05, maxOpenPositions: 3, maxDailyLossSol: 1 }, "a stored value above the cap is clamped where it is used");
   let r = await L({ maxPerTradeSol: 0.05, maxDailyLossSol: 0.2, maxOpenPositions: 2 }); assert.equal(r.status, 200);
   assert.deepEqual((await J(r)).limits, { maxPerTradeSol: 0.05, maxDailyLossSol: 0.2, maxOpenPositions: 2, autoTrade: false });
   r = await L({ autoTrade: true }); assert.equal(r.status, 200); await J(r);

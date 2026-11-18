@@ -4,7 +4,8 @@
 // Shapes read 2026-11-18: getTokenLargestAccounts value[{address, amount, uiAmount}] (Helius docs; the public node answers 429),
 // getAccountInfo jsonParsed mint info {mintAuthority, freezeAuthority, supply} (live), RugCheck /report/summary {score, risks[]}
 // (live), metadata at gateway.pinata.cloud/ipfs/<cid> {twitter, website, telegram?} (live; ipfs.io no longer serves JSON).
-import { judgeHealth } from "./rules.mjs";
+import { judgeHealth, createEngine } from "./rules.mjs";
+import { eventsFromLogs } from "./decode.mjs";
 
 export const PUBLIC_RPC = "https://api.mainnet-beta.solana.com";
 const heliusUrl = (k) => `https://mainnet.helius-rpc.com/?api-key=${encodeURIComponent(k)}`;
@@ -28,8 +29,29 @@ export async function vetoed(d, mint) {
   return rows.some((r) => isVeto(r.text, mint));
 }
 
+// When the live source carried no wallets (the "curve" source), the buyer-side facts come from a sample of the coin's own
+// transactions: its 20 oldest (the first blocks: snipers, bundles, the dev) and 100 newest, decoded with the same IDL decoder.
+// Unique buyers from a sample are a lower bound, so the check can only be stricter than the truth.
+export async function sampleStream(rpc, mint, base = {}) {
+  const sigs = ((await rpc("getSignaturesForAddress", [mint, { limit: 1000 }])) || []).filter((x) => !x.err);
+  const pick = [...new Set([...sigs.slice(-20), ...sigs.slice(0, 100)].map((x) => x.signature))];
+  const txs = [];
+  for (let i = 0; i < pick.length; i += 10) txs.push(...(await Promise.all(pick.slice(i, i + 10).map((sg) => rpc("getTransaction", [sg, { encoding: "json", maxSupportedTransactionVersion: 1 }]).catch(() => null)))));
+  const e = createEngine(); const ok = txs.filter(Boolean).sort((a, b) => a.slot - b.slot);
+  let created = false;
+  for (const t of ok) {
+    const ev = eventsFromLogs({ signature: null, err: t.meta?.err ?? null, logs: t.meta?.logMessages || [] }, t.slot);
+    for (const c of ev.creates) if (c.mint === mint) { e.onCreate({ ...c, src: "chain" }); created = true; }
+    if (!created) { e.onCreate({ mint, creator: base.creator, curve: base.curve, slot: t.slot, src: "chain" }); created = true; }
+    for (const x of ev.trades) if (x.mint === mint) e.onTrade(x, (t.blockTime || 0) * 1000);
+  }
+  const h = e.streamHealth(mint) || {};
+  return { ...base, ...h, curve: base.curve || h.curve, uri: base.uri || h.uri, creator: base.creator || h.creator, sampledTx: ok.length, totalTx: sigs.length };
+}
+
 // stream: rules.streamHealth(mint). Returns {checks, verdict}.
 export async function deepCheck(env, d, mint, stream, rpc = rpcFor(env)) {
+  if (!stream.uniqueBuyers) { const smp = await safe(() => sampleStream(rpc, mint, stream)); if (!smp.error) stream = smp; }
   const checks = { ...stream };
   const holders = await safe(async () => {
     const big = (await rpc("getTokenLargestAccounts", [mint]))?.value || [];
