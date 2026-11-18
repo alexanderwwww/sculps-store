@@ -74,11 +74,16 @@ export function entrySetup(c1, nowSec) {
   if (pullLow > lv.z50) return { ...base, signal: false, why: "waiting for the pullback into 50-61.8%" };
   if (last.c > lv.z50) return { ...base, signal: false, why: "price is back above 50%: too late, never chase" };
   if (last.c < lv.z618) return { ...base, signal: false, why: "price is under 61.8%: not inside the pocket" };
-  const bounce = last.c > last.o;
+  // the bounce is a CLOSED 5-minute bar after the high that closes up (close over its open) inside the pocket: one green
+  // minute inside a bar that is still falling is not a bounce
+  const lb5 = bars5(done, nowSec).filter((x) => x.t >= leg.highT + 300).slice(-1)[0];
+  const bounce = !!lb5 && lb5.c > lb5.o && lb5.c >= lv.z618 && lb5.c <= lv.z50;
   if (!bounce) return { ...base, signal: false, why: "no bounce candle yet: a falling knife is not bought" };
   if (!(leg.sellVol < leg.buyVol)) return { ...base, signal: false, why: "selling on the pullback is heavier than buying on the leg" };
+  // the stop: a 5-minute close under 78.6%, or under the pullback's swing low when that is closer, minus 0.25 ATR
+  const stop = r6(Math.max(lv.z786, pullLow) - FIB.stopBufAtr * leg.atr);
   return { ...base, signal: true, why: `golden pocket bounce: ${r6(((leg.high - last.c) / (leg.high - leg.low)) * 100)}% retrace, leg ${r6((leg.high - leg.low) / leg.atr)}x ATR`,
-    entry: last.c, stop: lv.stop, t1: lv.t1, t2: lv.t2, t3: lv.t3, validations: { leg: true, risingVolume: true, pocket: true, bounceClose: true, pullbackVolumeLower: true } };
+    entry: last.c, stop, stopFrom: pullLow > lv.z786 ? "swing low" : "78.6%", t1: lv.t1, t2: lv.t2, t3: lv.t3, validations: { leg: true, risingVolume: true, pocket: true, bounceClose: true, pullbackVolumeLower: true } };
 }
 // The plan stored with a position: everything the exits need, plus what the brain learns from.
 export const planOf = (s, nowSec, extra = {}) => ({ kind: "fib", leg: { low: s.leg.low, high: s.leg.high, lowT: s.leg.lowT, highT: s.leg.highT, atr: s.leg.atr }, levels: s.levels,
@@ -91,22 +96,29 @@ export function manage(plan, c1, nowSec, { liqNow = null, vetoed = false } = {})
   if (liqNow != null && plan.liq > 0 && liqNow < plan.liq * (1 - FIB.liqDropPct / 100)) return { action: "sell_all", reason: `invalidation: the pool lost ${FIB.liqDropPct}% of its liquidity` };
   const done = c1.filter((c) => c.t + 60 <= nowSec), last = done[done.length - 1];
   if (!last) return { action: "hold", reason: "no data: holding (data never forces an exit)" };
-  const b = bars5(done, nowSec), since = b.filter((x) => x.t >= plan.since), afterEntry = b.filter((x) => x.t >= plan.entryT);
+  // every 5-minute bar that ENDS after `since` counts (the bar the entry was made in included); lower lows from the minutes after the fill
+  const b = bars5(done, nowSec), since = b.filter((x) => x.t + 300 > plan.since), afterFill = done.filter((c) => c.t >= plan.entryT);
   const stop = plan.phase === 2 ? Math.max(plan.stop, plan.trailStop ?? -Infinity) : plan.stop;
   const closeUnder = since.find((x) => x.c < stop);
   if (closeUnder) return { action: "sell_all", reason: plan.phase === 0 ? "stop: a 5-minute close under the 78.6% stop" : plan.phase === 1 ? "stop at entry after target 1" : "trail: a higher low broke" };
-  if (plan.phase === 0 && afterEntry.some((x) => x.l < plan.pullLow)) return { action: "sell_all", reason: "invalidation: a lower low after entry" };
+  if (plan.phase === 0 && afterFill.some((x) => x.l < plan.pullLow)) return { action: "sell_all", reason: "invalidation: a lower low after entry" };
   const px = last.c;
   if (plan.phase === 0 && px >= plan.t1) return { action: "sell_half", reason: "target 1: the leg's high (sold half, stop to entry)", patch: { phase: 1, stop: plan.entry, since: last.t - (last.t % 300) + 300, t1At: last.t } };
-  if (plan.phase === 1 && px >= plan.t2) {
-    const lb = b[b.length - 1], pb = b[b.length - 2], strong = lb && pb && lb.c > plan.t2 && lb.v > pb.v;
-    if (!strong) return { action: "sell_all", reason: "target 2: the 1.272 extension" };
-    return { action: "hold", reason: "momentum above 1.272: trailing under each higher low", patch: { phase: 2, trailStop: Math.max(plan.entry, lb.l), since: lb.t + 300, t2At: last.t } };
+  // T2: the 1.272 touch is judged on the 5-minute bar it happens in. That bar closes above 1.272 on rising volume: trail toward
+  // 1.618. Otherwise: sell the rest.
+  if (plan.phase === 1 && (plan.t2At != null || px >= plan.t2)) {
+    const t2At = plan.t2At ?? last.t, bi = b.findIndex((x) => x.t + 300 > t2At);
+    if (bi < 0) return { action: "hold", reason: "1.272 touched: waiting for the 5-minute close", patch: plan.t2At == null ? { t2At } : undefined };
+    const bar = b[bi], prev = b[bi - 1];
+    if (!(bar.c > plan.t2 && prev && bar.v > prev.v)) return { action: "sell_all", reason: "target 2: the 1.272 extension" };
+    return { action: "hold", reason: "momentum above 1.272: trailing under each higher low", patch: { phase: 2, trailStop: Math.max(plan.entry, bar.l), since: bar.t + 300, t2At } };
   }
   if (plan.phase === 2) {
     if (px >= plan.t3) return { action: "sell_all", reason: "target 3: the 1.618 extension" };
+    if (since.some((x) => x.c < plan.t2)) return { action: "sell_all", reason: "target 2: a 5-minute close fell back under 1.272" };
     const lb = b[b.length - 1], pb = b[b.length - 2];
-    if (lb && pb && lb.l > pb.l && lb.l > (plan.trailStop ?? -Infinity) && lb.t >= plan.since - 300) return { action: "hold", reason: "trail raised to the new higher low", patch: { trailStop: lb.l } };
+    // a raised trail counts only bars that close after the raise (since moves with it)
+    if (lb && pb && lb.l > pb.l && lb.l > (plan.trailStop ?? -Infinity) && lb.t >= plan.since - 300) return { action: "hold", reason: "trail raised to the new higher low", patch: { trailStop: lb.l, since: lb.t + 300 } };
   }
   return { action: "hold", reason: "holding: no stop, target or invalidation" };
 }

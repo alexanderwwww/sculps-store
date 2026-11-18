@@ -1,7 +1,9 @@
 // Synthetic 1-minute charts for the chart trader (no network). Every candle {t, o, h, l, c, v}; the last one closed a minute before `now`.
 // The standard picture: 2 hours flat around 100, a 30-minute leg to ~130 on rising volume, a pullback into the golden pocket on
 // light volume, then whatever `tail` adds (a bounce, a knife, a break...).
-export function chart(nowSec, { tail = [[114.1, 114.6, 9]], legTo = 30, legVol = 2, pull = 16, pullVol = 8, flat = 120 } = {}) {
+// default tail: ten green minutes climbing inside the pocket, so whatever the clock, a CLOSED 5-minute bar closes up inside it
+export const rise = (a, b, n = 10, v = 9) => Array.from({ length: n }, (_, i) => [a + ((b - a) * i) / n, a + ((b - a) * (i + 1)) / n, v]);
+export function chart(nowSec, { tail = rise(113.9, 114.6), legTo = 30, legVol = 2, pull = 16, pullVol = 8, flat = 120 } = {}) {
   const rows = [];
   for (let i = 0; i < flat; i++) { const p = 100 + Math.sin(i) * 0.3; rows.push([p, p, 10]); }
   for (let i = 1; i <= legTo; i++) rows.push([100 + i - 1, 100 + i, 10 + i * legVol]);
