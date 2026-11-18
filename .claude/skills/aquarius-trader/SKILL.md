@@ -123,3 +123,6 @@ A switch Alex turns on (panel + state key `training_mode`). While on, a separate
 
 ## GTA 6 is permanent (Alex, 2026-11-18)
 The GTA 6 coin hunt and research never stop, even after release day. Symbiote watches every GTA-themed launch and Grok researches GTA on X every day.
+
+## Machine mistakes become pain (Alex, 2026-11-18)
+Every mistake the trading machine makes (a losing trade, a stop-out, a fake pump it took, a gate that let a bad coin through, a stuck sell) is written to the brain as a PAIN row: what happened, the numbers, and which rule or instinct should have caught it. The instinct layer reads these rows so the same pain is never taken twice. Agent mistakes are different: they cost HP (see alexander-c2o).
