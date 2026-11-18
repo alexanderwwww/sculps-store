@@ -390,6 +390,8 @@ test("LIVE PATH: a fresh right call becomes its own candidate; its symbiote bars
   mock("GET", /^https:\/\/api\.rugcheck\.xyz\//, () => ({ mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 6 } }));
   mock("POST", "https://api.mainnet-beta.solana.com", (rq) => { const m = JSON.parse(rq.body); return m.method === "getAccountInfo" ? { jsonrpc: "2.0", id: 1, result: { context: { slot: 1 }, value: { owner: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb", data: { parsed: { type: "mint", info: { freezeAuthority: null, mintAuthority: null, decimals: 6, extensions: [] } } } } } } : { jsonrpc: "2.0", id: 1, error: { message: "unmocked" } }; });
   await d.q(`DELETE FROM mob_aq_market`); await d.q(`DELETE FROM mob_aq_sym_right`); await d.q(`DELETE FROM mob_aq_sym_bars WHERE mint = $1`, [RC]);
+  // the right-call lane is a live setting and is OFF by default (live.mjs lanesOf): this test is about that lane, so it is switched on
+  await d.q(`INSERT INTO mob_aq_state (k, v, at) VALUES ('sol_wallet_limits', '{"lanes":{"market":true,"rightCall":true}}'::jsonb, now()) ON CONFLICT (k) DO UPDATE SET v = mob_aq_state.v || EXCLUDED.v`);
   const none = await L.scanFib(env, "live", async () => false);
   assert.ok(!none.c && ["no_candidate", "no_right_call"].includes(none.refusal.refused), "no right call: still refused " + JSON.stringify(none.refusal));
   await d.q(`INSERT INTO mob_aq_sym_right (mint, symbol, status, checked_at, checks) VALUES ($1, 'RC', 'candidate', now(), '{"realSol": 40}')`, [RC]);
