@@ -24,7 +24,7 @@ function orchestra(depts) {
     const on = (d.workers || []).some((w) => w.status === "busy");
     return `<div class="hy-mus${on ? " on" : ""}" style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%" title="${esc(d.name)}${on ? " · playing" : " · resting"}">
       <svg viewBox="0 0 24 30" aria-hidden="true"><circle cx="12" cy="6" r="4"/><path d="M5 29c0-9 3-15 7-15s7 6 7 15z"/><path class="ly" d="M15 13c3 0 5 3 4 8M15 13v9M19 21h-5"/></svg>
-      <small>${esc(String(d.name || "").split(" ·")[0])}</small></div>`;
+      <small>${esc(String(d.name || "").split(" · ").pop())}</small></div>`;
   }).join("");
 }
 
