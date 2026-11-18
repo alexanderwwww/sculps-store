@@ -53,9 +53,11 @@ export default {
   },
   async scheduled(event, env, ctx) {
     // Aquarius paper tick runs every minute ("* * * * *"); mob's own tick keeps its */5 schedule.
-    // LIVE orders have their own timer and their own run, so a slow paper tick or arena can never delay a real exit.
-    if (event?.cron === "*/1 * * * *") { ctx.waitUntil(C.ensureMigrated(env).then(() => liveTick(env, { cron: event.cron })).then((r) => { if (r.result && !r.result.refused || r.exits || r.reconciled || r.error) console.log("live", JSON.stringify(r)); }).catch((e) => console.log("live error", String(e.message || e).slice(0, 200)))); return; }
     if (event?.cron === "* * * * *") {
+      // LIVE orders: started with the minute, beside the paper tick and the arena and waiting on neither, so a slow paper tick
+      // cannot delay a real exit. (A third timer "*/1 * * * *" was tried on 2026-11-18: it first fired about 7 minutes after the
+      // deploy, with event.cron "*/1 * * * *". Running here, in the timer that is already proven, was kept instead.)
+      ctx.waitUntil(C.ensureMigrated(env).then(() => liveTick(env, { cron: event.cron })).then((r) => { if ((r.result && !r.result.refused) || r.exits || r.reconciled || r.error) console.log("live", JSON.stringify(r)); }).catch((e) => console.log("live error", String(e.message || e).slice(0, 200))));
       // the training arena has its own clock: it starts with the minute, beside the main tick, so a slow main tick can never cost it a batch
       ctx.waitUntil(C.ensureMigrated(env).then(() => arenaTick(env)).then((r) => { if (!r.off) console.log("arena", JSON.stringify(r)); }).catch((e) => console.log("arena error", e.message || e)));
       ctx.waitUntil(C.ensureMigrated(env).then(() => aqTick(env)).then((r) => console.log("aq", JSON.stringify(r))).catch((e) => console.log("aq error", e.message || e))
