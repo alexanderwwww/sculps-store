@@ -117,7 +117,7 @@ export class Symbiote {
     const r = j.params?.result; if (!r?.value) return;
     const e = eventsFromLogs(r.value, r.context?.slot ?? null);
     if (e.failed) { this.eng.stats.failed++; return; }
-    for (const c of e.creates) { if (c.curve) { this.curves.set(c.curve, c.mint); this.curveAt.set(c.curve, now); } const had = this.eng.coins.has(c.mint); const coin = this.eng.onCreate({ ...c, src: "chain" }); if (!had) this.push({ at: now, k: "launch", mint: coin.mint, sym: coin.symbol, gta: coin.gta }); }
+    for (const c of e.creates) { if (c.curve) { this.curves.set(c.curve, c.mint); this.curveAt.set(c.curve, now); } const had = this.eng.coins.has(c.mint); const coin = this.eng.onCreate({ ...c, src: "chain", live: true }); if (!had) this.push({ at: now, k: "launch", mint: coin.mint, sym: coin.symbol, gta: coin.gta }); }
     for (const t of e.trades) this.eng.onTrade(t, now);
     for (const x of e.completes) this.eng.onComplete(x, now);
   }

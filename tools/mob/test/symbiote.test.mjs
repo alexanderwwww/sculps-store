@@ -103,11 +103,12 @@ test("rules: a paper doubling is flagged once for the deep checks; stream health
 
 test("health: a healthy coin passes, each failure is named, unknown is never a pass", () => {
   const good = { top10Share: 0.18, devShare: 0.01, devSold: false, sniperShare: 0.05, sameFunderMax: 1, uniqueBuyers: 250, sizeCv: 1.4, sameSizeShare: 0.05, washShare: 0.04, liqToMcap: 0.2,
-    mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 2, vetoed: false };
+    mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 2, vetoed: false, launchComplete: true };
   assert.deepEqual(R.judgeHealth(good), { ok: true, failed: [] });
   const bad = R.judgeHealth({ ...good, sniperShare: 0.4, devSold: true, sameFunderMax: 7, washShare: 0.5, freezeAuthority: "X", vetoed: true });
   assert.equal(bad.ok, false);
   for (const w of ["sniper", "dev sold", "one source", "wash", "freeze", "VETO"]) assert.ok(bad.failed.some((f) => f.includes(w)), w);
+  const noLaunch = R.judgeHealth({ ...good, launchComplete: false }); assert.equal(noLaunch.ok, false); assert.match(noLaunch.failed[0], /launch data .* can never be a right call/);
   const unk = R.judgeHealth({ ...good, top10Share: undefined, mintAuthority: undefined });
   assert.equal(unk.ok, false); assert.ok(unk.failed.some((f) => /top-10.*unknown/.test(f))); assert.ok(unk.failed.some((f) => /mint authority.*unknown/.test(f)));
   assert.equal(isVeto("VETO " + MINT, MINT), true); assert.equal(isVeto("VETO lifted on " + MINT, MINT), false);
@@ -192,7 +193,7 @@ test("right calls: a healthy explosion becomes 'candidate' (read by live.mjs rig
   mock("GET", /api\.rugcheck\.xyz/, () => ({ score: 1, risks: [] }));
   mock("GET", /gateway\.pinata\.cloud/, () => ({ twitter: "https://x.com/a", website: "" }));
   const stream = { uniqueBuyers: 300, buyShare: 0.6, sizeCv: 1.2, sameSizeShare: 0.04, washShare: 0.02, sniperWallets: 1, sniperShare: 0.02, devSold: false, devShare: 0.0,
-    earlyBuyers: ["e1", "e2", "e3", "e4"], firstBuyers: ["b1", "b2"], creator: "DEV", curve: "CURVE", uri: "https://ipfs.io/ipfs/bafkreiexample", realSol: 40, mcapSol: 150, liqToMcap: 0.27 };
+    launchComplete: true, earlyBuyers: ["e1", "e2", "e3", "e4"], firstBuyers: ["b1", "b2"], creator: "DEV", curve: "CURVE", uri: "https://ipfs.io/ipfs/bafkreiexample", realSol: 40, mcapSol: 150, liqToMcap: 0.27 };
   const ok = await deepCheck({}, d, "GOODMINT", stream);
   assert.equal(ok.verdict.ok, true, JSON.stringify(ok.verdict.failed)); assert.equal(ok.checks.top10Share, 0.07); assert.equal(ok.checks.socials, 1);
   assert.equal(await writeRight(d, { mint: "GOODMINT", symbol: "GOOD", lane: "aquarius", gainPct: 140 }, ok), "candidate");
@@ -271,4 +272,59 @@ test("routes: admin-only state with real counts and sources, the brain terminal 
   await d.q(`INSERT INTO mob_aq_brain (dept, kind, text) VALUES ('symbiote','lesson','new one')`);
   const b2 = await (await req("GET", `/api/aq/sym/brain?after=${last}`, { cookie })).json();
   assert.deepEqual(b2.rows.map((r) => r.text), ["new one"]);
+});
+
+// ---------- the inspector's four findings ----------
+test("launch facts: read at launch from the create tx and its first slots; over 1000 transactions or no create = fail closed", async () => {
+  const { launchFacts } = await import("../src/aq/sym/health.mjs");
+  const create = FX[3], buy = FX[0];
+  const tx = { [create.signature]: { slot: 50, meta: { err: null, logMessages: create.logs } }, [buy.signature]: { slot: 51, meta: { err: null, logMessages: buy.logs.map((l) => l) } } };
+  // the buy fixture is for another mint, so the early set is checked on the shape and the dev/create fields on the real create
+  const rpc = async (m, p) => (m === "getSignaturesForAddress" ? [{ signature: buy.signature, slot: 51 }, { signature: create.signature, slot: 50 }] : tx[p[0]]);
+  const f = await launchFacts(rpc, "71yNknjXX7bHjQofB7LRwp1iUj2wUhFh2YY2RVWhDHZM", "973TwsVbrK17rfcwytYAa9TdFefRpZRKPeZCG8EfCCsG");
+  assert.equal(f.complete, true); assert.equal(f.createSlot, 50); assert.equal(f.creator, "5ZCUcSDKFLvo7nkZHkk4tUt93svyrF4hfiV4iF9F8bY9"); assert.equal(f.calls, 3);
+  const many = await launchFacts(async () => Array.from({ length: 1000 }, (_, i) => ({ signature: "s" + i, slot: i })), "M", "C");
+  assert.equal(many.complete, false); assert.match(many.why, /over 1000/);
+  const notCreate = await launchFacts(async (m) => (m === "getSignaturesForAddress" ? [{ signature: buy.signature, slot: 51 }] : tx[buy.signature]), "71yNknjXX7bHjQofB7LRwp1iUj2wUhFh2YY2RVWhDHZM", "C");
+  assert.equal(notCreate.complete, false);
+  // the engine keeps them: snipers and dev from launch, and a coin without them can never pass
+  const e = R.createEngine(); launch(e, "LF"); e.setLaunch("LF", { complete: true, createSlot: 10, creator: "DEV", early: [["sn1", 2e14], ["sn2", 1e14]], devTok: 5e13, devBuy: 1, devSold: true });
+  const h = e.streamHealth("LF"); assert.equal(h.launchComplete, true); assert.equal(h.sniperWallets, 2); assert.equal(h.sniperShare, 0.3); assert.equal(h.devSold, true);
+  assert.ok(R.judgeHealth({ ...h, top10Share: 0.1, sameFunderMax: 1, mintAuthority: null, freezeAuthority: null, rugDanger: false, socials: 1, uniqueBuyers: 100, sizeCv: 1, liqToMcap: 0.3 }).failed.some((x) => /sniper/.test(x)));
+  launch(e, "NOLF"); assert.equal(e.streamHealth("NOLF").launchComplete, false, "no launch facts recorded = not complete");
+});
+
+test("memory bounds: curve map entries and checked mints expire; live coins keep their curve", async () => {
+  const s = new Symbiote({ storage: { get: async () => null, put: async () => {}, getAlarm: async () => 1, setAlarm: async () => {} } }, env);
+  const now = Date.now(); s.eng.onCreate({ mint: "LIVE", curve: "CL", src: "chain", ts: now / 1000 });
+  s.curves.set("CL", "LIVE"); s.curveAt.set("CL", now - 7 * 3600000); s.curves.set("OLD", null); s.curveAt.set("OLD", now - 7 * 3600000); s.curves.set("NEW", null); s.curveAt.set("NEW", now);
+  s.checked.set("A", now - 25 * 3600000); s.checked.set("B", now);
+  for (let i = 0; i < 2100; i++) s.launchQ.add("q" + i);
+  s.prune(now);
+  assert.deepEqual([...s.curves.keys()].sort(), ["CL", "NEW"]); assert.deepEqual([...s.checked.keys()], ["B"]); assert.equal(s.launchQ.size, 2000);
+});
+
+test("credit guard: persisted in storage, a restart keeps the pause; deep checks are charged their real calls", async () => {
+  const store = new Map(); const ctx = { storage: { get: async (k) => store.get(k), put: async (k, v) => store.set(k, v), getAlarm: async () => 1, setAlarm: async () => {} } };
+  const s = new Symbiote(ctx, { ...env, HELIUS_API_KEY: "k" }); s.connect = async () => {};
+  await s.start(); s.credits(150001); await s.alarm();
+  assert.equal(s.paused, true); assert.equal(store.get("guard").paused, true);
+  const s2 = new Symbiote(ctx, { ...env, HELIUS_API_KEY: "k" }); s2.connect = async () => {}; await s2.start();
+  assert.equal(s2.paused, true, "the pause survives a restart"); assert.ok(s2.cused >= 150001);
+  const { deepCheck } = await import("../src/aq/sym/health.mjs");
+  let n = 0; const rpc = async () => { n++; throw new Error("x"); };
+  resetMocks(); mock("GET", /rugcheck|pinata/, () => ({}));
+  const r = await deepCheck({}, null, "M", { uniqueBuyers: 5, launchComplete: true, curve: "C", uri: null }, rpc);
+  assert.equal(r.calls, n, "the deep check reports the calls it really made"); resetMocks();
+});
+
+test("retention: 7 days for coins, misses and trades; GTA coins and right calls stay", async () => {
+  const { retention } = await import("../src/aq/sym/store.mjs");
+  await d.q(`INSERT INTO mob_aq_sym_coins (mint, created_at, gta) VALUES ('OLDC', now() - interval '8 days', false), ('OLDG', now() - interval '8 days', true), ('GOODMINT', now() - interval '8 days', false) ON CONFLICT (mint) DO UPDATE SET created_at = EXCLUDED.created_at`);
+  await d.q(`INSERT INTO mob_aq_sym_missed (mint, reason, at) VALUES ('OLDM', 'x', now() - interval '8 days')`);
+  await d.q(`INSERT INTO mob_aq_sym_trades (mint, lane, at) VALUES ('OLDC', 'aquarius', now() - interval '8 days')`);
+  const r = await retention(d);
+  assert.ok(r.coins >= 1 && r.missed >= 1 && r.trades >= 1);
+  const left = (await d.q(`SELECT mint FROM mob_aq_sym_coins WHERE mint IN ('OLDC','OLDG','GOODMINT')`)).map((x) => x.mint).sort();
+  assert.deepEqual(left, ["GOODMINT", "OLDG"]);
 });
