@@ -593,3 +593,14 @@ test("Inspector e: one failed or empty price read does not expire a migrated rig
   r = await st(); assert.equal(r.status, "expired"); assert.match(r.why, /no pool liquidity read/);
   resetMocks();
 });
+
+test("symbiote yields the shared RPC to a live order: /yield holds the deep checks (nothing is dropped) for the asked time, at most 2 minutes", async () => {
+  const s = new Symbiote({ storage: { get: async () => null, put: async () => {}, getAlarm: async () => 1, setAlarm: async () => {} } }, env);
+  let ran = 0; const check = async () => { ran++; return { verdict: { ok: false, failed: ["x"], unknown: [] }, checks: {}, calls: 1 }; };
+  s.queue.push({ mint: "YieldCoin", after: 0 });
+  const r = await (await s.fetch(new Request("https://sym/yield", { method: "POST", body: JSON.stringify({ ms: 45000 }) }))).json();
+  assert.equal(r.ok, true); assert.ok(r.yieldUntil > Date.now() + 40000 && r.yieldUntil <= Date.now() + 45000);
+  assert.match(await s.checkNext(d, "helius", Date.now(), check), /^yielding the RPC/); assert.equal(ran, 0, "no RPC read while a live order runs"); assert.equal(s.queue.length, 1, "the coin waits in the queue");
+  const long = await (await s.fetch(new Request("https://sym/yield", { method: "POST", body: JSON.stringify({ ms: 9e9 }) }))).json(); assert.ok(long.yieldUntil <= Date.now() + 120000, "never more than 2 minutes");
+  s.backoffUntil = Date.now() - 1; await s.checkNext(d, "helius", Date.now(), check).catch(() => null); assert.equal(ran, 1, "after the yield the check runs");
+});

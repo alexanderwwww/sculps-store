@@ -206,22 +206,44 @@ export async function txKeys(env, b64tx) {
   }
   return out;
 }
-// (4) THE READS BEFORE SIGNING DO NOT DIE WITH ONE RPC (order 4 on 2026-11-18, a manual sell, failed with "Helius did not answer
-// simulateTransaction"). A read that got no answer (a timeout, a dropped connection, HTTP 429/5xx) is asked again once on the
-// same RPC, then on another one: the SOLANA_RPC_FALLBACK_URL secret when it is set, then the public Solana node. Only reads
-// (balances, accounts, the simulation): a transaction is never SENT twice, and an RPC that ANSWERED with an error is believed.
-// (Measured earlier the same day: the public node answered Cloudflare with 403, so in production the second RPC is real only
-// once SOLANA_RPC_FALLBACK_URL holds one.)
-const noAnswer = (e) => /did not answer|\(HTTP (429|5\d\d)\)/.test(String(e?.message || e));
+// ---- THE LIVE TRADER'S RPC. One deaf or rate-limited RPC must never stop a sale (orders 4 and 10 on 2026-11-18, Alex's manual
+// sells, failed with "Helius did not answer simulateTransaction / getTokenAccountsByOwner"; symbiote's own notes of the same day
+// record Helius 429s on the key both share). Every live call goes through here:
+//   the main RPC (Helius) -> once more after 400 ms -> the second RPCs, in order, until one gives a result.
+// Second RPCs, PROBED FROM CLOUDFLARE'S OWN EGRESS on 2026-11-18 (a throwaway Worker; each method called with 0.7 s between calls):
+//   public.rpc.solanavibestation.com  getSlot, getBalance, getTokenAccountsByOwner, getSignatureStatuses, getLatestBlockhash,
+//                                     getMultipleAccounts: 200 ok; simulateTransaction and sendTransaction: answered. (Back-to-back
+//                                     calls got 429 after the third: it is a slow second line, not a main one.)
+//   solana-mainnet.gateway.tatum.io   getSignatureStatuses, getLatestBlockhash, getMultipleAccounts ok, simulate/send answered;
+//                                     getBalance and getTokenAccountsByOwner are paid-only there.
+//   solana-rpc.publicnode.com         getSlot, getLatestBlockhash, getSignatureStatuses ok, sendTransaction answered; the rest 429/403.
+//   api.mainnet-beta.solana.com       403 "Your IP or provider is blocked" for every method: not used.
+// A SOLANA_RPC_FALLBACK_URL secret, when set, is asked before those. What a second RPC can do to us is bounded: the swap is
+// Jupiter's, its instructions are checked here before signing, and its minimum output is enforced by the chain itself.
+// Only an answer from the MAIN RPC that is a real "no" (not a rate limit) is believed without asking further.
+const RPC2 = ["https://public.rpc.solanavibestation.com", "https://solana-mainnet.gateway.tatum.io", "https://solana-rpc.publicnode.com"];
+const rpc2List = (env) => [env.SOLANA_RPC_FALLBACK_URL, ...RPC2].filter(Boolean);
+const noAnswer = (e) => /did not answer|\(HTTP (403|429|5\d\d)\)|429|rate.?limit|too many|max usage|credit/i.test(String(e?.message || e));
+const rpcSeen = { fails: [], second: 0, dirty: false };
+async function rpc2(url, method, params) {
+  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(9000) }), j = await r.json();
+  if (!r.ok || j?.error || j?.result == null) throw new Error(j?.error?.message ? cut(j.error.message, 100) : `HTTP ${r.status}`);
+  return j.result;
+}
 export async function rpcRead(env, method, params) {
-  for (let i = 0; i < 2; i++) { if (i) await sleep(Number(env.AQ_LIVE_POLL_MS ?? 400)); try { return await solRpc(env, method, params); } catch (e) { if (!noAnswer(e)) throw e; } }
-  for (const url of [env.SOLANA_RPC_FALLBACK_URL, "https://api.mainnet-beta.solana.com"].filter(Boolean)) {
-    try { const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(15000) }), j = await r.json();
-      if (r.ok && !j?.error && j?.result != null) return j.result;
-      if (r.ok && j?.error) throw Object.assign(new Error(`the second RPC refused ${method} (${cut(j.error.message, 120)})`), { answered: true });
-    } catch (e) { if (e?.answered) throw e; } // the URL may carry a key: its raw error is never passed on
-  }
-  throw new Error(`no RPC answered ${method} (the main one twice, then the second one); nothing was signed`);
+  let why = null;
+  for (let i = 0; i < 2; i++) { if (i) await sleep(Number(env.AQ_LIVE_POLL_MS ?? 400)); try { return await solRpc(env, method, params); } catch (e) { if (!noAnswer(e)) throw e; why = cut(e.message || e, 120); } }
+  rpcSeen.fails.push({ method, why, at: new Date().toISOString() }); rpcSeen.fails = rpcSeen.fails.slice(-20); rpcSeen.dirty = true;
+  for (const url of rpc2List(env)) { try { const v = await rpc2(url, method, params); rpcSeen.second++; return v; } catch {} } // a second RPC's raw error is never passed on (its URL may carry a key)
+  throw new Error(`no RPC answered ${method} (the main one twice: ${why}; then ${rpc2List(env).length} second RPCs); nothing was signed on this read`);
+}
+// what the main RPC refused, for the record (state key live_rpc): written by the tick and by a manual order, only when something happened
+export async function saveRpcSeen(d) { if (!rpcSeen.dirty) return; rpcSeen.dirty = false; try { await set(d, "live_rpc", { at: new Date().toISOString(), mainFailures: rpcSeen.fails, answeredBySecond: rpcSeen.second }); } catch {} }
+// SYMBIOTE shares the Helius key. Before a live order it is asked to hold its own RPC reads for a while (do.mjs /yield): the
+// order's handful of calls then meet a quiet key. Never waits more than 1.5 s for the answer and never fails an order.
+export async function yieldSym(env, ms = 45000) {
+  try { if (!env.SYMBIOTE) return false; const stub = env.SYMBIOTE.get(env.SYMBIOTE.idFromName("main"));
+    await Promise.race([stub.fetch("https://sym/yield", { method: "POST", body: JSON.stringify({ ms }) }).then((r) => r.body?.cancel?.()), sleep(1500)]); return true; } catch { return false; }
 }
 // getMultipleAccounts takes at most 100 addresses (MAX_MULTIPLE_ACCOUNTS, agave rpc-client-types): asked in batches of 100
 async function multi(env, addrs, cfg) { const out = []; for (let i = 0; i < addrs.length; i += 100) out.push(...((await rpcRead(env, "getMultipleAccounts", [addrs.slice(i, i + 100), { ...cfg, commitment: "confirmed" }])).value || [])); return out; }
@@ -278,7 +300,14 @@ export async function tokenAccounts(env, owner, mint = null) {
     }
   return out;
 }
-const broadcast = (env, tx) => solRpc(env, "sendTransaction", [tx, { encoding: "base64", skipPreflight: false, preflightCommitment: "confirmed", maxRetries: 5 }]);
+// THE SEND GOES TO EVERY RPC AT ONCE: the same signed transaction (the same signature, so it can only land once) to the main RPC
+// and to each second RPC. It counts as sent when any of them takes it; the chain is asked about the signature either way.
+const broadcast = async (env, tx) => {
+  const SEND = "sendTransaction", p = [tx, { encoding: "base64", skipPreflight: false, preflightCommitment: "confirmed", maxRetries: 5 }]; // the one place in this file that names the send
+  const rs = await Promise.allSettled([solRpc(env, SEND, p), ...rpc2List(env).map((u) => rpc2(u, SEND, p))]);
+  const ok = rs.find((r) => r.status === "fulfilled"); if (ok) { if (rs[0].status !== "fulfilled") { rpcSeen.fails.push({ method: SEND, why: cut(rs[0].reason?.message, 120), at: new Date().toISOString() }); rpcSeen.fails = rpcSeen.fails.slice(-20); rpcSeen.second++; rpcSeen.dirty = true; } return ok.value; }
+  throw rs[0].reason;
+};
 // The ONLY place a transaction is signed. It signs only a transaction that needs exactly one signature and is paid by the
 // Aquarius wallet itself. The key is opened here, used once and dropped; it is never returned, stored or logged.
 export async function signTx(env, wallet, b64tx) {
@@ -349,10 +378,10 @@ export async function settle(env, o, { polls: polls0 = 1 } = {}) { let polls = p
   const d = db(env), address = o.wallet || (await get(d, "sol_wallet_key"))?.address; let waited = false;
   for (let i = 0; i < polls; i++) {
     if (i) await sleep(Number(env.AQ_LIVE_POLL_MS ?? LIVE.confirmGapMs));
-    let st; try { st = (await solRpc(env, "getSignatureStatuses", [[o.signature], { searchTransactionHistory: true }])).value?.[0] ?? null; } catch { continue; }
+    let st; try { st = (await rpcRead(env, "getSignatureStatuses", [[o.signature], { searchTransactionHistory: true }])).value?.[0] ?? null; } catch { continue; }
     if (st && st.err) { await finish(d, o, "failed", { error: `the chain rejected it (${cut(JSON.stringify(st.err), 140)})` }); return "failed"; }
     if (st && (st.confirmationStatus === "confirmed" || st.confirmationStatus === "finalized")) {
-      let tx = null; try { tx = await solRpc(env, "getTransaction", [o.signature, { encoding: "json", maxSupportedTransactionVersion: 0, commitment: "confirmed" }]); } catch {}
+      let tx = null; try { tx = await rpcRead(env, "getTransaction", [o.signature, { encoding: "json", maxSupportedTransactionVersion: 0, commitment: "confirmed" }]); } catch {}
       const payer = tx?.transaction?.message?.accountKeys?.[0];
       if (tx?.meta && payer && (payer.pubkey ?? payer) !== address) { await finish(d, o, "failed", { error: "that signature belongs to a different transaction, not to this order" }); return "failed"; }
       const f = fillOf(tx, address, o.mint);
@@ -364,7 +393,7 @@ export async function settle(env, o, { polls: polls0 = 1 } = {}) { let polls = p
       await finish(d, o, "confirmed", { fill: f }); return "confirmed";
     }
     if (!st) { // not on chain, says this RPC node. Only once its blockhash has expired can that be final, and one node's "null" is not proof.
-      let h = null; try { h = await solRpc(env, "getBlockHeight", [{ commitment: "confirmed" }]); } catch {}
+      let h = null; try { h = await rpcRead(env, "getBlockHeight", [{ commitment: "confirmed" }]); } catch {}
       const expired = typeof h === "number" && o.last_valid_height && h > Number(o.last_valid_height) + 5, stale = typeof h !== "number" && ageMin(o) >= LIVE.sentStaleMin;
       if (!expired && !stale) continue;
       const why = expired ? "it never reached the chain (its time window passed); nothing was spent" : `the chain never saw it in ${LIVE.sentStaleMin} minutes (far past a blockhash's ~150-block window); nothing was spent`;
@@ -533,7 +562,8 @@ async function execute(env, w, { side, c, positionId, inMint, outMint, amountRaw
   let o;
   try { o = await d.one(`INSERT INTO mob_aq_live_orders (venue, side, mint, symbol, position_id, claim, reason, in_amount, slippage_bps, plan_patch) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`, [VENUE, side, c.mint, c.symbol, positionId, claim, reason, String(amountRaw), slippageBps, patch ? JSON.stringify(patch) : null]); }
   catch (e) { if (/duplicate key|unique constraint/i.test(String(e.message || e))) return { skipped: "this order was already made in this minute" }; return { skipped: `the order could not be written down (${cut(e.message || e, 120)}); nothing was sent`, noOrder: true }; }
-  const fail = async (error) => { await finish(d, o, "failed", { error }); return { failed: error, orderId: o.id }; };
+  const fail = async (error) => { await finish(d, o, "failed", { error }); await saveRpcSeen(d); return { failed: error, orderId: o.id }; };
+  await yieldSym(env);
   try {
     const qr = q0 || (await quote(env, inMint, outMint, amountRaw, slippageBps));
     if (!qr.ok) return fail(qr.error);
@@ -552,7 +582,7 @@ async function execute(env, w, { side, c, positionId, inMint, outMint, amountRaw
     o = { ...o, status: "sent", signature: signed.signature, last_valid_height: sw.lastValidBlockHeight, sent_at: new Date().toISOString(), quote_out: qr.q.outAmount };
     try { await broadcast(env, signed.tx); }
     catch (e) { await upd(d, o.id, { error: cut(`send: ${e.message || e}`) }); } // unknown outcome: NOT failed, NOT sent again. The chain decides.
-    const end = await settle(env, o, { polls: LIVE.confirmPolls });
+    const end = await settle(env, o, { polls: LIVE.confirmPolls }); await saveRpcSeen(d);
     return { [end]: true, orderId: o.id, signature: o.signature };
   } catch (e) {
     if (o.status === "sent") return { pending: true, orderId: o.id, signature: o.signature, note: cut(e.message || e) };
@@ -730,7 +760,7 @@ export async function rightCalls(d) {
 // simulation would run a hook if one were ever set).
 const BAD_EXT = { transferFeeConfig: "a transfer fee", transferHook: "a transfer hook program", permanentDelegate: "a permanent delegate", nonTransferable: "a non-transferable flag", defaultAccountState: "new accounts frozen by default", pausableConfig: "a pause switch" };
 export async function mintCheck(env, mint) {
-  let v; try { v = (await solRpc(env, "getAccountInfo", [mint, { encoding: "jsonParsed", commitment: "confirmed" }])).value; } catch (e) { return { ok: false, reason: `the coin's mint could not be read (${cut(e.message, 80)})` }; }
+  let v; try { v = (await rpcRead(env, "getAccountInfo", [mint, { encoding: "jsonParsed", commitment: "confirmed" }])).value; } catch (e) { return { ok: false, reason: `the coin's mint could not be read (${cut(e.message, 80)})` }; }
   const info = v?.data?.parsed?.info;
   if (!info || v.data.parsed.type !== "mint") return { ok: false, reason: "the address is not a token mint" };
   if (v.owner !== PROG.token && v.owner !== PROG.token22) return { ok: false, reason: `the mint belongs to an unknown program (${v.owner})` };
@@ -752,12 +782,12 @@ export async function sellProof(env, c, tokensRaw, self = null) {
   const no = (reason) => ({ ok: false, reason });
   let big, info, kind;
   try {
-    big = ((await solRpc(env, "getTokenLargestAccounts", [c.mint, { commitment: "confirmed" }])).value || []).filter((a) => a?.address && /^\d+$/.test(String(a.amount)) && a.amount !== "0").slice(0, 20);
+    big = ((await rpcRead(env, "getTokenLargestAccounts", [c.mint, { commitment: "confirmed" }])).value || []).filter((a) => a?.address && /^\d+$/.test(String(a.amount)) && a.amount !== "0").slice(0, 20);
     if (!big.length) return no("no holder of this coin was found: its sale cannot be proven");
-    info = (await solRpc(env, "getMultipleAccounts", [big.map((a) => a.address), { encoding: "jsonParsed", commitment: "confirmed" }])).value || [];
+    info = (await rpcRead(env, "getMultipleAccounts", [big.map((a) => a.address), { encoding: "jsonParsed", commitment: "confirmed" }])).value || [];
     const owners = info.map((x) => x?.data?.parsed?.info?.owner || null);
     const uniq = [...new Set(owners.filter((o) => o && o !== self))];
-    kind = uniq.length ? (await solRpc(env, "getMultipleAccounts", [uniq, { encoding: "base64", dataSlice: { offset: 0, length: 0 }, commitment: "confirmed" }])).value || [] : [];
+    kind = uniq.length ? (await rpcRead(env, "getMultipleAccounts", [uniq, { encoding: "base64", dataSlice: { offset: 0, length: 0 }, commitment: "confirmed" }])).value || [] : [];
     const holder = uniq.find((o, i) => kind[i]?.owner === PROG.system);
     if (!holder) return no("no plain wallet among the coin's 20 largest holders: its sale cannot be proven");
     const held = BigInt(big[owners.indexOf(holder)].amount), want = BigInt(tokensRaw || "0"), amount = want > 0n && want < held ? want : held;
@@ -765,7 +795,7 @@ export async function sellProof(env, c, tokensRaw, self = null) {
     if (!q.ok) return no(`no sell route for this coin: ${q.error}`);
     const sw = await buildSwap(env, q.q, holder);
     if (!sw.ok) return no(`a holder's sale does not build: ${sw.error}`);
-    const v = (await solRpc(env, "simulateTransaction", [sw.tx, { encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed" }])).value;
+    const v = (await rpcRead(env, "simulateTransaction", [sw.tx, { encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed" }])).value;
     if (v?.err) return no(`a real holder's sale fails in the chain's simulator (${cut(JSON.stringify(v.err), 100)}): honeypot or transfer block`);
     return { ok: true, holder };
   } catch (e) { return no(`the sale could not be proven (${cut(e.message, 100)})`); }
@@ -810,7 +840,7 @@ export async function costGate(env, venue, c, s, sizeSol, { feeSide = LIVE.feePe
   if (!proof.ok) return no("honeypot", proof.reason);
   // room left for the buy's own network fee once Jupiter prices it (execute checks it before signing)
   const room = (Math.min(maxRt - quoteRtPct, rewardPct / FIB.minRewardRt - quoteRtPct) / 100) * lamports - feeSide - (ataNew ? LIVE.baseFeeLamports : 0);
-  let rent = 0; if (ataNew) { try { rent = await solRpc(env, "getMinimumBalanceForRentExemption", [165]); } catch {} if (!(rent > 0)) rent = LIVE.tokenAccountRentFallbackLamports; }
+  let rent = 0; if (ataNew) { try { rent = await rpcRead(env, "getMinimumBalanceForRentExemption", [165]); } catch {} if (!(rent > 0)) rent = LIVE.tokenAccountRentFallbackLamports; }
   return { ok: true, q, rtPct, quoteRtPct, fixedLamports: fixed, fixedPct: round(fixedPct, 3), rewardPct, maxBuyFeeLamports: Math.floor(room), rentFrontedLamports: rent, heldRaw };
 }
 async function tryBuy(env, g, owner = null) {
@@ -826,7 +856,7 @@ async function tryBuy(env, g, owner = null) {
   const size = round(Math.min(g.lim.maxPerTradeSol, g.budgetLeft != null ? Math.max(0, g.budgetLeft - (2 * (g.feeSide ?? LIVE.feePerSideFallbackLamports)) / 1e9) / perSol : Infinity), 6), lamports = Math.round(size * 1e9);
   const cappedBy = size < g.lim.maxPerTradeSol ? `daily loss budget: ${round(g.budgetLeft, 6)} SOL left` : null;
   if (!(size > 0)) return refuse(d, VENUE, "daily_loss_risk", `The daily loss budget left (${round(g.budgetLeft, 6)} SOL) does not cover even this trade's network fees`, c);
-  let bal; try { bal = (await solRpc(env, "getBalance", [g.w.address])).value; } catch (e) { return refuse(d, VENUE, "no_balance", cut(e.message)); }
+  let bal; try { bal = (await rpcRead(env, "getBalance", [g.w.address])).value; } catch (e) { return refuse(d, VENUE, "no_balance", cut(e.message)); }
   if (!(bal >= lamports + LIVE.feeBudgetLamports + LIVE.reserveSol * 1e9)) return refuse(d, VENUE, "reserve", `The wallet holds ${round(bal / 1e9, 6)} SOL: not enough for a ${size} SOL trade and the ${LIVE.reserveSol} SOL kept for fees`);
   const cg = await costGate(env, VENUE, c, s, size, { feeSide: g.feeSide, owner: g.w.address }); if (!cg.ok) return cg.refusal;
   const { q, rtPct, rewardPct } = cg;
@@ -931,7 +961,7 @@ export async function sweepEmpty(env, w, max = 2) {
   const known = new Set((await d.q(`SELECT DISTINCT mint FROM mob_aq_live_positions WHERE venue = $1`, [VENUE])).map((r) => r.mint));
   for (const a of accts.filter((x) => x.raw === "0" && x.mint !== SOL_MINT && !known.has(x.mint)).slice(0, max)) {
     try {
-      const bh = (await solRpc(env, "getLatestBlockhash", [{ commitment: "confirmed" }])).value, tx = closeTx(w.address, a.address, a.program, bh.blockhash);
+      const bh = (await rpcRead(env, "getLatestBlockhash", [{ commitment: "confirmed" }])).value, tx = closeTx(w.address, a.address, a.program, bh.blockhash);
       const pre = (await rpcRead(env, "getBalance", [w.address])).value;
       const v = (await rpcRead(env, "simulateTransaction", [tx, { encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed", accounts: { encoding: "base64", addresses: [w.address] } }])).value;
       const back = (v?.accounts?.[0]?.lamports ?? -1) - pre;
@@ -1080,7 +1110,7 @@ export async function reclaimRent(env, w) {
     const r0 = p.plan.rent || {}, tries = (r0.tries || 0) + (r0.state === "sent" ? 0 : 1);
     try {
       if (r0.state === "sent") { // a close whose outcome is not known yet: the chain is asked, never sent again
-        const st = (await solRpc(env, "getSignatureStatuses", [[r0.signature], { searchTransactionHistory: true }])).value?.[0] ?? null;
+        const st = (await rpcRead(env, "getSignatureStatuses", [[r0.signature], { searchTransactionHistory: true }])).value?.[0] ?? null;
         if (st && !st.err && (st.confirmationStatus === "confirmed" || st.confirmationStatus === "finalized")) { out.push(await bookRent(d, p, r0)); continue; }
         if (st?.err || (Date.now() - new Date(r0.at).getTime()) / 60000 >= LIVE.sentStaleMin) await mark({ ...r0, state: "failed", error: st?.err ? "the chain rejected the close" : "the close never reached the chain" });
         continue;
@@ -1089,17 +1119,17 @@ export async function reclaimRent(env, w) {
       if (!accts.length) { await mark({ state: "none", note: "no token account left for this coin" }); continue; }
       const a = accts[0];
       if (a.raw !== "0") { await mark({ state: "dust", amount: a.raw, account: a.address, note: "the account still holds tokens: it cannot be closed" }); continue; }
-      const bh = (await solRpc(env, "getLatestBlockhash", [{ commitment: "confirmed" }])).value;
+      const bh = (await rpcRead(env, "getLatestBlockhash", [{ commitment: "confirmed" }])).value;
       const tx = closeTx(w.address, a.address, a.program, bh.blockhash);
-      const pre = (await solRpc(env, "getBalance", [w.address])).value;
-      const v = (await solRpc(env, "simulateTransaction", [tx, { encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed", accounts: { encoding: "base64", addresses: [w.address] } }])).value;
+      const pre = (await rpcRead(env, "getBalance", [w.address])).value;
+      const v = (await rpcRead(env, "simulateTransaction", [tx, { encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed", accounts: { encoding: "base64", addresses: [w.address] } }])).value;
       const back = (v?.accounts?.[0]?.lamports ?? -1) - pre;
       if (v?.err || !(back > 0) || back > a.lamports) { await mark({ state: "failed", tries, error: v?.err ? `the close does not simulate (${cut(JSON.stringify(v.err), 100)})` : "the simulation did not show the rent coming back" }); continue; }
       const signed = await signTx(env, w, tx), r = { state: "sent", tries, signature: signed.signature, account: a.address, lamports: back, at: new Date().toISOString() };
       await mark(r);
       try { await broadcast(env, signed.tx); } catch {} // unknown outcome: the next tick asks the chain
       let st = null;
-      for (let i = 0; i < LIVE.confirmPolls && !st; i++) { if (i) await sleep(Number(env.AQ_LIVE_POLL_MS ?? LIVE.confirmGapMs)); try { const x = (await solRpc(env, "getSignatureStatuses", [[r.signature], { searchTransactionHistory: true }])).value?.[0]; if (x && (x.err || x.confirmationStatus === "confirmed" || x.confirmationStatus === "finalized")) st = x; } catch {} }
+      for (let i = 0; i < LIVE.confirmPolls && !st; i++) { if (i) await sleep(Number(env.AQ_LIVE_POLL_MS ?? LIVE.confirmGapMs)); try { const x = (await rpcRead(env, "getSignatureStatuses", [[r.signature], { searchTransactionHistory: true }])).value?.[0]; if (x && (x.err || x.confirmationStatus === "confirmed" || x.confirmationStatus === "finalized")) st = x; } catch {} }
       if (st && !st.err) out.push(await bookRent(d, p, r)); else if (st?.err) await mark({ ...r, state: "failed", error: "the chain rejected the close" }); else out.push({ symbol: p.symbol, rent: "sent, being confirmed" });
     } catch (e) { await mark({ ...r0, state: "failed", tries, error: cut(e.message || e, 160) }); }
   }
@@ -1148,6 +1178,7 @@ export async function liveTick(env, { cron = null, minute = Math.floor(Date.now(
   } catch (e) { out.error = cut(e.message || e); }
   finally {
     try { await set(d, "live_tick", out); } catch {}
+    await saveRpcSeen(d);
     await dropLock(d, owner);
   }
   return out;
@@ -1191,7 +1222,7 @@ async function manualCheck(env, b) {
   const open = (await d.one(`SELECT count(*)::int n FROM mob_aq_live_positions WHERE venue = $1 AND status IN ${ACTIVE}`, [VENUE])).n;
   if (lim.maxOpenPositions > 0 && open > lim.maxOpenPositions) return { error: `${open} positions open, over the limit of ${lim.maxOpenPositions}` };
   const lamports = Math.round(sol * 1e9); let bal;
-  try { bal = (await solRpc(env, "getBalance", [w.address])).value; } catch (e) { return { error: `The balance could not be read: ${cut(e.message)}` }; }
+  try { bal = (await rpcRead(env, "getBalance", [w.address])).value; } catch (e) { return { error: `The balance could not be read: ${cut(e.message)}` }; }
   if (!(bal >= lamports + LIVE.feeBudgetLamports + LIVE.reserveSol * 1e9)) return { error: `The wallet holds ${round(bal / 1e9, 6)} SOL: not enough for ${sol} SOL and the ${LIVE.reserveSol} SOL kept for fees` };
   return { d, w, lim, p, sol, lamports, underwater: p.last_value_sol != null && p.last_value_sol < p.cost_sol };
 }

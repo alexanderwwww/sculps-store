@@ -39,7 +39,7 @@ const flat = (p, k, v = 5) => Array.from({ length: k }, () => [p, p, v]);
 function world() {
   resetMocks();
   Object.assign(F, { payer: null, nsig: 1, swapBody: null, balance: 1_000_000_000, quoteFail: false, swapFail: false, jupSim: null, impact: "0.001", simTake: null, simErr: null, send: "ok", sent: [], status: {}, txs: {}, height: 1000, lastValid: 2000, tokensOut: "5000000", sellOut: "60000000", candles: fibCandles(), tokAccts: [], tokPost: {}, mint: { owner: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", data: { parsed: { type: "mint", info: { freezeAuthority: null, mintAuthority: null, decimals: 5 } } } },
-    solUsd: null, priceFail: false, quoteDown: false, quoteDownIf: null, tokFail: false, rpcDeaf: null, publicUp: false, noChart: new Set(), quoteFailIf: null, route: "Meteora", holderSimErr: null, recvTokens: null, ataOwner: null, txExtra: [], rentApart: false, holderOwner: "11111111111111111111111111111111", prices: null, rug: { mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 5 } }, calls: [], rowAtSend: null,
+    solUsd: null, priceFail: false, quoteDown: false, quoteDownIf: null, tokFail: false, rpcDeaf: null, rpcLimited: null, publicUp: false, noChart: new Set(), quoteFailIf: null, route: "Meteora", holderSimErr: null, recvTokens: null, ataOwner: null, txExtra: [], rentApart: false, holderOwner: "11111111111111111111111111111111", prices: null, rug: { mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 5 } }, calls: [], rowAtSend: null,
     pools: [{ id: "pool1", quoteAsset: SOL, baseAsset: { id: MINT, symbol: "BONK", usdPrice: 0.00002, liquidity: 250000, decimals: 5, firstPool: { createdAt: "2024-01-01T00:00:00Z" }, stats5m: { priceChange: -4 }, audit: { mintAuthorityDisabled: true, freezeAuthorityDisabled: true } } },
       { id: "pool2", quoteAsset: SOL, baseAsset: { id: NEWMINT, symbol: "NEWP", usdPrice: 1, liquidity: 900000, decimals: 6, firstPool: { createdAt: new Date(Date.now() - 3600e3).toISOString() }, stats5m: { priceChange: -9 } } }] });
   mock("GET", /^https:\/\/datapi\.jup\.ag\/v1\/pools\//, () => ({ pools: F.pools }));
@@ -55,8 +55,12 @@ function world() {
       return { swapTransaction: fakeTx(F.payer || b.userPublicKey, F.nsig || 1, ours && b.quoteResponse.inputMint === SOL ? await L.ataOf(b.userPublicKey, b.quoteResponse.outputMint) : null), lastValidBlockHeight: F.lastValid, prioritizationFeeLamports: 9555, simulationError: ours ? F.jupSim : null }; });
   }
   // the main RPC (Helius) can be made deaf for one method a number of times (F.rpcDeaf = {method: n}); the public node answers only when F.publicUp
-  mock("POST", "https://mainnet.helius-rpc.com/", async (c) => { const m0 = JSON.parse(c.body).method; if (F.rpcDeaf?.[m0] > 0) { F.rpcDeaf[m0]--; F.calls.push("deaf:" + m0); throw new Error("socket hang up"); } return rpcH(c); });
-  mock("POST", "https://api.mainnet-beta.solana.com", async (c) => { if (!F.publicUp) throw new Error("403"); F.calls.push("public:" + JSON.parse(c.body).method); return rpcH(c); });
+  // F.rpcLimited = {method: n}: the main RPC answers "rate limited" (HTTP 429) n times. The second RPC (the first of live.mjs RPC2) answers only when F.publicUp;
+  // it takes a sendTransaction without running the fake chain a second time (the same signature can only land once).
+  mock("POST", "https://mainnet.helius-rpc.com/", async (c) => { const m0 = JSON.parse(c.body).method; if (F.rpcDeaf?.[m0] > 0) { F.rpcDeaf[m0]--; F.calls.push("deaf:" + m0); throw new Error("socket hang up"); }
+    if (F.rpcLimited?.[m0] > 0) { F.rpcLimited[m0]--; F.calls.push("limited:" + m0); return new Response(JSON.stringify({ jsonrpc: "2.0", id: 1, error: { code: -32429, message: "rate limited" } }), { status: 429 }); } return rpcH(c); });
+  mock("POST", "https://public.rpc.solanavibestation.com", async (c) => { const m = JSON.parse(c.body); if (!F.publicUp) throw new Error("down"); F.calls.push("public:" + m.method);
+    if (m.method === "sendTransaction") return { jsonrpc: "2.0", id: 1, result: W.base58(Buffer.from(m.params[0], "base64").subarray(1, 65)) }; return rpcH(c); });
   const rpcH = async (c) => { const m = JSON.parse(c.body), ok = (result) => ({ jsonrpc: "2.0", id: 1, result }); if (m.method !== "simulateTransaction") F.calls.push(m.method);
     if (m.method === "getBalance") return ok({ context: { slot: 1 }, value: F.balance });
     if (m.method === "getTokenAccountsByOwner") { if (F.tokFail) return { jsonrpc: "2.0", id: 1, error: { code: -32000, message: "busy" } }; const f = m.params[1]; return ok({ context: { slot: 1 }, value: F.tokAccts.filter((t) => (f.mint ? t.mint === f.mint : t.program === f.programId)).map((t) => ({ pubkey: t.address, account: { owner: t.program, lamports: 2039280, data: { parsed: { info: { mint: t.mint, tokenAmount: { amount: t.raw ?? "0", decimals: 5 } } } } } })) }); }
@@ -778,14 +782,37 @@ test("G4) a manual sell does not die with one RPC: the simulation is asked again
   assert.equal(F.sent.length, sent0 + 1); assert.equal((await positions())[0].status, "closed");
   // Helius is deaf to it twice: the second RPC answers the simulation, and the sale still goes out ONCE, through the main RPC
   await wipe(); world(); await L.liveTick(env, { minute: 1 }); [p] = await positions(); await bump(); F.rpcDeaf = { simulateTransaction: 2, getBalance: 2 }; F.publicUp = true; F.calls.length = 0; r = await sell(p);
-  assert.equal(r.confirmed, true, JSON.stringify(r)); assert.ok(F.calls.includes("public:simulateTransaction") && F.calls.includes("public:getBalance")); assert.equal(F.calls.filter((c) => /sendTransaction/.test(c)).length, 1); assert.ok(!F.calls.includes("public:sendTransaction"));
+  assert.equal(r.confirmed, true, JSON.stringify(r)); assert.ok(F.calls.includes("public:simulateTransaction") && F.calls.includes("public:getBalance")); assert.equal(F.calls.filter((c) => c === "sendTransaction").length, 1, "the main RPC got the send once"); assert.equal(F.calls.filter((c) => c === "public:sendTransaction").length, 1, "and the second RPC got the SAME signed transaction");
   // no RPC answers at all: nothing is signed, the position stays open with its stop, and this is NOT a reason to widen the slippage
   await wipe(); world(); await L.liveTick(env, { minute: 1 }); [p] = await positions(); await bump(); F.rpcDeaf = { simulateTransaction: 9 }; const n1 = F.sent.length; r = await sell(p);
-  assert.match(r.failed, /no RPC answered simulateTransaction \(the main one twice, then the second one\); nothing was signed/); assert.equal(F.sent.length, n1); [p] = await positions(); assert.equal(p.status, "open"); assert.ok(!p.plan.slipFails); assert.equal((await orders()).at(-1).signature, null);
+  assert.match(r.failed, /no RPC answered simulateTransaction \(the main one twice: Helius did not answer simulateTransaction; then 3 second RPCs\); nothing was signed/); assert.equal(F.sent.length, n1); [p] = await positions(); assert.equal(p.status, "open"); assert.ok(!p.plan.slipFails); assert.equal((await orders()).at(-1).signature, null);
   // an RPC that ANSWERS with an error is believed, not shopped around
   F.rpcDeaf = null; F.publicUp = true; F.simErr = { InstructionError: [1, "Custom"] }; await bump(); F.calls.length = 0; r = await sell(p); assert.match(r.failed, /the simulation failed/); assert.ok(!F.calls.some((c) => c.startsWith("public:")));
   // the automatic stop uses the same path
   F.simErr = null; await scenario((s) => [...flat(114.6, 5), ...flat(s.stop - 0.5, 5)]); F.rpcDeaf = { simulateTransaction: 1 }; await bump(); r = await L.liveTick(env, { minute: 9 }); assert.equal(r.exits?.[0]?.confirmed, true, JSON.stringify(r.exits)); assert.equal((await positions())[0].status, "closed");
+});
+
+test("RPC) every live call survives a deaf or rate-limited main RPC: retry, then a second RPC; the send goes to all; symbiote yields; what happened is on record", async () => {
+  const bump = () => d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z' || id WHERE claim NOT LIKE '%-z%'`), sell = (p) => L.manualOrder(env, { side: "sell", positionId: Number(p.id), pct: 100 });
+  await L.liveTick(env, { minute: 1 }); let [p] = await positions(); await d.q(`DELETE FROM mob_aq_state WHERE k = 'live_rpc'`);
+  // order 10's failure: the main RPC is deaf to getTokenAccountsByOwner. Asked again: answered. Sold.
+  F.rpcDeaf = { getTokenAccountsByOwner: 1 }; let r = await sell(p); assert.equal(r.confirmed, true, JSON.stringify(r)); assert.equal((await positions())[0].status, "closed");
+  // rate limited (HTTP 429) on EVERY read the sale makes, twice each: the second RPC answers them all and the sale still lands
+  await wipe(); world(); await L.liveTick(env, { minute: 1 }); [p] = await positions(); await bump(); F.publicUp = true; F.rpcLimited = { getBalance: 2, getTokenAccountsByOwner: 4, simulateTransaction: 2, getSignatureStatuses: 2, getTransaction: 2, getMultipleAccounts: 2 }; F.calls.length = 0;
+  r = await sell(p); assert.equal(r.confirmed, true, JSON.stringify(r)); for (const m of ["getBalance", "getTokenAccountsByOwner", "simulateTransaction", "getSignatureStatuses", "getTransaction"]) assert.ok(F.calls.includes("public:" + m), "the second RPC answered " + m);
+  const seen = (await one(`SELECT v FROM mob_aq_state WHERE k = 'live_rpc'`)).v; assert.ok(seen.mainFailures.some((x) => x.method === "simulateTransaction" && /rate limited/.test(x.why)), "the main RPC's refusals are written down: " + JSON.stringify(seen.mainFailures.slice(-2))); assert.ok(seen.answeredBySecond >= 5);
+  // the main RPC does not take the SEND, the second does: it counts as sent (the signature is on record), and the chain is asked
+  await wipe(); world(); await L.liveTick(env, { minute: 1 }); [p] = await positions(); await bump(); F.publicUp = true; F.send = "throw"; F.calls.length = 0; r = await sell(p);
+  assert.ok(F.calls.includes("public:sendTransaction")); let so = (await orders()).at(-1); assert.equal(so.status, "sent"); assert.equal(so.error, null, "no send error: one RPC took it"); assert.ok(so.signature);
+  F.status[so.signature] = { confirmationStatus: "confirmed", err: null }; F.txs[so.signature] = landed(false, { inputMint: MINT, outputMint: SOL, inAmount: p.tokens_raw, outAmount: F.sellOut }); await L.liveTick(env, { minute: 2 }); assert.equal((await orders()).at(-1).status, "confirmed"); assert.equal((await positions())[0].status, "closed");
+  // no RPC takes the send at all: unknown outcome, exactly as before (never sent again, the chain decides)
+  await wipe(); world(); await L.liveTick(env, { minute: 1 }); [p] = await positions(); await bump(); F.send = "throw"; r = await sell(p); so = (await orders()).at(-1); assert.equal(so.status, "sent"); assert.match(so.error, /send:/);
+  // a real "no" from the main RPC (not a rate limit) is believed: nobody else is asked
+  await wipe(); world(); F.publicUp = true; F.heightFail = true; F.calls.length = 0; await assert.rejects(L.rpcRead(env, "getBlockHeight", [{}]), /Helius refused getBlockHeight \(busy\)/); assert.ok(!F.calls.some((c) => c.startsWith("public:"))); F.heightFail = false;
+  // symbiote is asked to hold its RPC reads before a live order, and a missing or slow symbiote never stops the order
+  const asked = []; env.SYMBIOTE = { idFromName: (n) => n, get: (id) => ({ fetch: async (u, init) => { asked.push([id, u, JSON.parse(init.body).ms]); return new Response("{}"); } }) };
+  await wipe(); world(); r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.confirmed, true); assert.deepEqual(asked, [["main", "https://sym/yield", 45000]]);
+  env.SYMBIOTE = { idFromName: (n) => n, get: () => ({ fetch: async () => { throw new Error("object reset"); } }) }; [p] = await positions(); await bump(); r = await sell(p); assert.equal(r.confirmed, true, "a symbiote that throws does not stop a sale"); delete env.SYMBIOTE;
 });
 
 test("G5) empty token accounts a swap route left in the wallet are closed and their rent comes back; nothing else is ever closed", async () => {
@@ -793,7 +820,7 @@ test("G5) empty token accounts a swap route left in the wallet are closed and th
   await L.liveTick(env, { minute: 1 }); const closes0 = F.closes || 0, sent0 = F.sent.length; // BONK is open
   F.tokAccts = [A(await L.ataOf(wallet.address, MINT), MINT, 5000000), A(await L.ataOf(wallet.address, USDC), USDC, 0), A(await L.ataOf(wallet.address, USDT), USDT, 0), A(await L.ataOf(wallet.address, STRAY), STRAY, 777)];
   let r = await L.liveTick(env, { minute: 2 }); assert.equal(r.swept, undefined, "only on the 5-minute pass"); assert.equal(F.closes || 0, closes0);
-  r = await L.liveTick(env, { minute: 5 }); assert.equal(r.swept?.length, 2, JSON.stringify(r)); assert.deepEqual(r.swept.map((x) => x.mint).sort(), [USDC, USDT].sort()); assert.ok(r.swept.every((x) => Math.abs(x.backSol - 0.00148344) < 1e-9));
+  r = await L.liveTick(env, { minute: 5 }); assert.equal(r.swept?.length, 2, JSON.stringify(r)); assert.deepEqual(r.swept.map((x) => x.mint).sort(), [USDC, USDT].sort()); assert.ok(r.swept.every((x) => x.backSol === 0.001483), "1,483,440 lamports each (the rent less the close's fee)");
   assert.equal(F.closes, closes0 + 2, "two CloseAccount transactions, nothing else"); assert.equal(F.sent.length, sent0, "no swap was sent"); assert.equal((await positions())[0].status, "open"); assert.equal((await positions())[0].tokens_raw, "5000000");
   assert.equal((await one(`SELECT count(*)::int n FROM mob_aq_brain WHERE text LIKE 'LIVE RENT SWEEP:%' AND at > now() - interval '1 minute'`)).n, 2); assert.equal(r.orphans, 1, "the stray coin with tokens in it is reported, not closed");
   // never: an account with tokens in it, the open position's own account, a closed position's account (reclaimRent books that one), or while an order is on its way

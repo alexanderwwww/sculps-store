@@ -50,6 +50,8 @@ export class Symbiote {
       if (!["public", "helius", "curve", "off"].includes(b.source)) return Response.json({ error: "source must be helius, curve, public or off" }, { status: 400 });
       await this.ctx.storage.put("source", b.source); this.closeChain("source changed");
     }
+    // the live trader is about to place an order on the Helius key both share: hold our own RPC reads for a while (at most 2 minutes)
+    if (u.pathname === "/yield" && req.method === "POST") { const b = await req.json().catch(() => ({})), ms = Math.min(120000, Math.max(0, Number(b.ms) || 45000)); this.backoffUntil = Math.max(this.backoffUntil || 0, Date.now() + ms); return Response.json({ ok: true, yieldUntil: this.backoffUntil }); }
     await this.start();
     return Response.json(this.status());
   }
@@ -208,6 +210,7 @@ export class Symbiote {
   // alarms), or a healthy coin is written off as "launch data missing" and blocked for 24 h. (a) a verdict that only lacks a
   // concentration answer is not written: it goes back in the queue and is asked again.
   async checkNext(d, src, now = Date.now(), check = deepCheck) {
+    if (this.backoffUntil && Date.now() < this.backoffUntil) return "yielding the RPC (a live order, or a 429)"; // nothing is dropped: the queue waits
     const i = this.queue.findIndex((q) => !(q.after > now)); if (i < 0) return null;
     const [x] = this.queue.splice(i, 1), c = this.eng.coins.get(x.mint);
     if (src === "curve" && c && c.curve && !c.launchDone && (x.waits || 0) < FACTS_WAIT) { x.waits = (x.waits || 0) + 1; c.launchAsked = true; this.launchQ.add(x.mint); this.queue.push(x); return "waiting for launch facts"; }
