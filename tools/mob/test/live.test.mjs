@@ -69,6 +69,7 @@ function world() {
       F.calls.push("simulateTransaction");
       const extra = (m.params[1].accounts.addresses || []).slice(1).map((a) => { const t = F.tokAccts.find((x) => x.address === a); const post = F.tokPost[a] !== undefined ? F.tokPost[a] : t?.data; return post == null ? null : { owner: t.program, lamports: 2039280, data: [post, "base64"] }; });
       return ok({ context: { slot: 1 }, value: { err: F.simErr, accounts: [{ lamports: F.balance - (F.simTake ?? (F.swapBody.quoteResponse.inputMint === SOL ? Number(F.swapBody.quoteResponse.inAmount) + 2_050_000 : -Number(F.swapBody.quoteResponse.otherAmountThreshold))) }, ...extra], logs: [] } }); }
+    if (m.method === "sendTransaction" && L.readIxs(m.params[0]).ixs[0]?.data[0] === 9) { const sig = W.base58(Buffer.from(m.params[0], "base64").subarray(1, 65)); F.closes = (F.closes || 0) + 1; F.status[sig] = { confirmationStatus: "confirmed", err: null }; return ok(sig); }
     if (m.method === "sendTransaction") { F.sent.push(m.params[0]); F.rowAtSend = await one(`SELECT status, signature FROM mob_aq_live_orders ORDER BY id DESC LIMIT 1`);
       if (F.send === "throw") throw new Error("socket hang up"); if (F.send === "rpcerror") return { jsonrpc: "2.0", id: 1, error: { code: -32002, message: "Transaction simulation failed: Blockhash not found" } };
       const sig = F.rowAtSend.signature, q = F.swapBody.quoteResponse, buy = q.inputMint === SOL; // it lands, exactly as quoted
@@ -377,6 +378,7 @@ test("audit: honeypot and Token-2022 checks before a buy; a fresh right call onl
 test("audit: daily loss counts marked and stop-risk of open positions, and sizes to the budget left", async () => {
   await limits({ maxDailyLossSol: 0.05 });
   // a position marked 0.03 SOL down: realized 0, marked -0.03 counts
+  F.sellOut = "20000000"; // the tick marks each held coin at the sell quote: 0.02 SOL for 0.05 = -0.03
   await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, last_value_sol, stop_pct) VALUES ('solana','OpenA','A','open','1',0.05,0.02,10)`);
   assert.ok(Math.abs((await L.pnlToday(d)) + 0.03) < 1e-9);
   let rk = await L.riskToday(d, 61000); assert.ok(rk.committed < -0.03, JSON.stringify(rk));
@@ -385,7 +387,7 @@ test("audit: daily loss counts marked and stop-risk of open positions, and sizes
   assert.equal((await L.liveTick(env, { minute: 1 })).result.refused, "daily_loss");
   // not at the limit yet, but the stops would take it there: no new trade
   await wipe(); world(); await limits({ maxDailyLossSol: 0.05, maxOpenPositions: 3 });
-  await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, last_value_sol, stop_pct) VALUES ('solana','OpenC','C','open','1',0.05,0.04,90)`);
+  await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, last_value_sol, stop_pct) VALUES ('solana','OpenC','C','open','1',0.05,0.04,100)`); F.sellOut = "40000000";
   assert.equal((await L.liveTick(env, { minute: 1 })).result.refused, "daily_loss_risk");
   // a small budget left: the buy is sized down to it
   await wipe(); world(); await limits({ maxDailyLossSol: 0.05, maxOpenPositions: 3 });
