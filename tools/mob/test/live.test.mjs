@@ -427,7 +427,7 @@ test("2) one missed price never sells: frozen candles + no price holds for two t
 
 test("2) CURVE: frozen bars on a curve coin: the exit quote's own fee is not read as a fall; a real fall under the stop sells; no price for 3 ticks sells", async () => {
   await curveWorld(); let r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.confirmed, true, JSON.stringify(r.result) + JSON.stringify(await lastRef())); let plan = await planNow(); assert.equal(plan.unit, "SOL");
-  await d.q(`UPDATE mob_aq_sym_bars SET t = t - 3600 WHERE mint = $1`, [CURVEMINT]); // symbiote's stream froze an hour ago; Jupiter has no chart
+  await d.q(`UPDATE mob_aq_sym_bars SET t = t - 10800 WHERE mint = $1`, [CURVEMINT]); // symbiote's stream froze three hours ago (a shift longer than the bars' own span, so no two rows ever share a minute); Jupiter has no chart
   // the price API is down; the exit quote is the only source. It sits 1.4% under the mid (pump's fee): lifted by half the round trip, it is above the stop
   F.priceFail = true; F.sellOut = curveOut(plan.stop * 1.002); assert.ok(plan.quoteRtPct > 2.7); r = await L.liveTick(env, { minute: 2 }); assert.equal((await positions())[0].status, "open", JSON.stringify(r.exits));
   F.quoteFail = true; await L.liveTick(env, { minute: 3 }); await L.liveTick(env, { minute: 4 }); assert.equal((await positions())[0].plan.noPx, 2); assert.equal((await orders()).length, 1);
