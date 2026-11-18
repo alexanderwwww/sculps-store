@@ -64,18 +64,21 @@ test("payout address: Alex only, a real wallet address only, and never the walle
   assert.equal(P.checkAddress(DEST, wallet.address), null);
 });
 
-test("the first address has no lock; changing it locks withdrawals for 24 hours", async () => {
+test("no payout lock (Alex, 2026-11-18): the address can be changed and paid to right away; an old stored lock still holds until its time", async () => {
   let r = await post("/api/aq/wallet/payout-address", { address: ` ${DEST} ` }); assert.equal(r.status, 200); assert.deepEqual(Object.keys(r.payout), ["address", "setAt", "lockedUntil"]); assert.equal(r.payout.address, DEST); assert.equal(r.payout.lockedUntil, null);
   assert.equal((await post("/api/aq/wallet/withdraw-preview", {})).status, 404);
   let pv = await J(await R("GET", "/api/aq/wallet/withdraw-preview?sol=0.5", { cookie })); assert.equal(pv.ok, true); assert.equal(pv.destination, DEST); assert.equal(pv.sol, 0.5);
   r = await post("/api/aq/wallet/payout-address", { address: DEST }); assert.equal(r.payout.lockedUntil, null, "saving the same address again changes nothing");
-  r = await post("/api/aq/wallet/payout-address", { address: DEST2 }); const until = new Date(r.payout.lockedUntil).getTime() - Date.now(); assert.ok(until > 23.9 * 3600e3 && until <= 24 * 3600e3);
+  // changed to another address: no lock, the change is on record, and a withdrawal to the NEW address can be previewed at once
+  r = await post("/api/aq/wallet/payout-address", { address: DEST2 }); assert.equal(r.status, 200); assert.equal(r.payout.address, DEST2); assert.equal(r.payout.lockedUntil, null, "no lock after a change");
   assert.equal((await st("sol_payout")).previous, DEST);
+  pv = await J(await R("GET", "/api/aq/wallet/withdraw-preview?sol=0.5", { cookie })); assert.equal(pv.ok, true, JSON.stringify(pv)); assert.equal(pv.destination, DEST2);
+  assert.ok(await d.one(`SELECT 1 FROM mob_aq_brain WHERE text LIKE 'Payout address CHANGED by Alex to ' || $1 || '%' AND text NOT LIKE '%locked until%'`, [DEST2]), "the change is written down, and says nothing about a lock");
+  r = await post("/api/aq/wallet/payout-address", { address: DEST }); assert.equal(r.payout.lockedUntil, null, "and back again, at once");
+  const s = (await buildState(env)).solWallet; assert.equal(s.payout.address, DEST); assert.equal(s.payout.lockedUntil, null);
+  // a lock stored before the rule changed is still honoured until its time, then ends by itself
+  await setS("sol_payout", { ...(await st("sol_payout")), lockedUntil: new Date(Date.now() + 3600e3).toISOString() });
   const w = await post("/api/aq/wallet/withdraw", { sol: 0.5 }); assert.equal(w.status, 400); assert.match(w.error.message, /payout address was changed\. Withdrawals open again on .* Athens time/); assert.equal(F.sent.length, 0); assert.equal((await orders()).length, 0);
-  pv = await J(await R("GET", "/api/aq/wallet/withdraw-preview?sol=all", { cookie })); assert.match(pv.error, /open again/);
-  r = await post("/api/aq/wallet/payout-address", { address: DEST }); assert.ok(r.payout.lockedUntil, "changing it back is a change too");
-  const s = (await buildState(env)).solWallet; assert.equal(s.payout.address, DEST); assert.ok(s.payout.lockedUntil);
-  // the lock ends by itself
   await setS("sol_payout", { ...(await st("sol_payout")), lockedUntil: new Date(Date.now() - 1000).toISOString() });
   assert.equal((await buildState(env)).solWallet.payout.lockedUntil, null); assert.equal((await J(await R("GET", "/api/aq/wallet/withdraw-preview?sol=0.5", { cookie }))).ok, true);
 });

@@ -51,9 +51,9 @@ export async function savePayout(env, body) {
   if (cur?.address === address) return { payout: publicPayout(cur) };
   let chain; try { chain = await notAWalletOnChain(env, address); } catch (e) { return { error: `The address could not be checked on the chain (${cut(e.message, 120)}). Nothing was saved` }; }
   if (chain) return { error: chain };
-  const now = Date.now(), next = { address, setAt: new Date(now).toISOString(), lockedUntil: cur?.address ? new Date(now + LOCK_MS).toISOString() : null, previous: cur?.address || null };
+  const now = Date.now(), next = { address, setAt: new Date(now).toISOString(), lockedUntil: cur?.address && LOCK_MS > 0 ? new Date(now + LOCK_MS).toISOString() : null, previous: cur?.address || null };
   await set(d, "sol_payout", next);
-  await brain(d, cur?.address ? `Payout address CHANGED by Alex to ${address} (was ${cur.address}). Withdrawals are locked until ${athens(now + LOCK_MS)} Athens time.` : `Payout address set by Alex: ${address}.`);
+  await brain(d, cur?.address ? `Payout address CHANGED by Alex to ${address} (was ${cur.address}).${LOCK_MS > 0 ? ` Withdrawals are locked until ${athens(now + LOCK_MS)} Athens time.` : " No lock: it can be paid to right away."}` : `Payout address set by Alex: ${address}.`);
   return { payout: publicPayout(next) };
 }
 export const publicPayout = (p) => (p?.address ? { address: p.address, setAt: p.setAt, lockedUntil: p.lockedUntil && new Date(p.lockedUntil).getTime() > Date.now() ? p.lockedUntil : null } : null);
