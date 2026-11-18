@@ -20,7 +20,7 @@ const bolt = `<svg class="hy-bolt" viewBox="0 0 100 200" preserveAspectRatio="no
 function orchestra(depts) {
   const n = depts.length || 1;
   return depts.map((d, i) => {
-    const a = Math.PI - (Math.PI * (i + 0.5)) / n, x = 50 + 44 * Math.cos(a), y = 88 - 70 * Math.sin(a);
+    const a = Math.PI * (0.92 - (0.84 * i) / Math.max(1, n - 1)), x = 50 + 47 * Math.cos(a), y = 86 - 74 * Math.sin(a);
     const on = (d.workers || []).some((w) => w.status === "busy");
     return `<div class="hy-mus${on ? " on" : ""}" style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%" title="${esc(d.name)}${on ? " · playing" : " · resting"}">
       <svg viewBox="0 0 24 30" aria-hidden="true"><circle cx="12" cy="6" r="4"/><path d="M5 29c0-9 3-15 7-15s7 6 7 15z"/><path class="ly" d="M15 13c3 0 5 3 4 8M15 13v9M19 21h-5"/></svg>
