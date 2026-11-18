@@ -512,7 +512,7 @@ export async function scanFib(env, venue, skip) {
     if (looked >= LIVE.candidatesPerTick) break;
     if (await skip(c.mint, null)) continue;
     looked++;
-    if (c.fresh && !(c.liqUsd > 0)) { const r = await refuse(d, venue, "pool", "No liquidity figure for this fresh right call", c); last = last || r; continue; } // an established coin's refusal says more
+    if (c.fresh && !(c.liqUsd > 0)) { if (!last) last = await refuse(d, venue, "pool", "No liquidity figure for this fresh right call", c); continue; } // an established coin's refusal, written first, says more
     const cs = await candlesFor(env, d, c.mint);
     if (!cs.ok) { last = await refuse(d, venue, "no_candles", "No one-minute candles for this coin", c); continue; }
     const s = entrySetup(cs.data, nowSec);

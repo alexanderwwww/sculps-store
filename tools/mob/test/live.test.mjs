@@ -116,7 +116,7 @@ test("every gate refuses, in order, and says why", async () => {
   await limits(); F.balance = 0.05e9 + 3_500_000 + 0.01e9 - 1; assert.equal(await gate(), "reserve"); assert.match((await lastRef()).reason, /not enough for a 0.05 SOL trade/);
   await wipe(); world(); F.impact = "0.02"; assert.equal(await gate(), "price_impact"); assert.match((await lastRef()).reason, /2% is over the 1% cap/);
   await wipe(); world(); F.rug = { ...F.rug, mintAuthority: "SomeAuthority111" }; assert.equal(await gate(), "safety"); assert.match((await lastRef()).reason, /mint authority/);
-  await wipe(); world(); F.pools[0].baseAsset.liquidity = 99000; assert.equal(await gate(), "no_candidate", "a pool under $100K is not looked at, and the one-hour-old pair never is");
+  await wipe(); world(); F.pools[0].baseAsset.liquidity = 99000; assert.equal(await gate(), "pool", "a pool under $100K is not an established candidate; the one-hour-old pair is a fresh right call now (Inspector fix 1, 2026-11-18) and is refused for having no liquidity figure");
   await wipe(); world(); F.candles = fibCandles({ tail: [[114.6, 114.1, 9]] }); assert.equal(await gate(), "no_setup"); assert.match((await lastRef()).reason, /no bounce candle yet: a falling knife/);
   await wipe(); world(); F.candles = fibCandles({ tail: [[114.1, 114.6, 9], [114.6, 117, 9], [117, 118, 9]] }); assert.equal(await gate(), "no_setup"); assert.match((await lastRef()).reason, /never chase/);
   await wipe(); world(); F.candles = asJup(chart(Date.now() / 1000 - 900)).candles; assert.equal(await gate(), "stale_data");
@@ -160,7 +160,7 @@ test("a buy: the row is written before the send, the signature is ours, the fill
   assert.ok(p.plan.rtPct < 1 && p.plan.rewardPct > 3 * p.plan.rtPct); assert.match(o.reason, /golden pocket bounce/);
   assert.deepEqual(F.calls.filter((c) => ["simulateTransaction", "sendTransaction"].includes(c)), ["simulateTransaction", "sendTransaction"], "simulated before it was signed and sent");
   // same minute, and later ticks: the coin is held, so nothing is bought and nothing is sent
-  const again = await L.liveTick(env, { minute: 1 }); assert.equal(again.result.refused, "no_setup"); assert.equal(F.sent.length, 1); assert.equal((await orders()).length, 1);
+  const again = await L.liveTick(env, { minute: 1 }); assert.ok(["no_setup", "pool"].includes(again.result.refused), again.result.refused); // the fresh right call (NEWMINT) is looked at too since fix 1 assert.equal(F.sent.length, 1); assert.equal((await orders()).length, 1);
   const [a, b] = await Promise.all([L.liveTick(env, { minute: 1 }), L.liveTick(env, { minute: 1 })]); assert.ok(a.skipped || b.skipped, "two ticks at once: one of them does not run"); assert.equal(F.sent.length, 1);
   // the order's one-time key: the same coin, side and minute can never be written twice
   await assert.rejects(d.q(`INSERT INTO mob_aq_live_orders (venue, side, mint, claim) VALUES ('solana','buy',$1,$2)`, [MINT, o.claim]), /duplicate key/);
