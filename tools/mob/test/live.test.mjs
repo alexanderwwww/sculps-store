@@ -131,7 +131,7 @@ test("a buy: the row is written before the send, the signature is ours, the fill
   assert.equal(F.swapBody.userPublicKey, wallet.address); assert.equal(F.swapBody.wrapAndUnwrapSol, true); assert.equal(F.swapBody.quoteResponse.inAmount, "50000000");
   assert.equal(o.status, "confirmed"); assert.equal(o.side, "buy"); assert.equal(o.in_amount, "50000000"); assert.equal(o.quote_out, "5000000"); assert.equal(o.fill_tokens, "5000000"); assert.ok(Math.abs(o.fill_sol + 0.05205) < 1e-9); assert.ok(Math.abs(o.fee_sol - 0.000014556) < 1e-12);
   assert.equal(p.status, "open"); assert.equal(p.tokens_raw, "5000000"); assert.ok(Math.abs(p.cost_sol - 0.05205) < 1e-9); assert.equal(p.time_exit_at, null, "no clock");
-  assert.equal(p.plan.kind, "fib"); assert.equal(p.plan.entry, 114.6); assert.ok(p.plan.stop < p.plan.levels.z786 && p.plan.t1 > 129); assert.equal(p.plan.phase, 0);
+  assert.equal(p.plan.kind, "fib"); assert.equal(p.plan.entry, 114.6); assert.ok(Math.abs(p.plan.stop - (Math.max(p.plan.levels.z786, p.plan.pullLow) - 0.25 * p.plan.leg.atr)) < 1e-4 && p.plan.t1 > 129); assert.equal(p.plan.phase, 0);
   for (const k of ["leg", "pocket", "bounceClose", "pullbackVolumeLower", "notVetoed", "safety", "cost", "impact"]) assert.equal(p.plan.validations[k], true, k);
   assert.ok(p.plan.rtPct < 1 && p.plan.rewardPct > 3 * p.plan.rtPct); assert.match(o.reason, /golden pocket bounce/);
   assert.deepEqual(F.calls.filter((c) => ["simulateTransaction", "sendTransaction"].includes(c)), ["simulateTransaction", "sendTransaction"], "simulated before it was signed and sent");
@@ -193,7 +193,7 @@ test("exits by the chart: half at target 1, the rest at the stop moved to entry;
   // then the rest: a 5-minute close under entry, after the stop moved
   { const cut = Math.floor(Date.now() / 60000) * 60 - 600; F.candles = F.candles.filter((c) => c.time < cut);
     for (let k = 0; k < 10; k++) F.candles.push({ time: cut + k * 60, open: plan.entry - 1, high: plan.entry - 0.9, low: plan.entry - 1.1, close: plan.entry - 1, volume: 5 });
-    await d.q(`UPDATE mob_aq_live_positions SET plan = plan || jsonb_build_object('since', $1::bigint)`, [cut - (cut % 300)]); }
+    await d.q(`UPDATE mob_aq_live_positions SET plan = plan || jsonb_build_object('since', $1::bigint)`, [cut - (cut % 300)]); await d.q(`DELETE FROM mob_aq_market`); }
   r = await L.liveTick(env, { minute: 4 }); assert.match(r.exits[0].reason, /stop at entry after target 1/, JSON.stringify(r));
   [p] = await positions(); assert.equal(p.status, "closed"); assert.equal(p.tokens_raw, "0"); assert.ok(Math.abs(p.pnl_sol - (p.proceeds_sol - p.cost_sol)) < 1e-12); assert.equal(p.plan.outcome, p.exit_reason);
   assert.equal(F.sent.length, 3); assert.deepEqual((await orders()).map((o) => o.side), ["buy", "sell", "sell"]);

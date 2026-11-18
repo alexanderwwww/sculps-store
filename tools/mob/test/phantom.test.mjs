@@ -148,7 +148,7 @@ test("signals: the chart trader's setup and SELL NOW, only while the page is ope
   await setPh({ ...ph, seenAt: new Date(Date.now() - 10 * 60000).toISOString() }); assert.equal(await L.phantomWatch(env), null); assert.equal((await buildState(env)).phantom.signal, null, "page closed: nothing is looked for");
   await setPh({ ...ph, seenAt: new Date().toISOString() }); const w = await L.phantomWatch(env); assert.equal(w.signal, "BONK");
   let pub = (await buildState(env)).phantom; assert.equal(pub.signal.mint, MINT); assert.equal(pub.signal.symbol, "BONK"); assert.match(pub.signal.why, /golden pocket bounce/);
-  assert.ok(pub.signal.zone[0] < pub.signal.zone[1] && pub.signal.stop < pub.signal.zone[0] && pub.signal.t1 > pub.signal.zone[1] && pub.signal.t2 > pub.signal.t1, "the banner carries zone, stop and targets");
+  assert.ok(pub.signal.zone[0] < pub.signal.zone[1] && pub.signal.stop < pub.signal.entry && pub.signal.entry >= pub.signal.zone[0] && pub.signal.t1 > pub.signal.zone[1] && pub.signal.t2 > pub.signal.t1, "the banner carries zone, stop and targets");
   assert.ok(!F.calls.includes("sendTransaction") && !F.calls.includes("swap"), "a signal builds nothing and sends nothing");
   // the same cost gate as the live trader: a 2% round trip means no signal
   await d.q(`DELETE FROM mob_aq_state WHERE k = 'phantom_signal'`); await d.q(`DELETE FROM mob_aq_market`); F.sellOut = "49000000"; assert.equal((await L.phantomWatch(env)).signal, null); assert.equal((await buildState(env)).phantom.signal, null); F.sellOut = "60000000";
