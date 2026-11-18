@@ -16,7 +16,7 @@ import { eventsFromLogs } from "./decode.mjs";
 import { createEngine, GTA_MAIN } from "./rules.mjs";
 import { deepCheck } from "./health.mjs";
 import { flush, writeRight, retention } from "./store.mjs";
-import { openWs, wsText, logsSub, programSub, heliusWss, PUBLIC_WSS } from "./probe.mjs";
+import { openWs, wsText, logsSub, programSub, launchSub, heliusWss, PUBLIC_WSS } from "./probe.mjs";
 import { decodeCurve } from "./decode.mjs";
 
 export const PUMPPORTAL_WSS = "wss://pumpportal.fun/api/data";
@@ -29,7 +29,7 @@ export class Symbiote {
   constructor(ctx, env) {
     this.ctx = ctx; this.env = env; this.vetoes = new Set();
     this.eng = createEngine({ isVetoed: (m) => this.vetoes.has(m) });
-    this.ws = { pp: null, chain: null }; this.lastMsg = { pp: 0, chain: 0 }; this.reconnects = { pp: 0, chain: 0 };
+    this.ws = { pp: null, chain: null, launch: null }; this.lastMsg = { pp: 0, chain: 0, launch: 0 }; this.reconnects = { pp: 0, chain: 0, launch: 0 }; this.pending = new Map();
     this.win = []; this.notes = 0; this.bytes = 0; this.feed = []; this.queue = []; this.checked = new Map();
     this.started = 0; this.lastVeto = 0; this.curves = new Map(); this.curveAt = new Map(); this.resolveQ = new Set(); this.launchQ = new Set(); this.lastPrune = 0; this.lastGta = 0; this.errors = [];
   }
@@ -98,6 +98,19 @@ export class Symbiote {
         ws.send(src === "curve" ? programSub() : logsSub());
       } catch (e) { this.err("chain", e); this.ws.chain = null; }
     }
+    // curve source: EVERY launch comes from a second, tiny subscription: logs that mention pump.fun's mint-authority PDA
+    // (TSLvdd…, present only in create transactions; production evidence 2026-11-18: 31 creates in 60 s, 0 failed, ~290 MB/day,
+    // ~5,800 credits/day). Each carries the CreateEvent: mint, curve, creator, slot. No guessing which curve is new.
+    if (src === "curve" && (!this.ws.launch || now - this.lastMsg.launch > 5 * 60000)) {
+      try { this.ws.launch?.close(); } catch {}
+      try {
+        const ws = await openWs(heliusWss(this.env.HELIUS_API_KEY)); this.ws.launch = ws; this.lastMsg.launch = now; this.reconnects.launch++;
+        ws.addEventListener("message", (m) => { this.lastMsg.launch = Date.now(); this.onChain(wsText(m.data)); });
+        ws.addEventListener("close", () => { if (this.ws.launch === ws) this.ws.launch = null; });
+        ws.addEventListener("error", () => { if (this.ws.launch === ws) this.ws.launch = null; });
+        ws.send(launchSub());
+      } catch (e) { this.err("launch", e); this.ws.launch = null; }
+    }
   }
 
   push(item) { this.feed.unshift(item); if (this.feed.length > FEED_MAX) this.feed.length = FEED_MAX; }
@@ -118,7 +131,7 @@ export class Symbiote {
     const r = j.params?.result; if (!r?.value) return;
     const e = eventsFromLogs(r.value, r.context?.slot ?? null);
     if (e.failed) { this.eng.stats.failed++; return; }
-    for (const c of e.creates) { if (c.curve) { this.curves.set(c.curve, c.mint); this.curveAt.set(c.curve, now); } const had = this.eng.coins.has(c.mint); const coin = this.eng.onCreate({ ...c, src: "chain", live: true }); if (!had) this.push({ at: now, k: "launch", mint: coin.mint, sym: coin.symbol, gta: coin.gta }); }
+    for (const c of e.creates) { if (c.curve) { this.curves.set(c.curve, c.mint); this.curveAt.set(c.curve, now); const pd = this.pending.get(c.curve); if (pd) { this.pending.delete(c.curve); queueMicrotask(() => this.onCurve(pd.raw)); } } const had = this.eng.coins.has(c.mint); const coin = this.eng.onCreate({ ...c, src: "chain", live: true }); if (!had) this.push({ at: now, k: "launch", mint: coin.mint, sym: coin.symbol, gta: coin.gta }); }
     for (const t of e.trades) this.eng.onTrade(t, now);
     for (const x of e.completes) this.eng.onComplete(x, now);
   }
@@ -133,8 +146,10 @@ export class Symbiote {
       // only a curve that still holds nearly all its tokens can be a new launch (a fresh curve starts at 1,073,000,000 tokens
       // minus the dev buy); older coins are ignored without spending a credit (production 2026-11-18: 5,748 unknown curves in
       // 10 minutes, resolving them all hit Helius 429s)
-      const b0 = decodeCurve(v.account?.data?.[0] || ""); this.eng.stats.unknownCurves = (this.eng.stats.unknownCurves || 0) + 1;
-      if (b0 && b0.virtual_token_reserves >= FRESH_VTOK && this.resolveQ.size < 500) this.resolveQ.add(v.pubkey); else { this.curves.set(v.pubkey, null); this.curveAt.set(v.pubkey, now); }
+      // launches arrive on the launch subscription; a curve update can beat its create by a moment, so the latest unknown
+      // update is held 2 minutes and replayed when the create lands (older coins simply age out, no credit spent)
+      this.eng.stats.unknownCurves = (this.eng.stats.unknownCurves || 0) + 1;
+      if (this.pending.size < 30000) this.pending.set(v.pubkey, { raw, at: now });
       return;
     }
     if (mint === null) return; // a coin launched before symbiote started: not a launch we cover
@@ -153,7 +168,7 @@ export class Symbiote {
   status() {
     const cov = this.eng.coverage();
     return { on: true, source: null, startedAt: new Date(this.started).toISOString(), coverage: cov, perSec: this.rate(), mbStreamed: +(this.bytes / 1e6).toFixed(1),
-      sockets: { pumpportal: !!this.ws.pp, chain: !!this.ws.chain }, lastMsg: { pumpportal: this.lastMsg.pp ? new Date(this.lastMsg.pp).toISOString() : null, chain: this.lastMsg.chain ? new Date(this.lastMsg.chain).toISOString() : null },
+      sockets: { pumpportal: !!this.ws.pp, chain: !!this.ws.chain, launch: !!this.ws.launch }, pendingCurves: this.pending.size, lastMsg: { pumpportal: this.lastMsg.pp ? new Date(this.lastMsg.pp).toISOString() : null, chain: this.lastMsg.chain ? new Date(this.lastMsg.chain).toISOString() : null },
       reconnects: this.reconnects, queue: this.queue.length, resolveQueue: this.resolveQ.size, launchQueue: this.launchQ.size, feed: this.feed.slice(0, FEED_MAX), errors: this.errors };
   }
 
@@ -205,6 +220,7 @@ export class Symbiote {
   prune(now = Date.now()) {
     for (const [k, v] of this.curves) if (!(v && this.eng.coins.has(v)) && now - (this.curveAt.get(k) ?? 0) > CURVE_TTL_MS) { this.curves.delete(k); this.curveAt.delete(k); }
     for (const [k, t] of this.checked) if (now - t > CHECKED_TTL_MS) this.checked.delete(k);
+    for (const [k, v] of this.pending) if (now - v.at > 120000) this.pending.delete(k);
     if (this.launchQ.size > 2000) this.launchQ = new Set([...this.launchQ].slice(-2000));
   }
   // curve source: a coin that moves (+50% from launch or 20 trades) gets its launch facts read once, while it is young

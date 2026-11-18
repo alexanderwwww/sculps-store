@@ -21,6 +21,9 @@ export async function openWs(url) {
 }
 export const wsText = (data) => (typeof data === "string" ? data : new TextDecoder().decode(data));
 export const logsSub = (id = 1) => JSON.stringify({ jsonrpc: "2.0", id, method: "logsSubscribe", params: [{ mentions: [PUMP_PROGRAM] }, { commitment: "confirmed" }] });
+// pump.fun's mint-authority PDA: an account of the create / create_v2 instructions only (read in a real CreateV2, 2026-11-18)
+export const PUMP_MINT_AUTHORITY = "TSLvdd1pWpHVjahSpsvCXUbgwsL3JAcvokwaKt1eokM";
+export const launchSub = (id = 2) => JSON.stringify({ jsonrpc: "2.0", id, method: "logsSubscribe", params: [{ mentions: [PUMP_MINT_AUTHORITY] }, { commitment: "confirmed" }] });
 export const programSub = (id = 1) => JSON.stringify({ jsonrpc: "2.0", id, method: "programSubscribe", params: [PUMP_PROGRAM, { encoding: "base64", commitment: "confirmed", filters: [{ memcmp: { offset: 0, bytes: CURVE_DISC_B58 } }] }] });
 export const heliusWss = (k) => `wss://mainnet.helius-rpc.com/?api-key=${encodeURIComponent(k)}`;
 export const PUBLIC_WSS = "wss://api.mainnet-beta.solana.com";
