@@ -94,7 +94,7 @@ function fracture(seed) {
   return d;
 }
 // a fresh PAIN row: a red fracture that heals to silver over 12 s and fades (only rule changes leave a permanent scar)
-function crack(id) { const g = document.getElementById("sym-cracks"); if (!g) return; const ns = "http://www.w3.org/2000/svg", p = document.createElementNS(ns, "path"); p.setAttribute("d", fracture(id)); p.setAttribute("class", "crack"); g.appendChild(p); setTimeout(() => p.remove(), 12500); while (g.children.length > 6) g.firstChild.remove(); }
+function crack(id) { const g = document.getElementById("sym-cracks"); if (!g) return; g.insertAdjacentHTML("beforeend", `<path class="crack" d="${fracture(id)}"/>`); const p = g.lastElementChild; setTimeout(() => p.remove(), 12500); while (g.children.length > 6) g.firstChild.remove(); }
 function scars(n) { const g = document.getElementById("sym-scars"); if (!g || !num(n)) return; const want = Math.min(n, 36); if (want === scarsDrawn) return; g.innerHTML = Array.from({ length: want }, (_, i) => `<path class="scar" d="${fracture(7 + i * 13)}"/>`).join(""); scarsDrawn = want; }
 async function pollState() {
   try { const r = await fetch("/api/aq/sym/state", { credentials: "same-origin", cache: "no-store" }); if (!r.ok) throw new Error("HTTP " + r.status); last = await r.json(); paint(last); }
