@@ -47,7 +47,7 @@ test("routes: admin session only; nothing exists and nothing is asked of Solana 
   assert.equal((await R("POST", "/api/aq/wallet/create", { bearer: env.MOB_API_TOKEN })).status, 403); assert.equal((await R("GET", "/api/aq/wallet", { bearer: env.MOB_API_TOKEN })).status, 403);
   assert.equal(await st("sol_wallet_key"), null);
   const s = await J(await R("GET", "/api/aq/wallet", { cookie }));
-  assert.deepEqual(s, { exists: false, address: null, createdAt: null, sol: null, tokens: null, checkedAt: null, source: null, limits: W.WALLET_LIMIT_DEFAULTS, lastError: null, liveOrders: false });
+  assert.deepEqual(s, { exists: false, address: null, createdAt: null, sol: null, tokens: null, checkedAt: null, source: null, limits: W.WALLET_LIMIT_DEFAULTS, lastError: null, liveOrders: true });
   assert.equal(calls.length, 0);
   for (const p of ["/api/aq/wallet/export", "/api/aq/wallet/key", "/api/aq/wallet/send", "/api/aq/wallet/swap", "/api/aq/wallet/transfer"]) { assert.equal((await R("GET", p, { cookie })).status, 404); assert.equal((await R("POST", p, { cookie, body: {} })).status, 404); }
   assert.equal((await R("DELETE", "/api/aq/wallet", { cookie })).status, 404);
@@ -73,7 +73,7 @@ test("read: address, SOL and coins from the RPC; the state the panel polls carri
   assert.ok(calls.every((c) => JSON.parse(c.body).params[0] === row.address));
   const n = calls.length; await J(await R("GET", "/api/aq/wallet", { cookie })); assert.equal(calls.length, n, "inside a minute the stored read is served");
   const state = await buildState(env); seen.push(JSON.stringify(state));
-  assert.equal(state.solWallet.address, row.address); assert.equal(state.solWallet.sol, 1.25); assert.equal(state.solWallet.liveOrders, false);
+  assert.equal(state.solWallet.address, row.address); assert.equal(state.solWallet.sol, 1.25); assert.equal(state.solWallet.liveOrders, true); assert.equal(state.solWallet.live.proven, false);
   assert.ok(state.wallet && "baseSol" in state.wallet, "the paper wallet's own state field is untouched");
   // the RPC failing: the reason is kept without the Helius key, the last good numbers stay
   resetMocks(); mock("POST", "https://mainnet.helius-rpc.com/", () => { throw new Error("connect failed https://mainnet.helius-rpc.com/?api-key=helius-secret-key"); });

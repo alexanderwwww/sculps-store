@@ -11,4 +11,4 @@ binding = "MEDIA"
 bucket_name = "gardenbuddy-media"
 
 [triggers]
-crons = ["*/5 * * * *", "* * * * *"]
+crons = ["*/5 * * * *", "* * * * *", "*/1 * * * *"]

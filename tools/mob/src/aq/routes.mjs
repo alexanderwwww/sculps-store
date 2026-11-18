@@ -10,6 +10,7 @@ import { setTraining, trainingState } from "./arena.mjs";
 import { safeEqual } from "../auth.mjs";
 import * as RH from "./robinhood.mjs";
 import { createWallet, walletStatus, saveWalletLimits } from "./wallet.mjs";
+import { sellAllLive, liveState } from "./live.mjs";
 
 const DROP_MAX = 95 * 1024 * 1024;
 const TYPES = { glb: "model/gltf-binary", gltf: "model/gltf+json", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", ktx2: "image/ktx2",
@@ -121,6 +122,9 @@ export async function aqApi(req, env, url, path, { json, apiErr, admin, bearer, 
     if (path === "/api/aq/wallet" && M === "GET") return json(await walletStatus(env, { fresh: url.searchParams.get("fresh") === "1" }));
     if (path === "/api/aq/wallet/create" && M === "POST") { const r = await createWallet(env); return r.error ? apiErr(r.exists ? 409 : 500, r.exists ? "exists" : "failed", r.error) : json(r, 201); }
     if (path === "/api/aq/wallet/limits" && M === "POST") { const r = await saveWalletLimits(env, await body()); return r.error ? apiErr(400, "validation", r.error) : json(r); }
+    // live orders: what is open and what was refused, and Alex's SELL ALL LIVE. There is no route that buys.
+    if (path === "/api/aq/wallet/live" && M === "GET") return json(await liveState(db(env)));
+    if (path === "/api/aq/wallet/sellall" && M === "POST") return json(await sellAllLive(env));
     return apiErr(404, "not_found", "No such wallet endpoint");
   }
   if ((path === "/api/aq/helper" || path === "/api/aq/briefing") && !(admin || bearer || keyOk)) return apiErr(401, "unauthorized", "Admin session, bearer MOB_API_TOKEN or AQUARIUS_KEY required");

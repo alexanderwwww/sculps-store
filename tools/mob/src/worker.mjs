@@ -14,6 +14,7 @@ import { cityRoute, incomeApi, newsApi } from "./city.mjs";
 import { aqPage, aqApi } from "./aq/routes.mjs";
 import { rhWarm } from "./aq/robinhood.mjs";
 import { walletWarm } from "./aq/wallet.mjs";
+import { liveTick } from "./aq/live.mjs";
 import { tick as aqTick } from "./aq/engine.mjs";
 import { arenaTick } from "./aq/arena.mjs";
 import { keeperTick, watchTicks } from "./aq/keeper.mjs";
@@ -52,6 +53,8 @@ export default {
   },
   async scheduled(event, env, ctx) {
     // Aquarius paper tick runs every minute ("* * * * *"); mob's own tick keeps its */5 schedule.
+    // LIVE orders have their own timer and their own run, so a slow paper tick or arena can never delay a real exit.
+    if (event?.cron === "*/1 * * * *") { ctx.waitUntil(C.ensureMigrated(env).then(() => liveTick(env, { cron: event.cron })).then((r) => { if (r.result && !r.result.refused || r.exits || r.reconciled || r.error) console.log("live", JSON.stringify(r)); }).catch((e) => console.log("live error", String(e.message || e).slice(0, 200)))); return; }
     if (event?.cron === "* * * * *") {
       // the training arena has its own clock: it starts with the minute, beside the main tick, so a slow main tick can never cost it a batch
       ctx.waitUntil(C.ensureMigrated(env).then(() => arenaTick(env)).then((r) => { if (!r.off) console.log("arena", JSON.stringify(r)); }).catch((e) => console.log("arena error", e.message || e)));

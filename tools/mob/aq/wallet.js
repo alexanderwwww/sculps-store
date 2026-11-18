@@ -1,6 +1,6 @@
 // AQUARIUS WALLET card (beside ROBINHOOD): the Solana wallet made on the Aquarius server. Reads state.solWallet
 // (engine: src/aq/wallet.mjs walletPublic). It shows the public address and balances only; the key never reaches the page.
-import { esc, ago, poll, onState } from "./main.js";
+import { esc, ago, poll, onState, dialog } from "./main.js";
 const D = "—", num = (v) => typeof v === "number" && isFinite(v);
 const sol = (v) => (num(v) ? v.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + " SOL" : D);
 const amt = (v) => (num(v) ? v.toLocaleString("en-US", { maximumFractionDigits: v < 1 ? 6 : 2 }) : D);
@@ -30,11 +30,26 @@ function paint(el, w) {
   const L = w.limits || {};
   if (!dirty && !el.contains(document.activeElement)) for (const [n] of NUMS) { const i = el.querySelector(`[name=${n}]`); if (i && i.value !== String(L[n] ?? 0)) i.value = String(L[n] ?? 0); }
   const at = el.querySelector("#wl-auto"); if (at) { at.classList.toggle("on", !!L.autoTrade); at.textContent = L.autoTrade ? "AUTO TRADE ON" : "AUTO TRADE OFF"; at.setAttribute("aria-pressed", L.autoTrade ? "true" : "false"); }
+  paintLive(el, w.live || null, L);
   if ((!w.checkedAt || Date.now() - new Date(w.checkedAt).getTime() > 120000) && Date.now() - lastAsk > 60000) { lastAsk = Date.now(); fetch("/api/aq/wallet", { credentials: "same-origin", cache: "no-store" }).then(() => poll()).catch(() => {}); }
+}
+const sgn = (v, d = 4) => (num(v) ? (v > 0 ? "+" : "") + v.toFixed(d) + " SOL" : D);
+function paintLive(el, lv, L) {
+  const set = (id, v, c) => { const e = el.querySelector("#" + id); if (e && e.textContent !== v) e.textContent = v; if (e && c != null && e.className !== c) e.className = c; };
+  const put = (id, html) => { const e = el.querySelector("#" + id); if (e && e.dataset.h !== html) { e.dataset.h = html; e.innerHTML = html; } };
+  set("wl-auto-n", L.autoTrade ? "trading real SOL inside these limits" : lv && lv.autoOff && lv.autoOff.why && Date.now() - new Date(lv.autoOff.at).getTime() < 86400000 ? lv.autoOff.why : "off: no new buys. Open live positions still exit on their stop and their clock.");
+  if (!lv) { set("wl-rule", "the engine has not sent the live book yet"); return; }
+  set("wl-rule", `${lv.rule} · this rule is NOT proven after costs: small size only`);
+  set("wl-pnl", sgn(lv.pnlTodaySol), num(lv.pnlTodaySol) ? (lv.pnlTodaySol > 0 ? "up" : lv.pnlTodaySol < 0 ? "dn" : "") : "");
+  const P = lv.positions || []; set("wl-ln", String(P.length));
+  put("wl-lpos", P.length ? P.map((p) => `<span><b>${esc(p.symbol || short(p.mint))}</b> ${p.status === "open" ? `${num(p.costSol) ? p.costSol.toFixed(4) : D} SOL in${num(p.valueSol) ? ` · now ${p.valueSol.toFixed(4)}` : ""}${p.timeExitAt ? ` · sells ${new Date(p.timeExitAt).toLocaleTimeString("en-GB", { timeZone: "Europe/Athens", hour: "2-digit", minute: "2-digit" })}` : ""}` : esc(p.status === "opening" ? "buying…" : p.status === "closing" ? "selling…" : "could not be sold: press SELL ALL LIVE")}</span>`).join("") : `<i>no live positions</i>`);
+  const O = lv.orders || [];
+  put("wl-lord", O.length ? O.map((o) => `<div class="o-${esc(o.status)}"><b>${esc(String(o.side).toUpperCase())} ${esc(o.symbol || "")}</b><span>${esc(o.status)}${num(o.sol) ? ` · ${sgn(o.sol)}` : ""}${o.error ? ` · ${esc(o.error)}` : o.reason ? ` · ${esc(o.reason)}` : ""}</span><em>${ago(o.at)} ago</em>${o.signature ? `<a href="https://solscan.io/tx/${encodeURIComponent(o.signature)}" target="_blank" rel="noopener noreferrer">Solscan</a>` : ""}</div>`).join("") : `<div><span>no live orders yet</span></div>`);
+  const r = lv.lastRefusal; set("wl-ref", r ? `Last trade refused ${ago(r.at)} ago: ${r.reason}${r.symbol ? ` (${r.symbol})` : ""}` : "No trade has been refused yet.");
 }
 const offHTML = () => `<div class="rh-h"><b class="rh-tag">AQUARIUS WALLET</b><span>Solana · not created</span></div>
   <button type="button" class="rh-go wl-go" id="wl-create">CREATE WALLET</button>
-  <p class="rh-n">Aquarius makes its own Solana wallet on the server and shows you its address. Live orders are not built yet.</p><p class="rh-e" id="wl-err"></p>`;
+  <p class="rh-n">Aquarius makes its own Solana wallet on the server and shows you its address. It trades only inside the limits you set.</p><p class="rh-e" id="wl-err"></p>`;
 const onHTML = () => `<div class="rh-h"><b class="rh-tag on wl-t">AQUARIUS WALLET</b><span>Solana · on the Aquarius server</span><em id="wl-age"></em></div>
   <div class="rh-g">
     <div class="wl-a"><code id="wl-addr">${D}</code><button type="button" class="ghost" id="wl-copy">Copy</button></div>
@@ -44,7 +59,10 @@ const onHTML = () => `<div class="rh-h"><b class="rh-tag on wl-t">AQUARIUS WALLE
       ${NUMS.map(([n, l]) => `<label>${l}<input name="${n}" type="number" inputmode="decimal" min="0" step="${n === "maxOpenPositions" ? 1 : "any"}" value="0"></label>`).join("")}
       <button class="primary" type="submit">Save limits</button><span class="msg" id="wl-msg"></span>
     </form>
-    <div class="rh-a"><button type="button" id="wl-auto" class="rh-sw" aria-pressed="false">AUTO TRADE OFF</button><i>live orders are not built yet</i></div>
+    <div class="rh-a"><button type="button" id="wl-auto" class="rh-sw" aria-pressed="false">AUTO TRADE OFF</button><i id="wl-auto-n"></i><button type="button" id="wl-sellall" class="kill">SELL ALL LIVE</button></div>
+    <div class="lv"><div class="rh-h"><b class="lv-t">LIVE</b><span id="wl-rule"></span></div>
+      <div class="rh-k"><div><small>LIVE P&amp;L TODAY</small><b id="wl-pnl">${D}</b></div><div><small>LIVE POSITIONS</small><b id="wl-ln">${D}</b></div></div>
+      <div class="rh-pos" id="wl-lpos"></div><div class="lv-o" id="wl-lord"></div><p class="rh-n" id="wl-ref"></p></div>
   </div><p class="rh-e" id="wl-err"></p>`;
 function wire(el) {
   const c = el.querySelector("#wl-create");
@@ -58,5 +76,9 @@ function wire(el) {
   const read = () => { const o = {}; for (const [n] of NUMS) { const v = f.elements[n].value.trim(); o[n] = v === "" ? NaN : Number(v); } return o; };
   const send = async (body, done) => { msg("Saving…"); try { await post("/api/aq/wallet/limits", body); dirty = false; msg(done, "ok"); await poll(); } catch (e) { msg(e.message, "err"); } };
   f.onsubmit = (e) => { e.preventDefault(); const o = read(); for (const [n, l] of NUMS) if (!(o[n] >= 0)) return msg(`${l}: type a number, 0 or more`, "err"); send(o, "Saved."); };
-  el.querySelector("#wl-auto").onclick = (e) => { const on = !e.currentTarget.classList.contains("on"); send({ ...read(), autoTrade: on }, on ? "Auto trade is ON. Live orders are not built yet." : "Auto trade is off."); };
+  el.querySelector("#wl-sellall").onclick = () => dialog(`<h3>Sell every live position?</h3><p>Aquarius sells all the coins in its wallet's live positions for SOL now, at the market. This is real money.</p><div class="row"><button class="ghost" data-x>Cancel</button><button class="danger" data-ok>SELL ALL LIVE</button></div><p class="msg"></p>`, (d, close) => {
+    d.querySelector("[data-x]").onclick = close;
+    d.querySelector("[data-ok]").onclick = async (e) => { const m = d.querySelector(".msg"); e.currentTarget.disabled = true; m.textContent = "Selling…"; try { const r = await post("/api/aq/wallet/sellall"); m.textContent = `${(r.sold || []).length} sold, ${(r.kept || []).length} not yet.`; m.className = "msg ok"; setTimeout(close, 1500); poll(); } catch (e2) { m.textContent = "Not sent: " + e2.message; e.currentTarget.disabled = false; } };
+  });
+  el.querySelector("#wl-auto").onclick = (e) => { const on = !e.currentTarget.classList.contains("on"); send({ ...read(), autoTrade: on }, on ? "Auto trade is ON: Aquarius now buys and sells with real SOL inside these limits." : "Auto trade is off."); };
 }

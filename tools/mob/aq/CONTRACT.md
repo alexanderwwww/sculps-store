@@ -93,4 +93,9 @@ Both are admin session only (no bearer, no helper code). Neither has an order, s
 - GET /api/aq/wallet[?fresh=1] · POST /api/aq/wallet/create (201 once, then 409) · POST /api/aq/wallet/limits {maxPerTradeSol, maxDailyLossSol, maxOpenPositions, autoTrade}
  robinhood:{connected, since, tokenExpiresAt, checkedAt, account:{valueUsd, cashUsd, positions:[{symbol, quantity, valueUsd, avgCostUsd}]|null, fields}|null, tools:[names], readTools:[names], limits, lastError, clientRegistered, liveOrders:false}
  solWallet:{exists, address, createdAt, sol, tokens:[{mint, amount, raw, decimals}]|null, checkedAt, source, limits, lastError, liveOrders:false}   // state.wallet is the PAPER wallet and is unchanged
-Limits are 0/false until Alex sets them; autoTrade is a stored flag only and is refused until every limit is above zero.
+Limits are 0/false until Alex sets them; autoTrade is refused until every limit is above zero.
+LIVE (Solana only, engine src/aq/live.mjs, since 2026-11-18): GET /api/aq/wallet/live · POST /api/aq/wallet/sellall (admin). There is no route that buys: buys come only from the live tick behind every gate.
+ solWallet.liveOrders:true, solWallet.live:{positions:[{id, symbol, mint, status:"opening"|"open"|"closing"|"stuck", costSol, valueSol, valueAt, stopPct, openedAt, timeExitAt}],
+   orders:[{id, side, symbol, status:"requested"|"sent"|"confirmed"|"failed", reason, error, signature, sol, at}] (newest 8), pnlTodaySol (Athens day), closedToday,
+   lastRefusal:{gate, reason, symbol, times, at}|null, lastTickAt, autoOff:{why, at}|null, rule, proven:false}
+ robinhood.liveOrders:false, robinhood.ordersNote, robinhood.toolsRead, robinhood.market:{open:true|false|null, note}

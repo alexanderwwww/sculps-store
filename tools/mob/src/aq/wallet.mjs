@@ -1,6 +1,7 @@
 // The Aquarius Solana wallet: made ON THE SERVER, read here, with its own limits. This file can create the key, show the
 // public address and read balances. It has NO swap, transfer or transaction code: nothing here builds, signs or sends a
 // Solana transaction. The only signature it ever makes is over one fixed sentence, at creation, to prove the key works.
+// Live orders are in live.mjs, the one other file that opens the sealed key (in memory, at the moment of signing).
 //
 // The secret key (Ed25519, WebCrypto, exported as PKCS#8) is stored AES-GCM sealed with the MOB_ENC_KEY secret
 // (auth.mjs seal/unseal, the same as the Robinhood tokens) in mob_aq_state k='sol_wallet_key'. No route, log, brain row or
@@ -73,7 +74,7 @@ export async function createWallet(env) {
 }
 
 // ---------------------------------------------------------------- reading balances (public data, by address)
-async function rpc(env, method, params) {
+export async function rpc(env, method, params) {
   const url = env.HELIUS_API_KEY ? HELIUS_URL(env.HELIUS_API_KEY) : PUBLIC_RPC, via = env.HELIUS_API_KEY ? "Helius" : "the public Solana RPC";
   let r, j;
   try { r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(15000) }); j = await r.json(); }
@@ -128,7 +129,7 @@ export async function saveWalletLimits(env, body) {
 export function walletPublic(S) {
   const w = S.sol_wallet_key || null, c = S.sol_wallet_cache || null;
   return { exists: !!w?.address, address: w?.address || null, createdAt: w?.createdAt || null, sol: c?.sol ?? null, tokens: c?.tokens ?? null, checkedAt: c?.at || null, source: c?.source || null,
-    limits: { ...WALLET_LIMIT_DEFAULTS, ...(S.sol_wallet_limits || {}) }, lastError: S.sol_wallet_status?.lastError || null, liveOrders: false };
+    limits: { ...WALLET_LIMIT_DEFAULTS, ...(S.sol_wallet_limits || {}) }, lastError: S.sol_wallet_status?.lastError || null, liveOrders: true };
 }
 const rows = async (d) => Object.fromEntries((await d.q(`SELECT k, v FROM mob_aq_state WHERE k IN ('sol_wallet_key','sol_wallet_cache','sol_wallet_limits','sol_wallet_status')`)).map((r) => [r.k, r.v]));
 export async function walletStatus(env, { fresh = false } = {}) {

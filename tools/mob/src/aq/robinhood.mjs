@@ -271,7 +271,9 @@ export async function refresh(env) {
     const portfolio = await readTool(env, sess, "get_portfolio", accounts, problems);
     const positions = await readTool(env, sess, "get_equity_positions", accounts, problems);
     const cache = { at: new Date().toISOString(), server: sess.server ? { name: sess.server.name || null, version: sess.server.version || null } : null,
-      tools: tools.map((t) => ({ name: t.name, description: cut(t.description, 240), readOnlyHint: t.annotations?.readOnlyHint ?? null, destructiveHint: t.annotations?.destructiveHint ?? null, required: requiredOf(t), read: !whyNotRead(t.name, t) })),
+      tools: tools.map((t) => ({ name: t.name, description: cut(t.description, 240), readOnlyHint: t.annotations?.readOnlyHint ?? null, destructiveHint: t.annotations?.destructiveHint ?? null, required: requiredOf(t), read: !whyNotRead(t.name, t),
+        // the whole definition as Robinhood sent it, for scripts/aq-rh-tools.mjs: the order tools are built from this, never from a guess
+        inputSchema: t.inputSchema ?? null, outputSchema: t.outputSchema ?? null, annotations: t.annotations ?? null, title: t.title ?? null, fullDescription: String(t.description ?? "").slice(0, 4000) })),
       account: summarize({ accounts, portfolio, positions }), problems };
     await set(d, "rh_cache", cache); await note(d, problems.length ? problems.join(" | ") : null);
     return cache;
@@ -306,11 +308,26 @@ export async function saveLimits(env, body) {
 
 // ---------------------------------------------------------------- what the panel and the status route see (no secrets)
 // From the state rows only: buildState calls this on every poll, so it never talks to Robinhood.
+// The regular US stock session: Monday to Friday, 9:30 to 16:00 New York time, closed on NYSE holidays (1:00 p.m. close on
+// the early days). Dates from nyse.com/markets/hours-calendars as read into .claude/skills/trader-alerts on 2026-10-13.
+const NYSE_CLOSED = ["2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-05-25", "2026-06-19", "2026-07-03", "2026-09-07", "2026-11-26", "2026-12-25",
+  "2027-01-01", "2027-01-18", "2027-02-15", "2027-03-26", "2027-05-31", "2027-06-18", "2027-07-05", "2027-09-06", "2027-11-25", "2027-12-24"];
+const NYSE_EARLY = ["2026-11-27", "2026-12-24", "2027-11-26"];
+export function usMarket(now = new Date()) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", weekday: "short", hourCycle: "h23" }).formatToParts(now).map((x) => [x.type, x.value]));
+  const day = `${p.year}-${p.month}-${p.day}`, mins = Number(p.hour) * 60 + Number(p.minute), close = NYSE_EARLY.includes(day) ? 13 * 60 : 16 * 60;
+  if (day > "2027-12-31") return { open: null, note: "holiday list ends in 2027" };
+  if (p.weekday === "Sat" || p.weekday === "Sun") return { open: false, note: "US market closed (weekend)" };
+  if (NYSE_CLOSED.includes(day)) return { open: false, note: "US market closed (holiday)" };
+  if (mins < 570 || mins >= close) return { open: false, note: "US market closed (opens 9:30 a.m. New York, Monday to Friday)" };
+  return { open: true, note: "US market open" };
+}
 export function publicState(S) {
   const t = S.rh_tokens || null, c = S.rh_cache || null;
   return { connected: !!t?.sealed, since: t?.since || null, tokenExpiresAt: t?.expiresAt || null, checkedAt: c?.at || null, account: c?.account || null,
     tools: (c?.tools || []).map((x) => x.name), readTools: (c?.tools || []).filter((x) => x.read).map((x) => x.name),
-    limits: { ...LIMIT_DEFAULTS, ...(S.rh_limits || {}) }, lastError: S.rh_status?.lastError || null, clientRegistered: !!S.rh_client?.clientId, liveOrders: false };
+    limits: { ...LIMIT_DEFAULTS, ...(S.rh_limits || {}) }, lastError: S.rh_status?.lastError || null, clientRegistered: !!S.rh_client?.clientId, liveOrders: false,
+    market: usMarket(), toolsRead: !!c?.tools?.length, ordersNote: c?.tools?.length ? "stock orders are not built yet: Robinhood's tool list has been read, the order call is the next build" : "stock orders are not built yet: they are built after Robinhood's tool list has been read" };
 }
 const rows = async (d) => Object.fromEntries((await d.q(`SELECT k, v FROM mob_aq_state WHERE k IN ('rh_tokens','rh_cache','rh_limits','rh_status','rh_client')`)).map((r) => [r.k, r.v]));
 export async function status(env, { fresh = false } = {}) {

@@ -1,0 +1,206 @@
+// LIVE orders (src/aq/live.mjs) against a fake Jupiter and a fake Solana RPC, on a throwaway schema. Nothing real is sent:
+// every Jupiter and RPC URL is mocked, and an unmocked fetch throws (helpers.mjs).
+import { test, before, after, beforeEach } from "node:test";
+import assert from "node:assert/strict";
+import { createPublicKey, verify } from "node:crypto";
+import { makeEnv, dropEnv, reqOf, login, mock, resetMocks } from "./helpers.mjs";
+import { db } from "../src/db.mjs";
+import * as L from "../src/aq/live.mjs";
+import * as W from "../src/aq/wallet.mjs";
+import { usMarket } from "../src/aq/robinhood.mjs";
+import { buildState, _resetSeeded } from "../src/aq/engine.mjs";
+
+const SOL = "So11111111111111111111111111111111111111112", MINT = "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263", NEWMINT = "NewPair1111111111111111111111111111111111111";
+let env, R, cookie, d, wallet;
+const one = (q, p) => d.one(q, p), all = (q, p) => d.q(q, p);
+const setS = (k, v) => d.q(`INSERT INTO mob_aq_state (k, v, at) VALUES ($1,$2,now()) ON CONFLICT (k) DO UPDATE SET v=EXCLUDED.v, at=now()`, [k, JSON.stringify(v)]);
+const limits = (o = {}) => setS("sol_wallet_limits", { maxPerTradeSol: 0.05, maxDailyLossSol: 0.2, maxOpenPositions: 2, autoTrade: true, ...o });
+// the fake world
+const F = {};
+const fakeTx = (payer, nsig = 1) => { const b = new Uint8Array(1 + 64 * nsig + 4 + 1 + 64 + 32 + 1); b[0] = nsig; let p = 1 + 64 * nsig; b[p++] = 0x80; b[p++] = nsig; b[p++] = 0; b[p++] = 1; b[p++] = 2; b.set(W.unbase58(payer), p); b.set(crypto.getRandomValues(new Uint8Array(32)), p + 64); return Buffer.from(b).toString("base64"); };
+const dipCandles = (drop = 0.955) => { const now = Math.floor(Date.now() / 60000) * 60, cs = []; for (let i = 39; i >= 0; i--) { const c = i < 5 ? 100 * (1 - ((1 - drop) * (5 - i)) / 5) : 100; cs.push({ time: now - i * 60, open: c, high: c * 1.012, low: c * 0.988, close: c, volume: 10 }); } return cs; };
+function world() {
+  resetMocks();
+  Object.assign(F, { payer: null, nsig: 1, swapBody: null, balance: 1_000_000_000, quoteFail: false, swapFail: false, jupSim: null, impact: "0.001", simTake: null, simErr: null, send: "ok", sent: [], status: {}, txs: {}, height: 1000, lastValid: 2000, tokensOut: "5000000", sellOut: "60000000", candles: dipCandles(), rug: { mintAuthority: null, freezeAuthority: null, rugged: false, risks: [], topHolders: [], markets: [], token: { decimals: 5 } }, calls: [], rowAtSend: null,
+    pools: [{ id: "pool1", quoteAsset: SOL, baseAsset: { id: MINT, symbol: "BONK", usdPrice: 0.00002, liquidity: 250000, decimals: 5, firstPool: { createdAt: "2024-01-01T00:00:00Z" }, stats5m: { priceChange: -4 }, audit: { mintAuthorityDisabled: true, freezeAuthorityDisabled: true } } },
+      { id: "pool2", quoteAsset: SOL, baseAsset: { id: NEWMINT, symbol: "NEWP", usdPrice: 1, liquidity: 900000, decimals: 6, firstPool: { createdAt: new Date(Date.now() - 3600e3).toISOString() }, stats5m: { priceChange: -9 } } }] });
+  mock("GET", /^https:\/\/datapi\.jup\.ag\/v1\/pools\//, () => ({ pools: F.pools }));
+  mock("GET", /^https:\/\/datapi\.jup\.ag\/v2\/charts\//, () => ({ candles: F.candles }));
+  mock("GET", /^https:\/\/api\.rugcheck\.xyz\//, () => F.rug);
+  for (const host of ["https://api.jup.ag", "https://lite-api.jup.ag"]) {
+    mock("GET", `${host}/swap/v1/quote`, (c, u) => { F.calls.push("quote"); if (F.quoteFail) return new Response(JSON.stringify({ error: "Could not find any route" }), { status: 400 });
+      const buy = u.searchParams.get("inputMint") === SOL, out = buy ? F.tokensOut : F.sellOut;
+      return { inputMint: u.searchParams.get("inputMint"), outputMint: u.searchParams.get("outputMint"), inAmount: u.searchParams.get("amount"), outAmount: out, otherAmountThreshold: String(Math.floor(Number(out) * 0.99)), priceImpactPct: F.impact, slippageBps: Number(u.searchParams.get("slippageBps")), routePlan: [{ swapInfo: { label: "Meteora" } }] }; });
+    mock("POST", `${host}/swap/v1/swap`, (c) => { F.calls.push("swap"); const b = JSON.parse(c.body); F.swapBody = b; if (F.swapFail) return new Response("{}", { status: 500 });
+      return { swapTransaction: fakeTx(F.payer || b.userPublicKey, F.nsig || 1), lastValidBlockHeight: F.lastValid, prioritizationFeeLamports: 9555, simulationError: F.jupSim }; });
+  }
+  mock("POST", "https://mainnet.helius-rpc.com/", async (c) => { const m = JSON.parse(c.body), ok = (result) => ({ jsonrpc: "2.0", id: 1, result }); F.calls.push(m.method);
+    if (m.method === "getBalance") return ok({ context: { slot: 1 }, value: F.balance });
+    if (m.method === "getTokenAccountsByOwner") return ok({ context: { slot: 1 }, value: [] });
+    if (m.method === "getBlockHeight") return ok(F.height);
+    if (m.method === "simulateTransaction") return ok({ context: { slot: 1 }, value: { err: F.simErr, accounts: [{ lamports: F.balance - (F.simTake ?? (F.swapBody.quoteResponse.inputMint === SOL ? Number(F.swapBody.quoteResponse.inAmount) + 2_050_000 : -Number(F.swapBody.quoteResponse.otherAmountThreshold))) }], logs: [] } });
+    if (m.method === "sendTransaction") { F.sent.push(m.params[0]); F.rowAtSend = await one(`SELECT status, signature FROM mob_aq_live_orders ORDER BY id DESC LIMIT 1`);
+      if (F.send === "throw") throw new Error("socket hang up"); if (F.send === "rpcerror") return { jsonrpc: "2.0", id: 1, error: { code: -32002, message: "Transaction simulation failed: Blockhash not found" } };
+      const sig = F.rowAtSend.signature, q = F.swapBody.quoteResponse, buy = q.inputMint === SOL; // it lands, exactly as quoted
+      if (F.send === "ok") { F.status[sig] = { confirmationStatus: "confirmed", err: null }; F.txs[sig] = landed(buy, q); }
+      return ok(sig); }
+    if (m.method === "getSignatureStatuses") return ok({ context: { slot: 1 }, value: m.params[0].map((s) => F.status[s] ?? null) });
+    if (m.method === "getTransaction") return ok(F.txs[m.params[0]] ?? null);
+    return { jsonrpc: "2.0", id: 1, error: { code: -32601, message: "Method not found" } }; });
+}
+const landed = (buy, q, err = null) => ({ slot: 5, meta: { err, fee: 14556, preBalances: [F.balance], postBalances: [buy ? F.balance - Number(q.inAmount) - 2_050_000 : F.balance + Number(q.outAmount) - 14556],
+  preTokenBalances: buy ? [] : [{ owner: wallet.address, mint: q.inputMint, uiTokenAmount: { amount: q.inAmount } }], postTokenBalances: buy ? [{ owner: wallet.address, mint: q.outputMint, uiTokenAmount: { amount: q.outAmount } }, { owner: "someone-else", mint: q.outputMint, uiTokenAmount: { amount: "999" } }] : [] }, transaction: { message: { accountKeys: [wallet.address, "x"] }, signatures: ["s"] } });
+const wipe = async () => { await d.q(`DELETE FROM mob_aq_live_orders`); await d.q(`DELETE FROM mob_aq_live_positions`); await d.q(`DELETE FROM mob_aq_live_refusals`); await d.q(`DELETE FROM mob_aq_market`); await d.q(`DELETE FROM mob_aq_state WHERE k IN ('live_auto_off','live_tick','live_tick_lock')`); await setS("kill", false); await limits(); };
+const lastRef = async (venue = "solana") => one(`SELECT gate, reason, symbol, n FROM mob_aq_live_refusals WHERE venue = $1 ORDER BY at DESC, id DESC LIMIT 1`, [venue]);
+const orders = () => all(`SELECT * FROM mob_aq_live_orders ORDER BY id`), positions = () => all(`SELECT * FROM mob_aq_live_positions ORDER BY id`);
+
+before(async () => { env = await makeEnv({ HELIUS_API_KEY: "hk", AQ_JUP_GAP_MS: "0", AQ_LIVE_POLL_MS: "0" }); _resetSeeded(); R = reqOf(env); cookie = await login(env); d = db(env); world(); await buildState(env); });
+after(async () => { await dropEnv(env); });
+beforeEach(async () => { world(); if (wallet) await wipe(); });
+
+test("with no wallet and every limit at zero nothing can trade: the tick records the refusal and asks nobody", async () => {
+  const r = await L.liveTick(env, { minute: 1 });
+  assert.equal(r.result.refused, "no_wallet"); assert.deepEqual(await lastRef(), { gate: "no_wallet", reason: "The Aquarius wallet has not been created", symbol: null, n: 1 });
+  assert.equal(F.calls.length, 0, "no Jupiter call, no RPC call"); assert.equal((await orders()).length, 0);
+  await L.liveTick(env, { minute: 1 }); assert.equal((await lastRef()).n, 2, "the same refusal inside ten minutes is one row with a count");
+  assert.equal((await W.createWallet(env)).created, true); wallet = await one(`SELECT v FROM mob_aq_state WHERE k='sol_wallet_key'`).then((x) => x.v);
+  assert.equal((await L.liveTick(env, { minute: 1 })).result.refused, "auto_trade_off"); assert.equal(F.calls.length, 0);
+});
+
+test("every gate refuses, in order, and says why", async () => {
+  const gate = async () => (await L.liveTick(env, { minute: 1 })).result.refused;
+  await limits({ autoTrade: false }); assert.equal(await gate(), "auto_trade_off");
+  await limits(); await setS("kill", true); assert.equal(await gate(), "kill_switch"); await setS("kill", false);
+  await limits({ maxPerTradeSol: 0 }); assert.equal(await gate(), "limit_per_trade");
+  await limits({ maxDailyLossSol: 0 }); assert.equal(await gate(), "limit_daily_loss");
+  await limits({ maxOpenPositions: 0 }); assert.equal(await gate(), "limit_open");
+  assert.equal(F.sent.length, 0); assert.equal(F.calls.filter((c) => c === "quote" || c === "swap").length, 0);
+  // the reserve: the wallet must hold the trade, the fee budget and 0.01 SOL on top
+  await limits(); F.balance = 0.05e9 + 3_500_000 + 0.01e9 - 1; assert.equal(await gate(), "reserve"); assert.match((await lastRef()).reason, /not enough for a 0.05 SOL trade/);
+  await wipe(); world(); F.impact = "0.02"; assert.equal(await gate(), "price_impact"); assert.match((await lastRef()).reason, /2% is over the 1% cap/);
+  await wipe(); world(); F.rug = { ...F.rug, mintAuthority: "SomeAuthority111" }; assert.equal(await gate(), "safety"); assert.match((await lastRef()).reason, /mint authority/);
+  await wipe(); world(); F.pools[0].baseAsset.liquidity = 99000; assert.equal(await gate(), "no_candidate", "a pool under $100K is not looked at, and the one-hour-old pair never is");
+  await wipe(); world(); F.candles = dipCandles(0.995); assert.equal(await gate(), "no_signal"); assert.match((await lastRef()).reason, /no dip/);
+  await wipe(); world(); F.candles = dipCandles().map((c) => ({ ...c, high: c.close * 1.001, low: c.close * 0.999 })).map((c, i, a) => (i >= a.length - 5 ? c : { ...c, open: 100, close: 100, high: 100.1, low: 99.9 }));
+  { const s = L.dipSignal(F.candles.map((c) => ({ t: c.time, o: c.open, h: c.high, l: c.low, c: c.close })), Date.now() / 1000); assert.equal(s.ok, s.atr >= 2 && s.ok); }
+  await wipe(); world(); F.quoteFail = true; assert.equal(await gate(), "no_quote");
+  assert.equal(F.sent.length, 0); assert.equal((await orders()).length, 0); assert.equal((await positions()).length, 0, "a refused trade leaves no order and no position");
+  // max open and the daily loss
+  await wipe(); world(); await limits({ maxOpenPositions: 1 }); await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, tokens_raw, cost_sol, stop_pct, time_exit_at) VALUES ('solana','OtherMint','OTH','open','1',0.05,10, now() + interval '1 hour')`);
+  assert.equal(await gate(), "max_open");
+  await wipe(); world(); await d.q(`INSERT INTO mob_aq_live_positions (venue, mint, symbol, status, cost_sol, proceeds_sol, pnl_sol, closed_at) VALUES ('solana','L1','L1','closed',0.3,0.09,-0.21, now())`);
+  assert.equal(await gate(), "daily_loss"); assert.equal((await one(`SELECT v FROM mob_aq_state WHERE k='sol_wallet_limits'`)).v.autoTrade, false, "auto trade switched itself off");
+  assert.match((await one(`SELECT v FROM mob_aq_state WHERE k='live_auto_off'`)).v.why, /today's live loss is 0.21 SOL/); assert.equal(await gate(), "auto_trade_off");
+});
+
+test("a buy: the row is written before the send, the signature is ours, the fill comes from the chain; a second tick cannot buy again", async () => {
+  const r = await L.liveTick(env, { minute: 1 });
+  assert.equal(r.result.buy, "BONK"); assert.equal(r.result.confirmed, true);
+  const [o] = await orders(), [p] = await positions();
+  assert.deepEqual(F.rowAtSend, { status: "sent", signature: o.signature }, "status and signature were on record before sendTransaction ran");
+  assert.equal(F.sent.length, 1);
+  // what was sent is the transaction Jupiter built, with a valid signature of the Aquarius wallet over its message
+  const t = L.readTx(F.sent[0]), pub = createPublicKey({ key: Buffer.concat([Buffer.from("302a300506032b6570032100", "hex"), Buffer.from(W.unbase58(wallet.address))]), format: "der", type: "spki" });
+  assert.equal(verify(null, t.bytes.subarray(t.msgStart), pub, t.bytes.subarray(t.sigStart, t.sigStart + 64)), true); assert.equal(W.base58(t.bytes.subarray(t.sigStart, t.sigStart + 64)), o.signature);
+  assert.equal(F.swapBody.userPublicKey, wallet.address); assert.equal(F.swapBody.wrapAndUnwrapSol, true); assert.equal(F.swapBody.quoteResponse.inAmount, "50000000");
+  assert.equal(o.status, "confirmed"); assert.equal(o.side, "buy"); assert.equal(o.in_amount, "50000000"); assert.equal(o.quote_out, "5000000"); assert.equal(o.fill_tokens, "5000000"); assert.ok(Math.abs(o.fill_sol + 0.05205) < 1e-9); assert.ok(Math.abs(o.fee_sol - 0.000014556) < 1e-12);
+  assert.equal(p.status, "open"); assert.equal(p.tokens_raw, "5000000"); assert.ok(Math.abs(p.cost_sol - 0.05205) < 1e-9); assert.ok(p.stop_pct >= 6 && p.stop_pct <= 15);
+  const mins = (new Date(p.time_exit_at) - new Date(p.opened_at)) / 60000; assert.ok(Math.abs(mins - 45) < 0.1, "45 minute hold (lesson 8)");
+  assert.deepEqual(F.calls.filter((c) => ["simulateTransaction", "sendTransaction"].includes(c)), ["simulateTransaction", "sendTransaction"], "simulated before it was signed and sent");
+  // same minute, and later ticks: the coin is held, so nothing is bought and nothing is sent
+  const again = await L.liveTick(env, { minute: 1 }); assert.equal(again.result.refused, "no_candidate"); assert.equal(F.sent.length, 1); assert.equal((await orders()).length, 1);
+  const [a, b] = await Promise.all([L.liveTick(env, { minute: 1 }), L.liveTick(env, { minute: 1 })]); assert.ok(a.skipped || b.skipped, "two ticks at once: one of them does not run"); assert.equal(F.sent.length, 1);
+  // the order's one-time key: the same coin, side and minute can never be written twice
+  await assert.rejects(d.q(`INSERT INTO mob_aq_live_orders (venue, side, mint, claim) VALUES ('solana','buy',$1,$2)`, [MINT, o.claim]), /duplicate key/);
+  await assert.rejects(d.q(`INSERT INTO mob_aq_live_positions (venue, mint, status) VALUES ('solana',$1,'opening')`, [MINT]), /duplicate key/);
+  const st = (await buildState(env)).solWallet.live;
+  assert.equal(st.positions.length, 1); assert.equal(st.orders[0].signature, o.signature); assert.equal(st.proven, false); assert.ok(!JSON.stringify(st).includes(wallet.sealed));
+});
+
+test("failures before signing spend nothing: no swap, Jupiter's simulation, our simulation, a transaction that is not ours", async () => {
+  const run = async (prep, re) => { await wipe(); world(); prep(); const r = await L.liveTick(env, { minute: 1 }); const [o] = await orders(), [p] = await positions();
+    assert.equal(o.status, "failed", JSON.stringify(r)); assert.match(o.error, re); assert.equal(o.signature, null); assert.equal(p.status, "failed"); assert.equal(F.sent.length, 0); };
+  await run(() => { F.swapFail = true; }, /Jupiter answered HTTP 500/);
+  await run(() => { F.jupSim = { errorCode: "TRANSACTION_ERROR", error: "custom program error" }; }, /Jupiter's own simulation failed/);
+  await run(() => { F.simErr = { InstructionError: [3, { Custom: 6001 }] }; }, /the simulation failed/);
+  await run(() => { F.simTake = 0.9e9; }, /would take 0.9 SOL, more than the 0.05 SOL trade plus fees; not signed/);
+  await run(() => { F.payer = "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1"; }, /not a one-signature transaction of the Aquarius wallet; not signed/);
+  await run(() => { F.nsig = 2; }, /not a one-signature transaction/);
+  assert.throws(() => L.readTx(Buffer.from([1, 2, 3]).toString("base64")));
+});
+
+test("a send with an unknown outcome is never sent again: found on the chain later, or expired, decided by the chain", async () => {
+  F.send = "throw"; // the RPC call dies: was it broadcast? unknown
+  let r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.pending, true, JSON.stringify(r));
+  let [o] = await orders(), [p] = await positions(); assert.equal(o.status, "sent"); assert.match(o.error, /send:/); assert.equal(p.status, "opening"); assert.equal(F.sent.length, 1);
+  r = await L.liveTick(env, { minute: 1 }); assert.equal(r.result.refused, "order_pending"); assert.equal(F.sent.length, 1, "not sent again"); assert.equal((await orders()).length, 1);
+  // ...and it had landed after all
+  F.status[o.signature] = { confirmationStatus: "finalized", err: null }; F.txs[o.signature] = landed(true, F.swapBody.quoteResponse);
+  r = await L.liveTick(env, { minute: 1 }); assert.deepEqual(r.reconciled, [{ id: Number(o.id), end: "confirmed" }].map((x) => ({ ...x, id: o.id })));
+  [o] = await orders(); [p] = await positions(); assert.equal(o.status, "confirmed"); assert.equal(p.status, "open"); assert.equal(p.tokens_raw, "5000000"); assert.equal(F.sent.length, 1);
+  // the other ending: never seen, and its time window passed
+  await wipe(); world(); F.send = "rpcerror"; await L.liveTick(env, { minute: 1 }); [o] = await orders(); assert.equal(o.status, "sent");
+  await L.liveTick(env, { minute: 1 }); assert.equal((await orders())[0].status, "sent", "inside its window it is still unknown");
+  F.height = F.lastValid + 50; r = await L.liveTick(env, { minute: 1 }); [o] = await orders(); [p] = await positions();
+  assert.equal(o.status, "failed"); assert.match(o.error, /never reached the chain/); assert.equal(p.status, "failed"); assert.equal(F.sent.length, 1);
+  // confirmed on the chain but rejected there
+  await wipe(); world(); F.send = "throw"; await L.liveTick(env, { minute: 1 }); [o] = await orders(); F.status[o.signature] = { confirmationStatus: "confirmed", err: { InstructionError: [2, "Custom"] } };
+  await L.liveTick(env, { minute: 1 }); assert.equal((await orders())[0].status, "failed"); assert.equal((await positions())[0].status, "failed");
+  // a run that died before signing leaves a row with no signature: closed as "nothing was sent"
+  await wipe(); world(); await d.q(`INSERT INTO mob_aq_live_orders (venue, side, mint, symbol, claim, requested_at) VALUES ('solana','buy','X','X','old-claim', now() - interval '5 minutes')`);
+  await limits({ autoTrade: false }); await L.liveTick(env, { minute: 1 }); assert.match((await orders())[0].error, /stopped before signing/);
+});
+
+test("exits: the clock, the stop, a failed sell, the daily loss switching auto trade off, SELL ALL LIVE", async () => {
+  await L.liveTick(env, { minute: 1 }); let [p] = await positions(); assert.equal(p.status, "open");
+  // inside the hold and above the stop: marked, not sold
+  await L.liveTick(env, { minute: 1 }); [p] = await positions(); assert.equal(p.status, "open"); assert.ok(Math.abs(p.last_value_sol - 0.06) < 1e-9); assert.equal(F.sent.length, 1);
+  // the clock
+  await d.q(`UPDATE mob_aq_live_positions SET time_exit_at = now() - interval '1 minute'`);
+  const r = await L.liveTick(env, { minute: 1 }); assert.equal(r.exits[0].confirmed, true); assert.match(r.exits[0].reason, /time exit after 45 minutes/);
+  [p] = await positions(); assert.equal(p.status, "closed", JSON.stringify([r, await orders()]).slice(0, 900)); assert.ok(Math.abs(p.proceeds_sol - (0.06 - 0.000014556)) < 1e-9); assert.ok(Math.abs(p.pnl_sol - (p.proceeds_sol - p.cost_sol)) < 1e-12); assert.equal(F.sent.length, 2);
+  const sell = (await orders())[1]; assert.equal(sell.side, "sell"); assert.equal(sell.in_amount, "5000000"); assert.equal(sell.status, "confirmed"); assert.equal(F.swapBody.quoteResponse.inputMint, MINT);
+  // exits run with auto trade off and the kill switch on; a sell that fails puts the position back; the stop sells at a loss
+  await wipe(); world(); await L.liveTick(env, { minute: 1 }); await limits({ autoTrade: false }); await setS("kill", true);
+  F.sellOut = "40000000"; F.simErr = { InstructionError: [1, "Custom"] }; let t = await L.liveTick(env, { minute: 1 }); assert.match(t.exits[0].failed, /simulation failed/);
+  [p] = await positions(); assert.equal(p.status, "open"); assert.equal(p.sell_fails, 1); assert.equal(F.sent.length, 1);
+  F.simErr = null; await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-x'`); t = await L.liveTick(env, { minute: 1 }); assert.match(t.exits[0].reason, /protective stop/); assert.equal(t.result.refused, "auto_trade_off");
+  [p] = await positions(); assert.equal(p.status, "closed"); assert.ok(p.pnl_sol < -0.012);
+  // the daily loss limit is reached by a real sell: auto trade goes off by itself
+  await wipe(); world(); await limits({ maxDailyLossSol: 0.01 }); await L.liveTick(env, { minute: 1 }); F.sellOut = "30000000"; await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-y'`); await L.liveTick(env, { minute: 1 });
+  assert.equal((await one(`SELECT v FROM mob_aq_state WHERE k='sol_wallet_limits'`)).v.autoTrade, false); assert.match((await lastRef()).reason, /Auto trade is off|switched itself OFF/);
+  assert.ok((await buildState(env)).solWallet.live.autoOff.why.includes("daily limit")); assert.ok((await buildState(env)).solWallet.live.pnlTodaySol < -0.01);
+  // SELL ALL LIVE: Alex only
+  await wipe(); world(); await L.liveTick(env, { minute: 1 }); await d.q(`UPDATE mob_aq_live_orders SET claim = claim || '-z'`);
+  assert.equal((await R("POST", "/api/aq/wallet/sellall")).status, 401); assert.equal((await R("POST", "/api/aq/wallet/sellall", { bearer: env.MOB_API_TOKEN })).status, 403); assert.equal(F.sent.length, 1);
+  const out = await (await R("POST", "/api/aq/wallet/sellall", { cookie, body: {} })).json(); assert.equal(out.sold.length, 1); assert.equal(out.sold[0].symbol, "BONK"); assert.equal((await positions())[0].status, "closed"); assert.equal((await positions())[0].exit_reason, "SELL ALL LIVE (Alex)");
+  const live = await (await R("GET", "/api/aq/wallet/live", { cookie })).json(); assert.equal(live.positions.length, 0); assert.equal(live.orders.length, 2); assert.ok(!JSON.stringify(live).includes("sealed"));
+  for (const path of ["/api/aq/wallet/buy", "/api/aq/wallet/order", "/api/aq/wallet/tick"]) assert.equal((await R("POST", path, { cookie, body: {} })).status, 404, "there is no route that buys");
+});
+
+test("the timer's side jobs: every 5 minutes the Robinhood gate, twice an hour a read-only Jupiter question", async () => {
+  await limits({ autoTrade: false }); const r = await L.liveTick(env, { minute: 30 });
+  assert.equal(r.result.refused, "auto_trade_off"); assert.ok(r.robinhood.refused); assert.deepEqual(F.calls, ["quote", "quote"], "two read-only quotes, nothing else");
+  assert.deepEqual((await one(`SELECT v FROM mob_aq_state WHERE k='live_probe'`)).v.hosts, { "https://api.jup.ag": 200, "https://lite-api.jup.ag": 200 }); assert.equal(F.sent.length, 0);
+});
+
+test("Robinhood: the same gates in USD, the order call is not built, and the US market clock", async () => {
+  await d.q(`DELETE FROM mob_aq_state WHERE k LIKE 'rh\\_%'`);
+  assert.equal((await L.rhGate(env)).refused, "not_connected");
+  await setS("rh_tokens", { sealed: "v1.x.y", since: new Date().toISOString() }); assert.equal((await L.rhGate(env)).refused, "auto_trade_off");
+  await setS("rh_limits", { maxPerTradeUsd: 0, maxDailyLossUsd: 50, maxOpenPositions: 2, allowStocks: true, autoTrade: true }); assert.equal((await L.rhGate(env)).refused, "limit_per_trade");
+  await setS("rh_limits", { maxPerTradeUsd: 25, maxDailyLossUsd: 50, maxOpenPositions: 2, allowStocks: false, allowCrypto: false, autoTrade: true }); assert.equal((await L.rhGate(env)).refused, "nothing_allowed");
+  await setS("rh_limits", { maxPerTradeUsd: 25, maxDailyLossUsd: 50, maxOpenPositions: 2, allowStocks: true, autoTrade: true });
+  await setS("kill", true); assert.equal((await L.rhGate(env)).refused, "kill_switch"); await setS("kill", false);
+  const g = await L.rhGate(env); assert.equal(g.refused, "orders_not_built"); assert.match(g.reason, /tool list has not been read/);
+  assert.deepEqual(await lastRef("robinhood").then((x) => x.gate), "orders_not_built");
+  const src = (await import("node:fs")).readFileSync(new URL("../src/aq/live.mjs", import.meta.url), "utf8");
+  assert.ok(!/place_|cancel_|equity_order|callRead|tools\/call/.test(src.replace(/^\s*\/\/.*$/gm, "")), "live.mjs has no Robinhood order call of any kind");
+  assert.equal(src.split('"sendTransaction"').length - 1, 1); assert.equal(src.split("subtle.sign(").length - 1, 1);
+  const s = (await buildState(env)).robinhood; assert.equal(s.liveOrders, false); assert.match(s.ordersNote, /not built yet/); assert.equal(typeof s.market.note, "string");
+  assert.deepEqual(usMarket(new Date("2026-11-18T15:00:00Z")), { open: true, note: "US market open" });            // Wed 10:00 New York
+  assert.equal(usMarket(new Date("2026-11-18T14:29:00Z")).open, false); assert.equal(usMarket(new Date("2026-11-18T21:00:00Z")).open, false); // 9:29 and 16:00
+  assert.match(usMarket(new Date("2026-11-21T16:00:00Z")).note, /weekend/); assert.match(usMarket(new Date("2026-11-26T16:00:00Z")).note, /holiday/);
+  assert.equal(usMarket(new Date("2026-11-27T17:59:00Z")).open, true); assert.equal(usMarket(new Date("2026-11-27T18:00:00Z")).open, false, "1:00 p.m. early close");
+  assert.equal(usMarket(new Date("2026-07-01T13:30:00Z")).open, true, "summer time: 9:30 New York is 13:30 UTC");
+});

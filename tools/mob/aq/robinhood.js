@@ -23,6 +23,7 @@ function paint(el, r) {
   const a = r.account || null;
   set("rh-val", a ? usd(a.valueUsd) : D); set("rh-cash", a ? usd(a.cashUsd) : D);
   set("rh-age", r.checkedAt ? `read ${ago(r.checkedAt)} ago` : "reading the account…");
+  set("rh-note", `${r.ordersNote || "stock orders are not built yet"}${r.market && r.market.note ? ` · ${r.market.note}` : ""}`);
   set("rh-since", r.since ? `connected ${ago(r.since)} ago` : "");
   const P = a && Array.isArray(a.positions) ? a.positions : null, ph = el.querySelector("#rh-pos");
   const html = !a ? `<i>not read yet</i>` : P == null ? `<i>Robinhood's answer had no positions list Aquarius can read yet</i>` : !P.length ? `<i>no open positions</i>`
@@ -40,7 +41,7 @@ function paint(el, r) {
 }
 const offHTML = () => `<div class="rh-h"><b class="rh-tag">ROBINHOOD</b><span>agent account · not connected</span></div>
   <a class="rh-go" href="/api/aq/rh/connect">CONNECT ROBINHOOD</a>
-  <p class="rh-n">Opens Robinhood's own sign-in. Aquarius reads the account. Live orders are not built yet.</p><p class="rh-e" id="rh-err"></p>`;
+  <p class="rh-n">Opens Robinhood's own sign-in. Aquarius reads the account. Stock orders are not built yet.</p><p class="rh-e" id="rh-err"></p>`;
 const onHTML = () => `<div class="rh-h"><b class="rh-tag on">ROBINHOOD</b><span>agent account · connected</span><em><span id="rh-age"></span> · <span id="rh-since"></span></em></div>
   <div class="rh-g">
     <div class="rh-k"><div><small>ACCOUNT VALUE</small><b id="rh-val">${D}</b></div><div><small>CASH</small><b id="rh-cash">${D}</b></div><div><small>POSITIONS</small><b id="rh-pn">${D}</b></div></div>
@@ -50,7 +51,7 @@ const onHTML = () => `<div class="rh-h"><b class="rh-tag on">ROBINHOOD</b><span>
       <div class="rh-c">${FLAGS.map(([n, l]) => `<label><input name="${n}" type="checkbox"> ${l}</label>`).join("")}</div>
       <button class="primary" type="submit">Save limits</button><span class="msg" id="rh-msg"></span>
     </form>
-    <div class="rh-a"><button type="button" id="rh-auto" class="rh-sw" aria-pressed="false">AUTO TRADE OFF</button><i>live orders are not built yet</i><button type="button" id="rh-off" class="ghost">Disconnect</button></div>
+    <div class="rh-a"><button type="button" id="rh-auto" class="rh-sw" aria-pressed="false">AUTO TRADE OFF</button><i id="rh-note">stock orders are not built yet</i><button type="button" id="rh-off" class="ghost">Disconnect</button></div>
   </div><p class="rh-e" id="rh-err"></p>`;
 function wire(el) {
   const f = el.querySelector("#rh-form"); if (!f) return;
@@ -59,7 +60,7 @@ function wire(el) {
   const read = () => { const o = {}; for (const [n] of NUMS) { const v = f.elements[n].value.trim(); o[n] = v === "" ? NaN : Number(v); } for (const [n] of FLAGS) o[n] = f.elements[n].checked; return o; };
   const send = async (body, done) => { msg("Saving…"); try { await post("/api/aq/rh/limits", body); dirty = false; msg(done, "ok"); await poll(); } catch (e) { msg(e.message, "err"); } };
   f.onsubmit = (e) => { e.preventDefault(); const o = read(); for (const [n, l] of NUMS) if (!(o[n] >= 0)) return msg(`${l}: type a number, 0 or more`, "err"); send(o, "Saved."); };
-  el.querySelector("#rh-auto").onclick = (e) => { const on = !e.currentTarget.classList.contains("on"); send({ ...read(), autoTrade: on }, on ? "Auto trade is ON. Live orders are not built yet." : "Auto trade is off."); };
+  el.querySelector("#rh-auto").onclick = (e) => { const on = !e.currentTarget.classList.contains("on"); send({ ...read(), autoTrade: on }, on ? "Auto trade is ON. Stock orders are not built yet, so nothing trades here." : "Auto trade is off."); };
   el.querySelector("#rh-off").onclick = () => dialog(`<h3>Disconnect Robinhood?</h3><p>Aquarius deletes its sign-in and switches auto trade off. Your Robinhood account is not changed.</p><div class="row"><button class="ghost" data-x>Cancel</button><button class="danger" data-ok>Disconnect</button></div><p class="msg"></p>`, (d, close) => {
     d.querySelector("[data-x]").onclick = close;
     d.querySelector("[data-ok]").onclick = async () => { const m = d.querySelector(".msg"); m.textContent = "Sending…"; try { await post("/api/aq/rh/disconnect"); close(); poll(); } catch (e2) { m.textContent = "Not sent: " + e2.message; } };

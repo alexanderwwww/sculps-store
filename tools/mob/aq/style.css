@@ -268,3 +268,7 @@ body.world .hero{display:none}
 .lk{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:8px;margin:8px 12px 0;align-items:start}.lk .rh{margin:0}body.world .lk{display:none}
 .wl{border-color:rgba(64,232,255,.22)}.wl-go{width:100%;border:0;background:var(--cy);color:#04121a}.wl-go:disabled{opacity:.6}.rh-tag.wl-t{background:var(--cy)}
 .wl-a{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.wl-a code{font:600 13px var(--mono);color:#fff;background:#070a12;border:1px solid #24304a;border-radius:6px;padding:7px 10px;word-break:break-all;user-select:all}
+/* live book on the AQUARIUS WALLET card */
+.lv{display:grid;gap:8px;padding-top:10px;border-top:1px solid var(--line)}.lv-t{font:800 11px var(--mono);letter-spacing:.16em;color:#1a1300;background:var(--gold);padding:2px 8px;border-radius:3px}.lv .rh-h span{color:var(--gold)}
+.lv-o{display:grid;gap:3px;font:11px var(--mono);color:var(--mut)}.lv-o div{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.lv-o b{color:var(--ink)}.lv-o em{font-style:normal;margin-left:auto}.lv-o a{color:var(--cy)}.lv-o .o-failed span{color:var(--dn)}.lv-o .o-confirmed b{color:var(--up)}
+.rh-a .kill{margin-left:auto}.rh-k b.up{color:var(--up)}.rh-k b.dn{color:var(--dn)}
