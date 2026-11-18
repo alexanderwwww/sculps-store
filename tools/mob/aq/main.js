@@ -6,6 +6,7 @@ import { helperBadges } from "./grok.js";
 import { trainingButton, renderTrainingButton, trainingHero } from "./training.js";
 import { robinhoodCard } from "./robinhood.js";
 import { walletCard } from "./wallet.js";
+import { phantomCard } from "./phantom.js";
 export const BUILD = typeof __AQ_BUILD__ !== "undefined" ? __AQ_BUILD__ : "dev";
 
 import { DEPTS, GODS } from "./depts.js";
@@ -286,7 +287,7 @@ export async function setMode(m) {
 
 // ---------- boot ----------
 function boot() {
-  const links = h(`<div class="lk"></div>`); links.append(robinhoodCard(), walletCard());
+  const links = h(`<div class="lk"></div>`); links.append(phantomCard(), walletCard(), robinhoodCard());
   document.body.append(topbar(), links, trainingHero(), h(`<div id="offline" hidden>Can't reach the engine. Showing the last data.</div>`), buildDash(), h(`<div id="stage"></div>`));
   onState((s) => { renderTop(s); if (store.mode === "bot") renderDash(s); });
   window.addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.querySelector(".dlg-bg")) openMenu(); else if (e.key === "Escape") document.querySelector(".dlg-bg").remove(); });

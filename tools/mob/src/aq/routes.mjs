@@ -12,6 +12,8 @@ import * as RH from "./robinhood.mjs";
 import { createWallet, walletStatus, saveWalletLimits } from "./wallet.mjs";
 import { sellAllLive, liveState } from "./live.mjs";
 import { savePayout, withdraw, preview, restoreWallet } from "./payout.mjs";
+import * as PH from "./phantom.mjs";
+import { AQ_PHANTOM_JS } from "../aq-bundle.mjs";
 
 const DROP_MAX = 95 * 1024 * 1024;
 const TYPES = { glb: "model/gltf-binary", gltf: "model/gltf+json", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", ktx2: "image/ktx2",
@@ -20,6 +22,7 @@ const TYPES = { glb: "model/gltf-binary", gltf: "model/gltf+json", png: "image/p
 export async function aqPage(req, env, path, { json, html }) {
   if (req.method !== "GET") return json({ error: { message: "read-only" } }, 405);
   if (path === "/aq") return html(AQ_PAGE, 200, { "content-security-policy": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' blob: data:; worker-src 'self' blob:", "x-robots-tag": "noindex" });
+  if (path === "/aq/phantom-tx.js") return new Response(AQ_PHANTOM_JS, { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" } });
   if (path === "/aq/app.js") return new Response(AQ_JS, { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" } });
   const m = path.match(/^\/aq\/assets\/([A-Za-z0-9._\/-]+)$/);
   if (m && !m[1].split("/").includes("..")) {
@@ -100,6 +103,22 @@ export async function aqApi(req, env, url, path, { json, apiErr, admin, bearer, 
     if (M !== "POST") return apiErr(405, "method_not_allowed", "POST {on:true|false}");
     if (typeof b?.on !== "boolean") return apiErr(400, "validation", "on must be true or false");
     return json({ training: await setTraining(env, b.on, admin ? "Alex" : "Claude for Alex") });
+  }
+  // Alex's Phantom wallet: the server keeps only its public address and hands back UNSIGNED transactions for him to approve
+  // in Phantom. Admin session only. Nothing here signs or sends (src/aq/phantom.mjs).
+  if (path === "/api/aq/phantom" || path.startsWith("/api/aq/phantom/")) {
+    if (!admin) return apiErr(bearer ? 403 : 401, bearer ? "forbidden" : "unauthorized", "Only Alex (admin session) uses the Phantom link");
+    await ensureSeed(env);
+    const out = (r, okStatus = 200) => (r.error ? apiErr(r.missing ? 404 : 400, r.secret ? "secret_refused" : "refused", r.error) : json(r, okStatus));
+    if (path === "/api/aq/phantom" && M === "GET") return json(await PH.status(env));
+    if (M !== "POST") return apiErr(405, "method_not_allowed", "POST");
+    if (path === "/api/aq/phantom/connect") return out(await PH.connect(env, await body()));
+    if (path === "/api/aq/phantom/disconnect") return json(await PH.disconnect(env));
+    if (path === "/api/aq/phantom/trade") return out(await PH.buildTrade(env, await body()), 201);
+    if (path === "/api/aq/phantom/fund") return out(await PH.buildFund(env, await body()), 201);
+    if (path === "/api/aq/phantom/cancel") return out(await PH.cancel(env, await body()));
+    if (path === "/api/aq/phantom/sent") { const r = await PH.sent(env, await body()); return r.error ? out(r) : json(r, r.notSeenYet ? 202 : 200); }
+    return apiErr(404, "not_found", "No such Phantom endpoint");
   }
   // Robinhood agent account: sign-in, read-only status, limits. Alex's admin session only (not the bearer, not a helper code).
   // Nothing under here can place, change or cancel an order (src/aq/robinhood.mjs).

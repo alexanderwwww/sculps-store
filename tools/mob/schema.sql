@@ -319,3 +319,4 @@ CREATE UNIQUE INDEX IF NOT EXISTS aqx_live_pos_active ON mob_aq_live_positions (
 CREATE TABLE IF NOT EXISTS mob_aq_live_refusals (id bigserial PRIMARY KEY, venue text NOT NULL, gate text NOT NULL, mint text NOT NULL DEFAULT '', symbol text, reason text NOT NULL, bucket bigint NOT NULL, n int NOT NULL DEFAULT 1, at timestamptz NOT NULL DEFAULT now(), UNIQUE (venue, gate, mint, bucket));
 ALTER TABLE mob_aq_live_orders ADD COLUMN IF NOT EXISTS dest text;
 CREATE UNIQUE INDEX IF NOT EXISTS aqx_live_withdraw_pending ON mob_aq_live_orders (venue) WHERE side = 'withdraw' AND status IN ('requested','sent');
+ALTER TABLE mob_aq_live_orders ADD COLUMN IF NOT EXISTS wallet text;
