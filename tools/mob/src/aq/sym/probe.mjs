@@ -51,6 +51,18 @@ export function report(t, secs) {
     creditsPerDay: Math.round(credDay), creditsThisProbe: Math.round(t.bytes / 1e6 * (t.kind === "public" ? 0 : CREDITS_PER_MB)), planUse: fits };
 }
 
+// Which Helius plan is this key on? Evidence, not a guess: the response headers of one call, and a 1-second burst of 70
+// getSlot calls counted as answered vs 429 (plans: Free 10 req/s, Developer 50, Business 200, Professional 500). ~70 credits.
+export async function planEvidence(env) {
+  if (!env.HELIUS_API_KEY) return { error: "HELIUS_API_KEY is not set on this Worker" };
+  const url = `https://mainnet.helius-rpc.com/?api-key=${encodeURIComponent(env.HELIUS_API_KEY)}`;
+  const call = () => fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: '{"jsonrpc":"2.0","id":1,"method":"getSlot"}' });
+  const first = await call(); const headers = Object.fromEntries([...first.headers].filter(([k]) => !/cookie|cf-ray|date/i.test(k)));
+  const t0 = Date.now(); const rs = await Promise.all(Array.from({ length: 70 }, () => call().then((r) => r.status).catch(() => 0)));
+  const count = (c) => rs.filter((x) => x === c).length;
+  return { headers, firstStatus: first.status, burst: { sent: 70, ms: Date.now() - t0, ok: count(200), limited: count(429), other: rs.filter((x) => x !== 200 && x !== 429) } };
+}
+
 export async function probe(env, { secs = 60, sources = ["helius"] } = {}) {
   secs = Math.max(5, Math.min(90, Number(secs) || 60));
   const runs = sources.map(async (src) => {

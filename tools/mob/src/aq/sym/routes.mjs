@@ -3,7 +3,7 @@
 // Reads come from the database, so the screen works whether the Durable Object is up or not. PAPER only.
 import { db } from "../../db.mjs";
 import { safeEqual } from "../../auth.mjs";
-import { probe } from "./probe.mjs";
+import { probe, planEvidence } from "./probe.mjs";
 import { LANES, WALLET_SOL, HEALTH } from "./rules.mjs";
 
 const n = (v) => (v == null ? null : Number(v));
@@ -51,6 +51,7 @@ export async function symApi(req, env, url, path, { json, apiErr, admin, bearer 
   if (path === "/api/aq/sym/probe") {
     const pk = req.headers.get("x-sym-probe-key") || "";
     if (!(admin || bearer || (env.SYM_PROBE_KEY && pk && safeEqual(pk, env.SYM_PROBE_KEY)))) return apiErr(401, "unauthorized", "Admin session or bearer MOB_API_TOKEN required");
+    if (url.searchParams.get("src") === "plan") return json(await planEvidence(env));
     const srcs = (url.searchParams.get("src") || "helius").split(",").filter((s) => ["helius", "public", "program"].includes(s));
     return json(await probe(env, { secs: url.searchParams.get("secs"), sources: srcs.length ? srcs : ["helius"] }));
   }
