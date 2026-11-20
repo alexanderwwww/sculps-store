@@ -57,13 +57,13 @@ function draw(){let tot=0,start=0,bets=[],w=0,n=0;
   if(s){tot+=s.balance;start+=s.start;const pl=s.balance-s.start;$("l"+k).textContent=(pl>=0?"+":"")+m(pl);$("l"+k).className=pl>0?"up":pl<0?"down":"";
    const km=s.market||{};const o=(s.open||[]).find(b=>b.ticker===km.ticker)||null;if(km.yesAsk!=null){$("sub"+k).textContent="Kalshi · closes "+ath(km.closeSec)}
    $("u"+k).className="pill u"+(o&&o.side==="up"?" on":"");$("d"+k).className="pill d"+(o&&o.side==="down"?" on":"");
-   $("u"+k).className="pill u"+(o&&o.side==="yes"?" on":"");$("d"+k).className="pill d"+(o&&o.side==="no"?" on":"");$("u"+k).textContent=(o&&o.side==="yes"?`▲ Up · ${o.contracts}× bought $${o.price}`:`▲ Up $${km.yesAsk??"–"}`);$("d"+k).textContent=(o&&o.side==="no"?`▼ Down · ${o.contracts}× bought $${o.price}`:`▼ Down $${km.noAsk??"–"}`);
+   $("u"+k).className="pill u"+(o&&o.side==="yes"?" on":"");$("d"+k).className="pill d"+(o&&o.side==="no"?" on":"");$("u"+k).textContent=(o&&o.side==="yes"?`▲ Up · $${(o.contracts*o.price).toFixed(2)} bet · wins $${o.contracts}`:`▲ Up $${km.yesAsk??"–"}`);$("d"+k).textContent=(o&&o.side==="no"?`▼ Down · $${(o.contracts*o.price).toFixed(2)} bet · wins $${o.contracts}`:`▼ Down $${km.noAsk??"–"}`);
    s.bets.forEach(b=>{bets.push({...b,k});n++;if(b.won)w++})}
  }
  if(start){$("tot").textContent=m(tot);const p=tot-start;$("tpl").textContent=(p>=0?"+":"")+m(p)+" ("+(p/start*100).toFixed(2)+"%)";$("tpl").className="d "+(p>0?"up":p<0?"down":"mute")}
  $("wr").textContent=n?`Win rate ${Math.round(100*w/n)}% over ${n} bets`:"";$("nb").textContent=n+" bets";
  const on=!Object.values(S).some(s=>s.on===false);$("tog").textContent=on?"Pause":"Start";$("st").textContent="Paper account · "+(on?"live":"paused");
- bets.sort((a,b)=>b.placed-a.placed);if(bets.length){const h=$("hist");h.textContent="";bets.slice(0,12).forEach(b=>{const d=document.createElement("div");const a=document.createElement("span");a.textContent=`${ath(b.placed)} · ${b.k} ${b.side==="yes"?"▲":"▼"} ${b.contracts}× $${b.price}`;const z=document.createElement("b");z.textContent=(b.pnl>=0?"+":"")+m(b.pnl);z.className=b.pnl>=0?"up":"down";d.append(a,z);h.appendChild(d)})}
+ bets.sort((a,b)=>b.placed-a.placed);if(bets.length){const h=$("hist");h.textContent="";bets.slice(0,12).forEach(b=>{const d=document.createElement("div");const a=document.createElement("span");a.textContent=`${ath(b.placed)} · ${b.k} ${b.side==="yes"?"▲ Up":"▼ Down"} · $${(b.contracts*b.price).toFixed(2)} bet`;const z=document.createElement("b");z.textContent=(b.pnl>=0?"+":"")+m(b.pnl);z.className=b.pnl>=0?"up":"down";d.append(a,z);h.appendChild(d)})}
 }
 function clock(){const n=Date.now()/1000;const cs=Object.values(S).map(s=>s.market&&s.market.closeSec).filter(Boolean);const l=Math.max(0,(cs.length?Math.min(...cs):Math.ceil(n/900)*900)-n);$("clock").textContent=Math.floor(l/60)+":"+String(Math.floor(l%60)).padStart(2,"0")}
 const live=()=>fetch("/api/live").then(r=>r.json()).then(d=>{L=d;draw()}).catch(()=>{});
