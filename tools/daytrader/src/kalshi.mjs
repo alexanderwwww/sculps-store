@@ -40,7 +40,7 @@ export async function kalshiTick(coin, s, { getJSON, price, vol1m, move5, nowSec
   if (Math.max(edgeYes, edgeNo) >= 0.03) { side = edgeYes >= edgeNo ? "yes" : "no"; why = "value"; }
   else { side = (move5 || 0) > 0 ? "no" : "yes"; why = "fade"; }
   const ask = side === "yes" ? yesAsk : noAsk;
-  if (!(ask > 0.01 && ask < 0.99)) return s;
+  if (!(ask >= 0.15 && ask <= 0.9)) return s; // cheap contracts: the $0.02 fee per contract eats the bet
   const contracts = +(K.stake / ask).toFixed(4);
   const fair = side === "yes" ? pYes : 1 - pYes;
   s.open.push({ ticker: m.ticker, slot, side, price: ask, contracts, strike, at: price, fair: +fair.toFixed(3), why, left, move5: +(move5 * 100).toFixed(3), vol: +vol1m.toFixed(5), closeSec, placed: nowSec });

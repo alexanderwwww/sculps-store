@@ -20,7 +20,7 @@
 .coin{display:flex;align-items:center;gap:10px}.logo{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:#1c1c1c}
 .coin b{display:block}.coin span{font-size:12px;color:var(--mute)}
 .px{text-align:right;font-variant-numeric:tabular-nums}.px b{display:block;font-size:17px}.px span{font-size:12px}
-canvas{width:100%;height:110px;display:block}
+canvas{width:100%;height:150px;display:block}
 .tg{display:flex;justify-content:space-between;font-size:13px;background:var(--card2);border-radius:12px;padding:10px 12px;gap:8px;flex-wrap:wrap}
 .tg b{font-variant-numeric:tabular-nums}
 .bet{display:flex;gap:8px}.pill{flex:1;text-align:center;border-radius:12px;padding:10px;font-weight:700;font-size:14px;background:var(--card2);color:var(--mute)}
@@ -28,7 +28,7 @@ canvas{width:100%;height:110px;display:block}
 .hist{background:var(--card);border-radius:16px;padding:6px 14px}.hist div{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #383838;font-size:13px}.hist div:last-child{border:0}
 h3{margin:8px 0 0;font-size:15px}
 </style></head><body><div class="w">
-<div class="head"><div class="acct"><div class="av">5</div><div><b>Up or Down</b><span id="st">Paper account · live</span></div></div><button class="icon" id="tog">Pause</button></div>
+<div class="head"><div class="acct"><div class="av">5</div><div><b>Up or Down</b><span id="st">Paper account · live</span><span id="now" style="font-variant-numeric:tabular-nums"></span></div></div><button class="icon" id="tog">Pause</button></div>
 <div class="total"><div class="n" id="tot">$300.00</div><div class="d" id="tpl">$0.00</div><div class="mute" style="font-size:13px;margin-top:6px" id="wr"></div></div>
 <div class="acts"><div class="act"><i>⏱</i><span id="clock">5:00</span></div><div class="act"><i>◎</i><span id="nb">0 bets</span></div><button class="act" id="reset"><i>↺</i><span>Reset</span></button></div>
 <div id="mks"></div>
@@ -41,21 +41,36 @@ const ath=t=>new Date(t*1000).toLocaleTimeString("en-GB",{timeZone:"Europe/Athen
 let L={},S={};
 const wrap=$("mks");
 for(const k in C){wrap.insertAdjacentHTML("beforeend",`<div class="mk" style="margin-bottom:12px"><div class="mt"><div class="coin"><div class="logo" style="background:${C[k].c}">${k}</div><div><b>${C[k].n}</b><span id="sub${k}">Kalshi · up or down · 15 min</span></div></div><div class="px"><b id="p${k}">–</b><span id="c${k}">–</span></div></div><canvas id="g${k}"></canvas><div class="tg"><span class="mute">Price to beat</span><b id="t${k}">–</b><span class="mute">Bot P&amp;L</span><b id="l${k}">$0.00</b></div><div class="bet"><div class="pill u" id="u${k}">▲ Up</div><div class="pill d" id="d${k}">▼ Down</div></div></div>`)}
-function chart(k){const cv=$("g"+k),d=L[k];if(!d||!d.candles)return;const dpr=devicePixelRatio||1,W=cv.clientWidth,H=110;cv.width=W*dpr;cv.height=H*dpr;const x=cv.getContext("2d");x.scale(dpr,dpr);
- const raw=d.candles.map(c=>+c[2]).filter(v=>isFinite(v)&&v>0);const med=raw.slice().sort((a,b)=>a-b)[raw.length>>1]||d.price;const T=(TK[k]||[]);const lastC=d.candles.length?d.candles[d.candles.length-1][0]:0;const pts=raw.filter(v=>Math.abs(v/med-1)<0.05).concat(T.filter(t=>t[0]>lastC+60).map(t=>t[1])).concat(isFinite(d.price)&&d.price>0?[d.price]:[]);if(pts.length<2)return;const tgt=target(k);const all=pts.concat(tgt?[tgt]:[]);const lo=Math.min(...all),hi=Math.max(...all),r=(hi-lo)||1;
- const Y=v=>H-12-(v-lo)/r*(H-24),X=i=>i/(pts.length-1)*(W-8);const up=d.price>=(tgt||pts[0]);const col=up?"#2ec08b":"#eb3742";
- const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,up?"rgba(46,192,139,.25)":"rgba(235,55,66,.25)");g.addColorStop(1,"rgba(0,0,0,0)");
- x.beginPath();pts.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(0,Y(v)));x.lineTo(W,H);x.lineTo(0,H);x.fillStyle=g;x.fill();
- x.beginPath();pts.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(0,Y(v)));x.strokeStyle=col;x.lineWidth=2;x.stroke();
- if(tgt){x.setLineDash([4,4]);x.strokeStyle="#ab9ff2";x.lineWidth=1;x.beginPath();x.moveTo(0,Y(tgt));x.lineTo(W,Y(tgt));x.stroke();x.setLineDash([])}
- x.fillStyle=col;x.beginPath();x.arc(W-8,Y(d.price),3.5,0,7);x.fill();}
+const EZ={};
+function chart(k){const cv=$("g"+k),d=L[k];if(!d||!d.candles)return;const km=(S[k]&&S[k].market)||{};
+ const now=Date.now()/1000,close=km.closeSec||Math.ceil(now/900)*900,open=close-900;
+ const dpr=devicePixelRatio||1,W=cv.clientWidth,H=150;if(cv.width!==W*dpr){cv.width=W*dpr;cv.height=H*dpr}const x=cv.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
+ const t0=open-300;let pts=d.candles.filter(c=>c[0]+60>=t0&&isFinite(c[2])&&c[2]>0).map(c=>[c[0]+60,+c[2]]);
+ const lastT=pts.length?pts[pts.length-1][0]:0;(TK[k]||[]).forEach(t=>{if(t[0]>lastT)pts.push(t)});
+ if(!d.price)return;EZ[k]=EZ[k]==null?d.price:EZ[k]+(d.price-EZ[k])*0.12;pts.push([now,EZ[k]]);
+ const med=pts.map(p=>p[1]).sort((a,b)=>a-b)[pts.length>>1];pts=pts.filter(p=>Math.abs(p[1]/med-1)<0.05);
+ const tgt=target(k);const vals=pts.map(p=>p[1]).concat(tgt?[tgt]:[]);let lo=Math.min(...vals),hi=Math.max(...vals);const pad=(hi-lo)*0.15||hi*0.0005;lo-=pad;hi+=pad;
+ const top=8,bot=H-22,X=t=>((t-t0)/(close-t0))*(W-4),Y=v=>bot-(v-lo)/(hi-lo)*(bot-top);
+ const up=EZ[k]>=(tgt||pts[0][1]);const col=up?"#2ec08b":"#eb3742";
+ x.fillStyle="rgba(171,159,242,.06)";x.fillRect(X(open),top,X(close)-X(open),bot-top);
+ x.strokeStyle="rgba(255,255,255,.06)";x.lineWidth=1;for(let t=open;t<=close;t+=300){x.beginPath();x.moveTo(X(t),top);x.lineTo(X(t),bot);x.stroke()}
+ const g=x.createLinearGradient(0,top,0,bot);g.addColorStop(0,up?"rgba(46,192,139,.28)":"rgba(235,55,66,.28)");g.addColorStop(1,"rgba(0,0,0,0)");
+ x.beginPath();pts.forEach((p,i)=>i?x.lineTo(X(p[0]),Y(p[1])):x.moveTo(X(p[0]),Y(p[1])));x.lineTo(X(now),bot);x.lineTo(X(pts[0][0]),bot);x.fillStyle=g;x.fill();
+ x.beginPath();pts.forEach((p,i)=>i?x.lineTo(X(p[0]),Y(p[1])):x.moveTo(X(p[0]),Y(p[1])));x.strokeStyle=col;x.lineWidth=2;x.lineJoin="round";x.stroke();
+ if(tgt){x.setLineDash([5,5]);x.strokeStyle="#ab9ff2";x.beginPath();x.moveTo(0,Y(tgt));x.lineTo(W,Y(tgt));x.stroke();x.setLineDash([]);x.fillStyle="#ab9ff2";x.font="600 10px Inter";x.textAlign="left";x.fillText("TARGET",4,Y(tgt)-4)}
+ (S[k]&&S[k].open||[]).filter(b=>b.ticker===km.ticker).forEach(b=>{x.fillStyle=b.side==="yes"?"#2ec08b":"#eb3742";x.strokeStyle="#1c1c1c";x.lineWidth=2;x.beginPath();x.arc(X(b.placed),Y(b.at),5,0,7);x.fill();x.stroke()});
+ const pulse=3.5+1.5*Math.sin(now*4);x.fillStyle=col;x.globalAlpha=.25;x.beginPath();x.arc(X(now),Y(EZ[k]),pulse+4,0,7);x.fill();x.globalAlpha=1;x.beginPath();x.arc(X(now),Y(EZ[k]),3.5,0,7);x.fill();
+ x.fillStyle="#999";x.font="500 10px Inter";const lab=t=>new Date(t*1000).toLocaleTimeString("en-GB",{timeZone:"Europe/Athens",hour:"2-digit",minute:"2-digit"});
+ x.textAlign="left";x.fillText(lab(open),Math.max(0,X(open)-14),H-6);x.textAlign="center";x.fillText(lab(open+300),X(open+300),H-6);x.fillText(lab(open+600),X(open+600),H-6);x.textAlign="right";x.fillText(lab(close),W-2,H-6);
+ const left=Math.max(0,close-now);const el=$("sub"+k);if(el)el.textContent=`Kalshi · ends ${ath(close)} · ${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,"0")} left`;}
+function frame(){for(const k in C)chart(k);const n=new Date();$("now").textContent=n.toLocaleTimeString("en-GB",{timeZone:"Europe/Athens"})+" Athens";requestAnimationFrame(frame)}
 function target(k){const km=S[k]&&S[k].market;if(km&&km.strike)return km.strike;const d=L[k];if(!d||!d.candles)return null;const r=Math.floor(Date.now()/1000/300)*300;const c=d.candles.find(c=>c[0]===r);if(c)return c[1];const b=d.candles.filter(c=>c[0]<r).pop();return b?b[2]:null}
 function draw(){let tot=0,start=0,bets=[],w=0,n=0;
  for(const k in C){const s=S[k],d=L[k]||{};
   if(d.price){$("p"+k).textContent=fp(k,d.price);const t=target(k);$("t"+k).textContent=fp(k,t);if(t){const ch=(d.price-t)/t*100;$("c"+k).textContent=(ch>=0?"+":"")+ch.toFixed(3)+"% vs target";$("c"+k).className=ch>=0?"up":"down"}}
   chart(k);
   if(s){tot+=s.balance;start+=s.start;const pl=s.balance-s.start;$("l"+k).textContent=(pl>=0?"+":"")+m(pl);$("l"+k).className=pl>0?"up":pl<0?"down":"";
-   const km=s.market||{};const o=(s.open||[]).find(b=>b.ticker===km.ticker)||null;if(km.yesAsk!=null){$("sub"+k).textContent="Kalshi · closes "+ath(km.closeSec)}
+   const km=s.market||{};const o=(s.open||[]).find(b=>b.ticker===km.ticker)||null;if(km.yesAsk!=null){$("sub"+k).firstChild||0}
    $("u"+k).className="pill u"+(o&&o.side==="up"?" on":"");$("d"+k).className="pill d"+(o&&o.side==="down"?" on":"");
    $("u"+k).className="pill u"+(o&&o.side==="yes"?" on":"");$("d"+k).className="pill d"+(o&&o.side==="no"?" on":"");$("u"+k).textContent=(o&&o.side==="yes"?`▲ Up · $${(o.contracts*o.price).toFixed(2)} bet · wins $${o.contracts.toFixed(2)}`:`▲ Up $${km.yesAsk??"–"}`);$("d"+k).textContent=(o&&o.side==="no"?`▼ Down · $${(o.contracts*o.price).toFixed(2)} bet · wins $${o.contracts.toFixed(2)}`:`▼ Down $${km.noAsk??"–"}`);
    s.bets.forEach(b=>{bets.push({...b,k});n++;if(b.won)w++})}
@@ -73,5 +88,5 @@ const state=()=>fetch("/api/kalshi").then(r=>r.json()).then(d=>{S=d;draw()}).cat
 const post=p=>fetch(p,{method:"POST"}).then(r=>r.json()).then(d=>{S=d;draw()});
 $("tog").onclick=()=>post("/api/kalshi/toggle");
 let armed=0;$("reset").onclick=()=>{if(!armed){armed=1;$("reset").lastChild.textContent="Tap again";setTimeout(()=>{armed=0;$("reset").lastChild.textContent="Reset"},4000);return}armed=0;$("reset").lastChild.textContent="Reset";post("/api/kalshi/reset")};
-live();state();setInterval(live,30000);setInterval(px,2000);setInterval(state,15000);setInterval(clock,1000);clock();addEventListener("resize",draw);
+live();state();setInterval(live,30000);setInterval(px,1000);requestAnimationFrame(frame);setInterval(state,15000);setInterval(clock,1000);clock();addEventListener("resize",draw);
 </script></body></html>
