@@ -41,3 +41,4 @@ tools/xugc/bin/
 tools/xugc/dist/
 private/
 tools/aquarius/.keys.json
+tools/daytrader/research/data/
