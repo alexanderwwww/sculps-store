@@ -13,7 +13,7 @@ async function runKalshi(env){
   await Promise.all(Object.keys(COINS).map(async k=>{ const s=all[k]||freshK(); try{
     const [cs,px]=await Promise.all([candles(k),ticker(k)]); const c=cs.slice(-61);
     const rets=c.slice(1).map((x,i)=>Math.log(x.c/c[i].c)); const vol=Math.sqrt(rets.reduce((a,r)=>a+r*r,0)/Math.max(1,rets.length));
-    await kalshiTick(k,s,{getJSON,price:px,vol1m:vol,nowSec:now}); s.px=px; s.err=null; }catch(e){ s.err=String(e.message||e); } s.last=now; all[k]=s; }));
+    const p5=c.length>5?c[c.length-6].c:px; await kalshiTick(k,s,{getJSON,price:px,vol1m:vol,move5:(px-p5)/p5,nowSec:now}); s.px=px; s.err=null; }catch(e){ s.err=String(e.message||e); } s.last=now; all[k]=s; }));
   await env.KV.put("kalshi",JSON.stringify(all)); return all; }
 async function runFive(env){
   const all=(await env.KV.get("five3","json"))||{}; const now=Math.floor(Date.now()/1000);

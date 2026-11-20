@@ -8,7 +8,7 @@ const cdf = z => 0.5 * (1 + erf(z / Math.SQRT2));
 
 export const freshK = () => ({ balance: 100, start: 100, on: true, bets: [], open: [], log: [], market: null });
 
-export async function kalshiTick(coin, s, { getJSON, price, vol1m, nowSec }) {
+export async function kalshiTick(coin, s, { getJSON, price, vol1m, move5, nowSec }) {
   const say = m => s.log.unshift({ at: nowSec, m });
   // settle finished bets from Kalshi's own result
   for (const b of [...s.open]) {
@@ -28,20 +28,23 @@ export async function kalshiTick(coin, s, { getJSON, price, vol1m, nowSec }) {
   const closeSec = Date.parse(m.close_time) / 1000, left = closeSec - nowSec;
   const yesAsk = +m.yes_ask_dollars, noAsk = +m.no_ask_dollars, strike = +m.floor_strike;
   s.market = { ticker: m.ticker, strike: strike || null, yesAsk, noAsk, closeSec, title: m.title };
-  if (!s.on || !strike || !(price > 0) || left < K.minLeftSec || left > K.maxLeftSec) return s;
-  if (s.open.some(b => b.ticker === m.ticker)) return s;
-  // fair chance price ends >= strike, using 1-minute volatility scaled to the time left
+  if (!s.on || !strike || !(price > 0) || left < 30) return s;
+  // One entry every 5 minutes on every coin: slots at 15-10, 10-5, 5-0 minutes left.
+  const slot = m.ticker + ":" + Math.floor(Math.max(0, left - 1) / 300);
+  if (s.open.some(b => b.slot === slot) || s.balance < K.stake) return s;
   const sd = Math.max(vol1m, 0.0002) * Math.sqrt(left / 60);
   const pYes = cdf(Math.log(price / strike) / sd);
   const edgeYes = pYes - yesAsk - K.fee, edgeNo = (1 - pYes) - noAsk - K.fee;
-  const side = edgeYes >= edgeNo ? "yes" : "no", ask = side === "yes" ? yesAsk : noAsk, edge = Math.max(edgeYes, edgeNo);
-  if (s.lastLook !== m.ticker + Math.floor(left / 60)) {
-    s.lastLook = m.ticker + Math.floor(left / 60);
-    if (edge < K.minEdge || !(ask > 0.02 && ask < 0.98) || s.balance < K.stake) { if (left < 400 && !s.saidSkip?.[m.ticker]) { s.saidSkip = { [m.ticker]: 1 }; say(`No edge yet: Up $${yesAsk} / Down $${noAsk}, fair Up ${(pYes * 100).toFixed(0)}%`); } return s; }
-    const contracts = +(K.stake / ask).toFixed(4); // exactly $10 per bet
-    s.open.push({ ticker: m.ticker, side, price: ask, contracts, strike, at: price, fair: +pYes.toFixed(3), closeSec, placed: nowSec });
-    say(`Bet ${side === "yes" ? "UP" : "DOWN"} ${contracts}× at $${ask} (fair ${(100 * (side === "yes" ? pYes : 1 - pYes)).toFixed(0)}%, pays ×${(1 / ask).toFixed(1)})`);
-  }
+  // Aquarius lesson 1 (never chase strength): with no clear value, take the side against the last 5-minute move.
+  let side, why;
+  if (Math.max(edgeYes, edgeNo) >= 0.03) { side = edgeYes >= edgeNo ? "yes" : "no"; why = "value"; }
+  else { side = (move5 || 0) > 0 ? "no" : "yes"; why = "fade"; }
+  const ask = side === "yes" ? yesAsk : noAsk;
+  if (!(ask > 0.01 && ask < 0.99)) return s;
+  const contracts = +(K.stake / ask).toFixed(4);
+  const fair = side === "yes" ? pYes : 1 - pYes;
+  s.open.push({ ticker: m.ticker, slot, side, price: ask, contracts, strike, at: price, fair: +fair.toFixed(3), why, left, move5: +(move5 * 100).toFixed(3), vol: +vol1m.toFixed(5), closeSec, placed: nowSec });
+  say(`Bet ${side === "yes" ? "UP" : "DOWN"} $${K.stake} at $${ask} (${why}, fair ${(100 * fair).toFixed(0)}%, pays ×${(1 / ask).toFixed(1)}, ${Math.round(left / 60)} min left)`);
   s.log = s.log.slice(0, 80);
   return s;
 }
