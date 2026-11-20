@@ -8,7 +8,7 @@ async function candles(coin){ const r=await fetch(`https://api.exchange.coinbase
 async function ticker(coin){ const r=await fetch(`https://api.exchange.coinbase.com/products/${COINS[coin]}/ticker`,{headers:{"user-agent":"daytrader"}}); const j=await r.json(); return +j.price; }
 async function runFive(env){
   const all=(await env.KV.get("five3","json"))||{}; const now=Math.floor(Date.now()/1000);
-  await Promise.all(Object.keys(COINS).map(async k=>{ const s=all[k]||freshFive(); try{ const c=(await candles(k)).filter(x=>x.t+60<=now).slice(-70); fiveTick(s,c,now); s.err=null; }catch(e){ s.err=String(e.message||e); } all[k]=s; }));
+  await Promise.all(Object.keys(COINS).map(async k=>{ const s=all[k]||freshFive(); try{ const [cs,px]=await Promise.all([candles(k),ticker(k)]); const c=cs.filter(x=>x.t+60<=now).slice(-70); const live=Math.floor(now/60)*60; if(px>0&&(!c.length||c.at(-1).t<live)) c.push({t:live,o:c.at(-1)?.c??px,c:px,h:px,l:px}); fiveTick(s,c,now); s.err=null; }catch(e){ s.err=String(e.message||e); } all[k]=s; }));
   await env.KV.put("five3",JSON.stringify(all)); return all; }
 
 const KEY = "state";
