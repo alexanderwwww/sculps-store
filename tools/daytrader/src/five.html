@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>5-Minute Markets</title>
+<title>Up or Down</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
 :root{--bg:#1c1c1c;--card:#2a2a2a;--card2:#333;--fg:#fff;--mute:#999;--purple:#ab9ff2;--up:#2ec08b;--down:#eb3742}
@@ -28,7 +28,7 @@ canvas{width:100%;height:110px;display:block}
 .hist{background:var(--card);border-radius:16px;padding:6px 14px}.hist div{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #383838;font-size:13px}.hist div:last-child{border:0}
 h3{margin:8px 0 0;font-size:15px}
 </style></head><body><div class="w">
-<div class="head"><div class="acct"><div class="av">5</div><div><b>5-Minute Markets</b><span id="st">Paper account · live</span></div></div><button class="icon" id="tog">Pause</button></div>
+<div class="head"><div class="acct"><div class="av">5</div><div><b>Up or Down</b><span id="st">Paper account · live</span></div></div><button class="icon" id="tog">Pause</button></div>
 <div class="total"><div class="n" id="tot">$300.00</div><div class="d" id="tpl">$0.00</div><div class="mute" style="font-size:13px;margin-top:6px" id="wr"></div></div>
 <div class="acts"><div class="act"><i>⏱</i><span id="clock">5:00</span></div><div class="act"><i>◎</i><span id="nb">0 bets</span></div><button class="act" id="reset"><i>↺</i><span>Reset</span></button></div>
 <div id="mks"></div>
@@ -43,12 +43,12 @@ const wrap=$("mks");
 for(const k in C){wrap.insertAdjacentHTML("beforeend",`<div class="mk" style="margin-bottom:12px"><div class="mt"><div class="coin"><div class="logo" style="background:${C[k].c}">${k}</div><div><b>${C[k].n}</b><span id="sub${k}">Kalshi · up or down · 15 min</span></div></div><div class="px"><b id="p${k}">–</b><span id="c${k}">–</span></div></div><canvas id="g${k}"></canvas><div class="tg"><span class="mute">Price to beat</span><b id="t${k}">–</b><span class="mute">Bot P&amp;L</span><b id="l${k}">$0.00</b></div><div class="bet"><div class="pill u" id="u${k}">▲ Up</div><div class="pill d" id="d${k}">▼ Down</div></div></div>`)}
 function chart(k){const cv=$("g"+k),d=L[k];if(!d||!d.candles)return;const dpr=devicePixelRatio||1,W=cv.clientWidth,H=110;cv.width=W*dpr;cv.height=H*dpr;const x=cv.getContext("2d");x.scale(dpr,dpr);
  const pts=d.candles.map(c=>c[2]).concat([d.price]);const tgt=target(k);const all=pts.concat(tgt?[tgt]:[]);const lo=Math.min(...all),hi=Math.max(...all),r=(hi-lo)||1;
- const Y=v=>H-6-(v-lo)/r*(H-12),X=i=>i/(pts.length-1)*W;const up=d.price>=(tgt||pts[0]);const col=up?"#2ec08b":"#eb3742";
+ const Y=v=>H-12-(v-lo)/r*(H-24),X=i=>i/(pts.length-1)*(W-8);const up=d.price>=(tgt||pts[0]);const col=up?"#2ec08b":"#eb3742";
  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,up?"rgba(46,192,139,.25)":"rgba(235,55,66,.25)");g.addColorStop(1,"rgba(0,0,0,0)");
  x.beginPath();pts.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(0,Y(v)));x.lineTo(W,H);x.lineTo(0,H);x.fillStyle=g;x.fill();
  x.beginPath();pts.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(0,Y(v)));x.strokeStyle=col;x.lineWidth=2;x.stroke();
  if(tgt){x.setLineDash([4,4]);x.strokeStyle="#ab9ff2";x.lineWidth=1;x.beginPath();x.moveTo(0,Y(tgt));x.lineTo(W,Y(tgt));x.stroke();x.setLineDash([])}
- x.fillStyle=col;x.beginPath();x.arc(W-3,Y(d.price),3.5,0,7);x.fill();}
+ x.fillStyle=col;x.beginPath();x.arc(W-8,Y(d.price),3.5,0,7);x.fill();}
 function target(k){const km=S[k]&&S[k].market;if(km&&km.strike)return km.strike;const d=L[k];if(!d||!d.candles)return null;const r=Math.floor(Date.now()/1000/300)*300;const c=d.candles.find(c=>c[0]===r);if(c)return c[1];const b=d.candles.filter(c=>c[0]<r).pop();return b?b[2]:null}
 function draw(){let tot=0,start=0,bets=[],w=0,n=0;
  for(const k in C){const s=S[k],d=L[k]||{};
