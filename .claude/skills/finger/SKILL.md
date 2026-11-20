@@ -49,3 +49,9 @@ Known since the plan: MacBook Air 2020 Intel i3, 8 GB, macOS Sequoia 15.7.4, Xco
 ## Unproven until his Mac
 
 usbmux forwarding on his iOS, signing with his Apple account, and whether Phantom shows readable text and buttons. Never say finger "works" before those are seen.
+
+## Alex, 2026-11-21: orders and live updates
+- "Make sure u can give it orders and u can update it on the spot like all apps." This REPLACES plan decision 30 (no self-update).
+- Orders: Claude drives finger through the finger-link tools (look, tap, swipe, type, open app), any time the app is open.
+- Updates: finger checks for a newer published build and installs it itself ("different in either direction", build number on screen), no new zip for Alex. To add after M1+M2 pass inspection.
+- Unchanged: the money limits live in a file on his Mac that only he types; an update never ships or edits that file.
