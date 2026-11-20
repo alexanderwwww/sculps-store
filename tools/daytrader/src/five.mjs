@@ -2,7 +2,7 @@
 // Bet at minute 3-4 of a round on the side BTC is already on, only when the move is big enough.
 // Contract price is modelled as the fair probability of that side winning (normal model on recent
 // 1-minute volatility), plus a $0.02 fee: the paper result is what an honest market would pay.
-export const FIVE = { stake: 1, fee: 0.02, minEdgeMove: 0.0004, maxPrice: 0.85 };
+export const FIVE = { stake: 2, fee: 0.02, minEdgeMove: 0.0004, maxPrice: 0.85 };
 
 const erf = x => { const t = 1 / (1 + 0.3275911 * Math.abs(x)); const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; };
 const cdf = z => 0.5 * (1 + erf(z / Math.SQRT2));
