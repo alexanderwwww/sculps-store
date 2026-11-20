@@ -55,3 +55,9 @@ usbmux forwarding on his iOS, signing with his Apple account, and whether Phanto
 - Orders: Claude drives finger through the finger-link tools (look, tap, swipe, type, open app), any time the app is open.
 - Updates: finger checks for a newer published build and installs it itself ("different in either direction", build number on screen), no new zip for Alex. To add after M1+M2 pass inspection.
 - Unchanged: the money limits live in a file on his Mac that only he types; an update never ships or edits that file.
+
+## Alex, 2026-11-21: speed
+- "Real time screen recognition… it needs speed… maybe you wanna cash out."
+- The watching happens ON THE MAC, not in the cloud: the worker reads the phone screen continuously (text tree first; live MJPEG stream from WDA, moved up from M8) and runs standing orders Claude sets ("cash out when this position shows +$1 / -$2", "sell before the round ends") with no round trip to Claude.
+- Claude sets and changes the standing orders and makes the entry call; the Mac executes exits at screen speed.
+- How fast one read is on his i3 + iPhone 11 Pro is unproven until his Mac (plan section 13, item 12). Measure it at M3 and show the number.
