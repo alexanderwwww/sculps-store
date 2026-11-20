@@ -1,0 +1,9 @@
+{
+  "note": "Empty on purpose. Filled from the real Phantom screens on Alex's iPhone at milestone M4. While readable is not true, live mode cannot be switched on and no gesture guard for the confirm button exists.",
+  "readable": null,
+  "bundleId": null,
+  "confirmLabels": [],
+  "flow": null,
+  "confirm": null,
+  "placed": null
+}

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>finger</title>
+<style>
+  :root { --ink:#111; --soft:#666; --line:#e6e6e6; --bg:#fafafa; --card:#fff; --go:#0a7d3c; --stop:#c0271b; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:28px 16px 60px; }
+  .top { display:flex; align-items:baseline; justify-content:space-between; }
+  h1 { font-size:22px; margin:0; letter-spacing:-0.02em; }
+  .build { color:var(--soft); font-size:13px; }
+  .money { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; margin:18px 0; }
+  .mode { font-size:44px; font-weight:700; letter-spacing:-0.03em; }
+  .mode.LIVE { color:var(--stop); } .mode.PAPER { color:var(--go); }
+  .big { font-size:28px; font-weight:600; margin-top:4px; }
+  .row { color:var(--soft); margin-top:6px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px 22px; margin:14px 0; }
+  .card h2 { font-size:15px; margin:0 0 10px; color:var(--soft); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  .phone { display:flex; justify-content:space-between; padding:8px 0; border-top:1px solid var(--line); }
+  .phone:first-of-type { border-top:0; }
+  .state { font-weight:600; }
+  label { display:flex; justify-content:space-between; align-items:center; padding:7px 0; gap:12px; }
+  input { width:120px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; font:inherit; text-align:right; }
+  button { font:inherit; font-weight:600; padding:10px 18px; border-radius:12px; border:1px solid var(--ink); background:var(--ink); color:#fff; cursor:pointer; margin-top:10px; }
+  button.quiet { background:#fff; color:var(--ink); }
+  .note { color:var(--soft); font-size:14px; margin-top:8px; }
+  .err { color:var(--stop); }
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><h1>finger</h1><span class="build" id="build"></span></div>
+
+  <section class="money">
+    <div class="mode" id="mode">...</div>
+    <div class="big" id="balance"></div>
+    <div class="row" id="spent"></div>
+    <div class="row err" id="unknown"></div>
+    <div class="note" id="blockers"></div>
+  </section>
+
+  <section class="card">
+    <h2>iPhones</h2>
+    <div id="phones"></div>
+    <div class="note err" id="usb"></div>
+  </section>
+
+  <section class="card">
+    <h2>Money limits</h2>
+    <form id="caps">
+      <label>Most per bet ($) <input name="perBetCap" inputmode="decimal"></label>
+      <label>Most per day ($) <input name="dailyCap" inputmode="decimal"></label>
+      <label>Stop after losing this much in a day ($) <input name="dailyLossLimit" inputmode="decimal"></label>
+      <label>Stop after this many losses in a row <input name="lossStop" inputmode="numeric"></label>
+      <label>Skip a round with less than this many seconds left <input name="minSecondsLeft" inputmode="numeric"></label>
+      <button type="submit">Save</button>
+      <span class="note" id="saved"></span>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Claude</h2>
+    <div id="link"></div>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const money = (n) => n === null || n === undefined ? 'not known yet' : '$' + Number(n).toFixed(2);
+let filled = false;
+
+function show(s) {
+  $('build').textContent = 'build ' + s.build + ' · phone software ' + s.wda;
+  $('mode').textContent = s.mode;
+  $('mode').className = 'mode ' + s.mode;
+  $('balance').textContent = 'Balance: ' + money(s.balance);
+  $('spent').textContent = 'Bet today: ' + money(s.spentToday) + ' · Lost today: ' + money(s.lossToday);
+  $('unknown').textContent = s.unknownBets ? s.unknownBets + ' bet with no known outcome. Live buying is stopped on that phone.' : '';
+  $('blockers').textContent = s.mode === 'PAPER' && s.liveBlockers.length ? 'Live stays off: ' + s.liveBlockers.join('; ') + '.' : '';
+  $('usb').textContent = s.usbmuxError ? 'USB: ' + s.usbmuxError : '';
+  const phones = $('phones');
+  phones.textContent = '';
+  if (!s.devices.length) phones.textContent = 'No iPhone has been plugged in yet.';
+  for (const d of s.devices) {
+    const row = document.createElement('div');
+    row.className = 'phone';
+    const name = document.createElement('span');
+    name.textContent = d.label;
+    const state = document.createElement('span');
+    state.className = 'state';
+    state.textContent = ({ ABSENT: 'not plugged in', STARTING: 'starting', READY: 'ready', LOCKED: 'unlock it', ALERT: 'pop-up: ' + (d.alert || ''), DEAD: 'not answering', UNKNOWN: 'checking' })[d.state] || d.state;
+    row.append(name, state);
+    phones.append(row);
+  }
+  $('link').textContent = !s.link ? 'Not connected to Claude yet.' : s.link.error ? 'No internet to Claude: ' + s.link.error : s.link.lastOkAt ? 'Connected.' : 'Connecting.';
+  if (!filled) {
+    for (const el of $('caps').elements) if (el.name) el.value = s.caps[el.name] === null ? '' : s.caps[el.name];
+    filled = true;
+  }
+}
+
+async function refresh() {
+  try { show(await (await fetch('/api/status')).json()); } catch (e) { $('mode').textContent = 'finger is not running'; }
+}
+
+$('caps').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const body = {};
+  for (const el of ev.target.elements) if (el.name) body[el.name] = el.value.trim();
+  const res = await (await fetch('/api/caps', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).json();
+  $('saved').textContent = res.ok ? 'Saved.' : res.error;
+  $('saved').className = res.ok ? 'note' : 'note err';
+  filled = false;
+  refresh();
+});
+
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

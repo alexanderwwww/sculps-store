@@ -1,0 +1,19 @@
+# finger-link: the bridge between Claude and finger on the Mac. Its own worker, its own name.
+# NOT DEPLOYED YET. It is never deployed without --config pointing at THIS file:
+# a deploy without --config once redeployed the live store.
+# Keys read from the wrangler 4.130.0 config schema in this repo (node_modules/wrangler/config-schema.json):
+# durable_objects.bindings, migrations[].new_sqlite_classes (line 3583).
+name = "finger-link"
+main = "worker.mjs"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[[durable_objects.bindings]]
+name = "LINK"
+class_name = "FingerLink"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["FingerLink"]
+
+# FINGER_KEY is the key in the URL (/k/<key>/...). It is set at deploy time and is not in this file.

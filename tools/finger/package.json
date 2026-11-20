@@ -1,0 +1,11 @@
+{
+  "name": "finger",
+  "private": true,
+  "type": "module",
+  "description": "Works a USB-connected iPhone like a finger and a pair of eyes. No dependencies: Node built-ins only.",
+  "engines": { "node": ">=22.5" },
+  "scripts": {
+    "test": "node --test --disable-warning=ExperimentalWarning \"test/*.test.mjs\"",
+    "check:workerd": "node test/workerd-check.mjs"
+  }
+}

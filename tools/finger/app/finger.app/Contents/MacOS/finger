@@ -1,0 +1,58 @@
+#!/bin/bash
+# finger launcher. UNPROVEN UNTIL HIS MAC (proven only under Linux bash, see STATUS.md).
+# 1. Installs the worker from this bundle into the support folder. The bundle is the truth:
+#    whenever the installed build file differs from the bundle's, in either direction, the
+#    installed worker is replaced. What finger remembers (data/) is never touched.
+# 2. Starts the worker with the Node that ships inside this bundle. Never a Node from the Mac.
+# 3. Opens the page.
+# 4. Keeps the worker running: if it stops, it is started again.
+# FINGER_SUPPORT and FINGER_NO_OPEN exist for the tests.
+
+HERE="$(cd "$(dirname "$0")" && pwd)"
+RES="$HERE/../Resources"
+NODE="$RES/node"
+SUPPORT="${FINGER_SUPPORT:-$HOME/Library/Application Support/finger}"
+WORKER="$SUPPORT/worker"
+DATA="$SUPPORT/data"
+LOG="$SUPPORT/finger.log"
+
+mkdir -p "$SUPPORT" "$DATA"
+
+if [ ! -x "$NODE" ]; then
+  echo "finger: the bundled Node is missing at $NODE" >> "$LOG"
+  exit 1
+fi
+
+if ! cmp -s "$RES/worker/BUILD" "$WORKER/BUILD"; then
+  rm -rf "$WORKER.new"
+  cp -R "$RES/worker" "$WORKER.new" || { echo "finger: install failed" >> "$LOG"; exit 1; }
+  rm -rf "$WORKER"
+  mv "$WORKER.new" "$WORKER"
+  echo "finger: installed build $(cat "$WORKER/BUILD")" >> "$LOG"
+fi
+
+export FINGER_HOME="$DATA"
+rm -f "$DATA/page.url"
+
+opened=0
+while true; do
+  "$NODE" "$WORKER/src/main.mjs" >> "$LOG" 2>&1 &
+  pid=$!
+  if [ "$opened" = 0 ]; then
+    for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+      [ -s "$DATA/page.url" ] && break
+      kill -0 "$pid" 2>/dev/null || break
+      sleep 0.5
+    done
+    if [ -s "$DATA/page.url" ] && [ -z "$FINGER_NO_OPEN" ]; then
+      open "$(cat "$DATA/page.url")"
+    fi
+    opened=1
+  fi
+  wait "$pid"
+  code=$?
+  # 3 = another finger is already running: this copy steps aside.
+  [ "$code" = 3 ] && exit 0
+  echo "finger: worker stopped with code $code, starting it again" >> "$LOG"
+  sleep 2
+done
