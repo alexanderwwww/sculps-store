@@ -3,7 +3,7 @@
 **Nothing here has run on a Mac or an iPhone.** This container is Linux. finger does not
 "work" until section 2 has been seen on his Mac. Nothing is deployed. No zip exists.
 
-Run everything: `npm test` in `tools/finger` (TESTCOUNT tests, Node 22, no dependencies), and
+Run everything: `npm test` in `tools/finger` (208 tests, Node 22, no dependencies), and
 `npm run check:workerd` (the real link worker in local workerd; nothing is deployed by it).
 Sources for every outside fact: `SOURCES.md`.
 

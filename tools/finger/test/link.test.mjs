@@ -412,6 +412,13 @@ test('link: a result over the size limit is swapped on the Mac for a small one t
     const res = await answer(link, await link.tool('finger_look', {}));
     assert.equal(res.code, 'RESULT_TOO_BIG');
     assert.equal(res.image, null);
+    // What the Mac itself puts on the wire (finger-link has the same check on its side).
+    const lone = new Link({ base: 'http://unused', getStatus: () => ({}), onCommand: async () => ({ ok: true, tree: ['x'.repeat(MAX_RESULT_BYTES)] }) });
+    const posted = [];
+    lone.post = async (route, body) => { posted.push(body); return { ok: true }; };
+    await lone.deliver({ id: 'big-1', tool: 'finger_look' });
+    assert.equal(posted[0].result.code, 'RESULT_TOO_BIG');
+    assert.ok(JSON.stringify(posted[0]).length < 1000);
   } finally { await close(); }
 });
 
@@ -422,6 +429,7 @@ test('link: an odd answer to take does not kill the loop, each loop holds one ti
   const { link, mac, close } = await macLink(async (cmd) => { seen.push(cmd.args.n); if (cmd.args.n === 1) await gate; return { ok: true, n: cmd.args.n }; });
   try {
     link.faults.on = (route) => (route === 'take' ? { ok: true, commands: { 0: 'x' } } : undefined);
+    await assert.doesNotReject(mac.takeOnce(), 'a take answer that is not a list is read as no commands');
     await sleep(150);
     link.faults.on = () => undefined;
     const slow = await link.tool('finger_look', { n: 1 });
