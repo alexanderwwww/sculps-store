@@ -76,3 +76,10 @@ usbmux forwarding on his iOS, signing with his Apple account, and whether Phanto
 - Flow: data brain (tools/daytrader/research/brain.mjs, when it passes its tests) + Claude + Grok -> one council decision per coin per round (up / down / skip, stake, exit orders) -> finger -> taps on the iPhone in Phantom.
 - Grok's seat today: he reads /grok/brief and answers through /grok/pick on the daytrader worker (works when Alex types "go" in Grok's chat). A Grok API key makes his vote automatic every round; no key is stored yet.
 - Every decision is logged with each member's vote, so who is right gets measured.
+
+## Alex, 2026-11-21: watch first, for one hour
+- "For 1 hour you're going to just observe trades on the iPhone and see how it works… you already have a lot of data from the Aquarius brain, transfer the knowledge."
+- Observe mode is the first thing finger does in Phantom: no taps on Buy for a full hour. It records every round on BTC, SOL, ETH: the chart views, Up/Down prices second by second, the price to beat, the result, the cash-out value over time, and where every button sits.
+- What it learns: Phantom's real round length, fee, minimum stake, how fast prices move, and how Phantom's prices compare with what the brain predicted. The council's paper votes are scored against these real rounds during the hour.
+- Knowledge carried in: aquarius-lessons and aquarius-brain (never chase strength, cost is the enemy, a few hundred trades is noise) plus tools/daytrader/research.
+- After the hour: a one-screen report to Alex, then the first $2 bet with him watching.
