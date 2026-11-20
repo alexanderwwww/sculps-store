@@ -70,3 +70,9 @@ usbmux forwarding on his iOS, signing with his Apple account, and whether Phanto
 - Setup, his words: "double click the app, then connect my iPhone with USB, then approve it, and then it will work." Three beats only. Every Apple-required tap (Trust, Developer Mode, trust the developer app, Apple account in Xcode) is presented as part of the one "approve" beat, one at a time on finger's window; nothing else is asked.
 - Trading goal: a little profit every 5-minute round by chart reading; cash out early when the trade has almost won; win at least 2 of the 3 coins each round (BTC, SOL, ETH).
 - Measure of "good": rounds where 2+ of 3 closed in profit, shown on screen. Paper first; live when that number holds.
+
+## Alex, 2026-11-21: the council decides every trade
+- "Let Grok be connected as well, so everything is going to go through the council… both you and Grok connected on the app, then the signals transferred to the iPhone."
+- Flow: data brain (tools/daytrader/research/brain.mjs, when it passes its tests) + Claude + Grok -> one council decision per coin per round (up / down / skip, stake, exit orders) -> finger -> taps on the iPhone in Phantom.
+- Grok's seat today: he reads /grok/brief and answers through /grok/pick on the daytrader worker (works when Alex types "go" in Grok's chat). A Grok API key makes his vote automatic every round; no key is stored yet.
+- Every decision is logged with each member's vote, so who is right gets measured.
