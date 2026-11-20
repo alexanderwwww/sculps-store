@@ -38,7 +38,7 @@ export async function kalshiTick(coin, s, { getJSON, price, vol1m, nowSec }) {
   if (s.lastLook !== m.ticker + Math.floor(left / 60)) {
     s.lastLook = m.ticker + Math.floor(left / 60);
     if (edge < K.minEdge || !(ask > 0.02 && ask < 0.98) || s.balance < K.stake) { if (left < 400 && !s.saidSkip?.[m.ticker]) { s.saidSkip = { [m.ticker]: 1 }; say(`No edge yet: Up $${yesAsk} / Down $${noAsk}, fair Up ${(pYes * 100).toFixed(0)}%`); } return s; }
-    const contracts = Math.max(1, Math.floor(K.stake / ask));
+    const contracts = +(K.stake / ask).toFixed(4); // exactly $10 per bet
     s.open.push({ ticker: m.ticker, side, price: ask, contracts, strike, at: price, fair: +pYes.toFixed(3), closeSec, placed: nowSec });
     say(`Bet ${side === "yes" ? "UP" : "DOWN"} ${contracts}× at $${ask} (fair ${(100 * (side === "yes" ? pYes : 1 - pYes)).toFixed(0)}%, pays ×${(1 / ask).toFixed(1)})`);
   }

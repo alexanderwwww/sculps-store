@@ -57,7 +57,7 @@ function draw(){let tot=0,start=0,bets=[],w=0,n=0;
   if(s){tot+=s.balance;start+=s.start;const pl=s.balance-s.start;$("l"+k).textContent=(pl>=0?"+":"")+m(pl);$("l"+k).className=pl>0?"up":pl<0?"down":"";
    const km=s.market||{};const o=(s.open||[]).find(b=>b.ticker===km.ticker)||null;if(km.yesAsk!=null){$("sub"+k).textContent="Kalshi · closes "+ath(km.closeSec)}
    $("u"+k).className="pill u"+(o&&o.side==="up"?" on":"");$("d"+k).className="pill d"+(o&&o.side==="down"?" on":"");
-   $("u"+k).className="pill u"+(o&&o.side==="yes"?" on":"");$("d"+k).className="pill d"+(o&&o.side==="no"?" on":"");$("u"+k).textContent=(o&&o.side==="yes"?`▲ Up · $${(o.contracts*o.price).toFixed(2)} bet · wins $${o.contracts}`:`▲ Up $${km.yesAsk??"–"}`);$("d"+k).textContent=(o&&o.side==="no"?`▼ Down · $${(o.contracts*o.price).toFixed(2)} bet · wins $${o.contracts}`:`▼ Down $${km.noAsk??"–"}`);
+   $("u"+k).className="pill u"+(o&&o.side==="yes"?" on":"");$("d"+k).className="pill d"+(o&&o.side==="no"?" on":"");$("u"+k).textContent=(o&&o.side==="yes"?`▲ Up · $${(o.contracts*o.price).toFixed(2)} bet · wins $${o.contracts.toFixed(2)}`:`▲ Up $${km.yesAsk??"–"}`);$("d"+k).textContent=(o&&o.side==="no"?`▼ Down · $${(o.contracts*o.price).toFixed(2)} bet · wins $${o.contracts.toFixed(2)}`:`▼ Down $${km.noAsk??"–"}`);
    s.bets.forEach(b=>{bets.push({...b,k});n++;if(b.won)w++})}
  }
  if(start){$("tot").textContent=m(tot);const p=tot-start;$("tpl").textContent=(p>=0?"+":"")+m(p)+" ("+(p/start*100).toFixed(2)+"%)";$("tpl").className="d "+(p>0?"up":p<0?"down":"mute")}
