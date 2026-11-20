@@ -1,0 +1,77 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day Trader</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--fg:#0f141a;--mute:#66717d;--line:#e3e8ee;--up:#0a9f5a;--down:#d7352b;--accent:#1d6ff2}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px Inter,system-ui,sans-serif;padding:24px max(16px,env(safe-area-inset-left))}
+.w{max-width:900px;margin:0 auto;display:grid;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:24px}.sub{color:var(--mute);margin:2px 0 0;font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.big{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px}
+.k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.v{font:600 22px "JetBrains Mono",monospace;font-variant-numeric:tabular-nums;margin-top:4px}
+.v.hero{font-size:34px}
+.up{color:var(--up)}.down{color:var(--down)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px;padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--card)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mute)}.dot.on{background:var(--up)}
+button{font:600 13px Inter,sans-serif;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:9px 14px;cursor:pointer}
+button.main{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+h2{font-size:15px;margin:0 0 10px}
+.tbl{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}th{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
+.empty{color:var(--mute);padding:6px 0}
+.log div{padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}.log span{color:var(--mute);font-family:"JetBrains Mono",monospace;margin-right:8px}
+input{font:13px "JetBrains Mono",monospace;padding:9px;border:1px solid var(--line);border-radius:10px;flex:1;min-width:200px;background:var(--bg);color:var(--fg)}
+@media(max-width:640px){.big{grid-template-columns:1fr 1fr}}
+</style></head><body><div class="w">
+<div class="top"><div><h1>Day Trader</h1><p class="sub">Claude's engine finds the trade · Grok checks the news · paper money</p></div>
+<div class="row"><span class="pill"><span class="dot" id="dot"></span><span id="status">…</span></span><button id="toggle">Pause</button></div></div>
+
+<div class="big">
+ <div class="card"><div class="k">Balance (paper)</div><div class="v hero" id="bal">–</div><div class="sub" id="total"></div></div>
+ <div class="card"><div class="k">Today</div><div class="v" id="today">–</div></div>
+ <div class="card"><div class="k">Win rate</div><div class="v" id="wr">–</div></div>
+ <div class="card"><div class="k">Market</div><div class="v" id="bias">–</div></div>
+</div>
+
+<div class="card"><h2>Open trades</h2><div class="tbl"><table><thead><tr><th>Stock</th><th>Side</th><th>Shares</th><th>Entry</th><th>Now</th><th>Stop</th><th>Target</th><th>P&amp;L</th><th>Grok</th></tr></thead><tbody id="open"></tbody></table></div><div class="empty" id="openE">No open trades. It scans every 5 minutes from 17:00 to 22:00 Athens.</div></div>
+
+<div class="card"><h2>What happened</h2><div class="log" id="log"></div><div class="empty" id="logE">Nothing yet today.</div></div>
+
+<div class="card"><h2>Closed trades</h2><div class="tbl"><table><thead><tr><th>Day</th><th>Stock</th><th>Side</th><th>Entry</th><th>Exit</th><th>P&amp;L</th><th>Why</th></tr></thead><tbody id="closed"></tbody></table></div><div class="empty" id="closedE">None yet.</div></div>
+
+<div class="card"><h2>Grok</h2><p class="sub" id="grokS" style="margin:0 0 10px"></p>
+<div class="row"><input id="xai" placeholder="Paste Grok API key (console.x.ai → API Keys)"><button class="main" id="saveG">Connect Grok</button></div></div>
+
+<div class="card"><h2>Rules</h2><p class="sub" style="line-height:1.7;margin:0">Opening-range breakout after 17:00 Athens, only with the market direction and above-average volume · risk 1% per trade · target 2× risk · max 3 trades and 2 losses a day · everything closed by 22:55 Athens · stocks, gold (GLD), SPY, QQQ.</p>
+<div class="row" style="margin-top:12px"><button id="run">Scan now</button><button id="reset">Reset paper account</button></div></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const m=n=>(n<0?"-$":"$")+Math.abs(n).toLocaleString("en-US",{maximumFractionDigits:2});
+const ath=t=>new Date(t*1000).toLocaleTimeString("en-GB",{timeZone:"Europe/Athens",hour:"2-digit",minute:"2-digit"});
+const athDay=t=>new Date(t*1000).toLocaleDateString("en-GB",{timeZone:"Europe/Athens",day:"2-digit",month:"short"});
+function cells(tr,vals){vals.forEach(([v,c])=>{const td=document.createElement("td");td.textContent=v;if(c)td.className=c;tr.appendChild(td)})}
+function draw(s){
+ $("bal").textContent=m(s.balance);const tot=s.balance-s.start;$("total").textContent=(tot>=0?"+":"")+m(tot)+" since start";$("total").className="sub "+(tot>0?"up":tot<0?"down":"");
+ const todayStr=new Date().toLocaleDateString("en-CA",{timeZone:"America/New_York"});
+ const td=s.closed.filter(c=>new Date(c.closedAt*1000).toLocaleDateString("en-CA",{timeZone:"America/New_York"})===todayStr).reduce((a,c)=>a+c.pnl,0)+s.open.reduce((a,p)=>a+(p.now-p.entry)*p.shares*(p.side==="long"?1:-1),0);
+ $("today").textContent=m(td);$("today").className="v "+(td>0?"up":td<0?"down":"");
+ const w=s.closed.filter(c=>c.pnl>0).length;$("wr").textContent=s.closed.length?Math.round(100*w/s.closed.length)+"%":"–";
+ $("bias").textContent={up:"Up",down:"Down",flat:"Flat"}[s.bias]||"–";$("bias").className="v "+(s.bias==="up"?"up":s.bias==="down"?"down":"");
+ $("dot").className="dot"+(s.on?" on":"");$("status").textContent=s.on?("Running · last scan "+(s.lastTick?ath(s.lastTick):"–")):"Paused";$("toggle").textContent=s.on?"Pause":"Start";
+ const ob=$("open");ob.textContent="";s.open.forEach(p=>{const tr=document.createElement("tr");const pl=(p.now-p.entry)*p.shares*(p.side==="long"?1:-1);cells(tr,[[p.symbol],[p.side],[p.shares],[p.entry],[(+p.now).toFixed(2)],[p.stop,"down"],[p.target,"up"],[m(pl),pl>0?"up":pl<0?"down":""],[p.grok?p.grok.verdict:"–"]]);ob.appendChild(tr)});$("openE").hidden=s.open.length>0;
+ const cb=$("closed");cb.textContent="";s.closed.slice().reverse().forEach(c=>{const tr=document.createElement("tr");cells(tr,[[athDay(c.closedAt)],[c.symbol],[c.side],[c.entry],[c.exit],[m(c.pnl),c.pnl>0?"up":"down"],[c.why]]);cb.appendChild(tr)});$("closedE").hidden=s.closed.length>0;
+ const lg=$("log");lg.textContent="";s.log.slice(0,15).forEach(l=>{const d=document.createElement("div");const sp=document.createElement("span");sp.textContent=ath(l.at);d.append(sp,l.m);lg.appendChild(d)});$("logE").hidden=s.log.length>0;
+ $("grokS").textContent=s.hasGrok?("Grok is connected"+(s.grok&&s.grok.startsWith("error")?" but answered with an "+s.grok:" and checks every trade before it opens.")):"Not connected. The engine trades alone until you paste a key.";
+}
+const load=()=>fetch("/api/state").then(r=>r.json()).then(draw);
+const post=(p,b)=>fetch(p,{method:"POST",headers:{"content-type":"application/json"},body:b?JSON.stringify(b):undefined}).then(r=>r.json());
+$("toggle").onclick=()=>post("/api/toggle").then(load);
+$("run").onclick=()=>{$("run").textContent="Scanning…";post("/api/run").then(load).finally(()=>$("run").textContent="Scan now")};
+let armed=0;$("reset").onclick=()=>{if(!armed){armed=1;$("reset").textContent="Tap again to wipe";setTimeout(()=>{armed=0;$("reset").textContent="Reset paper account"},4000);return}post("/api/reset").then(load);armed=0;$("reset").textContent="Reset paper account"};
+$("saveG").onclick=()=>post("/api/grok",{key:$("xai").value}).then(()=>{$("xai").value="";return post("/api/run")}).then(load);
+load();setInterval(load,30000);
+</script></body></html>
