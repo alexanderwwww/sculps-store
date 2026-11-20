@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { Usbmux } from './usbmux.mjs';
 import { Registry } from './devices.mjs';
 import { Lane } from './lane.mjs';
-import { Caps, Refusal } from './guard.mjs';
+import { Caps, Refusal, BUILT, checkProfile } from './guard.mjs';
 import { Ledger } from './ledger.mjs';
 import { CommandJournal } from './journal.mjs';
 import { buy } from './buy.mjs';
@@ -34,12 +34,14 @@ export function createApp({
   now = Date.now,
   healthMs = 10000,
   linkOptions = {},
+  built = BUILT,         // what finger can do by itself (guard.mjs); the tests stand in for parts not built
 }) {
+  checkProfile(profile); // a profile finger cannot guard does not load
   fs.mkdirSync(home, { recursive: true });
   const build = readBuild();
   const usbmux = new Usbmux(usbmuxSocket ? { socketPath: usbmuxSocket } : {});
   const registry = new Registry({ file: path.join(home, 'devices.json') });
-  const caps = new Caps({ file: path.join(home, 'caps.json') });
+  const caps = new Caps({ file: path.join(home, 'caps.json'), built });
   const ledger = new Ledger({ file: path.join(home, 'ledger.jsonl'), now });
   const commands = new CommandJournal({ file: path.join(home, 'commands.jsonl') });
   const lanes = new Map();
@@ -51,7 +53,7 @@ export function createApp({
 
   const laneFor = (udid) => {
     const k = udid.toLowerCase();
-    if (!lanes.has(k)) lanes.set(k, new Lane({ udid, usbmux, registry, profile, now }));
+    if (!lanes.has(k)) lanes.set(k, new Lane({ udid, usbmux, registry, profile, caps, now }));
     return lanes.get(k);
   };
 
@@ -82,9 +84,17 @@ export function createApp({
     }
   }
 
+  // Never throws: a damaged file shows up as a line in "problems", not as a dead page.
   function status() {
     const c = caps.read();
     const s = ledger.summary();
+    const problems = [];
+    if (c.problem) problems.push(c.problem);
+    if (s.damaged) problems.push(`${s.damaged}. Buying is stopped until it is repaired; looking and tapping still work.`);
+    if (s.torn) problems.push(`${s.torn} unfinished row${s.torn === 1 ? ' was' : 's were'} found at the end of the money ledger and set aside (ledger.jsonl.torn).`);
+    if (commands.bad) problems.push(`${commands.bad} line${commands.bad === 1 ? '' : 's'} of the command journal could not be read and ${commands.bad === 1 ? 'was' : 'were'} skipped.`);
+    if (registry.problem) problems.push(registry.problem);
+    if (profile.readable !== true && c.walletSetup) problems.push('Wallet setup is ON: finger may tap anywhere inside the wallet and nothing guards its buy button. The wallet balance must be zero. Switch it off when setup is done.');
     return {
       build,
       wda: WDA_PIN.version,
@@ -93,7 +103,13 @@ export function createApp({
       balance: null,
       spentToday: s.spentToday,
       lossToday: s.lossToday,
+      openStakes: s.openStakes,
+      openSince: s.openSince,
       unknownBets: s.unknown.length,
+      unknown: s.unknown,
+      problems,
+      walletRecorded: profile.readable === true,
+      walletSetup: c.walletSetup,
       caps: { perBetCap: c.perBetCap, dailyCap: c.dailyCap, dailyLossLimit: c.dailyLossLimit, lossStop: c.lossStop, minSecondsLeft: c.minSecondsLeft, maxStake: c.maxStake },
       usbmuxError,
       mac,
@@ -104,7 +120,11 @@ export function createApp({
   // Every result carries the same header (PLAN section 2).
   const stamp = (udid, body) => {
     const c = caps.read();
-    return { device: udid ? registry.label(udid) : null, udid: udid || null, build, mode: c.mode, spentToday: ledger.summary().spentToday, ...body };
+    const lane = udid ? laneFor(udid).status() : null;
+    return {
+      device: udid ? registry.label(udid) : null, udid: udid || null, build, wda: WDA_PIN.version, mode: c.mode,
+      balance: null, spentToday: ledger.summary().spentToday, lastLookAgeMs: lane ? lane.lastLookAgeMs : null, ...body,
+    };
   };
 
   async function runCommand(cmd) {
@@ -113,14 +133,16 @@ export function createApp({
     // Written before anything runs. A second delivery of the same id stops here.
     if (!commands.begin(cmd.id, cmd.tool)) return stamp(null, { ok: false, code: 'ALREADY_RUN', error: 'this call was already started once; it is not run again' });
     let udid = null;
+    // The lifetime is checked here and again when the call's turn in the phone's lane comes.
+    const life = { expiresAt: cmd.expiresAt };
     try {
       if (cmd.tool === 'finger_look') {
         udid = registry.resolve(args.device);
-        return stamp(udid, { ok: true, ...(await laneFor(udid).look(args.mode || 'tree')) });
+        return stamp(udid, { ok: true, ...(await laneFor(udid).look(args.mode || 'tree', life)) });
       }
       if (cmd.tool === 'finger_act') {
         udid = registry.resolve(args.device);
-        const done = await laneFor(udid).act(args.steps, args.then || 'tree');
+        const done = await laneFor(udid).act(args.steps, args.then || 'tree', life);
         // The picture rides at the top of the result, where finger-link looks for it.
         const image = done.after ? done.after.image : undefined;
         if (image) delete done.after.image;
@@ -129,7 +151,7 @@ export function createApp({
       if (cmd.tool === 'finger_buy') {
         udid = registry.resolve(args.udid, { forBuy: true });
         const req = { udid, coin: args.coin, side: args.side, stake: args.stake, round: args.round, createdAt: cmd.createdAt };
-        return stamp(udid, await buy(req, { lane: laneFor(udid), caps, ledger, profile, now }));
+        return stamp(udid, await buy(req, { lane: laneFor(udid), caps, ledger, profile, now, ...life }));
       }
       if (cmd.tool === 'finger_selftest') {
         return stamp(null, { ok: false, code: 'NOT_BUILT', error: 'the self-test is not built yet (milestone M3)' });
@@ -140,7 +162,7 @@ export function createApp({
     }
   }
 
-  const link = linkBase ? new Link({ base: linkBase, getStatus: status, onCommand: runCommand, ...linkOptions }) : null;
+  const link = linkBase ? new Link({ base: linkBase, getStatus: status, onCommand: runCommand, outboxFile: path.join(home, 'outbox.json'), ...linkOptions }) : null;
   let page = null;
 
   return {
@@ -150,7 +172,7 @@ export function createApp({
       await watchUsb();
       probe().then((m) => { mac = m; }).catch((e) => { mac = { error: e.message }; });
       timers.push(setInterval(() => { for (const lane of lanes.values()) lane.healthTick(); }, healthMs));
-      page = await startPage({ port: pagePort, getStatus: () => ({ ...status(), link: link ? { lastOkAt: link.lastOkAt, error: link.lastError } : null }), caps, ledger, profile });
+      page = await startPage({ port: pagePort, getStatus: () => ({ ...status(), link: link ? { lastOkAt: link.lastOkAt, error: link.lastError, undelivered: Object.keys(link.outbox).length } : null }), caps, ledger, profile });
       if (link) link.start();
       return this;
     },
@@ -186,7 +208,12 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
   }
   // The link address is kept in link.json ({"base": "https://.../k/<key>"}) once finger-link is deployed.
   const linkFile = path.join(home, 'link.json');
-  const linkBase = fs.existsSync(linkFile) ? JSON.parse(fs.readFileSync(linkFile, 'utf8')).base : null;
+  let linkBase = null;
+  try {
+    if (fs.existsSync(linkFile)) linkBase = JSON.parse(fs.readFileSync(linkFile, 'utf8')).base || null;
+  } catch (e) {
+    console.error(`link.json cannot be read (${e.message}); starting without the link to Claude`);
+  }
   const app = createApp({ home, usbmuxSocket: process.env.FINGER_USBMUXD, linkBase, pagePort: Number(process.env.FINGER_PORT || 4747) });
   await app.start();
   fs.writeFileSync(path.join(home, 'page.url'), app.pageUrl);

@@ -5,8 +5,16 @@
 //   - a command is refused when the Mac's heartbeat is older than 30 s
 //   - every command has a lifetime; an expired command is never handed out
 //   - a command is handed out once
+//   - a command that was handed out and never answered does not stay "pending" for ever:
+//     past its deadline (its lifetime plus the longest it may run) it reads as "lost"
+//   - a result that is too big to store is replaced by a small one that says so
 export const HEARTBEAT_MAX_AGE_MS = 30000;
 const KEEP_MS = 60 * 60 * 1000;
+// A result is stored as one string. Cloudflare allows 8 MB for a string or a row in a
+// SQLite Durable Object (developers.cloudflare.com/durable-objects/platform/limits/, read
+// 2026-11-20); finger keeps to half. src/link.mjs checks the same number before posting.
+export const MAX_RESULT_BYTES = 4 * 1000 * 1000;
+const bytes = (text) => new TextEncoder().encode(text).length;
 
 export class LinkCore {
   constructor({ sql, now = Date.now }) {
@@ -14,7 +22,7 @@ export class LinkCore {
     this.now = now;
     sql.all(`CREATE TABLE IF NOT EXISTS commands (
       id TEXT PRIMARY KEY, tool TEXT NOT NULL, args TEXT NOT NULL,
-      created INTEGER NOT NULL, expires INTEGER NOT NULL,
+      created INTEGER NOT NULL, expires INTEGER NOT NULL, deadline INTEGER NOT NULL,
       state TEXT NOT NULL, result TEXT)`);
     sql.all('CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL, t INTEGER NOT NULL)');
     sql.all('CREATE TABLE IF NOT EXISTS journal (n INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, row TEXT NOT NULL)');
@@ -41,7 +49,18 @@ export class LinkCore {
     const rows = this.sql.all('SELECT state FROM commands WHERE id = ?', id);
     if (rows.length === 0) return { ok: false, error: 'no such command' };
     if (rows[0].state === 'done') return { ok: true, already: true };
-    this.sql.all("UPDATE commands SET state = 'done', result = ? WHERE id = ?", JSON.stringify(body), id);
+    if (rows[0].state !== 'taken' && rows[0].state !== 'lost') return { ok: false, error: 'that command was never handed to the Mac' };
+    // Whatever goes wrong storing it, the call must end: the Mac is told "taken" (so it
+    // stops posting) and Claude reads a small result that says what happened.
+    let text = JSON.stringify(body === undefined ? null : body);
+    const size = bytes(text);
+    const tooBig = (why) => JSON.stringify({ ok: false, code: 'RESULT_TOO_BIG', error: `the Mac carried out the call, but its result (${size} bytes) could not be kept: ${why}. Look again with mode "tree".` });
+    if (size > MAX_RESULT_BYTES) text = tooBig(`it is over ${MAX_RESULT_BYTES} bytes`);
+    try {
+      this.sql.all("UPDATE commands SET state = 'done', result = ? WHERE id = ?", text, id);
+    } catch (e) {
+      this.sql.all("UPDATE commands SET state = 'done', result = ? WHERE id = ?", tooBig(String(e.message).slice(0, 200)), id);
+    }
     return { ok: true };
   }
 
@@ -54,7 +73,8 @@ export class LinkCore {
     return { online: ageMs <= HEARTBEAT_MAX_AGE_MS, ageMs, mac: JSON.parse(rows[0].v) };
   }
 
-  enqueue(tool, args, lifetimeMs) {
+  // lifetimeMs: how long the Mac has to take it. maxRunMs: the longest it may then run.
+  enqueue(tool, args, lifetimeMs, maxRunMs = 5 * 60 * 1000) {
     const s = this.status();
     if (!s.online) {
       const seen = s.ageMs === null ? 'has never been seen' : `was last seen ${Math.round(s.ageMs / 1000)} s ago`;
@@ -63,13 +83,15 @@ export class LinkCore {
     const now = this.now();
     this.sql.all('DELETE FROM commands WHERE created < ?', now - KEEP_MS);
     const id = crypto.randomUUID();
-    this.sql.all("INSERT INTO commands (id, tool, args, created, expires, state) VALUES (?, ?, ?, ?, ?, 'queued')",
-      id, tool, JSON.stringify(args), now, now + lifetimeMs);
+    this.sql.all("INSERT INTO commands (id, tool, args, created, expires, deadline, state) VALUES (?, ?, ?, ?, ?, ?, 'queued')",
+      id, tool, JSON.stringify(args), now, now + lifetimeMs, now + lifetimeMs + maxRunMs);
     return { ok: true, id };
   }
 
   expire(now) {
     this.sql.all("UPDATE commands SET state = 'expired' WHERE state = 'queued' AND expires <= ?", now);
+    // Handed to the Mac and never answered. A result that still arrives later is kept.
+    this.sql.all("UPDATE commands SET state = 'lost' WHERE state = 'taken' AND deadline <= ?", now);
   }
 
   get(id) {

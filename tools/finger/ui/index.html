@@ -38,14 +38,32 @@
     <div class="mode" id="mode">...</div>
     <div class="big" id="balance"></div>
     <div class="row" id="spent"></div>
-    <div class="row err" id="unknown"></div>
+    <div class="row" id="open"></div>
     <div class="note" id="blockers"></div>
+    <button class="quiet" id="modeBtn" type="button"></button>
+    <button class="quiet" id="resetBtn" type="button">Clear the losses-in-a-row stop</button>
+    <span class="note" id="modeSaid"></span>
+  </section>
+
+  <section class="card" id="problemsCard" hidden>
+    <h2>Needs a look</h2>
+    <div id="problems" class="err"></div>
+  </section>
+
+  <section class="card" id="unknownCard" hidden>
+    <h2>Bets finger could not read the outcome of</h2>
+    <div class="note">Live buying is stopped on that phone until you say what happened. Check the bet in the wallet.</div>
+    <div id="unknown"></div>
   </section>
 
   <section class="card">
     <h2>iPhones</h2>
     <div id="phones"></div>
     <div class="note err" id="usb"></div>
+    <div id="setup" hidden>
+      <div class="note" id="setupSaid"></div>
+      <button class="quiet" id="setupBtn" type="button"></button>
+    </div>
   </section>
 
   <section class="card">
@@ -70,6 +88,17 @@
 const $ = (id) => document.getElementById(id);
 const money = (n) => n === null || n === undefined ? 'not known yet' : '$' + Number(n).toFixed(2);
 let filled = false;
+let mode = 'PAPER';
+let setupOn = false;
+
+// Sends one change to finger and shows what it answered.
+async function send(route, body) {
+  const res = await (await fetch(route, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).json();
+  $('modeSaid').textContent = res.ok ? '' : res.error;
+  $('modeSaid').className = res.ok ? 'note' : 'note err';
+  refresh();
+  return res;
+}
 
 function show(s) {
   $('build').textContent = 'build ' + s.build + ' · phone software ' + s.wda;
@@ -77,7 +106,36 @@ function show(s) {
   $('mode').className = 'mode ' + s.mode;
   $('balance').textContent = 'Balance: ' + money(s.balance);
   $('spent').textContent = 'Bet today: ' + money(s.spentToday) + ' · Lost today: ' + money(s.lossToday);
-  $('unknown').textContent = s.unknownBets ? s.unknownBets + ' bet with no known outcome. Live buying is stopped on that phone.' : '';
+  $('open').textContent = s.openStakes ? 'In bets with no result recorded: ' + money(s.openStakes) + ' (oldest from ' + s.openSince + ')' : '';
+  $('modeBtn').textContent = s.mode === 'LIVE' ? 'Switch to PAPER' : 'Switch to LIVE';
+  mode = s.mode;
+  $('problemsCard').hidden = !s.problems.length;
+  $('problems').textContent = '';
+  for (const p of s.problems) { const d = document.createElement('div'); d.textContent = p; $('problems').append(d); }
+  $('unknownCard').hidden = !s.unknown.length;
+  $('unknown').textContent = '';
+  for (const b of s.unknown) {
+    const row = document.createElement('div');
+    row.className = 'phone';
+    const name = document.createElement('span');
+    name.textContent = b.coin + ' ' + b.round + ' · ' + money(b.stake) + ' · ' + b.date;
+    const yes = document.createElement('button');
+    yes.className = 'quiet'; yes.type = 'button'; yes.textContent = 'It was placed';
+    yes.onclick = () => send('/api/resolve', { id: b.id, result: 'placed' });
+    const no = document.createElement('button');
+    no.className = 'quiet'; no.type = 'button'; no.textContent = 'It was not placed';
+    no.onclick = () => send('/api/resolve', { id: b.id, result: 'not_placed' });
+    const buttons = document.createElement('span');
+    buttons.append(yes, ' ', no);
+    row.append(name, buttons);
+    $('unknown').append(row);
+  }
+  $('setup').hidden = s.walletRecorded;
+  setupOn = s.walletSetup;
+  $('setupSaid').textContent = s.walletSetup
+    ? 'Wallet setup is ON: finger may tap inside the wallet and nothing guards its buy button. Keep the wallet balance at zero.'
+    : 'The wallet\'s screens are not recorded yet, so finger looks at the wallet but does not tap inside it.';
+  $('setupBtn').textContent = s.walletSetup ? 'Switch wallet setup off' : 'Switch wallet setup on (only with an empty wallet)';
   $('blockers').textContent = s.mode === 'PAPER' && s.liveBlockers.length ? 'Live stays off: ' + s.liveBlockers.join('; ') + '.' : '';
   $('usb').textContent = s.usbmuxError ? 'USB: ' + s.usbmuxError : '';
   const phones = $('phones');
@@ -115,6 +173,10 @@ $('caps').addEventListener('submit', async (ev) => {
   filled = false;
   refresh();
 });
+
+$('modeBtn').addEventListener('click', () => send('/api/mode', { mode: mode === 'LIVE' ? 'PAPER' : 'LIVE' }));
+$('resetBtn').addEventListener('click', () => send('/api/reset-losses', {}));
+$('setupBtn').addEventListener('click', () => send('/api/wallet-setup', { on: !setupOn }));
 
 refresh();
 setInterval(refresh, 2000);

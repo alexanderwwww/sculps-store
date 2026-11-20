@@ -15,7 +15,22 @@ export class Registry {
     this.file = file;
     this.known = {};      // key -> { alias, udid, firstSeen }
     this.attached = new Map(); // key -> deviceId
-    if (fs.existsSync(file)) this.known = JSON.parse(fs.readFileSync(file, 'utf8'));
+    this.problem = null;
+    if (fs.existsSync(file)) {
+      // A file that cannot be read is set aside and finger starts with no phones known.
+      // The phone numbers (1, 2) are then given out afresh, which is said on the page;
+      // a buy is safe either way, because a buy names the phone by its full UDID.
+      try {
+        const known = JSON.parse(fs.readFileSync(file, 'utf8'));
+        const ok = known && typeof known === 'object' && !Array.isArray(known)
+          && Object.values(known).every((d) => d && typeof d.udid === 'string' && Number.isInteger(d.alias));
+        if (!ok) throw new Error('not a list of phones');
+        this.known = known;
+      } catch {
+        fs.renameSync(file, `${file}.bad`);
+        this.problem = 'the list of known iPhones could not be read and was set aside: iPhone numbers (1, 2) are being given out again, so check which is which';
+      }
+    }
   }
 
   attach({ deviceId, udid }) {

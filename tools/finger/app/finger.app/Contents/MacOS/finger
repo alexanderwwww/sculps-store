@@ -2,10 +2,12 @@
 # finger launcher. UNPROVEN UNTIL HIS MAC (proven only under Linux bash, see STATUS.md).
 # 1. Installs the worker from this bundle into the support folder. The bundle is the truth:
 #    whenever the installed build file differs from the bundle's, in either direction, the
-#    installed worker is replaced. What finger remembers (data/) is never touched.
+#    installed worker is replaced. A worker that is still running the other build is stopped
+#    first, so its folder is never swapped under it. What finger remembers (data/) is never touched.
 # 2. Starts the worker with the Node that ships inside this bundle. Never a Node from the Mac.
 # 3. Opens the page.
 # 4. Keeps the worker running: if it stops, it is started again.
+# A double-click while finger is already running opens the running copy's page and steps aside.
 # FINGER_SUPPORT and FINGER_NO_OPEN exist for the tests.
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -15,6 +17,7 @@ SUPPORT="${FINGER_SUPPORT:-$HOME/Library/Application Support/finger}"
 WORKER="$SUPPORT/worker"
 DATA="$SUPPORT/data"
 LOG="$SUPPORT/finger.log"
+PIDFILE="$DATA/finger.pid"
 
 mkdir -p "$SUPPORT" "$DATA"
 
@@ -23,7 +26,31 @@ if [ ! -x "$NODE" ]; then
   exit 1
 fi
 
+# Is the worker named in the pidfile alive?
+running() {
+  [ -s "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
+}
+
+opened=0
+open_page() {
+  [ "$opened" = 1 ] && return
+  [ -s "$DATA/page.url" ] || return
+  opened=1
+  [ -n "$FINGER_NO_OPEN" ] && return
+  open "$(cat "$DATA/page.url")"
+}
+
 if ! cmp -s "$RES/worker/BUILD" "$WORKER/BUILD"; then
+  if running; then
+    old="$(cat "$PIDFILE")"
+    echo "finger: stopping the running worker ($old) to install another build" >> "$LOG"
+    kill "$old" 2>/dev/null
+    for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+      kill -0 "$old" 2>/dev/null || break
+      sleep 0.5
+    done
+    kill -9 "$old" 2>/dev/null
+  fi
   rm -rf "$WORKER.new"
   cp -R "$RES/worker" "$WORKER.new" || { echo "finger: install failed" >> "$LOG"; exit 1; }
   rm -rf "$WORKER"
@@ -31,10 +58,10 @@ if ! cmp -s "$RES/worker/BUILD" "$WORKER/BUILD"; then
   echo "finger: installed build $(cat "$WORKER/BUILD")" >> "$LOG"
 fi
 
+# page.url belongs to the running worker. It is cleared only when none is running.
 export FINGER_HOME="$DATA"
-rm -f "$DATA/page.url"
+running || rm -f "$DATA/page.url"
 
-opened=0
 while true; do
   "$NODE" "$WORKER/src/main.mjs" >> "$LOG" 2>&1 &
   pid=$!
@@ -44,15 +71,19 @@ while true; do
       kill -0 "$pid" 2>/dev/null || break
       sleep 0.5
     done
-    if [ -s "$DATA/page.url" ] && [ -z "$FINGER_NO_OPEN" ]; then
-      open "$(cat "$DATA/page.url")"
-    fi
-    opened=1
+    open_page
   fi
   wait "$pid"
   code=$?
-  # 3 = another finger is already running: this copy steps aside.
-  [ "$code" = 3 ] && exit 0
+  if [ "$code" = 3 ]; then
+    # 3 = another finger is already running. Its page is opened and this copy steps aside.
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+      [ -s "$DATA/page.url" ] && break
+      sleep 0.5
+    done
+    open_page
+    exit 0
+  fi
   echo "finger: worker stopped with code $code, starting it again" >> "$LOG"
   sleep 2
 done

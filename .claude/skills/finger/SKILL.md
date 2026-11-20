@@ -83,3 +83,11 @@ usbmux forwarding on his iOS, signing with his Apple account, and whether Phanto
 - What it learns: Phantom's real round length, fee, minimum stake, how fast prices move, and how Phantom's prices compare with what the brain predicted. The council's paper votes are scored against these real rounds during the hour.
 - Knowledge carried in: aquarius-lessons and aquarius-brain (never chase strength, cost is the enemy, a few hundred trades is noise) plus tools/daytrader/research.
 - After the hour: a one-screen report to Alex, then the first $2 bet with him watching.
+
+## Alex, 2026-11-21: THE MOST IMPORTANT PART — judgment, not a timer
+- "Don't hard code the trader to go when the timer starts… you can go after 2 minutes or 3 or 1 or 30 seconds. He's going to use judgment, not automated bot bullshit… You're gonna check how much money they give you and then you're gonna judge."
+- No fixed entry second anywhere in the code. Every few seconds of a round the trader asks one question per coin: "at the payout offered RIGHT NOW for Up and for Down, and with what the chart has done so far, is this bet worth taking?" If not, wait and ask again. Entering at 0:20, 1:10, 2:45 or never are all normal.
+- The payout on screen is an input to the decision, every time: the same chart read is a bet at 40¢ and a pass at 75¢.
+- Skipping a round on a coin is allowed and expected.
+- Same for the exit: no fixed profit number alone; it weighs the cash-out offered now against the chance of the full win with the time left.
+- Any code review of the trader checks for this first: a constant like "enter at t=180" is a bug.

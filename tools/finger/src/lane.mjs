@@ -1,7 +1,14 @@
 // One lane per iPhone (per UDID). A lane does one thing at a time, in the order asked.
 // Two lanes run side by side. The health check is lane work too: it only goes into the
-// queue when the lane is idle, so it can never sit behind, or be mistaken for, a slow command
-// (WDA answers every route on one queue: WebDriverAgentLib/Routing/FBWebServer.m:80).
+// queue when the lane is idle, so it can never sit behind, or be mistaken for, a slow command.
+//
+// WDA answers its routes on ONE queue, the main queue (WebDriverAgentLib/Routing/FBWebServer.m:80),
+// except the routes declared ".standalone", which skip that queue so that "a handler stuck on
+// that queue can never block" them (Routing/FBHTTPServer.h:58-62). Of the routes finger uses,
+// GET /status (Commands/FBSessionCommands.m:52) and GET /screenshot
+// (Commands/FBScreenshotCommands.m:21-22) are standalone. So the health check asks twice:
+//   GET /status      answers when the WDA process is alive and reachable, even if it is hung;
+//   GET /wda/locked  goes through the main queue, so it answers only if commands still can.
 import { WdaClient } from './wda-client.mjs';
 import { WDA_PORT } from './routes.mjs';
 import { LookStore } from './screen.mjs';
@@ -9,13 +16,16 @@ import { look, runSteps } from './actions.mjs';
 import { Refusal } from './guard.mjs';
 
 export const HEALTH_FAILS_TO_DEAD = 3;
+// Transport failures after which nothing more is asked of the phone in the same call.
+const NO_ANSWER = ['TIMEOUT', 'CLOSED', 'NOT_JSON', 'HTTP_STATUS'];
 
 export class Lane {
-  constructor({ udid, usbmux, registry, profile = null, now = Date.now, resize = null }) {
+  constructor({ udid, usbmux, registry, profile = null, caps = null, now = Date.now, resize = null, healthQueueMs = undefined }) {
     this.udid = udid;
     this.registry = registry;
     this.wda = new WdaClient({ connect: () => usbmux.connect(registry.deviceId(udid), WDA_PORT) });
-    this.ctx = { wda: this.wda, looks: new LookStore(), udid, profile, now, resize };
+    this.ctx = { wda: this.wda, looks: new LookStore(), udid, profile, caps, now, resize };
+    this.healthQueueMs = healthQueueMs; // how long the health check waits for the main queue (default: the route's own timeout)
     this.tail = Promise.resolve();
     this.pending = 0;
     this.state = 'UNKNOWN'; // ABSENT | STARTING | READY | LOCKED | ALERT | DEAD
@@ -41,6 +51,14 @@ export class Lane {
     this.lastError = e.message;
     if (e.code === 'NOT_PLUGGED' || e.code === 'BAD_DEVICE') this.state = 'ABSENT';
     else if (e.code === 'REFUSED') this.state = 'STARTING';
+    // No clean answer: the lane is not known to be ready until a health check says so.
+    else if (e.kind === 'transport' && NO_ANSWER.includes(e.code)) this.state = 'UNKNOWN';
+  }
+
+  // A call's lifetime is checked again when its turn in the lane comes: a call that waited
+  // behind a slow one must not act on a screen nobody has looked at since.
+  fresh(expiresAt) {
+    if (expiresAt && this.ctx.now() > expiresAt) throw new Refusal('EXPIRED', 'this call waited behind another until its lifetime ran out; nothing was done');
   }
 
   // Before any command: plugged in, WDA answering, not locked, and one pop-up check.
@@ -76,8 +94,9 @@ export class Lane {
     }
   }
 
-  look(mode) {
+  look(mode, { expiresAt } = {}) {
     return this.run(() => this.guarded(async () => {
+      this.fresh(expiresAt);
       await this.preflight();
       const seen = await look(this.ctx, mode);
       this.lastLookAt = this.ctx.now();
@@ -85,11 +104,18 @@ export class Lane {
     }));
   }
 
-  act(steps, then = 'tree') {
+  act(steps, then = 'tree', { expiresAt } = {}) {
     return this.run(() => this.guarded(async () => {
+      this.fresh(expiresAt);
       if (!['tree', 'image', 'both', 'none'].includes(then)) throw new Refusal('BAD_REQUEST', 'then is tree, image, both or none');
       await this.preflight();
       const done = await runSteps(this.ctx, steps, { alertOpen: this.alert });
+      // The phone gave no answer: asking it for a pop-up and a look would only wait again.
+      if (!done.ok && done.results.at(-1).noAnswer) {
+        this.state = 'UNKNOWN';
+        this.lastError = done.results.at(-1).error;
+        return { ...done, alert: this.alert, after: then === 'none' ? null : { code: 'NOT_LOOKED', error: 'no look was taken: the phone did not answer the step' } };
+      }
       // A failed step gets one pop-up check, because a pop-up is the usual reason.
       if (!done.ok) this.alert = await this.wda.alertText().catch(() => this.alert);
       else if (this.alert !== null) this.alert = await this.wda.alertText().catch(() => null);
@@ -108,8 +134,9 @@ export class Lane {
   }
 
   // A job that needs the lane to itself with its checks done (the buy sequence).
-  exclusive(job) {
+  exclusive(job, { expiresAt } = {}) {
     return this.run(() => this.guarded(async () => {
+      this.fresh(expiresAt);
       await this.preflight();
       if (this.alert !== null) throw new Refusal('ALERT_OPEN', `a pop-up is open: "${this.alert}"`);
       return job(this.ctx);
@@ -124,8 +151,16 @@ export class Lane {
       try {
         const s = await this.wda.call('status');
         if (!s || s.ready !== true) throw new Error('WDA says it is not ready');
+        let locked;
+        try {
+          locked = await this.wda.call('locked', { timeoutMs: this.healthQueueMs });
+        } catch (e) {
+          if (e.code !== 'TIMEOUT') throw e;
+          throw new Error('the phone software is running but its command queue is not answering');
+        }
         this.healthFails = 0;
-        if (this.state === 'UNKNOWN' || this.state === 'STARTING' || this.state === 'DEAD' || this.state === 'ABSENT') this.state = 'READY';
+        if (locked === true) this.state = 'LOCKED';
+        else if (['UNKNOWN', 'STARTING', 'DEAD', 'ABSENT', 'LOCKED'].includes(this.state)) this.state = 'READY';
       } catch (e) {
         this.lastError = e.message;
         if (e.code === 'REFUSED') { this.state = 'STARTING'; return; }

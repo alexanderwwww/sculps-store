@@ -19,13 +19,15 @@ export const TOOLS = [
   { name: 'finger_status', lifetimeMs: 0,
     description: 'What finger on the Mac reports right now: build, mode (PAPER or LIVE), money numbers, and each iPhone with its state.',
     inputSchema: { type: 'object', properties: {} } },
-  { name: 'finger_look', lifetimeMs: 30000,
+  // lifetimeMs: how long the Mac has to take the call. maxRunMs: the longest it may then
+  // run before finger_result stops saying "pending" and says the answer was lost.
+  { name: 'finger_look', lifetimeMs: 30000, maxRunMs: 120000,
     description: 'Look at an iPhone screen. mode "tree" (default) gives lines like: Button "label" @x,y,w,h in points. "image" gives a picture. "both" gives both. Returns a lookId.',
     inputSchema: { type: 'object', properties: { device: DEVICE, mode: { type: 'string', enum: ['tree', 'image', 'both'] } } } },
-  { name: 'finger_act', lifetimeMs: 30000,
-    description: 'Do steps on an iPhone, in order, stopping at the first that fails. Each step is one of: {tap:{label}} or {tap:{x,y,of:lookId}}, {double:{...}}, {hold:{...,seconds}}, {swipe:{from:[x,y],to:[x,y],seconds,of}}, {type:{text}}, {home:{}}, {press:{button}}, {open:{bundleId}}, {close:{bundleId}}, {alert:{accept:true}} or {alert:{dismiss:true}}, {wait:{ms}}. A step is reported as sent; the look afterwards shows what happened. This tool can never place a bet.',
+  { name: 'finger_act', lifetimeMs: 30000, maxRunMs: 600000,
+    description: 'Do steps on an iPhone, in order, stopping at the first that fails. Each step is one of: {tap:{label}} or {tap:{x,y,of:lookId}}, {double:{...}}, {hold:{...,seconds}}, {swipe:{from:[x,y],to:[x,y],of,holdBefore}} (holdBefore = seconds the finger presses before it moves, default 0; the swipe speed cannot be set), {type:{text}}, {home:{}}, {press:{button}}, {open:{bundleId}}, {close:{bundleId}}, {alert:{accept:true}} or {alert:{dismiss:true}}, {wait:{ms}}. A step is reported as sent; the look afterwards shows what happened. A step answered "NO_ANSWER" may or may not have landed: look before repeating it. This tool is not for betting; use finger_buy. Inside the wallet app it is limited on purpose: it refuses any touch on or near a buy or confirm button and anything on the confirm screen, types digits only, and only dismisses pop-ups. Until the wallet\'s screens have been recorded it does not touch inside the wallet at all, unless Alex has switched wallet setup on, on the Mac, for an empty wallet.',
     inputSchema: { type: 'object', required: ['steps'], properties: { device: DEVICE, steps: { type: 'array', items: { type: 'object' } }, then: { type: 'string', enum: ['tree', 'image', 'both', 'none'] } } } },
-  { name: 'finger_buy', lifetimeMs: 15000,
+  { name: 'finger_buy', lifetimeMs: 15000, maxRunMs: 120000,
     description: 'Place one bet in the wallet. The Mac checks every money rule, reads the confirm screen and only then presses confirm. Needs the full UDID.',
     inputSchema: { type: 'object', required: ['udid', 'coin', 'side', 'stake', 'round'], properties: {
       udid: { type: 'string' }, coin: { type: 'string', enum: ['BTC', 'SOL', 'ETH'] }, side: { type: 'string', enum: ['UP', 'DOWN'] },
@@ -36,7 +38,7 @@ export const TOOLS = [
   { name: 'finger_journal', lifetimeMs: 0,
     description: 'Add a decision or bet row ({add:{...}}), or read the last rows ({last:n}).',
     inputSchema: { type: 'object', properties: { add: { type: 'object' }, last: { type: 'number' } } } },
-  { name: 'finger_selftest', lifetimeMs: 60000,
+  { name: 'finger_selftest', lifetimeMs: 60000, maxRunMs: 600000,
     description: 'Run the self-test on an iPhone and report each step.',
     inputSchema: { type: 'object', properties: { device: DEVICE } } },
 ];
@@ -54,6 +56,9 @@ function toContent(result) {
   return { content, isError: rest.ok === false };
 }
 
+// A call the Mac took and never answered. It is NOT the same as "nothing was done".
+const LOST = (id) => ({ ok: false, code: 'NO_ANSWER', lost: true, id, error: 'this call was handed to the Mac and no answer came back. It may or may not have been carried out: look at the phone before repeating it. (finger_status lists results the Mac is still trying to send, under mac.undelivered.)' });
+
 const text = (obj, isError = false) => ({ content: [{ type: 'text', text: JSON.stringify(obj) }], isError });
 
 async function callTool(core, name, args, waitMs) {
@@ -69,15 +74,17 @@ async function callTool(core, name, args, waitMs) {
     if (!c) return text({ ok: false, error: 'no call with that id' }, true);
     if (c.state === 'done') return toContent(c.result);
     if (c.state === 'expired') return text({ ok: false, error: 'that call expired before the Mac took it; nothing was done' }, true);
+    if (c.state === 'lost') return text(LOST(c.id), true);
     return text({ ok: false, pending: true, id: c.id, state: c.state });
   }
-  const q = core.enqueue(name, args, tool.lifetimeMs);
+  const q = core.enqueue(name, args, tool.lifetimeMs, tool.maxRunMs);
   if (!q.ok) return text(q, true);
   const until = Date.now() + waitMs;
   for (;;) {
     const c = core.get(q.id);
     if (c.state === 'done') return toContent(c.result);
     if (c.state === 'expired') return text({ ok: false, error: 'the Mac did not take this call in time; nothing was done' }, true);
+    if (c.state === 'lost') return text(LOST(q.id), true);
     if (Date.now() >= until) return text({ ok: false, pending: true, id: q.id, note: 'still running on the Mac; ask finger_result with this id' });
     await sleep(POLL_MS);
   }

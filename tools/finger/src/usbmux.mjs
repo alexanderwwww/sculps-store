@@ -3,7 +3,10 @@
 //             go-ios ios/usbmuxconnection.go:100-104,164
 //   socket  : /var/run/usbmuxd                      go-ios ios/usbmuxconnection.go:54
 //   Connect : PortNumber is the port byte-swapped   go-ios ios/connect.go:45, ios/utils.go:101-104
-//   results : 0 ok, 2 bad device, 3 refused         usbmuxd-proto.h:39-43
+//   results : 0 ok, 2 bad device, 3 refused         usbmuxd src/usbmuxd-proto.h:39-43
+//   kLibUSBMuxVersion: sent on Connect only, as go-ios does (ios/connect.go:17-36); its
+//             ListDevices and Listen messages do not carry it (ios/listdevices.go:13-17,
+//             ios/listen.go:11-17, where the field is unexported and so never written).
 import net from 'node:net';
 import { buildPlist, parsePlist } from './plist.mjs';
 
@@ -12,7 +15,8 @@ const HEADER = 16;
 const VERSION = 1;
 const MSG_PLIST = 8;
 const MAX_FRAME = 4 * 1024 * 1024;
-const CLIENT = { ProgName: 'finger', ClientVersionString: 'finger-1', kLibUSBMuxVersion: 3 };
+const CLIENT = { ProgName: 'finger', ClientVersionString: 'finger-1' };
+const LIB_VERSION = 3; // go-ios ios/connect.go:34
 
 export class UsbmuxError extends Error {
   constructor(code, message) {
@@ -87,7 +91,14 @@ async function ask(socketPath, msg, timeoutMs) {
       let frame;
       try { reader.feed(chunk); frame = reader.next(); } catch (e) { return fail(e); }
       if (!frame) return;
+      // The reply to our request comes first and carries our tag: usbmuxd answers Listen with
+      // the Result before any notification (usbmuxd src/client.c:692).
       if (frame.tag !== tag) return fail(new UsbmuxError('PROTOCOL', `reply tag ${frame.tag}, expected ${tag}`));
+      // Only message type 8 is a plist (the reference client reads nothing else as one:
+      // libusbmuxd's libusbmuxd.c:436,586, a copy read without its commit). The header's version is NOT checked on purpose: neither
+      // go-ios (ios/usbmuxconnection.go:139-150) nor libusbmuxd checks it on a reply, and
+      // what Apple's own usbmuxd puts there is unread until his Mac.
+      if (frame.message !== MSG_PLIST) return fail(new UsbmuxError('PROTOCOL', `reply is message type ${frame.message}, expected ${MSG_PLIST} (a plist)`));
       cleanup();
       let reply;
       try { reply = parsePlist(frame.payload); } catch (e) { sock.destroy(); return reject(new UsbmuxError('PROTOCOL', e.message)); }
@@ -127,7 +138,7 @@ export class Usbmux {
   async connect(deviceId, port) {
     const { sock, reply, rest } = await ask(
       this.socketPath,
-      { MessageType: 'Connect', DeviceID: deviceId, PortNumber: swapPort(port) },
+      { MessageType: 'Connect', DeviceID: deviceId, PortNumber: swapPort(port), kLibUSBMuxVersion: LIB_VERSION },
       this.timeoutMs,
     );
     if (reply.MessageType !== 'Result' || reply.Number !== 0) {

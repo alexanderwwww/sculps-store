@@ -1,8 +1,11 @@
 {
-  "note": "Empty on purpose. Filled from the real Phantom screens on Alex's iPhone at milestone M4. While readable is not true, live mode cannot be switched on and no gesture guard for the confirm button exists.",
+  "note": "Only the wallet's bundle id is known. Everything else is filled from the real Phantom screens on Alex's iPhone at milestone M4. While readable is not true: live mode cannot be switched on, finger_act does not touch inside this app (unless Alex switches wallet setup on, on the page, with an empty wallet), typing in it is digits only, and its pop-ups are only dismissed.",
+  "bundleIdSource": "App Store lookup, read 2026-11-20: https://itunes.apple.com/lookup?bundleId=app.phantom answers trackId 1598432977, \"Phantom: Trading Wallet\", seller \"Phantom Technologies Incorporated\". UNPROVEN on his phone until M4 reads /wda/activeAppInfo with Phantom in front.",
   "readable": null,
-  "bundleId": null,
+  "bundleId": "app.phantom",
   "confirmLabels": [],
+  "screen": null,
+  "guardRects": [],
   "flow": null,
   "confirm": null,
   "placed": null

@@ -25,23 +25,31 @@ export function startPage({ port, getStatus, caps, ledger, profile }) {
   };
   const server = http.createServer(async (req, res) => {
     try {
+      // The page answers only when it was asked for by its own address. A website that
+      // points a name of its own at 127.0.0.1 (DNS rebinding) arrives with that name in
+      // Host, and gets nothing: not the numbers, not the status.
+      const port = server.address().port;
+      const hosts = [`127.0.0.1:${port}`, `localhost:${port}`];
+      if (!hosts.includes(req.headers.host)) return send(res, 403, { ok: false, error: 'this is the finger page; open it at 127.0.0.1' });
       const url = new URL(req.url, 'http://127.0.0.1');
       if (req.method === 'GET' && url.pathname === '/') return send(res, 200, fs.readFileSync(PAGE), 'text/html; charset=utf-8');
       if (req.method === 'GET' && url.pathname === '/api/status') {
-        return send(res, 200, { ...getStatus(), liveBlockers: liveBlockers(caps.read(), profile) });
+        return send(res, 200, { ...getStatus(), liveBlockers: liveBlockers(caps.read(), profile, caps.built) });
       }
       if (req.method === 'POST') {
-        // Only this page may change the numbers: a form on some other site cannot send JSON
-        // here, and its Origin would not be ours.
+        // Only this page may change anything: a form on some other site cannot send JSON
+        // here, and its Origin is not one of ours.
         const origin = req.headers.origin;
-        const ours = `http://${req.headers.host}`;
-        if (!/^application\/json/.test(req.headers['content-type'] || '') || (origin && origin !== ours)) {
+        if (!/^application\/json/.test(req.headers['content-type'] || '') || (origin && !hosts.map((h) => `http://${h}`).includes(origin))) {
           return send(res, 403, { ok: false, error: 'only the finger page can change this' });
         }
         const body = await readBody(req);
         if (url.pathname === '/api/caps') return send(res, 200, { ok: true, caps: caps.setNumbers(body) });
         if (url.pathname === '/api/mode') return send(res, 200, { ok: true, caps: caps.setMode(body.mode, profile) });
         if (url.pathname === '/api/reset-losses') { ledger.append({ type: 'reset', what: 'losses' }); return send(res, 200, { ok: true }); }
+        // Alex says what happened to a bet whose outcome finger could not read.
+        if (url.pathname === '/api/resolve') { ledger.resolve(String(body.id || ''), body.result); return send(res, 200, { ok: true }); }
+        if (url.pathname === '/api/wallet-setup') return send(res, 200, { ok: true, caps: caps.setWalletSetup(body.on) });
       }
       return send(res, 404, { ok: false, error: 'not found' });
     } catch (e) {

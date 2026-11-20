@@ -6,7 +6,7 @@ import { ROUTES, SESSION_SETTINGS, WDA_ERRORS } from './routes.mjs';
 
 export class WdaError extends Error {
   // kind 'wda'       : WDA answered with an error envelope (code = its error string)
-  // kind 'transport' : no usable answer (code = REFUSED | BAD_DEVICE | TIMEOUT | NOT_JSON | CLOSED | ...)
+  // kind 'transport' : no usable answer (code = REFUSED | BAD_DEVICE | NOT_PLUGGED | TIMEOUT | NOT_JSON | HTTP_STATUS | CLOSED)
   constructor(kind, code, message, httpStatus) {
     super(message);
     this.kind = kind;
@@ -70,11 +70,16 @@ export class WdaClient {
     try { envelope = JSON.parse(res.text); } catch {
       throw new WdaError('transport', 'NOT_JSON', `${route.method} ${path} answered HTTP ${res.status} that is not JSON`, res.status);
     }
-    const v = envelope ? envelope.value : undefined;
+    // WDA always answers with the envelope {value, sessionId}. JSON without it (the bare
+    // word null, a proxy's JSON error) is not WDA speaking, and is not a "done".
+    if (envelope === null || typeof envelope !== 'object' || !('value' in envelope)) {
+      throw new WdaError('transport', 'NOT_JSON', `${route.method} ${path} answered HTTP ${res.status} without the WDA envelope`, res.status);
+    }
+    const v = envelope.value;
     if (v && typeof v === 'object' && typeof v.error === 'string') {
       throw new WdaError('wda', v.error, v.message || v.error, res.status);
     }
-    if (res.status !== 200) throw new WdaError('transport', 'NOT_JSON', `${route.method} ${path} answered HTTP ${res.status}`, res.status);
+    if (res.status !== 200) throw new WdaError('transport', 'HTTP_STATUS', `${route.method} ${path} answered HTTP ${res.status}`, res.status);
     return v;
   }
 
