@@ -1,7 +1,7 @@
 // Paper trading on Kalshi's real 15-minute crypto up/down markets, at Kalshi's real ask prices.
 // Buys a side only when Kalshi sells it cheaper than its fair chance (live price vs target, recent volatility).
 // Settles from Kalshi's own result. Fee: Kalshi + Phantom $0.02 per contract.
-export const K = { series: { BTC: "KXBTC15M", ETH: "KXETH15M", SOL: "KXSOL15M" }, stake: 2, fee: 0.02, minEdge: 0.06, minLeftSec: 60, maxLeftSec: 600 };
+export const K = { series: { BTC: "KXBTC15M", ETH: "KXETH15M", SOL: "KXSOL15M" }, stake: 10, fee: 0.02, minEdge: 0.06, minLeftSec: 60, maxLeftSec: 600 };
 const API = "https://api.elections.kalshi.com/trade-api/v2";
 const erf = x => { const t = 1 / (1 + 0.3275911 * Math.abs(x)); const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; };
 const cdf = z => 0.5 * (1 + erf(z / Math.SQRT2));
