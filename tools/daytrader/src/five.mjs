@@ -15,7 +15,7 @@ export function fiveTick(s, candles, nowSec) {
   const byT = new Map(candles.map(x => [x.t, x]));
   // settle
   if (s.open && nowSec >= s.open.round + 300) {
-    const first = byT.get(s.open.round), last = byT.get(s.open.round + 240);
+    const first = { o: s.open.open }, last = byT.get(s.open.round + 240) || (nowSec >= s.open.round + 420 ? candles.filter(x => x.t < s.open.round + 300).at(-1) : null);
     if (first && last) {
       const up = last.c >= first.o, won = (s.open.side === "up") === up;
       const contracts = s.open.contracts;
@@ -29,8 +29,9 @@ export function fiveTick(s, candles, nowSec) {
   }
   // place: minute 3 of the round, last closed candle is round+120
   const into = nowSec - round;
-  if (s.on && !s.open && into >= 180 && into < 240) {
-    const first = byT.get(round), cur = byT.get(round + 120);
+  if (s.on && !s.open && into >= 150 && into < 270 && s.skipped !== round) {
+    const first = byT.get(round) || candles.filter(x => x.t < round).at(-1);
+    const cur = candles.filter(x => x.t >= round + 60).at(-1);
     if (first && cur) {
       const move = (cur.c - first.o) / first.o;
       const rets = candles.slice(-61).map((x, i, a) => i ? Math.log(x.c / a[i - 1].c) : 0).slice(1);
@@ -41,8 +42,8 @@ export function fiveTick(s, candles, nowSec) {
       if (Math.abs(move) >= FIVE.minEdgeMove && price <= FIVE.maxPrice && s.balance >= FIVE.stake) {
         const contracts = Math.max(1, Math.floor(FIVE.stake / price));
         s.open = { round, side, price, contracts, open: first.o, at: cur.c, move: +(move * 100).toFixed(3) };
-        s.log.unshift({ at: nowSec, m: `Bet ${side.toUpperCase()} ${contracts}× at $${price} (BTC ${move >= 0 ? "+" : ""}${(move * 100).toFixed(3)}% this round)` });
-      } else s.log.unshift({ at: nowSec, m: `Skip round: move ${(move * 100).toFixed(3)}%, price $${price}` });
+        s.log.unshift({ at: nowSec, m: `Bet ${side.toUpperCase()} ${contracts}× at $${price} (${move >= 0 ? "+" : ""}${(move * 100).toFixed(3)}% this round)` });
+      } else { s.skipped = round; s.log.unshift({ at: nowSec, m: `Skip round: move ${(move * 100).toFixed(3)}%, price $${price}` }); }
     }
   }
   s.log = s.log.slice(0, 80);

@@ -3,8 +3,13 @@ import PAGE from "./page.html";
 import FIVEPAGE from "./five.html";
 import { fiveTick, freshFive } from "./five.mjs";
 
-async function btc(){ const r=await fetch("https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60",{headers:{"user-agent":"daytrader"}}); if(!r.ok) throw new Error("coinbase "+r.status); const now=Date.now()/1000; return (await r.json()).map(([t,l,h,o,c])=>({t,o,c})).filter(x=>x.t+60<=now).sort((a,b)=>a.t-b.t).slice(-70); }
-async function runFive(env){ const s=(await env.KV.get("five","json"))||freshFive(); fiveTick(s, await btc(), Math.floor(Date.now()/1000)); await env.KV.put("five",JSON.stringify(s)); return s; }
+const COINS = { BTC: "BTC-USD", ETH: "ETH-USD", SOL: "SOL-USD" };
+async function candles(coin){ const r=await fetch(`https://api.exchange.coinbase.com/products/${COINS[coin]}/candles?granularity=60`,{headers:{"user-agent":"daytrader"}}); if(!r.ok) throw new Error("coinbase "+r.status); return (await r.json()).map(([t,l,h,o,c])=>({t,o,c,h,l})).sort((a,b)=>a.t-b.t); }
+async function ticker(coin){ const r=await fetch(`https://api.exchange.coinbase.com/products/${COINS[coin]}/ticker`,{headers:{"user-agent":"daytrader"}}); const j=await r.json(); return +j.price; }
+async function runFive(env){
+  const all=(await env.KV.get("five3","json"))||{}; const now=Math.floor(Date.now()/1000);
+  await Promise.all(Object.keys(COINS).map(async k=>{ const s=all[k]||freshFive(); try{ const c=(await candles(k)).filter(x=>x.t+60<=now).slice(-70); fiveTick(s,c,now); s.err=null; }catch(e){ s.err=String(e.message||e); } all[k]=s; }));
+  await env.KV.put("five3",JSON.stringify(all)); return all; }
 
 const KEY = "state";
 async function load(env) { return (await env.KV.get(KEY, "json")) || fresh(); }
@@ -88,10 +93,11 @@ export default {
     if (u.pathname === "/") return new Response(PAGE, { headers: { "content-type": "text/html; charset=utf-8" } });
     if (u.pathname === "/api/state") { const s = await load(env); s.hasGrok = !!(await env.KV.get("xai_key")); s.rules = RULES; s.watch = WATCH; return json(s); }
     if (u.pathname === "/five") return new Response(FIVEPAGE, { headers: { "content-type": "text/html; charset=utf-8" } });
-    if (u.pathname === "/api/five") return json((await env.KV.get("five","json"))||freshFive());
-    if (u.pathname === "/api/five/toggle" && req.method==="POST") { const s=(await env.KV.get("five","json"))||freshFive(); s.on=!s.on; await env.KV.put("five",JSON.stringify(s)); return json(s); }
+    if (u.pathname === "/api/five") return json((await env.KV.get("five3","json"))||{});
+    if (u.pathname === "/api/live") { const out={}; await Promise.all(Object.keys(COINS).map(async k=>{ try{ const c=(await candles(k)).slice(-90); out[k]={candles:c.map(x=>[x.t,x.o,x.c]), price:await ticker(k)}; }catch(e){ out[k]={error:String(e.message||e)}; } })); return json(out); }
+    if (u.pathname === "/api/five/toggle" && req.method==="POST") { const all=(await env.KV.get("five3","json"))||{}; const on=!Object.values(all).some(s=>s.on===false); for (const k of Object.keys(COINS)) { all[k]=all[k]||freshFive(); all[k].on=!on; } await env.KV.put("five3",JSON.stringify(all)); return json(all); }
     if (u.pathname === "/api/five/run" && req.method==="POST") { try { return json(await runFive(env)); } catch (e) { return json({ error: String(e.message||e) }, 500); } }
-    if (u.pathname === "/api/five/reset" && req.method==="POST") { await env.KV.put("five",JSON.stringify(freshFive())); return json(freshFive()); }
+    if (u.pathname === "/api/five/reset" && req.method==="POST") { const all={}; for (const k of Object.keys(COINS)) all[k]=freshFive(); await env.KV.put("five3",JSON.stringify(all)); return json(all); }
     if (req.method !== "POST") return json({ error: "not found" }, 404);
     if (u.pathname === "/api/run") return json(await run(env));
     if (u.pathname === "/api/toggle") { const s = await load(env); s.on = !s.on; await save(env, s); return json(s); }

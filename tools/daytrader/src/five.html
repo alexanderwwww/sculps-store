@@ -1,47 +1,75 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>5-Minute Bot</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<title>5-Minute Markets</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
-:root{--bg:#0d1014;--card:#151a21;--fg:#eef2f6;--mute:#8793a1;--line:#242c36;--up:#2fd17c;--down:#ff5d55}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px Inter,system-ui,sans-serif;padding:24px max(16px,env(safe-area-inset-left))}
-.w{max-width:760px;margin:0 auto;display:grid;gap:14px}
-.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}h1{margin:0;font-size:22px}.sub{color:var(--mute);font-size:13px;margin:2px 0 0}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
-.g{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.k{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
-.v{font:600 22px "JetBrains Mono",monospace;margin-top:4px;font-variant-numeric:tabular-nums}
-.up{color:var(--up)}.down{color:var(--down)}
-.round{display:flex;align-items:center;gap:16px}.clock{font:700 44px "JetBrains Mono",monospace}
-.bar{height:6px;background:var(--line);border-radius:9px;overflow:hidden;flex:1}.bar i{display:block;height:100%;background:var(--fg)}
-button{font:600 13px Inter;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:9px 14px;cursor:pointer}
-.log div{padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}.log span{color:var(--mute);font-family:"JetBrains Mono",monospace;margin-right:8px}
-@media(max-width:600px){.g{grid-template-columns:1fr 1fr}}
+:root{--bg:#1c1c1c;--card:#2a2a2a;--card2:#333;--fg:#fff;--mute:#999;--purple:#ab9ff2;--up:#2ec08b;--down:#eb3742}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px Inter,system-ui,sans-serif;padding:20px max(16px,env(safe-area-inset-left))}
+.w{max-width:520px;margin:0 auto;display:grid;gap:12px}
+.head{display:flex;justify-content:space-between;align-items:center}
+.acct{display:flex;align-items:center;gap:10px}.av{width:34px;height:34px;border-radius:50%;background:var(--purple);display:grid;place-items:center;font-weight:700;color:#1c1c1c}
+.acct b{font-size:15px}.acct span{display:block;font-size:12px;color:var(--mute)}
+.icon{background:var(--card);border:0;color:var(--fg);border-radius:12px;padding:9px 14px;font:600 13px Inter;cursor:pointer}
+.total{text-align:center;padding:14px 0 6px}.total .n{font-size:40px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.total .d{font-size:15px;font-weight:600;margin-top:2px}
+.up{color:var(--up)}.down{color:var(--down)}.mute{color:var(--mute)}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.act{background:var(--card);border-radius:14px;padding:12px 6px;text-align:center;font-size:13px;font-weight:600;border:0;color:var(--fg);cursor:pointer}
+.act i{display:block;font-style:normal;color:var(--purple);font-size:18px;margin-bottom:4px}
+.mk{background:var(--card);border-radius:16px;padding:14px;display:grid;gap:10px}
+.mt{display:flex;justify-content:space-between;align-items:center}
+.coin{display:flex;align-items:center;gap:10px}.logo{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:#1c1c1c}
+.coin b{display:block}.coin span{font-size:12px;color:var(--mute)}
+.px{text-align:right;font-variant-numeric:tabular-nums}.px b{display:block;font-size:17px}.px span{font-size:12px}
+canvas{width:100%;height:110px;display:block}
+.tg{display:flex;justify-content:space-between;font-size:13px;background:var(--card2);border-radius:12px;padding:10px 12px;gap:8px;flex-wrap:wrap}
+.tg b{font-variant-numeric:tabular-nums}
+.bet{display:flex;gap:8px}.pill{flex:1;text-align:center;border-radius:12px;padding:10px;font-weight:700;font-size:14px;background:var(--card2);color:var(--mute)}
+.pill.on.u{background:rgba(46,192,139,.16);color:var(--up)}.pill.on.d{background:rgba(235,55,66,.16);color:var(--down)}
+.hist{background:var(--card);border-radius:16px;padding:6px 14px}.hist div{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #383838;font-size:13px}.hist div:last-child{border:0}
+h3{margin:8px 0 0;font-size:15px}
 </style></head><body><div class="w">
-<div class="top"><div><h1>5-Minute Bot</h1><p class="sub">BTC up/down rounds · paper money · bets at minute 3 on the side BTC is already on</p></div>
-<div><button id="tog">Pause</button> <button id="reset">Reset</button></div></div>
-<div class="g">
-<div class="card"><div class="k">Balance</div><div class="v" id="bal">–</div></div>
-<div class="card"><div class="k">Profit</div><div class="v" id="pnl">–</div></div>
-<div class="card"><div class="k">Win rate</div><div class="v" id="wr">–</div></div>
-<div class="card"><div class="k">BTC</div><div class="v" id="btc">–</div></div></div>
-<div class="card round"><div><div class="k">This round</div><div class="clock" id="clock">–</div></div><div class="bar"><i id="prog"></i></div><div id="cur" class="sub" style="min-width:150px;text-align:right">No bet yet</div></div>
-<div class="card"><div class="k" style="margin-bottom:6px">What it did</div><div class="log" id="log"></div></div>
-<p class="sub">Price per bet is the fair odds for that side plus the $0.02 fee, so the result here is what a real market would pay. Times are Athens.</p>
+<div class="head"><div class="acct"><div class="av">5</div><div><b>5-Minute Markets</b><span id="st">Paper account · live</span></div></div><button class="icon" id="tog">Pause</button></div>
+<div class="total"><div class="n" id="tot">$300.00</div><div class="d" id="tpl">$0.00</div><div class="mute" style="font-size:13px;margin-top:6px" id="wr"></div></div>
+<div class="acts"><div class="act"><i>⏱</i><span id="clock">5:00</span></div><div class="act"><i>◎</i><span id="nb">0 bets</span></div><button class="act" id="reset"><i>↺</i><span>Reset</span></button></div>
+<div id="mks"></div>
+<h3>Activity</h3><div class="hist" id="hist"><div class="mute">Bets show up here at minute 3 of every round.</div></div>
 </div><script>
+const C={BTC:{n:"Bitcoin",c:"#f7931a"},ETH:{n:"Ethereum",c:"#8c9cf5"},SOL:{n:"Solana",c:"#14f195"}};
 const $=i=>document.getElementById(i);const m=n=>(n<0?"-$":"$")+Math.abs(n).toFixed(2);
+const fp=(k,p)=>p==null?"–":"$"+(+p).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
 const ath=t=>new Date(t*1000).toLocaleTimeString("en-GB",{timeZone:"Europe/Athens",hour:"2-digit",minute:"2-digit"});
-let S=null;
-function draw(){ if(!S)return;
- $("bal").textContent=m(S.balance);const p=S.balance-S.start;$("pnl").textContent=(p>=0?"+":"")+m(p);$("pnl").className="v "+(p>0?"up":p<0?"down":"");
- const w=S.bets.filter(b=>b.won).length;$("wr").textContent=S.bets.length?Math.round(100*w/S.bets.length)+"% ("+S.bets.length+")":"–";
- $("btc").textContent=S.btc?"$"+Math.round(S.btc).toLocaleString("en-US"):"–";
- $("tog").textContent=S.on?"Pause":"Start";
- $("cur").textContent=S.open?`${S.open.side.toUpperCase()} ${S.open.contracts}× at $${S.open.price}`:"No bet this round";$("cur").className="sub "+(S.open?(S.open.side==="up"?"up":"down"):"");
- const lg=$("log");lg.textContent="";S.log.slice(0,20).forEach(l=>{const d=document.createElement("div");const s=document.createElement("span");s.textContent=ath(l.at);d.append(s,l.m);lg.appendChild(d)});
+let L={},S={};
+const wrap=$("mks");
+for(const k in C){wrap.insertAdjacentHTML("beforeend",`<div class="mk" style="margin-bottom:12px"><div class="mt"><div class="coin"><div class="logo" style="background:${C[k].c}">${k}</div><div><b>${C[k].n}</b><span>Up or down · 5 min</span></div></div><div class="px"><b id="p${k}">–</b><span id="c${k}">–</span></div></div><canvas id="g${k}"></canvas><div class="tg"><span class="mute">Price to beat</span><b id="t${k}">–</b><span class="mute">Bot P&amp;L</span><b id="l${k}">$0.00</b></div><div class="bet"><div class="pill u" id="u${k}">▲ Up</div><div class="pill d" id="d${k}">▼ Down</div></div></div>`)}
+function chart(k){const cv=$("g"+k),d=L[k];if(!d||!d.candles)return;const dpr=devicePixelRatio||1,W=cv.clientWidth,H=110;cv.width=W*dpr;cv.height=H*dpr;const x=cv.getContext("2d");x.scale(dpr,dpr);
+ const pts=d.candles.map(c=>c[2]).concat([d.price]);const tgt=target(k);const all=pts.concat(tgt?[tgt]:[]);const lo=Math.min(...all),hi=Math.max(...all),r=(hi-lo)||1;
+ const Y=v=>H-6-(v-lo)/r*(H-12),X=i=>i/(pts.length-1)*W;const up=d.price>=(tgt||pts[0]);const col=up?"#2ec08b":"#eb3742";
+ const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,up?"rgba(46,192,139,.25)":"rgba(235,55,66,.25)");g.addColorStop(1,"rgba(0,0,0,0)");
+ x.beginPath();pts.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(0,Y(v)));x.lineTo(W,H);x.lineTo(0,H);x.fillStyle=g;x.fill();
+ x.beginPath();pts.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(0,Y(v)));x.strokeStyle=col;x.lineWidth=2;x.stroke();
+ if(tgt){x.setLineDash([4,4]);x.strokeStyle="#ab9ff2";x.lineWidth=1;x.beginPath();x.moveTo(0,Y(tgt));x.lineTo(W,Y(tgt));x.stroke();x.setLineDash([])}
+ x.fillStyle=col;x.beginPath();x.arc(W-3,Y(d.price),3.5,0,7);x.fill();}
+function target(k){const d=L[k];if(!d||!d.candles)return null;const r=Math.floor(Date.now()/1000/300)*300;const c=d.candles.find(c=>c[0]===r);if(c)return c[1];const b=d.candles.filter(c=>c[0]<r).pop();return b?b[2]:null}
+function draw(){let tot=0,start=0,bets=[],w=0,n=0;
+ for(const k in C){const s=S[k],d=L[k]||{};
+  if(d.price){$("p"+k).textContent=fp(k,d.price);const t=target(k);$("t"+k).textContent=fp(k,t);if(t){const ch=(d.price-t)/t*100;$("c"+k).textContent=(ch>=0?"+":"")+ch.toFixed(3)+"% vs target";$("c"+k).className=ch>=0?"up":"down"}}
+  chart(k);
+  if(s){tot+=s.balance;start+=s.start;const pl=s.balance-s.start;$("l"+k).textContent=(pl>=0?"+":"")+m(pl);$("l"+k).className=pl>0?"up":pl<0?"down":"";
+   const r=Math.floor(Date.now()/1000/300)*300,o=s.open&&s.open.round===r?s.open:null;
+   $("u"+k).className="pill u"+(o&&o.side==="up"?" on":"");$("d"+k).className="pill d"+(o&&o.side==="down"?" on":"");
+   $("u"+k).textContent=o&&o.side==="up"?`▲ Up · ${o.contracts}× $${o.price}`:"▲ Up";$("d"+k).textContent=o&&o.side==="down"?`▼ Down · ${o.contracts}× $${o.price}`:"▼ Down";
+   s.bets.forEach(b=>{bets.push({...b,k});n++;if(b.won)w++})}
+ }
+ if(start){$("tot").textContent=m(tot);const p=tot-start;$("tpl").textContent=(p>=0?"+":"")+m(p)+" ("+(p/start*100).toFixed(2)+"%)";$("tpl").className="d "+(p>0?"up":p<0?"down":"mute")}
+ $("wr").textContent=n?`Win rate ${Math.round(100*w/n)}% over ${n} bets`:"";$("nb").textContent=n+" bets";
+ const on=!Object.values(S).some(s=>s.on===false);$("tog").textContent=on?"Pause":"Start";$("st").textContent="Paper account · "+(on?"live":"paused");
+ bets.sort((a,b)=>b.round-a.round);if(bets.length){const h=$("hist");h.textContent="";bets.slice(0,12).forEach(b=>{const d=document.createElement("div");const a=document.createElement("span");a.textContent=`${ath(b.round)} · ${b.k} ${b.side==="up"?"▲":"▼"} ${b.contracts}× $${b.price}`;const z=document.createElement("b");z.textContent=(b.pnl>=0?"+":"")+m(b.pnl);z.className=b.pnl>=0?"up":"down";d.append(a,z);h.appendChild(d)})}
 }
-function clock(){const n=Date.now()/1000,left=300-(n%300);$("clock").textContent=Math.floor(left/60)+":"+String(Math.floor(left%60)).padStart(2,"0");$("prog").style.width=((300-left)/3)+"%"}
-const load=()=>fetch("/api/five").then(r=>r.json()).then(s=>{S=s;draw()});
-const post=p=>fetch(p,{method:"POST"}).then(r=>r.json()).then(s=>{S=s;draw()});
+function clock(){const n=Date.now()/1000,l=300-(n%300);$("clock").textContent=Math.floor(l/60)+":"+String(Math.floor(l%60)).padStart(2,"0")}
+const live=()=>fetch("/api/live").then(r=>r.json()).then(d=>{L=d;draw()}).catch(()=>{});
+const state=()=>fetch("/api/five").then(r=>r.json()).then(d=>{S=d;draw()}).catch(()=>{});
+const post=p=>fetch(p,{method:"POST"}).then(r=>r.json()).then(d=>{S=d;draw()});
 $("tog").onclick=()=>post("/api/five/toggle");
-let armed=0;$("reset").onclick=()=>{if(!armed){armed=1;$("reset").textContent="Tap again";setTimeout(()=>{armed=0;$("reset").textContent="Reset"},4000);return}armed=0;$("reset").textContent="Reset";post("/api/five/reset")};
-load();setInterval(load,15000);setInterval(clock,1000);clock();
+let armed=0;$("reset").onclick=()=>{if(!armed){armed=1;$("reset").lastChild.textContent="Tap again";setTimeout(()=>{armed=0;$("reset").lastChild.textContent="Reset"},4000);return}armed=0;$("reset").lastChild.textContent="Reset";post("/api/five/reset")};
+live();state();setInterval(live,5000);setInterval(state,15000);setInterval(clock,1000);clock();addEventListener("resize",draw);
 </script></body></html>
