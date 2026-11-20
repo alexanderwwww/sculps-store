@@ -18,7 +18,7 @@ async function bestBid(getJSON, token) {
   return bids.length ? Math.max(...bids) : null;
 }
 
-export async function polyTick(coin, s, { getJSON, price, openPrice, vol1m, move5, nowSec }) {
+export async function polyTick(coin, s, { grok, getJSON, price, openPrice, vol1m, move5, nowSec }) {
   const say = m => s.log.unshift({ at: nowSec, m });
   // Cash out: sell the held side at the live bid when the profit is in hand or the bet has gone bad.
   for (const b of [...s.open]) {
@@ -32,6 +32,7 @@ export async function polyTick(coin, s, { getJSON, price, openPrice, vol1m, move
     if (now$ >= 3 || bid >= 0.95) why = "Took profit";
     if (b.peak >= 1 && now$ <= b.peak - 0.5 && now$ > 0) why = "Took profit";  // it was running, now giving back
     if (now$ <= -2) why = "Cut loss";
+    if (grok === "sell") why = "Grok said sell";
     b.lastBid = bid;
     if (!why) continue;
     const pnl = +(b.contracts * (bid - b.price)).toFixed(2);
@@ -67,7 +68,9 @@ export async function polyTick(coin, s, { getJSON, price, openPrice, vol1m, move
   const pYes = cdf(Math.log(price / openPrice) / sd);
   const eY = yesAsk ? pYes - yesAsk : -1, eN = noAsk ? (1 - pYes) - noAsk : -1;
   let side, why;
-  if (Math.max(eY, eN) >= 0.03) { side = eY >= eN ? "yes" : "no"; why = "value"; }
+  if (grok === "skip") return s;
+  if (grok === "up" || grok === "down") { side = grok === "up" ? "yes" : "no"; why = "grok"; }
+  else if (Math.max(eY, eN) >= 0.03) { side = eY >= eN ? "yes" : "no"; why = "value"; }
   else if (into >= 210) { side = (move5 || 0) > 0 ? "no" : "yes"; why = "fade"; }
   else return s; // no good price yet: keep watching, like a person waiting on the chart
   const ask = side === "yes" ? yesAsk : noAsk;

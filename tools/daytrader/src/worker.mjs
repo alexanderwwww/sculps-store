@@ -16,7 +16,7 @@ async function runPoly(env){
     const rets=c.slice(1).map((x,i)=>Math.log(x.c/c[i].c)); const vol=Math.sqrt(rets.reduce((a,r)=>a+r*r,0)/Math.max(1,rets.length));
     if(s.openFor!==start){ const oc=cs.find(x=>x.t===start); const pc=cs.find(x=>x.t===start-60); if(oc){ s.openFor=start; s.openPx=oc.o; } else if(pc){ s.openFor=start; s.openPx=pc.c; } else if(now-start<20){ s.openFor=start; s.openPx=px; } }
     const p5=c.length>5?c[c.length-6].c:px;
-    await polyTick(k,s,{getJSON,price:px,openPrice:s.openFor===start?s.openPx:null,vol1m:vol,move5:(px-p5)/p5,nowSec:now}); s.err=null; }catch(e){ s.err=String(e.message||e); } s.last=now; all[k]=s; }));
+    const gp=(await env.KV.get("grok_pick","json"))||{}; const grok=(gp.at&&now-gp.at<300)?gp[k]:null; s.grok=grok; await polyTick(k,s,{grok,getJSON,price:px,openPrice:s.openFor===start?s.openPx:null,vol1m:vol,move5:(px-p5)/p5,nowSec:now}); s.px=px; s.err=null; }catch(e){ s.err=String(e.message||e); } s.last=now; all[k]=s; }));
   await env.KV.put("poly",JSON.stringify(all)); return all; }
 async function runKalshi(env){
   const all=(await env.KV.get("kalshi","json"))||{}; const now=Math.floor(Date.now()/1000);
@@ -115,6 +115,10 @@ export default {
     if (u.pathname === "/five") return new Response(FIVEPAGE, { headers: { "content-type": "text/html; charset=utf-8" } });
     if (u.pathname === "/api/five") return json((await env.KV.get("five3","json"))||{});
     if (u.pathname === "/api/px") { const out={}; await Promise.all(Object.keys(COINS).map(async k=>{ try{ out[k]=await ticker(k); }catch(e){} })); return json(out); }
+    if (u.pathname === "/grok/brief") { const all=(await env.KV.get("poly","json"))||{}; const now=Math.floor(Date.now()/1000); const out={time_utc:new Date().toISOString(), round_ends_in_s:300-(now%300), coins:{}};
+      for (const [k,v] of Object.entries(all)) out.coins[k]={price:v.px??null,price_to_beat:v.market?.strike??null,up_ask:v.market?.yesAsk??null,down_ask:v.market?.noAsk??null,open_bet:(v.open||[]).map(b=>({side:b.side==="yes"?"up":"down",bought:b.price,bid_now:b.bid??null})),balance:v.balance,last_10:(v.bets||[]).slice(-10).map(b=>({side:b.side==="yes"?"up":"down",pnl:b.pnl}))};
+      return json(out); }
+    if (u.pathname === "/grok/pick") { const pick={at:Math.floor(Date.now()/1000)}; for (const k of ["BTC","ETH","SOL"]) { const v=(u.searchParams.get(k.toLowerCase())||"").toLowerCase(); if (["up","down","skip","sell"].includes(v)) pick[k]=v; } await env.KV.put("grok_pick",JSON.stringify(pick)); return json({ok:true,received:pick,note:"Bot will act on these within 10 seconds."}); }
     if (u.pathname === "/api/poly") return json((await env.KV.get("poly","json"))||{});
     if (u.pathname === "/api/poly/run" && req.method==="POST") return json(await runPoly(env));
     if (u.pathname === "/api/poly/reset" && req.method==="POST") { const all={}; for (const k of Object.keys(COINS)) all[k]=freshP(); await env.KV.put("poly",JSON.stringify(all)); return json(all); }
