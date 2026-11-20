@@ -25,8 +25,14 @@ export async function polyTick(coin, s, { getJSON, price, openPrice, vol1m, move
     if (!b.token || nowSec >= b.closeSec - 5) continue;
     const bid = await bestBid(getJSON, b.token); if (!bid) continue;
     b.bid = bid;
-    const gain = bid / b.price;
-    const why = gain >= 1.6 || bid >= 0.95 ? "Took profit" : (gain <= 0.45 && nowSec - b.placed > 45) ? "Cut loss" : null;
+    const now$ = b.contracts * (bid - b.price);            // profit if sold now
+    b.peak = Math.max(b.peak ?? -99, now$);
+    let why = null;
+    if (now$ >= 1 && !(b.lastBid != null && bid > b.lastBid)) why = "Took profit"; // $1+ and not still climbing
+    if (now$ >= 3 || bid >= 0.95) why = "Took profit";
+    if (b.peak >= 1 && now$ <= b.peak - 0.5 && now$ > 0) why = "Took profit";  // it was running, now giving back
+    if (now$ <= -2) why = "Cut loss";
+    b.lastBid = bid;
     if (!why) continue;
     const pnl = +(b.contracts * (bid - b.price)).toFixed(2);
     s.balance = +(s.balance + pnl).toFixed(2);
