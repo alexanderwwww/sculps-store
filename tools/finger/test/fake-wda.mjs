@@ -6,6 +6,10 @@
 //   a route needs /session/<id> unless .withoutSession                Routing/FBRoute.m:106-122,153-169
 //   unknown paths -> "unknown command"                                Commands/FBUnknownCommands.m:26-29
 //   one request at a time (main queue)                                Routing/FBWebServer.m:80
+//   except routes declared .standalone, which skip that queue         Routing/FBHTTPServer.h:58-62
+//     GET /status      Commands/FBSessionCommands.m:52
+//     GET /screenshot  Commands/FBScreenshotCommands.m:21-22
+//   tree JSON carries isVisible / isEnabled as "1" / "0"              Categories/XCUIApplication+FBHelpers.m:57-62,259-266,302-307
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 
@@ -32,6 +36,8 @@ const TABLE = [
   ['POST', '/wda/apps/activate',         'session'], // FBSessionCommands.m:46
   ['POST', '/wda/apps/terminate',        'session'], // FBSessionCommands.m:47
 ];
+
+const STANDALONE = ['/status', '/screenshot'];
 
 const ERR = {
   unknownCommand: ['unknown command', 404],
@@ -86,6 +92,8 @@ export class FakeWda {
     this.calls = [];      // { method, path, body }
     this.delays = {};     // path -> ms before answering
     this.html = false;    // answer with an HTML page instead of JSON
+    this.reply = null;    // (path) => { status, body } to answer something the real WDA would not, or nothing
+    this.standaloneInFlight = 0;
     this.onTap = null;    // (x, y) => void
     this.inFlight = 0;
     this.maxInFlight = 0;
@@ -109,14 +117,18 @@ export class FakeWda {
     const chunks = [];
     req.on('data', (c) => chunks.push(c));
     req.on('end', () => {
-      // One at a time, like the real one.
-      this.chain = this.chain.then(() => this.answer(req, res, Buffer.concat(chunks).toString('utf8'))).catch(() => {});
+      const raw = Buffer.concat(chunks).toString('utf8');
+      const path = new URL(req.url, 'http://x').pathname.replace(/^\/session\/[^/]+/, '');
+      // Standalone routes are answered at once, whatever the main queue is doing.
+      if (STANDALONE.includes(path)) return void this.answer(req, res, raw, false).catch(() => {});
+      // Everything else one at a time, like the real one.
+      this.chain = this.chain.then(() => this.answer(req, res, raw, true)).catch(() => {});
     });
   }
 
-  async answer(req, res, raw) {
-    this.inFlight++;
-    this.maxInFlight = Math.max(this.maxInFlight, this.inFlight);
+  // inFlight counts the main queue only.
+  async answer(req, res, raw, main) {
+    if (main) { this.inFlight++; this.maxInFlight = Math.max(this.maxInFlight, this.inFlight); } else this.standaloneInFlight++;
     try {
       const url = new URL(req.url, 'http://x');
       let path = url.pathname;
@@ -130,6 +142,11 @@ export class FakeWda {
       if (this.html) {
         res.writeHead(502, { 'content-type': 'text/html' });
         return res.end('<html><body>Bad Gateway</body></html>');
+      }
+      const forced = this.reply ? this.reply(path) : undefined;
+      if (forced) {
+        res.writeHead(forced.status, { 'content-type': 'application/json;charset=UTF-8' });
+        return res.end(forced.body);
       }
       let status = 200;
       let value;
@@ -148,7 +165,7 @@ export class FakeWda {
       res.writeHead(status, { 'content-type': 'application/json;charset=UTF-8', 'content-length': Buffer.byteLength(out), server: 'WebDriverAgent/1.0' });
       res.end(out);
     } finally {
-      this.inFlight--;
+      if (main) this.inFlight--; else this.standaloneInFlight--;
     }
   }
 

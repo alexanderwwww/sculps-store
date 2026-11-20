@@ -10,12 +10,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { buildPlist, parsePlist } from '../src/plist.mjs';
 
-function frame(tag, obj) {
+function frame(tag, obj, messageType = 8) {
   const body = Buffer.from(buildPlist(obj));
   const head = Buffer.alloc(16);
   head.writeUInt32LE(16 + body.length, 0);
   head.writeUInt32LE(1, 4);
-  head.writeUInt32LE(8, 8);
+  head.writeUInt32LE(messageType, 8);
   head.writeUInt32LE(tag, 12);
   return Buffer.concat([head, body]);
 }
@@ -29,6 +29,8 @@ export class FakeUsbmuxd {
     this.sockets = new Set();
     this.nextId = 1;
     this.connects = [];        // every Connect seen: { deviceId, port, result }
+    this.messages = [];        // every message seen, as it arrived
+    this.replyMessageType = 8; // the header's message type on replies (8 = plist)
     this.splitReplies = false; // send replies one byte at a time
     this.server = net.createServer((sock) => this.onClient(sock));
   }
@@ -85,13 +87,14 @@ export class FakeUsbmuxd {
   }
 
   handle(sock, tag, msg, onData, rest) {
+    this.messages.push(msg);
     if (msg.MessageType === 'ListDevices') {
       const list = [];
       for (const [udid, p] of this.phones) {
         list.push(this.entry(udid, p));
         if (p.network) list.push(this.entry(udid, { deviceId: p.deviceId + 1000 }, 'Network'));
       }
-      this.write(sock, frame(tag, { DeviceList: list }));
+      this.write(sock, frame(tag, { DeviceList: list }, this.replyMessageType));
     } else if (msg.MessageType === 'Listen') {
       this.write(sock, frame(tag, { MessageType: 'Result', Number: 0 }));
       this.listeners.add(sock);

@@ -129,3 +129,22 @@ test('usbmux: a replug gives the phone a new DeviceID', () => withMux(async (mux
   mux.detach(UDID_A);
   assert.notEqual(mux.attach(UDID_A, {}), first);
 }));
+
+// ---- added after review ----
+
+test('usbmux: kLibUSBMuxVersion goes on Connect only, as in the cited client; a reply that is not a plist message is refused', () => withMux(async (mux, usbmux) => {
+  const echo = await echoServer();
+  const id = mux.attach(UDID_A, { 8100: echo.address().port });
+  await usbmux.listDevices();
+  (await usbmux.listen(() => {})).close();
+  (await usbmux.connect(id, 8100)).destroy();
+  const sent = Object.fromEntries(mux.messages.map((m) => [m.MessageType, m]));
+  assert.deepEqual(Object.keys(sent), ['ListDevices', 'Listen', 'Connect']);
+  assert.equal(sent.Connect.kLibUSBMuxVersion, 3);
+  assert.equal('kLibUSBMuxVersion' in sent.ListDevices, false);
+  assert.equal('kLibUSBMuxVersion' in sent.Listen, false);
+  for (const m of Object.values(sent)) { assert.equal(m.ProgName, 'finger'); assert.equal(typeof m.ClientVersionString, 'string'); }
+  mux.replyMessageType = 1; // the old binary "result" message: its bytes are not a plist
+  await assert.rejects(usbmux.listDevices(), (e) => e.code === 'PROTOCOL' && /message type 1/.test(e.message));
+  echo.close();
+}));

@@ -43,7 +43,26 @@ try {
   assert.equal(res.isError, false);
   assert.deepEqual(res.content[1], { type: 'image', data: 'AAAA', mimeType: 'image/jpeg' });
   assert.equal((await fetch(`http://127.0.0.1:${port}/k/wrong/mcp`, { method: 'POST', body: '{}' })).status, 404);
-  console.log('workerd check passed: initialize, offline refusal, heartbeat, queue, single delivery, wait inside the Durable Object, image result, key check');
+
+  // A result too big to keep (9 MB; the documented limit for a string or row is 8 MB) must
+  // not come back as HTTP 500 and leave the call pending for ever: it ends, and says why.
+  const big = tool('finger_look', { device: '1' });
+  await sleep(700);
+  const [cmd] = (await post('take', {})).commands;
+  const stored = await fetch(`${base}/result`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: cmd.id, result: { ok: true, image: { base64: 'A'.repeat(9 * 1000 * 1000), mime: 'image/jpeg' } } }) });
+  assert.equal(stored.status, 200, 'the Mac is told the result was taken');
+  const bigRes = await big;
+  assert.equal(bigRes.isError, true);
+  assert.equal(JSON.parse(bigRes.content[0].text).code, 'RESULT_TOO_BIG');
+  // 3.5 MB, under finger's own 4 MB limit, is kept whole.
+  const mid = tool('finger_look', { device: '1' });
+  await sleep(700);
+  const [cmd2] = (await post('take', {})).commands;
+  await post('result', { id: cmd2.id, result: { ok: true, image: { base64: 'A'.repeat(3500000), mime: 'image/jpeg' } } });
+  assert.equal((await mid).content[1].data.length, 3500000);
+  // A call taken and never answered: the schema's deadline column exists and is read.
+  assert.equal(JSON.parse((await tool('finger_result', { id: cmd2.id })).content[0].text).ok, true);
+  console.log('workerd check passed: initialize, offline refusal, heartbeat, queue, single delivery, wait inside the Durable Object, image result, key check, over-size result ends as RESULT_TOO_BIG, 3.5 MB result kept');
 } finally {
   // wrangler stops its workerd when asked nicely; the hard kill is only the backstop.
   try { process.kill(-child.pid, 'SIGTERM'); } catch { /* already gone */ }

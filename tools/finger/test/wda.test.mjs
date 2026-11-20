@@ -108,8 +108,32 @@ test('wda: WDA not listening is REFUSED; phone unplugged is NOT_PLUGGED', () => 
   await assert.rejects(client.call('status'), (e) => e.code === 'NOT_PLUGGED');
 }));
 
-test('fake wda: answers one request at a time, like the real one', () => one(async ({ client, wda }) => {
-  wda.delays['/source'] = 60;
-  await Promise.all([client.call('source', { query: { format: 'json' } }), client.call('status'), client.call('locked')]);
-  assert.equal(wda.maxInFlight, 1);
+test('fake wda: answers one request at a time on its command queue, like the real one; /status and /screenshot skip the queue', () => one(async ({ client, wda }) => {
+  wda.delays['/source'] = 150;
+  const done = [];
+  const mark = (name, p) => p.then(() => done.push(name));
+  await Promise.all([
+    mark('source', client.call('source', { query: { format: 'json' } })),
+    mark('locked', client.call('locked')),
+    mark('status', client.call('status')),
+    mark('screenshot', client.call('screenshot')),
+  ]);
+  assert.equal(wda.maxInFlight, 1, 'the command queue ran one at a time');
+  assert.deepEqual(done.slice(0, 2).sort(), ['screenshot', 'status'], 'the two standalone routes answered while /source was still running');
+  assert.deepEqual(done.slice(2), ['source', 'locked']);
+}));
+
+test('wda: an HTTP 200 whose body is not the WDA envelope is not a "done"', () => one(async ({ client, wda }) => {
+  await client.newSession();
+  for (const body of ['null', '[]', '"ok"', '{"status":0}', '42']) {
+    wda.reply = (p) => (p === '/wda/tap' ? { status: 200, body } : undefined);
+    await assert.rejects(client.call('tap', { body: { x: 1, y: 1 } }), (e) => e.kind === 'transport' && e.code === 'NOT_JSON', body);
+  }
+  wda.reply = (p) => (p === '/wda/tap' ? { status: 200, body: '{"value":null,"sessionId":"x"}' } : undefined);
+  assert.equal(await client.call('tap', { body: { x: 1, y: 1 } }), null);
+}));
+
+test('wda: an answer that is not HTTP 200 is an error even when its body is a clean envelope', () => one(async ({ client, wda }) => {
+  wda.reply = (p) => (p === '/wda/locked' ? { status: 500, body: '{"value":false,"sessionId":null}' } : undefined);
+  await assert.rejects(client.call('locked'), (e) => e.kind === 'transport' && e.code === 'HTTP_STATUS' && e.httpStatus === 500);
 }));

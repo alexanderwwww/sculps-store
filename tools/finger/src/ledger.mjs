@@ -86,7 +86,7 @@ export class Ledger {
       today,
       spentToday: todays.reduce((s, b) => s + b.stake, 0),
       // Money lost today, less money won today (by the day the result was recorded).
-      lossToday: -settledToday.reduce((s, b) => s + b.pnl, 0),
+      lossToday: 0 - settledToday.reduce((s, b) => s + b.pnl, 0), // "0 -" so nothing lost reads 0, not -0
       // Every stake that was placed (or is unknown) and has no result recorded, from ANY day:
       // until a result is recorded that money may still be lost.
       openStakes: open.reduce((s, b) => s + b.stake, 0),

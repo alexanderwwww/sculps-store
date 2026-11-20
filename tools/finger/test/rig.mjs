@@ -26,7 +26,9 @@ export const FAKE_WALLET = 'test.fake.wallet';
 export const FAKE_PROFILE = {
   readable: true,
   bundleId: FAKE_WALLET,
-  confirmLabels: ['Confirm'],
+  confirmLabels: [],                       // the guard takes confirm.label by itself
+  screen: { width: 390, height: 844 },     // the fake phone's screen, in points
+  guardRects: [[20, 700, 350, 60]],        // where the fake wallet puts Confirm
   flow: { side: { UP: 'Up', DOWN: 'Down' }, stake: { 2: '$2', 5: '$5', 10: '$10' }, review: 'Review' },
   confirm: {
     label: 'Confirm',
@@ -74,7 +76,7 @@ export function fakeWallet(wda, o = {}) {
 }
 
 // phones: how many fake iPhones (1 or 2), plugged in and listed by the registry.
-export async function rig({ phones = 2, profile = null, now = Date.now } = {}) {
+export async function rig({ phones = 2, profile = null, caps = null, now = Date.now, healthQueueMs = undefined } = {}) {
   const mux = new FakeUsbmuxd();
   await mux.start();
   const home = tmpHome();
@@ -87,7 +89,7 @@ export async function rig({ phones = 2, profile = null, now = Date.now } = {}) {
   const unplug = (u) => { const id = registry.deviceId(u); mux.detach(u); registry.detach(id); };
   udids.forEach(plug);
   const lanes = {};
-  for (const u of udids) lanes[u] = new Lane({ udid: u, usbmux, registry, profile, now });
+  for (const u of udids) lanes[u] = new Lane({ udid: u, usbmux, registry, profile, caps, now, healthQueueMs });
   return {
     mux, home, udids, wdas, usbmux, registry, lanes, plug, unplug,
     async close() {
