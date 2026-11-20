@@ -103,6 +103,7 @@ export default {
     if (u.pathname === "/api/state") { const s = await load(env); s.hasGrok = !!(await env.KV.get("xai_key")); s.rules = RULES; s.watch = WATCH; return json(s); }
     if (u.pathname === "/five") return new Response(FIVEPAGE, { headers: { "content-type": "text/html; charset=utf-8" } });
     if (u.pathname === "/api/five") return json((await env.KV.get("five3","json"))||{});
+    if (u.pathname === "/api/px") { const out={}; await Promise.all(Object.keys(COINS).map(async k=>{ try{ out[k]=await ticker(k); }catch(e){} })); return json(out); }
     if (u.pathname === "/api/kalshi") return json((await env.KV.get("kalshi","json"))||{});
     if (u.pathname === "/api/kalshi/run" && req.method==="POST") return json(await runKalshi(env));
     if (u.pathname === "/api/kalshi/reset" && req.method==="POST") { const all={}; for (const k of Object.keys(COINS)) all[k]=freshK(); await env.KV.put("kalshi",JSON.stringify(all)); return json(all); }
