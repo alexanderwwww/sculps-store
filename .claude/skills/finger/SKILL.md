@@ -61,3 +61,7 @@ usbmux forwarding on his iOS, signing with his Apple account, and whether Phanto
 - The watching happens ON THE MAC, not in the cloud: the worker reads the phone screen continuously (text tree first; live MJPEG stream from WDA, moved up from M8) and runs standing orders Claude sets ("cash out when this position shows +$1 / -$2", "sell before the round ends") with no round trip to Claude.
 - Claude sets and changes the standing orders and makes the entry call; the Mac executes exits at screen speed.
 - How fast one read is on his i3 + iPhone 11 Pro is unproven until his Mac (plan section 13, item 12). Measure it at M3 and show the number.
+
+## Alex, 2026-11-21: the phone must be visible
+- "I will connect my phone with usb… make sure this is visible and says connected and recognizes."
+- The first thing on finger's window: each plugged-in iPhone as a card with its name, model, iOS version and a big state word: Connected / Not trusted yet (tap Trust) / Locked / Developer Mode off / Unplugged. Updates the moment the cable goes in or out (usbmux Listen events), no refresh button.
