@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>5-Minute Bot</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{--bg:#0d1014;--card:#151a21;--fg:#eef2f6;--mute:#8793a1;--line:#242c36;--up:#2fd17c;--down:#ff5d55}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px Inter,system-ui,sans-serif;padding:24px max(16px,env(safe-area-inset-left))}
+.w{max-width:760px;margin:0 auto;display:grid;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}h1{margin:0;font-size:22px}.sub{color:var(--mute);font-size:13px;margin:2px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.g{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.k{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+.v{font:600 22px "JetBrains Mono",monospace;margin-top:4px;font-variant-numeric:tabular-nums}
+.up{color:var(--up)}.down{color:var(--down)}
+.round{display:flex;align-items:center;gap:16px}.clock{font:700 44px "JetBrains Mono",monospace}
+.bar{height:6px;background:var(--line);border-radius:9px;overflow:hidden;flex:1}.bar i{display:block;height:100%;background:var(--fg)}
+button{font:600 13px Inter;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:9px 14px;cursor:pointer}
+.log div{padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}.log span{color:var(--mute);font-family:"JetBrains Mono",monospace;margin-right:8px}
+@media(max-width:600px){.g{grid-template-columns:1fr 1fr}}
+</style></head><body><div class="w">
+<div class="top"><div><h1>5-Minute Bot</h1><p class="sub">BTC up/down rounds · paper money · bets at minute 3 on the side BTC is already on</p></div>
+<div><button id="tog">Pause</button> <button id="reset">Reset</button></div></div>
+<div class="g">
+<div class="card"><div class="k">Balance</div><div class="v" id="bal">–</div></div>
+<div class="card"><div class="k">Profit</div><div class="v" id="pnl">–</div></div>
+<div class="card"><div class="k">Win rate</div><div class="v" id="wr">–</div></div>
+<div class="card"><div class="k">BTC</div><div class="v" id="btc">–</div></div></div>
+<div class="card round"><div><div class="k">This round</div><div class="clock" id="clock">–</div></div><div class="bar"><i id="prog"></i></div><div id="cur" class="sub" style="min-width:150px;text-align:right">No bet yet</div></div>
+<div class="card"><div class="k" style="margin-bottom:6px">What it did</div><div class="log" id="log"></div></div>
+<p class="sub">Price per bet is the fair odds for that side plus the $0.02 fee, so the result here is what a real market would pay. Times are Athens.</p>
+</div><script>
+const $=i=>document.getElementById(i);const m=n=>(n<0?"-$":"$")+Math.abs(n).toFixed(2);
+const ath=t=>new Date(t*1000).toLocaleTimeString("en-GB",{timeZone:"Europe/Athens",hour:"2-digit",minute:"2-digit"});
+let S=null;
+function draw(){ if(!S)return;
+ $("bal").textContent=m(S.balance);const p=S.balance-S.start;$("pnl").textContent=(p>=0?"+":"")+m(p);$("pnl").className="v "+(p>0?"up":p<0?"down":"");
+ const w=S.bets.filter(b=>b.won).length;$("wr").textContent=S.bets.length?Math.round(100*w/S.bets.length)+"% ("+S.bets.length+")":"–";
+ $("btc").textContent=S.btc?"$"+Math.round(S.btc).toLocaleString("en-US"):"–";
+ $("tog").textContent=S.on?"Pause":"Start";
+ $("cur").textContent=S.open?`${S.open.side.toUpperCase()} ${S.open.contracts}× at $${S.open.price}`:"No bet this round";$("cur").className="sub "+(S.open?(S.open.side==="up"?"up":"down"):"");
+ const lg=$("log");lg.textContent="";S.log.slice(0,20).forEach(l=>{const d=document.createElement("div");const s=document.createElement("span");s.textContent=ath(l.at);d.append(s,l.m);lg.appendChild(d)});
+}
+function clock(){const n=Date.now()/1000,left=300-(n%300);$("clock").textContent=Math.floor(left/60)+":"+String(Math.floor(left%60)).padStart(2,"0");$("prog").style.width=((300-left)/3)+"%"}
+const load=()=>fetch("/api/five").then(r=>r.json()).then(s=>{S=s;draw()});
+const post=p=>fetch(p,{method:"POST"}).then(r=>r.json()).then(s=>{S=s;draw()});
+$("tog").onclick=()=>post("/api/five/toggle");
+let armed=0;$("reset").onclick=()=>{if(!armed){armed=1;$("reset").textContent="Tap again";setTimeout(()=>{armed=0;$("reset").textContent="Reset"},4000);return}armed=0;$("reset").textContent="Reset";post("/api/five/reset")};
+load();setInterval(load,15000);setInterval(clock,1000);clock();
+</script></body></html>

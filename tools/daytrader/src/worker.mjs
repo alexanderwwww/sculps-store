@@ -1,5 +1,10 @@
 import { tick, fresh, todayBars, WATCH, RULES } from "./engine.mjs";
 import PAGE from "./page.html";
+import FIVEPAGE from "./five.html";
+import { fiveTick, freshFive } from "./five.mjs";
+
+async function btc(){ const r=await fetch("https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60",{headers:{"user-agent":"daytrader"}}); if(!r.ok) throw new Error("coinbase "+r.status); const now=Date.now()/1000; return (await r.json()).map(([t,l,h,o,c])=>({t,o,c})).filter(x=>x.t+60<=now).sort((a,b)=>a.t-b.t).slice(-70); }
+async function runFive(env){ const s=(await env.KV.get("five","json"))||freshFive(); fiveTick(s, await btc(), Math.floor(Date.now()/1000)); await env.KV.put("five",JSON.stringify(s)); return s; }
 
 const KEY = "state";
 async function load(env) { return (await env.KV.get(KEY, "json")) || fresh(); }
@@ -53,12 +58,40 @@ async function run(env) {
 
 const json = (d, st = 200) => new Response(JSON.stringify(d), { status: st, headers: { "content-type": "application/json" } });
 
+// Storage: one Durable Object (SQLite) shaped like KV, so no extra Cloudflare permission is needed.
+export class Store {
+  constructor(state) { this.st = state.storage; }
+  async fetch(req) {
+    const { op, key, val } = await req.json();
+    if (op === "get") return new Response(JSON.stringify({ v: (await this.st.get(key)) ?? null }));
+    if (op === "put") { await this.st.put(key, val); return new Response("{}"); }
+    if (op === "del") { await this.st.delete(key); return new Response("{}"); }
+    return new Response("{}", { status: 400 });
+  }
+}
+function kv(env) {
+  const stub = env.STORE.get(env.STORE.idFromName("main"));
+  const call = b => stub.fetch("https://store/", { method: "POST", body: JSON.stringify(b) }).then(r => r.json());
+  return {
+    get: async (key, type) => { const { v } = await call({ op: "get", key }); return v == null ? null : type === "json" ? JSON.parse(v) : v; },
+    put: (key, val) => call({ op: "put", key, val }),
+    delete: key => call({ op: "del", key }),
+  };
+}
+const withKV = env => (env.KV ? env : { ...env, KV: kv(env) });
+
 export default {
-  async scheduled(_e, env, ctx) { ctx.waitUntil(run(env)); },
-  async fetch(req, env) {
+  async scheduled(e, env0, ctx) { const env = withKV(env0); ctx.waitUntil(runFive(env)); if (new Date(e.scheduledTime).getUTCMinutes() % 5 === 0) ctx.waitUntil(run(env)); },
+  async fetch(req, env0) {
+    const env = withKV(env0);
     const u = new URL(req.url);
     if (u.pathname === "/") return new Response(PAGE, { headers: { "content-type": "text/html; charset=utf-8" } });
     if (u.pathname === "/api/state") { const s = await load(env); s.hasGrok = !!(await env.KV.get("xai_key")); s.rules = RULES; s.watch = WATCH; return json(s); }
+    if (u.pathname === "/five") return new Response(FIVEPAGE, { headers: { "content-type": "text/html; charset=utf-8" } });
+    if (u.pathname === "/api/five") return json((await env.KV.get("five","json"))||freshFive());
+    if (u.pathname === "/api/five/toggle" && req.method==="POST") { const s=(await env.KV.get("five","json"))||freshFive(); s.on=!s.on; await env.KV.put("five",JSON.stringify(s)); return json(s); }
+    if (u.pathname === "/api/five/run" && req.method==="POST") { try { return json(await runFive(env)); } catch (e) { return json({ error: String(e.message||e) }, 500); } }
+    if (u.pathname === "/api/five/reset" && req.method==="POST") { await env.KV.put("five",JSON.stringify(freshFive())); return json(freshFive()); }
     if (req.method !== "POST") return json({ error: "not found" }, 404);
     if (u.pathname === "/api/run") return json(await run(env));
     if (u.pathname === "/api/toggle") { const s = await load(env); s.on = !s.on; await save(env, s); return json(s); }
