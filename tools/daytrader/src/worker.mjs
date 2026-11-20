@@ -2,10 +2,19 @@ import { tick, fresh, todayBars, WATCH, RULES } from "./engine.mjs";
 import PAGE from "./page.html";
 import FIVEPAGE from "./five.html";
 import { fiveTick, freshFive } from "./five.mjs";
+import { kalshiTick, freshK } from "./kalshi.mjs";
 
 const COINS = { BTC: "BTC-USD", ETH: "ETH-USD", SOL: "SOL-USD" };
 async function candles(coin){ const r=await fetch(`https://api.exchange.coinbase.com/products/${COINS[coin]}/candles?granularity=60`,{headers:{"user-agent":"daytrader"}}); if(!r.ok) throw new Error("coinbase "+r.status); return (await r.json()).map(([t,l,h,o,c])=>({t,o,c,h,l})).sort((a,b)=>a.t-b.t); }
 async function ticker(coin){ const r=await fetch(`https://api.exchange.coinbase.com/products/${COINS[coin]}/ticker`,{headers:{"user-agent":"daytrader"}}); const j=await r.json(); return +j.price; }
+async function runKalshi(env){
+  const all=(await env.KV.get("kalshi","json"))||{}; const now=Math.floor(Date.now()/1000);
+  const getJSON=u=>fetch(u,{headers:{"user-agent":"daytrader"}}).then(r=>r.json());
+  await Promise.all(Object.keys(COINS).map(async k=>{ const s=all[k]||freshK(); try{
+    const [cs,px]=await Promise.all([candles(k),ticker(k)]); const c=cs.slice(-61);
+    const rets=c.slice(1).map((x,i)=>Math.log(x.c/c[i].c)); const vol=Math.sqrt(rets.reduce((a,r)=>a+r*r,0)/Math.max(1,rets.length));
+    await kalshiTick(k,s,{getJSON,price:px,vol1m:vol,nowSec:now}); s.px=px; s.err=null; }catch(e){ s.err=String(e.message||e); } s.last=now; all[k]=s; }));
+  await env.KV.put("kalshi",JSON.stringify(all)); return all; }
 async function runFive(env){
   const all=(await env.KV.get("five3","json"))||{}; const now=Math.floor(Date.now()/1000);
   await Promise.all(Object.keys(COINS).map(async k=>{ const s=all[k]||freshFive(); try{ const [cs,px]=await Promise.all([candles(k),ticker(k)]); const c=cs.filter(x=>x.t+60<=now).slice(-70); const live=Math.floor(now/60)*60; if(px>0&&(!c.length||c.at(-1).t<live)) c.push({t:live,o:c.at(-1)?.c??px,c:px,h:px,l:px}); fiveTick(s,c,now); s.err=null; }catch(e){ s.err=String(e.message||e); } all[k]=s; }));
@@ -86,7 +95,7 @@ function kv(env) {
 const withKV = env => (env.KV ? env : { ...env, KV: kv(env) });
 
 export default {
-  async scheduled(e, env0, ctx) { const env = withKV(env0); ctx.waitUntil(runFive(env)); if (new Date(e.scheduledTime).getUTCMinutes() % 5 === 0) ctx.waitUntil(run(env)); },
+  async scheduled(e, env0, ctx) { const env = withKV(env0); ctx.waitUntil(runKalshi(env)); ctx.waitUntil(runFive(env)); if (new Date(e.scheduledTime).getUTCMinutes() % 5 === 0) ctx.waitUntil(run(env)); },
   async fetch(req, env0) {
     const env = withKV(env0);
     const u = new URL(req.url);
@@ -94,6 +103,10 @@ export default {
     if (u.pathname === "/api/state") { const s = await load(env); s.hasGrok = !!(await env.KV.get("xai_key")); s.rules = RULES; s.watch = WATCH; return json(s); }
     if (u.pathname === "/five") return new Response(FIVEPAGE, { headers: { "content-type": "text/html; charset=utf-8" } });
     if (u.pathname === "/api/five") return json((await env.KV.get("five3","json"))||{});
+    if (u.pathname === "/api/kalshi") return json((await env.KV.get("kalshi","json"))||{});
+    if (u.pathname === "/api/kalshi/run" && req.method==="POST") return json(await runKalshi(env));
+    if (u.pathname === "/api/kalshi/reset" && req.method==="POST") { const all={}; for (const k of Object.keys(COINS)) all[k]=freshK(); await env.KV.put("kalshi",JSON.stringify(all)); return json(all); }
+    if (u.pathname === "/api/kalshi/toggle" && req.method==="POST") { const all=(await env.KV.get("kalshi","json"))||{}; const on=!Object.values(all).some(s=>s.on===false); for (const k of Object.keys(COINS)) { all[k]=all[k]||freshK(); all[k].on=!on; } await env.KV.put("kalshi",JSON.stringify(all)); return json(all); }
     if (u.pathname === "/api/live") { const out={}; await Promise.all(Object.keys(COINS).map(async k=>{ try{ const c=(await candles(k)).slice(-90); out[k]={candles:c.map(x=>[x.t,x.o,x.c]), price:await ticker(k)}; }catch(e){ out[k]={error:String(e.message||e)}; } })); return json(out); }
     if (u.pathname === "/api/five/toggle" && req.method==="POST") { const all=(await env.KV.get("five3","json"))||{}; const on=!Object.values(all).some(s=>s.on===false); for (const k of Object.keys(COINS)) { all[k]=all[k]||freshFive(); all[k].on=!on; } await env.KV.put("five3",JSON.stringify(all)); return json(all); }
     if (u.pathname === "/api/five/run" && req.method==="POST") { try { return json(await runFive(env)); } catch (e) { return json({ error: String(e.message||e) }, 500); } }
