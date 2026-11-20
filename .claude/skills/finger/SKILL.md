@@ -91,3 +91,17 @@ usbmux forwarding on his iOS, signing with his Apple account, and whether Phanto
 - Skipping a round on a coin is allowed and expected.
 - Same for the exit: no fixed profit number alone; it weighs the cash-out offered now against the chance of the full win with the time left.
 - Any code review of the trader checks for this first: a constant like "enter at t=180" is a bug.
+
+## Settled in the build after the first review round (2026-11-20). Detail: tools/finger/STATUS.md
+- Phantom's iOS bundle id is `app.phantom` (App Store lookup; unproven on his phone until M4 reads it off the phone first).
+- `finger_act` never bets. Inside the wallet it refuses any touch on the recorded buy/confirm rectangle (fixed points, whatever the screen tree says, because a tap can land seconds after the screen was read), anything on the confirm screen, typing other than digits, and accepting a pop-up. Only `finger_buy` presses confirm.
+- Until M4 records Phantom's screens, `finger_act` does not touch inside the wallet at all. For M4 Alex switches "wallet setup" on, on finger's page, with an EMPTY wallet; the page says in red that nothing guards the buy button while it is on.
+- Live mode is blocked in code until finger can read a round's result from the wallet (the settlement reader, not built). Without it the loss stops have nothing to count.
+- A bet whose outcome finger could not read (UNKNOWN) stops live buying on that phone until it is resolved: two buttons on the page, "It was placed" / "It was not placed".
+- WDA's swipe "duration" is the press before the drag, not the swipe time; finger's swipe has `holdBefore` (default 0) and no speed. WDA can hold any tap up to 10 s waiting for the app to go idle; whether to lower that for Phantom is an M4 measurement.
+- The page answers only at 127.0.0.1 / localhost with its own port. A damaged file never stops finger from starting; the page says what is wrong and only buying stops.
+
+## Alex, 2026-11-21: more than one entry per coin
+- "You can enter each coin multiple times… 2 times each coin… when it's on the finishing line, they give you more multiplier."
+- Up to 2 entries per coin per round (so up to 6 bets a round, 1,728 a day at most). The second entry is its own judgment call: late in the round, when the price sits near the line and one side pays a big multiplier for a chance that is better than its price, or to add to / lock in the first bet.
+- Both entries count toward the per-bet and daily limits Alex types.
