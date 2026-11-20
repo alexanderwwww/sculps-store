@@ -105,3 +105,8 @@ usbmux forwarding on his iOS, signing with his Apple account, and whether Phanto
 - "You can enter each coin multiple times… 2 times each coin… when it's on the finishing line, they give you more multiplier."
 - Up to 2 entries per coin per round (so up to 6 bets a round, 1,728 a day at most). The second entry is its own judgment call: late in the round, when the price sits near the line and one side pays a big multiplier for a chance that is better than its price, or to add to / lock in the first bet.
 - Both entries count toward the per-bet and daily limits Alex types.
+
+## Alex, 2026-11-21: small profits, all day
+- "Mostly target small profits… even $1, 80 cents, 50 cents, everything is welcome. We grab the money and we're leaving. We never sleep, and that's how we win."
+- Style: many small takes, 24/7. A position showing +$0.50 to +$1 is cashed unless the judgment says the full win is clearly coming. No waiting for big wins.
+- The number that makes this work, tracked on screen: average loss must stay near the size of the average win (a +$0.80 take with a -$2 loss needs 72% winners).
