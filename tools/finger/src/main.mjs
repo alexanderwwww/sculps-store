@@ -16,6 +16,7 @@ import { buy } from './buy.mjs';
 import { Link } from './link.mjs';
 import { startPage } from './ui.mjs';
 import { WDA_PIN } from './routes.mjs';
+import { probe } from './probe.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.dirname(HERE);
@@ -43,6 +44,7 @@ export function createApp({
   const commands = new CommandJournal({ file: path.join(home, 'commands.jsonl') });
   const lanes = new Map();
   let usbmuxError = null;
+  let mac = null; // filled once by the probe, a moment after start
   let listener = null;
   let stopped = false;
   const timers = [];
@@ -94,6 +96,7 @@ export function createApp({
       unknownBets: s.unknown.length,
       caps: { perBetCap: c.perBetCap, dailyCap: c.dailyCap, dailyLossLimit: c.dailyLossLimit, lossStop: c.lossStop, minSecondsLeft: c.minSecondsLeft, maxStake: c.maxStake },
       usbmuxError,
+      mac,
       devices: registry.list().map((d) => ({ ...d, ...laneFor(d.udid).status() })),
     };
   }
@@ -145,6 +148,7 @@ export function createApp({
     get pageUrl() { return page ? page.url : null; },
     async start() {
       await watchUsb();
+      probe().then((m) => { mac = m; }).catch((e) => { mac = { error: e.message }; });
       timers.push(setInterval(() => { for (const lane of lanes.values()) lane.healthTick(); }, healthMs));
       page = await startPage({ port: pagePort, getStatus: () => ({ ...status(), link: link ? { lastOkAt: link.lastOkAt, error: link.lastError } : null }), caps, ledger, profile });
       if (link) link.start();

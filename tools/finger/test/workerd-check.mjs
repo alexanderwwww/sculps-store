@@ -45,6 +45,9 @@ try {
   assert.equal((await fetch(`http://127.0.0.1:${port}/k/wrong/mcp`, { method: 'POST', body: '{}' })).status, 404);
   console.log('workerd check passed: initialize, offline refusal, heartbeat, queue, single delivery, wait inside the Durable Object, image result, key check');
 } finally {
+  // wrangler stops its workerd when asked nicely; the hard kill is only the backstop.
+  try { process.kill(-child.pid, 'SIGTERM'); } catch { /* already gone */ }
+  await sleep(2000);
   try { process.kill(-child.pid, 'SIGKILL'); } catch { /* already gone */ }
   fs.rmSync(state, { recursive: true, force: true });
   fs.rmSync(path.join(here, '..', 'link', '.wrangler'), { recursive: true, force: true });

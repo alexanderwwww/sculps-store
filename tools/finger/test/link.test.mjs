@@ -157,6 +157,8 @@ withBridge('bridge: finger_status shows build, mode, limits and both phones by a
   assert.equal(s.mac.build, fs.readFileSync(new URL('../BUILD', import.meta.url), 'utf8').trim());
   assert.equal(s.mac.mode, 'PAPER');
   assert.equal(s.mac.wda, '17.0.12');
+  assert.equal(s.mac.mac.node, process.version, 'the Mac probe rides in the status');
+  assert.equal(typeof s.mac.mac.xcode.found, 'boolean');
   assert.deepEqual(s.mac.devices.map((d) => [d.alias, d.last4, d.label]), [[1, '001E', 'iPhone 1 (...001E)'], [2, '002F', 'iPhone 2 (...002F)']]);
 });
 

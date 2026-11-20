@@ -5,8 +5,11 @@ description: finger is Alex's Mac app that works any USB-connected iPhone like a
 
 # finger
 
-**Status 2026-11-20: plan only. No code, nothing run on a Mac or an iPhone.**
-The full plan, with every source citation, is `tools/finger/PLAN.md`. Read it before writing a line.
+**Status 2026-11-20: build 1 written and tested on Linux against fake phones only. Nothing run on a Mac or an iPhone. Nothing deployed. No zip.**
+The plan is `tools/finger/PLAN.md`. What is proven, unproven and not started is `tools/finger/STATUS.md`. Every outside fact and its source is `tools/finger/SOURCES.md`. Read all three before writing a line.
+
+WebDriverAgent pin: `appium/appium-ios`, `packages/webdriveragent`, commit `a20438d81ea63ce3f985497fd0759295a7ddf58c` (version 17.0.12). Whether it builds with his Xcode 16.x is unproven.
+Known since the plan: MacBook Air 2020 Intel i3, 8 GB, macOS Sequoia 15.7.4, Xcode 16.x installed; target iPhones on iOS 17 and up; free Apple account by default; spare iPhone's exact iOS still unknown.
 
 ## His words (2026-11-20), the specification
 
