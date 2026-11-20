@@ -32,7 +32,7 @@ h3{margin:8px 0 0;font-size:15px}
 <div class="total"><div class="n" id="tot">$300.00</div><div class="d" id="tpl">$0.00</div><div class="mute" style="font-size:13px;margin-top:6px" id="wr"></div></div>
 <div class="acts"><div class="act"><i>⏱</i><span id="clock">5:00</span></div><div class="act"><i>◎</i><span id="nb">0 bets</span></div><button class="act" id="reset"><i>↺</i><span>Reset</span></button></div>
 <div id="mks"></div>
-<h3>Activity</h3><div class="hist" id="hist"><div class="mute">Bets show up here when Kalshi sells a side cheaper than its real chance.</div></div>
+<h3>Activity</h3><div class="hist" id="hist"><div class="mute">One $10 bet per coin every 5 minutes.</div></div>
 </div><script>
 const C={BTC:{n:"Bitcoin",c:"#f7931a"},ETH:{n:"Ethereum",c:"#8c9cf5"},SOL:{n:"Solana",c:"#14f195"}};
 const $=i=>document.getElementById(i);const m=n=>(n<0?"-$":"$")+Math.abs(n).toFixed(2);
@@ -40,10 +40,10 @@ const fp=(k,p)=>p==null?"–":"$"+(+p).toLocaleString("en-US",{minimumFractionDi
 const ath=t=>new Date(t*1000).toLocaleTimeString("en-GB",{timeZone:"Europe/Athens",hour:"2-digit",minute:"2-digit"});
 let L={},S={};
 const wrap=$("mks");
-for(const k in C){wrap.insertAdjacentHTML("beforeend",`<div class="mk" style="margin-bottom:12px"><div class="mt"><div class="coin"><div class="logo" style="background:${C[k].c}">${k}</div><div><b>${C[k].n}</b><span id="sub${k}">Kalshi · up or down · 15 min</span></div></div><div class="px"><b id="p${k}">–</b><span id="c${k}">–</span></div></div><canvas id="g${k}"></canvas><div class="tg"><span class="mute">Price to beat</span><b id="t${k}">–</b><span class="mute">Bot P&amp;L</span><b id="l${k}">$0.00</b></div><div class="bet"><div class="pill u" id="u${k}">▲ Up</div><div class="pill d" id="d${k}">▼ Down</div></div></div>`)}
+for(const k in C){wrap.insertAdjacentHTML("beforeend",`<div class="mk" style="margin-bottom:12px"><div class="mt"><div class="coin"><div class="logo" style="background:${C[k].c}">${k}</div><div><b>${C[k].n}</b><span id="sub${k}">Polymarket · up or down · 5 min</span></div></div><div class="px"><b id="p${k}">–</b><span id="c${k}">–</span></div></div><canvas id="g${k}"></canvas><div class="tg"><span class="mute">Price to beat</span><b id="t${k}">–</b><span class="mute">Bot P&amp;L</span><b id="l${k}">$0.00</b></div><div class="bet"><div class="pill u" id="u${k}">▲ Up</div><div class="pill d" id="d${k}">▼ Down</div></div></div>`)}
 const EZ={};
 function chart(k){const cv=$("g"+k),d=L[k];if(!d||!d.candles)return;const km=(S[k]&&S[k].market)||{};
- const now=Date.now()/1000,close=km.closeSec||Math.ceil(now/900)*900,open=close-900;
+ const now=Date.now()/1000,close=km.closeSec||Math.ceil(now/300)*300,open=close-300;
  const dpr=devicePixelRatio||1,W=cv.clientWidth,H=150;if(cv.width!==W*dpr){cv.width=W*dpr;cv.height=H*dpr}const x=cv.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
  const t0=open-300;let pts=d.candles.filter(c=>c[0]+60>=t0&&isFinite(c[2])&&c[2]>0).map(c=>[c[0]+60,+c[2]]);
  const lastT=pts.length?pts[pts.length-1][0]:0;(TK[k]||[]).forEach(t=>{if(t[0]>lastT)pts.push(t)});
@@ -53,7 +53,7 @@ function chart(k){const cv=$("g"+k),d=L[k];if(!d||!d.candles)return;const km=(S[
  const top=8,bot=H-22,X=t=>((t-t0)/(close-t0))*(W-4),Y=v=>bot-(v-lo)/(hi-lo)*(bot-top);
  const up=EZ[k]>=(tgt||pts[0][1]);const col=up?"#2ec08b":"#eb3742";
  x.fillStyle="rgba(171,159,242,.06)";x.fillRect(X(open),top,X(close)-X(open),bot-top);
- x.strokeStyle="rgba(255,255,255,.06)";x.lineWidth=1;for(let t=open;t<=close;t+=300){x.beginPath();x.moveTo(X(t),top);x.lineTo(X(t),bot);x.stroke()}
+ x.strokeStyle="rgba(255,255,255,.06)";x.lineWidth=1;for(let t=open;t<=close;t+=60){x.beginPath();x.moveTo(X(t),top);x.lineTo(X(t),bot);x.stroke()}
  const g=x.createLinearGradient(0,top,0,bot);g.addColorStop(0,up?"rgba(46,192,139,.28)":"rgba(235,55,66,.28)");g.addColorStop(1,"rgba(0,0,0,0)");
  x.beginPath();pts.forEach((p,i)=>i?x.lineTo(X(p[0]),Y(p[1])):x.moveTo(X(p[0]),Y(p[1])));x.lineTo(X(now),bot);x.lineTo(X(pts[0][0]),bot);x.fillStyle=g;x.fill();
  x.beginPath();pts.forEach((p,i)=>i?x.lineTo(X(p[0]),Y(p[1])):x.moveTo(X(p[0]),Y(p[1])));x.strokeStyle=col;x.lineWidth=2;x.lineJoin="round";x.stroke();
@@ -61,8 +61,8 @@ function chart(k){const cv=$("g"+k),d=L[k];if(!d||!d.candles)return;const km=(S[
  (S[k]&&S[k].open||[]).filter(b=>b.ticker===km.ticker).forEach(b=>{x.fillStyle=b.side==="yes"?"#2ec08b":"#eb3742";x.strokeStyle="#1c1c1c";x.lineWidth=2;x.beginPath();x.arc(X(b.placed),Y(b.at),5,0,7);x.fill();x.stroke()});
  const pulse=3.5+1.5*Math.sin(now*4);x.fillStyle=col;x.globalAlpha=.25;x.beginPath();x.arc(X(now),Y(EZ[k]),pulse+4,0,7);x.fill();x.globalAlpha=1;x.beginPath();x.arc(X(now),Y(EZ[k]),3.5,0,7);x.fill();
  x.fillStyle="#999";x.font="500 10px Inter";const lab=t=>new Date(t*1000).toLocaleTimeString("en-GB",{timeZone:"Europe/Athens",hour:"2-digit",minute:"2-digit"});
- x.textAlign="left";x.fillText(lab(open),Math.max(0,X(open)-14),H-6);x.textAlign="center";x.fillText(lab(open+300),X(open+300),H-6);x.fillText(lab(open+600),X(open+600),H-6);x.textAlign="right";x.fillText(lab(close),W-2,H-6);
- const left=Math.max(0,close-now);const el=$("sub"+k);if(el)el.textContent=`Kalshi · ends ${ath(close)} · ${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,"0")} left`;}
+ x.textAlign="left";x.fillText(lab(open),Math.max(0,X(open)-14),H-6);x.textAlign="center";x.textAlign="right";x.fillText(lab(close),W-2,H-6);
+ const left=Math.max(0,close-now);const el=$("sub"+k);if(el)el.textContent=`Polymarket · ends ${ath(close)} · ${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,"0")} left`;}
 function frame(){for(const k in C)chart(k);const n=new Date();$("now").textContent=n.toLocaleTimeString("en-GB",{timeZone:"Europe/Athens"})+" Athens";requestAnimationFrame(frame)}
 function target(k){const km=S[k]&&S[k].market;if(km&&km.strike)return km.strike;const d=L[k];if(!d||!d.candles)return null;const r=Math.floor(Date.now()/1000/300)*300;const c=d.candles.find(c=>c[0]===r);if(c)return c[1];const b=d.candles.filter(c=>c[0]<r).pop();return b?b[2]:null}
 function draw(){let tot=0,start=0,bets=[],w=0,n=0;
@@ -84,9 +84,9 @@ function clock(){const n=Date.now()/1000;const cs=Object.values(S).map(s=>s.mark
 const TK={};
 const px=()=>fetch("/api/px").then(r=>r.json()).then(p=>{const n=Date.now()/1000;for(const k in p){if(!(p[k]>0))continue;(TK[k]=TK[k]||[]).push([n,p[k]]);if(TK[k].length>600)TK[k].shift();if(L[k])L[k].price=p[k];}draw()}).catch(()=>{});
 const live=()=>fetch("/api/live").then(r=>r.json()).then(d=>{L=d;draw()}).catch(()=>{});
-const state=()=>fetch("/api/kalshi").then(r=>r.json()).then(d=>{S=d;draw()}).catch(()=>{});
+const state=()=>fetch("/api/poly").then(r=>r.json()).then(d=>{S=d;draw()}).catch(()=>{});
 const post=p=>fetch(p,{method:"POST"}).then(r=>r.json()).then(d=>{S=d;draw()});
-$("tog").onclick=()=>post("/api/kalshi/toggle");
-let armed=0;$("reset").onclick=()=>{if(!armed){armed=1;$("reset").lastChild.textContent="Tap again";setTimeout(()=>{armed=0;$("reset").lastChild.textContent="Reset"},4000);return}armed=0;$("reset").lastChild.textContent="Reset";post("/api/kalshi/reset")};
+$("tog").onclick=()=>post("/api/poly/toggle");
+let armed=0;$("reset").onclick=()=>{if(!armed){armed=1;$("reset").lastChild.textContent="Tap again";setTimeout(()=>{armed=0;$("reset").lastChild.textContent="Reset"},4000);return}armed=0;$("reset").lastChild.textContent="Reset";post("/api/poly/reset")};
 live();state();setInterval(live,30000);setInterval(px,1000);requestAnimationFrame(frame);setInterval(state,15000);setInterval(clock,1000);clock();addEventListener("resize",draw);
 </script></body></html>
