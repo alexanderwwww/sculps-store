@@ -65,3 +65,8 @@ usbmux forwarding on his iOS, signing with his Apple account, and whether Phanto
 ## Alex, 2026-11-21: the phone must be visible
 - "I will connect my phone with usb… make sure this is visible and says connected and recognizes."
 - The first thing on finger's window: each plugged-in iPhone as a card with its name, model, iOS version and a big state word: Connected / Not trusted yet (tap Trust) / Locked / Developer Mode off / Unplugged. Updates the moment the cable goes in or out (usbmux Listen events), no refresh button.
+
+## Alex, 2026-11-21: how it must feel, and the trading goal
+- Setup, his words: "double click the app, then connect my iPhone with USB, then approve it, and then it will work." Three beats only. Every Apple-required tap (Trust, Developer Mode, trust the developer app, Apple account in Xcode) is presented as part of the one "approve" beat, one at a time on finger's window; nothing else is asked.
+- Trading goal: a little profit every 5-minute round by chart reading; cash out early when the trade has almost won; win at least 2 of the 3 coins each round (BTC, SOL, ETH).
+- Measure of "good": rounds where 2+ of 3 closed in profit, shown on screen. Paper first; live when that number holds.
