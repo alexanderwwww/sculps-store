@@ -106,7 +106,7 @@ function kv(env) {
 const withKV = env => (env.KV ? env : { ...env, KV: kv(env) });
 
 export default {
-  async scheduled(e, env0, ctx) { const env = withKV(env0); ctx.waitUntil(runPoly(env)); ctx.waitUntil(runFive(env)); if (new Date(e.scheduledTime).getUTCMinutes() % 5 === 0) ctx.waitUntil(run(env)); },
+  async scheduled(e, env0, ctx) { const env = withKV(env0); ctx.waitUntil((async()=>{ for(let i=0;i<6;i++){ try{ await runPoly(env); }catch(e){} if(i<5) await new Promise(r=>setTimeout(r,9000)); } })()); ctx.waitUntil(runFive(env)); if (new Date(e.scheduledTime).getUTCMinutes() % 5 === 0) ctx.waitUntil(run(env)); },
   async fetch(req, env0) {
     const env = withKV(env0);
     const u = new URL(req.url);

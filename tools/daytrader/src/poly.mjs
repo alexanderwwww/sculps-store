@@ -12,8 +12,28 @@ async function bestAsk(getJSON, token) {
   return asks.length ? Math.min(...asks) : null;
 }
 
+async function bestBid(getJSON, token) {
+  const b = await getJSON(`${CLOB}/book?token_id=${token}`);
+  const bids = (b.bids || []).map(x => +x.price).filter(p => p > 0);
+  return bids.length ? Math.max(...bids) : null;
+}
+
 export async function polyTick(coin, s, { getJSON, price, openPrice, vol1m, move5, nowSec }) {
   const say = m => s.log.unshift({ at: nowSec, m });
+  // Cash out: sell the held side at the live bid when the profit is in hand or the bet has gone bad.
+  for (const b of [...s.open]) {
+    if (!b.token || nowSec >= b.closeSec - 5) continue;
+    const bid = await bestBid(getJSON, b.token); if (!bid) continue;
+    b.bid = bid;
+    const gain = bid / b.price;
+    const why = gain >= 1.6 || bid >= 0.95 ? "Took profit" : (gain <= 0.45 && nowSec - b.placed > 45) ? "Cut loss" : null;
+    if (!why) continue;
+    const pnl = +(b.contracts * (bid - b.price)).toFixed(2);
+    s.balance = +(s.balance + pnl).toFixed(2);
+    s.bets.push({ ...b, won: pnl > 0, pnl, cashout: bid, why2: why }); s.bets = s.bets.slice(-500);
+    s.open = s.open.filter(x => x !== b);
+    say(`${why}: sold ${b.side === "yes" ? "UP" : "DOWN"} at $${bid} (bought $${b.price}) ${pnl >= 0 ? "+" : ""}$${pnl}`);
+  }
   for (const b of [...s.open]) {
     if (nowSec < b.closeSec + 30) continue;
     const ev = (await getJSON(`${GAMMA}/events?slug=${b.slug}`))[0];
@@ -47,7 +67,7 @@ export async function polyTick(coin, s, { getJSON, price, openPrice, vol1m, move
   const ask = side === "yes" ? yesAsk : noAsk;
   if (!(ask >= P.minAsk && ask <= P.maxAsk)) { if (s.saidSkip !== slug) { s.saidSkip = slug; say(`Skip: Up $${yesAsk ?? "–"} / Down $${noAsk ?? "–"}, too lopsided`); } return s; }
   const contracts = +(P.stake / ask).toFixed(4), fair = side === "yes" ? pYes : 1 - pYes;
-  s.open.push({ slug, ticker: slug, side, price: ask, contracts, strike: openPrice, at: price, fair: +fair.toFixed(3), why, left, move5: +((move5 || 0) * 100).toFixed(3), vol: +vol1m.toFixed(5), closeSec, placed: nowSec });
+  s.open.push({ slug, ticker: slug, token: side === "yes" ? upTok : downTok, side, price: ask, contracts, strike: openPrice, at: price, fair: +fair.toFixed(3), why, left, move5: +((move5 || 0) * 100).toFixed(3), vol: +vol1m.toFixed(5), closeSec, placed: nowSec });
   say(`Bet ${side === "yes" ? "UP" : "DOWN"} $${P.stake} at $${ask} (${why}, ${into}s in, fair ${(100 * fair).toFixed(0)}%, pays ×${(1 / ask).toFixed(1)})`);
   s.log = s.log.slice(0, 80);
   return s;
