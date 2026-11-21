@@ -17,7 +17,8 @@ export interface Candidate extends Profit {
   dexA: string;
   dexB: string;
   borrowed: bigint;
-  midX: bigint; // X out of leg1
+  midX: bigint; // X out of leg1 (quoted)
+  leg2InX?: bigint; // X sold in leg 2
   finalUsdc: bigint;
   verified: boolean;
   quote1?: QuoteResponse;
@@ -196,11 +197,15 @@ export async function scan(deps: ScanDeps): Promise<ScanResult> {
     c.verified = true; // attempted; failed attempts are removed below
     const q1 = await tryQuote(deps, errors, 'verify1', c.pair, c.dexA, c.sizeUsdc, USDC.mint, X.mint, c.borrowed);
     if (!q1) return void (c.net = -(1n << 62n));
-    const q2 = await tryQuote(deps, errors, 'verify2', c.pair, c.dexB, c.sizeUsdc, X.mint, USDC.mint, BigInt(q1.outAmount));
+    // Scan math uses the quoted leg-1 output, so the spread is the market's real spread. (The builder later sells
+    // only leg 1's guaranteed minimum, see prepareForBuild.)
+    const leg2In = BigInt(q1.outAmount);
+    const q2 = await tryQuote(deps, errors, 'verify2', c.pair, c.dexB, c.sizeUsdc, X.mint, USDC.mint, leg2In);
     if (!q2) return void (c.net = -(1n << 62n));
     c.quote1 = q1;
     c.quote2 = q2;
     c.midX = BigInt(q1.outAmount);
+    c.leg2InX = leg2In;
     c.finalUsdc = BigInt(q2.outAmount);
     Object.assign(c, computeProfit({ borrowed: c.borrowed, finalUsdc: c.finalUsdc, flashLoanFeeSf: deps.flashLoanFeeSf, networkFeeUsdc }));
   };
@@ -233,6 +238,20 @@ export async function scan(deps: ScanDeps): Promise<ScanResult> {
     networkFeeUsdc,
     durationMs: Date.now() - t0,
   };
+}
+
+/**
+ * For the real transaction, leg 2 must sell what leg 1 is GUARANTEED to deliver (otherAmountThreshold).
+ * Selling the quoted outAmount failed on chain with Jupiter 6024 InsufficientFunds when leg 1 filled a little
+ * below its quote (proof/simulate-alex-route.txt). Re-quotes leg 2 and recomputes net in USDC (the X left
+ * over, up to SLIPPAGE_BPS of the trade, stays in the wallet and is reported separately).
+ */
+export async function prepareForBuild(jup: JupiterClient, c: Candidate, cfg: Config, flashLoanFeeSf: bigint): Promise<Candidate> {
+  const q1 = c.quote1!;
+  const leg2In = BigInt(q1.otherAmountThreshold);
+  const q2 = await jup.quote({ inputMint: c.mint!, outputMint: USDC.mint, amount: leg2In, dex: c.dexB, slippageBps: cfg.slippageBps, maxAccounts: cfg.maxAccountsPerSwap });
+  const finalUsdc = BigInt(q2.outAmount);
+  return { ...c, quote2: q2, leg2InX: leg2In, finalUsdc, ...computeProfit({ borrowed: c.borrowed, finalUsdc, flashLoanFeeSf, networkFeeUsdc: c.networkFeeUsdc }) };
 }
 
 export function logScan(path: string, r: ScanResult) {

@@ -42,7 +42,7 @@ export const config = {
   pairs: list('PAIRS', []),
   minTokenLiquidityUsd: num('MIN_TOKEN_LIQUIDITY_USD', 5_000_000),
   maxTokens: num('MAX_TOKENS', 10),
-  excludeTags: list('EXCLUDE_TAGS', ['jup-lend-earn', 'yb']),
+  excludeTags: list('EXCLUDE_TAGS', ['jup-lend-earn', 'yb', 'lst']),
   allowToken2022: (process.env.ALLOW_TOKEN_2022 ?? 'false') === 'true',
   goldQueries: list('GOLD_QUERIES', ['gold', 'XAU', 'PAXG']),
   minNetProfitUsdc: num('MIN_NET_PROFIT_USDC', 0),

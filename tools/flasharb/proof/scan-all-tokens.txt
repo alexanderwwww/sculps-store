@@ -1,0 +1,5 @@
+Kamino SOL/BTC Market 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF | USDC reserve D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59 | flash fee 0.0010% | available 40807445.31 USDC
+tokens (live, verified, liquidity >= $5,000,000): SOL $751.5M, USX $29.1M, USDT $28.0M, WBTC $26.4M, USD1 $22.2M, JupUSD $17.7M, cbBTC $17.3M, ETH $14.5M, TRUMP $12.7M, RAY $11.9M
+headline size 100000 USDC | all sizes 1000,10000,100000,1000000 | dexes discovered live per token
+log -> /home/user/sculps-store/tools/flasharb/logs/scans.jsonl
+

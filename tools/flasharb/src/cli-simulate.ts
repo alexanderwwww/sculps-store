@@ -4,37 +4,64 @@ import { address } from '@solana/kit';
 import { config, USDC } from './config.ts';
 import { athens, describe, setup, table } from './common.ts';
 import { buildArbTx, FLASH_BORROW_DISCRIMINATOR, FLASH_REPAY_DISCRIMINATOR, hasDiscriminator } from './builder.ts';
-import { fmtUsdc } from './math.ts';
-import { logScan, scan } from './scanner.ts';
-import { findFundedWallet, simulate } from './simulate.ts';
+import { computeProfit, fmtUsdc } from './math.ts';
+import { logScan, prepareForBuild, scan, type Candidate } from './scanner.ts';
+import { findFundedWallet, simulate, usdcBalance } from './simulate.ts';
 
 const { rpc, jup, kamino, tokens } = await setup();
 console.log(`Kamino USDC reserve ${kamino.reserveAddress} flash fee ${(kamino.flashLoanFeeRate * 100).toFixed(4)}%, available ${fmtUsdc(kamino.availableLiquidity)} USDC`);
 
-let wallet = config.walletPubkey;
-let walletNote = 'WALLET_PUBKEY from .env';
-if (!wallet) {
-  const found = await findFundedWallet(rpc, USDC.mint, kamino.reserveAddress);
-  wallet = found.wallet;
-  walletNote = `WALLET_PUBKEY not set -> stand-in public wallet ${wallet}: ${found.how}`;
-}
-console.log(walletNote);
+// Flags:
+//   --route "SOL,Whirlpool,Raydium CLMM"  build that exact route (pair symbol, buy DEX, sell DEX) at TRADE_SIZE_USDC
+//   --size 1000                            override the size for this run
+//   --stand-in-wallet                      simulate with a public mainnet wallet that holds USDC (found on chain),
+//                                          so a losing trade's shortfall is covered and the repay can complete.
+const arg = (k: string) => {
+  const i = process.argv.indexOf(k);
+  return i > 0 ? process.argv[i + 1] : undefined;
+};
+const size = Number(arg('--size') ?? config.tradeSizeUsdc);
 
-const r = await scan({ jup, cfg: config, flashLoanFeeSf: kamino.flashLoanFeeSf, availableLiquidity: kamino.availableLiquidity, tokens });
-logScan(config.logPath, r);
-console.log(`scan @ ${athens(new Date(r.ts))}, ${r.candidates.length} routes, ${r.jupiterCalls} calls`);
-console.log(`HEADLINE ${config.tradeSizeUsdc} USDC -> ${describe(r.bestAtTradeSize)}`);
-console.log(table(r.candidates.filter((c) => c.sizeUsdc === config.tradeSizeUsdc), 6));
-// Build the headline-size candidate (TRADE_SIZE_USDC); fall back to the best of any size.
-const best = r.bestAtTradeSize ?? r.best;
+// Cheap, fast route pick first, so the wallet lookup does not age the quotes.
+let best: Candidate | undefined;
+const route = arg('--route');
+if (route) {
+  const [sym, dexA, dexB] = route.split(',').map((x) => x.trim());
+  const X = tokens.find((t) => t.symbol === sym || t.mint === sym);
+  if (!X) throw new Error(`${sym} not in discovered tokens`);
+  const borrowed = BigInt(size) * 10n ** BigInt(USDC.decimals);
+  const q1 = await jup.quote({ inputMint: USDC.mint, outputMint: X.mint, amount: borrowed, dex: dexA, slippageBps: config.slippageBps, maxAccounts: config.maxAccountsPerSwap });
+  const q2 = await jup.quote({ inputMint: X.mint, outputMint: USDC.mint, amount: BigInt(q1.otherAmountThreshold), dex: dexB, slippageBps: config.slippageBps, maxAccounts: config.maxAccountsPerSwap });
+  const p = computeProfit({ borrowed, finalUsdc: BigInt(q2.outAmount), flashLoanFeeSf: kamino.flashLoanFeeSf, networkFeeUsdc: 0n });
+  best = { pair: X.symbol, mint: X.mint, sizeUsdc: size, dexA, dexB, borrowed, midX: BigInt(q1.outAmount), leg2InX: BigInt(q1.otherAmountThreshold), finalUsdc: BigInt(q2.outAmount), verified: true, quote1: q1, quote2: q2, ...p };
+} else {
+  const r = await scan({ jup, cfg: { ...config, tradeSizeUsdc: size } as any, flashLoanFeeSf: kamino.flashLoanFeeSf, availableLiquidity: kamino.availableLiquidity, tokens });
+  logScan(config.logPath, r);
+  console.log(`scan @ ${athens(new Date(r.ts))}, ${r.candidates.length} routes, ${r.jupiterCalls} calls`);
+  console.log(`HEADLINE ${size} USDC -> ${describe(r.bestAtTradeSize)}`);
+  console.log(table(r.candidates.filter((c) => c.sizeUsdc === size), 6));
+  best = r.bestAtTradeSize ?? r.best;
+}
 if (!best?.quote1 || !best.quote2) {
   console.log('No verified candidate to build.');
   process.exit(1);
 }
-console.log(`\nbuilding: ${best.pair} ${best.sizeUsdc} USDC, buy on ${best.dexA}, sell on ${best.dexB}, expected net $${fmtUsdc(best.net)}`);
+if (!route) best = await prepareForBuild(jup, best, config, kamino.flashLoanFeeSf);
 
-const swap1 = await jup.swapInstructions(best.quote1, wallet);
-const swap2 = await jup.swapInstructions(best.quote2, wallet);
+let wallet = config.walletPubkey;
+let walletNote = 'WALLET_PUBKEY from .env';
+if (!wallet || process.argv.includes('--stand-in-wallet')) {
+  const shortfall = best.net < 0n ? -best.net + 1_000_000n : 0n;
+  const found = await findFundedWallet(rpc, USDC.mint, kamino.reserveAddress, shortfall);
+  wallet = found.wallet;
+  walletNote = `stand-in public wallet ${wallet} (simulation only): ${found.how}`;
+}
+const [solInfo, usdcHeld] = await Promise.all([rpc.getBalance(address(wallet)).send(), usdcBalance(rpc, wallet, USDC.mint)]);
+console.log(`${walletNote} | ${Number(solInfo.value) / 1e9} SOL, ${fmtUsdc(usdcHeld)} USDC held`);
+console.log(`\nbuilding: ${best.pair} ${best.sizeUsdc} USDC, buy on ${best.dexA}, sell on ${best.dexB}, expected net $${fmtUsdc(best.net)} (USDC only; leg 2 sells leg 1's guaranteed minimum ${best.leg2InX} of ${best.midX} base units)`);
+
+const swap1 = await jup.swapInstructions(best.quote1!, wallet);
+const swap2 = await jup.swapInstructions(best.quote2!, wallet);
 const built = await buildArbTx({
   rpc,
   kamino,

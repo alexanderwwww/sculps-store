@@ -188,7 +188,7 @@ function fakeMarket(opts: { noRouteDex?: string; failAll?: boolean } = {}) {
     if (dex === opts.noRouteDex) return resp(400, { error: 'No routes found', errorCode: 'NO_ROUTES_FOUND' });
     const p = price[dex];
     const out = inMint === USDC.mint ? (amt / p) * 1 : amt * p; // X has 6 decimals like USDC
-    return resp(200, { inAmount: String(amt), outAmount: String(Math.floor(out)), otherAmountThreshold: '0', routePlan: [{ swapInfo: { label: dex } }] });
+    return resp(200, { inAmount: String(amt), outAmount: String(Math.floor(out)), otherAmountThreshold: String(Math.floor(out * 0.999)), routePlan: [{ swapInfo: { label: dex } }] });
   };
 }
 const X = { symbol: 'X', mint: 'XMint', decimals: 6, tokenProgram: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' };
@@ -201,8 +201,16 @@ test('scan loop finds buy-cheap/sell-rich, verifies it exactly, rejects reverse 
   assert.equal(r.bestAtTradeSize!.dexA, 'Cheap');
   assert.equal(r.bestAtTradeSize!.dexB, 'Rich');
   assert.equal(r.bestAtTradeSize!.verified, true);
-  // 100k / 99 * 100 = 101,010.10 -> gross ~ 1010.10, minus $1 flash fee
-  assert.ok(r.bestAtTradeSize!.net > 1_000_000_000n && r.bestAtTradeSize!.net < 1_010_000_000n);
+  // scan math = market spread: 100k / 99 * 100 = 101,010.10 -> net ~ $1009.10
+  const b = r.bestAtTradeSize!;
+  assert.equal(b.quote2!.inAmount, b.quote1!.outAmount);
+  assert.ok(b.net > 1_000_000_000n && b.net < 1_010_000_000n, String(b.net));
+  // build path: leg 2 sells only leg 1's guaranteed minimum (0.999x) -> ~ $908
+  const { prepareForBuild } = await import('../src/scanner.ts');
+  const built = await prepareForBuild(jup, b, cfgFor(), REAL_SF);
+  assert.equal(built.leg2InX, BigInt(b.quote1!.otherAmountThreshold));
+  assert.equal(built.quote2!.inAmount, built.leg2InX!.toString());
+  assert.ok(built.net > 900_000_000n && built.net < 910_000_000n, String(built.net));
   const rev = r.candidates.find((c) => c.dexA === 'Rich' && c.dexB === 'Cheap' && c.sizeUsdc === 100000)!;
   assert.ok(rev.net < 0n);
   assert.deepEqual(profitable(r.candidates).every((c) => c.net > 0n), true);
