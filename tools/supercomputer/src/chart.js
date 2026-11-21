@@ -83,7 +83,7 @@ export class Chart {
         const y = Math.round(Y(ln.price)) + 0.5, col = d.pattern.dir > 0 ? "rgba(48,209,88,0.5)" : "rgba(255,69,58,0.5)";
         g.beginPath(); g.moveTo(X(now - 30 * 60), y); g.lineTo(xn, y); g.strokeStyle = col; g.lineWidth = 1; g.setLineDash([1, 2]); g.stroke(); g.setLineDash([]);
         g.font = "500 9px -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif"; g.fillStyle = "rgba(235,235,245,0.6)"; g.textAlign = "left";
-        g.fillText(i === 0 ? d.pattern.label : ln.label, X(now - 30 * 60) + 2, y - 3);
+        if (i === 0) g.fillText(d.pattern.label, X(now - 30 * 60) + 2, y - 3);
       });
     }
     // price line: smooth curve + soft fill
@@ -112,8 +112,6 @@ export class Chart {
         const y = Math.round(Y(v)) + 0.5; g.beginPath(); g.moveTo(xn, y); g.lineTo(W - padR, y); g.strokeStyle = hex(C.grok, 0.7); g.setLineDash([1, 3]); g.stroke(); g.setLineDash([]);
       }
     }
-    // price tag at the right edge
-    label(g, W - padR - 2, Y(price), this.fmt(price), C.blue, "right", true);
   }
   empty(g, W, H) {
     g.fillStyle = C.text; g.font = "500 11px -apple-system, system-ui, sans-serif"; g.textAlign = "center";

@@ -12,6 +12,7 @@ export const DEFAULTS = {
   feePerSidePct: 0.04,    // Kraken Prop: 0.04% per side
   levBTC: 10, levETH: 5, levOther: 2, // Kraken Prop sets leverage per instrument; change if the ticket shows another
   minLiquidityUSD: 5_000_000, // movers: 24h USD volume a pair needs
+  minRange24hPct: 1,          // movers: 24h high-low range a pair needs (drops pegged and dead coins)
   sessionFrom: "15:30", sessionTo: "23:00",
 };
 

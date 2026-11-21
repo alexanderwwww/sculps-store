@@ -134,7 +134,16 @@ for (const h of HORIZONS) {
     return { mu, sd, w, prob };
   };
   const baseFit = fitAll((r) => r.x), baseTest = te.filter((r) => (baseFit.prob(r) >= 0.5) === (r.y[h] === 1)).length / te.length;
-  const { mu, sd, w, prob } = usePatterns.length ? fitAll(xOf) : baseFit;
+  // patterns join the shipped model only if adding them raised the hit rate on VALID and on TEST; otherwise they are drawn and named, never counted
+  let patFit = null, patGain = null;
+  if (usePatterns.length) {
+    patFit = fitAll(xOf);
+    const hr = (fit, set) => set.filter((r) => (fit.prob(r) >= 0.5) === (r.y[h] === 1)).length / set.length;
+    patGain = { valid: hr(patFit, va) - hr(baseFit, va), test: hr(patFit, te) - hr(baseFit, te) };
+    if (!(patGain.valid > 0 && patGain.test > 0)) { patFit = null; usePatterns.length = 0; pIdx.length = 0; }
+  }
+  for (const ps of Object.values(patternStats)) ps.passedValid = ps.used, ps.used = usePatterns.some((nm) => patternStats[nm] === ps);
+  const { mu, sd, w, prob } = patFit || baseFit;
   for (const r of [...tr, ...va, ...te]) r.p = prob(r);
   const hits = (set) => set.filter((r) => (r.p >= 0.5) === (r.y[h] === 1)).length;
 
@@ -167,11 +176,11 @@ for (const h of HORIZONS) {
     const edge = dirEdge && v.plan.trades >= 100 && t.plan.trades >= 100 && v.plan.netPct > 0 && t.plan.netPct > 0;
     bands.push({ lo, hi, dirEdge, edge, valid: v, test: t });
   }
-  out.horizons[h] = { mu, sd, w: Array.from(w.slice(1)), b: w[0], patterns: usePatterns, patternStats, testHitWithoutPatterns: baseTest, range, drift, plan: pp, bands,
+  out.horizons[h] = { mu, sd, w: Array.from(w.slice(1)), b: w[0], patterns: usePatterns, patternStats, patternGain: patGain, testHitWithoutPatterns: baseTest, range, drift, plan: pp, bands,
     overall: { train: { n: tr.length, hit: hits(tr) / tr.length, up: upRate(tr) }, valid: { n: va.length, hit: hits(va) / va.length, up: upRate(va) },
       test: { n: te.length, hit: hits(te) / te.length, up: upRate(te), rangeCover: cover(te) }, planValid: best?.res ?? null, planTest: replay(te.filter((r) => Math.max(r.p, 1 - r.p) >= 0.52), h, pp) } };
-  console.log(`\n== ${h}m patterns used: ${usePatterns.join(", ") || "none"} (test hit without patterns ${(baseTest * 100).toFixed(2)}%)`);
-  for (const [nm, ps] of Object.entries(patternStats)) console.log(`   ${nm.padEnd(13)} valid n=${ps.valid.n} hit=${(ps.valid.hit * 100).toFixed(1)} naive=${(ps.valid.naive * 100).toFixed(1)} | test n=${ps.test.n} hit=${(ps.test.hit * 100).toFixed(1)} naive=${(ps.test.naive * 100).toFixed(1)}${ps.used ? "  USED" : ""}`);
+  console.log(`\n== ${h}m patterns: gain with them valid ${patGain ? (patGain.valid * 100).toFixed(2) : "-"} test ${patGain ? (patGain.test * 100).toFixed(2) : "-"} pts; used: ${usePatterns.join(", ") || "none"} (test hit without patterns ${(baseTest * 100).toFixed(2)}%)`);
+  for (const [nm, ps] of Object.entries(patternStats)) console.log(`   ${nm.padEnd(13)} valid n=${ps.valid.n} hit=${(ps.valid.hit * 100).toFixed(1)} naive=${(ps.valid.naive * 100).toFixed(1)} | test n=${ps.test.n} hit=${(ps.test.hit * 100).toFixed(1)} naive=${(ps.test.naive * 100).toFixed(1)}${ps.passedValid ? "  passed valid" : ""}${ps.used ? ", USED" : ""}`);
   console.log(`== ${h}m  train ${tr.length}  valid ${va.length}  test ${te.length}`);
   console.log(`  test hit ${(hits(te) / te.length * 100).toFixed(2)}%  (up-rate ${(upRate(te) * 100).toFixed(1)}%)  range cover ${(cover(te) * 100).toFixed(1)}%  plan`, JSON.stringify(pp));
   for (const b of bands) console.log(`  ${(b.lo * 100).toFixed(0)}-${(Math.min(b.hi, 1) * 100).toFixed(0)}%  valid n=${b.valid.n} hit=${(b.valid.hit * 100).toFixed(2)} | test n=${b.test.n} hit=${(b.test.hit * 100).toFixed(2)} ciLow=${(b.test.ciLow * 100).toFixed(2)} naive=${(b.test.naive * 100).toFixed(1)} | plan test ${b.test.plan.trades} trades net ${b.test.plan.netPct.toFixed(3)}%/trade R ${b.test.plan.R.toFixed(3)} win ${(b.test.plan.win * 100).toFixed(1)}%  ${b.edge ? "TRADE EDGE" : b.dirEdge ? "direction edge only" : "no edge"}`);

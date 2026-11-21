@@ -99,11 +99,12 @@ function start() {
 
   // ---------- tabs ----------
   root.querySelectorAll(".tabs button").forEach((b) => (b.onclick = () => { S.tab = S.tab === b.dataset.t ? null : b.dataset.t; savePos(); renderTab(); }));
+  const markTabs = () => root.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.t === S.tab));
 
   // ---------- settings sheet ----------
   const FIELDS = [["accountSize", "Account size", "$"], ["equityNow", "Equity now", "$"], ["dayStartBalance", "Balance at 02:30 Athens", "$"], ["maxLossPerTrade", "Max loss per trade", "$"],
     ["dailyLossPct", "Max daily loss", "%"], ["maxDrawdownPct", "Max drawdown", "%"], ["targetPct", "Profit target", "%"], ["levBTC", "Leverage BTC", "x"], ["levETH", "Leverage ETH", "x"],
-    ["levOther", "Leverage others", "x"], ["feePerSidePct", "Fee per side", "%"], ["minLiquidityUSD", "Movers: min 24h volume", "$"], ["sessionFrom", "Best hours from", ""], ["sessionTo", "Best hours to", ""]];
+    ["levOther", "Leverage others", "x"], ["feePerSidePct", "Fee per side", "%"], ["minLiquidityUSD", "Movers: min 24h volume", "$"], ["minRange24hPct", "Movers: min 24h range", "%"], ["sessionFrom", "Best hours from", ""], ["sessionTo", "Best hours to", ""]];
   $(".gear").onclick = () => {
     const sh = $(".sheet"); if (!sh.hidden) { sh.hidden = true; return; }
     const L = limits(S.settings);
@@ -229,10 +230,10 @@ function start() {
   }
   function renderBest() {
     const el2 = $(".best"), b = S.best, learnTxt = `learning: ${S.scored || 0} calls scored`;
-    const scan = `scanned ${S.moversLiquid || 0} markets${S.moversAt ? " · " + clock(S.moversAt / 1000) : ""}`;
+    const scan = !S.moversAt ? "scanning the liquid Kraken markets…" : `scanned ${S.moversLiquid || 0} markets${S.moversAt ? " · " + clock(S.moversAt / 1000) : ""}`;
     if (!b) {
       const c = S.cancelled && Date.now() - S.cancelled.at < 90e3 ? `<div class="gone">Cancelled: ${esc(S.cancelled.name)} ${S.cancelled.side === "up" ? "long" : "short"}, setup gone</div>` : "";
-      el2.className = "best"; el2.innerHTML = `<div class="bh"><b>No trade now · waiting</b><span>${learnTxt}</span></div>${c}<div class="bw">${scan}. A trade shows here only when its tested edge after fees is real.</div>`; return;
+      el2.className = "best"; el2.innerHTML = `<div class="bh"><b>No trade now · waiting</b><span>${learnTxt}</span></div>${c}<div class="bw">${S.standWhy ? esc(S.standWhy) + "<br>" : ""}${scan}. A trade shows only when its tested edge after fees is real.</div>`; return;
     }
     const p = b.plan, d = decOf(b.tick), nx = S.ranked.slice(1, 3).map((x) => `${x.name} ${x.plan.side === "up" ? "▲" : "▼"}`).join(" · ");
     el2.className = "best go" + (p.side === "up" ? "" : " short");
@@ -251,7 +252,9 @@ function start() {
     if (moverBusy || document.hidden || !S.markets.length) return; moverBusy = true;
     try {
       const tk = await spotTickers(get), min = S.settings.minLiquidityUSD;
-      const liquid = S.markets.filter((m) => m.source === "spot" && tk[m.key] && tk[m.key].volUSD >= min).sort((a, b) => tk[b.key].volUSD - tk[a.key].volUSD).slice(0, 30);
+      // liquid and alive: enough 24h volume, and a 24h range wide enough to pay fees (this also drops stablecoins, found live, no list)
+      const alive = (x) => x.last > 0 && (x.high - x.low) / x.last * 100 >= S.settings.minRange24hPct;
+      const liquid = S.markets.filter((m) => m.source === "spot" && tk[m.key] && tk[m.key].volUSD >= min && alive(tk[m.key])).sort((a, b) => tk[b.key].volUSD - tk[a.key].volUSD).slice(0, 30);
       const stale = liquid.filter((m) => !S.moverCache[m.key] || Date.now() - S.moverCache[m.key].at > 60e3).sort((a, b) => (S.moverCache[a.key]?.at || 0) - (S.moverCache[b.key]?.at || 0)).slice(0, 10);
       for (const m of stale) {
         try {
@@ -319,12 +322,14 @@ function start() {
     const inS = (() => { const a = hm(S.settings.sessionFrom), b = hm(S.settings.sessionTo), t = athensHM(); return a <= b ? t >= a && t < b : t >= a || t < b; })();
     $(".sess").innerHTML = `<span class="sdot ${inS ? "on" : ""}"></span>${inS ? "Your hours" : `Outside ${S.settings.sessionFrom}–${S.settings.sessionTo}`}`;
     $(".c5").innerHTML = callHTML(S.r5, "5 MIN"); $(".c15").innerHTML = callHTML(S.r15, "15 MIN");
-    const vd = $(".verdict"), p = S.plan;
+    const vd = $(".verdict"), p = S.plan; vd.hidden = false; S.standWhy = null;
     if (S.err) { vd.className = "verdict warn"; vd.textContent = S.err; }
     else if (!S.f) { vd.className = "verdict"; vd.textContent = S.bars.length ? "Not enough history on this market yet." : "Reading 12 hours of Kraken candles…"; }
-    else if (S.r5 && S.r5.untested) { vd.className = "verdict stand"; vd.innerHTML = `<b>Stand aside.</b> The model was trained on crypto; it has no test on ${esc(m.base)}.`; }
+    else if (S.r5 && S.r5.untested) { vd.hidden = true; S.standWhy = `${m.base}: the model was trained on crypto and has no test here, so no call.`; }
     else if (p && p.ok) { vd.className = "verdict go " + (p.side === "up" ? "up" : "dn"); vd.innerHTML = `<b>${p.side === "up" ? "Long" : "Short"} setup · ${p.h} min</b> · hold up to ${p.holdMin} min`; }
-    else { const r = [S.r15, S.r5].find((x) => x && x.band.dirEdge) || S.r15; vd.className = "verdict stand"; vd.innerHTML = `<b>Stand aside.</b> ${esc(p && p.reason && !p.reason.startsWith("no edge") ? p.reason : verdict(r).why.replace(/^no edge, stand aside /, "No edge after fees "))}`; }
+    else { const r = [S.r15, S.r5].find((x) => x && x.band.dirEdge) || S.r15; vd.hidden = true;
+      S.standWhy = `${m.base}: ${p && p.reason && !p.reason.startsWith("no edge") ? p.reason : verdict(r).why.replace(/^no edge, stand aside /, "no edge after fees ")}.`; }
+    renderBest();
     const pl = $(".plan");
     if (p && p.ok) {
       pl.hidden = false;
@@ -339,7 +344,6 @@ function start() {
     $(".parrow").textContent = r ? (r.side === "up" ? "▲" : "▼") : ""; $(".parrow").className = "parrow " + (r ? (r.side === "up" ? "up" : "dn") : "");
     $(".ppct").textContent = r ? `${Math.round(r.conf * 100)}%` : ""; $(".pdot").className = "pdot " + (p && p.ok ? "go" : "");
     $(".lg").style.opacity = liveGrok() ? 1 : 0.35;
-    root.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.t === S.tab));
     renderPrice(); renderTab(); renderFooter();
   }
   function renderFooter() {
@@ -350,12 +354,12 @@ function start() {
     else up.textContent = "";
   }
   function renderTab() {
-    const b = $(".tabbody"); if (!S.tab) { b.hidden = true; return; } b.hidden = false;
+    markTabs(); const b = $(".tabbody"); if (!S.tab) { b.hidden = true; return; } b.hidden = false;
     if (S.tab === "movers") {
       if (!S.movers.length) { b.innerHTML = `<p class="fine">${S.moversErr ? esc(S.moversErr) : "Reading the liquid Kraken USD pairs…"}</p>`; return; }
       b.innerHTML = S.movers.map((x) => { const r = x.best, up = r.side === "up";
         return `<div class="mv"><div class="mvh"><b>${x.m.name}</b><span class="${up ? "up" : "dn"}">${up ? "▲" : "▼"} ${Math.round(r.conf * 100)}% · ${r.h}m</span></div>
-        <div class="mvt">${[...x.tags, ...(x.pats || []).map((p) => p.label)].slice(0, 3).map((t) => `<em>${esc(t)}</em>`).join("") || "<em>quiet</em>"}<span>$${(x.vol / 1e6).toFixed(1)}M 24h</span></div>
+        <div class="mvt">${[...x.tags, ...(x.pats || []).map((p) => p.label)].slice(0, 2).map((t) => `<em>${esc(t)}</em>`).join("") || "<em>quiet</em>"}<span>$${(x.vol / 1e6).toFixed(1)}M 24h</span></div>
         ${x.plan.ok ? `<div class="mvp">In ${fmt(x.plan.entry, decOf(x.m.tick))} · SL ${fmt(x.plan.stop, decOf(x.m.tick))} · TP ${fmt(x.plan.tp, decOf(x.m.tick))} · ${+x.plan.qty.toFixed(6)}</div>` : `<div class="mvp muted">${esc(x.plan.reason)}</div>`}</div>`; }).join("") +
         `<p class="fine">${S.moversLiquid} pairs over $${(S.settings.minLiquidityUSD / 1e6).toFixed(0)}M volume · updated ${clock(S.moversAt / 1000)}</p>`;
     } else if (S.tab === "news") {
