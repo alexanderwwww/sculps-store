@@ -29,7 +29,9 @@ export function read(model, f, h) {
 // "Stand aside" unless the band this read falls in passed out-of-sample, on two separate samples.
 export function verdict(r) {
   if (!r) return { stand: true, why: "no data" };
-  if (!r.edge) return { stand: true, why: `no edge at ${Math.round(r.conf * 100)}% (tested ${pct(r.band.test.hit)} on ${r.band.test.n.toLocaleString("en-US")} calls)` };
+  const t = r.band.test, tested = `${pct(t.hit)} right on ${t.n.toLocaleString("en-US")} unseen calls`;
+  if (!r.edge && r.band.dirEdge) return { stand: true, why: `direction ${tested}, but after fees the trade lost: stand aside` };
+  if (!r.edge) return { stand: true, why: `no edge, stand aside (${tested})` };
   return { stand: false, why: `edge: this band hit ${pct(r.band.test.hit)} on ${r.band.test.n.toLocaleString("en-US")} unseen calls` };
 }
 const pct = (x) => `${(x * 100).toFixed(1)}%`;

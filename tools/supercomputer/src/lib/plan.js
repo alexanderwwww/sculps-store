@@ -66,6 +66,7 @@ export function plan(model, f, read, s, inst) {
   if (lim.blocked) return { ...out, reason: lim.blocked };
   const ch = chasing(f, read.side); if (ch) return { ...out, reason: ch };
   const pp = model.horizons[String(read.h)].plan;
+  if (Math.exp(f.s * Math.sqrt(read.h)) - 1 < (pp.minSdPct || 0)) return { ...out, reason: "too quiet: the move would not pay the fees" };
   const dir = read.side === "up" ? 1 : -1, price = f.price, tick = inst.tick || 0;
   const sp = stopPct(pp, f, read.h);
   const entry = roundTo(price, tick);

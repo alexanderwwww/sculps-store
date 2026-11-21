@@ -82,6 +82,7 @@ function replay(sig, h, pp) {
     const col = series[coin]; let busyUntil = -1;
     for (const r of list.sort((a, b) => a.end - b.end)) {
       if (r.end <= busyUntil) continue;
+      if ((Math.exp(r.f.s * Math.sqrt(h)) - 1) < pp.minSdPct) continue; // too quiet to pay the fees
       const dir = r.p >= 0.5 ? 1 : -1;
       if (chasing(r.f, dir > 0 ? "up" : "down")) continue;
       const entry = col.c[r.end], sp = stopPct(pp, r.f, h);
@@ -120,8 +121,10 @@ for (const h of HORIZONS) {
   const upRate = (set) => set.filter((r) => r.y[h] === 1).length / set.length;
 
   // range: 80% of the time the high / low of the next h minutes stays inside (fit on TRAIN)
-  const range = { hi: quantile(tr.map((r) => r.hiE[h]), 0.8), lo: quantile(tr.map((r) => r.loE[h]), 0.8) };
-  const cover = (set) => set.filter((r) => r.hiE[h] <= range.hi && r.loE[h] <= range.lo).length / set.length;
+  // both edges at the same quantile q, q raised until the high AND the low stay inside 80% of the time on TRAIN
+  const cover = (set, rg = range) => set.filter((r) => r.hiE[h] <= rg.hi && r.loE[h] <= rg.lo).length / set.length;
+  let range = null;
+  for (let q = 0.8; q < 0.995; q += 0.005) { range = { hi: quantile(tr.map((r) => r.hiE[h]), q), lo: quantile(tr.map((r) => r.loE[h]), q), q: +q.toFixed(3) }; if (cover(tr, range) >= 0.8) break; }
   // drift: expected normalised return per unit of (p - 0.5), least squares on TRAIN
   let sxy = 0, sxx = 0; for (const r of tr) { const q = r.p - 0.5; sxy += q * r.ret[h]; sxx += q * q; }
   const drift = sxx ? sxy / sxx : 0;
@@ -129,26 +132,29 @@ for (const h of HORIZONS) {
   // plan settings chosen on VALID (all calls from 52%+), then fixed
   const pick = va.filter((r) => Math.max(r.p, 1 - r.p) >= 0.52);
   let best = null;
-  for (const stopZ of [1, 1.5, 2, 2.5]) for (const rr of [1, 1.5, 2]) for (const hold of [h, 2 * h, 3 * h]) {
-    const pp = { stopZ, rr, hold, minStopPct: 0.002, entryPull: 0.25 }, res = replay(pick, h, pp);
+  for (const stopZ of [1, 1.5, 2, 2.5]) for (const rr of [1, 1.5, 2, 3]) for (const hold of [h, 2 * h, 4 * h]) for (const minSdPct of [0, 0.003, 0.006]) {
+    const pp = { stopZ, rr, hold, minStopPct: 0.002, entryPull: 0.25, minSdPct }, res = replay(pick, h, pp);
     if (res.trades >= 200 && (!best || res.netPct > best.res.netPct)) best = { pp, res };
   }
-  const pp = best ? best.pp : { stopZ: 1.5, rr: 1.5, hold: 2 * h, minStopPct: 0.002, entryPull: 0.25 };
+  const pp = best ? best.pp : { stopZ: 1.5, rr: 1.5, hold: 2 * h, minStopPct: 0.002, entryPull: 0.25, minSdPct: 0 };
 
   const bands = [];
   for (let k = 0; k < BAND_EDGES.length - 1; k++) {
     const lo = BAND_EDGES[k], hi = BAND_EDGES[k + 1], inB = (r) => { const c = Math.max(r.p, 1 - r.p); return c >= lo && c < hi; };
-    const stat = (set) => { const s = set.filter(inB), k2 = hits(s); return { n: s.length, hit: s.length ? k2 / s.length : 0, ciLow: wilsonLow(k2, s.length), plan: replay(s, h, pp) }; };
+    // naive = always calling the side that was more common in this band and period (a hindsight baseline, so beating it is a real bar)
+    const stat = (set) => { const s = set.filter(inB), k2 = hits(s), up = s.filter((r) => r.y[h] === 1).length;
+      return { n: s.length, hit: s.length ? k2 / s.length : 0, ciLow: wilsonLow(k2, s.length), naive: s.length ? Math.max(up, s.length - up) / s.length : 0, plan: replay(s, h, pp) }; };
     const v = stat(va), t = stat(te);
-    const edge = v.n >= 1000 && t.n >= 1000 && v.ciLow > 0.5 && t.ciLow > 0.5 && v.plan.trades >= 100 && t.plan.trades >= 100 && v.plan.netPct > 0 && t.plan.netPct > 0;
-    bands.push({ lo, hi, edge, valid: v, test: t });
+    const dirEdge = v.n >= 1000 && t.n >= 1000 && v.ciLow > Math.max(0.5, v.naive) && t.ciLow > Math.max(0.5, t.naive);
+    const edge = dirEdge && v.plan.trades >= 100 && t.plan.trades >= 100 && v.plan.netPct > 0 && t.plan.netPct > 0;
+    bands.push({ lo, hi, dirEdge, edge, valid: v, test: t });
   }
   out.horizons[h] = { mu, sd, w: Array.from(w.slice(1)), b: w[0], range, drift, plan: pp, bands,
     overall: { train: { n: tr.length, hit: hits(tr) / tr.length, up: upRate(tr) }, valid: { n: va.length, hit: hits(va) / va.length, up: upRate(va) },
       test: { n: te.length, hit: hits(te) / te.length, up: upRate(te), rangeCover: cover(te) }, planValid: best?.res ?? null, planTest: replay(te.filter((r) => Math.max(r.p, 1 - r.p) >= 0.52), h, pp) } };
   console.log(`\n== ${h}m  train ${tr.length}  valid ${va.length}  test ${te.length}`);
   console.log(`  test hit ${(hits(te) / te.length * 100).toFixed(2)}%  (up-rate ${(upRate(te) * 100).toFixed(1)}%)  range cover ${(cover(te) * 100).toFixed(1)}%  plan`, JSON.stringify(pp));
-  for (const b of bands) console.log(`  ${(b.lo * 100).toFixed(0)}-${(Math.min(b.hi, 1) * 100).toFixed(0)}%  valid n=${b.valid.n} hit=${(b.valid.hit * 100).toFixed(2)} | test n=${b.test.n} hit=${(b.test.hit * 100).toFixed(2)} ciLow=${(b.test.ciLow * 100).toFixed(2)} | plan test ${b.test.plan.trades} trades net ${b.test.plan.netPct.toFixed(3)}%/trade R ${b.test.plan.R.toFixed(3)} win ${(b.test.plan.win * 100).toFixed(1)}%  ${b.edge ? "EDGE" : "no edge"}`);
+  for (const b of bands) console.log(`  ${(b.lo * 100).toFixed(0)}-${(Math.min(b.hi, 1) * 100).toFixed(0)}%  valid n=${b.valid.n} hit=${(b.valid.hit * 100).toFixed(2)} | test n=${b.test.n} hit=${(b.test.hit * 100).toFixed(2)} ciLow=${(b.test.ciLow * 100).toFixed(2)} naive=${(b.test.naive * 100).toFixed(1)} | plan test ${b.test.plan.trades} trades net ${b.test.plan.netPct.toFixed(3)}%/trade R ${b.test.plan.R.toFixed(3)} win ${(b.test.plan.win * 100).toFixed(1)}%  ${b.edge ? "TRADE EDGE" : b.dirEdge ? "direction edge only" : "no edge"}`);
 }
 writeFileSync(outFile, JSON.stringify(out, null, 1));
 console.log(`\nwrote ${outFile}`);
