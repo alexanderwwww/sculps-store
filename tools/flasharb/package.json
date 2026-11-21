@@ -11,6 +11,9 @@
   "license": "ISC",
   "dependencies": {
     "@kamino-finance/klend-sdk": "^14.0.0",
+    "@orca-so/whirlpools-client": "^2.0.0",
+    "@solana-program/compute-budget": "^0.18.1",
+    "@solana-program/token": "^0.16.1",
     "@solana/kit": "^8.3.0",
     "decimal.js": "^10.6.0"
   },

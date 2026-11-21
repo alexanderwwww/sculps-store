@@ -1,0 +1,10 @@
+import { createSolanaRpc, address } from '@solana/kit';
+import { KaminoMarket, DEFAULT_RECENT_SLOT_DURATION_MS, PROGRAM_ID } from '@kamino-finance/klend-sdk';
+const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+const t=Date.now();
+const m = await KaminoMarket.load(rpc as any, address('7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF'), DEFAULT_RECENT_SLOT_DURATION_MS);
+console.log('loaded', Date.now()-t, 'ms', m?.getName(), 'PROGRAM_ID', PROGRAM_ID, 'reserves', m?.reserves.size);
+const rs = m!.getReservesBySymbol('USDC');
+for (const r of rs) console.log(r.address, r.symbol, r.getLiquidityMint(), 'fee', r.getFlashLoanFee().toString(), 'sf', r.state.config.fees.flashLoanFeeSf.toString(), 'avail', r.getLiquidityAvailableAmount().div(1e6).toFixed(0), 'supplyVault', r.state.liquidity.supplyVault, 'feeVault', r.state.liquidity.feeVault, 'tp', r.getLiquidityTokenProgram());
+console.log('auth', await m!.getLendingMarketAuthority());
+const sol = m!.getReservesBySymbol('SOL'); for (const r of sol) console.log('SOL', r.address, r.getFlashLoanFee().toString());
