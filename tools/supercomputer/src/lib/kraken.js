@@ -14,7 +14,9 @@ export async function loadMarkets(get) {
   for (const [key, v] of Object.entries(ap.result || {})) {
     if (!(v.quote === "ZUSD" || v.quote === "USD") || v.status !== "online" || !v.wsname) continue;
     const base = normBase(v.wsname.split("/")[0]);
-    out.push({ key, source: "spot", base, name: `${base}/USD`, tick: Number(v.tick_size) || 10 ** -v.pair_decimals,
+    // Kraken's own asset codes: Z + 3 letters is a fiat currency (ZEUR, ZGBP); the model was only tested on crypto
+    const kind = /^Z[A-Z]{3}$/.test(v.base) ? "fiat" : "crypto";
+    out.push({ key, source: "spot", kind, base, name: `${base}/USD`, tick: Number(v.tick_size) || 10 ** -v.pair_decimals,
       qtyInc: 10 ** -v.lot_decimals, minQty: Number(v.ordermin) || 0, levMax: Math.max(1, ...(v.leverage_buy || [1])) });
   }
   try {
@@ -23,7 +25,7 @@ export async function loadMarkets(get) {
     for (const i of ins.instruments || []) {
       const m = /^PF_(.+)USD$/.exec(i.symbol || ""); if (!m || !i.tradeable) continue;
       const base = normBase(m[1]); if (have.has(base)) continue; // spot first when both exist
-      out.push({ key: i.symbol, source: "futures", base, name: `${base}/USD`, tick: Number(i.tickSize) || 0.01,
+      out.push({ key: i.symbol, source: "futures", kind: "other", base, name: `${base}/USD`, tick: Number(i.tickSize) || 0.01,
         qtyInc: 10 ** -(i.contractValueTradePrecision ?? 4), minQty: 0, levMax: null });
     }
   } catch { /* futures list is a bonus; spot alone still works */ }

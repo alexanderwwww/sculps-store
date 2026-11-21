@@ -49,7 +49,7 @@ test("features: right length, need 600 bars, same for any price scale", () => {
 test("model: probabilities in range, bands from the file, stand aside without edge", () => {
   const f = features(columns(walk(700)), 699);
   for (const h of ["5", "15"]) {
-    const r = read(MODEL, f, h); assert.ok(r.p > 0 && r.p < 1); assert.ok(r.hi > f.price && r.lo < f.price); assert.ok(r.conf >= 0.5);
+    const r = read(MODEL, f, h); assert.ok(r.p > 0 && r.p < 1); assert.ok(r.hi > f.price && r.lo < f.price); assert.ok(r.conf >= 0.5 && r.shown >= 0.5 && r.shown < 0.7);
     assert.ok(MODEL.horizons[h].bands.includes(r.band));
     const v = verdict({ ...r, edge: false, band: { ...r.band, dirEdge: false } }); assert.equal(v.stand, true); assert.match(v.why, /no edge/);
   }
@@ -128,7 +128,7 @@ test("kraken: page detection, market list, bars", async () => {
     : { result: { XXBTZUSD: [[60, "1", "2", "0.5", "1.5", "1.2", "10", 3], [120, "1.5", "1.6", "1.4", "1.55", "1.5", "2", 1]], last: 60 } };
   const m = await loadMarkets(get);
   assert.deepEqual(m.map((x) => [x.name, x.source]), [["BTC/USD", "spot"], ["XAU/USD", "futures"]]);
-  assert.equal(m[0].levMax, 10); near(m[0].qtyInc, 1e-8);
+  assert.equal(m[0].levMax, 10); assert.equal(m[0].kind, "crypto"); near(m[0].qtyInc, 1e-8);
   const b = await bars1m(get, m[0]); assert.equal(b.length, 1); assert.deepEqual(b[0], { t: 60, o: 1, h: 2, l: 0.5, c: 1.5, v: 10 });
 });
 

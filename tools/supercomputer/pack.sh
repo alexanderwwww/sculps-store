@@ -30,4 +30,5 @@ for n in 16 32 48 128; do [ -f "$M/icon-$n.png" ] || fail "icon $n missing"; don
 ok "unzipped into a path with spaces: manifest, scripts, icons check out; it starts in Chromium"
 mkdir -p "$HERE/dist"; Z="$HERE/dist/supercomputer-build-$SC_BUILD.zip"; cp "$T/sc.zip" "$Z"
 printf '{"build":"%s","zip":"%s","notes":""}\n' "$SC_BUILD" "${SC_ZIP_URL:-supercomputer-build-$SC_BUILD.zip}" > "$HERE/dist/version.json"
+rm -rf "$SHOTS/.profile" "$SHOTS/.release-profile"
 echo "built $Z (build $SC_BUILD)"

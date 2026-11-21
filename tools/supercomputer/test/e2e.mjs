@@ -34,7 +34,8 @@ ok(Math.abs(shown / realBtc - 1) < 0.005, `BTC price on widget ${shown} matches 
 ok((await text(".cname")) === "BTC/USD", `coin detected from the Prop URL: ${await text(".cname")}`);
 ok(/5 MIN/.test(await text(".c5")) && /%/.test(await text(".c5")), `5 min call: ${(await text(".c5 .big")).trim()}`);
 ok(/15 MIN/.test(await text(".c15")), `15 min call: ${(await text(".c15 .big")).trim()}`);
-const verdictTxt = await text(".verdict"); ok(verdictTxt.length > 5, `verdict: ${verdictTxt}`);
+await page.waitForTimeout(1500);
+const verdictTxt = (await S(".verdict").isVisible()) ? await text(".verdict") : await text(".best .bw"); ok(/BTC:|setup/.test(verdictTxt), `verdict: ${verdictTxt.replace(/\s+/g, " ").slice(0, 140)}`);
 const plan = await S(".plan").isVisible(); console.log(`      plan row ${plan ? "shown: " + (await text(".plan")).slice(0, 120) : "hidden (no edge)"}`);
 await page.waitForTimeout(2500);
 const ws = await text(".feed"); ok(ws === "live", `live feed: ${ws}`);
@@ -78,7 +79,7 @@ const fut = await (await fetch("https://futures.kraken.com/derivatives/api/v3/ti
 const gold = Number((await text(".price")).replace(/,/g, ""));
 ok(Math.abs(gold / fut.ticker.last - 1) < 0.005, `GOLD price ${gold} matches Kraken PF_XAUUSD ${fut.ticker.last}`);
 await page.waitForTimeout(6000);
-ok(/Stand aside/.test(await text(".verdict")), `GOLD verdict: ${await text(".verdict")}`);
+ok(/no test here/.test(await text(".best")) && !(await S(".plan").isVisible()), `GOLD: ${(await text(".best .bw")).slice(0, 90)}`);
 await S(".card").screenshot({ path: join(shots, "7-widget-gold.png") });
 
 // picker override

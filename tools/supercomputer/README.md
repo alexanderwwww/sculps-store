@@ -6,9 +6,9 @@ Your eyes on Kraken Pro. A small card in the corner of the trade page that reads
 
 1. Open Chrome and type `chrome://extensions` in the address bar.
 2. Turn on **Developer mode** (top right).
-3. Drag the file `supercomputer-build-<n>.zip` onto that page.
-   If Chrome refuses the zip, unzip it first, press **Load unpacked** and pick the `supercomputer` folder.
-4. Open Kraken Pro (or your Kraken Prop trade page). The card appears bottom-left.
+3. Double-click `supercomputer-build-<n>.zip` so it becomes a `supercomputer` folder.
+4. Press **Load unpacked** and pick that `supercomputer` folder. (Chrome does not install a zip dropped on the page; it needs the folder.)
+5. Open Kraken Pro (or your Kraken Prop trade page). The card appears bottom-left.
 
 ## What you see
 
@@ -25,7 +25,7 @@ Your eyes on Kraken Pro. A small card in the corner of the trade page that reads
 - **Settings** (gear): your equity now, the balance at 02:30 Athens, the limits and leverage. supercomputer cannot see your account, so type your equity after each trade.
 - **Minimise** (–): the card becomes a small pill with the coin and the 5-minute arrow. Drag it anywhere; it snaps to the nearest corner and stays there.
 
-The build number and the Athens time are at the bottom. When a newer build is published the footer shows **Update ready**: press it, the new zip downloads, drag it onto `chrome://extensions`.
+The build number and the Athens time are at the bottom. When a newer build is published the footer shows **Update ready**: press it, the new zip downloads; unzip it over the old folder and press the reload arrow on the supercomputer card in `chrome://extensions`.
 
 ## For the next agent
 

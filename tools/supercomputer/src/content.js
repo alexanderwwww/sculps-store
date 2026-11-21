@@ -122,8 +122,8 @@ function start() {
   // ---------- data: markets, bars, live price ----------
   async function loadAll() {
     const cached = await store.get("markets");
-    if (cached && Date.now() - cached.at < 6 * 3600e3 && cached.list.length) S.markets = cached.list;
-    else { S.markets = await loadMarkets(get); store.set("markets", { at: Date.now(), list: S.markets }); }
+    if (cached && cached.v === 2 && Date.now() - cached.at < 6 * 3600e3 && cached.list.length) S.markets = cached.list;
+    else { S.markets = await loadMarkets(get); store.set("markets", { v: 2, at: Date.now(), list: S.markets }); }
     fillPicker();
   }
   function pageCoin() { return detectBase(location.href, document.title); }
@@ -152,7 +152,7 @@ function start() {
     if (f) { const det = detect(col, col.n - 1); f.px = det.x; S.pats = patList(det.hits); }
     if (f) {
       S.r5 = read(MODEL, f, "5"); S.r15 = read(MODEL, f, "15");
-      if (m.source !== "spot") { S.r5.edge = S.r15.edge = false; S.r5.untested = S.r15.untested = true; }
+      if (m.source !== "spot" || m.kind !== "crypto") { S.r5.edge = S.r15.edge = false; S.r5.untested = S.r15.untested = true; }
       const best = [S.r15, S.r5].find((r) => r.edge) || S.r15;
       S.plan = plan(MODEL, f, best, settingsFor(m), instFor(m));
       logCalls(m, f);
@@ -230,7 +230,7 @@ function start() {
   }
   function renderBest() {
     const el2 = $(".best"), b = S.best, learnTxt = `learning: ${S.scored || 0} calls scored`;
-    const scan = !S.moversAt ? "scanning the liquid Kraken markets…" : `scanned ${S.moversLiquid || 0} markets${S.moversAt ? " · " + clock(S.moversAt / 1000) : ""}`;
+    const scan = !S.moversAt ? "scanning the liquid Kraken markets" : `scanned ${S.moversLiquid || 0} markets${S.moversAt ? " · " + clock(S.moversAt / 1000) : ""}`;
     if (!b) {
       const c = S.cancelled && Date.now() - S.cancelled.at < 90e3 ? `<div class="gone">Cancelled: ${esc(S.cancelled.name)} ${S.cancelled.side === "up" ? "long" : "short"}, setup gone</div>` : "";
       el2.className = "best"; el2.innerHTML = `<div class="bh"><b>No trade now · waiting</b><span>${learnTxt}</span></div>${c}<div class="bw">${S.standWhy ? esc(S.standWhy) + "<br>" : ""}${scan}. A trade shows only when its tested edge after fees is real.</div>`; return;
@@ -239,7 +239,7 @@ function start() {
     el2.className = "best go" + (p.side === "up" ? "" : " short");
     el2.innerHTML = `<div class="bh"><b>Best trade now: ${esc(b.name)} ${p.side === "up" ? "long" : "short"}</b><span>${learnTxt}</span></div>
       <div class="bw">In ${fmt(p.entry, d)} · SL ${fmt(p.stop, d)} · TP ${fmt(p.tp, d)} · size ${+p.qty.toFixed(6)} (${usd(p.notional)}) · risk ${usd(p.risk)} · reward ${usd(p.reward)}</div>
-      <div class="bw">Why: ${Math.round(b.read.conf * 100)}% ${b.read.side} in ${b.read.h} min, that band was right ${pc(b.read.band.test.hit, 1)} on ${b.read.band.test.n.toLocaleString("en-US")} unseen calls and its plan made ${b.read.band.test.plan.netPct.toFixed(2)}% a trade after fees${b.tags.length ? " · " + esc(b.tags.join(", ")) : ""}${b.pats && b.pats.length ? " · pattern: " + esc(patWhy(b.pats)) : ""}${b.learned.why.length ? " · down-weighted: " + esc(b.learned.why.join(", ")) : ""}${nx ? `<br>Next: ${esc(nx)}` : ""}</div>`;
+      <div class="bw">Why: ${Math.round(b.read.shown * 100)}% ${b.read.side} in ${b.read.h} min, that band was right ${pc(b.read.band.test.hit, 1)} on ${b.read.band.test.n.toLocaleString("en-US")} unseen calls and its plan made ${b.read.band.test.plan.netPct.toFixed(2)}% a trade after fees${b.tags.length ? " · " + esc(b.tags.join(", ")) : ""}${b.pats && b.pats.length ? " · pattern: " + esc(patWhy(b.pats)) : ""}${b.learned.why.length ? " · down-weighted: " + esc(b.learned.why.join(", ")) : ""}${nx ? `<br>Next: ${esc(nx)}` : ""}</div>`;
   }
   async function settleOthers() {
     const now = Date.now() / 1000, coins = [...new Set(S.calls.filter((c) => c.status === "open" && c.tEnd < now - 5 && (!S.mkt || c.coin !== S.mkt.base)).map((c) => c.coin))].slice(0, 3);
@@ -254,7 +254,7 @@ function start() {
       const tk = await spotTickers(get), min = S.settings.minLiquidityUSD;
       // liquid and alive: enough 24h volume, and a 24h range wide enough to pay fees (this also drops stablecoins, found live, no list)
       const alive = (x) => x.last > 0 && (x.high - x.low) / x.last * 100 >= S.settings.minRange24hPct;
-      const liquid = S.markets.filter((m) => m.source === "spot" && tk[m.key] && tk[m.key].volUSD >= min && alive(tk[m.key])).sort((a, b) => tk[b.key].volUSD - tk[a.key].volUSD).slice(0, 30);
+      const liquid = S.markets.filter((m) => m.source === "spot" && m.kind === "crypto" && tk[m.key] && tk[m.key].volUSD >= min && alive(tk[m.key])).sort((a, b) => tk[b.key].volUSD - tk[a.key].volUSD).slice(0, 30);
       const stale = liquid.filter((m) => !S.moverCache[m.key] || Date.now() - S.moverCache[m.key].at > 60e3).sort((a, b) => (S.moverCache[a.key]?.at || 0) - (S.moverCache[b.key]?.at || 0)).slice(0, 10);
       for (const m of stale) {
         try {
@@ -311,7 +311,7 @@ function start() {
   function callHTML(r, label) {
     if (!r) return `<div class="lab">${label}</div><div class="big muted">–</div>`;
     const up = r.side === "up", v = verdict(r), sub = r.untested ? "not tested on this market" : r.edge ? `tested ${pc(r.band.test.hit, 1)} · edge` : `tested ${pc(r.band.test.hit, 1)} · no edge`;
-    return `<div class="lab">${label}</div><div class="big ${up ? "up" : "dn"} ${r.edge ? "" : "soft"}"><span class="arr">${up ? "▲" : "▼"}</span>${Math.round(r.conf * 100)}<small>%</small></div>
+    return `<div class="lab">${label}</div><div class="big ${up ? "up" : "dn"} ${r.edge ? "" : "soft"}"><span class="arr">${up ? "▲" : "▼"}</span>${Math.round(r.shown * 100)}<small>%</small></div>
       <div class="rng">${fmt(r.lo)} – ${fmt(r.hi)}</div><div class="tested ${r.edge ? "ok" : ""}" title="${esc(v.why)}">${sub}</div>`;
   }
   function render() {
@@ -342,7 +342,7 @@ function start() {
     const r = S.r5;
     $(".pcoin").textContent = m ? m.base : "–";
     $(".parrow").textContent = r ? (r.side === "up" ? "▲" : "▼") : ""; $(".parrow").className = "parrow " + (r ? (r.side === "up" ? "up" : "dn") : "");
-    $(".ppct").textContent = r ? `${Math.round(r.conf * 100)}%` : ""; $(".pdot").className = "pdot " + (p && p.ok ? "go" : "");
+    $(".ppct").textContent = r ? `${Math.round(r.shown * 100)}%` : ""; $(".pdot").className = "pdot " + (p && p.ok ? "go" : "");
     $(".lg").style.opacity = liveGrok() ? 1 : 0.35;
     renderPrice(); renderTab(); renderFooter();
   }
@@ -350,7 +350,7 @@ function start() {
     $(".clock").textContent = clock(Date.now() / 1000, true) + " Athens";
     const u = S.update, up = $(".upd");
     if (u && u.state === "ready") { up.innerHTML = `<button class="updbtn">Update ready · build ${esc(u.build)}</button>`;
-      up.querySelector("button").onclick = async () => { try { await msg({ type: "download" }); up.innerHTML = `<span class="fine">Downloaded. Open chrome://extensions and drop the zip on it.</span>`; } catch (e) { up.textContent = e.message; } }; }
+      up.querySelector("button").onclick = async () => { try { await msg({ type: "download" }); up.innerHTML = `<span class="fine">Downloaded. Unzip it over the old folder, then reload supercomputer in chrome://extensions.</span>`; } catch (e) { up.textContent = e.message; } }; }
     else up.textContent = "";
   }
   function renderTab() {
@@ -358,7 +358,7 @@ function start() {
     if (S.tab === "movers") {
       if (!S.movers.length) { b.innerHTML = `<p class="fine">${S.moversErr ? esc(S.moversErr) : "Reading the liquid Kraken USD pairs…"}</p>`; return; }
       b.innerHTML = S.movers.map((x) => { const r = x.best, up = r.side === "up";
-        return `<div class="mv"><div class="mvh"><b>${x.m.name}</b><span class="${up ? "up" : "dn"}">${up ? "▲" : "▼"} ${Math.round(r.conf * 100)}% · ${r.h}m</span></div>
+        return `<div class="mv"><div class="mvh"><b>${x.m.name}</b><span class="${up ? "up" : "dn"}">${up ? "▲" : "▼"} ${Math.round(r.shown * 100)}% · ${r.h}m</span></div>
         <div class="mvt">${[...x.tags, ...(x.pats || []).map((p) => p.label)].slice(0, 2).map((t) => `<em>${esc(t)}</em>`).join("") || "<em>quiet</em>"}<span>$${(x.vol / 1e6).toFixed(1)}M 24h</span></div>
         ${x.plan.ok ? `<div class="mvp">In ${fmt(x.plan.entry, decOf(x.m.tick))} · SL ${fmt(x.plan.stop, decOf(x.m.tick))} · TP ${fmt(x.plan.tp, decOf(x.m.tick))} · ${+x.plan.qty.toFixed(6)}</div>` : `<div class="mvp muted">${esc(x.plan.reason)}</div>`}</div>`; }).join("") +
         `<p class="fine">${S.moversLiquid} pairs over $${(S.settings.minLiquidityUSD / 1e6).toFixed(0)}M volume · updated ${clock(S.moversAt / 1000)}</p>`;
@@ -391,8 +391,8 @@ function start() {
     const side = (s, p) => (s ? `<span class="${s === "up" ? "up" : s === "down" ? "dn" : ""}">${s === "up" ? "▲" : s === "down" ? "▼" : "•"} ${p != null ? Math.round(p * 100) + "%" : ""}</span>` : "–");
     const agree = (gs, r) => (!gs || !r ? "" : gs === r.side ? `<em class="ok">agrees</em>` : `<em class="warn">disagrees</em>`);
     return `<table class="sc"><tr><th></th><th>Grok</th><th>Model</th><th></th></tr>
-      <tr><td>5 min</td><td>${side(g.h5, g.p5)}</td><td>${S.r5 ? side(S.r5.side, S.r5.conf) : "–"}</td><td>${agree(g.h5, S.r5)}</td></tr>
-      <tr><td>15 min</td><td>${side(g.h15, g.p15)}</td><td>${S.r15 ? side(S.r15.side, S.r15.conf) : "–"}</td><td>${agree(g.h15, S.r15)}</td></tr></table>
+      <tr><td>5 min</td><td>${side(g.h5, g.p5)}</td><td>${S.r5 ? side(S.r5.side, S.r5.shown) : "–"}</td><td>${agree(g.h5, S.r5)}</td></tr>
+      <tr><td>15 min</td><td>${side(g.h15, g.p15)}</td><td>${S.r15 ? side(S.r15.side, S.r15.shown) : "–"}</td><td>${agree(g.h15, S.r15)}</td></tr></table>
       ${g.entry || g.stop || g.tp ? `<p class="fine">Grok: in ${fmt(g.entry)} · SL ${fmt(g.stop)} · TP ${fmt(g.tp)}</p>` : ""}${g.note ? `<p class="fine">“${esc(g.note)}”</p>` : ""}
       <p class="fine">Pasted ${clock(g.at / 1000)} · shown on the chart for 20 min.</p>`;
   }

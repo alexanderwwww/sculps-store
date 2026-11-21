@@ -15,7 +15,7 @@ export const FEEDS = {
 export const BULL = ["surge", "soar", "rall", "jump", "gain", "climb", "rise", "rebound", "bounce", "record high", "all-time high", "breakout", "approv",
   "inflow", "adopt", "bull", "buy", "accumulat", "upgrade", "partnership", "launch", "etf approval", "rate cut", "recover", "outperform", "higher"];
 export const BEAR = ["plunge", "crash", "tumble", "drop", "fall", "slump", "sink", "slide", "dump", "sell-off", "selloff", "liquidat", "outflow", "hack",
-  "exploit", "lawsuit", "sue", "ban", "fraud", "bear", "fear", "downgrade", "reject", "delay", "probe", "investigat", "lower", "loss", "warn", "rate hike", "collapse"];
+  "exploit", "lawsuit", "sue", "ban", "fraud", "bear", "fear", "downgrade", "reject", "delay", "probe", "investigat", "lower", "loss", "warn", "rate hike", "collapse", "tank", "plummet", "stall", "slip"];
 // Names people write instead of the ticker. A ticker also matches as a whole word (e.g. "SOL").
 const NAMES = { BTC: ["bitcoin"], ETH: ["ether", "ethereum"], SOL: ["solana"], XRP: ["ripple", "xrp"], DOGE: ["dogecoin"], ADA: ["cardano"],
   AVAX: ["avalanche"], LINK: ["chainlink"], LTC: ["litecoin"], DOT: ["polkadot"], SUI: ["sui"], XAU: ["gold"], PAXG: ["gold"], XAUT: ["gold"] };

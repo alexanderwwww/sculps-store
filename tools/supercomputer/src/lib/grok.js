@@ -2,7 +2,7 @@
 const fmt = (x) => (x == null ? "?" : Number(x).toPrecision(6).replace(/\.?0+$/, ""));
 
 export function prompt({ coin, price, atAthens, r5, r15, f }) {
-  const side = (r) => (r ? `${r.side.toUpperCase()} ${Math.round(r.conf * 100)}% (range ${fmt(r.lo)} to ${fmt(r.hi)}${r.edge ? "" : ", our model has no tested edge here"})` : "n/a");
+  const side = (r) => (r ? `${r.side.toUpperCase()} ${Math.round((r.shown || r.conf) * 100)}% (range ${fmt(r.lo)} to ${fmt(r.hi)}${r.edge ? "" : ", our model has no tested edge here"})` : "n/a");
   return [
     `You are my second opinion on a short-term crypto trade on Kraken. Do not be polite, be right.`,
     `Coin: ${coin}. Price now: ${fmt(price)} USD. Time: ${atAthens} Athens.`,

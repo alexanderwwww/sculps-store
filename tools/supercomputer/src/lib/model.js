@@ -25,7 +25,9 @@ export function read(model, f, h) {
   const sd = f.s * Math.sqrt(Number(h));
   const drift = hm.drift * (p - 0.5) * sd;               // expected log move over the horizon
   const hi = f.price * Math.exp(hm.range.hi * sd), lo = f.price * Math.exp(-hm.range.lo * sd);
-  return { h: Number(h), p, side, conf, band, edge: !!band.edge, drift, sd, mid: f.price * Math.exp(drift), hi, lo, price: f.price };
+  // what is shown: the hit rate this band really had on the VALID period (calibrated), never the raw model number
+  const shown = Math.max(0.5, band.valid ? band.valid.hit : conf);
+  return { h: Number(h), p, side, conf, shown, band, edge: !!band.edge, drift, sd, mid: f.price * Math.exp(drift), hi, lo, price: f.price };
 }
 
 // "Stand aside" unless the band this read falls in passed out-of-sample, on two separate samples.
