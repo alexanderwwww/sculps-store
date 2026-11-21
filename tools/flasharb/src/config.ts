@@ -53,7 +53,7 @@ export const config = {
   // The trade size Alex cares about (headline row, and the size `npm run simulate` builds).
   tradeSizeUsdc: num('TRADE_SIZE_USDC', 100_000),
   // Comparison sizes scanned alongside it.
-  compareSizesUsdc: list('COMPARE_SIZES_USDC', ['1000', '10000']).map(Number),
+  compareSizesUsdc: list('COMPARE_SIZES_USDC', ['1000', '10000', '1000000']).map(Number),
   get sizesUsdc(): number[] {
     return [...new Set([...this.compareSizesUsdc, this.tradeSizeUsdc])].sort((a, b) => a - b);
   },
