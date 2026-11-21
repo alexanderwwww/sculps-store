@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>55,000.0 | BTC Kraken Prop</title>
+<style>
+/* A stand-in for the Kraken Prop trade page, laid out like Alex's screen: chart top-left, order form right,
+   empty positions area bottom-left. It only has to be realistic enough to judge where the widget sits. */
+body { margin: 0; background: #0b0b12; color: #e6e6f0; font: 13px system-ui, sans-serif; height: 100vh; display: grid; grid-template-rows: 52px 1fr 300px; grid-template-columns: 1fr 340px; }
+.top { grid-column: 1 / 3; display: flex; align-items: center; gap: 22px; padding: 0 18px; background: #12121c; border-bottom: 1px solid #22222f; }
+.top b { font-size: 15px; } .lev { background: #2a2a3a; border-radius: 5px; padding: 2px 6px; font-size: 12px; }
+.chart { position: relative; border-right: 1px solid #22222f; } canvas { width: 100%; height: 100%; display: block; }
+.form { grid-row: 2 / 4; grid-column: 2; padding: 18px; background: #12121c; }
+.form .bs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; } .form .bs div { padding: 10px; border-radius: 8px; text-align: center; background: #1d3b2a; color: #4ade80; } .form .bs div + div { background: #2a1a1d; color: #f87171; }
+.field { background: #1a1a26; border-radius: 8px; padding: 12px; margin-bottom: 10px; color: #8b8ba0; }
+.pos { border-top: 1px solid #22222f; padding: 14px 18px; } .pos .tabs { display: flex; gap: 18px; color: #8b8ba0; margin-bottom: 70px; } .pos .tabs b { color: #fff; }
+.empty { text-align: center; color: #6b6b80; }
+</style></head>
+<body>
+<div class="top"><b id="mkt">BTC</b><span class="lev" id="lev">10x</span><span id="px">55,000.0 USD</span><span style="color:#8b8ba0">Kraken Prop · Advanced Eval $5,000</span></div>
+<div class="chart"><canvas id="c"></canvas></div>
+<div class="form"><div class="bs"><div>Buy</div><div>Sell</div></div><div class="field">Order type · Limit</div><div class="field">Limit price</div><div class="field">Quantity</div><div class="field">Available to trade 24,870.67 USD</div></div>
+<div class="pos"><div class="tabs"><b>Positions</b><span>Orders</span><span>Trades</span></div><div class="empty">No positions</div></div>
+<script>
+// "BTC 10x" as one text node, like the market header on the real page
+const setMkt = (base, lev) => { document.getElementById("mkt").textContent = base; document.getElementById("lev").textContent = lev; document.getElementById("mkt").parentNode.firstChild.textContent = base;
+  document.getElementById("hdr").textContent = base + " " + lev; };
+const h = document.createElement("span"); h.id = "hdr"; h.style.cssText = "position:absolute;left:-9999px"; h.textContent = "BTC 10x"; document.body.appendChild(h);
+const c = document.getElementById("c"), g = c.getContext("2d");
+function draw() { c.width = c.clientWidth; c.height = c.clientHeight; let p = 200; for (let i = 0; i < 90; i++) { const o = p; p += (Math.sin(i * 1.7) + Math.cos(i * .37)) * 9; const x = 30 + i * (c.width - 60) / 90;
+  g.fillStyle = p > o ? "#4ade80" : "#f87171"; g.fillRect(x, c.height / 2 - Math.max(o, p) + 150, 6, Math.abs(p - o) + 2); } }
+draw();
+window.goGold = () => { history.pushState({}, "", "/prop/account/TEST123/trade/gold-usd"); document.title = "3,513.4 | GOLD Kraken Prop"; setMkt("GOLD", "5x"); };
+</script>
+</body></html>
