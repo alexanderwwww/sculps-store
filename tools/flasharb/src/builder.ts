@@ -28,7 +28,7 @@ import {
   getCreateAssociatedTokenIdempotentInstruction,
 } from '@solana-program/token';
 import { getFlashLoanInstructions } from '@kamino-finance/klend-sdk';
-import Decimal from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import type { JupIx, SwapInstructionsResponse } from './jupiter.ts';
 import type { KaminoUsdc } from './kamino.ts';
 
