@@ -1,0 +1,29 @@
+Kamino SOL/BTC Market 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF | USDC reserve D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59 | flash fee 0.0010% | available 41009957.80 USDC
+tokens (live, verified, liquidity >= $5,000,000): SOL $753.6M
+headline size 100000 USDC | all sizes 1000,10000,100000 | dexes Whirlpool, Raydium, Raydium CLMM, Raydium CP, Meteora DLMM, Meteora DAMM v2, Phoenix, SolFi, HumidiFi, TesseraV, ZeroFi, Obric V2
+log -> /home/user/sculps-store/tools/flasharb/logs/scans.jsonl
+
+scan 1 @ 21/11/2026, 05:42:01 Athens | SOL $66.82 | network fee $0.00 | 75 routes | 49 Jupiter calls | 32.0s | no-route/errors 9
+HEADLINE 100000 USDC -> SOL 100000 USDC: buy on Whirlpool, sell on ZeroFi, spread -59.68 bps, net $-597.84 (negative, not tradable)
+pair        size buy on (A)      sell on (B)     spread bps    gross $ flash $      net $ chk
+---------------------------------------------------------------------------------------------
+SOL       100000 Whirlpool       ZeroFi              -59.68    -596.84    1.00    -597.84 exact
+SOL       100000 ZeroFi          Whirlpool           -60.11    -601.14    1.00    -602.14 exact
+SOL       100000 ZeroFi          Raydium            -144.54   -1445.40    1.00   -1446.41 exact
+SOL       100000 Meteora DLMM    ZeroFi             -176.66   -1766.57    1.00   -1767.57 est
+SOL       100000 Raydium         ZeroFi             -181.32   -1813.21    1.00   -1814.22 est
+SOL       100000 Whirlpool       Raydium            -190.97   -1909.70    1.00   -1910.71 est
+SOL       100000 Meteora DLMM    Whirlpool          -211.17   -2111.73    1.00   -2112.73 est
+SOL       100000 Raydium         Whirlpool          -215.82   -2158.21    1.00   -2159.22 est
+comparison sizes:
+pair        size buy on (A)      sell on (B)     spread bps    gross $ flash $      net $ chk
+---------------------------------------------------------------------------------------------
+SOL         1000 ZeroFi          Whirlpool           -27.41      -2.74    0.01      -2.75 exact
+SOL         1000 ZeroFi          Raydium CLMM        -27.58      -2.75    0.01      -2.77 exact
+SOL         1000 ZeroFi          Meteora DLMM        -30.09      -3.00    0.01      -3.02 exact
+SOL         1000 Whirlpool       Raydium CLMM        -18.18      -1.81    0.01      -1.83 est
+SOL         1000 Raydium CLMM    Whirlpool           -18.89      -1.88    0.01      -1.90 est
+SOL         1000 Whirlpool       Meteora DLMM        -22.01      -2.20    0.01      -2.21 est
+best any size: SOL 1000 USDC: buy on ZeroFi, sell on Whirlpool, spread -27.41 bps, net $-2.75 (negative, not tradable)
+best 100000 USDC net seen so far: $-597.84
+
