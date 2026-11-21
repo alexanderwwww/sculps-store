@@ -30,21 +30,6 @@ export interface TokenInfo { symbol: string; mint: string; decimals: number; tok
 export const USDC: TokenInfo = { symbol: 'USDC', mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', decimals: 6, tokenProgram: SPL_TOKEN_PROGRAM };
 export const WSOL: TokenInfo = { symbol: 'SOL', mint: 'So11111111111111111111111111111111111111112', decimals: 9, tokenProgram: SPL_TOKEN_PROGRAM };
 
-// DEX labels exactly as returned by GET https://lite-api.jup.ag/swap/v1/program-id-to-label (checked at start-up).
-export const DEFAULT_DEXES = [
-  'Whirlpool',
-  'Raydium',
-  'Raydium CLMM',
-  'Raydium CP',
-  'Meteora DLMM',
-  'Meteora DAMM v2',
-  'Phoenix',
-  'SolFi',
-  'HumidiFi',
-  'TesseraV',
-  'ZeroFi',
-  'Obric V2',
-];
 
 export const config = {
   rpcUrl: process.env.RPC_URL || 'https://api.mainnet-beta.solana.com',
@@ -61,7 +46,10 @@ export const config = {
   allowToken2022: (process.env.ALLOW_TOKEN_2022 ?? 'false') === 'true',
   goldQueries: list('GOLD_QUERIES', ['gold', 'XAU', 'PAXG']),
   minNetProfitUsdc: num('MIN_NET_PROFIT_USDC', 0),
-  dexes: list('DEXES', DEFAULT_DEXES),
+  // Empty = discover live per token: every DEX Jupiter routes it through (excludeDexes peeling). Set DEXES to pin a list.
+  dexes: list('DEXES', []),
+  maxDexesPerToken: num('MAX_DEXES_PER_TOKEN', 8),
+  dexRediscoverMs: num('DEX_REDISCOVER_MS', 10 * 60_000),
   // The trade size Alex cares about (headline row, and the size `npm run simulate` builds).
   tradeSizeUsdc: num('TRADE_SIZE_USDC', 100_000),
   // Comparison sizes scanned alongside it.

@@ -52,7 +52,8 @@ export interface QuoteParams {
   inputMint: string;
   outputMint: string;
   amount: bigint;
-  dex: string;
+  dex?: string; // restrict to these DEX labels (comma separated)
+  excludeDexes?: string[];
   slippageBps: number;
   maxAccounts?: number;
 }
@@ -126,9 +127,10 @@ export class JupiterClient {
       outputMint: p.outputMint,
       amount: p.amount.toString(),
       slippageBps: String(p.slippageBps),
-      dexes: p.dex,
       swapMode: 'ExactIn',
     });
+    if (p.dex) q.set('dexes', p.dex);
+    if (p.excludeDexes?.length) q.set('excludeDexes', p.excludeDexes.join(','));
     if (p.maxAccounts) q.set('maxAccounts', String(p.maxAccounts));
     return this.request(`${this.base}/quote?${q}`);
   }

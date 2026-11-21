@@ -31,6 +31,7 @@ export interface ScanResult {
   best?: Candidate;
   bestAtTradeSize?: Candidate; // the headline (TRADE_SIZE_USDC)
   tradeSizeUsdc: number;
+  dexesUsed: Record<string, string[]>;
   errors: { stage: string; pair: string; dex: string; size: number; error: string }[];
   jupiterCalls: number;
   usdcPerSol: number;
@@ -82,17 +83,36 @@ async function tryQuote(
   }
 }
 
-/** SOL price in USDC from a USDC->SOL quote (used only to price the network fee). */
+/** SOL price in USDC from an unrestricted USDC->SOL quote (used only to price the network fee). */
 export async function solPrice(deps: ScanDeps): Promise<number> {
-  const q = await deps.jup.quote({
-    inputMint: USDC.mint,
-    outputMint: WSOL.mint,
-    amount: 100_000_000n,
-    dex: deps.cfg.dexes.join(','),
-    slippageBps: 50,
-  });
+  const q = await deps.jup.quote({ inputMint: USDC.mint, outputMint: WSOL.mint, amount: 100_000_000n, slippageBps: 50 });
   return 100 / (Number(q.outAmount) / 1e9);
 }
+
+/**
+ * Live DEX discovery for one token: quote USDC->X unrestricted, record every DEX label in the route,
+ * exclude those labels (excludeDexes), repeat until Jupiter has no route or `max` labels are found.
+ */
+export async function discoverDexes(jup: JupiterClient, X: TokenInfo, amount: bigint, max: number): Promise<string[]> {
+  const found: string[] = [];
+  for (let i = 0; i < max; i++) {
+    try {
+      const q = await jup.quote({ inputMint: USDC.mint, outputMint: X.mint, amount, excludeDexes: found, slippageBps: 50 });
+      const labels = [...new Set(q.routePlan.map((r) => r.swapInfo.label))].filter((l) => !found.includes(l));
+      if (!labels.length) break;
+      found.push(...labels);
+      if (found.length >= max) break;
+    } catch (e) {
+      if (e instanceof JupiterNoRouteError) break;
+      throw e;
+    }
+  }
+  return found.slice(0, max);
+}
+
+const dexCache = new Map<string, { at: number; dexes: string[] }>();
+
+const byNet = (a: Candidate, b: Candidate) => (b.net > a.net ? 1 : b.net < a.net ? -1 : 0);
 
 export async function scan(deps: ScanDeps): Promise<ScanResult> {
   const t0 = Date.now();
@@ -108,11 +128,31 @@ export async function scan(deps: ScanDeps): Promise<ScanResult> {
   });
   const networkFeeUsdc = lamportsToUsdc(feeLamports, usdcPerSol);
   const all: Candidate[] = [];
+  const dexesUsed: Record<string, string[]> = {};
+  const sizes = [...cfg.sizesUsdc].sort((a, b) => a - b);
 
   for (const X of deps.tokens) {
     const pair = X.symbol;
-    let liveDexes = [...cfg.dexes];
-    const sizes = [...cfg.sizesUsdc].sort((a, b) => a - b);
+    let liveDexes: string[];
+    if (cfg.dexes.length) liveDexes = [...cfg.dexes];
+    else {
+      const c = dexCache.get(X.mint);
+      if (c && Date.now() - c.at < cfg.dexRediscoverMs) liveDexes = c.dexes;
+      else {
+        try {
+          liveDexes = await discoverDexes(deps.jup, X, BigInt(sizes[0] * 10 ** USDC.decimals), cfg.maxDexesPerToken);
+          dexCache.set(X.mint, { at: Date.now(), dexes: liveDexes });
+        } catch (e: any) {
+          errors.push({ stage: 'discover', pair, dex: '-', size: sizes[0], error: String(e?.message ?? e) });
+          continue;
+        }
+      }
+    }
+    dexesUsed[pair] = liveDexes;
+    if (liveDexes.length < 2) {
+      errors.push({ stage: 'discover', pair, dex: '-', size: 0, error: `only ${liveDexes.length} DEX routes this token` });
+      continue;
+    }
     for (const size of sizes) {
       const borrowed = BigInt(Math.round(size * 10 ** USDC.decimals));
       if (borrowed > deps.availableLiquidity) {
@@ -149,22 +189,33 @@ export async function scan(deps: ScanDeps): Promise<ScanResult> {
     }
   }
 
-  // Pass 2: exact re-quote of the top-K estimates.
-  all.sort((a, b) => (b.net > a.net ? 1 : b.net < a.net ? -1 : 0));
-  // Top-K overall plus top-K at the headline trade size are re-quoted exactly.
-  const top = [...new Set([...all.slice(0, cfg.verifyTopK), ...all.filter((c) => c.sizeUsdc === cfg.tradeSizeUsdc).slice(0, cfg.verifyTopK)])];
-  for (const c of top) {
-    const X = deps.tokens.find((t) => t.symbol === c.pair)!;
-    const q2 = await tryQuote(deps, errors, 'verify', c.pair, c.dexB, c.sizeUsdc, X.mint, USDC.mint, c.midX);
-    if (!q2) continue;
+  // Pass 2: exact. Fresh leg-1 quote, then leg-2 quoted with exactly that output. Keep verifying the leader
+  // (overall and at the headline size) until the leader is an exact number, at most verifyTopK+5 times each.
+  const verify = async (c: Candidate) => {
+    const X = deps.tokens.find((t) => t.mint === c.mint)!;
+    c.verified = true; // attempted; failed attempts are removed below
+    const q1 = await tryQuote(deps, errors, 'verify1', c.pair, c.dexA, c.sizeUsdc, USDC.mint, X.mint, c.borrowed);
+    if (!q1) return void (c.net = -(1n << 62n));
+    const q2 = await tryQuote(deps, errors, 'verify2', c.pair, c.dexB, c.sizeUsdc, X.mint, USDC.mint, BigInt(q1.outAmount));
+    if (!q2) return void (c.net = -(1n << 62n));
+    c.quote1 = q1;
     c.quote2 = q2;
+    c.midX = BigInt(q1.outAmount);
     c.finalUsdc = BigInt(q2.outAmount);
     Object.assign(c, computeProfit({ borrowed: c.borrowed, finalUsdc: c.finalUsdc, flashLoanFeeSf: deps.flashLoanFeeSf, networkFeeUsdc }));
-    c.verified = true;
+  };
+  for (const subset of [all, all.filter((c) => c.sizeUsdc === cfg.tradeSizeUsdc)]) {
+    for (const c of [...subset].sort(byNet).slice(0, cfg.verifyTopK)) if (!c.verified) await verify(c);
+    for (let i = 0; i < 5; i++) {
+      const lead = [...subset].sort(byNet)[0];
+      if (!lead || lead.verified) break;
+      await verify(lead);
+    }
   }
-  const sorted = [...all].sort((a, b) => {
+  const failed = (c: Candidate) => c.verified && !c.quote2;
+  const sorted = all.filter((c) => !failed(c)).sort((a, b) => {
     if (a.verified !== b.verified) return a.verified ? -1 : 1;
-    return b.net > a.net ? 1 : b.net < a.net ? -1 : 0;
+    return byNet(a, b);
   });
   const best = sorted.find((c) => c.verified);
   const bestAtTradeSize = sorted.find((c) => c.verified && c.sizeUsdc === cfg.tradeSizeUsdc);
@@ -175,6 +226,7 @@ export async function scan(deps: ScanDeps): Promise<ScanResult> {
     best,
     bestAtTradeSize,
     tradeSizeUsdc: cfg.tradeSizeUsdc,
+    dexesUsed,
     errors,
     jupiterCalls: deps.jup.calls - callsBefore,
     usdcPerSol,
@@ -219,6 +271,8 @@ export function logScan(path: string, r: ScanResult) {
       errors: r.errors.length,
       usdcPerSol: r.usdcPerSol,
       durationMs: r.durationMs,
+      dexesUsed: r.dexesUsed,
+      errorKinds: r.errors.reduce((m: Record<string, number>, e) => ((m[e.error] = (m[e.error] ?? 0) + 1), m), {}),
     }),
   );
   appendFileSync(path, lines.join('\n') + '\n');
