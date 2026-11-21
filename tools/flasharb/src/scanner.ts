@@ -8,10 +8,11 @@ import { appendFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { JupiterClient, JupiterNoRouteError, JupiterRateLimitError, type QuoteResponse } from './jupiter.ts';
 import { computeProfit, lamportsToUsdc, networkFeeLamports, scaleOut, type Profit } from './math.ts';
-import { TOKENS, type Config } from './config.ts';
+import { USDC, WSOL, type Config, type TokenInfo } from './config.ts';
 
 export interface Candidate extends Profit {
   pair: string;
+  mint?: string;
   sizeUsdc: number;
   dexA: string;
   dexB: string;
@@ -28,6 +29,8 @@ export interface ScanResult {
   ts: string;
   candidates: Candidate[]; // sorted by net desc, verified first
   best?: Candidate;
+  bestAtTradeSize?: Candidate; // the headline (TRADE_SIZE_USDC)
+  tradeSizeUsdc: number;
   errors: { stage: string; pair: string; dex: string; size: number; error: string }[];
   jupiterCalls: number;
   usdcPerSol: number;
@@ -40,10 +43,10 @@ export interface ScanDeps {
   cfg: Config;
   flashLoanFeeSf: bigint;
   availableLiquidity: bigint;
+  tokens: TokenInfo[];
   log?: (s: string) => void;
 }
 
-const USDC = TOKENS.USDC;
 
 async function tryQuote(
   deps: ScanDeps,
@@ -83,7 +86,7 @@ async function tryQuote(
 export async function solPrice(deps: ScanDeps): Promise<number> {
   const q = await deps.jup.quote({
     inputMint: USDC.mint,
-    outputMint: TOKENS.SOL.mint,
+    outputMint: WSOL.mint,
     amount: 100_000_000n,
     dex: deps.cfg.dexes.join(','),
     slippageBps: 50,
@@ -106,12 +109,8 @@ export async function scan(deps: ScanDeps): Promise<ScanResult> {
   const networkFeeUsdc = lamportsToUsdc(feeLamports, usdcPerSol);
   const all: Candidate[] = [];
 
-  for (const pair of cfg.pairs) {
-    const X = TOKENS[pair];
-    if (!X) {
-      errors.push({ stage: 'config', pair, dex: '-', size: 0, error: 'unknown token' });
-      continue;
-    }
+  for (const X of deps.tokens) {
+    const pair = X.symbol;
     let liveDexes = [...cfg.dexes];
     const sizes = [...cfg.sizesUsdc].sort((a, b) => a - b);
     for (const size of sizes) {
@@ -145,16 +144,17 @@ export async function scan(deps: ScanDeps): Promise<ScanResult> {
           const midX = BigInt(q1.outAmount);
           const finalUsdc = scaleOut(refIn, BigInt(q2.outAmount), midX);
           const p = computeProfit({ borrowed, finalUsdc, flashLoanFeeSf: deps.flashLoanFeeSf, networkFeeUsdc });
-          all.push({ pair, sizeUsdc: size, dexA, dexB, borrowed, midX, finalUsdc, verified: false, quote1: q1, ...p });
+          all.push({ pair, mint: X.mint, sizeUsdc: size, dexA, dexB, borrowed, midX, finalUsdc, verified: false, quote1: q1, ...p });
         }
     }
   }
 
   // Pass 2: exact re-quote of the top-K estimates.
   all.sort((a, b) => (b.net > a.net ? 1 : b.net < a.net ? -1 : 0));
-  const top = all.slice(0, cfg.verifyTopK);
+  // Top-K overall plus top-K at the headline trade size are re-quoted exactly.
+  const top = [...new Set([...all.slice(0, cfg.verifyTopK), ...all.filter((c) => c.sizeUsdc === cfg.tradeSizeUsdc).slice(0, cfg.verifyTopK)])];
   for (const c of top) {
-    const X = TOKENS[c.pair];
+    const X = deps.tokens.find((t) => t.symbol === c.pair)!;
     const q2 = await tryQuote(deps, errors, 'verify', c.pair, c.dexB, c.sizeUsdc, X.mint, USDC.mint, c.midX);
     if (!q2) continue;
     c.quote2 = q2;
@@ -167,11 +167,14 @@ export async function scan(deps: ScanDeps): Promise<ScanResult> {
     return b.net > a.net ? 1 : b.net < a.net ? -1 : 0;
   });
   const best = sorted.find((c) => c.verified);
+  const bestAtTradeSize = sorted.find((c) => c.verified && c.sizeUsdc === cfg.tradeSizeUsdc);
   return {
     scanId: `${t0}`,
     ts: new Date(t0).toISOString(),
     candidates: sorted,
     best,
+    bestAtTradeSize,
+    tradeSizeUsdc: cfg.tradeSizeUsdc,
     errors,
     jupiterCalls: deps.jup.calls - callsBefore,
     usdcPerSol,
@@ -206,6 +209,10 @@ export function logScan(path: string, r: ScanResult) {
       scanId: r.scanId,
       summary: true,
       candidates: r.candidates.length,
+      tradeSizeUsdc: r.tradeSizeUsdc,
+      headlineNet: r.bestAtTradeSize?.net.toString() ?? null,
+      headlineRoute: r.bestAtTradeSize ? `${r.bestAtTradeSize.pair} ${r.bestAtTradeSize.dexA}->${r.bestAtTradeSize.dexB}` : null,
+      headlineSpreadBps: r.bestAtTradeSize ? Number(r.bestAtTradeSize.spreadBps.toFixed(3)) : null,
       bestNet: r.best?.net.toString() ?? null,
       bestRoute: r.best ? `${r.best.pair} ${r.best.sizeUsdc} ${r.best.dexA}->${r.best.dexB}` : null,
       jupiterCalls: r.jupiterCalls,

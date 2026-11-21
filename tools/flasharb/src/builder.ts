@@ -97,6 +97,7 @@ export interface BuildInput {
   wallet: string;
   borrowAmount: bigint;
   xMint: string;
+  xTokenProgram: string;
   swap1: SwapInstructionsResponse;
   swap2: SwapInstructionsResponse;
   computeUnitLimit: number;
@@ -109,13 +110,13 @@ export async function buildArbTx(b: BuildInput) {
   const signer = createNoopSigner(walletAddr);
   const usdcMint = b.kamino.reserve.getLiquidityMint();
   const [usdcAta] = await findAssociatedTokenPda({ owner: walletAddr, mint: usdcMint, tokenProgram: TOKEN_PROGRAM_ADDRESS });
-  const [xAta] = await findAssociatedTokenPda({ owner: walletAddr, mint: address(b.xMint), tokenProgram: TOKEN_PROGRAM_ADDRESS });
+  const [xAta] = await findAssociatedTokenPda({ owner: walletAddr, mint: address(b.xMint), tokenProgram: address(b.xTokenProgram) });
 
   const pre: Instruction[] = [
     getSetComputeUnitLimitInstruction({ units: b.computeUnitLimit }),
     getSetComputeUnitPriceInstruction({ microLamports: BigInt(b.computeUnitPriceMicroLamports) }),
     getCreateAssociatedTokenIdempotentInstruction({ payer: signer, ata: usdcAta, owner: walletAddr, mint: usdcMint }),
-    getCreateAssociatedTokenIdempotentInstruction({ payer: signer, ata: xAta, owner: walletAddr, mint: address(b.xMint) }),
+    getCreateAssociatedTokenIdempotentInstruction({ payer: signer, ata: xAta, owner: walletAddr, mint: address(b.xMint), tokenProgram: address(b.xTokenProgram) }),
   ];
   const { ixs, borrowIxIndex, repayIndex } = assembleInstructions({
     pre,
