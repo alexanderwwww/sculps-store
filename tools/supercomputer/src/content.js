@@ -10,13 +10,10 @@ import { shouldLog, makeCall, settle, tally, prune } from "./lib/score.js";
 import * as grok from "./lib/grok.js";
 import * as news from "./lib/news.js";
 import { Chart } from "./chart.js";
+import { detect, LABEL, DIR } from "./lib/patterns.js";
 import { rank, learn, makeRec, settleRec } from "./lib/recs.js";
 import { CSS } from "./style.js";
 
-if (!window.__supercomputer) {
-  window.__supercomputer = true;
-  start();
-}
 
 function start() {
   // ---------- small helpers ----------
@@ -150,7 +147,8 @@ function start() {
   function recompute() {
     const m = S.mkt; if (!m || S.bars.length < 2) return render();
     const col = columns(S.bars), f = features(col, col.n - 1);
-    S.f = f;
+    S.f = f; S.pats = [];
+    if (f) { const det = detect(col, col.n - 1); f.px = det.x; S.pats = patList(det.hits); }
     if (f) {
       S.r5 = read(MODEL, f, "5"); S.r15 = read(MODEL, f, "15");
       if (m.source !== "spot") { S.r5.edge = S.r15.edge = false; S.r5.untested = S.r15.untested = true; }
@@ -161,6 +159,12 @@ function start() {
     if (S.price == null) S.price = S.bars[S.bars.length - 1].c;
     render();
   }
+  // detected patterns with their measured out-of-sample record (15-minute horizon)
+  function patList(hits) {
+    const st = MODEL.horizons["15"].patternStats || {};
+    return Object.entries(hits).map(([name, lines]) => ({ name, label: LABEL[name], dir: DIR[name], lines, test: st[name] ? st[name].test : null, used: !!(st[name] && st[name].used) }));
+  }
+  const patWhy = (pats) => pats.map((p) => `${p.label}${p.test ? ` (tested ${pc(p.test.hit, 0)} on ${p.test.n.toLocaleString("en-US")}${p.used ? "" : ", context only"})` : ""}`).join(", ");
   const instFor = (m) => ({ base: m.base, tick: m.tick, qtyInc: m.qtyInc, minQty: m.minQty });
   function settingsFor(m) {
     const s = { ...S.settings };
@@ -211,9 +215,9 @@ function start() {
   }
   const hourAthens = () => Number(clock(Date.now() / 1000).slice(0, 2));
   function decide() {
-    const st = learn(S.recs), cands = Object.values(S.moverCache).filter((x) => Date.now() - x.at < 3 * 60e3).map((x) => ({ coin: x.m.base, name: x.m.name, key: x.m.key, tick: x.m.tick, plan: x.plan, read: x.best, tags: x.tags, hourAthens: hourAthens() }));
+    const st = learn(S.recs), cands = Object.values(S.moverCache).filter((x) => Date.now() - x.at < 3 * 60e3).map((x) => ({ coin: x.m.base, name: x.m.name, key: x.m.key, tick: x.m.tick, plan: x.plan, read: x.best, tags: x.tags, pats: x.pats || [], hourAthens: hourAthens() }));
     if (S.mkt && S.f && S.plan && !cands.some((c) => c.coin === S.mkt.base))
-      cands.push({ coin: S.mkt.base, name: S.mkt.name, key: S.mkt.key, tick: S.mkt.tick, plan: S.plan, read: [S.r15, S.r5].find((r) => r.edge) || S.r15, tags: setupTags(S.f), hourAthens: hourAthens() });
+      cands.push({ coin: S.mkt.base, name: S.mkt.name, key: S.mkt.key, tick: S.mkt.tick, plan: S.plan, read: [S.r15, S.r5].find((r) => r.edge) || S.r15, tags: setupTags(S.f), pats: S.pats || [], hourAthens: hourAthens() });
     const ranked = rank(cands, st), prev = S.best;
     S.ranked = ranked; S.best = ranked[0] || null; S.scored = S.recs.filter((r) => ["win", "loss", "timeout"].includes(r.status)).length;
     if (prev && !ranked.some((c) => c.coin === prev.coin && c.plan.side === prev.plan.side)) S.cancelled = { name: prev.name, side: prev.plan.side, at: Date.now() };
@@ -234,7 +238,7 @@ function start() {
     el2.className = "best go" + (p.side === "up" ? "" : " short");
     el2.innerHTML = `<div class="bh"><b>Best trade now: ${esc(b.name)} ${p.side === "up" ? "long" : "short"}</b><span>${learnTxt}</span></div>
       <div class="bw">In ${fmt(p.entry, d)} · SL ${fmt(p.stop, d)} · TP ${fmt(p.tp, d)} · size ${+p.qty.toFixed(6)} (${usd(p.notional)}) · risk ${usd(p.risk)} · reward ${usd(p.reward)}</div>
-      <div class="bw">Why: ${Math.round(b.read.conf * 100)}% ${b.read.side} in ${b.read.h} min, that band was right ${pc(b.read.band.test.hit, 1)} on ${b.read.band.test.n.toLocaleString("en-US")} unseen calls and its plan made ${b.read.band.test.plan.netPct.toFixed(2)}% a trade after fees${b.tags.length ? " · " + esc(b.tags.join(", ")) : ""}${b.learned.why.length ? " · down-weighted: " + esc(b.learned.why.join(", ")) : ""}${nx ? `<br>Next: ${esc(nx)}` : ""}</div>`;
+      <div class="bw">Why: ${Math.round(b.read.conf * 100)}% ${b.read.side} in ${b.read.h} min, that band was right ${pc(b.read.band.test.hit, 1)} on ${b.read.band.test.n.toLocaleString("en-US")} unseen calls and its plan made ${b.read.band.test.plan.netPct.toFixed(2)}% a trade after fees${b.tags.length ? " · " + esc(b.tags.join(", ")) : ""}${b.pats && b.pats.length ? " · pattern: " + esc(patWhy(b.pats)) : ""}${b.learned.why.length ? " · down-weighted: " + esc(b.learned.why.join(", ")) : ""}${nx ? `<br>Next: ${esc(nx)}` : ""}</div>`;
   }
   async function settleOthers() {
     const now = Date.now() / 1000, coins = [...new Set(S.calls.filter((c) => c.status === "open" && c.tEnd < now - 5 && (!S.mkt || c.coin !== S.mkt.base)).map((c) => c.coin))].slice(0, 3);
@@ -252,9 +256,10 @@ function start() {
       for (const m of stale) {
         try {
           const bars = fillGaps(await bars1m(get, m)), col = columns(bars), f = features(col, col.n - 1);
+          let pats = []; if (f) { const det = detect(col, col.n - 1); f.px = det.x; pats = patList(det.hits); }
           settleRecs(m.base, bars);
           if (f) { const r5 = read(MODEL, f, "5"), r15 = read(MODEL, f, "15"), best = [r15, r5].find((r) => r.edge) || r15;
-            S.moverCache[m.key] = { at: Date.now(), m, f, r5, r15, best, tags: setupTags(f), plan: plan(MODEL, f, best, settingsFor(m), instFor(m)), vol: tk[m.key].volUSD }; }
+            S.moverCache[m.key] = { at: Date.now(), m, f, r5, r15, best, pats, tags: setupTags(f), plan: plan(MODEL, f, best, settingsFor(m), instFor(m)), vol: tk[m.key].volUSD }; }
         } catch {}
         decide();
         await new Promise((r) => setTimeout(r, CONFIG.scanGapMs ?? 1500)); // stay inside Kraken's public rate limit
@@ -297,7 +302,7 @@ function start() {
     const ago = (Date.now() - S.lastTick) / 1000;
     $(".feed").textContent = S.mkt.source === "spot" ? (S.live === "websocket" && ago < 30 ? "live" : S.live) : "perp · polling";
     $(".feed").className = "feed " + (ago < 30 ? "on" : "off");
-    chart.set({ hist: S.bars.slice(-60).map((b) => ({ t: b.t + 60, c: b.c })), price: S.price, now: Date.now() / 1000, r5: S.r5, r15: S.r15, plan: S.plan, grok: liveGrok(), clock: (t) => clock(t), fmt: (x) => fmt(x) });
+    chart.set({ hist: S.bars.slice(-60).map((b) => ({ t: b.t + 60, c: b.c })), price: S.price, now: Date.now() / 1000, r5: S.r5, r15: S.r15, plan: S.plan, grok: liveGrok(), pattern: (S.pats || [])[0] || null, clock: (t) => clock(t), fmt: (x) => fmt(x) });
   }
   const liveGrok = () => { const g = S.mkt && S.grokByCoin[S.mkt.base]; return g && Date.now() - g.at < 20 * 60e3 ? g : null; };
   function callHTML(r, label) {
@@ -350,7 +355,7 @@ function start() {
       if (!S.movers.length) { b.innerHTML = `<p class="fine">${S.moversErr ? esc(S.moversErr) : "Reading the liquid Kraken USD pairs…"}</p>`; return; }
       b.innerHTML = S.movers.map((x) => { const r = x.best, up = r.side === "up";
         return `<div class="mv"><div class="mvh"><b>${x.m.name}</b><span class="${up ? "up" : "dn"}">${up ? "▲" : "▼"} ${Math.round(r.conf * 100)}% · ${r.h}m</span></div>
-        <div class="mvt">${x.tags.length ? x.tags.map((t) => `<em>${t}</em>`).join("") : "<em>quiet</em>"}<span>$${(x.vol / 1e6).toFixed(1)}M 24h</span></div>
+        <div class="mvt">${[...x.tags, ...(x.pats || []).map((p) => p.label)].slice(0, 3).map((t) => `<em>${esc(t)}</em>`).join("") || "<em>quiet</em>"}<span>$${(x.vol / 1e6).toFixed(1)}M 24h</span></div>
         ${x.plan.ok ? `<div class="mvp">In ${fmt(x.plan.entry, decOf(x.m.tick))} · SL ${fmt(x.plan.stop, decOf(x.m.tick))} · TP ${fmt(x.plan.tp, decOf(x.m.tick))} · ${+x.plan.qty.toFixed(6)}</div>` : `<div class="mvp muted">${esc(x.plan.reason)}</div>`}</div>`; }).join("") +
         `<p class="fine">${S.moversLiquid} pairs over $${(S.settings.minLiquidityUSD / 1e6).toFixed(0)}M volume · updated ${clock(S.moversAt / 1000)}</p>`;
     } else if (S.tab === "news") {
@@ -419,3 +424,8 @@ const ICON = {
   gear: `<svg viewBox="0 0 20 20" width="15" height="15"><path fill="currentColor" d="M10 6.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Zm0 5.3a1.9 1.9 0 1 1 0-3.8 1.9 1.9 0 0 1 0 3.8Zm7.3-3.1-1.5-.3a6 6 0 0 0-.6-1.4l.9-1.3a.8.8 0 0 0-.1-1l-.8-.8a.8.8 0 0 0-1-.1l-1.3.9a6 6 0 0 0-1.4-.6l-.3-1.5a.8.8 0 0 0-.8-.7H9.6a.8.8 0 0 0-.8.7l-.3 1.5a6 6 0 0 0-1.4.6l-1.3-.9a.8.8 0 0 0-1 .1l-.8.8a.8.8 0 0 0-.1 1l.9 1.3a6 6 0 0 0-.6 1.4l-1.5.3a.8.8 0 0 0-.7.8v1.1c0 .4.3.7.7.8l1.5.3c.1.5.3 1 .6 1.4l-.9 1.3a.8.8 0 0 0 .1 1l.8.8c.3.3.7.3 1 .1l1.3-.9c.4.3.9.5 1.4.6l.3 1.5c.1.4.4.7.8.7h1.1c.4 0 .7-.3.8-.7l.3-1.5c.5-.1 1-.3 1.4-.6l1.3.9c.3.2.7.2 1-.1l.8-.8c.3-.3.3-.7.1-1l-.9-1.3c.3-.4.5-.9.6-1.4l1.5-.3c.4-.1.7-.4.7-.8V9.6a.8.8 0 0 0-.7-.8Z"/></svg>`,
   min: `<svg viewBox="0 0 20 20" width="15" height="15"><path fill="currentColor" d="M5 10.75h10a.75.75 0 0 0 0-1.5H5a.75.75 0 0 0 0 1.5Z"/></svg>`,
 };
+
+if (!window.__supercomputer) {
+  window.__supercomputer = true;
+  start();
+}

@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { fillGaps } from "../src/lib/indicators.js";
 import { FEATURES, LOOKBACK, columns, features } from "../src/lib/features.js";
 import { chasing, stopPct } from "../src/lib/plan.js";
+import { detect, PATTERNS, LABEL, DIR } from "../src/lib/patterns.js";
 
 const [dir, outFile] = process.argv.slice(2);
 const HORIZONS = [5, 15], STEP = 3, EMBARGO = 86400, FEE = 0.0004;
@@ -31,7 +32,8 @@ for (const coin of coins) {
       const r = Math.log(col.c[end + h] / col.c[end]);
       y[h] = r > 0 ? 1 : r < 0 ? 0 : -1; ret[h] = r / sd; hiE[h] = Math.log(hi / f.price) / sd; loE[h] = Math.log(f.price / lo) / sd;
     }
-    rows.push({ coin, end, t: f.tClose, x: f.x, f, y, ret, hiE, loE });
+    f.px = detect(col, end).x;
+    rows.push({ coin, end, t: f.tClose, x: f.x, px: f.px, f, y, ret, hiE, loE });
     if (f.tClose < tMin) tMin = f.tClose; if (f.tClose > tMax) tMax = f.tClose;
   }
   console.log(`  ${coin}: ${col.n} bars, ${new Date(col.t[0] * 1000).toISOString().slice(0, 10)} -> ${new Date(col.t[col.n - 1] * 1000).toISOString().slice(0, 16)}`);
@@ -109,16 +111,32 @@ const out = { build: null, made: new Date().toISOString(), source: "Coinbase Exc
 for (const h of HORIZONS) {
   const ok = (r) => r.y[h] >= 0;
   const tr = rows.filter((r) => r.part === "train" && ok(r)), va = rows.filter((r) => r.part === "valid" && ok(r)), te = rows.filter((r) => r.part === "test" && ok(r));
-  const d = FEATURES.length, mu = new Array(d).fill(0), sd = new Array(d).fill(0);
-  for (const r of tr) for (let j = 0; j < d; j++) mu[j] += r.x[j] / tr.length;
-  for (const r of tr) for (let j = 0; j < d; j++) sd[j] += (r.x[j] - mu[j]) ** 2 / tr.length;
-  for (let j = 0; j < d; j++) sd[j] = Math.sqrt(sd[j]) || 1;
-  const Z = (r) => r.x.map((v, j) => (v - mu[j]) / sd[j]);
-  const w = fitLogit(tr.map(Z), tr.map((r) => r.y[h]), 50);
-  const prob = (r) => { let z = w[0]; const x = Z(r); for (let j = 0; j < d; j++) z += w[j + 1] * x[j]; return 1 / (1 + Math.exp(-z)); };
+  const upRate = (set) => set.filter((r) => r.y[h] === 1).length / set.length;
+  // patterns: each one's own hit rate in its own direction; it may join the model only if it beat 50% and the naive side on VALID
+  const patternStats = {}, usePatterns = [];
+  PATTERNS.forEach((name, k) => {
+    // naive = always calling the side that was more common over the whole period (a one-sided signal is compared to that, not to itself)
+    const st = (set) => { const s = set.filter((r) => r.px[k] !== 0), hit = s.filter((r) => (r.y[h] === 1) === (r.px[k] > 0)).length, upAll = upRate(set);
+      return { n: s.length, hit: s.length ? hit / s.length : 0, ciLow: wilsonLow(hit, s.length), naive: Math.max(upAll, 1 - upAll) }; };
+    const ps = { label: LABEL[name], dir: DIR[name], train: st(tr), valid: st(va), test: st(te) };
+    ps.used = ps.valid.n >= 200 && ps.valid.ciLow > Math.max(0.5, ps.valid.naive);
+    patternStats[name] = ps; if (ps.used) usePatterns.push(name);
+  });
+  const pIdx = usePatterns.map((nm) => PATTERNS.indexOf(nm)), xOf = (r) => r.x.concat(pIdx.map((k) => r.px[k]));
+  const fitAll = (xf) => {
+    const d = xf(tr[0]).length, mu = new Array(d).fill(0), sd = new Array(d).fill(0);
+    for (const r of tr) { const x = xf(r); for (let j = 0; j < d; j++) mu[j] += x[j] / tr.length; }
+    for (const r of tr) { const x = xf(r); for (let j = 0; j < d; j++) sd[j] += (x[j] - mu[j]) ** 2 / tr.length; }
+    for (let j = 0; j < d; j++) sd[j] = Math.sqrt(sd[j]) || 1;
+    const Z = (r) => xf(r).map((v, j) => (v - mu[j]) / sd[j]);
+    const w = fitLogit(tr.map(Z), tr.map((r) => r.y[h]), 50);
+    const prob = (r) => { let z = w[0]; const x = Z(r); for (let j = 0; j < d; j++) z += w[j + 1] * x[j]; return 1 / (1 + Math.exp(-z)); };
+    return { mu, sd, w, prob };
+  };
+  const baseFit = fitAll((r) => r.x), baseTest = te.filter((r) => (baseFit.prob(r) >= 0.5) === (r.y[h] === 1)).length / te.length;
+  const { mu, sd, w, prob } = usePatterns.length ? fitAll(xOf) : baseFit;
   for (const r of [...tr, ...va, ...te]) r.p = prob(r);
   const hits = (set) => set.filter((r) => (r.p >= 0.5) === (r.y[h] === 1)).length;
-  const upRate = (set) => set.filter((r) => r.y[h] === 1).length / set.length;
 
   // range: 80% of the time the high / low of the next h minutes stays inside (fit on TRAIN)
   // both edges at the same quantile q, q raised until the high AND the low stay inside 80% of the time on TRAIN
@@ -149,10 +167,12 @@ for (const h of HORIZONS) {
     const edge = dirEdge && v.plan.trades >= 100 && t.plan.trades >= 100 && v.plan.netPct > 0 && t.plan.netPct > 0;
     bands.push({ lo, hi, dirEdge, edge, valid: v, test: t });
   }
-  out.horizons[h] = { mu, sd, w: Array.from(w.slice(1)), b: w[0], range, drift, plan: pp, bands,
+  out.horizons[h] = { mu, sd, w: Array.from(w.slice(1)), b: w[0], patterns: usePatterns, patternStats, testHitWithoutPatterns: baseTest, range, drift, plan: pp, bands,
     overall: { train: { n: tr.length, hit: hits(tr) / tr.length, up: upRate(tr) }, valid: { n: va.length, hit: hits(va) / va.length, up: upRate(va) },
       test: { n: te.length, hit: hits(te) / te.length, up: upRate(te), rangeCover: cover(te) }, planValid: best?.res ?? null, planTest: replay(te.filter((r) => Math.max(r.p, 1 - r.p) >= 0.52), h, pp) } };
-  console.log(`\n== ${h}m  train ${tr.length}  valid ${va.length}  test ${te.length}`);
+  console.log(`\n== ${h}m patterns used: ${usePatterns.join(", ") || "none"} (test hit without patterns ${(baseTest * 100).toFixed(2)}%)`);
+  for (const [nm, ps] of Object.entries(patternStats)) console.log(`   ${nm.padEnd(13)} valid n=${ps.valid.n} hit=${(ps.valid.hit * 100).toFixed(1)} naive=${(ps.valid.naive * 100).toFixed(1)} | test n=${ps.test.n} hit=${(ps.test.hit * 100).toFixed(1)} naive=${(ps.test.naive * 100).toFixed(1)}${ps.used ? "  USED" : ""}`);
+  console.log(`== ${h}m  train ${tr.length}  valid ${va.length}  test ${te.length}`);
   console.log(`  test hit ${(hits(te) / te.length * 100).toFixed(2)}%  (up-rate ${(upRate(te) * 100).toFixed(1)}%)  range cover ${(cover(te) * 100).toFixed(1)}%  plan`, JSON.stringify(pp));
   for (const b of bands) console.log(`  ${(b.lo * 100).toFixed(0)}-${(Math.min(b.hi, 1) * 100).toFixed(0)}%  valid n=${b.valid.n} hit=${(b.valid.hit * 100).toFixed(2)} | test n=${b.test.n} hit=${(b.test.hit * 100).toFixed(2)} ciLow=${(b.test.ciLow * 100).toFixed(2)} naive=${(b.test.naive * 100).toFixed(1)} | plan test ${b.test.plan.trades} trades net ${b.test.plan.netPct.toFixed(3)}%/trade R ${b.test.plan.R.toFixed(3)} win ${(b.test.plan.win * 100).toFixed(1)}%  ${b.edge ? "TRADE EDGE" : b.dirEdge ? "direction edge only" : "no edge"}`);
 }

@@ -76,6 +76,16 @@ export class Chart {
       }
     }
 
+    // detected pattern: thin lines across the past, named once
+    if (d.pattern) {
+      d.pattern.lines.forEach((ln, i) => {
+        if (!(ln.price > this.view.lo && ln.price < this.view.hi)) return;
+        const y = Math.round(Y(ln.price)) + 0.5, col = d.pattern.dir > 0 ? "rgba(48,209,88,0.5)" : "rgba(255,69,58,0.5)";
+        g.beginPath(); g.moveTo(X(now - 30 * 60), y); g.lineTo(xn, y); g.strokeStyle = col; g.lineWidth = 1; g.setLineDash([1, 2]); g.stroke(); g.setLineDash([]);
+        g.font = "500 9px -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif"; g.fillStyle = "rgba(235,235,245,0.6)"; g.textAlign = "left";
+        g.fillText(i === 0 ? d.pattern.label : ln.label, X(now - 30 * 60) + 2, y - 3);
+      });
+    }
     // price line: smooth curve + soft fill
     const P = pts.map(([t, v]) => [X(t), Y(v)]);
     const path = () => { g.moveTo(P[0][0], P[0][1]); for (let i = 0; i < P.length - 1; i++) { const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2;

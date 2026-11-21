@@ -1,4 +1,5 @@
 // Inference with the shipped coefficients (model.json). Pure functions, no browser APIs.
+import { PATTERNS } from "./patterns.js";
 
 export const sigmoid = (z) => 1 / (1 + Math.exp(-z));
 
@@ -16,7 +17,8 @@ export function bandOf(hm, conf) {
 // One horizon's read. f = features() output, h = "5" | "15"
 export function read(model, f, h) {
   const hm = model.horizons[h];
-  const p = rawProb(hm, f.x);
+  const pats = hm.patterns || [], x = pats.length ? f.x.concat(pats.map((nm) => (f.px ? f.px[PATTERNS.indexOf(nm)] : 0))) : f.x;
+  const p = rawProb(hm, x);
   const side = p >= 0.5 ? "up" : "down";
   const conf = Math.max(p, 1 - p);
   const band = bandOf(hm, conf);
