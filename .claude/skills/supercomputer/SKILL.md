@@ -8,3 +8,4 @@ description: supercomputer — Alex's eyes-only trading assistant: a Chrome exte
 - On Kraken Pro: next 5 min / 15 min Up-Down with calibrated %, price range, trade plan (entry, stop, target, size) sized so the stop costs max $10; movers (top 3 setups, coins discovered live); scorecard of every call; Grok's call beside ours (paste box until a Grok key exists).
 - His account: Kraken Prop $5K Advanced ($20): target $450, daily loss $150, max drawdown $150, up to 10x. Best hours 15:30-23:00 Athens.
 - If the model has no measured edge, it says "stand aside". Code: tools/supercomputer.
+- Look (Alex): "perfect UI like Apple made it… blue line moving". Draws its own chart: live price as a smooth moving blue line (#0A84FF), prediction drawn ahead of now for 5 and 15 min in other colors with a shaded range, entry / stop (red) / target (green) lines, Grok's call as its own marker. Frosted glass, system font, 60fps.
