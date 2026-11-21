@@ -1,12 +1,13 @@
 {
   "name": "flasharb",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Solana flash-loan arbitrage scanner (simulation only, never sends)",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "scan": "tsx src/cli-scan.ts",
+    "simulate": "tsx src/cli-simulate.ts",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -21,5 +22,10 @@
     "@types/node": "^26.6.6",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
+  },
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
   }
 }
