@@ -1,0 +1,2 @@
+Kamino USDC reserve D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59 flash fee 0.0010%, available 40990268.73 USDC
+WALLET_PUBKEY from .env
