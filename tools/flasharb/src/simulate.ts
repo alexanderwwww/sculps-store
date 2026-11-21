@@ -89,9 +89,10 @@ export async function findFundedWallet(
       .catch(() => null);
     const payer = tx?.transaction?.message?.accountKeys?.[0];
     if (!payer) continue;
-    const lam = await isFunded(payer);
+    await new Promise((r) => setTimeout(r, 400)); // public RPC answers 429 to bursts
+    const lam = await isFunded(payer).catch(() => null);
     if (!lam) continue;
-    const usdc = minUsdc > 0n ? await usdcBalance(rpc, payer, usdcMint) : 0n;
+    const usdc = minUsdc > 0n ? await usdcBalance(rpc, payer, usdcMint).catch(() => 0n) : 0n;
     if (usdc < minUsdc) continue;
     return { wallet: payer, how: `fee payer of recent tx ${s.signature} touching ${probeAddr}, ${Number(lam) / 1e9} SOL, ${Number(usdc) / 1e6} USDC` };
   }

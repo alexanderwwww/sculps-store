@@ -1,1 +1,1 @@
-Kamino USDC reserve D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59 flash fee 0.0010%, available 40938351.95 USDC
+Kamino USDC reserve D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59 flash fee 0.0010%, available 40932706.11 USDC
