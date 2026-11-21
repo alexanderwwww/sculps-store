@@ -6,7 +6,8 @@
     "scan": "tsx src/cli-scan.ts",
     "simulate": "tsx src/cli-simulate.ts",
     "test": "node --import tsx --test test/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "gold": "tsx src/cli-gold.ts"
   },
   "author": "",
   "license": "ISC",

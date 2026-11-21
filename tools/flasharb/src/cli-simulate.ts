@@ -1,30 +1,32 @@
 // npm run simulate: scan once, take the best exact candidate (even if negative), build the flash-loan tx, simulate it.
 // Never signs, never sends.
 import { address } from '@solana/kit';
-import { config, TOKENS } from './config.ts';
-import { athens, setup, table } from './common.ts';
+import { config, USDC } from './config.ts';
+import { athens, describe, setup, table } from './common.ts';
 import { buildArbTx, FLASH_BORROW_DISCRIMINATOR, FLASH_REPAY_DISCRIMINATOR, hasDiscriminator } from './builder.ts';
 import { fmtUsdc } from './math.ts';
 import { logScan, scan } from './scanner.ts';
 import { findFundedWallet, simulate } from './simulate.ts';
 
-const { rpc, jup, kamino } = await setup();
+const { rpc, jup, kamino, tokens } = await setup();
 console.log(`Kamino USDC reserve ${kamino.reserveAddress} flash fee ${(kamino.flashLoanFeeRate * 100).toFixed(4)}%, available ${fmtUsdc(kamino.availableLiquidity)} USDC`);
 
 let wallet = config.walletPubkey;
 let walletNote = 'WALLET_PUBKEY from .env';
 if (!wallet) {
-  const found = await findFundedWallet(rpc, TOKENS.USDC.mint, kamino.reserveAddress);
+  const found = await findFundedWallet(rpc, USDC.mint, kamino.reserveAddress);
   wallet = found.wallet;
   walletNote = `WALLET_PUBKEY not set -> stand-in public wallet ${wallet}: ${found.how}`;
 }
 console.log(walletNote);
 
-const r = await scan({ jup, cfg: config, flashLoanFeeSf: kamino.flashLoanFeeSf, availableLiquidity: kamino.availableLiquidity });
+const r = await scan({ jup, cfg: config, flashLoanFeeSf: kamino.flashLoanFeeSf, availableLiquidity: kamino.availableLiquidity, tokens });
 logScan(config.logPath, r);
 console.log(`scan @ ${athens(new Date(r.ts))}, ${r.candidates.length} routes, ${r.jupiterCalls} calls`);
-console.log(table(r, 6));
-const best = r.best;
+console.log(`HEADLINE ${config.tradeSizeUsdc} USDC -> ${describe(r.bestAtTradeSize)}`);
+console.log(table(r.candidates.filter((c) => c.sizeUsdc === config.tradeSizeUsdc), 6));
+// Build the headline-size candidate (TRADE_SIZE_USDC); fall back to the best of any size.
+const best = r.bestAtTradeSize ?? r.best;
 if (!best?.quote1 || !best.quote2) {
   console.log('No verified candidate to build.');
   process.exit(1);
@@ -38,7 +40,8 @@ const built = await buildArbTx({
   kamino,
   wallet,
   borrowAmount: best.borrowed,
-  xMint: TOKENS[best.pair].mint,
+  xMint: best.mint!,
+  xTokenProgram: tokens.find((t) => t.mint === best.mint)!.tokenProgram,
   swap1,
   swap2,
   computeUnitLimit: config.computeUnitLimit,

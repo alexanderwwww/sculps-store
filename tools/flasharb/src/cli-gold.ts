@@ -1,24 +1,28 @@
-// npm run gold: which DEXes can route USDC <-> each gold-backed token, from live Jupiter quotes only.
-// Method: quote unrestricted, record the DEX labels used, exclude them (excludeDexes), repeat until no route.
-// Candidate list = Jupiter token search "gold"/"XAUT"/"PAXG" results tagged verified (lite-api /tokens/v2/search).
-import { config, TOKENS } from './config.ts';
+// npm run gold: is any gold-backed token on Solana routable on two or more DEXes? Live data only.
+// Candidates: Jupiter token search for each GOLD_QUERIES term, verified tokens whose name/symbol/tags mention gold/XAU.
+// Method: quote USDC->token unrestricted, record the DEX labels used, exclude them (excludeDexes), repeat until no route.
+import { createSolanaRpc } from '@solana/kit';
+import { config, TOKEN_2022_PROGRAM, USDC } from './config.ts';
 import { JupiterClient, JupiterNoRouteError } from './jupiter.ts';
+import { searchTokens, type JupToken } from './tokens.ts';
 
-const GOLD = ['XAUt0', 'GOLD', 'GLDx', 'VNXAU', 'XAUM', 'PAXG'];
 const jup = new JupiterClient(config.jupiterBase, { ratePerMin: config.jupiterRatePerMin, apiKey: config.jupiterApiKey });
+const rpc = createSolanaRpc(config.rpcUrl);
 
-async function q(inputMint: string, outputMint: string, amount: bigint, exclude: string[]) {
-  const p = new URLSearchParams({ inputMint, outputMint, amount: amount.toString(), slippageBps: '50' });
-  if (exclude.length) p.set('excludeDexes', exclude.join(','));
-  return (jup as any).request(`${config.jupiterBase}/quote?${p}`);
-}
+const seen = new Map<string, JupToken>();
+for (const q of config.goldQueries)
+  for (const t of await searchTokens(config.jupiterTokensBase, q))
+    if (t.isVerified && /gold|xau/i.test(`${t.name} ${t.symbol} ${(t.tags ?? []).join(' ')}`) && (t.liquidity ?? 0) >= 1000) seen.set(t.id, t);
+const gold = [...seen.values()].sort((a, b) => (b.liquidity ?? 0) - (a.liquidity ?? 0));
 
-async function dexesFor(inputMint: string, outputMint: string, amount: bigint) {
+async function dexesFor(outputMint: string, amount: bigint) {
   const found: { labels: string[]; out: string; impact: string }[] = [];
   const exclude: string[] = [];
   for (let i = 0; i < 8; i++) {
+    const p = new URLSearchParams({ inputMint: USDC.mint, outputMint, amount: amount.toString(), slippageBps: '50' });
+    if (exclude.length) p.set('excludeDexes', exclude.join(','));
     try {
-      const r = await q(inputMint, outputMint, amount, exclude);
+      const r: any = await (jup as any).request(`${config.jupiterBase}/quote?${p}`);
       const labels = [...new Set<string>(r.routePlan.map((s: any) => s.swapInfo.label))];
       found.push({ labels, out: r.outAmount, impact: r.priceImpactPct });
       exclude.push(...labels);
@@ -30,15 +34,17 @@ async function dexesFor(inputMint: string, outputMint: string, amount: bigint) {
   return found;
 }
 
-const sizes = [1_000, 100_000];
-for (const sym of GOLD) {
-  const t = TOKENS[sym];
-  for (const size of sizes) {
-    const amt = BigInt(size) * 1_000_000n;
-    const buy = await dexesFor(TOKENS.USDC.mint, t.mint, amt);
-    console.log(`${sym} (${t.mint}, ${t.tokenProgram === TOKENS.USDC.tokenProgram ? 'SPL' : 'Token-2022'}) buy $${size}:`);
-    if (!buy.length) console.log('   no route');
-    for (const b of buy) console.log(`   via [${b.labels.join(' + ')}] out ${Number(b.out) / 10 ** t.decimals} ${sym}, impact ${(Number(b.impact) * 100).toFixed(3)}%`);
+const { value: accts } = await rpc.getMultipleAccounts(gold.map((t) => t.id as any), { encoding: 'jsonParsed' }).send();
+for (const [i, t] of gold.entries()) {
+  const a: any = accts[i];
+  const exts = (a?.data?.parsed?.info?.extensions ?? []).map((e: any) => e.extension);
+  console.log(`\n${t.symbol} "${t.name}" ${t.id} | Jupiter liquidity $${Math.round(t.liquidity ?? 0).toLocaleString('en-US')} | ${a?.owner === TOKEN_2022_PROGRAM ? 'Token-2022' : 'SPL'}${exts.length ? ' [' + exts.join(',') + ']' : ''}`);
+  for (const size of [config.compareSizesUsdc[0] ?? 1000, config.tradeSizeUsdc]) {
+    const routes = await dexesFor(t.id, BigInt(size) * 10n ** BigInt(USDC.decimals));
+    const distinct = new Set(routes.flatMap((r) => r.labels));
+    console.log(`  buy $${size}: ${routes.length ? '' : 'no route'}`);
+    for (const r of routes) console.log(`    via [${r.labels.join(' + ')}] out ${Number(r.out) / 10 ** t.decimals}, impact ${(Number(r.impact) * 100).toFixed(3)}%`);
+    if (routes.length) console.log(`    distinct DEXes able to fill: ${distinct.size} -> ${distinct.size >= 2 ? 'TWO+ DEXes' : 'single DEX only'}`);
   }
 }
-console.log(`Jupiter calls: ${jup.calls}`);
+console.log(`\nJupiter calls: ${jup.calls}`);

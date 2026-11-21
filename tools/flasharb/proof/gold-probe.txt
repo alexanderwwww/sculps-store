@@ -1,0 +1,60 @@
+
+GLDx "Gold xStock" Xsv9hRk1z5ystj9MhnA7Lq4vjSsLwzL2nxrwmwtD3re | Jupiter liquidity $420,849 | Token-2022 [metadataPointer,permanentDelegate,defaultAccountState,scaledUiAmountConfig,pausableConfig,confidentialTransferMint,transferHook,tokenMetadata]
+  buy $1000: 
+    via [ZeroFi + Whirlpool] out 3.10521505, impact 0.658%
+    via [Raydium CLMM] out 3.10065008, impact 0.804%
+    via [Meteora DLMM] out 3.07348548, impact 1.673%
+    via [Manifest] out 2.56513095, impact 17.936%
+    distinct DEXes able to fill: 5 -> TWO+ DEXes
+  buy $100000: 
+    via [ZeroFi + Whirlpool + Raydium CLMM] out 298.60249308, impact 4.471%
+    via [Meteora + Meteora DLMM] out 210.73997803, impact 32.580%
+    via [Manifest] out 4.94589714, impact 98.418%
+    distinct DEXes able to fill: 6 -> TWO+ DEXes
+
+GOLD "GOLD" GoLDppdjB1vDTPSGxyMJFqdnj134yH6Prg9eqsGDiw6A | Jupiter liquidity $347,801 | SPL
+  buy $1000: 
+    via [Raydium CLMM] out 0.279353, impact 0.057%
+    via [Meteora DLMM] out 0.274867, impact 1.662%
+    via [Manifest] out 0.220122, impact 21.248%
+    distinct DEXes able to fill: 3 -> TWO+ DEXes
+  buy $100000: 
+    via [Meteora DLMM + Archer + Raydium CLMM] out 27.674219, impact 0.991%
+    via [Manifest] out 1.58389, impact 94.333%
+    distinct DEXes able to fill: 4 -> TWO+ DEXes
+
+XAUt0 "Tether Gold" AymATz4TCL9sWNEEV9Kvyz45CHVhDZ6kUgjTJPzLpU9P | Jupiter liquidity $123,768 | SPL
+  buy $1000: 
+    via [ZeroFi + Whirlpool + Raydium CLMM] out 0.284647, impact 0.740%
+    via [Deriverse + Byreal] out 0.283586, impact 1.110%
+    via [Kipseli + Meteora DLMM] out 0.279033, impact 2.698%
+    distinct DEXes able to fill: 7 -> TWO+ DEXes
+  buy $100000: 
+    via [Raydium CLMM + Whirlpool] out 27.127368, impact 5.404%
+    via [ZeroFi + Byreal + Manifest + Meteora DLMM] out 17.082927, impact 40.430%
+    distinct DEXes able to fill: 6 -> TWO+ DEXes
+
+XAUM "Matrixdock Gold" 5aLhp9VnUEKcsdtkfsf2DUgpJfomx7GmYVny24dHUZoB | Jupiter liquidity $43,765 | Token-2022 [metadataPointer,permanentDelegate,transferFeeConfig,pausableConfig,tokenMetadata]
+  buy $1000: 
+    via [Raydium CLMM] out 0.280224362, impact 0.915%
+    distinct DEXes able to fill: 1 -> single DEX only
+  buy $100000: no route
+
+VNXAU "VNX Gold" 9TPL8droGJ7jThsq4momaoz6uhTcvX2SeMqipoPmNa8R | Jupiter liquidity $28,316 | SPL
+  buy $1000: 
+    via [Raydium CLMM] out 8.629424996, impact 0.128%
+    via [Deriverse + Byreal + Whirlpool] out 8.569387911, impact 0.823%
+    distinct DEXes able to fill: 4 -> TWO+ DEXes
+  buy $100000: 
+    via [Raydium CLMM + Whirlpool] out 778.642676926, impact 9.885%
+    distinct DEXes able to fill: 2 -> TWO+ DEXes
+
+GKAPPA "Golden Kappa" n88wHcVtfavStAM5VQyUFQ6ykdnfqZucysVgmqpdgiM | Jupiter liquidity $25,797 | SPL
+  buy $1000: 
+    via [Kipseli + Meteora] out 25302208839.183495, impact 2.967%
+    distinct DEXes able to fill: 2 -> TWO+ DEXes
+  buy $100000: 
+    via [ZeroFi + Meteora + BisonFi] out 529275458749.6724, impact 79.702%
+    distinct DEXes able to fill: 3 -> TWO+ DEXes
+
+Jupiter calls: 35
