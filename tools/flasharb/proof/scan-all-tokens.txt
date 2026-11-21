@@ -53,3 +53,28 @@ SOL        10000 ZeroFi          BisonFi              -3.17      -3.16    0.10  
 best any size: SOL 10000 USDC: buy on BisonFi, sell on Scorch, spread -0.74 bps, net $-0.83 (negative, not tradable)
 best 100000 USDC net seen so far: $-25.15
 
+scan 3 @ 21/11/2026, 06:17:24 Athens | SOL $65.66 | network fee $0.0023 | 641 routes | 516 Jupiter calls | 343.4s | no-route/errors 118
+dexes: SOL[ZeroFi|Deriverse|BisonFi|Scorch|Archer|GoonFi V2|Kipseli|Raydium CLMM] USX[Whirlpool|Raydium CLMM|JupLend AMM|Manifest] USDT[Kipseli|Scorch|ZeroFi|Deriverse|Byreal|Manifest|PancakeSwap|Whirlpool] WBTC[BisonFi|Whirlpool|ZeroFi|Meteora DLMM|Manifest|GoonFi V2|Perps|Scorch] USD1[Scorch|Raydium CLMM|Kipseli|BisonFi|Manifest|Whirlpool|ZeroFi|Byreal] JupUSD[Manifest|JupLend AMM|Whirlpool|Meteora DLMM|Perps|Omnipair] cbBTC[BisonFi|ZeroFi|Scorch|Kipseli|Whirlpool|GoonFi V2|Deriverse|Meteora DLMM] ETH[GoonFi V2|ZeroFi|Whirlpool|BisonFi|Kipseli|PancakeSwap|Scorch|Meteora DLMM] TRUMP[Meteora DLMM|Scorch|GoonFi V2|Raydium CLMM|Kipseli|Whirlpool] RAY[BisonFi|Raydium CLMM|Scorch|Raydium|Kipseli|Whirlpool|ZeroFi|Meteora DLMM]
+HEADLINE 100000 USDC -> JupUSD 100000 USDC: buy on Whirlpool, sell on Meteora DLMM, spread -2.52 bps, net $-26.21 (negative, not tradable)
+pair        size buy on (A)      sell on (B)     spread bps    gross $ flash $      net $ chk
+---------------------------------------------------------------------------------------------
+JupUSD    100000 Whirlpool       Meteora DLMM         -2.52     -25.21    1.00     -26.21 exact
+JupUSD    100000 JupLend AMM     Meteora DLMM         -2.63     -26.26    1.00     -27.26 exact
+JupUSD    100000 Manifest        Meteora DLMM         -2.74     -27.39    1.00     -28.39 exact
+JupUSD    100000 JupLend AMM     Whirlpool            -2.74     -27.40    1.00     -28.40 est
+JupUSD    100000 Whirlpool       JupLend AMM          -2.75     -27.47    1.00     -28.47 est
+JupUSD    100000 Manifest        Whirlpool            -2.91     -29.08    1.00     -30.09 est
+JupUSD    100000 Manifest        JupLend AMM          -3.03     -30.31    1.00     -31.31 est
+JupUSD    100000 Meteora DLMM    Whirlpool            -3.36     -33.58    1.00     -34.58 est
+comparison sizes:
+pair        size buy on (A)      sell on (B)     spread bps    gross $ flash $      net $ chk
+---------------------------------------------------------------------------------------------
+SOL        10000 ZeroFi          Kipseli               2.98       2.97    0.10       2.87 exact
+SOL        10000 ZeroFi          Scorch                1.28       1.28    0.10       1.18 exact
+SOL        10000 BisonFi         Scorch                1.02       1.02    0.10       0.91 exact
+SOL        10000 BisonFi         Kipseli               0.81       0.80    0.10       0.70 exact
+SOL        10000 Scorch          BisonFi              -2.78      -2.77    0.10      -2.87 exact
+SOL        10000 ZeroFi          BisonFi              -5.30      -5.30    0.10      -5.40 exact
+best any size: SOL 10000 USDC: buy on ZeroFi, sell on Kipseli, spread 2.98 bps, net $2.87 PROFITABLE
+best 100000 USDC net seen so far: $-25.15
+
