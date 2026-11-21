@@ -1,1 +1,31 @@
 Kamino USDC reserve D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59 flash fee 0.0010%, available 40935670.40 USDC
+scan @ 21/11/2026, 06:23:33 Athens, 278 routes, 150 calls
+HEADLINE 100000 USDC -> JupUSD 100000 USDC: buy on Whirlpool, sell on Meteora DLMM, spread -2.52 bps, net $-26.22 (negative, not tradable)
+pair        size buy on (A)      sell on (B)     spread bps    gross $ flash $      net $ chk
+---------------------------------------------------------------------------------------------
+JupUSD    100000 Whirlpool       Meteora DLMM         -2.52     -25.22    1.00     -26.22 exact
+JupUSD    100000 Manifest        Meteora DLMM         -2.62     -26.21    1.00     -27.21 exact
+JupUSD    100000 JupLend AMM     Meteora DLMM         -2.63     -26.27    1.00     -27.27 exact
+JupUSD    100000 JupLend AMM     Whirlpool            -2.73     -27.29    1.00     -28.29 est
+JupUSD    100000 Whirlpool       JupLend AMM          -2.76     -27.57    1.00     -28.57 est
+JupUSD    100000 Manifest        Whirlpool            -2.77     -27.66    1.00     -28.67 est
+WALLET_PUBKEY from .env | 0.000650241 SOL, 0.00 USDC held
+
+building: JupUSD 100000 USDC, buy on Whirlpool, sell on Meteora DLMM, expected net $-526.05 (USDC only; leg 2 sells leg 1's guaranteed minimum 99535423134 of 100035601139 base units)
+tx: 8 instructions, flashBorrow at #4, flashRepay at #7, 3 lookup tables, 784 bytes (limit 1232: fits)
+  #0 ComputeBudget111111111111111111111111111111
+  #1 ComputeBudget111111111111111111111111111111
+  #2 ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL
+  #3 ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL
+  #4 KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD (Kamino flashBorrow)
+  #5 JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4
+  #6 JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4
+  #7 KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD (Kamino flashRepay)
+
+simulation (slot 472004156, sigVerify=false, replaceRecentBlockhash=true): FAILED
+error: {"InsufficientFundsForRent":{"account_index":"0"}}
+compute units: 0
+USDC ATA Rm3uMwFHzPFDkFiVber9KsWH6HzrYG3NKnzbW3NCTAD: 0 -> 0 (delta 0.00 USDC)
+JupUSD ATA GvBoojHfqXrd5kGJk7cNc4iRsk1thAuoUHU3mLVbKfzu: 0 -> 0 (delta 0 base units)
+logs (tail 25):
+Kamino flash log lines: none
