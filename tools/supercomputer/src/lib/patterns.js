@@ -16,7 +16,8 @@ function swings(b, k = 2) {
   const hi = [], lo = [];
   for (let i = k; i < b.length - k; i++) {
     let isH = true, isL = true;
-    for (let j = i - k; j <= i + k; j++) { if (j === i) continue; if (b[j].h >= b[i].h) isH = false; if (b[j].l <= b[i].l) isL = false; }
+    for (let j = i - k; j <= i + k; j++) { if (j === i) continue; // ties go to the first of the equal blocks
+      if (j < i ? b[j].h >= b[i].h : b[j].h > b[i].h) isH = false; if (j < i ? b[j].l <= b[i].l : b[j].l < b[i].l) isL = false; }
     if (isH) hi.push(i); if (isL) lo.push(i);
   }
   return { hi, lo };

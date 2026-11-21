@@ -15,7 +15,7 @@ export function prompt({ coin, price, atAthens, r5, r15, f }) {
 }
 
 const side = (s) => { const v = String(s || "").toLowerCase(); return v.startsWith("u") || v === "long" || v === "buy" ? "up" : v.startsWith("d") || v === "short" || v === "sell" ? "down" : v ? "flat" : null; };
-const num = (x) => { if (x == null || x === "") return null; const n = Number(String(x).replace(/[$,\s]/g, "")); return Number.isFinite(n) && n !== 0 ? n : null; };
+const num = (x) => { if (x == null || x === "") return null; const n = Number(String(x).replace(/[$,%\s]/g, "")); return Number.isFinite(n) && n !== 0 ? n : null; };
 const prob = (x) => { const n = num(x); if (n == null) return null; const p = n > 1 ? n / 100 : n; return p >= 0 && p <= 1 ? p : null; };
 
 // Finds the last "GROK {...}" in pasted text (Grok often wraps it in ``` or bold). Returns null if none parse.
